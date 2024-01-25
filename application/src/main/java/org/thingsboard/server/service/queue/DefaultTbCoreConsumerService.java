@@ -660,6 +660,9 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     }
 
     void forwardToStateService(TransportProtos.DeviceConnectProto deviceConnectMsg, TbCallback callback) {
+        if (statsEnabled) {
+            stats.log(deviceConnectMsg);
+        }
         var tenantId = toTenantId(deviceConnectMsg.getTenantIdMSB(), deviceConnectMsg.getTenantIdLSB());
         var deviceId = new DeviceId(new UUID(deviceConnectMsg.getDeviceIdMSB(), deviceConnectMsg.getDeviceIdLSB()));
         try {
@@ -687,6 +690,9 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     }
 
     void forwardToStateService(TransportProtos.DeviceDisconnectProto deviceDisconnectMsg, TbCallback callback) {
+        if (statsEnabled) {
+            stats.log(deviceDisconnectMsg);
+        }
         var tenantId = toTenantId(deviceDisconnectMsg.getTenantIdMSB(), deviceDisconnectMsg.getTenantIdLSB());
         var deviceId = new DeviceId(new UUID(deviceDisconnectMsg.getDeviceIdMSB(), deviceDisconnectMsg.getDeviceIdLSB()));
         try {
@@ -699,6 +705,9 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     }
 
     void forwardToStateService(TransportProtos.DeviceInactivityProto deviceInactivityMsg, TbCallback callback) {
+        if (statsEnabled) {
+            stats.log(deviceInactivityMsg);
+        }
         var tenantId = toTenantId(deviceInactivityMsg.getTenantIdMSB(), deviceInactivityMsg.getTenantIdLSB());
         var deviceId = new DeviceId(new UUID(deviceInactivityMsg.getDeviceIdMSB(), deviceInactivityMsg.getDeviceIdLSB()));
         try {
