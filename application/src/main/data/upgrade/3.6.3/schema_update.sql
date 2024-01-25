@@ -106,3 +106,14 @@ EXCEPTION
         RAISE EXCEPTION 'Error during COPY: %', SQLERRM;
 END
 $$;
+
+CREATE TABLE IF NOT EXISTS alarm_rule (
+    id uuid NOT NULL CONSTRAINT alarm_rule_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid NOT NULL,
+    alarm_type varchar(255),
+    name varchar(255),
+    enabled boolean,
+    configuration jsonb,
+    description varchar
+);

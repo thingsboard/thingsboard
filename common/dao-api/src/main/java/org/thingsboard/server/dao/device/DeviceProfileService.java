@@ -64,4 +64,6 @@ public interface DeviceProfileService extends EntityDaoService {
 
     List<EntityInfo> findDeviceProfileNamesByTenantId(TenantId tenantId, boolean activeOnly);
 
+    PageData<DeviceProfile> findDeviceProfilesWithAlarmRules(TenantId tenantId, PageLink pageLink);
+
 }

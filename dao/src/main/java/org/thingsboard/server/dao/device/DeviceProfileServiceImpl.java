@@ -43,6 +43,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.msg.EncryptionUtil;
+import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
@@ -381,6 +382,11 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
         return deviceProfileDao.findTenantDeviceProfileNames(tenantId.getId(), activeOnly)
                 .stream().sorted(Comparator.comparing(EntityInfo::getName))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public PageData<DeviceProfile> findDeviceProfilesWithAlarmRules(TenantId tenantId, PageLink pageLink) {
+        return deviceProfileDao.findDeviceProfilesWithAlarmRules(tenantId, pageLink);
     }
 
     private final PaginatedRemover<TenantId, DeviceProfile> tenantDeviceProfilesRemover =

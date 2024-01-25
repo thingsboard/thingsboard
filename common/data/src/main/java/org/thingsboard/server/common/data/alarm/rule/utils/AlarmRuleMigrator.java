@@ -54,6 +54,7 @@ import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.query.FilterPredicateType;
 import org.thingsboard.server.common.data.query.KeyFilterPredicate;
+import org.thingsboard.server.common.data.query.SimpleKeyFilterPredicate;
 import org.thingsboard.server.common.data.query.StringFilterPredicate;
 import org.thingsboard.server.common.data.util.TbPair;
 
@@ -89,6 +90,7 @@ public class AlarmRuleMigrator {
         oldRule.getCreateRules().forEach((severity, oldAlarmRule) -> createRules.put(severity, getAlarmRuleCondition(oldAlarmRule)));
         configuration.setCreateRules(createRules);
         configuration.setClearRule(getAlarmRuleCondition(oldRule.getClearRule()));
+        alarmRule.setConfiguration(configuration);
         return alarmRule;
     }
 
@@ -145,7 +147,7 @@ public class AlarmRuleMigrator {
         if (predicate.getType() == FilterPredicateType.COMPLEX) {
             return getComplexConditionFilter((ComplexFilterPredicate) predicate, leftArgId, valueType, arguments);
         } else {
-            return getSimpleConditionFilter(predicate, leftArgId, valueType, arguments);
+            return getSimpleConditionFilter((SimpleKeyFilterPredicate<?>) predicate, leftArgId, valueType, arguments);
         }
     }
 
@@ -154,7 +156,7 @@ public class AlarmRuleMigrator {
         return new ComplexAlarmConditionFilter(conditions, ComplexAlarmConditionFilter.ComplexOperation.valueOf(complexPredicate.getOperationName()));
     }
 
-    private static SimpleAlarmConditionFilter getSimpleConditionFilter(KeyFilterPredicate simplePredicate, String leftArgId, ArgumentValueType valueType, Map<TbPair<String, Integer>, AlarmRuleArgument> arguments) {
+    private static SimpleAlarmConditionFilter getSimpleConditionFilter(SimpleKeyFilterPredicate<?> simplePredicate, String leftArgId, ArgumentValueType valueType, Map<TbPair<String, Integer>, AlarmRuleArgument> arguments) {
         var simpleFilter = new SimpleAlarmConditionFilter();
         simpleFilter.setLeftArgId(leftArgId);
         simpleFilter.setOperation(Operation.valueOf(simplePredicate.getOperationName()));

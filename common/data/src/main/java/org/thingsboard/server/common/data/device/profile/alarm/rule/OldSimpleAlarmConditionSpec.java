@@ -13,30 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.query;
+package org.thingsboard.server.common.data.device.profile.alarm.rule;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
-
-import java.util.List;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionSpecType;
 
 @Data
-public class ComplexFilterPredicate implements KeyFilterPredicate {
-
-    private ComplexOperation operation;
-    private List<KeyFilterPredicate> predicates;
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class OldSimpleAlarmConditionSpec implements OldAlarmConditionSpec {
 
     @Override
-    public FilterPredicateType getType() {
-        return FilterPredicateType.COMPLEX;
-    }
-
-    @Override
-    public String getOperationName() {
-        return operation.name();
-    }
-
-    public enum ComplexOperation {
-        AND,
-        OR
+    public AlarmConditionSpecType getType() {
+        return AlarmConditionSpecType.SIMPLE;
     }
 }

@@ -284,13 +284,6 @@ public class ThingsboardInstallService {
                             databaseEntitiesUpgradeService.upgradeDatabase("3.6.3");
                             //TODO DON'T FORGET to update switch statement in the CacheCleanupService if you need to clear the cache
                             break;
-                        case "3.5.2":
-                            log.info("Upgrading ThingsBoard from version 3.5.2 to 3.6.0 ...");
-                            databaseEntitiesUpgradeService.upgradeDatabase("3.5.2");
-                            break;
-
-                        //TODO update CacheCleanupService on the next version upgrade
-
                         default:
                             throw new RuntimeException("Unable to upgrade ThingsBoard, unsupported fromVersion: " + upgradeFromVersion);
                     }

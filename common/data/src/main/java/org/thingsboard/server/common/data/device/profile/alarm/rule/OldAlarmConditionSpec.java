@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionSpecType;
-import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionSpec;
 
 import java.io.Serializable;
 
@@ -30,7 +29,7 @@ import java.io.Serializable;
         include = JsonTypeInfo.As.PROPERTY,
         property = "type")
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = SimpleAlarmConditionSpec.class, name = "SIMPLE"),
+        @JsonSubTypes.Type(value = OldSimpleAlarmConditionSpec.class, name = "SIMPLE"),
         @JsonSubTypes.Type(value = OldDurationAlarmConditionSpec.class, name = "DURATION"),
         @JsonSubTypes.Type(value = OldRepeatingAlarmConditionSpec.class, name = "REPEATING")})
 public interface OldAlarmConditionSpec extends Serializable {
