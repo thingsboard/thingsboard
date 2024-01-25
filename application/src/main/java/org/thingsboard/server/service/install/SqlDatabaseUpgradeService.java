@@ -855,7 +855,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                                                     continue;
                                                 }
 
-                                                List<JsonNode> states = alarmRuleService.findRuleNodeStatesByRuleChainIdAndType(deviceProfileId, ruleChainId, "org.thingsboard.rule.engine.action.TbDeviceProfileNode");
+                                                List<JsonNode> states = alarmRuleService.findRuleNodeStatesByRuleChainIdAndType(deviceProfileId, ruleChainId, "org.thingsboard.rule.engine.profile.TbDeviceProfileNode");
                                                 states.forEach(stateNode -> {
                                                     Map<String, PersistedAlarmState> alarmStates = new HashMap<>();
                                                     DeviceId deviceId = new DeviceId(UUID.fromString(stateNode.get("entity_id").asText()));
@@ -895,18 +895,6 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         Futures.allAsList(futures).get();
                     } catch (InterruptedException | ExecutionException e) {
                         log.warn("Failed to await rules migration!!!", e);
-                    }
-
-                    log.info("Updating device profile nodes...");
-
-                    try {
-                        conn.createStatement().execute("UPDATE rule_node rn SET type = 'org.thingsboard.rule.engine.action.TbAlarmRulesNode', configuration = '{}' WHERE rn.type = 'org.thingsboard.rule.engine.profile.TbDeviceProfileNode';");
-                    } catch (Exception e) {
-                    }
-
-                    try {
-                        conn.createStatement().execute("UPDATE rule_node rn SET name = 'Alarm Rules Node' WHERE rn.type = 'org.thingsboard.rule.engine.action.TbAlarmRulesNode' AND rn.name = 'Device Profile Node';");
-                    } catch (Exception e) {
                     }
 
                     try {

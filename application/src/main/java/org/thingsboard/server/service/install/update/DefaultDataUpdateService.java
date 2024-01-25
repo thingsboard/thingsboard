@@ -29,7 +29,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNode;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
-import org.thingsboard.rule.engine.action.TbAlarmRulesNode;
+import org.thingsboard.rule.engine.profile.TbDeviceProfileNode;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityView;
@@ -531,7 +531,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
                             }
 
                             RuleNode oldFirstNode = md.getNodes().get(oldIdx);
-                            if (oldFirstNode.getType().equals(TbAlarmRulesNode.class.getName())) {
+                            if (oldFirstNode.getType().equals(TbDeviceProfileNode.class.getName())) {
                                 // No need to update the rule node twice.
                                 return;
                             }
@@ -539,7 +539,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
                             RuleNode ruleNode = new RuleNode();
                             ruleNode.setRuleChainId(ruleChain.getId());
                             ruleNode.setName("Alarm Rules Node");
-                            ruleNode.setType(TbAlarmRulesNode.class.getName());
+                            ruleNode.setType(TbDeviceProfileNode.class.getName());
                             ruleNode.setDebugMode(false);
 
                             ObjectNode additionalInfo = JacksonUtil.newObjectNode();
