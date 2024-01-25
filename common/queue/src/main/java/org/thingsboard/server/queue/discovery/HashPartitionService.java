@@ -177,7 +177,6 @@ public class HashPartitionService implements PartitionService {
             QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, queueUpdateMsg.getQueueName(), tenantId);
             partitionTopicsMap.put(queueKey, queueUpdateMsg.getQueueTopic());
             partitionSizesMap.put(queueKey, queueUpdateMsg.getPartitions());
-            myPartitions.remove(queueKey);
             if (!tenantId.isSysTenantId()) {
                 tenantRoutingInfoMap.remove(tenantId);
             }
