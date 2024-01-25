@@ -28,7 +28,7 @@
   <div *ngFor="let mappingConfig of mappingsConfigFormArray.controls; let $index = index;
                last as isLast;" fxLayout="row" fxLayoutAlign="start center"
        fxLayoutGap="8px" [formGroup]="mappingConfig" class="mapping-list">
-    <div fxFlex fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start">
+    <div class="tb-layout-fill" fxFlex fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start">
       <mat-form-field fxFlex="26">
         <mat-select formControlName="dataType" required>
           <mat-option *ngFor="let dataType of dataTypes" [value]="dataType">

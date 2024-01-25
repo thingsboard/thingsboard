@@ -19,6 +19,13 @@
     border-radius: 4px;
     padding: 8px;
     min-width: 0;
+    flex-direction: row;
+    box-sizing: border-box;
+    display: flex;
+    place-content: stretch flex-start;
+    align-items: stretch;
+    flex: 1 1 0;
+    gap: 8px;
   }
 
   .scope-row {
@@ -27,6 +34,13 @@
 
   .required-text {
     margin: 16px 0
+  }
+
+  @media (max-width: 1500px) {
+    .communication-config {
+      flex-direction: column;
+      gap: 0;
+    }
   }
 }
 
