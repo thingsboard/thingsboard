@@ -95,7 +95,7 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
             savedTenantProfile = tenantProfileDao.save(tenantId, tenantProfile);
             publishEvictEvent(new TenantProfileEvictEvent(savedTenantProfile.getId(), savedTenantProfile.isDefault()));
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId)
-                    .entityId(savedTenantProfile.getId()).added(tenantProfile.getId() == null).build());
+                    .entityId(savedTenantProfile.getId()).created(tenantProfile.getId() == null).build());
         } catch (Exception t) {
             handleEvictEvent(new TenantProfileEvictEvent(null, tenantProfile.isDefault()));
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);

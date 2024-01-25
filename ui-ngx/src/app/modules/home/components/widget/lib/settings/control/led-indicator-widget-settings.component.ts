@@ -15,7 +15,7 @@
 ///
 
 import { Component } from '@angular/core';
-import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
+import { TargetDevice, WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -31,12 +31,8 @@ export class LedIndicatorWidgetSettingsComponent extends WidgetSettingsComponent
 
   functionScopeVariables = this.widgetService.getWidgetScopeVariables();
 
-  get targetDeviceAliasId(): string {
-    const aliasIds = this.widget?.config?.targetDeviceAliasIds;
-    if (aliasIds && aliasIds.length) {
-      return aliasIds[0];
-    }
-    return null;
+  get targetDevice(): TargetDevice {
+    return this.widget?.config?.targetDevice;
   }
 
   dataKeyType = DataKeyType;

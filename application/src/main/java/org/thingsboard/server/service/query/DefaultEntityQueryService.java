@@ -225,7 +225,7 @@ public class DefaultEntityQueryService implements EntityQueryService {
 
     @Override
     public DeferredResult<ResponseEntity> getKeysByQuery(SecurityUser securityUser, TenantId tenantId, EntityDataQuery query,
-                                                         boolean isTimeseries, boolean isAttributes) {
+                                                         boolean isTimeseries, boolean isAttributes, String attributesScope) {
         final DeferredResult<ResponseEntity> response = new DeferredResult<>();
         if (!isAttributes && !isTimeseries) {
             replyWithEmptyResponse(response);
@@ -253,7 +253,7 @@ public class DefaultEntityQueryService implements EntityQueryService {
         if (isAttributes) {
             Map<EntityType, List<EntityId>> typesMap = ids.stream().collect(Collectors.groupingBy(EntityId::getEntityType));
             List<ListenableFuture<List<String>>> futures = new ArrayList<>(typesMap.size());
-            typesMap.forEach((type, entityIds) -> futures.add(dbCallbackExecutor.submit(() -> attributesService.findAllKeysByEntityIds(tenantId, type, entityIds))));
+            typesMap.forEach((type, entityIds) -> futures.add(dbCallbackExecutor.submit(() -> attributesService.findAllKeysByEntityIds(tenantId, type, entityIds, attributesScope))));
             attributesKeysFuture = Futures.transform(Futures.allAsList(futures), lists -> {
                 if (CollectionUtils.isEmpty(lists)) {
                     return Collections.emptyList();

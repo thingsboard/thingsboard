@@ -58,6 +58,7 @@ import {
   NamedDataSet,
   toNamedData
 } from '@home/components/widget/lib/chart/echarts-widget.models';
+import { IntervalMath } from '@shared/models/time/time.models';
 
 interface BarChartDataItem {
   id: string;
@@ -187,18 +188,23 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
 
     this.barRenderItem = (params, api) => {
 
-      const interval = this.ctx.defaultSubscription.timeWindow.interval;
+      const time = api.value(0) as number;
+      let start = api.value(2) as number;
+      const end = api.value(3) as number;
+      let interval = end - start;
+      if (!start || !end || !interval) {
+        interval = IntervalMath.numberValue(this.ctx.timeWindow.interval);
+        start = time - interval / 2;
+      }
       const enabledDataItems = this.dataItems.filter(d => d.enabled);
       const barInterval = interval / (enabledDataItems.length + 1);
       const intervalGap = barInterval / 2;
 
       const index = enabledDataItems.findIndex(d => d.id === params.seriesId);
-      const time = api.value(0) as number;
       const value = api.value(1);
-      const start = time - interval / 2;
       const startTime = start + intervalGap + barInterval * index;
       const delta = barInterval;
-      const lowerLeft = api.coord([startTime, value]);
+      const lowerLeft = api.coord([startTime, value >= 0 ? value : 0]);
       const height = api.size([delta, value])[1];
       const width = api.size([delta, 10])[0];
 
@@ -256,7 +262,7 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
     this.barLabelLayoutCallback = (params) => {
       if (params.rect.width - params.labelRect.width < 2) {
         return {
-          y: '1000%',
+          y: '100000%',
         };
       } else {
         return {
@@ -293,29 +299,14 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
   }
 
   public onDataUpdated() {
-    let minTime = this.ctx.defaultSubscription.timeWindow.minTime;
-    let maxTime = this.ctx.defaultSubscription.timeWindow.maxTime;
-    let dataMin = Number.MAX_VALUE;
-    let dataMax = Number.MIN_VALUE;
     for (const item of this.dataItems) {
       const datasourceData = this.ctx.data ? this.ctx.data.find(d => d.dataKey === item.dataKey) : null;
       item.data = datasourceData?.data ? toNamedData(datasourceData.data) : [];
-      if (datasourceData.data.length) {
-        dataMin = Math.min(datasourceData.data[0][0], dataMin);
-        dataMax = Math.max(datasourceData.data[datasourceData.data.length-1][0], dataMax);
-      }
-    }
-    if (dataMin !== Number.MAX_VALUE) {
-      minTime = dataMin - this.ctx.defaultSubscription.timeWindow.interval / 2;
-    }
-    if (dataMax !== Number.MIN_VALUE) {
-      dataMax = dataMax + this.ctx.defaultSubscription.timeWindow.interval / 2;
-      maxTime = Math.max(dataMax, maxTime);
     }
     if (this.barChart) {
-      (this.barChartOptions.xAxis as any).min = minTime;
-      (this.barChartOptions.xAxis as any).max = maxTime;
-      (this.barChartOptions.xAxis as any).tbTimewindowInterval = this.ctx.defaultSubscription.timeWindow.interval;
+      (this.barChartOptions.xAxis as any).min = this.ctx.defaultSubscription.timeWindow.minTime;
+      (this.barChartOptions.xAxis as any).max = this.ctx.defaultSubscription.timeWindow.maxTime;
+      (this.barChartOptions.xAxis as any).tbTimeWindow = this.ctx.defaultSubscription.timeWindow;
       this.barChartOptions.series = this.updateSeries();
       this.barChart.setOption(this.barChartOptions);
     }
@@ -332,7 +323,15 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
           color: item.dataKey.color,
           data: item.data,
           renderItem: this.barRenderItem,
-          labelLayout: this.barLabelLayoutCallback
+          labelLayout: this.barLabelLayoutCallback,
+          dimensions: [
+            {name: 'intervalStart', type: 'number'},
+            {name: 'intervalEnd', type: 'number'}
+          ],
+          encode: {
+            intervalStart: 2,
+            intervalEnd: 3
+          }
         };
         series.push(seriesOption);
       }
@@ -385,7 +384,25 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
     });
     this.barChartOptions = {
       tooltip: {
-        trigger: 'none'
+        trigger: 'axis',
+        confine: true,
+        appendToBody: true,
+        axisPointer: {
+          type: 'shadow'
+        },
+        formatter: (params: CallbackDataParams[]) => {
+          if (this.settings.showTooltip) {
+            const focusedSeriesIndex = this.focusedSeriesIndex();
+            return echartsTooltipFormatter(this.renderer, this.tooltipDateFormat,
+              this.settings, params, this.decimals, this.units, focusedSeriesIndex);
+          } else {
+            return undefined;
+          }
+        },
+        padding: [8, 12],
+        backgroundColor: this.settings.tooltipBackgroundColor,
+        borderWidth: 0,
+        extraCssText: `line-height: 1; backdrop-filter: blur(${this.settings.tooltipBackgroundBlur}px);`
       },
       grid: {
         containLabel: true,
@@ -407,8 +424,8 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
         axisLine: {
           onZero: false
         },
-        min: this.ctx.defaultSubscription.timeWindow.minTime - this.ctx.defaultSubscription.timeWindow.interval / 2,
-        max: this.ctx.defaultSubscription.timeWindow.maxTime + this.ctx.defaultSubscription.timeWindow.interval / 2
+        min: this.ctx.defaultSubscription.timeWindow.minTime,
+        max: this.ctx.defaultSubscription.timeWindow.maxTime
       },
       yAxis: {
         type: 'value',
@@ -418,27 +435,9 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
       }
     };
 
-    (this.barChartOptions.xAxis as any).tbTimewindowInterval = this.ctx.defaultSubscription.timeWindow.interval;
+    (this.barChartOptions.xAxis as any).tbTimeWindow = this.ctx.defaultSubscription.timeWindow;
 
     this.barChartOptions.series = this.updateSeries();
-
-    if (this.settings.showTooltip) {
-      this.barChartOptions.tooltip = {
-        trigger: 'axis',
-        axisPointer: {
-          type: 'shadow'
-        },
-        formatter: (params: CallbackDataParams[]) => {
-          const focusedSeriesIndex = this.focusedSeriesIndex();
-          return echartsTooltipFormatter(this.renderer, this.tooltipDateFormat,
-            this.settings, params, this.decimals, this.units, focusedSeriesIndex);
-        },
-        padding: [8, 12],
-        backgroundColor: this.settings.tooltipBackgroundColor,
-        borderWidth: 0,
-        extraCssText: `line-height: 1; backdrop-filter: blur(${this.settings.tooltipBackgroundBlur}px);`
-      };
-    }
 
     this.barChart.setOption(this.barChartOptions);
 

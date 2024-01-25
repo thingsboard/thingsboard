@@ -17,7 +17,7 @@
 import * as echarts from 'echarts/core';
 import { Axis } from 'echarts';
 import AxisModel from 'echarts/types/src/coord/cartesian/AxisModel';
-import { formatValue, isNumber } from '@core/utils';
+import { formatValue, isDefinedAndNotNull, isNumber, isString } from '@core/utils';
 import TimeScale from 'echarts/types/src/scale/Time';
 import {
   DataZoomComponent, DataZoomComponentOption,
@@ -36,7 +36,13 @@ import {
 } from 'echarts/charts';
 import { LabelLayout } from 'echarts/features';
 import { CanvasRenderer, SVGRenderer } from 'echarts/renderers';
-import { DataSet } from '@shared/models/widget.models';
+import { DataEntry, DataSet } from '@shared/models/widget.models';
+import {
+  calculateAggIntervalWithWidgetTimeWindow,
+  Interval,
+  IntervalMath,
+  WidgetTimewindow
+} from '@shared/models/time/time.models';
 import { CallbackDataParams } from 'echarts/types/dist/shared';
 import { Renderer2 } from '@angular/core';
 import { DateFormatProcessor, DateFormatSettings, Font } from '@shared/models/widget-settings.models';
@@ -51,13 +57,43 @@ class EChartsModule {
       Axis.prototype.getBandWidth = function(){
         const model: AxisModel = this.model;
         const axisOption = model.option;
-        const tbTimewindowInterval = (axisOption as any).tbTimewindowInterval;
-        if (this.scale.type === 'time' && isNumber(tbTimewindowInterval)) {
-          const timeScale: TimeScale = this.scale;
-          const axisExtent: [number, number] = this._extent;
-          const dataExtent = timeScale.getExtent();
-          const size = Math.abs(axisExtent[1] - axisExtent[0]);
-          return tbTimewindowInterval * (size / (dataExtent[1] - dataExtent[0]));
+        if (this.scale.type === 'time') {
+          let interval: number;
+          const seriesDataIndices = axisOption.axisPointer?.seriesDataIndices;
+          if (seriesDataIndices?.length) {
+            const seriesDataIndex = seriesDataIndices[0];
+            const series = model.ecModel.getSeriesByIndex(seriesDataIndex.seriesIndex);
+            if (series) {
+              const values = series.getData().getValues(seriesDataIndex.dataIndex);
+              const start = values[2];
+              const end = values[3];
+              if (typeof start === 'number' && typeof end === 'number') {
+                interval = Math.max(end - start, 1);
+              }
+            }
+          }
+          if (!interval) {
+            const tbTimeWindow: WidgetTimewindow = (axisOption as any).tbTimeWindow;
+            if (isDefinedAndNotNull(tbTimeWindow)) {
+              if (axisOption.axisPointer?.value && typeof axisOption.axisPointer?.value === 'number') {
+                const intervalArray = calculateAggIntervalWithWidgetTimeWindow(tbTimeWindow, axisOption.axisPointer.value);
+                const start = intervalArray[0];
+                const end = intervalArray[1];
+                interval = Math.max(end - start, 1);
+              } else {
+                interval = IntervalMath.numberValue(tbTimeWindow.interval);
+              }
+            }
+          }
+          if (interval) {
+            const timeScale: TimeScale = this.scale;
+            const axisExtent: [number, number] = this._extent;
+            const dataExtent = timeScale.getExtent();
+            const size = Math.abs(axisExtent[1] - axisExtent[0]);
+            return interval * (size / (dataExtent[1] - dataExtent[0]));
+          } else {
+            return axisGetBandWidth.call(this);
+          }
         } else {
           return axisGetBandWidth.call(this);
         }
@@ -99,17 +135,31 @@ export type EChartsOption = echarts.ComposeOption<
 
 export type ECharts = echarts.ECharts;
 
-export type NamedDataSet = {name: string; value: [number, any]}[];
+export type EChartsDataItem = [number, any, number, number];
+
+export type NamedDataSet = {name: string; value: EChartsDataItem}[];
 
 export const toNamedData = (data: DataSet): NamedDataSet => {
   if (!data?.length) {
     return [];
   } else {
-    return data.map(d => ({
-      name: d[0] + '',
-      value: d
-    }));
+    return data.map(d => {
+      const ts = isDefinedAndNotNull(d[2]) ? d[2][0] : d[0];
+      return {
+        name: ts + '',
+        value: toEChartsDataItem(d)
+      };
+    });
   }
+};
+
+const toEChartsDataItem = (entry: DataEntry): EChartsDataItem => {
+  const item: EChartsDataItem = [entry[0], entry[1], entry[0], entry[0]];
+  if (isDefinedAndNotNull(entry[2])) {
+    item[2] = entry[2][0];
+    item[3] = entry[2][1];
+  }
+  return item;
 };
 
 export interface EChartsTooltipWidgetSettings {
@@ -141,9 +191,22 @@ export const echartsTooltipFormatter = (renderer: Renderer2,
   renderer.setStyle(tooltipElement, 'gap', '4px');
   if (settings.tooltipShowDate) {
     const dateElement: HTMLElement = renderer.createElement('div');
-    const ts = params[0].value[0];
-    tooltipDateFormat.update(ts);
-    renderer.appendChild(dateElement, renderer.createText(tooltipDateFormat.formatted));
+    let dateText: string;
+    const startTs = params[0].value[2];
+    const endTs = params[0].value[3];
+    if (startTs && endTs && (endTs - 1) > startTs) {
+      const startDateText = tooltipDateFormat.update(startTs);
+      const endDateText = tooltipDateFormat.update(endTs - 1);
+      if (startDateText === endDateText) {
+        dateText = startDateText;
+      } else {
+        dateText = startDateText + ' - ' + endDateText;
+      }
+    } else {
+      const ts = params[0].value[0];
+      dateText = tooltipDateFormat.update(ts);
+    }
+    renderer.appendChild(dateElement, renderer.createText(dateText));
     renderer.setStyle(dateElement, 'font-family', settings.tooltipDateFont.family);
     renderer.setStyle(dateElement, 'font-size', settings.tooltipDateFont.size + settings.tooltipDateFont.sizeUnit);
     renderer.setStyle(dateElement, 'font-style', settings.tooltipDateFont.style);

@@ -13,18 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.flow;
-
-import lombok.Data;
-import org.thingsboard.rule.engine.api.NodeConfiguration;
-
-@Data
-public class TbCheckpointNodeConfiguration implements NodeConfiguration<TbCheckpointNodeConfiguration> {
-
-    private String queueName;
-
-    @Override
-    public TbCheckpointNodeConfiguration defaultConfiguration() {
-        return new TbCheckpointNodeConfiguration();
+.mdc-button.tb-rpc-state-settings {
+  width: 100%;
+  .mdc-button__label {
+    width: 100%;
+    & > div {
+      width: 100%;
+      display: flex;
+      flex-direction: row;
+      gap: 8px;
+      justify-content: space-between;
+      align-items: center;
+      & > span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
     }
+  }
 }

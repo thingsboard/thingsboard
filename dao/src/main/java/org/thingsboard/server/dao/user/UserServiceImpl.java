@@ -152,7 +152,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
                 .entity(savedUser)
                 .oldEntity(oldUser)
                 .entityId(savedUser.getId())
-                .added(user.getId() == null).build());
+                .created(user.getId() == null).build());
         return savedUser;
     }
 

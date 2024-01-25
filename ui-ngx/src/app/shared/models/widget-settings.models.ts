@@ -15,7 +15,7 @@
 ///
 
 import { isDefinedAndNotNull, isNumber, isNumeric, isUndefinedOrNull, parseFunction } from '@core/utils';
-import { DataKey, Datasource, DatasourceData } from '@shared/models/widget.models';
+import { DataEntry, DataKey, Datasource, DatasourceData } from '@shared/models/widget.models';
 import { Injector } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
@@ -366,7 +366,7 @@ export abstract class DateFormatProcessor {
                         protected settings: DateFormatSettings) {
   }
 
-  abstract update(ts: string | number | Date): void;
+  abstract update(ts: string | number | Date): string;
 
 }
 
@@ -380,12 +380,13 @@ export class SimpleDateFormatProcessor extends DateFormatProcessor {
     this.datePipe = $injector.get(DatePipe);
   }
 
-  update(ts: string| number | Date): void {
+  update(ts: string| number | Date): string {
     if (ts) {
       this.formatted = this.datePipe.transform(ts, this.settings.format);
     } else {
       this.formatted = '&nbsp;';
     }
+    return this.formatted;
   }
 
 }
@@ -402,7 +403,7 @@ export class LastUpdateAgoDateFormatProcessor extends DateFormatProcessor {
     this.translate = $injector.get(TranslateService);
   }
 
-  update(ts: string| number | Date): void {
+  update(ts: string| number | Date): string {
     if (ts) {
       const agoText = this.dateAgoPipe.transform(ts, {applyAgo: true, short: true, textPart: true});
       if (this.settings.hideLastUpdatePrefix) {
@@ -414,6 +415,7 @@ export class LastUpdateAgoDateFormatProcessor extends DateFormatProcessor {
     } else {
       this.formatted = '&nbsp;';
     }
+    return this.formatted;
   }
 
 }
@@ -629,7 +631,7 @@ export const setLabel = (label: string, datasources?: Datasource[]): void => {
   }
 };
 
-export const getSingleTsValue = (data: Array<DatasourceData>): [number, any] => {
+export const getSingleTsValue = (data: Array<DatasourceData>): DataEntry => {
   if (data.length) {
     const dsData = data[0];
     if (dsData.data.length) {
@@ -639,7 +641,7 @@ export const getSingleTsValue = (data: Array<DatasourceData>): [number, any] => 
   return null;
 };
 
-export const getSingleTsValueByDataKey = (data: Array<DatasourceData>, dataKey: DataKey): [number, any] => {
+export const getSingleTsValueByDataKey = (data: Array<DatasourceData>, dataKey: DataKey): DataEntry => {
   if (data.length) {
     const dsData = data.find(d => d.dataKey === dataKey);
     if (dsData?.data?.length) {
@@ -649,7 +651,7 @@ export const getSingleTsValueByDataKey = (data: Array<DatasourceData>, dataKey: 
   return null;
 };
 
-export const getLatestSingleTsValue = (data: Array<DatasourceData>): [number, any] => {
+export const getLatestSingleTsValue = (data: Array<DatasourceData>): DataEntry => {
   if (data.length) {
     const dsData = data[0];
     if (dsData.data.length) {

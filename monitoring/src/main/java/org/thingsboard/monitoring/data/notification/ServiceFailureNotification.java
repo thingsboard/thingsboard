@@ -43,7 +43,7 @@ public class ServiceFailureNotification implements Notification {
         if (errorMsg == null) {
             errorMsg = error.getClass().getSimpleName();
         }
-        return String.format("[%s] Failure: %s (number of subsequent failures: %s)", serviceKey, errorMsg, failuresCount);
+        return String.format("%s - Failure: %s (number of subsequent failures: %s)", serviceKey, errorMsg, failuresCount);
     }
 
 }

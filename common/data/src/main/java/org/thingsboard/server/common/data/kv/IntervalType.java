@@ -13,27 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.transport.service;
+package org.thingsboard.server.common.data.kv;
 
-import lombok.Data;
-import org.thingsboard.server.gen.transport.TransportProtos;
+public enum IntervalType {
 
-/**
- * Created by ashvayka on 15.10.18.
- */
-@Data
-public class SessionActivityData {
-
-    private volatile TransportProtos.SessionInfoProto sessionInfo;
-    private volatile long lastActivityTime;
-    private volatile long lastReportedActivityTime;
-
-    SessionActivityData(TransportProtos.SessionInfoProto sessionInfo) {
-        this.sessionInfo = sessionInfo;
-    }
-
-    void updateLastActivityTime() {
-        this.lastActivityTime = System.currentTimeMillis();
-    }
+    MILLISECONDS, WEEK/*Sunday-Saturday*/, WEEK_ISO/*Monday-Sunday*/, MONTH, QUARTER
 
 }

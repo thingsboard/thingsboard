@@ -40,6 +40,7 @@ export interface ComponentDescriptor {
   type: ComponentType | RuleNodeType;
   scope?: ComponentScope;
   clusteringMode: ComponentClusteringMode;
+  hasQueueName?: boolean;
   name: string;
   clazz: string;
   configurationDescriptor?: any;

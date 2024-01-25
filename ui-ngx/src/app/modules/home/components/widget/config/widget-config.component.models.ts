@@ -27,6 +27,7 @@ import { DataKey, DatasourceType, KeyInfo, WidgetConfigMode } from '@shared/mode
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { isDefinedAndNotNull } from '@core/utils';
+import { IAliasController } from '@core/api/widget-api.models';
 
 export type WidgetConfigCallbacks = DatasourceCallbacks & WidgetActionCallbacks;
 
@@ -56,6 +57,10 @@ export abstract class BasicWidgetConfigComponent extends PageComponent implement
 
   get widgetConfig(): WidgetConfigComponentData {
     return this.widgetConfigValue;
+  }
+
+  get aliasController(): IAliasController {
+    return this.widgetConfigComponent.aliasController;
   }
 
   widgetConfigChangedEmitter = new EventEmitter<WidgetConfigComponentData>();
