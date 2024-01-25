@@ -27,7 +27,7 @@ import {
   widgetType
 } from '@shared/models/widget.models';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
-import { deepClone, isEqual } from '@core/utils';
+import { deepClone, isDefinedAndNotNull, isEqual } from '@core/utils';
 import { UtilsService } from '@core/services/utils.service';
 import { Observable, of, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -308,6 +308,9 @@ export class ItemBufferService {
       }
       if (origNode.error) {
         node.error = origNode.error;
+      }
+      if (isDefinedAndNotNull(origNode.singletonMode)) {
+        node.singletonMode = origNode.singletonMode;
       }
       ruleNodes.nodes.push(node);
       if (i === 0) {
