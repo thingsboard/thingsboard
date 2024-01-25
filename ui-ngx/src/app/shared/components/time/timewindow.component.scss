@@ -58,6 +58,12 @@
     .mdc-button__label {
       overflow: hidden;
       text-overflow: ellipsis;
+      height: 100%;
+
+      span {
+        display: block;
+        height: 100%;
+      }
     }
   }
 }
