@@ -245,7 +245,7 @@ class AlarmRuleState {
         if (specType.equals(AlarmConditionSpecType.REPEATING)) {
             RepeatingAlarmConditionSpec repeating = (RepeatingAlarmConditionSpec) spec;
 
-            repeatingTimes = resolveDynamicValue(data, repeating.getArgId());
+            repeatingTimes = resolveDynamicValue(data, repeating.getArgumentId());
         }
         return repeatingTimes;
     }
@@ -258,7 +258,7 @@ class AlarmRuleState {
             DurationAlarmConditionSpec duration = (DurationAlarmConditionSpec) spec;
             TimeUnit timeUnit = duration.getUnit();
 
-            durationTimeInMs = timeUnit.toMillis(resolveDynamicValue(data, duration.getArgId()));
+            durationTimeInMs = timeUnit.toMillis(resolveDynamicValue(data, duration.getArgumentId()));
         }
         return durationTimeInMs;
     }
@@ -341,9 +341,10 @@ class AlarmRuleState {
         EntityKeyValue right = getValue(filter.getRightArgId(), data);
 
         return switch (getArgument(filter.getLeftArgId()).getValueType()) {
-            case STRING -> filter.getOperation().process(getStrValue(left), getStrValue(right));
+            case STRING -> filter.getOperation().process(getStrValue(left), getStrValue(right), filter.isIgnoreCase());
             case BOOLEAN -> filter.getOperation().process(getBoolValue(left), getBoolValue(right));
             case NUMERIC -> filter.getOperation().process(getDblValue(left), getDblValue(right));
+            case DATE_TIME -> filter.getOperation().process(getLongValue(left), getLongValue(right));
         };
     }
 
@@ -375,6 +376,7 @@ class AlarmRuleState {
             case STRING -> value.setStrValue(valueStr);
             case NUMERIC -> value.setDblValue(Double.valueOf(valueStr));
             case BOOLEAN -> value.setBoolValue(Boolean.valueOf(valueStr));
+            case DATE_TIME -> value.setLngValue(Long.valueOf(valueStr));
         }
         return value;
     }
@@ -486,6 +488,6 @@ class AlarmRuleState {
     }
 
     private AlarmRuleArgument getArgument(String id) {
-        return alarmRule.getCondition().getArguments().get(id);
+        return alarmRule.getArguments().get(id);
     }
 }

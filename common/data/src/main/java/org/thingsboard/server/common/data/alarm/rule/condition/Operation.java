@@ -44,8 +44,15 @@ public enum Operation {
         this.numericPredicate = numericPredicate;
     }
 
-    public boolean process(String o1, String o2) {
-        return checkArguments(o1, o2) && stringPredicate.test(o1, o2);
+    public boolean process(String o1, String o2, boolean ignoreCase) {
+        if (checkArguments(o1, o2)) {
+            if (ignoreCase) {
+                o1 = o1.toLowerCase();
+                o2 = o2.toLowerCase();
+            }
+            stringPredicate.test(o1, o2);
+        }
+        return false;
     }
 
     public boolean process(Boolean o1, Boolean o2) {
@@ -54,6 +61,10 @@ public enum Operation {
 
     public boolean process(Double o1, Double o2) {
         return checkArguments(o1, o2) && numericPredicate.test(o1, o2);
+    }
+
+    public boolean process(Long o1, Long o2) {
+        return checkArguments(o1, o2) && numericPredicate.test(o1.doubleValue(), o2.doubleValue());
     }
 
     private boolean checkArguments(Object o1, Object o2) {

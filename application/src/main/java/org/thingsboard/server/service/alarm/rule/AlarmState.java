@@ -318,7 +318,7 @@ class AlarmState {
         if (StringUtils.isNotEmpty(alarmDetailsStr) || dashboardId != null) {
             ObjectNode newDetails = JacksonUtil.newObjectNode();
             if (StringUtils.isNotEmpty(alarmDetailsStr)) {
-                for (var argument : ruleState.getAlarmRule().getCondition().getArguments().values()) {
+                for (var argument : ruleState.getAlarmRule().getArguments().values()) {
                     if (argument.isDynamic()) {
                         continue;
                     }

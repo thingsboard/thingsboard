@@ -20,14 +20,17 @@ import lombok.Data;
 @Data
 public class BooleanFilterPredicate implements SimpleKeyFilterPredicate<Boolean> {
 
-    private static final long serialVersionUID = 8308177419956886468L;
-
     private BooleanOperation operation;
     private FilterPredicateValue<Boolean> value;
 
     @Override
     public FilterPredicateType getType() {
         return FilterPredicateType.BOOLEAN;
+    }
+
+    @Override
+    public String getOperationName() {
+        return operation.name();
     }
 
     public enum BooleanOperation {

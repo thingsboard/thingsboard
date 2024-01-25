@@ -32,6 +32,9 @@ public class SimpleAlarmConditionFilter implements AlarmConditionFilter, Seriali
 
     private Operation operation;
 
+    //Only for String
+    private boolean ignoreCase;
+
     @Override
     public AlarmConditionType getType() {
         return AlarmConditionType.SIMPLE;

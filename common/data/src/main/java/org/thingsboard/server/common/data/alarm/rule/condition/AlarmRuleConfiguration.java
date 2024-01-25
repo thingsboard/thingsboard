@@ -32,8 +32,6 @@ import java.util.TreeMap;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AlarmRuleConfiguration implements Serializable {
 
-    private static final long serialVersionUID = 4050882336403853271L;
-
     @Schema(description = "List of JSON objects representing source entity filters. These filters select a certain entity on which the specific Alarm Rule condition will be applied.")
     private List<AlarmRuleEntityFilter> sourceEntityFilters;
 

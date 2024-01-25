@@ -866,8 +866,6 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .defaultValue(Boolean.TRUE)
                 .build();
 
-        alarmCondition.setArguments(Map.of("boolKey", boolKey, "boolConst", boolConst));
-
         SimpleAlarmConditionFilter alarmConditionFilter = new SimpleAlarmConditionFilter();
         alarmConditionFilter.setLeftArgId("boolKey");
         alarmConditionFilter.setRightArgId("boolConst");
@@ -875,6 +873,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         alarmCondition.setCondition(alarmConditionFilter);
 
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setArguments(Map.of("boolKey", boolKey, "boolConst", boolConst));
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
 

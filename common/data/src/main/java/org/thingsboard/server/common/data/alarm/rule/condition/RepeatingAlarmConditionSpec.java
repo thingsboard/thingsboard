@@ -22,7 +22,7 @@ import lombok.Data;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class RepeatingAlarmConditionSpec implements AlarmConditionSpec {
 
-    private String argId;
+    private String argumentId;
 
     @Override
     public AlarmConditionSpecType getType() {

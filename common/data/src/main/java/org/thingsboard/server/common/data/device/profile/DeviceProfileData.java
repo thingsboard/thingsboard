@@ -19,8 +19,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.Data;
+import org.thingsboard.server.common.data.device.profile.alarm.rule.DeviceProfileAlarm;
 
 import java.io.Serializable;
+import java.util.List;
 
 @Schema
 @Data
@@ -36,5 +38,7 @@ public class DeviceProfileData implements Serializable {
     private DeviceProfileTransportConfiguration transportConfiguration;
     @Schema(description = "JSON object of provisioning strategy type per device profile")
     private DeviceProfileProvisionConfiguration provisionConfiguration;
+    @Schema(description = "JSON array of alarm rules configuration per device profile", hidden = true)
+    private List<DeviceProfileAlarm> alarms;
 
 }

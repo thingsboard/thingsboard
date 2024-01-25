@@ -31,6 +31,7 @@ import static org.thingsboard.server.common.data.alarm.rule.condition.Operation.
 public enum ArgumentValueType {
     STRING(EQUAL, NOT_EQUAL, STARTS_WITH, ENDS_WITH, CONTAINS, NOT_CONTAINS),
     NUMERIC(EQUAL, NOT_EQUAL, GREATER, LESS, GREATER_OR_EQUAL, LESS_OR_EQUAL),
+    DATE_TIME(EQUAL, NOT_EQUAL, GREATER, LESS, GREATER_OR_EQUAL, LESS_OR_EQUAL),
     BOOLEAN(EQUAL, NOT_EQUAL);
 
     private final List<Operation> availableOperations;

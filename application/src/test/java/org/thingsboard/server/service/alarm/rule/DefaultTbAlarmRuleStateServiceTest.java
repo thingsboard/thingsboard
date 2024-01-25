@@ -186,9 +186,9 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         highTempFilter.setRightArgId("highTemperatureConst");
         highTempFilter.setOperation(Operation.GREATER);
         AlarmCondition alarmCondition = new AlarmCondition();
-        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         alarmCondition.setCondition(highTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
@@ -205,7 +205,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         lowTempFilter.setOperation(Operation.LESS);
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
-        clearCondition.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
+        clearRule.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
         clearCondition.setCondition(lowTempFilter);
         clearRule.setCondition(clearCondition);
         alarmRuleConfiguration.setClearRule(clearRule);
@@ -300,9 +300,9 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         tempFilter.setRightArgId("temperatureConst");
         tempFilter.setOperation(Operation.GREATER);
         AlarmCondition tempAlarmCondition = new AlarmCondition();
-        tempAlarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "temperatureConst", temperatureConst));
         tempAlarmCondition.setCondition(tempFilter);
         AlarmRuleCondition tempAlarmRuleCondition = new AlarmRuleCondition();
+        tempAlarmRuleCondition.setArguments(Map.of("temperatureKey", temperatureKey, "temperatureConst", temperatureConst));
         tempAlarmRuleCondition.setCondition(tempAlarmCondition);
 
         AlarmRuleArgument highTemperatureConst = AlarmRuleArgument.builder()
@@ -316,9 +316,9 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         highTempFilter.setRightArgId("highTemperatureConst");
         highTempFilter.setOperation(Operation.GREATER);
         AlarmCondition highTempAlarmCondition = new AlarmCondition();
-        highTempAlarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         highTempAlarmCondition.setCondition(highTempFilter);
         AlarmRuleCondition highTempAlarmRuleCondition = new AlarmRuleCondition();
+        highTempAlarmRuleCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         highTempAlarmRuleCondition.setCondition(highTempAlarmCondition);
 
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
@@ -405,13 +405,13 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         temperatureFilter.setOperation(Operation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
-        alarmCondition.setArguments(Map.of(
+        alarmCondition.setCondition(new ComplexAlarmConditionFilter(Arrays.asList(alarmEnabledFilter, temperatureFilter), ComplexAlarmConditionFilter.ComplexOperation.AND));
+        AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setArguments(Map.of(
                 "alarmEnabledConst", alarmEnabledConst,
                 "alarmEnabledKey", alarmEnabledKey,
                 "temperatureKey", temperatureKey,
                 "temperatureConst", temperatureConst));
-        alarmCondition.setCondition(new ComplexAlarmConditionFilter(Arrays.asList(alarmEnabledFilter, temperatureFilter), ComplexAlarmConditionFilter.ComplexOperation.AND));
-        AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
 
@@ -502,13 +502,13 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         temperatureFilter.setOperation(Operation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
-        alarmCondition.setArguments(Map.of(
+        alarmCondition.setCondition(new ComplexAlarmConditionFilter(Arrays.asList(alarmEnabledFilter, temperatureFilter), ComplexAlarmConditionFilter.ComplexOperation.AND));
+        AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setArguments(Map.of(
                 "alarmEnabledConst", alarmEnabledConst,
                 "alarmEnabledKey", alarmEnabledKey,
                 "temperatureKey", temperatureKey,
                 "temperatureConst", temperatureConst));
-        alarmCondition.setCondition(new ComplexAlarmConditionFilter(Arrays.asList(alarmEnabledFilter, temperatureFilter), ComplexAlarmConditionFilter.ComplexOperation.AND));
-        AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
 
@@ -586,9 +586,9 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         highTempFilter.setOperation(Operation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
-        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         alarmCondition.setCondition(highTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
@@ -606,7 +606,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
-        clearCondition.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
+        clearRule.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
         clearCondition.setCondition(lowTempFilter);
         clearRule.setCondition(clearCondition);
         alarmRuleConfiguration.setClearRule(clearRule);
@@ -711,9 +711,9 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         highTempFilter.setOperation(Operation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
-        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         alarmCondition.setCondition(highTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
@@ -731,7 +731,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
-        clearCondition.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
+        clearRule.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
         clearCondition.setCondition(lowTempFilter);
         clearRule.setCondition(clearCondition);
         alarmRuleConfiguration.setClearRule(clearRule);
@@ -820,9 +820,9 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         highTempFilter.setOperation(Operation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
-        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         alarmCondition.setCondition(highTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
@@ -840,7 +840,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
-        clearCondition.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
+        clearRule.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
         clearCondition.setCondition(lowTempFilter);
         clearRule.setCondition(clearCondition);
         alarmRuleConfiguration.setClearRule(clearRule);
@@ -927,13 +927,12 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         highTempFilter.setOperation(Operation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
-        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         alarmCondition.setCondition(highTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
-
 
         AlarmRuleArgument lowTemperatureConst = AlarmRuleArgument.builder()
                 .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
@@ -947,7 +946,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
-        clearCondition.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
+        clearRule.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
         clearCondition.setCondition(lowTempFilter);
         clearRule.setCondition(clearCondition);
         alarmRuleConfiguration.setClearRule(clearRule);
@@ -1034,9 +1033,9 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         highTempFilter.setOperation(Operation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
-        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         alarmCondition.setCondition(highTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
@@ -1054,7 +1053,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
-        clearCondition.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
+        clearRule.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
         clearCondition.setCondition(lowTempFilter);
         clearRule.setCondition(clearCondition);
         alarmRuleConfiguration.setClearRule(clearRule);
@@ -1143,9 +1142,9 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         highTempFilter.setOperation(Operation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
-        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         alarmCondition.setCondition(highTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
@@ -1163,7 +1162,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
-        clearCondition.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
+        clearRule.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
         clearCondition.setCondition(lowTempFilter);
         clearRule.setCondition(clearCondition);
         alarmRuleConfiguration.setClearRule(clearRule);
@@ -1253,9 +1252,9 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         highTempFilter.setOperation(Operation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
-        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         alarmCondition.setCondition(highTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
@@ -1272,7 +1271,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
-        clearCondition.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
+        clearRule.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
         clearCondition.setCondition(lowTempFilter);
         clearRule.setCondition(clearCondition);
         alarmRuleConfiguration.setClearRule(clearRule);
@@ -1358,9 +1357,9 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         highTempFilter.setOperation(Operation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
-        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         alarmCondition.setCondition(highTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
@@ -1378,7 +1377,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
-        clearCondition.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
+        clearRule.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
         clearCondition.setCondition(lowTempFilter);
         clearRule.setCondition(clearCondition);
         alarmRuleConfiguration.setClearRule(clearRule);
@@ -1477,13 +1476,12 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         highTempFilter.setOperation(Operation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
-        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         alarmCondition.setCondition(highTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
-
 
         AlarmRuleArgument lowTemperatureConst = AlarmRuleArgument.builder()
                 .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
@@ -1497,7 +1495,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
-        clearCondition.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
+        clearRule.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
         clearCondition.setCondition(lowTempFilter);
         clearRule.setCondition(clearCondition);
         alarmRuleConfiguration.setClearRule(clearRule);
@@ -1589,9 +1587,9 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         highTempFilter.setOperation(Operation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
-        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "greaterAttributeKey", greaterAttributeKey));
         alarmCondition.setCondition(highTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setArguments(Map.of("temperatureKey", temperatureKey, "greaterAttributeKey", greaterAttributeKey));
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
@@ -1680,12 +1678,11 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         DurationAlarmConditionSpec durationSpec = new DurationAlarmConditionSpec();
         durationSpec.setUnit(TimeUnit.SECONDS);
-        durationSpec.setArgId("alarmDelayKey");
+        durationSpec.setArgumentId("alarmDelayKey");
         alarmCondition.setSpec(durationSpec);
 
-        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "greaterAttributeKey", greaterAttributeKey, "alarmDelayKey", alarmDelayKey));
-
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setArguments(Map.of("temperatureKey", temperatureKey, "greaterAttributeKey", greaterAttributeKey, "alarmDelayKey", alarmDelayKey));
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
@@ -1792,12 +1789,11 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         DurationAlarmConditionSpec durationSpec = new DurationAlarmConditionSpec();
         durationSpec.setUnit(TimeUnit.SECONDS);
-        durationSpec.setArgId("alarmDelayKey");
+        durationSpec.setArgumentId("alarmDelayKey");
         alarmCondition.setSpec(durationSpec);
 
-        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "greaterAttributeKey", greaterAttributeKey, "alarmDelayKey", alarmDelayKey));
-
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setArguments(Map.of("temperatureKey", temperatureKey, "greaterAttributeKey", greaterAttributeKey, "alarmDelayKey", alarmDelayKey));
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
@@ -1898,12 +1894,11 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
                 .build();
 
         RepeatingAlarmConditionSpec repeatingSpec = new RepeatingAlarmConditionSpec();
-        repeatingSpec.setArgId("alarmRepeatingKey");
+        repeatingSpec.setArgumentId("alarmRepeatingKey");
         alarmCondition.setSpec(repeatingSpec);
 
-        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "greaterAttributeKey", greaterAttributeKey, "alarmRepeatingKey", alarmRepeatingKey));
-
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setArguments(Map.of("temperatureKey", temperatureKey, "greaterAttributeKey", greaterAttributeKey, "alarmRepeatingKey", alarmRepeatingKey));
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
@@ -1995,12 +1990,11 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
                 .build();
 
         RepeatingAlarmConditionSpec repeatingSpec = new RepeatingAlarmConditionSpec();
-        repeatingSpec.setArgId("alarmRepeatingKey");
+        repeatingSpec.setArgumentId("alarmRepeatingKey");
         alarmCondition.setSpec(repeatingSpec);
 
-        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "greaterAttributeKey", greaterAttributeKey, "alarmRepeatingKey", alarmRepeatingKey));
-
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setArguments(Map.of("temperatureKey", temperatureKey, "greaterAttributeKey", greaterAttributeKey, "alarmRepeatingKey", alarmRepeatingKey));
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
@@ -2096,12 +2090,11 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         DurationAlarmConditionSpec durationSpec = new DurationAlarmConditionSpec();
         durationSpec.setUnit(TimeUnit.SECONDS);
-        durationSpec.setArgId("alarmDelayKey");
+        durationSpec.setArgumentId("alarmDelayKey");
         alarmCondition.setSpec(durationSpec);
 
-        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "greaterAttributeKey", greaterAttributeKey, "alarmDelayKey", alarmDelayKey));
-
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setArguments(Map.of("temperatureKey", temperatureKey, "greaterAttributeKey", greaterAttributeKey, "alarmDelayKey", alarmDelayKey));
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
@@ -2125,7 +2118,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
                 .multiply(BigDecimal.valueOf(1000))
                 .divide(BigDecimal.valueOf(2), 3, RoundingMode.HALF_EVEN)
                 .longValueExact();
-
 
         Thread.sleep(halfOfAlarmDelay);
 
@@ -2203,12 +2195,11 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
                 .build();
 
         RepeatingAlarmConditionSpec repeatingSpec = new RepeatingAlarmConditionSpec();
-        repeatingSpec.setArgId("alarmRepeatingKey");
+        repeatingSpec.setArgumentId("alarmRepeatingKey");
         alarmCondition.setSpec(repeatingSpec);
 
-        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "greaterAttributeKey", greaterAttributeKey, "alarmRepeatingKey", alarmRepeatingKey));
-
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setArguments(Map.of("temperatureKey", temperatureKey, "greaterAttributeKey", greaterAttributeKey, "alarmRepeatingKey", alarmRepeatingKey));
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
@@ -2300,9 +2291,8 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         schedule.setItems(Collections.emptyList());
         schedule.setArgumentId("scheduleKey");
 
-        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "temperatureConst", temperatureConst, "scheduleKey", scheduleKey));
-
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setArguments(Map.of("temperatureKey", temperatureKey, "temperatureConst", temperatureConst, "scheduleKey", scheduleKey));
         alarmRuleCondition.setCondition(alarmCondition);
         alarmRuleCondition.setSchedule(schedule);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
@@ -2400,9 +2390,8 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         schedule.setItems(items);
         schedule.setArgumentId("scheduleKey");
 
-        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "temperatureConst", temperatureConst, "scheduleKey", scheduleKey));
-
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setArguments(Map.of("temperatureKey", temperatureKey, "temperatureConst", temperatureConst, "scheduleKey", scheduleKey));
         alarmRuleCondition.setCondition(alarmCondition);
         alarmRuleCondition.setSchedule(schedule);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
@@ -2473,9 +2462,9 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         lowTempFilter.setOperation(Operation.LESS);
 
         AlarmCondition alarmCondition = new AlarmCondition();
-        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "lessAttributeKey", lessAttributeKey));
         alarmCondition.setCondition(lowTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setArguments(Map.of("temperatureKey", temperatureKey, "lessAttributeKey", lessAttributeKey));
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
@@ -2549,9 +2538,9 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         lowTempFilter.setOperation(Operation.LESS);
 
         AlarmCondition alarmCondition = new AlarmCondition();
-        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "lessAttributeKey", lessAttributeKey));
         alarmCondition.setCondition(lowTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setArguments(Map.of("temperatureKey", temperatureKey, "lessAttributeKey", lessAttributeKey));
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
@@ -2625,9 +2614,9 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         lowTempFilter.setOperation(Operation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
-        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "tenantAttributeKey", tenantAttributeKey));
         alarmCondition.setCondition(lowTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setArguments(Map.of("temperatureKey", temperatureKey, "tenantAttributeKey", tenantAttributeKey));
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
@@ -2705,9 +2694,9 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         lowTempFilter.setOperation(Operation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
-        alarmCondition.setArguments(Map.of("temperatureKey", temperatureKey, "tenantAttributeKey", tenantAttributeKey));
         alarmCondition.setCondition(lowTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setArguments(Map.of("temperatureKey", temperatureKey, "tenantAttributeKey", tenantAttributeKey));
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));

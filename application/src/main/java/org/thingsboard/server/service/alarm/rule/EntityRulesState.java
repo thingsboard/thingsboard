@@ -75,7 +75,7 @@ class EntityRulesState {
         Map<AlarmSeverity, Set<AlarmConditionFilterKey>> createAlarmKeys = alarmCreateKeys.computeIfAbsent(alarmRule.getId(), id -> new HashMap<>());
         configuration.getCreateRules().forEach(((severity, alarmRuleCondition) -> {
             var ruleKeys = createAlarmKeys.computeIfAbsent(severity, id -> new HashSet<>());
-            for (var argument : alarmRuleCondition.getCondition().getArguments().values()) {
+            for (var argument : alarmRuleCondition.getArguments().values()) {
                 if (!argument.isConstant()) {
                     entityKeys.add(argument.getKey());
                     ruleKeys.add(argument.getKey());
@@ -84,7 +84,7 @@ class EntityRulesState {
         }));
         if (configuration.getClearRule() != null) {
             var clearAlarmKeys = alarmClearKeys.computeIfAbsent(alarmRule.getId(), id -> new HashSet<>());
-            for (var argument : configuration.getClearRule().getCondition().getArguments().values()) {
+            for (var argument : configuration.getClearRule().getArguments().values()) {
                 if (!argument.isConstant())
                     entityKeys.add(argument.getKey());
                 clearAlarmKeys.add(argument.getKey());

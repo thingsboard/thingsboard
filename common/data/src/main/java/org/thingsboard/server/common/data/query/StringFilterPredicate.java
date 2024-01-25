@@ -15,14 +15,11 @@
  */
 package org.thingsboard.server.common.data.query;
 
-import lombok.Data;
-
 import jakarta.validation.Valid;
+import lombok.Data;
 
 @Data
 public class StringFilterPredicate implements SimpleKeyFilterPredicate<String> {
-
-    private static final long serialVersionUID = 7135920799116250009L;
 
     private StringOperation operation;
     @Valid
@@ -32,6 +29,11 @@ public class StringFilterPredicate implements SimpleKeyFilterPredicate<String> {
     @Override
     public FilterPredicateType getType() {
         return FilterPredicateType.STRING;
+    }
+
+    @Override
+    public String getOperationName() {
+        return operation.name();
     }
 
     public enum StringOperation {

@@ -165,13 +165,13 @@ public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
         temperatureFilter.setOperation(Operation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
-        alarmCondition.setArguments(Map.of(
+        alarmCondition.setCondition(new ComplexAlarmConditionFilter(Arrays.asList(alarmEnabledFilter, temperatureFilter), ComplexAlarmConditionFilter.ComplexOperation.AND));
+        AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setArguments(Map.of(
                 "alarmEnabledConst", alarmEnabledConst,
                 "alarmEnabledKey", alarmEnabledKey,
                 "temperatureKey", temperatureKey,
                 "temperatureConst", temperatureConst));
-        alarmCondition.setCondition(new ComplexAlarmConditionFilter(Arrays.asList(alarmEnabledFilter, temperatureFilter), ComplexAlarmConditionFilter.ComplexOperation.AND));
-        AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
 

@@ -13,17 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.alarm.rule.condition;
+package org.thingsboard.server.common.data.device.profile.alarm.rule;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilterKey;
+import org.thingsboard.server.common.data.query.EntityKeyValueType;
+import org.thingsboard.server.common.data.query.KeyFilterPredicate;
+
+import java.io.Serializable;
 
 @Data
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class SimpleAlarmConditionSpec implements AlarmConditionSpec {
+public class OldAlarmConditionFilter implements Serializable {
 
-    @Override
-    public AlarmConditionSpecType getType() {
-        return AlarmConditionSpecType.SIMPLE;
-    }
+    private AlarmConditionFilterKey key;
+    private EntityKeyValueType valueType;
+    private Object value;
+    private KeyFilterPredicate predicate;
+
 }

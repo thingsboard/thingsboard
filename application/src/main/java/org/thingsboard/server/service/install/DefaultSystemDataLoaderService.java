@@ -425,7 +425,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         temperatureTimeseriesFilter.setOperation(Operation.GREATER);
 
         temperatureCondition.setCondition(new ComplexAlarmConditionFilter(Arrays.asList(temperatureAlarmFlagAttributeFilter, temperatureTimeseriesFilter), ComplexAlarmConditionFilter.ComplexOperation.AND));
-        temperatureCondition.setArguments(Map.of(
+        temperatureRule.setArguments(Map.of(
                 "temperatureAlarmFlagKey", temperatureAlarmFlagKey,
                 "temperatureAlarmFlagConst", temperatureAlarmFlagConst,
                 "temperatureKey", temperatureKey,
@@ -437,7 +437,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
         AlarmRuleCondition clearTemperatureRule = new AlarmRuleCondition();
         AlarmCondition clearTemperatureCondition = new AlarmCondition();
-        clearTemperatureCondition.setArguments(Map.of("temperatureKey", temperatureKey, "temperatureAlarmThresholdKey", temperatureAlarmThresholdKey));
+        clearTemperatureRule.setArguments(Map.of("temperatureKey", temperatureKey, "temperatureAlarmThresholdKey", temperatureAlarmThresholdKey));
         clearTemperatureCondition.setSpec(new SimpleAlarmConditionSpec());
 
         SimpleAlarmConditionFilter clearTemperatureTimeseriesFilter = new SimpleAlarmConditionFilter();
@@ -501,7 +501,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         humidityTimeseriesFilter.setOperation(Operation.LESS);
 
         humidityCondition.setCondition(new ComplexAlarmConditionFilter(Arrays.asList(humidityAlarmFlagAttributeFilter, humidityTimeseriesFilter), ComplexAlarmConditionFilter.ComplexOperation.AND));
-        humidityCondition.setArguments(Map.of(
+        humidityRule.setArguments(Map.of(
                 "humidityAlarmFlagKey", humidityAlarmFlagKey,
                 "humidityAlarmFlagConst", humidityAlarmFlagConst,
                 "humidityKey", humidityKey,
@@ -520,7 +520,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         clearHumidityTimeseriesFilter.setRightArgId("humidityAlarmThresholdKey");
         clearHumidityTimeseriesFilter.setOperation(Operation.GREATER_OR_EQUAL);
 
-        clearHumidityCondition.setArguments(Map.of("humidityKey", humidityKey, "humidityAlarmThresholdKey", humidityAlarmThresholdKey));
+        clearHumidityRule.setArguments(Map.of("humidityKey", humidityKey, "humidityAlarmThresholdKey", humidityAlarmThresholdKey));
 
         clearHumidityCondition.setCondition(clearHumidityTimeseriesFilter);
         clearHumidityRule.setCondition(clearHumidityCondition);

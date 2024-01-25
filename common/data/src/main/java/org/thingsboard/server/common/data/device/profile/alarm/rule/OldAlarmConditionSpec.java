@@ -13,32 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.query;
+package org.thingsboard.server.common.data.device.profile.alarm.rule;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionSpecType;
+import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionSpec;
 
 import java.io.Serializable;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,
         property = "type")
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = StringFilterPredicate.class, name = "STRING"),
-        @JsonSubTypes.Type(value = NumericFilterPredicate.class, name = "NUMERIC"),
-        @JsonSubTypes.Type(value = BooleanFilterPredicate.class, name = "BOOLEAN"),
-        @JsonSubTypes.Type(value = ComplexFilterPredicate.class, name = "COMPLEX")})
-public interface KeyFilterPredicate extends Serializable {
+        @JsonSubTypes.Type(value = SimpleAlarmConditionSpec.class, name = "SIMPLE"),
+        @JsonSubTypes.Type(value = OldDurationAlarmConditionSpec.class, name = "DURATION"),
+        @JsonSubTypes.Type(value = OldRepeatingAlarmConditionSpec.class, name = "REPEATING")})
+public interface OldAlarmConditionSpec extends Serializable {
 
     @JsonIgnore
-    FilterPredicateType getType();
-
-    @JsonIgnore
-    String getOperationName();
-
-    @JsonIgnore
-    FilterPredicateValue<?> getValue();
+    AlarmConditionSpecType getType();
 
 }

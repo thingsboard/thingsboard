@@ -13,17 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.alarm.rule.condition;
+package org.thingsboard.server.common.data.device.profile.alarm.rule;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.Data;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmScheduleType;
+import org.thingsboard.server.common.data.query.DynamicValue;
 
-@Data
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class SimpleAlarmConditionSpec implements AlarmConditionSpec {
+public class OldAnyTimeSchedule implements OldAlarmSchedule {
 
     @Override
-    public AlarmConditionSpecType getType() {
-        return AlarmConditionSpecType.SIMPLE;
+    public AlarmScheduleType getType() {
+        return AlarmScheduleType.ANY_TIME;
     }
+
+    @Override
+    public DynamicValue<String> getDynamicValue() {
+        return null;
+    }
+
 }

@@ -21,15 +21,11 @@ import jakarta.validation.Valid;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.util.Map;
 
 @Schema
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class AlarmCondition implements Serializable {
-
-    private Map<String, AlarmRuleArgument> arguments;
-
     @Valid
     @Schema(description = "JSON array of alarm condition filters")
     private AlarmConditionFilter condition;

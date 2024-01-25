@@ -13,17 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.alarm.rule.condition;
+package org.thingsboard.server.common.data.device.profile.alarm.rule;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionSpecType;
+import org.thingsboard.server.common.data.query.FilterPredicateValue;
+
+import java.util.concurrent.TimeUnit;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class SimpleAlarmConditionSpec implements AlarmConditionSpec {
+public class OldDurationAlarmConditionSpec implements OldAlarmConditionSpec {
+
+    private TimeUnit unit;
+    private FilterPredicateValue<Long> predicate;
 
     @Override
     public AlarmConditionSpecType getType() {
-        return AlarmConditionSpecType.SIMPLE;
+        return AlarmConditionSpecType.DURATION;
     }
 }

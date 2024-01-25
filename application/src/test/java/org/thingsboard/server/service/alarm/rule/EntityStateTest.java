@@ -179,7 +179,7 @@ public class EntityStateTest {
         AlarmRuleConfiguration alarmConfig = new AlarmRuleConfiguration();
         AlarmRuleCondition alarmRule = new AlarmRuleCondition();
         AlarmCondition alarmCondition = new AlarmCondition();
-        alarmCondition.setArguments(Map.of("enabledKey", enabledKey, "enabledConst", enabledConst));
+        alarmRule.setArguments(Map.of("enabledKey", enabledKey, "enabledConst", enabledConst));
         alarmCondition.setSpec(new SimpleAlarmConditionSpec());
         alarmCondition.setCondition(condition);
         alarmRule.setCondition(alarmCondition);

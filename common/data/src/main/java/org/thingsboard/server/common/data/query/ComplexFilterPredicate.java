@@ -22,14 +22,22 @@ import java.util.List;
 @Data
 public class ComplexFilterPredicate implements KeyFilterPredicate {
 
-    private static final long serialVersionUID = -8881032418645867535L;
-
     private ComplexOperation operation;
     private List<KeyFilterPredicate> predicates;
 
     @Override
     public FilterPredicateType getType() {
         return FilterPredicateType.COMPLEX;
+    }
+
+    @Override
+    public String getOperationName() {
+        return operation.name();
+    }
+
+    @Override
+    public FilterPredicateValue<?> getValue() {
+        return null;
     }
 
     public enum ComplexOperation {

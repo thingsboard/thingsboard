@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.query.DynamicValueSourceType;
 import org.thingsboard.server.common.data.validation.NoXss;
@@ -29,6 +30,7 @@ import java.io.Serializable;
 @Schema
 @Data
 @Builder
+@RequiredArgsConstructor
 public class AlarmRuleArgument implements Serializable {
     @Schema(description = "JSON object for specifying alarm condition by specific key")
     private final AlarmConditionFilterKey key;

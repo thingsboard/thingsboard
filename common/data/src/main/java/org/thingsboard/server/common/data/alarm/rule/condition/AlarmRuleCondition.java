@@ -22,12 +22,15 @@ import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.io.Serializable;
+import java.util.Map;
 
 @Schema
 @Data
 public class AlarmRuleCondition implements Serializable {
 
-    private static final long serialVersionUID = -2205295678085379808L;
+    @Schema(description = "JSON object representing the alarm rule arguments")
+    private Map<String, AlarmRuleArgument> arguments;
+
     @Valid
     @Schema(description = "JSON object representing the alarm rule condition")
     private AlarmCondition condition;
