@@ -20,6 +20,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -33,6 +34,7 @@ import org.thingsboard.server.common.msg.tools.TbRateLimits;
 
 import java.util.concurrent.TimeUnit;
 
+@Lazy
 @Service
 @Slf4j
 public class DefaultRateLimitService implements RateLimitService {
@@ -41,7 +43,7 @@ public class DefaultRateLimitService implements RateLimitService {
     private final NotificationRuleProcessor notificationRuleProcessor;
 
     public DefaultRateLimitService(TenantProfileProvider tenantProfileProvider,
-                                   NotificationRuleProcessor notificationRuleProcessor,
+                                   @Lazy NotificationRuleProcessor notificationRuleProcessor,
                                    @Value("${cache.rateLimits.timeToLiveInMinutes:120}") int rateLimitsTtl,
                                    @Value("${cache.rateLimits.maxSize:200000}") int rateLimitsCacheMaxSize) {
         this.tenantProfileProvider = tenantProfileProvider;
