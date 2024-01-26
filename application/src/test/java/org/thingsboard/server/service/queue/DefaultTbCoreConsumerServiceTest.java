@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.service.queue;
 
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,6 +32,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.service.state.DeviceStateService;
 
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -52,12 +56,31 @@ public class DefaultTbCoreConsumerServiceTest {
     private final DeviceId deviceId = new DeviceId(UUID.randomUUID());
     private final long time = System.currentTimeMillis();
 
+    private ListeningExecutorService executor;
+
     @Mock
     private DefaultTbCoreConsumerService defaultTbCoreConsumerServiceMock;
 
     @BeforeEach
     public void setup() {
+        executor = MoreExecutors.newDirectExecutorService();
         ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "stateService", stateServiceMock);
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "deviceActivityEventsExecutor", executor);
+    }
+
+    @AfterEach
+    public void cleanup() {
+        if (executor != null) {
+            executor.shutdown();
+            try {
+                if (!executor.awaitTermination(10L, TimeUnit.SECONDS)) {
+                    executor.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                executor.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     @Test
