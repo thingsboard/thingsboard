@@ -1017,6 +1017,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 log.debug("[{}][{}][{}] IOException: {}", sessionId,
                         Optional.ofNullable(this.deviceSessionCtx.getDeviceInfo()).map(TransportDeviceInfo::getDeviceId).orElse(null),
                         Optional.ofNullable(this.deviceSessionCtx.getDeviceInfo()).map(TransportDeviceInfo::getDeviceName).orElse(""),
+                        cause.getMessage(),
                         cause);
             } else if (log.isInfoEnabled()) {
                 log.info("[{}][{}][{}] IOException: {}", sessionId,
