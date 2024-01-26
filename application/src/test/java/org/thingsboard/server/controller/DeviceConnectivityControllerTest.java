@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
@@ -42,6 +43,7 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.dao.device.GatewaySettingsInfo;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.nio.file.Files;
@@ -291,6 +293,143 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
 
         String commands =
                 doGet("/api/device-connectivity/gateway-launch/" + savedDevice.getId().getId() + "/docker-compose/download", String.class);
+
+        assertThat(commands).isEqualTo(String.format("version: '3.4'\n" +
+                "services:\n" +
+                "  # ThingsBoard IoT Gateway Service Configuration\n" +
+                "  tb-gateway:\n" +
+                "    image: thingsboard/tb-gateway\n" +
+                "    container_name: tb-gateway\n" +
+                "    restart: always\n" +
+                "\n" +
+                "    # Ports bindings - required by some connectors\n" +
+                "    ports:\n" +
+                "        - \"5000:5000\" # Comment if you don't use REST connector and change if you use another port\n" +
+                "        # Uncomment and modify the following ports based on connector usage:\n" +
+                "#        - \"1052:1052\" # BACnet connector\n" +
+                "#        - \"5026:5026\" # Modbus TCP connector (Modbus Slave)\n" +
+                "#        - \"50000:50000/tcp\" # Socket connector with type TCP\n" +
+                "#        - \"50000:50000/udp\" # Socket connector with type UDP\n" +
+                "\n" +
+                "    # Necessary mapping for Linux\n" +
+                "    extra_hosts:\n" +
+                "      - \"host.docker.internal:host-gateway\"\n" +
+                "\n" +
+                "    # Environment variables\n" +
+                "    environment:\n" +
+                "      - host=host.docker.internal\n" +
+                "      - port=1883\n" +
+                "      - accessToken=" + credentials.getCredentialsId() + "\n" +
+                "\n" +
+                "    # Volumes bind\n" +
+                "    volumes:\n" +
+                "      - tb-gw-config:/thingsboard_gateway/config\n" +
+                "      - tb-gw-logs:/thingsboard_gateway/logs\n" +
+                "      - tb-gw-extensions:/thingsboard_gateway/extensions\n" +
+                "\n" +
+                "# Volumes declaration for configurations, extensions and configuration\n" +
+                "volumes:\n" +
+                "  tb-gw-config:\n" +
+                "    name: tb-gw-config\n" +
+                "  tb-gw-logs:\n" +
+                "    name: tb-gw-logs\n" +
+                "  tb-gw-extensions:\n" +
+                "    name: tb-gw-extensions\n"));
+    }
+
+    @Test
+    public void testFetchGatewayDockerComposeFileWithVersionIn() throws Exception {
+        String deviceName = "My device";
+        Device device = new Device();
+        device.setName(deviceName);
+        device.setType("default");
+        ObjectNode additionalInfo = JacksonUtil.newObjectNode();
+        additionalInfo.put("gateway", true);
+        device.setAdditionalInfo(additionalInfo);
+        Device savedDevice = doPost("/api/device", device, Device.class);
+        DeviceCredentials credentials =
+                doGet("/api/device/" + savedDevice.getId().getId() + "/credentials", DeviceCredentials.class);
+
+        loginSysAdmin();
+
+        AdminSettings adminSettings = new AdminSettings();
+
+        GatewaySettingsInfo gatewaySettingsInfo = new GatewaySettingsInfo();
+        gatewaySettingsInfo.setVersion("3.4.4");
+
+        adminSettings.setKey("gatewaySettings");
+        adminSettings.setJsonValue(JacksonUtil.valueToTree(gatewaySettingsInfo));
+
+        adminSettings = doPostWithTypedResponse("/api/admin/settings", JacksonUtil.valueToTree(adminSettings), new TypeReference<AdminSettings>() {
+        });
+
+        Assert.assertNotNull(adminSettings);
+        Assert.assertNotNull(adminSettings.getJsonValue());
+        Assert.assertEquals("3.4.4", adminSettings.getJsonValue().get("version").asText());
+
+        loginUser(tenantAdmin.getEmail(), "testPassword1");
+
+        String commands =
+                doGet("/api/device-connectivity/gateway-launch/" + savedDevice.getId().getId() + "/docker-compose/download", String.class);
+
+        assertThat(commands).isEqualTo(String.format("version: '3.4'\n" +
+                "services:\n" +
+                "  # ThingsBoard IoT Gateway Service Configuration\n" +
+                "  tb-gateway:\n" +
+                "    image: thingsboard/tb-gateway:" + gatewaySettingsInfo.getVersion() + "\n" +
+                "    container_name: tb-gateway\n" +
+                "    restart: always\n" +
+                "\n" +
+                "    # Ports bindings - required by some connectors\n" +
+                "    ports:\n" +
+                "        - \"5000:5000\" # Comment if you don't use REST connector and change if you use another port\n" +
+                "        # Uncomment and modify the following ports based on connector usage:\n" +
+                "#        - \"1052:1052\" # BACnet connector\n" +
+                "#        - \"5026:5026\" # Modbus TCP connector (Modbus Slave)\n" +
+                "#        - \"50000:50000/tcp\" # Socket connector with type TCP\n" +
+                "#        - \"50000:50000/udp\" # Socket connector with type UDP\n" +
+                "\n" +
+                "    # Necessary mapping for Linux\n" +
+                "    extra_hosts:\n" +
+                "      - \"host.docker.internal:host-gateway\"\n" +
+                "\n" +
+                "    # Environment variables\n" +
+                "    environment:\n" +
+                "      - host=host.docker.internal\n" +
+                "      - port=1883\n" +
+                "      - accessToken=" + credentials.getCredentialsId() + "\n" +
+                "\n" +
+                "    # Volumes bind\n" +
+                "    volumes:\n" +
+                "      - tb-gw-config:/thingsboard_gateway/config\n" +
+                "      - tb-gw-logs:/thingsboard_gateway/logs\n" +
+                "      - tb-gw-extensions:/thingsboard_gateway/extensions\n" +
+                "\n" +
+                "# Volumes declaration for configurations, extensions and configuration\n" +
+                "volumes:\n" +
+                "  tb-gw-config:\n" +
+                "    name: tb-gw-config\n" +
+                "  tb-gw-logs:\n" +
+                "    name: tb-gw-logs\n" +
+                "  tb-gw-extensions:\n" +
+                "    name: tb-gw-extensions\n"));
+
+        loginSysAdmin();
+        gatewaySettingsInfo.setVersion("");
+
+        adminSettings.setJsonValue(JacksonUtil.valueToTree(gatewaySettingsInfo));
+
+        adminSettings = doPostWithTypedResponse("/api/admin/settings", JacksonUtil.valueToTree(adminSettings),
+                new TypeReference<>() {
+                });
+
+        Assert.assertNotNull(adminSettings);
+        Assert.assertNotNull(adminSettings.getJsonValue());
+        Assert.assertTrue(StringUtils.isEmpty(adminSettings.getJsonValue().get("version").asText()));
+
+        loginUser(tenantAdmin.getEmail(), "testPassword1");
+
+        commands = doGet("/api/device-connectivity/gateway-launch/" + savedDevice.getId().getId() + "/docker-compose/download", String.class);
 
         assertThat(commands).isEqualTo(String.format("version: '3.4'\n" +
                 "services:\n" +
