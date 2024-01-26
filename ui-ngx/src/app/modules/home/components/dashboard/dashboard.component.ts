@@ -211,7 +211,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       disableAutoPositionOnConflict: false,
       pushItems: false,
       swap: false,
-      maxRows: 100,
+      maxRows: Infinity,
       minCols: this.columns ? this.columns : 24,
       maxCols: 3000,
       maxItemCols: 1000,
