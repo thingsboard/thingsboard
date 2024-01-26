@@ -32,6 +32,7 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import {
   backgroundStyle,
   ColorProcessor,
+  ColorRange,
   ComponentStyle,
   DateFormatProcessor,
   getDataKey,
@@ -129,6 +130,7 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
   private rssi = -100;
   private noSignal = false;
   private noData = false;
+  private lowestSignalRangeValue: number;
 
   constructor(public widgetComponent: WidgetComponent,
               private imagePipe: ImagePipe,
@@ -141,7 +143,7 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
   ngOnInit(): void {
     this.ctx.$scope.signalStrengthWidget = this;
     this.settings = {...signalStrengthDefaultSettings, ...this.ctx.settings};
-
+    this.lowestSignalRangeValue = this.getLowestSignalRange();
     this.layout = this.settings.layout;
 
     this.showDate = this.settings.showDate;
@@ -246,7 +248,7 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
       }
     }
 
-    this.noSignal = this.rssi <= -100;
+    this.noSignal = this.rssi <= this.lowestSignalRangeValue;
 
     this.activeBarsColor.update(this.rssi);
 
@@ -389,4 +391,15 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
     }
   }
 
+  getLowestSignalRange(): number {
+    return this.settings.activeBarsColor.rangeList.reduce((acc: number, colorRange: ColorRange)=>{
+      if (acc < colorRange.from && acc < colorRange.to) {
+        return acc;
+      }
+      if (colorRange.from < colorRange.to) {
+        return colorRange.from;
+      }
+      return colorRange.to;
+    }, -100);
+  }
 }
