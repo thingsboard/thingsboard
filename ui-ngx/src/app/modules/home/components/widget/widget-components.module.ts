@@ -79,6 +79,7 @@ import {
 import {
   GatewayServiceRPCConnectorTemplateDialogComponent
 } from '@home/components/widget/lib/gateway/gateway-service-rpc-connector-template-dialog';
+import { SingleSwitchWidgetComponent } from '@home/components/widget/lib/rpc/single-switch-widget.component';
 
 @NgModule({
   declarations:
@@ -124,7 +125,8 @@ import {
       LiquidLevelWidgetComponent,
       DoughnutWidgetComponent,
       RangeChartWidgetComponent,
-      BarChartWithLabelsWidgetComponent
+      BarChartWithLabelsWidgetComponent,
+      SingleSwitchWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -174,7 +176,8 @@ import {
         LiquidLevelWidgetComponent,
         DoughnutWidgetComponent,
         RangeChartWidgetComponent,
-        BarChartWithLabelsWidgetComponent
+        BarChartWithLabelsWidgetComponent,
+        SingleSwitchWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }

@@ -183,6 +183,7 @@ export interface WidgetTypeParameters {
   hideDataSettings?: boolean;
   defaultDataKeysFunction?: (configComponent: any, configData: any) => DataKey[];
   defaultLatestDataKeysFunction?: (configComponent: any, configData: any) => DataKey[];
+  displayRpcMessageToast?: boolean;
 }
 
 export interface WidgetControllerDescriptor {
@@ -408,6 +409,22 @@ export interface Datasource {
   latestDataKeyStartIndex?: number;
   [key: string]: any;
 }
+
+export enum TargetDeviceType {
+  device = 'device',
+  entity = 'entity'
+}
+
+export interface TargetDevice {
+  type?: TargetDeviceType;
+  deviceId?: string;
+  entityAliasId?: string;
+}
+
+export const targetDeviceValid = (targetDevice?: TargetDevice): boolean =>
+  !!targetDevice && !!targetDevice.type &&
+    ((targetDevice.type === TargetDeviceType.device && !!targetDevice.deviceId) ||
+      (targetDevice.type === TargetDeviceType.entity && !!targetDevice.entityAliasId));
 
 export const datasourcesHasAggregation = (datasources?: Array<Datasource>): boolean => {
   if (datasources) {
@@ -697,7 +714,7 @@ export interface WidgetConfig {
   alarmSource?: Datasource;
   alarmFilterConfig?: AlarmFilterConfig;
   datasources?: Array<Datasource>;
-  targetDeviceAliasIds?: Array<string>;
+  targetDevice?: TargetDevice;
   [key: string]: any;
 }
 

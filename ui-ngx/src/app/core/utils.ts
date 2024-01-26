@@ -24,6 +24,7 @@ import { baseDetailsPageByEntityType, EntityType } from '@shared/models/entity-t
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { serverErrorCodesTranslations } from '@shared/models/constants';
+import { SubscriptionEntityInfo } from '@core/api/widget-api.models';
 
 const varsRegex = /\${([^}]*)}/g;
 
@@ -426,6 +427,33 @@ export const createLabelFromDatasource = (datasource: Datasource, pattern: strin
   return label;
 };
 
+export const createLabelFromSubscriptionEntityInfo = (entityInfo: SubscriptionEntityInfo, pattern: string): string => {
+  let label = pattern;
+  if (!entityInfo) {
+    return label;
+  }
+  let match = varsRegex.exec(pattern);
+  while (match !== null) {
+    const variable = match[0];
+    const variableName = match[1];
+    if (variableName === 'dsName') {
+      label = label.replace(variable, entityInfo.entityName);
+    } else if (variableName === 'entityName') {
+      label = label.replace(variable, entityInfo.entityName);
+    } else if (variableName === 'deviceName') {
+      label = label.replace(variable, entityInfo.entityName);
+    } else if (variableName === 'entityLabel') {
+      label = label.replace(variable, entityInfo.entityLabel || entityInfo.entityName);
+    } else if (variableName === 'aliasName') {
+      label = label.replace(variable, entityInfo.entityName);
+    } else if (variableName === 'entityDescription') {
+      label = label.replace(variable, entityInfo.entityDescription);
+    }
+    match = varsRegex.exec(pattern);
+  }
+  return label;
+};
+
 export const hasDatasourceLabelsVariables = (pattern: string): boolean => varsRegex.test(pattern) !== null;
 
 export function formattedDataFormDatasourceData(input: DatasourceData[], dataIndex?: number, ts?: number): FormattedData[] {
@@ -711,7 +739,7 @@ export function randomAlphanumeric(length: number): string {
 }
 
 export function getEntityDetailsPageURL(id: string, entityType: EntityType): string {
-  return `${baseDetailsPageByEntityType.get(entityType)}/${id}`;
+  return baseDetailsPageByEntityType.has(entityType) ? `${baseDetailsPageByEntityType.get(entityType)}/${id}` : '';
 }
 
 export function parseHttpErrorMessage(errorResponse: HttpErrorResponse,

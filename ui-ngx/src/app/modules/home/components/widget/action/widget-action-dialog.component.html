@@ -97,6 +97,7 @@
                    #dashboardStateInput
                    formControlName="targetDashboardStateId"
                    [required]="widgetActionFormGroup.get('type').value === widgetActionType.openDashboardState"
+                   (focusin)="onFocus()"
                    [matAutocomplete]="targetDashboardStateAutocomplete">
             <button *ngIf="actionTypeFormGroup.get('targetDashboardStateId').value"
                     type="button"

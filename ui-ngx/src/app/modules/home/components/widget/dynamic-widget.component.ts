@@ -57,7 +57,7 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
   executingRpcRequest: boolean;
   rpcEnabled: boolean;
   rpcErrorText: string;
-  rpcRejection: HttpErrorResponse;
+  rpcRejection: HttpErrorResponse | Error;
 
   [key: string]: any;
 

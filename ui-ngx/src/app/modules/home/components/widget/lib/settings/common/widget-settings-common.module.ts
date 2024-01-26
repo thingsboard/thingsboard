@@ -51,6 +51,21 @@ import { ColorRangePanelComponent } from '@home/components/widget/lib/settings/c
 import {
   ColorRangeSettingsComponent, ColorRangeSettingsComponentService
 } from '@home/components/widget/lib/settings/common/color-range-settings.component';
+import {
+  RpcInitialStateSettingsComponent
+} from '@home/components/widget/lib/settings/common/rpc/rpc-initial-state-settings.component';
+import {
+  RpcInitialStateSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/rpc/rpc-initial-state-settings-panel.component';
+import {
+  DeviceKeyAutocompleteComponent
+} from '@home/components/widget/lib/settings/control/device-key-autocomplete.component';
+import {
+  RpcUpdateStateSettingsComponent
+} from '@home/components/widget/lib/settings/common/rpc/rpc-update-state-settings.component';
+import {
+  RpcUpdateStateSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/rpc/rpc-update-state-settings-panel.component';
 
 @NgModule({
   declarations: [
@@ -71,7 +86,12 @@ import {
     CountWidgetSettingsComponent,
     ColorRangeListComponent,
     ColorRangePanelComponent,
-    ColorRangeSettingsComponent
+    ColorRangeSettingsComponent,
+    RpcInitialStateSettingsComponent,
+    RpcInitialStateSettingsPanelComponent,
+    DeviceKeyAutocompleteComponent,
+    RpcUpdateStateSettingsComponent,
+    RpcUpdateStateSettingsPanelComponent
   ],
   imports: [
     CommonModule,
@@ -96,7 +116,12 @@ import {
     CountWidgetSettingsComponent,
     ColorRangeListComponent,
     ColorRangePanelComponent,
-    ColorRangeSettingsComponent
+    ColorRangeSettingsComponent,
+    RpcInitialStateSettingsComponent,
+    RpcInitialStateSettingsPanelComponent,
+    DeviceKeyAutocompleteComponent,
+    RpcUpdateStateSettingsComponent,
+    RpcUpdateStateSettingsPanelComponent
   ],
   providers: [
     ColorSettingsComponentService,

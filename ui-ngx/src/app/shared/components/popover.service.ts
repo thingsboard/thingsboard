@@ -26,7 +26,12 @@ import {
   Type,
   ViewContainerRef
 } from '@angular/core';
-import { PopoverPlacement, PopoverWithTrigger } from '@shared/components/popover.models';
+import {
+  PopoverPlacement,
+  PopoverPreferredPlacement,
+  PopoverWithTrigger,
+  StrictPopoverPlacement
+} from '@shared/components/popover.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { ComponentType } from '@angular/cdk/portal';
 import { HELP_MARKDOWN_COMPONENT_TOKEN } from '@shared/components/tokens';
@@ -63,8 +68,9 @@ export class TbPopoverService {
   }
 
   displayPopover<T>(trigger: Element, renderer: Renderer2, hostView: ViewContainerRef,
-                    componentType: Type<T>, preferredPlacement: PopoverPlacement = 'top', hideOnClickOutside = true,
-                    injector?: Injector, context?: any, overlayStyle: any = {}, popoverStyle: any = {}, style?: any,
+                    componentType: Type<T>, preferredPlacement: PopoverPreferredPlacement = 'top',
+                    hideOnClickOutside = true, injector?: Injector, context?: any, overlayStyle: any = {},
+                    popoverStyle: any = {}, style?: any,
                     showCloseButton = true, visibleFn: (visible: boolean) => void = () => {}): TbPopoverComponent<T> {
     const componentRef = this.createPopoverRef(hostView);
     return this.displayPopoverWithComponentRef(componentRef, trigger, renderer, componentType, preferredPlacement, hideOnClickOutside,
@@ -72,7 +78,7 @@ export class TbPopoverService {
   }
 
   displayPopoverWithComponentRef<T>(componentRef: ComponentRef<TbPopoverComponent>, trigger: Element, renderer: Renderer2,
-                                    componentType: Type<T>, preferredPlacement: PopoverPlacement = 'top',
+                                    componentType: Type<T>, preferredPlacement: PopoverPreferredPlacement = 'top',
                                     hideOnClickOutside = true, injector?: Injector, context?: any, overlayStyle: any = {},
                                     popoverStyle: any = {}, style?: any, showCloseButton = true,
                                     visibleFn: (visible: boolean) => void = () => {}): TbPopoverComponent<T> {
@@ -116,7 +122,7 @@ export class TbPopoverService {
                     helpContent = '',
                     visibleFn: (visible: boolean) => void = () => {},
                     readyFn: (ready: boolean) => void = () => {},
-                    preferredPlacement: PopoverPlacement = 'bottom',
+                    preferredPlacement: PopoverPreferredPlacement = 'bottom',
                     overlayStyle: any = {}, helpStyle: any = {}) {
     if (this.hasPopover(trigger)) {
       this.hidePopover(trigger);
