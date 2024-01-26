@@ -183,7 +183,6 @@ public class TbCreateRelationNodeTest {
         TbCreateRelationNodeConfiguration configuration = new TbCreateRelationNodeConfiguration();
         configuration.setDirection(EntitySearchDirection.FROM.name());
         configuration.setRelationType(EntityRelation.CONTAINS_TYPE);
-        configuration.setEntityCacheExpiration(300);
         configuration.setEntityType(EntityType.ASSET.name());
         configuration.setEntityNamePattern("${name}");
         configuration.setEntityTypePattern("${type}");

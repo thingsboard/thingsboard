@@ -15,46 +15,32 @@
  */
 package org.thingsboard.rule.engine.action;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.rule.engine.util.EntityContainer;
 import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.dao.asset.AssetService;
-import org.thingsboard.server.dao.customer.CustomerService;
-import org.thingsboard.server.dao.dashboard.DashboardService;
-import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.edge.EdgeService;
-import org.thingsboard.server.dao.entityview.EntityViewService;
-import org.thingsboard.server.dao.user.UserService;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 import static org.thingsboard.server.common.data.msg.TbNodeConnectionType.FAILURE;
@@ -63,71 +49,47 @@ import static org.thingsboard.server.common.data.msg.TbNodeConnectionType.SUCCES
 @Slf4j
 public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationActionNodeConfiguration> implements TbNode {
 
-    protected C config;
+    private final ConcurrentMap<EntityCreationLock, Object> entitiesCreationLocks = new ConcurrentReferenceHashMap<>();
 
-    private LoadingCache<EntityKey, EntityContainer> entityIdCache;
+    protected final List<EntityType> supportedEntityTypes = List.of(EntityType.TENANT, EntityType.DEVICE,
+            EntityType.ASSET, EntityType.ENTITY_VIEW, EntityType.DASHBOARD, EntityType.EDGE, EntityType.USER);
+
+    protected final List<String> supportedEntityTypesStrList = supportedEntityTypes.stream().map(Enum::name).collect(Collectors.toList());
+
+    protected C config;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = loadEntityNodeActionConfig(configuration);
-        CacheBuilder<Object, Object> cacheBuilder = CacheBuilder.newBuilder();
-        if (this.config.getEntityCacheExpiration() > 0) {
-            cacheBuilder.expireAfterWrite(this.config.getEntityCacheExpiration(), TimeUnit.SECONDS);
-        }
-        entityIdCache = cacheBuilder.build(new EntityCacheLoader(ctx, createEntityIfNotExists()));
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        String relationType = processPattern(msg, config.getRelationType());
-        withCallback(processEntityRelationAction(ctx, msg, relationType),
-                filterResult -> ctx.tellNext(filterResult.getMsg(), filterResult.isResult() ? SUCCESS : FAILURE), t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
+        withCallback(processEntityRelationAction(ctx, msg),
+                filterResult -> ctx.tellNext(filterResult.getMsg(), filterResult.isResult() ? SUCCESS : FAILURE),
+                t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
 
-    @Override
-    public void destroy() {
-        if (entityIdCache != null) {
-            entityIdCache.invalidateAll();
-        }
-    }
-
-    protected ListenableFuture<RelationContainer> processEntityRelationAction(TbContext ctx, TbMsg msg, String relationType) {
-        return Futures.transformAsync(getEntity(ctx, msg), entityContainer -> doProcessEntityRelationAction(ctx, msg, entityContainer, relationType), ctx.getDbCallbackExecutor());
+    protected ListenableFuture<RelationContainer> processEntityRelationAction(TbContext ctx, TbMsg msg) {
+        return Futures.transformAsync(getTargetEntityId(ctx, msg), entityId ->
+                        doProcessEntityRelationAction(ctx, msg, entityId, processPattern(msg, config.getRelationType())),
+                ctx.getDbCallbackExecutor());
     }
 
     protected abstract boolean createEntityIfNotExists();
 
-    protected abstract ListenableFuture<RelationContainer> doProcessEntityRelationAction(TbContext ctx, TbMsg msg, EntityContainer entityContainer, String relationType);
+    protected abstract ListenableFuture<RelationContainer> doProcessEntityRelationAction(TbContext ctx, TbMsg msg, EntityId targetEntityId, String relationType);
 
     protected abstract C loadEntityNodeActionConfig(TbNodeConfiguration configuration) throws TbNodeException;
 
-    protected ListenableFuture<EntityContainer> getEntity(TbContext ctx, TbMsg msg) {
-        String entityName = processPattern(msg, this.config.getEntityNamePattern());
-        String type;
-        if (this.config.getEntityTypePattern() != null) {
-            type = processPattern(msg, this.config.getEntityTypePattern());
-        } else {
-            type = null;
-        }
-        EntityType entityType = EntityType.valueOf(this.config.getEntityType());
-        EntityKey key = new EntityKey(entityName, type, entityType);
-        return ctx.getDbCallbackExecutor().executeAsync(() -> {
-            EntityContainer entityContainer = entityIdCache.get(key);
-            if (entityContainer.getEntityId() == null) {
-                throw new RuntimeException("No entity found with type '" + key.getEntityType() + "' and name '" + key.getEntityName() + "'.");
-            }
-            return entityContainer;
-        });
-    }
-
-    protected SearchDirectionIds processSingleSearchDirection(TbMsg msg, EntityContainer entityContainer) {
+    protected SearchDirectionIds processSingleSearchDirection(TbMsg msg, EntityId targetEntityId) {
         SearchDirectionIds searchDirectionIds = new SearchDirectionIds();
-        if (EntitySearchDirection.FROM.name().equals(this.config.getDirection())) {
-            searchDirectionIds.setFromId(EntityIdFactory.getByTypeAndId(entityContainer.getEntityType().name(), entityContainer.getEntityId().toString()));
+        if (EntitySearchDirection.FROM.name().equals(config.getDirection())) {
+            searchDirectionIds.setFromId(EntityIdFactory.getByTypeAndUuid(targetEntityId.getEntityType().name(), targetEntityId.getId()));
             searchDirectionIds.setToId(msg.getOriginator());
             searchDirectionIds.setOriginatorDirectionFrom(false);
         } else {
-            searchDirectionIds.setToId(EntityIdFactory.getByTypeAndId(entityContainer.getEntityType().name(), entityContainer.getEntityId().toString()));
+            searchDirectionIds.setToId(EntityIdFactory.getByTypeAndUuid(targetEntityId.getEntityType().name(), targetEntityId.getId()));
             searchDirectionIds.setFromId(msg.getOriginator());
             searchDirectionIds.setOriginatorDirectionFrom(true);
         }
@@ -135,23 +97,15 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
     }
 
     protected ListenableFuture<List<EntityRelation>> processListSearchDirection(TbContext ctx, TbMsg msg) {
-        if (EntitySearchDirection.FROM.name().equals(this.config.getDirection())) {
-            return ctx.getRelationService().findByToAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), processPattern(msg, this.config.getRelationType()), RelationTypeGroup.COMMON);
+        if (EntitySearchDirection.FROM.name().equals(config.getDirection())) {
+            return ctx.getRelationService().findByToAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), processPattern(msg, config.getRelationType()), RelationTypeGroup.COMMON);
         } else {
-            return ctx.getRelationService().findByFromAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), processPattern(msg, this.config.getRelationType()), RelationTypeGroup.COMMON);
+            return ctx.getRelationService().findByFromAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), processPattern(msg, config.getRelationType()), RelationTypeGroup.COMMON);
         }
     }
 
     protected String processPattern(TbMsg msg, String pattern) {
         return TbNodeUtils.processPattern(pattern, msg);
-    }
-
-    @Data
-    @AllArgsConstructor
-    private static class EntityKey {
-        private String entityName;
-        private String type;
-        private EntityType entityType;
     }
 
     @Data
@@ -161,124 +115,142 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
         private boolean originatorDirectionFrom;
     }
 
-    private static class EntityCacheLoader extends CacheLoader<EntityKey, EntityContainer> {
-
-        private final TbContext ctx;
-        private final boolean createIfNotExists;
-
-        private EntityCacheLoader(TbContext ctx, boolean createIfNotExists) {
-            this.ctx = ctx;
-            this.createIfNotExists = createIfNotExists;
+    protected ListenableFuture<EntityId> getTargetEntityId(TbContext ctx, TbMsg msg) {
+        var entityTypeStr = config.getEntityType();
+        var entityType = EntityType.valueOf(entityTypeStr);
+        var tenantId = ctx.getTenantId();
+        if (EntityType.TENANT.equals(entityType)) {
+            return Futures.immediateFuture(tenantId);
         }
-
-        @Override
-        public EntityContainer load(EntityKey key) {
-            return loadEntity(key);
-        }
-
-        private EntityContainer loadEntity(EntityKey entitykey) {
-            EntityType type = entitykey.getEntityType();
-            EntityContainer targetEntity = new EntityContainer();
-            targetEntity.setEntityType(type);
-            switch (type) {
+        var targetEntityName = processPattern(msg, config.getEntityNamePattern());
+        return ctx.getDbCallbackExecutor().executeAsync(() -> {
+            boolean createEntityIfNotExists = createEntityIfNotExists();
+            switch (entityType) {
                 case DEVICE:
-                    DeviceService deviceService = ctx.getDeviceService();
-                    Device device = deviceService.findDeviceByTenantIdAndName(ctx.getTenantId(), entitykey.getEntityName());
-                    if (device != null) {
-                        targetEntity.setEntityId(device.getId());
-                    } else if (createIfNotExists) {
-                        Device newDevice = new Device();
-                        newDevice.setName(entitykey.getEntityName());
-                        newDevice.setType(entitykey.getType());
-                        newDevice.setTenantId(ctx.getTenantId());
-                        Device savedDevice = deviceService.saveDevice(newDevice);
-                        ctx.getClusterService().onDeviceUpdated(savedDevice, null);
-                        ctx.enqueue(ctx.deviceCreatedMsg(savedDevice, ctx.getSelfId()),
-                                () -> log.trace("Pushed Device Created message: {}", savedDevice),
-                                throwable -> log.warn("Failed to push Device Created message: {}", savedDevice, throwable));
-                        targetEntity.setEntityId(savedDevice.getId());
+                    var deviceService = ctx.getDeviceService();
+                    if (createEntityIfNotExists) {
+                        var entityCreationLock = new EntityCreationLock(tenantId, entityType, targetEntityName);
+                        synchronized (entitiesCreationLocks.computeIfAbsent(entityCreationLock, k -> new Object())) {
+                            var device = deviceService.findDeviceByTenantIdAndName(tenantId, targetEntityName);
+                            if (device != null) {
+                                return device.getId();
+                            }
+                            var deviceProfileName = processPattern(msg, config.getEntityTypePattern());
+                            var newDevice = new Device();
+                            newDevice.setName(targetEntityName);
+                            newDevice.setType(deviceProfileName);
+                            newDevice.setTenantId(tenantId);
+                            var savedDevice = deviceService.saveDevice(newDevice);
+                            ctx.getClusterService().onDeviceUpdated(savedDevice, null);
+                            ctx.enqueue(ctx.deviceCreatedMsg(savedDevice, ctx.getSelfId()),
+                                    () -> log.trace("Pushed Device Created message: {}", savedDevice),
+                                    throwable -> log.warn("Failed to push Device Created message: {}", savedDevice, throwable));
+                            return savedDevice.getId();
+                        }
                     }
-                    break;
+                    var device = deviceService.findDeviceByTenantIdAndName(tenantId, targetEntityName);
+                    if (device == null) {
+                        throw new NullPointerException("Device with name '" + targetEntityName + "' doesn't exist!");
+                    }
+                    return device.getId();
                 case ASSET:
-                    AssetService assetService = ctx.getAssetService();
-                    Asset asset = assetService.findAssetByTenantIdAndName(ctx.getTenantId(), entitykey.getEntityName());
-                    if (asset != null) {
-                        targetEntity.setEntityId(asset.getId());
-                    } else if (createIfNotExists) {
-                        Asset newAsset = new Asset();
-                        newAsset.setName(entitykey.getEntityName());
-                        newAsset.setType(entitykey.getType());
-                        newAsset.setTenantId(ctx.getTenantId());
-                        Asset savedAsset = assetService.saveAsset(newAsset);
-                        ctx.enqueue(ctx.assetCreatedMsg(savedAsset, ctx.getSelfId()),
-                                () -> log.trace("Pushed Asset Created message: {}", savedAsset),
-                                throwable -> log.warn("Failed to push Asset Created message: {}", savedAsset, throwable));
-                        targetEntity.setEntityId(savedAsset.getId());
+                    var assetService = ctx.getAssetService();
+                    if (createEntityIfNotExists) {
+                        var entityCreationLock = new EntityCreationLock(tenantId, entityType, targetEntityName);
+                        synchronized (entitiesCreationLocks.computeIfAbsent(entityCreationLock, k -> new Object())) {
+                            var asset = assetService.findAssetByTenantIdAndName(tenantId, targetEntityName);
+                            if (asset != null) {
+                                return asset.getId();
+                            }
+                            var assetProfileName = processPattern(msg, config.getEntityTypePattern());
+                            var newAsset = new Asset();
+                            newAsset.setName(targetEntityName);
+                            newAsset.setType(assetProfileName);
+                            newAsset.setTenantId(tenantId);
+                            var savedAsset = assetService.saveAsset(newAsset);
+                            ctx.enqueue(ctx.assetCreatedMsg(savedAsset, ctx.getSelfId()),
+                                    () -> log.trace("Pushed Asset Created message: {}", savedAsset),
+                                    throwable -> log.warn("Failed to push Asset Created message: {}", savedAsset, throwable));
+                            return savedAsset.getId();
+                        }
                     }
-                    break;
+                    var asset = assetService.findAssetByTenantIdAndName(tenantId, targetEntityName);
+                    if (asset == null) {
+                        throw new NullPointerException("Asset with name '" + targetEntityName + "' doesn't exist!");
+                    }
+                    return asset.getId();
                 case CUSTOMER:
-                    CustomerService customerService = ctx.getCustomerService();
-                    Optional<Customer> customerOptional = Optional.ofNullable(customerService.findCustomerByTenantIdAndTitleUsingCache(ctx.getTenantId(), entitykey.getEntityName()));
-                    if (customerOptional.isPresent()) {
-                        targetEntity.setEntityId(customerOptional.get().getId());
-                    } else if (createIfNotExists) {
-                        Customer newCustomer = new Customer();
-                        newCustomer.setTitle(entitykey.getEntityName());
-                        newCustomer.setTenantId(ctx.getTenantId());
-                        Customer savedCustomer = customerService.saveCustomer(newCustomer);
-                        ctx.enqueue(ctx.customerCreatedMsg(savedCustomer, ctx.getSelfId()),
-                                () -> log.trace("Pushed Customer Created message: {}", savedCustomer),
-                                throwable -> log.warn("Failed to push Customer Created message: {}", savedCustomer, throwable));
-                        targetEntity.setEntityId(savedCustomer.getId());
+                    var customerService = ctx.getCustomerService();
+                    if (createEntityIfNotExists) {
+                        var entityCreationLock = new EntityCreationLock(tenantId, entityType, targetEntityName);
+                        synchronized (entitiesCreationLocks.computeIfAbsent(entityCreationLock, k -> new Object())) {
+                            var customer = customerService.findCustomerByTenantIdAndTitleUsingCache(tenantId, targetEntityName);
+                            if (customer != null) {
+                                return customer.getId();
+                            }
+                            var newCustomer = new Customer();
+                            newCustomer.setTitle(targetEntityName);
+                            newCustomer.setTenantId(tenantId);
+                            var savedCustomer = customerService.saveCustomer(newCustomer);
+                            ctx.enqueue(ctx.customerCreatedMsg(savedCustomer, ctx.getSelfId()),
+                                    () -> log.trace("Pushed Customer Created message: {}", savedCustomer),
+                                    throwable -> log.warn("Failed to push Customer Created message: {}", savedCustomer, throwable));
+                            return savedCustomer.getId();
+                        }
                     }
-                    break;
-                case TENANT:
-                    targetEntity.setEntityId(ctx.getTenantId());
-                    break;
+                    var customer = customerService.findCustomerByTenantIdAndTitleUsingCache(tenantId, targetEntityName);
+                    if (customer == null) {
+                        throw new NullPointerException("Customer with title '" + targetEntityName + "' doesn't exist!");
+                    }
+                    return customer.getId();
                 case ENTITY_VIEW:
-                    EntityViewService entityViewService = ctx.getEntityViewService();
-                    EntityView entityView = entityViewService.findEntityViewByTenantIdAndName(ctx.getTenantId(), entitykey.getEntityName());
+                    var entityViewService = ctx.getEntityViewService();
+                    var entityView = entityViewService.findEntityViewByTenantIdAndName(tenantId, targetEntityName);
                     if (entityView != null) {
-                        targetEntity.setEntityId(entityView.getId());
+                        return entityView.getId();
                     }
-                    break;
+                    throw new NullPointerException("EntityView with name '" + targetEntityName + "' doesn't exist!");
                 case EDGE:
-                    EdgeService edgeService = ctx.getEdgeService();
-                    Edge edge = edgeService.findEdgeByTenantIdAndName(ctx.getTenantId(), entitykey.getEntityName());
+                    var edgeService = ctx.getEdgeService();
+                    var edge = edgeService.findEdgeByTenantIdAndName(tenantId, targetEntityName);
                     if (edge != null) {
-                        targetEntity.setEntityId(edge.getId());
+                        return edge.getId();
                     }
-                    break;
+                    throw new NullPointerException("Edge with name '" + targetEntityName + "' doesn't exist!");
                 case DASHBOARD:
-                    DashboardService dashboardService = ctx.getDashboardService();
-                    DashboardInfo dashboardInfo = dashboardService.findFirstDashboardInfoByTenantIdAndName(ctx.getTenantId(), entitykey.getEntityName());
+                    var dashboardService = ctx.getDashboardService();
+                    var dashboardInfo = dashboardService.findFirstDashboardInfoByTenantIdAndName(tenantId, targetEntityName);
                     if (dashboardInfo != null) {
-                        targetEntity.setEntityId(dashboardInfo.getId());
+                        return dashboardInfo.getId();
                     }
-                    break;
+                    throw new NullPointerException("Dashboard with title '" + targetEntityName + "' doesn't exist!");
                 case USER:
-                    UserService userService = ctx.getUserService();
-                    User user = userService.findUserByTenantIdAndEmail(ctx.getTenantId(), entitykey.getEntityName());
+                    var userService = ctx.getUserService();
+                    var user = userService.findUserByTenantIdAndEmail(tenantId, targetEntityName);
                     if (user != null) {
-                        targetEntity.setEntityId(user.getId());
+                        return user.getId();
                     }
-                    break;
+                    throw new NullPointerException("User with email '" + targetEntityName + "' doesn't exist!");
                 default:
-                    return targetEntity;
+                    throw new IllegalArgumentException("Unsupported originator type '" + entityTypeStr +
+                            "'! Only " + String.join(" ,", supportedEntityTypesStrList) + " types are allowed.");
             }
-            return targetEntity;
-        }
+        });
     }
 
     @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
+    @RequiredArgsConstructor
     protected static class RelationContainer {
-
-        private TbMsg msg;
-        private boolean result;
-
+        private final TbMsg msg;
+        private final boolean result;
     }
 
+    @Data
+    @RequiredArgsConstructor
+    private static class EntityCreationLock {
+        private final TenantId tenantId;
+        private final EntityType entityType;
+        private final String entityName;
+    }
 
 }

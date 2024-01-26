@@ -31,7 +31,6 @@ public class TbDeleteRelationNodeConfiguration extends TbAbstractRelationActionN
         configuration.setDirection(EntitySearchDirection.FROM.name());
         configuration.setRelationType("Contains");
         configuration.setEntityNamePattern("");
-        configuration.setEntityCacheExpiration(300);
         return configuration;
     }
 }

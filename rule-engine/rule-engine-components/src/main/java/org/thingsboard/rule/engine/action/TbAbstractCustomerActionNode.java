@@ -95,7 +95,7 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
 
     protected static String unsupportedOriginatorTypeErrorMessage(EntityType originatorType) {
         return "Unsupported originator type '" + originatorType +
-                "'! Only 'DEVICE', 'ASSET', 'ENTITY_VIEW', 'DASHBOARD' types are allowed.";
+                "'! Only 'DEVICE', 'ASSET', 'ENTITY_VIEW', 'DASHBOARD', 'EDGE' types are allowed.";
     }
 
     @Override

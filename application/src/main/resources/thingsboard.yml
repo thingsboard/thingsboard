@@ -506,6 +506,9 @@ cache:
     customers:
       timeToLiveInMinutes: "${CACHE_SPECS_CUSTOMERS_TTL:1440}" # Customer cache TTL
       maxSize: "${CACHE_SPECS_CUSTOMERS_MAX_SIZE:10000}" # 0 means the cache is disabled
+    users:
+      timeToLiveInMinutes: "${CACHE_SPECS_USERS_TTL:1440}" # User cache TTL
+      maxSize: "${CACHE_SPECS_USERS_MAX_SIZE:10000}" # 0 means the cache is disabled
     entityViews:
       timeToLiveInMinutes: "${CACHE_SPECS_ENTITY_VIEWS_TTL:1440}" # Entity view cache TTL
       maxSize: "${CACHE_SPECS_ENTITY_VIEWS_MAX_SIZE:10000}" # 0 means the cache is disabled

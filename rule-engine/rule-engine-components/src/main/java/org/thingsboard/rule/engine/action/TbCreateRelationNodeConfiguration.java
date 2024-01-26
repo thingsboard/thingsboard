@@ -32,7 +32,6 @@ public class TbCreateRelationNodeConfiguration extends TbAbstractRelationActionN
         configuration.setDirection(EntitySearchDirection.FROM.name());
         configuration.setRelationType("Contains");
         configuration.setEntityNamePattern("");
-        configuration.setEntityCacheExpiration(300);
         configuration.setCreateEntityIfNotExists(false);
         configuration.setRemoveCurrentRelations(false);
         configuration.setChangeOriginatorToRelatedEntity(false);

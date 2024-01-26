@@ -31,7 +31,7 @@ public interface CustomerService extends EntityDaoService {
 
     Customer findCustomerByTenantIdAndTitleUsingCache(TenantId tenantId, String title);
 
-    @Deprecated(since = "3.6.2", forRemoval = true)
+    @Deprecated(since = "3.6.3", forRemoval = true)
     Optional<Customer> findCustomerByTenantIdAndTitle(TenantId tenantId, String title);
 
     ListenableFuture<Customer> findCustomerByIdAsync(TenantId tenantId, CustomerId customerId);
