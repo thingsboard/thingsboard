@@ -283,7 +283,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
             return cachePut(ctx.getRequestId(), result);
         } catch (LoadEntityException e) {
             return cachePut(ctx.getRequestId(), onError(e.getExternalId(), e.getCause()));
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.info("[{}] Failed to process request [{}] due to: ", ctx.getTenantId(), request, e);
             return cachePut(ctx.getRequestId(), VersionLoadResult.error(EntityLoadError.runtimeError(e)));
         }
