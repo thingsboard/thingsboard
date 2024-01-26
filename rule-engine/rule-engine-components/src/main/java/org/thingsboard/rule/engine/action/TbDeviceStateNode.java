@@ -39,12 +39,9 @@ import java.util.Set;
         type = ComponentType.ACTION,
         name = "device state",
         nodeDescription = "Triggers device connectivity events",
-        nodeDetails = "If incoming message originator is a device," +
-                " registers configured event for that device in the Device State Service," +
-                " which sends appropriate message to the Rule Engine." +
-                " If metadata <code>ts</code> property is present, it will be used as event timestamp." +
-                " Incoming message is forwarded using the <code>Success</code> chain," +
-                " unless an unexpected error occurs during message processing" +
+        nodeDetails = "If incoming message originator is a device, registers configured event for that device in the Device State Service, which sends appropriate message to the Rule Engine." +
+                " If metadata <code>ts</code> property is present, it will be used as event timestamp. Otherwise, the message timestamp will be used." +
+                " Incoming message is forwarded using the <code>Success</code> chain, unless an unexpected error occurs during message processing" +
                 " then incoming message is forwarded using the <code>Failure</code> chain." +
                 "<br>" +
                 "Supported device connectivity events are:" +
@@ -54,8 +51,7 @@ import java.util.Set;
                 "<li>Activity event</li>" +
                 "<li>Inactivity event</li>" +
                 "</ul>" +
-                "This node is particularly useful when device isn't using transports to receive data," +
-                " such as when fetching data from external API or computing new data within the rule chain.",
+                "This node is particularly useful when device isn't using transports to receive data, such as when fetching data from external API or computing new data within the rule chain.",
         configClazz = TbDeviceStateNodeConfiguration.class,
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeDeviceStateConfig"
