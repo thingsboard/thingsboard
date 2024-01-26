@@ -42,6 +42,4 @@ public interface AuditLogDao extends Dao<AuditLog> {
 
     void cleanUpAuditLogs(long expTime);
 
-    void migrateAuditLogs();
-
 }

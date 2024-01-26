@@ -138,12 +138,6 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     private AdminSettingsService adminSettingsService;
 
     @Autowired
-    private WidgetTypeService widgetTypeService;
-
-    @Autowired
-    private WidgetsBundleService widgetsBundleService;
-
-    @Autowired
     private TenantService tenantService;
 
     @Autowired
@@ -295,11 +289,6 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     @Override
     public void createRandomJwtSettings() throws Exception {
         jwtSettingsService.createRandomJwtSettings();
-    }
-
-    @Override
-    public void saveLegacyYmlSettings() throws Exception {
-        jwtSettingsService.saveLegacyYmlSettings();
     }
 
     @Override
