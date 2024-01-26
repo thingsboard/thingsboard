@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.device.profile.alarm.rule;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.TreeMap;
 
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class DeviceProfileAlarm implements Serializable {
     private String id;
     private String alarmType;

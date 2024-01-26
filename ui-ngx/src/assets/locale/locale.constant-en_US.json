@@ -2224,7 +2224,10 @@
         "type-notification-request": "Notification request",
         "type-notification-template": "Notification template",
         "type-notification-templates": "Notification templates",
-        "list-of-notification-templates": "{ count, plural, =1 {One notification template} other {List of # notification templates} }"
+        "list-of-notification-templates": "{ count, plural, =1 {One notification template} other {List of # notification templates} }",
+        "type-alarm-rule": "Alarm rule",
+        "type-alarm-rules": "Alarm rules",
+        "list-of-alarm-rules": "{ count, plural, =1 {One alarm rule} other {List of # alarm ruless} }"
     },
     "entity-field": {
         "created-time": "Created time",

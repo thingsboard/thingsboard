@@ -377,7 +377,7 @@ public class RuleChainMsgConstructorTest {
 
     private RuleNode getAlarmRulesNode(RuleChainId ruleChainId) throws JsonProcessingException {
         return createRuleNode(ruleChainId,
-                "org.thingsboard.rule.engine.action.TbAlarmRulesNode",
+                "org.thingsboard.rule.engine.profile.TbDeviceProfileNode",
                 "Alarm Rules Node",
                 null,
                 JacksonUtil.OBJECT_MAPPER.readTree("{\"description\":\"Process incoming messages from devices with the alarm rules. Dispatch all incoming messages with \\\"Success\\\" relation type.\",\"layoutX\":187,\"layoutY\":468}"));

@@ -35,7 +35,8 @@ export const exportableEntityTypes: Array<EntityType> = [
   EntityType.TB_RESOURCE,
   EntityType.NOTIFICATION_TEMPLATE,
   EntityType.NOTIFICATION_TARGET,
-  EntityType.NOTIFICATION_RULE
+  EntityType.NOTIFICATION_RULE,
+  EntityType.ALARM_RULE
 ];
 
 export const entityTypesWithoutRelatedData: Set<EntityType> = new Set([

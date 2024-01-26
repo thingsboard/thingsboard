@@ -90,7 +90,9 @@ public class AlarmRuleMigrator {
         TreeMap<AlarmSeverity, AlarmRuleCondition> createRules = new TreeMap<>();
         oldRule.getCreateRules().forEach((severity, oldAlarmRule) -> createRules.put(severity, getAlarmRuleCondition(oldAlarmRule)));
         configuration.setCreateRules(createRules);
-        configuration.setClearRule(getAlarmRuleCondition(oldRule.getClearRule()));
+        if (oldRule.getClearRule() != null) {
+            configuration.setClearRule(getAlarmRuleCondition(oldRule.getClearRule()));
+        }
         alarmRule.setConfiguration(configuration);
         return alarmRule;
     }
