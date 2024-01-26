@@ -31,6 +31,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.NotificationCenter;
+import org.thingsboard.rule.engine.api.RuleEngineDeviceStateManager;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.slack.SlackService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
@@ -202,6 +203,10 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private DeviceCredentialsService deviceCredentialsService;
+
+    @Autowired
+    @Getter
+    private RuleEngineDeviceStateManager deviceStateManager;
 
     @Autowired
     @Getter

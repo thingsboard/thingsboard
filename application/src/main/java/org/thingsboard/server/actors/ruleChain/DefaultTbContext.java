@@ -28,6 +28,7 @@ import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.RuleEngineApiUsageStateService;
 import org.thingsboard.rule.engine.api.RuleEngineAssetProfileCache;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
+import org.thingsboard.rule.engine.api.RuleEngineDeviceStateManager;
 import org.thingsboard.rule.engine.api.RuleEngineRpcService;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.ScriptEngine;
@@ -681,6 +682,11 @@ class DefaultTbContext implements TbContext {
     @Override
     public DeviceCredentialsService getDeviceCredentialsService() {
         return mainCtx.getDeviceCredentialsService();
+    }
+
+    @Override
+    public RuleEngineDeviceStateManager getDeviceStateManager() {
+        return mainCtx.getDeviceStateManager();
     }
 
     @Override

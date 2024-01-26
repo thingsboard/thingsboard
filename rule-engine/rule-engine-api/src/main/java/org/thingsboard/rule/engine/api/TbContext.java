@@ -280,6 +280,8 @@ public interface TbContext {
 
     DeviceCredentialsService getDeviceCredentialsService();
 
+    RuleEngineDeviceStateManager getDeviceStateManager();
+
     TbClusterService getClusterService();
 
     DashboardService getDashboardService();

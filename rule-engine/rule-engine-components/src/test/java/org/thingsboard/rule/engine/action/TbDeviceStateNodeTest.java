@@ -20,28 +20,28 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.RuleEngineDeviceStateManager;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
-import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.queue.TbQueueCallback;
+import org.thingsboard.server.common.msg.queue.TbCallback;
 
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -51,7 +51,6 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
 public class TbDeviceStateNodeTest {
@@ -59,7 +58,9 @@ public class TbDeviceStateNodeTest {
     @Mock
     private TbContext ctxMock;
     @Mock
-    private TbClusterService tbClusterServiceMock;
+    private static RuleEngineDeviceStateManager deviceStateManagerMock;
+    @Captor
+    private static ArgumentCaptor<TbCallback> callbackCaptor;
     private TbDeviceStateNode node;
     private TbDeviceStateNodeConfiguration config;
 
@@ -94,10 +95,6 @@ public class TbDeviceStateNodeTest {
     @Test
     public void givenDefaultConfiguration_whenInvoked_thenCorrectValuesAreSet() {
         assertThat(config.getEvent()).isEqualTo(TbMsgType.ACTIVITY_EVENT);
-        assertThat(TbDeviceStateNode.SUPPORTED_EVENTS).isEqualTo(Set.of(
-                TbMsgType.CONNECT_EVENT, TbMsgType.ACTIVITY_EVENT,
-                TbMsgType.DISCONNECT_EVENT, TbMsgType.INACTIVITY_EVENT
-        ));
     }
 
     @Test
@@ -113,10 +110,14 @@ public class TbDeviceStateNodeTest {
                 .matches(e -> ((TbNodeException) e).isUnrecoverable());
     }
 
-    @Test
-    public void givenUnsupportedEventInConfig_whenInit_thenThrowsUnrecoverableTbNodeException() {
+    @ParameterizedTest
+    @EnumSource(
+            value = TbMsgType.class,
+            names = {"CONNECT_EVENT", "ACTIVITY_EVENT", "DISCONNECT_EVENT", "INACTIVITY_EVENT"},
+            mode = EnumSource.Mode.EXCLUDE
+    )
+    public void givenUnsupportedEventInConfig_whenInit_thenThrowsUnrecoverableTbNodeException(TbMsgType unsupportedEvent) {
         // GIVEN
-        var unsupportedEvent = TbMsgType.TO_SERVER_RPC_REQUEST;
         config.setEvent(unsupportedEvent);
         var nodeConfig = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
@@ -127,11 +128,23 @@ public class TbDeviceStateNodeTest {
                 .matches(e -> ((TbNodeException) e).isUnrecoverable());
     }
 
-    @Test
-    public void givenNonDeviceOriginator_whenOnMsg_thenTellsSuccessAndNoActivityActionsTriggered() {
+    @ParameterizedTest
+    @EnumSource(value = EntityType.class, names = "DEVICE", mode = EnumSource.Mode.EXCLUDE)
+    public void givenNonDeviceOriginator_whenOnMsg_thenTellsSuccessAndNoActivityActionsTriggered(EntityType unsupportedType) {
         // GIVEN
-        var asset = new AssetId(UUID.randomUUID());
-        var msg = TbMsg.newMsg(TbMsgType.ENTITY_CREATED, asset, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        var nonDeviceOriginator = new EntityId() {
+
+            @Override
+            public UUID getId() {
+                return UUID.randomUUID();
+            }
+
+            @Override
+            public EntityType getEntityType() {
+                return unsupportedType;
+            }
+        };
+        var msg = TbMsg.newMsg(TbMsgType.ENTITY_CREATED, nonDeviceOriginator, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
 
         // WHEN
         node.onMsg(ctxMock, msg);
@@ -142,10 +155,10 @@ public class TbDeviceStateNodeTest {
     }
 
     @ParameterizedTest
-    @MethodSource("provideSupportedEventsAndExpectedMessages")
-    public void givenSupportedEvent_whenOnMsg_thenCorrectMsgIsSent(TbMsgType event, TransportProtos.ToCoreMsg expectedToCoreMsg) {
+    @MethodSource
+    public void givenInactivityEventAndDeviceOriginator_whenOnMsg_thenOnDeviceInactivityIsCalledWithCorrectCallback(TbMsgType supportedEventType, Runnable actionVerification) {
         // GIVEN
-        config.setEvent(event);
+        config.setEvent(supportedEventType);
         var nodeConfig = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         try {
             node.init(ctxMock, nodeConfig);
@@ -153,65 +166,34 @@ public class TbDeviceStateNodeTest {
             fail("Node failed to initialize!", e);
         }
         given(ctxMock.getTenantId()).willReturn(TENANT_ID);
-        given(ctxMock.getClusterService()).willReturn(tbClusterServiceMock);
+        given(ctxMock.getDeviceStateManager()).willReturn(deviceStateManagerMock);
 
         // WHEN
         node.onMsg(ctxMock, msg);
 
         // THEN
-        var protoCaptor = ArgumentCaptor.forClass(TransportProtos.ToCoreMsg.class);
-        var callbackCaptor = ArgumentCaptor.forClass(TbQueueCallback.class);
-        then(tbClusterServiceMock).should().pushMsgToCore(eq(TENANT_ID), eq(DEVICE_ID), protoCaptor.capture(), callbackCaptor.capture());
+        actionVerification.run();
 
-        TbQueueCallback actualCallback = callbackCaptor.getValue();
+        TbCallback actualCallback = callbackCaptor.getValue();
 
-        actualCallback.onSuccess(null);
+        actualCallback.onSuccess();
         then(ctxMock).should().tellSuccess(msg);
 
         var throwable = new Throwable();
         actualCallback.onFailure(throwable);
         then(ctxMock).should().tellFailure(msg, throwable);
 
-        assertThat(expectedToCoreMsg).isEqualTo(protoCaptor.getValue());
 
-        then(tbClusterServiceMock).shouldHaveNoMoreInteractions();
+        then(deviceStateManagerMock).shouldHaveNoMoreInteractions();
         then(ctxMock).shouldHaveNoMoreInteractions();
     }
 
-    private static Stream<Arguments> provideSupportedEventsAndExpectedMessages() {
+    private static Stream<Arguments> givenInactivityEventAndDeviceOriginator_whenOnMsg_thenOnDeviceInactivityIsCalledWithCorrectCallback() {
         return Stream.of(
-                Arguments.of(TbMsgType.CONNECT_EVENT, TransportProtos.ToCoreMsg.newBuilder().setDeviceConnectMsg(
-                        TransportProtos.DeviceConnectProto.newBuilder()
-                                .setTenantIdMSB(TENANT_ID.getId().getMostSignificantBits())
-                                .setTenantIdLSB(TENANT_ID.getId().getLeastSignificantBits())
-                                .setDeviceIdMSB(DEVICE_ID.getId().getMostSignificantBits())
-                                .setDeviceIdLSB(DEVICE_ID.getId().getLeastSignificantBits())
-                                .setLastConnectTime(METADATA_TS)
-                                .build()).build()),
-                Arguments.of(TbMsgType.ACTIVITY_EVENT, TransportProtos.ToCoreMsg.newBuilder().setDeviceActivityMsg(
-                        TransportProtos.DeviceActivityProto.newBuilder()
-                                .setTenantIdMSB(TENANT_ID.getId().getMostSignificantBits())
-                                .setTenantIdLSB(TENANT_ID.getId().getLeastSignificantBits())
-                                .setDeviceIdMSB(DEVICE_ID.getId().getMostSignificantBits())
-                                .setDeviceIdLSB(DEVICE_ID.getId().getLeastSignificantBits())
-                                .setLastActivityTime(METADATA_TS)
-                                .build()).build()),
-                Arguments.of(TbMsgType.DISCONNECT_EVENT, TransportProtos.ToCoreMsg.newBuilder().setDeviceDisconnectMsg(
-                        TransportProtos.DeviceDisconnectProto.newBuilder()
-                                .setTenantIdMSB(TENANT_ID.getId().getMostSignificantBits())
-                                .setTenantIdLSB(TENANT_ID.getId().getLeastSignificantBits())
-                                .setDeviceIdMSB(DEVICE_ID.getId().getMostSignificantBits())
-                                .setDeviceIdLSB(DEVICE_ID.getId().getLeastSignificantBits())
-                                .setLastDisconnectTime(METADATA_TS)
-                                .build()).build()),
-                Arguments.of(TbMsgType.INACTIVITY_EVENT, TransportProtos.ToCoreMsg.newBuilder().setDeviceInactivityMsg(
-                        TransportProtos.DeviceInactivityProto.newBuilder()
-                                .setTenantIdMSB(TENANT_ID.getId().getMostSignificantBits())
-                                .setTenantIdLSB(TENANT_ID.getId().getLeastSignificantBits())
-                                .setDeviceIdMSB(DEVICE_ID.getId().getMostSignificantBits())
-                                .setDeviceIdLSB(DEVICE_ID.getId().getLeastSignificantBits())
-                                .setLastInactivityTime(METADATA_TS)
-                                .build()).build())
+                Arguments.of(TbMsgType.CONNECT_EVENT, (Runnable) () -> then(deviceStateManagerMock).should().onDeviceConnect(eq(TENANT_ID), eq(DEVICE_ID), eq(METADATA_TS), callbackCaptor.capture())),
+                Arguments.of(TbMsgType.ACTIVITY_EVENT, (Runnable) () -> then(deviceStateManagerMock).should().onDeviceActivity(eq(TENANT_ID), eq(DEVICE_ID), eq(METADATA_TS), callbackCaptor.capture())),
+                Arguments.of(TbMsgType.DISCONNECT_EVENT, (Runnable) () -> then(deviceStateManagerMock).should().onDeviceDisconnect(eq(TENANT_ID), eq(DEVICE_ID), eq(METADATA_TS), callbackCaptor.capture())),
+                Arguments.of(TbMsgType.INACTIVITY_EVENT, (Runnable) () -> then(deviceStateManagerMock).should().onDeviceInactivity(eq(TENANT_ID), eq(DEVICE_ID), eq(METADATA_TS), callbackCaptor.capture()))
         );
     }
 

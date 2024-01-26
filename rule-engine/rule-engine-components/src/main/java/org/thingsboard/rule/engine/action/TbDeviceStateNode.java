@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.action;
 
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.rule.engine.api.RuleEngineDeviceStateManager;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -23,12 +24,12 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.queue.TbQueueCallback;
-import org.thingsboard.server.queue.common.SimpleTbQueueCallback;
+import org.thingsboard.server.common.msg.queue.TbCallback;
 
 import java.util.EnumSet;
 import java.util.Set;
@@ -61,7 +62,7 @@ import java.util.Set;
 )
 public class TbDeviceStateNode implements TbNode {
 
-    static final Set<TbMsgType> SUPPORTED_EVENTS = EnumSet.of(
+    private static final Set<TbMsgType> SUPPORTED_EVENTS = EnumSet.of(
             TbMsgType.CONNECT_EVENT, TbMsgType.ACTIVITY_EVENT, TbMsgType.DISCONNECT_EVENT, TbMsgType.INACTIVITY_EVENT
     );
 
@@ -85,98 +86,41 @@ public class TbDeviceStateNode implements TbNode {
             ctx.tellSuccess(msg);
             return;
         }
+
+        TenantId tenantId = ctx.getTenantId();
+        DeviceId deviceId = (DeviceId) msg.getOriginator();
+        RuleEngineDeviceStateManager deviceStateManager = ctx.getDeviceStateManager();
+
         switch (event) {
             case CONNECT_EVENT:
-                sendDeviceConnectMsg(ctx, msg);
+                deviceStateManager.onDeviceConnect(tenantId, deviceId, msg.getMetaDataTs(), getMsgEnqueuedCallback(ctx, msg));
                 break;
             case ACTIVITY_EVENT:
-                sendDeviceActivityMsg(ctx, msg);
+                deviceStateManager.onDeviceActivity(tenantId, deviceId, msg.getMetaDataTs(), getMsgEnqueuedCallback(ctx, msg));
                 break;
             case DISCONNECT_EVENT:
-                sendDeviceDisconnectMsg(ctx, msg);
+                deviceStateManager.onDeviceDisconnect(tenantId, deviceId, msg.getMetaDataTs(), getMsgEnqueuedCallback(ctx, msg));
                 break;
             case INACTIVITY_EVENT:
-                sendDeviceInactivityMsg(ctx, msg);
+                deviceStateManager.onDeviceInactivity(tenantId, deviceId, msg.getMetaDataTs(), getMsgEnqueuedCallback(ctx, msg));
                 break;
             default:
                 ctx.tellFailure(msg, new IllegalStateException("Configured event [" + event + "] is not supported!"));
         }
     }
 
-    private void sendDeviceConnectMsg(TbContext ctx, TbMsg msg) {
-        var tenantUuid = ctx.getTenantId().getId();
-        var deviceUuid = msg.getOriginator().getId();
-        var deviceConnectMsg = TransportProtos.DeviceConnectProto.newBuilder()
-                .setTenantIdMSB(tenantUuid.getMostSignificantBits())
-                .setTenantIdLSB(tenantUuid.getLeastSignificantBits())
-                .setDeviceIdMSB(deviceUuid.getMostSignificantBits())
-                .setDeviceIdLSB(deviceUuid.getLeastSignificantBits())
-                .setLastConnectTime(msg.getMetaDataTs())
-                .build();
-        var toCoreMsg = TransportProtos.ToCoreMsg.newBuilder()
-                .setDeviceConnectMsg(deviceConnectMsg)
-                .build();
-        ctx.getClusterService().pushMsgToCore(
-                ctx.getTenantId(), msg.getOriginator(), toCoreMsg, getMsgEnqueuedCallback(ctx, msg)
-        );
-    }
+    private TbCallback getMsgEnqueuedCallback(TbContext ctx, TbMsg msg) {
+        return new TbCallback() {
+            @Override
+            public void onSuccess() {
+                ctx.tellSuccess(msg);
+            }
 
-    private void sendDeviceActivityMsg(TbContext ctx, TbMsg msg) {
-        var tenantUuid = ctx.getTenantId().getId();
-        var deviceUuid = msg.getOriginator().getId();
-        var deviceActivityMsg = TransportProtos.DeviceActivityProto.newBuilder()
-                .setTenantIdMSB(tenantUuid.getMostSignificantBits())
-                .setTenantIdLSB(tenantUuid.getLeastSignificantBits())
-                .setDeviceIdMSB(deviceUuid.getMostSignificantBits())
-                .setDeviceIdLSB(deviceUuid.getLeastSignificantBits())
-                .setLastActivityTime(msg.getMetaDataTs())
-                .build();
-        var toCoreMsg = TransportProtos.ToCoreMsg.newBuilder()
-                .setDeviceActivityMsg(deviceActivityMsg)
-                .build();
-        ctx.getClusterService().pushMsgToCore(
-                ctx.getTenantId(), msg.getOriginator(), toCoreMsg, getMsgEnqueuedCallback(ctx, msg)
-        );
-    }
-
-    private void sendDeviceDisconnectMsg(TbContext ctx, TbMsg msg) {
-        var tenantUuid = ctx.getTenantId().getId();
-        var deviceUuid = msg.getOriginator().getId();
-        var deviceDisconnectMsg = TransportProtos.DeviceDisconnectProto.newBuilder()
-                .setTenantIdMSB(tenantUuid.getMostSignificantBits())
-                .setTenantIdLSB(tenantUuid.getLeastSignificantBits())
-                .setDeviceIdMSB(deviceUuid.getMostSignificantBits())
-                .setDeviceIdLSB(deviceUuid.getLeastSignificantBits())
-                .setLastDisconnectTime(msg.getMetaDataTs())
-                .build();
-        var toCoreMsg = TransportProtos.ToCoreMsg.newBuilder()
-                .setDeviceDisconnectMsg(deviceDisconnectMsg)
-                .build();
-        ctx.getClusterService().pushMsgToCore(
-                ctx.getTenantId(), msg.getOriginator(), toCoreMsg, getMsgEnqueuedCallback(ctx, msg)
-        );
-    }
-
-    private void sendDeviceInactivityMsg(TbContext ctx, TbMsg msg) {
-        var tenantUuid = ctx.getTenantId().getId();
-        var deviceUuid = msg.getOriginator().getId();
-        var deviceInactivityMsg = TransportProtos.DeviceInactivityProto.newBuilder()
-                .setTenantIdMSB(tenantUuid.getMostSignificantBits())
-                .setTenantIdLSB(tenantUuid.getLeastSignificantBits())
-                .setDeviceIdMSB(deviceUuid.getMostSignificantBits())
-                .setDeviceIdLSB(deviceUuid.getLeastSignificantBits())
-                .setLastInactivityTime(msg.getMetaDataTs())
-                .build();
-        var toCoreMsg = TransportProtos.ToCoreMsg.newBuilder()
-                .setDeviceInactivityMsg(deviceInactivityMsg)
-                .build();
-        ctx.getClusterService().pushMsgToCore(
-                ctx.getTenantId(), msg.getOriginator(), toCoreMsg, getMsgEnqueuedCallback(ctx, msg)
-        );
-    }
-
-    private TbQueueCallback getMsgEnqueuedCallback(TbContext ctx, TbMsg msg) {
-        return new SimpleTbQueueCallback(metadata -> ctx.tellSuccess(msg), t -> ctx.tellFailure(msg, t));
+            @Override
+            public void onFailure(Throwable t) {
+                ctx.tellFailure(msg, t);
+            }
+        };
     }
 
 }
