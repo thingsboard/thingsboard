@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.device.DeviceConnectivityInfo;
+import org.thingsboard.server.dao.device.GatewaySettingsInfo;
 
 import java.net.Inet6Address;
 import java.net.InetAddress;
@@ -92,7 +93,11 @@ public class DeviceConnectivityUtil {
         return command.toString();
     }
 
-    public static Resource getGatewayDockerComposeFile(String baseUrl, DeviceConnectivityInfo properties, DeviceCredentials deviceCredentials, String mqttType) throws URISyntaxException {
+    public static Resource getGatewayDockerComposeFile(String baseUrl,
+                                                       DeviceConnectivityInfo properties,
+                                                       DeviceCredentials deviceCredentials,
+                                                       String mqttType,
+                                                       GatewaySettingsInfo gatewaySettings) throws URISyntaxException {
         String host = getHost(baseUrl, properties, mqttType);
 
         StringBuilder dockerComposeBuilder = new StringBuilder();
@@ -100,7 +105,12 @@ public class DeviceConnectivityUtil {
         dockerComposeBuilder.append("services:\n");
         dockerComposeBuilder.append("  # ThingsBoard IoT Gateway Service Configuration\n");
         dockerComposeBuilder.append("  tb-gateway:\n");
-        dockerComposeBuilder.append("    image: thingsboard/tb-gateway\n");
+        dockerComposeBuilder.append("    image: thingsboard/tb-gateway");
+        if (gatewaySettings != null && StringUtils.isNotBlank(gatewaySettings.getVersion())) {
+            dockerComposeBuilder.append(":").append(gatewaySettings.getVersion()).append("\n");
+        } else {
+            dockerComposeBuilder.append("\n");
+        }
         dockerComposeBuilder.append("    container_name: tb-gateway\n");
         dockerComposeBuilder.append("    restart: always\n");
         dockerComposeBuilder.append("\n");
