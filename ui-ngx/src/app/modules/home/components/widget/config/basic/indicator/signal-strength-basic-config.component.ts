@@ -133,6 +133,7 @@ export class SignalStrengthBasicConfigComponent extends BasicWidgetConfigCompone
 
       tooltipBackgroundColor: [settings.tooltipBackgroundColor, []],
       tooltipBackgroundBlur: [settings.tooltipBackgroundBlur, []],
+      noSignalRssiValue: [settings.noSignalRssiValue, []],
 
       background: [settings.background, []],
 
@@ -184,6 +185,7 @@ export class SignalStrengthBasicConfigComponent extends BasicWidgetConfigCompone
 
     this.widgetConfig.config.settings.tooltipBackgroundColor = config.tooltipBackgroundColor;
     this.widgetConfig.config.settings.tooltipBackgroundBlur = config.tooltipBackgroundBlur;
+    this.widgetConfig.config.settings.noSignalRssiValue = config.noSignalRssiValue;
 
     this.widgetConfig.config.settings.background = config.background;
 
