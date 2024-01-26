@@ -31,11 +31,11 @@ import org.thingsboard.server.service.state.DeviceStateService;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
 public class DefaultTbCoreConsumerServiceTest {
@@ -48,22 +48,93 @@ public class DefaultTbCoreConsumerServiceTest {
     @Mock
     private TbCallback tbCallbackMock;
 
+    private final TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
+    private final DeviceId deviceId = new DeviceId(UUID.randomUUID());
+    private final long time = System.currentTimeMillis();
+
     @Mock
     private DefaultTbCoreConsumerService defaultTbCoreConsumerServiceMock;
 
     @BeforeEach
     public void setup() {
         ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "stateService", stateServiceMock);
-        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "stats", statsMock);
     }
 
     @Test
-    public void givenConnectMsg_whenForwardToStateService_thenOnDeviceConnectAndCallbackAreCalled() {
+    public void givenProcessingSuccess_whenForwardingDeviceStateMsgToStateService_thenOnSuccessCallbackIsCalled() {
         // GIVEN
-        var tenantId = new TenantId(UUID.randomUUID());
-        var deviceId = new DeviceId(UUID.randomUUID());
-        var time = System.currentTimeMillis();
+        var stateMsg = TransportProtos.DeviceStateServiceMsgProto.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
+                .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
+                .setAdded(true)
+                .setUpdated(false)
+                .setDeleted(false)
+                .build();
 
+        doCallRealMethod().when(defaultTbCoreConsumerServiceMock).forwardToStateService(stateMsg, tbCallbackMock);
+
+        // WHEN
+        defaultTbCoreConsumerServiceMock.forwardToStateService(stateMsg, tbCallbackMock);
+
+        // THEN
+        then(stateServiceMock).should().onQueueMsg(stateMsg, tbCallbackMock);
+    }
+
+    @Test
+    public void givenStatsEnabled_whenForwardingDeviceStateMsgToStateService_thenStatsAreRecorded() {
+        // GIVEN
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "stats", statsMock);
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "statsEnabled", true);
+
+        var stateMsg = TransportProtos.DeviceStateServiceMsgProto.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
+                .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
+                .setAdded(true)
+                .setUpdated(false)
+                .setDeleted(false)
+                .build();
+
+        doCallRealMethod().when(defaultTbCoreConsumerServiceMock).forwardToStateService(stateMsg, tbCallbackMock);
+
+        // WHEN
+        defaultTbCoreConsumerServiceMock.forwardToStateService(stateMsg, tbCallbackMock);
+
+        // THEN
+        then(statsMock).should().log(stateMsg);
+    }
+
+    @Test
+    public void givenStatsDisabled_whenForwardingDeviceStateMsgToStateService_thenStatsAreNotRecorded() {
+        // GIVEN
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "stats", statsMock);
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "statsEnabled", false);
+
+        var stateMsg = TransportProtos.DeviceStateServiceMsgProto.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
+                .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
+                .setAdded(true)
+                .setUpdated(false)
+                .setDeleted(false)
+                .build();
+
+        doCallRealMethod().when(defaultTbCoreConsumerServiceMock).forwardToStateService(stateMsg, tbCallbackMock);
+
+        // WHEN
+        defaultTbCoreConsumerServiceMock.forwardToStateService(stateMsg, tbCallbackMock);
+
+        // THEN
+        then(statsMock).should(never()).log(stateMsg);
+    }
+
+    @Test
+    public void givenProcessingSuccess_whenForwardingConnectMsgToStateService_thenOnSuccessCallbackIsCalled() {
+        // GIVEN
         var connectMsg = TransportProtos.DeviceConnectProto.newBuilder()
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
@@ -78,17 +149,14 @@ public class DefaultTbCoreConsumerServiceTest {
         defaultTbCoreConsumerServiceMock.forwardToStateService(connectMsg, tbCallbackMock);
 
         // THEN
-        then(stateServiceMock).should(times(1)).onDeviceConnect(tenantId, deviceId, time);
-        then(tbCallbackMock).should(times(1)).onSuccess();
+        then(stateServiceMock).should().onDeviceConnect(tenantId, deviceId, time);
+        then(tbCallbackMock).should().onSuccess();
+        then(tbCallbackMock).should(never()).onFailure(any());
     }
 
     @Test
-    public void givenOnDeviceConnectThrowsException_whenForwardToStateService_thenOnlyCallbackOnFailureIsCalled() {
+    public void givenProcessingFailure_whenForwardingConnectMsgToStateService_thenOnFailureCallbackIsCalled() {
         // GIVEN
-        var tenantId = new TenantId(UUID.randomUUID());
-        var deviceId = new DeviceId(UUID.randomUUID());
-        var time = System.currentTimeMillis();
-
         var connectMsg = TransportProtos.DeviceConnectProto.newBuilder()
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
@@ -97,9 +165,9 @@ public class DefaultTbCoreConsumerServiceTest {
                 .setLastConnectTime(time)
                 .build();
 
-        var runtimeException = new RuntimeException("Something bad happened!");
-
         doCallRealMethod().when(defaultTbCoreConsumerServiceMock).forwardToStateService(connectMsg, tbCallbackMock);
+
+        var runtimeException = new RuntimeException("Something bad happened!");
         doThrow(runtimeException).when(stateServiceMock).onDeviceConnect(tenantId, deviceId, time);
 
         // WHEN
@@ -107,18 +175,58 @@ public class DefaultTbCoreConsumerServiceTest {
 
         // THEN
         then(tbCallbackMock).should(never()).onSuccess();
-        then(tbCallbackMock).should(times(1)).onFailure(runtimeException);
+        then(tbCallbackMock).should().onFailure(runtimeException);
     }
 
     @Test
-    public void givenActivityMsgAndStatsAreEnabled_whenForwardToStateService_thenOnDeviceActivityAndCallbackAreCalled() {
+    public void givenStatsEnabled_whenForwardingConnectMsgToStateService_thenStatsAreRecorded() {
         // GIVEN
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "stats", statsMock);
         ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "statsEnabled", true);
 
-        var tenantId = new TenantId(UUID.randomUUID());
-        var deviceId = new DeviceId(UUID.randomUUID());
-        var time = System.currentTimeMillis();
+        var connectMsg = TransportProtos.DeviceConnectProto.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
+                .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
+                .setLastConnectTime(time)
+                .build();
 
+        doCallRealMethod().when(defaultTbCoreConsumerServiceMock).forwardToStateService(connectMsg, tbCallbackMock);
+
+        // WHEN
+        defaultTbCoreConsumerServiceMock.forwardToStateService(connectMsg, tbCallbackMock);
+
+        // THEN
+        then(statsMock).should().log(connectMsg);
+    }
+
+    @Test
+    public void givenStatsDisabled_whenForwardingConnectMsgToStateService_thenStatsAreNotRecorded() {
+        // GIVEN
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "stats", statsMock);
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "statsEnabled", false);
+
+        var connectMsg = TransportProtos.DeviceConnectProto.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
+                .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
+                .setLastConnectTime(time)
+                .build();
+
+        doCallRealMethod().when(defaultTbCoreConsumerServiceMock).forwardToStateService(connectMsg, tbCallbackMock);
+
+        // WHEN
+        defaultTbCoreConsumerServiceMock.forwardToStateService(connectMsg, tbCallbackMock);
+
+        // THEN
+        then(statsMock).should(never()).log(connectMsg);
+    }
+
+    @Test
+    public void givenProcessingSuccess_whenForwardingActivityMsgToStateService_thenOnSuccessCallbackIsCalled() {
+        // GIVEN
         var activityMsg = TransportProtos.DeviceActivityProto.newBuilder()
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
@@ -133,18 +241,14 @@ public class DefaultTbCoreConsumerServiceTest {
         defaultTbCoreConsumerServiceMock.forwardToStateService(activityMsg, tbCallbackMock);
 
         // THEN
-        then(statsMock).should(times(1)).log(activityMsg);
-        then(stateServiceMock).should(times(1)).onDeviceActivity(tenantId, deviceId, time);
-        then(tbCallbackMock).should(times(1)).onSuccess();
+        then(stateServiceMock).should().onDeviceActivity(tenantId, deviceId, time);
+        then(tbCallbackMock).should().onSuccess();
+        then(tbCallbackMock).should(never()).onFailure(any());
     }
 
     @Test
-    public void givenOnDeviceActivityThrowsException_whenForwardToStateService_thenOnlyCallbackOnFailureIsCalled() {
+    public void givenProcessingFailure_whenForwardingActivityMsgToStateService_thenOnFailureCallbackIsCalled() {
         // GIVEN
-        var tenantId = new TenantId(UUID.randomUUID());
-        var deviceId = new DeviceId(UUID.randomUUID());
-        var time = System.currentTimeMillis();
-
         var activityMsg = TransportProtos.DeviceActivityProto.newBuilder()
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
@@ -153,9 +257,9 @@ public class DefaultTbCoreConsumerServiceTest {
                 .setLastActivityTime(time)
                 .build();
 
-        var runtimeException = new RuntimeException("Something bad happened!");
-
         doCallRealMethod().when(defaultTbCoreConsumerServiceMock).forwardToStateService(activityMsg, tbCallbackMock);
+
+        var runtimeException = new RuntimeException("Something bad happened!");
         doThrow(runtimeException).when(stateServiceMock).onDeviceActivity(tenantId, deviceId, time);
 
         // WHEN
@@ -164,21 +268,63 @@ public class DefaultTbCoreConsumerServiceTest {
         // THEN
         then(tbCallbackMock).should(never()).onSuccess();
 
-        var exceptionCaptor = ArgumentCaptor.forClass(Exception.class);
-        then(tbCallbackMock).should(times(1)).onFailure(exceptionCaptor.capture());
-
+        var exceptionCaptor = ArgumentCaptor.forClass(Throwable.class);
+        then(tbCallbackMock).should().onFailure(exceptionCaptor.capture());
         assertThat(exceptionCaptor.getValue())
                 .isInstanceOf(RuntimeException.class)
-                .hasMessage("Failed to update device activity for device [" + deviceId.getId() + "]!");
+                .hasMessage("Failed to update device activity for device [" + deviceId.getId() + "]!")
+                .hasCause(runtimeException);
     }
 
     @Test
-    public void givenDisconnectMsg_whenForwardToStateService_thenOnDeviceDisconnectAndCallbackAreCalled() {
+    public void givenStatsEnabled_whenForwardingActivityMsgToStateService_thenStatsAreRecorded() {
         // GIVEN
-        var tenantId = new TenantId(UUID.randomUUID());
-        var deviceId = new DeviceId(UUID.randomUUID());
-        var time = System.currentTimeMillis();
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "stats", statsMock);
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "statsEnabled", true);
 
+        var activityMsg = TransportProtos.DeviceActivityProto.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
+                .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
+                .setLastActivityTime(time)
+                .build();
+
+        doCallRealMethod().when(defaultTbCoreConsumerServiceMock).forwardToStateService(activityMsg, tbCallbackMock);
+
+        // WHEN
+        defaultTbCoreConsumerServiceMock.forwardToStateService(activityMsg, tbCallbackMock);
+
+        // THEN
+        then(statsMock).should().log(activityMsg);
+    }
+
+    @Test
+    public void givenStatsDisabled_whenForwardingActivityMsgToStateService_thenStatsAreNotRecorded() {
+        // GIVEN
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "stats", statsMock);
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "statsEnabled", false);
+
+        var activityMsg = TransportProtos.DeviceActivityProto.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
+                .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
+                .setLastActivityTime(time)
+                .build();
+
+        doCallRealMethod().when(defaultTbCoreConsumerServiceMock).forwardToStateService(activityMsg, tbCallbackMock);
+
+        // WHEN
+        defaultTbCoreConsumerServiceMock.forwardToStateService(activityMsg, tbCallbackMock);
+
+        // THEN
+        then(statsMock).should(never()).log(activityMsg);
+    }
+
+    @Test
+    public void givenProcessingSuccess_whenForwardingDisconnectMsgToStateService_thenOnSuccessCallbackIsCalled() {
+        // GIVEN
         var disconnectMsg = TransportProtos.DeviceDisconnectProto.newBuilder()
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
@@ -193,17 +339,14 @@ public class DefaultTbCoreConsumerServiceTest {
         defaultTbCoreConsumerServiceMock.forwardToStateService(disconnectMsg, tbCallbackMock);
 
         // THEN
-        then(stateServiceMock).should(times(1)).onDeviceDisconnect(tenantId, deviceId, time);
-        then(tbCallbackMock).should(times(1)).onSuccess();
+        then(stateServiceMock).should().onDeviceDisconnect(tenantId, deviceId, time);
+        then(tbCallbackMock).should().onSuccess();
+        then(tbCallbackMock).should(never()).onFailure(any());
     }
 
     @Test
-    public void givenOnDeviceDisconnectThrowsException_whenForwardToStateService_thenOnlyCallbackOnFailureIsCalled() {
+    public void givenProcessingFailure_whenForwardingDisconnectMsgToStateService_thenOnFailureCallbackIsCalled() {
         // GIVEN
-        var tenantId = new TenantId(UUID.randomUUID());
-        var deviceId = new DeviceId(UUID.randomUUID());
-        var time = System.currentTimeMillis();
-
         var disconnectMsg = TransportProtos.DeviceDisconnectProto.newBuilder()
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
@@ -212,9 +355,9 @@ public class DefaultTbCoreConsumerServiceTest {
                 .setLastDisconnectTime(time)
                 .build();
 
-        var runtimeException = new RuntimeException("Something bad happened!");
-
         doCallRealMethod().when(defaultTbCoreConsumerServiceMock).forwardToStateService(disconnectMsg, tbCallbackMock);
+
+        var runtimeException = new RuntimeException("Something bad happened!");
         doThrow(runtimeException).when(stateServiceMock).onDeviceDisconnect(tenantId, deviceId, time);
 
         // WHEN
@@ -222,16 +365,58 @@ public class DefaultTbCoreConsumerServiceTest {
 
         // THEN
         then(tbCallbackMock).should(never()).onSuccess();
-        then(tbCallbackMock).should(times(1)).onFailure(runtimeException);
+        then(tbCallbackMock).should().onFailure(runtimeException);
     }
 
     @Test
-    public void givenInactivityMsg_whenForwardToStateService_thenOnDeviceInactivityAndCallbackAreCalled() {
+    public void givenStatsEnabled_whenForwardingDisconnectMsgToStateService_thenStatsAreRecorded() {
         // GIVEN
-        var tenantId = new TenantId(UUID.randomUUID());
-        var deviceId = new DeviceId(UUID.randomUUID());
-        var time = System.currentTimeMillis();
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "stats", statsMock);
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "statsEnabled", true);
 
+        var disconnectMsg = TransportProtos.DeviceDisconnectProto.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
+                .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
+                .setLastDisconnectTime(time)
+                .build();
+
+        doCallRealMethod().when(defaultTbCoreConsumerServiceMock).forwardToStateService(disconnectMsg, tbCallbackMock);
+
+        // WHEN
+        defaultTbCoreConsumerServiceMock.forwardToStateService(disconnectMsg, tbCallbackMock);
+
+        // THEN
+        then(statsMock).should().log(disconnectMsg);
+    }
+
+    @Test
+    public void givenStatsDisabled_whenForwardingDisconnectMsgToStateService_thenStatsAreNotRecorded() {
+        // GIVEN
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "stats", statsMock);
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "statsEnabled", false);
+
+        var disconnectMsg = TransportProtos.DeviceDisconnectProto.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
+                .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
+                .setLastDisconnectTime(time)
+                .build();
+
+        doCallRealMethod().when(defaultTbCoreConsumerServiceMock).forwardToStateService(disconnectMsg, tbCallbackMock);
+
+        // WHEN
+        defaultTbCoreConsumerServiceMock.forwardToStateService(disconnectMsg, tbCallbackMock);
+
+        // THEN
+        then(statsMock).should(never()).log(disconnectMsg);
+    }
+
+    @Test
+    public void givenProcessingSuccess_whenForwardingInactivityMsgToStateService_thenOnSuccessCallbackIsCalled() {
+        // GIVEN
         var inactivityMsg = TransportProtos.DeviceInactivityProto.newBuilder()
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
@@ -246,17 +431,14 @@ public class DefaultTbCoreConsumerServiceTest {
         defaultTbCoreConsumerServiceMock.forwardToStateService(inactivityMsg, tbCallbackMock);
 
         // THEN
-        then(stateServiceMock).should(times(1)).onDeviceInactivity(tenantId, deviceId, time);
-        then(tbCallbackMock).should(times(1)).onSuccess();
+        then(stateServiceMock).should().onDeviceInactivity(tenantId, deviceId, time);
+        then(tbCallbackMock).should().onSuccess();
+        then(tbCallbackMock).should(never()).onFailure(any());
     }
 
     @Test
-    public void givenOnDeviceInactivityThrowsException_whenForwardToStateService_thenOnlyCallbackOnFailureIsCalled() {
+    public void givenProcessingFailure_whenForwardingInactivityMsgToStateService_thenOnFailureCallbackIsCalled() {
         // GIVEN
-        var tenantId = new TenantId(UUID.randomUUID());
-        var deviceId = new DeviceId(UUID.randomUUID());
-        var time = System.currentTimeMillis();
-
         var inactivityMsg = TransportProtos.DeviceInactivityProto.newBuilder()
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
@@ -265,9 +447,9 @@ public class DefaultTbCoreConsumerServiceTest {
                 .setLastInactivityTime(time)
                 .build();
 
-        var runtimeException = new RuntimeException("Something bad happened!");
-
         doCallRealMethod().when(defaultTbCoreConsumerServiceMock).forwardToStateService(inactivityMsg, tbCallbackMock);
+
+        var runtimeException = new RuntimeException("Something bad happened!");
         doThrow(runtimeException).when(stateServiceMock).onDeviceInactivity(tenantId, deviceId, time);
 
         // WHEN
@@ -275,7 +457,53 @@ public class DefaultTbCoreConsumerServiceTest {
 
         // THEN
         then(tbCallbackMock).should(never()).onSuccess();
-        then(tbCallbackMock).should(times(1)).onFailure(runtimeException);
+        then(tbCallbackMock).should().onFailure(runtimeException);
+    }
+
+    @Test
+    public void givenStatsEnabled_whenForwardingInactivityMsgToStateService_thenStatsAreRecorded() {
+        // GIVEN
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "stats", statsMock);
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "statsEnabled", true);
+
+        var inactivityMsg = TransportProtos.DeviceInactivityProto.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
+                .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
+                .setLastInactivityTime(time)
+                .build();
+
+        doCallRealMethod().when(defaultTbCoreConsumerServiceMock).forwardToStateService(inactivityMsg, tbCallbackMock);
+
+        // WHEN
+        defaultTbCoreConsumerServiceMock.forwardToStateService(inactivityMsg, tbCallbackMock);
+
+        // THEN
+        then(statsMock).should().log(inactivityMsg);
+    }
+
+    @Test
+    public void givenStatsDisabled_whenForwardingInactivityMsgToStateService_thenStatsAreNotRecorded() {
+        // GIVEN
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "stats", statsMock);
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "statsEnabled", false);
+
+        var inactivityMsg = TransportProtos.DeviceInactivityProto.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setDeviceIdMSB(deviceId.getId().getMostSignificantBits())
+                .setDeviceIdLSB(deviceId.getId().getLeastSignificantBits())
+                .setLastInactivityTime(time)
+                .build();
+
+        doCallRealMethod().when(defaultTbCoreConsumerServiceMock).forwardToStateService(inactivityMsg, tbCallbackMock);
+
+        // WHEN
+        defaultTbCoreConsumerServiceMock.forwardToStateService(inactivityMsg, tbCallbackMock);
+
+        // THEN
+        then(statsMock).should(never()).log(inactivityMsg);
     }
 
 }
