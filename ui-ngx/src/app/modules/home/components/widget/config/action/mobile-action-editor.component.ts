@@ -14,18 +14,22 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit, QueryList, ViewChildren } from '@angular/core';
-import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
-import { Store } from '@ngrx/store';
-import { AppState } from '@app/core/core.state';
+import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import {
+  ControlValueAccessor,
+  NG_VALUE_ACCESSOR,
+  UntypedFormBuilder,
+  UntypedFormGroup,
+  Validators
+} from '@angular/forms';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import {
+  WidgetActionType,
   WidgetMobileActionDescriptor,
   WidgetMobileActionType,
   widgetMobileActionTypeTranslationMap
 } from '@shared/models/widget.models';
-import { CustomActionEditorCompleter } from '@home/components/widget/action/custom-action.models';
-import { JsFuncComponent } from '@shared/components/js-func.component';
+import { CustomActionEditorCompleter } from '@home/components/widget/config/action/custom-action.models';
 import {
   getDefaultGetLocationFunction,
   getDefaultGetPhoneNumberFunction,
@@ -35,7 +39,7 @@ import {
   getDefaultProcessLaunchResultFunction,
   getDefaultProcessLocationFunction,
   getDefaultProcessQrCodeFunction
-} from '@home/components/widget/action/mobile-action-editor.models';
+} from '@home/components/widget/config/action/mobile-action-editor.models';
 import { WidgetService } from '@core/http/widget.service';
 
 @Component({
@@ -49,8 +53,6 @@ import { WidgetService } from '@core/http/widget.service';
   }]
 })
 export class MobileActionEditorComponent implements ControlValueAccessor, OnInit {
-
-  @ViewChildren(JsFuncComponent) jsFuncComponents: QueryList<JsFuncComponent>;
 
   mobileActionTypes = Object.keys(WidgetMobileActionType);
   mobileActionTypeTranslations = widgetMobileActionTypeTranslationMap;
@@ -75,10 +77,9 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
   @Input()
   disabled: boolean;
 
-  private propagateChange = (v: any) => { };
+  private propagateChange = (_v: any) => { };
 
-  constructor(private store: Store<AppState>,
-              private fb: UntypedFormBuilder,
+  constructor(private fb: UntypedFormBuilder,
               private widgetService: WidgetService) {
     this.functionScopeVariables = this.widgetService.getWidgetScopeVariables();
   }
@@ -87,7 +88,7 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
     this.propagateChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(_fn: any): void {
   }
 
   ngOnInit() {
@@ -158,7 +159,7 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
     }
     this.mobileActionTypeFormGroup = this.fb.group({});
     if (type) {
-      let processLaunchResultFunction;
+      let processLaunchResultFunction: string;
       switch (type) {
         case WidgetMobileActionType.takePictureFromGallery:
         case WidgetMobileActionType.takePhoto:
@@ -253,9 +254,5 @@ export class MobileActionEditorComponent implements ControlValueAccessor, OnInit
     });
   }
 
-  public validateOnSubmit() {
-    for (const jsFuncComponent of this.jsFuncComponents.toArray()) {
-      jsFuncComponent.validateOnSubmit();
-    }
-  }
+  protected readonly WidgetActionType = WidgetActionType;
 }

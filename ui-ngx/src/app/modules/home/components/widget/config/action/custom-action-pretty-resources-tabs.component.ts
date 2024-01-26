@@ -35,7 +35,7 @@ import { CustomActionDescriptor } from '@shared/models/widget.models';
 import { Ace } from 'ace-builds';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { ResizeObserver } from '@juggle/resize-observer';
-import { CustomPrettyActionEditorCompleter } from '@home/components/widget/action/custom-action.models';
+import { CustomPrettyActionEditorCompleter } from '@home/components/widget/config/action/custom-action.models';
 import { Observable } from 'rxjs/internal/Observable';
 import { forkJoin, from } from 'rxjs';
 import { map, tap } from 'rxjs/operators';

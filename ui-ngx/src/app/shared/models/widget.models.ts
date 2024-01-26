@@ -632,11 +632,7 @@ export interface CustomActionDescriptor {
   customModules?: Type<any>[];
 }
 
-export interface WidgetActionDescriptor extends CustomActionDescriptor {
-  id: string;
-  name: string;
-  icon: string;
-  displayName?: string;
+export interface WidgetAction extends CustomActionDescriptor {
   type: WidgetActionType;
   targetDashboardId?: string;
   targetDashboardStateId?: string;
@@ -657,9 +653,27 @@ export interface WidgetActionDescriptor extends CustomActionDescriptor {
   setEntityId?: boolean;
   stateEntityParamName?: string;
   mobileAction?: WidgetMobileActionDescriptor;
+}
+
+export interface WidgetActionDescriptor extends WidgetAction {
+  id: string;
+  name: string;
+  icon: string;
+  displayName?: string;
   useShowWidgetActionFunction?: boolean;
   showWidgetActionFunction?: string;
 }
+
+export const actionDescriptorToAction = (descriptor: WidgetActionDescriptor): WidgetAction => {
+  const result: WidgetActionDescriptor = {...descriptor};
+  delete result.id;
+  delete result.name;
+  delete result.icon;
+  delete result.displayName;
+  delete result.useShowWidgetActionFunction;
+  delete result.showWidgetActionFunction;
+  return result;
+};
 
 export interface WidgetComparisonSettings {
   comparisonEnabled?: boolean;

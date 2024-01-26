@@ -24,6 +24,7 @@ const processImageFunctionTemplate =
   '\n' +
   'function showImageDialog(title, imageUrl) {\n' +
   '    setTimeout(function() {\n' +
+  // eslint-disable-next-line max-len
   '        widgetContext.customDialog.customDialog(imageDialogTemplate, ImageDialogController, {imageUrl: imageUrl, title: title}).subscribe();\n' +
   '    }, 100);\n' +
   '}\n' +
@@ -82,6 +83,7 @@ const processImageFunctionTemplate =
   '}\n';
 
 const processLaunchResultFunctionTemplate =
+  // eslint-disable-next-line max-len
   '// Optional function body to process result of attempt to launch external mobile application (for ex. map application or phone call application). \n' +
   '// - launched - boolean value indicating if the external application was successfully launched.\n\n' +
   'showLaunchStatusDialog(\'--TITLE--\', launched);\n' +
@@ -166,6 +168,7 @@ const getLocationFunctionTemplate =
   '\n' +
   'function getLocationFromEntityAttributes() {\n' +
   '    if (entityId) {\n' +
+  // eslint-disable-next-line max-len
   '        return widgetContext.attributeService.getEntityAttributes(entityId, \'SERVER_SCOPE\', [\'latitude\', \'longitude\']).pipe(widgetContext.rxjs.map(function(attributeData) {\n' +
   '            var res = [0,0];\n' +
   '            if (attributeData && attributeData.length === 2) {\n' +
@@ -188,6 +191,7 @@ const getPhoneNumberFunctionTemplate =
   '\n' +
   'function getPhoneNumberFromEntityAttributes() {\n' +
   '    if (entityId) {\n' +
+  // eslint-disable-next-line max-len
   '        return widgetContext.attributeService.getEntityAttributes(entityId, \'SERVER_SCOPE\', [\'phone\']).pipe(widgetContext.rxjs.map(function(attributeData) {\n' +
   '            var res = 0;\n' +
   '            if (attributeData && attributeData.length === 1) {\n' +
@@ -200,8 +204,8 @@ const getPhoneNumberFunctionTemplate =
   '    }\n' +
   '}\n';
 
-export function getDefaultProcessImageFunction(type: WidgetMobileActionType): string {
-  let title;
+export const getDefaultProcessImageFunction = (type: WidgetMobileActionType): string => {
+  let title: string;
   switch (type) {
     case WidgetMobileActionType.takePictureFromGallery:
       title = 'Gallery picture';
@@ -214,10 +218,10 @@ export function getDefaultProcessImageFunction(type: WidgetMobileActionType): st
       break;
   }
   return processImageFunctionTemplate.replace('--TITLE--', title);
-}
+};
 
-export function getDefaultProcessLaunchResultFunction(type: WidgetMobileActionType): string {
-  let title;
+export const getDefaultProcessLaunchResultFunction = (type: WidgetMobileActionType): string => {
+  let title: string;
   switch (type) {
     case WidgetMobileActionType.mapLocation:
       title = 'Map location';
@@ -230,25 +234,17 @@ export function getDefaultProcessLaunchResultFunction(type: WidgetMobileActionTy
       break;
   }
   return processLaunchResultFunctionTemplate.replace('--TITLE--', title);
-}
+};
 
-export function getDefaultProcessQrCodeFunction() {
-  return processQrCodeFunction;
-}
+export const getDefaultProcessQrCodeFunction = () => processQrCodeFunction;
 
-export function getDefaultProcessLocationFunction() {
-  return processLocationFunction;
-}
+export const getDefaultProcessLocationFunction = () => processLocationFunction;
 
-export function getDefaultGetLocationFunction() {
-  return getLocationFunctionTemplate;
-}
+export const getDefaultGetLocationFunction = () => getLocationFunctionTemplate;
 
-export function getDefaultGetPhoneNumberFunction() {
-  return getPhoneNumberFunctionTemplate;
-}
+export const getDefaultGetPhoneNumberFunction = () => getPhoneNumberFunctionTemplate;
 
-export function getDefaultHandleEmptyResultFunction(type: WidgetMobileActionType): string {
+export const getDefaultHandleEmptyResultFunction = (type: WidgetMobileActionType): string => {
   let message = 'Mobile action was cancelled!';
   switch (type) {
     case WidgetMobileActionType.takePictureFromGallery:
@@ -277,9 +273,9 @@ export function getDefaultHandleEmptyResultFunction(type: WidgetMobileActionType
       break;
   }
   return handleEmptyResultFunctionTemplate.replace('--MESSAGE--', message);
-}
+};
 
-export function getDefaultHandleErrorFunction(type: WidgetMobileActionType): string {
+export const getDefaultHandleErrorFunction = (type: WidgetMobileActionType): string => {
   let title = 'Mobile action failed';
   switch (type) {
     case WidgetMobileActionType.takePictureFromGallery:
@@ -308,4 +304,4 @@ export function getDefaultHandleErrorFunction(type: WidgetMobileActionType): str
       break;
   }
   return handleErrorFunctionTemplate.replace('--TITLE--', title);
-}
+};

@@ -15,7 +15,7 @@
 ///
 
 // eslint-disable-next-line @typescript-eslint/triple-slash-reference
-/// <reference path="../../../../../../../src/typings/split.js.typings.d.ts" />
+/// <reference path="../../../../../../../../src/typings/split.js.typings.d.ts" />
 
 import {
   AfterViewInit,
@@ -35,7 +35,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { combineLatest } from 'rxjs';
 import { CustomActionDescriptor } from '@shared/models/widget.models';
-import { CustomPrettyActionEditorCompleter } from '@home/components/widget/action/custom-action.models';
+import { CustomPrettyActionEditorCompleter } from '@home/components/widget/config/action/custom-action.models';
 
 @Component({
   selector: 'tb-custom-action-pretty-editor',

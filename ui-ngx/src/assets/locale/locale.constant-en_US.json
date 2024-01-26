@@ -1006,6 +1006,10 @@
         "edges": "Customer edge instances",
         "manage-edges": "Manage edges"
     },
+    "css-size": {
+        "size-value-required": "Size value is required",
+        "invalid-size-value": "Invalid size value"
+    },
     "date": {
         "last-update-n-ago": "Last update N ago",
         "last-update-n-ago-text": "Last update {{ agoText }}",
@@ -4987,6 +4991,8 @@
         "target-dashboard-state-required": "Target dashboard state is required",
         "set-entity-from-widget": "Set entity from widget",
         "target-dashboard": "Target dashboard",
+        "select-target-dashboard": "Select target dashboard",
+        "target-dashboard-required": "Target dashboard is required.",
         "open-right-layout": "Open right dashboard layout (mobile view)",
         "state-display-type": "Dashboard state display option",
         "open-normal": "Normal",
@@ -5012,12 +5018,13 @@
         "popover-placement-leftBottom": "Left bottom",
         "popover-hide-on-click-outside": "Hide popover on outside click",
         "popover-hide-dashboard-toolbar": "Hide dashboard toolbar in popover",
-        "popover-width": "Popover width in browser units (ex. 100px, 25vw)",
-        "popover-height": "Popover height in browser units (ex. 100px, 25vh)",
+        "popover-width": "Popover width",
+        "popover-height": "Popover height",
         "popover-style": "Popover style",
         "open-new-browser-tab": "Open in a new browser tab",
         "mobile": {
           "action-type": "Mobile action type",
+          "select-action-type": "Select mobile action type",
           "action-type-required": "Mobile action type is required",
           "take-picture-from-gallery": "Take picture from gallery",
           "take-photo": "Take photo",
@@ -5027,7 +5034,9 @@
           "make-phone-call": "Make phone call",
           "get-location": "Get phone location",
           "take-screenshot": "Take screenshot"
-        }
+        },
+        "custom-action-function": "Custom action function",
+        "custom-pretty-function": "Custom action (with HTML template) function"
     },
     "widgets-bundle": {
         "current": "Current bundle",
@@ -5123,12 +5132,14 @@
         "search-actions": "Search actions",
         "no-actions-text": "No actions found",
         "action-source": "Action source",
+        "select-action-source": "Select action source",
         "action-source-required": "Action source is required.",
         "action-name": "Name",
         "action-name-required": "Action name is required.",
-        "action-name-not-unique": "Another action with the same name already exists.<br/>Action name should be unique within the same action source.",
+        "action-name-not-unique": "Another action with the same name already exists.\nAction name should be unique within the same action source.",
         "action-icon": "Icon",
         "show-hide-action-using-function": "Show/hide action using function",
+        "show-action-function": "Show action function",
         "action-type": "Type",
         "action-type-required": "Action type is required.",
         "edit-action": "Edit action",
