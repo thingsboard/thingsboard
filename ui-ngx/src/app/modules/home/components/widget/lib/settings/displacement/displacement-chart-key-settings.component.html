@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<ng-container [formGroup]="displacementSettingsFormGroup" class="tb-displacement-chart-key-settings">
+<div [formGroup]="displacementSettingsFormGroup" class="tb-displacement-chart-key-settings">
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widgets.chart.common-settings</div>
     <mat-slide-toggle class="mat-slide" formControlName="grid">
@@ -73,7 +73,7 @@
     <div class="tb-form-row space-between">
       <div translate>widgets.displacement.baseline.select-timestamp</div>
       <div class="tb-form-row">
-        <mat-form-field class="mat-input-datetime" style="width: unset;">
+        <mat-form-field class="mat-input-datetime">
           <mat-label translate>widgets.displacement.baseline.select-date</mat-label>
           <mat-datetimepicker-toggle [for]="datePicker" matPrefix></mat-datetimepicker-toggle>
           <mat-datetimepicker #datePicker type="date" openOnFocus="true"></mat-datetimepicker>
@@ -84,7 +84,7 @@
             [disabled]="displacementSettingsFormGroup.get('baseline.enterManually').value"
           >
         </mat-form-field>
-        <mat-form-field class="mat-input-datetime" style="width: unset;">
+        <mat-form-field class="mat-input-datetime">
           <mat-label translate>widgets.displacement.baseline.select-time</mat-label>
           <mat-datetimepicker-toggle [for]="timePicker" matPrefix></mat-datetimepicker-toggle>
           <mat-datetimepicker #timePicker type="time" openOnFocus="true"></mat-datetimepicker>
@@ -107,9 +107,9 @@
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
         <div class="tb-form-table">
-          <div class="tb-form-table-header no-padding-right">
-            <div class="tb-form-table-header-cell tb-key-header" translate>widgets.displacement.baseline.headers.key</div>
-            <div class="tb-form-table-header-cell tb-key-header" translate>widgets.displacement.baseline.headers.value</div>
+          <div class="tb-form-table-header">
+            <div class="tb-form-table-header-cell flex-1" translate>widgets.displacement.baseline.headers.key</div>
+            <div class="tb-form-table-header-cell flex-1" translate>widgets.displacement.baseline.headers.value</div>
           </div>
           <div *ngIf="baselineArray.controls.length" class="tb-form-table-body">
             <div class="tb-form-table-row tb-data-key-row"
@@ -138,9 +138,9 @@
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widgets.displacement.position.title</div>
     <div class="tb-form-table">
-      <div class="tb-form-table-header no-padding-right">
-        <div class="tb-form-table-header-cell tb-key-header" translate>widgets.displacement.position.headers.key</div>
-        <div class="tb-form-table-header-cell tb-key-header" translate>widgets.displacement.position.headers.depth</div>
+      <div class="tb-form-table-header">
+        <div class="tb-form-table-header-cell flex-1" translate>widgets.displacement.position.headers.key</div>
+        <div class="tb-form-table-header-cell flex-1" translate>widgets.displacement.position.headers.depth</div>
       </div>
       <div *ngIf="positionArray.controls.length" class="tb-form-table-body">
         <div class="tb-form-table-row tb-data-key-row"
@@ -162,11 +162,11 @@
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widgets.displacement.layer.title</div>
     <div class="tb-form-table">
-      <div class="tb-form-table-header no-padding-right">
-        <div class="tb-form-table-header-cell tb-key-header" translate>widgets.displacement.layer.headers.from</div>
-        <div class="tb-form-table-header-cell tb-key-header" translate>widgets.displacement.layer.headers.to</div>
-        <div class="tb-form-table-header-cell tb-key-header" translate>widgets.displacement.layer.headers.name</div>
-        <div class="tb-form-table-header-cell tb-key-header" translate>widgets.displacement.layer.headers.color</div>
+      <div class="tb-form-table-header">
+        <div class="tb-form-table-header-cell flex-1" translate>widgets.displacement.layer.headers.from</div>
+        <div class="tb-form-table-header-cell flex-1" translate>widgets.displacement.layer.headers.to</div>
+        <div class="tb-form-table-header-cell flex-1" translate>widgets.displacement.layer.headers.name</div>
+        <div class="tb-form-table-header-cell flex-1" translate>widgets.displacement.layer.headers.color</div>
         <div class="tb-form-table-header-cell tb-actions-header"></div>
       </div>
       <div *ngIf="layersArray.controls.length" class="tb-form-table-body">
@@ -211,10 +211,10 @@
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widgets.displacement.threshold.title</div>
     <div class="tb-form-table">
-      <div class="tb-form-table-header no-padding-right">
-        <div class="tb-form-table-header-cell tb-key-header" translate>widgets.displacement.threshold.headers.x</div>
-        <div class="tb-form-table-header-cell tb-key-header" translate>widgets.displacement.threshold.headers.name</div>
-        <div class="tb-form-table-header-cell tb-key-header" translate>widgets.displacement.threshold.headers.color</div>
+      <div class="tb-form-table-header">
+        <div class="tb-form-table-header-cell flex-1" translate>widgets.displacement.threshold.headers.x</div>
+        <div class="tb-form-table-header-cell flex-1" translate>widgets.displacement.threshold.headers.name</div>
+        <div class="tb-form-table-header-cell flex-1" translate>widgets.displacement.threshold.headers.color</div>
         <div class="tb-form-table-header-cell tb-actions-header"></div>
       </div>
       <div *ngIf="thresholdsArray.controls.length" class="tb-form-table-body">
@@ -251,4 +251,4 @@
       </button>
     </div>
   </div>
-</ng-container>
+</div>

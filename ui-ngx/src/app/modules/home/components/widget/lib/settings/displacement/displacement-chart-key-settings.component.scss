@@ -1,0 +1,19 @@
+@import '../../../../../../../../scss/constants';
+
+.tb-displacement-chart-key-settings {
+  display: flex;
+  flex-direction: column;
+  row-gap: 16px;
+
+  .mat-input-datetime {
+    width: unset !important;
+  }
+
+  .tb-actions-header {
+    width: 40px;
+  }
+
+  .flex-1 {
+    flex: 1;
+  }
+}

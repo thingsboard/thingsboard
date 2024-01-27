@@ -16,7 +16,6 @@
 
 import { Component, Input, OnInit, forwardRef } from "@angular/core";
 import {
-  AbstractControl,
   ControlValueAccessor,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
@@ -24,7 +23,8 @@ import {
   UntypedFormBuilder,
   UntypedFormControl,
   UntypedFormGroup,
-  Validator
+  Validator,
+  Validators
 } from "@angular/forms";
 import { AppState } from "@app/core/core.state";
 import { WidgetConfigComponentData } from "@app/modules/home/models/widget-component.models";
@@ -70,6 +70,7 @@ export const displacementDefaultSettings = (dataKeys: string[]) => {
 @Component({
   selector: "tb-displacement-chart-key-settings",
   templateUrl: "./displacement-chart-key-settings.component.html",
+  styleUrls: ['./displacement-chart-key-settings.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -117,18 +118,28 @@ export class DisplacementChartKeySettingsComponent extends PageComponent impleme
         direction: [DisplacementCalculationDirection.START, []]
       }),
       baseline: this.fb.group({
-        baseline_date: [null, []],
-        baseline_time: [null, []],
+        baseline_date: [null, [Validators.required]],
+        baseline_time: [null, [Validators.required]],
         enterManually: [false, []],
         baseline: this.fb.array(
-          this.dataKeys().map((key) => this.fb.group({ key: [key, []], value: [null, []] }))
+          this.dataKeys().map((key) => this.fb.group({
+            key: [key, [Validators.required]],
+            value: [null, [Validators.required]]
+          }))
         ),
       }),
       position: this.fb.array(
-        this.dataKeys().map((key) => this.fb.group({ key: [key, []], depth: [null, []] }))
+        this.dataKeys().map((key) => this.fb.group({
+          key: [key, [Validators.required]],
+          depth: [null, [Validators.required]]
+        }))
       ),
       layers: this.fb.array([]),
       thresholds: this.fb.array([]),
+    });
+
+    this.displacementSettingsFormGroup.get('baseline.enterManually').valueChanges.subscribe(() => {
+      this.updateValidators(true);
     });
 
     this.displacementSettingsFormGroup.valueChanges.subscribe(() => {
@@ -163,10 +174,10 @@ export class DisplacementChartKeySettingsComponent extends PageComponent impleme
   addLayer() {
     const layersArray = this.layersArray;
     const layerGroup = this.fb.group({
-      from: [null, []],
-      to: [null, []],
-      title: [null, []],
-      color: [null, []],
+      from: [null, [Validators.required]],
+      to: [null, [Validators.required]],
+      title: [null, [Validators.required]],
+      color: [null, [Validators.required]],
     });
     layersArray.push(layerGroup);
     this.displacementSettingsFormGroup.updateValueAndValidity();
@@ -175,9 +186,9 @@ export class DisplacementChartKeySettingsComponent extends PageComponent impleme
   addThreshold() {
     const thresholdsArray = this.thresholdsArray;
     const thresholdControl = this.fb.group({
-      x_pos: [null, []],
-      title: [null, []],
-      color: [null, []],
+      x_pos: [null, [Validators.required]],
+      title: [null, [Validators.required]],
+      color: [null, [Validators.required]],
     });
     thresholdsArray.push(thresholdControl);
     this.displacementSettingsFormGroup.updateValueAndValidity();
@@ -208,17 +219,17 @@ export class DisplacementChartKeySettingsComponent extends PageComponent impleme
     const thresholds = value.thresholds;
     if (layers && layers.length) {
       layers.forEach((layer) => this.layersArray.push(this.fb.group({
-        from: [layer.from, []],
-        to: [layer.to, []],
-        title: [layer.title, []],
-        color: [layer.color, []],
+        from: [layer.from, [Validators.required]],
+        to: [layer.to, [Validators.required]],
+        title: [layer.title, [Validators.required]],
+        color: [layer.color, [Validators.required]],
       }), {emitEvent: false}));
     }
     if (thresholds && thresholds.length) {
       thresholds.forEach((threshold) => this.thresholdsArray.push(this.fb.group({
-        x_pos: [threshold.x_pos, []],
-        title: [threshold.title, []],
-        color: [threshold.color, []],
+        x_pos: [threshold.x_pos, [Validators.required]],
+        title: [threshold.title, [Validators.required]],
+        color: [threshold.color, [Validators.required]],
       }), {emitEvent: false}))
     }
 
@@ -240,6 +251,17 @@ export class DisplacementChartKeySettingsComponent extends PageComponent impleme
   }
 
   private updateValidators(emitEvent?: boolean): void {
+    const enterBaselineManually = this.displacementSettingsFormGroup.get('baseline.enterManually').value;
+    if (enterBaselineManually) {
+      this.displacementSettingsFormGroup.get('baseline.baseline_date').disable({emitEvent});
+      this.displacementSettingsFormGroup.get('baseline.baseline_time').disable({emitEvent});
+      this.displacementSettingsFormGroup.get('baseline.baseline').enable({emitEvent});
+    } else {
+      this.displacementSettingsFormGroup.get('baseline.baseline_date').enable({emitEvent});
+      this.displacementSettingsFormGroup.get('baseline.baseline_time').enable({emitEvent});
+      this.displacementSettingsFormGroup.get('baseline.baseline').disable({emitEvent});
+    }
+
     this.displacementSettingsFormGroup.get('grid').updateValueAndValidity({emitEvent: false});
     this.displacementSettingsFormGroup.get('xaxis.min').updateValueAndValidity({emitEvent: false});
     this.displacementSettingsFormGroup.get('xaxis.max').updateValueAndValidity({emitEvent: false});

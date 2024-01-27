@@ -28,7 +28,6 @@ import { displacementDefaultSettings } from "./displacement-chart-key-settings.c
 @Component({
   selector: "tb-displacement-chart-widget-settings",
   templateUrl: "./displacement-chart-widget-settings.component.html",
-  styleUrls: ["./displacement-chart-widget-settings.component.scss"]
 })
 export class DisplacementChartWidgetSettingsComponent extends WidgetSettingsComponent {
   
