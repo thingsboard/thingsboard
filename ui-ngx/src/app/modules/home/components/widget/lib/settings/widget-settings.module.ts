@@ -305,6 +305,12 @@ import {
 import {
   DoughnutWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/chart/doughnut-widget-settings.component';
+import {
+  DisplacementChartKeySettingsComponent
+} from '@home/components/widget/lib/settings/displacement/displacement-chart-key-settings.component';
+import {
+  DisplacementChartWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/displacement/displacement-chart-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -416,7 +422,9 @@ import {
     ValueChartCardWidgetSettingsComponent,
     ProgressBarWidgetSettingsComponent,
     LiquidLevelCardWidgetSettingsComponent,
-    DoughnutWidgetSettingsComponent
+    DoughnutWidgetSettingsComponent,
+    DisplacementChartKeySettingsComponent,
+    DisplacementChartWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -533,7 +541,9 @@ import {
     ValueChartCardWidgetSettingsComponent,
     ProgressBarWidgetSettingsComponent,
     LiquidLevelCardWidgetSettingsComponent,
-    DoughnutWidgetSettingsComponent
+    DoughnutWidgetSettingsComponent,
+    DisplacementChartKeySettingsComponent,
+    DisplacementChartWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -616,5 +626,6 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-value-chart-card-widget-settings': ValueChartCardWidgetSettingsComponent,
   'tb-progress-bar-widget-settings': ProgressBarWidgetSettingsComponent,
   'tb-liquid-level-card-widget-settings': LiquidLevelCardWidgetSettingsComponent,
-  'tb-doughnut-widget-settings': DoughnutWidgetSettingsComponent
+  'tb-doughnut-widget-settings': DoughnutWidgetSettingsComponent,
+  'tb-displacement-chart-widget-settings': DisplacementChartWidgetSettingsComponent
 };
