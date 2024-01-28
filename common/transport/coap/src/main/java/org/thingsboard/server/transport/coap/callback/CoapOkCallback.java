@@ -20,6 +20,8 @@ import org.eclipse.californium.core.coap.Response;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 
+import static org.thingsboard.server.transport.coap.client.DefaultCoapClientContext.updateResponseObserve;
+
 public class CoapOkCallback implements TransportServiceCallback<Void> {
 
     protected final CoapExchange exchange;
@@ -36,6 +38,7 @@ public class CoapOkCallback implements TransportServiceCallback<Void> {
     public void onSuccess(Void msg) {
         Response response = new Response(onSuccessResponse);
         response.setConfirmable(isConRequest());
+        updateResponseObserve(exchange.advanced(), response);
         exchange.respond(response);
     }
 

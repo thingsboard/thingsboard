@@ -27,6 +27,8 @@ import org.eclipse.californium.core.server.resources.Resource;
 import org.eclipse.californium.core.server.resources.ResourceObserver;
 import org.thingsboard.server.coapserver.CoapServerService;
 import org.thingsboard.server.coapserver.TbCoapDtlsSessionInfo;
+import org.thingsboard.server.common.adaptor.AdaptorException;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
@@ -35,8 +37,6 @@ import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.security.DeviceTokenCredentials;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
-import org.thingsboard.server.common.adaptor.AdaptorException;
-import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.coap.callback.CoapDeviceAuthCallback;
@@ -57,6 +57,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.eclipse.californium.elements.DtlsEndpointContext.KEY_SESSION_ID;
+import static org.thingsboard.server.transport.coap.client.DefaultCoapClientContext.getTokenFromRequest;
 
 @Slf4j
 public class CoapTransportResource extends AbstractCoapTransportResource {
@@ -364,11 +365,6 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
 
     private UUID toSessionId(TransportProtos.SessionInfoProto sessionInfoProto) {
         return new UUID(sessionInfoProto.getSessionIdMSB(), sessionInfoProto.getSessionIdLSB());
-    }
-
-    private String getTokenFromRequest(Request request) {
-        return (request.getSourceContext() != null ? request.getSourceContext().getPeerAddress().getAddress().getHostAddress() : "null")
-                + ":" + (request.getSourceContext() != null ? request.getSourceContext().getPeerAddress().getPort() : -1) + ":" + request.getTokenString();
     }
 
     private Optional<DeviceTokenCredentials> decodeCredentials(Request request) {

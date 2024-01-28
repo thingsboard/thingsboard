@@ -102,15 +102,16 @@ public abstract class AbstractCoapServerSideRpcIntegrationTest extends AbstractC
         CoapTestCallback callbackCoap = new TestCoapCallbackForRPC(client, false, protobuf);
 
         CoapObserveRelation observeRelation = client.getObserveRelation(callbackCoap);
+        int expectedObserveCountAfterGpioRequest = 0;
         String awaitAlias = "await Two Way Rpc (client.getObserveRelation)";
         await(awaitAlias)
                 .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .until(() -> CoAP.ResponseCode.VALID.equals(callbackCoap.getResponseCode()) &&
                         callbackCoap.getObserve() != null &&
-                        0 == callbackCoap.getObserve());
+                        expectedObserveCountAfterGpioRequest == callbackCoap.getObserve());
         validateCurrentStateNotification(callbackCoap);
 
-        String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"26\",\"value\": 1}}";
+        String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"16\",\"value\": 1}}";
         String deviceId = savedDevice.getId().getId().toString();
         int expectedObserveCountAfterGpioRequest1 = callbackCoap.getObserve() + 1;
         String actualResult = doPostAsync("/api/rpc/twoway/" + deviceId, setGpioRequest, String.class, status().isOk());
@@ -123,14 +124,25 @@ public abstract class AbstractCoapServerSideRpcIntegrationTest extends AbstractC
         validateTwoWayStateChangedNotification(callbackCoap, expectedResponseResult, actualResult);
 
         int expectedObserveCountAfterGpioRequest2 = callbackCoap.getObserve() + 1;
+        setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"26\",\"value\": 2}}";
         actualResult = doPostAsync("/api/rpc/twoway/" + deviceId, setGpioRequest, String.class, status().isOk());
-        awaitAlias = "await Two Way Rpc (setGpio(method, params, value) first";
+        awaitAlias = "await Two Way Rpc (setGpio(method, params, value) second";
         await(awaitAlias)
                 .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .until(() -> CoAP.ResponseCode.CONTENT.equals(callbackCoap.getResponseCode()) &&
                         callbackCoap.getObserve() != null &&
                         expectedObserveCountAfterGpioRequest2 == callbackCoap.getObserve());
+        validateTwoWayStateChangedNotification(callbackCoap, expectedResponseResult, actualResult);
 
+        int expectedObserveCountAfterGpioRequest3 = callbackCoap.getObserve() + 1;
+        setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"23\",\"value\": 3}}";
+        actualResult = doPostAsync("/api/rpc/twoway/" + deviceId, setGpioRequest, String.class, status().isOk());
+        awaitAlias = "await Two Way Rpc (setGpio(method, params, value) third";
+        await(awaitAlias)
+                .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .until(() -> CoAP.ResponseCode.CONTENT.equals(callbackCoap.getResponseCode()) &&
+                        callbackCoap.getObserve() != null &&
+                        expectedObserveCountAfterGpioRequest3 == callbackCoap.getObserve());
         validateTwoWayStateChangedNotification(callbackCoap, expectedResponseResult, actualResult);
 
         observeRelation.proactiveCancel();

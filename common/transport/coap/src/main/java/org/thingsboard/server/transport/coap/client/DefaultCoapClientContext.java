@@ -18,7 +18,9 @@ package org.thingsboard.server.transport.coap.client;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.CoAP;
+import org.eclipse.californium.core.coap.Request;
 import org.eclipse.californium.core.coap.Response;
+import org.eclipse.californium.core.network.Exchange;
 import org.eclipse.californium.core.observe.ObserveRelation;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -26,6 +28,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.coapserver.CoapServerContext;
+import org.thingsboard.server.common.adaptor.AdaptorException;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -45,7 +48,6 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.msg.session.FeatureType;
-import org.thingsboard.server.transport.coap.CoapSessionMsgType;
 import org.thingsboard.server.common.transport.DeviceDeletedEvent;
 import org.thingsboard.server.common.transport.DeviceProfileUpdatedEvent;
 import org.thingsboard.server.common.transport.DeviceUpdatedEvent;
@@ -53,11 +55,11 @@ import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportDeviceProfileCache;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
-import org.thingsboard.server.common.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.transport.coap.CoapSessionMsgType;
 import org.thingsboard.server.transport.coap.CoapTransportContext;
 import org.thingsboard.server.transport.coap.TbCoapMessageObserver;
 import org.thingsboard.server.transport.coap.TransportConfigurationContainer;
@@ -89,7 +91,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
     private final TransportDeviceProfileCache profileCache;
     private final PartitionService partitionService;
     private final ConcurrentMap<DeviceId, TbCoapClientState> clients = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, TbCoapClientState> clientsByToken = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<String, TbCoapClientState> clientsByToken = new ConcurrentHashMap<>();
 
     public DefaultCoapClientContext(CoapServerContext config, @Lazy CoapTransportContext transportContext,
                                     TransportService transportService, TransportDeviceProfileCache profileCache,
@@ -152,22 +154,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
 
     @Override
     public AtomicInteger getNotificationCounterByToken(String token) {
-        TbCoapClientState state = clientsByToken.get(token);
-        if (state == null) {
-            log.trace("Failed to find state using token: {}", token);
-            return null;
-        }
-        if (state.getAttrs() != null && state.getAttrs().getToken().equals(token)) {
-            return state.getAttrs().getObserveCounter();
-        } else {
-            log.trace("Failed to find attr subscription using token: {}", token);
-        }
-        if (state.getRpc() != null && state.getRpc().getToken().equals(token)) {
-            return state.getRpc().getObserveCounter();
-        } else {
-            log.trace("Failed to find rpc subscription using token: {}", token);
-        }
-        return null;
+        return getNotificationCountByToken(token);
     }
 
     @Override
@@ -841,6 +828,46 @@ public class DefaultCoapClientContext implements CoapClientContext {
 
     private void respond(CoapExchange exchange, Response response, int defContentFormat) {
         response.getOptions().setContentFormat(TbCoapContentFormatUtil.getContentFormat(exchange.getRequestOptions().getContentFormat(), defContentFormat));
+        // Response Update -> observe cnt
+        updateResponseObserve(exchange.advanced(), response);
         exchange.respond(response);
+    }
+
+    public static void updateResponseObserve(Exchange exchange, Response response) {
+        final ObserveRelation relation = exchange.getRelation();
+        if (relation == null || relation.isCanceled()) {
+            return; // because request did not try to establish a relation
+        }
+        String token = getTokenFromRequest(exchange.getRequest());
+        AtomicInteger state = getNotificationCountByToken(token);
+        if ( state != null) {
+            response.getOptions().setObserve(state.getAndIncrement());
+        } else {
+            response.getOptions().removeObserve();
+        }
+    }
+
+    public static String getTokenFromRequest(Request request) {
+        return (request.getSourceContext() != null ? request.getSourceContext().getPeerAddress().getAddress().getHostAddress() : "null")
+                + ":" + (request.getSourceContext() != null ? request.getSourceContext().getPeerAddress().getPort() : -1) + ":" + request.getTokenString();
+    }
+
+    public static AtomicInteger getNotificationCountByToken(String token) {
+        TbCoapClientState state = clientsByToken.get(token);
+        if (state == null) {
+            log.trace("Failed to find state using token: {}", token);
+            return null;
+        }
+        if (state.getAttrs() != null && state.getAttrs().getToken().equals(token)) {
+            return state.getAttrs().getObserveCounter();
+        } else {
+            log.trace("Failed to find attr subscription using token: {}", token);
+        }
+        if (state.getRpc() != null && state.getRpc().getToken().equals(token)) {
+            return state.getRpc().getObserveCounter();
+        } else {
+            log.trace("Failed to find rpc subscription using token: {}", token);
+        }
+        return null;
     }
 }
