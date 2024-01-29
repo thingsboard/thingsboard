@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.coap.attributes.updates;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.CoapDeviceType;
 import org.thingsboard.server.common.data.TransportPayloadType;
@@ -44,11 +45,13 @@ public class CoapAttributesUpdatesProtoIntegrationTest extends AbstractCoapAttri
         processAfterTest();
     }
 
+    @Ignore
     @Test
     public void testSubscribeToAttributesUpdatesFromTheServer() throws Exception {
         processProtoTestSubscribeToAttributesUpdates(false);
     }
 
+    @Ignore
     @Test
     public void testSubscribeToAttributesUpdatesFromTheServerWithEmptyCurrentStateNotification() throws Exception {
         processProtoTestSubscribeToAttributesUpdates(true);

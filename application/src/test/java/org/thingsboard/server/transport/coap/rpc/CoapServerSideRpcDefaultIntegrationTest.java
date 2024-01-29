@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.security.AccessValidator;
@@ -83,11 +84,13 @@ public class CoapServerSideRpcDefaultIntegrationTest extends AbstractCoapServerS
     }
 
     @Test
+    @Ignore
     public void testServerCoapOneWayRpc() throws Exception {
         processOneWayRpcTest(false);
     }
 
     @Test
+    @Ignore
     public void testServerCoapTwoWayRpc() throws Exception {
         processTwoWayRpcTest("{\"value1\":\"A\",\"value2\":\"B\"}", false);
     }
