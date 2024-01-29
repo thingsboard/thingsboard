@@ -17,7 +17,6 @@
 import { Component } from "@angular/core";
 import { UntypedFormBuilder, UntypedFormGroup } from "@angular/forms";
 import { AppState } from "@app/core/core.state";
-import { WidgetConfigComponentData } from "@app/modules/home/models/widget-component.models";
 import { Store } from "@ngrx/store";
 import {
   WidgetSettings,
@@ -50,26 +49,19 @@ export class DisplacementChartWidgetSettingsComponent extends WidgetSettingsComp
     );
   }
 
-  protected onWidgetConfigSet(widgetConfig: WidgetConfigComponentData) {
-    console.log('onWidgetConfigSet widgetConfig', widgetConfig);
-  }
-
   protected onSettingsSet(settings: WidgetSettings) {
-    console.log('onSettingsSet settings', settings);
     this.displacementChartWidgetSettingsForm = this.fb.group({
       displacementSettings: [settings.displacementSettings, []]
     });
   }
 
   protected prepareInputSettings(settings: WidgetSettings): WidgetSettings {
-    console.log('prepareInputSettings settings', settings);
     return {
       displacementSettings: settings
     };
   }
 
   protected prepareOutputSettings(settings: any): WidgetSettings {
-    console.log('prepareOutputSettings settings', settings);
     return settings.displacementSettings;
   }
 }

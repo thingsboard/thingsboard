@@ -102,8 +102,6 @@ export class DisplacementChartKeySettingsComponent extends PageComponent impleme
   }
 
   ngOnInit(): void {
-    console.log('ngOnInit dataKeys()', this.dataKeys());
-
     this.displacementSettingsFormGroup = this.fb.group({
       grid: [true, []],
       xaxis: this.fb.group({
@@ -211,7 +209,6 @@ export class DisplacementChartKeySettingsComponent extends PageComponent impleme
   registerOnTouched(fn: any): void {}
 
   writeValue(value: any): void {
-    console.log('writeValue value', value);
     this.modelValue = value;
     this.displacementSettingsFormGroup.patchValue(value, {emitEvent: false});
 
