@@ -57,6 +57,7 @@ import {
   createLabelFromDatasource,
   createLabelFromSubscriptionEntityInfo,
   formatValue,
+  getEntityDetailsPageURL,
   hasDatasourceLabelsVariables,
   isDefined
 } from '@core/utils';
@@ -253,7 +254,8 @@ export class WidgetContext {
   };
 
   utils: IWidgetUtils = {
-    formatValue
+    formatValue,
+    getEntityDetailsPageURL
   };
 
   $widgetElement: JQuery<HTMLElement>;
