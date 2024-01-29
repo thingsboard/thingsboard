@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.alarm.rule.condition;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -25,5 +26,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = SimpleAlarmConditionFilter.class, name = "SIMPLE"),
         @JsonSubTypes.Type(value = ComplexAlarmConditionFilter.class, name = "COMPLEX")})
 public interface AlarmConditionFilter {
+
+    @JsonIgnore
     AlarmConditionType getType();
 }

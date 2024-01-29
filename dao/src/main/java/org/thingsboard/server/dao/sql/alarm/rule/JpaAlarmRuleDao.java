@@ -24,6 +24,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleInfo;
+import org.thingsboard.server.common.data.id.AlarmRuleId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -36,6 +37,7 @@ import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -95,5 +97,21 @@ public class JpaAlarmRuleDao extends JpaAbstractDao<AlarmRuleEntity, AlarmRule> 
                 .stream()
                 .map(JacksonUtil::toJsonNode)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public AlarmRule findByTenantIdAndExternalId(UUID tenantId, UUID externalId) {
+        return DaoUtil.getData(alarmRuleRepository.findByTenantIdAndExternalId(tenantId, externalId));
+    }
+
+    @Override
+    public PageData<AlarmRule> findByTenantId(UUID tenantId, PageLink pageLink) {
+        return findAlarmRulesByTenantId(tenantId, pageLink);
+    }
+
+    @Override
+    public AlarmRuleId getExternalIdByInternal(AlarmRuleId internalId) {
+        return Optional.ofNullable(alarmRuleRepository.getExternalIdById(internalId.getId()))
+                .map(AlarmRuleId::new).orElse(null);
     }
 }

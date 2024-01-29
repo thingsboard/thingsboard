@@ -19,19 +19,20 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.id.AlarmRuleId;
 
 @Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class AlarmRule extends AlarmRuleInfo {
-
-    private static final long serialVersionUID = -8491640876881610526L;
+public class AlarmRule extends AlarmRuleInfo implements ExportableEntity<AlarmRuleId> {
 
     @Valid
     @Schema(description = "JSON object with Alarm Rule Configuration")
     private AlarmRuleConfiguration configuration;
+
+    private AlarmRuleId externalId;
 
     public AlarmRule() {
         super();
@@ -44,5 +45,6 @@ public class AlarmRule extends AlarmRuleInfo {
     public AlarmRule(AlarmRule alarmRule) {
         super(alarmRule);
         this.configuration = alarmRule.getConfiguration();
+        this.externalId = alarmRule.getExternalId();
     }
 }

@@ -24,8 +24,6 @@ import java.util.List;
 @Data
 public class AlarmRuleEntityListEntityFilter implements AlarmRuleEntityFilter {
 
-    private static final long serialVersionUID = -1606652279198083665L;
-
     private final EntityType entityType;
 
     private final List<EntityId> entityIds;

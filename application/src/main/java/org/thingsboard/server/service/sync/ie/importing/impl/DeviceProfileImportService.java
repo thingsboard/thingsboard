@@ -66,7 +66,7 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
         TenantId tenantId = ctx.getTenantId();
         if (CollectionsUtil.isNotEmpty(alarms)) {
             alarms.stream().map(dpAlarm -> {
-                AlarmRule alarmRule = AlarmRuleMigrator.migrate(tenantId, deviceProfile.getId(), dpAlarm);
+                AlarmRule alarmRule = AlarmRuleMigrator.migrate(tenantId, deviceProfile, dpAlarm);
                 return alarmRuleService.saveAlarmRule(tenantId, alarmRule);
             }).toList().forEach(savedAlarmRule -> {
                 ctx.registerResult(EntityType.ALARM_RULE, true);

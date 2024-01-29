@@ -28,6 +28,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.id.AlarmRuleId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -41,6 +42,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.ALARM_RULE_DESCRIP
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_RULE_ENABLED_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_RULE_NAME_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.ALARM_RULE_TENANT_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.EXTERNAL_ID_PROPERTY;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -68,6 +70,9 @@ public class AlarmRuleEntity extends BaseSqlEntity<AlarmRule> {
     @Column(name = ALARM_RULE_DESCRIPTION_PROPERTY)
     private String description;
 
+    @Column(name = EXTERNAL_ID_PROPERTY)
+    private UUID externalId;
+
     public AlarmRuleEntity() {
         super();
     }
@@ -85,6 +90,9 @@ public class AlarmRuleEntity extends BaseSqlEntity<AlarmRule> {
         this.enabled = alarmRule.isEnabled();
         this.configuration = JacksonUtil.valueToTree(alarmRule.getConfiguration());
         this.description = alarmRule.getDescription();
+        if (alarmRule.getExternalId() != null) {
+            this.externalId = alarmRule.getExternalId().getId();
+        }
     }
 
     @Override
@@ -99,6 +107,9 @@ public class AlarmRuleEntity extends BaseSqlEntity<AlarmRule> {
         alarmRule.setEnabled(enabled);
         alarmRule.setConfiguration(JacksonUtil.treeToValue(configuration, AlarmRuleConfiguration.class));
         alarmRule.setDescription(description);
+        if (externalId != null) {
+            alarmRule.setExternalId(new AlarmRuleId(externalId));
+        }
 
         return alarmRule;
     }

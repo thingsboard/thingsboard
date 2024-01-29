@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.alarm.rule.utils;
 
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleOriginatorTargetEntity;
@@ -72,15 +73,15 @@ public class AlarmRuleMigrator {
     private AlarmRuleMigrator() {
     }
 
-    public static AlarmRule migrate(TenantId tenantId, DeviceProfileId deviceProfileId, DeviceProfileAlarm oldRule) {
+    public static AlarmRule migrate(TenantId tenantId, DeviceProfile deviceProfile, DeviceProfileAlarm oldRule) {
         var alarmRule = new AlarmRule();
         alarmRule.setTenantId(tenantId);
         alarmRule.setAlarmType(oldRule.getAlarmType());
-        alarmRule.setName(oldRule.getAlarmType());
+        alarmRule.setName(deviceProfile.getName() + " - " + oldRule.getAlarmType());
         alarmRule.setEnabled(true);
 
         var configuration = new AlarmRuleConfiguration();
-        configuration.setSourceEntityFilters(Collections.singletonList(new AlarmRuleDeviceTypeEntityFilter(deviceProfileId)));
+        configuration.setSourceEntityFilters(Collections.singletonList(new AlarmRuleDeviceTypeEntityFilter(deviceProfile.getId())));
         configuration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
         configuration.setPropagate(oldRule.isPropagate());
         configuration.setPropagateToOwner(oldRule.isPropagateToOwner());

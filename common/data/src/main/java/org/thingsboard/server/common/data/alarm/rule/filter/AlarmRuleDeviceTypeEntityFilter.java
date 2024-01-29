@@ -22,8 +22,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 @Data
 public class AlarmRuleDeviceTypeEntityFilter implements AlarmRuleEntityFilter {
 
-    private static final long serialVersionUID = -5790520144535260365L;
-
     private final DeviceProfileId deviceProfileId;
 
     @Override

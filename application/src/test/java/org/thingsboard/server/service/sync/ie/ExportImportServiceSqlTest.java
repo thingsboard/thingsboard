@@ -33,6 +33,9 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.OtaPackage;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfiguration;
+import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleDeviceTypeEntityFilter;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -711,6 +714,56 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
         DeviceProfile importedDeviceProfile = deviceProfileService.findDeviceProfileById(tenantId2, (DeviceProfileId) ids.get(deviceProfile.getId()));
         importedDeviceProfile.setDefaultDashboardId(null);
         deviceProfileService.saveDeviceProfile(importedDeviceProfile);
+    }
+
+    @Test
+    public void testExportImportAlarmRuleWithDeProfileProfileFilter_betweenTenants() throws Exception {
+        DeviceProfile deviceProfile = createDeviceProfile(tenantId1, null, null, "Device profile v1.0");
+        AlarmRule alarmRule = createAlarmRule(tenantId1, deviceProfile.getId());
+        EntityExportData<AlarmRule> exportData = exportEntity(tenantAdmin1, alarmRule.getId());
+        EntityExportData<DeviceProfile> profileExportData = exportEntity(tenantAdmin1, deviceProfile.getId());
+
+        EntityImportResult<DeviceProfile> profileImportResult = importEntity(tenantAdmin2, profileExportData);
+        checkImportedEntity(tenantId1, deviceProfile, tenantId2, profileImportResult.getSavedEntity());
+        checkImportedDeviceProfileData(deviceProfile, profileImportResult.getSavedEntity());
+
+        EntityImportResult<AlarmRule> alarmRuleImportResult = importEntity(tenantAdmin2, exportData);
+        AlarmRule importedRule = alarmRuleImportResult.getSavedEntity();
+        checkImportedEntity(tenantId1, alarmRule, tenantId2, importedRule);
+
+        assertThat(importedRule.getName()).isEqualTo(alarmRule.getName());
+        assertThat(importedRule.getAlarmType()).isEqualTo(alarmRule.getAlarmType());
+        assertThat(importedRule.isEnabled()).isEqualTo(alarmRule.isEnabled());
+        assertThat(importedRule.getDescription()).isEqualTo(alarmRule.getDescription());
+
+        var configuration = alarmRule.getConfiguration();
+        var importedConfiguration = importedRule.getConfiguration();
+
+        assertThat(importedConfiguration.getAlarmTargetEntity()).isEqualTo(configuration.getAlarmTargetEntity());
+        assertThat(importedConfiguration.getCreateRules()).isEqualTo(configuration.getCreateRules());
+        assertThat(importedConfiguration.getClearRule()).isEqualTo(configuration.getClearRule());
+        assertThat(importedConfiguration.isPropagate()).isEqualTo(configuration.isPropagate());
+        assertThat(importedConfiguration.isPropagateToOwner()).isEqualTo(configuration.isPropagateToOwner());
+        assertThat(importedConfiguration.isPropagateToTenant()).isEqualTo(configuration.isPropagateToTenant());
+        assertThat(importedConfiguration.getPropagateRelationTypes()).isEqualTo(configuration.getPropagateRelationTypes());
+
+        assertThat(((AlarmRuleDeviceTypeEntityFilter)importedConfiguration.getSourceEntityFilters().get(0)).getDeviceProfileId()).isEqualTo(profileImportResult.getSavedEntity().getId());
+    }
+
+    @Test
+    public void testExportImportAlarmRuleWithDeProfileProfileFilter_sameTenant() throws Exception {
+        DeviceProfile deviceProfile = createDeviceProfile(tenantId1, null, null, "Device profile v1.0");
+        AlarmRule alarmRule = createAlarmRule(tenantId1, deviceProfile.getId());
+        EntityExportData<AlarmRule> exportData = exportEntity(tenantAdmin1, alarmRule.getId());
+
+        EntityImportResult<AlarmRule> importResult = importEntity(tenantAdmin1, exportData);
+        AlarmRule importedRule = importResult.getSavedEntity();
+        checkImportedEntity(tenantId1, alarmRule, tenantId1, importedRule);
+        assertThat(importedRule.getName()).isEqualTo(alarmRule.getName());
+        assertThat(importedRule.getAlarmType()).isEqualTo(alarmRule.getAlarmType());
+        assertThat(importedRule.isEnabled()).isEqualTo(alarmRule.isEnabled());
+        assertThat(importedRule.getDescription()).isEqualTo(alarmRule.getDescription());
+        assertThat(importedRule.getConfiguration()).isEqualTo(alarmRule.getConfiguration());
     }
 
 }

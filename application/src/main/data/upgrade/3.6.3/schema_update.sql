@@ -107,6 +107,7 @@ EXCEPTION
 END
 $$;
 
+-- alarm rules
 CREATE TABLE IF NOT EXISTS alarm_rule (
     id uuid NOT NULL CONSTRAINT alarm_rule_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
@@ -115,5 +116,10 @@ CREATE TABLE IF NOT EXISTS alarm_rule (
     name varchar(255),
     enabled boolean,
     configuration jsonb,
-    description varchar
+    description varchar,
+    external_id uuid,
+    CONSTRAINT alarm_rule_name_unq_key UNIQUE (tenant_id, name)
 );
+
+CREATE INDEX IF NOT EXISTS idx_alarm_rules_tenant_id on alarm_rule(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_alarm_rules_enabled on alarm_rule(tenant_id) WHERE enabled = true;

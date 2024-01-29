@@ -21,8 +21,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 @Data
 public class AlarmRuleOriginatorTargetEntity implements AlarmRuleTargetEntity {
 
-    private static final long serialVersionUID = -2174020331194800349L;
-
     @Override
     public AlarmRuleTargetEntityType getType() {
         return AlarmRuleTargetEntityType.ORIGINATOR;

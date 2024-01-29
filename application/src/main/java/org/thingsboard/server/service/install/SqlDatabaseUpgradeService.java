@@ -839,7 +839,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                                                 DeviceProfileId deviceProfileId = deviceProfile.getId();
                                                 for (DeviceProfileAlarm alarm : deviceProfile.getProfileData().getAlarms()) {
                                                     try {
-                                                        AlarmRule savedRule = alarmRuleService.save(tenantId, AlarmRuleMigrator.migrate(tenantId, deviceProfileId, alarm));
+                                                        AlarmRule savedRule = alarmRuleService.save(tenantId, AlarmRuleMigrator.migrate(tenantId, deviceProfile, alarm));
                                                         alarmRuleIdMapping.put(alarm.getId(), savedRule.getId().toString());
                                                     } catch (Exception e) {
                                                     }

@@ -20,13 +20,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.AlarmRuleEntity;
 import org.thingsboard.server.dao.model.sql.AlarmRuleInfoEntity;
 
 import java.util.List;
 import java.util.UUID;
 
-public interface AlarmRuleRepository extends JpaRepository<AlarmRuleEntity, UUID> {
+public interface AlarmRuleRepository extends JpaRepository<AlarmRuleEntity, UUID>, ExportableEntityRepository<AlarmRuleEntity> {
 
     @Query("SELECT ai FROM AlarmRuleInfoEntity ai WHERE ai.tenantId = :tenantId " +
             "AND LOWER(ai.name) LIKE LOWER(CONCAT('%', :searchText, '%'))")
@@ -37,15 +38,15 @@ public interface AlarmRuleRepository extends JpaRepository<AlarmRuleEntity, UUID
     @Query("SELECT ai FROM AlarmRuleEntity ai WHERE ai.tenantId = :tenantId " +
             "AND LOWER(ai.name) LIKE LOWER(CONCAT('%', :searchText, '%'))")
     Page<AlarmRuleEntity> findByTenantId(@Param("tenantId") UUID tenantId,
-                                                  @Param("searchText") String searchText,
-                                                  Pageable pageable);
+                                         @Param("searchText") String searchText,
+                                         Pageable pageable);
 
     @Query("SELECT ai FROM AlarmRuleEntity ai WHERE ai.tenantId = :tenantId " +
             "AND ai.enabled = true " +
             "AND LOWER(ai.name) LIKE LOWER(CONCAT('%', :searchText, '%'))")
     Page<AlarmRuleEntity> findByTenantIdAndEnabled(@Param("tenantId") UUID tenantId,
-                                         @Param("searchText") String searchText,
-                                         Pageable pageable);
+                                                   @Param("searchText") String searchText,
+                                                   Pageable pageable);
 
     @Query(value = "SELECT cast(to_json(r) as varchar) FROM (" +
             "SELECT rns.entity_id, rns.rule_node_id, rn.debug_mode, rns.state_data FROM rule_node_state rns " +
@@ -57,4 +58,7 @@ public interface AlarmRuleRepository extends JpaRepository<AlarmRuleEntity, UUID
     List<String> findRuleNodeStatesByRuleChainIdAndRuleNodeType(@Param("deviceProfileId") UUID deviceProfileId,
                                                                 @Param("ruleChainId") UUID ruleChainId,
                                                                 @Param("type") String type);
+
+    @Query("SELECT externalId FROM AlarmRuleEntity WHERE id = :id")
+    UUID getExternalIdById(@Param("id") UUID id);
 }

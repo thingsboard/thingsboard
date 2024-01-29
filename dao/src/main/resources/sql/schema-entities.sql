@@ -94,7 +94,9 @@ CREATE TABLE IF NOT EXISTS alarm_rule (
     name varchar(255),
     enabled boolean,
     configuration jsonb,
-    description varchar
+    description varchar,
+    external_id uuid,
+    CONSTRAINT alarm_rule_name_unq_key UNIQUE (tenant_id, name)
 );
 
 CREATE TABLE IF NOT EXISTS audit_log (

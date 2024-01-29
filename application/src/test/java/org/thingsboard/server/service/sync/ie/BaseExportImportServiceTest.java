@@ -37,6 +37,20 @@ import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRuleOriginatorTargetEntity;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRuleSpecifiedTargetEntity;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilterKey;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionKeyType;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleArgument;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleCondition;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfiguration;
+import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentValueType;
+import org.thingsboard.server.common.data.alarm.rule.condition.Operation;
+import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionFilter;
+import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleDeviceTypeEntityFilter;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
@@ -68,6 +82,7 @@ import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
 import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
 import org.thingsboard.server.common.data.util.ThrowingRunnable;
 import org.thingsboard.server.controller.AbstractControllerTest;
+import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
@@ -87,6 +102,8 @@ import org.thingsboard.server.service.sync.vc.data.SimpleEntitiesExportCtx;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -118,6 +135,8 @@ public abstract class BaseExportImportServiceTest extends AbstractControllerTest
     protected TenantService tenantService;
     @Autowired
     protected EntityViewService entityViewService;
+    @Autowired
+    protected AlarmRuleService alarmRuleService;
 
     protected TenantId tenantId1;
     protected User tenantAdmin1;
@@ -238,6 +257,63 @@ public abstract class BaseExportImportServiceTest extends AbstractControllerTest
         asset.setLabel("lbl");
         asset.setAdditionalInfo(JacksonUtil.newObjectNode().set("a", new TextNode("b")));
         return assetService.saveAsset(asset);
+    }
+
+    protected AlarmRule createAlarmRule(TenantId tenantId, DeviceProfileId deviceProfileId) {
+        AlarmRule alarmRule = new AlarmRule();
+        alarmRule.setTenantId(tenantId);
+        alarmRule.setAlarmType("highTemperatureAlarm");
+        alarmRule.setName("highTemperatureAlarmRule");
+        alarmRule.setEnabled(true);
+
+        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+
+        AlarmRuleArgument highTemperatureConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(30.0)
+                .build();
+
+        SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
+        highTempFilter.setLeftArgId("temperatureKey");
+        highTempFilter.setRightArgId("temperatureConst");
+        highTempFilter.setOperation(Operation.GREATER);
+
+        AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setCondition(highTempFilter);
+        AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
+        alarmRuleCondition.setCondition(alarmCondition);
+        AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
+        alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
+
+
+        AlarmRuleArgument lowTemperatureConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(10.0)
+                .build();
+        SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
+        lowTempFilter.setLeftArgId("temperatureKey");
+        lowTempFilter.setRightArgId("lowTemperatureConst");
+        lowTempFilter.setOperation(Operation.LESS);
+
+        AlarmRuleCondition clearRule = new AlarmRuleCondition();
+        AlarmCondition clearCondition = new AlarmCondition();
+        clearRule.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
+        clearCondition.setCondition(lowTempFilter);
+        clearRule.setCondition(clearCondition);
+        alarmRuleConfiguration.setClearRule(clearRule);
+
+        AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(deviceProfileId);
+        alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
+        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
+
+        alarmRule.setConfiguration(alarmRuleConfiguration);
+        return alarmRuleService.saveAlarmRule(tenantId, alarmRule);
     }
 
     protected void checkImportedAssetData(Asset initialAsset, Asset importedAsset) {

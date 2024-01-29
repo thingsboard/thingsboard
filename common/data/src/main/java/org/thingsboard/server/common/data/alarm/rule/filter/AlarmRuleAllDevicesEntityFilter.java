@@ -20,8 +20,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 
 public class AlarmRuleAllDevicesEntityFilter implements AlarmRuleEntityFilter {
 
-    private static final long serialVersionUID = 457160168944469618L;
-
     @Override
     public AlarmRuleEntityFilterType getType() {
         return AlarmRuleEntityFilterType.ALL_DEVICES;
