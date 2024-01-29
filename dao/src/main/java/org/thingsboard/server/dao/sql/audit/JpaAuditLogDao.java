@@ -41,7 +41,6 @@ import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -88,7 +87,7 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
             auditLog.setCreatedTime(Uuids.unixTimestamp(uuid));
         }
         partitioningRepository.createPartitionIfNotExists(TABLE_NAME, auditLog.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
-        return super.save(tenantId, auditLog);
+        return create(tenantId, auditLog);
     }
 
     @Override

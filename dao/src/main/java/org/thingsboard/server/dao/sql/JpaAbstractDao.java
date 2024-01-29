@@ -19,14 +19,19 @@ import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -41,6 +46,12 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
         extends JpaAbstractDaoListeningExecutorService
         implements Dao<D> {
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    @Autowired
+    private TransactionTemplate transactionTemplate;
+
     protected abstract Class<E> getEntityClass();
 
     protected abstract JpaRepository<E, UUID> getRepository();
@@ -51,6 +62,33 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
     @Override
     @Transactional
     public D save(TenantId tenantId, D domain) {
+        E entity = prepare(domain);
+        entity = getRepository().save(entity);
+        return DaoUtil.getData(entity);
+    }
+
+    @Override
+    @Transactional
+    public D saveAndFlush(TenantId tenantId, D domain) {
+        D d = save(tenantId, domain);
+        getRepository().flush();
+        return d;
+    }
+
+    @Override
+    public D create(TenantId tenantId, D domain) {
+        E entity = prepare(domain);
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            entityManager.persist(entity);
+        } else {
+            transactionTemplate.executeWithoutResult(ts -> {
+                entityManager.persist(entity);
+            });
+        }
+        return DaoUtil.getData(entity);
+    }
+
+    private E prepare(D domain) {
         E entity;
         try {
             entity = getEntityClass().getConstructor(domain.getClass()).newInstance(domain);
@@ -65,16 +103,7 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
             entity.setUuid(uuid);
             entity.setCreatedTime(Uuids.unixTimestamp(uuid));
         }
-        entity = getRepository().save(entity);
-        return DaoUtil.getData(entity);
-    }
-
-    @Override
-    @Transactional
-    public D saveAndFlush(TenantId tenantId, D domain) {
-        D d = save(tenantId, domain);
-        getRepository().flush();
-        return d;
+        return entity;
     }
 
     @Override

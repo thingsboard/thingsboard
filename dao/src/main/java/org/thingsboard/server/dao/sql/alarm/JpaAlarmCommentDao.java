@@ -57,8 +57,7 @@ public class JpaAlarmCommentDao extends JpaAbstractDao<AlarmCommentEntity, Alarm
     public AlarmComment createAlarmComment(TenantId tenantId, AlarmComment alarmComment){
         log.trace("Saving entity {}", alarmComment);
         partitioningRepository.createPartitionIfNotExists(ALARM_COMMENT_TABLE_NAME, alarmComment.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
-        AlarmCommentEntity saved = alarmCommentRepository.save(new AlarmCommentEntity(alarmComment));
-        return DaoUtil.getData(saved);
+        return create(tenantId, alarmComment);
     }
 
     @Override

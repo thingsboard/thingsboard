@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.sql.notification;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import com.google.common.base.Strings;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -60,6 +59,7 @@ public class JpaNotificationDao extends JpaAbstractDao<NotificationEntity, Notif
             notification.setCreatedTime(Uuids.unixTimestamp(uuid));
             partitioningRepository.createPartitionIfNotExists(ModelConstants.NOTIFICATION_TABLE_NAME,
                     notification.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
+            return create(tenantId, notification);
         }
         return super.save(tenantId, notification);
     }
