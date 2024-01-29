@@ -812,7 +812,7 @@
                             <exclude>**/.gradle/**</exclude>
                             <exclude>**/nightwatch</exclude>
                             <exclude>**/README</exclude>
-                            <exclude>**/LICENSE</exclude>if (!response.isNotification()) {
+                            <exclude>**/LICENSE</exclude>
                             <exclude>**/banner.txt</exclude>
                             <exclude>node_modules/**</exclude>
                             <exclude>**/*.properties</exclude>
