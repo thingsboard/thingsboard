@@ -19,7 +19,6 @@ import com.google.gson.JsonParseException;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.Request;
-import org.eclipse.californium.core.coap.Response;
 import org.eclipse.californium.core.network.Exchange;
 import org.eclipse.californium.core.observe.ObserveRelation;
 import org.eclipse.californium.core.server.resources.CoapExchange;
@@ -54,7 +53,6 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.eclipse.californium.elements.DtlsEndpointContext.KEY_SESSION_ID;
 import static org.thingsboard.server.transport.coap.client.DefaultCoapClientContext.getTokenFromRequest;
@@ -83,30 +81,6 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         this.clients = ctx.getClientContext();
         long sessionReportTimeout = ctx.getSessionReportTimeout();
         ctx.getScheduler().scheduleAtFixedRate(clients::reportActivity, new Random().nextInt((int) sessionReportTimeout), sessionReportTimeout, TimeUnit.MILLISECONDS);
-    }
-
-    /*
-     * Overwritten method from CoapResource to be able to manage our own observe notification counters.
-     */
-    @Override
-    public void checkObserveRelation(Exchange exchange, Response response) {
-        String token = getTokenFromRequest(exchange.getRequest());
-        final ObserveRelation relation = exchange.getRelation();
-        if (relation == null || relation.isCanceled()) {
-            return; // because request did not try to establish a relation
-        }
-        if (response.getCode().isSuccess()) {
-            if (!relation.isEstablished()) {
-                relation.setEstablished();
-                addObserveRelation(relation);
-            }
-            AtomicInteger state = clients.getNotificationCounterByToken(token);
-            if (state != null) {
-                response.getOptions().setObserve(state.getAndIncrement());
-            } else {
-                response.getOptions().removeObserve();
-            }
-        } // ObserveLayer takes care of the else case
     }
 
     @Override
