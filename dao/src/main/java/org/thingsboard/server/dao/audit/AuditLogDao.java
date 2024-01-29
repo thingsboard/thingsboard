@@ -30,7 +30,7 @@ import java.util.UUID;
 
 public interface AuditLogDao extends Dao<AuditLog> {
 
-    ListenableFuture<Void> saveByTenantId(AuditLog auditLog);
+    ListenableFuture<AuditLog> saveByTenantId(AuditLog auditLog);
 
     PageData<AuditLog> findAuditLogsByTenantIdAndEntityId(UUID tenantId, EntityId entityId, List<ActionType> actionTypes, TimePageLink pageLink);
 

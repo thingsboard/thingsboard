@@ -15,11 +15,11 @@
  */
 package org.thingsboard.server.dao.sql.notification;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
@@ -51,17 +51,13 @@ public class JpaNotificationDao extends JpaAbstractDao<NotificationEntity, Notif
     @Value("${sql.notifications.partition_size:168}")
     private int partitionSizeInHours;
 
+    @Transactional
     @Override
     public Notification save(TenantId tenantId, Notification notification) {
-        if (notification.getId() == null) {
-            UUID uuid = Uuids.timeBased();
-            notification.setId(new NotificationId(uuid));
-            notification.setCreatedTime(Uuids.unixTimestamp(uuid));
+        return save(tenantId, notification, entity -> {
             partitioningRepository.createPartitionIfNotExists(ModelConstants.NOTIFICATION_TABLE_NAME,
-                    notification.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
-            return create(tenantId, notification);
-        }
-        return super.save(tenantId, notification);
+                    entity.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
+        });
     }
 
     @Override

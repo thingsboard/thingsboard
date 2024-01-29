@@ -39,8 +39,6 @@ public interface Dao<T> {
 
     T saveAndFlush(TenantId tenantId, T t);
 
-    T create(TenantId tenantId, T t);
-
     boolean removeById(TenantId tenantId, UUID id);
 
     void removeAllByIds(Collection<UUID> ids);

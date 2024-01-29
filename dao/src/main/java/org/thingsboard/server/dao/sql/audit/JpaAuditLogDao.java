@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.sql.audit;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +24,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
-import org.thingsboard.server.common.data.id.AuditLogId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -72,22 +70,15 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
     }
 
     @Override
-    public ListenableFuture<Void> saveByTenantId(AuditLog auditLog) {
-        return service.submit(() -> {
-            save(auditLog.getTenantId(), auditLog);
-            return null;
-        });
+    public ListenableFuture<AuditLog> saveByTenantId(AuditLog auditLog) {
+        return service.submit(() -> save(auditLog.getTenantId(), auditLog));
     }
 
     @Override
     public AuditLog save(TenantId tenantId, AuditLog auditLog) {
-        if (auditLog.getId() == null) {
-            UUID uuid = Uuids.timeBased();
-            auditLog.setId(new AuditLogId(uuid));
-            auditLog.setCreatedTime(Uuids.unixTimestamp(uuid));
-        }
-        partitioningRepository.createPartitionIfNotExists(TABLE_NAME, auditLog.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
-        return create(tenantId, auditLog);
+        return save(tenantId, auditLog, entity -> {
+            partitioningRepository.createPartitionIfNotExists(TABLE_NAME, entity.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
+        });
     }
 
     @Override

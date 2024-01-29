@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
@@ -53,11 +54,13 @@ public class JpaAlarmCommentDao extends JpaAbstractDao<AlarmCommentEntity, Alarm
     @Autowired
     private AlarmCommentRepository alarmCommentRepository;
 
+    @Transactional
     @Override
     public AlarmComment createAlarmComment(TenantId tenantId, AlarmComment alarmComment){
         log.trace("Saving entity {}", alarmComment);
-        partitioningRepository.createPartitionIfNotExists(ALARM_COMMENT_TABLE_NAME, alarmComment.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
-        return create(tenantId, alarmComment);
+        return save(tenantId, alarmComment, entity -> {
+            partitioningRepository.createPartitionIfNotExists(ALARM_COMMENT_TABLE_NAME, entity.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
+        });
     }
 
     @Override

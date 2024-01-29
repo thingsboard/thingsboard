@@ -24,6 +24,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.DaoUtil;
@@ -36,13 +37,14 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 /**
  * @author Valerii Sosliuk
  */
 @Slf4j
 @SqlDao
-public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
+public abstract class JpaAbstractDao<E extends BaseEntity<D>, D extends HasId<?>>
         extends JpaAbstractDaoListeningExecutorService
         implements Dao<D> {
 
@@ -62,9 +64,7 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
     @Override
     @Transactional
     public D save(TenantId tenantId, D domain) {
-        E entity = prepare(domain);
-        entity = getRepository().save(entity);
-        return DaoUtil.getData(entity);
+        return save(tenantId, domain, null);
     }
 
     @Override
@@ -75,20 +75,7 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
         return d;
     }
 
-    @Override
-    public D create(TenantId tenantId, D domain) {
-        E entity = prepare(domain);
-        if (TransactionSynchronizationManager.isActualTransactionActive()) {
-            entityManager.persist(entity);
-        } else {
-            transactionTemplate.executeWithoutResult(ts -> {
-                entityManager.persist(entity);
-            });
-        }
-        return DaoUtil.getData(entity);
-    }
-
-    private E prepare(D domain) {
+    protected D save(TenantId tenantId, D domain, Consumer<E> preSaveAction) {
         E entity;
         try {
             entity = getEntityClass().getConstructor(domain.getClass()).newInstance(domain);
@@ -98,12 +85,30 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
         }
         setSearchText(entity);
         log.debug("Saving entity {}", entity);
-        if (entity.getUuid() == null) {
+        boolean isNew = entity.getUuid() == null;
+        if (isNew) {
             UUID uuid = Uuids.timeBased();
             entity.setUuid(uuid);
             entity.setCreatedTime(Uuids.unixTimestamp(uuid));
         }
-        return entity;
+
+        if (preSaveAction != null) {
+            preSaveAction.accept(entity);
+        }
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            return doSave(entity, isNew);
+        } else {
+            return transactionTemplate.execute(status -> doSave(entity, isNew));
+        }
+    }
+
+    private D doSave(E entity, boolean isNew) {
+        if (isNew) {
+            entityManager.persist(entity);
+        } else {
+            entity = entityManager.merge(entity);
+        }
+        return DaoUtil.getData(entity);
     }
 
     @Override
