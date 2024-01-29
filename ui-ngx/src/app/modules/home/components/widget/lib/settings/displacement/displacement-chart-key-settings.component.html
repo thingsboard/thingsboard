@@ -1,0 +1,254 @@
+<!--
+
+    Copyright © 2016-2023 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div [formGroup]="displacementSettingsFormGroup" class="tb-displacement-chart-key-settings">
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.chart.common-settings</div>
+    <mat-slide-toggle class="mat-slide" formControlName="grid">
+      {{ 'widgets.displacement.common.display-grid' | translate }}
+    </mat-slide-toggle>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.chart.axis</div>
+    <div class="tb-form-panel stroked" formGroupName="xaxis">
+      <div class="tb-form-panel-title" translate>widgets.chart.horizontal-axis</div>
+      <div class="tb-form-row space-between">
+        <div translate>widgets.chart.min-scale-value</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="min" type="number" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+      </div>
+      <div class="tb-form-row space-between">
+        <div translate>widgets.chart.max-scale-value</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="max" type="number" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+      </div>
+    </div>
+    <div class="tb-form-panel stroked" formGroupName="yaxis">
+      <div class="tb-form-panel-title" translate>widgets.chart.vertical-axis</div>
+      <div class="tb-form-row space-between">
+        <div translate>widget-config.units-short</div>
+        <tb-unit-input formControlName="unit"></tb-unit-input>
+      </div>
+    </div>
+  </div>
+  <div class="tb-form-panel" formGroupName="calculation">
+    <div class="tb-form-panel-title" translate>widgets.displacement.calculation.title</div>
+    <div class="tb-form-row space-between">
+      <div translate>widgets.displacement.calculation.type</div>
+      <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="type">
+          <mat-option value="cumulative">{{ 'widgets.displacement.calculation.cumulative-option' | translate }}</mat-option>
+          <mat-option value="incremental">{{ 'widgets.displacement.calculation.incremental-option' | translate }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row space-between">
+      <div translate>widgets.displacement.calculation.reference-point</div>
+      <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="direction">
+          <mat-option value="start">{{ 'widgets.displacement.calculation.start-option' | translate }}</mat-option>
+          <mat-option value="end">{{ 'widgets.displacement.calculation.end-option' | translate }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </div>
+  <div class="tb-form-panel" formGroupName="baseline">
+    <div class="tb-form-panel-title" translate>widgets.displacement.baseline.title</div>
+    <div class="tb-form-row space-between">
+      <div translate>widgets.displacement.baseline.select-timestamp</div>
+      <div class="tb-form-row">
+        <mat-form-field class="mat-input-datetime">
+          <mat-label translate>widgets.displacement.baseline.select-date</mat-label>
+          <mat-datetimepicker-toggle [for]="datePicker" matPrefix></mat-datetimepicker-toggle>
+          <mat-datetimepicker #datePicker type="date" openOnFocus="true"></mat-datetimepicker>
+          <input
+            matInput
+            formControlName="baseline_date"
+            [matDatetimepicker]="datePicker"
+            [disabled]="displacementSettingsFormGroup.get('baseline.enterManually').value"
+          >
+        </mat-form-field>
+        <mat-form-field class="mat-input-datetime">
+          <mat-label translate>widgets.displacement.baseline.select-time</mat-label>
+          <mat-datetimepicker-toggle [for]="timePicker" matPrefix></mat-datetimepicker-toggle>
+          <mat-datetimepicker #timePicker type="time" openOnFocus="true"></mat-datetimepicker>
+          <input
+            matInput
+            formControlName="baseline_time"
+            [matDatetimepicker]="timePicker"
+            [disabled]="displacementSettingsFormGroup.get('baseline.enterManually').value"
+          >
+        </mat-form-field>
+      </div>
+    </div>
+    <mat-expansion-panel class="tb-settings" [expanded]="displacementSettingsFormGroup.get('baseline.enterManually').value">
+      <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-panel-title>
+          <mat-slide-toggle class="mat-slide" formControlName="enterManually" (click)="$event.stopPropagation()" fxLayoutAlign="center">
+            {{ 'widgets.displacement.baseline.enter-manually' | translate }}
+          </mat-slide-toggle>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <div class="tb-form-table">
+          <div class="tb-form-table-header">
+            <div class="tb-form-table-header-cell flex-1" translate>widgets.displacement.baseline.headers.key</div>
+            <div class="tb-form-table-header-cell flex-1" translate>widgets.displacement.baseline.headers.value</div>
+          </div>
+          <div *ngIf="baselineArray.controls.length" class="tb-form-table-body">
+            <div class="tb-form-table-row tb-data-key-row"
+                 [formGroup]="baseline" *ngFor="let baseline of baselineArray.controls">
+              <div class="tb-form-table-row-cell" fxFlex>
+                <mat-form-field class="tb-inline-field" subscriptSizing="dynamic">
+                  <input matInput
+                         formControlName="key"
+                         readonly>
+                </mat-form-field>
+              </div>
+              <div class="tb-form-table-row-cell"  fxFlex style="height: 40px;">
+                <mat-form-field class="tb-inline-field" appearance="outline" subscriptSizing="dynamic">
+                  <input matInput
+                         type="number"
+                         formControlName="value"
+                         placeholder="{{ 'widget-config.set' | translate }}">
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-template>
+    </mat-expansion-panel>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.displacement.position.title</div>
+    <div class="tb-form-table">
+      <div class="tb-form-table-header">
+        <div class="tb-form-table-header-cell flex-1" translate>widgets.displacement.position.headers.key</div>
+        <div class="tb-form-table-header-cell flex-1" translate>widgets.displacement.position.headers.depth</div>
+      </div>
+      <div *ngIf="positionArray.controls.length" class="tb-form-table-body">
+        <div class="tb-form-table-row tb-data-key-row"
+             [formGroup]="position" *ngFor="let position of positionArray.controls">
+          <div class="tb-form-table-row-cell" fxFlex>
+            <mat-form-field class="tb-inline-field" subscriptSizing="dynamic">
+              <input matInput formControlName="key" readonly>
+            </mat-form-field>
+          </div>
+          <div class="tb-form-table-row-cell" fxFlex>
+            <mat-form-field class="tb-inline-field" appearance="outline" subscriptSizing="dynamic">
+              <input matInput type="number" formControlName="depth" placeholder="{{ 'widget-config.set' | translate }}">
+            </mat-form-field>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.displacement.layer.title</div>
+    <div class="tb-form-table">
+      <div class="tb-form-table-header">
+        <div class="tb-form-table-header-cell flex-1" translate>widgets.displacement.layer.headers.from</div>
+        <div class="tb-form-table-header-cell flex-1" translate>widgets.displacement.layer.headers.to</div>
+        <div class="tb-form-table-header-cell flex-1" translate>widgets.displacement.layer.headers.name</div>
+        <div class="tb-form-table-header-cell flex-1" translate>widgets.displacement.layer.headers.color</div>
+        <div class="tb-form-table-header-cell tb-actions-header"></div>
+      </div>
+      <div *ngIf="layersArray.controls.length" class="tb-form-table-body">
+        <div class="tb-form-table-row tb-data-key-row"
+             [formGroup]="layer" *ngFor="let layer of layersArray.controls; let $index = index">
+          <div class="tb-form-table-row-cell" fxFlex>
+            <mat-form-field class="tb-inline-field" appearance="outline" subscriptSizing="dynamic">
+              <input matInput formControlName="from" placeholder="{{ 'widget-config.set' | translate }}">
+            </mat-form-field>
+          </div>
+          <div class="tb-form-table-row-cell" fxFlex>
+            <mat-form-field class="tb-inline-field" appearance="outline" subscriptSizing="dynamic">
+              <input matInput formControlName="to" placeholder="{{ 'widget-config.set' | translate }}">
+            </mat-form-field>
+          </div>
+          <div class="tb-form-table-row-cell" fxFlex>
+            <mat-form-field class="tb-inline-field" appearance="outline" subscriptSizing="dynamic">
+              <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
+            </mat-form-field>
+          </div>
+          <div class="tb-form-table-row-cell" fxFlex>
+            <tb-color-input asBoxInput colorClearButton formControlName="color"></tb-color-input>
+          </div>
+          <div class="tb-form-table-row-cell-buttons">
+            <button type="button"
+                    mat-icon-button
+                    (click)="removeLayer($index)"
+                    [matTooltip]="'action.remove' | translate"
+                    matTooltipPosition="above">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <button type="button" mat-stroked-button color="primary" (click)="addLayer()">
+        {{ 'widgets.displacement.add-layer' | translate }}
+      </button>
+    </div>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.displacement.threshold.title</div>
+    <div class="tb-form-table">
+      <div class="tb-form-table-header">
+        <div class="tb-form-table-header-cell flex-1" translate>widgets.displacement.threshold.headers.x</div>
+        <div class="tb-form-table-header-cell flex-1" translate>widgets.displacement.threshold.headers.name</div>
+        <div class="tb-form-table-header-cell flex-1" translate>widgets.displacement.threshold.headers.color</div>
+        <div class="tb-form-table-header-cell tb-actions-header"></div>
+      </div>
+      <div *ngIf="thresholdsArray.controls.length" class="tb-form-table-body">
+        <div class="tb-form-table-row tb-data-key-row"
+             [formGroup]="threshold" *ngFor="let threshold of thresholdsArray.controls; let $index = index">
+          <div class="tb-form-table-row-cell" fxFlex>
+            <mat-form-field class="tb-inline-field" appearance="outline" subscriptSizing="dynamic">
+              <input matInput type="number" formControlName="x_pos" placeholder="{{ 'widget-config.set' | translate }}">
+            </mat-form-field>
+          </div>
+          <div class="tb-form-table-row-cell" fxFlex>
+            <mat-form-field class="tb-inline-field" appearance="outline" subscriptSizing="dynamic">
+              <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
+            </mat-form-field>
+          </div>
+          <div class="tb-form-table-row-cell" fxFlex>
+            <tb-color-input asBoxInput colorClearButton formControlName="color"></tb-color-input>
+          </div>
+          <div class="tb-form-table-row-cell-buttons">
+            <button type="button"
+                    mat-icon-button
+                    (click)="removeThreshold($index)"
+                    [matTooltip]="'action.remove' | translate"
+                    matTooltipPosition="above">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <button type="button" mat-stroked-button color="primary" (click)="addThreshold()">
+        {{ 'widgets.displacement.add-threshold' | translate }}
+      </button>
+    </div>
+  </div>
+</div>

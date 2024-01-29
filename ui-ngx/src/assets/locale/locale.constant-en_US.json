@@ -6562,6 +6562,57 @@
                     "how-to-create-customer-and-assign-dashboard": "How to create Customer and assign Dashboard"
                 }
             }
+        },
+        "displacement": {
+            "add-layer": "Add layer",
+            "add-threshold": "Add threshold",
+            "common": {
+                "display-grid": "Display grid lines"
+            },
+            "calculation": {
+                "title": "Calculation",
+                "type": "Type",
+                "reference-point": "Reference point",
+                "cumulative-option": "Cumulative",
+                "incremental-option": "Incremental",
+                "start-option": "Start",
+                "end-option": "End"
+            },
+            "baseline": {
+                "title": "Baseline",
+                "select-timestamp": "Select a timestamp",
+                "select-date": "Select date",
+                "select-time": "Select time",
+                "enter-manually": "Or Enter baseline manually",
+                "headers": {
+                    "key": "Key",
+                    "value": "Value"
+                }
+            },
+            "position": {
+                "title": "Devices position",
+                "headers": {
+                    "key": "Key",
+                    "depth": "Depth"
+                }
+            },
+            "layer": {
+                "title": "Layers",
+                "headers": {
+                    "from": "From",
+                    "to": "To",
+                    "name": "Name",
+                    "color": "Color"
+                }
+            },
+            "threshold": {
+                "title": "Thresholds",
+                "headers": {
+                    "x": "X-Axis position",
+                    "name": "Name",
+                    "color": "Color"
+                }
+            }
         }
     },
     "color": {
