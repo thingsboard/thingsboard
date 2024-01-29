@@ -308,7 +308,7 @@ cassandra:
     poll_ms: "${CASSANDRA_QUERY_POLL_MS:50}"
     # Interval in milliseconds for printing Cassandra query queue statistic
     rate_limit_print_interval_ms: "${CASSANDRA_QUERY_RATE_LIMIT_PRINT_MS:10000}"
-    # When saving a value, set other data types to null (to avoid having multiple telemetry values with the same timeseries).
+    # When saving a value, set other data types to null (to avoid having multiple telemetry values with the same timestamp).
     set_null_values_enabled: "${CASSANDRA_QUERY_SET_NULL_VALUES_ENABLED:false}"
     # log one of cassandra queries with specified frequency (0 - logging is disabled)
     print_queries_freq: "${CASSANDRA_QUERY_PRINT_FREQ:0}"
