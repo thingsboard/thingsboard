@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -48,6 +47,7 @@ import org.thingsboard.server.dao.audit.sink.AuditLogSink;
 import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.service.DataValidator;
+import org.thingsboard.server.dao.sql.JpaExecutorService;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -75,6 +75,9 @@ public class AuditLogServiceImpl implements AuditLogService {
 
     @Autowired
     private AuditLogSink auditLogSink;
+
+    @Autowired
+    private JpaExecutorService executor;
 
     @Autowired
     private DataValidator<AuditLog> auditLogValidator;
@@ -380,15 +383,15 @@ public class AuditLogServiceImpl implements AuditLogService {
     }
 
     private ListenableFuture<Void> logAction(TenantId tenantId,
-                                                   EntityId entityId,
-                                                   String entityName,
-                                                   CustomerId customerId,
-                                                   UserId userId,
-                                                   String userName,
-                                                   ActionType actionType,
-                                                   JsonNode actionData,
-                                                   ActionStatus actionStatus,
-                                                   String actionFailureDetails) {
+                                             EntityId entityId,
+                                             String entityName,
+                                             CustomerId customerId,
+                                             UserId userId,
+                                             String userName,
+                                             ActionType actionType,
+                                             JsonNode actionData,
+                                             ActionStatus actionStatus,
+                                             String actionFailureDetails) {
         AuditLog auditLogEntry = createAuditLogEntry(tenantId, entityId, entityName, customerId, userId, userName,
                 actionType, actionData, actionStatus, actionFailureDetails);
         log.trace("Executing logAction [{}]", auditLogEntry);
@@ -402,11 +405,11 @@ public class AuditLogServiceImpl implements AuditLogService {
             }
         }
 
-        ListenableFuture<AuditLog> future = auditLogDao.saveByTenantId(auditLogEntry);
-        return Futures.transform(future, auditLog -> {
-            auditLogSink.logAction(auditLogEntry);
+        return executor.submit(() -> {
+            AuditLog auditLog = auditLogDao.save(tenantId, auditLogEntry);
+            auditLogSink.logAction(auditLog);
             return null;
-        }, MoreExecutors.directExecutor());
+        });
     }
 
 }

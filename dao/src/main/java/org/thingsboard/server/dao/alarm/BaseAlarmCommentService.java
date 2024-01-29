@@ -86,7 +86,7 @@ public class BaseAlarmCommentService extends AbstractEntityService implements Al
         if (alarmComment.getType() == null) {
             alarmComment.setType(AlarmCommentType.OTHER);
         }
-        return alarmCommentDao.createAlarmComment(tenantId, alarmComment);
+        return alarmCommentDao.save(tenantId, alarmComment);
     }
 
     private AlarmComment updateAlarmComment(TenantId tenantId, AlarmComment newAlarmComment) {

@@ -19,12 +19,8 @@ import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
-import org.springframework.transaction.support.TransactionTemplate;
-import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.DaoUtil;
@@ -37,45 +33,26 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Consumer;
 
 /**
  * @author Valerii Sosliuk
  */
 @Slf4j
 @SqlDao
-public abstract class JpaAbstractDao<E extends BaseEntity<D>, D extends HasId<?>>
+public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
         extends JpaAbstractDaoListeningExecutorService
         implements Dao<D> {
 
     @PersistenceContext
     private EntityManager entityManager;
 
-    @Autowired
-    private TransactionTemplate transactionTemplate;
-
     protected abstract Class<E> getEntityClass();
 
     protected abstract JpaRepository<E, UUID> getRepository();
 
-    protected void setSearchText(E entity) {
-    }
-
     @Override
     @Transactional
     public D save(TenantId tenantId, D domain) {
-        return save(tenantId, domain, null);
-    }
-
-    @Override
-    @Transactional
-    public D saveAndFlush(TenantId tenantId, D domain) {
-        D d = save(tenantId, domain);
-        getRepository().flush();
-        return d;
-    }
-
-    protected D save(TenantId tenantId, D domain, Consumer<E> preSaveAction) {
         E entity;
         try {
             entity = getEntityClass().getConstructor(domain.getClass()).newInstance(domain);
@@ -83,7 +60,6 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D extends HasId<?>
             log.error("Can't create entity for domain object {}", domain, e);
             throw new IllegalArgumentException("Can't create entity for domain object {" + domain + "}", e);
         }
-        setSearchText(entity);
         log.debug("Saving entity {}", entity);
         boolean isNew = entity.getUuid() == null;
         if (isNew) {
@@ -92,23 +68,23 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D extends HasId<?>
             entity.setCreatedTime(Uuids.unixTimestamp(uuid));
         }
 
-        if (preSaveAction != null) {
-            preSaveAction.accept(entity);
+        if (isPartitioned()) {
+            createPartition(entity);
         }
-        if (TransactionSynchronizationManager.isActualTransactionActive()) {
-            return doSave(entity, isNew);
-        } else {
-            return transactionTemplate.execute(status -> doSave(entity, isNew));
-        }
-    }
-
-    private D doSave(E entity, boolean isNew) {
         if (isNew) {
             entityManager.persist(entity);
         } else {
             entity = entityManager.merge(entity);
         }
         return DaoUtil.getData(entity);
+    }
+
+    @Override
+    @Transactional
+    public D saveAndFlush(TenantId tenantId, D domain) {
+        D d = save(tenantId, domain);
+        getRepository().flush();
+        return d;
     }
 
     @Override
@@ -155,4 +131,12 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D extends HasId<?>
         List<E> entities = Lists.newArrayList(getRepository().findAll());
         return DaoUtil.convertDataList(entities);
     }
+
+    public boolean isPartitioned() {
+        return false;
+    }
+
+    public void createPartition(E entity) {
+    }
+
 }

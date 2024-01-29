@@ -22,10 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
-import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -54,21 +52,6 @@ public class JpaAlarmCommentDao extends JpaAbstractDao<AlarmCommentEntity, Alarm
     @Autowired
     private AlarmCommentRepository alarmCommentRepository;
 
-    @Transactional
-    @Override
-    public AlarmComment createAlarmComment(TenantId tenantId, AlarmComment alarmComment){
-        log.trace("Saving entity {}", alarmComment);
-        return save(tenantId, alarmComment, entity -> {
-            partitioningRepository.createPartitionIfNotExists(ALARM_COMMENT_TABLE_NAME, entity.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
-        });
-    }
-
-    @Override
-    public void deleteAlarmComment(TenantId tenantId, AlarmCommentId alarmCommentId){
-        log.trace("Try to delete entity alarm comment by id using [{}]", alarmCommentId);
-        alarmCommentRepository.deleteById(alarmCommentId.getId());
-    }
-
     @Override
     public PageData<AlarmCommentInfo> findAlarmComments(TenantId tenantId, AlarmId id, PageLink pageLink){
         log.trace("Try to find alarm comments by alarm id using [{}]", id);
@@ -86,6 +69,16 @@ public class JpaAlarmCommentDao extends JpaAbstractDao<AlarmCommentEntity, Alarm
     public ListenableFuture<AlarmComment> findAlarmCommentByIdAsync(TenantId tenantId, UUID key) {
         log.trace("Try to find alarm comment by id using [{}]", key);
         return findByIdAsync(tenantId, key);
+    }
+
+    @Override
+    public boolean isPartitioned() {
+        return true;
+    }
+
+    @Override
+    public void createPartition(AlarmCommentEntity entity) {
+        partitioningRepository.createPartitionIfNotExists(ALARM_COMMENT_TABLE_NAME, entity.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
     }
 
     @Override

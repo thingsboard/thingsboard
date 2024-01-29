@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.sql.audit;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,7 +25,6 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -67,18 +65,6 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
     @Override
     protected JpaRepository<AuditLogEntity, UUID> getRepository() {
         return auditLogRepository;
-    }
-
-    @Override
-    public ListenableFuture<AuditLog> saveByTenantId(AuditLog auditLog) {
-        return service.submit(() -> save(auditLog.getTenantId(), auditLog));
-    }
-
-    @Override
-    public AuditLog save(TenantId tenantId, AuditLog auditLog) {
-        return save(tenantId, auditLog, entity -> {
-            partitioningRepository.createPartitionIfNotExists(TABLE_NAME, entity.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
-        });
     }
 
     @Override
@@ -170,6 +156,16 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
 
     private void callMigrationFunction(long startTime, long endTime, long partitionSizeInMs) {
         jdbcTemplate.update("CALL migrate_audit_logs(?, ?, ?)", startTime, endTime, partitionSizeInMs);
+    }
+
+    @Override
+    public boolean isPartitioned() {
+        return true;
+    }
+
+    @Override
+    public void createPartition(AuditLogEntity entity) {
+        partitioningRepository.createPartitionIfNotExists(TABLE_NAME, entity.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
     }
 
 }

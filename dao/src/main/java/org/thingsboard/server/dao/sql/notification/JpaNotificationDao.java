@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
@@ -50,15 +49,6 @@ public class JpaNotificationDao extends JpaAbstractDao<NotificationEntity, Notif
 
     @Value("${sql.notifications.partition_size:168}")
     private int partitionSizeInHours;
-
-    @Transactional
-    @Override
-    public Notification save(TenantId tenantId, Notification notification) {
-        return save(tenantId, notification, entity -> {
-            partitioningRepository.createPartitionIfNotExists(ModelConstants.NOTIFICATION_TABLE_NAME,
-                    entity.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
-        });
-    }
 
     @Override
     public PageData<Notification> findUnreadByRecipientIdAndPageLink(TenantId tenantId, UserId recipientId, PageLink pageLink) {
@@ -108,6 +98,17 @@ public class JpaNotificationDao extends JpaAbstractDao<NotificationEntity, Notif
     @Override
     public void deleteByRecipientId(TenantId tenantId, UserId recipientId) {
         notificationRepository.deleteByRecipientId(recipientId.getId());
+    }
+
+    @Override
+    public boolean isPartitioned() {
+        return true;
+    }
+
+    @Override
+    public void createPartition(NotificationEntity entity) {
+        partitioningRepository.createPartitionIfNotExists(ModelConstants.NOTIFICATION_TABLE_NAME,
+                entity.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
     }
 
     @Override

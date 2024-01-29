@@ -47,7 +47,6 @@ import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -151,8 +150,9 @@ public class JpaBaseEdgeEventDao extends JpaAbstractDao<EdgeEventEntity, EdgeEve
         if (StringUtils.isEmpty(edgeEvent.getUid())) {
             edgeEvent.setUid(edgeEvent.getId().toString());
         }
-        partitioningRepository.createPartitionIfNotExists(TABLE_NAME, edgeEvent.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
-        return save(new EdgeEventEntity(edgeEvent));
+        EdgeEventEntity entity = new EdgeEventEntity(edgeEvent);
+        createPartition(entity);
+        return save(entity);
     }
 
     private ListenableFuture<Void> save(EdgeEventEntity entity) {
@@ -227,4 +227,15 @@ public class JpaBaseEdgeEventDao extends JpaAbstractDao<EdgeEventEntity, EdgeEve
     private void callMigrationFunction(long startTime, long endTime, long partitionSIzeInMs) {
         jdbcTemplate.update("CALL migrate_edge_event(?, ?, ?)", startTime, endTime, partitionSIzeInMs);
     }
+
+    @Override
+    public boolean isPartitioned() {
+        return true;
+    }
+
+    @Override
+    public void createPartition(EdgeEventEntity entity) {
+        partitioningRepository.createPartitionIfNotExists(TABLE_NAME, entity.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
+    }
+
 }
