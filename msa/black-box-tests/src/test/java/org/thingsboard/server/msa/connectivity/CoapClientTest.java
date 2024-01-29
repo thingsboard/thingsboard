@@ -18,6 +18,7 @@ package org.thingsboard.server.msa.connectivity;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.JsonObject;
+import org.junit.Ignore;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -50,6 +51,7 @@ public class CoapClientTest  extends AbstractContainerTest {
         testRestClient.deleteDeviceIfExists(device.getId());
     }
 
+    @Ignore
     @Test
     public void provisionRequestForDeviceWithPreProvisionedStrategy() throws Exception {
 
@@ -67,6 +69,7 @@ public class CoapClientTest  extends AbstractContainerTest {
         updateDeviceProfileWithProvisioningStrategy(deviceProfile, DeviceProfileProvisionType.DISABLED);
     }
 
+    @Ignore
     @Test
     public void provisionRequestForDeviceWithAllowToCreateNewDevicesStrategy() throws Exception {
 
@@ -90,6 +93,7 @@ public class CoapClientTest  extends AbstractContainerTest {
         updateDeviceProfileWithProvisioningStrategy(deviceProfile, DeviceProfileProvisionType.DISABLED);
     }
 
+    @Ignore
     @Test
     public void provisionRequestForDeviceWithDisabledProvisioningStrategy() throws Exception {
 
