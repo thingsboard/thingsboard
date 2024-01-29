@@ -66,6 +66,7 @@ import {
 import {
   RpcUpdateStateSettingsPanelComponent
 } from '@home/components/widget/lib/settings/common/rpc/rpc-update-state-settings-panel.component';
+import { CssSizeInputComponent } from '@home/components/widget/lib/settings/common/css-size-input.component';
 
 @NgModule({
   declarations: [
@@ -76,6 +77,7 @@ import {
     ColorSettingsComponent,
     ColorSettingsPanelComponent,
     CssUnitSelectComponent,
+    CssSizeInputComponent,
     DateFormatSelectComponent,
     DateFormatSettingsPanelComponent,
     BackgroundSettingsComponent,
@@ -106,6 +108,7 @@ import {
     ColorSettingsComponent,
     ColorSettingsPanelComponent,
     CssUnitSelectComponent,
+    CssSizeInputComponent,
     DateFormatSelectComponent,
     DateFormatSettingsPanelComponent,
     BackgroundSettingsComponent,

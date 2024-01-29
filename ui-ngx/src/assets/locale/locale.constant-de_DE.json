@@ -1959,7 +1959,7 @@
     "action-source-required": "Aktionsquelle ist erforderlich.",
     "action-name": "Name",
     "action-name-required": "Aktionsname ist erforderlich.",
-    "action-name-not-unique": "Eine andere Aktion mit demselben Namen ist bereits vorhanden.<br/> Der Aktionsname sollte innerhalb derselben Aktionsquelle eindeutig sein.",
+    "action-name-not-unique": "Eine andere Aktion mit demselben Namen ist bereits vorhanden.\n Der Aktionsname sollte innerhalb derselben Aktionsquelle eindeutig sein.",
     "action-icon": "Symbol ",
     "action-type": "Art",
     "action-type-required": "Aktionsart ist erforderlich.",

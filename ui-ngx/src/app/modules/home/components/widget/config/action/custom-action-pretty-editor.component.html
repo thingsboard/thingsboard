@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-custom-action-pretty mat-elevation-z1" tb-fullscreen [fullscreen]="fullscreen">
+<div class="tb-custom-action-pretty" tb-fullscreen [fullscreen]="fullscreen">
   <div fxLayout="row" fxLayoutAlign="end center" class="tb-action-expand-button" [ngClass]="{'tb-fullscreen-editor': fullscreen}">
     <button *ngIf="!fullscreen"
             mat-icon-button fxHide.lt-md
@@ -55,6 +55,7 @@
             [disableUndefinedCheck]="true"
             [validationArgs]="[]"
             [editorCompleter]="customPrettyActionEditorCompleter"
+            functionTitle="{{ 'widget-action.custom-pretty-function' | translate }}"
             helpId="widget/action/custom_pretty_action_fn">
           </tb-js-func>
         </div>
