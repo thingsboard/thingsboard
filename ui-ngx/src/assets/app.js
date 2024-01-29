@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 window.addEventListener("load", (event) => {
-  //checkLicense();
+  checkLicense();
 });
 
 function checkLicense() {
