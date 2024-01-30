@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.action;
 
+import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceStateManager;
 import org.thingsboard.rule.engine.api.RuleNode;
@@ -29,10 +30,15 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 
+import java.time.Duration;
 import java.util.EnumSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 @Slf4j
 @RuleNode(
@@ -61,7 +67,11 @@ public class TbDeviceStateNode implements TbNode {
     private static final Set<TbMsgType> SUPPORTED_EVENTS = EnumSet.of(
             TbMsgType.CONNECT_EVENT, TbMsgType.ACTIVITY_EVENT, TbMsgType.DISCONNECT_EVENT, TbMsgType.INACTIVITY_EVENT
     );
+    private static final Duration ONE_SECOND = Duration.ofSeconds(1L);
+    private static final Duration ENTRY_EXPIRATION_TIME = Duration.ofDays(1L);
 
+    private Stopwatch stopwatch;
+    private ConcurrentMap<DeviceId, Duration> lastActivityEventTimestamps;
     private TbMsgType event;
 
     @Override
@@ -74,31 +84,82 @@ public class TbDeviceStateNode implements TbNode {
             throw new TbNodeException("Unsupported event: " + event, true);
         }
         this.event = event;
+        lastActivityEventTimestamps = new ConcurrentHashMap<>();
+        stopwatch = Stopwatch.createStarted();
+        scheduleCleanupMsg(ctx);
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
+        if (msg.isTypeOf(TbMsgType.DEVICE_STATE_STALE_ENTRIES_CLEANUP_MSG)) {
+            removeStaleEntries();
+            scheduleCleanupMsg(ctx);
+            ctx.ack(msg);
+            return;
+        }
+
         if (!EntityType.DEVICE.equals(msg.getOriginator().getEntityType())) {
             ctx.tellSuccess(msg);
             return;
         }
 
+        DeviceId originator = new DeviceId(msg.getOriginator().getId());
+
+        lastActivityEventTimestamps.compute(originator, (__, lastEventTs) -> {
+            Duration now = stopwatch.elapsed();
+
+            if (lastEventTs == null) {
+                sendEvent(ctx, originator, msg);
+                return now;
+            }
+
+            Duration elapsedSinceLastEventSent = now.minus(lastEventTs);
+            if (elapsedSinceLastEventSent.compareTo(ONE_SECOND) < 0) {
+                ctx.tellSuccess(msg);
+                return lastEventTs;
+            }
+
+            sendEvent(ctx, originator, msg);
+
+            return now;
+        });
+    }
+
+    private void scheduleCleanupMsg(TbContext ctx) {
+        TbMsg cleanupMsg = ctx.newMsg(
+                null, TbMsgType.DEVICE_STATE_STALE_ENTRIES_CLEANUP_MSG, ctx.getSelfId(), TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING
+        );
+        ctx.tellSelf(cleanupMsg, Duration.ofHours(1L).toMillis());
+    }
+
+    private void removeStaleEntries() {
+        lastActivityEventTimestamps.entrySet().removeIf(entry -> {
+            Duration now = stopwatch.elapsed();
+            Duration lastEventTs = entry.getValue();
+            Duration elapsedSinceLastEventSent = now.minus(lastEventTs);
+            return elapsedSinceLastEventSent.compareTo(ENTRY_EXPIRATION_TIME) > 0;
+        });
+    }
+
+    private void sendEvent(TbContext ctx, DeviceId originator, TbMsg msg) {
         TenantId tenantId = ctx.getTenantId();
-        DeviceId deviceId = (DeviceId) msg.getOriginator();
+        long eventTs = msg.getMetaDataTs();
+
         RuleEngineDeviceStateManager deviceStateManager = ctx.getDeviceStateManager();
+        TbCallback callback = getMsgEnqueuedCallback(ctx, msg);
 
         switch (event) {
             case CONNECT_EVENT:
-                deviceStateManager.onDeviceConnect(tenantId, deviceId, msg.getMetaDataTs(), getMsgEnqueuedCallback(ctx, msg));
+                deviceStateManager.onDeviceConnect(tenantId, originator, eventTs, callback);
                 break;
             case ACTIVITY_EVENT:
-                deviceStateManager.onDeviceActivity(tenantId, deviceId, msg.getMetaDataTs(), getMsgEnqueuedCallback(ctx, msg));
+                deviceStateManager.onDeviceActivity(tenantId, originator, eventTs, callback);
                 break;
             case DISCONNECT_EVENT:
-                deviceStateManager.onDeviceDisconnect(tenantId, deviceId, msg.getMetaDataTs(), getMsgEnqueuedCallback(ctx, msg));
+                deviceStateManager.onDeviceDisconnect(tenantId, originator, eventTs, callback);
                 break;
             case INACTIVITY_EVENT:
-                deviceStateManager.onDeviceInactivity(tenantId, deviceId, msg.getMetaDataTs(), getMsgEnqueuedCallback(ctx, msg));
+                deviceStateManager.onDeviceInactivity(tenantId, originator, eventTs, callback);
                 break;
             default:
                 ctx.tellFailure(msg, new IllegalStateException("Configured event [" + event + "] is not supported!"));
@@ -117,6 +178,21 @@ public class TbDeviceStateNode implements TbNode {
                 ctx.tellFailure(msg, t);
             }
         };
+    }
+
+    @Override
+    public void onPartitionChangeMsg(TbContext ctx, PartitionChangeMsg msg) {
+        lastActivityEventTimestamps.entrySet().removeIf(entry -> !ctx.isLocalEntity(entry.getKey()));
+    }
+
+    @Override
+    public void destroy() {
+        if (lastActivityEventTimestamps != null) {
+            lastActivityEventTimestamps.clear();
+            lastActivityEventTimestamps = null;
+        }
+        stopwatch = null;
+        event = null;
     }
 
 }
