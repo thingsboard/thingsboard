@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.id.AlarmRuleId;
@@ -26,6 +27,7 @@ import org.thingsboard.server.common.data.id.AlarmRuleId;
 @Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 public class AlarmRule extends AlarmRuleInfo implements ExportableEntity<AlarmRuleId> {
 
     @Valid

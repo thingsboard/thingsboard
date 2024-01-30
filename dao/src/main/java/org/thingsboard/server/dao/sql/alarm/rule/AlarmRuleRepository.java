@@ -61,4 +61,6 @@ public interface AlarmRuleRepository extends JpaRepository<AlarmRuleEntity, UUID
 
     @Query("SELECT externalId FROM AlarmRuleEntity WHERE id = :id")
     UUID getExternalIdById(@Param("id") UUID id);
+
+    AlarmRuleEntity findByTenantIdAndName(UUID tenantId, String name);
 }

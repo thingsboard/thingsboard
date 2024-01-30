@@ -31,6 +31,8 @@ public interface AlarmRuleService extends EntityDaoService {
 
     AlarmRule findAlarmRuleById(TenantId tenantId, AlarmRuleId alarmRuleId);
 
+    AlarmRule findAlarmRuleByName(TenantId tenantId, String name);
+
     PageData<AlarmRuleInfo> findAlarmRuleInfos(TenantId tenantId, PageLink pageLink);
 
     PageData<AlarmRule> findAlarmRules(TenantId tenantId, PageLink pageLink);

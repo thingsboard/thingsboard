@@ -34,7 +34,7 @@ public class DefaultTbAlarmRuleService extends AbstractTbEntityService implement
         TenantId tenantId = alarmRule.getTenantId();
         try {
             AlarmRule savedAlarmRule = alarmRuleService.saveAlarmRule(tenantId, alarmRule);
-//            autoCommit(user, savedAlarmRule.getId());
+            autoCommit(user, savedAlarmRule.getId());
             logEntityActionService.logEntityAction(tenantId, savedAlarmRule.getId(), savedAlarmRule, null, actionType, user);
             return savedAlarmRule;
         } catch (Exception e) {

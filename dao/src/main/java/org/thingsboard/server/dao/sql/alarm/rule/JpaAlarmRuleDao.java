@@ -105,6 +105,11 @@ public class JpaAlarmRuleDao extends JpaAbstractDao<AlarmRuleEntity, AlarmRule> 
     }
 
     @Override
+    public AlarmRule findByTenantIdAndName(UUID tenantId, String name) {
+        return DaoUtil.getData(alarmRuleRepository.findByTenantIdAndName(tenantId, name));
+    }
+
+    @Override
     public PageData<AlarmRule> findByTenantId(UUID tenantId, PageLink pageLink) {
         return findAlarmRulesByTenantId(tenantId, pageLink);
     }

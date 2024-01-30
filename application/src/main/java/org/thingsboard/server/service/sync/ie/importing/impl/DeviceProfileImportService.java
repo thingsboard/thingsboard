@@ -65,14 +65,18 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
         DeviceProfile savedProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
         TenantId tenantId = ctx.getTenantId();
         if (CollectionsUtil.isNotEmpty(alarms)) {
-            alarms.stream().map(dpAlarm -> {
+            alarms.forEach(dpAlarm -> {
                 AlarmRule alarmRule = AlarmRuleMigrator.migrate(tenantId, deviceProfile, dpAlarm);
-                return alarmRuleService.saveAlarmRule(tenantId, alarmRule);
-            }).toList().forEach(savedAlarmRule -> {
-                ctx.registerResult(EntityType.ALARM_RULE, true);
-                ctx.addEventCallback(() ->
-                    logEntityActionService.logEntityAction(tenantId, savedAlarmRule.getId(), savedAlarmRule, null, ActionType.ADDED, ctx.getUser())
-                );
+                AlarmRule foundAlarmRule = alarmRuleService.findAlarmRuleByName(tenantId, alarmRule.getName());
+                if (foundAlarmRule != null) {
+                    alarmRule.setId(foundAlarmRule.getId());
+                    alarmRule.setCreatedTime(foundAlarmRule.getCreatedTime());
+                }
+                boolean created = alarmRule.getId() == null;
+                ActionType actionType = created ? ActionType.ADDED : ActionType.UPDATED;
+                var savedAlarmRule = alarmRuleService.saveAlarmRule(tenantId, alarmRule);
+                ctx.registerResult(EntityType.ALARM_RULE, created);
+                ctx.addEventCallback(() -> logEntityActionService.logEntityAction(tenantId, savedAlarmRule.getId(), savedAlarmRule, null, actionType, ctx.getUser()));
             });
         }
         return savedProfile;
