@@ -18,10 +18,7 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Getter;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.postgresql.util.PSQLException;
-import org.postgresql.util.ServerErrorMessage;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,6 +45,7 @@ import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
@@ -171,7 +169,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.apache.commons.lang3.StringUtils.isNotEmpty;
+import static org.thingsboard.server.common.data.StringUtils.isNotEmpty;
 import static org.thingsboard.server.common.data.query.EntityKeyType.ENTITY_FIELD;
 import static org.thingsboard.server.controller.UserController.YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -378,15 +376,11 @@ public abstract class BaseController {
         } else if (exception instanceof AsyncRequestTimeoutException) {
             return new ThingsboardException("Request timeout", ThingsboardErrorCode.GENERAL);
         } else if (exception instanceof DataAccessException) {
-            Throwable rootCause = ExceptionUtils.getRootCause(exception);
-            if (rootCause instanceof PSQLException) {
-                String sqlError = Optional.ofNullable(((PSQLException) rootCause).getServerErrorMessage())
-                        .map(ServerErrorMessage::getMessage).orElse(null);
-                if (isNotEmpty(sqlError)) {
-                    sqlError = StringUtils.capitalize(sqlError);
-                    return new ThingsboardException(sqlError, ThingsboardErrorCode.GENERAL);
-                }
+            String errorType = exception.getClass().getSimpleName();
+            if (!logControllerErrorStackTrace) { // not to log the error twice
+                log.warn("Database error: {} - {}", errorType, ExceptionUtils.getRootCauseMessage(exception));
             }
+            return new ThingsboardException("Database error: " + errorType, ThingsboardErrorCode.GENERAL);
         }
         return new ThingsboardException(exception.getMessage(), exception, ThingsboardErrorCode.GENERAL);
     }
