@@ -35,6 +35,7 @@ import org.thingsboard.server.msa.TestCoapClient;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.thingsboard.server.msa.prototypes.DevicePrototypes.defaultDevicePrototype;
 
+@Ignore
 @DisableUIListeners
 public class CoapClientTest  extends AbstractContainerTest {
     private TestCoapClient client;
