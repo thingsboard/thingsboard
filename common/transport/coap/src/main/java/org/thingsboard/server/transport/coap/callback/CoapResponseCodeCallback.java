@@ -20,13 +20,13 @@ import org.eclipse.californium.core.coap.Response;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 
-public class CoapOkCallback implements TransportServiceCallback<Void> {
+public class CoapResponseCodeCallback implements TransportServiceCallback<Void> {
 
     protected final CoapExchange exchange;
     protected final CoAP.ResponseCode onSuccessResponse;
     protected final CoAP.ResponseCode onFailureResponse;
 
-    public CoapOkCallback(CoapExchange exchange, CoAP.ResponseCode onSuccessResponse, CoAP.ResponseCode onFailureResponse) {
+    public CoapResponseCodeCallback(CoapExchange exchange, CoAP.ResponseCode onSuccessResponse, CoAP.ResponseCode onFailureResponse) {
         this.exchange = exchange;
         this.onSuccessResponse = onSuccessResponse;
         this.onFailureResponse = onFailureResponse;
