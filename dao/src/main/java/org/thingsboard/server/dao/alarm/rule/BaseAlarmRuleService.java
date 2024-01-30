@@ -53,7 +53,7 @@ public class BaseAlarmRuleService extends AbstractEntityService implements Alarm
     public AlarmRule saveAlarmRule(TenantId tenantId, AlarmRule alarmRule) {
         alarmRuleDataValidator.validate(alarmRule, AlarmRule::getTenantId);
         AlarmRule saved = alarmRuleDao.save(tenantId, alarmRule);
-//        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(saved.getId()).created(alarmRule.getId() == null).build());
+        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(saved.getId()).created(alarmRule.getId() == null).build());
         return saved;
     }
 
@@ -61,8 +61,8 @@ public class BaseAlarmRuleService extends AbstractEntityService implements Alarm
     public void deleteAlarmRule(TenantId tenantId, AlarmRuleId alarmRuleId) {
         log.debug("Deleting AlarmRule Id: {}", alarmRuleId);
         alarmRuleDao.removeById(tenantId, alarmRuleId.getId());
-//        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId)
-//                .entityId(alarmRuleId).build());
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId)
+                .entityId(alarmRuleId).build());
     }
 
     @Override
