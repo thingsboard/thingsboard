@@ -22,6 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM;
 import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM_DELETE;
+import static org.thingsboard.server.common.data.msg.TbMsgType.DEVICE_STATE_STALE_ENTRIES_CLEANUP_MSG;
 import static org.thingsboard.server.common.data.msg.TbMsgType.NA;
 import static org.thingsboard.server.common.data.msg.TbMsgType.DEDUPLICATION_TIMEOUT_SELF_MSG;
 import static org.thingsboard.server.common.data.msg.TbMsgType.DELAY_TIMEOUT_SELF_MSG;
@@ -53,6 +54,7 @@ class TbMsgTypeTest {
             DEDUPLICATION_TIMEOUT_SELF_MSG,
             DELAY_TIMEOUT_SELF_MSG,
             MSG_COUNT_SELF_MSG,
+            DEVICE_STATE_STALE_ENTRIES_CLEANUP_MSG,
             NA
     );
 
