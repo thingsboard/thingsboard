@@ -11,7 +11,7 @@
     "resources": [],
     "templateHtml": "<tb-single-switch-widget\n    [ctx]='ctx'\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-single-switch-widget>",
     "templateCss": "",
-    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.rpcWidget.onInit();\n}\n\nself.typeParameters = function() {\n    return {\n        previewWidth: '280px',\n        previewHeight: '80px',\n        embedTitlePanel: true,\n        displayRpcMessageToast: false\n    };\n};\n\nself.onDestroy = function() {\n}\n",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.actionWidget.onInit();\n}\n\nself.typeParameters = function() {\n    return {\n        previewWidth: '280px',\n        previewHeight: '80px',\n        embedTitlePanel: true,\n        displayRpcMessageToast: false\n    };\n};\n\nself.onDestroy = function() {\n}\n",
     "settingsSchema": "",
     "dataKeySettingsSchema": "{}\n",
     "settingsDirective": "tb-single-switch-widget-settings",

@@ -37,7 +37,7 @@ import { ValueType } from '@shared/models/constants';
   templateUrl: './single-switch-basic-config.component.html',
   styleUrls: ['../basic-config.scss']
 })
-export class SingSwitchBasicConfigComponent extends BasicWidgetConfigComponent {
+export class SingleSwitchBasicConfigComponent extends BasicWidgetConfigComponent {
 
   get targetDevice(): TargetDevice {
     return this.singleSwitchWidgetConfigForm.get('targetDevice').value;
