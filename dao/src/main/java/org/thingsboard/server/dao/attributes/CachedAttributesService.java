@@ -256,7 +256,7 @@ public class CachedAttributesService implements AttributesService {
 
     @Override
     public ListenableFuture<List<String>> save(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
-        return save(tenantId, entityId, scope, attributes);
+        return save(tenantId, entityId, AttributeScope.valueOf(scope), attributes);
     }
 
     @Override
