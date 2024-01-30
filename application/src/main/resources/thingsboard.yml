@@ -379,7 +379,11 @@ sql:
       # Enable/disable TTL (Time To Live) for timeseries records
       enabled: "${SQL_TTL_TS_ENABLED:true}"
       execution_interval_ms: "${SQL_TTL_TS_EXECUTION_INTERVAL:86400000}" # Number of milliseconds. The current value corresponds to one day
-      ts_key_value_ttl: "${SQL_TTL_TS_TS_KEY_VALUE_TTL:0}" # Number of seconds
+      # The parameter to specify system TTL(Time To Live) value for timeseries records. Value set in seconds.
+      # 0 - records are never expired. System TTL value can be overwritten for a particular Tenant, or parent Customer entity by setting the server-side
+      # attribute TTL to the corresponding Tenant or parent Customer entity. Please, note that the value should be set as long value, otherwise the TTL
+      # will be used from the higher level(Tenant or System)
+      ts_key_value_ttl: "${SQL_TTL_TS_TS_KEY_VALUE_TTL:0}"
     events:
       # Enable/disable TTL (Time To Live) for event records
       enabled: "${SQL_TTL_EVENTS_ENABLED:true}"
