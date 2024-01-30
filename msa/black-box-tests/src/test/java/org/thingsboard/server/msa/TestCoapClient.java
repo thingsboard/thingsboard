@@ -22,6 +22,11 @@ import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.eclipse.californium.core.coap.Request;
+import org.eclipse.californium.elements.config.Configuration;
+import org.eclipse.californium.elements.config.Configuration.ModuleDefinitionsProvider;
+import org.eclipse.californium.elements.config.IntegerDefinition;
+import org.eclipse.californium.elements.config.StringDefinition;
+import org.eclipse.californium.elements.config.TcpConfig;
 import org.eclipse.californium.elements.exception.ConnectorException;
 import org.thingsboard.server.common.msg.session.FeatureType;
 
@@ -31,6 +36,26 @@ public class TestCoapClient {
 
     private static final String COAP_BASE_URL = "coap://localhost:5683/api/v1/";
     private static final long CLIENT_REQUEST_TIMEOUT = 60000L;
+
+
+    private static final String MODULE2 = "TEST2.";
+    private static final IntegerDefinition INT2 = new IntegerDefinition(MODULE2 + "INT2", "TEST", null, 1);
+    private static final StringDefinition STRING = new StringDefinition(MODULE2 + "STRING", "TEST");
+
+    private static final ModuleDefinitionsProvider DEFAULTS = new ModuleDefinitionsProvider() {
+
+        @Override
+        public String getModule() {
+            return MODULE2;
+        }
+
+        @Override
+        public void applyDefinitions(Configuration config) {
+            TcpConfig.register();
+            config.set(INT2, 100);
+            config.set(STRING, "Hallo");
+        }
+    };
 
     private final CoapClient client;
 
@@ -43,7 +68,8 @@ public class TestCoapClient {
     }
 
     public TestCoapClient(String featureTokenUrl) {
-        this.client = createClient(featureTokenUrl);
+        Configuration.addDefaultModule(DEFAULTS);
+        this.client  = new CoapClient(featureTokenUrl);
     }
 
     public void connectToCoap(String accessToken) {
