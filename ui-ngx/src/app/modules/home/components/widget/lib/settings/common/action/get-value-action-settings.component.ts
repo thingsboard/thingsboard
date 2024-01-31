@@ -28,35 +28,38 @@ import {
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
-import { RpcInitialStateAction, RpcInitialStateSettings } from '@shared/models/rpc-widget-settings.models';
+import { GetValueAction, GetValueSettings } from '@shared/models/action-widget-settings.models';
 import { TranslateService } from '@ngx-translate/core';
 import { ValueType } from '@shared/models/constants';
 import {
-  RpcInitialStateSettingsPanelComponent
-} from '@home/components/widget/lib/settings/common/rpc/rpc-initial-state-settings-panel.component';
+  GetValueActionSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/action/get-value-action-settings-panel.component';
 import { IAliasController } from '@core/api/widget-api.models';
 import { TargetDevice } from '@shared/models/widget.models';
 
 @Component({
-  selector: 'tb-rpc-initial-state-settings',
-  templateUrl: './rpc-state-settings-button.component.html',
-  styleUrls: ['./rpc-state-settings-button.scss'],
+  selector: 'tb-get-value-action-settings',
+  templateUrl: './value-action-settings-button.component.html',
+  styleUrls: ['./value-action-settings-button.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => RpcInitialStateSettingsComponent),
+      useExisting: forwardRef(() => GetValueActionSettingsComponent),
       multi: true
     }
   ],
   encapsulation: ViewEncapsulation.None
 })
-export class RpcInitialStateSettingsComponent implements OnInit, ControlValueAccessor {
+export class GetValueActionSettingsComponent implements OnInit, ControlValueAccessor {
 
   @HostBinding('style.overflow')
   overflow = 'hidden';
 
   @Input()
-  stateValueType: ValueType;
+  panelTitle: string;
+
+  @Input()
+  valueType: ValueType;
 
   @Input()
   aliasController: IAliasController;
@@ -67,7 +70,7 @@ export class RpcInitialStateSettingsComponent implements OnInit, ControlValueAcc
   @Input()
   disabled = false;
 
-  modelValue: RpcInitialStateSettings<any>;
+  modelValue: GetValueSettings<any>;
 
   displayValue: string;
 
@@ -95,12 +98,12 @@ export class RpcInitialStateSettingsComponent implements OnInit, ControlValueAcc
     }
   }
 
-  writeValue(value: RpcInitialStateSettings<any>): void {
+  writeValue(value: GetValueSettings<any>): void {
     this.modelValue = value;
     this.updateDisplayValue();
   }
 
-  openRpcStateSettingsPopup($event: Event, matButton: MatButton) {
+  openValueActionSettingsPopup($event: Event, matButton: MatButton) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -109,21 +112,22 @@ export class RpcInitialStateSettingsComponent implements OnInit, ControlValueAcc
       this.popoverService.hidePopover(trigger);
     } else {
       const ctx: any = {
-        initialState: this.modelValue,
-        stateValueType: this.stateValueType,
+        getValueSettings: this.modelValue,
+        panelTitle: this.panelTitle,
+        valueType: this.valueType,
         aliasController: this.aliasController,
         targetDevice: this.targetDevice
       };
-      const initialStateSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, RpcInitialStateSettingsPanelComponent,
+      const getValueSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
+        this.viewContainerRef, GetValueActionSettingsPanelComponent,
         ['leftTopOnly', 'leftOnly', 'leftBottomOnly'], true, null,
         ctx,
         {},
         {}, {}, true);
-      initialStateSettingsPanelPopover.tbComponentRef.instance.popover = initialStateSettingsPanelPopover;
-      initialStateSettingsPanelPopover.tbComponentRef.instance.initialStateSettingsApplied.subscribe((initialState) => {
-        initialStateSettingsPanelPopover.hide();
-        this.modelValue = initialState;
+      getValueSettingsPanelPopover.tbComponentRef.instance.popover = getValueSettingsPanelPopover;
+      getValueSettingsPanelPopover.tbComponentRef.instance.getValueSettingsApplied.subscribe((getValueSettings) => {
+        getValueSettingsPanelPopover.hide();
+        this.modelValue = getValueSettings;
         this.updateDisplayValue();
         this.propagateChange(this.modelValue);
       });
@@ -132,22 +136,22 @@ export class RpcInitialStateSettingsComponent implements OnInit, ControlValueAcc
 
   private updateDisplayValue() {
     switch (this.modelValue.action) {
-      case RpcInitialStateAction.DO_NOTHING:
-        if (this.stateValueType === ValueType.BOOLEAN) {
-          this.displayValue = this.translate.instant(!!this.modelValue.defaultValue ? 'widgets.rpc-state.on' : 'widgets.rpc-state.off');
+      case GetValueAction.DO_NOTHING:
+        if (this.valueType === ValueType.BOOLEAN) {
+          this.displayValue = this.translate.instant(!!this.modelValue.defaultValue ? 'widgets.value-action.on' : 'widgets.value-action.off');
         } else {
           this.displayValue = this.modelValue.defaultValue + '';
         }
         break;
-      case RpcInitialStateAction.EXECUTE_RPC:
+      case GetValueAction.EXECUTE_RPC:
         const methodName = this.modelValue.executeRpc.method;
-        this.displayValue = this.translate.instant('widgets.rpc-state.execute-rpc-text', {methodName});
+        this.displayValue = this.translate.instant('widgets.value-action.execute-rpc-text', {methodName});
         break;
-      case RpcInitialStateAction.GET_ATTRIBUTE:
-        this.displayValue = this.translate.instant('widgets.rpc-state.get-attribute-text', {key: this.modelValue.getAttribute.key});
+      case GetValueAction.GET_ATTRIBUTE:
+        this.displayValue = this.translate.instant('widgets.value-action.get-attribute-text', {key: this.modelValue.getAttribute.key});
         break;
-      case RpcInitialStateAction.GET_TIME_SERIES:
-        this.displayValue = this.translate.instant('widgets.rpc-state.get-time-series-text', {key: this.modelValue.getTimeSeries.key});
+      case GetValueAction.GET_TIME_SERIES:
+        this.displayValue = this.translate.instant('widgets.value-action.get-time-series-text', {key: this.modelValue.getTimeSeries.key});
         break;
     }
     this.cd.markForCheck();

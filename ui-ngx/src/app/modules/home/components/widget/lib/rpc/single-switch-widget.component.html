@@ -27,7 +27,7 @@
     </div>
     <div #singleSwitchToggleRow class="tb-single-switch-slide-toggle-row">
       <div *ngIf="showOffLabel" [style]="offLabelStyle">{{ offLabel }}</div>
-      <mat-slide-toggle class="tb-single-switch-toggle" [disabled]="loading$ | async" [(ngModel)]="value" (change)="updateValue()">
+      <mat-slide-toggle class="tb-single-switch-toggle" [disabled]="loading$ | async" [(ngModel)]="value" (click)="onToggleChange($event)">
       </mat-slide-toggle>
       <div *ngIf="showOnLabel" [style]="onLabelStyle">{{ onLabel }}</div>
     </div>

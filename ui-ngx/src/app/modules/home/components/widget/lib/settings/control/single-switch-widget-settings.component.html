@@ -19,30 +19,31 @@
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widgets.single-switch.behavior</div>
     <div class="tb-form-row">
-      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.initial-state-hint' | translate}}" translate>widgets.rpc-state.initial-state</div>
-      <tb-rpc-initial-state-settings fxFlex
-                                     [stateValueType]="valueType.BOOLEAN"
-                                     [aliasController]="aliasController"
-                                     [targetDevice]="targetDevice"
-                                     formControlName="initialState"></tb-rpc-initial-state-settings>
-    </div>
-    <div class="tb-form-row space-between">
-      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.turn-on-hint' | translate}}" translate>widgets.rpc-state.turn-on</div>
-      <tb-rpc-update-state-settings fxFlex
-                                    panelTitle="widgets.rpc-state.turn-on"
-                                    [stateValueType]="valueType.BOOLEAN"
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.value-action.initial-state-hint' | translate}}" translate>widgets.value-action.initial-state</div>
+      <tb-get-value-action-settings fxFlex
+                                    panelTitle="widgets.value-action.initial-state"
+                                    [valueType]="valueType.BOOLEAN"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
-                                    formControlName="onUpdateState"></tb-rpc-update-state-settings>
+                                    formControlName="initialState"></tb-get-value-action-settings>
     </div>
     <div class="tb-form-row space-between">
-      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.turn-off-hint' | translate}}" translate>widgets.rpc-state.turn-off</div>
-      <tb-rpc-update-state-settings fxFlex
-                                    panelTitle="widgets.rpc-state.turn-off"
-                                    [stateValueType]="valueType.BOOLEAN"
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.value-action.turn-on-hint' | translate}}" translate>widgets.value-action.turn-on</div>
+      <tb-set-value-action-settings fxFlex
+                                    panelTitle="widgets.value-action.turn-on"
+                                    [valueType]="valueType.BOOLEAN"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
-                                    formControlName="offUpdateState"></tb-rpc-update-state-settings>
+                                    formControlName="onUpdateState"></tb-set-value-action-settings>
+    </div>
+    <div class="tb-form-row space-between">
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.value-action.turn-off-hint' | translate}}" translate>widgets.value-action.turn-off</div>
+      <tb-set-value-action-settings fxFlex
+                                    panelTitle="widgets.value-action.turn-off"
+                                    [valueType]="valueType.BOOLEAN"
+                                    [aliasController]="aliasController"
+                                    [targetDevice]="targetDevice"
+                                    formControlName="offUpdateState"></tb-set-value-action-settings>
     </div>
   </div>
   <div class="tb-form-panel">
