@@ -38,7 +38,7 @@ public interface AuditLogService {
 
     PageData<AuditLog> findAuditLogsByTenantId(TenantId tenantId, List<ActionType> actionTypes, TimePageLink pageLink);
 
-    <E extends HasName, I extends EntityId> ListenableFuture<List<Void>> logEntityAction(
+    <E extends HasName, I extends EntityId> ListenableFuture<Void> logEntityAction(
             TenantId tenantId,
             CustomerId customerId,
             UserId userId,
