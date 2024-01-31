@@ -211,6 +211,29 @@
     }
   }
 
+  .tb-flex-centered-row {
+    display: flex;
+    flex: 1;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    &.flex-start {
+      justify-content: flex-start;
+    }
+    &.flex-end {
+      justify-content: flex-end;
+    }
+    &.space-between {
+      justify-content: space-between;
+    }
+    &.no-gap {
+      gap: 0;
+    }
+    &.fill-width {
+      width: 100%;
+    }
+  }
+
   .tb-form-panel, .tb-form-row {
     .mat-slide {
       margin: 0;
