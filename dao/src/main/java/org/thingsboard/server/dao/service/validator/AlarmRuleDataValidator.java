@@ -21,16 +21,40 @@ import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfiguration;
+import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleAssetTypeEntityFilter;
+import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleDeviceTypeEntityFilter;
+import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleEntityFilter;
+import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleEntityFilterType;
+import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleEntityListEntityFilter;
+import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleSingleEntityFilter;
+import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.AssetProfileId;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.asset.AssetProfileService;
+import org.thingsboard.server.dao.asset.AssetService;
+import org.thingsboard.server.dao.device.DeviceProfileService;
+import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantService;
+
+import static org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleEntityFilterType.ASSET_TYPE;
+import static org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleEntityFilterType.DEVICE_TYPE;
+import static org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleEntityFilterType.ENTITY_LIST;
+import static org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleEntityFilterType.SINGLE_ENTITY;
 
 @Component
 @AllArgsConstructor
 public class AlarmRuleDataValidator extends DataValidator<AlarmRule> {
 
     private final TenantService tenantService;
+    private final DeviceService deviceService;
+    private final AssetService assetService;
+    private final DeviceProfileService deviceProfileService;
+    private final AssetProfileService assetProfileService;
 
     @Override
     protected void validateDataImpl(TenantId tenantId, AlarmRule alarmRule) {
@@ -52,17 +76,49 @@ public class AlarmRuleDataValidator extends DataValidator<AlarmRule> {
         if (configuration == null) {
             throw new DataValidationException("Alarm rule configuration should be specified!");
         }
-        if (configuration.getSourceEntityFilters() == null) {
-            throw new DataValidationException("Alarm rule source filter should be specified!");
-        }
         if (CollectionUtils.isEmpty(configuration.getSourceEntityFilters())) {
             throw new DataValidationException("Alarm rule source entity filter should be specified!");
         }
+        configuration.getSourceEntityFilters().forEach(filter -> validateSourceEntityFilter(tenantId, filter));
+
         if (configuration.getAlarmTargetEntity() == null) {
             throw new DataValidationException("Alarm rule target entity should be specified!");
         }
         if (CollectionUtils.isEmpty(configuration.getCreateRules())) {
             throw new DataValidationException("Alarm create rule should be specified!");
+        }
+    }
+
+    private void validateSourceEntityFilter(TenantId tenantId, AlarmRuleEntityFilter entityFilter) {
+        switch (entityFilter.getType()) {
+            case SINGLE_ENTITY -> validateSourceEntityFilter(tenantId, ((AlarmRuleSingleEntityFilter) entityFilter).getEntityId(), SINGLE_ENTITY);
+            case DEVICE_TYPE -> validateSourceEntityFilter(tenantId, ((AlarmRuleDeviceTypeEntityFilter) entityFilter).getDeviceProfileId(), DEVICE_TYPE);
+            case ASSET_TYPE -> validateSourceEntityFilter(tenantId, ((AlarmRuleAssetTypeEntityFilter) entityFilter).getAssetProfileId(), ASSET_TYPE);
+            case ENTITY_LIST -> {
+                var list = ((AlarmRuleEntityListEntityFilter) entityFilter).getEntityIds();
+                if (CollectionUtils.isEmpty(list)) {
+                    throw new DataValidationException("EntityIds should be specified in Alarm Rule ENTITY_LIST filter!");
+                }
+                list.forEach(entityId -> validateSourceEntityFilter(tenantId, entityId, ENTITY_LIST));
+            }
+        }
+    }
+
+    private void validateSourceEntityFilter(TenantId tenantId, EntityId entityId, AlarmRuleEntityFilterType entityFilterType) {
+        if (entityId == null) {
+            throw new DataValidationException(String.format("EntityId should be specified in Alarm Rule %s filter!", entityFilterType));
+        }
+
+        var entity = switch (entityId.getEntityType()) {
+            case DEVICE -> deviceService.findDeviceById(tenantId, (DeviceId) entityId);
+            case ASSET -> assetService.findAssetById(tenantId, (AssetId) entityId);
+            case DEVICE_PROFILE -> deviceProfileService.findDeviceProfileById(tenantId, (DeviceProfileId) entityId);
+            case ASSET_PROFILE -> assetProfileService.findAssetProfileById(tenantId, (AssetProfileId) entityId);
+            default -> throw new DataValidationException(String.format("%s entity type does not supported in Alarm Rule %s filter!", entityId.getEntityType(), entityFilterType));
+        };
+
+        if (entity == null) {
+            throw new DataValidationException(String.format("Can't use non-existent %s in Alarm Rule %s filter! [%s]", entityId.getEntityType(), entityFilterType, entityId));
         }
     }
 }

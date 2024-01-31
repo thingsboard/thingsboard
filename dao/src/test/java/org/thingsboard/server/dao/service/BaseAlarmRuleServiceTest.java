@@ -19,6 +19,11 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileType;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
@@ -35,10 +40,14 @@ import org.thingsboard.server.common.data.alarm.rule.condition.ComplexAlarmCondi
 import org.thingsboard.server.common.data.alarm.rule.condition.Operation;
 import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionFilter;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleDeviceTypeEntityFilter;
+import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.query.DynamicValueSourceType;
+import org.thingsboard.server.dao.device.DeviceProfileService;
+import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -51,10 +60,16 @@ import java.util.stream.Collectors;
 @DaoSqlTest
 public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
 
+    private static final String ALARM_RULE_NAME = "Alarm Rule";
+
+    @Autowired
+    private DeviceProfileService deviceProfileService;
+
     private IdComparator<AlarmRule> idComparator = new IdComparator<>();
     private IdComparator<AlarmRuleInfo> alarmRuleInfoIdComparator = new IdComparator<>();
 
     private TenantId tenantId;
+    private DeviceProfileId deviceProfileId;
 
     @Before
     public void before() {
@@ -63,6 +78,20 @@ public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
         Tenant savedTenant = tenantService.saveTenant(tenant);
         Assert.assertNotNull(savedTenant);
         tenantId = savedTenant.getId();
+
+        DeviceProfile deviceProfile = new DeviceProfile();
+        deviceProfile.setTenantId(tenantId);
+        deviceProfile.setName("Test Profile");
+        deviceProfile.setType(DeviceProfileType.DEFAULT);
+        deviceProfile.setTransportType(DeviceTransportType.DEFAULT);
+
+        DeviceProfileData data = new DeviceProfileData();
+        data.setTransportConfiguration(new DefaultDeviceProfileTransportConfiguration());
+        deviceProfile.setProfileData(data);
+
+        var savedDeviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
+        Assert.assertNotNull(savedDeviceProfile);
+        deviceProfileId = savedDeviceProfile.getId();
     }
 
     @After
@@ -72,7 +101,7 @@ public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
 
     @Test
     public void testSaveAlarmRule() {
-        AlarmRule alarmRule = createAlarmRule(tenantId, "Alarm Rule");
+        AlarmRule alarmRule = createAlarmRule(tenantId, ALARM_RULE_NAME);
         AlarmRule savedAlarmRule = alarmRuleService.saveAlarmRule(tenantId, alarmRule);
         Assert.assertNotNull(savedAlarmRule);
         Assert.assertNotNull(savedAlarmRule.getId());
@@ -89,7 +118,7 @@ public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindAlarmRuleById() {
-        AlarmRule alarmRule = createAlarmRule(tenantId, "Alarm Rule");
+        AlarmRule alarmRule = createAlarmRule(tenantId, ALARM_RULE_NAME);
         AlarmRule savedAlarmRule = alarmRuleService.saveAlarmRule(tenantId, alarmRule);
         AlarmRule foundAlarmRule = alarmRuleService.findAlarmRuleById(tenantId, savedAlarmRule.getId());
         Assert.assertNotNull(foundAlarmRule);
@@ -101,7 +130,7 @@ public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
         List<AlarmRule> alarmRules = new ArrayList<>();
 
         for (int i = 0; i < 28; i++) {
-            AlarmRule alarmRule = createAlarmRule(tenantId, "Alarm Rule" + i);
+            AlarmRule alarmRule = createAlarmRule(tenantId, ALARM_RULE_NAME + i);
             alarmRules.add(alarmRuleService.saveAlarmRule(tenantId, alarmRule));
         }
 
@@ -123,6 +152,97 @@ public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
                 .map(AlarmRuleInfo::new).collect(Collectors.toList());
 
         Assert.assertEquals(alarmRuleInfos, loadedAlarmRuleInfos);
+    }
+
+    @Test
+    public void testFindAlarmRuleByName() {
+        AlarmRule alarmRule = createAlarmRule(tenantId, ALARM_RULE_NAME);
+        AlarmRule savedAlarmRule = alarmRuleService.saveAlarmRule(tenantId, alarmRule);
+        AlarmRule foundAlarmRule = alarmRuleService.findAlarmRuleByName(tenantId, savedAlarmRule.getName());
+        Assert.assertNotNull(foundAlarmRule);
+        Assert.assertEquals(savedAlarmRule, foundAlarmRule);
+    }
+
+    @Test()
+    public void testSaveAlarmRuleWithEmptyName() {
+        AlarmRule alarmRule = createAlarmRule(tenantId, "");
+        Assertions.assertThrows(
+                DataValidationException.class,
+                () -> alarmRuleService.saveAlarmRule(tenantId, alarmRule)
+        );
+    }
+
+    @Test
+    public void testSaveAlarmRuleWithEmptyAlarmType() {
+        AlarmRule alarmRule = createAlarmRule(tenantId, ALARM_RULE_NAME);
+        alarmRule.setAlarmType("");
+        Assertions.assertThrows(
+                DataValidationException.class,
+                () -> alarmRuleService.saveAlarmRule(tenantId, alarmRule)
+        );
+    }
+
+    @Test
+    public void testSaveAlarmRuleWithEmptyTenantId() {
+        AlarmRule alarmRule = createAlarmRule(null, ALARM_RULE_NAME);
+        Assertions.assertThrows(
+                DataValidationException.class,
+                () -> alarmRuleService.saveAlarmRule(tenantId, alarmRule)
+        );
+    }
+
+    @Test
+    public void testSaveAlarmRuleWithEmptyConfiguration() {
+        AlarmRule alarmRule = createAlarmRule(tenantId, ALARM_RULE_NAME);
+        alarmRule.setConfiguration(null);
+        Assertions.assertThrows(
+                DataValidationException.class,
+                () -> alarmRuleService.saveAlarmRule(tenantId, alarmRule)
+        );
+    }
+
+    @Test
+    public void testSaveAlarmRuleWithEmptySourceFilter() {
+        AlarmRule alarmRule = createAlarmRule(tenantId, ALARM_RULE_NAME);
+        var configuration = alarmRule.getConfiguration();
+        configuration.setSourceEntityFilters(Collections.emptyList());
+        Assertions.assertThrows(
+                DataValidationException.class,
+                () -> alarmRuleService.saveAlarmRule(tenantId, alarmRule)
+        );
+    }
+
+    @Test
+    public void testSaveAlarmRuleWithEmptyEntityIdInSourceFilter() {
+        AlarmRule alarmRule = createAlarmRule(tenantId, ALARM_RULE_NAME);
+        var configuration = alarmRule.getConfiguration();
+        configuration.setSourceEntityFilters(List.of(new AlarmRuleDeviceTypeEntityFilter(null)));
+        Assertions.assertThrows(
+                DataValidationException.class,
+                () -> alarmRuleService.saveAlarmRule(tenantId, alarmRule)
+        );
+    }
+
+    @Test
+    public void testSaveAlarmRuleWithEmptyTargetEntity() {
+        AlarmRule alarmRule = createAlarmRule(tenantId, ALARM_RULE_NAME);
+        var configuration = alarmRule.getConfiguration();
+        configuration.setAlarmTargetEntity(null);
+        Assertions.assertThrows(
+                DataValidationException.class,
+                () -> alarmRuleService.saveAlarmRule(tenantId, alarmRule)
+        );
+    }
+
+    @Test
+    public void testSaveAlarmRuleWithEmptyCreateRules() {
+        AlarmRule alarmRule = createAlarmRule(tenantId, ALARM_RULE_NAME);
+        var configuration = alarmRule.getConfiguration();
+        configuration.setCreateRules(null);
+        Assertions.assertThrows(
+                DataValidationException.class,
+                () -> alarmRuleService.saveAlarmRule(tenantId, alarmRule)
+        );
     }
 
     private AlarmRule createAlarmRule(TenantId tenantId, String name) {
@@ -175,7 +295,7 @@ public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
 
-        AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(null);
+        AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(deviceProfileId);
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
         alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 

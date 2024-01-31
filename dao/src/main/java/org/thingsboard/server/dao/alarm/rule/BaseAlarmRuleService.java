@@ -52,9 +52,14 @@ public class BaseAlarmRuleService extends AbstractEntityService implements Alarm
     @Override
     public AlarmRule saveAlarmRule(TenantId tenantId, AlarmRule alarmRule) {
         alarmRuleDataValidator.validate(alarmRule, AlarmRule::getTenantId);
-        AlarmRule saved = alarmRuleDao.save(tenantId, alarmRule);
-        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(saved.getId()).created(alarmRule.getId() == null).build());
-        return saved;
+        try {
+            AlarmRule saved = alarmRuleDao.save(tenantId, alarmRule);
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(saved.getId()).created(alarmRule.getId() == null).build());
+            return saved;
+        } catch (Exception e) {
+            checkConstraintViolation(e, "alarm_rule_name_unq_key", "Alarm rule with such name already exists!");
+            throw e;
+        }
     }
 
     @Override
