@@ -488,10 +488,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
                     Response resp = state.getAdaptor().convertToPublish(msg);
                     Response response = new Response(ResponseCode.VALID);
                     response.setPayload(resp.getPayload());
-                    if (state.getRpc() == null) {
-                        state.setRpc(new TbCoapObservationState(attrs.getExchange(), attrs.getToken()));
-                    }
-                    response.getOptions().setObserve(state.getRpc().getObserveCounter().getAndIncrement());
+                    response.getOptions().setObserve(attrs.getObserveCounter().getAndIncrement());
                     respond(attrs.getExchange(), response, state.getContentFormat());
                 } catch (AdaptorException e) {
                     log.trace("Failed to reply due to error", e);
@@ -522,7 +519,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
                     boolean conRequest = AbstractSyncSessionCallback.isConRequest(state.getAttrs());
                     int requestId = getNextMsgId();
                     Response response = state.getAdaptor().convertToPublish(msg);
-                    response.getOptions().setObserve(state.getRpc().getObserveCounter().getAndIncrement());
+                    response.getOptions().setObserve(attrs.getObserveCounter().getAndIncrement());
                     response.setConfirmable(conRequest);
                     response.setMID(requestId);
                     if (conRequest) {
