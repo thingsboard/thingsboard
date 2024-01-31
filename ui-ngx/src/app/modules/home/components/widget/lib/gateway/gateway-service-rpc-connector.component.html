@@ -279,7 +279,7 @@
           <span class="fields-label">{{ 'gateway.rpc.oids' | translate }}*</span>
           <div fxFlex fxLayout="row" fxLayoutGap="10px" fxLayoutAlign="center center"
                *ngFor="let control of getFormArrayControls('oid'); let i = index">
-            <mat-form-field appearance="outline" fxFlex>
+            <mat-form-field class="tb-inline-field" appearance="outline" fxFlex subscriptSizing="dynamic">
               <input matInput [formControl]="control" required/>
             </mat-form-field>
             <mat-icon style="cursor:pointer;"

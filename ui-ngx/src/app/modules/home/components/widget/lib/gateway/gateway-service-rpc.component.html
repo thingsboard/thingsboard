@@ -46,10 +46,12 @@
     </ng-template>
   </div>
   <section class="result-block" [formGroup]="commandForm">
-  <span>{{ 'gateway.rpc-command-result' | translate }}
-    <div *ngIf="resultTime" class="result-time" fxFlex fxLayout="row" fxLayoutAlign="center center"> <mat-icon
-      class="material-icons">schedule</mat-icon>
-      <span>{{ resultTime | date: 'yyyy/MM/dd HH:mm:ss' }}</span> </div></span>
+    <span>{{ 'gateway.rpc-command-result' | translate }}
+      <div *ngIf="resultTime" class="result-time" fxFlex fxLayout="row" fxLayoutAlign="center center">
+        <mat-icon class="material-icons">schedule</mat-icon>
+        <span>{{ resultTime | date: 'yyyy/MM/dd HH:mm:ss' }}</span>
+      </div>
+    </span>
     <tb-json-content [contentType]="contentTypes.JSON" readonly="true" formControlName="result"></tb-json-content>
   </section>
 </div>
