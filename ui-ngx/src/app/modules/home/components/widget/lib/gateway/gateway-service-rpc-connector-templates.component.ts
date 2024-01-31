@@ -23,6 +23,7 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { AttributeService } from '@core/http/attribute.service';
 import { WidgetContext } from '@home/models/widget-component.models';
+import { isLiteralObject } from '@app/core/utils';
 
 @Component({
   selector: 'tb-gateway-service-rpc-connector-templates',
@@ -45,6 +46,9 @@ export class GatewayServiceRPCConnectorTemplatesComponent implements OnInit {
 
   @Input()
   rpcTemplates: Array<RPCTemplate>;
+
+  public readonly originalOrder = (): number => 0;
+  public readonly isObject = (value: any) => isLiteralObject(value);
 
   constructor(private attributeService: AttributeService) {
   }
@@ -74,13 +78,5 @@ export class GatewayServiceRPCConnectorTemplatesComponent implements OnInit {
         value: this.rpcTemplates
       }]).subscribe(() => {
     })
-  }
-
-  public originalOrder = (a, b): number => {
-    return 0;
-  }
-
-  public isObject(value: any) {
-    return value !== null && typeof value === 'object' && !Array.isArray(value);
   }
 }
