@@ -41,6 +41,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 import static org.thingsboard.server.common.data.msg.TbNodeConnectionType.FAILURE;
@@ -51,10 +52,9 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
 
     private final ConcurrentMap<EntityCreationLock, Object> entitiesCreationLocks = new ConcurrentReferenceHashMap<>();
 
-    protected final List<EntityType> supportedEntityTypes = List.of(EntityType.TENANT, EntityType.DEVICE,
-            EntityType.ASSET, EntityType.ENTITY_VIEW, EntityType.DASHBOARD, EntityType.EDGE, EntityType.USER);
-
-    protected final List<String> supportedEntityTypesStrList = supportedEntityTypes.stream().map(Enum::name).collect(Collectors.toList());
+    private final String supportedEntityTypesStr = Stream.of(EntityType.TENANT, EntityType.DEVICE,
+                    EntityType.ASSET, EntityType.ENTITY_VIEW, EntityType.DASHBOARD, EntityType.EDGE, EntityType.USER)
+            .map(Enum::name).collect(Collectors.joining(" ,"));
 
     protected C config;
 
@@ -123,14 +123,14 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
             return Futures.immediateFuture(tenantId);
         }
         var targetEntityName = processPattern(msg, config.getEntityNamePattern());
-        return ctx.getDbCallbackExecutor().executeAsync(() -> {
-            boolean createEntityIfNotExists = createEntityIfNotExists();
-            switch (entityType) {
-                case DEVICE:
-                    var deviceService = ctx.getDeviceService();
-                    if (createEntityIfNotExists) {
-                        var entityCreationLock = new EntityCreationLock(tenantId, entityType, targetEntityName);
-                        synchronized (entitiesCreationLocks.computeIfAbsent(entityCreationLock, k -> new Object())) {
+        boolean createEntityIfNotExists = createEntityIfNotExists();
+        switch (entityType) {
+            case DEVICE:
+                var deviceService = ctx.getDeviceService();
+                if (createEntityIfNotExists) {
+                    var entityCreationLock = new EntityCreationLock(tenantId, entityType, targetEntityName);
+                    synchronized (entitiesCreationLocks.computeIfAbsent(entityCreationLock, k -> new Object())) {
+                        return ctx.getDbCallbackExecutor().executeAsync(() -> {
                             var device = deviceService.findDeviceByTenantIdAndName(tenantId, targetEntityName);
                             if (device != null) {
                                 return device.getId();
@@ -146,18 +146,22 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                                     () -> log.trace("Pushed Device Created message: {}", savedDevice),
                                     throwable -> log.warn("Failed to push Device Created message: {}", savedDevice, throwable));
                             return savedDevice.getId();
-                        }
+                        });
                     }
+                }
+                return ctx.getDbCallbackExecutor().executeAsync(() -> {
                     var device = deviceService.findDeviceByTenantIdAndName(tenantId, targetEntityName);
                     if (device == null) {
                         throw new NullPointerException("Device with name '" + targetEntityName + "' doesn't exist!");
                     }
                     return device.getId();
-                case ASSET:
-                    var assetService = ctx.getAssetService();
-                    if (createEntityIfNotExists) {
-                        var entityCreationLock = new EntityCreationLock(tenantId, entityType, targetEntityName);
-                        synchronized (entitiesCreationLocks.computeIfAbsent(entityCreationLock, k -> new Object())) {
+                });
+            case ASSET:
+                var assetService = ctx.getAssetService();
+                if (createEntityIfNotExists) {
+                    var entityCreationLock = new EntityCreationLock(tenantId, entityType, targetEntityName);
+                    synchronized (entitiesCreationLocks.computeIfAbsent(entityCreationLock, k -> new Object())) {
+                        return ctx.getDbCallbackExecutor().executeAsync(() -> {
                             var asset = assetService.findAssetByTenantIdAndName(tenantId, targetEntityName);
                             if (asset != null) {
                                 return asset.getId();
@@ -172,18 +176,22 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                                     () -> log.trace("Pushed Asset Created message: {}", savedAsset),
                                     throwable -> log.warn("Failed to push Asset Created message: {}", savedAsset, throwable));
                             return savedAsset.getId();
-                        }
+                        });
                     }
+                }
+                return ctx.getDbCallbackExecutor().executeAsync(() -> {
                     var asset = assetService.findAssetByTenantIdAndName(tenantId, targetEntityName);
                     if (asset == null) {
                         throw new NullPointerException("Asset with name '" + targetEntityName + "' doesn't exist!");
                     }
                     return asset.getId();
-                case CUSTOMER:
-                    var customerService = ctx.getCustomerService();
-                    if (createEntityIfNotExists) {
-                        var entityCreationLock = new EntityCreationLock(tenantId, entityType, targetEntityName);
-                        synchronized (entitiesCreationLocks.computeIfAbsent(entityCreationLock, k -> new Object())) {
+                });
+            case CUSTOMER:
+                var customerService = ctx.getCustomerService();
+                if (createEntityIfNotExists) {
+                    var entityCreationLock = new EntityCreationLock(tenantId, entityType, targetEntityName);
+                    synchronized (entitiesCreationLocks.computeIfAbsent(entityCreationLock, k -> new Object())) {
+                        return ctx.getDbCallbackExecutor().executeAsync(() -> {
                             var customer = customerService.findCustomerByTenantIdAndTitleUsingCache(tenantId, targetEntityName);
                             if (customer != null) {
                                 return customer.getId();
@@ -196,46 +204,56 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                                     () -> log.trace("Pushed Customer Created message: {}", savedCustomer),
                                     throwable -> log.warn("Failed to push Customer Created message: {}", savedCustomer, throwable));
                             return savedCustomer.getId();
-                        }
+                        });
                     }
+                }
+                return ctx.getDbCallbackExecutor().executeAsync(() -> {
                     var customer = customerService.findCustomerByTenantIdAndTitleUsingCache(tenantId, targetEntityName);
                     if (customer == null) {
                         throw new NullPointerException("Customer with title '" + targetEntityName + "' doesn't exist!");
                     }
                     return customer.getId();
-                case ENTITY_VIEW:
+                });
+            case ENTITY_VIEW:
+                return ctx.getDbCallbackExecutor().executeAsync(() -> {
                     var entityViewService = ctx.getEntityViewService();
                     var entityView = entityViewService.findEntityViewByTenantIdAndName(tenantId, targetEntityName);
                     if (entityView != null) {
                         return entityView.getId();
                     }
                     throw new NullPointerException("EntityView with name '" + targetEntityName + "' doesn't exist!");
-                case EDGE:
+                });
+            case EDGE:
+                return ctx.getDbCallbackExecutor().executeAsync(() -> {
                     var edgeService = ctx.getEdgeService();
                     var edge = edgeService.findEdgeByTenantIdAndName(tenantId, targetEntityName);
                     if (edge != null) {
                         return edge.getId();
                     }
                     throw new NullPointerException("Edge with name '" + targetEntityName + "' doesn't exist!");
-                case DASHBOARD:
+                });
+            case DASHBOARD:
+                return ctx.getDbCallbackExecutor().executeAsync(() -> {
                     var dashboardService = ctx.getDashboardService();
                     var dashboardInfo = dashboardService.findFirstDashboardInfoByTenantIdAndName(tenantId, targetEntityName);
                     if (dashboardInfo != null) {
                         return dashboardInfo.getId();
                     }
                     throw new NullPointerException("Dashboard with title '" + targetEntityName + "' doesn't exist!");
-                case USER:
+                });
+            case USER:
+                return ctx.getDbCallbackExecutor().executeAsync(() -> {
                     var userService = ctx.getUserService();
                     var user = userService.findUserByTenantIdAndEmail(tenantId, targetEntityName);
                     if (user != null) {
                         return user.getId();
                     }
                     throw new NullPointerException("User with email '" + targetEntityName + "' doesn't exist!");
-                default:
-                    throw new IllegalArgumentException("Unsupported originator type '" + entityTypeStr +
-                            "'! Only " + String.join(" ,", supportedEntityTypesStrList) + " types are allowed.");
-            }
-        });
+                });
+            default:
+                throw new IllegalArgumentException("Unsupported originator type '" + entityTypeStr +
+                        "'! Only " + supportedEntityTypesStr + " types are allowed.");
+        }
     }
 
     @Data

@@ -18,7 +18,10 @@ package org.thingsboard.rule.engine.action;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -27,25 +30,26 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import java.util.Map;
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
 @Slf4j
 public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerActionNodeConfiguration> implements TbNode {
 
-    protected final Map<EntityType, CustomerAssigner> assignersMap = Map.of(
-            EntityType.ASSET, this::processAsset,
-            EntityType.DEVICE, this::processDevice,
-            EntityType.ENTITY_VIEW, this::processEntityView,
-            EntityType.DASHBOARD, this::processDashboard,
-            EntityType.EDGE, this::processEdge
-    );
+    private final ConcurrentMap<CustomerCreationLock, Object> customerCreationLocks = new ConcurrentReferenceHashMap<>();
+
+    private static final List<EntityType> supportedEntityTypes = List.of(EntityType.ASSET, EntityType.DEVICE,
+            EntityType.ENTITY_VIEW, EntityType.DASHBOARD, EntityType.EDGE);
+
+    private static final String supportedEntityTypesStr = supportedEntityTypes.stream().map(Enum::name).collect(Collectors.joining(", "));
 
     protected C config;
 
@@ -60,9 +64,8 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        EntityType entityType = msg.getOriginator().getEntityType();
-        boolean originatorSupportedByNode = assignersMap.containsKey(entityType);
-        if (!originatorSupportedByNode) {
+        var entityType = msg.getOriginator().getEntityType();
+        if (!supportedEntityTypes.contains(entityType)) {
             throw new RuntimeException(unsupportedOriginatorTypeErrorMessage(entityType));
         }
         withCallback(processCustomerAction(ctx, msg),
@@ -73,29 +76,39 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
     protected abstract ListenableFuture<Void> processCustomerAction(TbContext ctx, TbMsg msg);
 
     protected ListenableFuture<CustomerId> getCustomerIdFuture(TbContext ctx, TbMsg msg) {
-        String customerTitle = TbNodeUtils.processPattern(this.config.getCustomerNamePattern(), msg);
+        var tenantId = ctx.getTenantId();
+        var customerTitle = TbNodeUtils.processPattern(this.config.getCustomerNamePattern(), msg);
+        if (createCustomerIfNotExists()) {
+            var customerCreationLock = new CustomerCreationLock(tenantId, customerTitle);
+            synchronized (customerCreationLocks.computeIfAbsent(customerCreationLock, k -> new Object())) {
+                return ctx.getDbCallbackExecutor().submit(() -> {
+                    var customerOptional = Optional.ofNullable(ctx.getCustomerService().findCustomerByTenantIdAndTitleUsingCache(tenantId, customerTitle));
+                    if (customerOptional.isPresent()) {
+                        return customerOptional.get().getId();
+                    }
+                    var newCustomer = new Customer();
+                    newCustomer.setTitle(customerTitle);
+                    newCustomer.setTenantId(tenantId);
+                    Customer savedCustomer = ctx.getCustomerService().saveCustomer(newCustomer);
+                    ctx.enqueue(ctx.customerCreatedMsg(savedCustomer, ctx.getSelfId()),
+                            () -> log.trace("Pushed Customer Created message: {}", savedCustomer),
+                            throwable -> log.warn("Failed to push Customer Created message: {}", savedCustomer, throwable));
+                    return savedCustomer.getId();
+                });
+            }
+        }
         return ctx.getDbCallbackExecutor().submit(() -> {
-            var customerOptional = Optional.ofNullable(ctx.getCustomerService().findCustomerByTenantIdAndTitleUsingCache(ctx.getTenantId(), customerTitle));
+            var customerOptional = Optional.ofNullable(ctx.getCustomerService().findCustomerByTenantIdAndTitleUsingCache(tenantId, customerTitle));
             if (customerOptional.isPresent()) {
                 return customerOptional.get().getId();
-            }
-            if (createCustomerIfNotExists()) {
-                var newCustomer = new Customer();
-                newCustomer.setTitle(customerTitle);
-                newCustomer.setTenantId(ctx.getTenantId());
-                Customer savedCustomer = ctx.getCustomerService().saveCustomer(newCustomer);
-                ctx.enqueue(ctx.customerCreatedMsg(savedCustomer, ctx.getSelfId()),
-                        () -> log.trace("Pushed Customer Created message: {}", savedCustomer),
-                        throwable -> log.warn("Failed to push Customer Created message: {}", savedCustomer, throwable));
-                return savedCustomer.getId();
             }
             throw new RuntimeException("No customer found with name '" + customerTitle + "'.");
         });
     }
 
-    protected static String unsupportedOriginatorTypeErrorMessage(EntityType originatorType) {
+    static String unsupportedOriginatorTypeErrorMessage(EntityType originatorType) {
         return "Unsupported originator type '" + originatorType +
-                "'! Only 'DEVICE', 'ASSET', 'ENTITY_VIEW', 'DASHBOARD', 'EDGE' types are allowed.";
+                "'! Only " + supportedEntityTypesStr + " types are allowed.";
     }
 
     @Override
@@ -112,21 +125,11 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
         return new TbPair<>(hasChanges, oldConfiguration);
     }
 
-    protected abstract void processAsset(TbContext ctx, EntityId originator, CustomerId customerId);
-
-    protected abstract void processDevice(TbContext ctx, EntityId originator, CustomerId customerId);
-
-    protected abstract void processEntityView(TbContext ctx, EntityId originator, CustomerId customerId);
-
-    protected abstract void processDashboard(TbContext ctx, EntityId originator, CustomerId customerId);
-
-    protected abstract void processEdge(TbContext ctx, EntityId originator, CustomerId customerId);
-
-    @FunctionalInterface
-    interface CustomerAssigner {
-
-        void apply(TbContext ctx, EntityId originator, CustomerId customerId);
-
+    @Data
+    @RequiredArgsConstructor
+    private static class CustomerCreationLock {
+        private final TenantId tenantId;
+        private final String customerTitle;
     }
 
 }

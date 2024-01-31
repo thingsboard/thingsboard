@@ -65,29 +65,44 @@ public class TbAssignToCustomerNode extends TbAbstractCustomerActionNode<TbAssig
         return Futures.transformAsync(customerIdFuture, customerId ->
                 ctx.getDbCallbackExecutor().submit(() -> {
                     var originator = msg.getOriginator();
-                    var customerAssigner = assignersMap.get(originator.getEntityType());
-                    customerAssigner.apply(ctx, originator, customerId);
+                    switch (originator.getEntityType()) {
+                        case ASSET:
+                            processAsset(ctx, originator, customerId);
+                            break;
+                        case DEVICE:
+                            processDevice(ctx, originator, customerId);
+                            break;
+                        case ENTITY_VIEW:
+                            processEntityView(ctx, originator, customerId);
+                            break;
+                        case EDGE:
+                            processEdge(ctx, originator, customerId);
+                            break;
+                        case DASHBOARD:
+                            processDashboard(ctx, originator, customerId);
+                            break;
+                    }
                     return null;
                 }), MoreExecutors.directExecutor());
     }
 
-    protected void processAsset(TbContext ctx, EntityId originator, CustomerId customerId) {
+    private void processAsset(TbContext ctx, EntityId originator, CustomerId customerId) {
         ctx.getAssetService().assignAssetToCustomer(ctx.getTenantId(), new AssetId(originator.getId()), customerId);
     }
 
-    protected void processDevice(TbContext ctx, EntityId originator, CustomerId customerId) {
+    private void processDevice(TbContext ctx, EntityId originator, CustomerId customerId) {
         ctx.getDeviceService().assignDeviceToCustomer(ctx.getTenantId(), new DeviceId(originator.getId()), customerId);
     }
 
-    protected void processEntityView(TbContext ctx, EntityId originator, CustomerId customerId) {
+    private void processEntityView(TbContext ctx, EntityId originator, CustomerId customerId) {
         ctx.getEntityViewService().assignEntityViewToCustomer(ctx.getTenantId(), new EntityViewId(originator.getId()), customerId);
     }
 
-    protected void processEdge(TbContext ctx, EntityId originator, CustomerId customerId) {
+    private void processEdge(TbContext ctx, EntityId originator, CustomerId customerId) {
         ctx.getEdgeService().assignEdgeToCustomer(ctx.getTenantId(), new EdgeId(originator.getId()), customerId);
     }
 
-    protected void processDashboard(TbContext ctx, EntityId originator, CustomerId customerId) {
+    private void processDashboard(TbContext ctx, EntityId originator, CustomerId customerId) {
         ctx.getDashboardService().assignDashboardToCustomer(ctx.getTenantId(), new DashboardId(originator.getId()), customerId);
     }
 

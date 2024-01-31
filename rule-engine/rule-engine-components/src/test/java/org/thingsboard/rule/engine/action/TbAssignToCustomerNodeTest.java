@@ -19,36 +19,129 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
+import org.thingsboard.rule.engine.TestDbCallbackExecutor;
+import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Dashboard;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.dao.asset.AssetService;
+import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.entityview.EntityViewService;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class TbAssignToCustomerNodeTest extends TbAbstractCustomerActionNodeTest<TbAssignToCustomerNode, TbAssignToCustomerNodeConfiguration> {
+class TbAssignToCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
+
+    private static final List<EntityType> supportedEntityTypes = List.of(EntityType.DEVICE, EntityType.ASSET,
+            EntityType.ENTITY_VIEW, EntityType.EDGE, EntityType.DASHBOARD);
+
+    private static final List<EntityType> unsupportedEntityTypes = Arrays.stream(EntityType.values())
+            .filter(type -> !supportedEntityTypes.contains(type)).collect(Collectors.toList());
+
+    private final Device DEVICE = new Device();
+    private final Asset ASSET = new Asset();
+    private final EntityView ENTITY_VIEW = new EntityView();
+    private final Edge EDGE = new Edge();
+    private final Dashboard DASHBOARD = new Dashboard();
+
+    private final TenantId TENANT_ID = new TenantId(UUID.fromString("c818385f-e661-407f-8c52-daf2dddf406d"));
+    private final RuleNodeId RULE_NODE_ID = new RuleNodeId(UUID.fromString("c3570bd0-c0bc-4609-97a4-6f57d7c8b809"));
+
+    private final ListeningExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
+
+    private static Stream<Arguments> provideUnsupportedTypeAndVerifyExceptionThrown() {
+        return unsupportedEntityTypes.stream().flatMap(type -> Stream.of(Arguments.of(type)));
+    }
+
+    private static Stream<Arguments> provideSupportedTypeAndCustomerTitle() {
+        return supportedEntityTypes.stream()
+                .flatMap(type -> Stream.of(Arguments.of(type, StringUtils.randomAlphabetic(5))));
+    }
+
+    private TbAssignToCustomerNode node;
+    private TbAssignToCustomerNodeConfiguration config;
+
+    @Mock
+    private TbContext ctxMock;
+
+    @Mock
+    private CustomerService customerServiceMock;
+
+    @Mock
+    private DeviceService deviceServiceMock;
+
+    @Mock
+    private AssetService assetServiceMock;
+
+    @Mock
+    private EntityViewService entityViewServiceMock;
+
+    @Mock
+    private EdgeService edgeServiceMock;
+
+    @Mock
+    private DashboardService dashboardServiceMock;
 
     @BeforeEach
     public void setUp() throws TbNodeException {
-        node = new TbAssignToCustomerNode();
+        node = spy(new TbAssignToCustomerNode());
         config = new TbAssignToCustomerNodeConfiguration().defaultConfiguration();
+    }
+
+    @Override
+    protected TbNode getTestNode() {
+        return node;
     }
 
     @Test
@@ -61,7 +154,17 @@ class TbAssignToCustomerNodeTest extends TbAbstractCustomerActionNodeTest<TbAssi
     @ParameterizedTest
     @MethodSource("provideUnsupportedTypeAndVerifyExceptionThrown")
     void givenOriginatorType_whenMsg_thenVerifyExceptionThrown(EntityType originatorType) {
-        processGivenOriginatorType_whenMsg_thenVerifyExceptionThrown(originatorType);
+        // GIVEN
+        var originator = toOriginator(originatorType);
+        var msg = getTbMsg(originator);
+
+        // WHEN
+        var exception = assertThrows(RuntimeException.class, () -> node.onMsg(ctxMock, msg));
+
+        // THEN
+        assertThat(exception.getMessage()).isEqualTo(TbAbstractCustomerActionNode.unsupportedOriginatorTypeErrorMessage(originatorType));
+        verifyNoInteractions(ctxMock);
+        verifyNoInteractions(customerServiceMock);
     }
 
     @ParameterizedTest
@@ -82,7 +185,7 @@ class TbAssignToCustomerNodeTest extends TbAbstractCustomerActionNodeTest<TbAssi
         var customer = createCustomer(customerTitle);
 
         when(customerServiceMock.findCustomerByTenantIdAndTitleUsingCache(eq(TENANT_ID), eq(customerTitle))).thenReturn(customer);
-        Map<EntityType, Consumer<EntityId>> entityTypeToAssignConsumerMap = mockMethodCallsForSupportedTypes(true);
+        Map<EntityType, Consumer<EntityId>> entityTypeToAssignConsumerMap = mockMethodCallsForSupportedTypes();
         entityTypeToAssignConsumerMap.get(type).accept(originator);
 
         // WHEN
@@ -114,14 +217,14 @@ class TbAssignToCustomerNodeTest extends TbAbstractCustomerActionNodeTest<TbAssi
 
         when(customerServiceMock.findCustomerByTenantIdAndTitleUsingCache(eq(TENANT_ID), eq(customerTitle))).thenReturn(null);
         when(customerServiceMock.saveCustomer(any(Customer.class))).thenReturn(customer);
-        Map<EntityType, Consumer<EntityId>> entityTypeToEntityIdConsumerMap = mockMethodCallsForSupportedTypes(true);
+        Map<EntityType, Consumer<EntityId>> entityTypeToEntityIdConsumerMap = mockMethodCallsForSupportedTypes();
         entityTypeToEntityIdConsumerMap.get(type).accept(originator);
 
         // WHEN
         node.onMsg(ctxMock, msg);
 
         // THEN
-        ArgumentCaptor<Runnable>  runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
+        ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
         verify(ctxMock, times(1))
                 .enqueue(any(), runnableCaptor.capture(), any());
         runnableCaptor.getValue().run();
@@ -156,19 +259,74 @@ class TbAssignToCustomerNodeTest extends TbAbstractCustomerActionNodeTest<TbAssi
         verifyNoMoreInteractions(ctxMock);
     }
 
-    @Test
-    void testUpgrade_fromVersion0() {
-        var node = mock(TbAssignToCustomerNode.class);
-        var config = new TbAssignToCustomerNodeConfiguration().defaultConfiguration();
-        processTestUpgrade_fromVersion0(node, config);
+    private Map<EntityType, Consumer<EntityId>> mockMethodCallsForSupportedTypes() {
+        return Map.of(
+                EntityType.DEVICE, id -> {
+                    when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
+                    when(deviceServiceMock.assignDeviceToCustomer(eq(TENANT_ID), (DeviceId) eq(id), any()))
+                            .thenReturn(DEVICE);
+                },
+                EntityType.ASSET, id -> {
+                    when(ctxMock.getAssetService()).thenReturn(assetServiceMock);
+                    when(assetServiceMock.assignAssetToCustomer(eq(TENANT_ID), (AssetId) eq(id), any()))
+                            .thenReturn(ASSET);
+                },
+                EntityType.ENTITY_VIEW, id -> {
+                    when(ctxMock.getEntityViewService()).thenReturn(entityViewServiceMock);
+                    when(entityViewServiceMock.assignEntityViewToCustomer(eq(TENANT_ID), (EntityViewId) eq(id), any()))
+                            .thenReturn(ENTITY_VIEW);
+                },
+                EntityType.EDGE, id -> {
+                    when(ctxMock.getEdgeService()).thenReturn(edgeServiceMock);
+                    when(edgeServiceMock.assignEdgeToCustomer(eq(TENANT_ID), (EdgeId) eq(id), any()))
+                            .thenReturn(EDGE);
+                },
+                EntityType.DASHBOARD, id -> {
+                    when(ctxMock.getDashboardService()).thenReturn(dashboardServiceMock);
+                    when(dashboardServiceMock.assignDashboardToCustomer(eq(TENANT_ID), (DashboardId) eq(id), any()))
+                            .thenReturn(DASHBOARD);
+                }
+        );
     }
 
-    @Test
-    void testUpgrade_fromVersion0_alreadyHasLatestConfig() {
-        var node = mock(TbAssignToCustomerNode.class);
-        var config = new TbAssignToCustomerNodeConfiguration().defaultConfiguration();
-        processTestUpgrade_fromVersion0_alreadyHasLatestConfig(node, config);
+    private void verifyMsgSuccess(TbMsg expectedMsg) {
+        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        verify(ctxMock, times(1)).tellSuccess(msgCaptor.capture());
+        verify(ctxMock, never()).tellFailure(any(), any());
+        TbMsg actualValue = msgCaptor.getValue();
+        assertThat(actualValue).isSameAs(expectedMsg);
     }
 
+    private Customer createCustomer(String customerTitle) {
+        var customer = new Customer();
+        customer.setTitle(customerTitle);
+        customer.setId(new CustomerId(UUID.randomUUID()));
+        customer.setTenantId(TENANT_ID);
+        return customer;
+    }
+
+    private TbMsg getTbMsg(EntityId originator) {
+        return TbMsg.newMsg(TbMsgType.NA, originator, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+    }
+
+    private static EntityId toOriginator(EntityType type) {
+        return EntityIdFactory.getByTypeAndId(type.name(), UUID.randomUUID().toString());
+    }
+
+    // Rule nodes upgrade
+    private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
+        return Stream.of(
+                // default config for version 0
+                Arguments.of(0,
+                        "{\"customerNamePattern\":\"\",\"createCustomerIfNotExists\":\"false\",\"customerCacheExpiration\":300}",
+                        true,
+                        "{\"customerNamePattern\":\"\",\"createCustomerIfNotExists\":\"false\"}"),
+                // default config for version 1 with upgrade from version 0
+                Arguments.of(0,
+                        "{\"customerNamePattern\":\"\",\"createCustomerIfNotExists\":\"false\"}",
+                        false,
+                        "{\"customerNamePattern\":\"\",\"createCustomerIfNotExists\":\"false\"}")
+        );
+    }
 
 }
