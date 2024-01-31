@@ -312,6 +312,9 @@ export class ItemBufferService {
       if (isDefinedAndNotNull(origNode.singletonMode)) {
         node.singletonMode = origNode.singletonMode;
       }
+      if (isDefinedAndNotNull(origNode.queueName)) {
+        node.queueName = origNode.queueName;
+      }
       ruleNodes.nodes.push(node);
       if (i === 0) {
         top = node.y;
