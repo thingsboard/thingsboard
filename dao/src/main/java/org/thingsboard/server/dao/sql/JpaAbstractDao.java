@@ -43,9 +43,6 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
         extends JpaAbstractDaoListeningExecutorService
         implements Dao<D> {
 
-    @PersistenceContext
-    private EntityManager entityManager;
-
     protected abstract Class<E> getEntityClass();
 
     protected abstract JpaRepository<E, UUID> getRepository();
@@ -67,16 +64,12 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
             entity.setUuid(uuid);
             entity.setCreatedTime(Uuids.unixTimestamp(uuid));
         }
-
-        if (isPartitioned()) {
-            createPartition(entity);
-        }
-        if (isNew) {
-            entityManager.persist(entity);
-        } else {
-            entity = entityManager.merge(entity);
-        }
+        entity = doSave(entity, isNew);
         return DaoUtil.getData(entity);
+    }
+
+    protected E doSave(E entity, boolean isNew) {
+        return getRepository().save(entity);
     }
 
     @Override
@@ -130,13 +123,6 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
     public List<D> find(TenantId tenantId) {
         List<E> entities = Lists.newArrayList(getRepository().findAll());
         return DaoUtil.convertDataList(entities);
-    }
-
-    public boolean isPartitioned() {
-        return false;
-    }
-
-    public void createPartition(E entity) {
     }
 
 }

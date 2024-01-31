@@ -32,7 +32,7 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.sql.NotificationEntity;
 import org.thingsboard.server.dao.notification.NotificationDao;
-import org.thingsboard.server.dao.sql.JpaAbstractDao;
+import org.thingsboard.server.dao.sql.JpaPartitionedAbstractDao;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
 import org.thingsboard.server.dao.util.SqlDao;
 
@@ -42,7 +42,7 @@ import java.util.concurrent.TimeUnit;
 @Component
 @SqlDao
 @RequiredArgsConstructor
-public class JpaNotificationDao extends JpaAbstractDao<NotificationEntity, Notification> implements NotificationDao {
+public class JpaNotificationDao extends JpaPartitionedAbstractDao<NotificationEntity, Notification> implements NotificationDao {
 
     private final NotificationRepository notificationRepository;
     private final SqlPartitioningRepository partitioningRepository;
@@ -98,11 +98,6 @@ public class JpaNotificationDao extends JpaAbstractDao<NotificationEntity, Notif
     @Override
     public void deleteByRecipientId(TenantId tenantId, UserId recipientId) {
         notificationRepository.deleteByRecipientId(recipientId.getId());
-    }
-
-    @Override
-    public boolean isPartitioned() {
-        return true;
     }
 
     @Override

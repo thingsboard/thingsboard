@@ -32,7 +32,7 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.audit.AuditLogDao;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.sql.AuditLogEntity;
-import org.thingsboard.server.dao.sql.JpaAbstractDao;
+import org.thingsboard.server.dao.sql.JpaPartitionedAbstractDao;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
 import org.thingsboard.server.dao.util.SqlDao;
 
@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
 @SqlDao
 @RequiredArgsConstructor
 @Slf4j
-public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> implements AuditLogDao {
+public class JpaAuditLogDao extends JpaPartitionedAbstractDao<AuditLogEntity, AuditLog> implements AuditLogDao {
 
     private final AuditLogRepository auditLogRepository;
     private final SqlPartitioningRepository partitioningRepository;
@@ -156,11 +156,6 @@ public class JpaAuditLogDao extends JpaAbstractDao<AuditLogEntity, AuditLog> imp
 
     private void callMigrationFunction(long startTime, long endTime, long partitionSizeInMs) {
         jdbcTemplate.update("CALL migrate_audit_logs(?, ?, ?)", startTime, endTime, partitionSizeInMs);
-    }
-
-    @Override
-    public boolean isPartitioned() {
-        return true;
     }
 
     @Override

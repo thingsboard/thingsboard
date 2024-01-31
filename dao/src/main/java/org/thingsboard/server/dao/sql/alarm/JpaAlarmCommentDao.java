@@ -31,7 +31,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.alarm.AlarmCommentDao;
 import org.thingsboard.server.dao.model.sql.AlarmCommentEntity;
-import org.thingsboard.server.dao.sql.JpaAbstractDao;
+import org.thingsboard.server.dao.sql.JpaPartitionedAbstractDao;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
 import org.thingsboard.server.dao.util.SqlDao;
 
@@ -44,7 +44,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.ALARM_COMMENT_TABL
 @Component
 @SqlDao
 @RequiredArgsConstructor
-public class JpaAlarmCommentDao extends JpaAbstractDao<AlarmCommentEntity, AlarmComment> implements AlarmCommentDao {
+public class JpaAlarmCommentDao extends JpaPartitionedAbstractDao<AlarmCommentEntity, AlarmComment> implements AlarmCommentDao {
     private final SqlPartitioningRepository partitioningRepository;
     @Value("${sql.alarm_comments.partition_size:168}")
     private int partitionSizeInHours;
@@ -53,7 +53,7 @@ public class JpaAlarmCommentDao extends JpaAbstractDao<AlarmCommentEntity, Alarm
     private AlarmCommentRepository alarmCommentRepository;
 
     @Override
-    public PageData<AlarmCommentInfo> findAlarmComments(TenantId tenantId, AlarmId id, PageLink pageLink){
+    public PageData<AlarmCommentInfo> findAlarmComments(TenantId tenantId, AlarmId id, PageLink pageLink) {
         log.trace("Try to find alarm comments by alarm id using [{}]", id);
         return DaoUtil.toPageData(
                 alarmCommentRepository.findAllByAlarmId(id.getId(), DaoUtil.toPageable(pageLink)));
@@ -69,11 +69,6 @@ public class JpaAlarmCommentDao extends JpaAbstractDao<AlarmCommentEntity, Alarm
     public ListenableFuture<AlarmComment> findAlarmCommentByIdAsync(TenantId tenantId, UUID key) {
         log.trace("Try to find alarm comment by id using [{}]", key);
         return findByIdAsync(tenantId, key);
-    }
-
-    @Override
-    public boolean isPartitioned() {
-        return true;
     }
 
     @Override

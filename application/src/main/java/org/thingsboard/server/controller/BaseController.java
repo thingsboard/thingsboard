@@ -380,7 +380,7 @@ public abstract class BaseController {
             if (!logControllerErrorStackTrace) { // not to log the error twice
                 log.warn("Database error: {} - {}", errorType, ExceptionUtils.getRootCauseMessage(exception));
             }
-            return new ThingsboardException("Database error: " + errorType, ThingsboardErrorCode.GENERAL);
+            return new ThingsboardException("Database error", ThingsboardErrorCode.GENERAL);
         }
         return new ThingsboardException(exception.getMessage(), exception, ThingsboardErrorCode.GENERAL);
     }
