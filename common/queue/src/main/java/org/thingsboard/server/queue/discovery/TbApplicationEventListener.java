@@ -41,7 +41,11 @@ public abstract class TbApplicationEventListener<T extends TbApplicationEvent> i
             seqNumberLock.unlock();
         }
         if (validUpdate && filterTbApplicationEvent(event)) {
-            onTbApplicationEvent(event);
+            try {
+                onTbApplicationEvent(event);
+            } catch (Exception e) {
+                log.error("Failed to handle partition change event: {}", event, e);
+            }
         } else {
             log.info("Application event ignored due to invalid sequence number ({} > {}). Event: {}", lastProcessedSequenceNumber, event.getSequenceNumber(), event);
         }
