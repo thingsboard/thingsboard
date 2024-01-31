@@ -15,7 +15,7 @@
  */
 @import '../../../../../../../../../scss/constants';
 
-.tb-rpc-state-settings-panel {
+.tb-value-action-settings-panel {
   width: 530px;
   display: flex;
   flex-direction: column;
@@ -23,20 +23,20 @@
   @media #{$mat-lt-md} {
     width: 90vw;
   }
-  .tb-rpc-state-settings-panel-content {
+  .tb-value-action-settings-panel-content {
     display: flex;
     flex-direction: column;
     gap: 16px;
     overflow: auto;
   }
-  .tb-rpc-state-settings-title {
+  .tb-value-action-settings-title {
     font-size: 16px;
     font-weight: 500;
     line-height: 24px;
     letter-spacing: 0.25px;
     color: rgba(0, 0, 0, 0.87);
   }
-  .tb-rpc-state-settings-panel-buttons {
+  .tb-value-action-settings-panel-buttons {
     height: 40px;
     display: flex;
     flex-direction: row;

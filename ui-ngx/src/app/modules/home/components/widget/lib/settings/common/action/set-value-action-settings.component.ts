@@ -28,34 +28,30 @@ import {
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
-import {
-  RpcStateToParamsType,
-  RpcUpdateStateAction,
-  RpcUpdateStateSettings
-} from '@shared/models/rpc-widget-settings.models';
+import { SetValueAction, SetValueSettings, ValueToDataType } from '@shared/models/action-widget-settings.models';
 import { TranslateService } from '@ngx-translate/core';
 import { ValueType } from '@shared/models/constants';
 import { IAliasController } from '@core/api/widget-api.models';
 import { TargetDevice } from '@shared/models/widget.models';
 import { isDefinedAndNotNull } from '@core/utils';
 import {
-  RpcUpdateStateSettingsPanelComponent
-} from '@home/components/widget/lib/settings/common/rpc/rpc-update-state-settings-panel.component';
+  SetValueActionSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/action/set-value-action-settings-panel.component';
 
 @Component({
-  selector: 'tb-rpc-update-state-settings',
-  templateUrl: './rpc-state-settings-button.component.html',
-  styleUrls: ['./rpc-state-settings-button.scss'],
+  selector: 'tb-set-value-action-settings',
+  templateUrl: './value-action-settings-button.component.html',
+  styleUrls: ['./value-action-settings-button.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => RpcUpdateStateSettingsComponent),
+      useExisting: forwardRef(() => SetValueActionSettingsComponent),
       multi: true
     }
   ],
   encapsulation: ViewEncapsulation.None
 })
-export class RpcUpdateStateSettingsComponent implements OnInit, ControlValueAccessor {
+export class SetValueActionSettingsComponent implements OnInit, ControlValueAccessor {
 
   @HostBinding('style.overflow')
   overflow = 'hidden';
@@ -64,7 +60,7 @@ export class RpcUpdateStateSettingsComponent implements OnInit, ControlValueAcce
   panelTitle: string;
 
   @Input()
-  stateValueType: ValueType;
+  valueType: ValueType;
 
   @Input()
   aliasController: IAliasController;
@@ -75,7 +71,7 @@ export class RpcUpdateStateSettingsComponent implements OnInit, ControlValueAcce
   @Input()
   disabled = false;
 
-  modelValue: RpcUpdateStateSettings;
+  modelValue: SetValueSettings;
 
   displayValue: string;
 
@@ -103,12 +99,12 @@ export class RpcUpdateStateSettingsComponent implements OnInit, ControlValueAcce
     }
   }
 
-  writeValue(value: RpcUpdateStateSettings): void {
+  writeValue(value: SetValueSettings): void {
     this.modelValue = value;
     this.updateDisplayValue();
   }
 
-  openRpcStateSettingsPopup($event: Event, matButton: MatButton) {
+  openValueActionSettingsPopup($event: Event, matButton: MatButton) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -117,22 +113,22 @@ export class RpcUpdateStateSettingsComponent implements OnInit, ControlValueAcce
       this.popoverService.hidePopover(trigger);
     } else {
       const ctx: any = {
-        updateState: this.modelValue,
+        setValueSettings: this.modelValue,
         panelTitle: this.panelTitle,
-        stateValueType: this.stateValueType,
+        valueType: this.valueType,
         aliasController: this.aliasController,
         targetDevice: this.targetDevice
       };
-     const updateStateSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, RpcUpdateStateSettingsPanelComponent,
+     const setValueSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
+        this.viewContainerRef, SetValueActionSettingsPanelComponent,
        ['leftTopOnly', 'leftOnly', 'leftBottomOnly'], true, null,
         ctx,
         {},
         {}, {}, true);
-      updateStateSettingsPanelPopover.tbComponentRef.instance.popover = updateStateSettingsPanelPopover;
-      updateStateSettingsPanelPopover.tbComponentRef.instance.updateStateSettingsApplied.subscribe((updateState) => {
-        updateStateSettingsPanelPopover.hide();
-        this.modelValue = updateState;
+      setValueSettingsPanelPopover.tbComponentRef.instance.popover = setValueSettingsPanelPopover;
+      setValueSettingsPanelPopover.tbComponentRef.instance.setValueSettingsApplied.subscribe((setValueSettings) => {
+        setValueSettingsPanelPopover.hide();
+        this.modelValue = setValueSettings;
         this.updateDisplayValue();
         this.propagateChange(this.modelValue);
       });
@@ -141,31 +137,31 @@ export class RpcUpdateStateSettingsComponent implements OnInit, ControlValueAcce
 
   private updateDisplayValue() {
     let value: any;
-    switch (this.modelValue.stateToParams.type) {
-      case RpcStateToParamsType.CONSTANT:
-        value = this.modelValue.stateToParams.constantValue;
+    switch (this.modelValue.valueToData.type) {
+      case ValueToDataType.CONSTANT:
+        value = this.modelValue.valueToData.constantValue;
         break;
-      case RpcStateToParamsType.FUNCTION:
+      case ValueToDataType.FUNCTION:
         value = 'f(value)';
         break;
-      case RpcStateToParamsType.NONE:
+      case ValueToDataType.NONE:
         break;
     }
     switch (this.modelValue.action) {
-      case RpcUpdateStateAction.EXECUTE_RPC:
+      case SetValueAction.EXECUTE_RPC:
         let methodName = this.modelValue.executeRpc.method;
         if (isDefinedAndNotNull(value)) {
           methodName = `${methodName}(${value})`;
         }
-        this.displayValue = this.translate.instant('widgets.rpc-state.execute-rpc-text', {methodName});
+        this.displayValue = this.translate.instant('widgets.value-action.execute-rpc-text', {methodName});
         break;
-      case RpcUpdateStateAction.SET_ATTRIBUTE:
-        this.displayValue = this.translate.instant('widgets.rpc-state.set-attribute-to-value-text',
+      case SetValueAction.SET_ATTRIBUTE:
+        this.displayValue = this.translate.instant('widgets.value-action.set-attribute-to-value-text',
           {key: this.modelValue.setAttribute.key, value});
         break;
-      case RpcUpdateStateAction.ADD_TIME_SERIES:
-        this.displayValue = this.translate.instant('widgets.rpc-state.add-time-series-value-text',
-          {key: this.modelValue.setAttribute.key, value});
+      case SetValueAction.ADD_TIME_SERIES:
+        this.displayValue = this.translate.instant('widgets.value-action.add-time-series-value-text',
+          {key: this.modelValue.putTimeSeries.key, value});
         break;
     }
     this.cd.markForCheck();
