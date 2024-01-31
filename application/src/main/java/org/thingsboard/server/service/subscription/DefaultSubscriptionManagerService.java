@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.msg.rule.engine.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
@@ -37,15 +36,16 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.common.msg.rule.engine.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
-import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
+import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.discovery.event.OtherServiceShutdownEvent;
+import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.state.DefaultDeviceStateService;
@@ -154,7 +154,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
     protected void onTbApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
         if (ServiceType.TB_CORE.equals(partitionChangeEvent.getServiceType())) {
             entitySubscriptions.values().removeIf(sub ->
-                    !partitionService.resolve(ServiceType.TB_CORE, sub.getTenantId(), sub.getEntityId()).isMyPartition());
+                    !partitionService.isMyPartition(ServiceType.TB_CORE, sub.getTenantId(), sub.getEntityId()));
         }
     }
 
