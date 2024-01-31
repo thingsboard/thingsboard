@@ -328,7 +328,7 @@ public class DeviceProfileControllerTest extends AbstractControllerTest {
 
     @Test
     public void testSaveDeviceProfileWithEmptyName() throws Exception {
-        DeviceProfile deviceProfile = new DeviceProfile();
+        DeviceProfile deviceProfile = createDeviceProfile(null);
 
         Mockito.reset(tbClusterService, auditLogService);
 
