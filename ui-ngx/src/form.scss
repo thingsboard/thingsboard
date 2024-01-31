@@ -211,11 +211,16 @@
     }
   }
 
-  .tb-flex-row {
+  .tb-flex {
     display: flex;
     flex: 1;
-    flex-direction: row;
     gap: 8px;
+    &.row {
+      flex-direction: row;
+    }
+    &.column {
+      flex-direction: column;
+    }
     &.flex-start {
       justify-content: flex-start;
     }

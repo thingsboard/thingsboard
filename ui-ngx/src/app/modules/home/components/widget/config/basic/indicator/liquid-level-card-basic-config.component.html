@@ -34,7 +34,7 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTitle">
         {{ 'widgets.liquid-level-card.title' | translate }}
       </mat-slide-toggle>
-      <div class="tb-flex-row flex-start align-center">
+      <div class="tb-flex row flex-start align-center">
         <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
           <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
@@ -49,7 +49,7 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTitleIcon">
         {{ 'widgets.liquid-level-card.icon' | translate }}
       </mat-slide-toggle>
-      <div class="tb-flex-row flex-end align-center">
+      <div class="tb-flex row flex-end align-center">
         <mat-form-field appearance="outline" class="flex number" subscriptSizing="dynamic">
           <input matInput type="number" min="0" formControlName="iconSize" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
@@ -64,7 +64,7 @@
       </div>
     </div>
     <div fxFlex fxLayout="column" class="tb-form-row space-between">
-      <div class="tb-flex-row space-between align-center no-gap fill-width">
+      <div class="tb-flex row space-between align-center no-gap fill-width">
         <div class="fixed-title-width"  translate>widgets.liquid-level-card.shape</div>
         <tb-toggle-select formControlName="tankSelectionType">
           <tb-toggle-option *ngFor="let type of DataSourceTypes" [value]="type">
@@ -96,7 +96,7 @@
                                   formControlName="shapeAttributeName">
           </tb-string-autocomplete>
         </div>
-        <div class="tb-flex-row space-between align-center no-gap fill-width">
+        <div class="tb-flex row space-between align-center no-gap fill-width">
           <div class="tb-hint" style="padding: 0;" translate>widgets.liquid-level-card.shape-by-attribute</div>
           <div class="see-example"
                [tb-help-popup]="'widget/lib/indicator/shape_attribute_fn'"
@@ -123,7 +123,7 @@
     <div class="tb-form-panel-title" translate>widgets.liquid-level-card.units</div>
     <div class="tb-form-row space-between">
       <div class="fixed-title-width tb-required" translate>widgets.liquid-level-card.datasource-units</div>
-      <div class="tb-flex-row flex-end align-center no-gap">
+      <div class="tb-flex row flex-end align-center no-gap">
         <tb-unit-input required style="max-width: 25%;" class="flex"
                        [tagFilter]="unitsType.capacity"
                        formControlName="datasourceUnits">
@@ -132,7 +132,7 @@
     </div>
     <div class="tb-form-row space-between column-xs" *ngIf="levelCardWidgetConfigForm.get('layout').value === LevelCardLayout.absolute">
       <div class="fixed-title-width tb-required" translate>widgets.liquid-level-card.widget-units</div>
-      <div class="tb-flex-row flex-start align-center">
+      <div class="tb-flex row flex-start align-center">
         <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic" style="max-width: 25%">
           <mat-select formControlName="widgetUnitsSource" placeholder="{{ 'widget-config.set' | translate }}">
             <mat-option *ngFor="let type of DataSourceTypes" [value]="type">
@@ -156,7 +156,7 @@
     </div>
     <div class="tb-form-row column-xs" [fxShow]="volumeInput">
       <div class="fixed-title-width tb-required" translate>widgets.liquid-level-card.total-volume</div>
-      <div class="tb-flex-row flex-start align-center">
+      <div class="tb-flex row flex-start align-center">
         <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic" style="max-width: 25%">
           <mat-select formControlName="volumeSource" placeholder="{{ 'widget-config.set' | translate }}">
             <mat-option *ngFor="let type of DataSourceTypes" [value]="type">
@@ -188,7 +188,7 @@
     </div>
     <div class="tb-form-row space-between column-xs" [fxShow]="volumeInput">
       <div class="fixed-title-width tb-required" translate>widgets.liquid-level-card.total-volume-units</div>
-      <div class="tb-flex-row flex-start align-center">
+      <div class="tb-flex row flex-start align-center">
         <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic" style="max-width: 25%">
           <mat-select formControlName="volumeUnitsSource" placeholder="{{ 'widget-config.set' | translate }}">
             <mat-option *ngFor="let type of DataSourceTypes" [value]="type">
@@ -226,7 +226,7 @@
     <div class="tb-form-row space-between"
          *ngIf="levelCardWidgetConfigForm.get('layout').value !== LevelCardLayout.simple">
       <div class="fixed-title-width" translate>widgets.liquid-level-card.value</div>
-      <div class="tb-flex-row flex-end align-center">
+      <div class="tb-flex row flex-end align-center">
         <mat-form-field style="max-width: 40%;" appearance="outline" class="flex number" subscriptSizing="dynamic">
           <input matInput formControlName="decimals" type="number"
                  min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
@@ -241,7 +241,7 @@
     </div>
     <div class="tb-form-row" *ngIf="levelCardWidgetConfigForm.get('layout').value === LevelCardLayout.absolute">
       <div class="fixed-title-width" translate>widgets.liquid-level-card.total-volume</div>
-      <div class="tb-flex-row flex-end align-center">
+      <div class="tb-flex row flex-end align-center">
         <tb-font-settings formControlName="volumeFont"
                           [previewText]="totalVolumeValuePreviewFn">
         </tb-font-settings>
@@ -267,7 +267,7 @@
           <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTooltipLevel">
             {{ 'widgets.liquid-level-card.level' | translate }}
           </mat-slide-toggle>
-          <div class="tb-flex-row flex-end align-center">
+          <div class="tb-flex row flex-end align-center">
             <tb-unit-input required class="flex"
                            [tagFilter]="unitsType.capacity"
                            formControlName="tooltipUnits">
@@ -288,7 +288,7 @@
           <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTooltipDate">
             {{ 'widgets.value-card.date' | translate }}
           </mat-slide-toggle>
-          <div class="tb-flex-row flex-start align-center">
+          <div class="tb-flex row flex-start align-center">
             <tb-date-format-select fxFlex formControlName="tooltipDateFormat"></tb-date-format-select>
             <tb-font-settings formControlName="tooltipDateFont"
                               [previewText]="datePreviewFn">
