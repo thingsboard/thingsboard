@@ -13,19 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import '../scss/constants';
+
 :host {
   .communication-config {
     border: 2px groove rgba(0, 0, 0, 0.25);
     border-radius: 4px;
     padding: 8px;
     min-width: 0;
-    flex-direction: row;
-    box-sizing: border-box;
+    flex-direction: column;
     display: flex;
     place-content: stretch flex-start;
     align-items: stretch;
-    flex: 1 1 0;
-    gap: 8px;
+    flex: 1;
+    gap: 0;
   }
 
   .scope-row {
@@ -36,10 +37,10 @@
     margin: 16px 0
   }
 
-  @media (max-width: 1650px) {
+  @media #{$mat-gt-xmd} {
     .communication-config {
-      flex-direction: column;
-      gap: 0;
+      flex-direction: row;
+      gap: 8px;
     }
   }
 }
