@@ -2951,7 +2951,7 @@
     "action-source-required": "Eylem kaynağı gerekli.",
     "action-name": "İsim",
     "action-name-required": "Eylem ismi gerekli.",
-    "action-name-not-unique": "Aynı ada sahip başka bir işlem zaten var.<br/>Eylem adı, aynı eylem kaynağı içinde emsalsiz olmalıdır.",
+    "action-name-not-unique": "Aynı ada sahip başka bir işlem zaten var.\nEylem adı, aynı eylem kaynağı içinde emsalsiz olmalıdır.",
     "action-icon": "İkon",
     "action-type": "Tür",
     "action-type-required": "Eylem türü gerekli.",

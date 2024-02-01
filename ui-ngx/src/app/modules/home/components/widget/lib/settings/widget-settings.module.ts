@@ -124,9 +124,6 @@ import {
   SendRpcWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/control/send-rpc-widget-settings.component';
 import {
-  DeviceKeyAutocompleteComponent
-} from '@home/components/widget/lib/settings/control/device-key-autocomplete.component';
-import {
   LedIndicatorWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/control/led-indicator-widget-settings.component';
 import {
@@ -311,6 +308,9 @@ import {
 import {
   BarChartWithLabelsWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/chart/bar-chart-with-labels-widget-settings.component';
+import {
+  SingleSwitchWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/control/single-switch-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -348,7 +348,6 @@ import {
     FlotPieKeySettingsComponent,
     ChartWidgetSettingsComponent,
     DoughnutChartWidgetSettingsComponent,
-    DeviceKeyAutocompleteComponent,
     SwitchRpcSettingsComponent,
     RoundSwitchWidgetSettingsComponent,
     SwitchControlWidgetSettingsComponent,
@@ -424,7 +423,8 @@ import {
     LiquidLevelCardWidgetSettingsComponent,
     DoughnutWidgetSettingsComponent,
     RangeChartWidgetSettingsComponent,
-    BarChartWithLabelsWidgetSettingsComponent
+    BarChartWithLabelsWidgetSettingsComponent,
+    SingleSwitchWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -467,7 +467,6 @@ import {
     FlotPieKeySettingsComponent,
     ChartWidgetSettingsComponent,
     DoughnutChartWidgetSettingsComponent,
-    DeviceKeyAutocompleteComponent,
     SwitchRpcSettingsComponent,
     RoundSwitchWidgetSettingsComponent,
     SwitchControlWidgetSettingsComponent,
@@ -543,7 +542,8 @@ import {
     LiquidLevelCardWidgetSettingsComponent,
     DoughnutWidgetSettingsComponent,
     RangeChartWidgetSettingsComponent,
-    BarChartWithLabelsWidgetSettingsComponent
+    BarChartWithLabelsWidgetSettingsComponent,
+    SingleSwitchWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -628,5 +628,6 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-liquid-level-card-widget-settings': LiquidLevelCardWidgetSettingsComponent,
   'tb-doughnut-widget-settings': DoughnutWidgetSettingsComponent,
   'tb-range-chart-widget-settings': RangeChartWidgetSettingsComponent,
-  'tb-bar-chart-with-labels-widget-settings': BarChartWithLabelsWidgetSettingsComponent
+  'tb-bar-chart-with-labels-widget-settings': BarChartWithLabelsWidgetSettingsComponent,
+  'tb-single-switch-widget-settings': SingleSwitchWidgetSettingsComponent
 };
