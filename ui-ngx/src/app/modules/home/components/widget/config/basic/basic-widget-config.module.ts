@@ -94,6 +94,9 @@ import {
 import {
   SingleSwitchBasicConfigComponent
 } from '@home/components/widget/config/basic/rpc/single-switch-basic-config.component';
+import {
+  ActionButtonBasicConfigComponent
+} from '@home/components/widget/config/basic/button/action-button-basic-config.component';
 
 @NgModule({
   declarations: [
@@ -123,7 +126,8 @@ import {
     DoughnutBasicConfigComponent,
     RangeChartBasicConfigComponent,
     BarChartWithLabelsBasicConfigComponent,
-    SingleSwitchBasicConfigComponent
+    SingleSwitchBasicConfigComponent,
+    ActionButtonBasicConfigComponent
   ],
   imports: [
     CommonModule,
@@ -157,7 +161,8 @@ import {
     DoughnutBasicConfigComponent,
     RangeChartBasicConfigComponent,
     BarChartWithLabelsBasicConfigComponent,
-    SingleSwitchBasicConfigComponent
+    SingleSwitchBasicConfigComponent,
+    ActionButtonBasicConfigComponent
   ]
 })
 export class BasicWidgetConfigModule {
@@ -185,5 +190,6 @@ export const basicWidgetConfigComponentsMap: {[key: string]: Type<IBasicWidgetCo
   'tb-doughnut-basic-config': DoughnutBasicConfigComponent,
   'tb-range-chart-basic-config': RangeChartBasicConfigComponent,
   'tb-bar-chart-with-labels-basic-config': BarChartWithLabelsBasicConfigComponent,
-  'tb-single-switch-basic-config': SingleSwitchBasicConfigComponent
+  'tb-single-switch-basic-config': SingleSwitchBasicConfigComponent,
+  'tb-action-button-basic-config': ActionButtonBasicConfigComponent
 };

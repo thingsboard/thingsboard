@@ -44,7 +44,7 @@ import { PopoverPlacement, PopoverPlacements } from '@shared/components/popover.
 import {
   CustomActionEditorCompleter,
   toCustomAction
-} from '@home/components/widget/config/action/custom-action.models';
+} from '@home/components/widget/lib/settings/common/action/custom-action.models';
 
 const stateDisplayTypes = ['normal', 'separateDialog', 'popover'] as const;
 type stateDisplayTypeTuple = typeof  stateDisplayTypes;

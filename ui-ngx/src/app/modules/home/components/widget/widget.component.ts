@@ -132,6 +132,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   isEdit: boolean;
 
   @Input()
+  isPreview: boolean;
+
+  @Input()
   isMobile: boolean;
 
   @Input()
@@ -231,6 +234,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.widgetContext.store = this.store;
     this.widgetContext.servicesMap = ServicesMap;
     this.widgetContext.isEdit = this.isEdit;
+    this.widgetContext.isPreview = this.isPreview;
     this.widgetContext.isMobile = this.isMobile;
     this.widgetContext.toastTargetId = this.toastTargetId;
 
@@ -252,6 +256,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       handleWidgetAction: this.handleWidgetAction.bind(this),
       elementClick: this.elementClick.bind(this),
       cardClick: this.cardClick.bind(this),
+      click: this.click.bind(this),
       getActiveEntityInfo: this.getActiveEntityInfo.bind(this),
       openDashboardStateInSeparateDialog: this.openDashboardStateInSeparateDialog.bind(this),
       openDashboardStateInPopover: this.openDashboardStateInPopover.bind(this)
@@ -411,6 +416,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.widgetType = this.widgetInfo.widgetTypeFunction;
     this.typeParameters = this.widgetInfo.typeParameters;
     this.widgetContext.embedTitlePanel = this.typeParameters.embedTitlePanel;
+    this.widgetContext.overflowVisible = this.typeParameters.overflowVisible;
 
     if (!this.widgetType) {
       this.widgetTypeInstance = {};
@@ -1423,7 +1429,15 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   }
 
   private cardClick($event: Event) {
-    const descriptors = this.getActionDescriptors('cardClick');
+    this.onClick($event, 'cardClick');
+  }
+
+  private click($event: Event) {
+    this.onClick($event, 'click');
+  }
+
+  private onClick($event: Event, sourceId: string) {
+    const descriptors = this.getActionDescriptors(sourceId);
     if (descriptors.length) {
       $event.stopPropagation();
       const descriptor = descriptors[0];

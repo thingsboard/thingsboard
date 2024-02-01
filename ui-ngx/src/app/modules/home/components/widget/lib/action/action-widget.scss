@@ -13,35 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../../../../../../../../../scss/constants';
-
-.tb-value-action-settings-panel {
-  width: 530px;
+.tb-action-widget-error-container {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  @media #{$mat-lt-md} {
-    width: 90vw;
-  }
-  .tb-value-action-settings-panel-content {
+  justify-content: center;
+  align-items: center;
+  z-index: 1;
+  .tb-action-widget-error-panel {
     display: flex;
-    flex-direction: column;
-    gap: 16px;
-    overflow: auto;
-  }
-  .tb-value-action-settings-title {
-    font-size: 16px;
-    font-weight: 500;
-    line-height: 24px;
-    letter-spacing: 0.25px;
-    color: rgba(0, 0, 0, 0.87);
-  }
-  .tb-value-action-settings-panel-buttons {
-    height: 40px;
-    display: flex;
-    flex-direction: row;
-    gap: 16px;
-    justify-content: flex-end;
-    align-items: flex-end;
+    padding: 4px 4px 4px 12px;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    border-radius: 4px;
+    background-color: #fff2f3;
+    box-shadow: -2px 2px 4px 0px rgba(0,0,0,0.2);
+    .tb-action-widget-error-text {
+      font-size: 12px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: 16px;
+      color: rgba(209, 39, 48, 1);
+    }
+    .tb-action-widget-error-clear {
+      color: rgba(209, 39, 48, 1);
+    }
   }
 }

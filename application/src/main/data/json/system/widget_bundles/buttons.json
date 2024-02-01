@@ -1,0 +1,13 @@
+{
+  "widgetsBundle": {
+    "alias": "buttons",
+    "title": "Buttons",
+    "image": null,
+    "description": null,
+    "order": 7500,
+    "name": "Buttons"
+  },
+  "widgetTypeFqns": [
+    "action_button"
+  ]
+}

@@ -15,7 +15,7 @@
 ///
 
 import { Component } from '@angular/core';
-import { TargetDevice, WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
+import { TargetDevice, WidgetSettings, WidgetSettingsComponent, widgetType } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -35,6 +35,10 @@ export class SingleSwitchWidgetSettingsComponent extends WidgetSettingsComponent
 
   get targetDevice(): TargetDevice {
     return this.widget?.config?.targetDevice;
+  }
+
+  get widgetType(): widgetType {
+    return this.widget?.type;
   }
 
   singleSwitchLayouts = singleSwitchLayouts;

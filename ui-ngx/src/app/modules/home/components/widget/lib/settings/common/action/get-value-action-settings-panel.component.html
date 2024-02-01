@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<div class="tb-value-action-settings-panel" [formGroup]="getValueSettingsFormGroup">
-  <div class="tb-value-action-settings-title">{{ panelTitle | translate }}</div>
-  <div class="tb-value-action-settings-panel-content">
+<div class="tb-action-settings-panel" [formGroup]="getValueSettingsFormGroup">
+  <div class="tb-action-settings-title">{{ panelTitle | translate }}</div>
+  <div class="tb-action-settings-panel-content">
     <div class="tb-form-row">
       <div class="fixed-title-width" >{{ 'widgets.value-action.action' | translate }}</div>
       <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
@@ -33,8 +33,8 @@
         <div class="tb-form-row space-between">
           <div tb-hint-tooltip-icon="{{'widgets.value-action.init-value-hint' | translate}}" translate>widgets.value-action.value</div>
           <tb-value-input [valueType]="valueType"
-                          trueLabel="widgets.value-action.on"
-                          falseLabel="widgets.value-action.off"
+                          [trueLabel]="trueLabel"
+                          [falseLabel]="falseLabel"
                           formControlName="defaultValue"></tb-value-input>
         </div>
       </ng-template>
@@ -132,7 +132,7 @@
                   helpId="widget/lib/rpc/parse_value_fn">
       </tb-js-func>
       <div *ngIf="valueType === ValueType.BOOLEAN" class="tb-form-row align-start no-gap column-xs">
-        <div class="fixed-title-width fixed-title-height" translate>widgets.value-action.on-when-result-is</div>
+        <div class="fixed-title-width fixed-title-height">{{ 'widgets.value-action.state-when-result-is' | translate:{state: (stateLabel | translate)} }}</div>
         <tb-value-input
           fxFlex
           layout="column"
@@ -203,7 +203,7 @@
       </mat-expansion-panel>
     </div>
   </div>
-  <div class="tb-value-action-settings-panel-buttons">
+  <div class="tb-action-settings-panel-buttons">
     <button mat-button
             color="primary"
             type="button"
