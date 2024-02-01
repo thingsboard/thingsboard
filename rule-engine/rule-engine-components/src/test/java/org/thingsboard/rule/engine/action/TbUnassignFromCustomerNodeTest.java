@@ -21,7 +21,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
@@ -48,7 +47,6 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
-import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -74,7 +72,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -96,15 +93,14 @@ class TbUnassignFromCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
     private final Dashboard DASHBOARD = new Dashboard();
 
     private final TenantId TENANT_ID = new TenantId(UUID.fromString("06fcc15f-2677-436d-a1cb-7754bd0bcccf"));
-    private final RuleNodeId RULE_NODE_ID = new RuleNodeId(UUID.fromString("1f44aaef-2e3d-4e7a-b81d-065e943dae53"));
 
     private final ListeningExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
 
-    private static Stream<Arguments> provideUnsupportedTypeAndVerifyExceptionThrown() {
+    private static Stream<Arguments> givenUnsupportedOriginatorType_whenOnMsg_thenVerifyExceptionThrown() {
         return unsupportedEntityTypes.stream().flatMap(type -> Stream.of(Arguments.of(type)));
     }
 
-    private static Stream<Arguments> provideSupportedTypeAndCustomerTitle() {
+    private static Stream<Arguments> givenSupportedOriginatorTypeAndCustomerTitle_whenOnMsg_thenVerifySuccessOutMsg() {
         return supportedEntityTypes.stream()
                 .flatMap(type -> Stream.of(Arguments.of(type, StringUtils.randomAlphabetic(5))));
     }
@@ -151,8 +147,8 @@ class TbUnassignFromCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @ParameterizedTest
-    @MethodSource("provideUnsupportedTypeAndVerifyExceptionThrown")
-    void givenOriginatorType_whenMsg_thenVerifyExceptionThrown(EntityType originatorType) {
+    @MethodSource
+    void givenUnsupportedOriginatorType_whenOnMsg_thenVerifyExceptionThrown(EntityType originatorType) {
         // GIVEN
         var originator = toOriginator(originatorType);
         var msg = getTbMsg(originator);
@@ -167,8 +163,8 @@ class TbUnassignFromCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @ParameterizedTest
-    @MethodSource("provideSupportedTypeAndCustomerTitle")
-    void givenOriginatorTypeAndCustomerTitle_whenMsg_thenVerifySuccessOutMsg(EntityType type, String customerTitle) throws TbNodeException {
+    @MethodSource("givenSupportedOriginatorTypeAndCustomerTitle_whenOnMsg_thenVerifySuccessOutMsg")
+    void givenSupportedOriginatorTypeAndCustomerTitle_whenOnMsg_thenVerifySuccessOutMsg(EntityType type, String customerTitle) throws TbNodeException {
         // GIVEN
 
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
@@ -199,8 +195,8 @@ class TbUnassignFromCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @ParameterizedTest
-    @MethodSource("provideSupportedTypeAndCustomerTitle")
-    void givenOriginatorTypeAndCustomerTitle_whenMsg_thenVerifyCustomerSearchedAndNotFoundOnlyForDashboardOriginator(EntityType type, String customerTitle) throws TbNodeException {
+    @MethodSource("givenSupportedOriginatorTypeAndCustomerTitle_whenOnMsg_thenVerifySuccessOutMsg")
+    void givenSupportedOriginatorTypeAndCustomerTitle_whenOnMsg_thenVerifyCustomerSearchedAndNotFoundOnlyForDashboardOriginator(EntityType type, String customerTitle) throws TbNodeException {
         // GIVEN
 
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
@@ -269,11 +265,8 @@ class TbUnassignFromCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     private void verifyMsgSuccess(TbMsg expectedMsg) {
-        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctxMock, times(1)).tellSuccess(msgCaptor.capture());
+        verify(ctxMock).tellSuccess(eq(expectedMsg));
         verify(ctxMock, never()).tellFailure(any(), any());
-        TbMsg actualValue = msgCaptor.getValue();
-        assertThat(actualValue).isSameAs(expectedMsg);
     }
 
     private Customer createCustomer(String customerTitle) {

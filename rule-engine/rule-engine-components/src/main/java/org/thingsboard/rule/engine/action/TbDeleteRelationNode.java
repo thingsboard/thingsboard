@@ -49,7 +49,12 @@ public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteR
 
     @Override
     protected TbDeleteRelationNodeConfiguration loadEntityNodeActionConfig(TbNodeConfiguration configuration) throws TbNodeException {
-        return TbNodeUtils.convert(configuration, TbDeleteRelationNodeConfiguration.class);
+        var deleteRelationNodeConfiguration = TbNodeUtils.convert(configuration, TbDeleteRelationNodeConfiguration.class);
+        if (!deleteRelationNodeConfiguration.isDeleteForSingleEntity()) {
+            return deleteRelationNodeConfiguration;
+        }
+        checkIfConfigEntityTypeIsSupported(deleteRelationNodeConfiguration.getEntityType());
+        return deleteRelationNodeConfiguration;
     }
 
     @Override
@@ -71,7 +76,7 @@ public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteR
     private ListenableFuture<RelationContainer> getRelationContainerListenableFuture(TbContext ctx, TbMsg msg, String relationType) {
         return config.isDeleteForSingleEntity() ?
                 Futures.transformAsync(getTargetEntityId(ctx, msg),
-                targetEntityId -> doProcessEntityRelationAction(ctx, msg, targetEntityId, relationType), ctx.getDbCallbackExecutor()) :
+                        targetEntityId -> doProcessEntityRelationAction(ctx, msg, targetEntityId, relationType), ctx.getDbCallbackExecutor()) :
                 Futures.transform(processList(ctx, msg), result -> new RelationContainer(msg, result), ctx.getDbCallbackExecutor());
     }
 

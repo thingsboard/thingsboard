@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -52,9 +53,12 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
 
     private final ConcurrentMap<EntityCreationLock, Object> entitiesCreationLocks = new ConcurrentReferenceHashMap<>();
 
-    private final String supportedEntityTypesStr = Stream.of(EntityType.TENANT, EntityType.DEVICE,
-                    EntityType.ASSET, EntityType.ENTITY_VIEW, EntityType.DASHBOARD, EntityType.EDGE, EntityType.USER)
-            .map(Enum::name).collect(Collectors.joining(" ,"));
+    private static final List<EntityType> supportedEntityTypes = Stream.of(EntityType.TENANT, EntityType.DEVICE,
+                    EntityType.ASSET, EntityType.CUSTOMER, EntityType.ENTITY_VIEW, EntityType.DASHBOARD, EntityType.EDGE, EntityType.USER)
+            .collect(Collectors.toList());
+
+    private static final List<String> supportedEntityTypesStrList = supportedEntityTypes.stream().map(EntityType::name).collect(Collectors.toList());
+    private static final String supportedEntityTypesStr = String.join(" ,", supportedEntityTypesStrList);
 
     protected C config;
 
@@ -97,11 +101,12 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
     }
 
     protected ListenableFuture<List<EntityRelation>> processListSearchDirection(TbContext ctx, TbMsg msg) {
-        if (EntitySearchDirection.FROM.name().equals(config.getDirection())) {
-            return ctx.getRelationService().findByToAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), processPattern(msg, config.getRelationType()), RelationTypeGroup.COMMON);
-        } else {
-            return ctx.getRelationService().findByFromAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), processPattern(msg, config.getRelationType()), RelationTypeGroup.COMMON);
-        }
+        var relationType = processPattern(msg, config.getRelationType());
+        var tenantId = ctx.getTenantId();
+        var originator = msg.getOriginator();
+        return EntitySearchDirection.FROM.name().equals(config.getDirection()) ?
+                ctx.getRelationService().findByToAndTypeAsync(tenantId, originator, relationType, RelationTypeGroup.COMMON) :
+                ctx.getRelationService().findByFromAndTypeAsync(tenantId, originator, relationType, RelationTypeGroup.COMMON);
     }
 
     protected String processPattern(TbMsg msg, String pattern) {
@@ -152,7 +157,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                 return ctx.getDbCallbackExecutor().executeAsync(() -> {
                     var device = deviceService.findDeviceByTenantIdAndName(tenantId, targetEntityName);
                     if (device == null) {
-                        throw new NullPointerException("Device with name '" + targetEntityName + "' doesn't exist!");
+                        throw new NoSuchElementException("Device with name '" + targetEntityName + "' doesn't exist!");
                     }
                     return device.getId();
                 });
@@ -182,7 +187,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                 return ctx.getDbCallbackExecutor().executeAsync(() -> {
                     var asset = assetService.findAssetByTenantIdAndName(tenantId, targetEntityName);
                     if (asset == null) {
-                        throw new NullPointerException("Asset with name '" + targetEntityName + "' doesn't exist!");
+                        throw new NoSuchElementException("Asset with name '" + targetEntityName + "' doesn't exist!");
                     }
                     return asset.getId();
                 });
@@ -210,7 +215,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                 return ctx.getDbCallbackExecutor().executeAsync(() -> {
                     var customer = customerService.findCustomerByTenantIdAndTitleUsingCache(tenantId, targetEntityName);
                     if (customer == null) {
-                        throw new NullPointerException("Customer with title '" + targetEntityName + "' doesn't exist!");
+                        throw new NoSuchElementException("Customer with title '" + targetEntityName + "' doesn't exist!");
                     }
                     return customer.getId();
                 });
@@ -221,7 +226,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                     if (entityView != null) {
                         return entityView.getId();
                     }
-                    throw new NullPointerException("EntityView with name '" + targetEntityName + "' doesn't exist!");
+                    throw new NoSuchElementException("EntityView with name '" + targetEntityName + "' doesn't exist!");
                 });
             case EDGE:
                 return ctx.getDbCallbackExecutor().executeAsync(() -> {
@@ -230,7 +235,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                     if (edge != null) {
                         return edge.getId();
                     }
-                    throw new NullPointerException("Edge with name '" + targetEntityName + "' doesn't exist!");
+                    throw new NoSuchElementException("Edge with name '" + targetEntityName + "' doesn't exist!");
                 });
             case DASHBOARD:
                 return ctx.getDbCallbackExecutor().executeAsync(() -> {
@@ -239,7 +244,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                     if (dashboardInfo != null) {
                         return dashboardInfo.getId();
                     }
-                    throw new NullPointerException("Dashboard with title '" + targetEntityName + "' doesn't exist!");
+                    throw new NoSuchElementException("Dashboard with title '" + targetEntityName + "' doesn't exist!");
                 });
             case USER:
                 return ctx.getDbCallbackExecutor().executeAsync(() -> {
@@ -248,12 +253,22 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                     if (user != null) {
                         return user.getId();
                     }
-                    throw new NullPointerException("User with email '" + targetEntityName + "' doesn't exist!");
+                    throw new NoSuchElementException("User with email '" + targetEntityName + "' doesn't exist!");
                 });
             default:
-                throw new IllegalArgumentException("Unsupported originator type '" + entityTypeStr +
-                        "'! Only " + supportedEntityTypesStr + " types are allowed.");
+                throw new IllegalArgumentException(unsupportedEntityTypeErrorMessage(entityTypeStr));
         }
+    }
+
+    protected void checkIfConfigEntityTypeIsSupported(String entityType) throws TbNodeException {
+        if (!supportedEntityTypesStrList.contains(entityType)) {
+            throw new TbNodeException(unsupportedEntityTypeErrorMessage(entityType), true);
+        }
+    }
+
+    static String unsupportedEntityTypeErrorMessage(String entityType) {
+        return "Unsupported entity type '" + entityType +
+                "'! Only " + supportedEntityTypesStr + " types are allowed.";
     }
 
     @Data

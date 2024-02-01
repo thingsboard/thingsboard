@@ -100,11 +100,11 @@ class TbAssignToCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private final ListeningExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
 
-    private static Stream<Arguments> provideUnsupportedTypeAndVerifyExceptionThrown() {
+    private static Stream<Arguments> givenUnsupportedOriginatorType_whenOnMsg_thenVerifyExceptionThrown() {
         return unsupportedEntityTypes.stream().flatMap(type -> Stream.of(Arguments.of(type)));
     }
 
-    private static Stream<Arguments> provideSupportedTypeAndCustomerTitle() {
+    private static Stream<Arguments> givenSupportedOriginatorTypeAndCustomerTitle_whenOnMsg_thenVerify() {
         return supportedEntityTypes.stream()
                 .flatMap(type -> Stream.of(Arguments.of(type, StringUtils.randomAlphabetic(5))));
     }
@@ -152,8 +152,8 @@ class TbAssignToCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @ParameterizedTest
-    @MethodSource("provideUnsupportedTypeAndVerifyExceptionThrown")
-    void givenOriginatorType_whenMsg_thenVerifyExceptionThrown(EntityType originatorType) {
+    @MethodSource
+    void givenUnsupportedOriginatorType_whenOnMsg_thenVerifyExceptionThrown(EntityType originatorType) {
         // GIVEN
         var originator = toOriginator(originatorType);
         var msg = getTbMsg(originator);
@@ -168,8 +168,8 @@ class TbAssignToCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @ParameterizedTest
-    @MethodSource("provideSupportedTypeAndCustomerTitle")
-    void givenOriginatorTypeAndCustomerTitle_whenMsg_thenVerifySuccessOutMsg(EntityType type, String customerTitle) throws TbNodeException {
+    @MethodSource("givenSupportedOriginatorTypeAndCustomerTitle_whenOnMsg_thenVerify")
+    void givenSupportedOriginatorTypeAndCustomerTitle_whenOnMsg_thenVerify(EntityType type, String customerTitle) throws TbNodeException {
         // GIVEN
 
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
@@ -197,8 +197,8 @@ class TbAssignToCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @ParameterizedTest
-    @MethodSource("provideSupportedTypeAndCustomerTitle")
-    void givenOriginatorTypeAndCustomerTitle_whenMsg_thenVerifyCustomerCreatedAndSuccessOutMsg(EntityType type, String customerTitle) throws TbNodeException {
+    @MethodSource("givenSupportedOriginatorTypeAndCustomerTitle_whenOnMsg_thenVerify")
+    void givenSupportedOriginatorTypeAndCustomerTitle_whenOnMsg_thenVerifyCustomerCreatedAndSuccessOutMsg(EntityType type, String customerTitle) throws TbNodeException {
         // GIVEN
 
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
@@ -233,8 +233,8 @@ class TbAssignToCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @ParameterizedTest
-    @MethodSource("provideSupportedTypeAndCustomerTitle")
-    void givenOriginatorTypeAndCustomerTitle_whenMsg_thenVerifyCustomerNotFound(EntityType type, String customerTitle) throws TbNodeException {
+    @MethodSource("givenSupportedOriginatorTypeAndCustomerTitle_whenOnMsg_thenVerify")
+    void givenSupportedOriginatorTypeAndCustomerTitle_whenOnMsg_thenVerifyCustomerNotFound(EntityType type, String customerTitle) throws TbNodeException {
         // GIVEN
 
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
@@ -290,11 +290,8 @@ class TbAssignToCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     private void verifyMsgSuccess(TbMsg expectedMsg) {
-        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctxMock, times(1)).tellSuccess(msgCaptor.capture());
+        verify(ctxMock).tellSuccess(eq(expectedMsg));
         verify(ctxMock, never()).tellFailure(any(), any());
-        TbMsg actualValue = msgCaptor.getValue();
-        assertThat(actualValue).isSameAs(expectedMsg);
     }
 
     private Customer createCustomer(String customerTitle) {
@@ -309,7 +306,7 @@ class TbAssignToCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
         return TbMsg.newMsg(TbMsgType.NA, originator, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
     }
 
-    private static EntityId toOriginator(EntityType type) {
+    private EntityId toOriginator(EntityType type) {
         return EntityIdFactory.getByTypeAndId(type.name(), UUID.randomUUID().toString());
     }
 

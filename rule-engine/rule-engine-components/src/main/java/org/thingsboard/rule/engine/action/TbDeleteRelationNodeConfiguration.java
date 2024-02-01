@@ -17,6 +17,7 @@ package org.thingsboard.rule.engine.action;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 
 @Data
@@ -29,7 +30,7 @@ public class TbDeleteRelationNodeConfiguration extends TbAbstractRelationActionN
         TbDeleteRelationNodeConfiguration configuration = new TbDeleteRelationNodeConfiguration();
         configuration.setDeleteForSingleEntity(true);
         configuration.setDirection(EntitySearchDirection.FROM.name());
-        configuration.setRelationType("Contains");
+        configuration.setRelationType(EntityRelation.CONTAINS_TYPE);
         configuration.setEntityNamePattern("");
         return configuration;
     }

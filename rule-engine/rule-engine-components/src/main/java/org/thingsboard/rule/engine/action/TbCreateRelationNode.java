@@ -62,7 +62,9 @@ public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateR
 
     @Override
     protected TbCreateRelationNodeConfiguration loadEntityNodeActionConfig(TbNodeConfiguration configuration) throws TbNodeException {
-        return TbNodeUtils.convert(configuration, TbCreateRelationNodeConfiguration.class);
+        var createRelationNodeConfiguration = TbNodeUtils.convert(configuration, TbCreateRelationNodeConfiguration.class);
+        checkIfConfigEntityTypeIsSupported(createRelationNodeConfiguration.getEntityType());
+        return createRelationNodeConfiguration;
     }
 
     @Override
@@ -90,18 +92,15 @@ public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateR
     }
 
     private ListenableFuture<Void> deleteCurrentRelationsIfNeeded(TbContext ctx, TbMsg msg, SearchDirectionIds sdId, String relationType) {
-        if (config.isRemoveCurrentRelations()) {
-            return deleteOriginatorRelations(ctx, findOriginatorRelations(ctx, msg, sdId, relationType));
-        }
-        return Futures.immediateFuture(null);
+        return config.isRemoveCurrentRelations() ?
+                deleteOriginatorRelations(ctx, findOriginatorRelations(ctx, msg, sdId, relationType)) :
+                Futures.immediateFuture(null);
     }
 
     private ListenableFuture<List<EntityRelation>> findOriginatorRelations(TbContext ctx, TbMsg msg, SearchDirectionIds sdId, String relationType) {
-        if (sdId.isOriginatorDirectionFrom()) {
-            return ctx.getRelationService().findByFromAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), relationType, RelationTypeGroup.COMMON);
-        } else {
-            return ctx.getRelationService().findByToAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), relationType, RelationTypeGroup.COMMON);
-        }
+        return sdId.isOriginatorDirectionFrom() ?
+                ctx.getRelationService().findByFromAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), relationType, RelationTypeGroup.COMMON) :
+                ctx.getRelationService().findByToAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), relationType, RelationTypeGroup.COMMON);
     }
 
     private ListenableFuture<Void> deleteOriginatorRelations(TbContext ctx, ListenableFuture<List<EntityRelation>> originatorRelationsFuture) {
@@ -117,12 +116,10 @@ public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateR
     }
 
     private ListenableFuture<Boolean> checkRelationAndCreateIfAbsent(TbContext ctx, EntityId targetEntityId, String relationType, SearchDirectionIds sdId) {
-        return Futures.transformAsync(checkRelation(ctx, sdId, relationType), relationPresent -> {
-            if (relationPresent) {
-                return Futures.immediateFuture(true);
-            }
-            return processCreateRelation(ctx, targetEntityId, sdId, relationType);
-        }, ctx.getDbCallbackExecutor());
+        return Futures.transformAsync(checkRelation(ctx, sdId, relationType), relationPresent ->
+                relationPresent ?
+                        Futures.immediateFuture(true) :
+                        processCreateRelation(ctx, targetEntityId, sdId, relationType), ctx.getDbCallbackExecutor());
     }
 
     private ListenableFuture<Boolean> checkRelation(TbContext ctx, SearchDirectionIds sdId, String relationType) {
