@@ -53,7 +53,7 @@ public class EdgeCommunicationFailureTriggerProcessor implements NotificationRul
     }
 
     private String truncateFailureMsg(String input) {
-        int maxLength = 800;
+        int maxLength = 500;
         if (input != null && input.length() > maxLength) {
             return input.substring(0, maxLength);
         }

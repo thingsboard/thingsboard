@@ -210,19 +210,22 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
             defaultNotifications.create(tenantId, DefaultNotifications.exceededPerEntityRateLimits, affectedTenantAdmins.getId());
             defaultNotifications.create(tenantId, DefaultNotifications.exceededRateLimitsForSysadmin, sysAdmins.getId());
         } else {
-            List<NotificationType> requiredNotificationTypes = List.of(NotificationType.EDGE_CONNECTION, NotificationType.EDGE_COMMUNICATION_FAILURE);
-            List<NotificationType> existingNotificationTypes = notificationTemplateService.findNotificationTemplatesByTenantIdAndNotificationTypes(
+            var requiredNotificationTypes = List.of(NotificationType.EDGE_CONNECTION, NotificationType.EDGE_COMMUNICATION_FAILURE);
+            var existingNotificationTypes = notificationTemplateService.findNotificationTemplatesByTenantIdAndNotificationTypes(
                             tenantId, requiredNotificationTypes, new PageLink(1))
                     .getData()
                     .stream()
                     .map(NotificationTemplate::getNotificationType)
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toSet());
+
+            if (existingNotificationTypes.containsAll(requiredNotificationTypes)) {
+                return;
+            }
 
             NotificationTarget tenantAdmins = notificationTargetService.findNotificationTargetsByTenantIdAndUsersFilterType(tenantId, UsersFilterType.TENANT_ADMINISTRATORS)
                     .stream()
                     .findFirst()
-                    .orElseGet(() -> createTarget(tenantId, "Tenant administrators", new TenantAdministratorsFilter(),
-                            tenantId.isSysTenantId() ? "All tenant administrators" : "Tenant administrators"));
+                    .orElseGet(() -> createTarget(tenantId, "Tenant administrators", new TenantAdministratorsFilter(), "Tenant administrators"));
 
             for (NotificationType type : requiredNotificationTypes) {
                 if (!existingNotificationTypes.contains(type)) {

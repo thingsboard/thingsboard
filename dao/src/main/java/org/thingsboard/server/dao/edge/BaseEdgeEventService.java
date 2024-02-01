@@ -41,9 +41,10 @@ public class BaseEdgeEventService implements EdgeEventService {
 
     @Override
     public ListenableFuture<Void> saveAsync(EdgeEvent edgeEvent) {
-        boolean isEdgeEventTenantRateLimitReached = !rateLimitService.checkRateLimit(LimitedApi.EDGE_EVENTS, edgeEvent.getTenantId());
-        boolean isEdgeEventRateLimitPerEdgeReached = !rateLimitService.checkRateLimit(LimitedApi.EDGE_EVENTS_PER_EDGE, edgeEvent.getTenantId(), edgeEvent.getEdgeId());
-        if (isEdgeEventTenantRateLimitReached || isEdgeEventRateLimitPerEdgeReached) {
+        if (!rateLimitService.checkRateLimit(LimitedApi.EDGE_EVENTS, edgeEvent.getTenantId())) {
+            throw new TbRateLimitsException(EntityType.TENANT);
+        }
+        if (!rateLimitService.checkRateLimit(LimitedApi.EDGE_EVENTS_PER_EDGE, edgeEvent.getTenantId(), edgeEvent.getEdgeId())) {
             throw new TbRateLimitsException(EntityType.EDGE);
         }
         edgeEventValidator.validate(edgeEvent, EdgeEvent::getTenantId);

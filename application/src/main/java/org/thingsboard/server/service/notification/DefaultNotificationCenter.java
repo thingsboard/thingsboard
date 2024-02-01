@@ -241,11 +241,13 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
             case PLATFORM_USERS: {
                 PlatformUsersNotificationTargetConfig targetConfig = (PlatformUsersNotificationTargetConfig) target.getConfiguration();
                 if (targetConfig.getUsersFilter().getType().isForRules() && ctx.getRequest().getInfo() instanceof RuleOriginatedNotificationInfo) {
-                    recipients = new PageDataIterable<>(pageLink ->
-                            notificationTargetService.findRecipientsForRuleNotificationTargetConfig(ctx.getTenantId(), targetConfig, (RuleOriginatedNotificationInfo) ctx.getRequest().getInfo(), pageLink), 500);
+                    recipients = new PageDataIterable<>(pageLink -> {
+                        return notificationTargetService.findRecipientsForRuleNotificationTargetConfig(ctx.getTenantId(), targetConfig, (RuleOriginatedNotificationInfo) ctx.getRequest().getInfo(), pageLink);
+                    }, 500);
                 } else {
-                    recipients = new PageDataIterable<>(pageLink ->
-                            notificationTargetService.findRecipientsForNotificationTargetConfig(ctx.getTenantId(), targetConfig, pageLink), 500);
+                    recipients = new PageDataIterable<>(pageLink -> {
+                        return notificationTargetService.findRecipientsForNotificationTargetConfig(ctx.getTenantId(), targetConfig, pageLink);
+                    }, 500);
                 }
                 break;
             }

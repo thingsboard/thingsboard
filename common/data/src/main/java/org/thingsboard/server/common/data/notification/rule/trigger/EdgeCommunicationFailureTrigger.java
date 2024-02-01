@@ -43,7 +43,7 @@ public class EdgeCommunicationFailureTrigger implements NotificationRuleTrigger 
 
     @Override
     public String getDeduplicationKey() {
-        return String.join(":", NotificationRuleTrigger.super.getDeduplicationKey(), edgeId.toString(), error);
+        return String.join(":", NotificationRuleTrigger.super.getDeduplicationKey(), error);
     }
 
     @Override

@@ -43,7 +43,6 @@ public class EdgeCommunicationFailureNotificationInfo implements RuleOriginatedN
     @Override
     public Map<String, String> getTemplateData() {
         return mapOf(
-                "tenantId", tenantId.toString(),
                 "edgeId", edgeId.toString(),
                 "edgeName", edgeName,
                 "failureMsg", failureMsg

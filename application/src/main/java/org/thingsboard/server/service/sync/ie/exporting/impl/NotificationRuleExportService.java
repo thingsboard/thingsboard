@@ -29,8 +29,8 @@ import org.thingsboard.server.common.data.notification.rule.EscalatedNotificatio
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.rule.NotificationRuleRecipientsConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.DeviceActivityNotificationRuleTriggerConfig;
-import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeConnectionNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeCommunicationFailureNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeConnectionNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
@@ -92,8 +92,9 @@ public class NotificationRuleExportService<I extends EntityId, E extends Exporta
             case ALARM: {
                 EscalatedNotificationRuleRecipientsConfig recipientsConfig = (EscalatedNotificationRuleRecipientsConfig) ruleRecipientsConfig;
                 Map<Integer, List<UUID>> escalationTable = new LinkedHashMap<>(recipientsConfig.getEscalationTable());
-                escalationTable.replaceAll((delay, targets) ->
-                        toExternalIds(targets, NotificationTargetId::new, ctx).collect(Collectors.toList()));
+                escalationTable.replaceAll((delay, targets) -> {
+                    return toExternalIds(targets, NotificationTargetId::new, ctx).collect(Collectors.toList());
+                });
                 recipientsConfig.setEscalationTable(escalationTable);
                 break;
             }

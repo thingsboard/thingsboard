@@ -479,11 +479,13 @@ public final class EdgeGrpcSession implements Closeable {
                     log.trace("[{}][{}][{}] downlink msg(s) are going to be send.", this.tenantId, this.sessionId, copy.size());
                     for (DownlinkMsg downlinkMsg : copy) {
                         if (this.clientMaxInboundMessageSize != 0 && downlinkMsg.getSerializedSize() > this.clientMaxInboundMessageSize) {
+                            String error = String.format("Client max inbound message size [{%s}] is exceeded. Please increase value of CLOUD_RPC_MAX_INBOUND_MESSAGE_SIZE " +
+                                    "env variable on the edge and restart it.", this.clientMaxInboundMessageSize);
                             String message = String.format("Downlink msg size [{%s}] exceeds client max inbound message size [{%s}]. " +
                                     "Please increase value of CLOUD_RPC_MAX_INBOUND_MESSAGE_SIZE env variable on the edge and restart it.", downlinkMsg.getSerializedSize(), this.clientMaxInboundMessageSize);
                             log.error("[{}][{}][{}] {} Message {}", this.tenantId, edge.getId(), this.sessionId, message, downlinkMsg);
                             ctx.getNotificationRuleProcessor().process(EdgeCommunicationFailureTrigger.builder().tenantId(tenantId)
-                                    .edgeId(edge.getId()).customerId(edge.getCustomerId()).edgeName(edge.getName()).failureMsg(message).error(message).build());
+                                    .edgeId(edge.getId()).customerId(edge.getCustomerId()).edgeName(edge.getName()).failureMsg(message).error(error).build());
                             sessionState.getPendingMsgsMap().remove(downlinkMsg.getDownlinkMsgId());
                         } else {
                             sendDownlinkMsg(ResponseMsg.newBuilder()

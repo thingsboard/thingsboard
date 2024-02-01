@@ -44,7 +44,6 @@ public class EdgeConnectionNotificationInfo implements RuleOriginatedNotificatio
     public Map<String, String> getTemplateData() {
         return mapOf(
                 "eventType", eventType,
-                "tenantId", tenantId.toString(),
                 "edgeId", edgeId.toString(),
                 "edgeName", edgeName
         );

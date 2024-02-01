@@ -1,4 +1,4 @@
-#### Edge notification templatization
+#### Edge connection notification templatization
 
 <div class="divider"></div>
 <br/>

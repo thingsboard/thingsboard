@@ -42,12 +42,12 @@ public class EdgeConnectionTrigger implements NotificationRuleTrigger {
 
     @Override
     public String getDeduplicationKey() {
-        return String.join(":", NotificationRuleTrigger.super.getDeduplicationKey(), edgeName, String.valueOf(connected));
+        return String.join(":", NotificationRuleTrigger.super.getDeduplicationKey(), String.valueOf(connected));
     }
 
     @Override
     public long getDefaultDeduplicationDuration() {
-        return TimeUnit.MINUTES.toMillis(30);
+        return TimeUnit.MINUTES.toMillis(1);
     }
 
     @Override
