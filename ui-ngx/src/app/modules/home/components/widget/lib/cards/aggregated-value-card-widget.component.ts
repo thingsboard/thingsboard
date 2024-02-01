@@ -242,7 +242,7 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
           aggValue.value = 'N/A';
         }
         const numeric = formatNumberValue(value, (aggValue.key.decimals || this.ctx.decimals));
-        aggValue.color.update(numeric);
+        aggValue.color.update(value);
         if (aggValue.showArrow && isDefined(numeric)) {
           aggValue.upArrow = numeric > 0;
           aggValue.downArrow = numeric < 0;
