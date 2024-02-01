@@ -225,7 +225,7 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
   }
 
   get displayUnitsOrDigits() {
-    return this.modelValue?.type && ![ DataKeyType.alarm, DataKeyType.entityField, DataKeyType.count ].includes(this.modelValue?.type);
+    return !this.modelValue || (this.modelValue?.type && ![ DataKeyType.alarm, DataKeyType.entityField, DataKeyType.count ].includes(this.modelValue?.type));
   }
 
   get isLatestDataKeys(): boolean {
