@@ -248,6 +248,10 @@ import * as ImportDialogCsvComponent from '@shared/import-export/import-dialog-c
 import * as TableColumnsAssignmentComponent from '@shared/import-export/table-columns-assignment.component';
 import * as EventContentDialogComponent from '@home/components/event/event-content-dialog.component';
 import * as SharedHomeComponentsModule from '@home/components/shared-home-components.module';
+import * as WidgetConfigComponentsModule from '@home/components/widget/config/widget-config-components.module';
+import * as BasicWidgetConfigModule from '@home/components/widget/config/basic/basic-widget-config.module';
+import * as WidgetSettingsCommonModule from '@home/components/widget/lib/settings/common/widget-settings-common.module';
+import * as  WidgetComponentsModule from '@home/components/widget/widget-components.module';
 import * as SelectTargetLayoutDialogComponent from '@home/components/dashboard/select-target-layout-dialog.component';
 import * as SelectTargetStateDialogComponent from '@home/components/dashboard/select-target-state-dialog.component';
 import * as AliasesEntityAutocompleteComponent from '@home/components/alias/aliases-entity-autocomplete.component';
@@ -571,6 +575,10 @@ class ModulesMap implements IModulesMap {
     '@home/components/attribute/add-widget-to-dashboard-dialog.component': AddWidgetToDashboardDialogComponent,
     '@home/components/event/event-content-dialog.component': EventContentDialogComponent,
     '@home/components/shared-home-components.module': SharedHomeComponentsModule,
+    '@home/components/widget/config/widget-config-components.module': WidgetConfigComponentsModule,
+    '@home/components/widget/config/basic/basic-widget-config.module': BasicWidgetConfigModule,
+    '@home/components/widget/lib/settings/common/widget-settings-common.module': WidgetSettingsCommonModule,
+    '@home/components/widget/widget-components.module': WidgetComponentsModule,
     '@home/components/dashboard/select-target-layout-dialog.component': SelectTargetLayoutDialogComponent,
     '@home/components/dashboard/select-target-state-dialog.component': SelectTargetStateDialogComponent,
     '@home/components/alias/aliases-entity-autocomplete.component': AliasesEntityAutocompleteComponent,

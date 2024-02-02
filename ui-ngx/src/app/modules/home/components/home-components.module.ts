@@ -172,10 +172,7 @@ import {
   ManageWidgetActionsDialogComponent
 } from '@home/components/widget/action/manage-widget-actions-dialog.component';
 import { WidgetConfigComponentsModule } from '@home/components/widget/config/widget-config-components.module';
-import { BasicWidgetConfigModule } from '@home/components/widget/config/basic/basic-widget-config.module';
 import { DeleteTimeseriesPanelComponent } from '@home/components/attribute/delete-timeseries-panel.component';
-import { WidgetSettingsCommonModule } from '@home/components/widget/lib/settings/common/widget-settings-common.module';
-import { WidgetComponentsModule } from '@home/components/widget/widget-components.module';
 
 @NgModule({
   declarations:
@@ -327,16 +324,9 @@ import { WidgetComponentsModule } from '@home/components/widget/widget-component
     SnmpDeviceProfileTransportModule,
     StatesControllerModule,
     DeviceCredentialsModule,
-    DeviceProfileCommonModule,
-    WidgetSettingsCommonModule,
-    WidgetComponentsModule,
-    BasicWidgetConfigModule
+    DeviceProfileCommonModule
   ],
   exports: [
-    WidgetComponentsModule,
-    SharedHomeComponentsModule,
-    WidgetSettingsCommonModule,
-    WidgetConfigComponentsModule,
     RouterTabsComponent,
     EntitiesTableComponent,
     AddEntityDialogComponent,
@@ -456,8 +446,7 @@ import { WidgetComponentsModule } from '@home/components/widget/widget-component
     RateLimitsComponent,
     RateLimitsTextComponent,
     RateLimitsDetailsDialogComponent,
-    SendNotificationButtonComponent,
-    BasicWidgetConfigModule
+    SendNotificationButtonComponent
   ],
   providers: [
     WidgetComponentService,
