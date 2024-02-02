@@ -251,7 +251,7 @@ import * as SharedHomeComponentsModule from '@home/components/shared-home-compon
 import * as WidgetConfigComponentsModule from '@home/components/widget/config/widget-config-components.module';
 import * as BasicWidgetConfigModule from '@home/components/widget/config/basic/basic-widget-config.module';
 import * as WidgetSettingsCommonModule from '@home/components/widget/lib/settings/common/widget-settings-common.module';
-import * as  WidgetComponentsModule from '@home/components/widget/widget-components.module';
+import * as WidgetComponentsModule from '@home/components/widget/widget-components.module';
 import * as SelectTargetLayoutDialogComponent from '@home/components/dashboard/select-target-layout-dialog.component';
 import * as SelectTargetStateDialogComponent from '@home/components/dashboard/select-target-state-dialog.component';
 import * as AliasesEntityAutocompleteComponent from '@home/components/alias/aliases-entity-autocomplete.component';
