@@ -6561,8 +6561,6 @@
             "attribute-key-required": "Attribute key is required.",
             "time-series-key": "Time-series key",
             "time-series-key-required": "Time-series key is required.",
-            "subscribe-for-updates": "Subscribe for updates",
-            "subscribe-for-updates-hint": "Subscribe for updates",
             "action-result-converter": "Action result converter",
             "converter-none": "None",
             "converter-function": "Function",

@@ -93,12 +93,10 @@ export const singleSwitchDefaultSettings: SingleSwitchWidgetSettings = {
     },
     getAttribute: {
       key: 'state',
-      scope: null,
-      subscribeForUpdates: false
+      scope: null
     },
     getTimeSeries: {
-      key: 'state',
-      subscribeForUpdates: false
+      key: 'state'
     },
     dataToValue: {
       type: DataToValueType.NONE,

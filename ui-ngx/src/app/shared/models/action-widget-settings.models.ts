@@ -54,11 +54,7 @@ export interface TelemetryValueSettings {
   key: string;
 }
 
-export interface GetTelemetryValueSettings extends TelemetryValueSettings {
-  subscribeForUpdates: boolean;
-}
-
-export interface GetAttributeValueSettings extends GetTelemetryValueSettings {
+export interface GetAttributeValueSettings extends TelemetryValueSettings {
   scope: AttributeScope | null;
 }
 
@@ -86,7 +82,7 @@ export interface GetValueSettings<V> extends ValueActionSettings {
   defaultValue: V;
   executeRpc?: RpcSettings;
   getAttribute: GetAttributeValueSettings;
-  getTimeSeries: GetTelemetryValueSettings;
+  getTimeSeries: TelemetryValueSettings;
   dataToValue: DataToValueSettings;
 }
 
@@ -133,13 +129,3 @@ export interface SetValueSettings extends ValueActionSettings {
   putTimeSeries: TelemetryValueSettings;
   valueToData: ValueToDataSettings;
 }
-
-/*export interface RpcStateBehaviourSettings<V> {
-  initialState: RpcInitialStateSettings<V>;
-  updateStateByValue: (value: V) => RpcUpdateStateSettings;
-}
-
-export interface RpcStateWidgetSettings<V> {
-  initialState: RpcInitialStateSettings<V>;
-  background: BackgroundSettings;
-}*/

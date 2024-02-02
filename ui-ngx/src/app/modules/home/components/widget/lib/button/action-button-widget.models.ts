@@ -33,12 +33,10 @@ export const actionButtonDefaultSettings: ActionButtonWidgetSettings = {
     defaultValue: false,
     getAttribute: {
       key: 'state',
-      scope: null,
-      subscribeForUpdates: false
+      scope: null
     },
     getTimeSeries: {
-      key: 'state',
-      subscribeForUpdates: false
+      key: 'state'
     },
     dataToValue: {
       type: DataToValueType.NONE,
@@ -51,12 +49,10 @@ export const actionButtonDefaultSettings: ActionButtonWidgetSettings = {
     defaultValue: false,
     getAttribute: {
       key: 'state',
-      scope: null,
-      subscribeForUpdates: false
+      scope: null
     },
     getTimeSeries: {
-      key: 'state',
-      subscribeForUpdates: false
+      key: 'state'
     },
     dataToValue: {
       type: DataToValueType.NONE,

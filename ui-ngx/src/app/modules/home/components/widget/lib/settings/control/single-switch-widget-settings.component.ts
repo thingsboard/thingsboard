@@ -20,7 +20,8 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
-  singleSwitchDefaultSettings, singleSwitchLayoutImages,
+  singleSwitchDefaultSettings,
+  singleSwitchLayoutImages,
   singleSwitchLayouts,
   singleSwitchLayoutTranslations
 } from '@home/components/widget/lib/rpc/single-switch-widget.models';
@@ -34,11 +35,11 @@ import { ValueType } from '@shared/models/constants';
 export class SingleSwitchWidgetSettingsComponent extends WidgetSettingsComponent {
 
   get targetDevice(): TargetDevice {
-    return this.widget?.config?.targetDevice;
+    return this.widgetConfig?.config?.targetDevice;
   }
 
   get widgetType(): widgetType {
-    return this.widget?.type;
+    return this.widgetConfig?.widgetType;
   }
 
   singleSwitchLayouts = singleSwitchLayouts;
@@ -156,6 +157,4 @@ export class SingleSwitchWidgetSettingsComponent extends WidgetSettingsComponent
       this.singleSwitchWidgetSettingsForm.get('offLabelColor').disable();
     }
   }
-
-  protected readonly ValueType = ValueType;
 }

@@ -24,7 +24,7 @@ import { merge } from 'rxjs';
 import {
   DataToValueType,
   GetValueAction,
-  getValueActions, getValueActionsByWidgetType,
+  getValueActionsByWidgetType,
   getValueActionTranslations,
   GetValueSettings
 } from '@shared/models/action-widget-settings.models';
@@ -117,12 +117,10 @@ export class GetValueActionSettingsPanelComponent extends PageComponent implemen
         }),
         getAttribute: this.fb.group({
           scope: [this.getValueSettings?.getAttribute?.scope, []],
-          key: [this.getValueSettings?.getAttribute?.key, [Validators.required]],
-          subscribeForUpdates: [this.getValueSettings?.getAttribute?.subscribeForUpdates, []]
+          key: [this.getValueSettings?.getAttribute?.key, [Validators.required]]
         }),
         getTimeSeries: this.fb.group({
-          key: [this.getValueSettings?.getTimeSeries?.key, [Validators.required]],
-          subscribeForUpdates: [this.getValueSettings?.getTimeSeries?.subscribeForUpdates, []]
+          key: [this.getValueSettings?.getTimeSeries?.key, [Validators.required]]
         }),
         dataToValue: this.fb.group({
           type: [this.getValueSettings?.dataToValue?.type, [Validators.required]],

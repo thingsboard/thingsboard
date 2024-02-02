@@ -84,11 +84,6 @@
               [attributeScope]="getValueSettingsFormGroup.get('getAttribute').get('scope').value">
             </tb-device-key-autocomplete>
           </div>
-          <div class="tb-form-row">
-            <mat-slide-toggle class="mat-slide" formControlName="subscribeForUpdates">
-              <span tb-hint-tooltip-icon="{{'widgets.value-action.subscribe-for-updates-hint' | translate}}">{{ 'widgets.value-action.subscribe-for-updates' | translate }}</span>
-            </mat-slide-toggle>
-          </div>
         </ng-container>
       </ng-template>
       <ng-template [ngSwitchCase]="getValueAction.GET_TIME_SERIES">
@@ -105,11 +100,6 @@
               [targetDevice]="targetDevice"
               [keyType]="dataKeyType.timeseries">
             </tb-device-key-autocomplete>
-          </div>
-          <div class="tb-form-row">
-            <mat-slide-toggle class="mat-slide" formControlName="subscribeForUpdates">
-              <span tb-hint-tooltip-icon="{{'widgets.value-action.subscribe-for-updates-hint' | translate}}">{{ 'widgets.value-action.subscribe-for-updates' | translate }}</span>
-            </mat-slide-toggle>
           </div>
         </ng-container>
       </ng-template>
