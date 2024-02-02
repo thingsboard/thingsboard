@@ -52,14 +52,12 @@ public abstract class AbstractTbRuleEngineSubmitStrategy implements TbRuleEngine
         List<IdMsgPair<TransportProtos.ToRuleEngineMsg>> newOrderedMsgList = new ArrayList<>(reprocessMap.size());
         for (IdMsgPair<TransportProtos.ToRuleEngineMsg> pair : orderedMsgList) {
             if (reprocessMap.containsKey(pair.uuid)) {
-                var oldValue = pair.getMsg().getValue();
-                if (StringUtils.isNotEmpty(oldValue.getFailureMessage())) {
-                    var newValue = TransportProtos.ToRuleEngineMsg.newBuilder()
-                            .setTenantIdMSB(oldValue.getTenantIdMSB())
-                            .setTenantIdLSB(oldValue.getTenantIdLSB())
-                            .setTbMsg(oldValue.getTbMsg())
+                if (StringUtils.isNotEmpty(pair.getMsg().getValue().getFailureMessage())) {
+                    var toRuleEngineMsg = TransportProtos.ToRuleEngineMsg.newBuilder(pair.getMsg().getValue())
+                            .clearFailureMessage()
+                            .clearRelationTypes()
                             .build();
-                    var newMsg = new TbProtoQueueMsg<>(pair.getMsg().getKey(), newValue, pair.getMsg().getHeaders());
+                    var newMsg = new TbProtoQueueMsg<>(pair.getMsg().getKey(), toRuleEngineMsg, pair.getMsg().getHeaders());
                     newOrderedMsgList.add(new IdMsgPair<>(pair.getUuid(), newMsg));
                 } else {
                     newOrderedMsgList.add(pair);
