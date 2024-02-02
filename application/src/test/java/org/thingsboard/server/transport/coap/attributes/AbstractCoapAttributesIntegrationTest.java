@@ -239,7 +239,7 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         String awaitAlias = "await Json Test Subscribe To AttributesUpdates (client.getObserveRelation)";
         await(awaitAlias)
                 .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                .until(() -> ResponseCode.VALID.equals(callbackCoap.getResponseCode()) &&
+                .until(() -> ResponseCode.CONTENT.equals(callbackCoap.getResponseCode()) &&
                         callbackCoap.getObserve() != null &&
                         0 == callbackCoap.getObserve().intValue());
         if (emptyCurrentStateNotification) {
@@ -286,7 +286,7 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         CoapObserveRelation observeRelation = client.getObserveRelation(callbackCoap);
         await(awaitAlias)
                 .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                .until(() -> ResponseCode.VALID.equals(callbackCoap.getResponseCode()) &&
+                .until(() -> ResponseCode.CONTENT.equals(callbackCoap.getResponseCode()) &&
                         callbackCoap.getObserve() != null &&
                         0 == callbackCoap.getObserve().intValue());
 

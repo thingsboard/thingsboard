@@ -485,9 +485,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
             TbCoapObservationState attrs = state.getAttrs();
             if (attrs != null) {
                 try {
-                    Response resp = state.getAdaptor().convertToPublish(msg);
-                    Response response = new Response(ResponseCode.VALID);
-                    response.setPayload(resp.getPayload());
+                    Response response = state.getAdaptor().convertToPublish(msg);
                     response.getOptions().setObserve(attrs.getObserveCounter().getAndIncrement());
                     respond(attrs.getExchange(), response, state.getContentFormat());
                 } catch (AdaptorException e) {
