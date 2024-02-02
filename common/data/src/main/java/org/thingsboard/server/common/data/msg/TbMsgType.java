@@ -76,7 +76,7 @@ public enum TbMsgType {
     DEDUPLICATION_TIMEOUT_SELF_MSG(null, true),
     DELAY_TIMEOUT_SELF_MSG(null, true),
     MSG_COUNT_SELF_MSG(null, true),
-    DEVICE_STATE_STALE_ENTRIES_CLEANUP_MSG(null, true),
+    DEVICE_STATE_STALE_ENTRIES_CLEANUP_SELF_MSG(null, true),
 
     // Custom or N/A type:
     NA;

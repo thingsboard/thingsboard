@@ -96,7 +96,7 @@ public class TbDeviceStateNodeTest {
         data.put("humidity", 58.3);
         msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metaData, JacksonUtil.toString(data));
         nodeId = new RuleNodeId(UUID.randomUUID());
-        cleanupMsg = TbMsg.newMsg(null, TbMsgType.DEVICE_STATE_STALE_ENTRIES_CLEANUP_MSG, nodeId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
+        cleanupMsg = TbMsg.newMsg(null, TbMsgType.DEVICE_STATE_STALE_ENTRIES_CLEANUP_SELF_MSG, nodeId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
     }
 
     @BeforeEach
@@ -123,7 +123,7 @@ public class TbDeviceStateNodeTest {
     public void givenValidConfig_whenInit_thenSchedulesCleanupMsg() {
         // GIVEN
         given(ctxMock.getSelfId()).willReturn(nodeId);
-        given(ctxMock.newMsg(isNull(), eq(TbMsgType.DEVICE_STATE_STALE_ENTRIES_CLEANUP_MSG), eq(nodeId), eq(TbMsgMetaData.EMPTY), eq(TbMsg.EMPTY_STRING))).willReturn(cleanupMsg);
+        given(ctxMock.newMsg(isNull(), eq(TbMsgType.DEVICE_STATE_STALE_ENTRIES_CLEANUP_SELF_MSG), eq(nodeId), eq(TbMsgMetaData.EMPTY), eq(TbMsg.EMPTY_STRING))).willReturn(cleanupMsg);
 
         // WHEN
         try {
@@ -140,7 +140,7 @@ public class TbDeviceStateNodeTest {
     public void givenCleanupMsg_whenOnMsg_thenCleansStaleEntries() {
         // GIVEN
         given(ctxMock.getSelfId()).willReturn(nodeId);
-        given(ctxMock.newMsg(isNull(), eq(TbMsgType.DEVICE_STATE_STALE_ENTRIES_CLEANUP_MSG), eq(nodeId), eq(TbMsgMetaData.EMPTY), eq(TbMsg.EMPTY_STRING))).willReturn(cleanupMsg);
+        given(ctxMock.newMsg(isNull(), eq(TbMsgType.DEVICE_STATE_STALE_ENTRIES_CLEANUP_SELF_MSG), eq(nodeId), eq(TbMsgMetaData.EMPTY), eq(TbMsg.EMPTY_STRING))).willReturn(cleanupMsg);
 
         ConcurrentMap<DeviceId, Duration> lastActivityEventTimestamps = new ConcurrentHashMap<>();
         ReflectionTestUtils.setField(node, "lastActivityEventTimestamps", lastActivityEventTimestamps);
@@ -169,7 +169,6 @@ public class TbDeviceStateNodeTest {
                 .size().isOne();
 
         verifyCleanupMsgSent();
-        then(ctxMock).should().ack(cleanupMsg);
         then(ctxMock).shouldHaveNoMoreInteractions();
     }
 
@@ -272,7 +271,7 @@ public class TbDeviceStateNodeTest {
     public void givenSupportedEventAndDeviceOriginator_whenOnMsg_thenCorrectEventIsSentWithCorrectCallback(TbMsgType supportedEventType, Runnable actionVerification) {
         // GIVEN
         given(ctxMock.getSelfId()).willReturn(nodeId);
-        given(ctxMock.newMsg(isNull(), eq(TbMsgType.DEVICE_STATE_STALE_ENTRIES_CLEANUP_MSG), eq(nodeId), eq(TbMsgMetaData.EMPTY), eq(TbMsg.EMPTY_STRING))).willReturn(cleanupMsg);
+        given(ctxMock.newMsg(isNull(), eq(TbMsgType.DEVICE_STATE_STALE_ENTRIES_CLEANUP_SELF_MSG), eq(nodeId), eq(TbMsgMetaData.EMPTY), eq(TbMsg.EMPTY_STRING))).willReturn(cleanupMsg);
         given(ctxMock.getTenantId()).willReturn(TENANT_ID);
         given(ctxMock.getDeviceStateManager()).willReturn(deviceStateManagerMock);
 
@@ -320,7 +319,7 @@ public class TbDeviceStateNodeTest {
 
     private void verifyCleanupMsgSent() {
         then(ctxMock).should().getSelfId();
-        then(ctxMock).should().newMsg(isNull(), eq(TbMsgType.DEVICE_STATE_STALE_ENTRIES_CLEANUP_MSG), eq(nodeId), eq(TbMsgMetaData.EMPTY), eq(TbMsg.EMPTY_STRING));
+        then(ctxMock).should().newMsg(isNull(), eq(TbMsgType.DEVICE_STATE_STALE_ENTRIES_CLEANUP_SELF_MSG), eq(nodeId), eq(TbMsgMetaData.EMPTY), eq(TbMsg.EMPTY_STRING));
         then(ctxMock).should().tellSelf(eq(cleanupMsg), eq(Duration.ofHours(1L).toMillis()));
     }
 

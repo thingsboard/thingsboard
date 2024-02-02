@@ -69,6 +69,7 @@ public class TbDeviceStateNode implements TbNode {
     );
     private static final Duration ONE_SECOND = Duration.ofSeconds(1L);
     private static final Duration ENTRY_EXPIRATION_TIME = Duration.ofDays(1L);
+    private static final Duration ENTRY_CLEANUP_PERIOD = Duration.ofHours(1L);
 
     private Stopwatch stopwatch;
     private ConcurrentMap<DeviceId, Duration> lastActivityEventTimestamps;
@@ -91,10 +92,9 @@ public class TbDeviceStateNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        if (msg.isTypeOf(TbMsgType.DEVICE_STATE_STALE_ENTRIES_CLEANUP_MSG)) {
+        if (msg.isTypeOf(TbMsgType.DEVICE_STATE_STALE_ENTRIES_CLEANUP_SELF_MSG)) {
             removeStaleEntries();
             scheduleCleanupMsg(ctx);
-            ctx.ack(msg);
             return;
         }
 
@@ -109,7 +109,7 @@ public class TbDeviceStateNode implements TbNode {
             Duration now = stopwatch.elapsed();
 
             if (lastEventTs == null) {
-                sendEvent(ctx, originator, msg);
+                sendEventAndTell(ctx, originator, msg);
                 return now;
             }
 
@@ -119,17 +119,16 @@ public class TbDeviceStateNode implements TbNode {
                 return lastEventTs;
             }
 
-            sendEvent(ctx, originator, msg);
-
+            sendEventAndTell(ctx, originator, msg);
             return now;
         });
     }
 
     private void scheduleCleanupMsg(TbContext ctx) {
         TbMsg cleanupMsg = ctx.newMsg(
-                null, TbMsgType.DEVICE_STATE_STALE_ENTRIES_CLEANUP_MSG, ctx.getSelfId(), TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING
+                null, TbMsgType.DEVICE_STATE_STALE_ENTRIES_CLEANUP_SELF_MSG, ctx.getSelfId(), TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING
         );
-        ctx.tellSelf(cleanupMsg, Duration.ofHours(1L).toMillis());
+        ctx.tellSelf(cleanupMsg, ENTRY_CLEANUP_PERIOD.toMillis());
     }
 
     private void removeStaleEntries() {
@@ -141,7 +140,7 @@ public class TbDeviceStateNode implements TbNode {
         });
     }
 
-    private void sendEvent(TbContext ctx, DeviceId originator, TbMsg msg) {
+    private void sendEventAndTell(TbContext ctx, DeviceId originator, TbMsg msg) {
         TenantId tenantId = ctx.getTenantId();
         long eventTs = msg.getMetaDataTs();
 
