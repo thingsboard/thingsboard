@@ -20,11 +20,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.EntityType;
@@ -43,7 +45,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
-public class TbDeleteRelationNodeTest {
+public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private static final List<EntityType> supportedEntityTypes = Stream.of(EntityType.TENANT, EntityType.DEVICE,
                     EntityType.ASSET, EntityType.CUSTOMER, EntityType.ENTITY_VIEW, EntityType.DASHBOARD, EntityType.EDGE, EntityType.USER)
@@ -51,10 +53,6 @@ public class TbDeleteRelationNodeTest {
 
     private static final List<EntityType> unsupportedEntityTypes = Arrays.stream(EntityType.values())
             .filter(type -> !supportedEntityTypes.contains(type)).collect(Collectors.toList());
-
-    private static Stream<Arguments> givenEntityType_whenInit_thenVerifyExceptionThrownIfTypeIsUnsupported() {
-        return Stream.of(EntityType.values()).map(Arguments::of);
-    }
 
     @Mock
     private TbContext ctxMock;
@@ -80,7 +78,7 @@ public class TbDeleteRelationNodeTest {
     }
 
     @ParameterizedTest
-    @MethodSource
+    @EnumSource(EntityType.class)
     void givenEntityType_whenInit_thenVerifyExceptionThrownIfTypeIsUnsupported(EntityType entityType) {
         // GIVEN
         config.setEntityType(entityType.name());
@@ -95,6 +93,31 @@ public class TbDeleteRelationNodeTest {
             assertThatCode(() -> node.init(ctxMock, nodeConfiguration)).doesNotThrowAnyException();
         }
         verifyNoInteractions(ctxMock);
+    }
+
+    @Override
+    protected TbNode getTestNode() {
+        return node;
+    }
+
+    // Rule nodes upgrade
+    private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
+        return Stream.of(
+                // version 0 config
+                Arguments.of(0,
+                        "{\"deleteForSingleEntity\":true,\"direction\":\"FROM\",\"entityType\":\"DEVICE\"," +
+                                "\"entityNamePattern\":\"$[name]\",\"relationType\":\"Contains\",\"entityCacheExpiration\":300}",
+                        true,
+                        "{\"deleteForSingleEntity\":true,\"direction\":\"FROM\",\"entityType\":\"DEVICE\"," +
+                                "\"entityNamePattern\":\"$[name]\",\"relationType\":\"Contains\"}"),
+                // config for version 1 with upgrade from version 0
+                Arguments.of(0,
+                        "{\"deleteForSingleEntity\":true,\"direction\":\"FROM\",\"entityType\":\"DEVICE\"," +
+                                "\"entityNamePattern\":\"$[name]\",\"relationType\":\"Contains\"}",
+                        false,
+                        "{\"deleteForSingleEntity\":true,\"direction\":\"FROM\",\"entityType\":\"DEVICE\"," +
+                                "\"entityNamePattern\":\"$[name]\",\"relationType\":\"Contains\"}")
+        );
     }
 
 }

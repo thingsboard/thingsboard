@@ -21,13 +21,16 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
 import org.thingsboard.rule.engine.TestDbCallbackExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.cluster.TbClusterService;
@@ -68,9 +71,11 @@ import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
 
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -92,18 +97,13 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class TbCreateRelationNodeTest {
+public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
 
-    private static final List<EntityType> supportedEntityTypes = Stream.of(EntityType.TENANT, EntityType.DEVICE,
-                    EntityType.ASSET, EntityType.CUSTOMER, EntityType.ENTITY_VIEW, EntityType.DASHBOARD, EntityType.EDGE, EntityType.USER)
-            .collect(Collectors.toList());
+    private static final Set<EntityType> supportedEntityTypes = EnumSet.of(EntityType.TENANT, EntityType.DEVICE,
+            EntityType.ASSET, EntityType.CUSTOMER, EntityType.ENTITY_VIEW, EntityType.DASHBOARD, EntityType.EDGE, EntityType.USER);
 
-    private static final List<EntityType> unsupportedEntityTypes = Arrays.stream(EntityType.values())
-            .filter(type -> !supportedEntityTypes.contains(type)).collect(Collectors.toList());
-
-    private static Stream<Arguments> givenEntityType_whenInit_thenVerifyExceptionThrownIfTypeIsUnsupported() {
-        return Stream.of(EntityType.values()).map(Arguments::of);
-    }
+    private static final Set<EntityType> unsupportedEntityTypes = Arrays.stream(EntityType.values())
+            .filter(type -> !supportedEntityTypes.contains(type)).collect(Collectors.toUnmodifiableSet());
 
     private static Stream<Arguments> givenSupportedEntityType_whenOnMsg_thenVerifyEntityNotFoundExceptionThrown() {
         return supportedEntityTypes.stream().filter(entityType -> !entityType.equals(EntityType.TENANT)).map(Arguments::of);
@@ -188,7 +188,7 @@ public class TbCreateRelationNodeTest {
     }
 
     @ParameterizedTest
-    @MethodSource
+    @EnumSource(EntityType.class)
     void givenEntityType_whenInit_thenVerifyExceptionThrownIfTypeIsUnsupported(EntityType entityType) {
         // GIVEN
         config.setEntityType(entityType.name());
@@ -651,6 +651,39 @@ public class TbCreateRelationNodeTest {
         var metaData = new TbMsgMetaData();
         metaData.putValue("name", "EntityName");
         return metaData;
+    }
+
+    @Override
+    protected TbNode getTestNode() {
+        return node;
+    }
+
+    // Rule nodes upgrade
+    private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
+        return Stream.of(
+                // version 0 config
+                Arguments.of(0,
+                        "{\"direction\":\"FROM\",\"entityType\":\"DEVICE\",\"entityNamePattern\":\"$[name]\"," +
+                                "\"entityTypePattern\":\"$[type]\",\"relationType\":\"Contains\"," +
+                                "\"createEntityIfNotExists\":false,\"removeCurrentRelations\":false," +
+                                "\"changeOriginatorToRelatedEntity\":false,\"entityCacheExpiration\":300}",
+                        true,
+                        "{\"direction\":\"FROM\",\"entityType\":\"DEVICE\",\"entityNamePattern\":\"$[name]\"," +
+                                "\"entityTypePattern\":\"$[type]\",\"relationType\":\"Contains\"," +
+                                "\"createEntityIfNotExists\":false,\"removeCurrentRelations\":false," +
+                                "\"changeOriginatorToRelatedEntity\":false}"),
+                // config for version 1 with upgrade from version 0
+                Arguments.of(0,
+                        "{\"direction\":\"FROM\",\"entityType\":\"DEVICE\",\"entityNamePattern\":\"$[name]\"," +
+                                "\"entityTypePattern\":\"$[type]\",\"relationType\":\"Contains\"," +
+                                "\"createEntityIfNotExists\":false,\"removeCurrentRelations\":false," +
+                                "\"changeOriginatorToRelatedEntity\":false}",
+                        false,
+                        "{\"direction\":\"FROM\",\"entityType\":\"DEVICE\",\"entityNamePattern\":\"$[name]\"," +
+                                "\"entityTypePattern\":\"$[type]\",\"relationType\":\"Contains\"," +
+                                "\"createEntityIfNotExists\":false,\"removeCurrentRelations\":false," +
+                                "\"changeOriginatorToRelatedEntity\":false}")
+        );
     }
 
 }

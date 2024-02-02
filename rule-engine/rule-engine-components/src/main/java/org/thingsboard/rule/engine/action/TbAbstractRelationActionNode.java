@@ -15,6 +15,8 @@
  */
 package org.thingsboard.rule.engine.action;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Data;
@@ -36,13 +38,15 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 import static org.thingsboard.server.common.data.msg.TbNodeConnectionType.FAILURE;
@@ -53,9 +57,8 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
 
     private final ConcurrentMap<EntityCreationLock, Object> entitiesCreationLocks = new ConcurrentReferenceHashMap<>();
 
-    private static final List<EntityType> supportedEntityTypes = Stream.of(EntityType.TENANT, EntityType.DEVICE,
-                    EntityType.ASSET, EntityType.CUSTOMER, EntityType.ENTITY_VIEW, EntityType.DASHBOARD, EntityType.EDGE, EntityType.USER)
-            .collect(Collectors.toList());
+    private static final Set<EntityType> supportedEntityTypes = EnumSet.of(EntityType.TENANT, EntityType.DEVICE,
+            EntityType.ASSET, EntityType.CUSTOMER, EntityType.ENTITY_VIEW, EntityType.DASHBOARD, EntityType.EDGE, EntityType.USER);
 
     private static final List<String> supportedEntityTypesStrList = supportedEntityTypes.stream().map(EntityType::name).collect(Collectors.toList());
     private static final String supportedEntityTypesStr = String.join(" ,", supportedEntityTypesStrList);
@@ -269,6 +272,20 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
     static String unsupportedEntityTypeErrorMessage(String entityType) {
         return "Unsupported entity type '" + entityType +
                 "'! Only " + supportedEntityTypesStr + " types are allowed.";
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0: {
+                if (oldConfiguration.has("entityCacheExpiration")) {
+                    ((ObjectNode) oldConfiguration).remove("entityCacheExpiration");
+                    hasChanges = true;
+                }
+            }
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
     }
 
     @Data

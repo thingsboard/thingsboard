@@ -61,8 +61,9 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.EnumSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -83,11 +84,11 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class TbAssignToCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
 
-    private static final List<EntityType> supportedEntityTypes = List.of(EntityType.DEVICE, EntityType.ASSET,
+    private static final Set<EntityType> supportedEntityTypes = EnumSet.of(EntityType.DEVICE, EntityType.ASSET,
             EntityType.ENTITY_VIEW, EntityType.EDGE, EntityType.DASHBOARD);
 
-    private static final List<EntityType> unsupportedEntityTypes = Arrays.stream(EntityType.values())
-            .filter(type -> !supportedEntityTypes.contains(type)).collect(Collectors.toList());
+    private static final Set<EntityType> unsupportedEntityTypes = Arrays.stream(EntityType.values())
+            .filter(type -> !supportedEntityTypes.contains(type)).collect(Collectors.toUnmodifiableSet());
 
     private final Device DEVICE = new Device();
     private final Asset ASSET = new Asset();

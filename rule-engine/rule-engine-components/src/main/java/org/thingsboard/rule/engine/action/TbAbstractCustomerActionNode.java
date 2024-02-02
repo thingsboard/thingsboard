@@ -34,8 +34,9 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import java.util.List;
+import java.util.EnumSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
@@ -46,7 +47,7 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
 
     private final ConcurrentMap<CustomerCreationLock, Object> customerCreationLocks = new ConcurrentReferenceHashMap<>();
 
-    private static final List<EntityType> supportedEntityTypes = List.of(EntityType.ASSET, EntityType.DEVICE,
+    private static final Set<EntityType> supportedEntityTypes = EnumSet.of(EntityType.ASSET, EntityType.DEVICE,
             EntityType.ENTITY_VIEW, EntityType.DASHBOARD, EntityType.EDGE);
 
     private static final String supportedEntityTypesStr = supportedEntityTypes.stream().map(Enum::name).collect(Collectors.joining(", "));
