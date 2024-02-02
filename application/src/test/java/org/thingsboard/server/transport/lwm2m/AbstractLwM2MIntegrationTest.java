@@ -17,10 +17,12 @@ package org.thingsboard.server.transport.lwm2m;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.californium.elements.config.Configuration;
-import org.eclipse.leshan.client.californium.LeshanClient;
+import org.eclipse.leshan.client.LeshanClient;
 import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.core.ResponseCode;
 import org.junit.After;
@@ -61,8 +63,8 @@ import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.service.ws.telemetry.cmd.TelemetryCmdsWrapper;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.LatestValueCmd;
@@ -75,7 +77,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -88,8 +89,8 @@ import static org.awaitility.Awaitility.await;
 import static org.eclipse.californium.core.config.CoapConfig.COAP_PORT;
 import static org.eclipse.californium.core.config.CoapConfig.COAP_SECURE_PORT;
 import static org.eclipse.leshan.client.object.Security.noSec;
-import static org.eclipse.leshan.client.object.Security.noSecBootstap;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
+import static org.junit.Assert.assertEquals;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_STARTED;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_SUCCESS;
@@ -121,8 +122,11 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
 
     public static final String host = "localhost";
     public static final String hostBs = "localhost";
-    public static final int shortServerId = 123;
-    public static final int shortServerIdBs = 111;
+    public static final Integer shortServerId = 123;
+    public static final Integer shortServerIdBs0 = 0;
+    public static final int serverId = 1;
+    public static final int serverIdBs = 0;
+
     public static final String COAP = "coap://";
     public static final String COAPS = "coaps://";
     public static final String URI = COAP + host + ":" + port;
@@ -132,7 +136,6 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     public static final Configuration COAP_CONFIG = new Configuration().set(COAP_PORT, port).set(COAP_SECURE_PORT, securityPort);
     public static Configuration COAP_CONFIG_BS = new Configuration().set(COAP_PORT, portBs).set(COAP_SECURE_PORT, securityPortBs);
     public static final Security SECURITY_NO_SEC = noSec(URI, shortServerId);
-    public static final Security SECURITY_NO_SEC_BS = noSecBootstap(URI_BS);
 
     protected final String OBSERVE_ATTRIBUTES_WITHOUT_PARAMS =
             "    {\n" +
@@ -142,18 +145,17 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
                     "    \"telemetry\": [],\n" +
                     "    \"attributeLwm2m\": {}\n" +
                     "  }";
-
-    public static final String OBSERVE_ATTRIBUTES_WITH_PARAMS =
+    public static  String OBSERVE_ATTRIBUTES_WITH_PARAMS =
 
             "    {\n" +
                     "    \"keyName\": {\n" +
-                    "      \"/3_1.0/0/9\": \"batteryLevel\"\n" +
+                    "      \"/3_1.2/0/9\": \"batteryLevel\"\n" +
                     "    },\n" +
                     "    \"observe\": [],\n" +
                     "    \"attribute\": [\n" +
                     "    ],\n" +
                     "    \"telemetry\": [\n" +
-                    "      \"/3_1.0/0/9\"\n" +
+                    "      \"/3_1.2/0/9\"\n" +
                     "    ],\n" +
                     "    \"attributeLwm2m\": {}\n" +
                     "  }";
@@ -178,6 +180,8 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     protected ScheduledExecutorService executor;
     protected LwM2MTestClient lwM2MTestClient;
     private String[] resources;
+    protected String deviceId;
+    protected boolean isWriteAttribute = false;
 
     @Before
     public void startInit() throws Exception {
@@ -232,8 +236,9 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         getWsClient().waitForReply();
 
         getWsClient().registerWaitForUpdate();
-        createNewClient(security, coapConfig, false, endpoint, false, null);
-        awaitObserveReadAll(0, false, device.getId().getId().toString());
+        createNewClient(security, null, coapConfig, false, endpoint);
+        deviceId = device.getId().getId().toString();
+        awaitObserveReadAll(0, deviceId);
         String msg = getWsClient().waitForUpdate();
 
         EntityDataUpdate update = JacksonUtil.fromString(msg, EntityDataUpdate.class);
@@ -249,6 +254,8 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         int expectedMin = 5;
         Assert.assertTrue(expectedMax >= Long.parseLong(tsValue.getValue()));
         Assert.assertTrue(expectedMin <= Long.parseLong(tsValue.getValue()));
+
+
     }
 
     protected void createDeviceProfile(Lwm2mDeviceProfileTransportConfiguration transportConfiguration) throws Exception {
@@ -297,14 +304,14 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         this.resources = resources;
     }
 
-    public void createNewClient(Security security, Configuration coapConfig, boolean isRpc, String endpoint, boolean isBootstrap, Security securityBs) throws Exception {
+    public void createNewClient(Security security, Security securityBs, Configuration coapConfig, boolean isRpc, String endpoint) throws Exception {
         this.clientDestroy();
         lwM2MTestClient = new LwM2MTestClient(this.executor, endpoint);
 
         try (ServerSocket socket = new ServerSocket(0)) {
             int clientPort = socket.getLocalPort();
-            lwM2MTestClient.init(security, coapConfig, clientPort, isRpc, isBootstrap, this.shortServerId, this.shortServerIdBs,
-                    securityBs, this.defaultLwM2mUplinkMsgHandlerTest, this.clientContextTest);
+            lwM2MTestClient.init(security, securityBs, coapConfig, clientPort, isRpc,
+                    this.defaultLwM2mUplinkMsgHandlerTest, this.clientContextTest, isWriteAttribute);
         }
     }
 
@@ -351,7 +358,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     private AbstractLwM2MBootstrapServerCredential getBootstrapServerCredentialNoSec(boolean isBootstrap) {
         AbstractLwM2MBootstrapServerCredential bootstrapServerCredential = new NoSecLwM2MBootstrapServerCredential();
         bootstrapServerCredential.setServerPublicKey("");
-        bootstrapServerCredential.setShortServerId(isBootstrap ? shortServerIdBs : shortServerId);
+        bootstrapServerCredential.setShortServerId(isBootstrap ? shortServerIdBs0 : shortServerId);
         bootstrapServerCredential.setBootstrapServerIs(isBootstrap);
         bootstrapServerCredential.setHost(isBootstrap ? hostBs : host);
         bootstrapServerCredential.setPort(isBootstrap ? portBs : port);
@@ -394,20 +401,25 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
                 .until(() -> leshanClient.getRegisteredServers().size() == 0);
     }
 
-    protected  void awaitObserveReadAll(int cntObserve, boolean isBootstrap, String deviceIdStr) throws Exception {
-        if (!isBootstrap) {
-            await("ObserveReadAll after start client: countObserve " + cntObserve)
-                    .atMost(40, TimeUnit.SECONDS)
-                    .until(() -> {
-                        String actualResultReadAll = sendObserve("ObserveReadAll", null, deviceIdStr);
-                        ObjectNode rpcActualResultReadAll = JacksonUtil.fromString(actualResultReadAll, ObjectNode.class);
-                        Assert.assertEquals(ResponseCode.CONTENT.getName(), rpcActualResultReadAll.get("result").asText());
-                        String actualValuesReadAll = rpcActualResultReadAll.get("value").asText();
-                        log.warn("ObserveReadAll:  [{}]", actualValuesReadAll);
-                        int actualCntObserve = "[]".equals(actualValuesReadAll) ? 0 : actualValuesReadAll.split(",").length;
-                        return cntObserve == actualCntObserve;
-                    });
-        }
+    protected  void awaitObserveReadAll(int cntObserve, String deviceIdStr) throws Exception {
+        await("ObserveReadAll after start client/test: countObserve " + cntObserve)
+                .atMost(40, TimeUnit.SECONDS)
+                .until(() -> cntObserve == getCntObserveAll(deviceIdStr));
+    }
+
+    protected Integer getCntObserveAll(String deviceIdStr) throws Exception {
+        String actualResultBefore = sendObserve("ObserveReadAll", null, deviceIdStr);
+        ObjectNode rpcActualResultBefore = JacksonUtil.fromString(actualResultBefore, ObjectNode.class);
+        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResultBefore.get("result").asText());
+        JsonElement element = JsonUtils.parse(rpcActualResultBefore.get("value").asText());
+        return element.isJsonArray() ? ((JsonArray)element).size() : null;
+    }
+
+    protected void sendCancelObserveAllWithAwait(String deviceIdStr) throws Exception {
+        String actualResultCancelAll = sendObserve("ObserveCancelAll", null, deviceIdStr);
+        ObjectNode rpcActualResultCancelAll = JacksonUtil.fromString(actualResultCancelAll, ObjectNode.class);
+        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResultCancelAll.get("result").asText());
+        awaitObserveReadAll(0, deviceId);
     }
 
     protected String sendObserve(String method, String params, String deviceIdStr) throws Exception {

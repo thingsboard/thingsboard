@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.lwm2m.server.store;
 
 import org.eclipse.leshan.core.SecurityMode;
+import org.eclipse.leshan.core.peer.OscoreIdentity;
 import org.eclipse.leshan.server.security.NonUniqueSecurityInfoException;
 import org.eclipse.leshan.server.security.SecurityInfo;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -87,6 +88,11 @@ public class TbLwM2mRedisSecurityStore implements TbEditableSecurityStore {
     }
 
     @Override
+    public SecurityInfo getByOscoreIdentity(OscoreIdentity oscoreIdentity) {
+        return null;
+    }
+
+    @Override
     public void put(TbLwM2MSecurityInfo tbSecurityInfo) throws NonUniqueSecurityInfoException {
         SecurityInfo info = tbSecurityInfo.getSecurityInfo();
         byte[] tbSecurityInfoSerialized = JavaSerDesUtil.encode(tbSecurityInfo);
@@ -94,21 +100,21 @@ public class TbLwM2mRedisSecurityStore implements TbEditableSecurityStore {
         try (var connection = connectionFactory.getConnection()) {
             lock = redisLock.obtain(tbSecurityInfo.getEndpoint());
             lock.lock();
-            if (info != null && info.getIdentity() != null) {
-                byte[] oldEndpointBytes = connection.hGet(PSKID_SEC.getBytes(), info.getIdentity().getBytes());
+            if (info != null && info.getPskIdentity() != null) {
+                byte[] oldEndpointBytes = connection.hGet(PSKID_SEC.getBytes(), info.getPskIdentity().getBytes());
                 if (oldEndpointBytes != null) {
                     String oldEndpoint = new String(oldEndpointBytes);
                     if (!oldEndpoint.equals(info.getEndpoint())) {
-                        throw new NonUniqueSecurityInfoException("PSK Identity " + info.getIdentity() + " is already used");
+                        throw new NonUniqueSecurityInfoException("PSK Identity " + info.getPskIdentity() + " is already used");
                     }
-                    connection.hSet(PSKID_SEC.getBytes(), info.getIdentity().getBytes(), info.getEndpoint().getBytes());
+                    connection.hSet(PSKID_SEC.getBytes(), info.getPskIdentity().getBytes(), info.getEndpoint().getBytes());
                 }
             }
 
             byte[] previousData = connection.getSet((SEC_EP + tbSecurityInfo.getEndpoint()).getBytes(), tbSecurityInfoSerialized);
             if (previousData != null && info != null) {
-                String previousIdentity = ((TbLwM2MSecurityInfo) JavaSerDesUtil.decode(previousData)).getSecurityInfo().getIdentity();
-                if (previousIdentity != null && !previousIdentity.equals(info.getIdentity())) {
+                String previousIdentity = ((TbLwM2MSecurityInfo) JavaSerDesUtil.decode(previousData)).getSecurityInfo().getPskIdentity();
+                if (previousIdentity != null && !previousIdentity.equals(info.getPskIdentity())) {
                     connection.hDel(PSKID_SEC.getBytes(), previousIdentity.getBytes());
                 }
             }
@@ -147,8 +153,8 @@ public class TbLwM2mRedisSecurityStore implements TbEditableSecurityStore {
             byte[] data = connection.get((SEC_EP + endpoint).getBytes());
             if (data != null && data.length > 0) {
                 SecurityInfo info = ((TbLwM2MSecurityInfo) JavaSerDesUtil.decode(data)).getSecurityInfo();
-                if (info != null && info.getIdentity() != null) {
-                    connection.hDel(PSKID_SEC.getBytes(), info.getIdentity().getBytes());
+                if (info != null && info.getPskIdentity() != null) {
+                    connection.hDel(PSKID_SEC.getBytes(), info.getPskIdentity().getBytes());
                 }
                 connection.del((SEC_EP + endpoint).getBytes());
             }
