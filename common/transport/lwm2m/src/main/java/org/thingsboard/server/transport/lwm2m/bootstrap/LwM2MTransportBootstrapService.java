@@ -38,6 +38,8 @@ import javax.annotation.PreDestroy;
 import java.security.cert.X509Certificate;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CONNECTION_ID_LENGTH;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CONNECTION_ID_NODE_ID;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CURVES_ONLY;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RETRANSMISSION_TIMEOUT;
@@ -96,6 +98,13 @@ public class LwM2MTransportBootstrapService {
         dtlsConfig.set(DTLS_RECOMMENDED_CIPHER_SUITES_ONLY, serverConfig.isRecommendedCiphers());
         dtlsConfig.set(DTLS_RETRANSMISSION_TIMEOUT, serverConfig.getDtlsRetransmissionTimeout(), MILLISECONDS);
         dtlsConfig.set(DTLS_ROLE, SERVER_ONLY);
+        Integer cid = serverConfig.getCid();
+        dtlsConfig.set(DTLS_CONNECTION_ID_LENGTH, cid);
+        if (cid != null && cid > 4) {
+            dtlsConfig.set(DTLS_CONNECTION_ID_NODE_ID, 0);
+        } else {
+            dtlsConfig.set(DTLS_CONNECTION_ID_NODE_ID, null);
+        }
         setServerWithCredentials(builder, dtlsConfig);
 
         /* Set DTLS Config */

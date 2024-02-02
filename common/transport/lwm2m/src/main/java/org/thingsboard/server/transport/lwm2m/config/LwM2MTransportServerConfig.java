@@ -42,6 +42,10 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
     private int dtlsRetransmissionTimeout;
 
     @Getter
+    @Value("${transport.lwm2m.dtls.cid:}")
+    private Integer cid;
+
+    @Getter
     @Value("${transport.lwm2m.timeout:}")
     private Long timeout;
 

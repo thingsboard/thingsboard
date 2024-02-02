@@ -55,6 +55,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CONNECTION_ID_LENGTH;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CONNECTION_ID_NODE_ID;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY;
 import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
 import static org.eclipse.leshan.core.LwM2mId.DEVICE;
@@ -162,6 +164,13 @@ public class LwM2MTestClient {
 
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder(coapConfig);
         dtlsConfig.set(DTLS_RECOMMENDED_CIPHER_SUITES_ONLY, true);
+        Integer cid = 6;
+        dtlsConfig.set(DTLS_CONNECTION_ID_LENGTH, cid);
+        if (cid != null && cid > 4) {
+            dtlsConfig.set(DTLS_CONNECTION_ID_NODE_ID, 0);
+        } else {
+            dtlsConfig.set(DTLS_CONNECTION_ID_NODE_ID, null);
+        }
 
         DefaultRegistrationEngineFactory engineFactory = new DefaultRegistrationEngineFactory();
         engineFactory.setReconnectOnUpdate(false);

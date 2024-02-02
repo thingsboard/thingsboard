@@ -63,7 +63,6 @@ import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.service.ws.telemetry.cmd.TelemetryCmdsWrapper;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.LatestValueCmd;
@@ -76,7 +75,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -102,6 +100,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfil
 
 @TestPropertySource(properties = {
         "transport.lwm2m.enabled=true",
+        "transport.lwm2m.dtls.cid=6"
 })
 @Slf4j
 @DaoSqlTest
