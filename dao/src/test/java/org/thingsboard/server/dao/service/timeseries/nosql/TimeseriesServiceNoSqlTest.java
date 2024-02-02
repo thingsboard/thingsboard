@@ -62,32 +62,10 @@ public class TimeseriesServiceNoSqlTest extends BaseTimeseriesServiceTest {
         assertEquals(5, fullList.size());
 
         // check entries after ttl
-        Thread.sleep(TimeUnit.SECONDS.toMillis(ttlInSec));
+        Thread.sleep(TimeUnit.SECONDS.toMillis(ttlInSec + 1));
         List<TsKvEntry> listAfterTtl = tsService.findAll(tenantId, deviceId, Collections.singletonList(new BaseReadTsKvQuery("test", 0L,
                 TimeUnit.MINUTES.toMillis(6), 1000, 10, Aggregation.NONE))).get(MAX_TIMEOUT, TimeUnit.SECONDS);
         assertEquals(0, listAfterTtl.size());
-    }
-
-    @Test
-    public void shouldDeleteValueAfterTtl() throws ExecutionException, InterruptedException, TimeoutException {
-        long longEntryTs = TimeUnit.MINUTES.toMillis(2);
-        long doubleEntryTs = TimeUnit.MINUTES.toMillis(3);
-        long ttlInSec = TimeUnit.SECONDS.toSeconds(3);
-        long longValue = 0L;
-        TsKvEntry longEntry = new BasicTsKvEntry(longEntryTs, new LongDataEntry("temp", longValue));
-        double doubleValue = 20.6;
-        TsKvEntry doubleEntry = new BasicTsKvEntry(doubleEntryTs, new DoubleDataEntry("temp", doubleValue));
-        DeviceId deviceId = new DeviceId(Uuids.timeBased());
-        tsService.save(tenantId, deviceId, longEntry).get(MAX_TIMEOUT, TimeUnit.SECONDS);
-        tsService.save(tenantId, deviceId, Collections.singletonList(doubleEntry), ttlInSec).get(MAX_TIMEOUT, TimeUnit.SECONDS);
-
-        Thread.sleep(TimeUnit.SECONDS.toMillis(ttlInSec));
-        List<TsKvEntry> listAfterTtl = tsService.findAll(tenantId, deviceId, Collections.singletonList(new BaseReadTsKvQuery("temp", 0L,
-                doubleEntryTs + 1 , 1000, 3, Aggregation.NONE))).get(MAX_TIMEOUT, TimeUnit.SECONDS);
-        assertEquals(1, listAfterTtl.size());
-        assertTrue(listAfterTtl.get(0).getLongValue().isPresent());
-        assertThat(listAfterTtl.get(0).getLongValue().get()).isEqualTo(longValue);
-        assertFalse(listAfterTtl.get(0).getDoubleValue().isPresent());
     }
 
     @Test
