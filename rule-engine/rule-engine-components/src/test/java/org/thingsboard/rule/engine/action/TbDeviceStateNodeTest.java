@@ -55,6 +55,7 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
@@ -75,7 +76,7 @@ public class TbDeviceStateNodeTest {
 
     private static final TenantId TENANT_ID = TenantId.fromUUID(UUID.randomUUID());
     private static final DeviceId DEVICE_ID = new DeviceId(UUID.randomUUID());
-    private static final long METADATA_TS = System.currentTimeMillis();
+    private static final long METADATA_TS = 123L;
     private TbMsg cleanupMsg;
     private TbMsg msg;
     private long nowNanos;
@@ -264,6 +265,28 @@ public class TbDeviceStateNodeTest {
         // THEN
         then(ctxMock).should().tellSuccess(msg);
         then(ctxMock).shouldHaveNoMoreInteractions();
+    }
+
+    @Test
+    public void givenMetadataDoesNotContainTs_whenOnMsg_thenMsgTsIsUsedAsEventTs() {
+        // GIVEN
+        try {
+            initNode(TbMsgType.ACTIVITY_EVENT);
+        } catch (TbNodeException e) {
+            fail("Node failed to initialize!", e);
+        }
+
+        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
+        given(ctxMock.getDeviceStateManager()).willReturn(deviceStateManagerMock);
+
+        long msgTs = METADATA_TS + 1;
+        msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT, msgTs);
+
+        // WHEN
+        node.onMsg(ctxMock, msg);
+
+        // THEN
+        then(deviceStateManagerMock).should().onDeviceActivity(eq(TENANT_ID), eq(DEVICE_ID), eq(msgTs), any());
     }
 
     @ParameterizedTest
