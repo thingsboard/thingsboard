@@ -327,8 +327,14 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
         long currentLastInactivityAlarmTime = stateData.getState().getLastInactivityAlarmTime();
         if (lastInactivityTime <= currentLastInactivityAlarmTime) {
-            log.trace("[{}][{}] On device inactivity: received outdated last inactivity ts [{}]. Skipping this event. Current last inactivity ts [{}].",
+            log.trace("[{}][{}] On device inactivity: received last inactivity ts [{}] is less than current last inactivity ts [{}]. Skipping this event.",
                     tenantId.getId(), deviceId.getId(), lastInactivityTime, currentLastInactivityAlarmTime);
+            return;
+        }
+        long currentLastActivityTime = stateData.getState().getLastActivityTime();
+        if (lastInactivityTime <= currentLastActivityTime) {
+            log.trace("[{}][{}] On device inactivity: received last inactivity ts [{}] is less or equal to current last activity ts [{}]. Skipping this event.",
+                    tenantId.getId(), deviceId.getId(), lastInactivityTime, currentLastActivityTime);
             return;
         }
         log.trace("[{}][{}] On device inactivity: processing inactivity event with ts [{}].", tenantId.getId(), deviceId.getId(), lastInactivityTime);

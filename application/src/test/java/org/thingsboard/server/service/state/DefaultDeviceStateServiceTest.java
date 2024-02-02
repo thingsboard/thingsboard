@@ -333,19 +333,45 @@ public class DefaultDeviceStateServiceTest {
 
     @ParameterizedTest
     @MethodSource("provideOutdatedTimestamps")
-    public void givenOutdatedLastInactivityTime_whenOnDeviceInactivity_thenSkipsThisEvent(long outdatedLastActivityTime, long currentLastActivityTime) {
+    public void givenReceivedInactivityTimeIsLessThanOrEqualToCurrentInactivityTime_whenOnDeviceInactivity_thenSkipsThisEvent(
+            long outdatedLastInactivityTime, long currentLastInactivityTime
+    ) {
         // GIVEN
         doReturn(false).when(service).cleanDeviceStateIfBelongsToExternalPartition(tenantId, deviceId);
 
         var deviceStateData = DeviceStateData.builder()
                 .tenantId(tenantId)
                 .deviceId(deviceId)
-                .state(DeviceState.builder().lastInactivityAlarmTime(currentLastActivityTime).build())
+                .state(DeviceState.builder().lastInactivityAlarmTime(currentLastInactivityTime).build())
                 .build();
         service.deviceStates.put(deviceId, deviceStateData);
 
         // WHEN
-        service.onDeviceInactivity(tenantId, deviceId, outdatedLastActivityTime);
+        service.onDeviceInactivity(tenantId, deviceId, outdatedLastInactivityTime);
+
+        // THEN
+        then(clusterService).shouldHaveNoInteractions();
+        then(notificationRuleProcessor).shouldHaveNoInteractions();
+        then(telemetrySubscriptionService).shouldHaveNoInteractions();
+    }
+
+    @ParameterizedTest
+    @MethodSource("provideOutdatedTimestamps")
+    public void givenReceivedInactivityTimeIsLessThanOrEqualToCurrentActivityTime_whenOnDeviceInactivity_thenSkipsThisEvent(
+            long outdatedLastInactivityTime, long currentLastActivityTime
+    ) {
+        // GIVEN
+        doReturn(false).when(service).cleanDeviceStateIfBelongsToExternalPartition(tenantId, deviceId);
+
+        var deviceStateData = DeviceStateData.builder()
+                .tenantId(tenantId)
+                .deviceId(deviceId)
+                .state(DeviceState.builder().lastActivityTime(currentLastActivityTime).build())
+                .build();
+        service.deviceStates.put(deviceId, deviceStateData);
+
+        // WHEN
+        service.onDeviceInactivity(tenantId, deviceId, outdatedLastInactivityTime);
 
         // THEN
         then(clusterService).shouldHaveNoInteractions();
