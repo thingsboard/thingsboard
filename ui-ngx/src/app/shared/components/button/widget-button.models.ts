@@ -20,6 +20,11 @@ import tinycolor from 'tinycolor2';
 const defaultMainColor = '#3F52DD';
 const defaultBackgroundColor = '#FFFFFF';
 
+const hoveredFilledDarkenAmount = 6;
+const pressedFilledDarkenAmount = 12;
+const activatedFilledDarkenAmount = 12;
+const pressedRippleFilledDarkenAmount = 18;
+
 export const defaultMainColorDisabled = 'rgba(0, 0, 0, 0.38)';
 export const defaultBackgroundColorDisabled = 'rgba(0, 0, 0, 0.03)';
 
@@ -181,7 +186,7 @@ class HoveredButtonStateCssGenerator extends ButtonStateCssGenerator {
   }
 
   protected generateAdditionalStateCss(mainColor: string): string {
-    const mainColorHoveredFilled = darkenColor(mainColor, 6);
+    const mainColorHoveredFilled = darkenColor(mainColor, hoveredFilledDarkenAmount);
     return `--tb-widget-button-main-color-hovered-filled: ${mainColorHoveredFilled};`;
   }
 }
@@ -193,10 +198,10 @@ class PressedButtonStateCssGenerator extends ButtonStateCssGenerator {
   }
 
   protected generateAdditionalStateCss(mainColor: string): string {
-    const mainColorPressedFilled = darkenColor(mainColor, 12);
+    const mainColorPressedFilled = darkenColor(mainColor, pressedFilledDarkenAmount);
     const mainColorInstance = tinycolor(mainColor);
     const mainColorPressedRipple = mainColorInstance.setAlpha(mainColorInstance.getAlpha() * 0.1).toRgbString();
-    const mainColorPressedRippleFilled = darkenColor(mainColor, 18);
+    const mainColorPressedRippleFilled = darkenColor(mainColor, pressedRippleFilledDarkenAmount);
     return `--tb-widget-button-main-color-pressed-filled: ${mainColorPressedFilled};\n`+
            `--tb-widget-button-main-color-pressed-ripple: ${mainColorPressedRipple};\n`+
            `--tb-widget-button-main-color-pressed-ripple-filled: ${mainColorPressedRippleFilled};`;
@@ -210,7 +215,7 @@ class ActivatedButtonStateCssGenerator extends ButtonStateCssGenerator {
   }
 
   protected generateAdditionalStateCss(mainColor: string): string {
-    const mainColorActivatedFilled = darkenColor(mainColor, 12);
+    const mainColorActivatedFilled = darkenColor(mainColor, activatedFilledDarkenAmount);
     return `--tb-widget-button-main-color-activated-filled: ${mainColorActivatedFilled};`;
   }
 }
@@ -255,5 +260,12 @@ export const generateWidgetButtonAppearanceCss = (appearance: WidgetButtonAppear
 
 const darkenColor = (inputColor: string, amount: number): string => {
   const input = tinycolor(inputColor);
-  return input.darken(amount).toRgbString();
+  const brightness = input.getBrightness() / 255;
+  let ratio: number;
+  if (brightness >= 0.4 && brightness <= 0.5) {
+    ratio = brightness + 0.2;
+  } else {
+    ratio = Math.max(0.1, Math.log10(brightness * 8));
+  }
+  return input.darken(ratio * amount).toRgbString();
 };

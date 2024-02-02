@@ -28,19 +28,19 @@ $boxShadowColorEnabled: var(--tb-widget-button-box-shadow-color-enabled, $defaul
 $mainColorHovered: var(--tb-widget-button-main-color-hovered, $defaultMainColor);
 $backgroundColorHovered: var(--tb-widget-button-background-color-hovered, $defaultBackgroundColor);
 $boxShadowColorHovered: var(--tb-widget-button-box-shadow-color-hovered, $defaultBoxShadowColor);
-$mainColorHoveredFilled: var(--tb-widget-button-main-color-hovered-filled, #263BD7); // main.darken(6)
+$mainColorHoveredFilled: var(--tb-widget-button-main-color-hovered-filled, #3347db); // main.darken(6)
 
 $mainColorPressed: var(--tb-widget-button-main-color-pressed, $defaultMainColor);
 $backgroundColorPressed: var(--tb-widget-button-background-color-pressed, $defaultBackgroundColor);
 $boxShadowColorPressed: var(--tb-widget-button-box-shadow-color-pressed, $defaultBoxShadowColor);
-$mainColorPressedFilled: var(--tb-widget-button-main-color-pressed-filled, #2234BD); // main.darken(12)
+$mainColorPressedFilled: var(--tb-widget-button-main-color-pressed-filled, #273cd9); // main.darken(12)
 $mainColorPressedRipple: var(--tb-widget-button-main-color-pressed-ripple, rgba(63, 82, 221, 0.1)); // Alpha(Main, 0.1)
-$mainColorPressedRippleFilled: var(--tb-widget-button-main-color-pressed-ripple-filled, #1D2DA3); // main.darken(18)
+$mainColorPressedRippleFilled: var(--tb-widget-button-main-color-pressed-ripple-filled, #2439cd); // main.darken(18)
 
 $mainColorActivated: var(--tb-widget-button-main-color-activated, $defaultMainColor);
 $backgroundColorActivated: var(--tb-widget-button-background-color-activated, $defaultBackgroundColor);
 $boxShadowColorActivated: var(--tb-widget-button-box-shadow-color-activated, $defaultBoxShadowColor);
-$mainColorActivatedFilled: var(--tb-widget-button-main-color-activated-filled, #2234BD); // main.darken(12)
+$mainColorActivatedFilled: var(--tb-widget-button-main-color-activated-filled, #273cd9); // main.darken(12)
 
 $mainColorDisabled: var(--tb-widget-button-main-color-disabled, $defaultMainColorDisabled);
 $backgroundColorDisabled: var(--tb-widget-button-background-color-disabled, $defaultBackgroundColorDisabled);
