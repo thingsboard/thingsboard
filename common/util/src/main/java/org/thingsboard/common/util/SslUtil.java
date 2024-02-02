@@ -30,6 +30,7 @@ import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
 import org.bouncycastle.operator.InputDecryptorProvider;
 import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
 import org.bouncycastle.pkcs.jcajce.JcePKCSPBEInputDecryptorProviderBuilder;
+import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.thingsboard.server.common.data.StringUtils;
 
 import java.io.StringReader;
@@ -38,6 +39,9 @@ import java.security.Security;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CONNECTION_ID_LENGTH;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CONNECTION_ID_NODE_ID;
 
 @Slf4j
 public class SslUtil {
@@ -100,6 +104,15 @@ public class SslUtil {
             }
         }
         return privateKey;
+    }
+
+    public static void setDtlsConnectorConfigCid (DtlsConnectorConfig.Builder configBuilder, Integer cid) {
+        configBuilder.set(DTLS_CONNECTION_ID_LENGTH, cid);
+        if (cid != null && cid > 4) {
+            configBuilder.set(DTLS_CONNECTION_ID_NODE_ID, 0);
+        } else {
+            configBuilder.set(DTLS_CONNECTION_ID_NODE_ID, null);
+        }
     }
 
 }

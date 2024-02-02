@@ -126,7 +126,7 @@ public class LwM2MTestClient {
     public void init(Security security, Configuration coapConfig, int port, boolean isRpc, boolean isBootstrap,
                      int shortServerId, int shortServerIdBs, Security securityBs,
                      LwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandler,
-                     LwM2mClientContext clientContext) throws InvalidDDFFileException, IOException {
+                     LwM2mClientContext clientContext, Integer cid) throws InvalidDDFFileException, IOException {
         Assert.assertNull("client already initialized", leshanClient);
         this.defaultLwM2mUplinkMsgHandlerTest = defaultLwM2mUplinkMsgHandler;
         this.clientContext = clientContext;
@@ -173,7 +173,6 @@ public class LwM2MTestClient {
 
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder(coapConfig);
         dtlsConfig.set(DTLS_RECOMMENDED_CIPHER_SUITES_ONLY, true);
-        Integer cid = 6;
         dtlsConfig.set(DTLS_CONNECTION_ID_LENGTH, cid);
         if (cid != null && cid > 4) {
             dtlsConfig.set(DTLS_CONNECTION_ID_NODE_ID, 0);

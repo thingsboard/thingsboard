@@ -196,7 +196,7 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
         createDeviceProfile(transportConfiguration);
         final Device device = createDevice(deviceCredentials, endpoint);
         device.getId().getId().toString();
-        createNewClient(security, coapConfig, true, endpoint, isBootstrap, null);
+        createNewClient(security, coapConfig, true, endpoint, isBootstrap, null, null);
         lwM2MTestClient.start(isStartLw);
         awaitObserveReadAll(0, isBootstrap, device.getId().getId().toString());
         await(awaitAlias)
@@ -245,7 +245,7 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
         createDeviceProfile(transportConfiguration);
         final Device device = createDevice(deviceCredentials, endpoint);
         String deviceIdStr = device.getId().getId().toString();
-        createNewClient(security, coapConfig, true, endpoint, isBootstrap, securityBs);
+        createNewClient(security, coapConfig, true, endpoint, isBootstrap, securityBs, null);
         lwM2MTestClient.start(true);
         awaitObserveReadAll(0, isBootstrap, deviceIdStr);
         await(awaitAlias)

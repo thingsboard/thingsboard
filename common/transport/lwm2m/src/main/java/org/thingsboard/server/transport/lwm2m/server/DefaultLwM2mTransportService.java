@@ -43,8 +43,6 @@ import javax.annotation.PreDestroy;
 import java.security.cert.X509Certificate;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CONNECTION_ID_LENGTH;
-import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CONNECTION_ID_NODE_ID;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CURVES_ONLY;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RETRANSMISSION_TIMEOUT;
@@ -54,6 +52,7 @@ import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CBC_SHA256;
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CCM_8;
+import static org.thingsboard.common.util.SslUtil.setDtlsConnectorConfigCid;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MNetworkConfig.getCoapConfig;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FIRMWARE_UPDATE_COAP_RESOURCE;
 
@@ -142,13 +141,8 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
         dtlsConfig.set(DTLS_RECOMMENDED_CIPHER_SUITES_ONLY, config.isRecommendedCiphers());
         dtlsConfig.set(DTLS_RETRANSMISSION_TIMEOUT, config.getDtlsRetransmissionTimeout(), MILLISECONDS);
         dtlsConfig.set(DTLS_ROLE, SERVER_ONLY);
-        Integer cid = config.getCid();
-        dtlsConfig.set(DTLS_CONNECTION_ID_LENGTH, cid);
-        if (cid != null && cid > 4) {
-            dtlsConfig.set(DTLS_CONNECTION_ID_NODE_ID, 0);
-        } else {
-            dtlsConfig.set(DTLS_CONNECTION_ID_NODE_ID, null);
-        }
+        setDtlsConnectorConfigCid(dtlsConfig, config.getCid());
+
         /*  Create credentials */
         this.setServerWithCredentials(builder, dtlsConfig);
 

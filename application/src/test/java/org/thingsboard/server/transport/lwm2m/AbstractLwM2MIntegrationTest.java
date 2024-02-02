@@ -235,7 +235,8 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         getWsClient().waitForReply();
 
         getWsClient().registerWaitForUpdate();
-        createNewClient(security, coapConfig, false, endpoint, false, null);
+//        Integer cid = 6;
+        createNewClient(security, coapConfig, false, endpoint, false, null, null);
         awaitObserveReadAll(0, false, device.getId().getId().toString());
         String msg = getWsClient().waitForUpdate();
 
@@ -300,12 +301,13 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         this.resources = resources;
     }
 
-    public void createNewClient(Security security, Configuration coapConfig, boolean isRpc, String endpoint, boolean isBootstrap, Security securityBs) throws Exception {
+    public void createNewClient(Security security, Configuration coapConfig, boolean isRpc, String endpoint,
+                                boolean isBootstrap, Security securityBs, Integer cid) throws Exception {
         this.clientDestroy();
         lwM2MTestClient = new LwM2MTestClient(this.executor, endpoint);
         int clientPort = SocketUtils.findAvailableUdpPort();
         lwM2MTestClient.init(security, coapConfig, clientPort, isRpc, isBootstrap, this.shortServerId, this.shortServerIdBs,
-                securityBs, this.defaultLwM2mUplinkMsgHandlerTest, this.clientContextTest);
+                securityBs, this.defaultLwM2mUplinkMsgHandlerTest, this.clientContextTest, cid);
     }
 
     private void clientDestroy() {
