@@ -17,8 +17,14 @@ package org.thingsboard.server.transport.lwm2m.client;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.elements.Connector;
 import org.eclipse.californium.elements.config.Configuration;
+import org.eclipse.californium.scandium.DTLSConnector;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
+import org.eclipse.californium.scandium.dtls.ClientHandshaker;
+import org.eclipse.californium.scandium.dtls.DTLSContext;
+import org.eclipse.californium.scandium.dtls.Handshaker;
+import org.eclipse.californium.scandium.dtls.SessionAdapter;
 import org.eclipse.leshan.client.californium.LeshanClient;
 import org.eclipse.leshan.client.californium.LeshanClientBuilder;
 import org.eclipse.leshan.client.engine.DefaultRegistrationEngineFactory;
@@ -30,6 +36,7 @@ import org.eclipse.leshan.client.resource.LwM2mInstanceEnabler;
 import org.eclipse.leshan.client.resource.ObjectsInitializer;
 import org.eclipse.leshan.client.servers.ServerIdentity;
 import org.eclipse.leshan.core.ResponseCode;
+import org.eclipse.leshan.core.californium.DefaultEndpointFactory;
 import org.eclipse.leshan.core.model.InvalidDDFFileException;
 import org.eclipse.leshan.core.model.LwM2mModel;
 import org.eclipse.leshan.core.model.ObjectLoader;
@@ -77,6 +84,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClient
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_DEREGISTRATION_TIMEOUT;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_EXPECTED_ERROR;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_INIT;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_READ_CONNECTION_ID;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_FAILURE;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_STARTED;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_SUCCESS;
@@ -85,6 +93,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClient
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_UPDATE_STARTED;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_UPDATE_SUCCESS;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_UPDATE_TIMEOUT;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_WRITE_CONNECTION_ID;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_1;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_12;
@@ -177,12 +186,38 @@ public class LwM2MTestClient {
         engineFactory.setResumeOnConnect(true);
         engineFactory.setCommunicationPeriod(5000);
 
+        /** Configure EndpointFactory */
+        DefaultEndpointFactory endpointFactory = new DefaultEndpointFactory(endpoint) {
+            @Override
+            protected Connector createSecuredConnector(DtlsConnectorConfig dtlsConfig) {
+                return new DTLSConnector(dtlsConfig) {
+                    @Override
+                    protected void onInitializeHandshaker(Handshaker handshaker) {
+                        handshaker.addSessionListener(new SessionAdapter() {
+
+                            @Override
+                            public void contextEstablished(Handshaker handshaker, DTLSContext establishedContext) {
+                                 if (handshaker instanceof ClientHandshaker) {
+                                    log.warn("DTLS initiated by client: SUCCEED, WriteConnectionId: [{}, ReadConnectionId: [{}]", establishedContext.getWriteConnectionId(), establishedContext.getReadConnectionId());
+                                    if (establishedContext.getWriteConnectionId() != null &&  establishedContext.getReadConnectionId() != null) {
+                                        clientStates.add(ON_WRITE_CONNECTION_ID);
+                                        clientStates.add(ON_READ_CONNECTION_ID);
+                                    }
+                                }
+                            }
+                        });
+                    }
+                };
+            }
+        };
+
         LeshanClientBuilder builder = new LeshanClientBuilder(endpoint);
         builder.setLocalAddress("0.0.0.0", port);
         builder.setObjects(initializer.createAll());
         builder.setCoapConfig(coapConfig);
         builder.setDtlsConfig(dtlsConfig);
         builder.setRegistrationEngineFactory(engineFactory);
+        builder.setEndpointFactory(endpointFactory);
         builder.setSharedExecutor(executor);
         builder.setDecoder(new DefaultLwM2mDecoder(false));
 

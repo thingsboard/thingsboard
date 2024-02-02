@@ -67,7 +67,9 @@ public class Lwm2mTestHelper {
         ON_DEREGISTRATION_SUCCESS(13, "onDeregistrationSuccess"),
         ON_DEREGISTRATION_FAILURE(14, "onDeregistrationFailure"),
         ON_DEREGISTRATION_TIMEOUT(15, "onDeregistrationTimeout"),
-        ON_EXPECTED_ERROR(16, "onUnexpectedError");
+        ON_WRITE_CONNECTION_ID(16, "onWriteConnectionId"),
+        ON_READ_CONNECTION_ID(17, "onReadConnectionId"),
+        ON_EXPECTED_ERROR(18, "onUnexpectedError");
 
         public int code;
         public String type;
