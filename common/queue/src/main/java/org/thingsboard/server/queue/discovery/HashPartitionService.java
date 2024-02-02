@@ -251,7 +251,12 @@ public class HashPartitionService implements PartitionService {
 
     @Override
     public boolean isMyPartition(ServiceType serviceType, TenantId tenantId, EntityId entityId) {
-        return resolve(serviceType, tenantId, entityId).isMyPartition();
+        try {
+            return resolve(serviceType, tenantId, entityId).isMyPartition();
+        } catch (TenantNotFoundException e) {
+            log.warn("Tenant with id {} not found", tenantId, new RuntimeException("stacktrace"));
+            return false;
+        }
     }
 
     private TopicPartitionInfo resolve(QueueKey queueKey, EntityId entityId) {
@@ -376,7 +381,12 @@ public class HashPartitionService implements PartitionService {
                                     .collect(Collectors.toList()))
                             .collect(Collectors.joining(System.lineSeparator())));
         }
-        applicationEventPublisher.publishEvent(new PartitionChangeEvent(this, serviceType, partitionsMap));
+        PartitionChangeEvent event = new PartitionChangeEvent(this, serviceType, partitionsMap);
+        try {
+            applicationEventPublisher.publishEvent(event);
+        } catch (Exception e) {
+            log.error("Failed to publish partition change event {}", event, e);
+        }
     }
 
     @Override
