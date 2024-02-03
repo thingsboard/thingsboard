@@ -223,7 +223,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
         return consumers.computeIfAbsent(queueKey, key -> new TbRuleEngineQueueConsumerManager(ctx, key));
     }
 
-    public void printStats() {
+    private void printStats() {
         long ts = System.currentTimeMillis();
         consumers.values().forEach(manager -> manager.printStats(ts));
     }

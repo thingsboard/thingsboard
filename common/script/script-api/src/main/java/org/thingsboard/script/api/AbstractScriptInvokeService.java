@@ -107,7 +107,7 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
         }
     }
 
-    public void printStats() {
+    private void printStats() {
         int pushed = pushedMsgs.getAndSet(0);
         int invoked = invokeMsgs.getAndSet(0);
         int evaluated = evalMsgs.getAndSet(0);

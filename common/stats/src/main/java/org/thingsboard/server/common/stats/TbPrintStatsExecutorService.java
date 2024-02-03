@@ -18,7 +18,7 @@ package org.thingsboard.server.common.stats;
 import java.util.concurrent.TimeUnit;
 
 public interface TbPrintStatsExecutorService {
-    void scheduleWithFixedDelay(Runnable command, long initialDelay, long period, TimeUnit unit);
+     void scheduleWithFixedDelay(Runnable command, long initialDelay, long delay, TimeUnit unit);
 
     void scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit);
 }

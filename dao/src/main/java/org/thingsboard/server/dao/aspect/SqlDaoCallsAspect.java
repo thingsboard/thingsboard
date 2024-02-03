@@ -78,7 +78,7 @@ public class SqlDaoCallsAspect {
         tbPrintStatsExecutorService.scheduleWithFixedDelay(this::printStats, statsPrintInterval, statsPrintInterval, TimeUnit.MILLISECONDS);
     }
 
-    public void printStats() {
+    private void printStats() {
         List<DbCallStatsSnapshot> snapshots = snapshot();
         if (snapshots.isEmpty()) return;
         try {

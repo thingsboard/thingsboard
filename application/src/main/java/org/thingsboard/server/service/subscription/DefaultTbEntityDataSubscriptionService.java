@@ -476,7 +476,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         }
     }
 
-    public void printStats() {
+    private void printStats() {
         int alarmQueryInvocationCntValue = stats.getAlarmQueryInvocationCnt().getAndSet(0);
         long alarmQueryInvocationTimeValue = stats.getAlarmQueryTimeSpent().getAndSet(0);
         int regularQueryInvocationCntValue = stats.getRegularQueryInvocationCnt().getAndSet(0);

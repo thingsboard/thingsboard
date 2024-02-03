@@ -1333,7 +1333,7 @@ public class DefaultTransportService implements TransportService {
         statsMap.put(statsName, number);
     }
 
-    public void printStats() {
+    private void printStats() {
         if (!statsMap.isEmpty()) {
             String values = statsMap.entrySet().stream()
                     .map(kv -> kv.getKey() + " [" + kv.getValue() + "]").collect(Collectors.joining(", "));

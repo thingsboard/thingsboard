@@ -286,7 +286,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
         tbPrintStatsExecutorService.scheduleWithFixedDelay(this::printStats, printInterval, printInterval, TimeUnit.MILLISECONDS);
     }
 
-    public void printStats() {
+    private void printStats() {
         int queueSize = getQueueSize();
         int rateLimitedTenantsCount = (int) stats.getRateLimitedTenants().values().stream()
                 .filter(defaultCounter -> defaultCounter.get() > 0)

@@ -459,7 +459,7 @@ public class DefaultTbClusterService implements TbClusterService {
         }
     }
 
-    public void printStats() {
+    private void printStats() {
         int toCoreMsgCnt = toCoreMsgs.getAndSet(0);
         int toCoreNfsCnt = toCoreNfs.getAndSet(0);
         int toRuleEngineMsgsCnt = toRuleEngineMsgs.getAndSet(0);

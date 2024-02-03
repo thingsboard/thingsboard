@@ -532,7 +532,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         callback.onSuccess();
     }
 
-    public void printStats() {
+    private void printStats() {
         stats.printStats();
         stats.reset();
     }

@@ -511,7 +511,7 @@ public class ActorSystemContext {
         }
     }
 
-    public void printStats() {
+    private void printStats() {
         if (jsInvokeStats.getRequests() > 0 || jsInvokeStats.getResponses() > 0 || jsInvokeStats.getFailures() > 0) {
             log.info("Rule Engine JS Invoke Stats: requests [{}] responses [{}] failures [{}]",
                     jsInvokeStats.getRequests(), jsInvokeStats.getResponses(), jsInvokeStats.getFailures());

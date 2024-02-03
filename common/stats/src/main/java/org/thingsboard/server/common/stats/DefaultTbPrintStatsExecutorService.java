@@ -41,8 +41,8 @@ public class DefaultTbPrintStatsExecutorService implements TbPrintStatsExecutorS
         }
     }
 
-    public void scheduleWithFixedDelay(Runnable command, long initialDelay, long period, TimeUnit unit) {
-        service.scheduleWithFixedDelay(command, initialDelay, period, unit);
+    public void scheduleWithFixedDelay(Runnable command, long initialDelay, long delay, TimeUnit unit) {
+        service.scheduleWithFixedDelay(command, initialDelay, delay, unit);
     }
 
     @Override
