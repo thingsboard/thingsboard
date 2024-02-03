@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,15 +14,24 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, NgForm } from '@angular/forms';
-import { ValueType, valueTypesMap } from '@shared/models/constants';
+import { resolveBreakpoint, ValueType, valueTypesMap } from '@shared/models/constants';
 import { isObject } from '@core/utils';
 import { MatDialog } from '@angular/material/dialog';
 import {
   JsonObjectEditDialogComponent,
   JsonObjectEditDialogData
 } from '@shared/components/dialog/json-object-edit-dialog.component';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { Subscription } from 'rxjs';
+
+type Layout = 'column' | 'row';
+
+export interface ValueInputLayout {
+  layout: Layout;
+  breakpoints?: {[breakpoint: string]: Layout};
+}
 
 @Component({
   selector: 'tb-value-input',
@@ -36,17 +45,29 @@ import {
     }
   ]
 })
-export class ValueInputComponent implements OnInit, ControlValueAccessor {
+export class ValueInputComponent implements OnInit, OnDestroy, ControlValueAccessor {
 
-  @Input() disabled: boolean;
+  @Input()
+  disabled: boolean;
 
-  @Input() requiredText: string;
+  @Input()
+  requiredText: string;
+
+  @Input()
+  valueType: ValueType;
+
+  @Input()
+  trueLabel = 'value.true';
+
+  @Input()
+  falseLabel = 'value.false';
+
+  @Input()
+  layout: ValueInputLayout | Layout = 'row';
 
   @ViewChild('inputForm', {static: true}) inputForm: NgForm;
 
   modelValue: any;
-
-  valueType: ValueType;
 
   public valueTypeEnum = ValueType;
 
@@ -54,15 +75,37 @@ export class ValueInputComponent implements OnInit, ControlValueAccessor {
 
   valueTypes = valueTypesMap;
 
+  showValueType = true;
+
+  computedLayout: Layout;
+
   private propagateChange = null;
 
+  private _subscription: Subscription;
+
   constructor(
+    private breakpointObserver: BreakpointObserver,
     public dialog: MatDialog,
   ) {
 
   }
 
   ngOnInit(): void {
+    this._subscription = new Subscription();
+    this.showValueType = !this.valueType;
+    this.computedLayout = this._computeLayout();
+    if (typeof this.layout === 'object' && this.layout.breakpoints) {
+      const breakpoints = Object.keys(this.layout.breakpoints);
+      this._subscription.add(this.breakpointObserver.observe(breakpoints.map(breakpoint => resolveBreakpoint(breakpoint))).subscribe(
+        () => {
+          this.computedLayout = this._computeLayout();
+        }
+      ));
+    }
+  }
+
+  ngOnDestroy() {
+    this._subscription.unsubscribe();
   }
 
   openEditJSONDialog($event: Event) {
@@ -100,18 +143,20 @@ export class ValueInputComponent implements OnInit, ControlValueAccessor {
 
   writeValue(value: any): void {
     this.modelValue = value;
-    if (this.modelValue === true || this.modelValue === false) {
-      this.valueType = ValueType.BOOLEAN;
-    } else if (typeof this.modelValue === 'number') {
-      if (this.modelValue.toString().indexOf('.') === -1) {
-        this.valueType = ValueType.INTEGER;
+    if (this.showValueType) {
+      if (this.modelValue === true || this.modelValue === false) {
+        this.valueType = ValueType.BOOLEAN;
+      } else if (typeof this.modelValue === 'number') {
+        if (this.modelValue.toString().indexOf('.') === -1) {
+          this.valueType = ValueType.INTEGER;
+        } else {
+          this.valueType = ValueType.DOUBLE;
+        }
+      } else if (isObject(this.modelValue)) {
+        this.valueType = ValueType.JSON;
       } else {
-        this.valueType = ValueType.DOUBLE;
+        this.valueType = ValueType.STRING;
       }
-    } else if (isObject(this.modelValue)) {
-      this.valueType = ValueType.JSON;
-    } else {
-      this.valueType = ValueType.STRING;
     }
   }
 
@@ -138,6 +183,24 @@ export class ValueInputComponent implements OnInit, ControlValueAccessor {
 
   onValueChanged() {
     this.updateView();
+  }
+
+  private _computeLayout(): Layout {
+    if (typeof this.layout !== 'object') {
+      return this.layout;
+    } else {
+      let layout = this.layout.layout;
+      if (this.layout.breakpoints) {
+        for (const breakpoint of Object.keys(this.layout.breakpoints)) {
+          const breakpointValue = resolveBreakpoint(breakpoint);
+          if (this.breakpointObserver.isMatched(breakpointValue)) {
+            layout = this.layout.breakpoints[breakpoint];
+            break;
+          }
+        }
+      }
+      return layout;
+    }
   }
 
 }

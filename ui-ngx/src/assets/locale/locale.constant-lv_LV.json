@@ -1578,7 +1578,7 @@
         "action-source-required": "Aktivitāšu avoti ir nepieciešami.",
         "action-name": "Nosaukums",
         "action-name-required": "Aktitiāšu nosaukums ir nepieciešams.",
-        "action-name-not-unique": "Cita aktivitāte ar tādu pašu nosaukumu jau eksistē.<br/>Aktitivātes nosaukumam ir jābūt unikālam vienā aktivitātes avotā.",
+        "action-name-not-unique": "Cita aktivitāte ar tādu pašu nosaukumu jau eksistē.\nAktitivātes nosaukumam ir jābūt unikālam vienā aktivitātes avotā.",
         "action-icon": "Ikona",
         "action-type": "Tips",
         "action-type-required": "Aktivitātes tips ir nepieciešams.",

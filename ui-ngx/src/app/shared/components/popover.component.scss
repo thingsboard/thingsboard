@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,10 @@ $box-shadow-base: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0,
   user-select: text;
   max-width: 100vw;
   max-height: 100vh;
+  &.strict-position {
+    width: 100%;
+    height: 100%;
+  }
 
   &::after {
     position: absolute;
@@ -112,6 +116,10 @@ $box-shadow-base: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0,
     overflow: auto;
     width: 100%;
     height: 100%;
+    &.strict-position {
+      display: flex;
+      overflow: hidden;
+    }
   }
 
   // Arrows

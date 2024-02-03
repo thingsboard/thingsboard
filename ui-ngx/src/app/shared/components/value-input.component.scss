@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+:host {
+  .tb-boolean-input {
+    min-width: 210px;
+  }
+}
+
 :host ::ng-deep {
   .mat-mdc-form-field.tb-value-type {
+    &.row {
+      width: 140px;
+      min-width: 140px;
+    }
+    &.column {
+      flex: 1;
+      width: auto;
+    }
+    .mat-mdc-form-field-infix {
+      max-height: 40px;
+    }
     mat-select-trigger {
-      .mat-icon {
-        vertical-align: bottom;
-        margin-right: 16px;
-        svg {
-          vertical-align: initial;
+      .tb-value-type-row {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 10px;
+        .mat-icon {
+          color: rgba(0, 0, 0, 0.38);
+          vertical-align: bottom;
         }
       }
     }

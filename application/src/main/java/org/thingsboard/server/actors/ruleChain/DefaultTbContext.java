@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,6 +76,7 @@ import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -86,6 +87,7 @@ import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 import org.thingsboard.server.dao.nosql.TbResultSetFuture;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
@@ -186,7 +188,7 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public void enqueue(TbMsg tbMsg, Runnable onSuccess, Consumer<Throwable> onFailure) {
-        TopicPartitionInfo tpi = mainCtx.resolve(ServiceType.TB_RULE_ENGINE, getTenantId(), tbMsg.getOriginator());
+        TopicPartitionInfo tpi = mainCtx.resolve(ServiceType.TB_RULE_ENGINE, getQueueName(), getTenantId(), tbMsg.getOriginator());
         enqueue(tpi, tbMsg, onFailure, onSuccess);
     }
 
@@ -311,7 +313,7 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public boolean isLocalEntity(EntityId entityId) {
-        return mainCtx.resolve(ServiceType.TB_RULE_ENGINE, getTenantId(), entityId).isMyPartition();
+        return mainCtx.resolve(ServiceType.TB_RULE_ENGINE, getQueueName(), getTenantId(), entityId).isMyPartition();
     }
 
     private void scheduleMsgWithDelay(TbActorMsg msg, long delayInMs, TbActorRef target) {
@@ -508,6 +510,11 @@ class DefaultTbContext implements TbContext {
     @Override
     public String getRuleChainName() {
         return ruleChainName;
+    }
+
+    @Override
+    public String getQueueName() {
+        return getSelf().getQueueName();
     }
 
     @Override
@@ -900,6 +907,16 @@ class DefaultTbContext implements TbContext {
     @Override
     public EntityService getEntityService() {
         return mainCtx.getEntityService();
+    }
+
+    @Override
+    public EventService getEventService() {
+        return mainCtx.getEventService();
+    }
+
+    @Override
+    public AuditLogService getAuditLogService() {
+        return mainCtx.getAuditLogService();
     }
 
     private TbMsgMetaData getActionMetaData(RuleNodeId ruleNodeId) {

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -51,6 +51,22 @@ import { ColorRangePanelComponent } from '@home/components/widget/lib/settings/c
 import {
   ColorRangeSettingsComponent, ColorRangeSettingsComponentService
 } from '@home/components/widget/lib/settings/common/color-range-settings.component';
+import {
+  GetValueActionSettingsComponent
+} from '@home/components/widget/lib/settings/common/action/get-value-action-settings.component';
+import {
+  GetValueActionSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/action/get-value-action-settings-panel.component';
+import {
+  DeviceKeyAutocompleteComponent
+} from '@home/components/widget/lib/settings/control/device-key-autocomplete.component';
+import {
+  SetValueActionSettingsComponent
+} from '@home/components/widget/lib/settings/common/action/set-value-action-settings.component';
+import {
+  SetValueActionSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/action/set-value-action-settings-panel.component';
+import { CssSizeInputComponent } from '@home/components/widget/lib/settings/common/css-size-input.component';
 
 @NgModule({
   declarations: [
@@ -61,6 +77,7 @@ import {
     ColorSettingsComponent,
     ColorSettingsPanelComponent,
     CssUnitSelectComponent,
+    CssSizeInputComponent,
     DateFormatSelectComponent,
     DateFormatSettingsPanelComponent,
     BackgroundSettingsComponent,
@@ -71,7 +88,12 @@ import {
     CountWidgetSettingsComponent,
     ColorRangeListComponent,
     ColorRangePanelComponent,
-    ColorRangeSettingsComponent
+    ColorRangeSettingsComponent,
+    GetValueActionSettingsComponent,
+    GetValueActionSettingsPanelComponent,
+    DeviceKeyAutocompleteComponent,
+    SetValueActionSettingsComponent,
+    SetValueActionSettingsPanelComponent
   ],
   imports: [
     CommonModule,
@@ -86,6 +108,7 @@ import {
     ColorSettingsComponent,
     ColorSettingsPanelComponent,
     CssUnitSelectComponent,
+    CssSizeInputComponent,
     DateFormatSelectComponent,
     DateFormatSettingsPanelComponent,
     BackgroundSettingsComponent,
@@ -96,7 +119,12 @@ import {
     CountWidgetSettingsComponent,
     ColorRangeListComponent,
     ColorRangePanelComponent,
-    ColorRangeSettingsComponent
+    ColorRangeSettingsComponent,
+    GetValueActionSettingsComponent,
+    GetValueActionSettingsPanelComponent,
+    DeviceKeyAutocompleteComponent,
+    SetValueActionSettingsComponent,
+    SetValueActionSettingsPanelComponent
   ],
   providers: [
     ColorSettingsComponentService,

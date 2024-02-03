@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
+import org.thingsboard.server.common.data.kv.IntervalType;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -37,9 +38,18 @@ import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
 import org.thingsboard.server.dao.sqlts.insert.InsertTsRepository;
 import org.thingsboard.server.dao.sqlts.ts.TsKvRepository;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
+import org.thingsboard.server.dao.util.TimeUtils;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.IsoFields;
+import java.time.temporal.TemporalUnit;
+import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -112,16 +122,23 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
 
     @Override
     public ListenableFuture<ReadTsKvQueryResult> findAllAsync(TenantId tenantId, EntityId entityId, ReadTsKvQuery query) {
-        if (query.getAggregation() == Aggregation.NONE) {
+        var aggParams = query.getAggParameters();
+        if (Aggregation.NONE.equals(aggParams.getAggregation())) {
             return Futures.immediateFuture(findAllAsyncWithLimit(entityId, query));
         } else {
             List<ListenableFuture<Optional<TsKvEntity>>> futures = new ArrayList<>();
+            var intervalType = aggParams.getIntervalType();
             long startPeriod = query.getStartTs();
             long endPeriod = Math.max(query.getStartTs() + 1, query.getEndTs());
-            long step = query.getInterval();
             while (startPeriod < endPeriod) {
                 long startTs = startPeriod;
-                long endTs = Math.min(startPeriod + step, endPeriod);
+                long endTs;
+                if (IntervalType.MILLISECONDS.equals(intervalType)) {
+                    endTs = startPeriod + aggParams.getInterval();
+                } else {
+                    endTs = TimeUtils.calculateIntervalEnd(startTs, intervalType, aggParams.getTzId());
+                }
+                endTs = Math.min(endTs, endPeriod);
                 long ts = startTs + (endTs - startTs) / 2;
                 ListenableFuture<Optional<TsKvEntity>> aggregateTsKvEntry = findAndAggregateAsync(entityId, query.getKey(), startTs, endTs, ts, query.getAggregation());
                 futures.add(aggregateTsKvEntry);

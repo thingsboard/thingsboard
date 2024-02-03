@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -864,6 +864,8 @@ public class EdgeControllerTest extends AbstractControllerTest {
         doPost("/api/admin/jwtSettings", settings).andExpect(status().isOk());
         loginTenantAdmin();
 
+        Edge edge = doPost("/api/edge", constructEdge("Test Sync Edge", "test"), Edge.class);
+
         Asset asset = new Asset();
         asset.setName("Test Sync Edge Asset 1");
         asset.setType("test");
@@ -873,8 +875,6 @@ public class EdgeControllerTest extends AbstractControllerTest {
         device.setName("Test Sync Edge Device 1");
         device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
-
-        Edge edge = doPost("/api/edge", constructEdge("Test Sync Edge", "test"), Edge.class);
 
         simulateEdgeActivation(edge);
 

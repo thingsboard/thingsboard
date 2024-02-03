@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -177,8 +177,9 @@ class TbDateTest {
          * For Java 17:
          * `{ "AM", "PM" }`
          */
-        s = "09:15:30 nachm., So. 10/09/2022";
-        d = new TbDate(s, pattern, "de","Europe/Berlin");
+        String s_ver = Runtime.version().feature() == 11 ? "09:15:30 nachm., So. 10/09/2022" :
+                                                           "09:15:30 PM, So. 10/09/2022";
+        d = new TbDate(s_ver, pattern, "de","Europe/Berlin");
         Assert.assertEquals("2022-10-09T19:15:30Z", d.toISOString());
 
         s = "02:15:30 пп, середа, 4 жовтня 2023 р.";
@@ -295,7 +296,9 @@ class TbDateTest {
         Assert.assertEquals("9/5/23, 9:04:05 PM", d.toLocaleString("en-US", "America/New_York"));
         Assert.assertEquals("23. 9. 5. 오후 9:04:05", d.toLocaleString("ko-KR",  "America/New_York"));
         Assert.assertEquals("06.09.23, 04:04:05",  d.toLocaleString( "uk-UA", "Europe/Kiev"));
-        Assert.assertEquals("5\u200F/9\u200F/2023 9:04:05 م",  d.toLocaleString( "ar-EG", "America/New_York"));
+        String expected_ver = Runtime.version().feature() == 11 ? "5\u200F/9\u200F/2023 9:04:05 م" :
+                                                                  "5\u200F/9\u200F/2023, 9:04:05 م";
+        Assert.assertEquals(expected_ver,  d.toLocaleString( "ar-EG", "America/New_York"));
 
         Assert.assertEquals("Tuesday, September 5, 2023 at 9:04:05 PM Eastern Daylight Time", d.toLocaleString("en-US", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
@@ -311,8 +314,11 @@ class TbDateTest {
                 .put("timeZone", "Europe/Kiev")
                 .put("dateStyle", "full")
                 .put("timeStyle", "full")
-                .toString())); 
-        Assert.assertEquals("الثلاثاء، 5 سبتمبر 2023 9:04:05 م التوقيت الصيفي الشرقي لأمريكا الشمالية", d.toLocaleString("ar-EG", JacksonUtil.newObjectNode()
+                .toString()));
+
+        expected_ver = Runtime.version().feature() == 11 ? "الثلاثاء، 5 سبتمبر 2023 9:04:05 م التوقيت الصيفي الشرقي لأمريكا الشمالية" :
+                                                           "الثلاثاء، 5 سبتمبر 2023 في 9:04:05 م التوقيت الصيفي الشرقي لأمريكا الشمالية";
+        Assert.assertEquals(expected_ver, d.toLocaleString("ar-EG", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
                 .put("dateStyle", "full")
                 .put("timeStyle", "full")
@@ -381,8 +387,9 @@ class TbDateTest {
 
         // With pattern + locale - ok
         String pattern = "hh:mm:ss a, EEE M/d/uuuu";
-        stringDateRFC_1123 = "09:15:30 nachm., So. 10/09/2022";
-        d = new TbDate(stringDateRFC_1123 , pattern, "de");
+        String stringDate_ver_RFC_1123 = Runtime.version().feature() == 11 ? "09:15:30 nachm., So. 10/09/2022" :
+                                                                             "09:15:30 PM, So. 10/09/2022";
+        d = new TbDate(stringDate_ver_RFC_1123 , pattern, "de");
         Assert.assertEquals("2022-10-09 21:15:30", d.toLocaleString());
 
             // failed TZ

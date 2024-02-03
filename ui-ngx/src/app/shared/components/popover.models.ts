@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -42,13 +42,30 @@ export const popoverMotion: AnimationTriggerMetadata = trigger('popoverMotion', 
   ])
 ]);
 
-export const PopoverPlacements = ['top', 'topLeft', 'topRight', 'right', 'rightTop', 'rightBottom', 'bottom', 'bottomLeft', 'bottomRight', 'left', 'leftTop', 'leftBottom'] as const;
+export const PopoverPlacements = ['top', 'topLeft', 'topRight', 'right', 'rightTop',
+  'rightBottom', 'bottom', 'bottomLeft', 'bottomRight', 'left', 'leftTop', 'leftBottom'] as const;
 type PopoverPlacementTuple = typeof PopoverPlacements;
 export type PopoverPlacement = PopoverPlacementTuple[number];
 
+export const StrictPopoverPlacements = ['topOnly', 'topLeftOnly', 'topRightOnly', 'rightOnly', 'rightTopOnly',
+  'rightBottomOnly', 'bottomOnly', 'bottomLeftOnly', 'bottomRightOnly', 'leftOnly', 'leftTopOnly', 'leftBottomOnly'] as const;
+
+type StrictPopoverPlacementTuple = typeof StrictPopoverPlacements;
+export type StrictPopoverPlacement = StrictPopoverPlacementTuple[number];
+
+export type PopoverPreferredPlacement = PopoverPlacement | PopoverPlacement[] | StrictPopoverPlacement | StrictPopoverPlacement[];
+
 export const DEFAULT_POPOVER_POSITIONS = [POSITION_MAP.top, POSITION_MAP.right, POSITION_MAP.bottom, POSITION_MAP.left];
 
-export function getPlacementName(position: ConnectedOverlayPositionChange): PopoverPlacement | undefined {
+export const isStrictPopoverPlacement = (placement: string): boolean =>
+  StrictPopoverPlacements.includes(placement as StrictPopoverPlacement);
+
+export const convertStrictPopoverPlacement = (placement: StrictPopoverPlacement): PopoverPlacement => {
+  const result = placement.substring(0, placement.length - 4);
+  return result as PopoverPlacement;
+};
+
+export const getPlacementName = (position: ConnectedOverlayPositionChange): PopoverPlacement | undefined => {
   for (const placement in POSITION_MAP) {
     if (
       position.connectionPair.originX === POSITION_MAP[placement].originX &&
@@ -60,9 +77,10 @@ export function getPlacementName(position: ConnectedOverlayPositionChange): Popo
     }
   }
   return undefined;
-}
+};
 
 export interface PropertyMapping {
+  // @ts-ignore
   [key: string]: [string, () => unknown];
 }
 
