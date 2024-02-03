@@ -23,6 +23,7 @@ import java.util.Map;
 
 @Data
 public class GpsGeofencingActionTestCase {
+
     private EntityId entityId;
     private Map<EntityId, EntityGeofencingState> entityStates;
     private boolean msgInside;

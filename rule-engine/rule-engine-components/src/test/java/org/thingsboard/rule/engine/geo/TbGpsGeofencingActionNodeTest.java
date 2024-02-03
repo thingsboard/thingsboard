@@ -56,6 +56,7 @@ import static org.thingsboard.server.common.data.msg.TbNodeConnectionType.SUCCES
 
 @ExtendWith(MockitoExtension.class)
 class TbGpsGeofencingActionNodeTest extends AbstractRuleNodeUpgradeTest {
+
     @Mock
     private TbContext ctx;
     @Mock
