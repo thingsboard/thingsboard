@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -156,6 +157,9 @@ public abstract class BaseEdgeProcessorTest {
 
     @MockBean
     protected AlarmService alarmService;
+
+    @MockBean
+    protected AlarmCommentService alarmCommentService;
 
     @MockBean
     protected DeviceService deviceService;

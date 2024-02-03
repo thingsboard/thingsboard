@@ -2931,7 +2931,7 @@
         "action-source-required": "Zdroj akce je povinný.",
         "action-name": "Název",
         "action-name-required": "Název akce je povinný.",
-        "action-name-not-unique": "Jiná akce s identickým názvem již existuje.<br/>Název akce by měl být v rámci zdroje akce unikátní.",
+        "action-name-not-unique": "Jiná akce s identickým názvem již existuje.\nNázev akce by měl být v rámci zdroje akce unikátní.",
         "action-icon": "Ikona",
         "action-type": "Typ",
         "action-type-required": "Typ akce je povinný.",

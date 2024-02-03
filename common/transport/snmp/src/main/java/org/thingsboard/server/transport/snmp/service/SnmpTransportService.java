@@ -416,7 +416,7 @@ public class SnmpTransportService implements TbTransportService, CommandResponde
     }
 
     private void reportActivity(TransportProtos.SessionInfoProto sessionInfo) {
-        transportService.reportActivity(sessionInfo);
+        transportService.recordActivity(sessionInfo);
     }
 
 

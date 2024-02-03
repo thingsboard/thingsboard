@@ -44,4 +44,6 @@ public interface AttributesDao {
     List<String> findAllKeysByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId);
 
     List<String> findAllKeysByEntityIds(TenantId tenantId, EntityType entityType, List<EntityId> entityIds);
+
+    List<String> findAllKeysByEntityIdsAndAttributeType(TenantId tenantId, EntityType entityType, List<EntityId> entityIds, String attributeType);
 }

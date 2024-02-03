@@ -154,7 +154,7 @@ export class ImageDialogComponent extends
         this.imageChanged = true;
         this.image = result;
         this.imagePreviewData = {
-          url: this.image.public ? this.image.publicLink : this.image.link
+          url: this.image.public ? `${this.image.publicLink}?ts=${new Date().getTime()}` : this.image.link
         };
       }
     });

@@ -226,9 +226,9 @@ import * as DataKeyConfigComponent from '@home/components/widget/config/data-key
 import * as LegendConfigComponent from '@home/components/widget/lib/settings/common/legend-config.component';
 import * as ManageWidgetActionsComponent from '@home/components/widget/action/manage-widget-actions.component';
 import * as WidgetActionDialogComponent from '@home/components/widget/action/widget-action-dialog.component';
-import * as CustomActionPrettyResourcesTabsComponent from '@home/components/widget/action/custom-action-pretty-resources-tabs.component';
-import * as CustomActionPrettyEditorComponent from '@home/components/widget/action/custom-action-pretty-editor.component';
-import * as MobileActionEditorComponent from '@home/components/widget/action/mobile-action-editor.component';
+import * as CustomActionPrettyResourcesTabsComponent from '@home/components/widget/config/action/custom-action-pretty-resources-tabs.component';
+import * as CustomActionPrettyEditorComponent from '@home/components/widget/config/action/custom-action-pretty-editor.component';
+import * as MobileActionEditorComponent from '@home/components/widget/config/action/mobile-action-editor.component';
 import * as CustomDialogService from '@home/components/widget/dialog/custom-dialog.service';
 import * as CustomDialogContainerComponent from '@home/components/widget/dialog/custom-dialog-container.component';
 import * as ImportDialogComponent from '@shared/import-export/import-dialog.component';
@@ -541,9 +541,9 @@ class ModulesMap implements IModulesMap {
     '@home/components/widget/lib/settings/common/legend-config.component': LegendConfigComponent,
     '@home/components/widget/action/manage-widget-actions.component': ManageWidgetActionsComponent,
     '@home/components/widget/action/widget-action-dialog.component': WidgetActionDialogComponent,
-    '@home/components/widget/action/custom-action-pretty-resources-tabs.component': CustomActionPrettyResourcesTabsComponent,
-    '@home/components/widget/action/custom-action-pretty-editor.component': CustomActionPrettyEditorComponent,
-    '@home/components/widget/action/mobile-action-editor.component': MobileActionEditorComponent,
+    '@home/components/widget/config/action/custom-action-pretty-resources-tabs.component': CustomActionPrettyResourcesTabsComponent,
+    '@home/components/widget/config/action/custom-action-pretty-editor.component': CustomActionPrettyEditorComponent,
+    '@home/components/widget/config/action/mobile-action-editor.component': MobileActionEditorComponent,
     '@home/components/widget/dialog/custom-dialog.service': CustomDialogService,
     '@home/components/widget/dialog/custom-dialog-container.component': CustomDialogContainerComponent,
     '@home/components/attribute/add-widget-to-dashboard-dialog.component': AddWidgetToDashboardDialogComponent,

@@ -560,17 +560,14 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         List<String> keys = cmd.getKeys();
         List<ReadTsKvQuery> finalTsKvQueryList;
         List<ReadTsKvQuery> tsKvQueryList = keys.stream().map(key -> {
-            var query = new BaseReadTsKvQuery(
-                    key, cmd.getStartTs(), cmd.getEndTs(), cmd.getInterval(), getLimit(cmd.getLimit()), cmd.getAgg()
-            );
+            var query = new BaseReadTsKvQuery(key, cmd.getStartTs(), cmd.getEndTs(), cmd.toAggregationParams(), getLimit(cmd.getLimit()));
             queriesKeys.put(query.getId(), query.getKey());
             return query;
         }).collect(Collectors.toList());
         if (cmd.isFetchLatestPreviousPoint()) {
             finalTsKvQueryList = new ArrayList<>(tsKvQueryList);
             finalTsKvQueryList.addAll(keys.stream().map(key -> {
-                        var query = new BaseReadTsKvQuery(
-                                key, cmd.getStartTs() - TimeUnit.DAYS.toMillis(365), cmd.getStartTs(), cmd.getInterval(), 1, cmd.getAgg());
+                        var query = new BaseReadTsKvQuery(key, cmd.getStartTs() - TimeUnit.DAYS.toMillis(365), cmd.getStartTs(), cmd.toAggregationParams(), 1);
                         queriesKeys.put(query.getId(), query.getKey());
                         return query;
                     }

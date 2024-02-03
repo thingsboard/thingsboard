@@ -27,11 +27,12 @@ import org.thingsboard.monitoring.service.transport.impl.MqttTransportHealthChec
 @Getter
 public enum TransportType {
 
-    MQTT(MqttTransportHealthChecker.class),
-    COAP(CoapTransportHealthChecker.class),
-    HTTP(HttpTransportHealthChecker.class),
-    LWM2M(Lwm2mTransportHealthChecker.class);
+    MQTT("MQTT", MqttTransportHealthChecker.class),
+    COAP("CoAP",CoapTransportHealthChecker.class),
+    HTTP("HTTP", HttpTransportHealthChecker.class),
+    LWM2M("LwM2M", Lwm2mTransportHealthChecker.class);
 
+    private final String name;
     private final Class<? extends TransportHealthChecker<?>> serviceClass;
 
 }

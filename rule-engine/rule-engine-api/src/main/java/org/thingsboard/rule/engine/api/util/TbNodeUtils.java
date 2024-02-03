@@ -36,7 +36,6 @@ import java.util.stream.Collectors;
  */
 public class TbNodeUtils {
 
-
     private static final Pattern DATA_PATTERN = Pattern.compile("(\\$\\[)(.*?)(])");
 
     public static <T> T convert(TbNodeConfiguration configuration, Class<T> clazz) throws TbNodeException {

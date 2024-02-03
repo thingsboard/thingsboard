@@ -203,6 +203,7 @@
         [(hideFlag)]="timewindow.hideAggInterval"
         (hideFlagChange)="onHideAggIntervalChanged()"
         [min]="minRealtimeAggInterval()" [max]="maxRealtimeAggInterval()"
+        useCalendarIntervals
         predefinedName="aggregation.group-interval">
       </tb-timeinterval>
     </div>
@@ -215,6 +216,7 @@
         [(hideFlag)]="timewindow.hideAggInterval"
         (hideFlagChange)="onHideAggIntervalChanged()"
         [min]="minHistoryAggInterval()" [max]="maxHistoryAggInterval()"
+        useCalendarIntervals
         predefinedName="aggregation.group-interval">
       </tb-timeinterval>
     </div>
