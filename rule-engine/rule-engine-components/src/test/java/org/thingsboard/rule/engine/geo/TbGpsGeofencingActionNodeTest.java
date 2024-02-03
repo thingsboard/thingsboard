@@ -15,40 +15,37 @@
  */
 package org.thingsboard.rule.engine.geo;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.util.concurrent.Futures;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
-import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.attributes.AttributesService;
 
 import java.time.Duration;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.thingsboard.rule.engine.util.GpsGeofencingEvents.ENTERED;
@@ -57,16 +54,17 @@ import static org.thingsboard.rule.engine.util.GpsGeofencingEvents.LEFT;
 import static org.thingsboard.rule.engine.util.GpsGeofencingEvents.OUTSIDE;
 import static org.thingsboard.server.common.data.msg.TbNodeConnectionType.SUCCESS;
 
-class TbGpsGeofencingActionNodeTest {
+@ExtendWith(MockitoExtension.class)
+class TbGpsGeofencingActionNodeTest extends AbstractRuleNodeUpgradeTest {
+    @Mock
     private TbContext ctx;
-    private TbGpsGeofencingActionNode node;
+    @Mock
     private AttributesService attributesService;
+    private TbGpsGeofencingActionNode node;
 
     @BeforeEach
     void setUp() {
-        ctx = mock(TbContext.class);
-        attributesService = mock(AttributesService.class);
-        node = new TbGpsGeofencingActionNode();
+        node = spy(new TbGpsGeofencingActionNode());
     }
 
     @AfterEach
@@ -80,23 +78,37 @@ class TbGpsGeofencingActionNodeTest {
         long tsNowMinusMinuteAndMillis = tsNow - Duration.ofMinutes(1).plusMillis(1).toMillis();
         return Stream.of(
                 // default config with presenceMonitoringStrategyOnEachMessage false and msgInside true
-                Arguments.of(new GpsGeofencingActionTestCase(deviceId, true, false, new EntityGeofencingState(false, 0, false)), ENTERED),
-                Arguments.of(new GpsGeofencingActionTestCase(deviceId, true, false, new EntityGeofencingState(true, tsNow, false)), SUCCESS),
-                Arguments.of(new GpsGeofencingActionTestCase(deviceId, true, false, new EntityGeofencingState(true, tsNowMinusMinuteAndMillis, false)), INSIDE),
-                Arguments.of(new GpsGeofencingActionTestCase(deviceId, true, false, new EntityGeofencingState(true, tsNow, true)), SUCCESS),
+                Arguments.of(new GpsGeofencingActionTestCase(deviceId, true, false,
+                        new EntityGeofencingState(false, 0, false)), ENTERED),
+                Arguments.of(new GpsGeofencingActionTestCase(deviceId, true, false,
+                        new EntityGeofencingState(true, tsNow, false)), SUCCESS),
+                Arguments.of(new GpsGeofencingActionTestCase(deviceId, true, false,
+                        new EntityGeofencingState(true, tsNowMinusMinuteAndMillis, false)), INSIDE),
+                Arguments.of(new GpsGeofencingActionTestCase(deviceId, true, false,
+                        new EntityGeofencingState(true, tsNow, true)), SUCCESS),
                 // default config with presenceMonitoringStrategyOnEachMessage false and msgInside false
-                Arguments.of(new GpsGeofencingActionTestCase(deviceId, false, false, new EntityGeofencingState(false, 0, false)), LEFT),
-                Arguments.of(new GpsGeofencingActionTestCase(deviceId, false, false, new EntityGeofencingState(false, tsNow, false)), SUCCESS),
-                Arguments.of(new GpsGeofencingActionTestCase(deviceId, false, false, new EntityGeofencingState(false, tsNowMinusMinuteAndMillis, false)), OUTSIDE),
-                Arguments.of(new GpsGeofencingActionTestCase(deviceId, false, false, new EntityGeofencingState(false, tsNow, true)), SUCCESS),
+                Arguments.of(new GpsGeofencingActionTestCase(deviceId, false, false,
+                        new EntityGeofencingState(false, 0, false)), LEFT),
+                Arguments.of(new GpsGeofencingActionTestCase(deviceId, false, false,
+                        new EntityGeofencingState(false, tsNow, false)), SUCCESS),
+                Arguments.of(new GpsGeofencingActionTestCase(deviceId, false, false,
+                        new EntityGeofencingState(false, tsNowMinusMinuteAndMillis, false)), OUTSIDE),
+                Arguments.of(new GpsGeofencingActionTestCase(deviceId, false, false,
+                        new EntityGeofencingState(false, tsNow, true)), SUCCESS),
                 // default config with presenceMonitoringStrategyOnEachMessage true and msgInside true
-                Arguments.of(new GpsGeofencingActionTestCase(deviceId, true, true, new EntityGeofencingState(false, 0, false)), ENTERED),
-                Arguments.of(new GpsGeofencingActionTestCase(deviceId, true, true, new EntityGeofencingState(true, tsNow, false)), INSIDE),
-                Arguments.of(new GpsGeofencingActionTestCase(deviceId, true, true, new EntityGeofencingState(true, tsNowMinusMinuteAndMillis, false)), INSIDE),
+                Arguments.of(new GpsGeofencingActionTestCase(deviceId, true, true,
+                        new EntityGeofencingState(false, 0, false)), ENTERED),
+                Arguments.of(new GpsGeofencingActionTestCase(deviceId, true, true,
+                        new EntityGeofencingState(true, tsNow, false)), INSIDE),
+                Arguments.of(new GpsGeofencingActionTestCase(deviceId, true, true,
+                        new EntityGeofencingState(true, tsNowMinusMinuteAndMillis, false)), INSIDE),
                 // default config with presenceMonitoringStrategyOnEachMessage true and msgInside false
-                Arguments.of(new GpsGeofencingActionTestCase(deviceId, false, true, new EntityGeofencingState(false, 0, false)), LEFT),
-                Arguments.of(new GpsGeofencingActionTestCase(deviceId, false, true, new EntityGeofencingState(false, tsNow, false)), OUTSIDE),
-                Arguments.of(new GpsGeofencingActionTestCase(deviceId, false, true, new EntityGeofencingState(false, tsNowMinusMinuteAndMillis, false)), OUTSIDE)
+                Arguments.of(new GpsGeofencingActionTestCase(deviceId, false, true,
+                        new EntityGeofencingState(false, 0, false)), LEFT),
+                Arguments.of(new GpsGeofencingActionTestCase(deviceId, false, true,
+                        new EntityGeofencingState(false, tsNow, false)), OUTSIDE),
+                Arguments.of(new GpsGeofencingActionTestCase(deviceId, false, true,
+                        new EntityGeofencingState(false, tsNowMinusMinuteAndMillis, false)), OUTSIDE)
         );
     }
 
@@ -117,10 +129,6 @@ class TbGpsGeofencingActionNodeTest {
                 getOutsideRectangleTbMsg(gpsGeofencingActionTestCase.getEntityId());
 
         when(ctx.getAttributesService()).thenReturn(attributesService);
-        when(ctx
-                .getAttributesService()
-                .find(ctx.getTenantId(), msg.getOriginator(), DataConstants.SERVER_SCOPE, ctx.getServiceId()))
-                .thenReturn(Futures.immediateFuture(Optional.empty()));
 
         ReflectionTestUtils.setField(node, "entityStates", gpsGeofencingActionTestCase.getEntityStates());
 
@@ -128,24 +136,16 @@ class TbGpsGeofencingActionNodeTest {
         node.onMsg(ctx, msg);
 
         // THEN
+        verify(ctx.getAttributesService(), never()).find(any(), any(), any(), anyString());
         verify(ctx, never()).tellFailure(any(), any(Throwable.class));
         verify(ctx, never()).enqueueForTellNext(any(), eq(expectedOutput), any(), any());
         verify(ctx, never()).ack(any());
 
-        ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         if (SUCCESS.equals(expectedOutput)) {
-            verify(ctx, times(1)).tellSuccess(newMsgCaptor.capture());
+            verify(ctx).tellSuccess(eq(msg));
         } else {
-            verify(ctx, times(1)).tellNext(newMsgCaptor.capture(), eq(expectedOutput));
+            verify(ctx).tellNext(eq(msg), eq(expectedOutput));
         }
-
-        var actualMsg = newMsgCaptor.getValue();
-        assertThat(actualMsg).isNotNull();
-        assertThat(actualMsg).isSameAs(msg);
-        assertThat(actualMsg.getType()).isSameAs(msg.getType());
-        assertThat(actualMsg.getData()).isSameAs(msg.getData());
-        assertThat(actualMsg.getMetaData()).isEqualTo(msg.getMetaData());
-        assertThat(actualMsg.getOriginator()).isSameAs(msg.getOriginator());
     }
 
     private TbMsg getOutsideRectangleTbMsg(EntityId entityId) {
@@ -250,20 +250,9 @@ class TbGpsGeofencingActionNodeTest {
         );
     }
 
-    @ParameterizedTest
-    @MethodSource
-    void givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig(int givenVersion, String givenConfigStr, boolean hasChanges, String expectedConfigStr) throws TbNodeException {
-        // GIVEN
-        JsonNode givenConfig = JacksonUtil.toJsonNode(givenConfigStr);
-        JsonNode expectedConfig = JacksonUtil.toJsonNode(expectedConfigStr);
-
-        // WHEN
-        TbPair<Boolean, JsonNode> upgradeResult = node.upgrade(givenVersion, givenConfig);
-
-        // THEN
-        assertThat(upgradeResult.getFirst()).isEqualTo(hasChanges);
-        ObjectNode upgradedConfig = (ObjectNode) upgradeResult.getSecond();
-        assertThat(upgradedConfig).isEqualTo(expectedConfig);
+    @Override
+    protected TbNode getTestNode() {
+        return node;
     }
 
 }
