@@ -71,6 +71,7 @@ import {
   BarChartWithLabelsWidgetComponent
 } from '@home/components/widget/lib/chart/bar-chart-with-labels-widget.component';
 import { SingleSwitchWidgetComponent } from '@home/components/widget/lib/rpc/single-switch-widget.component';
+import { ActionButtonWidgetComponent } from '@home/components/widget/lib/button/action-button-widget.component';
 
 @NgModule({
   declarations:
@@ -114,7 +115,8 @@ import { SingleSwitchWidgetComponent } from '@home/components/widget/lib/rpc/sin
       DoughnutWidgetComponent,
       RangeChartWidgetComponent,
       BarChartWithLabelsWidgetComponent,
-      SingleSwitchWidgetComponent
+      SingleSwitchWidgetComponent,
+      ActionButtonWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -162,7 +164,8 @@ import { SingleSwitchWidgetComponent } from '@home/components/widget/lib/rpc/sin
         DoughnutWidgetComponent,
         RangeChartWidgetComponent,
         BarChartWithLabelsWidgetComponent,
-        SingleSwitchWidgetComponent
+        SingleSwitchWidgetComponent,
+        ActionButtonWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }

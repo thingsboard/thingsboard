@@ -67,6 +67,31 @@ import {
   SetValueActionSettingsPanelComponent
 } from '@home/components/widget/lib/settings/common/action/set-value-action-settings-panel.component';
 import { CssSizeInputComponent } from '@home/components/widget/lib/settings/common/css-size-input.component';
+import { WidgetActionComponent } from '@home/components/widget/lib/settings/common/action/widget-action.component';
+import {
+  CustomActionPrettyResourcesTabsComponent
+} from '@home/components/widget/lib/settings/common/action/custom-action-pretty-resources-tabs.component';
+import {
+  CustomActionPrettyEditorComponent
+} from '@home/components/widget/lib/settings/common/action/custom-action-pretty-editor.component';
+import {
+  MobileActionEditorComponent
+} from '@home/components/widget/lib/settings/common/action/mobile-action-editor.component';
+import {
+  WidgetActionSettingsComponent
+} from '@home/components/widget/lib/settings/common/action/widget-action-settings.component';
+import {
+  WidgetActionSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/action/widget-action-settings-panel.component';
+import {
+  WidgetButtonAppearanceComponent
+} from '@home/components/widget/lib/settings/common/button/widget-button-appearance.component';
+import {
+  WidgetButtonCustomStyleComponent
+} from '@home/components/widget/lib/settings/common/button/widget-button-custom-style.component';
+import {
+  WidgetButtonCustomStylePanelComponent
+} from '@home/components/widget/lib/settings/common/button/widget-button-custom-style-panel.component';
 
 @NgModule({
   declarations: [
@@ -93,7 +118,16 @@ import { CssSizeInputComponent } from '@home/components/widget/lib/settings/comm
     GetValueActionSettingsPanelComponent,
     DeviceKeyAutocompleteComponent,
     SetValueActionSettingsComponent,
-    SetValueActionSettingsPanelComponent
+    SetValueActionSettingsPanelComponent,
+    WidgetActionComponent,
+    CustomActionPrettyResourcesTabsComponent,
+    CustomActionPrettyEditorComponent,
+    MobileActionEditorComponent,
+    WidgetActionSettingsComponent,
+    WidgetActionSettingsPanelComponent,
+    WidgetButtonAppearanceComponent,
+    WidgetButtonCustomStyleComponent,
+    WidgetButtonCustomStylePanelComponent
   ],
   imports: [
     CommonModule,
@@ -124,7 +158,16 @@ import { CssSizeInputComponent } from '@home/components/widget/lib/settings/comm
     GetValueActionSettingsPanelComponent,
     DeviceKeyAutocompleteComponent,
     SetValueActionSettingsComponent,
-    SetValueActionSettingsPanelComponent
+    SetValueActionSettingsPanelComponent,
+    WidgetActionComponent,
+    CustomActionPrettyResourcesTabsComponent,
+    CustomActionPrettyEditorComponent,
+    MobileActionEditorComponent,
+    WidgetActionSettingsComponent,
+    WidgetActionSettingsPanelComponent,
+    WidgetButtonAppearanceComponent,
+    WidgetButtonCustomStyleComponent,
+    WidgetButtonCustomStylePanelComponent
   ],
   providers: [
     ColorSettingsComponentService,

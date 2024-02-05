@@ -16,9 +16,9 @@
 
 -->
 <button #matButton [disabled]="disabled"
-        class="tb-value-action-settings"
+        class="tb-action-settings-button"
         mat-stroked-button color="primary"
-        (click)="openValueActionSettingsPopup($event, matButton)">
+        (click)="openActionSettingsPopup($event, matButton)">
   <div>
     <span>{{ displayValue }}</span>
     <mat-icon class="tb-mat-20">edit</mat-icon>

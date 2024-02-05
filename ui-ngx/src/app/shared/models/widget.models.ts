@@ -180,6 +180,7 @@ export interface WidgetTypeParameters {
   previewWidth?: string;
   previewHeight?: string;
   embedTitlePanel?: boolean;
+  overflowVisible?: boolean;
   hideDataSettings?: boolean;
   defaultDataKeysFunction?: (configComponent: any, configData: any) => DataKey[];
   defaultLatestDataKeysFunction?: (configComponent: any, configData: any) => DataKey[];
@@ -409,6 +410,23 @@ export interface Datasource {
   latestDataKeyStartIndex?: number;
   [key: string]: any;
 }
+
+export const datasourceValid = (datasource: Datasource): boolean => {
+  const type: DatasourceType = datasource?.type;
+  if (type) {
+    switch (type) {
+      case DatasourceType.function:
+      case DatasourceType.alarmCount:
+        return true;
+      case DatasourceType.device:
+        return !!datasource.deviceId;
+      case DatasourceType.entity:
+      case DatasourceType.entityCount:
+        return !!datasource.entityAliasId;
+    }
+  }
+  return false;
+};
 
 export enum TargetDeviceType {
   device = 'device',
@@ -674,6 +692,14 @@ export const actionDescriptorToAction = (descriptor: WidgetActionDescriptor): Wi
   delete result.showWidgetActionFunction;
   return result;
 };
+
+export const defaultWidgetAction = (setEntityId = true): WidgetAction => ({
+    type: WidgetActionType.updateDashboardState,
+    targetDashboardStateId: null,
+    openRightLayout: false,
+    setEntityId,
+    stateEntityParamName: null
+  });
 
 export interface WidgetComparisonSettings {
   comparisonEnabled?: boolean;

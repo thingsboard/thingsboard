@@ -37,7 +37,7 @@ export class SwitchControlWidgetSettingsComponent extends WidgetSettingsComponen
   }
 
   get targetDevice(): TargetDevice {
-    return this.widget?.config?.targetDevice;
+    return this.widgetConfig?.config?.targetDevice;
   }
 
   protected settingsForm(): UntypedFormGroup {

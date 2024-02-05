@@ -42,17 +42,17 @@ import { Observable } from 'rxjs';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
-import cssjs from '@core/css/css';
-import { hashCode } from '@core/utils';
 import { ValueType } from '@shared/models/constants';
+import { UtilsService } from '@core/services/utils.service';
 
+const initialSwitchHeight = 60;
 const horizontalLayoutPadding = 48;
 const verticalLayoutPadding = 36;
 
 @Component({
   selector: 'tb-single-switch-widget',
   templateUrl: './single-switch-widget.component.html',
-  styleUrls: ['./single-switch-widget.component.scss'],
+  styleUrls: ['../action/action-widget.scss', './single-switch-widget.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
 export class SingleSwitchWidgetComponent extends
@@ -74,8 +74,10 @@ export class SingleSwitchWidgetComponent extends
 
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
+  overlayInset = '12px';
 
   value = false;
+  disabled = false;
 
   layout: SingleSwitchLayout;
 
@@ -102,9 +104,12 @@ export class SingleSwitchWidgetComponent extends
   private onValueSetter: ValueSetter<boolean>;
   private offValueSetter: ValueSetter<boolean>;
 
+  private singleSwitchCssClass: string;
+
   constructor(protected imagePipe: ImagePipe,
               protected sanitizer: DomSanitizer,
               private renderer: Renderer2,
+              private utils: UtilsService,
               protected cd: ChangeDetectorRef,
               private elementRef: ElementRef) {
     super(cd);
@@ -148,25 +153,27 @@ export class SingleSwitchWidgetComponent extends
                                            `--tb-single-switch-color-off: ${this.settings.switchColorOff};\n`+
                                            `--tb-single-switch-color-disabled: ${this.settings.switchColorDisabled};\n`+
                                       `}`;
-    const cssParser = new cssjs();
-    cssParser.testMode = false;
-    const namespace = 'single-switch-' + hashCode(switchVariablesCss);
-    cssParser.cssPreviewNamespace = namespace;
-    cssParser.createStyleElement(namespace, switchVariablesCss);
-    this.renderer.addClass(this.elementRef.nativeElement, namespace);
+    this.singleSwitchCssClass =
+      this.utils.applyCssToElement(this.renderer, this.elementRef.nativeElement, 'tb-single-switch', switchVariablesCss);
 
     const getInitialStateSettings =
-      {...this.settings.initialState, actionLabel: this.ctx.translate.instant('widgets.value-action.initial-state')};
+      {...this.settings.initialState, actionLabel: this.ctx.translate.instant('widgets.rpc-state.initial-state')};
     this.createValueGetter(getInitialStateSettings, ValueType.BOOLEAN, {
       next: (value) => this.onValue(value)
     });
 
+    const disabledStateSettings =
+      {...this.settings.disabledState, actionLabel: this.ctx.translate.instant('widgets.rpc-state.disabled-state')};
+    this.createValueGetter(disabledStateSettings, ValueType.BOOLEAN, {
+      next: (value) => this.onDisabled(value)
+    });
+
     const onUpdateStateSettings = {...this.settings.onUpdateState,
-      actionLabel: this.ctx.translate.instant('widgets.value-action.turn-on')};
+      actionLabel: this.ctx.translate.instant('widgets.rpc-state.turn-on')};
     this.onValueSetter = this.createValueSetter(onUpdateStateSettings);
 
     const offUpdateStateSettings = {...this.settings.offUpdateState,
-      actionLabel: this.ctx.translate.instant('widgets.value-action.turn-off')};
+      actionLabel: this.ctx.translate.instant('widgets.rpc-state.turn-off')};
     this.offValueSetter = this.createValueSetter(offUpdateStateSettings);
   }
 
@@ -190,6 +197,9 @@ export class SingleSwitchWidgetComponent extends
     if (this.panelResize$) {
       this.panelResize$.disconnect();
     }
+    if (this.singleSwitchCssClass) {
+      this.utils.clearCssElement(this.renderer, this.singleSwitchCssClass);
+    }
     super.ngOnDestroy();
   }
 
@@ -211,25 +221,63 @@ export class SingleSwitchWidgetComponent extends
   }
 
   private onValue(value: boolean): void {
-    console.log(`onValue: ${value}`);
     this.value = !!value;
     this.cd.markForCheck();
   }
 
+  private onDisabled(value: boolean): void {
+    this.disabled = !!value;
+    if (this.disabled) {
+      if (this.showLabel) {
+        this.labelStyle = {...this.labelStyle, color: 'rgba(0, 0, 0, 0.38)'};
+      }
+      if (this.showIcon) {
+        this.iconStyle = {...this.iconStyle, color: 'rgba(0, 0, 0, 0.38)'};
+      }
+      if (this.showOnLabel) {
+        this.onLabelStyle = {...this.onLabelStyle, color: 'rgba(0, 0, 0, 0.38)'};
+      }
+      if (this.showOffLabel) {
+        this.offLabelStyle = {...this.offLabelStyle, color: 'rgba(0, 0, 0, 0.38)'};
+      }
+    } else {
+      if (this.showLabel) {
+        this.labelStyle = {...this.labelStyle, color: this.settings.labelColor};
+      }
+      if (this.showIcon) {
+        this.iconStyle = {...this.iconStyle, color: this.settings.iconColor};
+      }
+      if (this.showOnLabel) {
+        this.onLabelStyle = {...this.onLabelStyle, color: this.settings.onLabelColor};
+      }
+      if (this.showOffLabel) {
+        this.offLabelStyle = {...this.offLabelStyle, color: this.settings.offLabelColor};
+      }
+    }
+    this.cd.markForCheck();
+  }
+
   private onResize() {
-    const panelWidth = this.singleSwitchPanel.nativeElement.getBoundingClientRect().width - horizontalLayoutPadding;
-    const panelHeight = this.singleSwitchPanel.nativeElement.getBoundingClientRect().height - verticalLayoutPadding;
+    const height = this.singleSwitchPanel.nativeElement.getBoundingClientRect().height;
+    const switchScale = height / initialSwitchHeight;
+    const paddingScale = Math.min(switchScale, 1);
+    const panelWidth = this.singleSwitchPanel.nativeElement.getBoundingClientRect().width - (horizontalLayoutPadding * paddingScale);
+    const panelHeight = this.singleSwitchPanel.nativeElement.getBoundingClientRect().height - (verticalLayoutPadding * paddingScale);
     this.renderer.setStyle(this.singleSwitchContent.nativeElement, 'transform', `scale(1)`);
+    this.renderer.setStyle(this.singleSwitchContent.nativeElement, 'width', 'auto');
     let contentWidth = this.singleSwitchToggleRow.nativeElement.getBoundingClientRect().width;
     let contentHeight = this.singleSwitchToggleRow.nativeElement.getBoundingClientRect().height;
     if (this.showIcon || this.showLabel) {
       contentWidth += (8 + this.singleSwitchLabelRow.nativeElement.getBoundingClientRect().width);
       contentHeight = Math.max(contentHeight, this.singleSwitchLabelRow.nativeElement.getBoundingClientRect().height);
     }
-    const scale = Math.min(panelWidth / contentWidth, panelHeight / contentHeight);
+    const maxScale = Math.max(1, switchScale);
+    const scale = Math.min(Math.min(panelWidth / contentWidth, panelHeight / contentHeight), maxScale);
     const width = panelWidth / scale;
     this.renderer.setStyle(this.singleSwitchContent.nativeElement, 'width', width + 'px');
     this.renderer.setStyle(this.singleSwitchContent.nativeElement, 'transform', `scale(${scale})`);
+    this.overlayInset = (Math.floor(12 * paddingScale * 100) / 100) + 'px';
+    this.cd.markForCheck();
   }
 
 }
