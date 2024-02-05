@@ -44,6 +44,7 @@ import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CLIENT_AUT
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RETRANSMISSION_TIMEOUT;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_ROLE;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DtlsRole.SERVER_ONLY;
+import static org.thingsboard.common.util.SslUtil.setDtlsConnectorConfigCidLength;
 
 @Slf4j
 @ConditionalOnProperty(prefix = "transport.coap.dtls", value = "enabled", havingValue = "true", matchIfMissing = false)
@@ -55,6 +56,9 @@ public class TbCoapDtlsSettings {
 
     @Value("${transport.coap.dtls.bind_port}")
     private Integer port;
+
+    @Value("${transport.coap.dtls.connection_id_length}")
+    private Integer cIdLength;
 
     @Value("${transport.coap.dtls.retransmission_timeout:9000}")
     private int dtlsRetransmissionTimeout;
@@ -93,6 +97,7 @@ public class TbCoapDtlsSettings {
         configBuilder.set(DTLS_CLIENT_AUTHENTICATION_MODE, WANTED);
         configBuilder.set(DTLS_RETRANSMISSION_TIMEOUT, dtlsRetransmissionTimeout, MILLISECONDS);
         configBuilder.set(DTLS_ROLE, SERVER_ONLY);
+        setDtlsConnectorConfigCidLength(configBuilder, cIdLength);
         configBuilder.setAdvancedCertificateVerifier(
                 new TbCoapDtlsCertificateVerifier(
                         transportService,

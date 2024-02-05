@@ -29,7 +29,6 @@ import org.eclipse.leshan.core.util.NamedThreadFactory;
 import org.eclipse.leshan.core.util.Validate;
 import org.eclipse.leshan.server.californium.registration.CaliforniumRegistrationStore;
 import org.eclipse.leshan.server.redis.RedisRegistrationStore;
-import org.eclipse.leshan.server.redis.serialization.IdentitySerDes;
 import org.eclipse.leshan.server.redis.serialization.ObservationSerDes;
 import org.eclipse.leshan.server.redis.serialization.RegistrationSerDes;
 import org.eclipse.leshan.server.registration.Deregistration;
@@ -45,6 +44,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.integration.redis.util.RedisLockRegistry;
+import org.thingsboard.server.transport.lwm2m.server.store.util.LwM2MIdentitySerDes;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -173,7 +173,7 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
                     if (!oldRegistration.getSocketAddress().equals(registration.getSocketAddress())) {
                         removeAddrIndex(connection, oldRegistration);
                     }
-                    if (!oldRegistration.getIdentity().equals(registration.getIdentity())) {
+                    if (registrationsHaveDifferentIdentities(oldRegistration, registration)) {
                         removeIdentityIndex(connection, oldRegistration);
                     }
                     // remove old observation
@@ -231,7 +231,7 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
                 if (!r.getSocketAddress().equals(updatedRegistration.getSocketAddress())) {
                     removeAddrIndex(connection, r);
                 }
-                if (!r.getIdentity().equals(updatedRegistration.getIdentity())) {
+                if (registrationsHaveDifferentIdentities(r, updatedRegistration)) {
                     removeIdentityIndex(connection, r);
                 }
 
@@ -402,6 +402,12 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
         connection.zRem(EXP_EP, registration.getEndpoint().getBytes(UTF_8));
     }
 
+    private boolean registrationsHaveDifferentIdentities(Registration startReg, Registration updateReg){
+        var startRegIdentityString = LwM2MIdentitySerDes.serialize(startReg.getIdentity()).toString();
+        var updateRegIdentityString = LwM2MIdentitySerDes.serialize(updateReg.getIdentity()).toString();
+        return !startRegIdentityString.equals(updateRegIdentityString);
+    }
+
     private byte[] toRegIdKey(String registrationId) {
         return toKey(REG_EP_REGID_IDX, registrationId);
     }
@@ -411,7 +417,7 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
     }
 
     private byte[] toRegIdentityKey(Identity identity) {
-        return toKey(REG_EP_IDENTITY, IdentitySerDes.serialize(identity).toString());
+        return toKey(REG_EP_IDENTITY, LwM2MIdentitySerDes.serialize(identity).toString());
     }
 
     private byte[] toEndpointKey(String endpoint) {

@@ -43,6 +43,7 @@ import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDE
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RETRANSMISSION_TIMEOUT;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_ROLE;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DtlsRole.SERVER_ONLY;
+import static org.thingsboard.common.util.SslUtil.setDtlsConnectorConfigCidLength;
 import static org.thingsboard.server.transport.lwm2m.server.DefaultLwM2mTransportService.PSK_CIPHER_SUITES;
 import static org.thingsboard.server.transport.lwm2m.server.DefaultLwM2mTransportService.RPK_OR_X509_CIPHER_SUITES;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MNetworkConfig.getCoapConfig;
@@ -96,6 +97,7 @@ public class LwM2MTransportBootstrapService {
         dtlsConfig.set(DTLS_RECOMMENDED_CIPHER_SUITES_ONLY, serverConfig.isRecommendedCiphers());
         dtlsConfig.set(DTLS_RETRANSMISSION_TIMEOUT, serverConfig.getDtlsRetransmissionTimeout(), MILLISECONDS);
         dtlsConfig.set(DTLS_ROLE, SERVER_ONLY);
+        setDtlsConnectorConfigCidLength(dtlsConfig, serverConfig.getDtlsCidLength());
         setServerWithCredentials(builder, dtlsConfig);
 
         /* Set DTLS Config */
