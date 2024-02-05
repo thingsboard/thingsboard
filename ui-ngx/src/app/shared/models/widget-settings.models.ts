@@ -204,7 +204,7 @@ export const cssSizeToStrSize = (size?: number, unit?: cssUnit): string => (isDe
 
 export const resolveCssSize = (strSize?: string): [number, cssUnit] => {
   if (!strSize || !strSize.trim().length) {
-    return [0, 'px'];
+    return [null, 'px'];
   }
   let resolvedUnit: cssUnit;
   let resolvedSize = strSize;
@@ -218,7 +218,7 @@ export const resolveCssSize = (strSize?: string): [number, cssUnit] => {
     resolvedSize = strSize.substring(0, strSize.length - resolvedUnit.length);
   }
   resolvedUnit = resolvedUnit || 'px';
-  let numericSize = 0;
+  let numericSize: number = null;
   if (isNumeric(resolvedSize)) {
     numericSize = Number(resolvedSize);
   }

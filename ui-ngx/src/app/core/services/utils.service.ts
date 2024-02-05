@@ -294,32 +294,6 @@ export class UtilsService {
     return guid();
   }
 
-  public validateDatasources(datasources: Array<Datasource>): Array<Datasource> {
-    datasources.forEach((datasource) => {
-      if (datasource.type === DatasourceType.device) {
-        if (datasource.deviceAliasId) {
-          datasource.type = DatasourceType.entity;
-          datasource.entityAliasId = datasource.deviceAliasId;
-        }
-        if (datasource.deviceName) {
-          datasource.entityName = datasource.deviceName;
-        }
-      }
-      if (datasource.type === DatasourceType.entity && datasource.entityId) {
-        datasource.name = datasource.entityName;
-      }
-      if (!datasource.dataKeys) {
-        datasource.dataKeys = [];
-      }
-      datasource.dataKeys.forEach(dataKey => {
-        if (isUndefined(dataKey.label)) {
-          dataKey.label = dataKey.name;
-        }
-      });
-    });
-    return datasources;
-  }
-
   public getMaterialColor(index: number) {
     const colorIndex = index % materialColors.length;
     return materialColors[colorIndex].value;
