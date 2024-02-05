@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -261,7 +261,7 @@ public class TenantActor extends RuleChainManagerActor {
                 edgeRpcService.updateEdge(tenantId, edge);
             }
         }
-        if (msg.getEntityId().getEntityType() == EntityType.DEVICE && ComponentLifecycleEvent.DELETED == msg.getEvent()) {
+        if (msg.getEntityId().getEntityType() == EntityType.DEVICE && ComponentLifecycleEvent.DELETED == msg.getEvent() && isMyPartition(msg.getEntityId())) {
             DeviceId deviceId = (DeviceId) msg.getEntityId();
             onToDeviceActorMsg(new DeviceDeleteMsg(tenantId, deviceId), true);
             deletedDevices.add(deviceId);

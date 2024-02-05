@@ -1,6 +1,6 @@
 {
   "name": "thingsboard",
-  "version": "3.6.2",
+  "version": "3.6.3",
   "scripts": {
     "ng": "ng",
     "start": "node --max_old_space_size=8048 ./node_modules/@angular/cli/bin/ng serve --configuration development --host 0.0.0.0 --open",
@@ -97,6 +97,7 @@
     "rxjs": "~7.8.0",
     "schema-inspector": "^2.0.2",
     "screenfull": "^6.0.2",
+    "sorted-btree": "^1.8.1",
     "split.js": "^1.6.5",
     "systemjs": "6.14.1",
     "tinycolor2": "^1.6.0",

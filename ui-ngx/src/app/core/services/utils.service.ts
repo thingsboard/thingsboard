@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -292,32 +292,6 @@ export class UtilsService {
 
   public guid(): string {
     return guid();
-  }
-
-  public validateDatasources(datasources: Array<Datasource>): Array<Datasource> {
-    datasources.forEach((datasource) => {
-      if (datasource.type === DatasourceType.device) {
-        if (datasource.deviceAliasId) {
-          datasource.type = DatasourceType.entity;
-          datasource.entityAliasId = datasource.deviceAliasId;
-        }
-        if (datasource.deviceName) {
-          datasource.entityName = datasource.deviceName;
-        }
-      }
-      if (datasource.type === DatasourceType.entity && datasource.entityId) {
-        datasource.name = datasource.entityName;
-      }
-      if (!datasource.dataKeys) {
-        datasource.dataKeys = [];
-      }
-      datasource.dataKeys.forEach(dataKey => {
-        if (isUndefined(dataKey.label)) {
-          dataKey.label = dataKey.name;
-        }
-      });
-    });
-    return datasources;
   }
 
   public getMaterialColor(index: number) {

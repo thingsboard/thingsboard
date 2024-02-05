@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -447,7 +447,7 @@ public class TbRuleEngineQueueConsumerManagerTest {
         verifyMsgProcessed(consumer1.testMsg);
         verifyMsgProcessed(consumer2.testMsg);
 
-        consumerManager.delete();
+        consumerManager.delete(true);
 
         await().atMost(2, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
@@ -488,7 +488,7 @@ public class TbRuleEngineQueueConsumerManagerTest {
         verifySubscribedAndLaunched(consumer, partitions);
         verifyMsgProcessed(consumer.testMsg);
 
-        consumerManager.delete();
+        consumerManager.delete(true);
 
         await().atMost(2, TimeUnit.SECONDS)
                 .untilAsserted(() -> {

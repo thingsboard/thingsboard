@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
         queueValidator.validate(queue, Queue::getTenantId);
         Queue savedQueue = queueDao.save(queue.getTenantId(), queue);
         eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedQueue.getTenantId())
-                .entityId(savedQueue.getId()).added(queue.getId() == null).build());
+                .entityId(savedQueue.getId()).created(queue.getId() == null).build());
         return savedQueue;
     }
 

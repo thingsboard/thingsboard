@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,11 @@ public abstract class TbApplicationEventListener<T extends TbApplicationEvent> i
             seqNumberLock.unlock();
         }
         if (validUpdate && filterTbApplicationEvent(event)) {
-            onTbApplicationEvent(event);
+            try {
+                onTbApplicationEvent(event);
+            } catch (Exception e) {
+                log.error("Failed to handle partition change event: {}", event, e);
+            }
         } else {
             log.info("Application event ignored due to invalid sequence number ({} > {}). Event: {}", lastProcessedSequenceNumber, event.getSequenceNumber(), event);
         }

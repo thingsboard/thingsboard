@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ export class DynamicWidgetComponent extends PageComponent implements IDynamicWid
   executingRpcRequest: boolean;
   rpcEnabled: boolean;
   rpcErrorText: string;
-  rpcRejection: HttpErrorResponse;
+  rpcRejection: HttpErrorResponse | Error;
 
   [key: string]: any;
 

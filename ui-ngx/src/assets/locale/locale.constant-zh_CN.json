@@ -3159,7 +3159,9 @@
             "weeks": "（一周前）",
             "months": "（一个月前）",
             "years": "（一年前）"
-        }
+        },
+        "label": "标签",
+        "value": "值"
     },
     "login": {
         "login": "登录",
@@ -4276,6 +4278,12 @@
         "displayTypePrefix": "显示实时/历史前缀",
         "preview": "预览"
     },
+    "tooltip": {
+        "value": "值",
+        "date": "日期",
+        "background-color": "背景颜色",
+        "background-blur": "背景模糊"
+    },
     "user": {
         "user": "用户",
         "users": "用户",
@@ -4562,8 +4570,8 @@
         "popover-placement-leftBottom": "左下",
         "popover-hide-on-click-outside": "在点击弹出框外部时隐藏弹出框",
         "popover-hide-dashboard-toolbar": "在弹出框中隐藏仪表板工具栏",
-        "popover-width": "弹出框的宽度使用浏览器单位表示（例如：100px、25vw）",
-        "popover-height": "弹出框的高度使用浏览器单位表示（例如：100px、25vh）",
+        "popover-width": "弹出宽度",
+        "popover-height": "弹出高度",
         "popover-style": "弹出框样式",
         "open-new-browser-tab": "在新的浏览器选项卡中打开",
         "mobile": {
@@ -4676,7 +4684,7 @@
         "action-source-required": "动作源必填",
         "action-name": "名称",
         "action-name-required": "动作名称必填。",
-        "action-name-not-unique": "动作名称已经存在。<br/>相同动作源的动作名称必须唯一。",
+        "action-name-not-unique": "动作名称已经存在。\n相同动作源的动作名称必须唯一。",
         "action-icon": "图标",
         "show-hide-action-using-function": "使用函数显示/隐藏动作",
         "action-type": "类型",
@@ -4758,9 +4766,6 @@
             "date": "日期",
             "active-bars-color": "活动信号条颜色",
             "inactive-bars-color": "非活动信号条颜色",
-            "tooltip": "文字提示",
-            "background-color": "背景颜色",
-            "background-blur": "背景模糊",
             "signal-strength-card-style": "信号强度卡片样式"
         },
         "chart": {
@@ -5003,18 +5008,8 @@
             "clockwise-layout": "顺时针布局",
             "sort-series": "按标签对系列排序",
             "central-total-value": "中央总计值",
-            "legend-position-top": "顶部",
-            "legend-position-bottom": "底部",
-            "legend-position-left": "左侧",
-            "legend-position-right": "右侧",
-            "legend-label": "标签",
-            "legend-value": "值",
-            "tooltip": "文字提示",
-            "tooltip-value": "值",
             "tooltip-value-type-absolute": "绝对值",
             "tooltip-value-type-percentage": "百分比",
-            "tooltip-background-color": "背景颜色",
-            "tooltip-background-blur": "背景模糊",
             "doughnut-card-style": "圆环样式"
         },
         "entities-hierarchy": {
@@ -5496,12 +5491,6 @@
             "range-colors": "范围颜色",
             "out-of-range-color": "超出范围颜色",
             "fill-area": "填充区域",
-            "legend-label": "标签",
-            "tooltip": "文字提示",
-            "tooltip-value": "值",
-            "tooltip-date": "日期",
-            "tooltip-background-color": "背景颜色",
-            "tooltip-background-blur": "背景模糊",
             "range-chart-card-style": "范围图表卡片样式"
         },
         "rpc": {

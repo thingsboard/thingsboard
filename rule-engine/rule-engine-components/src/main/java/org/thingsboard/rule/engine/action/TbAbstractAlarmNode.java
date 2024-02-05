@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
                         ctx.tellNext(msg, TbNodeConnectionType.FALSE);
                     } else if (alarmResult.isCreated) {
                         tellNext(ctx, msg, alarmResult, TbMsgType.ENTITY_CREATED, "Created");
-                    } else if (alarmResult.isUpdated) {
+                    } else if (alarmResult.isUpdated || alarmResult.isSeverityUpdated) {
                         tellNext(ctx, msg, alarmResult, TbMsgType.ENTITY_UPDATED, "Updated");
                     } else if (alarmResult.isCleared) {
                         tellNext(ctx, msg, alarmResult, TbMsgType.ALARM_CLEAR, "Cleared");
@@ -93,7 +93,7 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
         TbMsgMetaData metaData = originalMsg.getMetaData().copy();
         if (alarmResult.isCreated) {
             metaData.putValue(DataConstants.IS_NEW_ALARM, Boolean.TRUE.toString());
-        } else if (alarmResult.isUpdated) {
+        } else if (alarmResult.isUpdated || alarmResult.isSeverityUpdated) {
             metaData.putValue(DataConstants.IS_EXISTING_ALARM, Boolean.TRUE.toString());
         } else if (alarmResult.isCleared) {
             metaData.putValue(DataConstants.IS_CLEARED_ALARM, Boolean.TRUE.toString());
