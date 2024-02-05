@@ -164,7 +164,7 @@ export class WidgetButtonCustomStylePanelComponent extends PageComponent impleme
   }
 
   private updatePreviewAppearance() {
-    this.previewAppearance = {...this.appearance};
+    this.previewAppearance = deepClone(this.appearance);
     this.previewAppearance.customStyle[this.state] = this.customStyleFormGroup.value;
     this.cd.markForCheck();
   }

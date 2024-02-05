@@ -37,6 +37,7 @@ import { MatIconButton } from '@angular/material/button';
 import {
   WidgetButtonCustomStylePanelComponent
 } from '@home/components/widget/lib/settings/common/button/widget-button-custom-style-panel.component';
+import { deepClone } from '@core/utils';
 
 @Component({
   selector: 'tb-widget-button-custom-style',
@@ -147,7 +148,7 @@ export class WidgetButtonCustomStyleComponent implements OnInit, OnChanges, Cont
   }
 
   private updatePreviewAppearance() {
-    this.previewAppearance = {...this.appearance};
+    this.previewAppearance = deepClone(this.appearance);
     if (this.modelValue) {
       this.previewAppearance.customStyle[this.state] = this.modelValue;
     }

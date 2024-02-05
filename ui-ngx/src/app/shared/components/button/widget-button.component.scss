@@ -44,7 +44,7 @@ $mainColorActivatedFilled: var(--tb-widget-button-main-color-activated-filled, #
 
 $mainColorDisabled: var(--tb-widget-button-main-color-disabled, $defaultMainColorDisabled);
 $backgroundColorDisabled: var(--tb-widget-button-background-color-disabled, $defaultBackgroundColorDisabled);
-$boxShadowColorDisabled: var(--tb-widget-button-box-shadow-color-activated, $defaultBoxShadowColor);
+$boxShadowColorDisabled: var(--tb-widget-button-box-shadow-color-disabled, $defaultBoxShadowColor);
 
 
 @mixin _tb-widget-button-styles($main, $background, $boxShadow) {
