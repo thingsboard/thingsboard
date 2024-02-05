@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,25 @@
  */
 package org.thingsboard.server.service.ws;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
 import java.util.Optional;
 
-@RequiredArgsConstructor
-@Getter
+@NoArgsConstructor
+@AllArgsConstructor
 public enum WebSocketSessionType {
-    TELEMETRY("telemetry"),
-    NOTIFICATIONS("notifications");
+    GENERAL(),
+    TELEMETRY("telemetry"), // deprecated
+    NOTIFICATIONS("notifications"); // deprecated
 
-    private final String name;
+    private String name;
 
     public static Optional<WebSocketSessionType> forName(String name) {
         return Arrays.stream(values())
-                .filter(sessionType -> sessionType.getName().equals(name))
+                .filter(sessionType -> StringUtils.equals(sessionType.name, name))
                 .findFirst();
     }
 

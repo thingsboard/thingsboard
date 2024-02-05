@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@
   <ng-template #connectorForm>
     <mat-form-field>
       <mat-label>{{ 'gateway.statistics.command' | translate }}</mat-label>
-      <input matInput formControlName="command" />
+      <input matInput formControlName="command"/>
     </mat-form-field>
     <mat-form-field fxFlex>
       <mat-label>{{ 'widget-config.datasource-parameters' | translate }}</mat-label>
@@ -56,8 +56,10 @@
   </button>
 </div>
 <section class="result-block" [formGroup]="commandForm">
-  <span>{{ 'gateway.rpc-command-result' | translate }}</span>
-  <mat-divider></mat-divider>
+  <span>{{ 'gateway.rpc-command-result' | translate }}
+    <div *ngIf="resultTime" class="result-time" fxFlex fxLayout="row" fxLayoutAlign="center center"> <mat-icon
+      class="material-icons">schedule</mat-icon>
+      <span>{{ resultTime | date: 'yyyy/MM/dd HH:mm:ss' }}</span> </div></span>
   <tb-json-content [contentType]="contentTypes.JSON" readonly="true" formControlName="result"></tb-json-content>
 </section>
 

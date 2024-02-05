@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -309,7 +309,12 @@ message CoreStartupMsg {
 message ResourceCacheInvalidateMsg {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
-  string resourceKey = 3;
+  repeated ImageCacheKeyProto keys = 3;
+}
+
+message ImageCacheKeyProto {
+  optional string resourceKey = 1;
+  optional string publicResourceKey = 2;
 }
 
 message LwM2MRegistrationRequestMsg {

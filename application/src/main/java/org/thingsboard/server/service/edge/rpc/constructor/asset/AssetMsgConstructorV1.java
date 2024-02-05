@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,12 @@
 package org.thingsboard.server.service.edge.rpc.constructor.asset;
 
 import com.google.protobuf.ByteString;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
@@ -30,6 +32,9 @@ import java.nio.charset.StandardCharsets;
 @Component
 @TbCoreComponent
 public class AssetMsgConstructorV1 extends BaseAssetMsgConstructor {
+
+    @Autowired
+    private ImageService imageService;
 
     @Override
     public AssetUpdateMsg constructAssetUpdatedMsg(UpdateMsgType msgType, Asset asset) {
@@ -58,6 +63,7 @@ public class AssetMsgConstructorV1 extends BaseAssetMsgConstructor {
 
     @Override
     public AssetProfileUpdateMsg constructAssetProfileUpdatedMsg(UpdateMsgType msgType, AssetProfile assetProfile) {
+        imageService.inlineImageForEdge(assetProfile);
         AssetProfileUpdateMsg.Builder builder = AssetProfileUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(assetProfile.getId().getId().getMostSignificantBits())

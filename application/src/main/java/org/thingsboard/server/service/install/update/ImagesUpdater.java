@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,21 @@ package org.thingsboard.server.service.install.update;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.HasImage;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageDataIterable;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.asset.AssetProfileDao;
 import org.thingsboard.server.dao.dashboard.DashboardDao;
 import org.thingsboard.server.dao.device.DeviceProfileDao;
 import org.thingsboard.server.dao.resource.ImageService;
+import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.dao.widget.WidgetTypeDao;
 import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 
@@ -41,6 +45,7 @@ public class ImagesUpdater {
     private final ImageService imageService;
     private final WidgetsBundleDao widgetsBundleDao;
     private final WidgetTypeDao widgetTypeDao;
+    private final TenantDao tenantDao;
     private final DashboardDao dashboardDao;
     private final DeviceProfileDao deviceProfileDao;
     private final AssetProfileDao assetProfileDao;
@@ -59,8 +64,7 @@ public class ImagesUpdater {
 
     public void updateDashboardsImages() {
         log.info("Updating dashboards images...");
-        var dashboardsIds = new PageDataIterable<>(dashboardDao::findAllIds, 1024);
-        updateImages(dashboardsIds, "dashboard", imageService::replaceBase64WithImageUrl, dashboardDao);
+        updateImages("dashboard", dashboardDao::findIdsByTenantId, imageService::replaceBase64WithImageUrl, dashboardDao);
     }
 
     public void createSystemImages(Dashboard defaultDashboard) {
@@ -108,11 +112,44 @@ public class ImagesUpdater {
 
     private <E extends HasImage> void updateImages(Iterable<? extends EntityId> entitiesIds, String type,
                                                    Function<E, Boolean> updater, Dao<E> dao) {
-        int updatedCount = 0;
         int totalCount = 0;
+        int updatedCount = 0;
+        var counts = updateImages(entitiesIds, type, updater, dao, totalCount, updatedCount);
+        totalCount = counts[0];
+        updatedCount = counts[1];
+        log.info("Updated {} {}s out of {}", updatedCount, type, totalCount);
+    }
+
+    private <E extends HasImage> void updateImages(String type, BiFunction<TenantId, PageLink, PageData<? extends EntityId>> entityIdsByTenantId,
+                                                   Function<E, Boolean> updater, Dao<E> dao) {
+        int tenantCount = 0;
+        int totalCount = 0;
+        int updatedCount = 0;
+        var tenantIds = new PageDataIterable<>(tenantDao::findTenantsIds, 128);
+        for (var tenantId : tenantIds) {
+            tenantCount++;
+            var entitiesIds = new PageDataIterable<>(link -> entityIdsByTenantId.apply(tenantId, link), 128);
+            var counts = updateImages(entitiesIds, type, updater, dao, totalCount, updatedCount);
+            totalCount = counts[0];
+            updatedCount = counts[1];
+            if (tenantCount % 100 == 0) {
+                log.info("Update {}s images: processed {} tenants so far", type, tenantCount);
+            }
+        }
+        log.info("Updated {} {}s out of {}", updatedCount, type, totalCount);
+    }
+
+    private <E extends HasImage> int[] updateImages(Iterable<? extends EntityId> entitiesIds, String type,
+                                                    Function<E, Boolean> updater, Dao<E> dao, int totalCount, int updatedCount) {
         for (EntityId id : entitiesIds) {
             totalCount++;
-            E entity = dao.findById(TenantId.SYS_TENANT_ID, id.getId());
+            E entity;
+            try {
+                entity = dao.findById(TenantId.SYS_TENANT_ID, id.getId());
+            } catch (Exception e) {
+                log.error("Failed to update {} images: error fetching {} by id [{}]: {}", type, type, id.getId(), StringUtils.abbreviate(e.toString(), 1000));
+                continue;
+            }
             try {
                 boolean updated = updater.apply(entity);
                 if (updated) {
@@ -127,7 +164,7 @@ public class ImagesUpdater {
                 log.info("Processed {} {}s so far", totalCount, type);
             }
         }
-        log.info("Updated {} {}s out of {}", updatedCount, type, totalCount);
+        return new int[]{totalCount, updatedCount};
     }
 
 }

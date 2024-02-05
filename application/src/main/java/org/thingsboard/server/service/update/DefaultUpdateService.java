@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,11 +27,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.EdgeUpgradeMessage;
 import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.notification.rule.trigger.NewPlatformVersionTrigger;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.instructions.EdgeInstallInstructionsService;
+import org.thingsboard.server.service.edge.instructions.EdgeUpgradeInstructionsService;
 
 import javax.annotation.PreDestroy;
 import java.io.IOException;
@@ -64,6 +67,12 @@ public class DefaultUpdateService implements UpdateService {
 
     @Autowired
     private NotificationRuleProcessor notificationRuleProcessor;
+
+    @Autowired(required = false)
+    private EdgeInstallInstructionsService edgeInstallInstructionsService;
+
+    @Autowired(required = false)
+    private EdgeUpgradeInstructionsService edgeUpgradeInstructionsService;
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1, ThingsBoardThreadFactory.forName("tb-update-service"));
 
@@ -141,6 +150,16 @@ public class DefaultUpdateService implements UpdateService {
                         .updateInfo(updateMessage)
                         .build());
             }
+            ObjectNode edgeRequest = JacksonUtil.newObjectNode().put(VERSION_PARAM, version);
+            String edgeInstallVersion = restClient.postForObject(UPDATE_SERVER_BASE_URL + "/api/v1/edge/installMapping", new HttpEntity<>(edgeRequest.toString(), headers), String.class);
+            if (edgeInstallVersion != null) {
+                edgeInstallInstructionsService.setAppVersion(edgeInstallVersion);
+                edgeUpgradeInstructionsService.setAppVersion(edgeInstallVersion);
+            }
+            EdgeUpgradeMessage edgeUpgradeMessage = restClient.postForObject(UPDATE_SERVER_BASE_URL + "/api/v1/edge/upgradeMapping", new HttpEntity<>(edgeRequest.toString(), headers), EdgeUpgradeMessage.class);
+            if (edgeUpgradeMessage != null) {
+                edgeUpgradeInstructionsService.updateInstructionMap(edgeUpgradeMessage.getEdgeVersions());
+            }
         } catch (Exception e) {
             log.trace(e.getMessage());
         }
@@ -150,5 +169,4 @@ public class DefaultUpdateService implements UpdateService {
     public UpdateMessage checkUpdates() {
         return updateMessage;
     }
-
 }

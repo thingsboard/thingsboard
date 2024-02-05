@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Pipe, PipeTransform } from '@angular/core';
+import { NgZone, Pipe, PipeTransform } from '@angular/core';
 import { ImageService } from '@core/http/image.service';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { AsyncSubject, BehaviorSubject, Observable } from 'rxjs';
@@ -35,7 +35,8 @@ export interface UrlHolder {
 export class ImagePipe implements PipeTransform {
 
   constructor(private imageService: ImageService,
-              private sanitizer: DomSanitizer) { }
+              private sanitizer: DomSanitizer,
+              private zone: NgZone) { }
 
   transform(urlData: string | UrlHolder, args?: any): Observable<SafeUrl | string> {
     const ignoreLoadingImage = !!args?.ignoreLoadingImage;
@@ -49,14 +50,18 @@ export class ImagePipe implements PipeTransform {
       const preview = !!args?.preview;
       this.imageService.resolveImageUrl(url, preview, asString, emptyUrl).subscribe((imageUrl) => {
         Promise.resolve().then(() => {
-          image$.next(imageUrl);
-          image$.complete();
+          this.zone.run(() => {
+            image$.next(imageUrl);
+            image$.complete();
+          });
         });
       });
     } else {
       Promise.resolve().then(() => {
-        image$.next(asString ? emptyUrl : this.sanitizer.bypassSecurityTrustUrl(emptyUrl));
-        image$.complete();
+        this.zone.run(() => {
+          image$.next(asString ? emptyUrl : this.sanitizer.bypassSecurityTrustUrl(emptyUrl));
+          image$.complete();
+        });
       });
     }
     return image$.asObservable();

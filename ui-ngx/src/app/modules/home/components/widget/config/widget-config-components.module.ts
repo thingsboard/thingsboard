@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -32,6 +32,12 @@ import { TimewindowConfigPanelComponent } from '@home/components/widget/config/t
 import { WidgetSettingsCommonModule } from '@home/components/widget/lib/settings/common/widget-settings-common.module';
 import { TimewindowStyleComponent } from '@home/components/widget/config/timewindow-style.component';
 import { TimewindowStylePanelComponent } from '@home/components/widget/config/timewindow-style-panel.component';
+import { TargetDeviceComponent } from '@home/components/widget/config/target-device.component';
+import { WidgetActionComponent } from '@home/components/widget/config/action/widget-action.component';
+import { CustomActionPrettyResourcesTabsComponent }
+  from '@home/components/widget/config/action/custom-action-pretty-resources-tabs.component';
+import { CustomActionPrettyEditorComponent } from '@home/components/widget/config/action/custom-action-pretty-editor.component';
+import { MobileActionEditorComponent } from '@home/components/widget/config/action/mobile-action-editor.component';
 
 @NgModule({
   declarations:
@@ -43,12 +49,17 @@ import { TimewindowStylePanelComponent } from '@home/components/widget/config/ti
       DataKeyConfigComponent,
       DatasourceComponent,
       DatasourcesComponent,
+      TargetDeviceComponent,
       EntityAliasSelectComponent,
       FilterSelectComponent,
       TimewindowStyleComponent,
       TimewindowStylePanelComponent,
       TimewindowConfigPanelComponent,
-      WidgetSettingsComponent
+      WidgetSettingsComponent,
+      WidgetActionComponent,
+      CustomActionPrettyResourcesTabsComponent,
+      CustomActionPrettyEditorComponent,
+      MobileActionEditorComponent
     ],
   imports: [
     CommonModule,
@@ -64,13 +75,18 @@ import { TimewindowStylePanelComponent } from '@home/components/widget/config/ti
     DataKeyConfigComponent,
     DatasourceComponent,
     DatasourcesComponent,
+    TargetDeviceComponent,
     EntityAliasSelectComponent,
     FilterSelectComponent,
     TimewindowStyleComponent,
     TimewindowStylePanelComponent,
     TimewindowConfigPanelComponent,
     WidgetSettingsComponent,
-    WidgetSettingsCommonModule
+    WidgetSettingsCommonModule,
+    WidgetActionComponent,
+    CustomActionPrettyResourcesTabsComponent,
+    CustomActionPrettyEditorComponent,
+    MobileActionEditorComponent
   ]
 })
 export class WidgetConfigComponentsModule { }

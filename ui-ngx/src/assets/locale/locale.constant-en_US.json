@@ -182,7 +182,10 @@
         "password-policy": "Password policy",
         "minimum-password-length": "Minimum password length",
         "minimum-password-length-required": "Minimum password length is required",
-        "minimum-password-length-range": "Minimum password length should be in a range from 5 to 50",
+        "minimum-password-length-range": "Minimum password length should be in a range from 6 to 50",
+        "maximum-password-length": "Maximum password length",
+        "maximum-password-length-min": "Maximum password length should be at least 6",
+        "maximum-password-length-less-min": "Maximum password length should be greater than minimum length",
         "minimum-uppercase-letters": "Minimum number of uppercase letters",
         "minimum-uppercase-letters-range": "Minimum number of uppercase letters can't be negative",
         "minimum-lowercase-letters": "Minimum number of lowercase letters",
@@ -196,6 +199,8 @@
         "password-reuse-frequency-days": "Password reuse frequency in days",
         "password-reuse-frequency-days-range": "Password reuse frequency in days can't be negative",
         "allow-whitespace": "Allow whitespace",
+        "force-reset-password-if-no-valid": "Force to reset password if not valid",
+        "force-reset-password-if-no-valid-hint": "Please be careful when enabling this feature: it will require users with not valid password to reset their password via email.",
         "general-policy": "General policy",
         "max-failed-login-attempts": "Maximum number of failed login attempts, before account is locked",
         "minimum-max-failed-login-attempts-range": "Maximum number of failed login attempts can't be negative",
@@ -609,7 +614,7 @@
         "filter-type-asset-type-and-name-description": "Assets of type '{{assetTypes}}' and with name starting with '{{prefix}}'",
         "filter-type-device-type": "Device type",
         "filter-type-device-type-description": "Devices of type '{{deviceTypes}}'",
-        "filter-type-device-type-and-name-description": "Devices of types '{{deviceTypes}}' and with name starting with '{{prefix}}'",
+        "filter-type-device-type-and-name-description": "Devices of type '{{deviceTypes}}' and with name starting with '{{prefix}}'",
         "filter-type-entity-view-type": "Entity View type",
         "filter-type-entity-view-type-description": "Entity Views of type '{{entityViewTypes}}'",
         "filter-type-entity-view-type-and-name-description": "Entity Views of type '{{entityViewTypes}}' and with name starting with '{{prefix}}'",
@@ -667,7 +672,7 @@
         "asset-type": "Asset type",
         "asset-type-required": "Asset type is required.",
         "select-asset-type": "Select asset type",
-        "enter-asset-type": "Enter asset type",
+        "enter-asset-type": "Enter asset profile",
         "any-asset": "Any asset",
         "no-asset-types-matching": "No asset types matching '{{entitySubtype}}' were found.",
         "asset-type-list-empty": "No asset types selected.",
@@ -735,6 +740,11 @@
         "scope-client": "Client attributes",
         "scope-server": "Server attributes",
         "scope-shared": "Shared attributes",
+        "scope-client-short": "Client",
+        "scope-server-short": "Server",
+        "scope-shared-short": "Shared",
+        "scope-latest-short": "Latest",
+        "scope-any": "Any",
         "add": "Add attribute",
         "key": "Key",
         "key-max-length": "Key should be less than 256",
@@ -996,6 +1006,10 @@
         "edges": "Customer edge instances",
         "manage-edges": "Manage edges"
     },
+    "css-size": {
+        "size-value-required": "Size value is required",
+        "invalid-size-value": "Invalid size value"
+    },
     "date": {
         "last-update-n-ago": "Last update N ago",
         "last-update-n-ago-text": "Last update {{ agoText }}",
@@ -1181,6 +1195,7 @@
         "hide-details": "Hide details",
         "select-state": "Select target state",
         "state-controller": "State controller",
+        "state-controller-default": "static (deprecated)",
         "search": "Search dashboards",
         "selected-dashboards": "{ count, plural, =1 {1 dashboard} other {# dashboards} } selected",
         "home-dashboard": "Home dashboard",
@@ -2021,6 +2036,7 @@
         "sync-process-started-successfully": "Sync process started successfully!",
         "missing-related-rule-chains-title": "Edge has missing related rule chain(s)",
         "missing-related-rule-chains-text": "Assigned to edge rule chain(s) use rule nodes that forward message(s) to rule chain(s) that are not assigned to this edge. <br><br> List of missing rule chain(s): <br> {{missingRuleChains}}",
+        "upgrade-instructions": "Upgrade Instructions",
         "widget-datasource-error": "This widget supports only EDGE entity datasource"
     },
     "edge-event": {
@@ -2688,10 +2704,15 @@
         "connectors-table-key": "Key",
         "connectors-table-class": "Class",
         "rpc-command-send": "Send",
-        "rpc-command-result": "Result",
+        "rpc-command-result": "Response",
         "rpc-command-edit-params": "Edit parameters",
         "gateway-configuration": "General Configuration",
-        "docker-label": "In order to run ThingsBoard IoT gateway in docker with credentials for this device you can use the following commands.",
+        "docker-label": "Use the following instruction to run IoT Gateway in in Docker compose with credentials for selected device",
+        "install-docker-compose": "Use the instructions to download, install and setup docker compose",
+        "download-configuration-file": "Download configuration file",
+        "download-docker-compose": "Download docker-compose.yml for your gateway",
+        "launch-gateway": "Launch gateway",
+        "launch-docker-compose": "Start the gateway using the following command in the terminal from folder with docker-compose.yml file",
         "create-new-gateway": "Create a new gateway",
         "create-new-gateway-text": "Are you sure you want create a new gateway with name: '{{gatewayName}}'?",
         "created-time": "Created time",
@@ -2957,8 +2978,8 @@
         "size": "Size",
         "system": "System",
         "download-image": "Download image",
-        "export-image": "Export image",
-        "import-image": "Import image",
+        "export-image": "Export image to JSON",
+        "import-image": "Import image from JSON",
         "upload-image": "Upload image",
         "edit-image": "Edit image",
         "image-details": "Image details",
@@ -2991,7 +3012,13 @@
         "set-link": "Set link",
         "image-link": "Image link",
         "link": "Link",
-        "copy-image-link": "Copy image link"
+        "copy-image-link": "Copy image link",
+        "embed-image": "Embed image",
+        "embed-to-html": "Embed to HTML",
+        "embed-to-html-hint": "This feature will make link available to any unauthorized user.",
+        "embed-to-html-text": "Using the following code snippet, you may embed an image into the components based on the plain HTML.<br/>Such components include HTML card widgets, cell content functions, etc.",
+        "embed-to-angular-template": "Embed to Angular HTML template",
+        "embed-to-angular-template-text": "Using the following code snippet, you may embed an image into the Angular HTML template that will be used for components.<br/>Such components include the Markdown widget, HTML section in the widget editor, custom actions, etc."
     },
     "image-input": {
         "drop-images-or": "Drag and drop an images or",
@@ -3141,7 +3168,9 @@
             "weeks": "(week ago)",
             "months": "(month ago)",
             "years": "(year ago)"
-        }
+        },
+        "label": "Label",
+        "value": "Value"
     },
     "login": {
         "login": "Login",
@@ -3493,6 +3522,7 @@
       "ota-update": "OTA update",
       "ota-update-details": "OTA update details",
       "ota-updates": "OTA updates",
+      "package-file": "Package file",
       "package-type": "Package type",
       "packages-repository": "Packages repository",
       "search": "Search packages",
@@ -3609,7 +3639,8 @@
             "password-requirements": "Password requirements",
             "password-should-difference": "New password should be different from current",
             "special-character": "{ count, plural, =1 {1 special character} other {# special characters} }",
-            "uppercase-letter": "{ count, plural, =1 {1 uppercase letter} other {# uppercase letters} }"
+            "uppercase-letter": "{ count, plural, =1 {1 uppercase letter} other {# uppercase letters} }",
+            "at-most": "At most:"
         }
     },
     "relation": {
@@ -3678,6 +3709,8 @@
         "no-resource-text": "No resources found",
         "open-widgets-bundle": "Open widgets bundle",
         "resource": "Resource",
+        "resource-file": "Resource file",
+        "resource-files": "Resource files",
         "resource-library-details": "Resource details",
         "resource-type": "Resource type",
         "resources-library": "Resources library",
@@ -3693,6 +3726,15 @@
             "lwm2m-model": "LWM2M model",
             "pkcs-12": "PKCS #12"
         }
+    },
+    "rpc": {
+      "error": {
+        "target-device-is-not-set": "Target device is not set!",
+        "invalid-target-entity": "RPC commands are not supported by <b>{{entityType}}</b> entity.",
+        "failed-to-resolve-target-device": "Failed to resolve target device!",
+        "request-timeout": "Request Timeout.",
+        "rpc-http-error": "Error: {{status}} - {{statusText}}"
+      }
     },
     "rulechain": {
         "rulechain": "Rule chain",
@@ -3735,7 +3777,6 @@
         "search": "Search rule chains",
         "selected-rulechains": "{ count, plural, =1 {1 rule chain} other {# rule chains} } selected",
         "open-rulechain": "Open rule chain",
-        "assign-new-rulechain": "Assign new rulechain",
         "edge-template-root": "Template root",
         "assign-to-edge": "Assign to edge",
         "edge-rulechain": "Edge rule chain",
@@ -3791,7 +3832,7 @@
         "custom-link-label": "Custom link label",
         "custom-link-label-required": "Custom link label is required.",
         "link-labels": "Link labels",
-        "link-labels-required": "Link labels is required.",
+        "link-labels-required": "Link labels are required.",
         "no-link-labels-found": "No link labels found",
         "no-link-label-matching": "'{{label}}' not found.",
         "create-new-link-label": "Create a new one!",
@@ -3829,7 +3870,9 @@
         "test": "Test",
         "help": "Help",
         "reset-debug-mode": "Reset debug mode in all nodes",
-        "test-with-this-message": "{{test}} with this message"
+        "test-with-this-message": "{{test}} with this message",
+        "queue-hint": "Select a queue for message forwarding to another queue.  'Main' queue is used by default.",
+        "queue-singleton-hint": "Select a queue for message forwarding in multi-instance environments. 'Main' queue is used by default."
     },
     "timezone": {
       "timezone": "Timezone",
@@ -3894,7 +3937,7 @@
         "processing-timeout": "Processing within, ms",
         "batch-size": "Batch size",
         "retries": "Number of retries (0 – unlimited)",
-        "failure-percentage": "Percentage of failure messages for skipping retries",
+        "failure-percentage": "Failure messages for skipping retries, %",
         "pause-between-retries": "Retry within, sec",
         "max-pause-between-retries": "Additional retry within, sec",
         "delete": "Delete queue",
@@ -4038,15 +4081,15 @@
         "maximum-rule-chains": "Rule chains maximum number",
         "maximum-rule-chains-required": "Rule chains maximum number is required.",
         "maximum-rule-chains-range": "Rule chains maximum number can't be negative",
-        "maximum-resources-sum-data-size": "Resource files sum size",
-        "maximum-resources-sum-data-size-required": "Resource files sum size is required.",
-        "maximum-resources-sum-data-size-range": "Resource files sum size can't be negative",
-        "maximum-resource-size": "Resource maximum size",
-        "maximum-resource-size-required": "Resource maximum size is required",
-        "maximum-resource-size-range": "Resource maximum size can't be negative",
-        "maximum-ota-packages-sum-data-size": "OTA package files sum size",
-        "maximum-ota-package-sum-data-size-required": "OTA package files sum size is required.",
-        "maximum-ota-package-sum-data-size-range": "OTA package files sum size can't be negative",
+        "maximum-resources-sum-data-size": "Maximum total size of resources files (bytes)",
+        "maximum-resources-sum-data-size-required": "Maximum total size of resources files is required.",
+        "maximum-resources-sum-data-size-range": "Maximum total size of resources files can't be negative",
+        "maximum-resource-size": "Maximum resource file size (bytes)",
+        "maximum-resource-size-required": "Maximum resource file size is required",
+        "maximum-resource-size-range": "Maximum resource file size can't be negative",
+        "maximum-ota-packages-sum-data-size": "Maximum total size of OTA package files (bytes)",
+        "maximum-ota-package-sum-data-size-required": "Maximum total size of OTA package files is required.",
+        "maximum-ota-package-sum-data-size-range": "Maximum total size of OTA package files can't be negative",
         "rest-requests-for-tenant": "REST requests for tenant",
         "transport-tenant-telemetry-msg-rate-limit": "Transport tenant telemetry messages",
         "transport-tenant-telemetry-data-points-rate-limit": "Transport tenant telemetry data points",
@@ -4197,6 +4240,12 @@
           "current-half-year-so-far": "Current half year so far",
           "current-year": "Current year",
           "current-year-so-far": "Current year so far"
+        },
+        "type": {
+            "week": "Week (Sun - Sat)",
+            "week-iso": "Week (Mon - Sun)",
+            "month": "Month",
+            "quarter": "Quarter"
         }
     },
     "timeunit": {
@@ -4254,6 +4303,12 @@
         "color": "Color",
         "displayTypePrefix": "Display Realtime/History prefix",
         "preview": "Preview"
+    },
+    "tooltip": {
+        "value": "Value",
+        "date": "Date",
+        "background-color": "Background color",
+        "background-blur": "Background blur"
     },
     "unit": {
         "millimeter": "Millimeter",
@@ -4533,6 +4588,7 @@
         "gram-per-cubic-centimeter": "Gram per cubic centimeter",
         "kilogram-per-square-meter": "Kilogram per square metre",
         "milligram-per-milliliter": "Milligram per milliliter",
+        "milligram-per-cubic-meter": "Milligram per cubic meter",
         "pound-per-cubic-foot": "Pound per cubic foot",
         "ounces-per-cubic-inch": "Ounces per cubic inch",
         "tons-per-cubic-yard": "Tons per cubic yard",
@@ -4935,6 +4991,8 @@
         "target-dashboard-state-required": "Target dashboard state is required",
         "set-entity-from-widget": "Set entity from widget",
         "target-dashboard": "Target dashboard",
+        "select-target-dashboard": "Select target dashboard",
+        "target-dashboard-required": "Target dashboard is required.",
         "open-right-layout": "Open right dashboard layout (mobile view)",
         "state-display-type": "Dashboard state display option",
         "open-normal": "Normal",
@@ -4960,12 +5018,13 @@
         "popover-placement-leftBottom": "Left bottom",
         "popover-hide-on-click-outside": "Hide popover on outside click",
         "popover-hide-dashboard-toolbar": "Hide dashboard toolbar in popover",
-        "popover-width": "Popover width in browser units (ex. 100px, 25vw)",
-        "popover-height": "Popover height in browser units (ex. 100px, 25vh)",
+        "popover-width": "Popover width",
+        "popover-height": "Popover height",
         "popover-style": "Popover style",
         "open-new-browser-tab": "Open in a new browser tab",
         "mobile": {
           "action-type": "Mobile action type",
+          "select-action-type": "Select mobile action type",
           "action-type-required": "Mobile action type is required",
           "take-picture-from-gallery": "Take picture from gallery",
           "take-photo": "Take photo",
@@ -4975,7 +5034,9 @@
           "make-phone-call": "Make phone call",
           "get-location": "Get phone location",
           "take-screenshot": "Take screenshot"
-        }
+        },
+        "custom-action-function": "Custom action function",
+        "custom-pretty-function": "Custom action (with HTML template) function"
     },
     "widgets-bundle": {
         "current": "Current bundle",
@@ -5071,12 +5132,14 @@
         "search-actions": "Search actions",
         "no-actions-text": "No actions found",
         "action-source": "Action source",
+        "select-action-source": "Select action source",
         "action-source-required": "Action source is required.",
         "action-name": "Name",
         "action-name-required": "Action name is required.",
-        "action-name-not-unique": "Another action with the same name already exists.<br/>Action name should be unique within the same action source.",
+        "action-name-not-unique": "Another action with the same name already exists.\nAction name should be unique within the same action source.",
         "action-icon": "Icon",
         "show-hide-action-using-function": "Show/hide action using function",
+        "show-action-function": "Show action function",
         "action-type": "Type",
         "action-type-required": "Action type is required.",
         "edit-action": "Edit action",
@@ -5130,6 +5193,12 @@
             "blur": "Blur",
             "preview": "Preview"
         },
+        "bar-chart": {
+            "bar-appearance": "Bar appearance",
+            "label-on-bar": "Label on bar",
+            "value-on-bar": "Value on bar",
+            "bar-chart-card-style": "Bar chart card style"
+        },
         "battery-level": {
             "layout": "Layout",
             "layout-vertical-solid": "Vertical. Solid",
@@ -5155,9 +5224,6 @@
             "date": "Date",
             "active-bars-color": "Active signal bars color",
             "inactive-bars-color": "Inactive signal bars color",
-            "tooltip": "Tooltip",
-            "background-color": "Background color",
-            "background-blur": "Background blur",
             "signal-strength-card-style": "Signal strength card style"
         },
         "chart": {
@@ -5400,18 +5466,8 @@
             "clockwise-layout": "Clockwise layout",
             "sort-series": "Sort series by label",
             "central-total-value": "Central total value",
-            "legend-position-top": "Top",
-            "legend-position-bottom": "Bottom",
-            "legend-position-left": "Left",
-            "legend-position-right": "Right",
-            "legend-label": "Label",
-            "legend-value": "Value",
-            "tooltip": "Tooltip",
-            "tooltip-value": "Value",
             "tooltip-value-type-absolute": "Absolute",
             "tooltip-value-type-percentage": "Percentage",
-            "tooltip-background-color": "Background color",
-            "tooltip-background-blur": "Background blur",
             "doughnut-card-style": "Doughnut card style"
         },
         "entities-hierarchy": {
@@ -5893,12 +5949,6 @@
             "range-colors": "Range colors",
             "out-of-range-color": "Out of range color",
             "fill-area": "Fill area",
-            "legend-label": "Label",
-            "tooltip": "Tooltip",
-            "tooltip-value": "Value",
-            "tooltip-date": "Date",
-            "tooltip-background-color": "Background color",
-            "tooltip-background-blur": "Background blur",
             "range-chart-card-style": "Range chart card style"
         },
         "rpc": {
@@ -6194,6 +6244,24 @@
             "label-position-left": "Left",
             "label-position-top": "Top"
         },
+        "single-switch": {
+            "behavior": "Behavior",
+            "layout": "Layout",
+            "layout-right": "Right",
+            "layout-left": "Left",
+            "layout-centered": "Centered",
+            "auto-scale": "Auto scale",
+            "label": "Label",
+            "icon": "Icon",
+            "switch-color": "Switch color",
+            "on": "On",
+            "off": "Off",
+            "disabled": "Disabled",
+            "tumbler-color": "Tumbler color",
+            "on-label": "On label",
+            "off-label": "Off label",
+            "switch": "Switch"
+        },
         "value-card": {
             "layout": "Layout",
             "layout-square": "Square",
@@ -6414,6 +6482,62 @@
             "value": "Value",
             "source-entity-alias": "Source entity alias",
             "source-entity-attribute": "Source entity attribute"
+        },
+        "value-action": {
+            "initial-state": "Initial state",
+            "initial-state-hint": "Action to get the initial value of the component.",
+            "turn-on": "Turn 'On'",
+            "turn-on-hint": "Action performed to turn ON the component.",
+            "turn-off": "Turn 'Off'",
+            "turn-off-hint": "Action performed to turn OFF the component.",
+            "on": "On",
+            "off": "Off",
+            "do-nothing": "Do nothing",
+            "execute-rpc": "Execute RPC",
+            "get-attribute": "Get attribute",
+            "set-attribute": "Set attribute",
+            "get-time-series": "Get time-series",
+            "add-time-series": "Add time-series",
+            "execute-rpc-text": "Execute RPC method '{{methodName}}'",
+            "get-attribute-text": "Use attribute '{{key}}'",
+            "get-time-series-text": "Use time-series '{{key}}'",
+            "set-attribute-to-value-text": "Set '{{key}}' attribute to: {{value}}",
+            "add-time-series-value-text": "Add '{{key}}' time-series value: {{value}}",
+            "set-attribute-text": "Set '{{key}}' attribute",
+            "add-time-series-text": "Add '{{key}}' time-series",
+            "action": "Action",
+            "value": "Value",
+            "init-value-hint": "Value that will be set until device sends data.",
+            "method": "Method",
+            "method-name-required": "Method name is required.",
+            "request-timeout-ms": "RPC request timeout (ms)",
+            "request-timeout-required": "Request timeout is required.",
+            "min-request-timeout-error": "Request timeout value should be greater or equal 5000 ms (5 seconds).",
+            "request-persistent": "RPC request persistent",
+            "persistent-polling-interval": "Persistent polling interval (ms)",
+            "persistent-polling-interval-hint": "Polling interval (ms) to get persistent RPC command response",
+            "persistent-polling-interval-required": "Persistent polling interval is required.",
+            "min-persistent-polling-interval-error": "Persistent polling interval value should be greater or equal 1000 ms (1 second).",
+            "attribute-scope": "Attribute scope",
+            "attribute-key": "Attribute key",
+            "attribute-key-required": "Attribute key is required.",
+            "time-series-key": "Time-series key",
+            "time-series-key-required": "Time-series key is required.",
+            "subscribe-for-updates": "Subscribe for updates",
+            "subscribe-for-updates-hint": "Subscribe for updates",
+            "action-result-converter": "Action result converter",
+            "converter-none": "None",
+            "converter-function": "Function",
+            "converter-constant": "Constant",
+            "parse-value-function": "Parse value function",
+            "on-when-result-is": "'On' when result is",
+            "parameters": "Parameters",
+            "convert-value-function": "Convert value function",
+            "error": {
+                "target-entity-is-not-set": "Target entity is not set!",
+                "failed-to-perform-action": "Failed to perform the <b>{{ actionLabel }}</b> action.",
+                "invalid-attribute-scope": "{{scope}} attribute scope is not supported by <b>{{entityType}}</b> entity."
+            }
         },
         "widget-font": {
             "font-settings": "Font settings",
@@ -6692,7 +6816,6 @@
             "nl_BE": "Koninkrijk België",
             "pt_BR": "Português do Brasil",
             "ro_RO": "Română",
-            "ru_RU": "Русский",
             "sl_SI": "Slovenščina",
             "tr_TR": "Türkçe",
             "uk_UA": "Українська",

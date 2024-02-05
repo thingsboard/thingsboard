@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,11 +17,11 @@
 import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import {
   ControlValueAccessor,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
   UntypedFormBuilder,
   UntypedFormControl,
   UntypedFormGroup,
-  NG_VALIDATORS,
-  NG_VALUE_ACCESSOR,
   Validator,
   Validators
 } from '@angular/forms';
@@ -33,6 +33,7 @@ import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetService } from '@core/http/widget.service';
 import { IAliasController } from '@core/api/widget-api.models';
 import { EntityService } from '@core/http/entity.service';
+import { TargetDevice } from '@shared/models/widget.models';
 
 export declare type RpcRetrieveValueMethod = 'none' | 'rpc' | 'attribute' | 'timeseries';
 
@@ -49,8 +50,7 @@ export interface SwitchRpcSettings {
   persistentPollingInterval: number;
 }
 
-export function switchRpcDefaultSettings(): SwitchRpcSettings {
-  return {
+export const switchRpcDefaultSettings = (): SwitchRpcSettings => ({
     initialValue: false,
     retrieveValueMethod: 'rpc',
     valueKey: 'value',
@@ -61,8 +61,7 @@ export function switchRpcDefaultSettings(): SwitchRpcSettings {
     requestTimeout: 500,
     requestPersistent: false,
     persistentPollingInterval: 5000
-  };
-}
+  });
 
 @Component({
   selector: 'tb-switch-rpc-settings',
@@ -92,7 +91,7 @@ export class SwitchRpcSettingsComponent extends PageComponent implements OnInit,
   aliasController: IAliasController;
 
   @Input()
-  targetDeviceAliasId: string;
+  targetDevice: TargetDevice;
 
   dataKeyType = DataKeyType;
 
@@ -185,8 +184,7 @@ export class SwitchRpcSettingsComponent extends PageComponent implements OnInit,
   }
 
   private updateModel() {
-    const value: SwitchRpcSettings = this.switchRpcSettingsFormGroup.value;
-    this.modelValue = value;
+    this.modelValue = this.switchRpcSettingsFormGroup.value;
     this.propagateChange(this.modelValue);
   }
 

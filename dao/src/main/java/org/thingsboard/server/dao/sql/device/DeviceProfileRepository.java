@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.data.asset.AssetProfileInfo;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.DeviceProfileEntity;
 
@@ -82,5 +82,14 @@ public interface DeviceProfileRepository extends JpaRepository<DeviceProfileEnti
     UUID getExternalIdById(@Param("id") UUID id);
 
     Page<DeviceProfileEntity> findAllByImageNotNull(Pageable pageable);
+
+    @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(dp.id, 'DEVICE_PROFILE', dp.name) " +
+            "FROM DeviceProfileEntity dp WHERE dp.tenantId = :tenantId AND EXISTS " +
+            "(SELECT 1 FROM DeviceEntity dv WHERE dv.tenantId = :tenantId AND dv.deviceProfileId = dp.id)")
+    List<EntityInfo> findActiveTenantDeviceProfileNames(@Param("tenantId") UUID tenantId);
+
+    @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(d.id, 'DEVICE_PROFILE', d.name) " +
+            "FROM DeviceProfileEntity d WHERE d.tenantId = :tenantId")
+    List<EntityInfo> findAllTenantDeviceProfileNames(@Param("tenantId") UUID tenantId);
 
 }

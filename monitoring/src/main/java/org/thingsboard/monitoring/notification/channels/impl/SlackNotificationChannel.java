@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-import org.thingsboard.monitoring.data.notification.Notification;
 import org.thingsboard.monitoring.notification.channels.NotificationChannel;
 
 import javax.annotation.PostConstruct;
@@ -29,11 +28,11 @@ import java.time.Duration;
 import java.util.Map;
 
 @Component
-@ConditionalOnProperty(value = "monitoring.notification_channels.slack.enabled", havingValue = "true")
+@ConditionalOnProperty(value = "monitoring.notifications.slack.enabled", havingValue = "true")
 @Slf4j
 public class SlackNotificationChannel implements NotificationChannel {
 
-    @Value("${monitoring.notification_channels.slack.webhook_url}")
+    @Value("${monitoring.notifications.slack.webhook_url}")
     private String webhookUrl;
 
     private RestTemplate restTemplate;
@@ -47,11 +46,7 @@ public class SlackNotificationChannel implements NotificationChannel {
     }
 
     @Override
-    public void sendNotification(Notification notification) {
-        sendNotification(notification.getText());
-    }
-
-    private void sendNotification(String message) {
+    public void sendNotification(String message) {
         restTemplate.postForObject(webhookUrl, Map.of("text", message), String.class);
     }
 

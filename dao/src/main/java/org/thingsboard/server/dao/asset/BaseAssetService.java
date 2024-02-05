@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,6 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -173,7 +172,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
             savedAsset = assetDao.saveAndFlush(asset.getTenantId(), asset);
             publishEvictEvent(evictEvent);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedAsset.getTenantId())
-                    .entityId(savedAsset.getId()).added(asset.getId() == null).build());
+                    .entityId(savedAsset.getId()).created(asset.getId() == null).build());
             if (asset.getId() == null) {
                 countService.publishCountEntityEvictEvent(savedAsset.getTenantId(), EntityType.ASSET);
             }
@@ -216,7 +215,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
 
     private void deleteAsset(TenantId tenantId, Asset asset) {
         log.trace("Executing deleteAsset [{}]", asset.getId());
-        relationService.deleteEntityRelations(tenantId, asset.getAssetProfileId());
+        relationService.deleteEntityRelations(tenantId, asset.getId());
 
         assetDao.removeById(tenantId, asset.getUuidId());
 
@@ -363,7 +362,12 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
             return Futures.successfulAsList(futures);
         }, MoreExecutors.directExecutor());
         assets = Futures.transform(assets, assetList ->
-                assetList == null ? Collections.emptyList() : assetList.stream().filter(asset -> query.getAssetTypes().contains(asset.getType())).collect(Collectors.toList()), MoreExecutors.directExecutor()
+                        assetList == null ?
+                                Collections.emptyList() :
+                                assetList.stream()
+                                        .filter(asset -> query.getAssetTypes().contains(asset.getType()))
+                                        .collect(Collectors.toList()),
+                MoreExecutors.directExecutor()
         );
         return assets;
     }
@@ -372,12 +376,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     public ListenableFuture<List<EntitySubtype>> findAssetTypesByTenantId(TenantId tenantId) {
         log.trace("Executing findAssetTypesByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        ListenableFuture<List<EntitySubtype>> tenantAssetTypes = assetDao.findTenantAssetTypesAsync(tenantId.getId());
-        return Futures.transform(tenantAssetTypes,
-                assetTypes -> {
-                    assetTypes.sort(Comparator.comparing(EntitySubtype::getType));
-                    return assetTypes;
-                }, MoreExecutors.directExecutor());
+        return assetDao.findTenantAssetTypesAsync(tenantId.getId());
     }
 
     @Override

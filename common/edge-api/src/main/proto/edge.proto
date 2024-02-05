@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -325,6 +325,11 @@ message AlarmUpdateMsg {
   string entity = 18;
 }
 
+message AlarmCommentUpdateMsg {
+  UpdateMsgType msgType = 1;
+  string entity = 2;
+}
+
 message CustomerUpdateMsg {
   UpdateMsgType msgType = 1;
   int64 idMSB = 2;
@@ -618,6 +623,7 @@ message UplinkMsg {
   repeated AssetProfileUpdateMsg assetProfileUpdateMsg = 19;
   repeated DeviceProfileUpdateMsg deviceProfileUpdateMsg = 20;
   repeated ResourceUpdateMsg resourceUpdateMsg = 21;
+  repeated AlarmCommentUpdateMsg alarmCommentUpdateMsg = 22;
 }
 
 message UplinkResponseMsg {
@@ -661,5 +667,6 @@ message DownlinkMsg {
   repeated TenantUpdateMsg tenantUpdateMsg = 26;
   repeated TenantProfileUpdateMsg tenantProfileUpdateMsg = 27;
   repeated ResourceUpdateMsg resourceUpdateMsg = 28;
+  repeated AlarmCommentUpdateMsg alarmCommentUpdateMsg = 29;
 }
 

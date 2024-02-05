@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import {
 } from '@shared/components/image/upload-image-dialog.component';
 import { UrlHolder } from '@shared/pipe/image.pipe';
 import { ImportExportService } from '@shared/import-export/import-export.service';
+import { EmbedImageDialogComponent, EmbedImageDialogData } from '@shared/components/image/embed-image-dialog.component';
 
 export interface ImageDialogData {
   readonly: boolean;
@@ -66,19 +67,16 @@ export class ImageDialogComponent extends
     this.image = data.image;
     this.readonly = data.readonly;
     this.imagePreviewData = {
-      url: this.image.link
+      url: this.image.public ? this.image.publicLink : this.image.link
     };
   }
 
   ngOnInit(): void {
     this.imageFormGroup = this.fb.group({
-      title: [this.image.title, [Validators.required]],
-      link: [this.image.link, []],
+      title: [this.image.title, [Validators.required]]
     });
     if (this.data.readonly) {
       this.imageFormGroup.disable();
-    } else {
-      this.imageFormGroup.get('link').disable();
     }
   }
 
@@ -117,6 +115,29 @@ export class ImageDialogComponent extends
     this.importExportService.exportImage(imageResourceType(this.image), this.image.resourceKey);
   }
 
+  embedImage($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialog.open<EmbedImageDialogComponent, EmbedImageDialogData,
+      ImageResourceInfo>(EmbedImageDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        image: this.image,
+        readonly: this.readonly
+      }
+    }).afterClosed().subscribe((result) => {
+      if (result) {
+        this.imageChanged = true;
+        this.image = result;
+        this.imagePreviewData = {
+          url: this.image.public ? this.image.publicLink : this.image.link
+        };
+      }
+    });
+  }
+
   updateImage($event): void {
     if ($event) {
       $event.stopPropagation();
@@ -133,7 +154,7 @@ export class ImageDialogComponent extends
         this.imageChanged = true;
         this.image = result;
         this.imagePreviewData = {
-          url: this.image.link
+          url: this.image.public ? `${this.image.publicLink}?ts=${new Date().getTime()}` : this.image.link
         };
       }
     });
