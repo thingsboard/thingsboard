@@ -290,11 +290,11 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       this.dashboardTimewindowChangedSubject.next(this.dashboardTimewindow);
     }
 
-    if (updateMobileOpts) {
-      this.updateMobileOpts();
-    }
     if (updateLayoutOpts) {
       this.updateLayoutOpts();
+    }
+    if (updateMobileOpts) {
+      this.updateMobileOpts();
     }
     if (updateEditingOpts) {
       this.updateEditingOpts();
