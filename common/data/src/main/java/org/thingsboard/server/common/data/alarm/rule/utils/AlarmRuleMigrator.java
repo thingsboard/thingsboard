@@ -206,6 +206,7 @@ public class AlarmRuleMigrator {
                 duration.setUnit(oldDuration.getUnit());
                 yield duration;
             }
+            case NO_UPDATE -> null;
         };
     }
 
