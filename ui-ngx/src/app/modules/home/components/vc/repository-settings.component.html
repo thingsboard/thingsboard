@@ -28,7 +28,7 @@
     </mat-card-header>
     <mat-progress-bar color="warn" mode="indeterminate" *ngIf="!hideLoadingBar && isLoading$ | async">
     </mat-progress-bar>
-    <div style="height: 4px;" *ngIf="!(!hideLoadingBar && isLoading$ | async)"></div>
+    <div style="height: 4px;" *ngIf="hideLoadingBar && !(isLoading$ | async)"></div>
     <mat-card-content style="padding-top: 16px;">
       <form [formGroup]="repositorySettingsForm" #formDirective="ngForm" (ngSubmit)="save()">
         <fieldset [disabled]="isLoading$ | async">

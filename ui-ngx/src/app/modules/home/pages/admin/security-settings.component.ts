@@ -37,19 +37,18 @@ import { AuthService } from '@core/auth/auth.service';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
-import { HasShowLoading } from '@home/pages/home-pages.models';
 
 @Component({
   selector: 'tb-security-settings',
   templateUrl: './security-settings.component.html',
   styleUrls: ['./security-settings.component.scss', './settings-card.scss']
 })
-export class SecuritySettingsComponent extends PageComponent implements HasConfirmForm, HasShowLoading {
+export class SecuritySettingsComponent extends PageComponent implements HasConfirmForm {
 
   securitySettingsFormGroup: UntypedFormGroup;
   jwtSecuritySettingsFormGroup: UntypedFormGroup;
 
-  showLoadingBar = false;
+  showMainLoadingBar = false;
 
   private securitySettings: SecuritySettings;
   private jwtSettings: JwtSettings;

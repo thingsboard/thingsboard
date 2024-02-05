@@ -21,13 +21,16 @@ import { Observable, Subscription } from 'rxjs';
 import { selectIsLoading } from '@core/interceptors/load.selectors';
 import { delay, share } from 'rxjs/operators';
 import { AbstractControl } from '@angular/forms';
+import { HasShowMainLoading } from '@home/pages/home-pages.models';
 
 @Directive()
-export abstract class PageComponent implements OnDestroy {
+export abstract class PageComponent implements OnDestroy, HasShowMainLoading {
 
   isLoading$: Observable<boolean>;
   loadingSubscription: Subscription;
   disabledOnLoadFormControls: Array<AbstractControl> = [];
+
+  showMainLoadingBar = true;
 
   protected constructor(protected store: Store<AppState>) {
     this.isLoading$ = this.store.pipe(delay(0), select(selectIsLoading), share());

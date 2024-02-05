@@ -31,7 +31,7 @@ export const entityDetailsPageBreadcrumbLabelFunction: BreadCrumbLabelFunction<E
   }
 });
 
-export interface HasShowLoading {
-  showLoadingBar?: boolean;
+export interface HasShowMainLoading {
+  showMainLoadingBar?: boolean;
 }
 

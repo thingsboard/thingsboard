@@ -150,14 +150,14 @@ export class HomeComponent extends PageComponent implements AfterViewInit, OnIni
     this.textSearch.reset('', {emitEvent: false});
     this.activeComponent = activeComponent;
     let showLoadingBar: boolean;
-    if (isDefined(this.activeComponent.activatedRoute?.data?.value?.showLoadingBar)) {
-      showLoadingBar = this.activeComponent.activatedRoute?.data?.value?.showLoadingBar;
-    } else if (isDefined(this.activeComponent?.showLoadingBar)) {
-      showLoadingBar = this.activeComponent.showLoadingBar;
+    if (isDefined(this.activeComponent.activatedRoute?.snapshot?.data?.showMainLoadingBar)) {
+      showLoadingBar = this.activeComponent.activatedRoute.snapshot.data.showMainLoadingBar;
+    } else if (isDefined(this.activeComponent?.showMainLoadingBar)) {
+      showLoadingBar = this.activeComponent.showMainLoadingBar;
     }
     if (activeComponent && activeComponent instanceof RouterTabsComponent) {
       this.hideLoadingBar = isDefinedAndNotNull(showLoadingBar) ? !showLoadingBar : true;
-    } else if (isDefinedAndNotNull(showLoadingBar)) {
+    } else if (activeComponent && activeComponent instanceof PageComponent && isDefinedAndNotNull(showLoadingBar)) {
       this.hideLoadingBar = !showLoadingBar;
     }
     if (this.activeComponent && instanceOfSearchableComponent(this.activeComponent)) {
