@@ -211,13 +211,15 @@ export class SingleSwitchWidgetComponent extends
   }
 
   public onToggleChange(event: MouseEvent) {
-    event.preventDefault();
-    const targetValue = this.value;
-    const targetSetter = targetValue ? this.onValueSetter : this.offValueSetter;
-    this.updateValue(targetSetter, targetValue, {
-      next: () => this.onValue(targetValue),
-      error: () => this.onValue(!targetValue)
-    });
+    if (!this.ctx.isEdit && !this.ctx.isPreview) {
+      event.preventDefault();
+      const targetValue = this.value;
+      const targetSetter = targetValue ? this.onValueSetter : this.offValueSetter;
+      this.updateValue(targetSetter, targetValue, {
+        next: () => this.onValue(targetValue),
+        error: () => this.onValue(!targetValue)
+      });
+    }
   }
 
   private onValue(value: boolean): void {

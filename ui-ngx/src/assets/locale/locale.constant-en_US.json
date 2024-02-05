@@ -5187,6 +5187,11 @@
             "on-click": "On click",
             "on-click-hint": "Action performed when the button is clicked."
         },
+        "command-button": {
+            "behavior": "Behavior",
+            "on-click": "On click",
+            "on-click-hint": "Action performed when the button is clicked."
+        },
         "button": {
             "layout": "Layout",
             "outlined": "Outlined",
