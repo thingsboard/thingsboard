@@ -15,9 +15,19 @@
  */
 package org.thingsboard.server.common.data.alarm.rule.condition;
 
-public enum AlarmConditionSpecType {
-    SIMPLE,
-    DURATION,
-    REPEATING,
-    NO_UPDATE
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+import java.util.concurrent.TimeUnit;
+
+@Data
+@EqualsAndHashCode(callSuper = true)
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class NoUpdateAlarmConditionSpec extends DurationAlarmConditionSpec {
+
+    @Override
+    public AlarmConditionSpecType getType() {
+        return AlarmConditionSpecType.NO_UPDATE;
+    }
 }

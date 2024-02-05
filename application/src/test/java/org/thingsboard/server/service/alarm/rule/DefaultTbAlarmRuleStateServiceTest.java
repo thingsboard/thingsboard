@@ -51,6 +51,7 @@ import org.thingsboard.server.common.data.alarm.rule.condition.ComplexAlarmCondi
 import org.thingsboard.server.common.data.alarm.rule.condition.CustomTimeSchedule;
 import org.thingsboard.server.common.data.alarm.rule.condition.CustomTimeScheduleItem;
 import org.thingsboard.server.common.data.alarm.rule.condition.DurationAlarmConditionSpec;
+import org.thingsboard.server.common.data.alarm.rule.condition.NoUpdateAlarmConditionSpec;
 import org.thingsboard.server.common.data.alarm.rule.condition.Operation;
 import org.thingsboard.server.common.data.alarm.rule.condition.RepeatingAlarmConditionSpec;
 import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionFilter;
@@ -2725,6 +2726,113 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmInfo alarm = alarms.get(0);
         Assert.equals("greaterTemperatureAlarm", alarm.getName());
+        Assert.equals(AlarmStatus.ACTIVE_UNACK, alarm.getStatus());
+    }
+
+    @Test
+    public void testCurrentDeviceAttributeForDynamicNoUpdateDurationValue() throws Exception {
+        DeviceProfile deviceProfile = createDeviceProfile("test profile");
+        deviceProfile.setTenantId(tenantId);
+        deviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
+
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setCustomerId(customerId);
+        device.setName("test device");
+        device.setDeviceProfileId(deviceProfile.getId());
+        device = deviceService.saveDevice(device);
+
+        DeviceId deviceId = device.getId();
+
+        saveAttribute(deviceId, "greaterAttribute", 30L);
+
+        long alarmDelayInSeconds = 5L;
+
+        saveAttribute(deviceId, "alarm_delay", alarmDelayInSeconds);
+
+        AlarmRule alarmRule = new AlarmRule();
+        alarmRule.setTenantId(tenantId);
+        alarmRule.setAlarmType("highTemperatureAlarm");
+        alarmRule.setName("highTemperatureAlarmRule");
+        alarmRule.setEnabled(true);
+
+        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+
+        SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
+        highTempFilter.setLeftArgId("temperatureKey");
+
+        AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setCondition(highTempFilter);
+
+        AlarmRuleArgument alarmDelayKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "alarm_delay"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(10)
+                .sourceType(AlarmRuleArgument.ValueSourceType.CURRENT_ENTITY)
+                .build();
+
+        NoUpdateAlarmConditionSpec durationSpec = new NoUpdateAlarmConditionSpec();
+        durationSpec.setUnit(TimeUnit.SECONDS);
+        durationSpec.setArgumentId("alarmDelayKey");
+        alarmCondition.setSpec(durationSpec);
+
+        AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setArguments(Map.of("temperatureKey", temperatureKey, "alarmDelayKey", alarmDelayKey));
+        alarmRuleCondition.setCondition(alarmCondition);
+        AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
+        alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
+
+        AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(deviceProfile.getId());
+        alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
+        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
+
+        alarmRule.setConfiguration(alarmRuleConfiguration);
+
+        alarmRuleService.saveAlarmRule(tenantId, alarmRule);
+
+        ObjectNode data = JacksonUtil.newObjectNode();
+        data.put("temperature", 35);
+        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+
+        alarmRuleStateService.process(ctx, msg);
+
+        long halfOfAlarmDelay = new BigDecimal(alarmDelayInSeconds)
+                .multiply(BigDecimal.valueOf(1000))
+                .divide(BigDecimal.valueOf(2), 3, RoundingMode.HALF_EVEN)
+                .longValueExact();
+
+        Thread.sleep(halfOfAlarmDelay);
+
+        Mockito.verify(clusterService, Mockito.never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
+
+        TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+
+        alarmRuleStateService.process(ctx, msg2);
+
+        Mockito.verify(clusterService, Mockito.never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
+
+        Thread.sleep(TimeUnit.SECONDS.toMillis(alarmDelayInSeconds));
+
+        TbMsg msg3 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+
+        alarmRuleStateService.process(ctx, msg3); //no update temperature
+
+        Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
+
+        PageData<AlarmInfo> pageData = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
+                new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
+
+        List<AlarmInfo> alarms = pageData.getData();
+        Assert.equals(1, alarms.size());
+
+        AlarmInfo alarm = alarms.get(0);
+        Assert.equals("highTemperatureAlarm", alarm.getName());
         Assert.equals(AlarmStatus.ACTIVE_UNACK, alarm.getStatus());
     }
 

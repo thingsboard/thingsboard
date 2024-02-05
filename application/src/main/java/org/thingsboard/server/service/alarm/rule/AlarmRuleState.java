@@ -17,6 +17,7 @@ package org.thingsboard.server.service.alarm.rule;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
@@ -44,6 +45,9 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import static org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionSpecType.DURATION;
+import static org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionSpecType.NO_UPDATE;
 
 @Data
 @Slf4j
@@ -113,11 +117,14 @@ class AlarmRuleState {
     }
 
     public AlarmEvalResult eval(DataSnapshot data) {
-        boolean active = isActive(data, data.getTs());
+        if (!isActive(data, data.getTs())) {
+            return AlarmEvalResult.FALSE;
+        }
         return switch (spec.getType()) {
-            case SIMPLE -> (active && eval(alarmRule.getCondition(), data)) ? AlarmEvalResult.TRUE : AlarmEvalResult.FALSE;
-            case DURATION -> evalDuration(data, active);
-            case REPEATING -> evalRepeating(data, active);
+            case SIMPLE -> eval(alarmRule.getCondition(), data) ? AlarmEvalResult.TRUE : AlarmEvalResult.FALSE;
+            case DURATION -> evalDuration(data);
+            case REPEATING -> evalRepeating(data);
+            case NO_UPDATE -> evalNoUpdate(data);
         };
     }
 
@@ -207,8 +214,8 @@ class AlarmRuleState {
         }
     }
 
-    private AlarmEvalResult evalRepeating(DataSnapshot data, boolean active) {
-        if (active && eval(alarmRule.getCondition(), data)) {
+    private AlarmEvalResult evalRepeating(DataSnapshot data) {
+        if (eval(alarmRule.getCondition(), data)) {
             state.setEventCount(state.getEventCount() + 1);
             updateFlag = true;
             long requiredRepeats = resolveRequiredRepeats(data);
@@ -218,8 +225,8 @@ class AlarmRuleState {
         }
     }
 
-    private AlarmEvalResult evalDuration(DataSnapshot data, boolean active) {
-        if (active && eval(alarmRule.getCondition(), data)) {
+    private AlarmEvalResult evalDuration(DataSnapshot data) {
+        if (eval(alarmRule.getCondition(), data)) {
             if (state.getLastEventTs() > 0) {
                 if (data.getTs() > state.getLastEventTs()) {
                     state.setDuration(state.getDuration() + (data.getTs() - state.getLastEventTs()));
@@ -238,6 +245,26 @@ class AlarmRuleState {
         }
     }
 
+    private AlarmEvalResult evalNoUpdate(DataSnapshot data) {
+        String argId = ((SimpleAlarmConditionFilter) alarmRule.getCondition().getCondition()).getLeftArgId();
+        EntityKeyValue value = getValue(argId, data);
+        if (value == null && state.getLastEventTs() > 0) {
+            return getNoUpdateResult(data);
+        } else if (value != null && data.getTs() > state.getLastEventTs()) {
+            var result = state.getLastEventTs() > 0 ? getNoUpdateResult(data) : AlarmEvalResult.NOT_YET_TRUE;
+            state.setLastEventTs(data.getTs());
+            updateFlag = true;
+            return result;
+        }
+        return AlarmEvalResult.FALSE;
+    }
+
+    @NotNull
+    private AlarmEvalResult getNoUpdateResult(DataSnapshot data) {
+        long requiredDurationInMs = resolveRequiredDurationInMs(data);
+        return data.getTs() - state.getLastEventTs() > requiredDurationInMs ? AlarmEvalResult.TRUE : AlarmEvalResult.NOT_YET_TRUE;
+    }
+
     private long resolveRequiredRepeats(DataSnapshot data) {
         long repeatingTimes = 0;
         AlarmConditionSpec alarmConditionSpec = getSpec();
@@ -254,7 +281,7 @@ class AlarmRuleState {
         long durationTimeInMs = 0;
         AlarmConditionSpec alarmConditionSpec = getSpec();
         AlarmConditionSpecType specType = alarmConditionSpec.getType();
-        if (specType.equals(AlarmConditionSpecType.DURATION)) {
+        if (specType == DURATION || specType == NO_UPDATE) {
             DurationAlarmConditionSpec duration = (DurationAlarmConditionSpec) spec;
             TimeUnit timeUnit = duration.getUnit();
 
@@ -294,9 +321,13 @@ class AlarmRuleState {
                     long duration = state.getDuration() + (ts - state.getLastEventTs());
                     if (isActive(dataSnapshot, ts)) {
                         return duration > requiredDurationInMs ? AlarmEvalResult.TRUE : AlarmEvalResult.NOT_YET_TRUE;
-                    } else {
-                        return AlarmEvalResult.FALSE;
                     }
+                }
+                return AlarmEvalResult.FALSE;
+            case NO_UPDATE:
+                long requiredNoUpdateDurationInMs = resolveRequiredDurationInMs(dataSnapshot);
+                if (requiredNoUpdateDurationInMs > 0 && state.getLastEventTs() > 0 && ts > state.getLastEventTs()) {
+                    return ts - state.getLastEventTs() > requiredNoUpdateDurationInMs ? AlarmEvalResult.TRUE : AlarmEvalResult.NOT_YET_TRUE;
                 }
             default:
                 return AlarmEvalResult.FALSE;
