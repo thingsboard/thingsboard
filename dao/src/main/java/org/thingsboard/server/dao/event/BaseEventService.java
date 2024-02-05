@@ -130,11 +130,6 @@ public class BaseEventService implements EventService {
         eventDao.cleanupEvents(regularEventExpTs, debugEventExpTs, cleanupDb);
     }
 
-    @Override
-    public void migrateEvents() {
-        eventDao.migrateEvents(ttlInSec > 0 ? (System.currentTimeMillis() - ttlInSec * 1000) : 0, debugTtlInSec > 0 ? (System.currentTimeMillis() - debugTtlInSec * 1000) : 0);
-    }
-
     private PageData<EventInfo> convert(EntityType entityType, PageData<? extends Event> pd) {
         return new PageData<>(pd.getData() == null ? null :
                 pd.getData().stream().map(e -> e.toInfo(entityType)).collect(Collectors.toList())

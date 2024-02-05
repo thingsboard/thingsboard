@@ -128,37 +128,6 @@ public class JpaAuditLogDao extends JpaPartitionedAbstractDao<AuditLogEntity, Au
     }
 
     @Override
-    public void migrateAuditLogs() {
-        long startTime = ttlInSec > 0 ? System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(ttlInSec) : 1480982400000L;
-
-        long currentTime = System.currentTimeMillis();
-        var partitionStepInMs = TimeUnit.HOURS.toMillis(partitionSizeInHours);
-        long numberOfPartitions = (currentTime - startTime) / partitionStepInMs;
-
-        if (numberOfPartitions > 1000) {
-            String error = "Please adjust your audit logs partitioning configuration. Configuration with partition size " +
-                    "of " + partitionSizeInHours + " hours and corresponding TTL will use " + numberOfPartitions + " " +
-                    "(> 1000) partitions which is not recommended!";
-            log.error(error);
-            throw new RuntimeException(error);
-        }
-
-        while (startTime < currentTime) {
-            var endTime = startTime + partitionStepInMs;
-            log.info("Migrating audit logs for time period: {} - {}", startTime, endTime);
-            callMigrationFunction(startTime, endTime, partitionStepInMs);
-            startTime = endTime;
-        }
-        log.info("Audit logs migration finished");
-
-        jdbcTemplate.execute("DROP TABLE IF EXISTS old_audit_log");
-    }
-
-    private void callMigrationFunction(long startTime, long endTime, long partitionSizeInMs) {
-        jdbcTemplate.update("CALL migrate_audit_logs(?, ?, ?)", startTime, endTime, partitionSizeInMs);
-    }
-
-    @Override
     public void createPartition(AuditLogEntity entity) {
         partitioningRepository.createPartitionIfNotExists(TABLE_NAME, entity.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
     }
