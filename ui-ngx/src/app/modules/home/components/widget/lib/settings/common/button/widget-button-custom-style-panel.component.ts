@@ -14,7 +14,16 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+  ViewChild,
+  ViewEncapsulation
+} from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
@@ -32,6 +41,7 @@ import {
 } from '@shared/components/button/widget-button.models';
 import { merge } from 'rxjs';
 import { deepClone } from '@core/utils';
+import { WidgetButtonComponent } from '@shared/components/button/widget-button.component';
 
 @Component({
   selector: 'tb-widget-button-custom-style-panel',
@@ -41,6 +51,9 @@ import { deepClone } from '@core/utils';
   encapsulation: ViewEncapsulation.None
 })
 export class WidgetButtonCustomStylePanelComponent extends PageComponent implements OnInit {
+
+  @ViewChild('widgetButtonPreview')
+  widgetButtonPreview: WidgetButtonComponent;
 
   @Input()
   appearance: WidgetButtonAppearance;
@@ -54,8 +67,19 @@ export class WidgetButtonCustomStylePanelComponent extends PageComponent impleme
   @Input()
   customStyle: WidgetButtonCustomStyle;
 
+  private popoverValue: TbPopoverComponent<WidgetButtonCustomStylePanelComponent>;
+
   @Input()
-  popover: TbPopoverComponent<WidgetButtonCustomStylePanelComponent>;
+  set popover(popover: TbPopoverComponent<WidgetButtonCustomStylePanelComponent>) {
+    this.popoverValue = popover;
+    popover.tbAnimationDone.subscribe(() => {
+      this.widgetButtonPreview?.validateSize();
+    });
+  }
+
+  get popover(): TbPopoverComponent<WidgetButtonCustomStylePanelComponent> {
+    return this.popoverValue;
+  }
 
   @Output()
   customStyleApplied = new EventEmitter<WidgetButtonCustomStyle>();
@@ -125,7 +149,7 @@ export class WidgetButtonCustomStylePanelComponent extends PageComponent impleme
     if (customStyle?.overrideBackgroundColor) {
       backgroundColor = customStyle?.backgroundColor;
     }
-    let dropShadow = this.appearance.type === WidgetButtonType.basic ? false : true;
+    let dropShadow = this.appearance.type !== WidgetButtonType.basic;
     if (customStyle?.overrideDropShadow) {
       dropShadow = customStyle?.dropShadow;
     }

@@ -34,6 +34,6 @@
         [style.pointer-events]="disableEvents ? 'none' : ''">
   <div #widgetButtonContent class="tb-widget-button-content" *ngIf="appearance.showIcon || appearance.showLabel">
     <tb-icon matButtonIcon *ngIf="appearance.showIcon" [style]="iconStyle">{{ appearance.icon }}</tb-icon>
-    <span *ngIf="appearance.showLabel" class="tb-widget-button-label">{{ appearance.label }}</span>
+    <span *ngIf="appearance.showLabel" class="tb-widget-button-label">{{ label$ | async }}</span>
   </div>
 </button>
