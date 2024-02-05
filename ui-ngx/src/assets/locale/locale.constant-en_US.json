@@ -6522,12 +6522,15 @@
         "rpc-state": {
             "initial-state": "Initial state",
             "initial-state-hint": "Action to get the initial value of the component.",
+            "disabled-state": "Disabled state",
+            "disabled-state-hint": "Condition under which the component is disabled.",
             "turn-on": "Turn 'On'",
             "turn-on-hint": "Action performed to turn ON the component.",
             "turn-off": "Turn 'Off'",
             "turn-off-hint": "Action performed to turn OFF the component.",
             "on": "On",
-            "off": "Off"
+            "off": "Off",
+            "disabled": "Disabled"
         },
         "value-action": {
             "do-nothing": "Do nothing",

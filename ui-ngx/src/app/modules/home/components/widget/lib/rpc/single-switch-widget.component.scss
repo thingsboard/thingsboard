@@ -29,15 +29,15 @@ $switchColorDisabled: var(--tb-single-switch-color-disabled, #D5D7E5);
   align-items: center;
   justify-content: center;
   padding: 18px 24px;
+  &.auto-scale {
+    padding: 0;
+  }
   > div:not(.tb-single-switch-overlay), > tb-icon {
     z-index: 1;
   }
   .tb-single-switch-overlay {
     position: absolute;
-    top: 12px;
-    left: 12px;
-    bottom: 12px;
-    right: 12px;
+    inset: 12px;
   }
   .tb-single-switch-progress {
     position: absolute;

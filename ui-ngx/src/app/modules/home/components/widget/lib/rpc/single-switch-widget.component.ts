@@ -45,6 +45,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { ValueType } from '@shared/models/constants';
 import { UtilsService } from '@core/services/utils.service';
 
+const initialSwitchHeight = 60;
 const horizontalLayoutPadding = 48;
 const verticalLayoutPadding = 36;
 
@@ -73,8 +74,10 @@ export class SingleSwitchWidgetComponent extends
 
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
+  overlayInset = '12px';
 
   value = false;
+  disabled = false;
 
   layout: SingleSwitchLayout;
 
@@ -159,6 +162,12 @@ export class SingleSwitchWidgetComponent extends
       next: (value) => this.onValue(value)
     });
 
+    const disabledStateSettings =
+      {...this.settings.disabledState, actionLabel: this.ctx.translate.instant('widgets.rpc-state.disabled-state')};
+    this.createValueGetter(disabledStateSettings, ValueType.BOOLEAN, {
+      next: (value) => this.onDisabled(value)
+    });
+
     const onUpdateStateSettings = {...this.settings.onUpdateState,
       actionLabel: this.ctx.translate.instant('widgets.rpc-state.turn-on')};
     this.onValueSetter = this.createValueSetter(onUpdateStateSettings);
@@ -216,20 +225,59 @@ export class SingleSwitchWidgetComponent extends
     this.cd.markForCheck();
   }
 
+  private onDisabled(value: boolean): void {
+    this.disabled = !!value;
+    if (this.disabled) {
+      if (this.showLabel) {
+        this.labelStyle = {...this.labelStyle, color: 'rgba(0, 0, 0, 0.38)'};
+      }
+      if (this.showIcon) {
+        this.iconStyle = {...this.iconStyle, color: 'rgba(0, 0, 0, 0.38)'};
+      }
+      if (this.showOnLabel) {
+        this.onLabelStyle = {...this.onLabelStyle, color: 'rgba(0, 0, 0, 0.38)'};
+      }
+      if (this.showOffLabel) {
+        this.offLabelStyle = {...this.offLabelStyle, color: 'rgba(0, 0, 0, 0.38)'};
+      }
+    } else {
+      if (this.showLabel) {
+        this.labelStyle = {...this.labelStyle, color: this.settings.labelColor};
+      }
+      if (this.showIcon) {
+        this.iconStyle = {...this.iconStyle, color: this.settings.iconColor};
+      }
+      if (this.showOnLabel) {
+        this.onLabelStyle = {...this.onLabelStyle, color: this.settings.onLabelColor};
+      }
+      if (this.showOffLabel) {
+        this.offLabelStyle = {...this.offLabelStyle, color: this.settings.offLabelColor};
+      }
+    }
+    this.cd.markForCheck();
+  }
+
   private onResize() {
-    const panelWidth = this.singleSwitchPanel.nativeElement.getBoundingClientRect().width - horizontalLayoutPadding;
-    const panelHeight = this.singleSwitchPanel.nativeElement.getBoundingClientRect().height - verticalLayoutPadding;
+    const height = this.singleSwitchPanel.nativeElement.getBoundingClientRect().height;
+    const switchScale = height / initialSwitchHeight;
+    const paddingScale = Math.min(switchScale, 1);
+    const panelWidth = this.singleSwitchPanel.nativeElement.getBoundingClientRect().width - (horizontalLayoutPadding * paddingScale);
+    const panelHeight = this.singleSwitchPanel.nativeElement.getBoundingClientRect().height - (verticalLayoutPadding * paddingScale);
     this.renderer.setStyle(this.singleSwitchContent.nativeElement, 'transform', `scale(1)`);
+    this.renderer.setStyle(this.singleSwitchContent.nativeElement, 'width', 'auto');
     let contentWidth = this.singleSwitchToggleRow.nativeElement.getBoundingClientRect().width;
     let contentHeight = this.singleSwitchToggleRow.nativeElement.getBoundingClientRect().height;
     if (this.showIcon || this.showLabel) {
       contentWidth += (8 + this.singleSwitchLabelRow.nativeElement.getBoundingClientRect().width);
       contentHeight = Math.max(contentHeight, this.singleSwitchLabelRow.nativeElement.getBoundingClientRect().height);
     }
-    const scale = Math.min(panelWidth / contentWidth, panelHeight / contentHeight);
+    const maxScale = Math.max(1, switchScale);
+    const scale = Math.min(Math.min(panelWidth / contentWidth, panelHeight / contentHeight), maxScale);
     const width = panelWidth / scale;
     this.renderer.setStyle(this.singleSwitchContent.nativeElement, 'width', width + 'px');
     this.renderer.setStyle(this.singleSwitchContent.nativeElement, 'transform', `scale(${scale})`);
+    this.overlayInset = (Math.floor(12 * paddingScale * 100) / 100) + 'px';
+    this.cd.markForCheck();
   }
 
 }
