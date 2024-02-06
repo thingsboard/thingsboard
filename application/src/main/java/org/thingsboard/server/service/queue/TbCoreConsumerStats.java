@@ -184,9 +184,9 @@ public class TbCoreConsumerStats {
             toCoreNfEdgeSyncResponseCounter.increment();
         } else if (!msg.getFromEdgeSyncResponseMsg().isEmpty()) {
             toCoreNfEdgeSyncResponseCounter.increment();
-        } else if (msg.hasQueueUpdateMsg()) {
+        } else if (msg.getQueueUpdateMsgsCount() > 0) {
             toCoreNfQueueUpdateCounter.increment();
-        } else if (msg.hasQueueDeleteMsg()) {
+        } else if (msg.getQueueDeleteMsgsCount() > 0) {
             toCoreNfQueueDeleteCounter.increment();
         } else if (msg.hasVcResponseMsg()) {
             toCoreNfVersionControlResponseCounter.increment();
