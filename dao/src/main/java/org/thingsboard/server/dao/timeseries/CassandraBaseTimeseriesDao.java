@@ -86,7 +86,7 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     public static final String ASC_ORDER = "ASC";
     public static final long SECONDS_IN_DAY = TimeUnit.DAYS.toSeconds(1);
     protected static final List<Long> FIXED_PARTITION = List.of(0L);
-    private static String INSERT_WITH_NULL = INSERT_INTO + ModelConstants.TS_KV_CF +
+    protected static final String INSERT_WITH_NULL = INSERT_INTO + ModelConstants.TS_KV_CF +
             "(" + ModelConstants.ENTITY_TYPE_COLUMN +
             "," + ModelConstants.ENTITY_ID_COLUMN +
             "," + ModelConstants.KEY_COLUMN +
