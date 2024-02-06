@@ -55,9 +55,11 @@ class EntityRulesState {
     void updateAlarmRule(AlarmRule alarmRule) {
         alarmRules.put(alarmRule.getId(), alarmRule);
         alarmCreateKeys.get(alarmRule.getId()).clear();
-        alarmClearKeys.get(alarmRule.getId()).clear();
+        var keys = alarmClearKeys.get(alarmRule.getId());
+        if (keys != null) {
+            keys.clear();
+        }
         entityKeys.clear();
-
         alarmRules.values().forEach(this::addAlarmRuleKeys);
     }
 

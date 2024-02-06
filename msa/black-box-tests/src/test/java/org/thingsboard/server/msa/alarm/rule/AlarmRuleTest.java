@@ -53,23 +53,23 @@ import static org.thingsboard.server.msa.prototypes.DevicePrototypes.defaultDevi
 public class AlarmRuleTest extends AbstractContainerTest {
 
     private Device device;
-    private AlarmRule alarmRule;
 
     @BeforeMethod
     public void setUp() {
         testRestClient.login("tenant@thingsboard.org", "tenant");
         device = testRestClient.postDevice("", defaultDevicePrototype("alarmRule_"));
-        alarmRule = createAlarmRule();
     }
 
     @AfterMethod
     public void tearDown() {
         testRestClient.deleteDeviceIfExists(device.getId());
-        testRestClient.deleteAlarmRule(alarmRule.getId());
     }
 
     @Test
-    public void telemetryUpload() throws Exception {
+    public void testCreateAndClearAlarm() throws Exception {
+        var alarmRule = createAlarmRule();
+        alarmRule = testRestClient.postAlarmRule(alarmRule);
+
         DeviceCredentials deviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
 
         WsClient wsClient = subscribeToWebSocket(device.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
@@ -113,6 +113,145 @@ public class AlarmRuleTest extends AbstractContainerTest {
         assertThat(alarm.getType()).isEqualTo("highTemperatureAlarm");
         assertThat(alarm.isCleared()).isEqualTo(true);
         assertThat(alarm.isAcknowledged()).isEqualTo(false);
+
+        testRestClient.deleteAlarmRule(alarmRule.getId());
+    }
+
+    @Test
+    public void testCreateAndClearAlarmAfterAlarmRuleUpdate() throws Exception {
+        var alarmRule = createAlarmRule();
+
+        AlarmRuleCondition clearRule = alarmRule.getConfiguration().getClearRule();
+
+        alarmRule.getConfiguration().setClearRule(null);
+
+        alarmRule = testRestClient.postAlarmRule(alarmRule);
+
+        DeviceCredentials deviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
+
+        WsClient wsClient = subscribeToWebSocket(device.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
+        testRestClient.postTelemetry(deviceCredentials.getCredentialsId(), mapper.valueToTree(Map.of("temperature", 42.0)));
+
+        WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
+        wsClient.closeBlocking();
+
+        assertThat(actualLatestTelemetry.getDataValuesByKey("temperature").get(1)).isEqualTo(Double.toString(42.0));
+
+        PageData<AlarmInfo> data = testRestClient.getEntityAlarms(device.getId(), new TimePageLink(10));
+        assertThat(data).isNotNull();
+
+        List<AlarmInfo> alarms = data.getData();
+        assertThat(alarms).isNotNull();
+        assertThat(alarms.size()).isEqualTo(1);
+
+        AlarmInfo alarm = alarms.get(0);
+
+        assertThat(alarm).isNotNull();
+        assertThat(alarm.getType()).isEqualTo("highTemperatureAlarm");
+        assertThat(alarm.isCleared()).isEqualTo(false);
+        assertThat(alarm.isAcknowledged()).isEqualTo(false);
+
+        wsClient = subscribeToWebSocket(device.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
+        testRestClient.postTelemetry(deviceCredentials.getCredentialsId(), mapper.valueToTree(Map.of("temperature", 5.0)));
+
+        actualLatestTelemetry = wsClient.getLastMessage();
+        wsClient.closeBlocking();
+
+        assertThat(actualLatestTelemetry.getDataValuesByKey("temperature").get(1)).isEqualTo(Double.toString(5.0));
+
+        data = testRestClient.getEntityAlarms(device.getId(), new TimePageLink(10));
+        alarms = data.getData();
+        assertThat(alarms).isNotNull();
+        assertThat(alarms.size()).isEqualTo(1);
+
+        alarm = alarms.get(0);
+
+        assertThat(alarm).isNotNull();
+        assertThat(alarm.getType()).isEqualTo("highTemperatureAlarm");
+        assertThat(alarm.isCleared()).isEqualTo(false);
+        assertThat(alarm.isAcknowledged()).isEqualTo(false);
+
+        alarmRule.getConfiguration().setClearRule(clearRule);
+
+        alarmRule = testRestClient.postAlarmRule(alarmRule);
+
+        wsClient = subscribeToWebSocket(device.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
+        testRestClient.postTelemetry(deviceCredentials.getCredentialsId(), mapper.valueToTree(Map.of("temperature", 5.0)));
+
+        actualLatestTelemetry = wsClient.getLastMessage();
+        wsClient.closeBlocking();
+
+        assertThat(actualLatestTelemetry.getDataValuesByKey("temperature").get(1)).isEqualTo(Double.toString(5.0));
+
+        data = testRestClient.getEntityAlarms(device.getId(), new TimePageLink(10));
+        alarms = data.getData();
+        assertThat(alarms).isNotNull();
+        assertThat(alarms.size()).isEqualTo(1);
+
+        alarm = alarms.get(0);
+
+        assertThat(alarm).isNotNull();
+        assertThat(alarm.getType()).isEqualTo("highTemperatureAlarm");
+        assertThat(alarm.isCleared()).isEqualTo(true);
+        assertThat(alarm.isAcknowledged()).isEqualTo(false);
+
+        testRestClient.deleteAlarmRule(alarmRule.getId());
+    }
+
+    @Test
+    public void testCreateAndNotClearAlarmAfterAlarmRuleUpdate() throws Exception {
+        var alarmRule = createAlarmRule();
+        alarmRule = testRestClient.postAlarmRule(alarmRule);
+
+        DeviceCredentials deviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
+
+        WsClient wsClient = subscribeToWebSocket(device.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
+        testRestClient.postTelemetry(deviceCredentials.getCredentialsId(), mapper.valueToTree(Map.of("temperature", 42.0)));
+
+        WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
+        wsClient.closeBlocking();
+
+        assertThat(actualLatestTelemetry.getDataValuesByKey("temperature").get(1)).isEqualTo(Double.toString(42.0));
+
+        PageData<AlarmInfo> data = testRestClient.getEntityAlarms(device.getId(), new TimePageLink(10));
+        assertThat(data).isNotNull();
+
+        List<AlarmInfo> alarms = data.getData();
+        assertThat(alarms).isNotNull();
+        assertThat(alarms.size()).isEqualTo(1);
+
+        AlarmInfo alarm = alarms.get(0);
+
+        assertThat(alarm).isNotNull();
+        assertThat(alarm.getType()).isEqualTo("highTemperatureAlarm");
+        assertThat(alarm.isCleared()).isEqualTo(false);
+        assertThat(alarm.isAcknowledged()).isEqualTo(false);
+
+        alarmRule.getConfiguration().setClearRule(null);
+
+        alarmRule = testRestClient.postAlarmRule(alarmRule);
+
+        wsClient = subscribeToWebSocket(device.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
+        testRestClient.postTelemetry(deviceCredentials.getCredentialsId(), mapper.valueToTree(Map.of("temperature", 5.0)));
+
+        actualLatestTelemetry = wsClient.getLastMessage();
+        wsClient.closeBlocking();
+
+        assertThat(actualLatestTelemetry.getDataValuesByKey("temperature").get(1)).isEqualTo(Double.toString(5.0));
+
+        data = testRestClient.getEntityAlarms(device.getId(), new TimePageLink(10));
+        alarms = data.getData();
+        assertThat(alarms).isNotNull();
+        assertThat(alarms.size()).isEqualTo(1);
+
+        alarm = alarms.get(0);
+
+        assertThat(alarm).isNotNull();
+        assertThat(alarm.getType()).isEqualTo("highTemperatureAlarm");
+        assertThat(alarm.isCleared()).isEqualTo(false);
+        assertThat(alarm.isAcknowledged()).isEqualTo(false);
+
+        testRestClient.deleteAlarmRule(alarmRule.getId());
     }
 
     private AlarmRule createAlarmRule() {
@@ -166,8 +305,7 @@ public class AlarmRuleTest extends AbstractContainerTest {
         alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         alarmRule.setConfiguration(alarmRuleConfiguration);
-
-        return testRestClient.postAlarmRule(alarmRule);
+        return alarmRule;
     }
 
 }
