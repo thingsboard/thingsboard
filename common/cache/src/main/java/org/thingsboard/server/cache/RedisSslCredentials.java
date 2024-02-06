@@ -16,21 +16,17 @@
 package org.thingsboard.server.cache;
 
 import lombok.Data;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
+@Configuration
+@ConfigurationProperties(prefix = "redis.ssl.credentials")
 @Data
-public class RedisKeystoreCredentialsConfig {
+public class RedisSslCredentials {
 
-    private String type;
+    private String certFile;
 
-    private String truststoreType;
+    private String userCertFile;
 
-    private String truststoreLocation;
-
-    private String truststorePassword;
-
-    private String keystoreType;
-
-    private String keystoreLocation;
-
-    private String keystorePassword;
+    private String userKeyFile;
 }

@@ -42,11 +42,14 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
-import java.io.FileInputStream;
+import java.io.IOException;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.cert.CertPath;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.time.Duration;
@@ -100,13 +103,16 @@ public abstract class TBRedisCacheConfiguration {
     @Value("${redis.pool_config.blockWhenExhausted:true}")
     private boolean blockWhenExhausted;
 
+    @Value("${redis.ssl.enabled:false}")
+    private boolean sslEnabled;
+
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
         return loadFactory();
     }
 
     @Autowired
-    private RedisSslCredentialsConfiguration redisSslCredentials;
+    private RedisSslCredentials redisSslCredentials;
 
     protected abstract JedisConnectionFactory loadFactory();
 
@@ -176,57 +182,35 @@ public abstract class TBRedisCacheConfiguration {
             sslContext.init(keyManagerFactory == null ? null : keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
             return sslContext.getSocketFactory();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Creating TLS factory failed!", e);
         }
     }
 
     private TrustManagerFactory createAndInitTrustManagerFactory() throws Exception {
-        String type = redisSslCredentials.getType();
-        if ("pem".equals(type)) {
-            RedisPemCredentialsConfig pemCredentials = redisSslCredentials.getPem();
-            List<X509Certificate> caCerts = SslUtil.readCertFileByPath(pemCredentials.getCertFile());
-
+            List<X509Certificate> caCerts = SslUtil.readCertFileByPath(redisSslCredentials.getCertFile());
             KeyStore caKeyStore = KeyStore.getInstance(KeyStore.getDefaultType());
             caKeyStore.load(null, null);
             for (X509Certificate caCert : caCerts) {
                 caKeyStore.setCertificateEntry("redis-caCert-cert-" + caCert.getSubjectX500Principal().getName(), caCert);
             }
 
-            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("X509");
+            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             trustManagerFactory.init(caKeyStore);
             return trustManagerFactory;
-        } else if ("keystore".equals(type)) {
-            RedisKeystoreCredentialsConfig keystore = redisSslCredentials.getKeystore();
-            KeyStore trustStore = KeyStore.getInstance(keystore.getKeystoreType());
-            trustStore.load(new FileInputStream(keystore.getTruststoreLocation()), keystore.getTruststorePassword().toCharArray());
-
-            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("X509");
-            trustManagerFactory.init(trustStore);
-            return trustManagerFactory;
-        } else {
-            throw new RuntimeException(type + ": Invalid SSL credentials configuration. None of the PEM or KEYSTORE configurations can be used!");
-        }
     }
 
     private KeyManagerFactory createAndInitKeyManagerFactory() throws Exception {
-        String type = redisSslCredentials.getType();
-        if ("pem".equals(type)) {
-            RedisPemCredentialsConfig pemCredentials = redisSslCredentials.getPem();
-            return getKeyManagerFactory(pemCredentials);
-        } else if ("keystore".equals(type)) {
-            RedisKeystoreCredentialsConfig keystore = redisSslCredentials.getKeystore();
-            return getKeyManagerFactory(keystore);
-        } else {
-            throw new RuntimeException(type + ": Invalid SSL credentials configuration. None of the PEM or KEYSTORE configurations can be used!");
-        }
+        KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        kmf.init(loadKeyStore(), null);
+        return kmf;
     }
 
-    private KeyManagerFactory getKeyManagerFactory(RedisPemCredentialsConfig pemCredentials) throws Exception {
-        if (pemCredentials.getUserCertFile().isBlank() || pemCredentials.getUserKeyFile().isBlank()) {
+    private KeyStore loadKeyStore() throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
+        if (redisSslCredentials.getUserCertFile().isBlank() || redisSslCredentials.getUserKeyFile().isBlank()) {
             return null;
         }
-        List<X509Certificate> certificates = SslUtil.readCertFileByPath(pemCredentials.getCertFile());
-        PrivateKey privateKey = SslUtil.readPrivateKeyByFilePath(pemCredentials.getUserKeyFile(), null);
+        List<X509Certificate> certificates = SslUtil.readCertFileByPath(redisSslCredentials.getCertFile());
+        PrivateKey privateKey = SslUtil.readPrivateKeyByFilePath(redisSslCredentials.getUserKeyFile(), null);
 
         KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
         keyStore.load(null);
@@ -242,21 +226,6 @@ public abstract class TBRedisCacheConfiguration {
             Certificate[] x509Certificates = path.toArray(new Certificate[0]);
             keyStore.setKeyEntry("redis-private-key", privateKey, null, x509Certificates);
         }
-
-        KeyManagerFactory kmf = KeyManagerFactory.getInstance("PKIX");
-        kmf.init(keyStore, null);
-        return kmf;
-    }
-
-    private KeyManagerFactory getKeyManagerFactory(RedisKeystoreCredentialsConfig keystore) throws Exception {
-        if (keystore.getKeystoreLocation().isBlank() || keystore.getKeystoreLocation().isBlank()) {
-            return null;
-        }
-        KeyStore keyStore = KeyStore.getInstance(keystore.getKeystoreType());
-        keyStore.load(new FileInputStream(keystore.getKeystoreLocation()), keystore.getKeystorePassword().toCharArray());
-
-        KeyManagerFactory kmf = KeyManagerFactory.getInstance("PKIX");
-        kmf.init(keyStore, keystore.getKeystorePassword().toCharArray());
-        return kmf;
+        return keyStore;
     }
 }
