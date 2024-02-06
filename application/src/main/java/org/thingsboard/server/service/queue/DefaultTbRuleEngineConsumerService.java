@@ -69,7 +69,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<ToRuleEngineNotificationMsg> implements TbRuleEngineConsumerService {
 
-    @Value("${queue.rule-engine.stats.print-interval-ms}")
+    @Value("${queue.rule-engine.stats.print-interval-ms:60000}")
     private long statsPrintInterval;
     private final TbRuleEngineConsumerContext ctx;
     private final QueueService queueService;

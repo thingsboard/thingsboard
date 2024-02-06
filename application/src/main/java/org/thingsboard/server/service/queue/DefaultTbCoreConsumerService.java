@@ -123,7 +123,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     private long packProcessingTimeout;
     @Value("${queue.core.stats.enabled:false}")
     private boolean statsEnabled;
-    @Value("${queue.core.stats.print-interval-ms}")
+    @Value("${queue.core.stats.print-interval-ms:60000}")
     private long statsPrintInterval;
     @Value("${queue.core.ota.pack-interval-ms:60000}")
     private long firmwarePackInterval;

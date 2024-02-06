@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueProducer;
@@ -73,6 +74,8 @@ public class DefaultTbClusterServiceTest {
     protected TbAssetProfileCache assetProfileCache;
     @MockBean
     protected GatewayNotificationsService gatewayNotificationsService;
+    @MockBean
+    protected TbPrintStatsExecutorService tbPrintStatsExecutorService;
     @MockBean
     protected EdgeService edgeService;
     @MockBean

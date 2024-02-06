@@ -51,7 +51,7 @@ public class CassandraBufferedRateReadExecutor extends AbstractBufferedRateExecu
             @Value("${cassandra.query.poll_ms:50}") long pollMs,
             @Value("${cassandra.query.tenant_rate_limits.print_tenant_names}") boolean printTenantNames,
             @Value("${cassandra.query.print_queries_freq:0}") int printQueriesFreq,
-            @Value("${cassandra.query.rate_limit_print_interval_ms}") long printInterval,
+            @Value("${cassandra.query.rate_limit_print_interval_ms:10000}") long printInterval,
             @Autowired StatsFactory statsFactory,
             @Autowired EntityService entityService,
             @Autowired RateLimitService rateLimitService,

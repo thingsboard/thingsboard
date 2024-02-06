@@ -485,7 +485,7 @@ public class ActorSystemContext {
     @Getter
     private boolean statisticsEnabled;
 
-    @Value("${actors.statistics.js_print_interval_ms}")
+    @Value("${actors.statistics.js_print_interval_ms:10000}")
     private long statisticsPrintInterval;
 
     @Value("${actors.statistics.persist_frequency:3600000}")

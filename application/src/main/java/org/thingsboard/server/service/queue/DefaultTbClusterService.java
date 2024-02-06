@@ -96,7 +96,7 @@ public class DefaultTbClusterService implements TbClusterService {
 
     @Value("${cluster.stats.enabled:false}")
     private boolean statsEnabled;
-    @Value("${cluster.stats.print_interval_ms}")
+    @Value("${cluster.stats.print_interval_ms:10000}")
     private long statsPrintInterval;
     @Value("${edges.enabled:true}")
     protected boolean edgesEnabled;

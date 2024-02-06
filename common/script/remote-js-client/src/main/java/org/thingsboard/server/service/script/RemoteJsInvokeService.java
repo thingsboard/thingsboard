@@ -79,7 +79,7 @@ public class RemoteJsInvokeService extends AbstractJsInvokeService {
     private boolean statsEnabled;
 
     @Getter
-    @Value("${js.remote.stats.print_interval_ms}")
+    @Value("${js.remote.stats.print_interval_ms:10000}")
     private long statsPrintInterval;
 
     private final ExecutorService callbackExecutor = Executors.newFixedThreadPool(
