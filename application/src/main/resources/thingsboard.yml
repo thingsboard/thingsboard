@@ -1013,7 +1013,7 @@ transport:
       # - 'on' to activate Connection ID support (same as CID 0 or more 0).
       # - A positive value defines generated CID size in bytes.
       # - A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic).
-      # - A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used
+      # - A value between 1 and <= 4: SingleNodeConnectionIdGenerator is used
       # - A value that are > 4: MultiNodeConnectionIdGenerator is used
       connection_id_length: "${COAP_DTLS_CONNECTION_ID_LENGTH:}"
       # Server DTLS credentials
@@ -1061,7 +1061,7 @@ transport:
       # - 'on' to activate Connection ID support (same as CID 0 or more 0).
       # - A positive value defines generated CID size in bytes.
       # - A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic).
-      # - A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used
+      # - A value between 1 and <= 4: SingleNodeConnectionIdGenerator is used
       # - A value that are > 4: MultiNodeConnectionIdGenerator is used
       connection_id_length: "${LWM2M_DTLS_CONNECTION_ID_LENGTH:}"
     server:

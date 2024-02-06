@@ -106,14 +106,18 @@ public class SslUtil {
         return privateKey;
     }
 
-    public static void setDtlsConnectorConfigCidLength (DtlsConnectorConfig.Builder configBuilder, Integer cid) {
-        configBuilder.set(DTLS_CONNECTION_ID_LENGTH, cid);
-        if (cid != null) {
-            if (cid > 4) {
+    public static void setDtlsConnectorConfigCidLength (DtlsConnectorConfig.Builder configBuilder, Integer dtlsCidLength) {
+        configBuilder.set(DTLS_CONNECTION_ID_LENGTH, dtlsCidLength);
+        if (dtlsCidLength != null) {
+            if (dtlsCidLength > 4) {
                 configBuilder.set(DTLS_CONNECTION_ID_NODE_ID, 0);
             } else {
                 configBuilder.set(DTLS_CONNECTION_ID_NODE_ID, null);
             }
         }
+    }
+
+    public static boolean isUsedNodeConnectionIdGenerator(Integer dtlsCidLength){
+        return dtlsCidLength != null && dtlsCidLength > 0;
     }
 }

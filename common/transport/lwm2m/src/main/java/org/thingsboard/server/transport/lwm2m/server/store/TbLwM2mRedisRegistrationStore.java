@@ -29,6 +29,7 @@ import org.eclipse.leshan.core.util.NamedThreadFactory;
 import org.eclipse.leshan.core.util.Validate;
 import org.eclipse.leshan.server.californium.registration.CaliforniumRegistrationStore;
 import org.eclipse.leshan.server.redis.RedisRegistrationStore;
+import org.eclipse.leshan.server.redis.serialization.IdentitySerDes;
 import org.eclipse.leshan.server.redis.serialization.ObservationSerDes;
 import org.eclipse.leshan.server.redis.serialization.RegistrationSerDes;
 import org.eclipse.leshan.server.registration.Deregistration;
@@ -44,7 +45,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.integration.redis.util.RedisLockRegistry;
-import org.thingsboard.server.transport.lwm2m.server.store.util.LwM2MIdentitySerDes;
+import org.thingsboard.server.transport.lwm2m.server.store.util.LwM2MIdentitySerializer;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -62,6 +63,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.thingsboard.common.util.SslUtil.isUsedNodeConnectionIdGenerator;
 
 public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationStore, Startable, Stoppable, Destroyable {
     /** Default time in seconds between 2 cleaning tasks (used to remove expired registration). */
@@ -95,27 +97,29 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
     private final long cleanPeriod; // in seconds
     private final int cleanLimit; // maximum number to clean in a clean period
     private final long gracePeriod; // in seconds
+    private final Integer dtlsCidLength; // null/0/1-6
 
     private final RedisLockRegistry redisLock;
 
-    public TbLwM2mRedisRegistrationStore(RedisConnectionFactory connectionFactory) {
-        this(connectionFactory, DEFAULT_CLEAN_PERIOD, DEFAULT_GRACE_PERIOD, DEFAULT_CLEAN_LIMIT); // default clean period 60s
+    public TbLwM2mRedisRegistrationStore(RedisConnectionFactory connectionFactory, Integer dtlsCidLength) {
+        this(connectionFactory, DEFAULT_CLEAN_PERIOD, DEFAULT_GRACE_PERIOD, DEFAULT_CLEAN_LIMIT, dtlsCidLength); // default clean period 60s
     }
 
-    public TbLwM2mRedisRegistrationStore(RedisConnectionFactory connectionFactory, long cleanPeriodInSec, long lifetimeGracePeriodInSec, int cleanLimit) {
+    public TbLwM2mRedisRegistrationStore(RedisConnectionFactory connectionFactory, long cleanPeriodInSec, long lifetimeGracePeriodInSec, int cleanLimit,  Integer dtlsCidLength) {
         this(connectionFactory, Executors.newScheduledThreadPool(1,
                 new NamedThreadFactory(String.format("RedisRegistrationStore Cleaner (%ds)", cleanPeriodInSec))),
-                cleanPeriodInSec, lifetimeGracePeriodInSec, cleanLimit);
+                cleanPeriodInSec, lifetimeGracePeriodInSec, cleanLimit, dtlsCidLength);
     }
 
     public TbLwM2mRedisRegistrationStore(RedisConnectionFactory connectionFactory, ScheduledExecutorService schedExecutor, long cleanPeriodInSec,
-                                         long lifetimeGracePeriodInSec, int cleanLimit) {
+                                         long lifetimeGracePeriodInSec, int cleanLimit, Integer dtlsCidLength) {
         this.connectionFactory = connectionFactory;
         this.schedExecutor = schedExecutor;
         this.cleanPeriod = cleanPeriodInSec;
         this.cleanLimit = cleanLimit;
         this.gracePeriod = lifetimeGracePeriodInSec;
         this.redisLock = new RedisLockRegistry(connectionFactory, "Registration");
+        this.dtlsCidLength = dtlsCidLength;
     }
 
     /* *************** Redis Key utility function **************** */
@@ -173,9 +177,16 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
                     if (!oldRegistration.getSocketAddress().equals(registration.getSocketAddress())) {
                         removeAddrIndex(connection, oldRegistration);
                     }
-                    if (registrationsHaveDifferentIdentities(oldRegistration, registration)) {
-                        removeIdentityIndex(connection, oldRegistration);
+                    if (isUsedNodeConnectionIdGenerator(this.dtlsCidLength)) {
+                        if (registrationsDtlsCidLength(oldRegistration, registration)) {
+                            removeIdentityIndex(connection, oldRegistration);
+                        }
+                    } else {
+                        if (!oldRegistration.getIdentity().equals(registration.getIdentity())) {
+                            removeIdentityIndex(connection, oldRegistration);
+                        }
                     }
+
                     // remove old observation
                     Collection<Observation> obsRemoved = unsafeRemoveAllObservations(connection, oldRegistration.getId());
 
@@ -231,8 +242,14 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
                 if (!r.getSocketAddress().equals(updatedRegistration.getSocketAddress())) {
                     removeAddrIndex(connection, r);
                 }
-                if (registrationsHaveDifferentIdentities(r, updatedRegistration)) {
-                    removeIdentityIndex(connection, r);
+                if (isUsedNodeConnectionIdGenerator(this.dtlsCidLength)) {
+                    if (registrationsDtlsCidLength(r, updatedRegistration)) {
+                        removeIdentityIndex(connection, r);
+                    }
+                } else {
+                    if (!r.getIdentity().equals(updatedRegistration.getIdentity())) {
+                        removeIdentityIndex(connection, r);
+                    }
                 }
 
                 return new UpdatedRegistration(r, updatedRegistration);
@@ -402,10 +419,10 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
         connection.zRem(EXP_EP, registration.getEndpoint().getBytes(UTF_8));
     }
 
-    private boolean registrationsHaveDifferentIdentities(Registration startReg, Registration updateReg){
-        var startRegIdentityString = LwM2MIdentitySerDes.serialize(startReg.getIdentity()).toString();
-        var updateRegIdentityString = LwM2MIdentitySerDes.serialize(updateReg.getIdentity()).toString();
-        return !startRegIdentityString.equals(updateRegIdentityString);
+    private boolean registrationsDtlsCidLength(Registration oldReg, Registration updateReg){
+        var oldRegIdentityString = LwM2MIdentitySerializer.serialize(oldReg.getIdentity()).toString();
+        var updateRegIdentityString = LwM2MIdentitySerializer.serialize(updateReg.getIdentity()).toString();
+        return !oldRegIdentityString.equals(updateRegIdentityString);
     }
 
     private byte[] toRegIdKey(String registrationId) {
@@ -417,7 +434,7 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
     }
 
     private byte[] toRegIdentityKey(Identity identity) {
-        return toKey(REG_EP_IDENTITY, LwM2MIdentitySerDes.serialize(identity).toString());
+        return toKey(REG_EP_IDENTITY, IdentitySerDes.serialize(identity).toString());
     }
 
     private byte[] toEndpointKey(String endpoint) {

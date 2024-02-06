@@ -40,7 +40,7 @@ public class TbLwM2mStoreFactory {
     @Bean
     private CaliforniumRegistrationStore registrationStore() {
         return redisConfiguration.isPresent() ?
-                new TbLwM2mRedisRegistrationStore(getConnectionFactory()) : new InMemoryRegistrationStore(config.getCleanPeriodInSec());
+                new TbLwM2mRedisRegistrationStore(getConnectionFactory(), config.getDtlsCidLength()) : new InMemoryRegistrationStore(config.getCleanPeriodInSec());
     }
 
     @Bean
