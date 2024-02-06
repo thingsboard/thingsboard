@@ -189,7 +189,7 @@ export class ColorInputComponent extends PageComponent implements OnInit, Contro
         this.popoverService.hidePopover(trigger);
       } else {
         const colorPickerPopover = this.popoverService.displayPopover(trigger, this.renderer,
-            this.viewContainerRef, ColorPickerPanelComponent, 'left', true, null,
+            this.viewContainerRef, ColorPickerPanelComponent, ['leftTopOnly', 'leftOnly', 'leftBottomOnly'], true, null,
             {
               color: this.colorFormGroup.get('color').value,
               colorClearButton: this.colorClearButton

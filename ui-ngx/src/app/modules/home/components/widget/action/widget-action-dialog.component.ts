@@ -38,13 +38,12 @@ import {
 } from '@home/components/widget/action/manage-widget-actions.component.models';
 import { UtilsService } from '@core/services/utils.service';
 import {
-  actionDescriptorToAction,
+  actionDescriptorToAction, defaultWidgetAction,
   WidgetActionSource,
-  WidgetActionType,
   widgetType
 } from '@shared/models/widget.models';
 import { takeUntil } from 'rxjs/operators';
-import { CustomActionEditorCompleter } from '@home/components/widget/config/action/custom-action.models';
+import { CustomActionEditorCompleter } from '@home/components/widget/lib/settings/common/action/custom-action.models';
 import { WidgetService } from '@core/http/widget.service';
 
 export interface WidgetActionDialogData {
@@ -92,11 +91,7 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
         id: this.utils.guid(),
         name: '',
         icon: 'more_horiz',
-        type: WidgetActionType.updateDashboardState,
-        targetDashboardStateId: null,
-        openRightLayout: false,
-        setEntityId: data.widgetType !== widgetType.static,
-        stateEntityParamName: null
+        ...defaultWidgetAction(data.widgetType !== widgetType.static)
       };
     } else {
       this.action = this.data.action;

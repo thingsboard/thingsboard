@@ -22,15 +22,13 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { merge } from 'rxjs';
 import {
-  getValueActions,
   SetValueAction,
-  setValueActions,
+  setValueActionsByWidgetType,
   setValueActionTranslations,
   SetValueSettings,
   ValueToDataType
 } from '@shared/models/action-widget-settings.models';
-import { ValueType } from '@shared/models/constants';
-import { TargetDevice } from '@shared/models/widget.models';
+import { TargetDevice, widgetType } from '@shared/models/widget.models';
 import { AttributeScope, DataKeyType, telemetryTypeTranslationsShort } from '@shared/models/telemetry/telemetry.models';
 import { IAliasController } from '@core/api/widget-api.models';
 import { WidgetService } from '@core/http/widget.service';
@@ -39,7 +37,7 @@ import { WidgetService } from '@core/http/widget.service';
   selector: 'tb-set-value-action-settings-panel',
   templateUrl: './set-value-action-settings-panel.component.html',
   providers: [],
-  styleUrls: ['./value-action-settings-panel.component.scss'],
+  styleUrls: ['./action-settings-panel.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
 export class SetValueActionSettingsPanelComponent extends PageComponent implements OnInit {
@@ -51,13 +49,13 @@ export class SetValueActionSettingsPanelComponent extends PageComponent implemen
   setValueSettings: SetValueSettings;
 
   @Input()
-  valueType: ValueType;
-
-  @Input()
   aliasController: IAliasController;
 
   @Input()
   targetDevice: TargetDevice;
+
+  @Input()
+  widgetType: widgetType;
 
   @Input()
   popover: TbPopoverComponent<SetValueActionSettingsPanelComponent>;
@@ -67,7 +65,7 @@ export class SetValueActionSettingsPanelComponent extends PageComponent implemen
 
   setValueAction = SetValueAction;
 
-  setValueActions = setValueActions;
+  setValueActions: SetValueAction[];
 
   setValueActionTranslationsMap = setValueActionTranslations;
 
@@ -81,8 +79,6 @@ export class SetValueActionSettingsPanelComponent extends PageComponent implemen
 
   functionScopeVariables = this.widgetService.getWidgetScopeVariables();
 
-  ValueType = ValueType;
-
   setValueSettingsFormGroup: UntypedFormGroup;
 
   constructor(private fb: UntypedFormBuilder,
@@ -92,6 +88,7 @@ export class SetValueActionSettingsPanelComponent extends PageComponent implemen
   }
 
   ngOnInit(): void {
+    this.setValueActions = setValueActionsByWidgetType(this.widgetType);
     this.setValueSettingsFormGroup = this.fb.group(
       {
         action: [this.setValueSettings?.action, []],

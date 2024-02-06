@@ -607,6 +607,14 @@
     }
   }
 
+  button.mat-mdc-button-base.tb-nowrap {
+    .mdc-button__label {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
   .mat-mdc-chip-listbox.center-stretch {
     .mat-mdc-standard-chip {
       flex: 1;

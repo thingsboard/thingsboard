@@ -263,6 +263,7 @@ export class WidgetContext {
   height: number;
   $scope: IDynamicWidgetComponent;
   isEdit: boolean;
+  isPreview: boolean;
   isMobile: boolean;
   toastTargetId: string;
 
@@ -279,6 +280,7 @@ export class WidgetContext {
   timeWindow?: WidgetTimewindow;
 
   embedTitlePanel?: boolean;
+  overflowVisible?: boolean;
 
   hideTitlePanel = false;
 
