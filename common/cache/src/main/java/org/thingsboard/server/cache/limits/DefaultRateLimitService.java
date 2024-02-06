@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.util.limits;
+package org.thingsboard.server.cache.limits;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -28,25 +28,25 @@ import org.thingsboard.server.common.data.exception.TenantProfileNotFoundExcepti
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.limit.LimitedApi;
-import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.data.notification.rule.trigger.RateLimitsTrigger;
+import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
-import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 
 import java.util.concurrent.TimeUnit;
 
+@Lazy
 @Service
 @Slf4j
 public class DefaultRateLimitService implements RateLimitService {
 
-    private final TbTenantProfileCache tenantProfileCache;
+    private final TenantProfileProvider tenantProfileProvider;
     private final NotificationRuleProcessor notificationRuleProcessor;
 
-    public DefaultRateLimitService(TbTenantProfileCache tenantProfileCache,
+    public DefaultRateLimitService(TenantProfileProvider tenantProfileProvider,
                                    @Lazy NotificationRuleProcessor notificationRuleProcessor,
                                    @Value("${cache.rateLimits.timeToLiveInMinutes:120}") int rateLimitsTtl,
                                    @Value("${cache.rateLimits.maxSize:200000}") int rateLimitsCacheMaxSize) {
-        this.tenantProfileCache = tenantProfileCache;
+        this.tenantProfileProvider = tenantProfileProvider;
         this.notificationRuleProcessor = notificationRuleProcessor;
         this.rateLimits = Caffeine.newBuilder()
                 .expireAfterAccess(rateLimitsTtl, TimeUnit.MINUTES)
@@ -66,7 +66,7 @@ public class DefaultRateLimitService implements RateLimitService {
         if (tenantId.isSysTenantId()) {
             return true;
         }
-        TenantProfile tenantProfile = tenantProfileCache.get(tenantId);
+        TenantProfile tenantProfile = tenantProfileProvider.get(tenantId);
         if (tenantProfile == null) {
             throw new TenantProfileNotFoundException(tenantId);
         }
