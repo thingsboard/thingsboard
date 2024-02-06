@@ -8,6 +8,7 @@
     "name": "Buttons"
   },
   "widgetTypeFqns": [
-    "action_button"
+    "action_button",
+    "command_button"
   ]
 }

@@ -97,6 +97,9 @@ import {
 import {
   ActionButtonBasicConfigComponent
 } from '@home/components/widget/config/basic/button/action-button-basic-config.component';
+import {
+  CommandButtonBasicConfigComponent
+} from '@home/components/widget/config/basic/button/command-button-basic-config.component';
 
 @NgModule({
   declarations: [
@@ -127,7 +130,8 @@ import {
     RangeChartBasicConfigComponent,
     BarChartWithLabelsBasicConfigComponent,
     SingleSwitchBasicConfigComponent,
-    ActionButtonBasicConfigComponent
+    ActionButtonBasicConfigComponent,
+    CommandButtonBasicConfigComponent
   ],
   imports: [
     CommonModule,
@@ -162,7 +166,8 @@ import {
     RangeChartBasicConfigComponent,
     BarChartWithLabelsBasicConfigComponent,
     SingleSwitchBasicConfigComponent,
-    ActionButtonBasicConfigComponent
+    ActionButtonBasicConfigComponent,
+    CommandButtonBasicConfigComponent
   ]
 })
 export class BasicWidgetConfigModule {
@@ -191,5 +196,6 @@ export const basicWidgetConfigComponentsMap: {[key: string]: Type<IBasicWidgetCo
   'tb-range-chart-basic-config': RangeChartBasicConfigComponent,
   'tb-bar-chart-with-labels-basic-config': BarChartWithLabelsBasicConfigComponent,
   'tb-single-switch-basic-config': SingleSwitchBasicConfigComponent,
-  'tb-action-button-basic-config': ActionButtonBasicConfigComponent
+  'tb-action-button-basic-config': ActionButtonBasicConfigComponent,
+  'tb-command-button-basic-config': CommandButtonBasicConfigComponent
 };

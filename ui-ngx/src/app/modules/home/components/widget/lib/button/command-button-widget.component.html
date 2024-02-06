@@ -15,18 +15,18 @@
     limitations under the License.
 
 -->
-<div class="tb-action-button-widget" [style.pointer-events]="ctx.isEdit ? 'none' : 'all'">
-  <div class="tb-action-button-widget-title-panel">
+<div class="tb-command-button-widget" [style.pointer-events]="ctx.isEdit ? 'none' : 'all'">
+  <div class="tb-command-button-widget-title-panel">
     <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
   </div>
   <tb-widget-button
     [appearance]="appearance"
     [borderRadius]="borderRadius"
-    [disabled]="disabled"
-    [activated]="activated"
+    [disabled]="disabled || (loading$ | async)"
     [ctx]="ctx"
     (clicked)="onClick($event)">
   </tb-widget-button>
+  <mat-progress-bar class="tb-action-widget-progress" style="height: 4px;" color="accent" mode="indeterminate" *ngIf="loading$ | async"></mat-progress-bar>
   <div *ngIf="error" class="tb-action-widget-error-container">
     <div class="tb-action-widget-error-panel">
       <div class="tb-action-widget-error-text" [innerHTML]="error | safe: 'html'"></div>

@@ -22,14 +22,12 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { merge } from 'rxjs';
 import {
-  getValueActions,
   SetValueAction,
-  setValueActions, setValueActionsByWidgetType,
+  setValueActionsByWidgetType,
   setValueActionTranslations,
   SetValueSettings,
   ValueToDataType
 } from '@shared/models/action-widget-settings.models';
-import { ValueType } from '@shared/models/constants';
 import { TargetDevice, widgetType } from '@shared/models/widget.models';
 import { AttributeScope, DataKeyType, telemetryTypeTranslationsShort } from '@shared/models/telemetry/telemetry.models';
 import { IAliasController } from '@core/api/widget-api.models';
@@ -49,9 +47,6 @@ export class SetValueActionSettingsPanelComponent extends PageComponent implemen
 
   @Input()
   setValueSettings: SetValueSettings;
-
-  @Input()
-  valueType: ValueType;
 
   @Input()
   aliasController: IAliasController;
@@ -83,8 +78,6 @@ export class SetValueActionSettingsPanelComponent extends PageComponent implemen
   valueToDataType = ValueToDataType;
 
   functionScopeVariables = this.widgetService.getWidgetScopeVariables();
-
-  ValueType = ValueType;
 
   setValueSettingsFormGroup: UntypedFormGroup;
 

@@ -30,7 +30,6 @@ import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { SetValueAction, SetValueSettings, ValueToDataType } from '@shared/models/action-widget-settings.models';
 import { TranslateService } from '@ngx-translate/core';
-import { ValueType } from '@shared/models/constants';
 import { IAliasController } from '@core/api/widget-api.models';
 import { TargetDevice, widgetType } from '@shared/models/widget.models';
 import { isDefinedAndNotNull } from '@core/utils';
@@ -58,9 +57,6 @@ export class SetValueActionSettingsComponent implements OnInit, ControlValueAcce
 
   @Input()
   panelTitle: string;
-
-  @Input()
-  valueType: ValueType;
 
   @Input()
   aliasController: IAliasController;
@@ -118,7 +114,6 @@ export class SetValueActionSettingsComponent implements OnInit, ControlValueAcce
       const ctx: any = {
         setValueSettings: this.modelValue,
         panelTitle: this.panelTitle,
-        valueType: this.valueType,
         aliasController: this.aliasController,
         targetDevice: this.targetDevice,
         widgetType: this.widgetType

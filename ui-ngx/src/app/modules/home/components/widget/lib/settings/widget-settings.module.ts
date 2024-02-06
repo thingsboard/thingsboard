@@ -318,6 +318,9 @@ import {
 import {
   ActionButtonWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/button/action-button-widget-settings.component';
+import {
+  CommandButtonWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/button/command-button-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -432,7 +435,8 @@ import {
     RangeChartWidgetSettingsComponent,
     BarChartWithLabelsWidgetSettingsComponent,
     SingleSwitchWidgetSettingsComponent,
-    ActionButtonWidgetSettingsComponent
+    ActionButtonWidgetSettingsComponent,
+    CommandButtonWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -552,7 +556,8 @@ import {
     RangeChartWidgetSettingsComponent,
     BarChartWithLabelsWidgetSettingsComponent,
     SingleSwitchWidgetSettingsComponent,
-    ActionButtonWidgetSettingsComponent
+    ActionButtonWidgetSettingsComponent,
+    CommandButtonWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -639,5 +644,6 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-range-chart-widget-settings': RangeChartWidgetSettingsComponent,
   'tb-bar-chart-with-labels-widget-settings': BarChartWithLabelsWidgetSettingsComponent,
   'tb-single-switch-widget-settings': SingleSwitchWidgetSettingsComponent,
-  'tb-action-button-widget-settings': ActionButtonWidgetSettingsComponent
+  'tb-action-button-widget-settings': ActionButtonWidgetSettingsComponent,
+  'tb-command-button-widget-settings': CommandButtonWidgetSettingsComponent
 };
