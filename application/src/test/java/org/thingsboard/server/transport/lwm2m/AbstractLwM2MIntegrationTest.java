@@ -63,7 +63,6 @@ import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.service.ws.telemetry.cmd.TelemetryCmdsWrapper;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.LatestValueCmd;
@@ -76,7 +75,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -233,7 +231,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         getWsClient().waitForReply();
 
         getWsClient().registerWaitForUpdate();
-        createNewClient(security, coapConfig, false, endpoint, false, null);
+        createNewClient(security, coapConfig, false, endpoint, false, null, null);
         awaitObserveReadAll(0, false, device.getId().getId().toString());
         String msg = getWsClient().waitForUpdate();
 
@@ -298,12 +296,12 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         this.resources = resources;
     }
 
-    public void createNewClient(Security security, Configuration coapConfig, boolean isRpc, String endpoint, boolean isBootstrap, Security securityBs) throws Exception {
+    public void createNewClient(Security security, Configuration coapConfig, boolean isRpc, String endpoint, boolean isBootstrap, Security securityBs, Integer dtlsCidLength) throws Exception {
         this.clientDestroy();
         lwM2MTestClient = new LwM2MTestClient(this.executor, endpoint);
         int clientPort = SocketUtils.findAvailableUdpPort();
         lwM2MTestClient.init(security, coapConfig, clientPort, isRpc, isBootstrap, this.shortServerId, this.shortServerIdBs,
-                securityBs, this.defaultLwM2mUplinkMsgHandlerTest, this.clientContextTest);
+                securityBs, this.defaultLwM2mUplinkMsgHandlerTest, this.clientContextTest, dtlsCidLength);
     }
 
     private void clientDestroy() {

@@ -50,7 +50,7 @@ public class Lwm2mTestHelper {
 
     public enum LwM2MClientState {
 
-        ON_INIT(1, "onInit"),
+        ON_INIT(0, "onInit"),
         ON_BOOTSTRAP_STARTED(1, "onBootstrapStarted"),
         ON_BOOTSTRAP_SUCCESS(2, "onBootstrapSuccess"),
         ON_BOOTSTRAP_FAILURE(3, "onBootstrapFailure"),
@@ -58,16 +58,18 @@ public class Lwm2mTestHelper {
         ON_REGISTRATION_STARTED(5, "onRegistrationStarted"),
         ON_REGISTRATION_SUCCESS(6, "onRegistrationSuccess"),
         ON_REGISTRATION_FAILURE(7, "onRegistrationFailure"),
-        ON_REGISTRATION_TIMEOUT(7, "onRegistrationTimeout"),
-        ON_UPDATE_STARTED(8, "onUpdateStarted"),
-        ON_UPDATE_SUCCESS(9, "onUpdateSuccess"),
-        ON_UPDATE_FAILURE(10, "onUpdateFailure"),
-        ON_UPDATE_TIMEOUT(11, "onUpdateTimeout"),
-        ON_DEREGISTRATION_STARTED(12, "onDeregistrationStarted"),
-        ON_DEREGISTRATION_SUCCESS(13, "onDeregistrationSuccess"),
-        ON_DEREGISTRATION_FAILURE(14, "onDeregistrationFailure"),
-        ON_DEREGISTRATION_TIMEOUT(15, "onDeregistrationTimeout"),
-        ON_EXPECTED_ERROR(16, "onUnexpectedError");
+        ON_REGISTRATION_TIMEOUT(8, "onRegistrationTimeout"),
+        ON_UPDATE_STARTED(9, "onUpdateStarted"),
+        ON_UPDATE_SUCCESS(10, "onUpdateSuccess"),
+        ON_UPDATE_FAILURE(11, "onUpdateFailure"),
+        ON_UPDATE_TIMEOUT(12, "onUpdateTimeout"),
+        ON_DEREGISTRATION_STARTED(13, "onDeregistrationStarted"),
+        ON_DEREGISTRATION_SUCCESS(14, "onDeregistrationSuccess"),
+        ON_DEREGISTRATION_FAILURE(15, "onDeregistrationFailure"),
+        ON_DEREGISTRATION_TIMEOUT(16, "onDeregistrationTimeout"),
+        ON_EXPECTED_ERROR(17, "onUnexpectedError"),
+        ON_READ_CONNECTION_ID(18, "onReadConnectionId"),
+        ON_WRITE_CONNECTION_ID(19, "onWriteConnectionId");
 
         public int code;
         public String type;

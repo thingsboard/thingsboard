@@ -23,6 +23,7 @@ import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.util.Hex;
 import org.junit.Assert;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MvcResult;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
@@ -68,12 +69,17 @@ import static org.junit.Assert.assertEquals;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_DEREGISTRATION_STARTED;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_DEREGISTRATION_SUCCESS;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_READ_CONNECTION_ID;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_STARTED;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_SUCCESS;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_UPDATE_SUCCESS;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_WRITE_CONNECTION_ID;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_ID_1;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_9;
 
+@TestPropertySource(properties = {
+        "transport.lwm2m.dtls.connection_id_length=",
+})
 @DaoSqlTest
 @Slf4j
 public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
@@ -107,6 +113,7 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
     protected static final String CLIENT_STORE_PWD = "client_ks_password";
     protected static final String CLIENT_ALIAS_CERT_TRUST = "client_alias_00000000";
     protected static final String CLIENT_ALIAS_CERT_TRUST_NO = "client_alias_trust_no";
+    public static final String SERVER_DTLS_CID_LENGTH = "3";
 
     protected final X509Certificate clientX509CertTrust;                                        // client certificate signed by intermediate, rootCA with a good CN ("host name")
     protected final PrivateKey clientPrivateKeyFromCertTrust;                                   // client private key used for X509 and RPK
@@ -196,7 +203,7 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
         createDeviceProfile(transportConfiguration);
         final Device device = createDevice(deviceCredentials, endpoint);
         device.getId().getId().toString();
-        createNewClient(security, coapConfig, true, endpoint, isBootstrap, null);
+        createNewClient(security, coapConfig, true, endpoint, isBootstrap, null, null);
         lwM2MTestClient.start(isStartLw);
         awaitObserveReadAll(0, isBootstrap, device.getId().getId().toString());
         await(awaitAlias)
@@ -212,6 +219,40 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
                     return lwM2MTestClient.getClientStates().contains(finishState) || lwM2MTestClient.getClientStates().contains(ON_UPDATE_SUCCESS);
                 });
         Assert.assertTrue(lwM2MTestClient.getClientStates().containsAll(expectedStatuses));
+    }
+
+  protected void basicTestConnectionDtlsCidLength(Security security,
+                                       LwM2MDeviceCredentials deviceCredentials,
+                                       Configuration coapConfig,
+                                       String endpoint,
+                                       Lwm2mDeviceProfileTransportConfiguration transportConfiguration,
+                                       String awaitAlias,
+                                       Set<LwM2MClientState> expectedStatuses,
+                                       Integer clientDtlsCidLength) throws Exception {
+        createDeviceProfile(transportConfiguration);
+        final Device device = createDevice(deviceCredentials, endpoint);
+        device.getId().getId().toString();
+        createNewClient(security, coapConfig, true, endpoint, false, null, clientDtlsCidLength);
+        lwM2MTestClient.start(true);
+        awaitObserveReadAll(0, false, device.getId().getId().toString());
+        await(awaitAlias)
+                .atMost(40, TimeUnit.SECONDS)
+                .until(() -> lwM2MTestClient.getClientStates().contains(ON_UPDATE_SUCCESS));
+        Assert.assertTrue(lwM2MTestClient.getClientStates().containsAll(expectedStatuses));
+        if (security.equals(SECURITY_NO_SEC)) {
+            Assert.assertTrue(lwM2MTestClient.getClientDtlsCid().isEmpty());
+        } else {
+            Assert.assertEquals(2L, lwM2MTestClient.getClientDtlsCid().size());
+            Assert.assertTrue(lwM2MTestClient.getClientDtlsCid().keySet().contains(ON_READ_CONNECTION_ID));
+            Assert.assertTrue(lwM2MTestClient.getClientDtlsCid().keySet().contains(ON_WRITE_CONNECTION_ID));
+            if (clientDtlsCidLength == null) {
+                Assert.assertNull(lwM2MTestClient.getClientDtlsCid().get(ON_READ_CONNECTION_ID));
+                Assert.assertNull(lwM2MTestClient.getClientDtlsCid().get(ON_WRITE_CONNECTION_ID));
+            } else {
+                Assert.assertEquals(Integer.valueOf(SERVER_DTLS_CID_LENGTH), lwM2MTestClient.getClientDtlsCid().get(ON_WRITE_CONNECTION_ID));
+                Assert.assertEquals(clientDtlsCidLength, lwM2MTestClient.getClientDtlsCid().get(ON_READ_CONNECTION_ID));
+            }
+      }
     }
 
 
@@ -245,7 +286,7 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
         createDeviceProfile(transportConfiguration);
         final Device device = createDevice(deviceCredentials, endpoint);
         String deviceIdStr = device.getId().getId().toString();
-        createNewClient(security, coapConfig, true, endpoint, isBootstrap, securityBs);
+        createNewClient(security, coapConfig, true, endpoint, isBootstrap, securityBs, null);
         lwM2MTestClient.start(true);
         awaitObserveReadAll(0, isBootstrap, deviceIdStr);
         await(awaitAlias)
