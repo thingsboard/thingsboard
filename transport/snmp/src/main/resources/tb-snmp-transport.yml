@@ -138,6 +138,7 @@ transport:
     response:
       # To ignore SNMP response values that do not match the data type of the configured OID mapping (by default false - will throw an error if any value of the response not match configured data types)
       ignore_type_cast_errors: "${SNMP_RESPONSE_IGNORE_TYPE_CAST_ERRORS:false}"
+    # Thread pool size for scheduler that executes device querying tasks
     scheduler_thread_pool_size: "${SNMP_SCHEDULER_THREAD_POOL_SIZE:4}"
   sessions:
     # Session inactivity timeout is a global configuration parameter that defines how long the device transport session will be opened after the last message arrives from the device.
