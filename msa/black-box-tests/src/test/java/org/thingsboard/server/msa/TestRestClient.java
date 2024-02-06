@@ -34,10 +34,13 @@ import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.AlarmRuleId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -546,6 +549,38 @@ public class TestRestClient {
                 .statusCode(HTTP_OK)
                 .extract()
                 .as(new TypeRef<>() {});
+    }
+
+    public AlarmRule postAlarmRule(AlarmRule alarmRule) {
+        return given().spec(requestSpec)
+                .body(alarmRule)
+                .post("/api/alarmRule")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(AlarmRule.class);
+    }
+
+    public void deleteAlarmRule(AlarmRuleId alarmRuleId) {
+        given().spec(requestSpec)
+                .delete("/api/alarmRule/{alarmRuleId}", alarmRuleId.getId())
+                .then()
+                .statusCode(HTTP_OK);
+    }
+
+    public PageData<AlarmInfo> getEntityAlarms(EntityId entityId, TimePageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        params.put("entityType", entityId.getEntityType().name());
+        params.put("entityId", entityId.toString());
+        addPageLinkToParam(params, pageLink);
+
+        return given().spec(requestSpec)
+                .get("/api/alarm/{entityType}/{entityId}?" + getTimeUrlParams(pageLink), params)
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(new TypeRef<>() {
+                });
     }
 
     private void addTimePageLinkToParam(Map<String, String> params, TimePageLink pageLink) {

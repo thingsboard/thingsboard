@@ -2816,7 +2816,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService, Mockito.never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        Thread.sleep(TimeUnit.SECONDS.toMillis(alarmDelayInSeconds));
+        Thread.sleep(TimeUnit.SECONDS.toMillis(alarmDelayInSeconds) + 1);
 
         TbMsg msg3 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
