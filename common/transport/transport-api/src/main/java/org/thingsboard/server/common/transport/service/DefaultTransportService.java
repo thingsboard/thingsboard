@@ -805,7 +805,7 @@ public class DefaultTransportService extends TransportActivityManager implements
                         .setEntityIdLSB(deviceId.getId().getLeastSignificantBits())
                         .setServiceId(serviceInfoProvider.getServiceId())
                         .setMethod(method)
-                        .setError(ExceptionUtils.getStackTrace(error)))
+                        .setError(ExceptionUtils.getRootCauseMessage(error)))
                 .build();
         try {
             sendToCore(tenantId, deviceId, msg, deviceId.getId(), TransportServiceCallback.EMPTY);

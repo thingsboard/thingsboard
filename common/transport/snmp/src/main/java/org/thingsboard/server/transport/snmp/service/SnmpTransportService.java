@@ -37,7 +37,7 @@ import org.snmp4j.mp.MPv3;
 import org.snmp4j.security.SecurityModels;
 import org.snmp4j.security.SecurityProtocols;
 import org.snmp4j.security.USM;
-import org.snmp4j.smi.Address;
+import org.snmp4j.smi.IpAddress;
 import org.snmp4j.smi.OctetString;
 import org.snmp4j.smi.TcpAddress;
 import org.snmp4j.smi.UdpAddress;
@@ -327,24 +327,31 @@ public class SnmpTransportService implements TbTransportService, CommandResponde
     }
 
     /*
-    * SNMP notifications handler
-    *
-    * TODO: add check for host uniqueness when saving device (for backward compatibility - only for the ones using from-device RPC requests)
-    *
-    * NOTE: SNMP TRAPs support won't work properly when there is more than one SNMP transport,
-    *  due to load-balancing of requests from devices: session might not be on this instance
-    * */
+     * SNMP notifications handler
+     *
+     * TODO: add check for host uniqueness when saving device (for backward compatibility - only for the ones using from-device RPC requests)
+     *
+     * NOTE: SNMP TRAPs support won't work properly when there is more than one SNMP transport,
+     *  due to load-balancing of requests from devices: session might not be on this instance
+     * */
     @Override
     public void processPdu(CommandResponderEvent event) {
-        Address sourceAddress = event.getPeerAddress();
-        DeviceSessionContext sessionContext = transportContext.getSessions().stream()
-                .filter(session -> session.getTarget().getAddress().equals(sourceAddress))
-                .findFirst().orElse(null);
-        if (sessionContext == null) {
-            log.warn("SNMP TRAP processing failed: couldn't find device session for address {}", sourceAddress);
+        IpAddress sourceAddress = (IpAddress) event.getPeerAddress();
+        List<DeviceSessionContext> sessions = transportContext.getSessions().stream()
+                .filter(session -> ((IpAddress) session.getTarget().getAddress()).getInetAddress().equals(sourceAddress.getInetAddress()))
+                .collect(Collectors.toList());
+        if (sessions.isEmpty()) {
+            log.warn("Couldn't find device session for SNMP TRAP for address {}", sourceAddress);
+            return;
+        } else if (sessions.size() > 1) {
+            for (DeviceSessionContext sessionContext : sessions) {
+                transportService.errorEvent(sessionContext.getTenantId(), sessionContext.getDeviceId(), SnmpCommunicationSpec.TO_SERVER_RPC_REQUEST.getLabel(),
+                        new IllegalStateException("Found multiple devices for host " + sourceAddress.getInetAddress().getHostAddress()));
+            }
             return;
         }
 
+        DeviceSessionContext sessionContext = sessions.get(0);
         try {
             processIncomingTrap(sessionContext, event);
         } catch (Throwable e) {
@@ -356,11 +363,11 @@ public class SnmpTransportService implements TbTransportService, CommandResponde
     private void processIncomingTrap(DeviceSessionContext sessionContext, CommandResponderEvent event) {
         PDU pdu = event.getPDU();
         if (pdu == null) {
-            log.warn("Got empty trap from device {}", sessionContext.getDeviceId());
+            log.warn("[{}] Received empty SNMP trap", sessionContext.getDeviceId());
             throw new IllegalArgumentException("Received TRAP with no data");
         }
 
-        log.debug("Processing SNMP trap from device {} (PDU: {}}", sessionContext.getDeviceId(), pdu);
+        log.debug("[{}] Processing SNMP trap: {}", sessionContext.getDeviceId(), pdu);
         SnmpCommunicationConfig communicationConfig = sessionContext.getProfileTransportConfiguration().getCommunicationConfigs().stream()
                 .filter(config -> config.getSpec() == SnmpCommunicationSpec.TO_SERVER_RPC_REQUEST).findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("No config found for to-server RPC requests"));
