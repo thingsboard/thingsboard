@@ -90,16 +90,18 @@ public class TenantActor extends RuleChainManagerActor {
                 isCore = systemContext.getServiceInfoProvider().isService(ServiceType.TB_CORE);
                 isRuleEngine = systemContext.getServiceInfoProvider().isService(ServiceType.TB_RULE_ENGINE);
                 if (isRuleEngine) {
-                    try {
-                        if (getApiUsageState().isReExecEnabled()) {
-                            log.debug("[{}] Going to init rule chains", tenantId);
-                            initRuleChains();
-                        } else {
-                            log.info("[{}] Skip init of the rule chains due to API limits", tenantId);
+                    if (systemContext.getPartitionService().isManagedByCurrentService(tenantId)) {
+                        try {
+                            if (getApiUsageState().isReExecEnabled()) {
+                                log.debug("[{}] Going to init rule chains", tenantId);
+                                initRuleChains();
+                            } else {
+                                log.info("[{}] Skip init of the rule chains due to API limits", tenantId);
+                            }
+                        } catch (Exception e) {
+                            log.info("Failed to check ApiUsage \"ReExecEnabled\"!!!", e);
+                            cantFindTenant = true;
                         }
-                    } catch (Exception e) {
-                        log.info("Failed to check ApiUsage \"ReExecEnabled\"!!!", e);
-                        cantFindTenant = true;
                     }
                 }
                 log.debug("[{}] Tenant actor started.", tenantId);
