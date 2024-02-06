@@ -97,6 +97,8 @@ export class SingleSwitchWidgetComponent extends
   offLabel = '';
   offLabelStyle: ComponentStyle = {};
 
+  disabledColor = 'rgba(0, 0, 0, 0.38)';
+
   autoScale = false;
 
   private panelResize$: ResizeObserver;
@@ -129,22 +131,18 @@ export class SingleSwitchWidgetComponent extends
     this.showLabel = this.settings.showLabel;
     this.label$ = this.ctx.registerLabelPattern(this.settings.label, this.label$);
     this.labelStyle = textStyle(this.settings.labelFont);
-    this.labelStyle.color = this.settings.labelColor;
 
     this.showIcon = this.settings.showIcon;
     this.icon = this.settings.icon;
     this.iconStyle = iconStyle(this.settings.iconSize, this.settings.iconSizeUnit );
-    this.iconStyle.color = this.settings.iconColor;
 
     this.showOnLabel = this.settings.showOnLabel;
     this.onLabel = this.settings.onLabel;
     this.onLabelStyle = textStyle(this.settings.onLabelFont);
-    this.onLabelStyle.color = this.settings.onLabelColor;
 
     this.showOffLabel = this.settings.showOffLabel;
     this.offLabel = this.settings.offLabel;
     this.offLabelStyle = textStyle(this.settings.offLabelFont);
-    this.offLabelStyle.color = this.settings.offLabelColor;
     const switchVariablesCss = `.tb-single-switch-panel {\n`+
                                            `--tb-single-switch-tumbler-color-on: ${this.settings.tumblerColorOn};\n`+
                                            `--tb-single-switch-tumbler-color-off: ${this.settings.tumblerColorOff};\n`+
@@ -229,33 +227,6 @@ export class SingleSwitchWidgetComponent extends
 
   private onDisabled(value: boolean): void {
     this.disabled = !!value;
-    if (this.disabled) {
-      if (this.showLabel) {
-        this.labelStyle = {...this.labelStyle, color: 'rgba(0, 0, 0, 0.38)'};
-      }
-      if (this.showIcon) {
-        this.iconStyle = {...this.iconStyle, color: 'rgba(0, 0, 0, 0.38)'};
-      }
-      if (this.showOnLabel) {
-        this.onLabelStyle = {...this.onLabelStyle, color: 'rgba(0, 0, 0, 0.38)'};
-      }
-      if (this.showOffLabel) {
-        this.offLabelStyle = {...this.offLabelStyle, color: 'rgba(0, 0, 0, 0.38)'};
-      }
-    } else {
-      if (this.showLabel) {
-        this.labelStyle = {...this.labelStyle, color: this.settings.labelColor};
-      }
-      if (this.showIcon) {
-        this.iconStyle = {...this.iconStyle, color: this.settings.iconColor};
-      }
-      if (this.showOnLabel) {
-        this.onLabelStyle = {...this.onLabelStyle, color: this.settings.onLabelColor};
-      }
-      if (this.showOffLabel) {
-        this.offLabelStyle = {...this.offLabelStyle, color: this.settings.offLabelColor};
-      }
-    }
     this.cd.markForCheck();
   }
 

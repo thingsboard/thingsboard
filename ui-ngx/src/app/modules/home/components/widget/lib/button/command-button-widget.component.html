@@ -22,10 +22,11 @@
   <tb-widget-button
     [appearance]="appearance"
     [borderRadius]="borderRadius"
-    [disabled]="disabled"
+    [disabled]="disabled || (loading$ | async)"
     [ctx]="ctx"
     (clicked)="onClick($event)">
   </tb-widget-button>
+  <mat-progress-bar class="tb-action-widget-progress" style="height: 4px;" color="accent" mode="indeterminate" *ngIf="loading$ | async"></mat-progress-bar>
   <div *ngIf="error" class="tb-action-widget-error-container">
     <div class="tb-action-widget-error-panel">
       <div class="tb-action-widget-error-text" [innerHTML]="error | safe: 'html'"></div>
