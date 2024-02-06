@@ -788,7 +788,11 @@ public class DefaultTransportService extends TransportActivityManager implements
                         .setSuccess(success)
                         .setError(error != null ? ExceptionUtils.getStackTrace(error) : ""))
                 .build();
-        sendToCore(tenantId, deviceId, msg, deviceId.getId(), TransportServiceCallback.EMPTY);
+        try {
+            sendToCore(tenantId, deviceId, msg, deviceId.getId(), TransportServiceCallback.EMPTY);
+        } catch (Exception e) {
+            log.error("[{}][{}] Failed to send lifecycle event to core", tenantId, deviceId, e);
+        }
     }
 
     @Override
@@ -803,7 +807,11 @@ public class DefaultTransportService extends TransportActivityManager implements
                         .setMethod(method)
                         .setError(ExceptionUtils.getStackTrace(error)))
                 .build();
-        sendToCore(tenantId, deviceId, msg, deviceId.getId(), TransportServiceCallback.EMPTY);
+        try {
+            sendToCore(tenantId, deviceId, msg, deviceId.getId(), TransportServiceCallback.EMPTY);
+        } catch (Exception e) {
+            log.error("[{}][{}] Failed to send error event to core", tenantId, deviceId, e);
+        }
     }
 
     @Override
