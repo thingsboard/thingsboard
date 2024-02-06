@@ -2308,7 +2308,7 @@
     "action-source-required": "Zahtevan je vir dejanj.",
     "action-name": "Ime",
     "action-name-required": "Ime dejanja je obvezno.",
-    "action-name-not-unique": "Še eno dejanje z istim imenom že obstaja. <br/> Ime dejanja mora biti enolično v istem viru dejanj.",
+    "action-name-not-unique": "Še eno dejanje z istim imenom že obstaja. \n Ime dejanja mora biti enolično v istem viru dejanj.",
     "action-icon": "Ikona",
     "action-type": "Vrsta",
     "action-type-required": "Zahtevana je vrsta dejanja.",

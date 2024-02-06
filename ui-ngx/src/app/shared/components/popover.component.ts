@@ -48,11 +48,15 @@ import {
 } from '@angular/cdk/overlay';
 import { Subject, Subscription } from 'rxjs';
 import {
+  convertStrictPopoverPlacement,
   DEFAULT_POPOVER_POSITIONS,
   getPlacementName,
+  isStrictPopoverPlacement,
   popoverMotion,
   PopoverPlacement,
-  PropertyMapping
+  PopoverPreferredPlacement,
+  PropertyMapping,
+  StrictPopoverPlacement
 } from '@shared/components/popover.models';
 import { POSITION_MAP } from '@shared/models/overlay.models';
 import { distinctUntilChanged, take, takeUntil } from 'rxjs/operators';
@@ -313,7 +317,8 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
       [cdkConnectedOverlayPositions]="positions"
       [cdkConnectedOverlayScrollStrategy]="scrollStrategy"
       [cdkConnectedOverlayOpen]="visible"
-      [cdkConnectedOverlayPush]="true"
+      [cdkConnectedOverlayPush]="!strictPosition"
+      [cdkConnectedOverlayFlexibleDimensions]="strictPosition"
       (overlayOutsideClick)="onClickOutside($event)"
       (detach)="hide()"
       (positionChange)="onPositionChange($event)"
@@ -323,6 +328,7 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
         <div
           #popover
           class="tb-popover"
+          [class.strict-position]="strictPosition"
           [class.tb-popover-rtl]="dir === 'rtl'"
           [ngClass]="classMap"
           [ngStyle]="tbOverlayStyle"
@@ -334,7 +340,8 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
             <div class="tb-popover-inner" [ngStyle]="tbPopoverInnerStyle" role="tooltip">
               <div *ngIf="tbShowCloseButton" class="tb-popover-close-button" (click)="closeButtonClick($event)">×</div>
               <div style="width: 100%; height: 100%;">
-                <div class="tb-popover-inner-content">
+                <div class="tb-popover-inner-content"
+                     [class.strict-position]="strictPosition">
                   <ng-container *ngIf="tbContent">
                     <ng-container *tbStringTemplateOutlet="tbContent; context: tbComponentContext">
                       {{ tbContent }}
@@ -434,12 +441,23 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
 
   protected trigger: TbPopoverTrigger = 'hover';
 
-  set tbPlacement(value: PopoverPlacement | PopoverPlacement[]) {
+  set tbPlacement(value: PopoverPreferredPlacement) {
     if (typeof value === 'string') {
-      this.positions = [POSITION_MAP[value], ...DEFAULT_POPOVER_POSITIONS];
+      if (isStrictPopoverPlacement(value)) {
+        const placement = convertStrictPopoverPlacement(value as StrictPopoverPlacement);
+        this.positions = [POSITION_MAP[placement]];
+        this.strictPosition = true;
+      } else {
+        this.positions = [POSITION_MAP[value], ...DEFAULT_POPOVER_POSITIONS];
+      }
     } else {
-      const preferredPosition = value.map(placement => POSITION_MAP[placement]);
-      this.positions = [...preferredPosition, ...DEFAULT_POPOVER_POSITIONS];
+      if (value.length && isStrictPopoverPlacement(value[0])) {
+        this.positions = value.map((val: any) => POSITION_MAP[convertStrictPopoverPlacement(val)]);
+        this.strictPosition = true;
+      } else {
+        const preferredPosition = value.map(placement => POSITION_MAP[placement]);
+        this.positions = [...preferredPosition, ...DEFAULT_POPOVER_POSITIONS];
+      }
     }
   }
 
@@ -448,6 +466,7 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
   }
 
   preferredPlacement: PopoverPlacement = 'top';
+  strictPosition = false;
   origin!: CdkOverlayOrigin;
   public dir: Direction = 'ltr';
   classMap: { [klass: string]: any } = {};
@@ -625,6 +644,10 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
 
   onComponentChange(component: ComponentRef<any>) {
     this.tbComponentRef = component;
+    if (this.strictPosition) {
+      this.renderer.setStyle(this.tbComponentRef.location.nativeElement, 'display', 'flex');
+      this.renderer.setStyle(this.tbComponentRef.location.nativeElement, 'height', '100%');
+    }
     this.tbComponentChange.next(component);
   }
 

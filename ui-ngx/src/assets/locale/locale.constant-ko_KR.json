@@ -2307,7 +2307,7 @@
         "action-source-required": "액션 소스를 입력하세요.",
         "action-name": "이름",
         "action-name-required": "액션 이름을 입력하세요.",
-        "action-name-not-unique": "같은 이름의 액션이 이미 존재합니다.<br/>같은 액션 소스에서 액션 이름이 중복될 수 없습니다.",
+        "action-name-not-unique": "같은 이름의 액션이 이미 존재합니다.\n같은 액션 소스에서 액션 이름이 중복될 수 없습니다.",
         "action-icon": "아이콘",
         "action-type": "유형",
         "action-type-required": "액션 유형을 입력하세요.",

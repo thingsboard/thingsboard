@@ -221,6 +221,15 @@ public class CachedAttributesService implements AttributesService {
     }
 
     @Override
+    public List<String> findAllKeysByEntityIds(TenantId tenantId, EntityType entityType, List<EntityId> entityIds, String scope) {
+        if (StringUtils.isEmpty(scope)) {
+            return attributesDao.findAllKeysByEntityIds(tenantId, entityType, entityIds);
+        } else {
+            return attributesDao.findAllKeysByEntityIdsAndAttributeType(tenantId, entityType, entityIds, scope);
+        }
+    }
+
+    @Override
     public ListenableFuture<String> save(TenantId tenantId, EntityId entityId, String scope, AttributeKvEntry attribute) {
         validate(entityId, scope);
         AttributeUtils.validate(attribute, valueNoXssValidation);

@@ -44,7 +44,7 @@
         [fxShow]="switchRpcSettingsFormGroup.get('retrieveValueMethod').value === 'attribute' ||
                   switchRpcSettingsFormGroup.get('retrieveValueMethod').value === 'timeseries'"
         [aliasController]="aliasController"
-        [targetDeviceAliasId]="targetDeviceAliasId"
+        [targetDevice]="targetDevice"
         [keyType]="switchRpcSettingsFormGroup.get('retrieveValueMethod').value === 'attribute' ? dataKeyType.attribute : dataKeyType.timeseries"
         required
         formControlName="valueKey">
