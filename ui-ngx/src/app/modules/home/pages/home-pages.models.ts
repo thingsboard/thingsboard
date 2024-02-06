@@ -30,8 +30,3 @@ export const entityDetailsPageBreadcrumbLabelFunction: BreadCrumbLabelFunction<E
       return component.entity?.name;
   }
 });
-
-export interface HasShowMainLoading {
-  showMainLoadingBar?: boolean;
-}
-
