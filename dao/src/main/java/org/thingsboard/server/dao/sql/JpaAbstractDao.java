@@ -45,9 +45,6 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
 
     protected abstract JpaRepository<E, UUID> getRepository();
 
-    protected void setSearchText(E entity) {
-    }
-
     @Override
     @Transactional
     public D save(TenantId tenantId, D domain) {
@@ -58,15 +55,19 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
             log.error("Can't create entity for domain object {}", domain, e);
             throw new IllegalArgumentException("Can't create entity for domain object {" + domain + "}", e);
         }
-        setSearchText(entity);
         log.debug("Saving entity {}", entity);
-        if (entity.getUuid() == null) {
+        boolean isNew = entity.getUuid() == null;
+        if (isNew) {
             UUID uuid = Uuids.timeBased();
             entity.setUuid(uuid);
             entity.setCreatedTime(Uuids.unixTimestamp(uuid));
         }
-        entity = getRepository().save(entity);
+        entity = doSave(entity, isNew);
         return DaoUtil.getData(entity);
+    }
+
+    protected E doSave(E entity, boolean isNew) {
+        return getRepository().save(entity);
     }
 
     @Override
@@ -121,4 +122,5 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
         List<E> entities = Lists.newArrayList(getRepository().findAll());
         return DaoUtil.convertDataList(entities);
     }
+
 }

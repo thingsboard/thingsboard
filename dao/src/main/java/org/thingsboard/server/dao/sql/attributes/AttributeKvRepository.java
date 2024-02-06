@@ -54,5 +54,10 @@ public interface AttributeKvRepository extends JpaRepository<AttributeKvEntity, 
     @Query(value = "SELECT DISTINCT attribute_key FROM attribute_kv WHERE " +
             "entity_id in :entityIds ORDER BY attribute_key", nativeQuery = true)
     List<Integer> findAllKeysByEntityIds(@Param("entityIds") List<UUID> entityIds);
+
+    @Query(value = "SELECT DISTINCT attribute_key FROM attribute_kv WHERE " +
+            "entity_id in :entityIds AND attribute_type = :attributeType ORDER BY attribute_key", nativeQuery = true)
+    List<Integer> findAllKeysByEntityIdsAndAttributeType(@Param("entityIds") List<UUID> entityIds,
+                                                        @Param("attributeType") String attributeType);
 }
 

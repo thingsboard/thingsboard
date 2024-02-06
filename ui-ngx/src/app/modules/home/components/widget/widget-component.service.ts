@@ -565,6 +565,9 @@ export class WidgetComponentService {
       if (isUndefined(result.typeParameters.embedTitlePanel)) {
         result.typeParameters.embedTitlePanel = false;
       }
+      if (isUndefined(result.typeParameters.overflowVisible)) {
+        result.typeParameters.overflowVisible = false;
+      }
       if (isUndefined(result.typeParameters.hideDataSettings)) {
         result.typeParameters.hideDataSettings = false;
       }
@@ -573,6 +576,9 @@ export class WidgetComponentService {
       }
       if (!isFunction(result.typeParameters.defaultLatestDataKeysFunction)) {
         result.typeParameters.defaultLatestDataKeysFunction = null;
+      }
+      if (isUndefined(result.typeParameters.displayRpcMessageToast)) {
+        result.typeParameters.displayRpcMessageToast = true;
       }
       if (isFunction(widgetTypeInstance.actionSources)) {
         result.actionSources = widgetTypeInstance.actionSources();

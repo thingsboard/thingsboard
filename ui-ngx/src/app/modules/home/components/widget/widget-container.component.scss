@@ -26,6 +26,13 @@
   outline: none;
 
   transition: all .2s ease-in-out;
+
+  &.tb-overflow-visible {
+    overflow: visible;
+    .tb-widget {
+      overflow: visible;
+    }
+  }
 }
 
 div.tb-widget {

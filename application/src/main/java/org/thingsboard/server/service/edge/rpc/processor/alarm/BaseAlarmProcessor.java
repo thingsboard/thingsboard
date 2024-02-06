@@ -113,7 +113,7 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
             }
             switch (alarmCommentUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
-                    alarmCommentDao.createAlarmComment(tenantId, alarmComment);
+                    alarmCommentDao.save(tenantId, alarmComment);
                     break;
                 case ENTITY_UPDATED_RPC_MESSAGE:
                     alarmCommentService.createOrUpdateAlarmComment(tenantId, alarmComment);

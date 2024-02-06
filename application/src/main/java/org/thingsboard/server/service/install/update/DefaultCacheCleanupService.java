@@ -49,47 +49,6 @@ public class DefaultCacheCleanupService implements CacheCleanupService {
     @Override
     public void clearCache(String fromVersion) throws Exception {
         switch (fromVersion) {
-            case "3.0.1":
-                log.info("Clear cache to upgrade from version 3.0.1 to 3.1.0 ...");
-                clearAllCaches();
-                //do not break to show explicit calls for next versions
-            case "3.1.1":
-                log.info("Clear cache to upgrade from version 3.1.1 to 3.2.0 ...");
-                clearCacheByName("devices");
-                clearCacheByName("deviceProfiles");
-                clearCacheByName("tenantProfiles");
-            case "3.2.2":
-                log.info("Clear cache to upgrade from version 3.2.2 to 3.3.0 ...");
-                clearCacheByName("devices");
-                clearCacheByName("deviceProfiles");
-                clearCacheByName("tenantProfiles");
-                clearCacheByName("relations");
-                break;
-            case "3.3.2":
-                log.info("Clear cache to upgrade from version 3.3.2 to 3.3.3 ...");
-                clearAll();
-                break;
-            case "3.3.3":
-                log.info("Clear cache to upgrade from version 3.3.3 to 3.3.4 ...");
-                clearAll();
-                break;
-            case "3.3.4":
-                log.info("Clear cache to upgrade from version 3.3.4 to 3.4.0 ...");
-                clearAll();
-                break;
-            case "3.4.1":
-                log.info("Clear cache to upgrade from version 3.4.1 to 3.4.2 ...");
-                clearCacheByName("assets");
-                clearCacheByName("repositorySettings");
-                break;
-            case "3.4.2":
-                log.info("Clearing cache to upgrade from version 3.4.2 to 3.4.3 ...");
-                clearCacheByName("repositorySettings");
-                break;
-            case "3.4.4":
-                log.info("Clearing cache to upgrade from version 3.4.4 to 3.5.0");
-                clearAll();
-                break;
             case "3.6.1":
                 log.info("Clearing cache to upgrade from version 3.6.1 to 3.6.2");
                 clearCacheByName(SECURITY_SETTINGS_CACHE);

@@ -41,7 +41,7 @@ import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
-import org.thingsboard.server.dao.util.limits.RateLimitService;
+import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.notification.NotificationDeduplicationService;
 import org.thingsboard.server.service.executors.NotificationExecutorService;

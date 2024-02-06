@@ -75,6 +75,7 @@ import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -85,6 +86,7 @@ import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 import org.thingsboard.server.dao.nosql.TbResultSetFuture;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
@@ -899,6 +901,16 @@ class DefaultTbContext implements TbContext {
     @Override
     public EntityService getEntityService() {
         return mainCtx.getEntityService();
+    }
+
+    @Override
+    public EventService getEventService() {
+        return mainCtx.getEventService();
+    }
+
+    @Override
+    public AuditLogService getAuditLogService() {
+        return mainCtx.getAuditLogService();
     }
 
     private TbMsgMetaData getActionMetaData(RuleNodeId ruleNodeId) {

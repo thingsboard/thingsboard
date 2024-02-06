@@ -242,6 +242,15 @@ public class CachedAttributesService implements AttributesService {
     }
 
     @Override
+    public List<String> findAllKeysByEntityIds(TenantId tenantId, List<EntityId> entityIds, String scope) {
+        if (StringUtils.isEmpty(scope)) {
+            return attributesDao.findAllKeysByEntityIds(tenantId, entityIds);
+        } else {
+            return attributesDao.findAllKeysByEntityIdsAndAttributeType(tenantId, entityIds, scope);
+        }
+    }
+
+    @Override
     public ListenableFuture<String> save(TenantId tenantId, EntityId entityId, String scope, AttributeKvEntry attribute) {
         return save(tenantId, entityId, AttributeScope.valueOf(scope), attribute);
     }

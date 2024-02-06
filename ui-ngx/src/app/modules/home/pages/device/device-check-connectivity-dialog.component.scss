@@ -126,6 +126,8 @@
           padding-right: 38px;
           overflow: scroll;
           padding-bottom: 4px;
+          min-height: 42px;
+          scrollbar-width: thin;
 
           &::-webkit-scrollbar {
             width: 4px;
