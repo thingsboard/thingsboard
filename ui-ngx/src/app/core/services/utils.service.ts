@@ -17,7 +17,7 @@
 // eslint-disable-next-line @typescript-eslint/triple-slash-reference
 /// <reference path="../../../../src/typings/rawloader.typings.d.ts" />
 
-import { Inject, Injectable, NgZone } from '@angular/core';
+import { Inject, Injectable, NgZone, Renderer2 } from '@angular/core';
 import { WINDOW } from '@core/services/window.service';
 import { ExceptionData } from '@app/shared/models/error.models';
 import {
@@ -55,8 +55,9 @@ import {
   TelemetryType
 } from '@shared/models/telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
-import { DatePipe } from '@angular/common';
+import { DatePipe, DOCUMENT } from '@angular/common';
 import { entityTypeTranslations } from '@shared/models/entity-type.models';
+import cssjs from '@core/css/css';
 
 const i18nRegExp = new RegExp(`{${i18nPrefix}:[^{}]+}`, 'g');
 
@@ -116,6 +117,7 @@ export class UtilsService {
   defaultAlarmDataKeys: Array<DataKey> = [];
 
   constructor(@Inject(WINDOW) private window: Window,
+              @Inject(DOCUMENT) private document: Document,
               private zone: NgZone,
               private datePipe: DatePipe,
               private translate: TranslateService) {
@@ -500,6 +502,26 @@ export class UtilsService {
 
   public base64toObj(b64Encoded: string): any {
     return base64toObj(b64Encoded);
+  }
+
+  public applyCssToElement(renderer: Renderer2, element: any, cssClassPrefix: string, css: string): string {
+    const cssParser = new cssjs();
+    cssParser.testMode = false;
+    const cssClass = `${cssClassPrefix}-${guid()}`;
+    cssParser.cssPreviewNamespace = cssClass;
+    cssParser.createStyleElement(cssClass, css);
+    renderer.addClass(element, cssClass);
+    return cssClass;
+  }
+
+  public clearCssElement(renderer: Renderer2, cssClass: string, element?: any): void {
+    if (element) {
+      renderer.removeClass(element, cssClass);
+    }
+    const el = this.document.getElementById(cssClass);
+    if (el) {
+      el.parentNode.removeChild(el);
+    }
   }
 
 }
