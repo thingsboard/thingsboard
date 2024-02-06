@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.queue.processing;
 
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 
@@ -51,7 +52,16 @@ public abstract class AbstractTbRuleEngineSubmitStrategy implements TbRuleEngine
         List<IdMsgPair<TransportProtos.ToRuleEngineMsg>> newOrderedMsgList = new ArrayList<>(reprocessMap.size());
         for (IdMsgPair<TransportProtos.ToRuleEngineMsg> pair : orderedMsgList) {
             if (reprocessMap.containsKey(pair.uuid)) {
-                newOrderedMsgList.add(pair);
+                if (StringUtils.isNotEmpty(pair.getMsg().getValue().getFailureMessage())) {
+                    var toRuleEngineMsg = TransportProtos.ToRuleEngineMsg.newBuilder(pair.getMsg().getValue())
+                            .clearFailureMessage()
+                            .clearRelationTypes()
+                            .build();
+                    var newMsg = new TbProtoQueueMsg<>(pair.getMsg().getKey(), toRuleEngineMsg, pair.getMsg().getHeaders());
+                    newOrderedMsgList.add(new IdMsgPair<>(pair.getUuid(), newMsg));
+                } else {
+                    newOrderedMsgList.add(pair);
+                }
             }
         }
         orderedMsgList = newOrderedMsgList;
