@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.msa.alarm.rule;
 
+import org.awaitility.Awaitility;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -33,6 +34,7 @@ import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentValueType
 import org.thingsboard.server.common.data.alarm.rule.condition.Operation;
 import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionFilter;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleDeviceTypeEntityFilter;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -46,6 +48,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.thingsboard.server.msa.prototypes.DevicePrototypes.defaultDevicePrototype;
@@ -81,15 +84,8 @@ public class AlarmRuleTest extends AbstractContainerTest {
 
         assertThat(actualLatestTelemetry.getDataValuesByKey("temperature").get(1)).isEqualTo(Double.toString(42.0));
 
-        PageData<AlarmInfo> data = testRestClient.getEntityAlarms(device.getId(), new TimePageLink(10));
+        AlarmInfo alarm = getSingleAlarm(device.getId());
 
-        List<AlarmInfo> alarms = data.getData();
-        assertThat(alarms).isNotNull();
-        assertThat(alarms.size()).isEqualTo(1);
-
-        AlarmInfo alarm = alarms.get(0);
-
-        assertThat(alarm).isNotNull();
         assertThat(alarm.getType()).isEqualTo("highTemperatureAlarm");
         assertThat(alarm.isCleared()).isEqualTo(false);
         assertThat(alarm.isAcknowledged()).isEqualTo(false);
@@ -102,14 +98,8 @@ public class AlarmRuleTest extends AbstractContainerTest {
 
         assertThat(actualLatestTelemetry.getDataValuesByKey("temperature").get(1)).isEqualTo(Double.toString(5.0));
 
-        data = testRestClient.getEntityAlarms(device.getId(), new TimePageLink(10));
-        alarms = data.getData();
-        assertThat(alarms).isNotNull();
-        assertThat(alarms.size()).isEqualTo(1);
+        alarm = getSingleAlarm(device.getId());
 
-        alarm = alarms.get(0);
-
-        assertThat(alarm).isNotNull();
         assertThat(alarm.getType()).isEqualTo("highTemperatureAlarm");
         assertThat(alarm.isCleared()).isEqualTo(true);
         assertThat(alarm.isAcknowledged()).isEqualTo(false);
@@ -137,15 +127,8 @@ public class AlarmRuleTest extends AbstractContainerTest {
 
         assertThat(actualLatestTelemetry.getDataValuesByKey("temperature").get(1)).isEqualTo(Double.toString(42.0));
 
-        PageData<AlarmInfo> data = testRestClient.getEntityAlarms(device.getId(), new TimePageLink(10));
+        AlarmInfo alarm = getSingleAlarm(device.getId());
 
-        List<AlarmInfo> alarms = data.getData();
-        assertThat(alarms).isNotNull();
-        assertThat(alarms.size()).isEqualTo(1);
-
-        AlarmInfo alarm = alarms.get(0);
-
-        assertThat(alarm).isNotNull();
         assertThat(alarm.getType()).isEqualTo("highTemperatureAlarm");
         assertThat(alarm.isCleared()).isEqualTo(false);
         assertThat(alarm.isAcknowledged()).isEqualTo(false);
@@ -158,14 +141,8 @@ public class AlarmRuleTest extends AbstractContainerTest {
 
         assertThat(actualLatestTelemetry.getDataValuesByKey("temperature").get(1)).isEqualTo(Double.toString(5.0));
 
-        data = testRestClient.getEntityAlarms(device.getId(), new TimePageLink(10));
-        alarms = data.getData();
-        assertThat(alarms).isNotNull();
-        assertThat(alarms.size()).isEqualTo(1);
+        alarm = getSingleAlarm(device.getId());
 
-        alarm = alarms.get(0);
-
-        assertThat(alarm).isNotNull();
         assertThat(alarm.getType()).isEqualTo("highTemperatureAlarm");
         assertThat(alarm.isCleared()).isEqualTo(false);
         assertThat(alarm.isAcknowledged()).isEqualTo(false);
@@ -182,14 +159,8 @@ public class AlarmRuleTest extends AbstractContainerTest {
 
         assertThat(actualLatestTelemetry.getDataValuesByKey("temperature").get(1)).isEqualTo(Double.toString(5.0));
 
-        data = testRestClient.getEntityAlarms(device.getId(), new TimePageLink(10));
-        alarms = data.getData();
-        assertThat(alarms).isNotNull();
-        assertThat(alarms.size()).isEqualTo(1);
+        alarm = getSingleAlarm(device.getId());
 
-        alarm = alarms.get(0);
-
-        assertThat(alarm).isNotNull();
         assertThat(alarm.getType()).isEqualTo("highTemperatureAlarm");
         assertThat(alarm.isCleared()).isEqualTo(true);
         assertThat(alarm.isAcknowledged()).isEqualTo(false);
@@ -212,15 +183,8 @@ public class AlarmRuleTest extends AbstractContainerTest {
 
         assertThat(actualLatestTelemetry.getDataValuesByKey("temperature").get(1)).isEqualTo(Double.toString(42.0));
 
-        PageData<AlarmInfo> data = testRestClient.getEntityAlarms(device.getId(), new TimePageLink(10));
+        AlarmInfo alarm = getSingleAlarm(device.getId());
 
-        List<AlarmInfo> alarms = data.getData();
-        assertThat(alarms).isNotNull();
-        assertThat(alarms.size()).isEqualTo(1);
-
-        AlarmInfo alarm = alarms.get(0);
-
-        assertThat(alarm).isNotNull();
         assertThat(alarm.getType()).isEqualTo("highTemperatureAlarm");
         assertThat(alarm.isCleared()).isEqualTo(false);
         assertThat(alarm.isAcknowledged()).isEqualTo(false);
@@ -237,14 +201,8 @@ public class AlarmRuleTest extends AbstractContainerTest {
 
         assertThat(actualLatestTelemetry.getDataValuesByKey("temperature").get(1)).isEqualTo(Double.toString(5.0));
 
-        data = testRestClient.getEntityAlarms(device.getId(), new TimePageLink(10));
-        alarms = data.getData();
-        assertThat(alarms).isNotNull();
-        assertThat(alarms.size()).isEqualTo(1);
+        alarm = getSingleAlarm(device.getId());
 
-        alarm = alarms.get(0);
-
-        assertThat(alarm).isNotNull();
         assertThat(alarm.getType()).isEqualTo("highTemperatureAlarm");
         assertThat(alarm.isCleared()).isEqualTo(false);
         assertThat(alarm.isAcknowledged()).isEqualTo(false);
@@ -293,16 +251,8 @@ public class AlarmRuleTest extends AbstractContainerTest {
 
         assertThat(actualLatestTelemetry.getDataValuesByKey("temperature").get(1)).isEqualTo(Double.toString(22.0));
 
-        data = testRestClient.getEntityAlarms(device.getId(), new TimePageLink(10));
+        AlarmInfo alarm = getSingleAlarm(device.getId());
 
-        alarms = data.getData();
-        assertThat(alarms).isNotNull();
-
-        assertThat(alarms.size()).isEqualTo(1);
-
-        AlarmInfo alarm = alarms.get(0);
-
-        assertThat(alarm).isNotNull();
         assertThat(alarm.getType()).isEqualTo("highTemperatureAlarm");
         assertThat(alarm.isCleared()).isEqualTo(false);
         assertThat(alarm.isAcknowledged()).isEqualTo(false);
@@ -315,14 +265,8 @@ public class AlarmRuleTest extends AbstractContainerTest {
 
         assertThat(actualLatestTelemetry.getDataValuesByKey("temperature").get(1)).isEqualTo(Double.toString(5.0));
 
-        data = testRestClient.getEntityAlarms(device.getId(), new TimePageLink(10));
-        alarms = data.getData();
-        assertThat(alarms).isNotNull();
-        assertThat(alarms.size()).isEqualTo(1);
+        alarm = getSingleAlarm(device.getId());
 
-        alarm = alarms.get(0);
-
-        assertThat(alarm).isNotNull();
         assertThat(alarm.getType()).isEqualTo("highTemperatureAlarm");
         assertThat(alarm.isCleared()).isEqualTo(false);
         assertThat(alarm.isAcknowledged()).isEqualTo(false);
@@ -339,14 +283,8 @@ public class AlarmRuleTest extends AbstractContainerTest {
 
         assertThat(actualLatestTelemetry.getDataValuesByKey("temperature").get(1)).isEqualTo(Double.toString(5.0));
 
-        data = testRestClient.getEntityAlarms(device.getId(), new TimePageLink(10));
-        alarms = data.getData();
-        assertThat(alarms).isNotNull();
-        assertThat(alarms.size()).isEqualTo(1);
+        alarm = getSingleAlarm(device.getId());
 
-        alarm = alarms.get(0);
-
-        assertThat(alarm).isNotNull();
         assertThat(alarm.getType()).isEqualTo("highTemperatureAlarm");
         assertThat(alarm.isCleared()).isEqualTo(true);
         assertThat(alarm.isAcknowledged()).isEqualTo(false);
@@ -355,7 +293,7 @@ public class AlarmRuleTest extends AbstractContainerTest {
     }
 
     @Test
-    public void testCreateAndClearAlarmAfterRemoving() throws Exception {
+    public void testCreateAndClearAlarmWhenOldAlarmRemoved() throws Exception {
         var alarmRule = createAlarmRule();
         alarmRule = testRestClient.postAlarmRule(alarmRule);
 
@@ -369,24 +307,17 @@ public class AlarmRuleTest extends AbstractContainerTest {
 
         assertThat(actualLatestTelemetry.getDataValuesByKey("temperature").get(1)).isEqualTo(Double.toString(42.0));
 
-        PageData<AlarmInfo> data = testRestClient.getEntityAlarms(device.getId(), new TimePageLink(10));
+        AlarmInfo alarm = getSingleAlarm(device.getId());
 
-        List<AlarmInfo> alarms = data.getData();
-        assertThat(alarms).isNotNull();
-        assertThat(alarms.size()).isEqualTo(1);
-
-        AlarmInfo alarm = alarms.get(0);
-
-        assertThat(alarm).isNotNull();
         assertThat(alarm.getType()).isEqualTo("highTemperatureAlarm");
         assertThat(alarm.isCleared()).isEqualTo(false);
         assertThat(alarm.isAcknowledged()).isEqualTo(false);
 
         testRestClient.deleteAlarm(alarm.getId());
 
-        data = testRestClient.getEntityAlarms(device.getId(), new TimePageLink(10));
+        var data = testRestClient.getEntityAlarms(device.getId(), new TimePageLink(10));
 
-        alarms = data.getData();
+        var alarms = data.getData();
         assertThat(CollectionsUtil.isEmpty(alarms)).isTrue();
 
         testRestClient.postTelemetry(deviceCredentials.getCredentialsId(), mapper.valueToTree(Map.of("temperature", 42.0)));
@@ -396,9 +327,8 @@ public class AlarmRuleTest extends AbstractContainerTest {
 
         assertThat(actualLatestTelemetry.getDataValuesByKey("temperature").get(1)).isEqualTo(Double.toString(42.0));
 
-        data = testRestClient.getEntityAlarms(device.getId(), new TimePageLink(10));
+        alarm = getSingleAlarm(device.getId());
 
-        assertThat(alarm).isNotNull();
         assertThat(alarm.getType()).isEqualTo("highTemperatureAlarm");
         assertThat(alarm.isCleared()).isEqualTo(false);
         assertThat(alarm.isAcknowledged()).isEqualTo(false);
@@ -411,19 +341,65 @@ public class AlarmRuleTest extends AbstractContainerTest {
 
         assertThat(actualLatestTelemetry.getDataValuesByKey("temperature").get(1)).isEqualTo(Double.toString(5.0));
 
-        data = testRestClient.getEntityAlarms(device.getId(), new TimePageLink(10));
-        alarms = data.getData();
-        assertThat(alarms).isNotNull();
-        assertThat(alarms.size()).isEqualTo(1);
+        alarm = getSingleAlarm(device.getId());
 
-        alarm = alarms.get(0);
-
-        assertThat(alarm).isNotNull();
         assertThat(alarm.getType()).isEqualTo("highTemperatureAlarm");
         assertThat(alarm.isCleared()).isEqualTo(true);
         assertThat(alarm.isAcknowledged()).isEqualTo(false);
 
         testRestClient.deleteAlarmRule(alarmRule.getId());
+    }
+
+    @Test
+    public void testNotCreateAlarmWhenAlarmRuleRemoved() throws Exception {
+        var alarmRule = createAlarmRule();
+        alarmRule = testRestClient.postAlarmRule(alarmRule);
+
+        DeviceCredentials deviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
+
+        WsClient wsClient = subscribeToWebSocket(device.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
+        testRestClient.postTelemetry(deviceCredentials.getCredentialsId(), mapper.valueToTree(Map.of("temperature", 42.0)));
+
+        WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
+        wsClient.closeBlocking();
+
+        assertThat(actualLatestTelemetry.getDataValuesByKey("temperature").get(1)).isEqualTo(Double.toString(42.0));
+
+        AlarmInfo alarm = getSingleAlarm(device.getId());
+
+        assertThat(alarm.getType()).isEqualTo("highTemperatureAlarm");
+        assertThat(alarm.isCleared()).isEqualTo(false);
+        assertThat(alarm.isAcknowledged()).isEqualTo(false);
+
+        testRestClient.deleteAlarmRule(alarmRule.getId());
+        testRestClient.deleteAlarm(alarm.getId());
+
+        wsClient = subscribeToWebSocket(device.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
+        testRestClient.postTelemetry(deviceCredentials.getCredentialsId(), mapper.valueToTree(Map.of("temperature", 42.0)));
+
+        actualLatestTelemetry = wsClient.getLastMessage();
+        wsClient.closeBlocking();
+
+        assertThat(actualLatestTelemetry.getDataValuesByKey("temperature").get(1)).isEqualTo(Double.toString(42.0));
+
+        var data = testRestClient.getEntityAlarms(device.getId(), new TimePageLink(10));
+
+        assertThat(CollectionsUtil.isEmpty(data.getData())).isTrue();
+    }
+
+    private AlarmInfo getSingleAlarm(EntityId entityId) {
+        Awaitility
+                .await()
+                .alias("Get Alarm")
+                .atMost(10, TimeUnit.SECONDS)
+                .until(() -> CollectionsUtil.isNotEmpty(testRestClient.getEntityAlarms(entityId, new TimePageLink(10)).getData()));
+
+        PageData<AlarmInfo> data = testRestClient.getEntityAlarms(entityId, new TimePageLink(10));
+        List<AlarmInfo> alarms = data.getData();
+        assertThat(alarms.size()).isEqualTo(1);
+        AlarmInfo alarm = alarms.get(0);
+        assertThat(alarm).isNotNull();
+        return alarm;
     }
 
     private AlarmRule createAlarmRule() {
