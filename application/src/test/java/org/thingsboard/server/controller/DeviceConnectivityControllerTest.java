@@ -43,7 +43,7 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
-import org.thingsboard.server.dao.device.GatewaySettingsInfo;
+import org.thingsboard.server.dao.device.GatewayInfo;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.nio.file.Files;
@@ -352,13 +352,17 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
 
         loginSysAdmin();
 
-        AdminSettings adminSettings = new AdminSettings();
+        AdminSettings adminSettings = doGet("/api/admin/settings/gateway", AdminSettings.class);
 
-        GatewaySettingsInfo gatewaySettingsInfo = new GatewaySettingsInfo();
-        gatewaySettingsInfo.setVersion("3.4.4");
+        Assert.assertNotNull(adminSettings);
+        Assert.assertNotNull(adminSettings.getJsonValue());
 
-        adminSettings.setKey("gatewaySettings");
-        adminSettings.setJsonValue(JacksonUtil.valueToTree(gatewaySettingsInfo));
+        GatewayInfo gatewayInfo = JacksonUtil.treeToValue(adminSettings.getJsonValue(), GatewayInfo.class);
+
+        Assert.assertEquals("latest", gatewayInfo.getVersion());
+
+        gatewayInfo.setVersion("3.4.4");
+        adminSettings.setJsonValue(JacksonUtil.valueToTree(gatewayInfo));
 
         adminSettings = doPostWithTypedResponse("/api/admin/settings", JacksonUtil.valueToTree(adminSettings), new TypeReference<AdminSettings>() {
         });
@@ -376,7 +380,7 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
                 "services:\n" +
                 "  # ThingsBoard IoT Gateway Service Configuration\n" +
                 "  tb-gateway:\n" +
-                "    image: thingsboard/tb-gateway:" + gatewaySettingsInfo.getVersion() + "\n" +
+                "    image: thingsboard/tb-gateway:" + gatewayInfo.getVersion() + "\n" +
                 "    container_name: tb-gateway\n" +
                 "    restart: always\n" +
                 "\n" +
@@ -415,9 +419,9 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
                 "    name: tb-gw-extensions\n"));
 
         loginSysAdmin();
-        gatewaySettingsInfo.setVersion("");
+        gatewayInfo.setVersion("");
 
-        adminSettings.setJsonValue(JacksonUtil.valueToTree(gatewaySettingsInfo));
+        adminSettings.setJsonValue(JacksonUtil.valueToTree(gatewayInfo));
 
         adminSettings = doPostWithTypedResponse("/api/admin/settings", JacksonUtil.valueToTree(adminSettings),
                 new TypeReference<>() {
