@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -51,7 +52,7 @@ public class DefaultFirebaseService implements FirebaseService {
             .build();
 
     @Override
-    public void sendMessage(TenantId tenantId, String credentials, String fcmToken, String title, String body) throws FirebaseMessagingException {
+    public void sendMessage(TenantId tenantId, String credentials, String fcmToken, String title, String body, Map<String, String> data) throws FirebaseMessagingException {
         FirebaseContext firebaseContext = contexts.asMap().compute(tenantId.toString(), (key, context) -> {
             if (context == null) {
                 return new FirebaseContext(key, credentials);
@@ -62,6 +63,7 @@ public class DefaultFirebaseService implements FirebaseService {
         });
 
         Message message = Message.builder()
+                .setToken(fcmToken)
                 .setNotification(Notification.builder()
                         .setTitle(title)
                         .setBody(body)
@@ -69,7 +71,7 @@ public class DefaultFirebaseService implements FirebaseService {
                 .setAndroidConfig(AndroidConfig.builder()
                         .setPriority(AndroidConfig.Priority.HIGH)
                         .build())
-                .setToken(fcmToken)
+                .putAllData(data)
                 .build();
         firebaseContext.getMessaging().send(message);
         log.trace("[{}] Sent message for FCM token {}", tenantId, fcmToken);

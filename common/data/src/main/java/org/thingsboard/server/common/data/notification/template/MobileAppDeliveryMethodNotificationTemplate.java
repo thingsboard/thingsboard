@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.notification.template;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -32,6 +33,7 @@ public class MobileAppDeliveryMethodNotificationTemplate extends DeliveryMethodN
 
     @NotEmpty
     private String subject;
+    private JsonNode additionalConfig;
 
     private final List<TemplatableValue> templatableValues = List.of(
             TemplatableValue.of(this::getBody, this::setBody),
@@ -41,6 +43,7 @@ public class MobileAppDeliveryMethodNotificationTemplate extends DeliveryMethodN
     public MobileAppDeliveryMethodNotificationTemplate(MobileAppDeliveryMethodNotificationTemplate other) {
         super(other);
         this.subject = other.subject;
+        this.additionalConfig = other.additionalConfig;
     }
 
     @Override

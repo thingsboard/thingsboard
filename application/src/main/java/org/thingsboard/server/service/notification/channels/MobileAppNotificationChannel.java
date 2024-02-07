@@ -20,10 +20,12 @@ import com.google.firebase.messaging.MessagingErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.notification.FirebaseService;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.settings.MobileAppNotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.template.MobileAppDeliveryMethodNotificationTemplate;
@@ -31,7 +33,10 @@ import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.service.notification.NotificationProcessingContext;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 @Component
@@ -53,9 +58,20 @@ public class MobileAppNotificationChannel implements NotificationChannel<User, M
         MobileAppNotificationDeliveryMethodConfig config = ctx.getDeliveryMethodConfig(NotificationDeliveryMethod.MOBILE_APP);
         String credentials = config.getFirebaseServiceAccountCredentials();
         Set<String> validTokens = new HashSet<>(mobileSessions.keySet());
+
+        String subject = processedTemplate.getSubject();
+        String body = processedTemplate.getBody();
+        Map<String, String> data = Optional.ofNullable(processedTemplate.getAdditionalConfig())
+                .map(JacksonUtil::toFlatMap).orElseGet(HashMap::new);
+        Optional.ofNullable(ctx.getRequest().getInfo())
+                .map(NotificationInfo::getStateEntityId)
+                .ifPresent(stateEntityId -> {
+                    data.put("stateEntityId", stateEntityId.getId().toString());
+                    data.put("stateEntityType", stateEntityId.getEntityType().name());
+                });
         for (String token : mobileSessions.keySet()) {
             try {
-                firebaseService.sendMessage(ctx.getTenantId(), credentials, token, processedTemplate.getSubject(), processedTemplate.getBody());
+                firebaseService.sendMessage(ctx.getTenantId(), credentials, token, subject, body, data);
             } catch (FirebaseMessagingException e) {
                 MessagingErrorCode errorCode = e.getMessagingErrorCode();
                 if (errorCode == MessagingErrorCode.UNREGISTERED || errorCode == MessagingErrorCode.INVALID_ARGUMENT) {
