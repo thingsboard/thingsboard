@@ -1391,3 +1391,11 @@ message LifecycleEventProto {
   bool success = 7;
   string error = 8;
 }
+
+message ToHousekeeperServiceMsg {
+  HousekeeperTaskProto task = 1;
+}
+
+message HousekeeperTaskProto {
+  bytes value = 1;
+}

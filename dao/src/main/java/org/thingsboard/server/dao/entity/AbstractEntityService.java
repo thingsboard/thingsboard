@@ -31,6 +31,9 @@ import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.housekeeper.HouseKeeperService;
+import org.thingsboard.server.dao.housekeeper.HousekeeperService;
+import org.thingsboard.server.dao.housekeeper.data.HousekeeperTask;
 import org.thingsboard.server.dao.relation.RelationService;
 
 import java.util.Collections;
@@ -62,6 +65,9 @@ public abstract class AbstractEntityService {
     @Lazy
     @Autowired(required = false)
     protected EdgeService edgeService;
+
+    @Autowired
+    protected HousekeeperService housekeeperService;
 
     protected void createRelation(TenantId tenantId, EntityRelation relation) {
         log.debug("Creating relation: {}", relation);
