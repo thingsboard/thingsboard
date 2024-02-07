@@ -149,7 +149,7 @@ export class DataKeysPanelComponent implements ControlValueAccessor, OnInit, OnC
   get noKeys(): boolean {
     let keys: DataKey[] = this.keysListFormGroup.get('keys').value;
     if (this.hasAdditionalLatestDataKeys) {
-      keys = keys.filter(k => !(k as any).latest);
+      keys = keys.filter(k => !(k as any)?.latest);
     }
     return keys.length === 0;
   }

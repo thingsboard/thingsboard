@@ -58,17 +58,6 @@ public abstract class TransportActivityManager extends AbstractActivityManager<U
     }
 
     @Override
-    protected ActivityState<TransportProtos.SessionInfoProto> createNewState(UUID sessionId) {
-        SessionMetaData session = sessions.get(sessionId);
-        if (session == null) {
-            return null;
-        }
-        ActivityState<TransportProtos.SessionInfoProto> state = new ActivityState<>();
-        state.setMetadata(session.getSessionInfo());
-        return state;
-    }
-
-    @Override
     protected ActivityStrategy getStrategy() {
         return reportingStrategyType.toStrategy();
     }

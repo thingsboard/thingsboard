@@ -1049,26 +1049,20 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         this.onAddWidgetClosed();
         this.isAddingWidgetClosed = true;
       }
-      if (this.widgetEditMode) {
-        if (revert) {
-          this.dashboard = this.prevDashboard;
-          this.dashboardLogoCache = undefined;
-          this.dashboardConfiguration = this.dashboard.configuration;
-        }
-      } else {
-        this.resetHighlight();
-        if (revert) {
-          this.dashboard = this.prevDashboard;
-          this.dashboardLogoCache = undefined;
-          this.dashboardConfiguration = this.dashboard.configuration;
+      this.resetHighlight();
+      if (revert) {
+        this.dashboard = this.prevDashboard;
+        this.dashboardLogoCache = undefined;
+        this.dashboardConfiguration = this.dashboard.configuration;
+        if (!this.widgetEditMode) {
           this.dashboardCtx.dashboardTimewindow = this.dashboardConfiguration.timewindow;
           this.updateDashboardCss();
           this.entityAliasesUpdated();
           this.filtersUpdated();
           this.updateLayouts();
-        } else {
-          this.dashboard.configuration.timewindow = this.dashboardCtx.dashboardTimewindow;
         }
+      } else if (!this.widgetEditMode) {
+        this.dashboard.configuration.timewindow = this.dashboardCtx.dashboardTimewindow;
       }
     }
   }

@@ -158,7 +158,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
         for (TenantId tenantId : vcService.getActiveRepositoryTenants()) {
-            if (!partitionService.resolve(ServiceType.TB_VC_EXECUTOR, tenantId, tenantId).isMyPartition()) {
+            if (!partitionService.isMyPartition(ServiceType.TB_VC_EXECUTOR, tenantId, tenantId)) {
                 var lock = getRepoLock(tenantId);
                 lock.lock();
                 try {

@@ -253,6 +253,7 @@ public class TbAlarmNodeTest {
                 AlarmApiCallResult.builder()
                         .successful(true)
                         .modified(true)
+                        .old(new Alarm(activeAlarm))
                         .alarm(new AlarmInfo(expectedAlarm))
                         .build());
         node.onMsg(ctx, msg);

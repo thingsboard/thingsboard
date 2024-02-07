@@ -299,11 +299,6 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     }
 
     @Override
-    public void saveLegacyYmlSettings() throws Exception {
-        jwtSettingsService.saveLegacyYmlSettings();
-    }
-
-    @Override
     public void createOAuth2Templates() throws Exception {
         installScripts.createOAuth2Templates();
     }
