@@ -22,7 +22,7 @@ import org.thingsboard.server.dao.housekeeper.data.HousekeeperTaskType;
 
 @Component
 @RequiredArgsConstructor
-public class EntityDeletionTaskProcessor implements HousekeeperTaskProcessor {
+public class EntityDeletionTaskProcessor implements HousekeeperTaskProcessor<HousekeeperTask> {
 
     @Override
     public void process(HousekeeperTask task) throws Exception {

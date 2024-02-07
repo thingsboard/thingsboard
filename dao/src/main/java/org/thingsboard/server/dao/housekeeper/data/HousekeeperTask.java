@@ -15,27 +15,28 @@
  */
 package org.thingsboard.server.dao.housekeeper.data;
 
-import lombok.Data;
+import lombok.Getter;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
 
 import java.io.Serializable;
 
 /*
  * on start, read the retry queue and put the messages back to main queue (save offset)
  * */
-@Data
+@Getter
 public class HousekeeperTask implements Serializable {
 
     private final TenantId tenantId;
     private final EntityId entityId;
     private final HousekeeperTaskType taskType;
 
-    // maybe we should not delete relations asynchronously
-//    public static HousekeeperTask deleteRelations(TenantId tenantId, EntityId entityId) {
-//        return new HousekeeperTask(tenantId, entityId, HousekeeperTaskType.DELETE_RELATIONS);
-//    }
+    protected HousekeeperTask(TenantId tenantId, EntityId entityId, HousekeeperTaskType taskType) {
+        this.tenantId = tenantId;
+        this.entityId = entityId;
+        this.taskType = taskType;
+    }
 
     public static HousekeeperTask deleteAttributes(TenantId tenantId, EntityId entityId) {
         return new HousekeeperTask(tenantId, entityId, HousekeeperTaskType.DELETE_ATTRIBUTES);
@@ -49,8 +50,8 @@ public class HousekeeperTask implements Serializable {
         return new HousekeeperTask(tenantId, entityId, HousekeeperTaskType.DELETE_EVENTS);
     }
 
-    public static HousekeeperTask unassignAlarms(TenantId tenantId, UserId userId) {
-        return new HousekeeperTask(tenantId, userId, HousekeeperTaskType.UNASSIGN_ALARMS);
+    public static HousekeeperTask unassignAlarms(User user) {
+        return new AlarmsUnassignHousekeeperTask(user);
     }
 
     public static HousekeeperTask deleteEntityAlarms(TenantId tenantId, EntityId entityId) {

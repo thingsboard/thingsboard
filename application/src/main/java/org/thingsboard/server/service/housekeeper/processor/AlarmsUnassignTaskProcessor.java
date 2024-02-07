@@ -17,24 +17,25 @@ package org.thingsboard.server.service.housekeeper.processor;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.dao.attributes.AttributesService;
-import org.thingsboard.server.dao.housekeeper.data.HousekeeperTask;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.dao.housekeeper.data.HousekeeperTaskType;
+import org.thingsboard.server.dao.housekeeper.data.AlarmsUnassignHousekeeperTask;
+import org.thingsboard.server.service.entitiy.alarm.TbAlarmService;
 
 @Component
 @RequiredArgsConstructor
-public class AttributesDeletionTaskProcessor implements HousekeeperTaskProcessor<HousekeeperTask> {
+public class AlarmsUnassignTaskProcessor implements HousekeeperTaskProcessor<AlarmsUnassignHousekeeperTask> {
 
-    private final AttributesService attributesService;
+    private final TbAlarmService alarmService;
 
     @Override
-    public void process(HousekeeperTask task) throws Exception {
-//        attributesService.removeAll(task.getTenantId(), task.getEntityId(), DataConstants.CLIENT_SCOPE);
+    public void process(AlarmsUnassignHousekeeperTask task) throws Exception {
+        alarmService.unassignDeletedUserAlarms(task.getTenantId(), (UserId) task.getEntityId(), task.getUserTitle(), task.getTs());
     }
 
     @Override
     public HousekeeperTaskType getTaskType() {
-        return HousekeeperTaskType.DELETE_ATTRIBUTES;
+        return HousekeeperTaskType.UNASSIGN_ALARMS;
     }
 
 }

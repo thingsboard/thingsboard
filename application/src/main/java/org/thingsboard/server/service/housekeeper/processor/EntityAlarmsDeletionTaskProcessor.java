@@ -23,7 +23,7 @@ import org.thingsboard.server.dao.housekeeper.data.HousekeeperTaskType;
 
 @Component
 @RequiredArgsConstructor
-public class EntityAlarmsDeletionTaskProcessor implements HousekeeperTaskProcessor {
+public class EntityAlarmsDeletionTaskProcessor implements HousekeeperTaskProcessor<HousekeeperTask> {
 
     private final AlarmService alarmService;
 

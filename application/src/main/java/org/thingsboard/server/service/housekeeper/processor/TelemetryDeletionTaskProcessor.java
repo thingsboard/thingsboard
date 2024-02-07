@@ -23,7 +23,7 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
 @Component
 @RequiredArgsConstructor
-public class TelemetryDeletionTaskProcessor implements HousekeeperTaskProcessor {
+public class TelemetryDeletionTaskProcessor implements HousekeeperTaskProcessor<HousekeeperTask> {
 
     private final TimeseriesService timeseriesService;
 

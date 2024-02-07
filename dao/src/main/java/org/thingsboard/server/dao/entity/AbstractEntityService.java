@@ -24,6 +24,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -78,9 +79,8 @@ public abstract class AbstractEntityService {
         log.trace("[{}] DeleteEntityEvent handler: {}", tenantId, event);
 
         cleanUpRelatedData(tenantId, entityId);
-        if (EntityType.USER.equals(entityId.getEntityType())) {
-//            housekeeperService.submitTask(HousekeeperTask.unassignAlarms(tenantId, entityId));
-//            unassignDeletedUserAlarms(tenantId, (User) event.getEntity(), event.getTs());
+        if (entityId.getEntityType() == EntityType.USER) {
+            housekeeperService.submitTask(HousekeeperTask.unassignAlarms((User) event.getEntity()));
         }
     }
 
