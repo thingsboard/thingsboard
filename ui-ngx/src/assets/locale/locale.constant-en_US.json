@@ -98,6 +98,7 @@
         "settings": "Settings",
         "general": "General",
         "general-settings": "General Settings",
+        "gateway-settings": "Gateway settings",
         "home-settings": "Home Settings",
         "home": "Home",
         "outgoing-mail": "Mail server",

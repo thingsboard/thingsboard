@@ -33,6 +33,14 @@ import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.dao.device.DeviceConnectivityConfiguration;
+import org.thingsboard.server.dao.device.GatewayInfoConfiguration;
+import org.thingsboard.server.dao.edge.EdgeEventDao;
+import org.thingsboard.server.dao.entity.EntityService;
+import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.event.EventService;
+import org.thingsboard.server.dao.model.sql.DeviceProfileEntity;
+import org.thingsboard.server.dao.queue.QueueService;
+import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
@@ -67,12 +75,19 @@ public class DefaultDataUpdateService implements DataUpdateService {
     @Autowired
     DeviceConnectivityConfiguration connectivityConfiguration;
 
+    @Autowired
+    GatewayInfoConfiguration gatewayInfoConfiguration;
+
     @Override
     public void updateData(String fromVersion) throws Exception {
         switch (fromVersion) {
             case "3.6.0":
                 log.info("Updating data from version 3.6.0 to 3.6.1 ...");
                 migrateDeviceConnectivity();
+                break;
+            case "3.6.2":
+                log.info("Updating data from version 3.6.2 to 3.6.3 ...");
+                migrateGatewayVersion();
                 break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
@@ -86,6 +101,16 @@ public class DefaultDataUpdateService implements DataUpdateService {
             connectivitySettings.setKey("connectivity");
             connectivitySettings.setJsonValue(JacksonUtil.valueToTree(connectivityConfiguration.getConnectivity()));
             adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, connectivitySettings);
+        }
+    }
+
+    private void migrateGatewayVersion() {
+        if (adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "gateway") == null) {
+            AdminSettings gatewaySettings = new AdminSettings();
+            gatewaySettings.setTenantId(TenantId.SYS_TENANT_ID);
+            gatewaySettings.setKey("gateway");
+            gatewaySettings.setJsonValue(JacksonUtil.valueToTree(gatewayInfoConfiguration.getGatewayInfo()));
+            adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, gatewaySettings);
         }
     }
 

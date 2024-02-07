@@ -18,17 +18,19 @@ import { Component, OnDestroy } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import {
   AdminSettings,
   DeviceConnectivityProtocol,
   DeviceConnectivitySettings,
+  GatewaySettings,
   GeneralSettings
 } from '@shared/models/settings.models';
 import { AdminService } from '@core/http/admin.service';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { MatTableDataSource } from '@angular/material/table';
 
 @Component({
   selector: 'tb-general-settings',
@@ -39,11 +41,13 @@ export class GeneralSettingsComponent extends PageComponent implements HasConfir
 
   generalSettings: FormGroup;
   deviceConnectivitySettingsForm: FormGroup;
+  gatewaySettingsArray: FormArray = this.fb.array([]);
 
   protocol: DeviceConnectivityProtocol = 'http';
 
   private adminSettings: AdminSettings<GeneralSettings>;
   private deviceConnectivitySettings: AdminSettings<DeviceConnectivitySettings>;
+  private gatewaySettings: AdminSettings<GatewaySettings>;
 
   private readonly destroy$ = new Subject<void>();
 
@@ -57,6 +61,9 @@ export class GeneralSettingsComponent extends PageComponent implements HasConfir
     this.buildDeviceConnectivitySettingsForm();
     this.adminService.getAdminSettings<DeviceConnectivitySettings>('connectivity')
       .subscribe(deviceConnectivitySettings => this.processDeviceConnectivitySettings(deviceConnectivitySettings));
+    this.adminService.getAdminSettings<GatewaySettings>('gatewaySettings')
+      .subscribe(gatewaySettings => this.processGatewaySettings(gatewaySettings));
+    // this.adminService('/api/notification')
   }
 
   ngOnDestroy() {
@@ -69,6 +76,16 @@ export class GeneralSettingsComponent extends PageComponent implements HasConfir
     this.generalSettings = this.fb.group({
       baseUrl: ['', [Validators.required]],
       prohibitDifferentUrl: ['',[]]
+    });
+  }
+
+  private buildGatewayServerSettingsForm(settingsPairs = [{property: 'version', value: 'latest'}]) {
+    this.gatewaySettingsArray.controls = [];
+    settingsPairs.forEach(item => {
+      this.gatewaySettingsArray.push(this.fb.group({
+        property: [{ value: item.property, disabled: true}],
+        value: [item.value]
+      }));
     });
   }
 
@@ -118,8 +135,25 @@ export class GeneralSettingsComponent extends PageComponent implements HasConfir
       .subscribe(deviceConnectivitySettings => this.processDeviceConnectivitySettings(deviceConnectivitySettings));
   }
 
+  saveGatewaySettings(): void {
+    this.gatewaySettingsArray.getRawValue().forEach(item => {
+      this.gatewaySettings.jsonValue[item.property] = item.value;
+    })
+    if (!this.gatewaySettings) {this.gatewaySettings = {key: 'gatewaySettings', jsonValue: {"version": "latest"}}};
+    if (!this.gatewaySettings.jsonValue) {this.gatewaySettings.jsonValue = {"version": "latest"}};
+    if (!this.gatewaySettings.jsonValue.version) {this.gatewaySettings.jsonValue["version"] = "latest"};
+
+    this.adminService.saveAdminSettings<GatewaySettings>(this.gatewaySettings)
+      .subscribe(gatewaySettings => this.processGatewaySettings(gatewaySettings));
+  }
+
   discardGeneralSettings(): void {
     this.generalSettings.reset(this.adminSettings.jsonValue);
+  }
+
+  discardGatewaySettings(): void {
+    this.gatewaySettingsArray.controls = [];
+    this.processGatewaySettings(this.gatewaySettings);
   }
 
   discardDeviceConnectivitySettings(): void {
@@ -136,8 +170,19 @@ export class GeneralSettingsComponent extends PageComponent implements HasConfir
     this.deviceConnectivitySettingsForm.reset(this.deviceConnectivitySettings.jsonValue);
   }
 
+  private processGatewaySettings(gatewaySettings: AdminSettings<GatewaySettings>): void {
+    this.gatewaySettings = gatewaySettings;
+    const settingsPairs = [];
+    Object.entries(this.gatewaySettings.jsonValue).forEach(([property, value]) => {
+      settingsPairs.push({
+        property,
+        value
+      });
+    })
+    this.buildGatewayServerSettingsForm(settingsPairs)
+  }
+
   confirmForm(): FormGroup {
     return this.generalSettings.dirty ? this.generalSettings : this.deviceConnectivitySettingsForm;
   }
-
 }

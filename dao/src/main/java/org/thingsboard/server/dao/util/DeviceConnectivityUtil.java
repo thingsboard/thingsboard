@@ -22,7 +22,7 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.device.DeviceConnectivityInfo;
-import org.thingsboard.server.dao.device.GatewaySettingsInfo;
+import org.thingsboard.server.dao.device.GatewayInfo;
 
 import java.net.Inet6Address;
 import java.net.InetAddress;
@@ -97,7 +97,7 @@ public class DeviceConnectivityUtil {
                                                        DeviceConnectivityInfo properties,
                                                        DeviceCredentials deviceCredentials,
                                                        String mqttType,
-                                                       GatewaySettingsInfo gatewaySettings) throws URISyntaxException {
+                                                       GatewayInfo gatewaySettings) throws URISyntaxException {
         String host = getHost(baseUrl, properties, mqttType);
 
         StringBuilder dockerComposeBuilder = new StringBuilder();

@@ -33,4 +33,78 @@
       }
     }
   }
+
+  .property-table-cotainer .tb-form-row div {
+    flex: 1;
+
+    mat-form-field.mat-mdc-form-field {
+      width: 100%;
+
+      input.mat-mdc-input-element {
+        font-size: 16px;
+      }
+    }
+  }
+
+  .property-table-cotainer {
+    margin-bottom: 16px;
+
+    .property-row {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      border-radius: 6px;
+
+      & > div {
+        flex: 1;
+        width: 100%;
+        padding: 16px;
+
+        &.property-name {
+          padding-top: 0;
+        }
+
+        &.property-header {
+          background-color: lightgrey;
+        }
+
+        & mat-form-field {
+          width: 100%;
+        }
+      }
+    }
+  }
+
+
+  /* table {
+    margin-bottom: 16px;
+    .table-row {
+      &:hover {
+        background-color: transparent;
+      }
+    }
+
+    form {
+      width: 100%;
+      height: 100%;
+    }
+
+    .table-cell {
+      width: 50%;
+      font-size: 16px;
+      padding-right: 0;
+
+      & input {
+        width: 100%;
+        height: 100%;
+        outline: none;
+        border: none;
+
+        &.invalid {
+          padding-left: 16px;
+          box-shadow: inset 0 -2px 0 red;
+        }
+      }
+    }
+  } */
 }

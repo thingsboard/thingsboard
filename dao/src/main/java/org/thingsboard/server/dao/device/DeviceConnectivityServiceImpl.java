@@ -156,7 +156,7 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     public Resource createGatewayDockerComposeFile(String baseUrl, Device device) throws URISyntaxException {
         String mqttType = isEnabled(MQTTS) ? MQTTS : MQTT;
         DeviceConnectivityInfo properties = getConnectivity(mqttType);
-        GatewaySettingsInfo gatewaySettings = getGatewaySettings();
+        GatewayInfo gatewaySettings = getGatewaySettings();
         DeviceCredentials creds = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), device.getId());
         return DeviceConnectivityUtil.getGatewayDockerComposeFile(baseUrl, properties, creds, mqttType, gatewaySettings);
     }
@@ -170,11 +170,11 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
         return null;
     }
 
-    private GatewaySettingsInfo getGatewaySettings() {
-        AdminSettings adminGatewaySettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "gatewaySettings");
-        JsonNode gatewaySettings;
-        if (adminGatewaySettings != null && (gatewaySettings = adminGatewaySettings.getJsonValue()) != null) {
-            return JacksonUtil.convertValue(gatewaySettings, GatewaySettingsInfo.class);
+    private GatewayInfo getGatewaySettings() {
+        AdminSettings gatewaySettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "gateway");
+        JsonNode gateway;
+        if (gatewaySettings != null && (gateway = gatewaySettings.getJsonValue()) != null) {
+            return JacksonUtil.convertValue(gateway, GatewayInfo.class);
         }
         return null;
     }

@@ -16,8 +16,15 @@
 package org.thingsboard.server.dao.device;
 
 import lombok.Data;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
+
+@Profile("install")
+@Configuration
+@ConfigurationProperties(prefix = "gateway")
 @Data
-public class GatewaySettingsInfo {
-    private String version;
+public class GatewayInfoConfiguration {
+    private GatewayInfo gatewayInfo = new GatewayInfo();
 }
