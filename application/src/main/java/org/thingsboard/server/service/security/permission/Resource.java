@@ -46,7 +46,8 @@ public enum Resource {
     QUEUE(EntityType.QUEUE),
     VERSION_CONTROL,
     NOTIFICATION(EntityType.NOTIFICATION_TARGET, EntityType.NOTIFICATION_TEMPLATE,
-            EntityType.NOTIFICATION_REQUEST, EntityType.NOTIFICATION_RULE);
+            EntityType.NOTIFICATION_REQUEST, EntityType.NOTIFICATION_RULE),
+    QUEUE_STATS(EntityType.QUEUE_STATS);
 
     private final Set<EntityType> entityTypes;
 

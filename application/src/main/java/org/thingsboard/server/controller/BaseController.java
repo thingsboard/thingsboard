@@ -78,6 +78,7 @@ import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.QueueId;
+import org.thingsboard.server.common.data.id.QueueStatsId;
 import org.thingsboard.server.common.data.id.RpcId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -96,6 +97,7 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.query.EntityDataSortOrder;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.queue.Queue;
+import org.thingsboard.server.common.data.queue.QueueStats;
 import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
@@ -123,6 +125,7 @@ import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
+import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rpc.RpcService;
@@ -306,6 +309,9 @@ public abstract class BaseController {
 
     @Autowired
     protected QueueService queueService;
+
+    @Autowired
+    protected QueueStatsService queueStatsService;
 
     @Autowired
     protected EntitiesVersionControlService vcService;
@@ -600,6 +606,9 @@ public abstract class BaseController {
                 case QUEUE:
                     checkQueueId(new QueueId(entityId.getId()), operation);
                     return;
+                case QUEUE_STATS:
+                    checkQueueStatsId(new QueueStatsId(entityId.getId()), operation);
+                    return;
                 default:
                     checkEntityId(entityId, entitiesService::findEntityByTenantIdAndId, operation);
             }
@@ -774,6 +783,10 @@ public abstract class BaseController {
             }
         }
         return queue;
+    }
+
+    protected QueueStats checkQueueStatsId(QueueStatsId queueStatsId, Operation operation) throws ThingsboardException {
+        return checkEntityId(queueStatsId, queueStatsService::findQueueStatsById, operation);
     }
 
     protected <I extends EntityId> I emptyId(EntityType entityType) {

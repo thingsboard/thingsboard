@@ -28,3 +28,23 @@ ALTER TABLE rule_node ADD COLUMN IF NOT EXISTS queue_name varchar(255);
 ALTER TABLE component_descriptor ADD COLUMN IF NOT EXISTS has_queue_name boolean DEFAULT false;
 
 -- RULE NODE QUEUE UPDATE END
+
+-- QUEUE STATS UPDATE START
+
+CREATE TABLE IF NOT EXISTS queue_stats (
+    id uuid NOT NULL CONSTRAINT queue_stats_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid NOT NULL,
+    queue_name varchar(255) NOT NULL,
+    service_id varchar(255) NOT NULL,
+    CONSTRAINT queue_stats_name_unq_key UNIQUE (tenant_id, queue_name, service_id));
+
+INSERT INTO queue_stats
+    SELECT id, created_time, tenant_id, split_part(name, '_', 1) AS queue_name, split_part(name, '_', 2) AS service_id
+    FROM asset
+    WHERE type = 'TbServiceQueue';
+
+DELETE FROM asset WHERE type='TbServiceQueue';
+DELETE FROM asset_profile WHERE name ='TbServiceQueue';
+
+-- QUEUE STATS UPDATE END
