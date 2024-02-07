@@ -16,12 +16,15 @@
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
@@ -50,14 +53,17 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.dao.service.validator.DeviceCredentialsDataValidator;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 
 import java.nio.ByteBuffer;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
@@ -78,6 +84,8 @@ public class DeviceServiceTest extends AbstractServiceTest {
     TenantProfileService tenantProfileService;
     @Autowired
     private PlatformTransactionManager platformTransactionManager;
+    @SpyBean
+    private DeviceCredentialsDataValidator validator;
 
     private IdComparator<Device> idComparator = new IdComparator<>();
     private TenantId anotherTenantId;
@@ -149,6 +157,43 @@ public class DeviceServiceTest extends AbstractServiceTest {
                 .hasMessageContaining("Device credentials are already assigned to another device!");
 
         Device deviceByName = deviceService.findDeviceByTenantIdAndName(tenantId, duplicatedDevice.getName());
+        Assertions.assertNull(deviceByName);
+    }
+
+    @Test
+    public void testShouldRollbackNotValidatedDeviceIfDeviceCredentialsValidationFailed() {
+        Mockito.reset(validator);
+        Mockito.doThrow(new DataValidationException("mock message"))
+                .when(validator).validate(any(), any());
+
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setName(StringUtils.randomAlphabetic(10));
+        device.setType("default");
+        assertThatThrownBy(() -> deviceService.saveDevice(device, false))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessageContaining("mock message");
+
+        Device deviceByName = deviceService.findDeviceByTenantIdAndName(tenantId, device.getName());
+        Assertions.assertNull(deviceByName);
+    }
+
+    @Test
+    public void testShouldRollbackValidatedDeviceIfDeviceCredentialsValidationFailed() {
+        Mockito.reset(validator);
+        Mockito.doThrow(new DataValidationException("mock message"))
+                .when(validator).validate(any(), any());
+
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setName(StringUtils.randomAlphabetic(10));
+        device.setType("default");
+
+        assertThatThrownBy(() -> deviceService.saveDevice(device))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessageContaining("mock message");
+
+        Device deviceByName = deviceService.findDeviceByTenantIdAndName(tenantId, device.getName());
         Assertions.assertNull(deviceByName);
     }
 
