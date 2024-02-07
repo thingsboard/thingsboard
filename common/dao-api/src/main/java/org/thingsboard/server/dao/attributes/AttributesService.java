@@ -69,4 +69,6 @@ public interface AttributesService {
 
     List<String> findAllKeysByEntityIds(TenantId tenantId, List<EntityId> entityIds);
 
+    List<String> findAllKeysByEntityIds(TenantId tenantId, List<EntityId> entityIds, String scope);
+
 }

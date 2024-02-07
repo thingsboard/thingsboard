@@ -14,6 +14,8 @@
 /// limitations under the License.
 ///
 
+/* eslint-disable max-len */
+
 import * as AngularAnimations from '@angular/animations';
 import * as AngularCore from '@angular/core';
 import * as AngularCommon from '@angular/common';
@@ -226,9 +228,9 @@ import * as DataKeyConfigComponent from '@home/components/widget/config/data-key
 import * as LegendConfigComponent from '@home/components/widget/lib/settings/common/legend-config.component';
 import * as ManageWidgetActionsComponent from '@home/components/widget/action/manage-widget-actions.component';
 import * as WidgetActionDialogComponent from '@home/components/widget/action/widget-action-dialog.component';
-import * as CustomActionPrettyResourcesTabsComponent from '@home/components/widget/action/custom-action-pretty-resources-tabs.component';
-import * as CustomActionPrettyEditorComponent from '@home/components/widget/action/custom-action-pretty-editor.component';
-import * as MobileActionEditorComponent from '@home/components/widget/action/mobile-action-editor.component';
+import * as CustomActionPrettyResourcesTabsComponent from '@home/components/widget/lib/settings/common/action/custom-action-pretty-resources-tabs.component';
+import * as CustomActionPrettyEditorComponent from '@home/components/widget/lib/settings/common/action/custom-action-pretty-editor.component';
+import * as MobileActionEditorComponent from '@home/components/widget/lib/settings/common/action/mobile-action-editor.component';
 import * as CustomDialogService from '@home/components/widget/dialog/custom-dialog.service';
 import * as CustomDialogContainerComponent from '@home/components/widget/dialog/custom-dialog-container.component';
 import * as ImportDialogComponent from '@shared/import-export/import-dialog.component';
@@ -261,7 +263,6 @@ import * as FilterPredicateValueComponent from '@home/components/filter/filter-p
 import * as TenantProfileComponent from '@home/components/profile/tenant-profile.component';
 import * as TenantProfileDialogComponent from '@home/components/profile/tenant-profile-dialog.component';
 import * as TenantProfileDataComponent from '@home/components/profile/tenant-profile-data.component';
-// eslint-disable-next-line max-len
 import * as DefaultDeviceProfileConfigurationComponent from '@home/components/profile/device/default-device-profile-configuration.component';
 import * as DeviceProfileConfigurationComponent from '@home/components/profile/device/device-profile-configuration.component';
 import * as DeviceProfileComponent from '@home/components/profile/device-profile.component';
@@ -286,7 +287,6 @@ import * as AlarmScheduleInfoComponent from '@home/components/profile/alarm/alar
 import * as AlarmScheduleDialogComponent from '@home/components/profile/alarm/alarm-schedule-dialog.component';
 import * as EditAlarmDetailsDialogComponent from '@home/components/profile/alarm/edit-alarm-details-dialog.component';
 import * as AlarmRuleConditionDialogComponent from '@home/components/profile/alarm/alarm-rule-condition-dialog.component';
-// eslint-disable-next-line max-len
 import * as DefaultTenantProfileConfigurationComponent from '@home/components/profile/tenant/default-tenant-profile-configuration.component';
 import * as TenantProfileConfigurationComponent from '@home/components/profile/tenant/tenant-profile-configuration.component';
 import * as SmsProviderConfigurationComponent from '@home/components/sms/sms-provider-configuration.component';
@@ -541,9 +541,9 @@ class ModulesMap implements IModulesMap {
     '@home/components/widget/lib/settings/common/legend-config.component': LegendConfigComponent,
     '@home/components/widget/action/manage-widget-actions.component': ManageWidgetActionsComponent,
     '@home/components/widget/action/widget-action-dialog.component': WidgetActionDialogComponent,
-    '@home/components/widget/action/custom-action-pretty-resources-tabs.component': CustomActionPrettyResourcesTabsComponent,
-    '@home/components/widget/action/custom-action-pretty-editor.component': CustomActionPrettyEditorComponent,
-    '@home/components/widget/action/mobile-action-editor.component': MobileActionEditorComponent,
+    '@home/components/widget/lib/settings/common/action/custom-action-pretty-resources-tabs.component': CustomActionPrettyResourcesTabsComponent,
+    '@home/components/widget/lib/settings/common/action/custom-action-pretty-editor.component': CustomActionPrettyEditorComponent,
+    '@home/components/widget/lib/settings/common/action/mobile-action-editor.component': MobileActionEditorComponent,
     '@home/components/widget/dialog/custom-dialog.service': CustomDialogService,
     '@home/components/widget/dialog/custom-dialog-container.component': CustomDialogContainerComponent,
     '@home/components/attribute/add-widget-to-dashboard-dialog.component': AddWidgetToDashboardDialogComponent,

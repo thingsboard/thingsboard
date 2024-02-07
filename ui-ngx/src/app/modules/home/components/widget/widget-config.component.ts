@@ -36,6 +36,8 @@ import {
   GroupInfo,
   JsonSchema,
   JsonSettingsSchema,
+  TargetDevice,
+  TargetDeviceType, targetDeviceValid,
   Widget,
   WidgetConfigMode,
   widgetType
@@ -368,9 +370,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
         this.widgetType !== widgetType.static) {
         this.dataSettings.addControl('datasources', this.fb.control(null));
       } else if (this.widgetType === widgetType.rpc) {
-        this.targetDeviceSettings.addControl('targetDeviceAliasId',
-          this.fb.control(null,
-            this.widgetEditMode ? [] : [Validators.required]));
+        this.targetDeviceSettings.addControl('targetDevice',
+          this.fb.control(null, []));
       } else if (this.widgetType === widgetType.alarm) {
         this.dataSettings.addControl('alarmSource', this.fb.control(null));
       }
@@ -534,20 +535,9 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
           this.dataSettings.patchValue({ datasources: config.datasources},
             {emitEvent: false});
         } else if (this.widgetType === widgetType.rpc) {
-          let targetDeviceAliasId: string;
-          if (config.targetDeviceAliasIds && config.targetDeviceAliasIds.length > 0) {
-            const aliasId = config.targetDeviceAliasIds[0];
-            const entityAliases = this.aliasController.getEntityAliases();
-            if (entityAliases[aliasId]) {
-              targetDeviceAliasId = entityAliases[aliasId].id;
-            } else {
-              targetDeviceAliasId = null;
-            }
-          } else {
-            targetDeviceAliasId = null;
-          }
+          const targetDevice: TargetDevice = config.targetDevice;
           this.targetDeviceSettings.patchValue({
-            targetDeviceAliasId
+            targetDevice
           }, {emitEvent: false});
         } else if (this.widgetType === widgetType.alarm) {
           this.dataSettings.patchValue(
@@ -650,12 +640,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   private updateTargetDeviceSettings() {
     if (this.modelValue) {
       if (this.modelValue.config) {
-        const targetDeviceAliasId: string = this.targetDeviceSettings.get('targetDeviceAliasId').value;
-        if (targetDeviceAliasId) {
-          this.modelValue.config.targetDeviceAliasIds = [targetDeviceAliasId];
-        } else {
-          this.modelValue.config.targetDeviceAliasIds = [];
-        }
+        this.modelValue.config.targetDevice = this.targetDeviceSettings.get('targetDevice').value;
       }
       this.propagateChange(this.modelValue);
     }
@@ -944,9 +929,9 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     if (this.modelValue) {
       const config = this.modelValue.config;
       if (this.widgetType === widgetType.rpc && this.modelValue.isDataEnabled) {
-        if (!this.widgetEditMode && (!config.targetDeviceAliasIds || !config.targetDeviceAliasIds.length)) {
+        if (!this.widgetEditMode && !targetDeviceValid(config.targetDevice)) {
           return {
-            targetDeviceAliasIds: {
+            targetDevice: {
               valid: false
             }
           };

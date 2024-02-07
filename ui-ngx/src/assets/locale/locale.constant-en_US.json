@@ -614,7 +614,7 @@
         "filter-type-asset-type-and-name-description": "Assets of type '{{assetTypes}}' and with name starting with '{{prefix}}'",
         "filter-type-device-type": "Device type",
         "filter-type-device-type-description": "Devices of type '{{deviceTypes}}'",
-        "filter-type-device-type-and-name-description": "Devices of types '{{deviceTypes}}' and with name starting with '{{prefix}}'",
+        "filter-type-device-type-and-name-description": "Devices of type '{{deviceTypes}}' and with name starting with '{{prefix}}'",
         "filter-type-entity-view-type": "Entity View type",
         "filter-type-entity-view-type-description": "Entity Views of type '{{entityViewTypes}}'",
         "filter-type-entity-view-type-and-name-description": "Entity Views of type '{{entityViewTypes}}' and with name starting with '{{prefix}}'",
@@ -740,6 +740,11 @@
         "scope-client": "Client attributes",
         "scope-server": "Server attributes",
         "scope-shared": "Shared attributes",
+        "scope-client-short": "Client",
+        "scope-server-short": "Server",
+        "scope-shared-short": "Shared",
+        "scope-latest-short": "Latest",
+        "scope-any": "Any",
         "add": "Add attribute",
         "key": "Key",
         "key-max-length": "Key should be less than 256",
@@ -1000,6 +1005,10 @@
         "selected-customers": "{ count, plural, =1 {1 customer} other {# customers} } selected",
         "edges": "Customer edge instances",
         "manage-edges": "Manage edges"
+    },
+    "css-size": {
+        "size-value-required": "Size value is required",
+        "invalid-size-value": "Invalid size value"
     },
     "date": {
         "last-update-n-ago": "Last update N ago",
@@ -3012,7 +3021,7 @@
         "embed-to-html-hint": "This feature will make link available to any unauthorized user.",
         "embed-to-html-text": "Using the following code snippet, you may embed an image into the components based on the plain HTML.<br/>Such components include HTML card widgets, cell content functions, etc.",
         "embed-to-angular-template": "Embed to Angular HTML template",
-        "embed-to-angular-template-text": "Using the following code snippet, you may embed an image into the Angular HTML template.<br/>Such components include the Markdown widget, HTML section in the widget editor, custom actions, etc."
+        "embed-to-angular-template-text": "Using the following code snippet, you may embed an image into the Angular HTML template that will be used for components.<br/>Such components include the Markdown widget, HTML section in the widget editor, custom actions, etc."
     },
     "image-input": {
         "drop-images-or": "Drag and drop an images or",
@@ -3721,6 +3730,15 @@
             "pkcs-12": "PKCS #12"
         }
     },
+    "rpc": {
+      "error": {
+        "target-device-is-not-set": "Target device is not set!",
+        "invalid-target-entity": "RPC commands are not supported by <b>{{entityType}}</b> entity.",
+        "failed-to-resolve-target-device": "Failed to resolve target device!",
+        "request-timeout": "Request Timeout.",
+        "rpc-http-error": "Error: {{status}} - {{statusText}}"
+      }
+    },
     "rulechain": {
         "rulechain": "Rule chain",
         "rulechain-events": "Rule chain events",
@@ -3817,7 +3835,7 @@
         "custom-link-label": "Custom link label",
         "custom-link-label-required": "Custom link label is required.",
         "link-labels": "Link labels",
-        "link-labels-required": "Link labels is required.",
+        "link-labels-required": "Link labels are required.",
         "no-link-labels-found": "No link labels found",
         "no-link-label-matching": "'{{label}}' not found.",
         "create-new-link-label": "Create a new one!",
@@ -3922,7 +3940,7 @@
         "processing-timeout": "Processing within, ms",
         "batch-size": "Batch size",
         "retries": "Number of retries (0 – unlimited)",
-        "failure-percentage": "Percentage of failure messages for skipping retries",
+        "failure-percentage": "Failure messages for skipping retries, %",
         "pause-between-retries": "Retry within, sec",
         "max-pause-between-retries": "Additional retry within, sec",
         "delete": "Delete queue",
@@ -4976,6 +4994,8 @@
         "target-dashboard-state-required": "Target dashboard state is required",
         "set-entity-from-widget": "Set entity from widget",
         "target-dashboard": "Target dashboard",
+        "select-target-dashboard": "Select target dashboard",
+        "target-dashboard-required": "Target dashboard is required.",
         "open-right-layout": "Open right dashboard layout (mobile view)",
         "state-display-type": "Dashboard state display option",
         "open-normal": "Normal",
@@ -5001,12 +5021,13 @@
         "popover-placement-leftBottom": "Left bottom",
         "popover-hide-on-click-outside": "Hide popover on outside click",
         "popover-hide-dashboard-toolbar": "Hide dashboard toolbar in popover",
-        "popover-width": "Popover width in browser units (ex. 100px, 25vw)",
-        "popover-height": "Popover height in browser units (ex. 100px, 25vh)",
+        "popover-width": "Popover width",
+        "popover-height": "Popover height",
         "popover-style": "Popover style",
         "open-new-browser-tab": "Open in a new browser tab",
         "mobile": {
           "action-type": "Mobile action type",
+          "select-action-type": "Select mobile action type",
           "action-type-required": "Mobile action type is required",
           "take-picture-from-gallery": "Take picture from gallery",
           "take-photo": "Take photo",
@@ -5016,7 +5037,9 @@
           "make-phone-call": "Make phone call",
           "get-location": "Get phone location",
           "take-screenshot": "Take screenshot"
-        }
+        },
+        "custom-action-function": "Custom action function",
+        "custom-pretty-function": "Custom action (with HTML template) function"
     },
     "widgets-bundle": {
         "current": "Current bundle",
@@ -5112,12 +5135,14 @@
         "search-actions": "Search actions",
         "no-actions-text": "No actions found",
         "action-source": "Action source",
+        "select-action-source": "Select action source",
         "action-source-required": "Action source is required.",
         "action-name": "Name",
         "action-name-required": "Action name is required.",
-        "action-name-not-unique": "Another action with the same name already exists.<br/>Action name should be unique within the same action source.",
+        "action-name-not-unique": "Another action with the same name already exists.\nAction name should be unique within the same action source.",
         "action-icon": "Icon",
         "show-hide-action-using-function": "Show/hide action using function",
+        "show-action-function": "Show action function",
         "action-type": "Type",
         "action-type-required": "Action type is required.",
         "edit-action": "Edit action",
@@ -5160,6 +5185,47 @@
         "invalid-widget-file-error": "Unable to import widget: Invalid widget data structure."
     },
     "widgets": {
+        "action-button": {
+            "behavior": "Behavior",
+            "on-click": "On click",
+            "on-click-hint": "Action performed when the button is clicked."
+        },
+        "command-button": {
+            "behavior": "Behavior",
+            "on-click": "On click",
+            "on-click-hint": "Action performed when the button is clicked."
+        },
+        "button": {
+            "layout": "Layout",
+            "outlined": "Outlined",
+            "filled": "Filled",
+            "underlined": "Underlined",
+            "basic": "Basic",
+            "auto-scale": "Auto scale",
+            "label": "Label",
+            "icon": "Icon",
+            "color-palette": "Color palette",
+            "main": "Main",
+            "background": "Background",
+            "custom-styles": "Custom styles",
+            "clear-style": "Clear style",
+            "shadow": "Shadow",
+            "enabled": "Enabled",
+            "disabled": "Disabled",
+            "preview": "Preview",
+            "copy-style-from": "Copy style from"
+        },
+        "button-state": {
+            "activated-state": "Activated state",
+            "activated-state-hint": "Condition under which the button is active.",
+            "disabled-state": "Disabled state",
+            "disabled-state-hint": "Condition under which the button is disabled.",
+            "enabled": "Enabled",
+            "hovered": "Hovered",
+            "pressed": "Pressed",
+            "activated": "Activated",
+            "disabled": "Disabled"
+        },
         "background": {
             "background": "Background",
             "background-settings": "Background settings",
@@ -6222,6 +6288,24 @@
             "label-position-left": "Left",
             "label-position-top": "Top"
         },
+        "single-switch": {
+            "behavior": "Behavior",
+            "layout": "Layout",
+            "layout-right": "Right",
+            "layout-left": "Left",
+            "layout-centered": "Centered",
+            "auto-scale": "Auto scale",
+            "label": "Label",
+            "icon": "Icon",
+            "switch-color": "Switch color",
+            "on": "On",
+            "off": "Off",
+            "disabled": "Disabled",
+            "tumbler-color": "Tumbler color",
+            "on-label": "On label",
+            "off-label": "Off label",
+            "switch": "Switch"
+        },
         "value-card": {
             "layout": "Layout",
             "layout-square": "Square",
@@ -6442,6 +6526,65 @@
             "value": "Value",
             "source-entity-alias": "Source entity alias",
             "source-entity-attribute": "Source entity attribute"
+        },
+        "rpc-state": {
+            "initial-state": "Initial state",
+            "initial-state-hint": "Action to get the initial value of the component.",
+            "disabled-state": "Disabled state",
+            "disabled-state-hint": "Condition under which the component is disabled.",
+            "turn-on": "Turn 'On'",
+            "turn-on-hint": "Action performed to turn ON the component.",
+            "turn-off": "Turn 'Off'",
+            "turn-off-hint": "Action performed to turn OFF the component.",
+            "on": "On",
+            "off": "Off",
+            "disabled": "Disabled"
+        },
+        "value-action": {
+            "do-nothing": "Do nothing",
+            "execute-rpc": "Execute RPC",
+            "get-attribute": "Get attribute",
+            "set-attribute": "Set attribute",
+            "get-time-series": "Get time-series",
+            "add-time-series": "Add time-series",
+            "execute-rpc-text": "Execute RPC method '{{methodName}}'",
+            "get-attribute-text": "Use attribute '{{key}}'",
+            "get-time-series-text": "Use time-series '{{key}}'",
+            "set-attribute-to-value-text": "Set '{{key}}' attribute to: {{value}}",
+            "add-time-series-value-text": "Add '{{key}}' time-series value: {{value}}",
+            "set-attribute-text": "Set '{{key}}' attribute",
+            "add-time-series-text": "Add '{{key}}' time-series",
+            "action": "Action",
+            "value": "Value",
+            "init-value-hint": "Value that will be set until device sends data.",
+            "method": "Method",
+            "method-name-required": "Method name is required.",
+            "request-timeout-ms": "RPC request timeout (ms)",
+            "request-timeout-required": "Request timeout is required.",
+            "min-request-timeout-error": "Request timeout value should be greater or equal 5000 ms (5 seconds).",
+            "request-persistent": "RPC request persistent",
+            "persistent-polling-interval": "Persistent polling interval (ms)",
+            "persistent-polling-interval-hint": "Polling interval (ms) to get persistent RPC command response",
+            "persistent-polling-interval-required": "Persistent polling interval is required.",
+            "min-persistent-polling-interval-error": "Persistent polling interval value should be greater or equal 1000 ms (1 second).",
+            "attribute-scope": "Attribute scope",
+            "attribute-key": "Attribute key",
+            "attribute-key-required": "Attribute key is required.",
+            "time-series-key": "Time-series key",
+            "time-series-key-required": "Time-series key is required.",
+            "action-result-converter": "Action result converter",
+            "converter-none": "None",
+            "converter-function": "Function",
+            "converter-constant": "Constant",
+            "parse-value-function": "Parse value function",
+            "state-when-result-is": "'{{state}}' when result is",
+            "parameters": "Parameters",
+            "convert-value-function": "Convert value function",
+            "error": {
+                "target-entity-is-not-set": "Target entity is not set!",
+                "failed-to-perform-action": "Failed to perform the <b>{{ actionLabel }}</b> action.",
+                "invalid-attribute-scope": "{{scope}} attribute scope is not supported by <b>{{entityType}}</b> entity."
+            }
         },
         "widget-font": {
             "font-settings": "Font settings",
@@ -6689,7 +6832,8 @@
             "element-click": "On HTML element click",
             "pie-slice-click": "On slice click",
             "row-double-click": "On row double click",
-            "card-click": "On card click"
+            "card-click": "On card click",
+            "click": "On click"
         }
     },
     "paginator" : {
