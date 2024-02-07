@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.client.RestTemplate;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.rule.engine.api.notification.FirebaseService;
 import org.thingsboard.server.common.data.EntityType;
@@ -66,6 +67,7 @@ import org.thingsboard.server.common.data.notification.template.DeliveryMethodNo
 import org.thingsboard.server.common.data.notification.template.EmailDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.MicrosoftTeamsDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.MicrosoftTeamsDeliveryMethodNotificationTemplate.Button.LinkType;
+import org.thingsboard.server.common.data.notification.template.MobileAppDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
 import org.thingsboard.server.common.data.notification.template.SlackDeliveryMethodNotificationTemplate;
@@ -76,7 +78,6 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.notification.DefaultNotifications;
 import org.thingsboard.server.dao.notification.NotificationDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.notification.channels.MicrosoftTeamsNotificationChannel;
 import org.thingsboard.server.service.ws.notification.cmd.UnreadNotificationsUpdate;
 
@@ -92,6 +93,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doThrow;
@@ -739,6 +742,9 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         loginTenantAdmin();
         NotificationTarget target = createNotificationTarget(new AllUsersFilter());
         NotificationTemplate template = createNotificationTemplate(NotificationType.GENERAL, "Title", "Message", NotificationDeliveryMethod.MOBILE_APP);
+        ((MobileAppDeliveryMethodNotificationTemplate) template.getConfiguration().getDeliveryMethodsTemplates().get(NotificationDeliveryMethod.MOBILE_APP))
+                .setAdditionalConfig(JacksonUtil.newObjectNode().set("test", JacksonUtil.newObjectNode().put("test", "test")));
+        saveNotificationTemplate(template);
 
         NotificationRequest request = submitNotificationRequest(List.of(target.getId()), template.getId(), 0);
         NotificationRequestStats stats = awaitNotificationRequest(request.getId());
@@ -747,11 +753,11 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
                 .contains("doesn't use the mobile app");
 
         verify(firebaseService).sendMessage(eq(tenantId), eq("testCredentials"),
-                eq("tenantFcmToken1"), eq("Title"), eq("Message"));
+                eq("tenantFcmToken1"), eq("Title"), eq("Message"), argThat(data -> "test".equals(data.get("test.test"))));
         verify(firebaseService).sendMessage(eq(tenantId), eq("testCredentials"),
-                eq("tenantFcmToken2"), eq("Title"), eq("Message"));
+                eq("tenantFcmToken2"), eq("Title"), eq("Message"), argThat(data -> "test".equals(data.get("test.test"))));
         verify(firebaseService).sendMessage(eq(tenantId), eq("testCredentials"),
-                eq("customerFcmToken"), eq("Title"), eq("Message"));
+                eq("customerFcmToken"), eq("Title"), eq("Message"), argThat(data -> "test".equals(data.get("test.test"))));
         verifyNoMoreInteractions(firebaseService);
         clearInvocations(firebaseService);
 
@@ -759,9 +765,9 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         request = submitNotificationRequest(List.of(target.getId()), template.getId(), 0);
         awaitNotificationRequest(request.getId());
         verify(firebaseService).sendMessage(eq(tenantId), eq("testCredentials"),
-                eq("tenantFcmToken1"), eq("Title"), eq("Message"));
+                eq("tenantFcmToken1"), eq("Title"), eq("Message"), anyMap());
         verify(firebaseService).sendMessage(eq(tenantId), eq("testCredentials"),
-                eq("customerFcmToken"), eq("Title"), eq("Message"));
+                eq("customerFcmToken"), eq("Title"), eq("Message"), anyMap());
         verifyNoMoreInteractions(firebaseService);
     }
 
