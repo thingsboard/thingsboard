@@ -245,7 +245,6 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         tenantDao.removeById(tenantId, tenantId.getId());
         publishEvictEvent(new TenantEvictEvent(tenantId, true));
         eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(tenantId).build());
-        relationService.deleteEntityRelations(tenantId, tenantId);
         alarmService.deleteEntityAlarmRecordsByTenantId(tenantId);
     }
 

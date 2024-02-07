@@ -75,7 +75,6 @@ import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
-import org.thingsboard.server.dao.housekeeper.data.HousekeeperTask;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 
@@ -321,19 +320,12 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         }
 
         Device device = deviceDao.findById(tenantId, deviceId.getId());
-        alarmService.deleteEntityAlarmRelations(tenantId, deviceId);
         deleteDevice(tenantId, device);
     }
 
     private void deleteDevice(TenantId tenantId, Device device) {
         log.trace("Executing deleteDevice [{}]", device.getId());
         deviceCredentialsService.deleteDeviceCredentialsByDeviceId(tenantId, device.getId());
-        relationService.deleteEntityRelations(tenantId, device.getId());
-        housekeeperService.submitTask(HousekeeperTask.deleteAttributes(tenantId, device.getId()));
-        housekeeperService.submitTask(HousekeeperTask.deleteTelemetry(tenantId, device.getId()));
-        housekeeperService.submitTask(HousekeeperTask.deleteEvents(tenantId, device.getId()));
-        // todo: extract to cleanUpRelatedData
-
         deviceDao.removeById(tenantId, device.getUuidId());
 
         DeviceCacheEvictEvent deviceCacheEvictEvent = new DeviceCacheEvictEvent(device.getTenantId(), device.getId(), device.getName(), null);

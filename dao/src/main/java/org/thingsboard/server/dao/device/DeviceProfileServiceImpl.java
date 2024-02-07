@@ -235,7 +235,6 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     private void removeDeviceProfile(TenantId tenantId, DeviceProfile deviceProfile) {
         DeviceProfileId deviceProfileId = deviceProfile.getId();
         try {
-            deleteEntityRelations(tenantId, deviceProfileId);
             deviceProfileDao.removeById(tenantId, deviceProfileId.getId());
             publishEvictEvent(new DeviceProfileEvictEvent(deviceProfile.getTenantId(), deviceProfile.getName(),
                     null, deviceProfile.getId(), deviceProfile.isDefault(),

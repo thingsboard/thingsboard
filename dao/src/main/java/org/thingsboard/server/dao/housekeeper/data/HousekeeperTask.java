@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.housekeeper.data;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 
 import java.io.Serializable;
 
@@ -46,6 +47,14 @@ public class HousekeeperTask implements Serializable {
 
     public static HousekeeperTask deleteEvents(TenantId tenantId, EntityId entityId) {
         return new HousekeeperTask(tenantId, entityId, HousekeeperTaskType.DELETE_EVENTS);
+    }
+
+    public static HousekeeperTask unassignAlarms(TenantId tenantId, UserId userId) {
+        return new HousekeeperTask(tenantId, userId, HousekeeperTaskType.UNASSIGN_ALARMS);
+    }
+
+    public static HousekeeperTask deleteEntityAlarms(TenantId tenantId, EntityId entityId) {
+        return new HousekeeperTask(tenantId, entityId, HousekeeperTaskType.DELETE_ENTITY_ALARMS);
     }
 
 }

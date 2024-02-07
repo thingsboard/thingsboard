@@ -189,7 +189,6 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
             return AlarmApiCallResult.builder().successful(false).build();
         } else {
             var propagationIds = getPropagationEntityIdsList(alarm);
-            deleteEntityRelations(tenantId, alarm.getId());
             alarmDao.removeById(tenantId, alarm.getUuidId());
             eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId)
                     .entityId(alarmId).entity(alarm).build());
@@ -323,7 +322,7 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
     }
 
     @Override
-    public void deleteEntityAlarmRelations(TenantId tenantId, EntityId entityId) {
+    public void deleteEntityAlarmRecords(TenantId tenantId, EntityId entityId) {
         log.trace("Executing deleteEntityAlarms [{}]", entityId);
         alarmDao.deleteEntityAlarmRecords(tenantId, entityId);
     }

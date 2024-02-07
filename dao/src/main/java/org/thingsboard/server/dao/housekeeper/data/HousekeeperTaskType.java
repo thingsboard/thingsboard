@@ -19,5 +19,7 @@ public enum HousekeeperTaskType {
     DELETE_ENTITY,
     DELETE_ATTRIBUTES,
     DELETE_TELEMETRY, // maybe divide into latest and ts kv history?
-    DELETE_EVENTS
+    DELETE_EVENTS,
+    UNASSIGN_ALARMS,
+    DELETE_ENTITY_ALARMS
 }

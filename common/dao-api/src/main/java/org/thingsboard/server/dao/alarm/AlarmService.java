@@ -106,7 +106,7 @@ public interface AlarmService extends EntityDaoService {
 
     PageData<AlarmId> findAlarmIdsByAssigneeId(TenantId tenantId, UserId userId, PageLink pageLink);
 
-    void deleteEntityAlarmRelations(TenantId tenantId, EntityId entityId);
+    void deleteEntityAlarmRecords(TenantId tenantId, EntityId entityId);
 
     void deleteEntityAlarmRecordsByTenantId(TenantId tenantId);
 

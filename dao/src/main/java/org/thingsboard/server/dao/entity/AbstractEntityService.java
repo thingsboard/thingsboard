@@ -20,6 +20,8 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.transaction.event.TransactionalEventListener;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -30,8 +32,8 @@ import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.housekeeper.HouseKeeperService;
 import org.thingsboard.server.dao.housekeeper.HousekeeperService;
 import org.thingsboard.server.dao.housekeeper.data.HousekeeperTask;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -69,6 +71,28 @@ public abstract class AbstractEntityService {
     @Autowired
     protected HousekeeperService housekeeperService;
 
+    @TransactionalEventListener(fallbackExecution = true) // todo: consider moving this to HousekeeperService
+    public void onEntityDeleted(DeleteEntityEvent<?> event) {
+        TenantId tenantId = event.getTenantId();
+        EntityId entityId = event.getEntityId();
+        log.trace("[{}] DeleteEntityEvent handler: {}", tenantId, event);
+
+        cleanUpRelatedData(tenantId, entityId);
+        if (EntityType.USER.equals(entityId.getEntityType())) {
+//            housekeeperService.submitTask(HousekeeperTask.unassignAlarms(tenantId, entityId));
+//            unassignDeletedUserAlarms(tenantId, (User) event.getEntity(), event.getTs());
+        }
+    }
+
+    protected void cleanUpRelatedData(TenantId tenantId, EntityId entityId) {
+        // todo: skipped entities list
+        relationService.deleteEntityRelations(tenantId, entityId);
+        housekeeperService.submitTask(HousekeeperTask.deleteAttributes(tenantId, entityId));
+        housekeeperService.submitTask(HousekeeperTask.deleteTelemetry(tenantId, entityId));
+        housekeeperService.submitTask(HousekeeperTask.deleteEvents(tenantId, entityId));
+        housekeeperService.submitTask(HousekeeperTask.deleteEntityAlarms(tenantId, entityId));
+    }
+
     protected void createRelation(TenantId tenantId, EntityRelation relation) {
         log.debug("Creating relation: {}", relation);
         relationService.saveRelation(tenantId, relation);
@@ -77,11 +101,6 @@ public abstract class AbstractEntityService {
     protected void deleteRelation(TenantId tenantId, EntityRelation relation) {
         log.debug("Deleting relation: {}", relation);
         relationService.deleteRelation(tenantId, relation);
-    }
-
-    protected void deleteEntityRelations(TenantId tenantId, EntityId entityId) {
-        relationService.deleteEntityRelations(tenantId, entityId);
-        alarmService.deleteEntityAlarmRelations(tenantId, entityId);
     }
 
     protected static Optional<ConstraintViolationException> extractConstraintViolationException(Exception t) {

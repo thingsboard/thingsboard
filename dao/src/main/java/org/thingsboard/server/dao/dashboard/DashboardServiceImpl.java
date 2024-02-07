@@ -234,7 +234,6 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     public void deleteDashboard(TenantId tenantId, DashboardId dashboardId) {
         log.trace("Executing deleteDashboard [{}]", dashboardId);
         Validator.validateId(dashboardId, INCORRECT_DASHBOARD_ID + dashboardId);
-        deleteEntityRelations(tenantId, dashboardId);
         try {
             dashboardDao.removeById(tenantId, dashboardId.getId());
             publishEvictEvent(new DashboardTitleEvictEvent(dashboardId));

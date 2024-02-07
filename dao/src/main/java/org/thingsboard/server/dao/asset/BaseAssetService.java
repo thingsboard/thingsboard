@@ -209,14 +209,11 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
         }
 
         Asset asset = assetDao.findById(tenantId, assetId.getId());
-        alarmService.deleteEntityAlarmRelations(tenantId, assetId);
         deleteAsset(tenantId, asset);
     }
 
     private void deleteAsset(TenantId tenantId, Asset asset) {
         log.trace("Executing deleteAsset [{}]", asset.getId());
-        relationService.deleteEntityRelations(tenantId, asset.getId());
-
         assetDao.removeById(tenantId, asset.getUuidId());
 
         publishEvictEvent(new AssetCacheEvictEvent(asset.getTenantId(), asset.getName(), null));
