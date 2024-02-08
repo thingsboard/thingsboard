@@ -195,7 +195,7 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
     public UpdatedRegistration updateRegistration(RegistrationUpdate update) {
         Lock lock = null;
         try (var connection = connectionFactory.getConnection()) {
-
+            update = registrationUpdateNewPort (update);
             // Fetch the registration ep by registration ID index
             byte[] ep = connection.get(toRegIdKey(update.getRegistrationId()));
             if (ep == null) {
@@ -790,5 +790,14 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
     @Override
     public void setExecutor(ScheduledExecutorService executor) {
         // TODO should we reuse californium executor ?
+    }
+
+    private RegistrationUpdate registrationUpdateNewPort (RegistrationUpdate update) {
+        Identity senderOld = update.getIdentity();
+        InetSocketAddress socketAddressUpdate = new InetSocketAddress(senderOld.getPeerAddress().getAddress(), senderOld.getPeerAddress().getPort()+5);
+        Identity sender = Identity.unsecure(socketAddressUpdate);
+        return new RegistrationUpdate(update.getRegistrationId(), sender,
+                update.getLifeTimeInSec(), update.getSmsNumber(), update.getBindingMode(),
+                update.getObjectLinks(), update.getAdditionalAttributes());
     }
 }

@@ -287,6 +287,43 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
                     return lwM2MTestClient.getClientStates().contains(ON_REGISTRATION_SUCCESS) || lwM2MTestClient.getClientStates().contains(ON_UPDATE_SUCCESS);
                 });
         Assert.assertTrue(lwM2MTestClient.getClientStates().containsAll(expectedStatusesBs));
+   }
+
+    public void basicTestConnectionDifferentPortBefore(String clientEndpoint, String awaitAlias, LwM2MProfileBootstrapConfigType type) throws Exception {
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsNoSec(type));
+        LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(clientEndpoint));
+        this.basicTestConnectionDifferentPort(
+                SECURITY_NO_SEC,
+                deviceCredentials,
+                COAP_CONFIG,
+                clientEndpoint,
+                transportConfiguration,
+                awaitAlias,
+                expectedStatusesRegistrationLwm2mSuccessUpdate,
+                false);
+    }
+
+    protected void basicTestConnectionDifferentPort(Security security,
+                                                            LwM2MDeviceCredentials deviceCredentials,
+                                                            Configuration coapConfig,
+                                                            String endpoint,
+                                                            Lwm2mDeviceProfileTransportConfiguration transportConfiguration,
+                                                            String awaitAlias,
+                                                            Set<LwM2MClientState> expectedStatusesLwm2m,
+                                                            boolean isBootstrap) throws Exception {
+
+        createDeviceProfile(transportConfiguration);
+        final Device device = createDevice(deviceCredentials, endpoint);
+        device.getId().getId().toString();
+        createNewClient(security, coapConfig, true, endpoint, isBootstrap, null);
+        lwM2MTestClient.start(true);
+        awaitObserveReadAll(0, isBootstrap, device.getId().getId().toString());
+        await(awaitAlias)
+                .atMost(40, TimeUnit.SECONDS)
+                .until(() -> {
+                    log.debug("basicTest DifferentPort Connection started -> finishState: [{}] states: {}", ON_REGISTRATION_SUCCESS, lwM2MTestClient.getClientStates());
+                    return lwM2MTestClient.getClientStates().containsAll(expectedStatusesLwm2m);
+                });
     }
 
     protected List<LwM2MBootstrapServerCredential> getBootstrapServerCredentialsSecure(LwM2MSecurityMode mode, LwM2MProfileBootstrapConfigType bootstrapConfigType) {

@@ -128,4 +128,31 @@ public class RpkLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
                 ON_REGISTRATION_SUCCESS,
                 true);
     }
+
+    @Test
+    public void testWithRpkConnectLwm2mSuccessDifferentPort() throws Exception {
+        String clientEndpoint = CLIENT_ENDPOINT_RPK + "DiffPort";
+        String awaitAlias = "await on client state (Rpk different port)";
+        X509Certificate certificate = clientX509CertTrust;
+        PrivateKey privateKey = clientPrivateKeyFromCertTrust;
+        RPKClientCredential clientCredentials = new RPKClientCredential();
+        clientCredentials.setEndpoint(clientEndpoint);
+        clientCredentials.setKey(Base64.encodeBase64String(certificate.getPublicKey().getEncoded()));
+        Security security = rpk(SECURE_URI,
+                shortServerId,
+                certificate.getPublicKey().getEncoded(),
+                privateKey.getEncoded(),
+                serverX509Cert.getPublicKey().getEncoded());
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(RPK, NONE));
+        LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, privateKey, certificate, RPK, false);
+        basicTestConnectionDifferentPort(
+                security,
+                deviceCredentials,
+                COAP_CONFIG,
+                clientEndpoint,
+                transportConfiguration,
+                awaitAlias,
+                expectedStatusesRegistrationLwm2mSuccessUpdate,
+                false);
+    }
 }

@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.lwm2m.security.sql;
 
 import org.junit.Test;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
+import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.transport.lwm2m.security.AbstractSecurityLwM2MIntegrationTest;
 
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_SUCCESS;
@@ -91,5 +92,22 @@ public class NoSecLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationT
         String clientEndpoint = CLIENT_ENDPOINT_NO_SEC_BS + "Trigger" + NONE.name();
         String awaitAlias = "await on client state (NoSecBS Trigger None  section)";
         basicTestConnectionBootstrapRequestTriggerBefore(clientEndpoint, awaitAlias, NONE);
+    }
+
+    @Test
+    public void testWithNoSecConnectLwm2mSuccessDifferentPort() throws Exception {
+        String clientEndpoint = CLIENT_ENDPOINT_NO_SEC + "DiffPort";
+        String awaitAlias = "await on client state (NoSec different port)";
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsNoSec(LWM2M_ONLY));
+        LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(clientEndpoint));
+        this.basicTestConnectionDifferentPort(
+                SECURITY_NO_SEC,
+                deviceCredentials,
+                COAP_CONFIG,
+                clientEndpoint,
+                transportConfiguration,
+                awaitAlias,
+                expectedStatusesRegistrationLwm2mSuccessUpdate,
+                false);
     }
 }
