@@ -856,7 +856,9 @@
         "rest-api-requests-per-customer": "REST API requests per customer",
         "transport-messages": "Transport messages",
         "transport-messages-per-device": "Transport messages per device",
-        "ws-updates-per-session": "WS updates per session"
+        "ws-updates-per-session": "WS updates per session",
+        "edge-events": "Edge events",
+        "edge-events-per-edge": "Edge events per edge"
     },
     "audit-log": {
         "audit": "Audit",
@@ -2037,7 +2039,9 @@
         "missing-related-rule-chains-title": "Edge has missing related rule chain(s)",
         "missing-related-rule-chains-text": "Assigned to edge rule chain(s) use rule nodes that forward message(s) to rule chain(s) that are not assigned to this edge. <br><br> List of missing rule chain(s): <br> {{missingRuleChains}}",
         "upgrade-instructions": "Upgrade Instructions",
-        "widget-datasource-error": "This widget supports only EDGE entity datasource"
+        "widget-datasource-error": "This widget supports only EDGE entity datasource",
+        "connected": "Connected",
+        "disconnected": "Disconnected"
     },
     "edge-event": {
         "type-dashboard": "Dashboard",
@@ -3288,6 +3292,8 @@
         "device-list-rule-hint": "If the field is empty, the trigger will be applied to all devices",
         "device-profiles-list-rule-hint": "If the field is empty, the trigger will be applied to all device profiles",
         "disabled": "Disabled",
+        "edge-trigger-settings": "Edge trigger settings",
+        "edge-list-rule-hint": "If the field is empty, the trigger will be applied to all edge instances",
         "edit-notification-recipients-group": "Edit notification recipients group",
         "edit-notification-template": "Edit notification template",
         "edit-rule": "Edit rule",
@@ -3432,7 +3438,9 @@
             "rule-engine-lifecycle-event": "Rule engine lifecycle event",
             "rule-node": "Rule node",
             "new-platform-version": "New platform version",
-            "rate-limits": "Exceeded rate limits"
+            "rate-limits": "Exceeded rate limits",
+            "edge-communication-failure": "Edge communication failure",
+            "edge-connection": "Edge connection"
         },
         "templates": "Templates",
         "notification-templates": "Notifications / Templates",
@@ -3453,6 +3461,8 @@
             "rule-engine-lifecycle-event": "Rule engine lifecycle event",
             "new-platform-version": "New platform version",
             "rate-limits": "Exceeded rate limits",
+            "edge-connection": "Edge connection",
+            "edge-communication-failure": "Edge communication failure",
             "trigger": "Trigger",
             "trigger-required": "Trigger is required"
         },
@@ -4185,6 +4195,10 @@
             "edit-tenant-entity-import-rate-limit-title": "Edit entity version load rate limits",
             "edit-tenant-notification-request-rate-limit-title": "Edit notification requests rate limits",
             "edit-tenant-notification-requests-per-rule-rate-limit-title": "Edit notification requests per notification rule rate limits",
+            "edit-edge-events-rate-limit": "Edit edge events rate limits",
+            "edit-edge-events-per-edge-rate-limit": "Edit edge events per edge rate limits",
+            "edge-events-rate-limit": "Edge events",
+            "edge-events-per-edge-rate-limit": "Edge events per edge",
             "messages-per": "messages per",
             "not-set": "Not set",
             "number-of-messages": "Number of messages",
