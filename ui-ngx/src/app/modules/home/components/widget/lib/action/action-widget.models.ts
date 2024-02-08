@@ -91,6 +91,8 @@ export abstract class BasicActionWidgetComponent implements OnInit, OnDestroy, A
 
   ngOnDestroy() {
     this.valueActions.forEach(v => v.destroy());
+    this.loadingSubject.complete();
+    this.loadingSubject.unsubscribe();
   }
 
   public onInit() {

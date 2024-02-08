@@ -9,6 +9,7 @@
   },
   "widgetTypeFqns": [
     "action_button",
-    "command_button"
+    "command_button",
+    "power_button"
   ]
 }

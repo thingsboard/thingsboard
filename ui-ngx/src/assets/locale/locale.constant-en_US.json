@@ -5192,6 +5192,28 @@
             "on-click": "On click",
             "on-click-hint": "Action performed when the button is clicked."
         },
+        "power-button": {
+            "behavior": "Behavior",
+            "power-on": "Power 'On'",
+            "power-on-hint": "Action performed to power ON the component.",
+            "power-off": "Power 'Off'",
+            "power-off-hint": "Action performed to power OFF the component.",
+            "on-label": "On",
+            "off-label": "Off",
+            "layout": "Layout",
+            "layout-default": "Default",
+            "layout-simplified": "Simplified",
+            "layout-outlined": "Outlined",
+            "layout-default-volume": "Default.Volume",
+            "layout-simplified-volume": "Simplified.Volume",
+            "layout-outlined-volume": "Outlined.Volume",
+            "main": "Main",
+            "background": "Background",
+            "power-on-colors": "Power 'On' colors",
+            "power-off-colors": "Power 'Off' colors",
+            "disabled-colors": "Disabled colors",
+            "button": "Button"
+        },
         "button": {
             "layout": "Layout",
             "outlined": "Outlined",
