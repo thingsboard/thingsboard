@@ -408,6 +408,67 @@
       </form>
     </mat-step>
 
+    <mat-step [stepControl]="edgeConnectionTemplateForm"
+              *ngIf="ruleNotificationForm.get('triggerType').value === triggerType.EDGE_CONNECTION">
+      <ng-template matStepLabel>{{ 'notification.edge-trigger-settings' | translate }}</ng-template>
+      <form [formGroup]="edgeConnectionTemplateForm">
+        <section formGroupName="triggerConfig">
+          <fieldset class="fields-group tb-margin-before-field">
+            <legend translate>notification.filter</legend>
+            <tb-entity-list
+              formControlName="edges"
+              subscriptSizing="dynamic"
+              labelText="{{'edge.edge-instances' | translate}}"
+              placeholderText="{{ 'edge.edge-instances' | translate }}"
+              hint="{{ 'notification.edge-list-rule-hint' | translate }}"
+              [entityType]="entityType.EDGE">
+            </tb-entity-list>
+            <mat-form-field fxFlex class="mat-block" floatLabel="always">
+              <mat-label translate>notification.notify-on</mat-label>
+              <mat-select formControlName="notifyOn" multiple
+                          placeholder="{{ !edgeConnectionTemplateForm.get('triggerConfig.notifyOn').value?.length ? ('event.all-events' | translate) : '' }}">
+                <mat-option *ngFor="let edgeEvent of edgeConnectionEvents" [value]="edgeEvent">
+                  {{ edgeConnectionEventTranslationMap.get(edgeEvent) | translate }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </fieldset>
+        </section>
+      </form>
+      <form [formGroup]="ruleNotificationForm">
+        <section formGroupName="additionalConfig">
+          <mat-form-field class="mat-block">
+            <mat-label translate>notification.description</mat-label>
+            <input matInput formControlName="description">
+          </mat-form-field>
+        </section>
+      </form>
+    </mat-step>
+
+    <mat-step [stepControl]="edgeCommunicationFailureTemplateForm"
+              *ngIf="ruleNotificationForm.get('triggerType').value === triggerType.EDGE_COMMUNICATION_FAILURE">
+      <ng-template matStepLabel>{{ 'notification.edge-trigger-settings' | translate }}</ng-template>
+      <form [formGroup]="edgeCommunicationFailureTemplateForm">
+        <section formGroupName="triggerConfig">
+          <fieldset class="fields-group tb-margin-before-field">
+            <legend translate>notification.filter</legend>
+            <tb-entity-list labelText="{{'edge.edge-instances' | translate}}"
+                            [entityType]="entityType.EDGE"
+                            formControlName="edges">
+            </tb-entity-list>
+          </fieldset>
+        </section>
+      </form>
+      <form [formGroup]="ruleNotificationForm">
+        <section formGroupName="additionalConfig">
+          <mat-form-field class="mat-block">
+            <mat-label translate>notification.description</mat-label>
+            <input matInput formControlName="description">
+          </mat-form-field>
+        </section>
+      </form>
+    </mat-step>
+
     <mat-step *ngIf="ruleNotificationForm.get('triggerType').value === triggerType.ENTITIES_LIMIT"
               [stepControl]="entitiesLimitTemplateForm">
       <ng-template matStepLabel>{{ 'notification.entities-limit-trigger-settings' | translate }}</ng-template>

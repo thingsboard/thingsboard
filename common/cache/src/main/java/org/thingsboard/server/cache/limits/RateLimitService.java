@@ -13,22 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification;
+package org.thingsboard.server.cache.limits;
 
-public enum NotificationType {
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.limit.LimitedApi;
 
-    GENERAL,
-    ALARM,
-    DEVICE_ACTIVITY,
-    ENTITY_ACTION,
-    ALARM_COMMENT,
-    RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT,
-    ALARM_ASSIGNMENT,
-    NEW_PLATFORM_VERSION,
-    ENTITIES_LIMIT,
-    API_USAGE_LIMIT,
-    RULE_NODE,
-    RATE_LIMITS,
-    EDGE_CONNECTION,
-    EDGE_COMMUNICATION_FAILURE
+public interface RateLimitService {
+
+    boolean checkRateLimit(LimitedApi api, TenantId tenantId);
+
+    boolean checkRateLimit(LimitedApi api, TenantId tenantId, Object level);
+
+    boolean checkRateLimit(LimitedApi api, Object level, String rateLimitConfig);
+
+    void cleanUp(LimitedApi api, Object level);
+
 }
