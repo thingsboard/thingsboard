@@ -5185,7 +5185,7 @@
         "action-button": {
             "behavior": "Behavior",
             "on-click": "On click",
-            "on-click-hint": "Action performed when the button is clicked."
+            "on-click-hint": "Action triggered when the button is clicked"
         },
         "command-button": {
             "behavior": "Behavior",
@@ -5214,9 +5214,9 @@
         },
         "button-state": {
             "activated-state": "Activated state",
-            "activated-state-hint": "Condition under which the button is active.",
+            "activated-state-hint": "Configure condition under which the button is active.",
             "disabled-state": "Disabled state",
-            "disabled-state-hint": "Condition under which the button is disabled.",
+            "disabled-state-hint": "Configure condition under which the button is disabled.",
             "enabled": "Enabled",
             "hovered": "Hovered",
             "pressed": "Pressed",
@@ -6526,13 +6526,13 @@
         },
         "rpc-state": {
             "initial-state": "Initial state",
-            "initial-state-hint": "Action to get the initial value of the component.",
+            "initial-state-hint": "Action to get the initial state (On/Off) of the component.",
             "disabled-state": "Disabled state",
-            "disabled-state-hint": "Condition under which the component is disabled.",
+            "disabled-state-hint": "Configure condition under which the component is disabled.",
             "turn-on": "Turn 'On'",
-            "turn-on-hint": "Action performed to turn ON the component.",
+            "turn-on-hint": "Action triggered when the slider is switched to 'On'",
             "turn-off": "Turn 'Off'",
-            "turn-off-hint": "Action performed to turn OFF the component.",
+            "turn-off-hint": "Action triggered when the slider is switched to 'Off'",
             "on": "On",
             "off": "Off",
             "disabled": "Disabled"
