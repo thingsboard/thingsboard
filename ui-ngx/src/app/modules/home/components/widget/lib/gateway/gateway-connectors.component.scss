@@ -30,6 +30,13 @@
       flex-direction: column;
     }
 
+    & > section:not(.table-section) {
+      max-width: unset;
+      @media #{$mat-gt-md} {
+        max-width: 50%;
+      }
+    }
+
     .table-section {
       min-height: 35vh;
       overflow: hidden;
