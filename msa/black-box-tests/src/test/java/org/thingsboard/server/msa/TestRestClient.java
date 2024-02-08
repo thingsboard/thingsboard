@@ -35,7 +35,9 @@ import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRuleInfo;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.event.EventType;
@@ -561,6 +563,19 @@ public class TestRestClient {
                 .as(AlarmRule.class);
     }
 
+    public PageData<AlarmRuleInfo> getAlarmRules(PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+
+        return given().spec(requestSpec).params(params)
+                .get("/api/alarmRuleInfos")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(new TypeRef<>() {
+                });
+    }
+
     public void deleteAlarmRule(AlarmRuleId alarmRuleId) {
         given().spec(requestSpec)
                 .delete("/api/alarmRule/{alarmRuleId}", alarmRuleId.getId())
@@ -581,6 +596,13 @@ public class TestRestClient {
                 .extract()
                 .as(new TypeRef<>() {
                 });
+    }
+
+    public void clearAlarm(AlarmId alarmId) {
+        given().spec(requestSpec)
+                .post("/api/alarm/{alarmId}/clear", alarmId.getId())
+                .then()
+                .statusCode(HTTP_OK);
     }
 
     private void addTimePageLinkToParam(Map<String, String> params, TimePageLink pageLink) {
