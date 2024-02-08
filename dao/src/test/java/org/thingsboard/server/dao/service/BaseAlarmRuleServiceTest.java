@@ -57,6 +57,8 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.data.alarm.rule.condition.ComplexAlarmConditionFilter.ComplexOperation.AND;
+
 @DaoSqlTest
 public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
 
@@ -239,6 +241,42 @@ public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
         AlarmRule alarmRule = createAlarmRule(tenantId, ALARM_RULE_NAME);
         var configuration = alarmRule.getConfiguration();
         configuration.setCreateRules(null);
+        Assertions.assertThrows(
+                DataValidationException.class,
+                () -> alarmRuleService.saveAlarmRule(tenantId, alarmRule)
+        );
+    }
+
+    @Test
+    public void testMaxAlarmRuleConditionDepth() {
+        AlarmRule alarmRule = new AlarmRule();
+        alarmRule.setTenantId(tenantId);
+        alarmRule.setAlarmType(ALARM_RULE_NAME + "Alarm");
+        alarmRule.setName(ALARM_RULE_NAME);
+
+        var complexFilterRoot = new ComplexAlarmConditionFilter(
+                List.of(new ComplexAlarmConditionFilter(
+                        List.of(new ComplexAlarmConditionFilter(
+                                List.of(new ComplexAlarmConditionFilter(
+                                        List.of(new ComplexAlarmConditionFilter(
+                                                List.of(new ComplexAlarmConditionFilter(
+                                                        List.of(new SimpleAlarmConditionFilter()), AND)), AND)), AND)), AND)), AND)), AND);
+
+        AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setCondition(complexFilterRoot);
+        AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+
+        alarmRuleCondition.setCondition(alarmCondition);
+        AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
+
+        AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(deviceProfileId);
+        alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
+        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
+
+        alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
+
+        alarmRule.setConfiguration(alarmRuleConfiguration);
+
         Assertions.assertThrows(
                 DataValidationException.class,
                 () -> alarmRuleService.saveAlarmRule(tenantId, alarmRule)

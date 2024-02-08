@@ -20,7 +20,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilter;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfiguration;
+import org.thingsboard.server.common.data.alarm.rule.condition.ComplexAlarmConditionFilter;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleAssetTypeEntityFilter;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleDeviceTypeEntityFilter;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleEntityFilter;
@@ -33,6 +35,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
@@ -40,6 +43,9 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantService;
+
+import java.util.LinkedList;
+import java.util.Queue;
 
 import static org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleEntityFilterType.ASSET_TYPE;
 import static org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleEntityFilterType.DEVICE_TYPE;
@@ -55,6 +61,8 @@ public class AlarmRuleDataValidator extends DataValidator<AlarmRule> {
     private final AssetService assetService;
     private final DeviceProfileService deviceProfileService;
     private final AssetProfileService assetProfileService;
+
+    private static final int MAX_DEPTH = 5; //TODO: add to the tenant profile
 
     @Override
     protected void validateDataImpl(TenantId tenantId, AlarmRule alarmRule) {
@@ -87,6 +95,14 @@ public class AlarmRuleDataValidator extends DataValidator<AlarmRule> {
         if (CollectionUtils.isEmpty(configuration.getCreateRules())) {
             throw new DataValidationException("Alarm create rule should be specified!");
         }
+        configuration.getCreateRules().values().forEach(condition -> {
+            validateAlarmConditionFilterDepth(condition.getCondition().getCondition(), MAX_DEPTH);
+        });
+        if (configuration.getClearRule() != null) {
+            validateAlarmConditionFilterDepth(configuration.getClearRule().getCondition().getCondition(), MAX_DEPTH);
+        }
+
+        //TODO: validate arguments if needed
     }
 
     private void validateSourceEntityFilter(TenantId tenantId, AlarmRuleEntityFilter entityFilter) {
@@ -119,6 +135,27 @@ public class AlarmRuleDataValidator extends DataValidator<AlarmRule> {
 
         if (entity == null) {
             throw new DataValidationException(String.format("Can't use non-existent %s in Alarm Rule %s filter! [%s]", entityId.getEntityType(), entityFilterType, entityId));
+        }
+    }
+
+    private void validateAlarmConditionFilterDepth(AlarmConditionFilter rootFilter, int maxDepth) {
+        Queue<TbPair<AlarmConditionFilter, Integer>> queue = new LinkedList<>();
+        queue.offer(new TbPair<>(rootFilter, 0));
+
+        while (!queue.isEmpty()) {
+            TbPair<AlarmConditionFilter, Integer> pair = queue.poll();
+            AlarmConditionFilter currentFilter = pair.getFirst();
+            int currentDepth = pair.getSecond();
+
+            if (currentDepth > maxDepth) {
+                throw new DataValidationException("Maximum depth of " + maxDepth + " exceeded!");
+            }
+
+            if (currentFilter instanceof ComplexAlarmConditionFilter complexFilter) {
+                for (AlarmConditionFilter child : complexFilter.getConditions()) {
+                    queue.offer(new TbPair<>(child, currentDepth + 1));
+                }
+            }
         }
     }
 }

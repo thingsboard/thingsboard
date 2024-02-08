@@ -500,17 +500,11 @@ public class DefaultTbAlarmRuleStateService extends TbApplicationEventListener<P
     }
 
     private EntityId getProfileId(TenantId tenantId, EntityId entityId) {
-        HasId<? extends EntityId> profile;
-        switch (entityId.getEntityType()) {
-            case ASSET:
-                profile = assetProfileCache.get(tenantId, (AssetId) entityId);
-                break;
-            case DEVICE:
-                profile = deviceProfileCache.get(tenantId, (DeviceId) entityId);
-                break;
-            default:
-                throw new IllegalArgumentException("Wrong entity type: " + entityId.getEntityType());
-        }
+        HasId<? extends EntityId> profile = switch (entityId.getEntityType()) {
+            case ASSET -> assetProfileCache.get(tenantId, (AssetId) entityId);
+            case DEVICE -> deviceProfileCache.get(tenantId, (DeviceId) entityId);
+            default -> throw new IllegalArgumentException("Wrong entity type: " + entityId.getEntityType());
+        };
         return profile.getId();
     }
 
