@@ -1185,14 +1185,18 @@ transport:
     bind_port: "${SNMP_BIND_PORT:1620}"
     response_processing:
       # parallelism level for executor (workStealingPool) that is responsible for handling responses from SNMP devices
-      parallelism_level: "${SNMP_RESPONSE_PROCESSING_PARALLELISM_LEVEL:20}"
+      parallelism_level: "${SNMP_RESPONSE_PROCESSING_PARALLELISM_LEVEL:4}"
     # to configure SNMP to work over UDP or TCP
     underlying_protocol: "${SNMP_UNDERLYING_PROTOCOL:udp}"
-    # Batch size to request OID mappings from the device (useful when the device profile has multiple hundreds of OID mappings)
+    # Maximum size of a PDU (amount of OID mappings in a single SNMP request). The request will be split into multiple PDUs if mappings amount exceeds this number
     max_request_oids: "${SNMP_MAX_REQUEST_OIDS:100}"
+    # Delay after sending each request chunk (in case the request was split into multiple PDUs due to max_request_oids)
+    request_chunk_delay_ms: "${SNMP_REQUEST_CHUNK_DELAY_MS:100}"
     response:
       # To ignore SNMP response values that do not match the data type of the configured OID mapping (by default false - will throw an error if any value of the response not match configured data types)
       ignore_type_cast_errors: "${SNMP_RESPONSE_IGNORE_TYPE_CAST_ERRORS:false}"
+    # Thread pool size for scheduler that executes device querying tasks
+    scheduler_thread_pool_size: "${SNMP_SCHEDULER_THREAD_POOL_SIZE:4}"
   stats:
     # Enable/Disable the collection of transport statistics
     enabled: "${TB_TRANSPORT_STATS_ENABLED:true}"

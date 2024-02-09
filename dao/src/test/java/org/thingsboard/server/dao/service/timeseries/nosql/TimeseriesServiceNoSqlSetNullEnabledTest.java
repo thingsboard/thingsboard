@@ -17,18 +17,15 @@ package org.thingsboard.server.dao.service.timeseries.nosql;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.junit.Test;
+import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
-import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
-import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
-import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.service.DaoNoSqlTest;
-import org.thingsboard.server.dao.service.timeseries.BaseTimeseriesServiceTest;
 
 import java.util.Collections;
 import java.util.List;
@@ -42,37 +39,16 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 @DaoNoSqlTest
-public class TimeseriesServiceNoSqlTest extends BaseTimeseriesServiceTest {
+@TestPropertySource(properties = {
+        "cassandra.query.set_null_values_enabled=true",
+})
+public class TimeseriesServiceNoSqlSetNullEnabledTest extends TimeseriesServiceNoSqlTest {
 
-    @Test
-    public void shouldSaveEntryOfEachTypeWithTtl() throws ExecutionException, InterruptedException, TimeoutException {
-        long ttlInSec = TimeUnit.SECONDS.toSeconds(3);
-        List<TsKvEntry> timeseries = List.of(
-                new BasicTsKvEntry(TimeUnit.MINUTES.toMillis(1), new BooleanDataEntry("test", true)),
-                new BasicTsKvEntry(TimeUnit.MINUTES.toMillis(2), new StringDataEntry("test", "text")),
-                new BasicTsKvEntry(TimeUnit.MINUTES.toMillis(3), new LongDataEntry("test", 15L)),
-                new BasicTsKvEntry(TimeUnit.MINUTES.toMillis(4), new DoubleDataEntry("test", 10.5)),
-                new BasicTsKvEntry(TimeUnit.MINUTES.toMillis(5), new JsonDataEntry("test", "{\"test\":\"testValue\"}")));
-
-        DeviceId deviceId = new DeviceId(Uuids.timeBased());
-        tsService.save(tenantId, deviceId, timeseries, ttlInSec);
-
-        List<TsKvEntry> fullList = tsService.findAll(tenantId, deviceId, Collections.singletonList(new BaseReadTsKvQuery("test", 0L,
-                TimeUnit.MINUTES.toMillis(6), 1000, 10, Aggregation.NONE))).get(MAX_TIMEOUT, TimeUnit.SECONDS);
-        assertEquals(5, fullList.size());
-
-        // check entries after ttl
-        Thread.sleep(TimeUnit.SECONDS.toMillis(ttlInSec + 1));
-        List<TsKvEntry> listAfterTtl = tsService.findAll(tenantId, deviceId, Collections.singletonList(new BaseReadTsKvQuery("test", 0L,
-                TimeUnit.MINUTES.toMillis(6), 1000, 10, Aggregation.NONE))).get(MAX_TIMEOUT, TimeUnit.SECONDS);
-        assertEquals(0, listAfterTtl.size());
-    }
-
+    @Override
     @Test
     public void testNullValuesOfNoneTargetColumn() throws ExecutionException, InterruptedException, TimeoutException {
         long ts = TimeUnit.MINUTES.toMillis(1);
-        long longValue = 10L;
-        TsKvEntry longEntry = new BasicTsKvEntry(ts, new LongDataEntry("temp", longValue));
+        TsKvEntry longEntry = new BasicTsKvEntry(ts, new LongDataEntry("temp", 0L));
         double doubleValue = 20.6;
         TsKvEntry doubleEntry = new BasicTsKvEntry(ts, new DoubleDataEntry("temp", doubleValue));
         DeviceId deviceId = new DeviceId(Uuids.timeBased());
@@ -82,16 +58,15 @@ public class TimeseriesServiceNoSqlTest extends BaseTimeseriesServiceTest {
         List<TsKvEntry> listWithoutAgg = tsService.findAll(tenantId, deviceId, Collections.singletonList(new BaseReadTsKvQuery("temp", 0L,
                 ts + 1 , 1000, 3, Aggregation.NONE))).get(MAX_TIMEOUT, TimeUnit.SECONDS);
         assertEquals(1, listWithoutAgg.size());
-        assertTrue(listWithoutAgg.get(0).getLongValue().isPresent());
-        assertFalse(listWithoutAgg.get(0).getDoubleValue().isPresent());
-        assertThat(listWithoutAgg.get(0).getLongValue().get()).isEqualTo(longValue);
+        assertFalse(listWithoutAgg.get(0).getLongValue().isPresent());
+        assertTrue(listWithoutAgg.get(0).getDoubleValue().isPresent());
+        assertThat(listWithoutAgg.get(0).getDoubleValue().get()).isEqualTo(doubleValue);
 
-        // long value should not be reset to null, so avg = (doubleValue + longValue)/ 2
+        // long value should be set to null after second insert, so avg = doubleValue
         List<TsKvEntry> listWithAgg = tsService.findAll(tenantId, deviceId, Collections.singletonList(new BaseReadTsKvQuery("temp", 0L,
-                ts + 1, 200000, 3, Aggregation.AVG))).get(MAX_TIMEOUT, TimeUnit.SECONDS);
+                ts + 1 , 1000, 3, Aggregation.AVG))).get(MAX_TIMEOUT, TimeUnit.SECONDS);
         assertEquals(1, listWithAgg.size());
         assertTrue(listWithAgg.get(0).getDoubleValue().isPresent());
-        double expectedValue = (doubleValue + longValue)/ 2;
-        assertThat(listWithAgg.get(0).getDoubleValue().get()).isEqualTo(expectedValue);
+        assertThat(listWithAgg.get(0).getDoubleValue().get()).isEqualTo(doubleValue);
     }
 }

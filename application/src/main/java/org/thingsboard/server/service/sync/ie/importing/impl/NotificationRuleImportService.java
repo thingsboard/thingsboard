@@ -32,6 +32,8 @@ import org.thingsboard.server.common.data.notification.rule.EscalatedNotificatio
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.rule.NotificationRuleRecipientsConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.DeviceActivityNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeConnectionNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeCommunicationFailureNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig;
@@ -84,7 +86,7 @@ public class NotificationRuleImportService extends BaseEntityImportService<Notif
                 }
                 break;
             }
-            case RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT:
+            case RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT: {
                 RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig triggerConfig = (RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig) ruleTriggerConfig;
                 Set<UUID> ruleChains = triggerConfig.getRuleChains();
                 if (ruleChains != null) {
@@ -93,6 +95,17 @@ public class NotificationRuleImportService extends BaseEntityImportService<Notif
                             .collect(Collectors.toSet()));
                 }
                 break;
+            }
+            case EDGE_CONNECTION: {
+                EdgeConnectionNotificationRuleTriggerConfig triggerConfig = (EdgeConnectionNotificationRuleTriggerConfig) ruleTriggerConfig;
+                triggerConfig.setEdges(null);
+                break;
+            }
+            case EDGE_COMMUNICATION_FAILURE: {
+                EdgeCommunicationFailureNotificationRuleTriggerConfig triggerConfig = (EdgeCommunicationFailureNotificationRuleTriggerConfig) ruleTriggerConfig;
+                triggerConfig.setEdges(null);
+                break;
+            }
         }
         if (!triggerType.isTenantLevel()) {
             throw new IllegalArgumentException("Trigger type " + triggerType + " is not available for tenants");

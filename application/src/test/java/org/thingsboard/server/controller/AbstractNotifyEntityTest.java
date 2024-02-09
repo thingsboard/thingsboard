@@ -606,7 +606,7 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
     private String entityClassToString(HasName entity) {
         String className = entity.getClass().toString()
                 .substring(entity.getClass().toString().lastIndexOf(".") + 1);
-        List str = className.chars()
+        List<String> str = className.chars()
                 .mapToObj(x -> (Character.isUpperCase(x)) ? "_" + Character.toString(x) : Character.toString(x))
                 .collect(Collectors.toList());
         return String.join("", str).toUpperCase(Locale.ENGLISH).substring(1);
