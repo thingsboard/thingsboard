@@ -78,6 +78,7 @@ import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
+import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -445,6 +446,11 @@ public class ActorSystemContext {
     @Autowired(required = false)
     @Getter
     private QueueService queueService;
+
+    @Lazy
+    @Autowired(required = false)
+    @Getter
+    private QueueStatsService queueStatsService;
 
     @Lazy
     @Autowired(required = false)
