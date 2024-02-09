@@ -633,6 +633,10 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         Assert.assertEquals(10, data.getTotalPages());
         Assert.assertTrue(data.hasNext());
         Assert.assertEquals(10, data.getData().size());
+        data.getData().forEach(entityData -> {
+            assertThat(entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("queueName")).asString().isNotBlank();
+            assertThat(entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("serviceId")).asString().isNotBlank();
+        });
 
         EntityCountQuery countQuery = new EntityCountQuery(entityTypeFilter);
 
