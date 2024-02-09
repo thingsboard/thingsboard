@@ -105,6 +105,7 @@ export class PowerButtonWidgetComponent extends
 
     this.loading$.subscribe((loading) => {
       this.updateDisabledState(loading || this.disabled);
+      this.cd.markForCheck();
     });
   }
 
@@ -139,6 +140,7 @@ export class PowerButtonWidgetComponent extends
     if (this.value !== newValue) {
       this.value = newValue;
       this.powerButtonSvgShape?.setValue(this.value);
+      this.cd.markForCheck();
     }
   }
 
@@ -147,6 +149,7 @@ export class PowerButtonWidgetComponent extends
     if (this.disabled !== newDisabled) {
       this.disabled = newDisabled;
       this.updateDisabledState(this.disabled);
+      this.cd.markForCheck();
     }
   }
 

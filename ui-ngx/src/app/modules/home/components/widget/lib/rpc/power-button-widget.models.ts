@@ -24,7 +24,8 @@ import {
   SetValueSettings,
   ValueToDataType
 } from '@shared/models/action-widget-settings.models';
-import { Circle, Element, G, Gradient, Runner, Stop, Svg, Text, Timeline } from '@svgdotjs/svg.js';
+import { Circle, Effect, Element, G, Gradient, Runner, Svg, Text, Timeline } from '@svgdotjs/svg.js';
+import '@svgdotjs/svg.filter.js';
 import tinycolor from 'tinycolor2';
 import { WidgetContext } from '@home/models/widget-component.models';
 
@@ -216,6 +217,8 @@ export const powerButtonShapeSize = 110;
 const cx = powerButtonShapeSize / 2;
 const cy = powerButtonShapeSize / 2;
 
+const powerButtonAnimation = (element: Element): Runner => element.animate(200, 0, 'now');
+
 export abstract class PowerButtonShape {
 
   static fromSettings(ctx: WidgetContext,
@@ -398,20 +401,6 @@ export abstract class PowerButtonShape {
     shape.maskWith(mask);
   }
 
-  protected createPressedShadow(diameter: number, rightElseLeft = true): Gradient {
-    const innerShadowGradient = this.svgShape.gradient('radial', (add) => {
-      add.stop(0.7, '#000000', 0);
-      add.stop(1, '#000000', 0.4);
-    }).attr({ cx: rightElseLeft ? '45%' : '55%', cy: '55%', r: '100%'});
-    this.svgShape.circle(diameter).center(cx, cy)
-    .fill(innerShadowGradient).stroke({width: 0});
-    return innerShadowGradient;
-  }
-
-  protected pressedAnimation(element: Element): Runner {
-    return element.animate(200, 0, 'now');
-  }
-
   protected createOnLabel(fontWeight = '500'): Text {
     return this.createLabel(this.onLabel, fontWeight);
   }
@@ -431,6 +420,72 @@ export abstract class PowerButtonShape {
 
 }
 
+class InnerShadowCircle {
+
+  private shadowCircle: Circle;
+  private blurEffect: Effect;
+  private offsetEffect: Effect;
+  private floodEffect: Effect;
+
+  constructor(private svgShape: Svg,
+              private diameter: number,
+              private centerX: number,
+              private centerY: number,
+              private blur = 6,
+              private shadowOpacity = 0.6,
+              private dx = 0,
+              private dy = 0,
+              private shadowColor = '#000') {
+
+    this.shadowCircle = this.svgShape.circle(this.diameter).center(this.centerX, this.centerY)
+    .fill({color: '#fff', opacity: 1}).stroke({width: 0});
+
+    this.shadowCircle.filterWith(add => {
+      add.x('-50%').y('-50%').width('200%').height('200%');
+      let effect: Effect = add.componentTransfer(components => {
+        components.funcA({ type: 'table', tableValues: '1 0' });
+      }).in(add.$fill);
+      effect = effect.gaussianBlur(this.blur, this.blur).attr({stdDeviation: this.blur});
+      this.blurEffect = effect;
+      effect = effect.offset(this.dx, this.dy);
+      this.offsetEffect = effect;
+      effect = effect.flood(this.shadowColor, this.shadowOpacity);
+      this.floodEffect = effect;
+      effect = effect.composite(this.offsetEffect, 'in');
+      effect.composite(add.$sourceAlpha, 'in');
+      add.merge(m => {
+        m.mergeNode(add.$fill);
+        m.mergeNode();
+      });
+    });
+  }
+
+  public timeline(tl: Timeline): void {
+    this.blurEffect.timeline(tl);
+    this.offsetEffect.timeline(tl);
+    this.floodEffect.timeline(tl);
+  }
+
+  public animate(blur: number, opacity: number, dx = 0, dy = 0): Runner {
+    powerButtonAnimation(this.blurEffect).attr({stdDeviation: blur});
+    powerButtonAnimation(this.offsetEffect).attr({dx, dy});
+    return powerButtonAnimation(this.floodEffect).attr({'flood-opacity': opacity});
+  }
+
+  public animateRestore(): Runner {
+    return this.animate(this.blur, this.shadowOpacity, this.dx, this.dy);
+  }
+
+  public show(): void {
+    this.shadowCircle.show();
+  }
+
+  public hide(): void {
+    this.shadowCircle.hide();
+  }
+
+}
+
 class DefaultPowerButtonShape extends PowerButtonShape {
 
   private outerBorder: Circle;
@@ -438,7 +493,7 @@ class DefaultPowerButtonShape extends PowerButtonShape {
   private offLabelShape: Text;
   private onCircleShape: Circle;
   private onLabelShape: Text;
-  private pressedShadow: Gradient;
+  private pressedShadow: InnerShadowCircle;
   private pressedTimeline: Timeline;
   private centerGroup: G;
 
@@ -453,7 +508,7 @@ class DefaultPowerButtonShape extends PowerButtonShape {
     .center(cx, cy);
     this.onLabelShape = this.createOnLabel();
     this.createMask(this.onCircleShape, [this.onLabelShape]);
-    this.pressedShadow = this.createPressedShadow(powerButtonShapeSize - 20);
+    this.pressedShadow = new InnerShadowCircle(this.svgShape, powerButtonShapeSize - 20, cx, cy, 0, 0);
 
     this.pressedTimeline = new Timeline();
     this.centerGroup.timeline(this.pressedTimeline);
@@ -482,16 +537,16 @@ class DefaultPowerButtonShape extends PowerButtonShape {
   protected onPressStart() {
     this.pressedTimeline.finish();
     const pressedScale = 0.75;
-    this.pressedAnimation(this.centerGroup).transform({scale: pressedScale});
-    this.pressedAnimation(this.onLabelShape).transform({scale: pressedScale});
-    this.pressedAnimation(this.pressedShadow).attr({r: '62%'});
+    powerButtonAnimation(this.centerGroup).transform({scale: pressedScale});
+    powerButtonAnimation(this.onLabelShape).transform({scale: pressedScale});
+    this.pressedShadow.animate(6, 0.6);
   }
 
   protected onPressEnd() {
     this.pressedTimeline.finish();
-    this.pressedAnimation(this.centerGroup).transform({scale: 1});
-    this.pressedAnimation(this.onLabelShape).transform({scale: 1});
-    this.pressedAnimation(this.pressedShadow).attr({r: '100%'});
+    powerButtonAnimation(this.centerGroup).transform({scale: 1});
+    powerButtonAnimation(this.onLabelShape).transform({scale: 1});
+    this.pressedShadow.animateRestore();
   }
 
 }
@@ -503,7 +558,7 @@ class SimplifiedPowerButtonShape extends PowerButtonShape {
   private onCircleShape: Circle;
   private offLabelShape: Text;
   private onLabelShape: Text;
-  private pressedShadow: Gradient;
+  private pressedShadow: InnerShadowCircle;
   private pressedTimeline: Timeline;
   private centerGroup: G;
 
@@ -517,7 +572,7 @@ class SimplifiedPowerButtonShape extends PowerButtonShape {
     this.onCircleShape = this.svgShape.circle(powerButtonShapeSize).center(cx, cy);
     this.onLabelShape = this.createOnLabel();
     this.createMask(this.onCircleShape, [this.onLabelShape]);
-    this.pressedShadow = this.createPressedShadow(powerButtonShapeSize - 4);
+    this.pressedShadow = new InnerShadowCircle(this.svgShape, powerButtonShapeSize - 4, cx, cy, 0, 0);
 
     this.pressedTimeline = new Timeline();
     this.centerGroup.timeline(this.pressedTimeline);
@@ -546,16 +601,16 @@ class SimplifiedPowerButtonShape extends PowerButtonShape {
   protected onPressStart() {
     this.pressedTimeline.finish();
     const pressedScale = 0.75;
-    this.pressedAnimation(this.centerGroup).transform({scale: pressedScale});
-    this.pressedAnimation(this.onLabelShape).transform({scale: pressedScale});
-    this.pressedAnimation(this.pressedShadow).attr({r: '62%'});
+    powerButtonAnimation(this.centerGroup).transform({scale: pressedScale});
+    powerButtonAnimation(this.onLabelShape).transform({scale: pressedScale});
+    this.pressedShadow.animate(6, 0.6);
   }
 
   protected onPressEnd() {
     this.pressedTimeline.finish();
-    this.pressedAnimation(this.centerGroup).transform({scale: 1});
-    this.pressedAnimation(this.onLabelShape).transform({scale: 1});
-    this.pressedAnimation(this.pressedShadow).attr({r: '100%'});
+    powerButtonAnimation(this.centerGroup).transform({scale: 1});
+    powerButtonAnimation(this.onLabelShape).transform({scale: 1});
+    this.pressedShadow.animateRestore();
   }
 }
 
@@ -567,7 +622,7 @@ class OutlinedPowerButtonShape extends PowerButtonShape {
   private offLabelShape: Text;
   private onCircleShape: Circle;
   private onLabelShape: Text;
-  private pressedShadow: Gradient;
+  private pressedShadow: InnerShadowCircle;
   private pressedTimeline: Timeline;
   private centerGroup: G;
   private onCenterGroup: G;
@@ -588,7 +643,7 @@ class OutlinedPowerButtonShape extends PowerButtonShape {
     .addTo(this.onCenterGroup);
     this.onLabelShape = this.createOnLabel();
     this.createMask(this.onCircleShape, [this.onLabelShape]);
-    this.pressedShadow = this.createPressedShadow(powerButtonShapeSize - 24);
+    this.pressedShadow = new InnerShadowCircle(this.svgShape, powerButtonShapeSize - 24, cx, cy, 0, 0);
 
     this.pressedTimeline = new Timeline();
     this.centerGroup.timeline(this.pressedTimeline);
@@ -617,18 +672,18 @@ class OutlinedPowerButtonShape extends PowerButtonShape {
   protected onPressStart() {
     this.pressedTimeline.finish();
     const pressedScale = 0.75;
-    this.pressedAnimation(this.centerGroup).transform({scale: pressedScale});
-    this.pressedAnimation(this.onCenterGroup).transform({scale: 0.98});
-    this.pressedAnimation(this.onLabelShape).transform({scale: pressedScale / 0.98});
-    this.pressedAnimation(this.pressedShadow).attr({r: '62%'});
+    powerButtonAnimation(this.centerGroup).transform({scale: pressedScale});
+    powerButtonAnimation(this.onCenterGroup).transform({scale: 0.98});
+    powerButtonAnimation(this.onLabelShape).transform({scale: pressedScale / 0.98});
+    this.pressedShadow.animate(6, 0.6);
   }
 
   protected onPressEnd() {
     this.pressedTimeline.finish();
-    this.pressedAnimation(this.centerGroup).transform({scale: 1});
-    this.pressedAnimation(this.onCenterGroup).transform({scale: 1});
-    this.pressedAnimation(this.onLabelShape).transform({scale: 1});
-    this.pressedAnimation(this.pressedShadow).attr({r: '100%'});
+    powerButtonAnimation(this.centerGroup).transform({scale: 1});
+    powerButtonAnimation(this.onCenterGroup).transform({scale: 1});
+    powerButtonAnimation(this.onLabelShape).transform({scale: 1});
+    this.pressedShadow.animateRestore();
   }
 }
 
@@ -639,9 +694,9 @@ class DefaultVolumePowerButtonShape extends PowerButtonShape {
   private innerBorder: Circle;
   private innerBorderMask: Circle;
   private innerBorderGradient: Gradient;
-  private innerShadow: Circle;
-  private innerShadowGradient: Gradient;
-  private innerShadowGradientStop: Stop;
+  private innerShadow: InnerShadowCircle;
+  //private innerShadowGradient: Gradient;
+  //private innerShadowGradientStop: Stop;
   private offLabelShape: Text;
   private onCircleShape: Circle;
   private onLabelShape: Text;
@@ -670,18 +725,12 @@ class DefaultVolumePowerButtonShape extends PowerButtonShape {
     this.onCircleShape = this.svgShape.circle(powerButtonShapeSize - 24).center(cx, cy);
     this.onLabelShape = this.createOnLabel('400');
     this.createMask(this.onCircleShape, [this.onLabelShape]);
-    this.innerShadow = this.svgShape.circle(powerButtonShapeSize - 24).center(cx, cy);
-    this.innerShadowGradient = this.svgShape.gradient('radial', (add) => {
-      add.stop(0.7, '#000000', 0);
-      this.innerShadowGradientStop = add.stop(1, '#000000', 0.2);
-    }).attr({ cx: '45%', cy: '55%', r: '65%'});
-    this.innerShadow.fill(this.innerShadowGradient);
+    this.innerShadow = new InnerShadowCircle(this.svgShape, powerButtonShapeSize - 24, cx, cy, 3, 0.3);
 
     this.pressedTimeline = new Timeline();
     this.centerGroup.timeline(this.pressedTimeline);
     this.onLabelShape.timeline(this.pressedTimeline);
-    this.innerShadowGradient.timeline(this.pressedTimeline);
-    this.innerShadowGradientStop.timeline(this.pressedTimeline);
+    this.innerShadow.timeline(this.pressedTimeline);
   }
 
   protected drawColorState(mainColor: PowerButtonColor){
@@ -724,22 +773,20 @@ class DefaultVolumePowerButtonShape extends PowerButtonShape {
     this.pressedTimeline.finish();
     this.innerShadow.show();
     const pressedScale = 0.75;
-    this.pressedAnimation(this.centerGroup).transform({scale: pressedScale});
-    this.pressedAnimation(this.onLabelShape).transform({scale: pressedScale});
-    this.pressedAnimation(this.innerShadowGradient).attr({ r: '60%'});
-    this.pressedAnimation(this.innerShadowGradientStop).update({ opacity: 0.4 });
+    powerButtonAnimation(this.centerGroup).transform({scale: pressedScale});
+    powerButtonAnimation(this.onLabelShape).transform({scale: pressedScale});
+    this.innerShadow.animate(6, 0.6);
   }
 
   protected onPressEnd() {
     this.pressedTimeline.finish();
-    this.pressedAnimation(this.centerGroup).transform({scale: 1});
-    this.pressedAnimation(this.onLabelShape).transform({scale: 1});
-    this.pressedAnimation(this.innerShadowGradient).attr({ r: '65%'}).after(() => {
+    powerButtonAnimation(this.centerGroup).transform({scale: 1});
+    powerButtonAnimation(this.onLabelShape).transform({scale: 1});
+    this.innerShadow.animateRestore().after(() => {
       if (this.disabled) {
         this.innerShadow.hide();
       }
     });
-    this.pressedAnimation(this.innerShadowGradientStop).update({ opacity: 0.2 });
   }
 
 }
@@ -750,8 +797,8 @@ class SimplifiedVolumePowerButtonShape extends PowerButtonShape {
   private outerBorderMask: Circle;
   private offLabelShape: Text;
   private onLabelShape: Text;
-  private innerShadow: Circle;
-  private pressedShadow: Gradient;
+  private innerShadow: InnerShadowCircle;
+  private pressedShadow: InnerShadowCircle;
   private pressedTimeline: Timeline;
   private centerGroup: G;
   private onCenterGroup: G;
@@ -766,14 +813,8 @@ class SimplifiedVolumePowerButtonShape extends PowerButtonShape {
     this.offLabelShape = this.createOffLabel().addTo(this.centerGroup);
     this.onCenterGroup = this.svgShape.group();
     this.onLabelShape = this.createOnLabel().addTo(this.onCenterGroup);
-    this.innerShadow = this.svgShape.circle(powerButtonShapeSize - 4).center(cx, cy);
-    const innerShadowGradient = this.svgShape.gradient('radial', (add) => {
-      add.stop(0.7, '#000000', 0);
-      add.stop(1, '#000000', 0.2);
-    }).attr({ cx: '55%', cy: '55%', r: '65%'});
-    this.innerShadow.fill(innerShadowGradient);
-    this.pressedShadow = this.createPressedShadow(powerButtonShapeSize - 4, false);
-
+    this.innerShadow = new InnerShadowCircle(this.svgShape, powerButtonShapeSize - 4, cx, cy, 3, 0.3);
+    this.pressedShadow = new InnerShadowCircle(this.svgShape, powerButtonShapeSize - 4, cx, cy, 0, 0);
     this.pressedTimeline = new Timeline();
     this.centerGroup.timeline(this.pressedTimeline);
     this.onCenterGroup.timeline(this.pressedTimeline);
@@ -807,16 +848,16 @@ class SimplifiedVolumePowerButtonShape extends PowerButtonShape {
     if (!this.value) {
       this.backgroundShape.removeClass('tb-shadow');
     }
-    this.pressedAnimation(this.centerGroup).transform({scale: pressedScale});
-    this.pressedAnimation(this.onCenterGroup).transform({scale: pressedScale});
-    this.pressedAnimation(this.pressedShadow).attr({r: '62%'});
+    powerButtonAnimation(this.centerGroup).transform({scale: pressedScale});
+    powerButtonAnimation(this.onCenterGroup).transform({scale: pressedScale});
+    this.pressedShadow.animate(8, 0.4);
   }
 
   protected onPressEnd() {
     this.pressedTimeline.finish();
-    this.pressedAnimation(this.centerGroup).transform({scale: 1});
-    this.pressedAnimation(this.onCenterGroup).transform({scale: 1});
-    this.pressedAnimation(this.pressedShadow).attr({r: '100%'}).after(() => {
+    powerButtonAnimation(this.centerGroup).transform({scale: 1});
+    powerButtonAnimation(this.onCenterGroup).transform({scale: 1});
+    this.pressedShadow.animateRestore().after(() => {
       if (!this.value) {
         this.backgroundShape.addClass('tb-shadow');
       }
@@ -833,7 +874,7 @@ class OutlinedVolumePowerButtonShape extends PowerButtonShape {
   private offLabelShape: Text;
   private onCircleShape: Circle;
   private onLabelShape: Text;
-  private pressedShadow: Gradient;
+  private pressedShadow: InnerShadowCircle;
   private pressedTimeline: Timeline;
   private centerGroup: G;
   private onCenterGroup: G;
@@ -858,7 +899,7 @@ class OutlinedVolumePowerButtonShape extends PowerButtonShape {
     .addTo(this.onCenterGroup);
     this.onLabelShape = this.createOnLabel('800');
     this.createMask(this.onCircleShape, [this.onLabelShape]);
-    this.pressedShadow = this.createPressedShadow(powerButtonShapeSize - 30);
+    this.pressedShadow = new InnerShadowCircle(this.svgShape, powerButtonShapeSize - 30, cx, cy, 0, 0);
     this.backgroundShape.addClass('tb-small-shadow');
 
     this.pressedTimeline = new Timeline();
@@ -895,18 +936,18 @@ class OutlinedVolumePowerButtonShape extends PowerButtonShape {
   protected onPressStart() {
     this.pressedTimeline.finish();
     const pressedScale = 0.75;
-    this.pressedAnimation(this.centerGroup).transform({scale: pressedScale});
-    this.pressedAnimation(this.onCenterGroup).transform({scale: 0.98});
-    this.pressedAnimation(this.onLabelShape).transform({scale: pressedScale / 0.98});
-    this.pressedAnimation(this.pressedShadow).attr({r: '62%'});
+    powerButtonAnimation(this.centerGroup).transform({scale: pressedScale});
+    powerButtonAnimation(this.onCenterGroup).transform({scale: 0.98});
+    powerButtonAnimation(this.onLabelShape).transform({scale: pressedScale / 0.98});
+    this.pressedShadow.animate(6, 0.6);
   }
 
   protected onPressEnd() {
     this.pressedTimeline.finish();
-    this.pressedAnimation(this.centerGroup).transform({scale: 1});
-    this.pressedAnimation(this.onCenterGroup).transform({scale: 1});
-    this.pressedAnimation(this.onLabelShape).transform({scale: 1});
-    this.pressedAnimation(this.pressedShadow).attr({r: '100%'});
+    powerButtonAnimation(this.centerGroup).transform({scale: 1});
+    powerButtonAnimation(this.onCenterGroup).transform({scale: 1});
+    powerButtonAnimation(this.onLabelShape).transform({scale: 1});
+    this.pressedShadow.animateRestore();
   }
 
 }
