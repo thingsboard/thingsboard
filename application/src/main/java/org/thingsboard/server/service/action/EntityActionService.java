@@ -201,10 +201,6 @@ public class EntityActionService {
     }
 
     private <T> void pushMsgToAlarmRules(TenantId tenantId, EntityId entityId, T entity, ActionType actionType, TbMsg tbMsg) throws Exception {
-        if (alarmRuleStateService.isEmpty()) {
-            return;
-        }
-
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_ALARM_RULES_EXECUTOR, tenantId, entityId);
 
         if (actionType.equals(ActionType.UPDATED)) {
