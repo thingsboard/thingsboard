@@ -40,9 +40,10 @@ CREATE TABLE IF NOT EXISTS queue_stats (
     CONSTRAINT queue_stats_name_unq_key UNIQUE (tenant_id, queue_name, service_id));
 
 INSERT INTO queue_stats
-    SELECT id, created_time, tenant_id, split_part(name, '_', 1) AS queue_name, split_part(name, '_', 2) AS service_id
+    SELECT id, created_time, tenant_id, substring(name FROM 1 FOR position('_' IN name) - 1) AS queue_name,
+           substring(name FROM position('_' IN name) + 1) AS service_id
     FROM asset
-    WHERE type = 'TbServiceQueue';
+    WHERE type = 'TbServiceQueue' and name LIKE '%\_%';
 
 DELETE FROM asset WHERE type='TbServiceQueue';
 DELETE FROM asset_profile WHERE name ='TbServiceQueue';

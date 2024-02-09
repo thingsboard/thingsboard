@@ -16,6 +16,10 @@
 package org.thingsboard.server.dao.sql.queue;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sql.QueueStatsEntity;
 
 import java.util.List;
@@ -23,8 +27,13 @@ import java.util.UUID;
 
 public interface QueueStatsRepository extends JpaRepository<QueueStatsEntity, UUID> {
 
-    QueueStatsEntity findByTenantIdAndQueueNameAndServiceId(UUID tenantId, String name, String serviceId);
+    QueueStatsEntity findByTenantIdAndQueueNameAndServiceId(UUID tenantId, String queueName, String serviceId);
 
     List<QueueStatsEntity> findByTenantId(UUID tenantId);
+
+    @Transactional
+    @Modifying
+    @Query("DELETE FROM QueueStatsEntity t WHERE t.tenantId = :tenantId")
+    void deleteByTenantId(@Param("tenantId") UUID tenantId);
 
 }

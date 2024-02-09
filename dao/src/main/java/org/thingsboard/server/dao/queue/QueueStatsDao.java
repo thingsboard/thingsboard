@@ -23,8 +23,10 @@ import java.util.List;
 
 public interface QueueStatsDao extends Dao<QueueStats> {
 
-    QueueStats findByTenantIdQueueNameAndServiceId(TenantId tenantId, String name, String serviceId);
+    QueueStats findByTenantIdQueueNameAndServiceId(TenantId tenantId, String queueName, String serviceId);
 
     List<QueueStats> findByTenantId(TenantId tenantId);
+
+    void deleteByTenantId(TenantId tenantId);
 
 }

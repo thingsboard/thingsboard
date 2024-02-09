@@ -16,13 +16,15 @@
 package org.thingsboard.server.common.data.queue;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.BaseDataWithAdditionalInfo;
+import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.QueueStatsId;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-public class QueueStats extends BaseDataWithAdditionalInfo<QueueStatsId> implements HasTenantId {
+public class QueueStats extends BaseData<QueueStatsId> implements HasTenantId {
     private TenantId tenantId;
     private String queueName;
     private String serviceId;

@@ -179,6 +179,7 @@ public class BaseQueueControllerTest extends AbstractControllerTest {
         List<QueueStats> queueStatsList = queueStatsService.findByTenantId(tenantId);
         assertThat(queueStatsList).hasSize(1);
         QueueStats queueStats = queueStatsList.get(0);
+        assertThat(queueStats.getQueueName()).isEqualTo(queue.getName());
 
         ArgumentCaptor<Long> ttlCaptor = ArgumentCaptor.forClass(Long.class);
         verify(timeseriesDao).save(eq(tenantId), eq(queueStats.getId()), argThat(tsKvEntry -> {

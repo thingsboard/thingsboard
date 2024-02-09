@@ -28,8 +28,10 @@ public interface QueueStatsService extends EntityDaoService {
 
     QueueStats findQueueStatsById(TenantId tenantId, QueueStatsId queueStatsId);
 
-    QueueStats findByTenantIdAndNameAndServiceId(TenantId tenantId, String queueStatsName, String serviceId);
+    QueueStats findByTenantIdAndNameAndServiceId(TenantId tenantId, String queueName, String serviceId);
 
     List<QueueStats> findByTenantId(TenantId tenantId);
+
+    void deleteByTenantId(TenantId tenantId);
 
 }

@@ -3729,7 +3729,7 @@
                   "_hash": 0.49891007198715376
                 }
               ],
-              "entityAliasId": "2e4c97b0-257a-a1b9-690c-141d9bf2ec6f"
+              "entityAliasId": "1fcc06b0-ba0d-11ee-8765-750128ef3ba9"
             }
           ],
           "timewindow": {
@@ -3880,7 +3880,7 @@
                   "_hash": 0.2679547062508352
                 }
               ],
-              "entityAliasId": "2e4c97b0-257a-a1b9-690c-141d9bf2ec6f"
+              "entityAliasId": "1fcc06b0-ba0d-11ee-8765-750128ef3ba9"
             }
           ],
           "timewindow": {
@@ -4007,7 +4007,7 @@
                   "_hash": 0.7255162989552142
                 }
               ],
-              "entityAliasId": "2e4c97b0-257a-a1b9-690c-141d9bf2ec6f"
+              "entityAliasId": "1fcc06b0-ba0d-11ee-8765-750128ef3ba9"
             }
           ],
           "timewindow": {
@@ -4880,16 +4880,13 @@
           "resolveMultiple": false
         }
       },
-      "2e4c97b0-257a-a1b9-690c-141d9bf2ec6f": {
-        "id": "2e4c97b0-257a-a1b9-690c-141d9bf2ec6f",
+      "1fcc06b0-ba0d-11ee-8765-750128ef3ba9": {
+        "id": "1fcc06b0-ba0d-11ee-8765-750128ef3ba9",
         "alias": "TbServiceQueues",
         "filter": {
-          "type": "assetType",
+          "type": "entityType",
           "resolveMultiple": true,
-          "assetNameFilter": "",
-          "assetTypes": [
-            "TbServiceQueue"
-          ]
+          "entityType": "QUEUE_STATS"
         }
       }
     },

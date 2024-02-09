@@ -49,13 +49,18 @@ public class JpaQueueStatsDao extends JpaAbstractDao<QueueStatsEntity, QueueStat
     }
 
     @Override
-    public QueueStats findByTenantIdQueueNameAndServiceId(TenantId tenantId, String name, String serviceId) {
-        return DaoUtil.getData(queueStatsRepository.findByTenantIdAndQueueNameAndServiceId(tenantId.getId(), name, serviceId));
+    public QueueStats findByTenantIdQueueNameAndServiceId(TenantId tenantId, String queueName, String serviceId) {
+        return DaoUtil.getData(queueStatsRepository.findByTenantIdAndQueueNameAndServiceId(tenantId.getId(), queueName, serviceId));
     }
 
     @Override
     public List<QueueStats> findByTenantId(TenantId tenantId) {
         return DaoUtil.convertDataList(queueStatsRepository.findByTenantId(tenantId.getId()));
+    }
+
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        queueStatsRepository.deleteByTenantId(tenantId.getId());
     }
 
 }
