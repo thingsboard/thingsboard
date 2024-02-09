@@ -1704,8 +1704,8 @@
         "condition-repeating-value-range":"Liczba zdarzeń powinna mieścić się w zakresie od 1 do 2147483647.",
         "condition-repeating-value-pattern":"Liczba zdarzeń powinna być liczbą całkowitą.",
         "condition-repeating-value-required":"Wymagana jest liczba zdarzeń.",
-        "condition-repeat-times":"Powtarza się {count, plural, =1 {1 raz} other {# razy}}",
-        "condition-repeat-times-dynamic":"Powtarza się \"{attribute}\" ({count, plural, =1 {1 raz} other {# razy}})",
+        "condition-repeat-times":"Powtarza się { count, plural, =1 {1 raz} other {# razy} }",
+        "condition-repeat-times-dynamic":"Powtarza się \"{attribute}\" ({ count, plural, =1 {1 raz} other {# razy} })",
         "schedule-type":"Typ harmonogramu",
         "schedule-type-required":"Wymagany jest typ harmonogramu.",
         "schedule":"Harmonogram",
@@ -6698,30 +6698,6 @@
         "items-per-page-separator":"z"
     },
     "language":{
-        "language":"Język",
-        "locales":{
-            "ca_ES":"Kataloński",
-            "cs_CZ":"Czeski",
-            "da_DK":"Duński",
-            "de_DE":"Niemiecki",
-            "el_GR":"Grecki",
-            "en_US":"Angielski",
-            "es_ES":"Hiszpański",
-            "fa_IR":"Perski",
-            "fr_FR":"Francuski",
-            "it_IT":"Włoski",
-            "ja_JP":"Japoński",
-            "ka_GE":"Gruziński",
-            "ko_KR":"Koreański",
-            "lv_LV":"Łotewski",
-            "nl_BE":"Niderlandzki (Belgia)",
-            "pt_BR":"Portugalski (Brazylia)",
-            "ro_RO":"Rumuński",
-            "sl_SI":"Słoweński",
-            "tr_TR":"Turecki",
-            "uk_UA":"Ukraiński",
-            "zh_CN":"Chiński uproszczony",
-            "zh_TW":"Chiński tradycyjny"
-        }
+        "language":"Język"
     }
 }
