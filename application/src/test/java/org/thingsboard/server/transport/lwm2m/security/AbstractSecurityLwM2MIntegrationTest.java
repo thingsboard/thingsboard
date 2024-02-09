@@ -289,20 +289,6 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
         Assert.assertTrue(lwM2MTestClient.getClientStates().containsAll(expectedStatusesBs));
    }
 
-    public void basicTestConnectionDifferentPortBefore(String clientEndpoint, String awaitAlias, LwM2MProfileBootstrapConfigType type) throws Exception {
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsNoSec(type));
-        LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(clientEndpoint));
-        this.basicTestConnectionDifferentPort(
-                SECURITY_NO_SEC,
-                deviceCredentials,
-                COAP_CONFIG,
-                clientEndpoint,
-                transportConfiguration,
-                awaitAlias,
-                expectedStatusesRegistrationLwm2mSuccessUpdate,
-                false);
-    }
-
     protected void basicTestConnectionDifferentPort(Security security,
                                                             LwM2MDeviceCredentials deviceCredentials,
                                                             Configuration coapConfig,
