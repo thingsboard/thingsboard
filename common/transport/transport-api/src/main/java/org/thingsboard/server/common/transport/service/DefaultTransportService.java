@@ -956,10 +956,10 @@ public class DefaultTransportService extends TransportActivityManager implements
                     log.warn("ResourceDelete - [{}] [{}]", id, mdRez);
                     transportCallbackExecutor.submit(() -> mdRez.getListener().onResourceDelete(msg));
                 });
-            } else if (toSessionMsg.hasQueueUpdateMsg()) {
-                partitionService.updateQueue(toSessionMsg.getQueueUpdateMsg());
-            } else if (toSessionMsg.hasQueueDeleteMsg()) {
-                partitionService.removeQueue(toSessionMsg.getQueueDeleteMsg());
+            } else if (toSessionMsg.getQueueUpdateMsgsCount() > 0) {
+                partitionService.updateQueues(toSessionMsg.getQueueUpdateMsgsList());
+            } else if (toSessionMsg.getQueueDeleteMsgsCount() > 0) {
+                partitionService.removeQueues(toSessionMsg.getQueueDeleteMsgsList());
             } else {
                 //TODO: should we notify the device actor about missed session?
                 log.debug("[{}] Missing session.", sessionId);
