@@ -110,16 +110,14 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
 
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
-        if (event.getServiceType().equals(getServiceType())) {
-            event.getPartitionsMap().forEach((queueKey, partitions) -> {
-                var consumer = consumers.get(queueKey);
-                if (consumer != null) {
-                    consumer.update(partitions);
-                } else {
-                    log.warn("Received invalid partition change event for {} that is not managed by this service", queueKey);
-                }
-            });
-        }
+        event.getPartitionsMap().forEach((queueKey, partitions) -> {
+            var consumer = consumers.get(queueKey);
+            if (consumer != null) {
+                consumer.update(partitions);
+            } else {
+                log.warn("Received invalid partition change event for {} that is not managed by this service", queueKey);
+            }
+        });
     }
 
     @AfterStartUp(order = AfterStartUp.REGULAR_SERVICE)
