@@ -113,7 +113,7 @@ public class PskLwm2mIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
     }
 
     @Test
-    public void testWithNoSecConnectLwm2mSuccessDifferentPort() throws Exception {
+    public void testWithPskConnectLwm2mSuccessDifferentPort() throws Exception {
         String clientEndpoint = CLIENT_ENDPOINT_PSK + "DiffPort";
         String awaitAlias = "await on client state (Psk different port)";
         String identity = CLIENT_PSK_IDENTITY;

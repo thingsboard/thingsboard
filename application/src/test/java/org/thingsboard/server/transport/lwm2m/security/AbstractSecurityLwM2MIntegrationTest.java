@@ -70,6 +70,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClient
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_DEREGISTRATION_SUCCESS;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_STARTED;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_SUCCESS;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_UPDATE_STARTED;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_UPDATE_SUCCESS;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_ID_1;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_9;
@@ -300,16 +301,29 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
 
         createDeviceProfile(transportConfiguration);
         final Device device = createDevice(deviceCredentials, endpoint);
-        device.getId().getId().toString();
+        String deviceIdStr = device.getId().getId().toString();
         createNewClient(security, coapConfig, true, endpoint, isBootstrap, null);
         lwM2MTestClient.start(true);
-        awaitObserveReadAll(0, isBootstrap, device.getId().getId().toString());
+        awaitObserveReadAll(0, isBootstrap, deviceIdStr);
         await(awaitAlias)
                 .atMost(40, TimeUnit.SECONDS)
                 .until(() -> {
-                    log.debug("basicTest DifferentPort Connection started -> finishState: [{}] states: {}", ON_REGISTRATION_SUCCESS, lwM2MTestClient.getClientStates());
-                    return lwM2MTestClient.getClientStates().containsAll(expectedStatusesLwm2m);
+                    log.warn("basicTest First Connection started -> finishState: [{}] states: {}", ON_REGISTRATION_SUCCESS, lwM2MTestClient.getClientStates());
+                    return lwM2MTestClient.getClientStates().contains(ON_REGISTRATION_SUCCESS) || lwM2MTestClient.getClientStates().contains(ON_REGISTRATION_STARTED);
                 });
+        await(awaitAlias)
+                .atMost(40, TimeUnit.SECONDS)
+                .until(() -> {
+                    log.warn("basicTest First  Connection -> finishState: [{}] states: {}", ON_REGISTRATION_SUCCESS, lwM2MTestClient.getClientStates());
+                    return lwM2MTestClient.getClientStates().contains(ON_REGISTRATION_SUCCESS) || lwM2MTestClient.getClientStates().contains(ON_UPDATE_SUCCESS);
+                });
+        await(awaitAlias)
+                .atMost(60, TimeUnit.SECONDS)
+                .until(() -> {
+                    log.warn("basicTest First  Connection -> finishState: [{}] states: {}", ON_REGISTRATION_SUCCESS, lwM2MTestClient.getClientStates());
+                    return lwM2MTestClient.getClientStates().contains(ON_UPDATE_STARTED) || lwM2MTestClient.getClientStates().contains(ON_UPDATE_SUCCESS);
+                });
+        Assert.assertTrue(lwM2MTestClient.getClientStates().containsAll(expectedStatusesLwm2m));
     }
 
     protected List<LwM2MBootstrapServerCredential> getBootstrapServerCredentialsSecure(LwM2MSecurityMode mode, LwM2MProfileBootstrapConfigType bootstrapConfigType) {
