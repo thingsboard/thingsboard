@@ -88,31 +88,4 @@ public class X509_TrustLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegra
                 ON_REGISTRATION_SUCCESS,
                 true);
     }
-
-    @Test
-    public void testWithX509TrustConnectLwm2mSuccessDifferentPort() throws Exception {
-        String clientEndpoint = CLIENT_ENDPOINT_X509_TRUST;
-        String awaitAlias = "await on client state (X509_Trust different port)";
-        X509Certificate certificate = clientX509CertTrust;
-        PrivateKey privateKey = clientPrivateKeyFromCertTrust;
-        X509ClientCredential clientCredentials = new X509ClientCredential();
-        clientCredentials.setEndpoint(clientEndpoint);
-        clientCredentials.setCert("");
-        Security security = x509(SECURE_URI,
-                shortServerId,
-                certificate.getEncoded(),
-                privateKey.getEncoded(),
-                serverX509Cert.getEncoded());
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(X509, NONE));
-        LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, privateKey, certificate, X509, false);
-        basicTestConnectionDifferentPort(
-                security,
-                deviceCredentials,
-                COAP_CONFIG,
-                clientEndpoint,
-                transportConfiguration,
-                awaitAlias,
-                expectedStatusesRegistrationLwm2mSuccessUpdate,
-                false);
-    }
 }

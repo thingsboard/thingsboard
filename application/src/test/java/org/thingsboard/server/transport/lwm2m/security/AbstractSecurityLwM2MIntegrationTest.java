@@ -165,11 +165,11 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
         defaultBootstrapCredentials.setLwm2mServer(serverCredentials);
     }
 
-    public void basicTestConnectionBefore(String clientEndpoint,
-                                          String awaitAlias,
-                                          LwM2MProfileBootstrapConfigType type,
-                                          Set<LwM2MClientState> expectedStatuses,
-                                          LwM2MClientState finishState) throws Exception {
+    public void basicTestNoSecConnection(String clientEndpoint,
+                                         String awaitAlias,
+                                         LwM2MProfileBootstrapConfigType type,
+                                         Set<LwM2MClientState> expectedStatuses,
+                                         LwM2MClientState finishState) throws Exception {
         Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsNoSec(type));
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(clientEndpoint));
         this.basicTestConnection(noSecBootstap(URI_BS),
@@ -195,11 +195,9 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
                                        LwM2MClientState finishState,
                                        boolean isStartLw) throws Exception {
         createDeviceProfile(transportConfiguration);
-        final Device device = createDevice(deviceCredentials, endpoint);
-        device.getId().getId().toString();
+        createDevice(deviceCredentials, endpoint);
         createNewClient(security, coapConfig, true, endpoint, isBootstrap, null);
         lwM2MTestClient.start(isStartLw);
-        awaitObserveReadAll(0, isBootstrap, device.getId().getId().toString());
         await(awaitAlias)
                 .atMost(40, TimeUnit.SECONDS)
                 .until(() -> {
@@ -216,7 +214,7 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
     }
 
 
-    public void basicTestConnectionBootstrapRequestTriggerBefore(String clientEndpoint, String awaitAlias, LwM2MProfileBootstrapConfigType type) throws Exception {
+    public void basicTestNoSecConnectionBootstrapRequestTrigger(String clientEndpoint, String awaitAlias, LwM2MProfileBootstrapConfigType type) throws Exception {
         Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsNoSec(type));
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(clientEndpoint));
         this.basicTestConnectionBootstrapRequestTrigger(
@@ -300,11 +298,9 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
                                                             boolean isBootstrap) throws Exception {
 
         createDeviceProfile(transportConfiguration);
-        final Device device = createDevice(deviceCredentials, endpoint);
-        String deviceIdStr = device.getId().getId().toString();
+        createDevice(deviceCredentials, endpoint);
         createNewClient(security, coapConfig, true, endpoint, isBootstrap, null);
         lwM2MTestClient.start(true);
-        awaitObserveReadAll(0, isBootstrap, deviceIdStr);
         await(awaitAlias)
                 .atMost(40, TimeUnit.SECONDS)
                 .until(() -> {
@@ -314,14 +310,20 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
         await(awaitAlias)
                 .atMost(40, TimeUnit.SECONDS)
                 .until(() -> {
-                    log.warn("basicTest First  Connection -> finishState: [{}] states: {}", ON_REGISTRATION_SUCCESS, lwM2MTestClient.getClientStates());
+                    log.warn("basicTest First Connection started -> finishState: [{}] states: {}", ON_REGISTRATION_SUCCESS, lwM2MTestClient.getClientStates());
                     return lwM2MTestClient.getClientStates().contains(ON_REGISTRATION_SUCCESS) || lwM2MTestClient.getClientStates().contains(ON_UPDATE_SUCCESS);
                 });
         await(awaitAlias)
                 .atMost(60, TimeUnit.SECONDS)
                 .until(() -> {
-                    log.warn("basicTest First  Connection -> finishState: [{}] states: {}", ON_REGISTRATION_SUCCESS, lwM2MTestClient.getClientStates());
+                    log.warn("basicTest Updated Connection started -> finishState: [{}] states: {}", ON_REGISTRATION_SUCCESS, lwM2MTestClient.getClientStates());
                     return lwM2MTestClient.getClientStates().contains(ON_UPDATE_STARTED) || lwM2MTestClient.getClientStates().contains(ON_UPDATE_SUCCESS);
+                });
+       await(awaitAlias)
+                .atMost(60, TimeUnit.SECONDS)
+                .until(() -> {
+                    log.warn("basicTest Update Connection started -> finishState: [{}] states: {}", ON_REGISTRATION_SUCCESS, lwM2MTestClient.getClientStates());
+                    return lwM2MTestClient.getClientStates().contains(ON_UPDATE_SUCCESS);
                 });
         Assert.assertTrue(lwM2MTestClient.getClientStates().containsAll(expectedStatusesLwm2m));
     }

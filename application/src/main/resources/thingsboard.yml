@@ -482,7 +482,7 @@ actors:
 # Cache settings parameters
 cache:
   # caffeine or redis
-  type: "${CACHE_TYPE:caffeine}"
+  type: "${CACHE_TYPE:redis}"
   maximumPoolSize: "${CACHE_MAXIMUM_POOL_SIZE:16}" # max pool size to process futures that call the external cache
   attributes:
     # make sure that if cache.type is 'redis' and cache.attributes.enabled is 'true' if you change 'maxmemory-policy' Redis config property to 'allkeys-lru', 'allkeys-lfu' or 'allkeys-random'

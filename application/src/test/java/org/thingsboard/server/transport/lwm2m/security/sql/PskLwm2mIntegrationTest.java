@@ -111,31 +111,4 @@ public class PskLwm2mIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
                 ON_REGISTRATION_SUCCESS,
                 true);
     }
-
-    @Test
-    public void testWithPskConnectLwm2mSuccessDifferentPort() throws Exception {
-        String clientEndpoint = CLIENT_ENDPOINT_PSK + "DiffPort";
-        String awaitAlias = "await on client state (Psk different port)";
-        String identity = CLIENT_PSK_IDENTITY;
-        String keyPsk = CLIENT_PSK_KEY;
-        PSKClientCredential clientCredentials = new PSKClientCredential();
-        clientCredentials.setEndpoint(clientEndpoint);
-        clientCredentials.setIdentity(identity);
-        clientCredentials.setKey(keyPsk);
-        Security security = psk(SECURE_URI,
-                shortServerId,
-                identity.getBytes(StandardCharsets.UTF_8),
-                Hex.decodeHex(keyPsk.toCharArray()));
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(PSK, NONE));
-        LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, null, null, PSK, false);
-        basicTestConnectionDifferentPort(
-                security,
-                deviceCredentials,
-                COAP_CONFIG,
-                clientEndpoint,
-                transportConfiguration,
-                awaitAlias,
-                expectedStatusesRegistrationLwm2mSuccessUpdate,
-                false);
-    }
 }

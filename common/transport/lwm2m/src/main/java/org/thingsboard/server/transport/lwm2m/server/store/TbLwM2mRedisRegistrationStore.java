@@ -195,7 +195,7 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
     public UpdatedRegistration updateRegistration(RegistrationUpdate update) {
         Lock lock = null;
         try (var connection = connectionFactory.getConnection()) {
-            update = registrationUpdateNewPort (update);
+            update = registrationUpdateNewPort(update);
             // Fetch the registration ep by registration ID index
             byte[] ep = connection.get(toRegIdKey(update.getRegistrationId()));
             if (ep == null) {
