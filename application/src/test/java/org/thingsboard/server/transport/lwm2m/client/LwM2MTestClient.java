@@ -18,7 +18,6 @@ package org.thingsboard.server.transport.lwm2m.client;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.elements.config.Configuration;
-import org.eclipse.californium.scandium.config.DtlsConfig;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.leshan.client.LeshanClient;
 import org.eclipse.leshan.client.LeshanClientBuilder;
@@ -62,11 +61,15 @@ import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CONNECTION_ID_LENGTH;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY;
 import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
 import static org.eclipse.leshan.core.LwM2mId.DEVICE;
 import static org.eclipse.leshan.core.LwM2mId.FIRMWARE;
@@ -103,6 +106,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INST
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_12;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.TEMPERATURE_SENSOR;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resources;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.setDtlsConnectorConfigCidLength;
 
 
 @Slf4j
@@ -119,12 +123,13 @@ public class LwM2MTestClient {
     private LwM2MLocationParams locationParams;
     private LwM2mTemperatureSensor lwM2MTemperatureSensor;
     private Set<LwM2MClientState> clientStates;
+    private Map<LwM2MClientState, Integer> clientDtlsCid;
     private LwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandlerTest;
     private LwM2mClientContext clientContext;
 
     public void init(Security security, Security securityBs,Configuration coapConfig, int port, boolean isRpc,
                      LwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandler,
-                     LwM2mClientContext clientContext, boolean isWriteAttribute) throws InvalidDDFFileException, IOException {
+                     LwM2mClientContext clientContext, boolean isWriteAttribute, Integer cIdLength) throws InvalidDDFFileException, IOException {
         Assert.assertNull("client already initialized", leshanClient);
         this.defaultLwM2mUplinkMsgHandlerTest = defaultLwM2mUplinkMsgHandler;
         this.clientContext = clientContext;
@@ -188,6 +193,10 @@ public class LwM2MTestClient {
                     protected DtlsConnectorConfig.Builder createRootDtlsConnectorConfigBuilder(
                             Configuration configuration) {
                         DtlsConnectorConfig.Builder builder = super.createRootDtlsConnectorConfigBuilder(configuration);
+
+                        // Add DTLS Session lifecycle logger
+                        builder.setSessionListener(new DtlsSessionLogger(clientStates, clientDtlsCid));
+
                         return builder;
                     };
                 };
@@ -213,20 +222,14 @@ public class LwM2MTestClient {
 
         // Set some DTLS stuff
         // These configuration values are always overwritten by CLI therefore set them to transient.
-        clientCoapConfig.setTransient(DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY);
-        clientCoapConfig.setTransient(DtlsConfig.DTLS_CONNECTION_ID_LENGTH);
+        clientCoapConfig.setTransient(DTLS_RECOMMENDED_CIPHER_SUITES_ONLY);
+        clientCoapConfig.setTransient(DTLS_CONNECTION_ID_LENGTH);
         boolean supportDeprecatedCiphers = false;
-        clientCoapConfig.set(DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY, !supportDeprecatedCiphers);
-        /**
-         *                         "Control usage of DTLS connection ID.", //
-         *                         "- 'on' to activate Connection ID support (same as -cid 0)", //
-         *                         "- 'off' to deactivate it", //
-         *                         "- Positive value define the size in byte of CID generated.", //
-         *                         "- 0 value means we accept to use CID but will not generated one for foreign peer.", //
-         *                         "Default: off"
-         */
-        Integer cid = null;
-        clientCoapConfig.set(DtlsConfig.DTLS_CONNECTION_ID_LENGTH, cid);
+        clientCoapConfig.set(DTLS_RECOMMENDED_CIPHER_SUITES_ONLY, !supportDeprecatedCiphers);
+
+        if (cIdLength!= null) {
+            setDtlsConnectorConfigCidLength(clientCoapConfig, cIdLength);
+        }
 
         // Set Californium Configuration
         endpointsBuilder.setConfiguration(clientCoapConfig);
@@ -279,6 +282,7 @@ public class LwM2MTestClient {
         builder.setSharedExecutor(executor);
 
         clientStates = new HashSet<>();
+        clientDtlsCid = new HashMap<>();
         clientStates.add(ON_INIT);
         leshanClient = builder.build();
 

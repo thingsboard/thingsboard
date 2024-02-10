@@ -23,6 +23,7 @@ import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.util.Hex;
 import org.junit.Assert;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MvcResult;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
@@ -74,6 +75,10 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClient
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_ID_1;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_9;
 
+
+@TestPropertySource(properties = {
+        "transport.lwm2m.dtls.connection_id_length=",
+})
 @DaoSqlTest
 @Slf4j
 public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
@@ -196,7 +201,7 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
                                        boolean isStartLw) throws Exception {
         createDeviceProfile(transportConfiguration);
         final Device device = createDevice(deviceCredentials, endpoint);
-        createNewClient(security, securityBs, coapConfig, true, endpoint);
+        createNewClient(security, securityBs, coapConfig, true, endpoint, null);
         lwM2MTestClient.start(isStartLw);
         if (isAwaitObserveReadAll) {
             awaitObserveReadAll(0, device.getId().getId().toString());
@@ -244,7 +249,7 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
         createDeviceProfile(transportConfiguration);
         final Device device = createDevice(deviceCredentials, endpoint);
         String deviceIdStr = device.getId().getId().toString();
-        createNewClient(security, securityBs, coapConfig, true, endpoint);
+        createNewClient(security, securityBs, coapConfig, true, endpoint, null);
         lwM2MTestClient.start(true);
         awaitObserveReadAll(0, deviceIdStr);
         await(awaitAlias)

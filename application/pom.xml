@@ -365,6 +365,12 @@
             <groupId>com.google.oauth-client</groupId>
             <artifactId>google-oauth-client</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.eclipse.leshan</groupId>
+            <artifactId>leshan-core-cf</artifactId>
+            <version>2.0.0-M14</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

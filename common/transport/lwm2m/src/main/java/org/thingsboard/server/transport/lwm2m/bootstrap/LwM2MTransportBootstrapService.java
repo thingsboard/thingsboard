@@ -44,11 +44,15 @@ import java.net.InetSocketAddress;
 import java.security.cert.X509Certificate;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CURVES_ONLY;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RETRANSMISSION_TIMEOUT;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_ROLE;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DtlsRole.SERVER_ONLY;
 import static org.thingsboard.server.transport.lwm2m.server.DefaultLwM2mTransportService.PSK_CIPHER_SUITES;
 import static org.thingsboard.server.transport.lwm2m.server.DefaultLwM2mTransportService.RPK_OR_X509_CIPHER_SUITES;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MNetworkConfig.getCoapConfig;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.setDtlsConnectorConfigCidLength;
 
 @Slf4j
 @Component
@@ -110,17 +114,26 @@ public class LwM2MTransportBootstrapService {
         // Create Californium Configuration
         Configuration serverCoapConfig = endpointsBuilder.createDefaultConfiguration();
         getCoapConfig(serverCoapConfig, bootstrapConfig.getPort(), bootstrapConfig.getSecurePort(),serverConfig);
-        serverCoapConfig.setTransient(DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY);
-        serverCoapConfig.set(DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY, serverConfig.isRecommendedCiphers());
-        serverCoapConfig.setTransient(DtlsConfig.DTLS_CONNECTION_ID_LENGTH);
-        serverCoapConfig.set(DtlsConfig.DTLS_CONNECTION_ID_LENGTH, 6);
+
+        // Set some DTLS stuff
+        serverCoapConfig.setTransient(DTLS_RECOMMENDED_CURVES_ONLY);
         serverCoapConfig.set(DTLS_RECOMMENDED_CURVES_ONLY, serverConfig.isRecommendedSupportedGroups());
+
+        serverCoapConfig.setTransient(DTLS_RECOMMENDED_CIPHER_SUITES_ONLY);
+        serverCoapConfig.set(DTLS_RECOMMENDED_CIPHER_SUITES_ONLY, serverConfig.isRecommendedCiphers());
+
         serverCoapConfig.setTransient(DTLS_RETRANSMISSION_TIMEOUT);
         serverCoapConfig.set(DTLS_RETRANSMISSION_TIMEOUT, serverConfig.getDtlsRetransmissionTimeout(), MILLISECONDS);
 
+        serverCoapConfig.setTransient(DTLS_RETRANSMISSION_TIMEOUT);
+        serverCoapConfig.set(DTLS_RETRANSMISSION_TIMEOUT, serverConfig.getDtlsRetransmissionTimeout(), MILLISECONDS);
+        serverCoapConfig.set(DTLS_ROLE, SERVER_ONLY);
 
+        if (serverConfig.getDtlsCidLength()!= null) {
+            setDtlsConnectorConfigCidLength(serverCoapConfig, serverConfig.getDtlsCidLength());
+        }
 
-        /* Create DTLS Config */
+        /* Create LwM2M DTLS Config */
 
         this.setServerWithCredentials(builder);
 

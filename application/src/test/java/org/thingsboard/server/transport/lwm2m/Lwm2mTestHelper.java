@@ -53,7 +53,7 @@ public class Lwm2mTestHelper {
 
     public enum LwM2MClientState {
 
-        ON_INIT(1, "onInit"),
+        ON_INIT(0, "onInit"),
         ON_BOOTSTRAP_STARTED(1, "onBootstrapStarted"),
         ON_BOOTSTRAP_SUCCESS(2, "onBootstrapSuccess"),
         ON_BOOTSTRAP_FAILURE(3, "onBootstrapFailure"),
@@ -70,7 +70,9 @@ public class Lwm2mTestHelper {
         ON_DEREGISTRATION_SUCCESS(13, "onDeregistrationSuccess"),
         ON_DEREGISTRATION_FAILURE(14, "onDeregistrationFailure"),
         ON_DEREGISTRATION_TIMEOUT(15, "onDeregistrationTimeout"),
-        ON_EXPECTED_ERROR(16, "onUnexpectedError");
+        ON_EXPECTED_ERROR(16, "onUnexpectedError"),
+        ON_WRITE_CONNECTION_ID(17, "onWriteConnectionId"),
+        ON_READ_CONNECTION_ID(18, "onReadConnectionId");
 
         public int code;
         public String type;
