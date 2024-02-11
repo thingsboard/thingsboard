@@ -370,13 +370,11 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         } else if (toCoreNotification.hasFromEdgeSyncResponse()) {
             forwardToAppActor(id, ProtoUtils.fromProto(toCoreNotification.getFromEdgeSyncResponse()));
             callback.onSuccess();
-        } else if (toCoreNotification.hasQueueUpdateMsg()) {
-            TransportProtos.QueueUpdateMsg queue = toCoreNotification.getQueueUpdateMsg();
-            partitionService.updateQueue(queue);
+        } else if (toCoreNotification.getQueueUpdateMsgsCount() > 0) {
+            partitionService.updateQueues(toCoreNotification.getQueueUpdateMsgsList());
             callback.onSuccess();
-        } else if (toCoreNotification.hasQueueDeleteMsg()) {
-            TransportProtos.QueueDeleteMsg queue = toCoreNotification.getQueueDeleteMsg();
-            partitionService.removeQueue(queue);
+        } else if (toCoreNotification.getQueueDeleteMsgsCount() > 0) {
+            partitionService.removeQueues(toCoreNotification.getQueueDeleteMsgsList());
             callback.onSuccess();
         } else if (toCoreNotification.hasVcResponseMsg()) {
             vcQueueService.processResponse(toCoreNotification.getVcResponseMsg());

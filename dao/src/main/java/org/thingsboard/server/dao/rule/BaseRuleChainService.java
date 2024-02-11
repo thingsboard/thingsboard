@@ -162,6 +162,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     @Override
+    @Transactional
     public RuleChainUpdateResult saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData, Function<RuleNode, RuleNode> ruleNodeUpdater) {
         return saveRuleChainMetaData(tenantId, ruleChainMetaData, ruleNodeUpdater, true);
     }

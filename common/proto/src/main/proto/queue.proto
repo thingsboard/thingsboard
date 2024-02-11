@@ -1446,8 +1446,8 @@ message ToCoreMsg {
 message ToCoreNotificationMsg {
   LocalSubscriptionServiceMsgProto toLocalSubscriptionServiceMsg = 1;
   FromDeviceRPCResponseProto fromDeviceRpcResponse = 2;
-  QueueUpdateMsg queueUpdateMsg = 3;
-  QueueDeleteMsg queueDeleteMsg = 4;
+  repeated QueueUpdateMsg queueUpdateMsgs = 3;
+  repeated QueueDeleteMsg queueDeleteMsgs = 4;
   VersionControlResponseMsg vcResponseMsg = 5;
   SubscriptionMgrMsgProto toSubscriptionMgrMsg = 6;
   NotificationRuleProcessorMsg notificationRuleProcessorMsg = 7;
@@ -1470,8 +1470,8 @@ message ToRuleEngineMsg {
 
 message ToRuleEngineNotificationMsg {
   FromDeviceRPCResponseProto fromDeviceRpcResponse = 2;
-  QueueUpdateMsg queueUpdateMsg = 3;
-  QueueDeleteMsg queueDeleteMsg = 4;
+  repeated QueueUpdateMsg queueUpdateMsgs = 3;
+  repeated QueueDeleteMsg queueDeleteMsgs = 4;
   ComponentLifecycleMsgProto componentLifecycle = 5;
 }
 
@@ -1491,8 +1491,8 @@ message ToTransportMsg {
   ResourceUpdateMsg resourceUpdateMsg = 12;
   ResourceDeleteMsg resourceDeleteMsg = 13;
   UplinkNotificationMsg uplinkNotificationMsg = 14;
-  QueueUpdateMsg queueUpdateMsg = 15;
-  QueueDeleteMsg queueDeleteMsg = 16;
+  repeated QueueUpdateMsg queueUpdateMsgs = 15;
+  repeated QueueDeleteMsg queueDeleteMsgs = 16;
 }
 
 message UsageStatsKVProto{

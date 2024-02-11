@@ -315,7 +315,7 @@ public class HashPartitionServiceTest {
                 .setPartitions(isolatedQueue.getPartitions())
                 .build();
 
-        partitionService_common.updateQueue(queueUpdateMsg);
+        partitionService_common.updateQueues(List.of(queueUpdateMsg));
         partitionService_common.recalculatePartitions(commonRuleEngine, List.of(dedicatedRuleEngine));
         // expecting event about no partitions for isolated queue key
         verifyPartitionChangeEvent(event -> {
@@ -323,7 +323,7 @@ public class HashPartitionServiceTest {
             return event.getPartitionsMap().get(queueKey).isEmpty();
         });
 
-        partitionService_dedicated.updateQueue(queueUpdateMsg);
+        partitionService_dedicated.updateQueues(List.of(queueUpdateMsg));
         partitionService_dedicated.recalculatePartitions(dedicatedRuleEngine, List.of(commonRuleEngine));
         verifyPartitionChangeEvent(event -> {
             QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.MAIN_QUEUE_NAME, tenantId);
@@ -342,7 +342,7 @@ public class HashPartitionServiceTest {
                 .setQueueIdLSB(isolatedQueue.getUuidId().getLeastSignificantBits())
                 .setQueueName(isolatedQueue.getName())
                 .build();
-        partitionService_dedicated.removeQueue(queueDeleteMsg);
+        partitionService_dedicated.removeQueues(List.of(queueDeleteMsg));
         verifyPartitionChangeEvent(event -> {
             QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, DataConstants.MAIN_QUEUE_NAME, tenantId);
             return event.getPartitionsMap().get(queueKey).isEmpty();

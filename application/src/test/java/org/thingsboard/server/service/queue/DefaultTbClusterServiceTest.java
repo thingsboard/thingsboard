@@ -40,6 +40,7 @@ import org.thingsboard.server.service.gateway_device.GatewayNotificationsService
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -92,7 +93,7 @@ public class DefaultTbClusterServiceTest {
 
         when(producerProvider.getRuleEngineNotificationsMsgProducer()).thenReturn(tbQueueProducer);
 
-        clusterService.onQueueChange(createTestQueue());
+        clusterService.onQueuesUpdate(List.of(createTestQueue()));
 
         verify(topicService, times(1)).getNotificationsTopic(ServiceType.TB_RULE_ENGINE, MONOLITH);
         verify(topicService, never()).getNotificationsTopic(eq(ServiceType.TB_CORE), any());
@@ -117,7 +118,7 @@ public class DefaultTbClusterServiceTest {
 
         when(producerProvider.getRuleEngineNotificationsMsgProducer()).thenReturn(tbQueueProducer);
 
-        clusterService.onQueueChange(createTestQueue());
+        clusterService.onQueuesUpdate(List.of(createTestQueue()));
 
         verify(topicService, times(1)).getNotificationsTopic(ServiceType.TB_RULE_ENGINE, monolith1);
         verify(topicService, times(1)).getNotificationsTopic(ServiceType.TB_RULE_ENGINE, monolith2);
@@ -145,7 +146,7 @@ public class DefaultTbClusterServiceTest {
         when(producerProvider.getRuleEngineNotificationsMsgProducer()).thenReturn(tbREQueueProducer);
         when(producerProvider.getTransportNotificationsMsgProducer()).thenReturn(tbTransportQueueProducer);
 
-        clusterService.onQueueChange(createTestQueue());
+        clusterService.onQueuesUpdate(List.of(createTestQueue()));
 
         verify(topicService, times(1)).getNotificationsTopic(ServiceType.TB_RULE_ENGINE, MONOLITH);
         verify(topicService, times(1)).getNotificationsTopic(ServiceType.TB_TRANSPORT, TRANSPORT);
@@ -191,7 +192,7 @@ public class DefaultTbClusterServiceTest {
         when(producerProvider.getTbCoreNotificationsMsgProducer()).thenReturn(tbCoreQueueProducer);
         when(producerProvider.getTransportNotificationsMsgProducer()).thenReturn(tbTransportQueueProducer);
 
-        clusterService.onQueueChange(createTestQueue());
+        clusterService.onQueuesUpdate(List.of(createTestQueue()));
 
         verify(topicService, times(1)).getNotificationsTopic(ServiceType.TB_RULE_ENGINE, monolith1);
         verify(topicService, times(1)).getNotificationsTopic(ServiceType.TB_RULE_ENGINE, monolith2);
