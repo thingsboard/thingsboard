@@ -2836,6 +2836,120 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         Assert.equals(AlarmStatus.ACTIVE_UNACK, alarm.getStatus());
     }
 
+    @Test
+    public void testCreateAndClearAlarmWithTelemetryArguments() throws Exception {
+        DeviceProfile deviceProfile = createDeviceProfile("test profile");
+        deviceProfile.setTenantId(tenantId);
+        deviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
+
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setName("temperature sensor");
+        device.setDeviceProfileId(deviceProfile.getId());
+        device = deviceService.saveDevice(device);
+
+        DeviceId deviceId = device.getId();
+
+        AlarmRule alarmRule = new AlarmRule();
+        alarmRule.setTenantId(tenantId);
+        alarmRule.setAlarmType("highTemperatureAlarm");
+        alarmRule.setName("highTemperatureAlarmRule");
+        alarmRule.setEnabled(true);
+
+        AlarmRuleArgument temperatureLeftKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperatureLeft"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+
+        AlarmRuleArgument temperatureRightKey = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperatureRight"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .build();
+
+        SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
+        highTempFilter.setLeftArgId("temperatureLeftKey");
+        highTempFilter.setRightArgId("temperatureRightKey");
+        highTempFilter.setOperation(Operation.GREATER);
+        AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setCondition(highTempFilter);
+        AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setArguments(Map.of("temperatureLeftKey", temperatureLeftKey, "temperatureRightKey", temperatureRightKey));
+        alarmRuleCondition.setCondition(alarmCondition);
+        AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
+        alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
+
+        AlarmRuleArgument lowTemperatureConst = AlarmRuleArgument.builder()
+                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
+                .valueType(ArgumentValueType.NUMERIC)
+                .defaultValue(10.0)
+                .build();
+
+        SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
+        lowTempFilter.setLeftArgId("temperatureLeftKey");
+        lowTempFilter.setRightArgId("lowTemperatureConst");
+        lowTempFilter.setOperation(Operation.LESS);
+        AlarmRuleCondition clearRule = new AlarmRuleCondition();
+        AlarmCondition clearCondition = new AlarmCondition();
+        clearRule.setArguments(Map.of("temperatureLeftKey", temperatureLeftKey, "lowTemperatureConst", lowTemperatureConst));
+        clearCondition.setCondition(lowTempFilter);
+        clearRule.setCondition(clearCondition);
+        alarmRuleConfiguration.setClearRule(clearRule);
+
+        AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(deviceProfile.getId());
+        alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
+        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
+
+        alarmRule.setConfiguration(alarmRuleConfiguration);
+
+        alarmRuleService.saveAlarmRule(tenantId, alarmRule);
+
+        ObjectNode data = JacksonUtil.newObjectNode();
+        data.put("temperatureLeft", 42);
+        data.put("temperatureRight", 39);
+        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+
+        alarmRuleStateService.process(ctx, msg);
+
+        Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
+
+        TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+
+        alarmRuleStateService.process(ctx, msg2);
+
+        Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Updated")), any());
+
+        PageData<AlarmInfo> pageData = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
+                new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
+
+        List<AlarmInfo> alarms = pageData.getData();
+        Assert.equals(1, alarms.size());
+
+        AlarmInfo alarm = alarms.get(0);
+        Assert.equals("highTemperatureAlarm", alarm.getName());
+        Assert.equals(AlarmStatus.ACTIVE_UNACK, alarm.getStatus());
+
+
+        data.put("temperatureLeft", 5);
+        TbMsg msg3 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+
+        alarmRuleStateService.process(ctx, msg3);
+
+        Mockito.verify(clusterService, Mockito.timeout(1000)).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Cleared")), any());
+
+        pageData = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
+                new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
+
+        alarms = pageData.getData();
+        Assert.equals(1, alarms.size());
+
+        alarm = alarms.get(0);
+        Assert.equals("highTemperatureAlarm", alarm.getName());
+        Assert.equals(AlarmStatus.CLEARED_UNACK, alarm.getStatus());
+    }
+
     private void saveAttribute(EntityId entityId, String key, Boolean value) {
         saveAttribute(entityId, new BooleanDataEntry(key, value));
     }

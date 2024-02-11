@@ -371,6 +371,10 @@ class AlarmRuleState {
         EntityKeyValue left = getValue(filter.getLeftArgId(), data);
         EntityKeyValue right = getValue(filter.getRightArgId(), data);
 
+        if (left == null || right == null) {
+            return false;
+        }
+
         return switch (getArgument(filter.getLeftArgId()).getValueType()) {
             case STRING -> filter.getOperation().process(getStrValue(left), getStrValue(right), filter.isIgnoreCase());
             case BOOLEAN -> filter.getOperation().process(getBoolValue(left), getBoolValue(right));
