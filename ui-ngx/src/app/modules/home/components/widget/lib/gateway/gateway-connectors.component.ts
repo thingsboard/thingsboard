@@ -366,7 +366,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
         type: 'success',
         duration: 1000,
         verticalPosition: 'top',
-        horizontalPosition: 'right',
+        horizontalPosition: 'left',
         target: 'dashboardRoot',
         forceDismiss: true
       }));
