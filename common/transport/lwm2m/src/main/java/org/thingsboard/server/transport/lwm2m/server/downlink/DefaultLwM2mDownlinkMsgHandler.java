@@ -259,7 +259,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                 for (Observation obs : observations) {
                     LwM2mPath lwPathObs = ((SingleObservation) obs).getPath();
                     for (LwM2mPath nodePath : listPath) {
-                        String validNodePath = validatePathCompositeCancel(nodePath, lwPathObs, client);
+                        String validNodePath = validatePathObserveCancelAny(nodePath, lwPathObs, client);
                         if (validNodePath != null) lwPaths.add(validNodePath);
                     }
                 };
@@ -273,13 +273,13 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         }
     }
 
-    private String validatePathCompositeCancel(LwM2mPath nodePath, LwM2mPath lwPathObs, LwM2mClient client) throws ThingsboardException {
+    private String validatePathObserveCancelAny(LwM2mPath nodePath, LwM2mPath lwPathObs, LwM2mClient client) throws ThingsboardException {
         if (nodePath.equals(lwPathObs) || lwPathObs.startWith(nodePath)) {    // nodePath = "3",     lwPathObs = "3/0/9": cancel for tne all lwPathObs
-            return nodePath.toString();
+            return lwPathObs.toString();
         } else if (!nodePath.equals(lwPathObs) && nodePath.startWith(lwPathObs)) {
             String errorMsg = String.format(
-                    "Unexpected error: There is registration with Endpoint %s for observation path %s, that includes this observation path %s",
-                    client.getRegistration().getEndpoint(), nodePath, lwPathObs);
+                    "Unexpected error: There is registration with Endpoint %s for observation path [%s], that includes this observation path [%s]",
+                    client.getRegistration().getEndpoint(), lwPathObs, nodePath);
             throw new ThingsboardException(errorMsg, ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
         return null;
@@ -335,9 +335,24 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
 
     @Override
     public void sendCancelObserveRequest(LwM2mClient client, TbLwM2MCancelObserveRequest request, DownlinkRequestCallback<TbLwM2MCancelObserveRequest, Integer> callback) {
-        validateVersionedId(client, request);
-        int observeCancelCnt = context.getServer().getObservationService().cancelObservations(client.getRegistration(), request.getObjectId());
-        callback.onSuccess(request, observeCancelCnt);
+        try{
+            validateVersionedId(client, request);
+            Set<Observation> observations = context.getServer().getObservationService().getObservations(client.getRegistration());
+            int observeCancelCnt = 0;
+            Set<String> lwPaths = new HashSet<>();
+            for (Observation obs : observations) {
+                LwM2mPath lwPathObs = ((SingleObservation) obs).getPath();
+                LwM2mPath nodePath = new LwM2mPath(request.getObjectId());
+                String validNodePath = validatePathObserveCancelAny(nodePath, lwPathObs, client);
+                if (validNodePath != null) lwPaths.add(validNodePath);
+            };
+            for (String nodePath : lwPaths) {
+                observeCancelCnt += context.getServer().getObservationService().cancelObservations(client.getRegistration(), nodePath);
+            }
+            callback.onSuccess(request, observeCancelCnt);
+        } catch (ThingsboardException e){
+            callback.onValidationError(request.toString(), e.getMessage());
+        }
     }
 
     @Override
