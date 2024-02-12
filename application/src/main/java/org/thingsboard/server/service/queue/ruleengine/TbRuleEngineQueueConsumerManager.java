@@ -63,9 +63,9 @@ public class TbRuleEngineQueueConsumerManager {
     public static final String SUCCESSFUL_STATUS = "successful";
     public static final String FAILED_STATUS = "failed";
 
-    private final TbRuleEngineConsumerContext ctx;
-    private final QueueKey queueKey;
-    private final TbRuleEngineConsumerStats stats;
+    protected final TbRuleEngineConsumerContext ctx;
+    protected final QueueKey queueKey;
+    protected final TbRuleEngineConsumerStats stats;
     private final ReentrantLock lock = new ReentrantLock(); //NonfairSync
 
     @Getter
@@ -273,9 +273,9 @@ public class TbRuleEngineQueueConsumerManager {
         log.info("Rule Engine consumer stopped");
     }
 
-    private void processMsgs(List<TbProtoQueueMsg<ToRuleEngineMsg>> msgs,
-                             TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> consumer,
-                             Queue queue) throws InterruptedException {
+    protected void processMsgs(List<TbProtoQueueMsg<ToRuleEngineMsg>> msgs,
+                               TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> consumer,
+                               Queue queue) throws InterruptedException {
         TbRuleEngineSubmitStrategy submitStrategy = getSubmitStrategy(queue);
         TbRuleEngineProcessingStrategy ackStrategy = getProcessingStrategy(queue);
         submitStrategy.init(msgs);

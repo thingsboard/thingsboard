@@ -53,6 +53,7 @@ import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
 import org.thingsboard.server.service.queue.ruleengine.TbRuleEngineConsumerContext;
+import org.thingsboard.server.service.queue.ruleengine.TbRuleEngineInternalQueueConsumerManager;
 import org.thingsboard.server.service.queue.ruleengine.TbRuleEngineQueueConsumerManager;
 import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
 
@@ -63,6 +64,9 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.common.data.DataConstants.INTERNAL_QUEUE_NAME;
+import static org.thingsboard.server.common.data.DataConstants.INTERNAL_QUEUE_TOPIC;
 
 @Service
 @TbRuleEngineComponent
@@ -105,7 +109,12 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     }
 
     private void initConsumer(Queue configuration) {
-        getOrCreateConsumer(new QueueKey(ServiceType.TB_RULE_ENGINE, configuration)).init(configuration);
+        QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, configuration);
+        getOrCreateConsumer(queueKey).init(configuration);
+        if (queueKey.isMain()) {
+            getOrCreateConsumer(queueKey.withQueueName(INTERNAL_QUEUE_NAME)).init(configuration
+                    .withName(INTERNAL_QUEUE_NAME).withTopic(INTERNAL_QUEUE_TOPIC));
+        }
     }
 
     @Override
@@ -192,6 +201,10 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                 TbRuleEngineQueueConsumerManager consumerManager = getOrCreateConsumer(queueKey);
                 Queue oldQueue = consumerManager.getQueue();
                 consumerManager.update(queue);
+                if (queueKey.isMain()) {
+                    getOrCreateConsumer(queueKey.withQueueName(INTERNAL_QUEUE_NAME)).update(queue
+                            .withName(INTERNAL_QUEUE_NAME).withTopic(INTERNAL_QUEUE_TOPIC));
+                }
 
                 if (oldQueue == null || queue.getPartitions() != oldQueue.getPartitions()) {
                     partitionsChanged = true;
@@ -216,6 +229,9 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
             var consumerManager = consumers.remove(queueKey);
             if (consumerManager != null) {
                 consumerManager.delete(true);
+                if (queueKey.isMain()) {
+                    consumers.get(queueKey.withQueueName(INTERNAL_QUEUE_NAME)).delete(true);
+                }
             }
         }
 
@@ -241,7 +257,13 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     }
 
     private TbRuleEngineQueueConsumerManager getOrCreateConsumer(QueueKey queueKey) {
-        return consumers.computeIfAbsent(queueKey, key -> new TbRuleEngineQueueConsumerManager(ctx, key));
+        return consumers.computeIfAbsent(queueKey, key -> {
+            if (queueKey.getQueueName().equals(INTERNAL_QUEUE_NAME)) {
+                return new TbRuleEngineInternalQueueConsumerManager(ctx, key);
+            } else {
+                return new TbRuleEngineQueueConsumerManager(ctx, key);
+            }
+        });
     }
 
     @Scheduled(fixedDelayString = "${queue.rule-engine.stats.print-interval-ms}")
