@@ -80,6 +80,22 @@
         </mat-form-field>
       </div>
     </ng-template>
+    <ng-template [ngSwitchCase]="widgetActionType.openURL">
+      <div class="tb-form-row">
+        <div class="tb-required">{{ 'widget-action.URL' | translate }}</div>
+        <mat-form-field fxFlex style="margin-left: 9px" appearance="outline" subscriptSizing="dynamic">
+          <input matInput placeholder="{{ 'widget-config.set' | translate }}" formControlName="url">
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="'widget-action.url-required' | translate"
+                    *ngIf="actionTypeFormGroup.get('url').invalid && actionTypeFormGroup.get('url').touched"
+                    class="tb-error">
+            warning
+          </mat-icon>
+        </mat-form-field>
+      </div>
+    </ng-template>
     <ng-template [ngSwitchCase]="widgetActionFormGroup.get('type').value === widgetActionType.openDashboardState ||
                                  widgetActionFormGroup.get('type').value === widgetActionType.updateDashboardState ?
                                  widgetActionFormGroup.get('type').value : ''">
@@ -89,7 +105,8 @@
         </mat-slide-toggle>
       </div>
     </ng-template>
-    <ng-template [ngSwitchCase]="widgetActionFormGroup.get('type').value === widgetActionType.openDashboard ?
+    <ng-template [ngSwitchCase]="widgetActionFormGroup.get('type').value === widgetActionType.openDashboard ||
+                                 widgetActionFormGroup.get('type').value === widgetActionType.openURL ?
                                  widgetActionFormGroup.get('type').value : ''">
       <div class="tb-form-row">
         <mat-slide-toggle class="mat-slide" formControlName="openNewBrowserTab">
