@@ -58,6 +58,7 @@ import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_W
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CCM_8;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MNetworkConfig.getCoapConfig;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FIRMWARE_UPDATE_COAP_RESOURCE;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.setDtlsConnectorConfigCidLength;
 
 @Slf4j
 @Component
@@ -165,21 +166,10 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
         serverCoapConfig.set(DTLS_RETRANSMISSION_TIMEOUT, config.getDtlsRetransmissionTimeout(), MILLISECONDS);
         serverCoapConfig.set(DTLS_ROLE, SERVER_ONLY);
         serverCoapConfig.setTransient(DtlsConfig.DTLS_CONNECTION_ID_LENGTH);
-        /**
-         * "Control usage of DTLS connection ID.",
-         * If DTLS_CONNECTION_ID_LENGTH enables the use of a connection id, this node id could be used
-         * to configure the generation of connection ids specific for node in a multi-node deployment (cluster).
-         * The value is used as first byte in generated connection ids.
-         * DTLS connection ID length. <blank> disabled,
-         * 0 enables support without active use of CID.", defaultValue == null, minimumValue == 0);
-         *   "- 'on' to activate Connection ID support ",
-         *   "  (same as -cid 6)",
-         *   "- 'off' to deactivate it",
-         *   "- Positive value define the size in byte of CID generated.",
-         *   "- 0 value means we accept to use CID but will not generated one for foreign peer.",
-         */
-        serverCoapConfig.set(DtlsConfig.DTLS_CONNECTION_ID_LENGTH, 6);
 
+        if (config.getDtlsCidLength() != null) {
+            setDtlsConnectorConfigCidLength( serverCoapConfig, config.getDtlsCidLength());
+        }
 
         /* Create DTLS Config */
         this.setServerWithCredentials(builder);

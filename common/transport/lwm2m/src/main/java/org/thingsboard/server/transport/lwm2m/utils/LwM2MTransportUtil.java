@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.lwm2m.utils;
 
 import com.google.gson.JsonElement;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.elements.config.Configuration;
 import org.eclipse.leshan.core.model.LwM2mModel;
 import org.eclipse.leshan.core.model.ObjectLoader;
 import org.eclipse.leshan.core.model.ObjectModel;
@@ -55,6 +56,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CONNECTION_ID_LENGTH;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CONNECTION_ID_NODE_ID;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.BOOLEAN;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.FLOAT;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.INTEGER;
@@ -424,5 +427,16 @@ public class LwM2MTransportUtil {
             newValueStr = newValue.toString();
         }
         return newValueStr.equals(oldValueStr);
+    }
+
+    public static void setDtlsConnectorConfigCidLength(Configuration serverCoapConfig, Integer cIdLength) {
+        serverCoapConfig.setTransient(DTLS_CONNECTION_ID_LENGTH);
+        serverCoapConfig.setTransient(DTLS_CONNECTION_ID_NODE_ID);
+        serverCoapConfig.set(DTLS_CONNECTION_ID_LENGTH, cIdLength);
+        if ( cIdLength > 4) {
+            serverCoapConfig.set(DTLS_CONNECTION_ID_NODE_ID, 0);
+        } else {
+            serverCoapConfig.set(DTLS_CONNECTION_ID_NODE_ID, null);
+        }
     }
 }
