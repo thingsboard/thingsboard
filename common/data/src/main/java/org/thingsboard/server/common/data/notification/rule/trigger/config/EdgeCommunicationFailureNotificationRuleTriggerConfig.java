@@ -13,16 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue;
+package org.thingsboard.server.common.data.notification.rule.trigger.config;
 
-import org.thingsboard.server.common.data.queue.Queue;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
-public interface TbQueueClusterService {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class EdgeCommunicationFailureNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
 
-    void onQueuesUpdate(List<Queue> queues);
+    private Set<UUID> edges; // if empty - all edges
 
-    void onQueuesDelete(List<Queue> queues);
+    @Override
+    public NotificationRuleTriggerType getTriggerType() {
+        return NotificationRuleTriggerType.EDGE_COMMUNICATION_FAILURE;
+    }
 
 }
