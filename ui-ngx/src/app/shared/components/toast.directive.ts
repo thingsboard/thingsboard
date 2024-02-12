@@ -280,7 +280,7 @@ export type ToastAnimationState = 'default' | 'opened' | 'closing';
 })
 export class TbSnackBarComponent implements AfterViewInit, OnDestroy {
 
-  @ViewChild('actionButton', {static: true}) actionButton: MatButton;
+  @ViewChild('actionButton') actionButton: MatButton;
 
   @HostBinding('class')
   get panelClass(): string[] {
