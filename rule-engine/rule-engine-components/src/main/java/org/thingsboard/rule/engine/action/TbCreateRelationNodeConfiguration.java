@@ -16,11 +16,13 @@
 package org.thingsboard.rule.engine.action;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class TbCreateRelationNodeConfiguration extends TbAbstractRelationActionNodeConfiguration implements NodeConfiguration<TbCreateRelationNodeConfiguration> {
 
     private boolean createEntityIfNotExists;
@@ -30,7 +32,7 @@ public class TbCreateRelationNodeConfiguration extends TbAbstractRelationActionN
     @Override
     public TbCreateRelationNodeConfiguration defaultConfiguration() {
         TbCreateRelationNodeConfiguration configuration = new TbCreateRelationNodeConfiguration();
-        configuration.setDirection(EntitySearchDirection.FROM.name());
+        configuration.setDirection(EntitySearchDirection.FROM);
         configuration.setRelationType(EntityRelation.CONTAINS_TYPE);
         configuration.setEntityNamePattern("");
         configuration.setCreateEntityIfNotExists(false);

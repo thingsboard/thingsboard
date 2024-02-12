@@ -178,7 +178,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
     @Test
     void givenDefaultConfig_whenVerify_thenOK() {
         var defaultConfig = new TbCreateRelationNodeConfiguration().defaultConfiguration();
-        assertThat(defaultConfig.getDirection()).isEqualTo(EntitySearchDirection.FROM.name());
+        assertThat(defaultConfig.getDirection()).isEqualTo(EntitySearchDirection.FROM);
         assertThat(defaultConfig.getRelationType()).isEqualTo(EntityRelation.CONTAINS_TYPE);
         assertThat(defaultConfig.getEntityNamePattern()).isEqualTo("");
         assertThat(defaultConfig.getEntityTypePattern()).isEqualTo(null);
@@ -192,14 +192,14 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
     @EnumSource(EntityType.class)
     void givenEntityType_whenInit_thenVerifyExceptionThrownIfTypeIsUnsupported(EntityType entityType) {
         // GIVEN
-        config.setEntityType(entityType.name());
+        config.setEntityType(entityType);
         var nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
         // WHEN-THEN
         if (unsupportedEntityTypes.contains(entityType)) {
             assertThatThrownBy(() -> node.init(ctxMock, nodeConfiguration))
                     .isInstanceOf(TbNodeException.class)
-                    .hasMessage(TbAbstractRelationActionNode.unsupportedEntityTypeErrorMessage(entityType.name()));
+                    .hasMessage(TbAbstractRelationActionNode.unsupportedEntityTypeErrorMessage(entityType));
         } else {
             assertThatCode(() -> node.init(ctxMock, nodeConfiguration)).doesNotThrowAnyException();
         }
@@ -210,7 +210,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
     @MethodSource
     void givenSupportedEntityType_whenOnMsg_thenVerifyEntityNotFoundExceptionThrown(EntityType entityType) throws TbNodeException {
         // GIVEN
-        config.setEntityType(entityType.name());
+        config.setEntityType(entityType);
         config.setEntityNamePattern("${name}");
         config.setEntityTypePattern("${type}");
 
@@ -238,7 +238,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         var entityId = (EntityId) entity.getId();
         var entityType = entityId.getEntityType();
 
-        config.setEntityType(entityType.name());
+        config.setEntityType(entityType);
         config.setEntityNamePattern("${name}");
         config.setEntityTypePattern("${type}");
         config.setCreateEntityIfNotExists(false);
@@ -273,14 +273,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
 
         verify(ctxMock).tellNext(eq(msg), eq(TbNodeConnectionType.SUCCESS));
         verify(ctxMock, never()).tellFailure(any(), any());
-        switch (entityType) {
-            case DEVICE:
-            case TENANT:
-                verify(ctxMock, times(6)).getDbCallbackExecutor();
-                break;
-            default:
-                verify(ctxMock, times(7)).getDbCallbackExecutor();
-        }
+        verify(ctxMock).getDbCallbackExecutor();
         verifyNoMoreInteractions(ctxMock, relationServiceMock);
     }
 
@@ -291,7 +284,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         var entityId = (EntityId) entity.getId();
         var entityType = entityId.getEntityType();
 
-        config.setEntityType(entityType.name());
+        config.setEntityType(entityType);
         config.setEntityNamePattern("${name}");
         config.setEntityTypePattern("${type}");
         config.setCreateEntityIfNotExists(false);
@@ -331,15 +324,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
 
         verify(ctxMock).tellNext(eq(msg), eq(TbNodeConnectionType.SUCCESS));
         verify(ctxMock, never()).tellFailure(any(), any());
-        switch (entityType) {
-            case DEVICE:
-            case TENANT:
-                verify(ctxMock, times(8)).getDbCallbackExecutor();
-                break;
-            default:
-                verify(ctxMock, times(9)).getDbCallbackExecutor();
-                break;
-        }
+        verify(ctxMock).getDbCallbackExecutor();
         verifyNoMoreInteractions(ctxMock, relationServiceMock);
     }
 
@@ -350,7 +335,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         var entityId = (EntityId) entity.getId();
         var entityType = entityId.getEntityType();
 
-        config.setEntityType(entityType.name());
+        config.setEntityType(entityType);
         config.setEntityNamePattern("${name}");
         config.setEntityTypePattern("${type}");
         config.setCreateEntityIfNotExists(false);
@@ -398,15 +383,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
 
         verify(ctxMock).tellNext(eq(msg), eq(TbNodeConnectionType.SUCCESS));
         verify(ctxMock, never()).tellFailure(any(), any());
-        switch (entityType) {
-            case DEVICE:
-            case TENANT:
-                verify(ctxMock, times(8)).getDbCallbackExecutor();
-                break;
-            default:
-                verify(ctxMock, times(9)).getDbCallbackExecutor();
-                break;
-        }
+        verify(ctxMock).getDbCallbackExecutor();
         verifyNoMoreInteractions(ctxMock, relationServiceMock);
     }
 
@@ -417,7 +394,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         var entityId = (EntityId) entity.getId();
         var entityType = entityId.getEntityType();
 
-        config.setEntityType(entityType.name());
+        config.setEntityType(entityType);
         config.setEntityNamePattern("${name}");
         config.setEntityTypePattern("${type}");
         config.setCreateEntityIfNotExists(false);
@@ -456,14 +433,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         verify(ctxMock).transformMsgOriginator(eq(msg), eq(entityId));
         verify(ctxMock).tellNext(eq(msgAfterOriginatorChanged), eq(TbNodeConnectionType.SUCCESS));
         verify(ctxMock, never()).tellFailure(any(), any());
-        switch (entityType) {
-            case DEVICE:
-            case TENANT:
-                verify(ctxMock, times(6)).getDbCallbackExecutor();
-                break;
-            default:
-                verify(ctxMock, times(7)).getDbCallbackExecutor();
-        }
+        verify(ctxMock).getDbCallbackExecutor();
         verifyNoMoreInteractions(ctxMock, relationServiceMock);
     }
 
@@ -474,7 +444,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         var entityId = (EntityId) entity.getId();
         var entityType = entityId.getEntityType();
 
-        config.setEntityType(entityType.name());
+        config.setEntityType(entityType);
         config.setEntityNamePattern("${name}");
         config.setEntityTypePattern("${type}");
         config.setCreateEntityIfNotExists(true);
@@ -511,11 +481,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
 
         verify(ctxMock).tellNext(eq(msg), eq(TbNodeConnectionType.SUCCESS));
         verify(ctxMock, never()).tellFailure(any(), any());
-        if (entityType == EntityType.DEVICE) {
-            verify(ctxMock, times(6)).getDbCallbackExecutor();
-        } else {
-            verify(ctxMock, times(7)).getDbCallbackExecutor();
-        }
+        verify(ctxMock).getDbCallbackExecutor();
         verifyNoMoreInteractions(ctxMock, relationServiceMock);
     }
 

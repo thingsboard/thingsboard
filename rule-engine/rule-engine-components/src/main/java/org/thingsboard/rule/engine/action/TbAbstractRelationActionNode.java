@@ -17,8 +17,8 @@ package org.thingsboard.rule.engine.action;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,16 +33,12 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
-import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.EnumSet;
-import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
@@ -60,8 +56,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
     private static final Set<EntityType> supportedEntityTypes = EnumSet.of(EntityType.TENANT, EntityType.DEVICE,
             EntityType.ASSET, EntityType.CUSTOMER, EntityType.ENTITY_VIEW, EntityType.DASHBOARD, EntityType.EDGE, EntityType.USER);
 
-    private static final List<String> supportedEntityTypesStrList = supportedEntityTypes.stream().map(EntityType::name).collect(Collectors.toList());
-    private static final String supportedEntityTypesStr = String.join(" ,", supportedEntityTypesStrList);
+    private static final String supportedEntityTypesStr = supportedEntityTypes.stream().map(Enum::name).collect(Collectors.joining(" ,"));
 
     protected C config;
 
@@ -73,47 +68,25 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         withCallback(processEntityRelationAction(ctx, msg),
-                filterResult -> ctx.tellNext(filterResult.getMsg(), filterResult.isResult() ? SUCCESS : FAILURE),
-                t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
+                actionResultAndMsg -> ctx.tellNext(actionResultAndMsg.getFirst(), actionResultAndMsg.getSecond() ? SUCCESS : FAILURE),
+                t -> ctx.tellFailure(msg, t), MoreExecutors.directExecutor());
     }
 
-    protected abstract ListenableFuture<RelationContainer> processEntityRelationAction(TbContext ctx, TbMsg msg);
+    protected abstract ListenableFuture<TbPair<TbMsg, Boolean>> processEntityRelationAction(TbContext ctx, TbMsg msg);
 
     protected abstract boolean createEntityIfNotExists();
 
     protected abstract C loadEntityNodeActionConfig(TbNodeConfiguration configuration) throws TbNodeException;
 
-    protected SearchDirectionIds processSingleSearchDirection(EntityId originator, EntityId targetEntityId) {
-        SearchDirectionIds searchDirectionIds = new SearchDirectionIds();
-        if (EntitySearchDirection.FROM.name().equals(config.getDirection())) {
-            searchDirectionIds.setToId(EntityIdFactory.getByTypeAndUuid(targetEntityId.getEntityType().name(), targetEntityId.getId()));
-            searchDirectionIds.setFromId(originator);
-            searchDirectionIds.setOriginatorDirectionFrom(true);
-        } else {
-            searchDirectionIds.setFromId(EntityIdFactory.getByTypeAndUuid(targetEntityId.getEntityType().name(), targetEntityId.getId()));
-            searchDirectionIds.setToId(originator);
-            searchDirectionIds.setOriginatorDirectionFrom(false);
-        }
-        return searchDirectionIds;
-    }
-
     protected String processPattern(TbMsg msg, String pattern) {
         return TbNodeUtils.processPattern(pattern, msg);
     }
 
-    @Data
-    protected static class SearchDirectionIds {
-        private EntityId fromId;
-        private EntityId toId;
-        private boolean originatorDirectionFrom;
-    }
-
     protected ListenableFuture<EntityId> getTargetEntityId(TbContext ctx, TbMsg msg) {
-        var entityTypeStr = config.getEntityType();
-        var entityType = EntityType.valueOf(entityTypeStr);
+        var entityType = config.getEntityType();
         var tenantId = ctx.getTenantId();
         if (EntityType.TENANT.equals(entityType)) {
-            return Futures.immediateFuture(tenantId);
+            return ctx.getDbCallbackExecutor().executeAsync(() -> tenantId);
         }
         var targetEntityName = processPattern(msg, config.getEntityNamePattern());
         boolean createEntityIfNotExists = createEntityIfNotExists();
@@ -244,17 +217,17 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                     throw new NoSuchElementException("User with email '" + targetEntityName + "' doesn't exist!");
                 });
             default:
-                throw new IllegalArgumentException(unsupportedEntityTypeErrorMessage(entityTypeStr));
+                throw new IllegalArgumentException(unsupportedEntityTypeErrorMessage(entityType));
         }
     }
 
-    protected void checkIfConfigEntityTypeIsSupported(String entityType) throws TbNodeException {
-        if (!supportedEntityTypesStrList.contains(entityType)) {
+    protected void checkIfConfigEntityTypeIsSupported(EntityType entityType) throws TbNodeException {
+        if (!supportedEntityTypes.contains(entityType)) {
             throw new TbNodeException(unsupportedEntityTypeErrorMessage(entityType), true);
         }
     }
 
-    static String unsupportedEntityTypeErrorMessage(String entityType) {
+    static String unsupportedEntityTypeErrorMessage(EntityType entityType) {
         return "Unsupported entity type '" + entityType +
                 "'! Only " + supportedEntityTypesStr + " types are allowed.";
     }
@@ -289,13 +262,6 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
             }
         }
         return new TbPair<>(hasChanges, newConfigObjectNode);
-    }
-
-    @Data
-    @RequiredArgsConstructor
-    protected static class RelationContainer {
-        private final TbMsg msg;
-        private final boolean result;
     }
 
     @Data

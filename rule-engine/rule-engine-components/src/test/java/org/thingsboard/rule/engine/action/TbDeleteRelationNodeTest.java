@@ -84,7 +84,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -162,7 +161,7 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
     @Test
     void givenDefaultConfig_whenVerify_thenOK() {
         var defaultConfig = new TbDeleteRelationNodeConfiguration().defaultConfiguration();
-        assertThat(defaultConfig.getDirection()).isEqualTo(EntitySearchDirection.FROM.name());
+        assertThat(defaultConfig.getDirection()).isEqualTo(EntitySearchDirection.FROM);
         assertThat(defaultConfig.getRelationType()).isEqualTo(EntityRelation.CONTAINS_TYPE);
         assertThat(defaultConfig.getEntityNamePattern()).isEqualTo("");
         assertThat(defaultConfig.getEntityTypePattern()).isEqualTo(null);
@@ -174,14 +173,14 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
     @EnumSource(EntityType.class)
     void givenEntityType_whenInit_thenVerifyExceptionThrownIfTypeIsUnsupported(EntityType entityType) {
         // GIVEN
-        config.setEntityType(entityType.name());
+        config.setEntityType(entityType);
         var nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
         // WHEN-THEN
         if (unsupportedEntityTypes.contains(entityType)) {
             assertThatThrownBy(() -> node.init(ctxMock, nodeConfiguration))
                     .isInstanceOf(TbNodeException.class)
-                    .hasMessage(TbAbstractRelationActionNode.unsupportedEntityTypeErrorMessage(entityType.name()));
+                    .hasMessage(TbAbstractRelationActionNode.unsupportedEntityTypeErrorMessage(entityType));
         } else {
             assertThatCode(() -> node.init(ctxMock, nodeConfiguration)).doesNotThrowAnyException();
         }
@@ -192,7 +191,7 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
     @MethodSource("givenSupportedEntityType_whenOnMsg_thenVerifyEntityNotFoundExceptionThrown")
     void givenSupportedEntityType_whenOnMsgAndDeleteForSingleEntityIsSet_thenVerifyEntityNotFoundExceptionThrown(EntityType entityType) throws TbNodeException {
         // GIVEN
-        config.setEntityType(entityType.name());
+        config.setEntityType(entityType);
         config.setEntityNamePattern("${name}");
         config.setEntityTypePattern("${type}");
 
@@ -220,7 +219,7 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         var entityId = (EntityId) entity.getId();
         var entityType = entityId.getEntityType();
 
-        config.setEntityType(entityType.name());
+        config.setEntityType(entityType);
         config.setEntityNamePattern("${name}");
         config.setEntityTypePattern("${type}");
 
@@ -252,13 +251,7 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
 
         verify(ctxMock).tellNext(eq(msg), eq(TbNodeConnectionType.SUCCESS));
         verify(ctxMock, never()).tellFailure(any(), any());
-        switch (entityType) {
-            case TENANT:
-                verify(ctxMock, times(4)).getDbCallbackExecutor();
-                break;
-            default:
-                verify(ctxMock, times(5)).getDbCallbackExecutor();
-        }
+        verify(ctxMock).getDbCallbackExecutor();
         verifyNoMoreInteractions(ctxMock, relationServiceMock);
     }
 
@@ -269,7 +262,7 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         var entityId = (EntityId) entity.getId();
         var entityType = entityId.getEntityType();
 
-        config.setEntityType(entityType.name());
+        config.setEntityType(entityType);
         config.setEntityNamePattern("${name}");
         config.setEntityTypePattern("${type}");
 
@@ -301,13 +294,7 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
 
         verify(ctxMock).tellNext(eq(msg), eq(TbNodeConnectionType.FAILURE));
         verify(ctxMock, never()).tellFailure(any(), any());
-        switch (entityType) {
-            case TENANT:
-                verify(ctxMock, times(4)).getDbCallbackExecutor();
-                break;
-            default:
-                verify(ctxMock, times(5)).getDbCallbackExecutor();
-        }
+        verify(ctxMock).getDbCallbackExecutor();
         verifyNoMoreInteractions(ctxMock, relationServiceMock);
     }
 
@@ -318,7 +305,7 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         var entityId = (EntityId) entity.getId();
         var entityType = entityId.getEntityType();
 
-        config.setEntityType(entityType.name());
+        config.setEntityType(entityType);
         config.setEntityNamePattern("${name}");
         config.setEntityTypePattern("${type}");
 
@@ -348,13 +335,7 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
 
         verify(ctxMock).tellNext(eq(msg), eq(TbNodeConnectionType.SUCCESS));
         verify(ctxMock, never()).tellFailure(any(), any());
-        switch (entityType) {
-            case TENANT:
-                verify(ctxMock, times(4)).getDbCallbackExecutor();
-                break;
-            default:
-                verify(ctxMock, times(5)).getDbCallbackExecutor();
-        }
+        verify(ctxMock).getDbCallbackExecutor();
         verifyNoMoreInteractions(ctxMock, relationServiceMock);
     }
 
@@ -365,7 +346,7 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         var entityId = (EntityId) entity.getId();
         var entityType = entityId.getEntityType();
 
-        config.setEntityType(entityType.name());
+        config.setEntityType(entityType);
         config.setEntityNamePattern("${name}");
         config.setEntityTypePattern("${type}");
         config.setDeleteForSingleEntity(false);
@@ -374,7 +355,6 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         node.init(ctxMock, nodeConfiguration);
 
         when(ctxMock.getTenantId()).thenReturn(tenantId);
-        when(ctxMock.getDbCallbackExecutor()).thenReturn(dbExecutor);
         when(ctxMock.getRelationService()).thenReturn(relationServiceMock);
 
         var relationToDelete = new EntityRelation();
@@ -392,7 +372,6 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
 
         verify(ctxMock).tellNext(eq(msg), eq(TbNodeConnectionType.SUCCESS));
         verify(ctxMock, never()).tellFailure(any(), any());
-        verify(ctxMock, times(4)).getDbCallbackExecutor();
         verifyNoMoreInteractions(ctxMock, relationServiceMock);
     }
 
@@ -404,7 +383,7 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         var entityId = (EntityId) entity.getId();
         var entityType = entityId.getEntityType();
 
-        config.setEntityType(entityType.name());
+        config.setEntityType(entityType);
         config.setEntityNamePattern("${name}");
         config.setEntityTypePattern("${type}");
         config.setDeleteForSingleEntity(false);
@@ -413,7 +392,6 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         node.init(ctxMock, nodeConfiguration);
 
         when(ctxMock.getTenantId()).thenReturn(tenantId);
-        when(ctxMock.getDbCallbackExecutor()).thenReturn(dbExecutor);
         when(ctxMock.getRelationService()).thenReturn(relationServiceMock);
 
         var relationToDelete = new EntityRelation();
@@ -431,7 +409,6 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
 
         verify(ctxMock).tellNext(eq(msg), eq(TbNodeConnectionType.FAILURE));
         verify(ctxMock, never()).tellFailure(any(), any());
-        verify(ctxMock, times(4)).getDbCallbackExecutor();
         verifyNoMoreInteractions(ctxMock, relationServiceMock);
     }
 
