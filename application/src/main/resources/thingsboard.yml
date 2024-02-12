@@ -1018,7 +1018,7 @@ transport:
       bind_address: "${COAP_DTLS_BIND_ADDRESS:0.0.0.0}"
       # CoAP DTLS bind port
       bind_port: "${COAP_DTLS_BIND_PORT:5684}"
-      # Server DTLS credentials
+        # Server DTLS credentials
         # CoAP DTLS connection ID length. RFC 9146, Connection Identifier for DTLS 1.2
         # Default: off
         # Control usage of DTLS connection ID length (CID).
