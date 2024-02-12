@@ -77,39 +77,24 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                 t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
     }
 
-    protected ListenableFuture<RelationContainer> processEntityRelationAction(TbContext ctx, TbMsg msg) {
-        return Futures.transformAsync(getTargetEntityId(ctx, msg), entityId ->
-                        doProcessEntityRelationAction(ctx, msg, entityId, processPattern(msg, config.getRelationType())),
-                ctx.getDbCallbackExecutor());
-    }
+    protected abstract ListenableFuture<RelationContainer> processEntityRelationAction(TbContext ctx, TbMsg msg);
 
     protected abstract boolean createEntityIfNotExists();
 
-    protected abstract ListenableFuture<RelationContainer> doProcessEntityRelationAction(TbContext ctx, TbMsg msg, EntityId targetEntityId, String relationType);
-
     protected abstract C loadEntityNodeActionConfig(TbNodeConfiguration configuration) throws TbNodeException;
 
-    protected SearchDirectionIds processSingleSearchDirection(TbMsg msg, EntityId targetEntityId) {
+    protected SearchDirectionIds processSingleSearchDirection(EntityId originator, EntityId targetEntityId) {
         SearchDirectionIds searchDirectionIds = new SearchDirectionIds();
         if (EntitySearchDirection.FROM.name().equals(config.getDirection())) {
-            searchDirectionIds.setFromId(EntityIdFactory.getByTypeAndUuid(targetEntityId.getEntityType().name(), targetEntityId.getId()));
-            searchDirectionIds.setToId(msg.getOriginator());
-            searchDirectionIds.setOriginatorDirectionFrom(false);
-        } else {
             searchDirectionIds.setToId(EntityIdFactory.getByTypeAndUuid(targetEntityId.getEntityType().name(), targetEntityId.getId()));
-            searchDirectionIds.setFromId(msg.getOriginator());
+            searchDirectionIds.setFromId(originator);
             searchDirectionIds.setOriginatorDirectionFrom(true);
+        } else {
+            searchDirectionIds.setFromId(EntityIdFactory.getByTypeAndUuid(targetEntityId.getEntityType().name(), targetEntityId.getId()));
+            searchDirectionIds.setToId(originator);
+            searchDirectionIds.setOriginatorDirectionFrom(false);
         }
         return searchDirectionIds;
-    }
-
-    protected ListenableFuture<List<EntityRelation>> processListSearchDirection(TbContext ctx, TbMsg msg) {
-        var relationType = processPattern(msg, config.getRelationType());
-        var tenantId = ctx.getTenantId();
-        var originator = msg.getOriginator();
-        return EntitySearchDirection.FROM.name().equals(config.getDirection()) ?
-                ctx.getRelationService().findByToAndTypeAsync(tenantId, originator, relationType, RelationTypeGroup.COMMON) :
-                ctx.getRelationService().findByFromAndTypeAsync(tenantId, originator, relationType, RelationTypeGroup.COMMON);
     }
 
     protected String processPattern(TbMsg msg, String pattern) {
@@ -275,17 +260,35 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
     }
 
     @Override
-    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) {
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
         boolean hasChanges = false;
+        var newConfigObjectNode = (ObjectNode) oldConfiguration;
         switch (fromVersion) {
             case 0: {
-                if (oldConfiguration.has("entityCacheExpiration")) {
-                    ((ObjectNode) oldConfiguration).remove("entityCacheExpiration");
-                    hasChanges = true;
+                if (!oldConfiguration.has("entityCacheExpiration")) {
+                    break;
                 }
+                newConfigObjectNode.remove("entityCacheExpiration");
+
+                var directionPropertyName = "direction";
+                if (!newConfigObjectNode.has(directionPropertyName)) {
+                    throw new TbNodeException("property to update: '" + directionPropertyName + "' doesn't exists in configuration!");
+                }
+                String direction = newConfigObjectNode.get(directionPropertyName).asText();
+                if (EntitySearchDirection.TO.name().equals(direction)) {
+                    newConfigObjectNode.put(directionPropertyName, EntitySearchDirection.FROM.name());
+                    hasChanges = true;
+                    break;
+                }
+                if (EntitySearchDirection.FROM.name().equals(direction)) {
+                    newConfigObjectNode.put(directionPropertyName, EntitySearchDirection.TO.name());
+                    hasChanges = true;
+                    break;
+                }
+                throw new TbNodeException("property to update: '" + directionPropertyName + "' has invalid value!");
             }
         }
-        return new TbPair<>(hasChanges, oldConfiguration);
+        return new TbPair<>(hasChanges, newConfigObjectNode);
     }
 
     @Data

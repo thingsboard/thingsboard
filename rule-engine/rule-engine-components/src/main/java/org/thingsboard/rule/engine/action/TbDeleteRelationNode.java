@@ -25,12 +25,12 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -64,55 +64,43 @@ public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteR
 
     @Override
     protected ListenableFuture<RelationContainer> processEntityRelationAction(TbContext ctx, TbMsg msg) {
-        var relationType = processPattern(msg, config.getRelationType());
-        return getRelationContainerListenableFuture(ctx, msg, relationType);
-    }
-
-    @Override
-    protected ListenableFuture<RelationContainer> doProcessEntityRelationAction(TbContext ctx, TbMsg msg, EntityId targetEntityId, String relationType) {
-        return Futures.transform(processSingle(ctx, msg, targetEntityId, relationType), result -> new RelationContainer(msg, result), ctx.getDbCallbackExecutor());
-    }
-
-    private ListenableFuture<RelationContainer> getRelationContainerListenableFuture(TbContext ctx, TbMsg msg, String relationType) {
-        return config.isDeleteForSingleEntity() ?
-                Futures.transformAsync(getTargetEntityId(ctx, msg),
-                        targetEntityId -> doProcessEntityRelationAction(ctx, msg, targetEntityId, relationType), ctx.getDbCallbackExecutor()) :
-                Futures.transform(processList(ctx, msg), result -> new RelationContainer(msg, result), ctx.getDbCallbackExecutor());
-    }
-
-    private ListenableFuture<Boolean> processList(TbContext ctx, TbMsg msg) {
-        return Futures.transformAsync(processListSearchDirection(ctx, msg), entityRelations -> {
-            if (entityRelations.isEmpty()) {
-                return Futures.immediateFuture(true);
-            }
-            List<ListenableFuture<Boolean>> listenableFutureList = new ArrayList<>();
-            for (EntityRelation entityRelation : entityRelations) {
-                listenableFutureList.add(ctx.getRelationService().deleteRelationAsync(ctx.getTenantId(), entityRelation));
-            }
-            return Futures.transformAsync(Futures.allAsList(listenableFutureList), booleans -> {
-                for (Boolean bool : booleans) {
-                    if (!bool) {
-                        return Futures.immediateFuture(false);
-                    }
-                }
-                return Futures.immediateFuture(true);
+        if (config.isDeleteForSingleEntity()) {
+            return Futures.transformAsync(getTargetEntityId(ctx, msg), targetEntityId -> {
+                var deleteRelationFuture = deleteRelationToSpecificEntity(ctx, msg.getOriginator(), targetEntityId, processPattern(msg, config.getRelationType()));
+                return Futures.transform(deleteRelationFuture, result -> new RelationContainer(msg, result), ctx.getDbCallbackExecutor());
             }, ctx.getDbCallbackExecutor());
+        }
+        return Futures.transform(deleteAllRelations(ctx, msg), result -> new RelationContainer(msg, result), ctx.getDbCallbackExecutor());
+    }
+
+    private ListenableFuture<Boolean> deleteAllRelations(TbContext ctx, TbMsg msg) {
+        var relationType = processPattern(msg, config.getRelationType());
+        var tenantId = ctx.getTenantId();
+        var originator = msg.getOriginator();
+        var originatorRelationsFuture = EntitySearchDirection.FROM.name().equals(config.getDirection()) ?
+                ctx.getRelationService().findByFromAndTypeAsync(tenantId, originator, relationType, RelationTypeGroup.COMMON) :
+                ctx.getRelationService().findByToAndTypeAsync(tenantId, originator, relationType, RelationTypeGroup.COMMON);
+        return Futures.transformAsync(originatorRelationsFuture, originatorRelations -> {
+            if (originatorRelations.isEmpty()) {
+                return Futures.immediateFuture(true);
+            }
+            var deleteRelationFutures = originatorRelations.stream()
+                    .map(entityRelation -> ctx.getRelationService().deleteRelationAsync(ctx.getTenantId(), entityRelation))
+                    .collect(Collectors.toCollection(ArrayList::new));
+            return Futures.transformAsync(Futures.allAsList(deleteRelationFutures), deleteResults ->
+                    Futures.immediateFuture(deleteResults.stream().allMatch(Boolean::booleanValue)), ctx.getDbCallbackExecutor());
         }, ctx.getDbCallbackExecutor());
     }
 
-    private ListenableFuture<Boolean> processSingle(TbContext ctx, TbMsg msg, EntityId targetEntityId, String relationType) {
-        SearchDirectionIds sdId = processSingleSearchDirection(msg, targetEntityId);
+    private ListenableFuture<Boolean> deleteRelationToSpecificEntity(TbContext ctx, EntityId originator, EntityId targetEntityId, String relationType) {
+        var sdId = processSingleSearchDirection(originator, targetEntityId);
         return Futures.transformAsync(ctx.getRelationService().checkRelationAsync(ctx.getTenantId(), sdId.getFromId(), sdId.getToId(), relationType, RelationTypeGroup.COMMON),
                 result -> {
                     if (result) {
-                        return processSingleDeleteRelation(ctx, sdId, relationType);
+                        return ctx.getRelationService().deleteRelationAsync(ctx.getTenantId(), sdId.getFromId(), sdId.getToId(), relationType, RelationTypeGroup.COMMON);
                     }
                     return Futures.immediateFuture(true);
                 }, ctx.getDbCallbackExecutor());
-    }
-
-    private ListenableFuture<Boolean> processSingleDeleteRelation(TbContext ctx, SearchDirectionIds sdId, String relationType) {
-        return ctx.getRelationService().deleteRelationAsync(ctx.getTenantId(), sdId.getFromId(), sdId.getToId(), relationType, RelationTypeGroup.COMMON);
     }
 
 }
