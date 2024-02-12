@@ -6361,6 +6361,7 @@
             "layout": "Layout",
             "background-overlay": "Value background overlay",
             "total-volume": "Total volume",
+            "total-volume-units": "Total volume units",
             "tank": "Tank",
             "shape": "Shape",
             "datasource-units": "Source units",

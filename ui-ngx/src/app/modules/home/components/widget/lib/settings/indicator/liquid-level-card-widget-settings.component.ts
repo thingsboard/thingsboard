@@ -158,7 +158,9 @@ export class LiquidLevelCardWidgetSettingsComponent extends WidgetSettingsCompon
       volumeSource: [settings.volumeSource, []],
       volumeConstant: [settings.volumeConstant, [Validators.required, Validators.min(0.1)]],
       volumeAttributeName: [settings.volumeAttributeName, [Validators.required]],
+      volumeUnitsSource: [settings.volumeUnitsSource, []],
       volumeUnits: [settings.volumeUnits, [Validators.required]],
+      volumeUnitsAttributeName: [settings.volumeUnitsAttributeName, [Validators.required]],
       volumeFont: [settings.volumeFont, []],
       volumeColor: [settings.volumeColor, []],
       valueFont: [settings.valueFont, []],
@@ -195,7 +197,7 @@ export class LiquidLevelCardWidgetSettingsComponent extends WidgetSettingsCompon
   protected validatorTriggers(): string[] {
     return [
       'showBackgroundOverlay', 'showTooltip', 'showTooltipLevel', 'tankSelectionType', 'datasourceUnits',
-      'showTooltipDate', 'layout', 'volumeSource', 'widgetUnitsSource'
+      'showTooltipDate', 'layout', 'volumeSource', 'widgetUnitsSource', 'volumeUnitsSource'
     ];
   }
 
