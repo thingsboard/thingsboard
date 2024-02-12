@@ -213,8 +213,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         if (systemContext.isEdgesEnabled() && edgeId != null) {
             log.debug("[{}][{}] device is related to edge: [{}]. Saving RPC request: [{}][{}] to edge queue", tenantId, deviceId, edgeId.getId(), rpcId, requestId);
             try {
-                Optional<AttributeKvEntry> edgeAttributeOpt = systemContext.getAttributesService().find(tenantId, edgeId, DataConstants.SERVER_SCOPE, DefaultDeviceStateService.ACTIVITY_STATE).get();
-                if (edgeAttributeOpt.isPresent() && edgeAttributeOpt.get().getBooleanValue().orElse(false)) {
+                if (systemContext.getEdgeService().isEdgeActiveAsync(tenantId, edgeId, DefaultDeviceStateService.ACTIVITY_STATE).get()) {
                     saveRpcRequestToEdgeQueue(request, requestId).get();
                 } else {
                     log.error("[{}][{}][{}] Failed to save RPC request to edge queue {}. The Edge is currently offline or unreachable", tenantId, deviceId, edgeId.getId(), request);
