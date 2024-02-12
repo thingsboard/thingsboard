@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
                 publishEvictEvent(new OtaPackageCacheEvictEvent(otaPackageId));
             }
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(result.getTenantId()).entity(result)
-                    .entityId(result.getId()).added(otaPackageId == null).build());
+                    .entityId(result.getId()).created(otaPackageId == null).build());
             return result;
         } catch (Exception t) {
             if (otaPackageId != null) {
@@ -110,7 +110,7 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
                 publishEvictEvent(new OtaPackageCacheEvictEvent(otaPackageId));
             }
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(result.getTenantId())
-                    .entityId(result.getId()).added(otaPackageId == null).build());
+                    .entityId(result.getId()).created(otaPackageId == null).build());
             return result;
         } catch (Exception t) {
             if (otaPackageId != null) {

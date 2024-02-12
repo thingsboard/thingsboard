@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,12 +112,10 @@ public class DeviceConnectivityUtil {
         dockerComposeBuilder.append("#        - \"5026:5026\" # Modbus TCP connector (Modbus Slave)\n");
         dockerComposeBuilder.append("#        - \"50000:50000/tcp\" # Socket connector with type TCP\n");
         dockerComposeBuilder.append("#        - \"50000:50000/udp\" # Socket connector with type UDP\n");
-        if (isLocalhost(host)) {
-            dockerComposeBuilder.append("\n");
-            dockerComposeBuilder.append("    # Necessary mapping for Linux\n");
-            dockerComposeBuilder.append("    extra_hosts:\n");
-            dockerComposeBuilder.append("      - \"host.docker.internal:host-gateway\"\n");
-        }
+        dockerComposeBuilder.append("\n");
+        dockerComposeBuilder.append("    # Necessary mapping for Linux\n");
+        dockerComposeBuilder.append("    extra_hosts:\n");
+        dockerComposeBuilder.append("      - \"host.docker.internal:host-gateway\"\n");
         dockerComposeBuilder.append("\n");
         dockerComposeBuilder.append("    # Environment variables\n");
         dockerComposeBuilder.append("    environment:\n");

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@
     [displayWith]="displayWidgetTypeFn">
     <mat-option *ngFor="let widgetType of filteredWidgetTypes | async" [value]="widgetType">
       <div class="tb-widget-type-option-container">
-        <img class="tb-widget-type-option-image-preview" [src]="getPreviewImage(widgetType.image)" alt="{{ widgetType.name }}">
+        <img class="tb-widget-type-option-image-preview" [src]="widgetType.image | image: {preview: true, emptyUrl: '/assets/widget-preview-empty.svg'} | async" alt="{{ widgetType.name }}">
         <div class="tb-widget-type-option-details">
           <div class="tb-widget-type-option-text" [innerHTML]="widgetType.name | highlight:searchText:true"></div>
           <div *ngIf="widgetType.deprecated" class="tb-widget-type-option-deprecated">{{ 'widget.deprecated' | translate }}</div>

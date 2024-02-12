@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -93,6 +93,10 @@ export class DatasourceComponent implements ControlValueAccessor, OnInit, Valida
 
   public get dataKeysOptional(): boolean {
     return this.widgetConfigComponent.modelValue?.typeParameters?.dataKeysOptional;
+  }
+
+  public get datasourcesOptional(): boolean {
+    return this.widgetConfigComponent.modelValue?.typeParameters?.datasourcesOptional;
   }
 
   public get maxDataKeys(): number {
@@ -276,18 +280,20 @@ export class DatasourceComponent implements ControlValueAccessor, OnInit, Valida
   }
 
   private updateValidators() {
-    const type: DatasourceType = this.datasourceFormGroup.get('type').value;
-    this.datasourceFormGroup.get('deviceId').setValidators(
-      type === DatasourceType.device ? [Validators.required] : []
-    );
-    this.datasourceFormGroup.get('entityAliasId').setValidators(
-      (type === DatasourceType.entity || type === DatasourceType.entityCount) ? [Validators.required] : []
-    );
-    const newDataKeysRequired = !this.isDataKeysOptional(type);
-    this.datasourceFormGroup.get('dataKeys').setValidators(newDataKeysRequired ? [Validators.required] : []);
-    this.datasourceFormGroup.get('deviceId').updateValueAndValidity({emitEvent: false});
-    this.datasourceFormGroup.get('entityAliasId').updateValueAndValidity({emitEvent: false});
-    this.datasourceFormGroup.get('dataKeys').updateValueAndValidity({emitEvent: false});
+    if (!this.datasourcesOptional) {
+      const type: DatasourceType = this.datasourceFormGroup.get('type').value;
+      this.datasourceFormGroup.get('deviceId').setValidators(
+        type === DatasourceType.device ? [Validators.required] : []
+      );
+      this.datasourceFormGroup.get('entityAliasId').setValidators(
+        (type === DatasourceType.entity || type === DatasourceType.entityCount) ? [Validators.required] : []
+      );
+      const newDataKeysRequired = !this.isDataKeysOptional(type);
+      this.datasourceFormGroup.get('dataKeys').setValidators(newDataKeysRequired ? [Validators.required] : []);
+      this.datasourceFormGroup.get('deviceId').updateValueAndValidity({emitEvent: false});
+      this.datasourceFormGroup.get('entityAliasId').updateValueAndValidity({emitEvent: false});
+      this.datasourceFormGroup.get('dataKeys').updateValueAndValidity({emitEvent: false});
+    }
   }
 
 }

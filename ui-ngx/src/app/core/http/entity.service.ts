@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -501,9 +501,13 @@ export class EntityService {
   }
 
   public findEntityKeysByQuery(query: EntityDataQuery, attributes = true, timeseries = true,
-                               config?: RequestConfig): Observable<EntitiesKeysByQuery> {
+                               scope?: AttributeScope, config?: RequestConfig): Observable<EntitiesKeysByQuery> {
+    let url = `/api/entitiesQuery/find/keys?attributes=${attributes}&timeseries=${timeseries}`;
+    if (scope) {
+      url += `&scope=${scope}`;
+    }
     return this.http.post<EntitiesKeysByQuery>(
-      `/api/entitiesQuery/find/keys?attributes=${attributes}&timeseries=${timeseries}`,
+      url,
       query, defaultHttpOptionsFromConfig(config));
   }
 
@@ -831,7 +835,14 @@ export class EntityService {
   }
 
   public getEntityKeysByEntityFilter(filter: EntityFilter, types: DataKeyType[],
-                                     entityTypes?: EntityType[], config?: RequestConfig): Observable<Array<DataKey>> {
+                                     entityTypes?: EntityType[],
+                                     config?: RequestConfig): Observable<Array<DataKey>> {
+    return this.getEntityKeysByEntityFilterAndScope(filter, types, entityTypes, null, config);
+  }
+
+  public getEntityKeysByEntityFilterAndScope(filter: EntityFilter, types: DataKeyType[],
+                                             entityTypes?: EntityType[], scope?: AttributeScope,
+                                             config?: RequestConfig): Observable<Array<DataKey>> {
     if (!types.length) {
       return of([]);
     }
@@ -842,7 +853,7 @@ export class EntityService {
         pageLink: createDefaultEntityDataPageLink(100),
       };
       entitiesKeysByQuery$ = this.findEntityKeysByQuery(dataQuery, types.includes(DataKeyType.attribute),
-        types.includes(DataKeyType.timeseries), config);
+        types.includes(DataKeyType.timeseries), scope, config);
     } else {
       entitiesKeysByQuery$ = of({
         attribute: [],
@@ -1518,5 +1529,32 @@ export class EntityService {
         break;
     }
     return entityObservable;
+  }
+
+  public getEntitySubtypesObservable(entityType: EntityType): Observable<Array<string>> {
+    let observable: Observable<Array<string>>;
+    switch (entityType) {
+      case EntityType.ASSET:
+        observable = this.assetProfileService.getAssetProfileNames(false, {ignoreLoading: true}).pipe(
+          map(subTypes => subTypes.map(subType => subType.name))
+        );
+        break;
+      case EntityType.DEVICE:
+        observable = this.deviceProfileService.getDeviceProfileNames(false,{ignoreLoading: true}).pipe(
+          map(subTypes => subTypes.map(subType => subType.name))
+        );
+        break;
+      case EntityType.EDGE:
+        observable = this.edgeService.getEdgeTypes({ignoreLoading: true}).pipe(
+          map(subTypes => subTypes.map(subType => subType.type))
+        );
+        break;
+      case EntityType.ENTITY_VIEW:
+        observable = this.entityViewService.getEntityViewTypes({ignoreLoading: true}).pipe(
+          map(subTypes => subTypes.map(subType => subType.type))
+        );
+        break;
+    }
+    return observable;
   }
 }
