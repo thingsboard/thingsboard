@@ -46,6 +46,7 @@ import org.thingsboard.server.common.adaptor.JsonConverter;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -467,6 +468,10 @@ class AlarmRuleState {
                 return !val.equals(predicateValue);
             case NOT_CONTAINS:
                 return !val.contains(predicateValue);
+            case IN:
+                return predicateValue.contains(val);
+            case NOT_IN:
+                return !predicateValue.contains(val);
             default:
                 throw new RuntimeException("Operation not supported: " + predicate.getOperation());
         }
