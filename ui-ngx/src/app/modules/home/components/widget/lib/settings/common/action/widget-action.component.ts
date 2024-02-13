@@ -186,7 +186,7 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
   }
 
   onDashboardStateInputFocus(): void {
-    this.actionTypeFormGroup.get('targetDashboardStateId').updateValueAndValidity({onlySelf: true, emitEvent: true});
+    this.actionTypeFormGroup.get('targetDashboardId').updateValueAndValidity({onlySelf: true, emitEvent: true});
   }
 
   stateDisplayTypeName(displayType: stateDisplayType): string {
