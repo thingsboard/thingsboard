@@ -284,7 +284,7 @@ public class TenantActor extends RuleChainManagerActor {
             onToDeviceActorMsg(new DeviceDeleteMsg(tenantId, deviceId), true);
             deletedDevices.add(deviceId);
         }
-        if (isRuleEngine) {
+        if (isRuleEngine && ruleChainsInitialized) {
             TbActorRef target = getEntityActorRef(msg.getEntityId());
             if (target != null) {
                 if (msg.getEntityId().getEntityType() == EntityType.RULE_CHAIN) {
