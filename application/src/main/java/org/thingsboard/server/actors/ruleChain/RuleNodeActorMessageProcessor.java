@@ -193,7 +193,9 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
         boolean result = ruleNode == null || !ruleNode.isSingletonMode()
                 || systemContext.getDiscoveryService().isMonolith()
                 || defaultCtx.isLocalEntity(ruleNode.getId());
-        log.trace("[{}][{}] Is not my node partition", tenantId, entityId);
+        if (!result) {
+            log.trace("[{}][{}] Is not my node partition", tenantId, entityId);
+        }
         return result;
     }
 

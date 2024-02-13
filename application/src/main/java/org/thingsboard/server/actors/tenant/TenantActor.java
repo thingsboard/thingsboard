@@ -183,7 +183,7 @@ public class TenantActor extends RuleChainManagerActor {
             return;
         }
         TbMsg tbMsg = msg.getMsg();
-        if (getApiUsageState().isReExecEnabled()) {
+        if (getApiUsageState().isReExecEnabled() && ruleChainsInitialized) {
             if (tbMsg.getRuleChainId() == null) {
                 if (getRootChainActor() != null) {
                     getRootChainActor().tell(msg);
@@ -207,7 +207,7 @@ public class TenantActor extends RuleChainManagerActor {
     }
 
     private void onRuleChainMsg(RuleChainAwareMsg msg) {
-        if (getApiUsageState().isReExecEnabled()) {
+        if (getApiUsageState().isReExecEnabled() && ruleChainsInitialized) {
             getOrCreateActor(msg.getRuleChainId()).tell(msg);
         }
     }
@@ -233,7 +233,7 @@ public class TenantActor extends RuleChainManagerActor {
         if (ServiceType.TB_RULE_ENGINE.equals(serviceType)) {
             if (systemContext.getPartitionService().isManagedByCurrentService(tenantId)) {
                 if (!ruleChainsInitialized) {
-                    log.info("Tenant {} is already managed by this service, initializing rule chains", tenantId);
+                    log.info("Tenant {} is now managed by this service, initializing rule chains", tenantId);
                     initRuleChains();
                 }
             } else {
