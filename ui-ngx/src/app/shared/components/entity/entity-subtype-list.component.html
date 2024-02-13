@@ -31,9 +31,10 @@
            style="max-width: 200px;"
            #entitySubtypeInput
            (focusin)="onFocus()"
+           (blur)="addOnBlur($event)"
            formControlName="entitySubtype"
            matAutocompleteOrigin
-           matChipInputAddOnBlur
+           matChipInputAddOnBlur="false"
            #origin="matAutocompleteOrigin"
            [matAutocompleteConnectedTo]="origin"
            [matAutocomplete]="entitySubtypeAutocomplete"
