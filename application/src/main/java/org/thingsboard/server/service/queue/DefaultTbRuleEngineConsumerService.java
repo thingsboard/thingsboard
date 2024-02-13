@@ -184,7 +184,6 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     }
 
     private void updateQueues(List<QueueUpdateMsg> queueUpdateMsgs) {
-        boolean partitionsChanged = false;
         for (QueueUpdateMsg queueUpdateMsg : queueUpdateMsgs) {
             log.info("Received queue update msg: [{}]", queueUpdateMsg);
             TenantId tenantId = new TenantId(new UUID(queueUpdateMsg.getTenantIdMSB(), queueUpdateMsg.getTenantIdLSB()));
@@ -194,23 +193,14 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                 QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, queueName, tenantId);
                 Queue queue = queueService.findQueueById(tenantId, queueId);
 
-                var consumer = getConsumer(queueKey).orElseGet(() -> createConsumer(queueKey, queue));
-                Queue oldQueue = consumer.getQueue();
-                consumer.update(queue);
-
-                if (oldQueue == null || queue.getPartitions() != oldQueue.getPartitions()) {
-                    partitionsChanged = true;
-                }
-            } else {
-                partitionsChanged = true;
+                getConsumer(queueKey).ifPresentOrElse(consumer -> consumer.update(queue),
+                        () -> createConsumer(queueKey, queue));
             }
         }
 
-        if (partitionsChanged) {
-            partitionService.updateQueues(queueUpdateMsgs);
-            partitionService.recalculatePartitions(ctx.getServiceInfoProvider().getServiceInfo(),
-                    new ArrayList<>(partitionService.getOtherServices(ServiceType.TB_RULE_ENGINE)));
-        }
+        partitionService.updateQueues(queueUpdateMsgs);
+        partitionService.recalculatePartitions(ctx.getServiceInfoProvider().getServiceInfo(),
+                new ArrayList<>(partitionService.getOtherServices(ServiceType.TB_RULE_ENGINE)));
     }
 
     private void deleteQueues(List<QueueDeleteMsg> queueDeleteMsgs) {
