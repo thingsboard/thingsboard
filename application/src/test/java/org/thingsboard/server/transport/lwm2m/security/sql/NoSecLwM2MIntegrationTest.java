@@ -32,7 +32,13 @@ public class NoSecLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationT
     public void testWithNoSecConnectLwm2mSuccessAndObserveTelemetry() throws Exception {
         String clientEndpoint = CLIENT_ENDPOINT_NO_SEC;
         LwM2MDeviceCredentials clientCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(clientEndpoint));
-        super.basicTestConnectionObserveTelemetry(SECURITY_NO_SEC, clientCredentials, COAP_CONFIG, clientEndpoint);
+        super.basicTestConnectionObserveTelemetry(SECURITY_NO_SEC, clientCredentials, COAP_CONFIG, clientEndpoint, false);
+    }
+    @Test
+    public void testWithNoSecQueueModeConnectLwm2mSuccessAndObserveTelemetry() throws Exception {
+        String clientEndpoint = CLIENT_ENDPOINT_NO_SEC + "_QueueMode";
+        LwM2MDeviceCredentials clientCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(clientEndpoint));
+        super.basicTestConnectionObserveTelemetry(SECURITY_NO_SEC, clientCredentials, COAP_CONFIG, clientEndpoint, true);
     }
 
     // Bootstrap + Lwm2m
