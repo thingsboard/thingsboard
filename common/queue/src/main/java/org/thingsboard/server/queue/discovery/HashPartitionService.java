@@ -223,23 +223,33 @@ public class HashPartitionService implements PartitionService {
             return true;
         }
 
+        boolean isManaged;
         Set<UUID> assignedTenantProfiles = serviceInfoProvider.getAssignedTenantProfiles();
         if (assignedTenantProfiles.isEmpty()) { // if this is regular rule engine
             if (tenantId.isSysTenantId()) {
-                return true;
-            }
-            TenantRoutingInfo routingInfo = getRoutingInfo(tenantId);
-            if (routingInfo.isIsolated()) {
-                return CollectionsUtil.isEmpty(responsibleServices.get(routingInfo.getProfileId()));
+                isManaged = true;
             } else {
-                return true;
+                TenantRoutingInfo routingInfo = getRoutingInfo(tenantId);
+                if (routingInfo.isIsolated()) {
+                    isManaged = CollectionsUtil.isEmpty(responsibleServices.get(routingInfo.getProfileId()));
+                } else {
+                    isManaged = true;
+                }
             }
         } else {
             if (tenantId.isSysTenantId()) {
-                return false;
+                isManaged = false;
+            } else {
+                TenantRoutingInfo routingInfo = getRoutingInfo(tenantId);
+                if (routingInfo.isIsolated()) {
+                    isManaged = assignedTenantProfiles.contains(routingInfo.getProfileId().getId());
+                } else {
+                    isManaged = false;
+                }
             }
-            return assignedTenantProfiles.contains(getRoutingInfo(tenantId).getProfileId().getId());
         }
+        log.trace("[{}] Tenant {} managed by this service", tenantId, isManaged ? "is" : "is not");
+        return isManaged;
     }
 
     @Override
