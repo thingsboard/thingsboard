@@ -525,12 +525,11 @@ public class RestClient implements Closeable {
     }
 
     public PageData<AlarmCommentInfo> getAlarmComments(AlarmId alarmId, PageLink pageLink) {
-        String urlSecondPart = "/api/alarm/{alarmId}/comment";
         Map<String, String> params = new HashMap<>();
         params.put("alarmId", alarmId.getId().toString());
-
+        addPageLinkToParam(params, pageLink);
         return restTemplate.exchange(
-                baseURL + urlSecondPart + "&" + getUrlParams(pageLink),
+                baseURL + "/api/alarm/{alarmId}/comment?" + getUrlParams(pageLink),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<AlarmCommentInfo>>() {

@@ -24,7 +24,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.common.msg.queue.RuleNodeInfo;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
-import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
