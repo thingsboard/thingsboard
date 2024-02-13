@@ -2667,6 +2667,7 @@
          "current-user": "Current user",
          "current-device": "Current device",
          "default-value": "Default value",
+         "default-coma-separated-values": "Default coma separated values",
          "dynamic-source-type": "Dynamic source type",
          "dynamic-value": "Dynamic value",
          "no-dynamic-value": "No dynamic value",
