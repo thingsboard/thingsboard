@@ -102,6 +102,8 @@ public class TenantActor extends RuleChainManagerActor {
                             log.info("Failed to check ApiUsage \"ReExecEnabled\"!!!", e);
                             cantFindTenant = true;
                         }
+                    } else {
+                        log.info("Tenant {} is not managed by current service, skipping rule chains init", tenantId);
                     }
                 }
                 log.debug("[{}] Tenant actor started.", tenantId);
@@ -131,20 +133,7 @@ public class TenantActor extends RuleChainManagerActor {
         }
         switch (msg.getMsgType()) {
             case PARTITION_CHANGE_MSG:
-                PartitionChangeMsg partitionChangeMsg = (PartitionChangeMsg) msg;
-                ServiceType serviceType = partitionChangeMsg.getServiceType();
-                if (ServiceType.TB_RULE_ENGINE.equals(serviceType)) {
-                    //To Rule Chain Actors
-                    broadcast(msg);
-                } else if (ServiceType.TB_CORE.equals(serviceType)) {
-                    List<TbActorId> deviceActorIds = ctx.filterChildren(new TbEntityTypeActorIdPredicate(EntityType.DEVICE) {
-                        @Override
-                        protected boolean testEntityId(EntityId entityId) {
-                            return super.testEntityId(entityId) && !isMyPartition(entityId);
-                        }
-                    });
-                    deviceActorIds.forEach(id -> ctx.stop(id));
-                }
+                onPartitionChangeMsg((PartitionChangeMsg) msg);
                 break;
             case COMPONENT_LIFE_CYCLE_MSG:
                 onComponentLifecycleMsg((ComponentLifecycleMsg) msg);
@@ -236,6 +225,35 @@ public class TenantActor extends RuleChainManagerActor {
             deviceActor.tellWithHighPriority(msg);
         } else {
             deviceActor.tell(msg);
+        }
+    }
+
+    private void onPartitionChangeMsg(PartitionChangeMsg msg) {
+        ServiceType serviceType = msg.getServiceType();
+        if (ServiceType.TB_RULE_ENGINE.equals(serviceType)) {
+            if (systemContext.getPartitionService().isManagedByCurrentService(tenantId)) {
+                if (!ruleChainsInitialized) {
+                    log.info("Tenant {} is already managed by this service, initializing rule chains", tenantId);
+                    initRuleChains();
+                }
+            } else {
+                if (ruleChainsInitialized) {
+                    log.info("Tenant {} is no longer managed by this service, stopping rule chains", tenantId);
+                    destroyRuleChains();
+                }
+                return;
+            }
+
+            //To Rule Chain Actors
+            broadcast(msg);
+        } else if (ServiceType.TB_CORE.equals(serviceType)) {
+            List<TbActorId> deviceActorIds = ctx.filterChildren(new TbEntityTypeActorIdPredicate(EntityType.DEVICE) {
+                @Override
+                protected boolean testEntityId(EntityId entityId) {
+                    return super.testEntityId(entityId) && !isMyPartition(entityId);
+                }
+            });
+            deviceActorIds.forEach(id -> ctx.stop(id));
         }
     }
 

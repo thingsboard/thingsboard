@@ -156,7 +156,7 @@ public class HashPartitionServiceTest {
             for (int queueIndex = 0; queueIndex < queueCount; queueIndex++) {
                 QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, "queue" + queueIndex, tenantId);
                 for (int partition = 0; partition < partitionCount; partition++) {
-                    ServiceInfo serviceInfo = clusterRoutingService.resolveByPartitionIdx(services, queueKey, partition);
+                    ServiceInfo serviceInfo = clusterRoutingService.resolveByPartitionIdx(services, queueKey, partition, Collections.emptyMap());
                     String serviceId = serviceInfo.getServiceId();
                     map.put(serviceId, map.get(serviceId) + 1);
                 }
@@ -389,9 +389,9 @@ public class HashPartitionServiceTest {
                     .limit(100).collect(Collectors.toList());
 
             for (int partition = 0; partition < 10; partition++) {
-                ServiceInfo expectedAssignedRuleEngine = clusterRoutingService.resolveByPartitionIdx(ruleEngines, new QueueKey(ServiceType.TB_RULE_ENGINE, tenantId), partition);
+                ServiceInfo expectedAssignedRuleEngine = clusterRoutingService.resolveByPartitionIdx(ruleEngines, new QueueKey(ServiceType.TB_RULE_ENGINE, tenantId), partition, Collections.emptyMap());
                 for (QueueKey queueKey : queues) {
-                    ServiceInfo assignedRuleEngine = clusterRoutingService.resolveByPartitionIdx(ruleEngines, queueKey, partition);
+                    ServiceInfo assignedRuleEngine = clusterRoutingService.resolveByPartitionIdx(ruleEngines, queueKey, partition, Collections.emptyMap());
                     assertThat(assignedRuleEngine).as(queueKey + "[" + partition + "] should be assigned to " + expectedAssignedRuleEngine.getServiceId())
                             .isEqualTo(expectedAssignedRuleEngine);
                 }
