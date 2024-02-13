@@ -19,7 +19,9 @@ import com.google.common.base.Splitter;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.function.Function;
 
 import static org.apache.commons.lang3.StringUtils.repeat;
@@ -243,6 +245,29 @@ public class StringUtils {
         }
         int truncatedSymbols = string.length() - maxLength;
         return string.substring(0, maxLength) + truncationMarkerFunc.apply(truncatedSymbols);
+    }
+
+    public static List<String> getListValuesWithoutQuote(String value) {
+        List<String> splitValues = List.of(value.trim().split("\\s*,\\s*"));
+        List<String> result = new ArrayList<>();
+        char lastWayInputValue = '#';
+        for (String str : splitValues) {
+            char startWith = str.charAt(0);
+            char endWith = str.charAt(str.length() - 1);
+
+            // if first value is not quote, so we return values after split
+            if (startWith != '\'' && startWith != '"') return splitValues;
+
+            // if value is not in quote, so we return values after split
+            if (startWith != endWith) return splitValues;
+
+            // if different way values, so don't replace quote and return values after split
+            if (lastWayInputValue != '#' && startWith != lastWayInputValue) return splitValues;
+
+            result.add(str.substring(1, str.length() - 1));
+            lastWayInputValue = startWith;
+        }
+        return result;
     }
 
 }

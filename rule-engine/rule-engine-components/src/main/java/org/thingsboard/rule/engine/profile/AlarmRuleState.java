@@ -46,10 +46,12 @@ import org.thingsboard.server.common.adaptor.JsonConverter;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+
+import static org.thingsboard.server.common.data.StringUtils.equalsAny;
+import static org.thingsboard.server.common.data.StringUtils.getListValuesWithoutQuote;
 
 @Data
 @Slf4j
@@ -469,9 +471,9 @@ class AlarmRuleState {
             case NOT_CONTAINS:
                 return !val.contains(predicateValue);
             case IN:
-                return predicateValue.contains(val);
+                return equalsAny(val, getListValuesWithoutQuote(predicateValue).toArray(new String[0]));
             case NOT_IN:
-                return !predicateValue.contains(val);
+                return !equalsAny(val, getListValuesWithoutQuote(predicateValue).toArray(new String[0]));
             default:
                 throw new RuntimeException("Operation not supported: " + predicate.getOperation());
         }

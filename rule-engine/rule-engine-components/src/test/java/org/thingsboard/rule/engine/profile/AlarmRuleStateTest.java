@@ -15,14 +15,10 @@
  */
 package org.thingsboard.rule.engine.profile;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.thingsboard.rule.engine.math.TbRuleNodeMathFunctionType;
 import org.thingsboard.server.common.data.device.profile.AlarmCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
@@ -39,16 +35,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import static org.junit.Assert.assertEquals;
-
 public class AlarmRuleStateTest {
 
     private static Stream<Arguments> testEvalCondition() {
         return Stream.of(
-                Arguments.of(StringFilterPredicate.StringOperation.IN, "test value", "test", AlarmEvalResult.TRUE),
-                Arguments.of(StringFilterPredicate.StringOperation.IN, "test value", "teeeeest", AlarmEvalResult.FALSE),
-                Arguments.of(StringFilterPredicate.StringOperation.NOT_IN, "test value", "test", AlarmEvalResult.FALSE),
-                Arguments.of(StringFilterPredicate.StringOperation.NOT_IN, "test value", "teeeeest", AlarmEvalResult.TRUE),
+                Arguments.of(StringFilterPredicate.StringOperation.IN, "test,value", "test", AlarmEvalResult.TRUE),
+                Arguments.of(StringFilterPredicate.StringOperation.IN, "test,value", "teeeeest", AlarmEvalResult.FALSE),
+                Arguments.of(StringFilterPredicate.StringOperation.NOT_IN, "test,value", "test", AlarmEvalResult.FALSE),
+                Arguments.of(StringFilterPredicate.StringOperation.NOT_IN, "test,value", "teeeeest", AlarmEvalResult.TRUE),
                 Arguments.of(StringFilterPredicate.StringOperation.CONTAINS, "test value", "test value", AlarmEvalResult.TRUE),
                 Arguments.of(StringFilterPredicate.StringOperation.CONTAINS, "test value", "test", AlarmEvalResult.FALSE),
                 Arguments.of(StringFilterPredicate.StringOperation.NOT_CONTAINS, "test value", "test", AlarmEvalResult.TRUE),
