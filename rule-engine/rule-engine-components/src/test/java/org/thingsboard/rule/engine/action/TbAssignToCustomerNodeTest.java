@@ -226,10 +226,9 @@ class TbAssignToCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
 
         // THEN
         ArgumentCaptor<Runnable> runnableCaptor = ArgumentCaptor.forClass(Runnable.class);
-        verify(ctxMock, times(1))
-                .enqueue(any(), runnableCaptor.capture(), any());
+        verify(ctxMock).enqueue(any(), runnableCaptor.capture(), any());
         runnableCaptor.getValue().run();
-        verify(ctxMock, times(1)).customerCreatedMsg(any(), eq(RULE_NODE_ID));
+        verify(ctxMock).customerCreatedMsg(any(), eq(RULE_NODE_ID));
         verifyMsgSuccess(msg);
     }
 

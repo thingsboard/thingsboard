@@ -40,12 +40,25 @@ import java.util.stream.Collectors;
         type = ComponentType.ACTION,
         name = "delete relation",
         configClazz = TbDeleteRelationNodeConfiguration.class,
-        nodeDescription = "Finds target Entity by entity name pattern and then delete a relation to Originator Entity by type and direction" +
-                " if 'Delete single entity' is set to true, otherwise rule node will delete all relations to the originator of the message by type and direction.",
-        nodeDetails = "If the relation(s) successfully deleted -  Message send via <b>Success</b> chain, otherwise <b>Failure</b> chain will be used.",
+        nodeDescription = "Deletes relation with the incoming message originator based on the configured direction and type.",
+        nodeDetails = "Useful when you need to remove relations between entities dynamically depending on incoming message payload, " +
+                "message originator type, name, etc.<br><br>" +
+                "If <strong>Delete relation with specific entity</strong> enabled, target entity to delete relation with should be specified. " +
+                "Otherwise, rule node will delete all relations with the message originator based on the configured direction and type.<br><br>" +
+                "Target entity configuration: " +
+                "<ul><li><strong>Device</strong> - use a device with the specified name as the target entity to delete relation with.</li>" +
+                "<li><strong>Asset</strong> - use an asset with the specified name as the target entity to delete relation with.</li>" +
+                "<li><strong>Entity View</strong> - use entity view with the specified name as the target entity to delete relation with.</li>" +
+                "<li><strong>Tenant</strong> - use current tenant as target entity to delete relation with.</li>" +
+                "<li><strong>Customer</strong> - use customer with the specified title as the target entity to delete relation with.</li>" +
+                "<li><strong>Dashboard</strong> - use a dashboard with the specified title as the target entity to delete relation with.</li>" +
+                "<li><strong>User</strong> - use a user with the specified email as the target entity to delete relation with.</li>" +
+                "<li><strong>Edge</strong> - use an edge with the specified name as the target entity to delete relation with.</li></ul>" +
+                "Output connections: <code>Success</code> - If the relation(s) successfully deleted, otherwise <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeDeleteRelationConfig",
-        icon = "remove_circle"
+        icon = "remove_circle",
+        version = 1
 )
 public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteRelationNodeConfiguration> {
 
@@ -69,7 +82,8 @@ public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteR
         if (config.isDeleteForSingleEntity()) {
             return Futures.transformAsync(getTargetEntityId(ctx, msg), targetEntityId -> {
                 var deleteRelationFuture = deleteRelationToSpecificEntity(ctx, msg, targetEntityId);
-                return Futures.transform(deleteRelationFuture, result -> new TbPair<>(msg, result), MoreExecutors.directExecutor());
+                return Futures.transform(deleteRelationFuture, deletedOrMissing ->
+                        new TbPair<>(msg, deletedOrMissing), MoreExecutors.directExecutor());
             }, MoreExecutors.directExecutor());
         }
         return Futures.transform(deleteAllRelations(ctx, msg), result -> new TbPair<>(msg, result), MoreExecutors.directExecutor());
@@ -79,15 +93,16 @@ public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteR
         var relationType = processPattern(msg, config.getRelationType());
         var tenantId = ctx.getTenantId();
         var originator = msg.getOriginator();
+        var relationService = ctx.getRelationService();
         var originatorRelationsFuture = EntitySearchDirection.FROM.equals(config.getDirection()) ?
-                ctx.getRelationService().findByFromAndTypeAsync(tenantId, originator, relationType, RelationTypeGroup.COMMON) :
-                ctx.getRelationService().findByToAndTypeAsync(tenantId, originator, relationType, RelationTypeGroup.COMMON);
+                relationService.findByFromAndTypeAsync(tenantId, originator, relationType, RelationTypeGroup.COMMON) :
+                relationService.findByToAndTypeAsync(tenantId, originator, relationType, RelationTypeGroup.COMMON);
         return Futures.transformAsync(originatorRelationsFuture, originatorRelations -> {
             if (originatorRelations.isEmpty()) {
                 return Futures.immediateFuture(true);
             }
             var deleteRelationFutures = originatorRelations.stream()
-                    .map(entityRelation -> ctx.getRelationService().deleteRelationAsync(ctx.getTenantId(), entityRelation))
+                    .map(entityRelation -> relationService.deleteRelationAsync(tenantId, entityRelation))
                     .collect(Collectors.toCollection(ArrayList::new));
             return Futures.transform(Futures.allAsList(deleteRelationFutures), deleteResults ->
                     deleteResults.stream().allMatch(Boolean::booleanValue), MoreExecutors.directExecutor());
@@ -105,10 +120,12 @@ public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteR
             fromId = targetEntityId;
         }
         var relationType = processPattern(msg, config.getRelationType());
-        return Futures.transformAsync(ctx.getRelationService().checkRelationAsync(ctx.getTenantId(), fromId, toId, relationType, RelationTypeGroup.COMMON),
-                result -> {
-                    if (result) {
-                        return ctx.getRelationService().deleteRelationAsync(ctx.getTenantId(), fromId, toId, relationType, RelationTypeGroup.COMMON);
+        var tenantId = ctx.getTenantId();
+        var relationService = ctx.getRelationService();
+        return Futures.transformAsync(relationService.checkRelationAsync(tenantId, fromId, toId, relationType, RelationTypeGroup.COMMON),
+                relationExists -> {
+                    if (relationExists) {
+                        return relationService.deleteRelationAsync(tenantId, fromId, toId, relationType, RelationTypeGroup.COMMON);
                     }
                     return Futures.immediateFuture(true);
                 }, MoreExecutors.directExecutor());

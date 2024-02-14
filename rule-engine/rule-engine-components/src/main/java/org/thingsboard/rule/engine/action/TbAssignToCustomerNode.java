@@ -25,11 +25,9 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -67,43 +65,23 @@ public class TbAssignToCustomerNode extends TbAbstractCustomerActionNode<TbAssig
                     var originator = msg.getOriginator();
                     switch (originator.getEntityType()) {
                         case ASSET:
-                            processAsset(ctx, originator, customerId);
+                            ctx.getAssetService().assignAssetToCustomer(ctx.getTenantId(), new AssetId(originator.getId()), customerId);
                             break;
                         case DEVICE:
-                            processDevice(ctx, originator, customerId);
+                            ctx.getDeviceService().assignDeviceToCustomer(ctx.getTenantId(), new DeviceId(originator.getId()), customerId);
                             break;
                         case ENTITY_VIEW:
-                            processEntityView(ctx, originator, customerId);
+                            ctx.getEntityViewService().assignEntityViewToCustomer(ctx.getTenantId(), new EntityViewId(originator.getId()), customerId);
                             break;
                         case EDGE:
-                            processEdge(ctx, originator, customerId);
+                            ctx.getEdgeService().assignEdgeToCustomer(ctx.getTenantId(), new EdgeId(originator.getId()), customerId);
                             break;
                         case DASHBOARD:
-                            processDashboard(ctx, originator, customerId);
+                            ctx.getDashboardService().assignDashboardToCustomer(ctx.getTenantId(), new DashboardId(originator.getId()), customerId);
                             break;
                     }
                     return null;
                 }), MoreExecutors.directExecutor());
-    }
-
-    private void processAsset(TbContext ctx, EntityId originator, CustomerId customerId) {
-        ctx.getAssetService().assignAssetToCustomer(ctx.getTenantId(), new AssetId(originator.getId()), customerId);
-    }
-
-    private void processDevice(TbContext ctx, EntityId originator, CustomerId customerId) {
-        ctx.getDeviceService().assignDeviceToCustomer(ctx.getTenantId(), new DeviceId(originator.getId()), customerId);
-    }
-
-    private void processEntityView(TbContext ctx, EntityId originator, CustomerId customerId) {
-        ctx.getEntityViewService().assignEntityViewToCustomer(ctx.getTenantId(), new EntityViewId(originator.getId()), customerId);
-    }
-
-    private void processEdge(TbContext ctx, EntityId originator, CustomerId customerId) {
-        ctx.getEdgeService().assignEdgeToCustomer(ctx.getTenantId(), new EdgeId(originator.getId()), customerId);
-    }
-
-    private void processDashboard(TbContext ctx, EntityId originator, CustomerId customerId) {
-        ctx.getDashboardService().assignDashboardToCustomer(ctx.getTenantId(), new DashboardId(originator.getId()), customerId);
     }
 
 }

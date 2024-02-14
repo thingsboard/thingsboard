@@ -25,15 +25,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.DashboardId;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EntityViewId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
@@ -49,16 +41,33 @@ import java.util.stream.Collectors;
         type = ComponentType.ACTION,
         name = "create relation",
         configClazz = TbCreateRelationNodeConfiguration.class,
-        nodeDescription = "Finds target Entity by entity name pattern and (entity type pattern for Asset, Device) and then create a relation to Originator Entity by type and direction." +
-                " If Selected entity type: Asset, Device or Customer will create new Entity if it doesn't exist and selected checkbox 'Create new entity if not exists'.<br>" +
-                " In case that relation from the message originator to the selected entity not exist and  If selected checkbox 'Remove current relations'," +
-                " before creating the new relation all existed relations to message originator by type and direction will be removed.<br>" +
-                " If relation from the message originator to the selected entity created and If selected checkbox 'Change originator to related entity'," +
-                " outbound message will be processed as a message from this entity.",
-        nodeDetails = "If the relation already exists or successfully created -  Message send via <b>Success</b> chain, otherwise <b>Failure</b> chain will be used.",
+        nodeDescription = "Finds target entity specified in the configuration and creates a relation with the " +
+                "incoming message originator based on the configured direction and type.",
+        nodeDetails = "Useful when you need to create relations between entities dynamically depending on " +
+                "incoming message payload, message originator type, name, etc.<br><br>" +
+                "Target entity configuration: " +
+                "<ul><li><strong>Device</strong> - use a device with the specified name as the target entity to create a relation with. " +
+                "When selected, rule node allows us to use advanced mode to enable device creation if it doesn't exist. " +
+                "In advanced mode, device profile name should be specified.</li>" +
+                "<li><strong>Asset</strong> - use an asset with the specified name as the target entity to create a relation with. " +
+                "When selected, rule node allows us to use advanced mode to enable device creation if it doesn't exist. " +
+                "In advanced mode, asset profile name should be specified.</li>" +
+                "<li><strong>Entity View</strong> - use entity view with the specified name as the target entity to create a relation with.</li>" +
+                "<li><strong>Tenant</strong> - use current tenant as target entity to create a relation with.</li>" +
+                "<li><strong>Customer</strong> - use customer with the specified title as the target entity to create a relation with. " +
+                "When selected, rule node allows us to use advanced mode to enable customer creation if it doesn't exist.</li>" +
+                "<li><strong>Dashboard</strong> - use a dashboard with the specified title as the target entity to create a relation with.</li>" +
+                "<li><strong>User</strong> - use a user with the specified email as the target entity to create a relation with.</li>" +
+                "<li><strong>Edge</strong> - use an edge with the specified name as the target entity to create a relation with.</li></ul>" +
+                "Advanced settings: " +
+                "<ul><li><strong>Remove current relations</strong> - removes current relations with originator of the incoming message based on direction and type. " +
+                "Useful in GPS tracking use cases where relation acts as a temporary indicator of a tracker presence in specific geofence.</li>" +
+                "<li><strong>Change originator to target entity</strong> - useful when you need to process submitted message as a message from target entity.</li></ul>" +
+                "Output connections: <code>Success</code> - if the relation already exists or successfully created, otherwise <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeCreateRelationConfig",
-        icon = "add_circle"
+        icon = "add_circle",
+        version = 1
 )
 public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateRelationNodeConfiguration> {
 
@@ -77,23 +86,18 @@ public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateR
     @Override
     protected ListenableFuture<TbPair<TbMsg, Boolean>> processEntityRelationAction(TbContext ctx, TbMsg msg) {
         return Futures.transformAsync(getTargetEntityId(ctx, msg), targetEntityId -> {
-            var createRelationFuture = createRelationIfAbsent(ctx, msg, targetEntityId);
-            return Futures.transform(createRelationFuture, result -> {
-                if (result && config.isChangeOriginatorToRelatedEntity()) {
+            var originator = msg.getOriginator();
+            var relationType = processPattern(msg, config.getRelationType());
+            var createRelationFuture = Futures.transformAsync(deleteCurrentRelationsIfNeeded(ctx, msg.getOriginator(), relationType), __ ->
+                    checkRelationAndCreateIfAbsent(ctx, originator, targetEntityId, relationType), MoreExecutors.directExecutor());
+            return Futures.transform(createRelationFuture, createdOrAlreadyExists -> {
+                if (createdOrAlreadyExists && config.isChangeOriginatorToRelatedEntity()) {
                     TbMsg tbMsg = ctx.transformMsgOriginator(msg, targetEntityId);
-                    return new TbPair<>(tbMsg, result);
+                    return new TbPair<>(tbMsg, true);
                 }
-                return new TbPair<>(msg, result);
+                return new TbPair<>(msg, createdOrAlreadyExists);
             }, MoreExecutors.directExecutor());
         }, MoreExecutors.directExecutor());
-    }
-
-    private ListenableFuture<Boolean> createRelationIfAbsent(TbContext ctx, TbMsg msg, EntityId targetEntityId) {
-        var originator = msg.getOriginator();
-        var relationType = processPattern(msg, config.getRelationType());
-        return Futures.transformAsync(deleteCurrentRelationsIfNeeded(ctx, originator, relationType), v ->
-                        checkRelationAndCreateIfAbsent(ctx, originator, targetEntityId, relationType),
-                MoreExecutors.directExecutor());
     }
 
     private ListenableFuture<Void> deleteCurrentRelationsIfNeeded(TbContext ctx, EntityId originator, String relationType) {
@@ -125,44 +129,11 @@ public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateR
             fromId = targetEntityId;
         }
         var checkRelationFuture = ctx.getRelationService().checkRelationAsync(ctx.getTenantId(), fromId, toId, relationType, RelationTypeGroup.COMMON);
-        return Futures.transformAsync(checkRelationFuture, relationPresent ->
-                relationPresent ?
+        return Futures.transformAsync(checkRelationFuture, relationExists ->
+                relationExists ?
                         Futures.immediateFuture(true) :
-                        processCreateRelation(ctx, fromId, toId, targetEntityId, relationType), MoreExecutors.directExecutor());
-    }
-
-    private ListenableFuture<Boolean> processCreateRelation(TbContext ctx, EntityId fromId, EntityId toId, EntityId targetEntityId, String relationType) {
-        switch (targetEntityId.getEntityType()) {
-            case ASSET:
-                return Futures.transformAsync(ctx.getAssetService().findAssetByIdAsync(ctx.getTenantId(), new AssetId(targetEntityId.getId())),
-                        asset -> asset != null ? saveRelation(ctx, fromId, toId, relationType) : Futures.immediateFuture(true), MoreExecutors.directExecutor());
-            case DEVICE:
-                var device = ctx.getDeviceService().findDeviceById(ctx.getTenantId(), new DeviceId(targetEntityId.getId()));
-                return device != null ? saveRelation(ctx, fromId, toId, relationType) : Futures.immediateFuture(true);
-            case CUSTOMER:
-                return Futures.transformAsync(ctx.getCustomerService().findCustomerByIdAsync(ctx.getTenantId(), new CustomerId(targetEntityId.getId())),
-                        customer -> customer != null ? saveRelation(ctx, fromId, toId, relationType) : Futures.immediateFuture(true), MoreExecutors.directExecutor());
-            case DASHBOARD:
-                return Futures.transformAsync(ctx.getDashboardService().findDashboardByIdAsync(ctx.getTenantId(), new DashboardId(targetEntityId.getId())),
-                        dashboard -> dashboard != null ? saveRelation(ctx, fromId, toId, relationType) : Futures.immediateFuture(true), MoreExecutors.directExecutor());
-            case ENTITY_VIEW:
-                return Futures.transformAsync(ctx.getEntityViewService().findEntityViewByIdAsync(ctx.getTenantId(), new EntityViewId(targetEntityId.getId())),
-                        entityView -> entityView != null ? saveRelation(ctx, fromId, toId, relationType) : Futures.immediateFuture(true), MoreExecutors.directExecutor());
-            case EDGE:
-                return Futures.transformAsync(ctx.getEdgeService().findEdgeByIdAsync(ctx.getTenantId(), new EdgeId(targetEntityId.getId())),
-                        edge -> edge != null ? saveRelation(ctx, fromId, toId, relationType) : Futures.immediateFuture(true), MoreExecutors.directExecutor());
-            case TENANT:
-                return Futures.transformAsync(ctx.getTenantService().findTenantByIdAsync(ctx.getTenantId(), TenantId.fromUUID(targetEntityId.getId())),
-                        tenant -> tenant != null ? saveRelation(ctx, fromId, toId, relationType) : Futures.immediateFuture(true), MoreExecutors.directExecutor());
-            case USER:
-                return Futures.transformAsync(ctx.getUserService().findUserByIdAsync(ctx.getTenantId(), new UserId(targetEntityId.getId())),
-                        user -> user != null ? saveRelation(ctx, fromId, toId, relationType) : Futures.immediateFuture(true), MoreExecutors.directExecutor());
-        }
-        return Futures.immediateFuture(true);
-    }
-
-    private ListenableFuture<Boolean> saveRelation(TbContext ctx, EntityId fromId, EntityId toId, String relationType) {
-        return ctx.getRelationService().saveRelationAsync(ctx.getTenantId(), new EntityRelation(fromId, toId, relationType, RelationTypeGroup.COMMON));
+                        ctx.getRelationService().saveRelationAsync(ctx.getTenantId(), new EntityRelation(fromId, toId, relationType, RelationTypeGroup.COMMON)),
+                MoreExecutors.directExecutor());
     }
 
 }

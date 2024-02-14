@@ -90,7 +90,7 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
                     var newCustomer = new Customer();
                     newCustomer.setTitle(customerTitle);
                     newCustomer.setTenantId(tenantId);
-                    Customer savedCustomer = ctx.getCustomerService().saveCustomer(newCustomer);
+                    var savedCustomer = ctx.getCustomerService().saveCustomer(newCustomer);
                     ctx.enqueue(ctx.customerCreatedMsg(savedCustomer, ctx.getSelfId()),
                             () -> log.trace("Pushed Customer Created message: {}", savedCustomer),
                             throwable -> log.warn("Failed to push Customer Created message: {}", savedCustomer, throwable));

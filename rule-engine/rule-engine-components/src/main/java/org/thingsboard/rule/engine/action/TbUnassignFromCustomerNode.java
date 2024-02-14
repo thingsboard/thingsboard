@@ -26,11 +26,9 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.AssetId;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -42,7 +40,7 @@ import org.thingsboard.server.common.msg.TbMsg;
         nodeDescription = "Unassign message originator entity from customer",
         nodeDetails = "If the message originator is not assigned to any customer, rule node will do nothing. <br><br>" +
                 "If the incoming message originator is a dashboard, will try to search for the customer by title specified in the configuration. " +
-                "If customer doesn't exist, the exception will be thrown. Otherwise will unassign the dashboard from retrived customer.<br><br>" +
+                "If customer doesn't exist, the exception will be thrown. Otherwise will unassign the dashboard from retrieved customer.<br><br>" +
                 "Other entities can be assigned only to one customer, so specified customer title in the configuration will be ignored if the originator isn't a dashboard.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeUnAssignToCustomerConfig",
@@ -63,8 +61,9 @@ public class TbUnassignFromCustomerNode extends TbAbstractCustomerActionNode<TbU
 
     @Override
     protected ListenableFuture<Void> processCustomerAction(TbContext ctx, TbMsg msg) {
-        EntityId originator = msg.getOriginator();
+        var originator = msg.getOriginator();
         var originatorType = originator.getEntityType();
+        var tenantId = ctx.getTenantId();
         if (EntityType.DASHBOARD.equals(originatorType)) {
             if (StringUtils.isEmpty(config.getCustomerNamePattern())) {
                 throw new RuntimeException("Failed to unassign dashboard with id '" +
@@ -73,46 +72,27 @@ public class TbUnassignFromCustomerNode extends TbAbstractCustomerActionNode<TbU
             var customerIdFuture = getCustomerIdFuture(ctx, msg);
             return Futures.transformAsync(customerIdFuture, customerId ->
                     ctx.getDbCallbackExecutor().submit(() -> {
-                        processDashboard(ctx, originator, customerId);
+                        ctx.getDashboardService().unassignDashboardFromCustomer(tenantId, new DashboardId(originator.getId()), customerId);
                         return null;
                     }), MoreExecutors.directExecutor());
         }
         return ctx.getDbCallbackExecutor().submit(() -> {
-            switch (originator.getEntityType()) {
+            switch (originatorType) {
                 case ASSET:
-                    processAsset(ctx, originator);
+                    ctx.getAssetService().unassignAssetFromCustomer(tenantId, new AssetId(originator.getId()));
                     break;
                 case DEVICE:
-                    processDevice(ctx, originator);
+                    ctx.getDeviceService().unassignDeviceFromCustomer(tenantId, new DeviceId(originator.getId()));
                     break;
                 case ENTITY_VIEW:
-                    processEntityView(ctx, originator);
+                    ctx.getEntityViewService().unassignEntityViewFromCustomer(tenantId, new EntityViewId(originator.getId()));
                     break;
                 case EDGE:
-                    processEdge(ctx, originator);
+                    ctx.getEdgeService().unassignEdgeFromCustomer(tenantId, new EdgeId(originator.getId()));
                     break;
             }
             return null;
         });
     }
 
-    private void processDashboard(TbContext ctx, EntityId originator, CustomerId customerId) {
-        ctx.getDashboardService().unassignDashboardFromCustomer(ctx.getTenantId(), new DashboardId(originator.getId()), customerId);
-    }
-
-    private void processAsset(TbContext ctx, EntityId originator) {
-        ctx.getAssetService().unassignAssetFromCustomer(ctx.getTenantId(), new AssetId(originator.getId()));
-    }
-
-    private void processDevice(TbContext ctx, EntityId originator) {
-        ctx.getDeviceService().unassignDeviceFromCustomer(ctx.getTenantId(), new DeviceId(originator.getId()));
-    }
-
-    private void processEntityView(TbContext ctx, EntityId originator) {
-        ctx.getEntityViewService().unassignEntityViewFromCustomer(ctx.getTenantId(), new EntityViewId(originator.getId()));
-    }
-
-    private void processEdge(TbContext ctx, EntityId originator) {
-        ctx.getEdgeService().unassignEdgeFromCustomer(ctx.getTenantId(), new EdgeId(originator.getId()));
-    }
 }

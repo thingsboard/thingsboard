@@ -227,7 +227,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
         }
     }
 
-    static String unsupportedEntityTypeErrorMessage(EntityType entityType) {
+    private static String unsupportedEntityTypeErrorMessage(EntityType entityType) {
         return "Unsupported entity type '" + entityType +
                 "'! Only " + supportedEntityTypesStr + " types are allowed.";
     }
