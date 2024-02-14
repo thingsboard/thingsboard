@@ -166,7 +166,7 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         assertThat(defaultConfig.getEntityNamePattern()).isEqualTo("");
         assertThat(defaultConfig.getEntityTypePattern()).isEqualTo(null);
         assertThat(defaultConfig.getEntityType()).isEqualTo(null);
-        assertThat(defaultConfig.isDeleteForSingleEntity()).isTrue();
+        assertThat(defaultConfig.isDeleteForSingleEntity()).isFalse();
     }
 
     @ParameterizedTest
@@ -174,6 +174,7 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
     void givenEntityType_whenInit_thenVerifyExceptionThrownIfTypeIsUnsupported(EntityType entityType) {
         // GIVEN
         config.setEntityType(entityType);
+        config.setDeleteForSingleEntity(true);
         var nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
         // WHEN-THEN
@@ -190,11 +191,12 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
 
     @ParameterizedTest
     @MethodSource("givenSupportedEntityType_whenOnMsg_thenVerifyEntityNotFoundExceptionThrown")
-    void givenSupportedEntityType_whenOnMsgAndDeleteForSingleEntityIsSet_thenVerifyEntityNotFoundExceptionThrown(EntityType entityType) throws TbNodeException {
+    void givenSupportedEntityType_whenOnMsgAndDeleteForSingleEntityIsTrue_thenVerifyEntityNotFoundExceptionThrown(EntityType entityType) throws TbNodeException {
         // GIVEN
         config.setEntityType(entityType);
         config.setEntityNamePattern("${name}");
         config.setEntityTypePattern("${type}");
+        config.setDeleteForSingleEntity(true);
 
         var nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctxMock, nodeConfiguration);
@@ -223,6 +225,7 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         config.setEntityType(entityType);
         config.setEntityNamePattern("${name}");
         config.setEntityTypePattern("${type}");
+        config.setDeleteForSingleEntity(true);
 
         var nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctxMock, nodeConfiguration);
@@ -266,6 +269,7 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         config.setEntityType(entityType);
         config.setEntityNamePattern("${name}");
         config.setEntityTypePattern("${type}");
+        config.setDeleteForSingleEntity(true);
 
         var nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctxMock, nodeConfiguration);
@@ -309,6 +313,7 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         config.setEntityType(entityType);
         config.setEntityNamePattern("${name}");
         config.setEntityTypePattern("${type}");
+        config.setDeleteForSingleEntity(true);
 
         var nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctxMock, nodeConfiguration);
@@ -350,7 +355,6 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         config.setEntityType(entityType);
         config.setEntityNamePattern("${name}");
         config.setEntityTypePattern("${type}");
-        config.setDeleteForSingleEntity(false);
 
         var nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctxMock, nodeConfiguration);
@@ -387,7 +391,6 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         config.setEntityType(entityType);
         config.setEntityNamePattern("${name}");
         config.setEntityTypePattern("${type}");
-        config.setDeleteForSingleEntity(false);
 
         var nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctxMock, nodeConfiguration);
