@@ -176,7 +176,7 @@ export class SliderWidgetComponent extends
 
     if (this.settings.showTickMarks) {
       const range = this.settings.tickMax - this.settings.tickMin;
-      this.sliderStep = Math.floor(range / (this.settings.tickMarksCount - 1));
+      this.sliderStep = range / (this.settings.tickMarksCount - 1);
     }
 
     const mainColorInstance = tinycolor(this.settings.mainColor);
