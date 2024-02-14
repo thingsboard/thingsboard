@@ -298,7 +298,7 @@ export class SliderWidgetComponent extends
     }
 
     let minAspect = 0.2;
-    let avgContentHeight = 45;
+    let avgContentHeight = 35;
     if (this.showTicks) {
       minAspect += 0.1;
       avgContentHeight += 20;
