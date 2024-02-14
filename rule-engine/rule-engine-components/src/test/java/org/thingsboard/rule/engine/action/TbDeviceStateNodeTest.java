@@ -263,7 +263,12 @@ public class TbDeviceStateNodeTest {
         node.onMsg(ctxMock, msg);
 
         // THEN
-        then(ctxMock).should().tellSuccess(msg);
+        var exceptionCaptor = ArgumentCaptor.forClass(Exception.class);
+        then(ctxMock).should().tellFailure(eq(msg), exceptionCaptor.capture());
+        assertThat(exceptionCaptor.getValue())
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Unsupported originator entity type: [" + unsupportedType + "]. Only DEVICE entity type is supported.");
+
         then(ctxMock).shouldHaveNoMoreInteractions();
     }
 

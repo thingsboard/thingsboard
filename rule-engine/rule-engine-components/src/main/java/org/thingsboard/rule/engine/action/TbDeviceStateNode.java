@@ -98,8 +98,11 @@ public class TbDeviceStateNode implements TbNode {
             return;
         }
 
-        if (!EntityType.DEVICE.equals(msg.getOriginator().getEntityType())) {
-            ctx.tellSuccess(msg);
+        EntityType originatorEntityType = msg.getOriginator().getEntityType();
+        if (!EntityType.DEVICE.equals(originatorEntityType)) {
+            ctx.tellFailure(msg, new IllegalArgumentException(
+                    "Unsupported originator entity type: [" + originatorEntityType + "]. Only DEVICE entity type is supported."
+            ));
             return;
         }
 
