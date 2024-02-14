@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  .mapping-config {
+package org.thingsboard.rule.engine.util;
 
-    .required-text {
-      margin: 14px 0;
-    }
-  }
+public class GpsGeofencingEvents {
+    public static final String ENTERED = "Entered";
+    public static final String INSIDE = "Inside";
+    public static final String LEFT = "Left";
+    public static final String OUTSIDE = "Outside";
 }

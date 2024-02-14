@@ -30,4 +30,3 @@ export const entityDetailsPageBreadcrumbLabelFunction: BreadCrumbLabelFunction<E
       return component.entity?.name;
   }
 });
-
