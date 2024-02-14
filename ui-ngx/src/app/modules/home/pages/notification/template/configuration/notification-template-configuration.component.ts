@@ -26,8 +26,6 @@ import {
   Validators
 } from '@angular/forms';
 import {
-  ActionButtonLinkType,
-  ActionButtonLinkTypeTranslateMap,
   DeliveryMethodsTemplates,
   NotificationDeliveryMethod,
   NotificationDeliveryMethodInfoMap,
@@ -80,10 +78,6 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
 
   readonly NotificationDeliveryMethod = NotificationDeliveryMethod;
   readonly NotificationTemplateTypeTranslateMap = NotificationTemplateTypeTranslateMap;
-
-  readonly actionButtonLinkType = ActionButtonLinkType;
-  readonly actionButtonLinkTypes = Object.keys(ActionButtonLinkType) as ActionButtonLinkType[];
-  readonly actionButtonLinkTypeTranslateMap = ActionButtonLinkTypeTranslateMap;
 
   tinyMceOptions: Record<string, any> = {
     base_url: '/assets/tinymce',
@@ -153,13 +147,7 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
          switch (method) {
            case NotificationDeliveryMethod.WEB:
              form.get('additionalConfig.icon.enabled').updateValueAndValidity({onlySelf: true});
-             form.get('additionalConfig.actionButtonConfig.enabled').updateValueAndValidity({onlySelf: true});
              break;
-           case NotificationDeliveryMethod.MICROSOFT_TEAMS:
-             form.get('button.enabled').updateValueAndValidity({onlySelf: true});
-             break;
-           case NotificationDeliveryMethod.MOBILE_APP:
-             form.get('additionalConfig.onClick.enabled').updateValueAndValidity({onlySelf: true});
          }
       }
     });
@@ -188,7 +176,7 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
               icon: [{value: 'notifications', disabled: true}, Validators.required],
               color: [{value: '#757575', disabled: true}]
             }),
-            actionButtonConfig: this.createButtonConfigForm()
+            actionButtonConfig: [null]
           })
         });
 
@@ -225,29 +213,8 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
           subject: ['', Validators.required],
           body: ['', Validators.required],
           additionalConfig: this.fb.group({
-            onClick: this.fb.group({
-              enabled: [false],
-              linkType: [{value: ActionButtonLinkType.DASHBOARD, disabled: true}],
-              dashboardId: [{value: null, disabled: true}, Validators.required],
-              dashboardState: [{value: null, disabled: true}],
-              setEntityIdInState: [{value: true, disabled: true}]
-            })
+            onClick: [null]
           })
-        });
-        deliveryMethodForm.get('additionalConfig.onClick.enabled').valueChanges.pipe(
-          takeUntil(this.destroy$)
-        ).subscribe((value) => {
-          if (value) {
-            deliveryMethodForm.get('additionalConfig.onClick.linkType').enable({emitEvent: false});
-            deliveryMethodForm.get('additionalConfig.onClick.dashboardId').enable({emitEvent: false});
-            deliveryMethodForm.get('additionalConfig.onClick.dashboardState').enable({emitEvent: false});
-            deliveryMethodForm.get('additionalConfig.onClick.setEntityIdInState').enable({emitEvent: false});
-          } else {
-            deliveryMethodForm.get('additionalConfig.onClick.linkType').disable({emitEvent: false});
-            deliveryMethodForm.get('additionalConfig.onClick.dashboardId').disable({emitEvent: false});
-            deliveryMethodForm.get('additionalConfig.onClick.dashboardState').disable({emitEvent: false});
-            deliveryMethodForm.get('additionalConfig.onClick.setEntityIdInState').disable({emitEvent: false});
-          }
         });
         break;
       case NotificationDeliveryMethod.MICROSOFT_TEAMS:
@@ -255,7 +222,7 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
           subject: [''],
           body: ['', Validators.required],
           themeColor: [''],
-          button: this.createButtonConfigForm()
+          button: [null]
         });
         break;
       default:
@@ -264,49 +231,5 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
     deliveryMethodForm.addControl('enabled', this.fb.control(false), {emitEvent: false});
     deliveryMethodForm.addControl('method', this.fb.control(deliveryMethod), {emitEvent: false});
     return deliveryMethodForm;
-  }
-
-  private createButtonConfigForm(): FormGroup {
-    const form = this.fb.group({
-      enabled: [false],
-      text: [{value: '', disabled: true}, [Validators.required, Validators.maxLength(50)]],
-      linkType: [ActionButtonLinkType.LINK],
-      link: [{value: '', disabled: true}, Validators.required],
-      dashboardId: [{value: null, disabled: true}, Validators.required],
-      dashboardState: [{value: null, disabled: true}],
-      setEntityIdInState: [{value: true, disabled: true}]
-    });
-
-    form.get('enabled').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe((value) => {
-      if (value) {
-        form.enable({emitEvent: false});
-        form.get('linkType').updateValueAndValidity({onlySelf: true});
-      } else {
-        form.disable({emitEvent: false});
-        form.get('enabled').enable({emitEvent: false});
-      }
-    });
-
-    form.get('linkType').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe((value) => {
-      const isEnabled = form.get('enabled').value;
-      if (isEnabled) {
-        if (value === ActionButtonLinkType.LINK) {
-          form.get('link').enable({emitEvent: false});
-          form.get('dashboardId').disable({emitEvent: false});
-          form.get('dashboardState').disable({emitEvent: false});
-          form.get('setEntityIdInState').disable({emitEvent: false});
-        } else {
-          form.get('link').disable({emitEvent: false});
-          form.get('dashboardId').enable({emitEvent: false});
-          form.get('dashboardState').enable({emitEvent: false});
-          form.get('setEntityIdInState').enable({emitEvent: false});
-        }
-      }
-    });
-    return form;
   }
 }

@@ -3214,6 +3214,7 @@
     },
     "notification": {
         "action-button": "Action button",
+        "action-on-click-notification": "Action on click notification",
         "action-type": "Action type",
         "active": "Active",
         "add-notification-recipients-group": "Add notification recipients group",
@@ -3353,7 +3354,6 @@
         "notify-only-user-comments": "Notify only user comments",
         "only-rule-chain-lifecycle-failures": "Only rule chain lifecycle failures",
         "only-rule-node-lifecycle-failures": "Only rule node lifecycle failures",
-        "open-dashboard-on-click-notification": "Open dashboard on click notification",
         "platform-users": "Platform users",
         "rate-limits": "Rate limits",
         "rate-limits-hint": "If the field is empty, the trigger will be applied to all rate limits",

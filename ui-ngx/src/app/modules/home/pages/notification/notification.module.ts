@@ -39,7 +39,12 @@ import { NotificationSettingsComponent } from '@home/pages/notification/settings
 import {
   NotificationSettingFormComponent
 } from '@home/pages/notification/settings/notification-setting-form.component';
-import { NotificationTemplateConfigurationComponent } from '@home/pages/notification/template/notification-template-configuration.component';
+import {
+  NotificationTemplateConfigurationComponent
+} from '@home/pages/notification/template/configuration/notification-template-configuration.component';
+import {
+  NotificationActionButtonConfigurationComponent
+} from '@home/pages/notification/template/configuration/notification-action-button-configuration.component';
 
 @NgModule({
   declarations: [
@@ -57,7 +62,8 @@ import { NotificationTemplateConfigurationComponent } from '@home/pages/notifica
     RuleTableHeaderComponent,
     NotificationSettingsComponent,
     NotificationSettingFormComponent,
-    NotificationTemplateConfigurationComponent
+    NotificationTemplateConfigurationComponent,
+    NotificationActionButtonConfigurationComponent
   ],
   imports: [
     CommonModule,

@@ -72,72 +72,10 @@
               </tb-color-input>
             </div>
           </div>
-          <div class="tb-form-panel tb-slide-toggle stroked" formGroupName="actionButtonConfig">
-            <mat-expansion-panel class="tb-settings"
-                                 [expanded]="templateConfigurationForm.get('WEB.additionalConfig.actionButtonConfig.enabled').value">
-              <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
-                <mat-panel-title fxFlex="60">
-                  <mat-slide-toggle class="mat-slide" formControlName="enabled" (click)="$event.stopPropagation()"
-                                    fxLayoutAlign="center">
-                    {{ 'notification.action-button' | translate }}
-                  </mat-slide-toggle>
-                </mat-panel-title>
-              </mat-expansion-panel-header>
-              <ng-template matExpansionPanelContent class="tb-extension-panel">
-                <div fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayout.xs="column">
-                  <mat-form-field class="mat-block" fxFlex>
-                    <mat-label translate>notification.button-text</mat-label>
-                    <input matInput formControlName="text" required>
-                    <mat-error
-                      *ngIf="templateConfigurationForm.get('WEB.additionalConfig.actionButtonConfig.text').hasError('required')">
-                      {{ 'notification.button-text-required' | translate }}
-                    </mat-error>
-                    <mat-error
-                      *ngIf="templateConfigurationForm.get('WEB.additionalConfig.actionButtonConfig.text').hasError('maxlength')">
-                      {{ 'notification.button-text-max-length' | translate :
-                          {length: templateConfigurationForm.get('WEB.additionalConfig.actionButtonConfig.text').getError('maxlength').requiredLength}
-                      }}
-                    </mat-error>
-                  </mat-form-field>
-                </div>
-                <div fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayout.xs="column">
-                  <mat-form-field fxFlex="30" fxFlex.xs="100">
-                    <mat-label translate>notification.action-type</mat-label>
-                    <mat-select formControlName="linkType">
-                      <mat-option *ngFor="let actionButtonLinkType of actionButtonLinkTypes"
-                                  [value]="actionButtonLinkType">
-                        {{ actionButtonLinkTypeTranslateMap.get(actionButtonLinkType) | translate }}
-                      </mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                  <mat-form-field fxFlex
-                                  *ngIf="templateConfigurationForm.get('WEB.additionalConfig.actionButtonConfig.linkType').value === actionButtonLinkType.LINK; else dashboardSelector">
-                    <mat-label translate>notification.link</mat-label>
-                    <input matInput formControlName="link" required>
-                    <mat-error
-                      *ngIf="templateConfigurationForm.get('WEB.additionalConfig.actionButtonConfig.link').hasError('required')">
-                      {{ 'notification.link-required' | translate }}
-                    </mat-error>
-                  </mat-form-field>
-                  <ng-template #dashboardSelector>
-                    <tb-dashboard-autocomplete
-                      fxFlex="35" fxFlex.xs="100"
-                      required
-                      formControlName="dashboardId">
-                    </tb-dashboard-autocomplete>
-                    <tb-dashboard-state-autocomplete fxFlex="35" fxFlex.xs="100"
-                                                     [dashboardId]="templateConfigurationForm.get('WEB.additionalConfig.actionButtonConfig.dashboardId').value"
-                                                     formControlName="dashboardState">
-                    </tb-dashboard-state-autocomplete>
-                  </ng-template>
-                </div>
-                <mat-slide-toggle formControlName="setEntityIdInState" class="toggle"
-                                  *ngIf="templateConfigurationForm.get('WEB.additionalConfig.actionButtonConfig.linkType').value === actionButtonLinkType.DASHBOARD">
-                  {{ 'notification.set-entity-from-notification' | translate }}
-                </mat-slide-toggle>
-              </ng-template>
-            </mat-expansion-panel>
-          </div>
+          <tb-notification-action-button-configuration
+            actionTitle="{{ 'notification.action-button' | translate }}"
+            formControlName="actionButtonConfig">
+          </tb-notification-action-button-configuration>
         </section>
       </ng-template>
     </mat-expansion-panel>
@@ -172,35 +110,12 @@
             {{ 'notification.message-required' | translate }}
           </mat-error>
         </mat-form-field>
-        <div class="tb-form-panel tb-slide-toggle stroked" formGroupName="additionalConfig">
-          <mat-expansion-panel class="tb-settings"
-                               formGroupName="onClick"
-                               [expanded]="templateConfigurationForm.get('MOBILE_APP.additionalConfig.onClick.enabled').value">
-            <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
-              <mat-panel-title fxFlex="60">
-                <mat-slide-toggle class="mat-slide" formControlName="enabled" (click)="$event.stopPropagation()"
-                                  fxLayoutAlign="center">
-                  {{ 'notification.open-dashboard-on-click-notification' | translate }}
-                </mat-slide-toggle>
-              </mat-panel-title>
-            </mat-expansion-panel-header>
-            <ng-template matExpansionPanelContent class="tb-extension-panel">
-              <div fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayout.xs="column">
-                <tb-dashboard-autocomplete
-                  fxFlex fxFlex.xs="100"
-                  required
-                  formControlName="dashboardId">
-                </tb-dashboard-autocomplete>
-                <tb-dashboard-state-autocomplete fxFlex fxFlex.xs="100"
-                                                 [dashboardId]="templateConfigurationForm.get('MICROSOFT_TEAMS.button.dashboardId').value"
-                                                 formControlName="dashboardState">
-                </tb-dashboard-state-autocomplete>
-              </div>
-              <mat-slide-toggle formControlName="setEntityIdInState" class="toggle">
-                {{ 'notification.set-entity-from-notification' | translate }}
-              </mat-slide-toggle>
-            </ng-template>
-          </mat-expansion-panel>
+        <div formGroupName="additionalConfig">
+          <tb-notification-action-button-configuration
+            formControlName="onClick"
+            hideButtonText
+            actionTitle="{{ 'notification.action-on-click-notification' | translate }}">
+          </tb-notification-action-button-configuration>
         </div>
       </ng-template>
     </mat-expansion-panel>
@@ -325,72 +240,10 @@
             <div translate>notification.theme-color</div>
             <tb-color-input asBoxInput formControlName="themeColor"></tb-color-input>
           </div>
-          <div class="tb-form-panel tb-slide-toggle stroked" formGroupName="button">
-            <mat-expansion-panel class="tb-settings"
-                                 [expanded]="templateConfigurationForm.get('MICROSOFT_TEAMS.button.enabled').value">
-              <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
-                <mat-panel-title fxFlex="60">
-                  <mat-slide-toggle class="mat-slide" formControlName="enabled" (click)="$event.stopPropagation()"
-                                    fxLayoutAlign="center">
-                    {{ 'notification.action-button' | translate }}
-                  </mat-slide-toggle>
-                </mat-panel-title>
-              </mat-expansion-panel-header>
-              <ng-template matExpansionPanelContent class="tb-extension-panel">
-                <div fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayout.xs="column">
-                  <mat-form-field class="mat-block" fxFlex>
-                    <mat-label translate>notification.button-text</mat-label>
-                    <input matInput formControlName="text" required>
-                    <mat-error
-                      *ngIf="templateConfigurationForm.get('MICROSOFT_TEAMS.button.text').hasError('required')">
-                      {{ 'notification.button-text-required' | translate }}
-                    </mat-error>
-                    <mat-error
-                      *ngIf="templateConfigurationForm.get('MICROSOFT_TEAMS.button.text').hasError('maxlength')">
-                      {{'notification.button-text-max-length' | translate :
-                      {length: templateConfigurationForm.get('MICROSOFT_TEAMS.button.text').getError('maxlength').requiredLength}
-                      }}
-                    </mat-error>
-                  </mat-form-field>
-                </div>
-                <div fxLayout="row" fxLayoutGap.gt-xs="8px" fxLayout.xs="column">
-                  <mat-form-field fxFlex="30" fxFlex.xs="100">
-                    <mat-label translate>notification.action-type</mat-label>
-                    <mat-select formControlName="linkType">
-                      <mat-option *ngFor="let actionButtonLinkType of actionButtonLinkTypes"
-                                  [value]="actionButtonLinkType">
-                        {{ actionButtonLinkTypeTranslateMap.get(actionButtonLinkType) | translate }}
-                      </mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                  <mat-form-field fxFlex
-                                  *ngIf="templateConfigurationForm.get('MICROSOFT_TEAMS.button.linkType').value === actionButtonLinkType.LINK; else dashboardSelector">
-                    <mat-label translate>notification.link</mat-label>
-                    <input matInput formControlName="link" required>
-                    <mat-error
-                      *ngIf="templateConfigurationForm.get('MICROSOFT_TEAMS.button.link').hasError('required')">
-                      {{ 'notification.link-required' | translate }}
-                    </mat-error>
-                  </mat-form-field>
-                  <ng-template #dashboardSelector>
-                    <tb-dashboard-autocomplete
-                      fxFlex="35" fxFlex.xs="100"
-                      required
-                      formControlName="dashboardId">
-                    </tb-dashboard-autocomplete>
-                    <tb-dashboard-state-autocomplete fxFlex="35" fxFlex.xs="100"
-                                                     [dashboardId]="templateConfigurationForm.get('MICROSOFT_TEAMS.button.dashboardId').value"
-                                                     formControlName="dashboardState">
-                    </tb-dashboard-state-autocomplete>
-                  </ng-template>
-                </div>
-                <mat-slide-toggle formControlName="setEntityIdInState" class="toggle"
-                                  *ngIf="templateConfigurationForm.get('MICROSOFT_TEAMS.button.linkType').value === actionButtonLinkType.DASHBOARD">
-                  {{ 'notification.set-entity-from-notification' | translate }}
-                </mat-slide-toggle>
-              </ng-template>
-            </mat-expansion-panel>
-          </div>
+          <tb-notification-action-button-configuration
+            actionTitle="{{ 'notification.action-button' | translate }}"
+            formControlName="button">
+          </tb-notification-action-button-configuration>
         </div>
       </ng-template>
     </mat-expansion-panel>
