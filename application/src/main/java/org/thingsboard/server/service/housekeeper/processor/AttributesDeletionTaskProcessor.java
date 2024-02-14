@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.housekeeper.processor;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.housekeeper.data.HousekeeperTask;
@@ -23,13 +24,15 @@ import org.thingsboard.server.dao.housekeeper.data.HousekeeperTaskType;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class AttributesDeletionTaskProcessor implements HousekeeperTaskProcessor<HousekeeperTask> {
 
     private final AttributesService attributesService;
 
     @Override
     public void process(HousekeeperTask task) throws Exception {
-//        attributesService.removeAll(task.getTenantId(), task.getEntityId(), DataConstants.CLIENT_SCOPE);
+        int deletedCount = attributesService.removeAllByEntityId(task.getTenantId(), task.getEntityId());
+        log.trace("[{}][{}][{}] Deleted {} attributes", task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(), deletedCount);
     }
 
     @Override
