@@ -6638,6 +6638,7 @@
             "converter-none": "None",
             "converter-function": "Function",
             "converter-constant": "Constant",
+            "converter-value": "Value",
             "parse-value-function": "Parse value function",
             "state-when-result-is": "'{{state}}' when result is",
             "parameters": "Parameters",

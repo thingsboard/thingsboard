@@ -23,7 +23,7 @@
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.slider.initial-value-hint' | translate}}" translate>widgets.slider.initial-value</div>
       <tb-get-value-action-settings fxFlex
                                     panelTitle="widgets.slider.initial-value"
-                                    [valueType]="valueType.INTEGER"
+                                    [valueType]="valueType.DOUBLE"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
@@ -33,6 +33,7 @@
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.slider.on-value-change-hint' | translate}}" translate>widgets.slider.on-value-change</div>
       <tb-set-value-action-settings fxFlex
                                     panelTitle="widgets.slider.on-value-change"
+                                    [valueType]="valueType.DOUBLE"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"

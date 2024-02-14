@@ -138,7 +138,7 @@ export const sliderWidgetDefaultSettings: SliderWidgetSettings = {
       key: 'state'
     },
     valueToData: {
-      type: ValueToDataType.FUNCTION,
+      type: ValueToDataType.VALUE,
       constantValue: 0,
       valueToDataFunction: '/* Convert input integer value to RPC parameters or attribute/time-series value */\nreturn value;'
     }

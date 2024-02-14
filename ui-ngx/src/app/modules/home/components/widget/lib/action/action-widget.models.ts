@@ -292,6 +292,8 @@ export class ValueToDataConverter<V> {
 
   constructor(protected settings: ValueToDataSettings) {
     switch (settings.type) {
+      case ValueToDataType.VALUE:
+        break;
       case ValueToDataType.CONSTANT:
         this.constantValue = this.settings.constantValue;
         break;
@@ -309,6 +311,8 @@ export class ValueToDataConverter<V> {
 
   valueToData(value: V): any {
     switch (this.settings.type) {
+      case ValueToDataType.VALUE:
+        return value;
       case ValueToDataType.CONSTANT:
         return this.constantValue;
       case ValueToDataType.FUNCTION:
