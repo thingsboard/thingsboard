@@ -39,18 +39,10 @@
       <ng-template matStepLabel>{{ 'notification.compose' | translate }}</ng-template>
       <form [formGroup]="notificationRequestForm">
         <div fxLayoutAlign="center">
-          <tb-toggle-header (valueChange)="notificationRequestForm.get('useTemplate').patchValue($event)"
-                            class="tb-notification-use-template-toggle-group"
-                            ignoreMdLgSize
-                            useSelectOnMdLg="false"
-                            appearance="fill"
-                            name="useTemplate"
-                            [options]="[
-                                         { name: translate.instant('notification.start-from-scratch'), value: false},
-                                         { name: translate.instant('notification.use-template'), value: true}
-                                       ]"
-                            [value]="notificationRequestForm.get('useTemplate').value">
-          </tb-toggle-header>
+          <tb-toggle-select formControlName="useTemplate" appearance="fill">
+            <tb-toggle-option  [value]="false">{{ 'notification.start-from-scratch' | translate }}</tb-toggle-option>
+            <tb-toggle-option  [value]="true">{{ 'notification.use-template' | translate }}</tb-toggle-option>
+          </tb-toggle-select>
         </div>
         <div *ngIf="notificationRequestForm.get('useTemplate').value; else scratchTemplate">
           <tb-template-autocomplete
@@ -68,7 +60,7 @@
                 <div>
                   <label [ngClass]="{'tb-error': notificationRequestForm.get('template.configuration.deliveryMethodsTemplates').hasError('atLeastOne')}"
                          class="tb-title tb-required">{{ "notification.delivery-methods" | translate }}</label>
-                  <div class="tb-hint" translate>notification.at-least-one-should-be-selected</div>
+                  <div class="tb-form-hint" translate>notification.at-least-one-should-be-selected</div>
                 </div>
                 <button
                   matTooltip="{{ 'notification.refresh-allow-delivery-method' | translate }}"
@@ -82,7 +74,7 @@
               <section formGroupName="deliveryMethodsTemplates" class="delivery-methods-container">
                 <ng-container *ngFor="let deliveryMethods of notificationDeliveryMethods">
                   <a *ngIf="isInteractDeliveryMethod(deliveryMethods); else deliveryMethod"
-                     class="delivery-method-container interact"
+                     class="tb-form-panel stroked delivery-method-container tb-pointer interact"
                      [routerLink]="configurationPage(deliveryMethods)"
                      [formGroupName]="deliveryMethods"
                      [matTooltip]="getDeliveryMethodsTooltip(deliveryMethods)"
@@ -95,7 +87,7 @@
                     </mat-icon>
                   </a>
                   <ng-template #deliveryMethod>
-                    <section class="delivery-method-container"
+                    <section class="delivery-method-container tb-form-panel stroked"
                              [formGroupName]="deliveryMethods"
                              [matTooltip]="getDeliveryMethodsTooltip(deliveryMethods)"
                              [matTooltipDisabled]="getDeliveryMethodsTemplatesControl(deliveryMethods).enabled"
@@ -126,7 +118,7 @@
             </button>
           </tb-entity-list>
         </ng-template>
-        <section formGroupName="additionalConfig" class="additional-config-group">
+        <section formGroupName="additionalConfig" class="tb-form-panel stroked no-padding-bottom no-gap">
           <mat-slide-toggle formControlName="enabled" class="toggle">
             {{ 'notification.scheduler-later' | translate }}
           </mat-slide-toggle>
@@ -162,69 +154,11 @@
       <mat-progress-spinner color="warn" mode="indeterminate"
                             strokeWidth="5" *ngIf="(isLoading$ | async) && !preview">
       </mat-progress-spinner>
-      <div *ngIf="preview" style="padding-bottom: 16px">
-        <section class="preview-group notification" *ngIf="preview.processedTemplates.WEB?.enabled">
+      <div *ngIf="preview" class="tb-form-panel no-padding no-border">
+        <section class="preview-group tb-form-panel stroked no-gap">
           <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
-            <mat-icon class="tb-mat-18" svgIcon="mdi:bell-badge"></mat-icon>
-            <div class="group-title" translate>notification.delivery-method.web-preview</div>
-          </div>
-          <div class="web-preview">
-            <tb-notification preview [notification]="preview.processedTemplates.WEB"></tb-notification>
-          </div>
-        </section>
-        <section class="preview-group notification" *ngIf="preview.processedTemplates.EMAIL?.enabled">
-          <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
-            <mat-icon class="tb-mat-18" svgIcon="mdi:email"></mat-icon>
-            <div class="group-title" translate>notification.delivery-method.email-preview</div>
-          </div>
-          <div class="notification-content">
-            <div class="subject">{{ preview.processedTemplates.EMAIL.subject }}</div>
-            <mat-divider></mat-divider>
-            <div class="html-content" [innerHTML]="(preview.processedTemplates.EMAIL.body | safe: 'html')"></div>
-          </div>
-        </section>
-        <section class="preview-group notification" *ngIf="preview.processedTemplates.SMS?.enabled">
-          <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
-            <mat-icon class="tb-mat-18" svgIcon="mdi:message-processing"></mat-icon>
-            <div class="group-title" translate>notification.delivery-method.sms-preview</div>
-          </div>
-          <div class="notification-content">
-            {{ preview.processedTemplates.SMS.body }}
-          </div>
-        </section>
-        <section class="preview-group notification" *ngIf="preview.processedTemplates.SLACK?.enabled">
-          <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
-            <mat-icon class="tb-mat-18" svgIcon="mdi:slack"></mat-icon>
-            <div class="group-title" translate>notification.delivery-method.slack-preview</div>
-          </div>
-          <div class="notification-content">
-            {{ preview.processedTemplates.SLACK.body }}
-          </div>
-        </section>
-        <section class="preview-group notification" *ngIf="preview.processedTemplates.MOBILE_APP?.enabled">
-          <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
-            <mat-icon class="tb-mat-18" svgIcon="mdi:cellphone-text"></mat-icon>
-            <div class="group-title" translate>notification.delivery-method.mobile-app-preview</div>
-          </div>
-          <div class="notification-content">
-            <div class="subject">{{ preview.processedTemplates.MOBILE_APP.subject }}</div>
-            <div>{{ preview.processedTemplates.MOBILE_APP.body }}</div>
-          </div>
-        </section>
-        <section class="preview-group notification" *ngIf="preview.processedTemplates.MICROSOFT_TEAMS?.enabled">
-          <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
-            <mat-icon class="tb-mat-18" svgIcon="mdi:microsoft-teams"></mat-icon>
-            <div class="group-title" translate>notification.delivery-method.microsoft-teams-preview</div>
-          </div>
-          <div class="notification-content mini">
-            <div class="subject">{{ preview.processedTemplates.MICROSOFT_TEAMS.subject }}</div>
-            {{ preview.processedTemplates.MICROSOFT_TEAMS.body }}
-          </div>
-        </section>
-        <section class="preview-group">
-          <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
-            <mat-icon  class="tb-mat-18">supervisor_account</mat-icon>
-            <div class="group-title">{{ 'notification.recipients-count' | translate : {count: preview.totalRecipientsCount} }}</div>
+            <tb-icon class="tb-mat-18">supervisor_account</tb-icon>
+            <div class="tb-form-panel-title">{{ 'notification.recipients-count' | translate : {count: preview.totalRecipientsCount} }}</div>
           </div>
           <div class="details-recipients" *ngIf="notificationRequestForm.get('targets').value?.length > 1">
             <div *ngFor="let detail of preview.recipientsCountByTarget | keyvalue" class="details-recipient">
@@ -237,6 +171,64 @@
               <span>{{ recipientTitle }}</span>
             </mat-chip>
           </mat-chip-listbox>
+        </section>
+        <section class="preview-group notification tb-form-panel stroked no-gap" *ngIf="preview.processedTemplates.WEB?.enabled">
+          <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+            <tb-icon class="tb-mat-18">mdi:bell-badge</tb-icon>
+            <div class="tb-form-panel-title" translate>notification.delivery-method.web-preview</div>
+          </div>
+          <div class="web-preview">
+            <tb-notification preview [notification]="preview.processedTemplates.WEB"></tb-notification>
+          </div>
+        </section>
+        <section class="preview-group notification tb-form-panel stroked no-gap" *ngIf="preview.processedTemplates.MOBILE_APP?.enabled">
+          <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+            <tb-icon class="tb-mat-18">mdi:cellphone-text</tb-icon>
+            <div class="tb-form-panel-title" translate>notification.delivery-method.mobile-app-preview</div>
+          </div>
+          <div class="notification-content">
+            <div class="subject">{{ preview.processedTemplates.MOBILE_APP.subject }}</div>
+            <div>{{ preview.processedTemplates.MOBILE_APP.body }}</div>
+          </div>
+        </section>
+        <section class="preview-group notification tb-form-panel stroked no-gap" *ngIf="preview.processedTemplates.SMS?.enabled">
+          <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+            <tb-icon class="tb-mat-18">mdi:message-processing</tb-icon>
+            <div class="tb-form-panel-title" translate>notification.delivery-method.sms-preview</div>
+          </div>
+          <div class="notification-content">
+            {{ preview.processedTemplates.SMS.body }}
+          </div>
+        </section>
+        <section class="preview-group notification tb-form-panel stroked no-gap" *ngIf="preview.processedTemplates.EMAIL?.enabled">
+          <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+            <tb-icon class="tb-mat-18">mdi:email</tb-icon>
+            <div class="tb-form-panel-title" translate>notification.delivery-method.email-preview</div>
+          </div>
+          <div class="notification-content">
+            <div class="subject">{{ preview.processedTemplates.EMAIL.subject }}</div>
+            <mat-divider></mat-divider>
+            <div class="html-content" [innerHTML]="(preview.processedTemplates.EMAIL.body | safe: 'html')"></div>
+          </div>
+        </section>
+        <section class="preview-group notification tb-form-panel stroked no-gap" *ngIf="preview.processedTemplates.SLACK?.enabled">
+          <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+            <tb-icon class="tb-mat-18">mdi:slack</tb-icon>
+            <div class="tb-form-panel-title" translate>notification.delivery-method.slack-preview</div>
+          </div>
+          <div class="notification-content">
+            {{ preview.processedTemplates.SLACK.body }}
+          </div>
+        </section>
+        <section class="preview-group notification tb-form-panel stroked no-gap" *ngIf="preview.processedTemplates.MICROSOFT_TEAMS?.enabled">
+          <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
+            <tb-icon class="tb-mat-18">mdi:microsoft-teams</tb-icon>
+            <div class="tb-form-panel-title" translate>notification.delivery-method.microsoft-teams-preview</div>
+          </div>
+          <div class="notification-content mini">
+            <div class="subject">{{ preview.processedTemplates.MICROSOFT_TEAMS.subject }}</div>
+            {{ preview.processedTemplates.MICROSOFT_TEAMS.body }}
+          </div>
         </section>
       </div>
     </mat-step>

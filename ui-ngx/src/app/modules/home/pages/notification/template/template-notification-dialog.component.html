@@ -59,9 +59,9 @@
           <div class="tb-hint" translate>notification.at-least-one-should-be-selected</div>
           <section formGroupName="deliveryMethodsTemplates" class="delivery-methods-container">
             <section *ngFor="let deliveryMethods of notificationDeliveryMethods"
-                     class="delivery-method-container"
+                     class="tb-form-panel stroked"
                      [formGroupName]="deliveryMethods">
-              <mat-slide-toggle class="delivery-method" formControlName="enabled">
+              <mat-slide-toggle formControlName="enabled">
                 {{ notificationDeliveryMethodInfoMap.get(deliveryMethods).name | translate }}
               </mat-slide-toggle>
             </section>

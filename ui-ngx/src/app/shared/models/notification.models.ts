@@ -380,9 +380,9 @@ export enum NotificationDeliveryMethod {
   WEB = 'WEB',
   MOBILE_APP = 'MOBILE_APP',
   SMS = 'SMS',
-  MICROSOFT_TEAMS = 'MICROSOFT_TEAMS',
-  SLACK = 'SLACK',
   EMAIL = 'EMAIL',
+  SLACK = 'SLACK',
+  MICROSOFT_TEAMS = 'MICROSOFT_TEAMS'
 }
 
 export interface NotificationDeliveryMethodInfo {

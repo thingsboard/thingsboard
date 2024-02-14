@@ -238,6 +238,62 @@
     </mat-expansion-panel>
   </section>
   <section class="tb-form-panel tb-slide-toggle stroked"
+           [formGroupName]="NotificationDeliveryMethod.EMAIL"
+           *ngIf="templateConfigurationForm.get('EMAIL.enabled').value">
+    <mat-expansion-panel class="tb-settings" expanded>
+      <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
+        <mat-panel-title class="template-tittle">
+          <tb-icon>{{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.EMAIL).icon }}</tb-icon>
+          {{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.EMAIL).name | translate }}
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent class="tb-extension-panel">
+        <mat-form-field class="mat-block">
+          <mat-label translate>notification.subject</mat-label>
+          <input matInput formControlName="subject">
+          <mat-error *ngIf="templateConfigurationForm.get('EMAIL.subject').hasError('required')">
+            {{ 'notification.subject-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <mat-label class="tb-title tb-required"
+                   [class.tb-error]="(interacted || templateConfigurationForm.get('EMAIL.body').touched) && templateConfigurationForm.get('EMAIL.body').hasError('required')"
+                   translate>notification.message
+        </mat-label>
+        <editor [init]="tinyMceOptions" formControlName="body"></editor>
+        <mat-error class="tb-mat-error"
+                   *ngIf="(interacted || templateConfigurationForm.get('EMAIL.body').touched) && templateConfigurationForm.get('EMAIL.body').hasError('required')">
+          {{ 'notification.message-required' | translate }}
+        </mat-error>
+      </ng-template>
+    </mat-expansion-panel>
+  </section>
+  <section class="tb-form-panel tb-slide-toggle stroked"
+           [formGroupName]="NotificationDeliveryMethod.SLACK"
+           *ngIf="templateConfigurationForm.get('SLACK.enabled').value">
+    <mat-expansion-panel class="tb-settings" expanded>
+      <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
+        <mat-panel-title class="template-tittle">
+          <tb-icon>{{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.SLACK).icon }}</tb-icon>
+          {{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.SLACK).name | translate }}
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent class="tb-extension-panel">
+        <mat-form-field class="mat-block">
+          <mat-label translate>notification.message</mat-label>
+          <textarea matInput
+                    cdkTextareaAutosize
+                    cols="1"
+                    cdkAutosizeMinRows="1"
+                    formControlName="body">
+          </textarea>
+          <mat-error *ngIf="templateConfigurationForm.get('SLACK.body').hasError('required')">
+            {{ 'notification.message-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+      </ng-template>
+    </mat-expansion-panel>
+  </section>
+  <section class="tb-form-panel tb-slide-toggle stroked"
            [formGroupName]="NotificationDeliveryMethod.MICROSOFT_TEAMS"
            *ngIf="templateConfigurationForm.get('MICROSOFT_TEAMS.enabled').value">
     <mat-expansion-panel class="tb-settings" expanded>
@@ -292,7 +348,7 @@
                     <mat-error
                       *ngIf="templateConfigurationForm.get('MICROSOFT_TEAMS.button.text').hasError('maxlength')">
                       {{'notification.button-text-max-length' | translate :
-                          {length: templateConfigurationForm.get('MICROSOFT_TEAMS.button.text').getError('maxlength').requiredLength}
+                      {length: templateConfigurationForm.get('MICROSOFT_TEAMS.button.text').getError('maxlength').requiredLength}
                       }}
                     </mat-error>
                   </mat-form-field>
@@ -336,62 +392,6 @@
             </mat-expansion-panel>
           </div>
         </div>
-      </ng-template>
-    </mat-expansion-panel>
-  </section>
-  <section class="tb-form-panel tb-slide-toggle stroked"
-           [formGroupName]="NotificationDeliveryMethod.SLACK"
-           *ngIf="templateConfigurationForm.get('SLACK.enabled').value">
-    <mat-expansion-panel class="tb-settings" expanded>
-      <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
-        <mat-panel-title class="template-tittle">
-          <tb-icon>{{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.SLACK).icon }}</tb-icon>
-          {{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.SLACK).name | translate }}
-        </mat-panel-title>
-      </mat-expansion-panel-header>
-      <ng-template matExpansionPanelContent class="tb-extension-panel">
-        <mat-form-field class="mat-block">
-          <mat-label translate>notification.message</mat-label>
-          <textarea matInput
-                    cdkTextareaAutosize
-                    cols="1"
-                    cdkAutosizeMinRows="1"
-                    formControlName="body">
-          </textarea>
-          <mat-error *ngIf="templateConfigurationForm.get('SLACK.body').hasError('required')">
-            {{ 'notification.message-required' | translate }}
-          </mat-error>
-        </mat-form-field>
-      </ng-template>
-    </mat-expansion-panel>
-  </section>
-  <section class="tb-form-panel tb-slide-toggle stroked"
-           [formGroupName]="NotificationDeliveryMethod.EMAIL"
-           *ngIf="templateConfigurationForm.get('EMAIL.enabled').value">
-    <mat-expansion-panel class="tb-settings" expanded>
-      <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
-        <mat-panel-title class="template-tittle">
-          <tb-icon>{{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.EMAIL).icon }}</tb-icon>
-          {{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.EMAIL).name | translate }}
-        </mat-panel-title>
-      </mat-expansion-panel-header>
-      <ng-template matExpansionPanelContent class="tb-extension-panel">
-        <mat-form-field class="mat-block">
-          <mat-label translate>notification.subject</mat-label>
-          <input matInput formControlName="subject">
-          <mat-error *ngIf="templateConfigurationForm.get('EMAIL.subject').hasError('required')">
-            {{ 'notification.subject-required' | translate }}
-          </mat-error>
-        </mat-form-field>
-        <mat-label class="tb-title tb-required"
-                   [class.tb-error]="(interacted || templateConfigurationForm.get('EMAIL.body').touched) && templateConfigurationForm.get('EMAIL.body').hasError('required')"
-                   translate>notification.message
-        </mat-label>
-        <editor [init]="tinyMceOptions" formControlName="body"></editor>
-        <mat-error class="tb-mat-error"
-                   *ngIf="(interacted || templateConfigurationForm.get('EMAIL.body').touched) && templateConfigurationForm.get('EMAIL.body').hasError('required')">
-          {{ 'notification.message-required' | translate }}
-        </mat-error>
       </ng-template>
     </mat-expansion-panel>
   </section>

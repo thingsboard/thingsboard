@@ -89,7 +89,7 @@ export class SentNotificationDialogComponent extends
               protected fb: FormBuilder,
               private notificationService: NotificationService,
               private dialog: MatDialog,
-              public translate: TranslateService) {
+              private translate: TranslateService) {
     super(store, router, dialogRef, fb);
 
     this.notificationDeliveryMethods.forEach(method => {
