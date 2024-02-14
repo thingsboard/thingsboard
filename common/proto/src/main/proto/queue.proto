@@ -1398,4 +1398,6 @@ message ToHousekeeperServiceMsg {
 
 message HousekeeperTaskProto {
   bytes value = 1;
+  int64 ts = 2;
+  int32 attempt = 3;
 }

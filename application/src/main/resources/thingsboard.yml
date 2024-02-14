@@ -1565,6 +1565,7 @@ queue:
       print-interval-ms: "${TB_QUEUE_CORE_STATS_PRINT_INTERVAL_MS:60000}"
     housekeeper:
       topic: "tb_housekeeper"
+      reprocessing-topic: "tb_housekeeper.reprocessing"
       poll-interval-ms: "1000"
   vc:
     # Default topic name for Kafka, RabbitMQ, etc.

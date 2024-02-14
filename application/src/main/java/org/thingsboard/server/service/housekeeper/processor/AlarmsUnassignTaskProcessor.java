@@ -16,21 +16,27 @@
 package org.thingsboard.server.service.housekeeper.processor;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.dao.housekeeper.data.HousekeeperTaskType;
 import org.thingsboard.server.dao.housekeeper.data.AlarmsUnassignHousekeeperTask;
 import org.thingsboard.server.service.entitiy.alarm.TbAlarmService;
 
+import java.util.List;
+
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class AlarmsUnassignTaskProcessor implements HousekeeperTaskProcessor<AlarmsUnassignHousekeeperTask> {
 
     private final TbAlarmService alarmService;
 
     @Override
     public void process(AlarmsUnassignHousekeeperTask task) throws Exception {
-        alarmService.unassignDeletedUserAlarms(task.getTenantId(), (UserId) task.getEntityId(), task.getUserTitle(), task.getTs());
+        List<AlarmId> alarms = alarmService.unassignDeletedUserAlarms(task.getTenantId(), (UserId) task.getEntityId(), task.getUserTitle(), task.getTs());
+        log.trace("[{}][{}] Unassigned {} alarms", task.getTenantId(), task.getEntityId(), alarms.size());
     }
 
     @Override

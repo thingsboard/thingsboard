@@ -177,7 +177,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         List<RuleNodeUpdateResult> updatedRuleNodes = new ArrayList<>();
         List<RuleNode> existingRuleNodes = getRuleChainNodes(tenantId, ruleChainMetaData.getRuleChainId());
         for (RuleNode existingNode : existingRuleNodes) {
-            cleanUpRelatedData(tenantId, existingNode.getId()); // fixme: for sure?
+            cleanUpService.cleanUpRelatedData(tenantId, existingNode.getId()); // fixme: for sure?
             Integer index = ruleNodeIndexMap.get(existingNode.getId());
             RuleNode newRuleNode = null;
             if (index != null) {
@@ -771,7 +771,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     private void deleteRuleNodes(TenantId tenantId, List<RuleNode> ruleNodes) {
         List<RuleNodeId> ruleNodeIds = ruleNodes.stream().map(RuleNode::getId).collect(Collectors.toList());
         for (var node : ruleNodes) {
-            cleanUpRelatedData(tenantId, node.getId());
+            cleanUpService.cleanUpRelatedData(tenantId, node.getId());
         }
         ruleNodeDao.deleteByIdIn(ruleNodeIds);
     }
@@ -820,7 +820,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
     private void deleteRuleNode(TenantId tenantId, EntityId entityId) {
         ruleNodeDao.removeById(tenantId, entityId.getId());
-        cleanUpRelatedData(tenantId, entityId);
+        cleanUpService.cleanUpRelatedData(tenantId, entityId);
     }
 
     private final PaginatedRemover<TenantId, RuleChain> tenantRuleChainsRemover =

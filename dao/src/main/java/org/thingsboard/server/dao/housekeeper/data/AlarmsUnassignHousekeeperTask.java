@@ -22,12 +22,10 @@ import org.thingsboard.server.common.data.User;
 public class AlarmsUnassignHousekeeperTask extends HousekeeperTask {
 
     private final String userTitle;
-    private final long ts;
 
     protected AlarmsUnassignHousekeeperTask(User user) {
         super(user.getTenantId(), user.getId(), HousekeeperTaskType.UNASSIGN_ALARMS);
         this.userTitle = user.getTitle();
-        this.ts = System.currentTimeMillis();
     }
 
 }

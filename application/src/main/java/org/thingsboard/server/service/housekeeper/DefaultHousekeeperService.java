@@ -15,10 +15,10 @@
  */
 package org.thingsboard.server.service.housekeeper;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -40,6 +40,8 @@ import org.thingsboard.server.service.housekeeper.processor.HousekeeperTaskProce
 import javax.annotation.PreDestroy;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -49,7 +51,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class DefaultHousekeeperService implements HousekeeperService {
 
-    private final Map<HousekeeperTaskType, HousekeeperTaskProcessor> taskProcessors;
+    private final Map<HousekeeperTaskType, HousekeeperTaskProcessor<?>> taskProcessors;
 
     private final TbQueueConsumer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> consumer;
     private final TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> producer;
@@ -65,7 +67,8 @@ public class DefaultHousekeeperService implements HousekeeperService {
     public DefaultHousekeeperService(HousekeeperReprocessingService reprocessingService,
                                      TbCoreQueueFactory queueFactory,
                                      TbQueueProducerProvider producerProvider,
-                                     DataDecodingEncodingService dataDecodingEncodingService, List<HousekeeperTaskProcessor> taskProcessors) {
+                                     DataDecodingEncodingService dataDecodingEncodingService,
+                                     @Lazy List<HousekeeperTaskProcessor<?>> taskProcessors) {
         this.consumer = queueFactory.createHousekeeperMsgConsumer();
         this.producer = producerProvider.getHousekeeperMsgProducer();
         this.reprocessingService = reprocessingService;
@@ -86,7 +89,7 @@ public class DefaultHousekeeperService implements HousekeeperService {
 
                     for (TbProtoQueueMsg<ToHousekeeperServiceMsg> msg : msgs) {
                         try {
-                            processTask(msg);
+                            processTask(msg.getValue());
                         } catch (Exception e) {
                             log.error("Message processing failed", e);
                         }
@@ -107,19 +110,18 @@ public class DefaultHousekeeperService implements HousekeeperService {
         log.info("Started Housekeeper service");
     }
 
-    protected void processTask(TbProtoQueueMsg<ToHousekeeperServiceMsg> msg) {
-        HousekeeperTask task = dataDecodingEncodingService.<HousekeeperTask>decode(msg.getValue().getTask().getValue().toByteArray()).get();
-        HousekeeperTaskProcessor taskProcessor = taskProcessors.get(task.getTaskType());
-        if (taskProcessor == null) {
-            log.error("Unsupported task type {}: {}", task.getTaskType(), task);
-            return;
-        }
+    @SuppressWarnings("unchecked")
+    protected <T extends HousekeeperTask> void processTask(ToHousekeeperServiceMsg msg) {
+        HousekeeperTask task = dataDecodingEncodingService.<HousekeeperTask>decode(msg.getTask().getValue().toByteArray()).get();
+        HousekeeperTaskProcessor<T> taskProcessor = getTaskProcessor(task.getTaskType());
 
-        log.info("[{}] Processing task: {}", task.getTenantId(), task);
+        log.info("[{}][{}][{}] Processing task: {}", task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(), task.getTaskType());
         try {
-            taskProcessor.process(task);
+            taskProcessor.process((T) task);
         } catch (Exception e) {
-            log.error("[{}] Task processing failed: {}", task.getTenantId(), task, e);
+            log.error("[{}][{}][{}] {} task processing failed, submitting for reprocessing (attempt {}): {}",
+                    task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(),
+                    task.getTaskType(), msg.getTask().getAttempt(), task, e);
             reprocessingService.submitForReprocessing(msg);
         }
     }
@@ -127,11 +129,20 @@ public class DefaultHousekeeperService implements HousekeeperService {
     @Override
     public void submitTask(HousekeeperTask task) {
         TopicPartitionInfo tpi = TopicPartitionInfo.builder().topic(producer.getDefaultTopic()).build();
-        producer.send(tpi, new TbProtoQueueMsg<>(Uuids.timeBased(), ToHousekeeperServiceMsg.newBuilder()
+        producer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), ToHousekeeperServiceMsg.newBuilder()
                 .setTask(HousekeeperTaskProto.newBuilder()
                         .setValue(ByteString.copyFrom(dataDecodingEncodingService.encode(task)))
+                        .setTs(task.getTs())
+                        .setAttempt(0)
                         .build())
                 .build()), null);
+        log.trace("[{}][{}][{}] Submitted task: {}", task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(), task.getTaskType());
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T extends HousekeeperTask> HousekeeperTaskProcessor<T> getTaskProcessor(HousekeeperTaskType taskType) {
+        return Optional.ofNullable((HousekeeperTaskProcessor<T>) taskProcessors.get(taskType))
+                .orElseThrow(() -> new IllegalArgumentException("Unsupported task type " + taskType));
     }
 
     @PreDestroy
@@ -141,4 +152,5 @@ public class DefaultHousekeeperService implements HousekeeperService {
         consumer.unsubscribe();
         consumerExecutor.shutdownNow();
     }
+
 }

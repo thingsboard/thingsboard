@@ -35,7 +35,7 @@ public class TelemetryDeletionTaskProcessor implements HousekeeperTaskProcessor<
 
     @Override
     public HousekeeperTaskType getTaskType() {
-        return HousekeeperTaskType.DELETE_ATTRIBUTES;
+        return HousekeeperTaskType.DELETE_TELEMETRY;
     }
 
 }

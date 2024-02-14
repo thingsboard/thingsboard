@@ -46,13 +46,13 @@ public class AbstractTbQueueTemplate {
         return new String(data, StandardCharsets.UTF_8);
     }
 
-    public static byte[] longToBytes(long x) {
+    protected static byte[] longToBytes(long x) {
         ByteBuffer longBuffer = ByteBuffer.allocate(Long.BYTES);
         longBuffer.putLong(0, x);
         return longBuffer.array();
     }
 
-    public static long bytesToLong(byte[] bytes) {
+    protected static long bytesToLong(byte[] bytes) {
         return ByteBuffer.wrap(bytes).getLong();
     }
 }

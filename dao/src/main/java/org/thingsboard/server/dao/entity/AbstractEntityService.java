@@ -20,11 +20,8 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.transaction.event.TransactionalEventListener;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -33,10 +30,8 @@ import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
-import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.housekeeper.HousekeeperService;
-import org.thingsboard.server.dao.housekeeper.data.HousekeeperTask;
+import org.thingsboard.server.dao.housekeeper.CleanUpService;
 import org.thingsboard.server.dao.relation.RelationService;
 
 import java.util.Collections;
@@ -70,28 +65,8 @@ public abstract class AbstractEntityService {
     protected EdgeService edgeService;
 
     @Autowired
-    protected HousekeeperService housekeeperService;
-
-    @TransactionalEventListener(fallbackExecution = true) // todo: consider moving this to HousekeeperService
-    public void onEntityDeleted(DeleteEntityEvent<?> event) {
-        TenantId tenantId = event.getTenantId();
-        EntityId entityId = event.getEntityId();
-        log.trace("[{}] DeleteEntityEvent handler: {}", tenantId, event);
-
-        cleanUpRelatedData(tenantId, entityId);
-        if (entityId.getEntityType() == EntityType.USER) {
-            housekeeperService.submitTask(HousekeeperTask.unassignAlarms((User) event.getEntity()));
-        }
-    }
-
-    protected void cleanUpRelatedData(TenantId tenantId, EntityId entityId) {
-        // todo: skipped entities list
-        relationService.deleteEntityRelations(tenantId, entityId);
-        housekeeperService.submitTask(HousekeeperTask.deleteAttributes(tenantId, entityId));
-        housekeeperService.submitTask(HousekeeperTask.deleteTelemetry(tenantId, entityId));
-        housekeeperService.submitTask(HousekeeperTask.deleteEvents(tenantId, entityId));
-        housekeeperService.submitTask(HousekeeperTask.deleteEntityAlarms(tenantId, entityId));
-    }
+    @Lazy
+    protected CleanUpService cleanUpService;
 
     protected void createRelation(TenantId tenantId, EntityRelation relation) {
         log.debug("Creating relation: {}", relation);

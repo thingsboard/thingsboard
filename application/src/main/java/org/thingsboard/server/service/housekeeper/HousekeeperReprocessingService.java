@@ -15,16 +15,15 @@
  */
 package org.thingsboard.server.service.housekeeper;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.gen.transport.TransportProtos.HousekeeperTaskProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperServiceMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
-import org.thingsboard.server.queue.TbQueueMsgHeaders;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
@@ -33,12 +32,9 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import javax.annotation.PreDestroy;
 import java.util.List;
-import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
-import static org.thingsboard.server.queue.common.AbstractTbQueueTemplate.bytesToLong;
-import static org.thingsboard.server.queue.common.AbstractTbQueueTemplate.longToBytes;
 
 @TbCoreComponent
 @Service
@@ -77,15 +73,21 @@ public class HousekeeperReprocessingService {
                         return;
                     }
 
-                    for (TbProtoQueueMsg<ToHousekeeperServiceMsg> msg : msgs) {
-                        long msgTs = Uuids.unixTimestamp(msg.getKey());
-                        if (msgTs >= startTs) {
-                            stop();
-                            return; // fixme: we should commit already reprocessed messages
+                    if (msgs.stream().anyMatch(msg -> {
+                        boolean newMsg = msg.getValue().getTask().getTs() >= startTs;
+                        if (newMsg) {
+                            log.info("Stopping reprocessing due to msg is new {}", msg);
                         }
-
+                        return newMsg;
+                    })) {
+                        stop(); // fixme: we should commit already reprocessed messages; maybe submit for reprocessing again and commit?
+                        // msg batch size should be 1. otherwise some tasks won't be reprocessed
+                        return;
+                    }
+                    for (TbProtoQueueMsg<ToHousekeeperServiceMsg> msg : msgs) {
                         try {
-                            reprocessTask(msg);
+                            housekeeperService.processTask(msg.getValue());// fixme: or should we submit to queue?
+                            Thread.sleep(1000);
                         } catch (Exception e) {
                             log.error("Message processing failed", e);
                         }
@@ -106,21 +108,19 @@ public class HousekeeperReprocessingService {
         log.info("Started Housekeeper tasks reprocessing");
     }
 
-    private void reprocessTask(TbProtoQueueMsg<ToHousekeeperServiceMsg> msg) {
-        housekeeperService.processTask(msg);// fixme: or should we submit to queue?
-    }
-
-    public void submitForReprocessing(TbProtoQueueMsg<ToHousekeeperServiceMsg> msg) {
-        TbQueueMsgHeaders msgHeaders = msg.getHeaders();
-        long reprocessingAttempts = Optional.ofNullable(msgHeaders.get("reprocessingAttempts"))
-                .map(header -> bytesToLong(header))
-                .orElse(0L);
-        reprocessingAttempts++;
-        msgHeaders.put("reprocessingAttempts", longToBytes(reprocessingAttempts));
+    public void submitForReprocessing(ToHousekeeperServiceMsg msg) {
+        HousekeeperTaskProto task = msg.getTask();
+        int attempt = task.getAttempt() + 1;
+        msg = msg.toBuilder()
+                .setTask(task.toBuilder()
+                        .setAttempt(attempt)
+                        .setTs(System.currentTimeMillis())
+                        .build())
+                .build();
 
         var producer = producerProvider.getHousekeeperDelayedMsgProducer();
         TopicPartitionInfo tpi = TopicPartitionInfo.builder().topic(producer.getDefaultTopic()).build();
-        producer.send(tpi, new TbProtoQueueMsg<>(Uuids.timeBased(), msg.getValue(), msgHeaders), null);
+        producer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), null);
     }
 
     @PreDestroy

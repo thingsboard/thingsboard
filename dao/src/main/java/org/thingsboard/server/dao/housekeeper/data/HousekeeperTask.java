@@ -15,27 +15,26 @@
  */
 package org.thingsboard.server.dao.housekeeper.data;
 
-import lombok.Getter;
+import lombok.Data;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.io.Serializable;
 
-/*
- * on start, read the retry queue and put the messages back to main queue (save offset)
- * */
-@Getter
+@Data
 public class HousekeeperTask implements Serializable {
 
     private final TenantId tenantId;
     private final EntityId entityId;
     private final HousekeeperTaskType taskType;
+    private final long ts;
 
     protected HousekeeperTask(TenantId tenantId, EntityId entityId, HousekeeperTaskType taskType) {
         this.tenantId = tenantId;
         this.entityId = entityId;
         this.taskType = taskType;
+        this.ts = System.currentTimeMillis();
     }
 
     public static HousekeeperTask deleteAttributes(TenantId tenantId, EntityId entityId) {

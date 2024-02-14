@@ -37,7 +37,7 @@ public class TbQueueCoreSettings {
     @Value("${queue.core.housekeeper.topic:tb_housekeeper}")
     private String housekeeperTopic;
 
-    @Value("${queue.core.housekeeper.topic:tb_housekeeper.delayed}")
+    @Value("${queue.core.housekeeper.reprocessing-topic:tb_housekeeper.reprocessing}")
     private String housekeeperDelayedTopic;
 
     @Value("${queue.core.partitions}")

@@ -20,9 +20,11 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -31,6 +33,7 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.attributes.AttributesDao;
+import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.sql.AttributeKvCompositeKey;
 import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
@@ -132,10 +135,10 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     @Override
     public List<AttributeKvEntry> findAll(TenantId tenantId, EntityId entityId, String attributeType) {
         return DaoUtil.convertDataList(Lists.newArrayList(
-                        attributeKvRepository.findAllByEntityTypeAndEntityIdAndAttributeType(
-                                entityId.getEntityType(),
-                                entityId.getId(),
-                                attributeType)));
+                attributeKvRepository.findAllByEntityTypeAndEntityIdAndAttributeType(
+                        entityId.getEntityType(),
+                        entityId.getId(),
+                        attributeType)));
     }
 
     @Override
@@ -186,6 +189,16 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
             }));
         }
         return futuresList;
+    }
+
+    @Transactional
+    @Override
+    public List<Pair<String, String>> removeAllByEntityId(TenantId tenantId, EntityId entityId) {
+        return jdbcTemplate.queryForList("DELETE FROM attribute_kv WHERE entity_type = ? and entity_id = ? " +
+                        "RETURNING attribute_type, attribute_key", entityId.getEntityType().name(), entityId.getId()).stream()
+                .map(deleted -> Pair.of((String) deleted.get(ModelConstants.ATTRIBUTE_TYPE_COLUMN),
+                        (String) deleted.get(ModelConstants.ATTRIBUTE_KEY_COLUMN)))
+                .collect(Collectors.toList());
     }
 
     private AttributeKvCompositeKey getAttributeKvCompositeKey(EntityId entityId, String attributeType, String attributeKey) {
