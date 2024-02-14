@@ -97,6 +97,11 @@
           <mat-error *ngIf="templateConfigurationForm.get('MOBILE_APP.subject').hasError('required')">
             {{ 'notification.subject-required' | translate }}
           </mat-error>
+          <mat-error *ngIf="templateConfigurationForm.get('MOBILE_APP.subject').hasError('maxlength')">
+            {{ 'notification.subject-max-length' | translate :
+            {length: templateConfigurationForm.get('MOBILE_APP.subject').getError('maxlength').requiredLength}
+            }}
+          </mat-error>
         </mat-form-field>
         <mat-form-field class="mat-block">
           <mat-label translate>notification.message</mat-label>
@@ -108,6 +113,11 @@
           </textarea>
           <mat-error *ngIf="templateConfigurationForm.get('MOBILE_APP.body').hasError('required')">
             {{ 'notification.message-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="templateConfigurationForm.get('MOBILE_APP.body').hasError('maxlength')">
+            {{ 'notification.message-max-length' | translate :
+            {length: templateConfigurationForm.get('MOBILE_APP.body').getError('maxlength').requiredLength}
+            }}
           </mat-error>
         </mat-form-field>
         <div formGroupName="additionalConfig">

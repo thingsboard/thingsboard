@@ -3420,6 +3420,7 @@
         "stop-escalation-alarm-status-become": "Stop the escalation on the alarm status become:",
         "subject": "Subject",
         "subject-required": "Subject is required",
+        "subject-max-length": "Subject should be less than or equal to {{ length }} characters",
         "template": "Template",
         "template-name": "Template name",
         "template-required": "Template is required",

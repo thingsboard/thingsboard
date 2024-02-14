@@ -210,8 +210,8 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
         break;
       case NotificationDeliveryMethod.MOBILE_APP:
         deliveryMethodForm = this.fb.group({
-          subject: ['', Validators.required],
-          body: ['', Validators.required],
+          subject: ['', [Validators.required, Validators.maxLength(50)]],
+          body: ['', [Validators.required, Validators.maxLength(150)]],
           additionalConfig: this.fb.group({
             onClick: [null]
           })
