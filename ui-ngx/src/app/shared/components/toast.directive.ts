@@ -84,6 +84,7 @@ export class ToastDirective implements AfterViewInit, OnDestroy {
         if (hideNotification) {
           const target = hideNotification.target || 'root';
           if (this.toastTarget === target) {
+            this.currentMessage = null;
             this.ngZone.run(() => {
               if (this.snackBarRef) {
                 this.snackBarRef.dismiss();

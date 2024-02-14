@@ -324,6 +324,9 @@ import {
 import {
   PowerButtonWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/button/power-button-widget-settings.component';
+import {
+  SliderWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/control/slider-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -440,7 +443,8 @@ import {
     SingleSwitchWidgetSettingsComponent,
     ActionButtonWidgetSettingsComponent,
     CommandButtonWidgetSettingsComponent,
-    PowerButtonWidgetSettingsComponent
+    PowerButtonWidgetSettingsComponent,
+    SliderWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -562,7 +566,8 @@ import {
     SingleSwitchWidgetSettingsComponent,
     ActionButtonWidgetSettingsComponent,
     CommandButtonWidgetSettingsComponent,
-    PowerButtonWidgetSettingsComponent
+    PowerButtonWidgetSettingsComponent,
+    SliderWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -651,5 +656,6 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-single-switch-widget-settings': SingleSwitchWidgetSettingsComponent,
   'tb-action-button-widget-settings': ActionButtonWidgetSettingsComponent,
   'tb-command-button-widget-settings': CommandButtonWidgetSettingsComponent,
-  'tb-power-button-widget-settings': PowerButtonWidgetSettingsComponent
+  'tb-power-button-widget-settings': PowerButtonWidgetSettingsComponent,
+  'tb-slider-widget-settings': SliderWidgetSettingsComponent
 };
