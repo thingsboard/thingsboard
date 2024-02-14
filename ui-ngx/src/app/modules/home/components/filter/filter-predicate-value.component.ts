@@ -85,7 +85,7 @@ export class FilterPredicateValueComponent implements ControlValueAccessor, Vali
   @Input()
   set operation(operation: StringOperation) {
     if (operation && (operation === StringOperation.IN || operation === StringOperation.NOT_IN)) {
-      this.hintText = 'filter.default-coma-separated-values';
+      this.hintText = 'filter.default-comma-separated-values';
     } else {
       this.hintText = 'filter.default-value';
     }
