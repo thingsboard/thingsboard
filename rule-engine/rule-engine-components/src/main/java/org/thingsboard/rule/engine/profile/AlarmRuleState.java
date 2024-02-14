@@ -51,7 +51,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 import static org.thingsboard.server.common.data.StringUtils.equalsAny;
-import static org.thingsboard.server.common.data.StringUtils.getListValuesWithoutQuote;
+import static org.thingsboard.server.common.data.StringUtils.splitByCommaWithoutQuotes;
 
 @Data
 @Slf4j
@@ -471,9 +471,9 @@ class AlarmRuleState {
             case NOT_CONTAINS:
                 return !val.contains(predicateValue);
             case IN:
-                return equalsAny(val, getListValuesWithoutQuote(predicateValue).toArray(new String[0]));
+                return equalsAny(val, splitByCommaWithoutQuotes(predicateValue));
             case NOT_IN:
-                return !equalsAny(val, getListValuesWithoutQuote(predicateValue).toArray(new String[0]));
+                return !equalsAny(val, splitByCommaWithoutQuotes(predicateValue));
             default:
                 throw new RuntimeException("Operation not supported: " + predicate.getOperation());
         }

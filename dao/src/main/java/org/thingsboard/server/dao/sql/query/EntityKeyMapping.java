@@ -47,7 +47,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.thingsboard.server.common.data.StringUtils.getListValuesWithoutQuote;
+import static org.thingsboard.server.common.data.StringUtils.splitByCommaWithoutQuotes;
 
 @Data
 public class EntityKeyMapping {
@@ -576,7 +576,7 @@ public class EntityKeyMapping {
         switch (stringFilterPredicate.getOperation()) {
             case IN:
             case NOT_IN:
-                ctx.addStringListParameter(paramName, getListValuesWithoutQuote(value));
+                ctx.addStringListParameter(paramName, splitByCommaWithoutQuotes(value));
                 break;
             default:
                 ctx.addStringParameter(paramName, value);

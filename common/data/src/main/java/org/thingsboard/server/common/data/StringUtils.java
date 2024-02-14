@@ -20,6 +20,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.function.Function;
@@ -158,6 +159,10 @@ public class StringUtils {
     }
 
     public static boolean equalsAny(String string, String... otherStrings) {
+        return equalsAny(string, Arrays.asList(otherStrings));
+    }
+
+    public static boolean equalsAny(String string, List<String> otherStrings) {
         for (String otherString : otherStrings) {
             if (equals(string, otherString)) {
                 return true;
@@ -247,7 +252,7 @@ public class StringUtils {
         return string.substring(0, maxLength) + truncationMarkerFunc.apply(truncatedSymbols);
     }
 
-    public static List<String> getListValuesWithoutQuote(String value) {
+    public static List<String> splitByCommaWithoutQuotes(String value) {
         List<String> splitValues = List.of(value.trim().split("\\s*,\\s*"));
         List<String> result = new ArrayList<>();
         char lastWayInputValue = '#';
