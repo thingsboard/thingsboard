@@ -2145,7 +2145,7 @@
         "action": "Action",
         "action-icon": "Icône",
         "action-name": "Nom",
-        "action-name-not-unique": "Une autre action portant le même nom existe déjà. <br/> Le nom de l'action doit être unique dans la même source d'action.",
+        "action-name-not-unique": "Une autre action portant le même nom existe déjà. \n Le nom de l'action doit être unique dans la même source d'action.",
         "action-name-required": "Le nom de l'action est requis",
         "action-source": "Source de l'action",
         "action-source-required": "Une source d'action est requise.",

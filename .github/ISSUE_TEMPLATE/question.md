@@ -1,9 +1,9 @@
 ---
 name: Question
-about: Describe your questions in details
-title: "[Question] your title here"
-labels: question
-assignees: ashvayka
+about: Describe your questions in detail
+title: "Your title here"
+labels: ['question']
+assignees: 'AndriichnekoDm'
 
 ---
 
@@ -16,7 +16,7 @@ assignees: ashvayka
  * Generic
 
 **Description**
-A clear and concise details.
+Clear and concise details.
 
 **Environment**
 <!-- Add information about your environment and ThingsBoard version if applicable -->

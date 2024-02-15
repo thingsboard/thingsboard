@@ -35,7 +35,7 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.edge.EdgeEventDao;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.sql.EdgeEventEntity;
-import org.thingsboard.server.dao.sql.JpaAbstractDao;
+import org.thingsboard.server.dao.sql.JpaPartitionedAbstractDao;
 import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
@@ -47,7 +47,6 @@ import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -58,7 +57,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 @SqlDao
 @RequiredArgsConstructor
 @Slf4j
-public class JpaBaseEdgeEventDao extends JpaAbstractDao<EdgeEventEntity, EdgeEvent> implements EdgeEventDao {
+public class JpaBaseEdgeEventDao extends JpaPartitionedAbstractDao<EdgeEventEntity, EdgeEvent> implements EdgeEventDao {
 
     private final UUID systemTenantId = NULL_UUID;
 
@@ -151,8 +150,9 @@ public class JpaBaseEdgeEventDao extends JpaAbstractDao<EdgeEventEntity, EdgeEve
         if (StringUtils.isEmpty(edgeEvent.getUid())) {
             edgeEvent.setUid(edgeEvent.getId().toString());
         }
-        partitioningRepository.createPartitionIfNotExists(TABLE_NAME, edgeEvent.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
-        return save(new EdgeEventEntity(edgeEvent));
+        EdgeEventEntity entity = new EdgeEventEntity(edgeEvent);
+        createPartition(entity);
+        return save(entity);
     }
 
     private ListenableFuture<Void> save(EdgeEventEntity entity) {
@@ -227,4 +227,10 @@ public class JpaBaseEdgeEventDao extends JpaAbstractDao<EdgeEventEntity, EdgeEve
     private void callMigrationFunction(long startTime, long endTime, long partitionSIzeInMs) {
         jdbcTemplate.update("CALL migrate_edge_event(?, ?, ?)", startTime, endTime, partitionSIzeInMs);
     }
+
+    @Override
+    public void createPartition(EdgeEventEntity entity) {
+        partitioningRepository.createPartitionIfNotExists(TABLE_NAME, entity.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
+    }
+
 }

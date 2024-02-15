@@ -157,16 +157,19 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
                 () -> deviceDao.findDeviceByTenantIdAndName(tenantId.getId(), name).orElse(null), true);
     }
 
+    @Transactional
     @Override
     public Device saveDeviceWithAccessToken(Device device, String accessToken) {
         return doSaveDevice(device, accessToken, true);
     }
 
+    @Transactional
     @Override
     public Device saveDevice(Device device, boolean doValidate) {
         return doSaveDevice(device, null, doValidate);
     }
 
+    @Transactional
     @Override
     public Device saveDevice(Device device) {
         return doSaveDevice(device, null, true);

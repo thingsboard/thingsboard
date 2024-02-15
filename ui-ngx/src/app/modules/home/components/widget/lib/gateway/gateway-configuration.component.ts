@@ -127,11 +127,11 @@ export class GatewayConfigurationComponent implements OnInit {
         type: [StorageTypes.MEMORY, [Validators.required]],
         read_records_count: [100, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/), Validators.required, Validators.pattern(/^[^.\s]+$/)]],
         max_records_count: [100000, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/), Validators.required, Validators.pattern(/^[^.\s]+$/)]],
-        data_folder_path: ['./data/', [Validators.pattern(/^[^\s]+$/)]],
+        data_folder_path: ['./data/', [Validators.required]],
         max_file_count: [10, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
         max_read_records_count: [10, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
         max_records_per_file: [10000, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
-        data_file_path: ['./data/data.db', [Validators.pattern(/^[^\s]+$/)]],
+        data_file_path: ['./data/data.db', [Validators.required]],
         messages_ttl_check_in_hours: [1, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
         messages_ttl_in_days: [7, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
 
@@ -240,7 +240,7 @@ export class GatewayConfigurationComponent implements OnInit {
         storageGroup.get('read_records_count').updateValueAndValidity({emitEvent: false});
         storageGroup.get('max_records_count').updateValueAndValidity({emitEvent: false});
       } else if (type === StorageTypes.FILE) {
-        storageGroup.get('data_folder_path').addValidators([Validators.required, Validators.pattern(/^[^.\s]+$/)]);
+        storageGroup.get('data_folder_path').addValidators([Validators.required]);
         storageGroup.get('max_file_count').addValidators(
           [Validators.min(1), Validators.pattern(/^-?[0-9]+$/), Validators.required]);
         storageGroup.get('max_read_records_count').addValidators(
@@ -252,7 +252,7 @@ export class GatewayConfigurationComponent implements OnInit {
         storageGroup.get('max_read_records_count').updateValueAndValidity({emitEvent: false});
         storageGroup.get('max_records_per_file').updateValueAndValidity({emitEvent: false});
       } else if (type === StorageTypes.SQLITE) {
-        storageGroup.get('data_file_path').addValidators([Validators.required, Validators.pattern(/^[^.\s]+$/)]);
+        storageGroup.get('data_file_path').addValidators([Validators.required]);
         storageGroup.get('messages_ttl_check_in_hours').addValidators(
           [Validators.min(1), Validators.pattern(/^-?[0-9]+$/), Validators.required]);
         storageGroup.get('messages_ttl_in_days').addValidators(

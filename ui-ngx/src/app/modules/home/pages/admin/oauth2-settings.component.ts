@@ -15,7 +15,14 @@
 ///
 
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
-import { AbstractControl, UntypedFormArray, UntypedFormBuilder, UntypedFormGroup, ValidationErrors, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormGroup,
+  ValidationErrors,
+  Validators
+} from '@angular/forms';
 import {
   ClientAuthenticationMethod,
   DomainSchema,
@@ -26,9 +33,11 @@ import {
   MapperConfigType,
   OAuth2ClientRegistrationTemplate,
   OAuth2DomainInfo,
-  OAuth2Info, OAuth2MobileInfo,
+  OAuth2Info,
+  OAuth2MobileInfo,
   OAuth2ParamsInfo,
-  OAuth2RegistrationInfo, PlatformType,
+  OAuth2RegistrationInfo,
+  PlatformType,
   platformTypeTranslations,
   TenantNameStrategy
 } from '@shared/models/oauth2.models';
@@ -104,6 +113,8 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
   platformTypeTranslations = platformTypeTranslations;
 
   templateProvider = ['Custom'];
+
+  showMainLoadingBar = false;
 
   private loginProcessingUrl: string = this.route.snapshot.data.loginProcessingUrl;
 

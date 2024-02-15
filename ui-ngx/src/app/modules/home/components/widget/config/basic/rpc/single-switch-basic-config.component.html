@@ -21,29 +21,45 @@
     <div class="tb-form-panel-title" translate>widgets.single-switch.behavior</div>
     <div class="tb-form-row">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.initial-state-hint' | translate}}" translate>widgets.rpc-state.initial-state</div>
-      <tb-rpc-initial-state-settings fxFlex
-                                     [stateValueType]="valueType.BOOLEAN"
-                                     [aliasController]="aliasController"
-                                     [targetDevice]="targetDevice"
-                                     formControlName="initialState"></tb-rpc-initial-state-settings>
+      <tb-get-value-action-settings fxFlex
+                                    panelTitle="widgets.rpc-state.initial-state"
+                                    [valueType]="valueType.BOOLEAN"
+                                    trueLabel="widgets.rpc-state.on"
+                                    falseLabel="widgets.rpc-state.off"
+                                    stateLabel="widgets.rpc-state.on"
+                                    [aliasController]="aliasController"
+                                    [targetDevice]="targetDevice"
+                                    [widgetType]="widgetType"
+                                    formControlName="initialState"></tb-get-value-action-settings>
     </div>
     <div class="tb-form-row space-between">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.turn-on-hint' | translate}}" translate>widgets.rpc-state.turn-on</div>
-      <tb-rpc-update-state-settings fxFlex
+      <tb-set-value-action-settings fxFlex
                                     panelTitle="widgets.rpc-state.turn-on"
-                                    [stateValueType]="valueType.BOOLEAN"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
-                                    formControlName="onUpdateState"></tb-rpc-update-state-settings>
+                                    [widgetType]="widgetType"
+                                    formControlName="onUpdateState"></tb-set-value-action-settings>
     </div>
     <div class="tb-form-row space-between">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.turn-off-hint' | translate}}" translate>widgets.rpc-state.turn-off</div>
-      <tb-rpc-update-state-settings fxFlex
+      <tb-set-value-action-settings fxFlex
                                     panelTitle="widgets.rpc-state.turn-off"
-                                    [stateValueType]="valueType.BOOLEAN"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
-                                    formControlName="offUpdateState"></tb-rpc-update-state-settings>
+                                    [widgetType]="widgetType"
+                                    formControlName="offUpdateState"></tb-set-value-action-settings>
+    </div>
+    <div class="tb-form-row">
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.disabled-state-hint' | translate}}" translate>widgets.rpc-state.disabled-state</div>
+      <tb-get-value-action-settings fxFlex
+                                    panelTitle="widgets.rpc-state.disabled-state"
+                                    [valueType]="valueType.BOOLEAN"
+                                    stateLabel="widgets.rpc-state.disabled"
+                                    [aliasController]="aliasController"
+                                    [targetDevice]="targetDevice"
+                                    [widgetType]="widgetType"
+                                    formControlName="disabledState"></tb-get-value-action-settings>
     </div>
   </div>
   <div class="tb-form-panel">
@@ -66,7 +82,7 @@
         {{ 'widgets.single-switch.auto-scale' | translate }}
       </mat-slide-toggle>
     </div>
-    <div class="tb-form-row">
+    <div class="tb-form-row column-xs">
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showLabel">
         {{ 'widgets.single-switch.label' | translate }}
       </mat-slide-toggle>
@@ -83,7 +99,7 @@
         </tb-color-input>
       </div>
     </div>
-    <div class="tb-form-row">
+    <div class="tb-form-row column-xs">
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showIcon">
         {{ 'widgets.single-switch.icon' | translate }}
       </mat-slide-toggle>

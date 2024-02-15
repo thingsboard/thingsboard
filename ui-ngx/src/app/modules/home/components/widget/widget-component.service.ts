@@ -565,6 +565,9 @@ export class WidgetComponentService {
       if (isUndefined(result.typeParameters.embedTitlePanel)) {
         result.typeParameters.embedTitlePanel = false;
       }
+      if (isUndefined(result.typeParameters.overflowVisible)) {
+        result.typeParameters.overflowVisible = false;
+      }
       if (isUndefined(result.typeParameters.hideDataSettings)) {
         result.typeParameters.hideDataSettings = false;
       }
