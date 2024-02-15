@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.mdc-linear-progress.tb-action-widget-progress {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
+package org.thingsboard.rule.engine.util;
+
+public class GpsGeofencingEvents {
+    public static final String ENTERED = "Entered";
+    public static final String INSIDE = "Inside";
+    public static final String LEFT = "Left";
+    public static final String OUTSIDE = "Outside";
 }

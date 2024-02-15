@@ -36,6 +36,7 @@ import { isDefinedAndNotNull } from '@core/utils';
 import {
   SetValueActionSettingsPanelComponent
 } from '@home/components/widget/lib/settings/common/action/set-value-action-settings-panel.component';
+import { ValueType } from '@shared/models/constants';
 
 @Component({
   selector: 'tb-set-value-action-settings',
@@ -57,6 +58,9 @@ export class SetValueActionSettingsComponent implements OnInit, ControlValueAcce
 
   @Input()
   panelTitle: string;
+
+  @Input()
+  valueType = ValueType.BOOLEAN;
 
   @Input()
   aliasController: IAliasController;
@@ -114,6 +118,7 @@ export class SetValueActionSettingsComponent implements OnInit, ControlValueAcce
       const ctx: any = {
         setValueSettings: this.modelValue,
         panelTitle: this.panelTitle,
+        valueType: this.valueType,
         aliasController: this.aliasController,
         targetDevice: this.targetDevice,
         widgetType: this.widgetType
@@ -137,6 +142,9 @@ export class SetValueActionSettingsComponent implements OnInit, ControlValueAcce
   private updateDisplayValue() {
     let value: any;
     switch (this.modelValue.valueToData.type) {
+      case ValueToDataType.VALUE:
+        value = 'value';
+        break;
       case ValueToDataType.CONSTANT:
         value = this.modelValue.valueToData.constantValue;
         break;
