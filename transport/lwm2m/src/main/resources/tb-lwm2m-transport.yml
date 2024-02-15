@@ -155,6 +155,8 @@ transport:
     dtls:
       # RFC7925_RETRANSMISSION_TIMEOUT_IN_MILLISECONDS = 9000
       retransmission_timeout: "${LWM2M_DTLS_RETRANSMISSION_TIMEOUT_MS:9000}"
+      # "" disables connection id support, 0 enables support but not for incoming traffic, any value greater than 0 set the connection id size in bytes
+      connection_id_length: "${LWM2M_DTLS_CONNECTION_ID_LENGTH:6}"
     server:
       # LwM2M Server ID
       id: "${LWM2M_SERVER_ID:123}"
