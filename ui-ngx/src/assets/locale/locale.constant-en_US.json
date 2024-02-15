@@ -3214,7 +3214,6 @@
     },
     "notification": {
         "action-button": "Action button",
-        "action-on-click-notification": "Action on click notification",
         "action-type": "Action type",
         "active": "Active",
         "add-notification-recipients-group": "Add notification recipients group",
@@ -3337,6 +3336,7 @@
         "not-found-slack-recipient": "Slack recipient not found",
         "notification": "Notification",
         "notification-center": "Notification center",
+        "notification-tap-action": "Notification tap action",
         "notify": "notify",
         "notify-again": "Notify again",
         "notify-alarm-action": {
