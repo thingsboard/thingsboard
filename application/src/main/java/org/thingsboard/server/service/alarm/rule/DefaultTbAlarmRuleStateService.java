@@ -43,12 +43,9 @@ import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.gen.transport.TransportProtos.TbAlarmRuleRequestCtxProto;
-import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
@@ -60,8 +57,6 @@ import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -79,8 +74,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.DataConstants.INTERNAL_QUEUE_NAME;
-import static org.thingsboard.server.common.data.msg.TbNodeConnectionType.FAILURE;
-import static org.thingsboard.server.common.data.msg.TbNodeConnectionType.SUCCESS;
 import static org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent.DELETED;
 import static org.thingsboard.server.common.data.util.CollectionsUtil.diffSets;
 

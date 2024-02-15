@@ -47,18 +47,13 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
-import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.audit.AuditLogService;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.PartitionService;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import static org.thingsboard.server.common.data.DataConstants.INTERNAL_QUEUE_NAME;
 
 @Service
 @RequiredArgsConstructor
@@ -181,32 +176,10 @@ public class EntityActionService {
                 }
                 TbMsg tbMsg = TbMsg.newMsg(msgType.get(), entityId, customerId, metaData, TbMsgDataType.JSON, JacksonUtil.toString(entityNode));
                 tbClusterService.pushMsgToRuleEngine(tenantId, entityId, tbMsg, null);
-
-//                if (isSendEventToAlarmRuleStateServiceAvailable(msgType.get()) &&
-//                        (entityId.getEntityType().equals(EntityType.DEVICE) || entityId.getEntityType().equals(EntityType.ASSET))) {
-//                    pushMsgToAlarmRules(tenantId, entityId, tbMsg);
-//                }
             } catch (Exception e) {
                 log.warn("[{}] Failed to push entity action to rule engine: {}", entityId, actionType, e);
             }
         }
-    }
-
-    private boolean isSendEventToAlarmRuleStateServiceAvailable(TbMsgType msgType) {
-        return switch (msgType) {
-            case ENTITY_ASSIGNED, ENTITY_UNASSIGNED, ATTRIBUTES_UPDATED,
-                    ATTRIBUTES_DELETED, ALARM_ACK, ALARM_CLEAR, ALARM_DELETE -> true;
-            default -> false;
-        };
-    }
-
-    private void pushMsgToAlarmRules(TenantId tenantId, EntityId entityId, TbMsg tbMsg) {
-        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, INTERNAL_QUEUE_NAME, tenantId, entityId);
-        TransportProtos.ToRuleEngineMsg msg = TransportProtos.ToRuleEngineMsg.newBuilder()
-                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
-                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
-                .setTbMsg(TbMsg.toByteString(tbMsg)).build();
-        tbClusterService.pushMsgToRuleEngine(tpi, tbMsg.getId(), msg, null);
     }
 
     private void processNotificationRules(TenantId tenantId, EntityId originatorId, HasName entity, ActionType actionType, User user, Object... additionalInfo) {

@@ -553,7 +553,7 @@ public abstract class BaseController {
                     checkAlarmId(new AlarmId(entityId.getId()), operation);
                     return;
                 case ALARM_RULE:
-
+                    checkAlarmRuleId(new AlarmRuleId(entityId.getId()), operation);
                     return;
                 case DEVICE:
                     checkDeviceId(new DeviceId(entityId.getId()), operation);
