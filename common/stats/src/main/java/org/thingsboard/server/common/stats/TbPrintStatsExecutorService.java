@@ -13,20 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql;
+package org.thingsboard.server.common.stats;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
+import java.util.concurrent.TimeUnit;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.function.Consumer;
+public interface TbPrintStatsExecutorService {
+     void scheduleWithFixedDelay(Runnable command, long initialDelay, long delay, TimeUnit unit);
 
-public interface TbSqlQueue<E> {
-
-    void init(TbPrintStatsExecutorService tbPrintStatsExecutorService, Consumer<List<E>> saveFunction, Comparator<E> batchUpdateComparator, int queueIndex);
-
-    void destroy();
-
-    ListenableFuture<Void> add(E element);
+    void scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit);
 }

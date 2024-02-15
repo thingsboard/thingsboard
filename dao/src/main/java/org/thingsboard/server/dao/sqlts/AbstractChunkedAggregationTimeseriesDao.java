@@ -84,7 +84,7 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
 
         Function<TsKvEntity, Integer> hashcodeFunction = entity -> entity.getEntityId().hashCode();
         tsQueue = new TbSqlBlockingQueueWrapper<>(tsParams, hashcodeFunction, tsBatchThreads, statsFactory);
-        tsQueue.init(logExecutor, v -> insertRepository.saveOrUpdate(v),
+        tsQueue.init(tbPrintStatsExecutorService, v -> insertRepository.saveOrUpdate(v),
                 Comparator.comparing((Function<TsKvEntity, UUID>) AbstractTsKvEntity::getEntityId)
                         .thenComparing(AbstractTsKvEntity::getKey)
                         .thenComparing(AbstractTsKvEntity::getTs)

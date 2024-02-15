@@ -26,8 +26,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
 
 import javax.annotation.Nullable;
 import java.sql.Connection;
@@ -46,7 +46,7 @@ public abstract class AbstractSqlTimeseriesDao extends BaseAbstractSqlTimeseries
     protected static final long SECONDS_IN_DAY = TimeUnit.DAYS.toSeconds(1);
 
     @Autowired
-    protected ScheduledLogExecutorComponent logExecutor;
+    protected TbPrintStatsExecutorService tbPrintStatsExecutorService;
 
     @Value("${sql.ts.batch_size:1000}")
     protected int tsBatchSize;

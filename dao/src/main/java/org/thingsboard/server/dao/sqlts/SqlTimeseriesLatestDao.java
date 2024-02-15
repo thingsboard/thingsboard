@@ -36,11 +36,11 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
 import org.thingsboard.server.common.stats.StatsFactory;
+import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestCompositeKey;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
-import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
 import org.thingsboard.server.dao.sqlts.insert.latest.InsertLatestTsRepository;
@@ -98,7 +98,7 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
     protected boolean batchSortEnabled;
 
     @Autowired
-    protected ScheduledLogExecutorComponent logExecutor;
+    protected TbPrintStatsExecutorService tbPrintStatsExecutorService;
 
     @Autowired
     private StatsFactory statsFactory;
@@ -117,7 +117,7 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
         java.util.function.Function<TsKvLatestEntity, Integer> hashcodeFunction = entity -> entity.getEntityId().hashCode();
         tsLatestQueue = new TbSqlBlockingQueueWrapper<>(tsLatestParams, hashcodeFunction, tsLatestBatchThreads, statsFactory);
 
-        tsLatestQueue.init(logExecutor, v -> {
+        tsLatestQueue.init(tbPrintStatsExecutorService, v -> {
             Map<TsKey, TsKvLatestEntity> trueLatest = new HashMap<>();
             v.forEach(ts -> {
                 TsKey key = new TsKey(ts.getEntityId(), ts.getKey());

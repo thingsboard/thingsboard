@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.stats.MessagesStats;
+import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -48,7 +49,7 @@ public class TbSqlBlockingQueue<E> implements TbSqlQueue<E> {
     }
 
     @Override
-    public void init(ScheduledLogExecutorComponent logExecutor, Consumer<List<E>> saveFunction, Comparator<E> batchUpdateComparator, int index) {
+    public void init(TbPrintStatsExecutorService tbPrintStatsExecutorService, Consumer<List<E>> saveFunction, Comparator<E> batchUpdateComparator, int index) {
         executor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("sql-queue-" + index + "-" + params.getLogName().toLowerCase()));
         executor.submit(() -> {
             String logName = params.getLogName();
@@ -103,7 +104,7 @@ public class TbSqlBlockingQueue<E> implements TbSqlQueue<E> {
             log.info("[{}] Queue polling completed", logName);
         });
 
-        logExecutor.scheduleAtFixedRate(() -> {
+        tbPrintStatsExecutorService.scheduleAtFixedRate(() -> {
             if (queue.size() > 0 || stats.getTotal() > 0 || stats.getSuccessful() > 0 || stats.getFailed() > 0) {
                 log.info("Queue-{} [{}] queueSize [{}] totalAdded [{}] totalSaved [{}] totalFailed [{}]", index,
                         params.getLogName(), queue.size(), stats.getTotal(), stats.getSuccessful(), stats.getFailed());

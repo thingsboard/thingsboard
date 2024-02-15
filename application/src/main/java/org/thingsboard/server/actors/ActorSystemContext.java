@@ -26,7 +26,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
@@ -102,6 +101,7 @@ import org.thingsboard.server.service.executors.ExternalCallExecutorService;
 import org.thingsboard.server.service.executors.NotificationExecutorService;
 import org.thingsboard.server.service.executors.PubSubRuleNodeExecutorProvider;
 import org.thingsboard.server.service.executors.SharedEventLoopGroupService;
+import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 import org.thingsboard.server.service.mail.MailExecutorService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
@@ -441,6 +441,10 @@ public class ActorSystemContext {
     @Getter
     private TbRpcService tbRpcService;
 
+    @Autowired
+    @Getter
+    private TbPrintStatsExecutorService tbPrintStatsExecutorService;
+
     @Lazy
     @Autowired(required = false)
     @Getter
@@ -481,6 +485,9 @@ public class ActorSystemContext {
     @Getter
     private boolean statisticsEnabled;
 
+    @Value("${actors.statistics.js_print_interval_ms:10000}")
+    private long statisticsPrintInterval;
+
     @Value("${actors.statistics.persist_frequency:3600000}")
     @Getter
     private long statisticsPersistFrequency;
@@ -499,16 +506,16 @@ public class ActorSystemContext {
     @PostConstruct
     public void init() {
         this.localCacheType = "caffeine".equals(cacheType);
+        if (statisticsEnabled) {
+            tbPrintStatsExecutorService.scheduleWithFixedDelay(this::printStats, statisticsPrintInterval, statisticsPrintInterval, TimeUnit.MILLISECONDS);
+        }
     }
 
-    @Scheduled(fixedDelayString = "${actors.statistics.js_print_interval_ms}")
-    public void printStats() {
-        if (statisticsEnabled) {
-            if (jsInvokeStats.getRequests() > 0 || jsInvokeStats.getResponses() > 0 || jsInvokeStats.getFailures() > 0) {
-                log.info("Rule Engine JS Invoke Stats: requests [{}] responses [{}] failures [{}]",
-                        jsInvokeStats.getRequests(), jsInvokeStats.getResponses(), jsInvokeStats.getFailures());
-                jsInvokeStats.reset();
-            }
+    private void printStats() {
+        if (jsInvokeStats.getRequests() > 0 || jsInvokeStats.getResponses() > 0 || jsInvokeStats.getFailures() > 0) {
+            log.info("Rule Engine JS Invoke Stats: requests [{}] responses [{}] failures [{}]",
+                    jsInvokeStats.getRequests(), jsInvokeStats.getResponses(), jsInvokeStats.getFailures());
+            jsInvokeStats.reset();
         }
     }
 

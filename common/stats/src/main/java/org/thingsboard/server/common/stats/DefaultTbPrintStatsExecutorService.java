@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql;
+package org.thingsboard.server.common.stats;
 
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -25,23 +25,28 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 @Component
-public class ScheduledLogExecutorComponent {
+public class DefaultTbPrintStatsExecutorService implements TbPrintStatsExecutorService {
 
-    private ScheduledExecutorService schedulerLogExecutor;
+    private ScheduledExecutorService service;
 
     @PostConstruct
     public void init() {
-        schedulerLogExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("sql-log"));
+        this.service = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("tb-print-stats-scheduler"));
     }
 
     @PreDestroy
-    public void stop() {
-        if (schedulerLogExecutor != null) {
-            schedulerLogExecutor.shutdownNow();
+    public void destroy() {
+        if (this.service != null) {
+            this.service.shutdown();
         }
     }
 
+    public void scheduleWithFixedDelay(Runnable command, long initialDelay, long delay, TimeUnit unit) {
+        service.scheduleWithFixedDelay(command, initialDelay, delay, unit);
+    }
+
+    @Override
     public void scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit) {
-        schedulerLogExecutor.scheduleAtFixedRate(command, initialDelay, period, unit);
+        service.scheduleAtFixedRate(command, initialDelay, period, unit);
     }
 }

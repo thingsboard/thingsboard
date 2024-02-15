@@ -89,7 +89,7 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
         Function<TimescaleTsKvEntity, Integer> hashcodeFunction = entity -> entity.getEntityId().hashCode();
         tsQueue = new TbSqlBlockingQueueWrapper<>(tsParams, hashcodeFunction, timescaleBatchThreads, statsFactory);
 
-        tsQueue.init(logExecutor, v -> insertRepository.saveOrUpdate(v),
+        tsQueue.init(tbPrintStatsExecutorService, v -> insertRepository.saveOrUpdate(v),
                 Comparator.comparing((Function<TimescaleTsKvEntity, UUID>) AbstractTsKvEntity::getEntityId)
                         .thenComparing(AbstractTsKvEntity::getKey)
                         .thenComparing(AbstractTsKvEntity::getTs)

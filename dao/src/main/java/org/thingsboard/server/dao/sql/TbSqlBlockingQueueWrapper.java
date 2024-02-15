@@ -20,6 +20,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.stats.MessagesStats;
 import org.thingsboard.server.common.stats.StatsFactory;
+import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 
 import java.util.Comparator;
 import java.util.List;
@@ -32,7 +33,6 @@ import java.util.function.Function;
 public class TbSqlBlockingQueueWrapper<E> {
     private final CopyOnWriteArrayList<TbSqlBlockingQueue<E>> queues = new CopyOnWriteArrayList<>();
     private final TbSqlBlockingQueueParams params;
-    private ScheduledLogExecutorComponent logExecutor;
     private final Function<E, Integer> hashCodeFunction;
     private final int maxThreads;
     private final StatsFactory statsFactory;
@@ -40,17 +40,17 @@ public class TbSqlBlockingQueueWrapper<E> {
     /**
      * Starts TbSqlBlockingQueues.
      *
-     * @param  logExecutor  executor that will be printing logs and statistics
+     * @param  tbPrintStatsExecutorService  executor that will be printing logs and statistics
      * @param  saveFunction function to save entities in database
      * @param  batchUpdateComparator comparator to sort entities by primary key to avoid deadlocks in cluster mode
      *                               NOTE: you must use all of primary key parts in your comparator
      */
-    public void init(ScheduledLogExecutorComponent logExecutor, Consumer<List<E>> saveFunction, Comparator<E> batchUpdateComparator) {
+    public void init(TbPrintStatsExecutorService tbPrintStatsExecutorService, Consumer<List<E>> saveFunction, Comparator<E> batchUpdateComparator) {
         for (int i = 0; i < maxThreads; i++) {
             MessagesStats stats = statsFactory.createMessagesStats(params.getStatsNamePrefix() + ".queue." + i);
             TbSqlBlockingQueue<E> queue = new TbSqlBlockingQueue<>(params, stats);
             queues.add(queue);
-            queue.init(logExecutor, saveFunction, batchUpdateComparator, i);
+            queue.init(tbPrintStatsExecutorService, saveFunction, batchUpdateComparator, i);
         }
     }
 

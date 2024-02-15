@@ -18,8 +18,8 @@ package org.thingsboard.server.service.queue;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.EntityType;
@@ -49,6 +49,7 @@ import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
+import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
 import org.thingsboard.server.service.queue.ruleengine.TbRuleEngineConsumerContext;
@@ -62,6 +63,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -69,6 +71,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<ToRuleEngineNotificationMsg> implements TbRuleEngineConsumerService {
 
+    @Value("${queue.rule-engine.stats.print-interval-ms:60000}")
+    private long statsPrintInterval;
     private final TbRuleEngineConsumerContext ctx;
     private final QueueService queueService;
     private final TbRuleEngineDeviceRpcService tbDeviceRpcService;
@@ -85,9 +89,10 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                                               TbAssetProfileCache assetProfileCache,
                                               TbTenantProfileCache tenantProfileCache,
                                               TbApiUsageStateService apiUsageStateService,
-                                              PartitionService partitionService, ApplicationEventPublisher eventPublisher) {
+                                              PartitionService partitionService, ApplicationEventPublisher eventPublisher,
+                                              TbPrintStatsExecutorService tbPrintStatsExecutorService) {
         super(actorContext, encodingService, tenantProfileCache, deviceProfileCache, assetProfileCache, apiUsageStateService, partitionService,
-                eventPublisher, tbRuleEngineQueueFactory.createToRuleEngineNotificationsMsgConsumer(), Optional.empty());
+                eventPublisher, tbRuleEngineQueueFactory.createToRuleEngineNotificationsMsgConsumer(), Optional.empty(), tbPrintStatsExecutorService);
         this.ctx = ctx;
         this.tbDeviceRpcService = tbDeviceRpcService;
         this.queueService = queueService;
@@ -101,6 +106,9 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
             if (partitionService.isManagedByCurrentService(configuration.getTenantId())) {
                 initConsumer(configuration);
             }
+        }
+        if (ctx.isStatsEnabled()) {
+            tbPrintStatsExecutorService.scheduleWithFixedDelay(this::printStats, statsPrintInterval, statsPrintInterval, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -244,12 +252,9 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
         return consumers.computeIfAbsent(queueKey, key -> new TbRuleEngineQueueConsumerManager(ctx, key));
     }
 
-    @Scheduled(fixedDelayString = "${queue.rule-engine.stats.print-interval-ms}")
-    public void printStats() {
-        if (ctx.isStatsEnabled()) {
-            long ts = System.currentTimeMillis();
-            consumers.values().forEach(manager -> manager.printStats(ts));
-        }
+    private void printStats() {
+        long ts = System.currentTimeMillis();
+        consumers.values().forEach(manager -> manager.printStats(ts));
     }
 
 }

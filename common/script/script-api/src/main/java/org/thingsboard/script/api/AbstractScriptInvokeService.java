@@ -20,11 +20,12 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 
 import java.util.Map;
 import java.util.UUID;
@@ -53,6 +54,9 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
 
     protected ScheduledExecutorService timeoutExecutorService;
 
+    @Autowired
+    protected TbPrintStatsExecutorService tbPrintStatsExecutorService;
+
     protected long getMaxEvalRequestsTimeout() {
         return getMaxInvokeRequestsTimeout();
     }
@@ -70,6 +74,8 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
     protected abstract int getMaxErrors();
 
     protected abstract boolean isStatsEnabled();
+
+    protected abstract long getStatsPrintInterval();
 
     protected abstract String getStatsName();
 
@@ -90,6 +96,9 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
         if (getMaxEvalRequestsTimeout() > 0 || getMaxInvokeRequestsTimeout() > 0) {
             timeoutExecutorService = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("script-timeout"));
         }
+        if (isStatsEnabled()) {
+            tbPrintStatsExecutorService.scheduleWithFixedDelay(this::printStats, getStatsPrintInterval(), getStatsPrintInterval(), TimeUnit.MILLISECONDS);
+        }
     }
 
     public void stop() {
@@ -98,17 +107,15 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
         }
     }
 
-    public void printStats() {
-        if (isStatsEnabled()) {
-            int pushed = pushedMsgs.getAndSet(0);
-            int invoked = invokeMsgs.getAndSet(0);
-            int evaluated = evalMsgs.getAndSet(0);
-            int failed = failedMsgs.getAndSet(0);
-            int timedOut = timeoutMsgs.getAndSet(0);
-            if (pushed > 0 || invoked > 0 || evaluated > 0 || failed > 0 || timedOut > 0) {
-                log.info("{}: pushed [{}] received [{}] invoke [{}] eval [{}] failed [{}] timedOut [{}]",
-                        getStatsName(), pushed, invoked + evaluated, invoked, evaluated, failed, timedOut);
-            }
+    private void printStats() {
+        int pushed = pushedMsgs.getAndSet(0);
+        int invoked = invokeMsgs.getAndSet(0);
+        int evaluated = evalMsgs.getAndSet(0);
+        int failed = failedMsgs.getAndSet(0);
+        int timedOut = timeoutMsgs.getAndSet(0);
+        if (pushed > 0 || invoked > 0 || evaluated > 0 || failed > 0 || timedOut > 0) {
+            log.info("{}: pushed [{}] received [{}] invoke [{}] eval [{}] failed [{}] timedOut [{}]",
+                    getStatsName(), pushed, invoked + evaluated, invoked, evaluated, failed, timedOut);
         }
     }
 

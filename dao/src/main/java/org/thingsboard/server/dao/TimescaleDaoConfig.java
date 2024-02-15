@@ -25,7 +25,7 @@ import org.thingsboard.server.dao.util.TimescaleDBTsDao;
 
 @Configuration
 @TbAutoConfiguration
-@ComponentScan({"org.thingsboard.server.dao.sqlts.timescale"})
+@ComponentScan({"org.thingsboard.server.dao.sqlts.timescale","org.thingsboard.server.common.stats"})
 @EnableJpaRepositories({"org.thingsboard.server.dao.sqlts.timescale", "org.thingsboard.server.dao.sqlts.insert.timescale"})
 @EntityScan({"org.thingsboard.server.dao.model.sqlts.timescale"})
 @EnableTransactionManagement

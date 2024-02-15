@@ -25,7 +25,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.mvel2.CompileException;
 import org.mvel2.ExecutionContext;
 import org.mvel2.MVEL;
 import org.mvel2.ParserContext;
@@ -34,7 +33,6 @@ import org.mvel2.ScriptMemoryOverflowException;
 import org.mvel2.optimizers.OptimizerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.script.api.AbstractScriptInvokeService;
@@ -100,6 +98,10 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
     @Value("${tbel.stats.enabled:false}")
     private boolean statsEnabled;
 
+    @Getter
+    @Value("${tbel.stats.print_interval_ms:10000}")
+    private long statsPrintInterval;
+
     @Value("${tbel.thread_pool_size:50}")
     private int threadPoolSize;
 
@@ -116,11 +118,6 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
     protected DefaultTbelInvokeService(Optional<TbApiUsageStateClient> apiUsageStateClient, Optional<TbApiUsageReportClient> apiUsageReportClient) {
         this.apiUsageStateClient = apiUsageStateClient;
         this.apiUsageReportClient = apiUsageReportClient;
-    }
-
-    @Scheduled(fixedDelayString = "${tbel.stats.print_interval_ms:10000}")
-    public void printStats() {
-        super.printStats();
     }
 
     @SneakyThrows

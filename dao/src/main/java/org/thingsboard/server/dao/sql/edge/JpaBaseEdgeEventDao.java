@@ -31,12 +31,12 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.stats.StatsFactory;
+import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.edge.EdgeEventDao;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.sql.EdgeEventEntity;
 import org.thingsboard.server.dao.sql.JpaPartitionedAbstractDao;
-import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
@@ -61,7 +61,7 @@ public class JpaBaseEdgeEventDao extends JpaPartitionedAbstractDao<EdgeEventEnti
 
     private final UUID systemTenantId = NULL_UUID;
 
-    private final ScheduledLogExecutorComponent logExecutor;
+    private final TbPrintStatsExecutorService tbPrintStatsExecutorService;
 
     private final StatsFactory statsFactory;
 
@@ -120,7 +120,7 @@ public class JpaBaseEdgeEventDao extends JpaPartitionedAbstractDao<EdgeEventEnti
             }
         };
         queue = new TbSqlBlockingQueueWrapper<>(params, hashcodeFunction, 1, statsFactory);
-        queue.init(logExecutor, edgeEventInsertRepository::save,
+        queue.init(tbPrintStatsExecutorService, edgeEventInsertRepository::save,
                 Comparator.comparing(EdgeEventEntity::getTs)
         );
     }

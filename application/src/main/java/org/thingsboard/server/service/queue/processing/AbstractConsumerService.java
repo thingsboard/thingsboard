@@ -33,6 +33,7 @@ import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
+import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
@@ -71,6 +72,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     protected final TbDeviceProfileCache deviceProfileCache;
     protected final TbAssetProfileCache assetProfileCache;
     protected final TbApiUsageStateService apiUsageStateService;
+    protected final TbPrintStatsExecutorService tbPrintStatsExecutorService;
     protected final PartitionService partitionService;
     protected final ApplicationEventPublisher eventPublisher;
 
@@ -82,7 +84,8 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
                                    TbTenantProfileCache tenantProfileCache, TbDeviceProfileCache deviceProfileCache,
                                    TbAssetProfileCache assetProfileCache, TbApiUsageStateService apiUsageStateService,
                                    PartitionService partitionService, ApplicationEventPublisher eventPublisher,
-                                   TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer, Optional<JwtSettingsService> jwtSettingsService) {
+                                   TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer, Optional<JwtSettingsService> jwtSettingsService,
+                                   TbPrintStatsExecutorService tbPrintStatsExecutorService) {
         this.actorContext = actorContext;
         this.encodingService = encodingService;
         this.tenantProfileCache = tenantProfileCache;
@@ -93,6 +96,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
         this.eventPublisher = eventPublisher;
         this.nfConsumer = nfConsumer;
         this.jwtSettingsService = jwtSettingsService;
+        this.tbPrintStatsExecutorService = tbPrintStatsExecutorService;
     }
 
     public void init(String nfConsumerThreadName) {

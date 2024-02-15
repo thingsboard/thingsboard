@@ -26,7 +26,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.CloseStatus;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -65,6 +64,7 @@ import org.thingsboard.server.service.ws.telemetry.cmd.v2.GetTsCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.LatestValueCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.TimeSeriesCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.UnsubscribeCmd;
+import org.thingsboard.server.common.stats.TbPrintStatsExecutorService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -123,6 +123,9 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
 
     private ScheduledExecutorService scheduler;
 
+    @Autowired
+    private TbPrintStatsExecutorService tbPrintStatsExecutorService;
+
     @Value("${database.ts.type}")
     private String databaseTsType;
     @Value("${server.ws.dynamic_page_link.refresh_interval:6}")
@@ -137,6 +140,8 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     private int maxAlarmQueriesPerRefreshInterval;
     @Value("${ui.dashboard.max_datapoints_limit:50000}")
     private int maxDatapointLimit;
+    @Value("${server.ws.dynamic_page_link.stats:10000}")
+    private long dynamicPageLinkStats;
 
     private ExecutorService wsCallBackExecutor;
     private boolean tsInSqlDB;
@@ -154,6 +159,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         } else {
             scheduler = Executors.newScheduledThreadPool(dynamicPageLinkRefreshPoolSize, tbThreadFactory);
         }
+        tbPrintStatsExecutorService.scheduleWithFixedDelay(this::printStats, dynamicPageLinkStats, dynamicPageLinkStats, TimeUnit.MILLISECONDS);
     }
 
     @PreDestroy
@@ -470,8 +476,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         }
     }
 
-    @Scheduled(fixedDelayString = "${server.ws.dynamic_page_link.stats:10000}")
-    public void printStats() {
+    private void printStats() {
         int alarmQueryInvocationCntValue = stats.getAlarmQueryInvocationCnt().getAndSet(0);
         long alarmQueryInvocationTimeValue = stats.getAlarmQueryTimeSpent().getAndSet(0);
         int regularQueryInvocationCntValue = stats.getRegularQueryInvocationCnt().getAndSet(0);
