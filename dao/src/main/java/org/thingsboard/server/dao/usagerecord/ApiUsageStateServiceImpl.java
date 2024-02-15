@@ -173,6 +173,11 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
     }
 
     @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteApiUsageStateByTenantId(tenantId);
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.API_USAGE_STATE;
     }

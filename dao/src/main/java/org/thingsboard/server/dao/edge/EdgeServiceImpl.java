@@ -267,6 +267,11 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     }
 
     @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteEdgesByTenantId(tenantId);
+    }
+
+    @Override
     public PageData<Edge> findEdgesByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink) {
         log.trace("Executing findEdgesByTenantIdAndCustomerId, tenantId [{}], customerId [{}], pageLink [{}]", tenantId, customerId, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);

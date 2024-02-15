@@ -27,6 +27,8 @@ import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.housekeeper.data.HousekeeperTask;
 import org.thingsboard.server.dao.relation.RelationService;
 
+import java.util.UUID;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -55,6 +57,13 @@ public class CleanUpService {
         housekeeperService.submitTask(HousekeeperTask.deleteTelemetry(tenantId, entityId));
         housekeeperService.submitTask(HousekeeperTask.deleteEvents(tenantId, entityId));
         housekeeperService.submitTask(HousekeeperTask.deleteEntityAlarms(tenantId, entityId));
+    }
+
+    public void removeTenantEntities(TenantId tenantId, EntityType... entityTypes) {
+        UUID tasksKey = UUID.randomUUID(); // so that all tasks are processed synchronously from one partition
+        for (EntityType entityType : entityTypes) {
+            housekeeperService.submitTask(tasksKey, HousekeeperTask.deleteEntities(tenantId, entityType));
+        }
     }
 
 }

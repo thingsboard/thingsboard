@@ -49,7 +49,7 @@ public class HousekeeperReprocessingService {
     @Value("${queue.core.housekeeper.poll-interval-ms:10000}")
     private int pollInterval;
 
-    private final long startTs = System.currentTimeMillis();
+    private final long startTs = System.currentTimeMillis(); // fixme: some other tb-core might start earlier and submit for reprocessing
     private boolean stopped;
     // todo: stats
 
@@ -114,12 +114,13 @@ public class HousekeeperReprocessingService {
         msg = msg.toBuilder()
                 .setTask(task.toBuilder()
                         .setAttempt(attempt)
-                        .setTs(System.currentTimeMillis())
+                        .setTs(System.currentTimeMillis()) // maybe set ts + 1 hour so that no-one reprocesses it immediately
                         .build())
                 .build();
 
         var producer = producerProvider.getHousekeeperDelayedMsgProducer();
         TopicPartitionInfo tpi = TopicPartitionInfo.builder().topic(producer.getDefaultTopic()).build();
+        // fixme submit with the same msg key, so that the messages goes to this consumer and will not be processed by anyone else
         producer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), null);
     }
 

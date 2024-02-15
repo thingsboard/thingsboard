@@ -345,6 +345,11 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
     }
 
     @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteEntityViewsByTenantId(tenantId);
+    }
+
+    @Override
     public ListenableFuture<List<EntitySubtype>> findEntityViewTypesByTenantId(TenantId tenantId) {
         log.trace("Executing findEntityViewTypesByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);

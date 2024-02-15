@@ -67,6 +67,11 @@ public class BaseRpcService implements RpcService {
     }
 
     @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteAllRpcByTenantId(tenantId);
+    }
+
+    @Override
     public Rpc findById(TenantId tenantId, RpcId rpcId) {
         log.trace("Executing findById, tenantId [{}], rpcId [{}]", tenantId, rpcId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);

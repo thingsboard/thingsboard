@@ -21,14 +21,20 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.AdminSettingsId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.entity.EntityDaoService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.Validator;
 
+import java.util.Optional;
+
 @Service
 @Slf4j
-public class AdminSettingsServiceImpl implements AdminSettingsService {
+public class AdminSettingsServiceImpl implements AdminSettingsService, EntityDaoService {
     
     @Autowired
     private AdminSettingsDao adminSettingsDao;
@@ -103,6 +109,21 @@ public class AdminSettingsServiceImpl implements AdminSettingsService {
                 ((ObjectNode) newJsonValue).remove("refreshTokenExpires");
             }
         }
+    }
+
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteAdminSettingsByTenantId(tenantId);
+    }
+
+    @Override
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.empty();
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.ADMIN_SETTINGS;
     }
 
 }

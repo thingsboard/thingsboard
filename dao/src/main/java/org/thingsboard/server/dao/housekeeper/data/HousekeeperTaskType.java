@@ -16,7 +16,7 @@
 package org.thingsboard.server.dao.housekeeper.data;
 
 public enum HousekeeperTaskType {
-    DELETE_ENTITY,
+    DELETE_ENTITIES,
     DELETE_ATTRIBUTES,
     DELETE_TELEMETRY, // maybe divide into latest and ts kv history?
     DELETE_EVENTS,

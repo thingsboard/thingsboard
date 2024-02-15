@@ -196,8 +196,8 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     public List<Pair<String, String>> removeAllByEntityId(TenantId tenantId, EntityId entityId) {
         return jdbcTemplate.queryForList("DELETE FROM attribute_kv WHERE entity_type = ? and entity_id = ? " +
                         "RETURNING attribute_type, attribute_key", entityId.getEntityType().name(), entityId.getId()).stream()
-                .map(deleted -> Pair.of((String) deleted.get(ModelConstants.ATTRIBUTE_TYPE_COLUMN),
-                        (String) deleted.get(ModelConstants.ATTRIBUTE_KEY_COLUMN)))
+                .map(row -> Pair.of((String) row.get(ModelConstants.ATTRIBUTE_TYPE_COLUMN),
+                        (String) row.get(ModelConstants.ATTRIBUTE_KEY_COLUMN)))
                 .collect(Collectors.toList());
     }
 

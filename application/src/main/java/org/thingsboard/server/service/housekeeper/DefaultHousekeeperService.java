@@ -128,8 +128,13 @@ public class DefaultHousekeeperService implements HousekeeperService {
 
     @Override
     public void submitTask(HousekeeperTask task) {
+        submitTask(UUID.randomUUID(), task);
+    }
+
+    @Override
+    public void submitTask(UUID key, HousekeeperTask task) {
         TopicPartitionInfo tpi = TopicPartitionInfo.builder().topic(producer.getDefaultTopic()).build();
-        producer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), ToHousekeeperServiceMsg.newBuilder()
+        producer.send(tpi, new TbProtoQueueMsg<>(key, ToHousekeeperServiceMsg.newBuilder()
                 .setTask(HousekeeperTaskProto.newBuilder()
                         .setValue(ByteString.copyFrom(dataDecodingEncodingService.encode(task)))
                         .setTs(task.getTs())

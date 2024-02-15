@@ -130,6 +130,11 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     }
 
     @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteQueuesByTenantId(tenantId);
+    }
+
+    @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findQueueById(tenantId, new QueueId(entityId.getId())));
     }

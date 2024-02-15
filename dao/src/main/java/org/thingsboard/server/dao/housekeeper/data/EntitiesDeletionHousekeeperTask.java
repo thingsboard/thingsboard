@@ -13,25 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.housekeeper.processor;
+package org.thingsboard.server.dao.housekeeper.data;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
-import org.thingsboard.server.dao.housekeeper.data.HousekeeperTask;
-import org.thingsboard.server.dao.housekeeper.data.HousekeeperTaskType;
+import lombok.Getter;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.TenantId;
 
-@Component
-@RequiredArgsConstructor
-public class EntityDeletionTaskProcessor implements HousekeeperTaskProcessor<HousekeeperTask> {
+@Getter
+public class EntitiesDeletionHousekeeperTask extends HousekeeperTask {
 
-    @Override
-    public void process(HousekeeperTask task) throws Exception {
+    private final EntityType entityType;
 
-    }
-
-    @Override
-    public HousekeeperTaskType getTaskType() {
-        return HousekeeperTaskType.DELETE_ENTITY;
+    protected EntitiesDeletionHousekeeperTask(TenantId tenantId, EntityType entityType) {
+        super(tenantId, null, HousekeeperTaskType.DELETE_ENTITIES);
+        this.entityType = entityType;
     }
 
 }

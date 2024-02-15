@@ -34,6 +34,10 @@ public interface EntityDaoService {
         throw new IllegalArgumentException(getEntityType().getNormalName() + " deletion not supported");
     }
 
+    default void deleteByTenantId(TenantId tenantId) {
+        throw new IllegalArgumentException("Deletion by tenant id not supported for " + getEntityType().getNormalName());
+    }
+
     EntityType getEntityType();
 
 }

@@ -273,6 +273,11 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     }
 
     @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteDashboardsByTenantId(tenantId);
+    }
+
+    @Override
     public PageData<DashboardInfo> findDashboardsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink) {
         log.trace("Executing findDashboardsByTenantIdAndCustomerId, tenantId [{}], customerId [{}], pageLink [{}]", tenantId, customerId, pageLink);
         Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);

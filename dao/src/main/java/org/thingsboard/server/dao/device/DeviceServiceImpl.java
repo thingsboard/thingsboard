@@ -422,6 +422,12 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         tenantDevicesRemover.removeEntities(tenantId, tenantId);
     }
 
+    @Transactional
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteDevicesByTenantId(tenantId);
+    }
+
     @Override
     public PageData<Device> findDevicesByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink) {
         log.trace("Executing findDevicesByTenantIdAndCustomerId, tenantId [{}], customerId [{}], pageLink [{}]", tenantId, customerId, pageLink);

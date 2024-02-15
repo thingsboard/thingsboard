@@ -211,41 +211,26 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         return savedTenant;
     }
 
-    /**
-     * We intentionally leave this method without "Transactional" annotation due to complexity of the method.
-     * Ideally we should delete related entites without "paginatedRemover" logic. But in such a case we can't clear cache and send events.
-     * We will create separate task to make "deleteTenant" transactional.
-     */
+    @Transactional
     @Override
     public void deleteTenant(TenantId tenantId) {
         log.trace("Executing deleteTenant [{}]", tenantId);
         Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        entityViewService.deleteEntityViewsByTenantId(tenantId);
-        widgetsBundleService.deleteWidgetsBundlesByTenantId(tenantId);
-        widgetTypeService.deleteWidgetTypesByTenantId(tenantId);
-        assetService.deleteAssetsByTenantId(tenantId);
-        assetProfileService.deleteAssetProfilesByTenantId(tenantId);
-        deviceService.deleteDevicesByTenantId(tenantId);
-        deviceProfileService.deleteDeviceProfilesByTenantId(tenantId);
-        dashboardService.deleteDashboardsByTenantId(tenantId);
-        customerService.deleteCustomersByTenantId(tenantId);
-        edgeService.deleteEdgesByTenantId(tenantId);
-        userService.deleteTenantAdmins(tenantId);
-        ruleChainService.deleteRuleChainsByTenantId(tenantId);
-        apiUsageStateService.deleteApiUsageStateByTenantId(tenantId);
-        resourceService.deleteResourcesByTenantId(tenantId);
-        otaPackageService.deleteOtaPackagesByTenantId(tenantId);
-        rpcService.deleteAllRpcByTenantId(tenantId);
-        queueService.deleteQueuesByTenantId(tenantId);
-        notificationRequestService.deleteNotificationRequestsByTenantId(tenantId);
-        notificationRuleService.deleteNotificationRulesByTenantId(tenantId);
-        notificationTemplateService.deleteNotificationTemplatesByTenantId(tenantId);
-        notificationTargetService.deleteNotificationTargetsByTenantId(tenantId);
-        adminSettingsService.deleteAdminSettingsByTenantId(tenantId);
+
+        userService.deleteByTenantId(tenantId);
         tenantDao.removeById(tenantId, tenantId.getId());
+
+        cleanUpService.removeTenantEntities(tenantId, // don't forget to implement deleteByTenantId from EntityDaoService when adding entity type to this list
+                EntityType.ENTITY_VIEW, EntityType.WIDGETS_BUNDLE, EntityType.WIDGET_TYPE,
+                EntityType.ASSET, EntityType.ASSET_PROFILE, EntityType.DEVICE, EntityType.DEVICE_PROFILE,
+                EntityType.DASHBOARD, EntityType.CUSTOMER, EntityType.EDGE, EntityType.RULE_CHAIN,
+                EntityType.API_USAGE_STATE, EntityType.TB_RESOURCE, EntityType.OTA_PACKAGE, EntityType.RPC,
+                EntityType.QUEUE, EntityType.NOTIFICATION_REQUEST, EntityType.NOTIFICATION_RULE,
+                EntityType.NOTIFICATION_TEMPLATE, EntityType.NOTIFICATION_TARGET, EntityType.ADMIN_SETTINGS
+        );
+
         publishEvictEvent(new TenantEvictEvent(tenantId, true));
         eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(tenantId).build());
-        alarmService.deleteEntityAlarmRecordsByTenantId(tenantId);
     }
 
     @Override

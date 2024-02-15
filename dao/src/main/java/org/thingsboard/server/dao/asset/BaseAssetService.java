@@ -280,6 +280,11 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     }
 
     @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteAssetsByTenantId(tenantId);
+    }
+
+    @Override
     public PageData<Asset> findAssetsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink) {
         log.trace("Executing findAssetsByTenantIdAndCustomerId, tenantId [{}], customerId [{}], pageLink [{}]", tenantId, customerId, pageLink);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);

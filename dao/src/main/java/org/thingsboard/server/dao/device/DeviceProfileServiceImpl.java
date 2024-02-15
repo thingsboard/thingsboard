@@ -360,6 +360,11 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     }
 
     @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteDeviceProfilesByTenantId(tenantId);
+    }
+
+    @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findDeviceProfileById(tenantId, new DeviceProfileId(entityId.getId())));
     }

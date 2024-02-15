@@ -305,6 +305,11 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
     }
 
     @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteAssetProfilesByTenantId(tenantId);
+    }
+
+    @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findAssetProfileById(tenantId, new AssetProfileId(entityId.getId())));
     }

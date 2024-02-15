@@ -105,6 +105,11 @@ public class DefaultNotificationRequestService implements NotificationRequestSer
     }
 
     @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteNotificationRequestsByTenantId(tenantId);
+    }
+
+    @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findNotificationRequestById(tenantId, new NotificationRequestId(entityId.getId())));
     }

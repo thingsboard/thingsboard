@@ -180,6 +180,11 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
         customersByTenantRemover.removeEntities(tenantId, tenantId);
     }
 
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteCustomersByTenantId(tenantId);
+    }
+
     private PaginatedRemover<TenantId, Customer> customersByTenantRemover =
             new PaginatedRemover<TenantId, Customer>() {
 

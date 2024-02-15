@@ -180,6 +180,11 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
     }
 
     @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteWidgetsBundlesByTenantId(tenantId);
+    }
+
+    @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findWidgetsBundleById(tenantId, new WidgetsBundleId(entityId.getId())));
     }

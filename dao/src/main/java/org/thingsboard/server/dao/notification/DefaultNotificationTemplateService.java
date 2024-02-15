@@ -90,6 +90,11 @@ public class DefaultNotificationTemplateService extends AbstractEntityService im
     }
 
     @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteNotificationTemplatesByTenantId(tenantId);
+    }
+
+    @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findNotificationTemplateById(tenantId, new NotificationTemplateId(entityId.getId())));
     }

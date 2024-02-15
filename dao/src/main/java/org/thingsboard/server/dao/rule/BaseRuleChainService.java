@@ -444,6 +444,11 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteRuleChainsByTenantId(tenantId);
+    }
+
+    @Override
     public RuleChainData exportTenantRuleChains(TenantId tenantId, PageLink pageLink) {
         Validator.validateId(tenantId, "Incorrect tenant id for search rule chain request.");
         Validator.validatePageLink(pageLink);
