@@ -28,6 +28,8 @@ import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleSingleEntit
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AlarmRuleId;
+import org.thingsboard.server.common.data.id.AssetProfileId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
@@ -86,11 +88,15 @@ public class AlarmRuleImportService extends BaseEntityImportService<AlarmRuleId,
             }
             case DEVICE_TYPE -> {
                 var profileType = (AlarmRuleDeviceTypeEntityFilter) entityFilter;
-                yield new AlarmRuleDeviceTypeEntityFilter(idProvider.getInternalId(profileType.getDeviceProfileId(), true));
+                List<DeviceProfileId> deviceProfileIds =
+                        profileType.getDeviceProfileIds().stream().map(id -> idProvider.getInternalId(id, true)).toList();
+                yield new AlarmRuleDeviceTypeEntityFilter(deviceProfileIds);
             }
             case ASSET_TYPE -> {
                 var profileType = (AlarmRuleAssetTypeEntityFilter) entityFilter;
-                yield new AlarmRuleAssetTypeEntityFilter(idProvider.getInternalId(profileType.getAssetProfileId(), true));
+                List<AssetProfileId> assetProfileIds =
+                        profileType.getAssetProfileIds().stream().map(id -> idProvider.getInternalId(id, true)).toList();
+                yield new AlarmRuleAssetTypeEntityFilter(assetProfileIds);
             }
             case ENTITY_LIST -> {
                 var listFilter = (AlarmRuleEntityListEntityFilter) entityFilter;

@@ -50,7 +50,7 @@ public enum Operation {
                 o1 = o1.toLowerCase();
                 o2 = o2.toLowerCase();
             }
-            stringPredicate.test(o1, o2);
+            return stringPredicate.test(o1, o2);
         }
         return false;
     }

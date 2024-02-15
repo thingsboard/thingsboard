@@ -15,27 +15,12 @@
  */
 package org.thingsboard.rule.engine.api;
 
-import org.thingsboard.server.common.data.HasProfileId;
-import org.thingsboard.server.common.data.id.AlarmRuleId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbMsg;
+
+import java.util.concurrent.ExecutionException;
 
 public interface TbAlarmRuleStateService {
 
-    void process(TbContext tbContext, TbMsg msg) throws Exception;
+    void process(TbContext tbContext, TbMsg msg) throws ExecutionException, InterruptedException;
 
-    void process(TenantId tenantId, TbMsg msg) throws Exception;
-
-    <T extends HasProfileId<? extends EntityId>> void processEntityUpdated(TenantId tenantId, EntityId entityId, T entity);
-
-    void processEntityDeleted(TenantId tenantId, EntityId entityId);
-
-    void createAlarmRule(TenantId tenantId, AlarmRuleId alarmRuleId);
-
-    void updateAlarmRule(TenantId tenantId, AlarmRuleId alarmRuleId);
-
-    void deleteAlarmRule(TenantId tenantId, AlarmRuleId alarmRuleId);
-
-    void deleteTenant(TenantId tenantId);
 }

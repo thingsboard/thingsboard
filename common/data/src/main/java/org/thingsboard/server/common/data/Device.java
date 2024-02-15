@@ -39,7 +39,7 @@ import java.util.Optional;
 @Schema
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class Device extends BaseDataWithAdditionalInfo<DeviceId> implements HasLabel, HasTenantId, HasCustomerId, HasOtaPackage, ExportableEntity<DeviceId>, HasProfileId<DeviceProfileId> {
+public class Device extends BaseDataWithAdditionalInfo<DeviceId> implements HasLabel, HasTenantId, HasCustomerId, HasOtaPackage, ExportableEntity<DeviceId> {
 
     private static final long serialVersionUID = 2807343040519543363L;
 
@@ -172,12 +172,6 @@ public class Device extends BaseDataWithAdditionalInfo<DeviceId> implements HasL
 
     public void setDeviceProfileId(DeviceProfileId deviceProfileId) {
         this.deviceProfileId = deviceProfileId;
-    }
-
-    @Override
-    @JsonIgnore
-    public DeviceProfileId getProfileId() {
-        return deviceProfileId;
     }
 
     @Schema(description = "JSON object with content specific to type of transport in the device profile.")

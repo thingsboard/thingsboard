@@ -19,10 +19,14 @@ import lombok.Data;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 
+import java.util.List;
+
+import static org.thingsboard.server.common.data.EntityType.DEVICE_PROFILE;
+
 @Data
 public class AlarmRuleDeviceTypeEntityFilter implements AlarmRuleEntityFilter {
 
-    private final DeviceProfileId deviceProfileId;
+    private final List<DeviceProfileId> deviceProfileIds;
 
     @Override
     public AlarmRuleEntityFilterType getType() {
@@ -31,6 +35,6 @@ public class AlarmRuleDeviceTypeEntityFilter implements AlarmRuleEntityFilter {
 
     @Override
     public boolean isEntityMatches(EntityId entityId) {
-        return deviceProfileId.equals(entityId);
+        return entityId.getEntityType() == DEVICE_PROFILE && deviceProfileIds.contains((DeviceProfileId) entityId);
     }
 }

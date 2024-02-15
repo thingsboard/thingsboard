@@ -45,6 +45,7 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 
 import static org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleEntityFilterType.ASSET_TYPE;
@@ -108,16 +109,17 @@ public class AlarmRuleDataValidator extends DataValidator<AlarmRule> {
     private void validateSourceEntityFilter(TenantId tenantId, AlarmRuleEntityFilter entityFilter) {
         switch (entityFilter.getType()) {
             case SINGLE_ENTITY -> validateSourceEntityFilter(tenantId, ((AlarmRuleSingleEntityFilter) entityFilter).getEntityId(), SINGLE_ENTITY);
-            case DEVICE_TYPE -> validateSourceEntityFilter(tenantId, ((AlarmRuleDeviceTypeEntityFilter) entityFilter).getDeviceProfileId(), DEVICE_TYPE);
-            case ASSET_TYPE -> validateSourceEntityFilter(tenantId, ((AlarmRuleAssetTypeEntityFilter) entityFilter).getAssetProfileId(), ASSET_TYPE);
-            case ENTITY_LIST -> {
-                var list = ((AlarmRuleEntityListEntityFilter) entityFilter).getEntityIds();
-                if (CollectionUtils.isEmpty(list)) {
-                    throw new DataValidationException("EntityIds should be specified in Alarm Rule ENTITY_LIST filter!");
-                }
-                list.forEach(entityId -> validateSourceEntityFilter(tenantId, entityId, ENTITY_LIST));
-            }
+            case DEVICE_TYPE -> validateSourceEntityListFilter(tenantId, ((AlarmRuleDeviceTypeEntityFilter) entityFilter).getDeviceProfileIds(), DEVICE_TYPE);
+            case ASSET_TYPE -> validateSourceEntityListFilter(tenantId, ((AlarmRuleAssetTypeEntityFilter) entityFilter).getAssetProfileIds(), ASSET_TYPE);
+            case ENTITY_LIST -> validateSourceEntityListFilter(tenantId, ((AlarmRuleEntityListEntityFilter) entityFilter).getEntityIds(), ENTITY_LIST);
         }
+    }
+
+    private void validateSourceEntityListFilter(TenantId tenantId, List<? extends EntityId> entityIds, AlarmRuleEntityFilterType entityFilterType) {
+        if (CollectionUtils.isEmpty(entityIds)) {
+            throw new DataValidationException(String.format("EntityIds should be specified in Alarm Rule %s filter!", entityFilterType));
+        }
+        entityIds.forEach(entityId -> validateSourceEntityFilter(tenantId, entityId, entityFilterType));
     }
 
     private void validateSourceEntityFilter(TenantId tenantId, EntityId entityId, AlarmRuleEntityFilterType entityFilterType) {

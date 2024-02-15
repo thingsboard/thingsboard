@@ -40,7 +40,6 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleOriginatorTargetEntity;
-import org.thingsboard.server.common.data.alarm.rule.AlarmRuleSpecifiedTargetEntity;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionKeyType;
@@ -102,6 +101,7 @@ import org.thingsboard.server.service.sync.vc.data.SimpleEntitiesExportCtx;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
@@ -308,7 +308,7 @@ public abstract class BaseExportImportServiceTest extends AbstractControllerTest
         clearRule.setCondition(clearCondition);
         alarmRuleConfiguration.setClearRule(clearRule);
 
-        AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(deviceProfileId);
+        AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfileId));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
         alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
@@ -388,6 +388,7 @@ public abstract class BaseExportImportServiceTest extends AbstractControllerTest
             assertThat(importedDashboard.getAssignedCustomers()).containsAll(initialDashboard.getAssignedCustomers());
         }
     }
+
     protected RuleChain createRuleChain(TenantId tenantId, String name, EntityId originatorId) {
         RuleChain ruleChain = new RuleChain();
         ruleChain.setTenantId(tenantId);

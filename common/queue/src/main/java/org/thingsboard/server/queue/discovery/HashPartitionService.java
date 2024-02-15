@@ -65,10 +65,6 @@ public class HashPartitionService implements PartitionService {
     private String vcTopic;
     @Value("${queue.vc.partitions:10}")
     private Integer vcPartitions;
-    @Value("${queue.ar.topic:tb_alarm_rules}")
-    private String arTopic;
-    @Value("${queue.ar.partitions:10}")
-    private Integer arPartitions;
     @Value("${queue.partitions.hash_function_name:murmur3_128}")
     private String hashFunctionName;
 
@@ -113,10 +109,6 @@ public class HashPartitionService implements PartitionService {
         QueueKey vcKey = new QueueKey(ServiceType.TB_VC_EXECUTOR);
         partitionSizesMap.put(vcKey, vcPartitions);
         partitionTopicsMap.put(vcKey, vcTopic);
-
-        QueueKey arKey = new QueueKey(ServiceType.TB_ALARM_RULES_EXECUTOR);
-        partitionSizesMap.put(arKey, arPartitions);
-        partitionTopicsMap.put(arKey, arTopic);
 
         if (!isTransport(serviceInfoProvider.getServiceType())) {
             doInitRuleEnginePartitions();
@@ -540,9 +532,7 @@ public class HashPartitionService implements PartitionService {
                         responsibleServices.computeIfAbsent(profileId, k -> new ArrayList<>()).add(instance);
                     }
                 }
-            } else if (ServiceType.TB_CORE.equals(serviceType)
-                    || ServiceType.TB_VC_EXECUTOR.equals(serviceType)
-                    || ServiceType.TB_ALARM_RULES_EXECUTOR.equals(serviceType)) {
+            } else if (ServiceType.TB_CORE.equals(serviceType) || ServiceType.TB_VC_EXECUTOR.equals(serviceType)) {
                 queueServiceList.computeIfAbsent(new QueueKey(serviceType), key -> new ArrayList<>()).add(instance);
             }
         }

@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.data.asset;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
@@ -25,7 +24,6 @@ import org.thingsboard.server.common.data.BaseDataWithAdditionalInfo;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasLabel;
-import org.thingsboard.server.common.data.HasProfileId;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
@@ -38,7 +36,7 @@ import java.util.Optional;
 
 @Schema
 @EqualsAndHashCode(callSuper = true)
-public class Asset extends BaseDataWithAdditionalInfo<AssetId> implements HasLabel, HasTenantId, HasCustomerId, ExportableEntity<AssetId>, HasProfileId<AssetProfileId> {
+public class Asset extends BaseDataWithAdditionalInfo<AssetId> implements HasLabel, HasTenantId, HasCustomerId, ExportableEntity<AssetId> {
 
     private static final long serialVersionUID = 2807343040519543363L;
 
@@ -158,12 +156,6 @@ public class Asset extends BaseDataWithAdditionalInfo<AssetId> implements HasLab
 
     public void setAssetProfileId(AssetProfileId assetProfileId) {
         this.assetProfileId = assetProfileId;
-    }
-
-    @Override
-    @JsonIgnore
-    public AssetProfileId getProfileId() {
-        return assetProfileId;
     }
 
     @Schema(description = "Additional parameters of the asset", implementation = com.fasterxml.jackson.databind.JsonNode.class)

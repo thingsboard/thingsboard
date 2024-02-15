@@ -15,13 +15,22 @@
  */
 package org.thingsboard.server.service.queue.ruleengine;
 
+import com.google.protobuf.ProtocolStringList;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.Queue;
+import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
+import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.QueueKey;
 
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 public class TbRuleEngineInternalQueueConsumerManager extends TbRuleEngineQueueConsumerManager {
 
@@ -32,15 +41,31 @@ public class TbRuleEngineInternalQueueConsumerManager extends TbRuleEngineQueueC
     @Override
     protected void processMsgs(List<TbProtoQueueMsg<ToRuleEngineMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> consumer, Queue queue) throws InterruptedException {
         // TODO:  stats.log(result, decision.isCommit());
-        //        ctx.isPrometheusStatsEnabled() ?
-        //                new TbMsgPackCallback(id, tenantId, packCtx, stats.getTimer(tenantId, SUCCESSFUL_STATUS), stats.getTimer(tenantId, FAILED_STATUS)) :
-        //                new TbMsgPackCallback(id, tenantId, packCtx)
+
+        for (TbProtoQueueMsg<ToRuleEngineMsg> msg : msgs) {
+            forwardToRuleEngineActor(msg.getValue());
+        }
+        consumer.commit();
+    }
+
+    private void forwardToRuleEngineActor(ToRuleEngineMsg toRuleEngineMsg) {
+        TbMsg tbMsg = TbMsg.fromBytes(toRuleEngineMsg.getQueueName(), toRuleEngineMsg.getTbMsg().toByteArray(), TbMsgCallback.EMPTY);
+        QueueToRuleEngineMsg msg;
+        ProtocolStringList relationTypesList = toRuleEngineMsg.getRelationTypesList();
+        Set<String> relationTypes;
+        if (relationTypesList.size() == 1) {
+            relationTypes = Collections.singleton(relationTypesList.get(0));
+        } else {
+            relationTypes = new HashSet<>(relationTypesList);
+        }
+        msg = new QueueToRuleEngineMsg(new TenantId(new UUID(toRuleEngineMsg.getTenantIdMSB(), toRuleEngineMsg.getTenantIdLSB())), tbMsg, relationTypes, toRuleEngineMsg.getFailureMessage());
+        ctx.getActorContext().tell(msg);
     }
 
     @Override
     public void printStats(long ts) {
-        stats.printStats();
-        stats.reset();
+//        stats.printStats();
+//        stats.reset();
     }
 
 }

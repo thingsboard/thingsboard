@@ -1466,6 +1466,7 @@ message ToRuleEngineMsg {
   bytes tbMsg = 3;
   repeated string relationTypes = 4;
   string failureMessage = 5;
+  string queueName = 6;
 }
 
 message ToRuleEngineNotificationMsg {
@@ -1520,24 +1521,6 @@ message ToOtaPackageStateServiceMsg {
   int64 otaPackageIdMSB = 6;
   int64 otaPackageIdLSB = 7;
   string type = 8;
-}
-
-message ToTbAlarmRuleStateServiceMsg {
-  int64 tenantIdMSB = 1;
-  int64 tenantIdLSB = 2;
-  string queueName = 3;
-  bytes tbMsg = 4;
-  EntityUpdateMsg entityUpdateMsg = 5;
-  EntityDeleteMsg entityDeleteMsg = 6;
-  TbAlarmRuleRequestCtxProto alarmRuleRequest = 7;
-}
-
-message TbAlarmRuleRequestCtxProto {
-  int64 ruleChainIdMSB = 1;
-  int64 ruleChainIdLSB = 2;
-  int64 ruleNodeIdMSB = 3;
-  int64 ruleNodeIdLSB = 4;
-  bool isDebug = 5;
 }
 
 message NotificationSchedulerServiceMsg {

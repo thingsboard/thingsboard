@@ -15,13 +15,13 @@
  */
 package org.thingsboard.server.queue.rabbitmq;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
 
-import jakarta.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -41,8 +41,6 @@ public class TbRabbitMqQueueArguments {
     private String jsExecutorProperties;
     @Value("${queue.rabbitmq.queue-properties.version-control:}")
     private String vcProperties;
-    @Value("${queue.rabbitmq.queue-properties.alarm-rules:}")
-    private String arProperties;
 
     @Getter
     private Map<String, Object> coreArgs;
@@ -56,8 +54,6 @@ public class TbRabbitMqQueueArguments {
     private Map<String, Object> jsExecutorArgs;
     @Getter
     private Map<String, Object> vcArgs;
-    @Getter
-    private Map<String, Object> arArgs;
 
     @PostConstruct
     private void init() {
@@ -67,7 +63,6 @@ public class TbRabbitMqQueueArguments {
         notificationsArgs = getArgs(notificationsProperties);
         jsExecutorArgs = getArgs(jsExecutorProperties);
         vcArgs = getArgs(vcProperties);
-        arArgs = getArgs(arProperties);
     }
 
     public static Map<String, Object> getArgs(String properties) {

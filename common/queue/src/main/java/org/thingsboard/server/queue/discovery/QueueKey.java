@@ -60,6 +60,10 @@ public class QueueKey {
         return DataConstants.MAIN_QUEUE_NAME.equals(queueName);
     }
 
+    public boolean isInternal() {
+        return DataConstants.INTERNAL_QUEUE_NAME.equals(queueName);
+    }
+
     @Override
     public String toString() {
         return "QK(" + queueName + "," + type + "," +

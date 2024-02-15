@@ -380,7 +380,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
         AlarmRuleConfiguration highTemperature = new AlarmRuleConfiguration();
 
-        highTemperature.setSourceEntityFilters(Collections.singletonList(new AlarmRuleDeviceTypeEntityFilter(savedThermostatDeviceProfile.getId())));
+        highTemperature.setSourceEntityFilters(Collections.singletonList(new AlarmRuleDeviceTypeEntityFilter(List.of(savedThermostatDeviceProfile.getId()))));
         highTemperature.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         AlarmRuleCondition temperatureRule = new AlarmRuleCondition();
@@ -457,7 +457,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
         AlarmRuleConfiguration lowHumidity = new AlarmRuleConfiguration();
 
-        lowHumidity.setSourceEntityFilters(Collections.singletonList(new AlarmRuleDeviceTypeEntityFilter(savedThermostatDeviceProfile.getId())));
+        lowHumidity.setSourceEntityFilters(Collections.singletonList(new AlarmRuleDeviceTypeEntityFilter(List.of(savedThermostatDeviceProfile.getId()))));
         lowHumidity.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         AlarmRuleCondition humidityRule = new AlarmRuleCondition();

@@ -81,7 +81,7 @@ public class AlarmRuleMigrator {
         alarmRule.setEnabled(true);
 
         var configuration = new AlarmRuleConfiguration();
-        configuration.setSourceEntityFilters(Collections.singletonList(new AlarmRuleDeviceTypeEntityFilter(deviceProfile.getId())));
+        configuration.setSourceEntityFilters(Collections.singletonList(new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfile.getId()))));
         configuration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
         configuration.setPropagate(oldRule.isPropagate());
         configuration.setPropagateToOwner(oldRule.isPropagateToOwner());

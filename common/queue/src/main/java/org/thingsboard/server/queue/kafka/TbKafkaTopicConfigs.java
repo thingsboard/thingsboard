@@ -15,13 +15,13 @@
  */
 package org.thingsboard.server.queue.kafka;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.queue.util.PropertyUtils;
 
-import jakarta.annotation.PostConstruct;
 import java.util.Map;
 
 @Component
@@ -43,8 +43,6 @@ public class TbKafkaTopicConfigs {
     private String fwUpdatesProperties;
     @Value("${queue.kafka.topic-properties.version-control:}")
     private String vcProperties;
-    @Value("${queue.kafka.topic-properties.alarm-rules:}")
-    private String arProperties;
 
     @Getter
     private Map<String, String> coreConfigs;
@@ -64,8 +62,6 @@ public class TbKafkaTopicConfigs {
     private Map<String, String> fwUpdatesConfigs;
     @Getter
     private Map<String, String> vcConfigs;
-    @Getter
-    private Map<String, String> arConfigs;
 
     @PostConstruct
     private void init() {
@@ -80,7 +76,6 @@ public class TbKafkaTopicConfigs {
         jsExecutorResponseConfigs.put(NUM_PARTITIONS_SETTING, "1");
         fwUpdatesConfigs = PropertyUtils.getProps(fwUpdatesProperties);
         vcConfigs = PropertyUtils.getProps(vcProperties);
-        arConfigs = PropertyUtils.getProps(arProperties);
     }
 
 }

@@ -43,6 +43,7 @@ import org.thingsboard.server.service.alarm.rule.state.PersistedAlarmRuleState;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -66,11 +67,7 @@ class AlarmRuleState {
         this.severity = severity;
         this.alarmRule = alarmRule;
         this.entityKeys = entityKeys;
-        if (state != null) {
-            this.state = state;
-        } else {
-            this.state = new PersistedAlarmRuleState(0L, 0L, 0L);
-        }
+        this.state = Objects.requireNonNullElseGet(state, () -> new PersistedAlarmRuleState(0L, 0L, 0L));
         this.spec = getSpec(alarmRule);
         this.dynamicPredicateValueCtx = dynamicPredicateValueCtx;
     }

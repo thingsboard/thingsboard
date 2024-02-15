@@ -17,6 +17,7 @@ package org.thingsboard.server.service.alarm.rule;
 
 import com.google.gson.JsonParser;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.adaptor.JsonConverter;
@@ -71,7 +72,8 @@ class EntityState {
     @Getter
     private final EntityId entityId;
     @Getter
-    private final EntityId profileId;
+    @Setter
+    private EntityId profileId;
     private final TbAlarmRuleContext ctx;
     private final EntityRulesState entityRulesState;
     private final PersistedEntityState pes;

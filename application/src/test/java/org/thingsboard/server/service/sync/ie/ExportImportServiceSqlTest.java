@@ -34,7 +34,6 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
-import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleDeviceTypeEntityFilter;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
@@ -747,7 +746,7 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
         assertThat(importedConfiguration.isPropagateToTenant()).isEqualTo(configuration.isPropagateToTenant());
         assertThat(importedConfiguration.getPropagateRelationTypes()).isEqualTo(configuration.getPropagateRelationTypes());
 
-        assertThat(((AlarmRuleDeviceTypeEntityFilter)importedConfiguration.getSourceEntityFilters().get(0)).getDeviceProfileId()).isEqualTo(profileImportResult.getSavedEntity().getId());
+        assertThat(((AlarmRuleDeviceTypeEntityFilter) importedConfiguration.getSourceEntityFilters().get(0)).getDeviceProfileIds().get(0)).isEqualTo(profileImportResult.getSavedEntity().getId());
     }
 
     @Test

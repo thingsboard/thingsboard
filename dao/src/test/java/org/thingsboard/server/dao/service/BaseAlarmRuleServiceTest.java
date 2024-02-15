@@ -269,7 +269,7 @@ public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
 
-        AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(deviceProfileId);
+        AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfileId));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
         alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
@@ -333,7 +333,7 @@ public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
         alarmRuleCondition.setCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
 
-        AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(deviceProfileId);
+        AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfileId));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
         alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
@@ -342,5 +342,4 @@ public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
         alarmRule.setConfiguration(alarmRuleConfiguration);
         return alarmRule;
     }
-
 }

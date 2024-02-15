@@ -68,12 +68,12 @@ public class AlarmRuleTest extends AbstractContainerTest {
         testRestClient.login("tenant@thingsboard.org", "tenant");
         device = testRestClient.postDevice("", defaultDevicePrototype("alarmRule_"));
         deviceId = device.getId();
-        deviceCredentialsId = testRestClient.getDeviceCredentialsByDeviceId(device.getId()).getCredentialsId();
+        deviceCredentialsId = testRestClient.getDeviceCredentialsByDeviceId(deviceId).getCredentialsId();
     }
 
     @AfterMethod
     public void tearDown() {
-        testRestClient.deleteDeviceIfExists(device.getId());
+        testRestClient.deleteDeviceIfExists(deviceId);
         PageData<AlarmRuleInfo> data = testRestClient.getAlarmRules(new PageLink(100));
         data.getData().forEach(info -> testRestClient.deleteAlarmRule(info.getId()));
     }
@@ -85,11 +85,11 @@ public class AlarmRuleTest extends AbstractContainerTest {
 
         postTelemetryAndAwait(deviceCredentialsId, "temperature", 42.0);
 
-        checkLastAlarm(device.getId(), "highTemperatureAlarm", false);
+        checkLastAlarm(deviceId, "highTemperatureAlarm", false);
 
         postTelemetryAndAwait(deviceCredentialsId, "temperature", 5.0);
 
-        checkLastAlarm(device.getId(), "highTemperatureAlarm", true);
+        checkLastAlarm(deviceId, "highTemperatureAlarm", true);
     }
 
     @Test
@@ -101,18 +101,18 @@ public class AlarmRuleTest extends AbstractContainerTest {
 
         postTelemetryAndAwait(deviceCredentialsId, "temperature", 42.0);
 
-        checkLastAlarm(device.getId(), "highTemperatureAlarm", false);
+        checkLastAlarm(deviceId, "highTemperatureAlarm", false);
 
         postTelemetryAndAwait(deviceCredentialsId, "temperature", 5.0);
 
-        checkLastAlarm(device.getId(), "highTemperatureAlarm", false);
+        checkLastAlarm(deviceId, "highTemperatureAlarm", false);
 
         alarmRule.getConfiguration().setClearRule(clearRule);
         testRestClient.postAlarmRule(alarmRule);
 
         postTelemetryAndAwait(deviceCredentialsId, "temperature", 5);
 
-        checkLastAlarm(device.getId(), "highTemperatureAlarm", true);
+        checkLastAlarm(deviceId, "highTemperatureAlarm", true);
     }
 
     @Test
@@ -122,14 +122,14 @@ public class AlarmRuleTest extends AbstractContainerTest {
 
         postTelemetryAndAwait(deviceCredentialsId, "temperature", 42.0);
 
-        checkLastAlarm(device.getId(), "highTemperatureAlarm", false);
+        checkLastAlarm(deviceId, "highTemperatureAlarm", false);
 
         alarmRule.getConfiguration().setClearRule(null);
         testRestClient.postAlarmRule(alarmRule);
 
         postTelemetryAndAwait(deviceCredentialsId, "temperature", 5.0);
 
-        checkLastAlarm(device.getId(), "highTemperatureAlarm", false);
+        checkLastAlarm(deviceId, "highTemperatureAlarm", false);
     }
 
     @Test
@@ -139,18 +139,18 @@ public class AlarmRuleTest extends AbstractContainerTest {
 
         postTelemetryAndAwait(deviceCredentialsId, "temperature", 22.0);
 
-        PageData<AlarmInfo> data = testRestClient.getEntityAlarms(device.getId(), new TimePageLink(10));
+        PageData<AlarmInfo> data = testRestClient.getEntityAlarms(deviceId, new TimePageLink(10));
         List<AlarmInfo> alarms = data.getData();
         assertThat(CollectionsUtil.isEmpty(alarms)).isTrue();
 
         postAttributeAndAwait(deviceCredentialsId, "temperatureThreshold", 20.0);
         postTelemetryAndAwait(deviceCredentialsId, "temperature", 22.0);
 
-        checkLastAlarm(device.getId(), "highTemperatureAlarm", false);
+        checkLastAlarm(deviceId, "highTemperatureAlarm", false);
 
         postTelemetryAndAwait(deviceCredentialsId, "temperature", 5.0);
 
-        checkLastAlarm(device.getId(), "highTemperatureAlarm", true);
+        checkLastAlarm(deviceId, "highTemperatureAlarm", true);
     }
 
     @Test
@@ -160,10 +160,10 @@ public class AlarmRuleTest extends AbstractContainerTest {
 
         postTelemetryAndAwait(deviceCredentialsId, "temperature", 42.0);
 
-        var alarm = checkLastAlarm(device.getId(), "highTemperatureAlarm", false);
+        var alarm = checkLastAlarm(deviceId, "highTemperatureAlarm", false);
         testRestClient.deleteAlarm(alarm.getId());
 
-        var data = testRestClient.getEntityAlarms(device.getId(), new TimePageLink(10));
+        var data = testRestClient.getEntityAlarms(deviceId, new TimePageLink(10));
         var alarms = data.getData();
         assertThat(CollectionsUtil.isEmpty(alarms)).isTrue();
 
@@ -171,11 +171,11 @@ public class AlarmRuleTest extends AbstractContainerTest {
 
         postTelemetryAndAwait(deviceCredentialsId, "temperature", 42.0);
 
-        checkLastAlarm(device.getId(), "highTemperatureAlarm", false);
+        checkLastAlarm(deviceId, "highTemperatureAlarm", false);
 
         postTelemetryAndAwait(deviceCredentialsId, "temperature", 5.0);
 
-        checkLastAlarm(device.getId(), "highTemperatureAlarm", true);
+        checkLastAlarm(deviceId, "highTemperatureAlarm", true);
     }
 
     @Test
@@ -185,14 +185,14 @@ public class AlarmRuleTest extends AbstractContainerTest {
 
         postTelemetryAndAwait(deviceCredentialsId, "temperature", 42.0);
 
-        var alarm = checkLastAlarm(device.getId(), "highTemperatureAlarm", false);
+        var alarm = checkLastAlarm(deviceId, "highTemperatureAlarm", false);
 
         testRestClient.deleteAlarmRule(alarmRule.getId());
         testRestClient.deleteAlarm(alarm.getId());
 
         postTelemetryAndAwait(deviceCredentialsId, "temperature", 42.0);
 
-        var data = testRestClient.getEntityAlarms(device.getId(), new TimePageLink(10));
+        var data = testRestClient.getEntityAlarms(deviceId, new TimePageLink(10));
         assertThat(CollectionsUtil.isEmpty(data.getData())).isTrue();
     }
 
@@ -203,27 +203,27 @@ public class AlarmRuleTest extends AbstractContainerTest {
 
         postTelemetryAndAwait(deviceCredentialsId, "temperature", 42.0);
 
-        var alarm = checkLastAlarm(device.getId(), "highTemperatureAlarm", false);
+        var alarm = checkLastAlarm(deviceId, "highTemperatureAlarm", false);
 
         testRestClient.clearAlarm(alarm.getId());
 
-        checkLastAlarm(device.getId(), "highTemperatureAlarm", true);
+        checkLastAlarm(deviceId, "highTemperatureAlarm", true);
 
         Thread.sleep(2000);
 
         postTelemetryAndAwait(deviceCredentialsId, "temperature", 42.0);
 
-        checkLastAlarm(device.getId(), "highTemperatureAlarm", false);
+        checkLastAlarm(deviceId, "highTemperatureAlarm", false);
 
         postTelemetryAndAwait(deviceCredentialsId, "temperature", 5.0);
 
-        checkLastAlarm(device.getId(), "highTemperatureAlarm", true);
+        checkLastAlarm(deviceId, "highTemperatureAlarm", true);
     }
 
     private void postTelemetryAndAwait(String deviceCredentialsId, String key, double value) throws Exception {
         WsClient wsClient;
         WsTelemetryResponse actualLatestTelemetry;
-        wsClient = subscribeToWebSocket(device.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
+        wsClient = subscribeToWebSocket(deviceId, "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
         testRestClient.postTelemetry(deviceCredentialsId, mapper.valueToTree(Map.of(key, value)));
 
         actualLatestTelemetry = wsClient.getLastMessage();
@@ -235,7 +235,7 @@ public class AlarmRuleTest extends AbstractContainerTest {
     private void postAttributeAndAwait(String deviceCredentialsId, String key, double value) throws Exception {
         WsClient wsClient;
         WsTelemetryResponse actualLatestTelemetry;
-        wsClient = subscribeToWebSocket(device.getId(), "CLIENT_SCOPE", CmdsType.ATTR_SUB_CMDS);
+        wsClient = subscribeToWebSocket(deviceId, "CLIENT_SCOPE", CmdsType.ATTR_SUB_CMDS);
         testRestClient.postAttribute(deviceCredentialsId, mapper.valueToTree(Map.of(key, value)));
 
         actualLatestTelemetry = wsClient.getLastMessage();
@@ -309,7 +309,7 @@ public class AlarmRuleTest extends AbstractContainerTest {
         clearRule.setCondition(clearCondition);
         alarmRuleConfiguration.setClearRule(clearRule);
 
-        AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(device.getDeviceProfileId());
+        AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(device.getDeviceProfileId()));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
         alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 

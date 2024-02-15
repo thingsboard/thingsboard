@@ -185,58 +185,6 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     @Override
-    public void pushMsgToAlarmRules(TopicPartitionInfo tpi, EntityId entityId, TransportProtos.ToTbAlarmRuleStateServiceMsg msg, TbQueueCallback callback) {
-        log.trace("PUSHING msg: {} to:{}", msg, tpi);
-        producerProvider.getTbAlarmRulesMsgProducer().send(tpi, new TbProtoQueueMsg<>(entityId.getId(), msg), callback);
-        toRuleEngineMsgs.incrementAndGet();
-    }
-
-    @Override
-    public <T> void pushUpdateEntityMsgToAlarmRules(TopicPartitionInfo tpi, TenantId tenantId, EntityId entityId, T entity, TbQueueCallback callback) {
-        log.trace("PUSHING entity update: {} to:{}", entityId, tpi);
-        TransportProtos.ToTbAlarmRuleStateServiceMsg toAlarmRule =
-                TransportProtos.ToTbAlarmRuleStateServiceMsg.newBuilder()
-                        .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
-                        .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
-                        .setEntityUpdateMsg(ProtoUtils.toEntityUpdateProto(entity))
-                        .build();
-
-        pushMsgToAlarmRules(tpi, entityId, toAlarmRule, callback);
-    }
-
-    @Override
-    public void pushDeleteEntityMsgToAlarmRules(TopicPartitionInfo tpi, TenantId tenantId, EntityId entityId, TbQueueCallback callback) {
-        log.trace("PUSHING entity delete: {} to:{}", entityId, tpi);
-        TransportProtos.EntityDeleteMsg entityDeleteMsg = TransportProtos.EntityDeleteMsg.newBuilder()
-                .setEntityIdMSB(entityId.getId().getMostSignificantBits())
-                .setEntityIdLSB(entityId.getId().getLeastSignificantBits())
-                .setEntityType(entityId.getEntityType().name())
-                .build();
-
-        TransportProtos.ToTbAlarmRuleStateServiceMsg toAlarmRule =
-                TransportProtos.ToTbAlarmRuleStateServiceMsg.newBuilder()
-                        .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
-                        .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
-                        .setEntityDeleteMsg(entityDeleteMsg)
-                        .build();
-
-        pushMsgToAlarmRules(tpi, entityId, toAlarmRule, callback);
-    }
-
-    @Override
-    public void pushMsgToAlarmRules(TopicPartitionInfo tpi, TenantId tenantId, EntityId entityId, TbMsg msg, TbQueueCallback callback) {
-        log.trace("PUSHING msg: {} to:{}", msg, tpi);
-        TransportProtos.ToTbAlarmRuleStateServiceMsg toAlarmRule =
-                TransportProtos.ToTbAlarmRuleStateServiceMsg.newBuilder()
-                        .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
-                        .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
-                        .setTbMsg(TbMsg.toByteString(msg))
-                        .build();
-
-        pushMsgToAlarmRules(tpi, entityId, toAlarmRule, callback);
-    }
-
-    @Override
     public void pushMsgToRuleEngine(TopicPartitionInfo tpi, UUID msgId, ToRuleEngineMsg msg, TbQueueCallback callback) {
         log.trace("PUSHING msg: {} to:{}", msg, tpi);
         producerProvider.getRuleEngineMsgProducer().send(tpi, new TbProtoQueueMsg<>(msgId, msg), callback);

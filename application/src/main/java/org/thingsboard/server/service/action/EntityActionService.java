@@ -21,12 +21,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.api.TbAlarmRuleStateService;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
-import org.thingsboard.server.common.data.HasProfileId;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
@@ -52,6 +50,7 @@ import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.audit.AuditLogService;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.PartitionService;
 
 import java.util.List;
@@ -59,13 +58,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.data.DataConstants.INTERNAL_QUEUE_NAME;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class EntityActionService {
     private final TbClusterService tbClusterService;
     private final AuditLogService auditLogService;
-    private final Optional<TbAlarmRuleStateService> alarmRuleStateService;
     private final PartitionService partitionService;
     private final NotificationRuleProcessor notificationRuleProcessor;
 
@@ -182,10 +182,10 @@ public class EntityActionService {
                 TbMsg tbMsg = TbMsg.newMsg(msgType.get(), entityId, customerId, metaData, TbMsgDataType.JSON, JacksonUtil.toString(entityNode));
                 tbClusterService.pushMsgToRuleEngine(tenantId, entityId, tbMsg, null);
 
-                if (isSendEventToAlarmRuleStateServiceAvailable(msgType.get()) &&
-                        (entityId.getEntityType().equals(EntityType.DEVICE) || entityId.getEntityType().equals(EntityType.ASSET))) {
-                    pushMsgToAlarmRules(tenantId, entityId, entity, actionType, tbMsg);
-                }
+//                if (isSendEventToAlarmRuleStateServiceAvailable(msgType.get()) &&
+//                        (entityId.getEntityType().equals(EntityType.DEVICE) || entityId.getEntityType().equals(EntityType.ASSET))) {
+//                    pushMsgToAlarmRules(tenantId, entityId, tbMsg);
+//                }
             } catch (Exception e) {
                 log.warn("[{}] Failed to push entity action to rule engine: {}", entityId, actionType, e);
             }
@@ -194,34 +194,19 @@ public class EntityActionService {
 
     private boolean isSendEventToAlarmRuleStateServiceAvailable(TbMsgType msgType) {
         return switch (msgType) {
-            case ENTITY_DELETED, ENTITY_UPDATED, ENTITY_ASSIGNED, ENTITY_UNASSIGNED, ATTRIBUTES_UPDATED,
+            case ENTITY_ASSIGNED, ENTITY_UNASSIGNED, ATTRIBUTES_UPDATED,
                     ATTRIBUTES_DELETED, ALARM_ACK, ALARM_CLEAR, ALARM_DELETE -> true;
             default -> false;
         };
     }
 
-    private <T> void pushMsgToAlarmRules(TenantId tenantId, EntityId entityId, T entity, ActionType actionType, TbMsg tbMsg) throws Exception {
-        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_ALARM_RULES_EXECUTOR, tenantId, entityId);
-
-        if (actionType.equals(ActionType.UPDATED)) {
-            if (tpi.isMyPartition()) {
-                alarmRuleStateService.get().processEntityUpdated(tenantId, entityId, (HasProfileId<? extends EntityId>) entity);
-            } else {
-                tbClusterService.pushUpdateEntityMsgToAlarmRules(tpi, tenantId, entityId, entity, null);
-            }
-        } else if (actionType.equals(ActionType.DELETED)) {
-            if (tpi.isMyPartition()) {
-                alarmRuleStateService.get().processEntityDeleted(tenantId, entityId);
-            } else {
-                tbClusterService.pushDeleteEntityMsgToAlarmRules(tpi, tenantId, entityId, null);
-            }
-        } else {
-            if (tpi.isMyPartition()) {
-                alarmRuleStateService.get().process(tenantId, tbMsg);
-            } else {
-                tbClusterService.pushMsgToAlarmRules(tpi, tenantId, entityId, tbMsg, null);
-            }
-        }
+    private void pushMsgToAlarmRules(TenantId tenantId, EntityId entityId, TbMsg tbMsg) {
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, INTERNAL_QUEUE_NAME, tenantId, entityId);
+        TransportProtos.ToRuleEngineMsg msg = TransportProtos.ToRuleEngineMsg.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setTbMsg(TbMsg.toByteString(tbMsg)).build();
+        tbClusterService.pushMsgToRuleEngine(tpi, tbMsg.getId(), msg, null);
     }
 
     private void processNotificationRules(TenantId tenantId, EntityId originatorId, HasName entity, ActionType actionType, User user, Object... additionalInfo) {

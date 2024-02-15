@@ -24,14 +24,15 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.concurrent.ExecutionException;
 
-import static org.thingsboard.server.common.data.DataConstants.ACTIVITY_EVENT;
-import static org.thingsboard.server.common.data.DataConstants.INACTIVITY_EVENT;
+import static org.thingsboard.server.common.data.EntityType.ASSET;
+import static org.thingsboard.server.common.data.EntityType.DEVICE;
 
 @Slf4j
 @RuleNode(
@@ -55,18 +56,16 @@ public class TbDeviceProfileNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException {
-        try {
-            switch (msg.getType()) {
-                case "POST_TELEMETRY_REQUEST":
-                case "POST_ATTRIBUTES_REQUEST":
-                case ACTIVITY_EVENT:
-                case INACTIVITY_EVENT:
-                    ctx.getAlarmRuleStateService().process(ctx, msg);
-                    break;
+        EntityType originatorType = msg.getOriginator().getEntityType();
+        if (originatorType == DEVICE || originatorType == ASSET) {
+            switch (msg.getInternalType()) {
+                case POST_TELEMETRY_REQUEST, POST_ATTRIBUTES_REQUEST, ACTIVITY_EVENT, INACTIVITY_EVENT,
+                        ENTITY_ASSIGNED, ENTITY_UNASSIGNED, ATTRIBUTES_UPDATED, ATTRIBUTES_DELETED,
+                        ALARM_ACK, ALARM_CLEAR, ALARM_DELETE -> ctx.getAlarmRuleStateService().process(ctx, msg);
+                default -> ctx.tellSuccess(msg);
             }
+        } else {
             ctx.tellSuccess(msg);
-        } catch (Exception e) {
-            ctx.tellFailure(msg, e);
         }
     }
 

@@ -1601,15 +1601,6 @@ queue:
     request-timeout: "${TB_QUEUE_VC_REQUEST_TIMEOUT:180000}"
     # Queue settings for Kafka, RabbitMQ, etc. Limit for single message size
     msg-chunk-size: "${TB_QUEUE_VC_MSG_CHUNK_SIZE:250000}"
-  ar:
-    # Default topic name for Kafka, RabbitMQ, etc.
-    topic: "${TB_QUEUE_AR_TOPIC:tb_alarm_rules}"
-    # Number of partitions to associate with this queue. Used for scaling the number of messages that can be processed in parallel
-    partitions: "${TB_QUEUE_AR_PARTITIONS:10}"
-    # Interval in milliseconds between polling of the messages if no new messages arrive
-    poll-interval: "${TB_QUEUE_AR_INTERVAL_MS:25}"
-    # Timeout before retrying all failed and timed-out messages from the processing pack
-    pack-processing-timeout: "${TB_QUEUE_AR_PACK_PROCESSING_TIMEOUT_MS:60000}"
   js:
     # JS Eval request topic
     request_topic: "${REMOTE_JS_EVAL_REQUEST_TOPIC:js_eval.requests}"

@@ -19,10 +19,14 @@ import lombok.Data;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 
+import java.util.List;
+
+import static org.thingsboard.server.common.data.EntityType.ASSET_PROFILE;
+
 @Data
 public class AlarmRuleAssetTypeEntityFilter implements AlarmRuleEntityFilter {
 
-    private final AssetProfileId assetProfileId;
+    private final List<AssetProfileId> assetProfileIds;
 
     @Override
     public AlarmRuleEntityFilterType getType() {
@@ -31,6 +35,6 @@ public class AlarmRuleAssetTypeEntityFilter implements AlarmRuleEntityFilter {
 
     @Override
     public boolean isEntityMatches(EntityId entityId) {
-        return assetProfileId.equals(entityId);
+        return entityId.getEntityType() == ASSET_PROFILE && assetProfileIds.contains((AssetProfileId) entityId);
     }
 }

@@ -24,6 +24,8 @@ import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleEntityFilte
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleEntityListEntityFilter;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleSingleEntityFilter;
 import org.thingsboard.server.common.data.id.AlarmRuleId;
+import org.thingsboard.server.common.data.id.AssetProfileId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -57,19 +59,21 @@ public class AlarmRuleExportService extends BaseEntityExportService<AlarmRuleId,
             }
             case DEVICE_TYPE -> {
                 var profileType = (AlarmRuleDeviceTypeEntityFilter) entityFilter;
-                yield new AlarmRuleDeviceTypeEntityFilter(getExternalIdOrElseInternal(ctx, profileType.getDeviceProfileId()));
+                List<DeviceProfileId> deviceProfileIds =
+                        profileType.getDeviceProfileIds().stream().map(id -> getExternalIdOrElseInternal(ctx, id)).toList();
+                yield new AlarmRuleDeviceTypeEntityFilter(deviceProfileIds);
             }
             case ASSET_TYPE -> {
                 var profileType = (AlarmRuleAssetTypeEntityFilter) entityFilter;
-                yield new AlarmRuleAssetTypeEntityFilter(getExternalIdOrElseInternal(ctx, profileType.getAssetProfileId()));
+                List<AssetProfileId> assetProfileIds =
+                        profileType.getAssetProfileIds().stream().map(id -> getExternalIdOrElseInternal(ctx, id)).toList();
+                yield new AlarmRuleAssetTypeEntityFilter(assetProfileIds);
             }
             case ENTITY_LIST -> {
                 var listFilter = (AlarmRuleEntityListEntityFilter) entityFilter;
-                List<EntityId> entityIds = listFilter.getEntityIds();
-                for (int i = 0; i < entityIds.size(); i++) {
-                    entityIds.set(i, getExternalIdOrElseInternal(ctx, entityIds.get(i)));
-                }
-                yield entityFilter;
+                List<EntityId> entityIds =
+                        listFilter.getEntityIds().stream().map(id -> getExternalIdOrElseInternal(ctx, id)).toList();
+                yield new AlarmRuleEntityListEntityFilter(listFilter.getEntityType(), entityIds);
             }
             default -> entityFilter;
         };

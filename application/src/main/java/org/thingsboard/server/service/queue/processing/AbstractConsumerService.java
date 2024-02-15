@@ -15,16 +15,14 @@
  */
 package org.thingsboard.server.service.queue.processing;
 
-import lombok.RequiredArgsConstructor;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.rule.engine.api.TbAlarmRuleStateService;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.AlarmRuleId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -50,7 +48,6 @@ import org.thingsboard.server.service.queue.TbPackCallback;
 import org.thingsboard.server.service.queue.TbPackProcessingContext;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 
-import jakarta.annotation.PreDestroy;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -78,7 +75,6 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     protected final ApplicationEventPublisher eventPublisher;
     protected final TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer;
     protected final Optional<JwtSettingsService> jwtSettingsService;
-    protected final Optional<TbAlarmRuleStateService> alarmRuleStateService;
 
     public void init(String nfConsumerThreadName) {
         this.notificationsConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName(nfConsumerThreadName));
@@ -162,7 +158,6 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
         } else if (EntityType.TENANT.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
             if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
                 jwtSettingsService.ifPresent(JwtSettingsService::reloadJwtSettings);
-                alarmRuleStateService.ifPresent(s -> s.deleteTenant(new TenantId(componentLifecycleMsg.getEntityId().getId())));
                         return;
                     } else {
                         tenantProfileCache.evict(tenantId);
@@ -190,18 +185,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
                     if (componentLifecycleMsg.getEvent() == ComponentLifecycleEvent.DELETED) {
                         apiUsageStateService.onCustomerDelete((CustomerId) componentLifecycleMsg.getEntityId());
                     }
-                } else if (EntityType.ALARM_RULE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
-                    alarmRuleStateService.ifPresent(s -> {
-                        AlarmRuleId alarmRuleId = new AlarmRuleId(componentLifecycleMsg.getEntityId().getId());
-                        if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.CREATED)) {
-                            s.createAlarmRule(tenantId, alarmRuleId);
-                        } else if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.UPDATED)) {
-                            s.updateAlarmRule(tenantId, alarmRuleId);
-                        } else if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.DELETED)) {
-                            s.deleteAlarmRule(tenantId, alarmRuleId);
-                        }
-            });
-        }
+                }
 
         eventPublisher.publishEvent(componentLifecycleMsg);
         log.trace("[{}] Forwarding component lifecycle message to App Actor {}", id, componentLifecycleMsg);

@@ -40,7 +40,7 @@ public class RedisAlarmRuleEntityStateStore implements AlarmRuleEntityStateStore
 
     @Override
     public void put(PersistedEntityState entityState) {
-        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_ALARM_RULES_EXECUTOR, entityState.getTenantId(), entityState.getEntityId());
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, entityState.getTenantId(), entityState.getEntityId());
         try (var connection = redisConnectionFactory.getConnection()) {
             connection.getSet(getKey(tpi, entityState.getEntityId()), JacksonUtil.writeValueAsBytes(entityState));
         }
@@ -48,7 +48,7 @@ public class RedisAlarmRuleEntityStateStore implements AlarmRuleEntityStateStore
 
     @Override
     public void remove(TenantId tenantId, EntityId entityId) {
-        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_ALARM_RULES_EXECUTOR, tenantId, entityId);
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, tenantId, entityId);
         try (var connection = redisConnectionFactory.getConnection()) {
             connection.del(getKey(tpi, entityId));
         }
