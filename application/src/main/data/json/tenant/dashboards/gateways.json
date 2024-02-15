@@ -2317,7 +2317,7 @@
                 "useShowWidgetActionFunction": null,
                 "showWidgetActionFunction": "return true;",
                 "type": "custom",
-                "customFunction": "const url = `${window.location.origin}/entities/devices/${entityId.id}`;\nwindow.open(url, '_blank');",
+                "customFunction": "const url = `${window.location.origin + widgetContext.utils.getEntityDetailsPageURL(entityId.id, entityId.entityType)}`;\nwindow.open(url, '_blank');",
                 "openInSeparateDialog": false,
                 "openInPopover": false,
                 "id": "45e4507d-3adc-bb31-8b2b-1ba09bbd56ac"
@@ -2484,7 +2484,7 @@
                 "useShowWidgetActionFunction": null,
                 "showWidgetActionFunction": "return true;",
                 "type": "custom",
-                "customFunction": "const url = `${window.location.origin}/entities/devices/${entityId.id}`;\nwindow.open(url, '_blank');",
+                "customFunction": "const url = `${window.location.origin + widgetContext.utils.getEntityDetailsPageURL(entityId.id, entityId.entityType)}`;\nwindow.open(url, '_blank');",
                 "openInSeparateDialog": false,
                 "openInPopover": false,
                 "id": "852eccce-98eb-24db-c783-bdd62566f906"
@@ -2650,7 +2650,7 @@
                 "useShowWidgetActionFunction": null,
                 "showWidgetActionFunction": "return true;",
                 "type": "custom",
-                "customFunction": "const url = `${window.location.origin}/entities/devices/${entityId.id}`;\nwindow.open(url, '_blank');",
+                "customFunction": "const url = `${window.location.origin + widgetContext.utils.getEntityDetailsPageURL(entityId.id, entityId.entityType)}`;\nwindow.open(url, '_blank');",
                 "openInSeparateDialog": false,
                 "openInPopover": false,
                 "id": "3c31ba62-e760-2bea-4c8d-d32784a86c24"
@@ -2816,7 +2816,7 @@
                 "useShowWidgetActionFunction": null,
                 "showWidgetActionFunction": "return true;",
                 "type": "custom",
-                "customFunction": "const url = `${window.location.origin}/entities/devices/${entityId.id}`;\nwindow.open(url, '_blank');",
+                "customFunction": "const url = `${window.location.origin + widgetContext.utils.getEntityDetailsPageURL(entityId.id, entityId.entityType)}`;\nwindow.open(url, '_blank');",
                 "openInSeparateDialog": false,
                 "openInPopover": false,
                 "id": "4b55ea81-93bf-4206-9166-3e0bdc1dd9f3"
@@ -2982,7 +2982,7 @@
                 "useShowWidgetActionFunction": null,
                 "showWidgetActionFunction": "return true;",
                 "type": "custom",
-                "customFunction": "const url = `${window.location.origin}/entities/devices/${entityId.id}`;\nwindow.open(url, '_blank');",
+                "customFunction": "const url = `${window.location.origin + widgetContext.utils.getEntityDetailsPageURL(entityId.id, entityId.entityType)}`;\nwindow.open(url, '_blank');",
                 "openInSeparateDialog": false,
                 "openInPopover": false,
                 "id": "babf88d0-a118-e2b5-f10e-3a5970c8a65b"
@@ -3148,7 +3148,7 @@
                 "useShowWidgetActionFunction": null,
                 "showWidgetActionFunction": "return true;",
                 "type": "custom",
-                "customFunction": "const url = `${window.location.origin}/entities/devices/${entityId.id}`;\nwindow.open(url, '_blank');",
+                "customFunction": "const url = `${window.location.origin + widgetContext.utils.getEntityDetailsPageURL(entityId.id, entityId.entityType)}`;\nwindow.open(url, '_blank');",
                 "openInSeparateDialog": false,
                 "openInPopover": false,
                 "id": "94de7690-f91d-b032-6771-85af99abd749"
@@ -3314,7 +3314,7 @@
                 "useShowWidgetActionFunction": null,
                 "showWidgetActionFunction": "return true;",
                 "type": "custom",
-                "customFunction": "const url = `${window.location.origin}/entities/devices/${entityId.id}`;\nwindow.open(url, '_blank');",
+                "customFunction": "const url = `${window.location.origin + widgetContext.utils.getEntityDetailsPageURL(entityId.id, entityId.entityType)}`;\nwindow.open(url, '_blank');",
                 "openInSeparateDialog": false,
                 "openInPopover": false,
                 "id": "18414f44-1c65-536a-14de-eaf21a7d56bd"
@@ -3480,7 +3480,7 @@
                 "useShowWidgetActionFunction": null,
                 "showWidgetActionFunction": "return true;",
                 "type": "custom",
-                "customFunction": "const url = `${window.location.origin}/entities/devices/${entityId.id}`;\nwindow.open(url, '_blank');",
+                "customFunction": "const url = `${window.location.origin + widgetContext.utils.getEntityDetailsPageURL(entityId.id, entityId.entityType)}`;\nwindow.open(url, '_blank');",
                 "openInSeparateDialog": false,
                 "openInPopover": false,
                 "id": "794974da-c9d2-a9f7-be47-c9eb642094e8"
@@ -3646,7 +3646,7 @@
                 "useShowWidgetActionFunction": null,
                 "showWidgetActionFunction": "return true;",
                 "type": "custom",
-                "customFunction": "const url = `${window.location.origin}/entities/devices/${entityId.id}`;\nwindow.open(url, '_blank');",
+                "customFunction": "const url = `${window.location.origin + widgetContext.utils.getEntityDetailsPageURL(entityId.id, entityId.entityType)}`;\nwindow.open(url, '_blank');",
                 "openInSeparateDialog": false,
                 "openInPopover": false,
                 "id": "2add705b-3e53-8559-8126-380cac686fb0"
@@ -3812,7 +3812,7 @@
                 "useShowWidgetActionFunction": null,
                 "showWidgetActionFunction": "return true;",
                 "type": "custom",
-                "customFunction": "const url = `${window.location.origin}/entities/devices/${entityId.id}`;\nwindow.open(url, '_blank');",
+                "customFunction": "const url = `${window.location.origin + widgetContext.utils.getEntityDetailsPageURL(entityId.id, entityId.entityType)}`;\nwindow.open(url, '_blank');",
                 "openInSeparateDialog": false,
                 "openInPopover": false,
                 "id": "7e1ba820-9992-d52a-579b-20485abb3926"
@@ -3978,7 +3978,7 @@
                 "useShowWidgetActionFunction": null,
                 "showWidgetActionFunction": "return true;",
                 "type": "custom",
-                "customFunction": "const url = `${window.location.origin}/entities/devices/${entityId.id}`;\nwindow.open(url, '_blank');",
+                "customFunction": "const url = `${window.location.origin + widgetContext.utils.getEntityDetailsPageURL(entityId.id, entityId.entityType)}`;\nwindow.open(url, '_blank');",
                 "openInSeparateDialog": false,
                 "openInPopover": false,
                 "id": "91af27c1-b37c-2276-6022-a332e41b2b33"
@@ -4144,7 +4144,7 @@
                 "useShowWidgetActionFunction": null,
                 "showWidgetActionFunction": "return true;",
                 "type": "custom",
-                "customFunction": "const url = `${window.location.origin}/entities/devices/${entityId.id}`;\nwindow.open(url, '_blank');",
+                "customFunction": "const url = `${window.location.origin + widgetContext.utils.getEntityDetailsPageURL(entityId.id, entityId.entityType)}`;\nwindow.open(url, '_blank');",
                 "openInSeparateDialog": false,
                 "openInPopover": false,
                 "id": "26cf8696-054b-13ec-7984-6fc5df20e6f1"
@@ -4310,7 +4310,7 @@
                 "useShowWidgetActionFunction": null,
                 "showWidgetActionFunction": "return true;",
                 "type": "custom",
-                "customFunction": "const url = `${window.location.origin}/entities/devices/${entityId.id}`;\nwindow.open(url, '_blank');",
+                "customFunction": "const url = `${window.location.origin + widgetContext.utils.getEntityDetailsPageURL(entityId.id, entityId.entityType)}`;\nwindow.open(url, '_blank');",
                 "openInSeparateDialog": false,
                 "openInPopover": false,
                 "id": "1dcfaf24-32be-cd19-62d6-86d12cc6a7ef"
@@ -4476,7 +4476,7 @@
                 "useShowWidgetActionFunction": null,
                 "showWidgetActionFunction": "return true;",
                 "type": "custom",
-                "customFunction": "const url = `${window.location.origin}/entities/devices/${entityId.id}`;\nwindow.open(url, '_blank');",
+                "customFunction": "const url = `${window.location.origin + widgetContext.utils.getEntityDetailsPageURL(entityId.id, entityId.entityType)}`;\nwindow.open(url, '_blank');",
                 "openInSeparateDialog": false,
                 "openInPopover": false,
                 "id": "ad2bc817-f3c4-150c-4672-8fe0c38aee8d"
@@ -4642,7 +4642,7 @@
                 "useShowWidgetActionFunction": null,
                 "showWidgetActionFunction": "return true;",
                 "type": "custom",
-                "customFunction": "const url = `${window.location.origin}/entities/devices/${entityId.id}`;\nwindow.open(url, '_blank');",
+                "customFunction": "const url = `${window.location.origin + widgetContext.utils.getEntityDetailsPageURL(entityId.id, entityId.entityType)}`;\nwindow.open(url, '_blank');",
                 "openInSeparateDialog": false,
                 "openInPopover": false,
                 "id": "d1ad84cd-bd9c-4dca-e4a0-f444ae8598bd"
@@ -4808,7 +4808,7 @@
                 "useShowWidgetActionFunction": null,
                 "showWidgetActionFunction": "return true;",
                 "type": "custom",
-                "customFunction": "const url = `${window.location.origin}/entities/devices/${entityId.id}`;\nwindow.open(url, '_blank');",
+                "customFunction": "const url = `${window.location.origin + widgetContext.utils.getEntityDetailsPageURL(entityId.id, entityId.entityType)}`;\nwindow.open(url, '_blank');",
                 "openInSeparateDialog": false,
                 "openInPopover": false,
                 "id": "bf80eef9-b879-9a08-40a4-488dbdefa125"
@@ -4974,7 +4974,7 @@
                 "useShowWidgetActionFunction": null,
                 "showWidgetActionFunction": "return true;",
                 "type": "custom",
-                "customFunction": "const url = `${window.location.origin}/entities/devices/${entityId.id}`;\nwindow.open(url, '_blank');",
+                "customFunction": "const url = `${window.location.origin + widgetContext.utils.getEntityDetailsPageURL(entityId.id, entityId.entityType)}`;\nwindow.open(url, '_blank');",
                 "openInSeparateDialog": false,
                 "openInPopover": false,
                 "id": "b5a406b3-cc0a-8a09-9aec-3f8befae5fb8"
@@ -5140,7 +5140,7 @@
                 "useShowWidgetActionFunction": null,
                 "showWidgetActionFunction": "return true;",
                 "type": "custom",
-                "customFunction": "const url = `${window.location.origin}/entities/devices/${entityId.id}`;\nwindow.open(url, '_blank');",
+                "customFunction": "const url = `${window.location.origin + widgetContext.utils.getEntityDetailsPageURL(entityId.id, entityId.entityType)}`;\nwindow.open(url, '_blank');",
                 "openInSeparateDialog": false,
                 "openInPopover": false,
                 "id": "ec1dfba3-4b43-2491-8948-f602337f8a3b"

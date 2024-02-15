@@ -82,6 +82,7 @@ export interface RpcApi {
 
 export interface IWidgetUtils {
   formatValue: (value: any, dec?: number, units?: string, showZeroDecimals?: boolean) => string | undefined;
+  getEntityDetailsPageURL: (id: string, entityType: EntityType) => string;
 }
 
 export interface WidgetActionsApi {
@@ -91,6 +92,7 @@ export interface WidgetActionsApi {
                        entityId?: EntityId, entityName?: string, additionalParams?: any, entityLabel?: string) => void;
   elementClick: ($event: Event) => void;
   cardClick: ($event: Event) => void;
+  click: ($event: Event) => void;
   getActiveEntityInfo: () => SubscriptionEntityInfo;
   openDashboardStateInSeparateDialog: (targetDashboardStateId: string, params?: StateParams, dialogTitle?: string,
                                        hideDashboardToolbar?: boolean, dialogWidth?: number, dialogHeight?: number) => void;

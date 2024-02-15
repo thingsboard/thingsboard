@@ -20,8 +20,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.postgresql.util.PSQLException;
-import org.postgresql.util.ServerErrorMessage;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -378,16 +376,13 @@ public abstract class BaseController {
         } else if (exception instanceof AsyncRequestTimeoutException) {
             return new ThingsboardException("Request timeout", ThingsboardErrorCode.GENERAL);
         } else if (exception instanceof DataAccessException) {
-            Throwable rootCause = ExceptionUtils.getRootCause(exception);
-            if (rootCause instanceof PSQLException) {
-                return new ThingsboardException(Optional.ofNullable(((PSQLException) rootCause).getServerErrorMessage())
-                        .map(ServerErrorMessage::getMessage).orElse(rootCause.getMessage()), ThingsboardErrorCode.GENERAL);
-            } else {
-                return new ThingsboardException(rootCause, ThingsboardErrorCode.GENERAL);
+            String errorType = exception.getClass().getSimpleName();
+            if (!logControllerErrorStackTrace) { // not to log the error twice
+                log.warn("Database error: {} - {}", errorType, ExceptionUtils.getRootCauseMessage(exception));
             }
-        } else {
-            return new ThingsboardException(exception.getMessage(), exception, ThingsboardErrorCode.GENERAL);
+            return new ThingsboardException("Database error", ThingsboardErrorCode.GENERAL);
         }
+        return new ThingsboardException(exception.getMessage(), exception, ThingsboardErrorCode.GENERAL);
     }
 
     /**

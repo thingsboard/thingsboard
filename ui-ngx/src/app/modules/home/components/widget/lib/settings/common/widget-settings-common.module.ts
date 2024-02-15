@@ -52,20 +52,46 @@ import {
   ColorRangeSettingsComponent, ColorRangeSettingsComponentService
 } from '@home/components/widget/lib/settings/common/color-range-settings.component';
 import {
-  RpcInitialStateSettingsComponent
-} from '@home/components/widget/lib/settings/common/rpc/rpc-initial-state-settings.component';
+  GetValueActionSettingsComponent
+} from '@home/components/widget/lib/settings/common/action/get-value-action-settings.component';
 import {
-  RpcInitialStateSettingsPanelComponent
-} from '@home/components/widget/lib/settings/common/rpc/rpc-initial-state-settings-panel.component';
+  GetValueActionSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/action/get-value-action-settings-panel.component';
 import {
   DeviceKeyAutocompleteComponent
 } from '@home/components/widget/lib/settings/control/device-key-autocomplete.component';
 import {
-  RpcUpdateStateSettingsComponent
-} from '@home/components/widget/lib/settings/common/rpc/rpc-update-state-settings.component';
+  SetValueActionSettingsComponent
+} from '@home/components/widget/lib/settings/common/action/set-value-action-settings.component';
 import {
-  RpcUpdateStateSettingsPanelComponent
-} from '@home/components/widget/lib/settings/common/rpc/rpc-update-state-settings-panel.component';
+  SetValueActionSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/action/set-value-action-settings-panel.component';
+import { CssSizeInputComponent } from '@home/components/widget/lib/settings/common/css-size-input.component';
+import { WidgetActionComponent } from '@home/components/widget/lib/settings/common/action/widget-action.component';
+import {
+  CustomActionPrettyResourcesTabsComponent
+} from '@home/components/widget/lib/settings/common/action/custom-action-pretty-resources-tabs.component';
+import {
+  CustomActionPrettyEditorComponent
+} from '@home/components/widget/lib/settings/common/action/custom-action-pretty-editor.component';
+import {
+  MobileActionEditorComponent
+} from '@home/components/widget/lib/settings/common/action/mobile-action-editor.component';
+import {
+  WidgetActionSettingsComponent
+} from '@home/components/widget/lib/settings/common/action/widget-action-settings.component';
+import {
+  WidgetActionSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/action/widget-action-settings-panel.component';
+import {
+  WidgetButtonAppearanceComponent
+} from '@home/components/widget/lib/settings/common/button/widget-button-appearance.component';
+import {
+  WidgetButtonCustomStyleComponent
+} from '@home/components/widget/lib/settings/common/button/widget-button-custom-style.component';
+import {
+  WidgetButtonCustomStylePanelComponent
+} from '@home/components/widget/lib/settings/common/button/widget-button-custom-style-panel.component';
 
 @NgModule({
   declarations: [
@@ -76,6 +102,7 @@ import {
     ColorSettingsComponent,
     ColorSettingsPanelComponent,
     CssUnitSelectComponent,
+    CssSizeInputComponent,
     DateFormatSelectComponent,
     DateFormatSettingsPanelComponent,
     BackgroundSettingsComponent,
@@ -87,11 +114,20 @@ import {
     ColorRangeListComponent,
     ColorRangePanelComponent,
     ColorRangeSettingsComponent,
-    RpcInitialStateSettingsComponent,
-    RpcInitialStateSettingsPanelComponent,
+    GetValueActionSettingsComponent,
+    GetValueActionSettingsPanelComponent,
     DeviceKeyAutocompleteComponent,
-    RpcUpdateStateSettingsComponent,
-    RpcUpdateStateSettingsPanelComponent
+    SetValueActionSettingsComponent,
+    SetValueActionSettingsPanelComponent,
+    WidgetActionComponent,
+    CustomActionPrettyResourcesTabsComponent,
+    CustomActionPrettyEditorComponent,
+    MobileActionEditorComponent,
+    WidgetActionSettingsComponent,
+    WidgetActionSettingsPanelComponent,
+    WidgetButtonAppearanceComponent,
+    WidgetButtonCustomStyleComponent,
+    WidgetButtonCustomStylePanelComponent
   ],
   imports: [
     CommonModule,
@@ -106,6 +142,7 @@ import {
     ColorSettingsComponent,
     ColorSettingsPanelComponent,
     CssUnitSelectComponent,
+    CssSizeInputComponent,
     DateFormatSelectComponent,
     DateFormatSettingsPanelComponent,
     BackgroundSettingsComponent,
@@ -117,11 +154,20 @@ import {
     ColorRangeListComponent,
     ColorRangePanelComponent,
     ColorRangeSettingsComponent,
-    RpcInitialStateSettingsComponent,
-    RpcInitialStateSettingsPanelComponent,
+    GetValueActionSettingsComponent,
+    GetValueActionSettingsPanelComponent,
     DeviceKeyAutocompleteComponent,
-    RpcUpdateStateSettingsComponent,
-    RpcUpdateStateSettingsPanelComponent
+    SetValueActionSettingsComponent,
+    SetValueActionSettingsPanelComponent,
+    WidgetActionComponent,
+    CustomActionPrettyResourcesTabsComponent,
+    CustomActionPrettyEditorComponent,
+    MobileActionEditorComponent,
+    WidgetActionSettingsComponent,
+    WidgetActionSettingsPanelComponent,
+    WidgetButtonAppearanceComponent,
+    WidgetButtonCustomStyleComponent,
+    WidgetButtonCustomStylePanelComponent
   ],
   providers: [
     ColorSettingsComponentService,

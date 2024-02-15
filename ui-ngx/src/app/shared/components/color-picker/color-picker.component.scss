@@ -18,9 +18,11 @@
   display: flex;
   flex-direction: column;
   gap: 32px;
+  overflow: auto;
 
   .saturation-component {
     height: 238px;
+    min-height: 80px;
     border-radius: 8px;
   }
 

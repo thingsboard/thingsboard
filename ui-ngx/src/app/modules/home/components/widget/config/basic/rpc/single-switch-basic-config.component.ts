@@ -37,7 +37,7 @@ import { ValueType } from '@shared/models/constants';
   templateUrl: './single-switch-basic-config.component.html',
   styleUrls: ['../basic-config.scss']
 })
-export class SingSwitchBasicConfigComponent extends BasicWidgetConfigComponent {
+export class SingleSwitchBasicConfigComponent extends BasicWidgetConfigComponent {
 
   get targetDevice(): TargetDevice {
     return this.singleSwitchWidgetConfigForm.get('targetDevice').value;
@@ -70,6 +70,7 @@ export class SingSwitchBasicConfigComponent extends BasicWidgetConfigComponent {
       initialState: [settings.initialState, []],
       onUpdateState: [settings.onUpdateState, []],
       offUpdateState: [settings.offUpdateState, []],
+      disabledState: [settings.disabledState, []],
 
       layout: [settings.layout, []],
       autoScale: [settings.autoScale, []],
@@ -120,6 +121,7 @@ export class SingSwitchBasicConfigComponent extends BasicWidgetConfigComponent {
     this.widgetConfig.config.settings.initialState = config.initialState;
     this.widgetConfig.config.settings.onUpdateState = config.onUpdateState;
     this.widgetConfig.config.settings.offUpdateState = config.offUpdateState;
+    this.widgetConfig.config.settings.disabledState = config.disabledState;
 
     this.widgetConfig.config.settings.layout = config.layout;
     this.widgetConfig.config.settings.autoScale = config.autoScale;

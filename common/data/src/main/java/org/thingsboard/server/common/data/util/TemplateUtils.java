@@ -19,6 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.Map;
 import java.util.function.UnaryOperator;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.google.common.base.Strings.nullToEmpty;
@@ -49,7 +50,7 @@ public class TemplateUtils {
                     value = FUNCTIONS.get(function).apply(value);
                 }
             }
-            return value;
+            return Matcher.quoteReplacement(value);
         });
     }
 
