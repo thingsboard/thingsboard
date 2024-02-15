@@ -1295,9 +1295,9 @@ message ToCoreMsg {
   LifecycleEventProto lifecycleEventMsg = 8;
   ErrorEventProto errorEventMsg = 9;
   ToDeviceActorNotificationMsgProto toDeviceActorNotification = 10;
-  DeviceConnectProto deviceConnectMsg = 13;
-  DeviceDisconnectProto deviceDisconnectMsg = 14;
-  DeviceInactivityProto deviceInactivityMsg = 15;
+  DeviceConnectProto deviceConnectMsg = 50;
+  DeviceDisconnectProto deviceDisconnectMsg = 51;
+  DeviceInactivityProto deviceInactivityMsg = 52;
 }
 
 /* High priority messages with low latency are handled by ThingsBoard Core Service separately */
