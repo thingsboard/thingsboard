@@ -129,7 +129,7 @@ public class LwM2MTestClient {
 
     public void init(Security security, Security securityBs,Configuration coapConfig, int port, boolean isRpc,
                      LwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandler,
-                     LwM2mClientContext clientContext, boolean isWriteAttribute, Integer cIdLength) throws InvalidDDFFileException, IOException {
+                     LwM2mClientContext clientContext, boolean isWriteAttribute, Integer cIdLength, boolean queueMode) throws InvalidDDFFileException, IOException {
         Assert.assertNull("client already initialized", leshanClient);
         this.defaultLwM2mUplinkMsgHandlerTest = defaultLwM2mUplinkMsgHandler;
         this.clientContext = clientContext;
@@ -263,11 +263,10 @@ public class LwM2MTestClient {
         boolean reconnectOnUpdate = false;
         engineFactory.setReconnectOnUpdate(reconnectOnUpdate);
         engineFactory.setResumeOnConnect(true);
-            // new
+
         /**
-         * Client use queue mode (not fully implemented).
+         * Client use queue mode.
          */
-        boolean queueMode = false;
         engineFactory.setQueueMode(queueMode);
 
         // Create client

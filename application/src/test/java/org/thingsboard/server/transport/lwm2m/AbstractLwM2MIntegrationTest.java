@@ -219,7 +219,8 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     public void basicTestConnectionObserveTelemetry(Security security,
                                                     LwM2MDeviceCredentials deviceCredentials,
                                                     Configuration coapConfig,
-                                                    String endpoint) throws Exception {
+                                                    String endpoint,
+                                                    boolean queueMode) throws Exception {
         Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITH_PARAMS, getBootstrapServerCredentialsNoSec(NONE));
         createDeviceProfile(transportConfiguration);
         Device device = createDevice(deviceCredentials, endpoint);
@@ -236,7 +237,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         getWsClient().waitForReply();
 
         getWsClient().registerWaitForUpdate();
-        createNewClient(security, null, coapConfig, false, endpoint, null);
+        createNewClient(security, null, coapConfig, false, endpoint, null, queueMode);
         deviceId = device.getId().getId().toString();
         awaitObserveReadAll(0, deviceId);
         String msg = getWsClient().waitForUpdate();
@@ -305,14 +306,25 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     }
 
     public void createNewClient(Security security, Security securityBs, Configuration coapConfig, boolean isRpc,
+                                String endpoint) throws Exception {
+        this.createNewClient(security, securityBs, coapConfig, isRpc, endpoint, null, false);
+    }
+
+    public void createNewClient(Security security, Security securityBs, Configuration coapConfig, boolean isRpc,
                                 String endpoint, Integer clientDtlsCidLength) throws Exception {
+        this.createNewClient(security, securityBs, coapConfig, isRpc, endpoint, clientDtlsCidLength, false);
+    }
+
+    public void createNewClient(Security security, Security securityBs, Configuration coapConfig, boolean isRpc,
+                                String endpoint, Integer clientDtlsCidLength, boolean queueMode) throws Exception {
         this.clientDestroy();
         lwM2MTestClient = new LwM2MTestClient(this.executor, endpoint);
 
         try (ServerSocket socket = new ServerSocket(0)) {
             int clientPort = socket.getLocalPort();
             lwM2MTestClient.init(security, securityBs, coapConfig, clientPort, isRpc,
-                    this.defaultLwM2mUplinkMsgHandlerTest, this.clientContextTest, isWriteAttribute, clientDtlsCidLength);
+                    this.defaultLwM2mUplinkMsgHandlerTest, this.clientContextTest, isWriteAttribute
+                    , clientDtlsCidLength, queueMode);
         }
     }
 
