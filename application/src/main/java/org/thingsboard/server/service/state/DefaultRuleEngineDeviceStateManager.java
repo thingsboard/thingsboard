@@ -175,7 +175,7 @@ public class DefaultRuleEngineDeviceStateManager implements RuleEngineDeviceStat
 
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, deviceId);
         if (serviceInfoProvider.isService(ServiceType.TB_CORE) && tpi.isMyPartition() && deviceStateService.isPresent()) {
-            log.info("[{}][{}] Forwarding device connectivity event to local service. Event time: [{}].", tenantId.getId(), deviceId.getId(), eventTime);
+            log.debug("[{}][{}] Forwarding device connectivity event to local service. Event time: [{}].", tenantId.getId(), deviceId.getId(), eventTime);
             try {
                 eventInfo.forwardToLocalService();
             } catch (Exception e) {
@@ -186,7 +186,7 @@ public class DefaultRuleEngineDeviceStateManager implements RuleEngineDeviceStat
             callback.onSuccess();
         } else {
             TransportProtos.ToCoreMsg msg = eventInfo.toQueueMsg();
-            log.info("[{}][{}] Sending device connectivity message to core. Event time: [{}].", tenantId.getId(), deviceId.getId(), eventTime);
+            log.debug("[{}][{}] Sending device connectivity message to core. Event time: [{}].", tenantId.getId(), deviceId.getId(), eventTime);
             clusterService.pushMsgToCore(tpi, UUID.randomUUID(), msg, new SimpleTbQueueCallback(__ -> callback.onSuccess(), callback::onFailure));
         }
     }
