@@ -26,6 +26,7 @@ import org.junit.Assert;
 import org.springframework.test.web.servlet.MvcResult;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.device.credentials.lwm2m.AbstractLwM2MClientSecurityCredential;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapClientCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MClientCredential;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
@@ -50,6 +51,7 @@ import org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootst
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.PrivateKey;
@@ -59,13 +61,16 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
 import static org.eclipse.leshan.client.object.Security.noSecBootstrap;
+import static org.eclipse.leshan.client.object.Security.psk;
 import static org.junit.Assert.assertEquals;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode.PSK;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_DEREGISTRATION_STARTED;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_DEREGISTRATION_SUCCESS;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_STARTED;
@@ -117,6 +122,13 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
 
 
     private final LwM2MBootstrapClientCredentials defaultBootstrapCredentials;
+
+    protected AbstractLwM2MClientSecurityCredential clientCredentials;
+    protected Security security;
+    protected Lwm2mDeviceProfileTransportConfiguration transportConfiguration;
+    protected LwM2MDeviceCredentials deviceCredentials;
+    protected String clientEndpoint;
+    protected final Random randomSuffix = new Random();
 
 
     public AbstractSecurityLwM2MIntegrationTest() {
@@ -379,6 +391,27 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
         bootstrapCredentials.setBootstrapServer(serverCredentials);
         bootstrapCredentials.setLwm2mServer(serverCredentials);
         return bootstrapCredentials;
+    }
+
+
+    protected void initDeviceCredentialsNoSek() {
+        clientEndpoint = CLIENT_ENDPOINT_NO_SEC + "_" + randomSuffix.nextInt(100);
+        security = SECURITY_NO_SEC;
+        deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(clientEndpoint));
+    }
+    protected void initDeviceCredentialsPsk() {
+        int suf =  randomSuffix.nextInt(10);
+        clientEndpoint = CLIENT_ENDPOINT_PSK + "_" + suf;
+        String identity = CLIENT_PSK_IDENTITY + "_" + suf;
+        clientCredentials = new PSKClientCredential();
+        clientCredentials.setEndpoint(clientEndpoint);
+        ((PSKClientCredential)clientCredentials).setIdentity(identity);
+        clientCredentials.setKey(CLIENT_PSK_KEY);
+        security = psk(SECURE_URI,
+                shortServerId,
+                identity.getBytes(StandardCharsets.UTF_8),
+                Hex.decodeHex(CLIENT_PSK_KEY.toCharArray()));
+        deviceCredentials = getDeviceCredentialsSecure(clientCredentials, null, null, PSK, false);
     }
 
     private LwM2MBootstrapClientCredentials getBootstrapClientCredentialsRpk(X509Certificate certificate, PrivateKey privateKey, boolean privateKeyIsBad) {

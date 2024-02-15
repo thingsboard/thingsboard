@@ -18,13 +18,15 @@ package org.thingsboard.server.transport.lwm2m.security.cid.serverDtlsCidLength_
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.transport.lwm2m.security.cid.AbstractSecurityLwM2MIntegrationDtlsCidLength0Test;
+
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode.PSK;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.NONE;
 
 public class PskLwm2mIntegrationDtlsCidLengthTest extends AbstractSecurityLwM2MIntegrationDtlsCidLength0Test {
 
     @Before
     public void createProfileRpc() {
-        transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(lwM2MSecurityMode, NONE));
+        transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(PSK, NONE));
         awaitAlias = "await on client state (Psk_Lwm2m) DtlsCidLength = 0";
     }
 
