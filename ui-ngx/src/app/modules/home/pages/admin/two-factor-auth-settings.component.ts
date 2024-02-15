@@ -47,6 +47,8 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
   twoFactorAuthProviderType = TwoFactorAuthProviderType;
   twoFactorAuthProvidersData = twoFactorAuthProvidersData;
 
+  showMainLoadingBar = false;
+
   @ViewChildren(MatExpansionPanel) expansionPanel: QueryList<MatExpansionPanel>;
 
   constructor(protected store: Store<AppState>,

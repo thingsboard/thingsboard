@@ -31,7 +31,6 @@ import {
   DataToValueSettings,
   DataToValueType,
   GetAttributeValueSettings,
-  GetTelemetryValueSettings,
   GetValueAction,
   GetValueSettings,
   RpcSettings,
@@ -63,8 +62,6 @@ export abstract class BasicActionWidgetComponent implements OnInit, OnDestroy, A
 
   loading$ = this.loadingSubject.asObservable().pipe(share());
 
-  error = '';
-
   protected constructor(protected cd: ChangeDetectorRef) {
   }
 
@@ -92,14 +89,15 @@ export abstract class BasicActionWidgetComponent implements OnInit, OnDestroy, A
 
   ngOnDestroy() {
     this.valueActions.forEach(v => v.destroy());
+    this.loadingSubject.complete();
+    this.loadingSubject.unsubscribe();
   }
 
   public onInit() {
   }
 
   public clearError() {
-    this.error = '';
-    this.cd.markForCheck();
+    this.ctx.hideToast(this.ctx.toastTargetId);
   }
 
   protected createValueGetter<V>(getValueSettings: GetValueSettings<V>,
@@ -112,7 +110,8 @@ export abstract class BasicActionWidgetComponent implements OnInit, OnDestroy, A
         }
       },
       error: (err: any) => {
-        this.onError(err);
+        const message = parseError(this.ctx, err);
+        this.onError(message);
         if (valueObserver?.error) {
           valueObserver.error(err);
         }
@@ -131,8 +130,7 @@ export abstract class BasicActionWidgetComponent implements OnInit, OnDestroy, A
   }
 
   private onError(error: string) {
-    this.error = error;
-    this.cd.markForCheck();
+    this.ctx.showErrorToast(error, 'bottom', 'center', this.ctx.toastTargetId, true);
   }
 
   protected updateValue<V>(valueSetter: ValueSetter<V>,
@@ -294,6 +292,8 @@ export class ValueToDataConverter<V> {
 
   constructor(protected settings: ValueToDataSettings) {
     switch (settings.type) {
+      case ValueToDataType.VALUE:
+        break;
       case ValueToDataType.CONSTANT:
         this.constantValue = this.settings.constantValue;
         break;
@@ -311,6 +311,8 @@ export class ValueToDataConverter<V> {
 
   valueToData(value: V): any {
     switch (this.settings.type) {
+      case ValueToDataType.VALUE:
+        return value;
       case ValueToDataType.CONSTANT:
         return this.constantValue;
       case ValueToDataType.FUNCTION:
@@ -405,7 +407,7 @@ export class ExecuteRpcValueGetter<V> extends ValueGetter<V> {
   }
 }
 
-export abstract class TelemetryValueGetter<V, S extends GetTelemetryValueSettings> extends ValueGetter<V> {
+export abstract class TelemetryValueGetter<V, S extends TelemetryValueSettings> extends ValueGetter<V> {
 
   protected targetEntityId: EntityId;
   private telemetrySubscriber: TelemetrySubscriber;
@@ -428,11 +430,7 @@ export abstract class TelemetryValueGetter<V, S extends GetTelemetryValueSetting
       if (err) {
         return throwError(() => err);
       }
-      if (this.getTelemetryValueSettings().subscribeForUpdates) {
-        return this.subscribeForTelemetryValue();
-      } else {
-        return this.doGetTelemetryValue();
-      }
+      return this.subscribeForTelemetryValue();
     } else {
       return of(null);
     }
@@ -464,8 +462,6 @@ export abstract class TelemetryValueGetter<V, S extends GetTelemetryValueSetting
 
   protected abstract getTelemetryValueSettings(): S;
 
-  protected abstract doGetTelemetryValue(): Observable<V>;
-
   destroy() {
     if (this.telemetrySubscriber) {
       this.telemetrySubscriber.unsubscribe();
@@ -492,17 +488,9 @@ export class AttributeValueGetter<V> extends TelemetryValueGetter<V, GetAttribut
     return this.getTelemetryValueSettings().scope;
   }
 
-  protected doGetTelemetryValue(): Observable<V> {
-    const getAttributeValueSettings = this.getTelemetryValueSettings();
-    return this.ctx.attributeService.getEntityAttributes(this.targetEntityId,
-      getAttributeValueSettings.scope, [getAttributeValueSettings.key], {ignoreLoading: true, ignoreErrors: true}).pipe(
-      map((data) => data.find(attr => attr.key === getAttributeValueSettings.key)?.value)
-    );
-  }
-
 }
 
-export class TimeSeriesValueGetter<V> extends TelemetryValueGetter<V, GetTelemetryValueSettings> {
+export class TimeSeriesValueGetter<V> extends TelemetryValueGetter<V, TelemetryValueSettings> {
 
   constructor(protected ctx: WidgetContext,
               protected settings: GetValueSettings<V>,
@@ -511,28 +499,9 @@ export class TimeSeriesValueGetter<V> extends TelemetryValueGetter<V, GetTelemet
     super(ctx, settings, valueType, valueObserver);
   }
 
-  protected getTelemetryValueSettings(): GetTelemetryValueSettings {
+  protected getTelemetryValueSettings(): TelemetryValueSettings {
     return this.settings.getTimeSeries;
   }
-
-  protected doGetTelemetryValue(): Observable<V> {
-    const getTelemetryValueSettings = this.getTelemetryValueSettings();
-    return this.ctx.attributeService.getEntityTimeseriesLatest(this.targetEntityId,
-      [getTelemetryValueSettings.key], true, {ignoreLoading: true, ignoreErrors: true})
-    .pipe(
-      map((data) => {
-        let value: any = null;
-        if (data[getTelemetryValueSettings.key]) {
-          const dataSet = data[getTelemetryValueSettings.key];
-          if (dataSet.length) {
-            value = dataSet[0].value;
-          }
-        }
-        return value;
-      })
-    );
-  }
-
 }
 
 export class ExecuteRpcValueSetter<V> extends ValueSetter<V> {

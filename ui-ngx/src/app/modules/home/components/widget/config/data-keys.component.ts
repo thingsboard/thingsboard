@@ -521,7 +521,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
       this.popoverService.hidePopover(trigger);
     } else {
       const colorPickerPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, ColorPickerPanelComponent, 'left', true, null,
+        this.viewContainerRef, ColorPickerPanelComponent, ['leftTopOnly', 'leftOnly', 'leftBottomOnly'], true, null,
         {
           color: key.color
         },

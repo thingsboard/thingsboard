@@ -298,11 +298,6 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     }
 
     @Override
-    public void saveLegacyYmlSettings() throws Exception {
-        jwtSettingsService.saveLegacyYmlSettings();
-    }
-
-    @Override
     public void createOAuth2Templates() throws Exception {
         installScripts.createOAuth2Templates();
     }
@@ -696,7 +691,23 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     }
 
     @Override
+    @SneakyThrows
     public void updateDefaultNotificationConfigs() {
+        PageDataIterable<TenantId> tenants = new PageDataIterable<>(tenantService::findTenantsIds, 500);
+        ExecutorService executor = Executors.newFixedThreadPool(Math.max(Runtime.getRuntime().availableProcessors(), 4));
+        log.info("Updating default edge failure notification configs for all tenants");
+        AtomicInteger count = new AtomicInteger();
+        for (TenantId tenantId : tenants) {
+            executor.submit(() -> {
+                notificationSettingsService.updateDefaultNotificationConfigs(tenantId);
+                int n = count.incrementAndGet();
+                if (n % 500 == 0) {
+                    log.info("{} tenants processed", n);
+                }
+            });
+        }
+        executor.shutdown();
+        executor.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
         notificationSettingsService.updateDefaultNotificationConfigs(TenantId.SYS_TENANT_ID);
     }
 
