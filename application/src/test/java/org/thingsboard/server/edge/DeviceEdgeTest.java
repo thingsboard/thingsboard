@@ -710,7 +710,7 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
         edgeImitator.sendUplinkMsg(uplinkMsgBuilder.build());
         Assert.assertTrue(edgeImitator.waitForResponses());
 
-        Assert.assertTrue(onUpdateCallback.getSubscribeLatch().await(30, TimeUnit.SECONDS));
+        Assert.assertTrue(onUpdateCallback.getSubscribeLatch().await(TIMEOUT, TimeUnit.SECONDS));
 
         Assert.assertEquals(JacksonUtil.newObjectNode().put(attrKey, attrValue),
                 JacksonUtil.fromBytes(onUpdateCallback.getPayloadBytes()));
@@ -797,7 +797,21 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
         // clean up stored edge events
         edgeEventService.cleanupEvents(1);
 
-        // perform rpc call to verify edgeId in DeviceActorMessageProcessor updated properly
+        // edge is disconnected: perform rpc call - no edge event saved
+        doPostAsync(
+                "/api/rpc/oneway/" + device.getId().getId().toString(),
+                JacksonUtil.toString(createDefaultRpc()),
+                String.class,
+                status().isOk());
+        Awaitility.await()
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> {
+                    PageData<EdgeEvent> result = edgeEventService.findEdgeEvents(tenantId, tmpEdge.getId(), 0L, null, new TimePageLink(1));
+                    return result.getTotalElements() == 0;
+                });
+
+        // edge is connected: perform rpc call to verify edgeId in DeviceActorMessageProcessor updated properly
+        simulateEdgeActivation(tmpEdge);
         doPostAsync(
                 "/api/rpc/oneway/" + device.getId().getId().toString(),
                 JacksonUtil.toString(createDefaultRpc()),
@@ -856,4 +870,23 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
 
         return rpc;
     }
+
+    private void simulateEdgeActivation(Edge edge) throws Exception {
+        ObjectNode attributes = JacksonUtil.newObjectNode();
+        attributes.put("active", true);
+        doPost("/api/plugins/telemetry/EDGE/" + edge.getId() + "/attributes/" + DataConstants.SERVER_SCOPE, attributes);
+        Awaitility.await()
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> {
+                    List<Map<String, Object>> values = doGetAsyncTyped("/api/plugins/telemetry/EDGE/" + edge.getId() +
+                            "/values/attributes/SERVER_SCOPE", new TypeReference<>() {});
+                    Optional<Map<String, Object>> activeAttrOpt = values.stream().filter(att -> att.get("key").equals("active")).findFirst();
+                    if (activeAttrOpt.isEmpty()) {
+                        return false;
+                    }
+                    Map<String, Object> activeAttr = activeAttrOpt.get();
+                    return "true".equals(activeAttr.get("value").toString());
+                });
+    }
+
 }

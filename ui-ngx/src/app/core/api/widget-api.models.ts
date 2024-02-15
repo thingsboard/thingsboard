@@ -82,6 +82,7 @@ export interface RpcApi {
 
 export interface IWidgetUtils {
   formatValue: (value: any, dec?: number, units?: string, showZeroDecimals?: boolean) => string | undefined;
+  getEntityDetailsPageURL: (id: string, entityType: EntityType) => string;
 }
 
 export interface WidgetActionsApi {

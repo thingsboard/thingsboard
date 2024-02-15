@@ -478,6 +478,8 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             TbMsgMetaData md = new TbMsgMetaData();
             if (!persistToTelemetry) {
                 md.putValue(DataConstants.SCOPE, DataConstants.SERVER_SCOPE);
+                md.putValue("edgeName", edge.getName());
+                md.putValue("edgeType", edge.getType());
             }
             TbMsg tbMsg = TbMsg.newMsg(msgType, edgeId, md, TbMsgDataType.JSON, data);
             clusterService.pushMsgToRuleEngine(tenantId, edgeId, tbMsg, null);
