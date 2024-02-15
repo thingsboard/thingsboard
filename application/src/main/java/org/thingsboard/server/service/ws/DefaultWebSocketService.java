@@ -259,13 +259,13 @@ public class DefaultWebSocketService implements WebSocketService {
     }
 
     @Override
-    public void sendUpdate(String sessionId, TelemetrySubscriptionUpdate update) {
-        sendUpdate(sessionId, update.getSubscriptionId(), update);
+    public void sendUpdate(String sessionId, int cmdId, TelemetrySubscriptionUpdate update) {
+        doSendUpdate(sessionId, cmdId, update);
     }
 
     @Override
     public void sendUpdate(String sessionId, CmdUpdate update) {
-        sendUpdate(sessionId, update.getCmdId(), update);
+        doSendUpdate(sessionId, update.getCmdId(), update);
     }
 
     @Override
@@ -274,7 +274,7 @@ public class DefaultWebSocketService implements WebSocketService {
         sendUpdate(sessionRef, update);
     }
 
-    private <T> void sendUpdate(String sessionId, int cmdId, T update) {
+    private <T> void doSendUpdate(String sessionId, int cmdId, T update) {
         WsSessionMetaData md = wsSessionsMap.get(sessionId);
         if (md != null) {
             sendUpdate(md.getSessionRef(), cmdId, update);
@@ -288,7 +288,7 @@ public class DefaultWebSocketService implements WebSocketService {
             try {
                 msgEndpoint.close(md.getSessionRef(), status);
             } catch (IOException e) {
-                log.warn("[{}] Failed to send session close: {}", sessionId, e);
+                log.warn("[{}] Failed to send session close", sessionId, e);
             }
         }
     }
@@ -439,7 +439,7 @@ public class DefaultWebSocketService implements WebSocketService {
                 TbAttributeSubscription sub = TbAttributeSubscription.builder()
                         .serviceId(serviceId)
                         .sessionId(sessionId)
-                        .subscriptionId(cmd.getCmdId())
+                        .subscriptionId(sessionRef.getSessionSubIdSeq().incrementAndGet())
                         .tenantId(sessionRef.getSecurityCtx().getTenantId())
                         .entityId(entityId)
                         .queryTs(queryTs)
@@ -449,7 +449,7 @@ public class DefaultWebSocketService implements WebSocketService {
                         .updateProcessor((subscription, update) -> {
                             subLock.lock();
                             try {
-                                sendUpdate(subscription.getSessionId(), update);
+                                sendUpdate(subscription.getSessionId(), cmd.getCmdId(), update);
                             } finally {
                                 subLock.unlock();
                             }
@@ -545,7 +545,7 @@ public class DefaultWebSocketService implements WebSocketService {
                 TbAttributeSubscription sub = TbAttributeSubscription.builder()
                         .serviceId(serviceId)
                         .sessionId(sessionId)
-                        .subscriptionId(cmd.getCmdId())
+                        .subscriptionId(sessionRef.getSessionSubIdSeq().incrementAndGet())
                         .tenantId(sessionRef.getSecurityCtx().getTenantId())
                         .entityId(entityId)
                         .queryTs(queryTs)
@@ -554,7 +554,7 @@ public class DefaultWebSocketService implements WebSocketService {
                         .updateProcessor((subscription, update) -> {
                             subLock.lock();
                             try {
-                                sendUpdate(subscription.getSessionId(), update);
+                                sendUpdate(subscription.getSessionId(), cmd.getCmdId(), update);
                             } finally {
                                 subLock.unlock();
                             }
@@ -643,13 +643,13 @@ public class DefaultWebSocketService implements WebSocketService {
                 TbTimeSeriesSubscription sub = TbTimeSeriesSubscription.builder()
                         .serviceId(serviceId)
                         .sessionId(sessionId)
-                        .subscriptionId(cmd.getCmdId())
+                        .subscriptionId(sessionRef.getSessionSubIdSeq().incrementAndGet())
                         .tenantId(sessionRef.getSecurityCtx().getTenantId())
                         .entityId(entityId)
                         .updateProcessor((subscription, update) -> {
                             subLock.lock();
                             try {
-                                sendUpdate(subscription.getSessionId(), update);
+                                sendUpdate(subscription.getSessionId(), cmd.getCmdId(), update);
                             } finally {
                                 subLock.unlock();
                             }
@@ -698,13 +698,13 @@ public class DefaultWebSocketService implements WebSocketService {
                 TbTimeSeriesSubscription sub = TbTimeSeriesSubscription.builder()
                         .serviceId(serviceId)
                         .sessionId(sessionId)
-                        .subscriptionId(cmd.getCmdId())
+                        .subscriptionId(sessionRef.getSessionSubIdSeq().incrementAndGet())
                         .tenantId(sessionRef.getSecurityCtx().getTenantId())
                         .entityId(entityId)
                         .updateProcessor((subscription, update) -> {
                             subLock.lock();
                             try {
-                                sendUpdate(subscription.getSessionId(), update);
+                                sendUpdate(subscription.getSessionId(), cmd.getCmdId(), update);
                             } finally {
                                 subLock.unlock();
                             }
@@ -836,7 +836,7 @@ public class DefaultWebSocketService implements WebSocketService {
                     try {
                         msgEndpoint.sendPing(md.getSessionRef(), currentTime);
                     } catch (IOException e) {
-                        log.warn("[{}] Failed to send ping: {}", md.getSessionRef().getSessionId(), e);
+                        log.warn("[{}] Failed to send ping:", md.getSessionRef().getSessionId(), e);
                     }
                 }));
     }

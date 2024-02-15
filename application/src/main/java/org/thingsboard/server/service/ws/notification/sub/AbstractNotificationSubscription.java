@@ -15,32 +15,24 @@
  */
 package org.thingsboard.server.service.ws.notification.sub;
 
-import lombok.Builder;
+
 import lombok.Getter;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.service.subscription.TbSubscription;
 import org.thingsboard.server.service.subscription.TbSubscriptionType;
-import org.thingsboard.server.service.ws.notification.cmd.UnreadNotificationsCountUpdate;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
 @Getter
-public class NotificationsCountSubscription extends AbstractNotificationSubscription<NotificationsSubscriptionUpdate> {
+public abstract class AbstractNotificationSubscription<T> extends TbSubscription<T> {
 
-    @Builder
-    public NotificationsCountSubscription(String serviceId, String sessionId, int subscriptionId, TenantId tenantId, EntityId entityId,
-                                          BiConsumer<TbSubscription<NotificationsSubscriptionUpdate>, NotificationsSubscriptionUpdate> updateProcessor) {
-        super(serviceId, sessionId, subscriptionId, tenantId, entityId, TbSubscriptionType.NOTIFICATIONS_COUNT, updateProcessor);
-    }
+    protected final AtomicInteger sequence = new AtomicInteger();
+    protected final AtomicInteger totalUnreadCounter = new AtomicInteger();
 
-    public UnreadNotificationsCountUpdate createUpdate() {
-        return UnreadNotificationsCountUpdate.builder()
-                .cmdId(getSubscriptionId())
-                .totalUnreadCount(totalUnreadCounter.get())
-                .sequenceNumber(sequence.incrementAndGet())
-                .build();
+    public AbstractNotificationSubscription(String serviceId, String sessionId, int subscriptionId, TenantId tenantId, EntityId entityId, TbSubscriptionType type, BiConsumer<TbSubscription<T>, T> updateProcessor) {
+        super(serviceId, sessionId, subscriptionId, tenantId, entityId, type, updateProcessor);
     }
 
 }
