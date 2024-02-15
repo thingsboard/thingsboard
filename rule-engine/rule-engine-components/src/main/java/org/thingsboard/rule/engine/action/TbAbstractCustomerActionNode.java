@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.action;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -71,7 +72,7 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
         }
         withCallback(processCustomerAction(ctx, msg),
                 m -> ctx.tellSuccess(msg),
-                t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
+                t -> ctx.tellFailure(msg, t), MoreExecutors.directExecutor());
     }
 
     protected abstract ListenableFuture<Void> processCustomerAction(TbContext ctx, TbMsg msg);
@@ -107,7 +108,7 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
         });
     }
 
-    static String unsupportedOriginatorTypeErrorMessage(EntityType originatorType) {
+    private static String unsupportedOriginatorTypeErrorMessage(EntityType originatorType) {
         return "Unsupported originator type '" + originatorType +
                 "'! Only " + supportedEntityTypesStr + " types are allowed.";
     }

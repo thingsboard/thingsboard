@@ -84,6 +84,8 @@ class TbUnassignFromCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
     private static final Set<EntityType> supportedEntityTypes = EnumSet.of(EntityType.DEVICE, EntityType.ASSET,
             EntityType.ENTITY_VIEW, EntityType.EDGE, EntityType.DASHBOARD);
 
+    private static final String supportedEntityTypesStr = supportedEntityTypes.stream().map(Enum::name).collect(Collectors.joining(", "));
+
     private static final Set<EntityType> unsupportedEntityTypes = Arrays.stream(EntityType.values())
             .filter(type -> !supportedEntityTypes.contains(type)).collect(Collectors.toUnmodifiableSet());
 
@@ -158,7 +160,8 @@ class TbUnassignFromCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
         var exception = assertThrows(RuntimeException.class, () -> node.onMsg(ctxMock, msg));
 
         // THEN
-        assertThat(exception.getMessage()).isEqualTo(TbAbstractCustomerActionNode.unsupportedOriginatorTypeErrorMessage(originatorType));
+        assertThat(exception.getMessage()).isEqualTo("Unsupported originator type '" + originatorType +
+                "'! Only " + supportedEntityTypesStr + " types are allowed.");
         verifyNoInteractions(ctxMock);
         verifyNoInteractions(customerServiceMock);
     }
