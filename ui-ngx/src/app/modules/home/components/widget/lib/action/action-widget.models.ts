@@ -62,8 +62,6 @@ export abstract class BasicActionWidgetComponent implements OnInit, OnDestroy, A
 
   loading$ = this.loadingSubject.asObservable().pipe(share());
 
-  error = '';
-
   protected constructor(protected cd: ChangeDetectorRef) {
   }
 
@@ -99,8 +97,7 @@ export abstract class BasicActionWidgetComponent implements OnInit, OnDestroy, A
   }
 
   public clearError() {
-    this.error = '';
-    this.cd.markForCheck();
+    this.ctx.hideToast(this.ctx.toastTargetId);
   }
 
   protected createValueGetter<V>(getValueSettings: GetValueSettings<V>,
@@ -113,7 +110,8 @@ export abstract class BasicActionWidgetComponent implements OnInit, OnDestroy, A
         }
       },
       error: (err: any) => {
-        this.onError(err);
+        const message = parseError(this.ctx, err);
+        this.onError(message);
         if (valueObserver?.error) {
           valueObserver.error(err);
         }
@@ -132,8 +130,7 @@ export abstract class BasicActionWidgetComponent implements OnInit, OnDestroy, A
   }
 
   private onError(error: string) {
-    this.error = error;
-    this.cd.markForCheck();
+    this.ctx.showErrorToast(error, 'bottom', 'center', this.ctx.toastTargetId, true);
   }
 
   protected updateValue<V>(valueSetter: ValueSetter<V>,
@@ -295,6 +292,8 @@ export class ValueToDataConverter<V> {
 
   constructor(protected settings: ValueToDataSettings) {
     switch (settings.type) {
+      case ValueToDataType.VALUE:
+        break;
       case ValueToDataType.CONSTANT:
         this.constantValue = this.settings.constantValue;
         break;
@@ -312,6 +311,8 @@ export class ValueToDataConverter<V> {
 
   valueToData(value: V): any {
     switch (this.settings.type) {
+      case ValueToDataType.VALUE:
+        return value;
       case ValueToDataType.CONSTANT:
         return this.constantValue;
       case ValueToDataType.FUNCTION:

@@ -111,6 +111,7 @@ export const setValueActionTranslations = new Map<SetValueAction, string>(
 );
 
 export enum ValueToDataType {
+  VALUE = 'VALUE',
   CONSTANT = 'CONSTANT',
   FUNCTION = 'FUNCTION',
   NONE = 'NONE'
