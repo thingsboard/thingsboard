@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.rule.RuleNode;
@@ -472,18 +473,8 @@ public class DefaultTbAlarmRuleStateService extends TbApplicationEventListener<P
 
     private List<AlarmRule> fetchAlarmRules(TenantId tenantId) {
         List<AlarmRule> alarmRules = new ArrayList<>();
-
-        PageLink pageLink = new PageLink(1024);
-        PageData<AlarmRule> pageData;
-
-        do {
-            pageData = alarmRuleService.findEnabledAlarmRules(tenantId, pageLink);
-
-            alarmRules.addAll(pageData.getData());
-
-            pageLink = pageLink.nextPageLink();
-        } while (pageData.hasNext());
-
+        PageDataIterable<AlarmRule> pageIterable = new PageDataIterable<>(pageLink -> alarmRuleService.findEnabledAlarmRules(tenantId, pageLink), 1024);
+        pageIterable.forEach(alarmRules::add);
         return alarmRules;
     }
 
