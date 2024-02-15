@@ -3241,6 +3241,7 @@
         "new-platform-version-trigger-settings": "New platform version trigger settings",
         "rate-limits-trigger-settings": "Exceeded rate limits trigger settings",
         "at-least-one-should-be-selected": "At least one should be selected",
+        "basic-settings": "Basic settings",
         "button-text": "Button text",
         "button-text-required": "Button text is required",
         "button-text-max-length": "Button text should be less than or equal to {{ length }} characters",
