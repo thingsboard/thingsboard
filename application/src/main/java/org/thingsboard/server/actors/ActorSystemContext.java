@@ -204,7 +204,7 @@ public class ActorSystemContext {
     @Getter
     private DeviceCredentialsService deviceCredentialsService;
 
-    @Autowired
+    @Autowired(required = false)
     @Getter
     private RuleEngineDeviceStateManager deviceStateManager;
 

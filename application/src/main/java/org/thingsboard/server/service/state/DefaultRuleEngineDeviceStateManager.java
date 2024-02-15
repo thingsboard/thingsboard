@@ -29,12 +29,14 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.SimpleTbQueueCallback;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 
 import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
 @Service
+@TbRuleEngineComponent
 public class DefaultRuleEngineDeviceStateManager implements RuleEngineDeviceStateManager {
 
     private final TbServiceInfoProvider serviceInfoProvider;
