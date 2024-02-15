@@ -794,6 +794,15 @@ state:
   # Used only when state.persistToTelemetry is set to 'true' and Cassandra is used for timeseries data.
   # 0 means time-to-live mechanism is disabled.
   telemetryTtl: "${STATE_TELEMETRY_TTL:0}"
+  # Configuration properties for rule nodes related to device activity state
+  rule:
+    node:
+      # Device state rule node
+      deviceState:
+        # Defines the rate at which device connectivity events can be triggered.
+        # Comma-separated list of capacity:duration pairs that define bandwidth capacity and refill duration for token bucket rate limit algorithm.
+        # Refill is set to be greedy. Please refer to Bucket4j library documentation for more details.
+        rateLimit: "${DEVICE_STATE_NODE_RATE_LIMIT_CONFIGURATION:1:1,30:60,60:3600}"
 
 # Tbel parameters
 tbel:

@@ -282,6 +282,8 @@ public interface TbContext {
 
     RuleEngineDeviceStateManager getDeviceStateManager();
 
+    String getDeviceStateNodeRateLimitConfig();
+
     TbClusterService getClusterService();
 
     DashboardService getDashboardService();

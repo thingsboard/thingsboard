@@ -15,8 +15,6 @@
  */
 package org.thingsboard.rule.engine.action;
 
-import com.google.common.base.Stopwatch;
-import com.google.common.base.Ticker;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,6 +27,7 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceStateManager;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -45,11 +44,9 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.common.msg.tools.TbRateLimits;
 
-import java.time.Duration;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,9 +54,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
 public class TbDeviceStateNodeTest {
@@ -71,21 +69,12 @@ public class TbDeviceStateNodeTest {
     @Captor
     private static ArgumentCaptor<TbCallback> callbackCaptor;
     private TbDeviceStateNode node;
-    private RuleNodeId nodeId;
     private TbDeviceStateNodeConfiguration config;
 
     private static final TenantId TENANT_ID = TenantId.fromUUID(UUID.randomUUID());
     private static final DeviceId DEVICE_ID = new DeviceId(UUID.randomUUID());
     private static final long METADATA_TS = 123L;
-    private TbMsg cleanupMsg;
     private TbMsg msg;
-    private long nowNanos;
-    private final Ticker controlledTicker = new Ticker() {
-        @Override
-        public long read() {
-            return nowNanos;
-        }
-    };
 
     @BeforeEach
     public void setup() {
@@ -96,8 +85,6 @@ public class TbDeviceStateNodeTest {
         var data = JacksonUtil.newObjectNode();
         data.put("humidity", 58.3);
         msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metaData, JacksonUtil.toString(data));
-        nodeId = new RuleNodeId(UUID.randomUUID());
-        cleanupMsg = TbMsg.newMsg(null, TbMsgType.DEVICE_STATE_STALE_ENTRIES_CLEANUP_SELF_MSG, nodeId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
     }
 
     @BeforeEach
@@ -121,80 +108,42 @@ public class TbDeviceStateNodeTest {
     }
 
     @Test
-    public void givenValidConfig_whenInit_thenSchedulesCleanupMsg() {
+    public void givenInvalidRateLimitConfig_whenInit_thenUsesDefaultConfig() {
         // GIVEN
-        given(ctxMock.getSelfId()).willReturn(nodeId);
-        given(ctxMock.newMsg(isNull(), eq(TbMsgType.DEVICE_STATE_STALE_ENTRIES_CLEANUP_SELF_MSG), eq(nodeId), eq(TbMsgMetaData.EMPTY), eq(TbMsg.EMPTY_STRING))).willReturn(cleanupMsg);
+        given(ctxMock.getDeviceStateNodeRateLimitConfig()).willReturn("invalid rate limit config");
+        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
+        given(ctxMock.getSelfId()).willReturn(new RuleNodeId(UUID.randomUUID()));
 
         // WHEN
         try {
             initNode(TbMsgType.ACTIVITY_EVENT);
         } catch (Exception e) {
-            fail("Node failed to initialize.");
+            fail("Node failed to initialize!", e);
         }
 
         // THEN
-        verifyCleanupMsgSent();
-    }
-
-    @Test
-    public void givenCleanupMsg_whenOnMsg_thenCleansStaleEntries() {
-        // GIVEN
-        given(ctxMock.getSelfId()).willReturn(nodeId);
-        given(ctxMock.newMsg(isNull(), eq(TbMsgType.DEVICE_STATE_STALE_ENTRIES_CLEANUP_SELF_MSG), eq(nodeId), eq(TbMsgMetaData.EMPTY), eq(TbMsg.EMPTY_STRING))).willReturn(cleanupMsg);
-
-        ConcurrentMap<DeviceId, Duration> lastActivityEventTimestamps = new ConcurrentHashMap<>();
-        ReflectionTestUtils.setField(node, "lastActivityEventTimestamps", lastActivityEventTimestamps);
-
-        Stopwatch stopwatch = Stopwatch.createStarted(controlledTicker);
-        ReflectionTestUtils.setField(node, "stopwatch", stopwatch);
-
-        // WHEN
-        Duration expirationTime = Duration.ofDays(1L);
-
-        DeviceId staleId = DEVICE_ID;
-        Duration staleTs = Duration.ofHours(4L);
-        lastActivityEventTimestamps.put(staleId, staleTs);
-
-        DeviceId goodId = new DeviceId(UUID.randomUUID());
-        Duration goodTs = staleTs.plus(expirationTime);
-        lastActivityEventTimestamps.put(goodId, goodTs);
-
-        nowNanos = staleTs.toNanos() + expirationTime.toNanos() + 1;
-        node.onMsg(ctxMock, cleanupMsg);
-
-        // THEN
-        assertThat(lastActivityEventTimestamps)
-                .containsKey(goodId)
-                .doesNotContainKey(staleId)
-                .size().isOne();
-
-        verifyCleanupMsgSent();
-        then(ctxMock).shouldHaveNoMoreInteractions();
+        String actualRateLimitConfig = (String) ReflectionTestUtils.getField(node, "rateLimitConfig");
+        assertThat(actualRateLimitConfig).isEqualTo("1:1,30:60,60:3600");
     }
 
     @Test
     public void givenMsgArrivedTooFast_whenOnMsg_thenRateLimitsThisMsg() {
         // GIVEN
-        ConcurrentMap<DeviceId, Duration> lastActivityEventTimestamps = new ConcurrentHashMap<>();
-        ReflectionTestUtils.setField(node, "lastActivityEventTimestamps", lastActivityEventTimestamps);
+        ConcurrentReferenceHashMap<DeviceId, TbRateLimits> rateLimits = new ConcurrentReferenceHashMap<>();
+        ReflectionTestUtils.setField(node, "rateLimits", rateLimits);
 
-        Stopwatch stopwatch = Stopwatch.createStarted(controlledTicker);
-        ReflectionTestUtils.setField(node, "stopwatch", stopwatch);
+        var rateLimitMock = mock(TbRateLimits.class);
+        rateLimits.put(DEVICE_ID, rateLimitMock);
+
+        given(rateLimitMock.tryConsume()).willReturn(false);
 
         // WHEN
-        Duration firstEventTs = Duration.ofMillis(1000L);
-        lastActivityEventTimestamps.put(DEVICE_ID, firstEventTs);
-
-        Duration tooFastEventTs = firstEventTs.plus(Duration.ofMillis(999L));
-        nowNanos = tooFastEventTs.toNanos();
         node.onMsg(ctxMock, msg);
 
         // THEN
-        Duration actualEventTs = lastActivityEventTimestamps.get(DEVICE_ID);
-        assertThat(actualEventTs).isEqualTo(firstEventTs);
-
-        then(ctxMock).should().tellSuccess(msg);
+        then(ctxMock).should().tellNext(msg, "Rate limited");
+        then(ctxMock).should(never()).tellSuccess(any());
+        then(ctxMock).should(never()).tellFailure(any(), any());
         then(ctxMock).shouldHaveNoMoreInteractions();
         then(deviceStateManagerMock).shouldHaveNoInteractions();
     }
@@ -202,25 +151,25 @@ public class TbDeviceStateNodeTest {
     @Test
     public void givenHasNonLocalDevices_whenOnPartitionChange_thenRemovesEntriesForNonLocalDevices() {
         // GIVEN
-        ConcurrentMap<DeviceId, Duration> lastActivityEventTimestamps = new ConcurrentHashMap<>();
-        ReflectionTestUtils.setField(node, "lastActivityEventTimestamps", lastActivityEventTimestamps);
+        ConcurrentReferenceHashMap<DeviceId, TbRateLimits> rateLimits = new ConcurrentReferenceHashMap<>();
+        ReflectionTestUtils.setField(node, "rateLimits", rateLimits);
 
-        lastActivityEventTimestamps.put(DEVICE_ID, Duration.ofHours(24L));
+        rateLimits.put(DEVICE_ID, new TbRateLimits("1:1"));
         given(ctxMock.isLocalEntity(eq(DEVICE_ID))).willReturn(true);
 
         DeviceId nonLocalDeviceId1 = new DeviceId(UUID.randomUUID());
-        lastActivityEventTimestamps.put(nonLocalDeviceId1, Duration.ofHours(30L));
+        rateLimits.put(nonLocalDeviceId1, new TbRateLimits("2:2"));
         given(ctxMock.isLocalEntity(eq(nonLocalDeviceId1))).willReturn(false);
 
         DeviceId nonLocalDeviceId2 = new DeviceId(UUID.randomUUID());
-        lastActivityEventTimestamps.put(nonLocalDeviceId2, Duration.ofHours(32L));
+        rateLimits.put(nonLocalDeviceId2, new TbRateLimits("3:3"));
         given(ctxMock.isLocalEntity(eq(nonLocalDeviceId2))).willReturn(false);
 
         // WHEN
         node.onPartitionChangeMsg(ctxMock, new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE));
 
         // THEN
-        assertThat(lastActivityEventTimestamps)
+        assertThat(rateLimits)
                 .containsKey(DEVICE_ID)
                 .doesNotContainKey(nonLocalDeviceId1)
                 .doesNotContainKey(nonLocalDeviceId2)
@@ -275,6 +224,7 @@ public class TbDeviceStateNodeTest {
     @Test
     public void givenMetadataDoesNotContainTs_whenOnMsg_thenMsgTsIsUsedAsEventTs() {
         // GIVEN
+        given(ctxMock.getDeviceStateNodeRateLimitConfig()).willReturn("1:1");
         try {
             initNode(TbMsgType.ACTIVITY_EVENT);
         } catch (TbNodeException e) {
@@ -298,9 +248,8 @@ public class TbDeviceStateNodeTest {
     @MethodSource
     public void givenSupportedEventAndDeviceOriginator_whenOnMsg_thenCorrectEventIsSentWithCorrectCallback(TbMsgType supportedEventType, Runnable actionVerification) {
         // GIVEN
-        given(ctxMock.getSelfId()).willReturn(nodeId);
-        given(ctxMock.newMsg(isNull(), eq(TbMsgType.DEVICE_STATE_STALE_ENTRIES_CLEANUP_SELF_MSG), eq(nodeId), eq(TbMsgMetaData.EMPTY), eq(TbMsg.EMPTY_STRING))).willReturn(cleanupMsg);
         given(ctxMock.getTenantId()).willReturn(TENANT_ID);
+        given(ctxMock.getDeviceStateNodeRateLimitConfig()).willReturn("1:1");
         given(ctxMock.getDeviceStateManager()).willReturn(deviceStateManagerMock);
 
         try {
@@ -308,7 +257,6 @@ public class TbDeviceStateNodeTest {
         } catch (TbNodeException e) {
             fail("Node failed to initialize!", e);
         }
-        verifyCleanupMsgSent();
 
         // WHEN
         node.onMsg(ctxMock, msg);
@@ -343,12 +291,6 @@ public class TbDeviceStateNodeTest {
         config.setEvent(event);
         var nodeConfig = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctxMock, nodeConfig);
-    }
-
-    private void verifyCleanupMsgSent() {
-        then(ctxMock).should().getSelfId();
-        then(ctxMock).should().newMsg(isNull(), eq(TbMsgType.DEVICE_STATE_STALE_ENTRIES_CLEANUP_SELF_MSG), eq(nodeId), eq(TbMsgMetaData.EMPTY), eq(TbMsg.EMPTY_STRING));
-        then(ctxMock).should().tellSelf(eq(cleanupMsg), eq(Duration.ofHours(1L).toMillis()));
     }
 
 }

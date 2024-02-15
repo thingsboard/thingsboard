@@ -15,8 +15,8 @@
  */
 package org.thingsboard.rule.engine.action;
 
-import com.google.common.base.Stopwatch;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceStateManager;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -28,17 +28,15 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.common.msg.tools.TbRateLimits;
 
-import java.time.Duration;
 import java.util.EnumSet;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 @Slf4j
 @RuleNode(
@@ -47,8 +45,8 @@ import java.util.concurrent.ConcurrentMap;
         nodeDescription = "Triggers device connectivity events",
         nodeDetails = "If incoming message originator is a device, registers configured event for that device in the Device State Service, which sends appropriate message to the Rule Engine." +
                 " If metadata <code>ts</code> property is present, it will be used as event timestamp. Otherwise, the message timestamp will be used." +
-                " Incoming message is forwarded using the <code>Success</code> chain, unless an unexpected error occurs during message processing" +
-                " then incoming message is forwarded using the <code>Failure</code> chain." +
+                " If originator entity type is not <code>DEVICE</code> or unexpected error happened during processing, then incoming message is forwarded using <code>Failure</code> chain." +
+                " If rate of connectivity events for a given originator is too high, then incoming message is forwarded using <code>Rate limited</code> chain. " +
                 "<br>" +
                 "Supported device connectivity events are:" +
                 "<ul>" +
@@ -59,6 +57,7 @@ import java.util.concurrent.ConcurrentMap;
                 "</ul>" +
                 "This node is particularly useful when device isn't using transports to receive data, such as when fetching data from external API or computing new data within the rule chain.",
         configClazz = TbDeviceStateNodeConfiguration.class,
+        relationTypes = {TbNodeConnectionType.SUCCESS, TbNodeConnectionType.FAILURE, "Rate limited"},
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeDeviceStateConfig"
 )
@@ -67,12 +66,9 @@ public class TbDeviceStateNode implements TbNode {
     private static final Set<TbMsgType> SUPPORTED_EVENTS = EnumSet.of(
             TbMsgType.CONNECT_EVENT, TbMsgType.ACTIVITY_EVENT, TbMsgType.DISCONNECT_EVENT, TbMsgType.INACTIVITY_EVENT
     );
-    private static final Duration ONE_SECOND = Duration.ofSeconds(1L);
-    private static final Duration ENTRY_EXPIRATION_TIME = Duration.ofDays(1L);
-    private static final Duration ENTRY_CLEANUP_PERIOD = Duration.ofHours(1L);
-
-    private Stopwatch stopwatch;
-    private ConcurrentMap<DeviceId, Duration> lastActivityEventTimestamps;
+    private static final String DEFAULT_RATE_LIMIT_CONFIG = "1:1,30:60,60:3600";
+    private ConcurrentReferenceHashMap<DeviceId, TbRateLimits> rateLimits;
+    private String rateLimitConfig;
     private TbMsgType event;
 
     @Override
@@ -85,19 +81,19 @@ public class TbDeviceStateNode implements TbNode {
             throw new TbNodeException("Unsupported event: " + event, true);
         }
         this.event = event;
-        lastActivityEventTimestamps = new ConcurrentHashMap<>();
-        stopwatch = Stopwatch.createStarted();
-        scheduleCleanupMsg(ctx);
+        rateLimits = new ConcurrentReferenceHashMap<>();
+        String deviceStateNodeRateLimitConfig = ctx.getDeviceStateNodeRateLimitConfig();
+        try {
+            rateLimitConfig = new TbRateLimits(deviceStateNodeRateLimitConfig).getConfiguration();
+        } catch (Exception e) {
+            log.error("[{}][{}] Invalid rate limit configuration provided: [{}]. Will use default value [{}].",
+                    ctx.getTenantId().getId(), ctx.getSelfId().getId(), deviceStateNodeRateLimitConfig, DEFAULT_RATE_LIMIT_CONFIG, e);
+            rateLimitConfig = DEFAULT_RATE_LIMIT_CONFIG;
+        }
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        if (msg.isTypeOf(TbMsgType.DEVICE_STATE_STALE_ENTRIES_CLEANUP_SELF_MSG)) {
-            removeStaleEntries();
-            scheduleCleanupMsg(ctx);
-            return;
-        }
-
         EntityType originatorEntityType = msg.getOriginator().getEntityType();
         if (!EntityType.DEVICE.equals(originatorEntityType)) {
             ctx.tellFailure(msg, new IllegalArgumentException(
@@ -105,41 +101,18 @@ public class TbDeviceStateNode implements TbNode {
             ));
             return;
         }
-
         DeviceId originator = new DeviceId(msg.getOriginator().getId());
-
-        lastActivityEventTimestamps.compute(originator, (__, lastEventTs) -> {
-            Duration now = stopwatch.elapsed();
-
-            if (lastEventTs == null) {
+        rateLimits.compute(originator, (__, rateLimit) -> {
+            if (rateLimit == null) {
+                rateLimit = new TbRateLimits(rateLimitConfig);
+            }
+            boolean isNotRateLimited = rateLimit.tryConsume();
+            if (isNotRateLimited) {
                 sendEventAndTell(ctx, originator, msg);
-                return now;
+            } else {
+                ctx.tellNext(msg, "Rate limited");
             }
-
-            Duration elapsedSinceLastEventSent = now.minus(lastEventTs);
-            if (elapsedSinceLastEventSent.compareTo(ONE_SECOND) < 0) {
-                ctx.tellSuccess(msg);
-                return lastEventTs;
-            }
-
-            sendEventAndTell(ctx, originator, msg);
-            return now;
-        });
-    }
-
-    private void scheduleCleanupMsg(TbContext ctx) {
-        TbMsg cleanupMsg = ctx.newMsg(
-                null, TbMsgType.DEVICE_STATE_STALE_ENTRIES_CLEANUP_SELF_MSG, ctx.getSelfId(), TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING
-        );
-        ctx.tellSelf(cleanupMsg, ENTRY_CLEANUP_PERIOD.toMillis());
-    }
-
-    private void removeStaleEntries() {
-        lastActivityEventTimestamps.entrySet().removeIf(entry -> {
-            Duration now = stopwatch.elapsed();
-            Duration lastEventTs = entry.getValue();
-            Duration elapsedSinceLastEventSent = now.minus(lastEventTs);
-            return elapsedSinceLastEventSent.compareTo(ENTRY_EXPIRATION_TIME) > 0;
+            return rateLimit;
         });
     }
 
@@ -184,16 +157,16 @@ public class TbDeviceStateNode implements TbNode {
 
     @Override
     public void onPartitionChangeMsg(TbContext ctx, PartitionChangeMsg msg) {
-        lastActivityEventTimestamps.entrySet().removeIf(entry -> !ctx.isLocalEntity(entry.getKey()));
+        rateLimits.entrySet().removeIf(entry -> !ctx.isLocalEntity(entry.getKey()));
     }
 
     @Override
     public void destroy() {
-        if (lastActivityEventTimestamps != null) {
-            lastActivityEventTimestamps.clear();
-            lastActivityEventTimestamps = null;
+        if (rateLimits != null) {
+            rateLimits.clear();
+            rateLimits = null;
         }
-        stopwatch = null;
+        rateLimitConfig = null;
         event = null;
     }
 

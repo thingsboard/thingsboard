@@ -561,6 +561,10 @@ public class ActorSystemContext {
     @Getter
     private boolean externalNodeForceAck;
 
+    @Value("${state.rule.node.deviceState.rateLimit:1:1,30:60,60:3600}")
+    @Getter
+    private String deviceStateNodeRateLimitConfig;
+
     @Getter
     @Setter
     private TbActorSystem actorSystem;

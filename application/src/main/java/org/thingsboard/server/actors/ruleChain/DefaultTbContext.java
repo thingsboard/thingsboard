@@ -690,6 +690,11 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    public String getDeviceStateNodeRateLimitConfig() {
+        return mainCtx.getDeviceStateNodeRateLimitConfig();
+    }
+
+    @Override
     public TbClusterService getClusterService() {
         return mainCtx.getClusterService();
     }
