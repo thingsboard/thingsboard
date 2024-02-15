@@ -402,7 +402,7 @@ public abstract class BaseEdgeProcessor {
 
     protected ListenableFuture<Void> processActionForAllEdges(TenantId tenantId, EdgeEventType type,
                                                               EdgeEventActionType actionType, EntityId entityId,
-                                                              EdgeId sourceEdgeId) {
+                                                              JsonNode body, EdgeId sourceEdgeId) {
         List<ListenableFuture<Void>> futures = new ArrayList<>();
         if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
             PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
@@ -410,7 +410,7 @@ public abstract class BaseEdgeProcessor {
             do {
                 tenantsIds = tenantService.findTenantsIds(pageLink);
                 for (TenantId tenantId1 : tenantsIds.getData()) {
-                    futures.addAll(processActionForAllEdgesByTenantId(tenantId1, type, actionType, entityId, null, sourceEdgeId));
+                    futures.addAll(processActionForAllEdgesByTenantId(tenantId1, type, actionType, entityId, body, sourceEdgeId));
                 }
                 pageLink = pageLink.nextPageLink();
             } while (tenantsIds.hasNext());
@@ -586,7 +586,7 @@ public abstract class BaseEdgeProcessor {
             case UPDATED:
             case DELETED:
             case CREDENTIALS_UPDATED: // used by USER entity
-                return processActionForAllEdges(tenantId, type, actionType, entityId, sourceEdgeId);
+                return processActionForAllEdges(tenantId, type, actionType, entityId, null, sourceEdgeId);
             default:
                 return Futures.immediateFuture(null);
         }

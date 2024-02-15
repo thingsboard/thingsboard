@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.oauth2.SchemeType;
 import org.thingsboard.server.common.data.oauth2.TenantNameStrategyType;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 
@@ -117,6 +118,7 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
                 });
             }
         });
+        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(TenantId.SYS_TENANT_ID).entity(oauth2Info).build());
     }
 
     @Override

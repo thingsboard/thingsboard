@@ -15,14 +15,20 @@
  */
 package org.thingsboard.server.service.edge.rpc.processor.oauth2;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2Info;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.OAuth2UpdateMsg;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
@@ -43,4 +49,16 @@ public class OAuth2EdgeProcessor extends BaseEdgeProcessor {
         }
         return downlinkMsg;
     }
+
+    public ListenableFuture<Void> processOAuth2Notification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
+        OAuth2Info oAuth2Info = JacksonUtil.fromString(edgeNotificationMsg.getBody(), OAuth2Info.class);
+        if (oAuth2Info == null) {
+            return Futures.immediateFuture(null);
+        }
+
+        EdgeEventType type = EdgeEventType.valueOf(edgeNotificationMsg.getType());
+        EdgeEventActionType actionType = EdgeEventActionType.valueOf(edgeNotificationMsg.getAction());
+        return processActionForAllEdges(tenantId, type, actionType, null, JacksonUtil.toJsonNode(edgeNotificationMsg.getBody()), null);
+    }
+
 }
