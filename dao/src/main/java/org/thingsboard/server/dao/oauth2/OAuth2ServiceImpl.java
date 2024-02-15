@@ -58,6 +58,7 @@ import static org.thingsboard.server.dao.service.Validator.validateString;
 @Slf4j
 @Service
 public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Service {
+
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String INCORRECT_CLIENT_REGISTRATION_ID = "Incorrect clientRegistrationId ";
     public static final String INCORRECT_DOMAIN_NAME = "Incorrect domainName ";
@@ -123,7 +124,7 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
         log.trace("Executing findOAuth2Info");
         OAuth2Info oauth2Info = new OAuth2Info();
         List<OAuth2Params> oauth2ParamsList = oauth2ParamsDao.find(TenantId.SYS_TENANT_ID);
-        oauth2Info.setEnabled(oauth2ParamsList.stream().anyMatch(param -> param.isEnabled()));
+        oauth2Info.setEnabled(oauth2ParamsList.stream().anyMatch(OAuth2Params::isEnabled));
         List<OAuth2ParamsInfo> oauth2ParamsInfos = new ArrayList<>();
         oauth2Info.setOauth2ParamsInfos(oauth2ParamsInfos);
         oauth2ParamsList.stream().sorted(Comparator.comparing(BaseData::getUuidId)).forEach(oauth2Params -> {

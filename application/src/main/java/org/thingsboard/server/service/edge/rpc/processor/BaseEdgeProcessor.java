@@ -74,6 +74,7 @@ import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.edge.EdgeSynchronizationManager;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -99,6 +100,7 @@ import org.thingsboard.server.service.edge.rpc.constructor.dashboard.DashboardMs
 import org.thingsboard.server.service.edge.rpc.constructor.device.DeviceMsgConstructorFactory;
 import org.thingsboard.server.service.edge.rpc.constructor.edge.EdgeMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.entityview.EntityViewMsgConstructorFactory;
+import org.thingsboard.server.service.edge.rpc.constructor.oauth2.OAuth2MsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.ota.OtaPackageMsgConstructorFactory;
 import org.thingsboard.server.service.edge.rpc.constructor.queue.QueueMsgConstructorFactory;
 import org.thingsboard.server.service.edge.rpc.constructor.relation.RelationMsgConstructorFactory;
@@ -226,6 +228,9 @@ public abstract class BaseEdgeProcessor {
     protected ResourceService resourceService;
 
     @Autowired
+    protected OAuth2Service oAuth2Service;
+
+    @Autowired
     @Lazy
     protected TbQueueProducerProvider producerProvider;
 
@@ -255,6 +260,9 @@ public abstract class BaseEdgeProcessor {
 
     @Autowired
     protected EntityDataMsgConstructor entityDataMsgConstructor;
+
+    @Autowired
+    protected OAuth2MsgConstructor oAuth2MsgConstructor;
 
     @Autowired
     protected RuleChainMsgConstructorFactory ruleChainMsgConstructorFactory;
