@@ -49,6 +49,7 @@ import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RETRANSMIS
 import static org.thingsboard.server.transport.lwm2m.server.DefaultLwM2mTransportService.PSK_CIPHER_SUITES;
 import static org.thingsboard.server.transport.lwm2m.server.DefaultLwM2mTransportService.RPK_OR_X509_CIPHER_SUITES;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MNetworkConfig.getCoapConfig;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.setDtlsConnectorConfigCidLength;
 
 @Slf4j
 @Component
@@ -113,15 +114,15 @@ public class LwM2MTransportBootstrapService {
         serverCoapConfig.setTransient(DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY);
         serverCoapConfig.set(DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY, serverConfig.isRecommendedCiphers());
         serverCoapConfig.setTransient(DtlsConfig.DTLS_CONNECTION_ID_LENGTH);
-        serverCoapConfig.set(DtlsConfig.DTLS_CONNECTION_ID_LENGTH, 6);
         serverCoapConfig.set(DTLS_RECOMMENDED_CURVES_ONLY, serverConfig.isRecommendedSupportedGroups());
         serverCoapConfig.setTransient(DTLS_RETRANSMISSION_TIMEOUT);
         serverCoapConfig.set(DTLS_RETRANSMISSION_TIMEOUT, serverConfig.getDtlsRetransmissionTimeout(), MILLISECONDS);
 
-
+        if (serverConfig.getDtlsCidLength() != null) {
+            setDtlsConnectorConfigCidLength( serverCoapConfig, serverConfig.getDtlsCidLength());
+        }
 
         /* Create DTLS Config */
-
         this.setServerWithCredentials(builder);
 
         // Set Californium Configuration

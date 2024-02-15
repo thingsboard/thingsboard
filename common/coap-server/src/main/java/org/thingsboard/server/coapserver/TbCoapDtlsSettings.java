@@ -41,6 +41,8 @@ import java.util.Collections;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.eclipse.californium.elements.config.CertificateAuthenticationMode.WANTED;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CLIENT_AUTHENTICATION_MODE;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CONNECTION_ID_LENGTH;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CONNECTION_ID_NODE_ID;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RETRANSMISSION_TIMEOUT;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_ROLE;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DtlsRole.SERVER_ONLY;
@@ -58,6 +60,9 @@ public class TbCoapDtlsSettings {
 
     @Value("${transport.coap.dtls.retransmission_timeout:9000}")
     private int dtlsRetransmissionTimeout;
+
+    @Value("${transport.coap.dtls.connection_id_length}")
+    private Integer cIdLength;
 
     @Bean
     @ConfigurationProperties(prefix = "transport.coap.dtls.credentials")
@@ -93,6 +98,14 @@ public class TbCoapDtlsSettings {
         configBuilder.set(DTLS_CLIENT_AUTHENTICATION_MODE, WANTED);
         configBuilder.set(DTLS_RETRANSMISSION_TIMEOUT, dtlsRetransmissionTimeout, MILLISECONDS);
         configBuilder.set(DTLS_ROLE, SERVER_ONLY);
+        configBuilder.set(DTLS_CONNECTION_ID_LENGTH, cIdLength);
+        if (cIdLength != null) {
+            if (cIdLength > 4) {
+                configBuilder.set(DTLS_CONNECTION_ID_NODE_ID, 0);
+            } else {
+                configBuilder.set(DTLS_CONNECTION_ID_NODE_ID, null);
+            }
+        }
         configBuilder.setAdvancedCertificateVerifier(
                 new TbCoapDtlsCertificateVerifier(
                         transportService,
