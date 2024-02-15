@@ -26,7 +26,6 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.DEDUPLICATION_TIM
 import static org.thingsboard.server.common.data.msg.TbMsgType.DELAY_TIMEOUT_SELF_MSG;
 import static org.thingsboard.server.common.data.msg.TbMsgType.DEVICE_PROFILE_PERIODIC_SELF_MSG;
 import static org.thingsboard.server.common.data.msg.TbMsgType.DEVICE_PROFILE_UPDATE_SELF_MSG;
-import static org.thingsboard.server.common.data.msg.TbMsgType.DEVICE_STATE_STALE_ENTRIES_CLEANUP_SELF_MSG;
 import static org.thingsboard.server.common.data.msg.TbMsgType.DEVICE_UPDATE_SELF_MSG;
 import static org.thingsboard.server.common.data.msg.TbMsgType.ENTITY_ASSIGNED_TO_EDGE;
 import static org.thingsboard.server.common.data.msg.TbMsgType.ENTITY_UNASSIGNED_FROM_EDGE;
@@ -54,7 +53,6 @@ class TbMsgTypeTest {
             DEDUPLICATION_TIMEOUT_SELF_MSG,
             DELAY_TIMEOUT_SELF_MSG,
             MSG_COUNT_SELF_MSG,
-            DEVICE_STATE_STALE_ENTRIES_CLEANUP_SELF_MSG,
             NA
     );
 
