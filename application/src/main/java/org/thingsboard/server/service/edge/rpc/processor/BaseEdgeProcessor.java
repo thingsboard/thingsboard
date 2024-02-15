@@ -460,6 +460,7 @@ public abstract class BaseEdgeProcessor {
             case UNASSIGNED_FROM_EDGE:
             case RELATION_DELETED:
             case DELETED_COMMENT:
+            case ALARM_DELETE:
                 return UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE;
             case ALARM_ACK:
                 return UpdateMsgType.ALARM_ACK_RPC_MESSAGE;

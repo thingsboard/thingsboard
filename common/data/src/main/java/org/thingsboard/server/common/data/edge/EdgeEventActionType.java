@@ -35,6 +35,7 @@ public enum EdgeEventActionType {
     RPC_CALL(ActionType.RPC_CALL),
     ALARM_ACK(ActionType.ALARM_ACK),
     ALARM_CLEAR(ActionType.ALARM_CLEAR),
+    ALARM_DELETE(ActionType.ALARM_DELETE),
     ALARM_ASSIGNED(ActionType.ALARM_ASSIGNED),
     ALARM_UNASSIGNED(ActionType.ALARM_UNASSIGNED),
     ADDED_COMMENT(ActionType.ADDED_COMMENT),
