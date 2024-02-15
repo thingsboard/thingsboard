@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 @import './scss/constants';
 
 @mixin form-row-column() {
   flex-direction: column;
   align-items: stretch;
+  &.align-start {
+    align-items: stretch;
+  }
   gap: 12px;
   padding: 12px 7px 12px 16px;
 }
@@ -77,6 +79,9 @@
       }
       > .mat-expansion-panel {
         padding: 16px;
+        &.no-padding {
+          padding: 0;
+        }
         .mat-expansion-panel-header {
           .mat-slide {
             margin: 0;
@@ -102,8 +107,9 @@
             background: none;
           }
           .mat-expansion-indicator {
-            height: 32px;
+            height: 24px;
             padding: 2px;
+            line-height: 14px;
           }
         }
         > .mat-expansion-panel-header-description {
@@ -114,20 +120,25 @@
             display: flex;
             flex-direction: column;
             gap: 16px;
-            padding: 16px 0 0 !important;
+            padding: 0 !important;
+            > :first-child {
+              margin-top: 16px;
+              @media #{$mat-xs} {
+                margin-top: 12px;
+              }
+            }
             @media #{$mat-xs} {
-              padding: 12px 0 0 !important;
               gap: 8px;
             }
           }
-        }
-        .tb-json-object-panel, .tb-css-content-panel {
-          margin: 0 0 8px;
         }
       }
       .mat-expansion-panel-content {
         font: inherit;
       }
+    }
+    .tb-json-object-panel, .tb-css-content-panel {
+      margin: 0 0 8px;
     }
   }
 
@@ -167,9 +178,15 @@
         @include form-row-column-breakpoint($mat-lt-md)
       }
     }
+    &.align-start {
+      align-items: flex-start;
+    }
     &.no-border {
       border: none;
       border-radius: 0;
+    }
+    &.no-gap {
+      gap: 0;
     }
     &.no-padding {
       padding: 0;
@@ -201,6 +218,10 @@
         min-width: fit-content;
       }
     }
+    .fixed-title-height {
+      min-height: 40px;
+      line-height: 40px;
+    }
     .mat-slide:only-child {
       margin: 8px 0;
     }
@@ -209,6 +230,36 @@
       color: rgba(0, 0, 0, .54);
       vertical-align: top;
       content: " *";
+    }
+  }
+
+  .tb-flex {
+    display: flex;
+    flex: 1;
+    gap: 8px;
+    &.row {
+      flex-direction: row;
+    }
+    &.column {
+      flex-direction: column;
+    }
+    &.flex-start {
+      justify-content: flex-start;
+    }
+    &.flex-end {
+      justify-content: flex-end;
+    }
+    &.space-between {
+      justify-content: space-between;
+    }
+    &.align-center {
+      align-items: center;
+    }
+    &.no-gap {
+      gap: 0;
+    }
+    &.fill-width {
+      width: 100%;
     }
   }
 
@@ -341,6 +392,15 @@
           }
         }
       }
+      &.tb-suffix-absolute {
+        .mat-mdc-text-field-wrapper {
+          .mat-mdc-form-field-icon-suffix {
+            > .mat-icon {
+              right: 16px;
+            }
+          }
+        }
+      }
     }
     &.tb-chips {
       &.flex {
@@ -382,6 +442,27 @@
             > * {
               display: block;
             }
+          }
+        }
+      }
+    }
+    &.tb-suffix-absolute {
+      .mat-mdc-text-field-wrapper {
+        .mat-mdc-form-field-icon-suffix {
+          padding: 0;
+          > .mat-icon {
+            position: absolute;
+            right: 0;
+          }
+        }
+      }
+      &.mat-mdc-form-field-has-icon-suffix {
+        .mat-mdc-text-field-wrapper {
+          padding-right: 12px;
+        }
+        &.number {
+          .mat-mdc-text-field-wrapper {
+            padding-right: 4px;
           }
         }
       }
@@ -553,6 +634,39 @@
     }
     &:disabled {
       color: rgba(0, 0, 0, 0.12);
+    }
+  }
+
+  button.mat-mdc-button-base.tb-nowrap {
+    .mdc-button__label {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .mat-mdc-chip-listbox.center-stretch {
+    .mat-mdc-standard-chip {
+      flex: 1;
+      &.mdc-evolution-chip--with-primary-graphic {
+        .mdc-evolution-chip__action--primary {
+          width: 100%;
+          padding-right: 0;
+          gap: 0;
+          .mdc-evolution-chip__graphic {
+            padding: 0;
+            flex: none;
+          }
+        }
+        &.mdc-evolution-chip--selected {
+          .mdc-evolution-chip__action--primary {
+            gap: 4px;
+          }
+          .mdc-evolution-chip__graphic {
+            width: 20px;
+          }
+        }
+      }
     }
   }
 }

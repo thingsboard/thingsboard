@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  ComponentFactoryResolver,
   ComponentRef,
   ElementRef,
   Inject,
@@ -110,12 +109,12 @@ import { MatDialog } from '@angular/material/dialog';
 import { ComponentType } from '@angular/cdk/portal';
 import { EMBED_DASHBOARD_DIALOG_TOKEN } from '@home/components/widget/dialog/embed-dashboard-dialog-token';
 import { MobileService } from '@core/services/mobile.service';
-import { DialogService } from '@core/services/dialog.service';
 import { PopoverPlacement } from '@shared/components/popover.models';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { DASHBOARD_PAGE_COMPONENT_TOKEN } from '@home/components/tokens';
 import { MODULES_MAP } from '@shared/models/constants';
 import { IModulesMap } from '@modules/common/modules-map.models';
+import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 
 @Component({
   selector: 'tb-widget',
@@ -131,6 +130,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
 
   @Input()
   isEdit: boolean;
+
+  @Input()
+  isPreview: boolean;
 
   @Input()
   isMobile: boolean;
@@ -179,7 +181,6 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
               private route: ActivatedRoute,
               private router: Router,
               private widgetComponentService: WidgetComponentService,
-              private componentFactoryResolver: ComponentFactoryResolver,
               private elementRef: ElementRef,
               private injector: Injector,
               private dialog: MatDialog,
@@ -198,8 +199,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
               private alarmDataService: AlarmDataService,
               private translate: TranslateService,
               private utils: UtilsService,
+              private dashboardUtils: DashboardUtilsService,
               private mobileService: MobileService,
-              private dialogs: DialogService,
               private raf: RafService,
               private ngZone: NgZone,
               private cd: ChangeDetectorRef) {
@@ -233,6 +234,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.widgetContext.store = this.store;
     this.widgetContext.servicesMap = ServicesMap;
     this.widgetContext.isEdit = this.isEdit;
+    this.widgetContext.isPreview = this.isPreview;
     this.widgetContext.isMobile = this.isMobile;
     this.widgetContext.toastTargetId = this.toastTargetId;
 
@@ -254,6 +256,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       handleWidgetAction: this.handleWidgetAction.bind(this),
       elementClick: this.elementClick.bind(this),
       cardClick: this.cardClick.bind(this),
+      click: this.click.bind(this),
       getActiveEntityInfo: this.getActiveEntityInfo.bind(this),
       openDashboardStateInSeparateDialog: this.openDashboardStateInSeparateDialog.bind(this),
       openDashboardStateInPopover: this.openDashboardStateInPopover.bind(this)
@@ -298,6 +301,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.subscriptionContext.entityDataService = this.entityDataService;
     this.subscriptionContext.alarmDataService = this.alarmDataService;
     this.subscriptionContext.utils = this.utils;
+    this.subscriptionContext.dashboardUtils = this.dashboardUtils;
     this.subscriptionContext.raf = this.raf;
     this.subscriptionContext.widgetUtils = this.widgetContext.utils;
     this.subscriptionContext.getServerTimeDiff = this.dashboardService.getServerTimeDiff.bind(this.dashboardService);
@@ -412,6 +416,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     this.widgetType = this.widgetInfo.widgetTypeFunction;
     this.typeParameters = this.widgetInfo.typeParameters;
     this.widgetContext.embedTitlePanel = this.typeParameters.embedTitlePanel;
+    this.widgetContext.overflowVisible = this.typeParameters.overflowVisible;
 
     if (!this.widgetType) {
       this.widgetTypeInstance = {};
@@ -959,7 +964,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       this.loadingData = false;
       options = {
         type: this.widget.type,
-        targetDeviceAliasIds: this.widget.config.targetDeviceAliasIds
+        targetDevice: this.widget.config.targetDevice
       };
       options.callbacks = {
         rpcStateChanged: (subscription) => {
@@ -974,7 +979,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
             this.dynamicWidgetComponent.executingRpcRequest = subscription.executingRpcRequest;
             this.dynamicWidgetComponent.rpcErrorText = subscription.rpcErrorText;
             this.dynamicWidgetComponent.rpcRejection = subscription.rpcRejection;
-            this.clearMessage();
+            if (this.typeParameters.displayRpcMessageToast) {
+              this.clearMessage();
+            }
             this.detectChanges();
           }
         },
@@ -983,7 +990,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
             this.dynamicWidgetComponent.executingRpcRequest = subscription.executingRpcRequest;
             this.dynamicWidgetComponent.rpcErrorText = subscription.rpcErrorText;
             this.dynamicWidgetComponent.rpcRejection = subscription.rpcRejection;
-            if (subscription.rpcErrorText) {
+            if (subscription.rpcErrorText && this.typeParameters.displayRpcMessageToast) {
               this.displayMessage('error', subscription.rpcErrorText);
             }
             this.detectChanges();
@@ -993,7 +1000,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           if (this.dynamicWidgetComponent) {
             this.dynamicWidgetComponent.rpcErrorText = null;
             this.dynamicWidgetComponent.rpcRejection = null;
-            this.clearMessage();
+            if (this.typeParameters.displayRpcMessageToast) {
+              this.clearMessage();
+            }
             this.detectChanges();
           }
         }
@@ -1079,6 +1088,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         } else {
           this.router.navigateByUrl(url);
         }
+        break;
+      case WidgetActionType.openURL:
+        window.open(descriptor.url, descriptor.openNewBrowserTab ? '_blank' : '_self');
         break;
       case WidgetActionType.custom:
         const customFunction = descriptor.customFunction;
@@ -1342,7 +1354,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
             this.widgetContext.parentDashboard : this.widgetContext.dashboard,
           popoverComponent: componentRef.instance
         },
-        {width: popoverWidth, height: popoverHeight},
+        {width: popoverWidth || '25vw', height: popoverHeight || '25vh'},
         popoverStyle,
         {}
       );
@@ -1420,7 +1432,15 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   }
 
   private cardClick($event: Event) {
-    const descriptors = this.getActionDescriptors('cardClick');
+    this.onClick($event, 'cardClick');
+  }
+
+  private click($event: Event) {
+    this.onClick($event, 'click');
+  }
+
+  private onClick($event: Event, sourceId: string) {
+    const descriptors = this.getActionDescriptors(sourceId);
     if (descriptors.length) {
       $event.stopPropagation();
       const descriptor = descriptors[0];

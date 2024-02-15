@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -23,7 +23,8 @@ import {
   AbstractControl,
   UntypedFormBuilder,
   UntypedFormControl,
-  UntypedFormGroup, ValidationErrors,
+  UntypedFormGroup,
+  ValidationErrors,
   ValidatorFn,
   Validators
 } from '@angular/forms';
@@ -35,10 +36,7 @@ import { randomAlphanumeric } from '@core/utils';
 import { AuthService } from '@core/auth/auth.service';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
-import { forkJoin, Observable, of } from 'rxjs';
-import { MatCheckboxChange } from '@angular/material/checkbox';
-import { AlarmInfo } from '@shared/models/alarm.models';
-import { QueueProcessingStrategyTypes, QueueProcessingStrategyTypesMap } from '@shared/models/queue.models';
+import { Observable, of } from 'rxjs';
 
 @Component({
   selector: 'tb-security-settings',
@@ -49,6 +47,8 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
 
   securitySettingsFormGroup: UntypedFormGroup;
   jwtSecuritySettingsFormGroup: UntypedFormGroup;
+
+  showMainLoadingBar = false;
 
   private securitySettings: SecuritySettings;
   private jwtSettings: JwtSettings;

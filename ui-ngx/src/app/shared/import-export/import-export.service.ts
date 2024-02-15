@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -229,11 +229,10 @@ export class ImportExportService {
           const originalSize = widgetItem.originalSize;
 
           const datasourceAliases = aliasesInfo.datasourceAliases;
-          const targetDeviceAliases = aliasesInfo.targetDeviceAliases;
-          if (datasourceAliases || targetDeviceAliases) {
+          if (datasourceAliases || aliasesInfo.targetDeviceAlias) {
             const entityAliases: EntityAliases = {};
             const datasourceAliasesMap: {[aliasId: string]: number} = {};
-            const targetDeviceAliasesMap: {[aliasId: string]: number} = {};
+            let targetDeviceAliasId: string;
             let aliasId: string;
             let datasourceIndex: number;
             if (datasourceAliases) {
@@ -244,13 +243,10 @@ export class ImportExportService {
                 entityAliases[aliasId] = {id: aliasId, ...datasourceAliases[datasourceIndex]};
               }
             }
-            if (targetDeviceAliases) {
-              for (const strIndex of Object.keys(targetDeviceAliases)) {
-                datasourceIndex = Number(strIndex);
-                aliasId = this.utils.guid();
-                targetDeviceAliasesMap[aliasId] = datasourceIndex;
-                entityAliases[aliasId] = {id: aliasId, ...targetDeviceAliases[datasourceIndex]};
-              }
+            if (aliasesInfo.targetDeviceAlias) {
+              aliasId = this.utils.guid();
+              targetDeviceAliasId = aliasId;
+              entityAliases[aliasId] = {id: aliasId, ...aliasesInfo.targetDeviceAlias};
             }
             const aliasIds = Object.keys(entityAliases);
             if (aliasIds.length > 0) {
@@ -267,9 +263,8 @@ export class ImportExportService {
                             if (isDefined(datasourceAliasesMap[id])) {
                               index = datasourceAliasesMap[id];
                               datasourceAliases[index] = entityAlias;
-                            } else if (isDefined(targetDeviceAliasesMap[id])) {
-                              index = targetDeviceAliasesMap[id];
-                              targetDeviceAliases[index] = entityAlias;
+                            } else if (targetDeviceAliasId === id) {
+                              aliasesInfo.targetDeviceAlias = entityAlias;
                             }
                           }
                           return this.addImportedWidget(dashboard, targetState, targetLayoutFunction, widget,
@@ -965,19 +960,15 @@ export class ImportExportService {
 
   private prepareAliasesInfo(aliasesInfo: AliasesInfo): AliasesInfo {
     const datasourceAliases = aliasesInfo.datasourceAliases;
-    const targetDeviceAliases = aliasesInfo.targetDeviceAliases;
-    if (datasourceAliases || targetDeviceAliases) {
+    if (datasourceAliases || aliasesInfo.targetDeviceAlias) {
       if (datasourceAliases) {
         for (const strIndex of Object.keys(datasourceAliases)) {
           const datasourceIndex = Number(strIndex);
           datasourceAliases[datasourceIndex] = this.prepareEntityAlias(datasourceAliases[datasourceIndex]);
         }
       }
-      if (targetDeviceAliases) {
-        for (const strIndex of Object.keys(targetDeviceAliases)) {
-          const datasourceIndex = Number(strIndex);
-          targetDeviceAliases[datasourceIndex] = this.prepareEntityAlias(targetDeviceAliases[datasourceIndex]);
-        }
+      if (aliasesInfo.targetDeviceAlias) {
+        aliasesInfo.targetDeviceAlias = this.prepareEntityAlias(aliasesInfo.targetDeviceAlias);
       }
     }
     return aliasesInfo;
