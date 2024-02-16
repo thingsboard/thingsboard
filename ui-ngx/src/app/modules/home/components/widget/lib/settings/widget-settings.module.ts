@@ -327,6 +327,9 @@ import {
 import {
   SliderWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/control/slider-widget-settings.component';
+import {
+  ToggleButtonWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/button/toggle-button-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -444,7 +447,8 @@ import {
     ActionButtonWidgetSettingsComponent,
     CommandButtonWidgetSettingsComponent,
     PowerButtonWidgetSettingsComponent,
-    SliderWidgetSettingsComponent
+    SliderWidgetSettingsComponent,
+    ToggleButtonWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -567,7 +571,8 @@ import {
     ActionButtonWidgetSettingsComponent,
     CommandButtonWidgetSettingsComponent,
     PowerButtonWidgetSettingsComponent,
-    SliderWidgetSettingsComponent
+    SliderWidgetSettingsComponent,
+    ToggleButtonWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -657,5 +662,6 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-action-button-widget-settings': ActionButtonWidgetSettingsComponent,
   'tb-command-button-widget-settings': CommandButtonWidgetSettingsComponent,
   'tb-power-button-widget-settings': PowerButtonWidgetSettingsComponent,
-  'tb-slider-widget-settings': SliderWidgetSettingsComponent
+  'tb-slider-widget-settings': SliderWidgetSettingsComponent,
+  'tb-toggle-button-widget-settings': ToggleButtonWidgetSettingsComponent
 };
