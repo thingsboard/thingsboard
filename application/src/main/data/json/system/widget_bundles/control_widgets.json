@@ -10,6 +10,7 @@
   "widgetTypeFqns": [
     "single_switch",
     "command_button",
+    "toggle_button",
     "power_button",
     "slider",
     "control_widgets.switch_control",

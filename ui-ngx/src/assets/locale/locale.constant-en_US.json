@@ -5231,6 +5231,19 @@
             "disabled-colors": "Disabled colors",
             "button": "Button"
         },
+        "toggle-button": {
+            "behavior": "Behavior",
+            "checked": "Checked",
+            "unchecked": "Unchecked",
+            "check": "Check",
+            "check-hint": "Action performed to check the component.",
+            "uncheck": "Uncheck",
+            "uncheck-hint": "Action performed to uncheck the component.",
+            "auto-scale": "Auto scale",
+            "horizontal-fill": "Horizontal fill",
+            "vertical-fill": "Vertical fill",
+            "button-appearance": "Button appearance"
+        },
         "button": {
             "layout": "Layout",
             "outlined": "Outlined",
@@ -5240,6 +5253,7 @@
             "auto-scale": "Auto scale",
             "label": "Label",
             "icon": "Icon",
+            "border-radius": "Border radius",
             "color-palette": "Color palette",
             "main": "Main",
             "background": "Background",
