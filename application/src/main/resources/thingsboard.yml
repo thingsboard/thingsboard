@@ -786,7 +786,7 @@ state:
   defaultInactivityTimeoutInSec: "${DEFAULT_INACTIVITY_TIMEOUT:600}"
   defaultStateCheckIntervalInSec: "${DEFAULT_STATE_CHECK_INTERVAL:60}" # Interval for checking the device state after a specified period. Time in seconds
   # Controls whether we store the device 'active' flag in attributes (default) or telemetry.
-  # If you device to change this parameter, you should re-create the device info view as one of the following:
+  # If you decide to change this parameter, you should re-create the device info view as one of the following:
   # If 'persistToTelemetry' is changed from 'false' to 'true': 'CREATE OR REPLACE VIEW device_info_view AS SELECT * FROM device_info_active_ts_view;'
   # If 'persistToTelemetry' is changed from 'true' to 'false': 'CREATE OR REPLACE VIEW device_info_view AS SELECT * FROM device_info_active_attribute_view;'
   persistToTelemetry: "${PERSIST_STATE_TO_TELEMETRY:false}"
@@ -794,6 +794,15 @@ state:
   # Used only when state.persistToTelemetry is set to 'true' and Cassandra is used for timeseries data.
   # 0 means time-to-live mechanism is disabled.
   telemetryTtl: "${STATE_TELEMETRY_TTL:0}"
+  # Configuration properties for rule nodes related to device activity state
+  rule:
+    node:
+      # Device state rule node
+      deviceState:
+        # Defines the rate at which device connectivity events can be triggered.
+        # Comma-separated list of capacity:duration pairs that define bandwidth capacity and refill duration for token bucket rate limit algorithm.
+        # Refill is set to be greedy. Please refer to Bucket4j library documentation for more details.
+        rateLimit: "${DEVICE_STATE_NODE_RATE_LIMIT_CONFIGURATION:1:1,30:60,60:3600}"
 
 # Tbel parameters
 tbel:
@@ -1044,6 +1053,8 @@ transport:
     dtls:
       # RFC7925_RETRANSMISSION_TIMEOUT_IN_MILLISECONDS = 9000
       retransmission_timeout: "${LWM2M_DTLS_RETRANSMISSION_TIMEOUT_MS:9000}"
+      # "" disables connection id support, 0 enables support but not for incoming traffic, any value greater than 0 set the connection id size in bytes
+      connection_id_length: "${LWM2M_DTLS_CONNECTION_ID_LENGTH:6}"
     server:
       # LwM2M Server ID
       id: "${LWM2M_SERVER_ID:123}"
