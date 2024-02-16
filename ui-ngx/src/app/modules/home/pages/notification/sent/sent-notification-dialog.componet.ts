@@ -98,7 +98,7 @@ export class SentNotificationDialogComponent extends
       }
     });
 
-    this.stepperOrientation = this.breakpointObserver.observe(MediaBreakpoints['gt-xs'])
+    this.stepperOrientation = this.breakpointObserver.observe(MediaBreakpoints['gt-sm'])
       .pipe(map(({matches}) => matches ? 'horizontal' : 'vertical'));
 
     this.notificationRequestForm = this.fb.group({

@@ -78,7 +78,7 @@ export class TemplateNotificationDialogComponent
 
     this.notificationTypes = this.allowNotificationType();
 
-    this.stepperOrientation = this.breakpointObserver.observe(MediaBreakpoints['gt-xs'])
+    this.stepperOrientation = this.breakpointObserver.observe(MediaBreakpoints['gt-sm'])
       .pipe(map(({matches}) => matches ? 'horizontal' : 'vertical'));
 
     if (isDefinedAndNotNull(this.data?.predefinedType)) {
