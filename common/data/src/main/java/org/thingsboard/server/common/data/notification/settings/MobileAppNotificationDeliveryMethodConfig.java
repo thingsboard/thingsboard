@@ -13,22 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification;
+package org.thingsboard.server.common.data.notification.settings;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.Data;
+import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 
-@RequiredArgsConstructor
-public enum NotificationDeliveryMethod {
+import javax.validation.constraints.NotEmpty;
 
-    WEB("web"),
-    EMAIL("email"),
-    SMS("SMS"),
-    SLACK("Slack"),
-    MICROSOFT_TEAMS("Microsoft Teams"),
-    MOBILE_APP("mobile app");
+@Data
+public class MobileAppNotificationDeliveryMethodConfig implements NotificationDeliveryMethodConfig {
 
-    @Getter
-    private final String name;
+    private String firebaseServiceAccountCredentialsFileName;
+    @NotEmpty
+    private String firebaseServiceAccountCredentials;
+
+    @Override
+    public NotificationDeliveryMethod getMethod() {
+        return NotificationDeliveryMethod.MOBILE_APP;
+    }
 
 }

@@ -13,23 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.user;
+package org.thingsboard.rule.engine.api.notification;
 
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.settings.UserSettings;
-import org.thingsboard.server.common.data.settings.UserSettingsCompositeKey;
-import org.thingsboard.server.common.data.settings.UserSettingsType;
 
-import java.util.List;
+import java.util.Map;
 
-public interface UserSettingsDao {
+public interface FirebaseService {
 
-    UserSettings save(TenantId tenantId, UserSettings userSettings);
-
-    UserSettings findById(TenantId tenantId, UserSettingsCompositeKey key);
-
-    void removeById(TenantId tenantId, UserSettingsCompositeKey key);
-
-    List<UserSettings> findByTypeAndPath(TenantId tenantId, UserSettingsType type, String... path);
+    void sendMessage(TenantId tenantId, String credentials, String fcmToken, String title, String body, Map<String, String> data) throws Exception;
 
 }

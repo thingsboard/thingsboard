@@ -156,6 +156,7 @@
         <google-oauth-client.version>1.34.1</google-oauth-client.version>
         <apache-xmlgraphics.version>1.17</apache-xmlgraphics.version>
         <drewnoakes-metadata-extractor.version>2.19.0</drewnoakes-metadata-extractor.version>
+        <firebase-admin.version>8.0.1</firebase-admin.version>
     </properties>
 
     <modules>
@@ -2017,6 +2018,11 @@
                 <groupId>com.slack.api</groupId>
                 <artifactId>slack-api-client</artifactId>
                 <version>${slack-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.firebase</groupId>
+                <artifactId>firebase-admin</artifactId>
+                <version>${firebase-admin.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jgit</groupId>

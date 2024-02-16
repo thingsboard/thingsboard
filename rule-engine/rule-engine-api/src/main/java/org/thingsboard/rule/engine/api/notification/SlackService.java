@@ -13,23 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.user;
+package org.thingsboard.rule.engine.api.notification;
 
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.settings.UserSettings;
-import org.thingsboard.server.common.data.settings.UserSettingsCompositeKey;
-import org.thingsboard.server.common.data.settings.UserSettingsType;
+import org.thingsboard.server.common.data.notification.targets.slack.SlackConversation;
+import org.thingsboard.server.common.data.notification.targets.slack.SlackConversationType;
 
 import java.util.List;
 
-public interface UserSettingsDao {
+public interface SlackService {
 
-    UserSettings save(TenantId tenantId, UserSettings userSettings);
+    void sendMessage(TenantId tenantId, String token, String conversationId, String message);
 
-    UserSettings findById(TenantId tenantId, UserSettingsCompositeKey key);
+    List<SlackConversation> listConversations(TenantId tenantId, String token, SlackConversationType conversationType);
 
-    void removeById(TenantId tenantId, UserSettingsCompositeKey key);
-
-    List<UserSettings> findByTypeAndPath(TenantId tenantId, UserSettingsType type, String... path);
+    String getToken(TenantId tenantId);
 
 }

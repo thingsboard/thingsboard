@@ -13,22 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification;
+package org.thingsboard.server.common.data.mobile;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.Data;
 
-@RequiredArgsConstructor
-public enum NotificationDeliveryMethod {
-
-    WEB("web"),
-    EMAIL("email"),
-    SMS("SMS"),
-    SLACK("Slack"),
-    MICROSOFT_TEAMS("Microsoft Teams"),
-    MOBILE_APP("mobile app");
-
-    @Getter
-    private final String name;
-
+@Data
+public class MobileSessionInfo {
+    private long fcmTokenTimestamp;
 }
