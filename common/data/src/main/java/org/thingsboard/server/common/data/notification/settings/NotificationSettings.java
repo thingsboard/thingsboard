@@ -30,6 +30,4 @@ public class NotificationSettings implements Serializable {
     @Valid
     private Map<NotificationDeliveryMethod, NotificationDeliveryMethodConfig> deliveryMethodsConfigs;
 
-    // TODO: disable option, location on the screen, shown notifications count, timings of displaying
-
 }
