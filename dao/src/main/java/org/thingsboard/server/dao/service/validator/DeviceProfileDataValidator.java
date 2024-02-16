@@ -23,7 +23,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-import org.springframework.util.Base64Utils;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -64,6 +63,7 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.PKIXParameters;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -411,6 +411,6 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
     }
 
     private String getCertificateString(X509Certificate cert) throws CertificateEncodingException {
-        return EncryptionUtil.certTrimNewLines(Base64Utils.encodeToString(cert.getEncoded()));
+        return EncryptionUtil.certTrimNewLines(Base64.getEncoder().encodeToString(cert.getEncoded()));
     }
 }
