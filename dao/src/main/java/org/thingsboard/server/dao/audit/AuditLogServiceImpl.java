@@ -190,6 +190,7 @@ public class AuditLogServiceImpl implements AuditLogService {
                 AlarmComment comment = extractParameter(AlarmComment.class, additionalInfo);
                 actionData.set("comment", comment.getComment());
                 break;
+            case ALARM_DELETE:
             case DELETED:
             case ACTIVATED:
             case SUSPENDED:
