@@ -434,8 +434,6 @@ public class HashPartitionServiceTest {
         ReflectionTestUtils.setField(partitionService, "vcTopic", "tb.vc");
         ReflectionTestUtils.setField(partitionService, "vcPartitions", 10);
         ReflectionTestUtils.setField(partitionService, "hashFunctionName", hashFunctionName);
-        ReflectionTestUtils.setField(partitionService, "arTopic", "tb.ar");
-        ReflectionTestUtils.setField(partitionService, "arPartitions", 10);
         partitionService.init();
         partitionService.partitionsInit();
         return partitionService;
