@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.housekeeper.data;
 
 import lombok.Data;
+import lombok.NonNull;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -31,7 +32,7 @@ public class HousekeeperTask implements Serializable {
     private final HousekeeperTaskType taskType;
     private final long ts;
 
-    protected HousekeeperTask(TenantId tenantId, EntityId entityId, HousekeeperTaskType taskType) {
+    protected HousekeeperTask(@NonNull TenantId tenantId, @NonNull EntityId entityId, @NonNull HousekeeperTaskType taskType) {
         this.tenantId = tenantId;
         this.entityId = entityId;
         this.taskType = taskType;

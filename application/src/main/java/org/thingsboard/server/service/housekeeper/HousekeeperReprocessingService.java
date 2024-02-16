@@ -32,9 +32,9 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import javax.annotation.PreDestroy;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @TbCoreComponent
 @Service
@@ -46,7 +46,7 @@ public class HousekeeperReprocessingService {
     private final TbQueueConsumer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> consumer;
     private final ExecutorService consumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("housekeeper-reprocessing-consumer"));
 
-    @Value("${queue.core.housekeeper.poll-interval-ms:10000}")
+    @Value("${queue.core.housekeeper.poll-interval-ms:500}")
     private int pollInterval;
 
     private final long startTs = System.currentTimeMillis(); // fixme: some other tb-core might start earlier and submit for reprocessing
@@ -68,28 +68,17 @@ public class HousekeeperReprocessingService {
             while (!stopped && !consumer.isStopped()) {
                 try {
                     List<TbProtoQueueMsg<ToHousekeeperServiceMsg>> msgs = consumer.poll(pollInterval);
-                    if (msgs.isEmpty()) {
+                    if (msgs.isEmpty() || msgs.stream().anyMatch(msg -> msg.getValue().getTask().getTs() >= startTs)) { // msg batch size should be 1. otherwise some tasks won't be reprocessed immediately
                         stop();
                         return;
                     }
 
-                    if (msgs.stream().anyMatch(msg -> {
-                        boolean newMsg = msg.getValue().getTask().getTs() >= startTs;
-                        if (newMsg) {
-                            log.info("Stopping reprocessing due to msg is new {}", msg);
-                        }
-                        return newMsg;
-                    })) {
-                        stop(); // fixme: we should commit already reprocessed messages; maybe submit for reprocessing again and commit?
-                        // msg batch size should be 1. otherwise some tasks won't be reprocessed
-                        return;
-                    }
                     for (TbProtoQueueMsg<ToHousekeeperServiceMsg> msg : msgs) {
                         try {
-                            housekeeperService.processTask(msg.getValue());// fixme: or should we submit to queue?
-                            Thread.sleep(1000);
+                            housekeeperService.processTask(msg);
                         } catch (Exception e) {
-                            log.error("Message processing failed", e);
+                            log.error("Unexpected error during message reprocessing [{}]", msg, e);
+                            submitForReprocessing(msg);
                         }
                     }
                     consumer.commit();
@@ -108,20 +97,20 @@ public class HousekeeperReprocessingService {
         log.info("Started Housekeeper tasks reprocessing");
     }
 
-    public void submitForReprocessing(ToHousekeeperServiceMsg msg) {
+    public void submitForReprocessing(TbProtoQueueMsg<ToHousekeeperServiceMsg> queueMsg) {
+        ToHousekeeperServiceMsg msg = queueMsg.getValue();
         HousekeeperTaskProto task = msg.getTask();
         int attempt = task.getAttempt() + 1;
         msg = msg.toBuilder()
                 .setTask(task.toBuilder()
                         .setAttempt(attempt)
-                        .setTs(System.currentTimeMillis()) // maybe set ts + 1 hour so that no-one reprocesses it immediately
+                        .setTs(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1)) // so that it is not reprocessed by anyone in the nearest hour
                         .build())
                 .build();
 
         var producer = producerProvider.getHousekeeperDelayedMsgProducer();
         TopicPartitionInfo tpi = TopicPartitionInfo.builder().topic(producer.getDefaultTopic()).build();
-        // fixme submit with the same msg key, so that the messages goes to this consumer and will not be processed by anyone else
-        producer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), null);
+        producer.send(tpi, new TbProtoQueueMsg<>(queueMsg.getKey(), msg), null);
     }
 
     @PreDestroy

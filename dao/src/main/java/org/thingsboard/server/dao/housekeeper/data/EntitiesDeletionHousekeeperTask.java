@@ -25,7 +25,7 @@ public class EntitiesDeletionHousekeeperTask extends HousekeeperTask {
     private final EntityType entityType;
 
     protected EntitiesDeletionHousekeeperTask(TenantId tenantId, EntityType entityType) {
-        super(tenantId, null, HousekeeperTaskType.DELETE_ENTITIES);
+        super(tenantId, tenantId, HousekeeperTaskType.DELETE_ENTITIES);
         this.entityType = entityType;
     }
 
