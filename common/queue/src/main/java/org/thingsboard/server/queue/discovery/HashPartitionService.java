@@ -225,31 +225,31 @@ public class HashPartitionService implements PartitionService {
 
         boolean isManaged;
         Set<UUID> assignedTenantProfiles = serviceInfoProvider.getAssignedTenantProfiles();
-        if (assignedTenantProfiles.isEmpty()) { // if this is regular rule engine
-            if (tenantId.isSysTenantId()) {
-                isManaged = true;
+        boolean isRegular = assignedTenantProfiles.isEmpty();
+        if (tenantId.isSysTenantId()) {
+            // All system queues are always processed on regular rule engines.
+            return isRegular;
+        }
+        TenantRoutingInfo routingInfo = getRoutingInfo(tenantId);
+        if (isRegular) {
+            if (routingInfo.isIsolated()) {
+                isManaged = hasDedicatedService(routingInfo.getProfileId());
             } else {
-                TenantRoutingInfo routingInfo = getRoutingInfo(tenantId);
-                if (routingInfo.isIsolated()) {
-                    isManaged = CollectionsUtil.isEmpty(responsibleServices.get(routingInfo.getProfileId()));
-                } else {
-                    isManaged = true;
-                }
+                isManaged = true;
             }
         } else {
-            if (tenantId.isSysTenantId()) {
-                isManaged = false;
+            if (routingInfo.isIsolated()) {
+                isManaged = assignedTenantProfiles.contains(routingInfo.getProfileId().getId());
             } else {
-                TenantRoutingInfo routingInfo = getRoutingInfo(tenantId);
-                if (routingInfo.isIsolated()) {
-                    isManaged = assignedTenantProfiles.contains(routingInfo.getProfileId().getId());
-                } else {
-                    isManaged = false;
-                }
+                isManaged = false;
             }
         }
         log.trace("[{}] Tenant {} managed by this service", tenantId, isManaged ? "is" : "is not");
         return isManaged;
+    }
+
+    private boolean hasDedicatedService(TenantProfileId profileId) {
+        return CollectionsUtil.isEmpty(responsibleServices.get(profileId));
     }
 
     @Override
