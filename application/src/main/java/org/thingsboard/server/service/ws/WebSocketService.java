@@ -29,7 +29,7 @@ public interface WebSocketService {
 
     void handleCommands(WebSocketSessionRef sessionRef, WsCommandsWrapper commandsWrapper);
 
-    void sendUpdate(String sessionId, TelemetrySubscriptionUpdate update);
+    void sendUpdate(String sessionId, int cmdId, TelemetrySubscriptionUpdate update);
 
     void sendUpdate(String sessionId, CmdUpdate update);
 

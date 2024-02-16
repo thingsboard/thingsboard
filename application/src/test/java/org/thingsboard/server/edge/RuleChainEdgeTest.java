@@ -146,7 +146,7 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
         }
     }
 
-    private void createRuleChainMetadata(RuleChain ruleChain) {
+    private RuleChainMetaData createRuleChainMetadata(RuleChain ruleChain) {
         RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
         ruleChainMetaData.setRuleChainId(ruleChain.getId());
 
@@ -182,7 +182,7 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
         ruleChainMetaData.addConnectionInfo(0, 2, "fail");
         ruleChainMetaData.addConnectionInfo(1, 2, "success");
 
-        doPost("/api/ruleChain/metadata", ruleChainMetaData, RuleChainMetaData.class);
+        return doPost("/api/ruleChain/metadata", ruleChainMetaData, RuleChainMetaData.class);
     }
 
     @Test
@@ -193,9 +193,10 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
         ruleChain.setType(RuleChainType.EDGE);
         RuleChain savedRuleChain = doPost("/api/ruleChain", ruleChain, RuleChain.class);
 
-        edgeImitator.expectMessageAmount(1);
+        edgeImitator.expectMessageAmount(2);
         doPost("/api/edge/" + edge.getUuidId()
                 + "/ruleChain/" + savedRuleChain.getUuidId(), RuleChain.class);
+        RuleChainMetaData metaData = createRuleChainMetadata(savedRuleChain);
         Assert.assertTrue(edgeImitator.waitForMessages());
 
         // set new rule chain as root
@@ -212,6 +213,22 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, ruleChainUpdateMsg.getMsgType());
         Assert.assertTrue(ruleChainMsg.isRoot());
         Assert.assertEquals(savedRuleChain.getId(), ruleChainMsg.getId());
+
+        // update metadata for root rule chain
+        edgeImitator.expectMessageAmount(1);
+        metaData.getNodes().forEach(n -> n.setDebugMode(true));
+        doPost("/api/ruleChain/metadata", metaData, RuleChainMetaData.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        ruleChainUpdateMsgOpt = edgeImitator.findMessageByType(RuleChainUpdateMsg.class);
+        Assert.assertTrue(ruleChainUpdateMsgOpt.isPresent());
+        ruleChainUpdateMsg = ruleChainUpdateMsgOpt.get();
+        ruleChainMsg = JacksonUtil.fromString(ruleChainUpdateMsg.getEntity(), RuleChain.class, true);
+        Assert.assertNotNull(ruleChainMsg);
+        Assert.assertTrue(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE.equals(ruleChainUpdateMsg.getMsgType()) ||
+                UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE.equals(ruleChainUpdateMsg.getMsgType()));
+        Assert.assertEquals(savedRuleChain.getId(), ruleChainMsg.getId());
+        Assert.assertEquals(savedRuleChain.getName(), ruleChainMsg.getName());
+        Assert.assertTrue(ruleChainMsg.isRoot());
 
         // revert root rule chain
         edgeImitator.expectMessageAmount(1);

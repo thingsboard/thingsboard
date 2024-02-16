@@ -194,6 +194,17 @@ import * as ScrollGridComponent from '@shared/components/grid/scroll-grid.compon
 import * as GalleryImageInputComponent from '@shared/components/image/gallery-image-input.component';
 import * as MultipleGalleryImageInputComponent from '@shared/components/image/multiple-gallery-image-input.component';
 
+import * as CssUnitSelectComponent from '@home/components/widget/lib/settings/common/css-unit-select.component';
+import * as WidgetActionsPanelComponent from '@home/components/widget/config/basic/common/widget-actions-panel.component';
+import * as FontSettingsComponent from '@home/components/widget/lib/settings/common/font-settings.component';
+import * as ColorSettingsComponent from '@home/components/widget/lib/settings/common/color-settings.component';
+import * as DisplayColumnsPanelComponent from '@home/components/widget/lib/display-columns-panel.component';
+import * as AlarmDetailsDialogComponent from '@home/components/alarm/alarm-details-dialog.component';
+import * as AlarmAssigneePanelComponent from '@home/components/alarm/alarm-assignee-panel.component';
+import * as AlarmCommentDialogComponent from '@home/components/alarm/alarm-comment-dialog.component';
+import * as AlarmFilterConfigComponent from '@home/components/alarm/alarm-filter-config.component';
+import * as DatasourceComponent from '@home/components/widget/config/datasources.component';
+import * as DataKeysPanelComponent from '@home/components/widget/config/basic/common/data-keys-panel.component';
 import * as AddEntityDialogComponent from '@home/components/entity/add-entity-dialog.component';
 import * as EntitiesTableComponent from '@home/components/entity/entities-table.component';
 import * as DetailsPanelComponent from '@home/components/details-panel.component';
@@ -239,6 +250,10 @@ import * as ImportDialogCsvComponent from '@shared/import-export/import-dialog-c
 import * as TableColumnsAssignmentComponent from '@shared/import-export/table-columns-assignment.component';
 import * as EventContentDialogComponent from '@home/components/event/event-content-dialog.component';
 import * as SharedHomeComponentsModule from '@home/components/shared-home-components.module';
+import * as WidgetConfigComponentsModule from '@home/components/widget/config/widget-config-components.module';
+import * as BasicWidgetConfigModule from '@home/components/widget/config/basic/basic-widget-config.module';
+import * as WidgetSettingsCommonModule from '@home/components/widget/lib/settings/common/widget-settings-common.module';
+import * as WidgetComponentsModule from '@home/components/widget/widget-components.module';
 import * as SelectTargetLayoutDialogComponent from '@home/components/dashboard/select-target-layout-dialog.component';
 import * as SelectTargetStateDialogComponent from '@home/components/dashboard/select-target-state-dialog.component';
 import * as AliasesEntityAutocompleteComponent from '@home/components/alias/aliases-entity-autocomplete.component';
@@ -507,6 +522,17 @@ class ModulesMap implements IModulesMap {
     '@shared/components/image/gallery-image-input.component': GalleryImageInputComponent,
     '@shared/components/image/multiple-gallery-image-input.component': MultipleGalleryImageInputComponent,
 
+    '@home/components/alarm/alarm-filter-config.component': AlarmFilterConfigComponent,
+    '@home/components/alarm/alarm-comment-dialog.component': AlarmCommentDialogComponent,
+    '@home/components/alarm/alarm-assignee-panel.component': AlarmAssigneePanelComponent,
+    '@home/components/alarm/alarm-details-dialog.component': AlarmDetailsDialogComponent,
+    '@home/components/widget/lib/display-columns-panel.component': DisplayColumnsPanelComponent,
+    '@home/components/widget/config/datasources.component': DatasourceComponent,
+    '@home/components/widget/config/basic/common/data-keys-panel.component': DataKeysPanelComponent,
+    '@home/components/widget/lib/settings/common/color-settings.component': ColorSettingsComponent,
+    '@home/components/widget/lib/settings/common/font-settings.component': FontSettingsComponent,
+    '@home/components/widget/config/basic/common/widget-actions-panel.component': WidgetActionsPanelComponent,
+    '@home/components/widget/lib/settings/common/css-unit-select.component': CssUnitSelectComponent,
     '@home/components/entity/add-entity-dialog.component': AddEntityDialogComponent,
     '@home/components/entity/entities-table.component': EntitiesTableComponent,
     '@home/components/details-panel.component': DetailsPanelComponent,
@@ -549,6 +575,10 @@ class ModulesMap implements IModulesMap {
     '@home/components/attribute/add-widget-to-dashboard-dialog.component': AddWidgetToDashboardDialogComponent,
     '@home/components/event/event-content-dialog.component': EventContentDialogComponent,
     '@home/components/shared-home-components.module': SharedHomeComponentsModule,
+    '@home/components/widget/config/widget-config-components.module': WidgetConfigComponentsModule,
+    '@home/components/widget/config/basic/basic-widget-config.module': BasicWidgetConfigModule,
+    '@home/components/widget/lib/settings/common/widget-settings-common.module': WidgetSettingsCommonModule,
+    '@home/components/widget/widget-components.module': WidgetComponentsModule,
     '@home/components/dashboard/select-target-layout-dialog.component': SelectTargetLayoutDialogComponent,
     '@home/components/dashboard/select-target-state-dialog.component': SelectTargetStateDialogComponent,
     '@home/components/alias/aliases-entity-autocomplete.component': AliasesEntityAutocompleteComponent,

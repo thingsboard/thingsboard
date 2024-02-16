@@ -279,6 +279,16 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
             this.fb.control(action ? action.mobileAction : null, [Validators.required])
           );
           break;
+        case WidgetActionType.openURL:
+          this.actionTypeFormGroup.addControl(
+            'openNewBrowserTab',
+            this.fb.control(action ? action.openNewBrowserTab : false, [])
+          );
+          this.actionTypeFormGroup.addControl(
+            'url',
+            this.fb.control(action ? action.url : null, [Validators.required])
+          );
+          break;
       }
     }
     this.actionTypeFormGroupSubscriptions.push(
