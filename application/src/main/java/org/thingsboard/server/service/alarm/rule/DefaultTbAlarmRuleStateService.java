@@ -352,8 +352,8 @@ public class DefaultTbAlarmRuleStateService extends TbApplicationEventListener<P
 
         AtomicInteger addedEntityStates = new AtomicInteger(0);
 
-        addedPartitions.forEach(tpi -> {
-                    List<PersistedEntityState> states = stateStore.getAll(tpi);
+        addedPartitions.stream().map(tpi -> tpi.getTenantId().orElse(TenantId.SYS_TENANT_ID)).distinct().forEach(tenantId -> {
+                    List<PersistedEntityState> states = stateStore.getAll(tenantId);
                     addedEntityStates.addAndGet(states.size());
                     states.forEach(ares -> {
                         try {

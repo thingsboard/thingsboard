@@ -25,11 +25,16 @@ import org.springframework.data.redis.core.ScanOptions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 @Slf4j
 public class RedisUtil {
 
     public static <T> List<T> getAll(RedisConnection connection, String keyPattern, Function<byte[], T> desFunction) {
+        return getAll(connection, keyPattern, desFunction, null);
+    }
+
+    public static <T> List<T> getAll(RedisConnection connection, String keyPattern, Function<byte[], T> desFunction, Predicate<T> filter) {
         List<T> elements = new ArrayList<>();
         ScanOptions scanOptions = ScanOptions.scanOptions().count(100).match(keyPattern + "*").build();
         List<Cursor<byte[]>> scans = new ArrayList<>();
@@ -44,7 +49,10 @@ public class RedisUtil {
             byte[] element = connection.get(key);
             if (element != null) {
                 try {
-                    elements.add(desFunction.apply(element));
+                    T entity = desFunction.apply(element);
+                    if (filter == null || filter.test(entity)) {
+                        elements.add(entity);
+                    }
                 } catch (Exception e) {
                     log.warn("[{}] Failed to deserialize from data: {}", Hex.encodeHexString(key), Hex.encodeHexString(element), e);
                 }

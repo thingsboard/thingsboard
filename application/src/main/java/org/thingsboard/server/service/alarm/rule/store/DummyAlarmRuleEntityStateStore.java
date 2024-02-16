@@ -19,7 +19,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.service.alarm.rule.state.PersistedEntityState;
 
 import java.util.Collections;
@@ -38,7 +37,7 @@ public class DummyAlarmRuleEntityStateStore implements AlarmRuleEntityStateStore
     }
 
     @Override
-    public List<PersistedEntityState> getAll(TopicPartitionInfo tpi) {
+    public List<PersistedEntityState> getAll(TenantId tenantId) {
         return Collections.emptyList();
     }
 }

@@ -17,7 +17,6 @@ package org.thingsboard.server.service.alarm.rule.store;
 
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.service.alarm.rule.state.PersistedEntityState;
 
 import java.util.List;
@@ -28,5 +27,5 @@ public interface AlarmRuleEntityStateStore {
 
     void remove(TenantId tenantId, EntityId entityId);
 
-    List<PersistedEntityState> getAll(TopicPartitionInfo tpi);
+    List<PersistedEntityState> getAll(TenantId tenantId);
 }
