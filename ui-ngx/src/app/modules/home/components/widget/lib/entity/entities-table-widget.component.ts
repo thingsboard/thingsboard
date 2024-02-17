@@ -139,6 +139,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   public enableStickyHeader = true;
   public enableStickyAction = true;
   public showCellActionsMenu = true;
+  public useCellClickAction = false;
   public pageSizeOptions;
   public pageLink: EntityDataPageLink;
   public sortOrderProperty: string;
@@ -230,6 +231,12 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     }
   }
 
+  private isActionsConfigured(actionSourceIds: Array<string>): boolean {
+    let configured = false;
+    actionSourceIds.forEach(id => configured = configured || this.ctx.actionsApi.getActionDescriptors(id).length > 0 );
+    return configured;
+  }
+
   ngOnDestroy(): void {
     if (this.widgetResize$) {
       this.widgetResize$.disconnect();
@@ -310,6 +317,9 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     cssParser.cssPreviewNamespace = namespace;
     cssParser.createStyleElement(namespace, cssString);
     $(this.elementRef.nativeElement).addClass(namespace);
+
+    this.useCellClickAction = this.isActionsConfigured(['cellClick', 'cellDoubleClick']) &&
+                                !this.isActionsConfigured(['rowClick', 'rowDoubleClick']);
   }
 
   private updateDatasources() {
@@ -684,6 +694,26 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
       return this.ctx.utils.formatValue(value, decimals, units, true);
     } else {
       return '';
+    }
+  }
+
+  public onCellClick($event: Event, entity: EntityData, key: EntityColumn, isDouble?: boolean) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.entityDatasource.toggleCurrentEntity(entity);
+    const actionSourceId = isDouble ? 'cellDoubleClick' : 'cellClick';
+    const descriptors = this.ctx.actionsApi.getActionDescriptors(actionSourceId);
+    if (descriptors.length) {
+      let entityId;
+      let entityName;
+      let entityLabel;
+      if (entity) {
+        entityId = entity.id;
+        entityName = entity.entityName;
+        entityLabel = entity.entityLabel;
+      }
+      this.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, {entity, key}, entityLabel);
     }
   }
 
