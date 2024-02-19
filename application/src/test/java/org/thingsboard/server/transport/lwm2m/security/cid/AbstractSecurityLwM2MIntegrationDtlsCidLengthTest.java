@@ -52,7 +52,7 @@ public abstract class AbstractSecurityLwM2MIntegrationDtlsCidLengthTest extends 
         createDeviceProfile(transportConfiguration);
         final Device device = createDevice(deviceCredentials, clientEndpoint);
         device.getId().getId().toString();
-        createNewClient(security, null, COAP_CONFIG, true, clientEndpoint, clientDtlsCidLength);
+        createNewClient(security, null, true, clientEndpoint, clientDtlsCidLength);
         lwM2MTestClient.start(true);
         await(awaitAlias)
                 .atMost(40, TimeUnit.SECONDS)
