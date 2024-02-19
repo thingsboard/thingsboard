@@ -55,7 +55,7 @@ import java.util.concurrent.TimeUnit;
 public class DefaultUpdateService implements UpdateService {
 
     private static final String INSTANCE_ID_FILE = ".instance_id";
-    private static final String UPDATE_SERVER_BASE_URL = "http://updates.thingsboard.io:8090";
+    private static final String UPDATE_SERVER_BASE_URL = "https://updates.thingsboard.io";
 
     private static final String PLATFORM_PARAM = "platform";
     private static final String VERSION_PARAM = "version";
