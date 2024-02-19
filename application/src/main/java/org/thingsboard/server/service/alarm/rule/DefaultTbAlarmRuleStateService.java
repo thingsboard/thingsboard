@@ -114,22 +114,21 @@ public class DefaultTbAlarmRuleStateService extends AbstractPartitionBasedServic
     protected Map<TopicPartitionInfo, List<ListenableFuture<?>>> onAddedPartitions(Set<TopicPartitionInfo> addedPartitions) {
         AtomicInteger addedEntityStates = new AtomicInteger(0);
         addedPartitions.stream().map(tpi -> tpi.getTenantId().orElse(TenantId.SYS_TENANT_ID)).distinct().forEach(tenantId -> {
-                    List<PersistedEntityState> states = stateStore.getAll(tenantId);
-                    addedEntityStates.addAndGet(states.size());
-                    states.forEach(ares -> {
-                        try {
-                            EntityId entityId = ares.getEntityId();
-                            if (!entityStates.containsKey(entityId)) {
-                                createEntityState(ares.getTenantId(), entityId, ares);
-                                TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, INTERNAL_QUEUE_NAME, ares.getTenantId(), entityId);
-                                partitionedEntities.get(tpi).add(entityId);
-                            }
-                        } catch (Exception e) {
-                            log.warn("Failed to create entity state [{}]!", e.getMessage());
-                        }
-                    });
+            List<PersistedEntityState> states = stateStore.getAll(tenantId);
+            addedEntityStates.addAndGet(states.size());
+            states.forEach(ares -> {
+                try {
+                    EntityId entityId = ares.getEntityId();
+                    if (!entityStates.containsKey(entityId)) {
+                        createEntityState(ares.getTenantId(), entityId, ares);
+                        TopicPartitionInfo tpi = getTpi(ares.getTenantId(), entityId);
+                        partitionedEntities.get(tpi).add(entityId);
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed to create entity state [{}]!", e.getMessage());
                 }
-        );
+            });
+        });
         log.info("Added new entity states: {}", addedEntityStates.get());
         return Collections.emptyMap();
     }
@@ -147,10 +146,7 @@ public class DefaultTbAlarmRuleStateService extends AbstractPartitionBasedServic
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
         if (getServiceType().equals(event.getServiceType())) {
-            var internalPartitions = event.getPartitionsMap().entrySet().stream()
-                    .filter(entry -> entry.getKey().isInternal())
-                    .flatMap(entry -> entry.getValue().stream())
-                    .collect(Collectors.toSet());
+            var internalPartitions = event.getPartitionsMap().entrySet().stream().filter(entry -> entry.getKey().isInternal()).flatMap(entry -> entry.getValue().stream()).collect(Collectors.toSet());
             log.debug("onTbApplicationEvent, processing event: {}", internalPartitions);
 
             subscribeQueue.add(internalPartitions);
@@ -180,7 +176,7 @@ public class DefaultTbAlarmRuleStateService extends AbstractPartitionBasedServic
             case DEVICE, ASSET -> {
                 switch (event) {
                     case UPDATED -> processEntityUpdated(tenantId, entityId);
-                    case DELETED -> processEntityDeleted(tenantId, entityId);
+                    case DELETED -> cleanupEntityState(tenantId, entityId);
                 }
             }
         }
@@ -201,17 +197,12 @@ public class DefaultTbAlarmRuleStateService extends AbstractPartitionBasedServic
             doProcess(requestCtx, tenantId, msg);
             tbContext.tellSuccess(msg);
         } else {
-            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, INTERNAL_QUEUE_NAME, tenantId, entityId);
+            TopicPartitionInfo tpi = getTpi(tenantId, entityId);
             tbContext.ack(msg);
 
             var tbMsg = TbMsg.newMsg(msg, msg.getQueueName(), ruleChainId, ruleNodeId);
 
-            TransportProtos.ToRuleEngineMsg toQueueMsg = TransportProtos.ToRuleEngineMsg.newBuilder()
-                    .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
-                    .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
-                    .setTbMsg(TbMsg.toByteString(tbMsg))
-                    .setQueueName(tbMsg.getQueueName())
-                    .build();
+            TransportProtos.ToRuleEngineMsg toQueueMsg = TransportProtos.ToRuleEngineMsg.newBuilder().setTenantIdMSB(tenantId.getId().getMostSignificantBits()).setTenantIdLSB(tenantId.getId().getLeastSignificantBits()).setTbMsg(TbMsg.toByteString(tbMsg)).setQueueName(tbMsg.getQueueName()).build();
 
             tbContext.getClusterService().pushMsgToRuleEngine(tpi, tbMsg.getId(), toQueueMsg, null);
         }
@@ -238,18 +229,14 @@ public class DefaultTbAlarmRuleStateService extends AbstractPartitionBasedServic
                     List<AlarmRule> newAlarmRules = getAlarmRulesForEntity(tenantId, entityId);
 
                     List<AlarmRule> toAdd = CollectionsUtil.diffLists(oldAlarmRules, newAlarmRules);
-                    List<AlarmRuleId> toRemoveIds = CollectionsUtil.diffLists(newAlarmRules, oldAlarmRules).stream()
-                            .map(AlarmRule::getId)
-                            .collect(Collectors.toList());
+                    List<AlarmRuleId> toRemoveIds = CollectionsUtil.diffLists(newAlarmRules, oldAlarmRules).stream().map(AlarmRule::getId).collect(Collectors.toList());
 
                     toAdd.forEach(entityState::addAlarmRule);
                     entityState.removeAlarmRules(toRemoveIds);
                     toRemoveIds.forEach(alarmRuleId -> myEntityStateIdsPerAlarmRule.get(alarmRuleId).remove(entityId));
 
                     if (entityState.isEmpty()) {
-                        entityStates.remove(entityId);
-                        myEntityStateIds.get(tenantId).remove(entityId);
-                        stateStore.remove(tenantId, entityId);
+                        cleanupEntityState(tenantId, entityId);
                     } else {
                         entityState.setProfileId(newProfileId);
                     }
@@ -260,12 +247,13 @@ public class DefaultTbAlarmRuleStateService extends AbstractPartitionBasedServic
         }
     }
 
-    private void processEntityDeleted(TenantId tenantId, EntityId entityId) {
+    private void cleanupEntityState(TenantId tenantId, EntityId entityId) {
         EntityState state = entityStates.remove(entityId);
         if (state != null) {
             myEntityStateIdsPerAlarmRule.values().forEach(ids -> ids.remove(entityId));
             myEntityStateIds.get(tenantId).remove(entityId);
             stateStore.remove(tenantId, entityId);
+            partitionedEntities.remove(getTpi(tenantId, entityId));
         }
     }
 
@@ -308,14 +296,11 @@ public class DefaultTbAlarmRuleStateService extends AbstractPartitionBasedServic
         Map<AlarmRuleId, AlarmRule> tenantRules = rules.get(tenantId);
         if (tenantRules != null) {
             tenantRules.put(alarmRule.getId(), alarmRule);
-            myEntityStateIds.get(tenantId).stream()
-                    .filter(entityId -> isEntityMatches(tenantId, entityId, alarmRule))
-                    .forEach(entityId -> {
-                                EntityState entityState = entityStates.get(entityId);
-                                myEntityStateIdsPerAlarmRule.computeIfAbsent(alarmRule.getId(), key -> ConcurrentHashMap.newKeySet()).add(entityId);
-                                entityState.addAlarmRule(alarmRule);
-                            }
-                    );
+            myEntityStateIds.get(tenantId).stream().filter(entityId -> isEntityMatches(tenantId, entityId, alarmRule)).forEach(entityId -> {
+                EntityState entityState = entityStates.get(entityId);
+                myEntityStateIdsPerAlarmRule.computeIfAbsent(alarmRule.getId(), key -> ConcurrentHashMap.newKeySet()).add(entityId);
+                entityState.addAlarmRule(alarmRule);
+            });
         }
     }
 
@@ -338,9 +323,7 @@ public class DefaultTbAlarmRuleStateService extends AbstractPartitionBasedServic
                     lock.lock();
                     entityState.removeAlarmRule(alarmRuleId);
                     if (entityState.isEmpty()) {
-                        entityStates.remove(entityState.getEntityId());
-                        myEntityStateIds.get(tenantId).remove(entityState.getEntityId());
-                        stateStore.remove(tenantId, id);
+                        cleanupEntityState(tenantId, id);
                     }
                 } finally {
                     lock.unlock();
@@ -397,10 +380,7 @@ public class DefaultTbAlarmRuleStateService extends AbstractPartitionBasedServic
     }
 
     private List<AlarmRule> getAlarmRulesForEntity(TenantId tenantId, EntityId entityId) {
-        return getOrFetchAlarmRules(tenantId)
-                .stream()
-                .filter(rule -> isEntityMatches(tenantId, entityId, rule))
-                .collect(Collectors.toList());
+        return getOrFetchAlarmRules(tenantId).stream().filter(rule -> isEntityMatches(tenantId, entityId, rule)).collect(Collectors.toList());
     }
 
     private EntityState getOrCreateEntityState(TenantId tenantId, EntityId targetEntityId, List<AlarmRule> alarmRules, PersistedEntityState persistedEntityState) {
@@ -438,14 +418,9 @@ public class DefaultTbAlarmRuleStateService extends AbstractPartitionBasedServic
     }
 
     private void createEntityState(TenantId tenantId, EntityId entityId, PersistedEntityState persistedEntityState) {
-        Set<AlarmRuleId> alarmRuleIds =
-                persistedEntityState.getAlarmStates().keySet().stream().map(id -> new AlarmRuleId(UUID.fromString(id))).collect(Collectors.toSet());
+        Set<AlarmRuleId> alarmRuleIds = persistedEntityState.getAlarmStates().keySet().stream().map(id -> new AlarmRuleId(UUID.fromString(id))).collect(Collectors.toSet());
 
-        List<AlarmRule> filteredRules =
-                getOrFetchAlarmRules(tenantId)
-                        .stream()
-                        .filter(rule -> alarmRuleIds.contains(rule.getId()))
-                        .collect(Collectors.toList());
+        List<AlarmRule> filteredRules = getOrFetchAlarmRules(tenantId).stream().filter(rule -> alarmRuleIds.contains(rule.getId())).collect(Collectors.toList());
 
         getOrCreateEntityState(tenantId, entityId, filteredRules, persistedEntityState);
     }
@@ -518,6 +493,10 @@ public class DefaultTbAlarmRuleStateService extends AbstractPartitionBasedServic
     }
 
     private boolean isLocalEntity(TenantId tenantId, EntityId entityId) {
-        return partitionService.resolve(ServiceType.TB_RULE_ENGINE, INTERNAL_QUEUE_NAME, tenantId, entityId).isMyPartition();
+        return getTpi(tenantId, entityId).isMyPartition();
+    }
+
+    private TopicPartitionInfo getTpi(TenantId tenantId, EntityId entityId) {
+        return partitionService.resolve(ServiceType.TB_RULE_ENGINE, INTERNAL_QUEUE_NAME, tenantId, entityId);
     }
 }
