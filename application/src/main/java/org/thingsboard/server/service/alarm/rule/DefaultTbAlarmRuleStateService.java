@@ -121,8 +121,6 @@ public class DefaultTbAlarmRuleStateService extends AbstractPartitionBasedServic
                     EntityId entityId = ares.getEntityId();
                     if (!entityStates.containsKey(entityId)) {
                         createEntityState(ares.getTenantId(), entityId, ares);
-                        TopicPartitionInfo tpi = getTpi(ares.getTenantId(), entityId);
-                        partitionedEntities.get(tpi).add(entityId);
                     }
                 } catch (Exception e) {
                     log.warn("Failed to create entity state [{}]!", e.getMessage());
@@ -390,6 +388,7 @@ public class DefaultTbAlarmRuleStateService extends AbstractPartitionBasedServic
             myEntityStateIds.computeIfAbsent(tenantId, key -> ConcurrentHashMap.newKeySet()).add(targetEntityId);
             entityStates.put(targetEntityId, entityState);
             alarmRules.forEach(alarmRule -> myEntityStateIdsPerAlarmRule.computeIfAbsent(alarmRule.getId(), key -> ConcurrentHashMap.newKeySet()).add(targetEntityId));
+            partitionedEntities.get(getTpi(tenantId, targetEntityId)).add(targetEntityId);
         } else {
             for (AlarmRule alarmRule : alarmRules) {
                 Set<EntityId> entityIds = myEntityStateIdsPerAlarmRule.get(alarmRule.getId());
@@ -419,9 +418,7 @@ public class DefaultTbAlarmRuleStateService extends AbstractPartitionBasedServic
 
     private void createEntityState(TenantId tenantId, EntityId entityId, PersistedEntityState persistedEntityState) {
         Set<AlarmRuleId> alarmRuleIds = persistedEntityState.getAlarmStates().keySet().stream().map(id -> new AlarmRuleId(UUID.fromString(id))).collect(Collectors.toSet());
-
         List<AlarmRule> filteredRules = getOrFetchAlarmRules(tenantId).stream().filter(rule -> alarmRuleIds.contains(rule.getId())).collect(Collectors.toList());
-
         getOrCreateEntityState(tenantId, entityId, filteredRules, persistedEntityState);
     }
 
