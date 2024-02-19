@@ -209,8 +209,7 @@ public class LwM2MTestClient {
         /**
          * "Use java-coap for CoAP protocol instead of Californium."
          */
-        boolean useJavaCoap = false;
-        if (!useJavaCoap) protocolProvider.add(new CoapOscoreProtocolProvider());
+        protocolProvider.add(new CoapOscoreProtocolProvider());
         protocolProvider.add(customCoapsProtocolProvider);
         CaliforniumClientEndpointsProvider.Builder endpointsBuilder = new CaliforniumClientEndpointsProvider.Builder(
                 protocolProvider.toArray(new ClientProtocolProvider[protocolProvider.size()]));
