@@ -15,11 +15,11 @@
  */
 package org.thingsboard.server.service.alarm.rule;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.TbAlarmRuleStateService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -35,9 +35,7 @@ import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageDataIterable;
-import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.util.CollectionsUtil;
@@ -47,19 +45,18 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.alarm.rule.state.PersistedEntityState;
 import org.thingsboard.server.service.alarm.rule.store.AlarmRuleEntityStateStore;
+import org.thingsboard.server.service.partition.AbstractPartitionBasedService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,8 +64,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
@@ -76,41 +71,90 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.DataConstants.INTERNAL_QUEUE_NAME;
 import static org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent.DELETED;
-import static org.thingsboard.server.common.data.util.CollectionsUtil.diffSets;
 
 @Slf4j
 @Service
 @TbRuleEngineComponent
 @RequiredArgsConstructor
-public class DefaultTbAlarmRuleStateService extends TbApplicationEventListener<PartitionChangeEvent> implements TbAlarmRuleStateService {
+public class DefaultTbAlarmRuleStateService extends AbstractPartitionBasedService<EntityId> implements TbAlarmRuleStateService {
 
     private final TbAlarmRuleContext ctx;
     private final AlarmRuleService alarmRuleService;
     private final AlarmRuleEntityStateStore stateStore;
-    private final PartitionService partitionService;
     //    private final RelationService relationService;
     private final TbDeviceProfileCache deviceProfileCache;
     private final TbAssetProfileCache assetProfileCache;
-
-    private ScheduledExecutorService scheduler;
 
     private final Map<EntityId, EntityState> entityStates = new ConcurrentHashMap<>();
     private final Map<TenantId, Map<AlarmRuleId, AlarmRule>> rules = new ConcurrentHashMap<>();
     private final Map<AlarmRuleId, Set<EntityId>> myEntityStateIdsPerAlarmRule = new ConcurrentHashMap<>();
     private final Map<TenantId, Set<EntityId>> myEntityStateIds = new ConcurrentHashMap<>();
 
-    private final Set<TopicPartitionInfo> myPartitions = ConcurrentHashMap.newKeySet();
-
     @PostConstruct
-    private void init() {
-        scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("alarm-rule-service"));
-        scheduler.scheduleAtFixedRate(this::harvestAlarms, 1, 1, TimeUnit.MINUTES);
+    protected void init() {
+        super.init();
+        scheduledExecutor.scheduleAtFixedRate(this::harvestAlarms, 1, 1, TimeUnit.MINUTES);
     }
 
-    @PreDestroy
-    private void destroy() {
-        if (scheduler != null) {
-            scheduler.shutdownNow();
+    protected ServiceType getServiceType() {
+        return ServiceType.TB_RULE_ENGINE;
+    }
+
+    @Override
+    protected String getServiceName() {
+        return "Alarm Rule State";
+    }
+
+    @Override
+    protected String getSchedulerExecutorName() {
+        return "alarm-rule-state-scheduler";
+    }
+
+    @Override
+    protected Map<TopicPartitionInfo, List<ListenableFuture<?>>> onAddedPartitions(Set<TopicPartitionInfo> addedPartitions) {
+        AtomicInteger addedEntityStates = new AtomicInteger(0);
+        addedPartitions.stream().map(tpi -> tpi.getTenantId().orElse(TenantId.SYS_TENANT_ID)).distinct().forEach(tenantId -> {
+                    List<PersistedEntityState> states = stateStore.getAll(tenantId);
+                    addedEntityStates.addAndGet(states.size());
+                    states.forEach(ares -> {
+                        try {
+                            EntityId entityId = ares.getEntityId();
+                            if (!entityStates.containsKey(entityId)) {
+                                createEntityState(ares.getTenantId(), entityId, ares);
+                                TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, INTERNAL_QUEUE_NAME, ares.getTenantId(), entityId);
+                                partitionedEntities.get(tpi).add(entityId);
+                            }
+                        } catch (Exception e) {
+                            log.warn("Failed to create entity state [{}]!", e.getMessage());
+                        }
+                    });
+                }
+        );
+        log.info("Added new entity states: {}", addedEntityStates.get());
+        return Collections.emptyMap();
+    }
+
+    @Override
+    protected void cleanupEntitiesOnPartitionRemoval(Set<EntityId> ids) {
+        ids.forEach(entityStates::remove);
+        myEntityStateIdsPerAlarmRule.values().forEach(set -> ids.forEach(ids::remove));
+    }
+
+    @Override
+    protected void cleanupEntityOnPartitionRemoval(EntityId entityId) {
+    }
+
+    @Override
+    protected void onTbApplicationEvent(PartitionChangeEvent event) {
+        if (getServiceType().equals(event.getServiceType())) {
+            var internalPartitions = event.getPartitionsMap().entrySet().stream()
+                    .filter(entry -> entry.getKey().isInternal())
+                    .flatMap(entry -> entry.getValue().stream())
+                    .collect(Collectors.toSet());
+            log.debug("onTbApplicationEvent, processing event: {}", internalPartitions);
+
+            subscribeQueue.add(internalPartitions);
+            scheduledExecutor.submit(this::pollInitStateFromDB);
         }
     }
 
@@ -311,61 +355,6 @@ public class DefaultTbAlarmRuleStateService extends TbApplicationEventListener<P
             tenantRules.keySet().forEach(alarmRuleId -> deleteAlarmRule(tenantId, alarmRuleId));
             rules.remove(tenantId);
         }
-    }
-
-    @Override
-    protected void onTbApplicationEvent(PartitionChangeEvent event) {
-        if (!ServiceType.TB_RULE_ENGINE.equals(event.getServiceType())) {
-            return;
-        }
-
-        var internalPartitions = event.getPartitionsMap().entrySet().stream()
-                .filter(entry -> entry.getKey().isInternal())
-                .flatMap(entry -> entry.getValue().stream())
-                .collect(Collectors.toSet());
-
-        Set<TopicPartitionInfo> addedPartitions = diffSets(myPartitions, internalPartitions);
-        Set<TopicPartitionInfo> removedPartitions = diffSets(internalPartitions, myPartitions);
-
-        myPartitions.clear();
-        myPartitions.addAll(internalPartitions);
-
-        log.info("calculated removedPartitions: {}", removedPartitions);
-
-        //TODO: add Map<TI, Set<EntityId>>
-        List<EntityId> toRemove = new ArrayList<>();
-        entityStates.values().forEach(entityState -> {
-            TenantId tenantId = entityState.getTenantId();
-            EntityId entityId = entityState.getEntityId();
-            if (!isLocalEntity(tenantId, entityId)) {
-                toRemove.add(entityId);
-            }
-        });
-
-        log.info("calculated removedEntityStates: {}", toRemove.size());
-
-
-        toRemove.forEach(entityStates::remove);
-        myEntityStateIdsPerAlarmRule.values().forEach(ids -> toRemove.forEach(ids::remove));
-
-        log.info("calculated addedPartitions: {}", addedPartitions);
-
-        AtomicInteger addedEntityStates = new AtomicInteger(0);
-
-        addedPartitions.stream().map(tpi -> tpi.getTenantId().orElse(TenantId.SYS_TENANT_ID)).distinct().forEach(tenantId -> {
-                    List<PersistedEntityState> states = stateStore.getAll(tenantId);
-                    addedEntityStates.addAndGet(states.size());
-                    states.forEach(ares -> {
-                        try {
-                            createEntityState(ares.getTenantId(), ares.getEntityId(), ares);
-                        } catch (Exception e) {
-                            log.warn("Failed to create entity state [{}]!", e.getMessage());
-                        }
-                    });
-                }
-        );
-
-        log.info("calculated addedEntityStates: {}", addedEntityStates.get());
     }
 
     private void harvestAlarms() {
