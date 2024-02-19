@@ -57,6 +57,7 @@ import {
   createLabelFromDatasource,
   createLabelFromSubscriptionEntityInfo,
   formatValue,
+  getEntityDetailsPageURL,
   hasDatasourceLabelsVariables,
   isDefined
 } from '@core/utils';
@@ -253,7 +254,8 @@ export class WidgetContext {
   };
 
   utils: IWidgetUtils = {
-    formatValue
+    formatValue,
+    getEntityDetailsPageURL
   };
 
   $widgetElement: JQuery<HTMLElement>;
@@ -263,6 +265,7 @@ export class WidgetContext {
   height: number;
   $scope: IDynamicWidgetComponent;
   isEdit: boolean;
+  isPreview: boolean;
   isMobile: boolean;
   toastTargetId: string;
 
@@ -279,6 +282,7 @@ export class WidgetContext {
   timeWindow?: WidgetTimewindow;
 
   embedTitlePanel?: boolean;
+  overflowVisible?: boolean;
 
   hideTitlePanel = false;
 
@@ -345,35 +349,35 @@ export class WidgetContext {
   showSuccessToast(message: string, duration: number = 1000,
                    verticalPosition: NotificationVerticalPosition = 'bottom',
                    horizontalPosition: NotificationHorizontalPosition = 'left',
-                   target: string = 'dashboardRoot') {
-    this.showToast('success', message, duration, verticalPosition, horizontalPosition, target);
+                   target: string = 'dashboardRoot', modern = false) {
+    this.showToast('success', message, duration, verticalPosition, horizontalPosition, target, modern);
   }
 
   showInfoToast(message: string,
                 verticalPosition: NotificationVerticalPosition = 'bottom',
                 horizontalPosition: NotificationHorizontalPosition = 'left',
-                target: string = 'dashboardRoot') {
-    this.showToast('info', message, undefined, verticalPosition, horizontalPosition, target);
+                target: string = 'dashboardRoot', modern = false) {
+    this.showToast('info', message, undefined, verticalPosition, horizontalPosition, target, modern);
   }
 
   showWarnToast(message: string,
                 verticalPosition: NotificationVerticalPosition = 'bottom',
                 horizontalPosition: NotificationHorizontalPosition = 'left',
-                target: string = 'dashboardRoot') {
-    this.showToast('warn', message, undefined, verticalPosition, horizontalPosition, target);
+                target: string = 'dashboardRoot', modern = false) {
+    this.showToast('warn', message, undefined, verticalPosition, horizontalPosition, target, modern);
   }
 
   showErrorToast(message: string,
                  verticalPosition: NotificationVerticalPosition = 'bottom',
                  horizontalPosition: NotificationHorizontalPosition = 'left',
-                 target: string = 'dashboardRoot') {
-    this.showToast('error', message, undefined, verticalPosition, horizontalPosition, target);
+                 target: string = 'dashboardRoot', modern = false) {
+    this.showToast('error', message, undefined, verticalPosition, horizontalPosition, target, modern);
   }
 
   showToast(type: NotificationType, message: string, duration: number,
             verticalPosition: NotificationVerticalPosition = 'bottom',
             horizontalPosition: NotificationHorizontalPosition = 'left',
-            target: string = 'dashboardRoot') {
+            target: string = 'dashboardRoot', modern = false) {
     this.store.dispatch(new ActionNotificationShow(
       {
         message,
@@ -383,7 +387,8 @@ export class WidgetContext {
         horizontalPosition,
         target,
         panelClass: this.widgetNamespace,
-        forceDismiss: true
+        forceDismiss: true,
+        modern
       }));
   }
 

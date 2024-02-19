@@ -30,8 +30,6 @@ import java.util.UUID;
 
 public interface AuditLogDao extends Dao<AuditLog> {
 
-    ListenableFuture<Void> saveByTenantId(AuditLog auditLog);
-
     PageData<AuditLog> findAuditLogsByTenantIdAndEntityId(UUID tenantId, EntityId entityId, List<ActionType> actionTypes, TimePageLink pageLink);
 
     PageData<AuditLog> findAuditLogsByTenantIdAndCustomerId(UUID tenantId, CustomerId customerId, List<ActionType> actionTypes, TimePageLink pageLink);
@@ -41,7 +39,5 @@ public interface AuditLogDao extends Dao<AuditLog> {
     PageData<AuditLog> findAuditLogsByTenantId(UUID tenantId, List<ActionType> actionTypes, TimePageLink pageLink);
 
     void cleanUpAuditLogs(long expTime);
-
-    void migrateAuditLogs();
 
 }

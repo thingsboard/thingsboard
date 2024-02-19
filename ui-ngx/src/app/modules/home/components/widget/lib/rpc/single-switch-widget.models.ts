@@ -14,16 +14,16 @@
 /// limitations under the License.
 ///
 
-import { BackgroundType, cssUnit, Font } from '@shared/models/widget-settings.models';
+import { BackgroundSettings, BackgroundType, cssUnit, Font } from '@shared/models/widget-settings.models';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import {
-  RpcDataToStateType,
-  RpcInitialStateAction,
-  RpcStateToParamsType,
-  RpcStateWidgetSettings,
-  RpcUpdateStateAction,
-  RpcUpdateStateSettings
-} from '@shared/models/rpc-widget-settings.models';
+  DataToValueType,
+  GetValueAction,
+  GetValueSettings,
+  SetValueAction,
+  SetValueSettings,
+  ValueToDataType
+} from '@shared/models/action-widget-settings.models';
 
 export enum SingleSwitchLayout {
   right = 'right',
@@ -49,9 +49,11 @@ export const singleSwitchLayoutImages = new Map<SingleSwitchLayout, string>(
   ]
 );
 
-export interface SingleSwitchWidgetSettings extends RpcStateWidgetSettings<boolean> {
-  onUpdateState: RpcUpdateStateSettings;
-  offUpdateState: RpcUpdateStateSettings;
+export interface SingleSwitchWidgetSettings {
+  initialState: GetValueSettings<boolean>;
+  disabledState: GetValueSettings<boolean>;
+  onUpdateState: SetValueSettings;
+  offUpdateState: SetValueSettings;
   layout: SingleSwitchLayout;
   autoScale: boolean;
   showLabel: boolean;
@@ -77,11 +79,12 @@ export interface SingleSwitchWidgetSettings extends RpcStateWidgetSettings<boole
   offLabel: string;
   offLabelFont: Font;
   offLabelColor: string;
+  background: BackgroundSettings;
 }
 
 export const singleSwitchDefaultSettings: SingleSwitchWidgetSettings = {
   initialState: {
-    action: RpcInitialStateAction.EXECUTE_RPC,
+    action: GetValueAction.EXECUTE_RPC,
     defaultValue: false,
     executeRpc: {
       method: 'getState',
@@ -96,14 +99,30 @@ export const singleSwitchDefaultSettings: SingleSwitchWidgetSettings = {
     getTimeSeries: {
       key: 'state'
     },
-    dataToState: {
-      type: RpcDataToStateType.NONE,
+    dataToValue: {
+      type: DataToValueType.NONE,
       compareToValue: true,
-      dataToStateFunction: '/* Should return boolean value */\nreturn data;'
+      dataToValueFunction: '/* Should return boolean value */\nreturn data;'
+    }
+  },
+  disabledState: {
+    action: GetValueAction.DO_NOTHING,
+    defaultValue: false,
+    getAttribute: {
+      key: 'state',
+      scope: null
+    },
+    getTimeSeries: {
+      key: 'state'
+    },
+    dataToValue: {
+      type: DataToValueType.NONE,
+      compareToValue: true,
+      dataToValueFunction: '/* Should return boolean value */\nreturn data;'
     }
   },
   onUpdateState: {
-    action: RpcUpdateStateAction.EXECUTE_RPC,
+    action: SetValueAction.EXECUTE_RPC,
     executeRpc: {
       method: 'setState',
       requestTimeout: 5000,
@@ -117,14 +136,14 @@ export const singleSwitchDefaultSettings: SingleSwitchWidgetSettings = {
     putTimeSeries: {
       key: 'state'
     },
-    stateToParams: {
-      type: RpcStateToParamsType.CONSTANT,
+    valueToData: {
+      type: ValueToDataType.CONSTANT,
       constantValue: true,
-      stateToParamsFunction: '/* Convert input boolean value to RPC parameters or attribute/time-series value */\nreturn value;'
+      valueToDataFunction: '/* Convert input boolean value to RPC parameters or attribute/time-series value */\nreturn value;'
     }
   },
   offUpdateState: {
-    action: RpcUpdateStateAction.EXECUTE_RPC,
+    action: SetValueAction.EXECUTE_RPC,
     executeRpc: {
       method: 'setState',
       requestTimeout: 5000,
@@ -138,10 +157,10 @@ export const singleSwitchDefaultSettings: SingleSwitchWidgetSettings = {
     putTimeSeries: {
       key: 'state'
     },
-    stateToParams: {
-      type: RpcStateToParamsType.CONSTANT,
+    valueToData: {
+      type: ValueToDataType.CONSTANT,
       constantValue: false,
-      stateToParamsFunction: '/* Convert input boolean value to RPC parameters or attribute/time-series value */ \n return value;'
+      valueToDataFunction: '/* Convert input boolean value to RPC parameters or attribute/time-series value */ \n return value;'
     }
   },
   layout: SingleSwitchLayout.right,

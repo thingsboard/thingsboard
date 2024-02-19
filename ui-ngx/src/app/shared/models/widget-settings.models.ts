@@ -15,7 +15,15 @@
 ///
 
 import { isDefinedAndNotNull, isNumber, isNumeric, isUndefinedOrNull, parseFunction } from '@core/utils';
-import { DataEntry, DataKey, Datasource, DatasourceData } from '@shared/models/widget.models';
+import {
+  DataEntry,
+  DataKey,
+  Datasource,
+  DatasourceData,
+  DatasourceType,
+  TargetDevice,
+  TargetDeviceType
+} from '@shared/models/widget.models';
 import { Injector } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
@@ -204,7 +212,7 @@ export const cssSizeToStrSize = (size?: number, unit?: cssUnit): string => (isDe
 
 export const resolveCssSize = (strSize?: string): [number, cssUnit] => {
   if (!strSize || !strSize.trim().length) {
-    return [0, 'px'];
+    return [null, 'px'];
   }
   let resolvedUnit: cssUnit;
   let resolvedSize = strSize;
@@ -218,11 +226,20 @@ export const resolveCssSize = (strSize?: string): [number, cssUnit] => {
     resolvedSize = strSize.substring(0, strSize.length - resolvedUnit.length);
   }
   resolvedUnit = resolvedUnit || 'px';
-  let numericSize = 0;
+  let numericSize: number = null;
   if (isNumeric(resolvedSize)) {
     numericSize = Number(resolvedSize);
   }
   return [numericSize, resolvedUnit];
+};
+
+export const validateCssSize = (strSize?: string): string | undefined => {
+  const resolved = resolveCssSize(strSize);
+  if (!!resolved[0] && !!resolved[1]) {
+    return cssSizeToStrSize(resolved[0], resolved[1]);
+  } else {
+    return undefined;
+  }
 };
 
 type ValueColorFunction = (value: any) => string;
@@ -598,6 +615,24 @@ export const updateDataKeyByLabel = (datasources: Datasource[], dataKey: DataKey
       dataKeys.splice(existingIndex, 1);
     }
   }
+};
+
+export const getTargetDeviceFromDatasources = (datasources?: Datasource[]): TargetDevice => {
+  if (datasources && datasources.length) {
+    const datasource = datasources[0];
+    if (datasource?.type === DatasourceType.device) {
+      return {
+        type: TargetDeviceType.device,
+        deviceId: datasource?.deviceId
+      };
+    } else if (datasource?.type === DatasourceType.entity) {
+      return {
+        type: TargetDeviceType.entity,
+        entityAliasId: datasource?.entityAliasId
+      };
+    }
+  }
+  return null;
 };
 
 export const getAlarmFilterConfig = (datasources?: Datasource[]): AlarmFilterConfig => {

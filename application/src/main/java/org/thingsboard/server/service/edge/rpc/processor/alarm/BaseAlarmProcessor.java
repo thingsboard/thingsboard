@@ -113,7 +113,7 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
             }
             switch (alarmCommentUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
-                    alarmCommentDao.createAlarmComment(tenantId, alarmComment);
+                    alarmCommentDao.save(tenantId, alarmComment);
                     break;
                 case ENTITY_UPDATED_RPC_MESSAGE:
                     alarmCommentService.createOrUpdateAlarmComment(tenantId, alarmComment);
@@ -154,6 +154,7 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
                             .constructAlarmUpdatedMsg(msgType, alarm, findOriginatorEntityName(tenantId, alarm));
                 }
                 break;
+            case ALARM_DELETE:
             case DELETED:
                 Alarm deletedAlarm = JacksonUtil.convertValue(body, Alarm.class);
                 if (deletedAlarm != null) {
