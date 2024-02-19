@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,13 @@
     height: 100%;
   }
 
-  &:not(.tb-js-func-title) {
+  &:not(.tb-hide-brackets) {
     .tb-js-func-panel {
       margin-left: 15px;
     }
   }
 
-  &.tb-js-func-title {
+  &.tb-hide-brackets {
     .tb-js-func-panel {
       height: calc(100% - 40px);
     }
@@ -48,7 +48,7 @@
   }
 
   &:not(.tb-fullscreen) {
-    &.tb-js-func-title {
+    &.tb-hide-brackets {
       padding-bottom: 15px;
     }
   }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import { ActivatedRoute } from '@angular/router';
 import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import {
   NotificationDeliveryMethod,
-  NotificationDeliveryMethodTranslateMap,
+  NotificationDeliveryMethodInfoMap,
   NotificationUserSettings
 } from '@shared/models/notification.models';
 import { NotificationService } from '@core/http/notification.service';
@@ -41,7 +41,7 @@ export class NotificationSettingsComponent extends PageComponent implements OnIn
   notificationSettings: UntypedFormGroup;
 
   notificationDeliveryMethods: NotificationDeliveryMethod[];
-  notificationDeliveryMethodTranslateMap = NotificationDeliveryMethodTranslateMap;
+  notificationDeliveryMethodInfoMap = NotificationDeliveryMethodInfoMap;
 
   private deliveryMethods = new Set([
     NotificationDeliveryMethod.SLACK,

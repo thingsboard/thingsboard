@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,15 +95,15 @@ public class TbRuleEngineQueueConsumerManager {
     }
 
     public void update(Queue queue) {
-        addTask(new TbQueueConsumerManagerTask(QueueEvent.CONFIG_UPDATE, queue));
+        addTask(TbQueueConsumerManagerTask.configUpdate(queue));
     }
 
     public void update(Set<TopicPartitionInfo> partitions) {
-        addTask(new TbQueueConsumerManagerTask(QueueEvent.PARTITION_CHANGE, partitions));
+        addTask(TbQueueConsumerManagerTask.partitionChange(partitions));
     }
 
-    public void delete() {
-        addTask(new TbQueueConsumerManagerTask(QueueEvent.DELETE));
+    public void delete(boolean drainQueue) {
+        addTask(TbQueueConsumerManagerTask.delete(drainQueue));
     }
 
     private void addTask(TbQueueConsumerManagerTask todo) {
@@ -138,7 +138,7 @@ public class TbRuleEngineQueueConsumerManager {
                         } else if (task.getEvent() == QueueEvent.CONFIG_UPDATE) {
                             newConfiguration = task.getQueue();
                         } else if (task.getEvent() == QueueEvent.DELETE) {
-                            doDelete();
+                            doDelete(task.isDrainQueue());
                             return;
                         }
                     }
@@ -205,7 +205,7 @@ public class TbRuleEngineQueueConsumerManager {
         log.debug("[{}] Unsubscribed and stopped consumers", queueKey);
     }
 
-    private void doDelete() {
+    private void doDelete(boolean drainQueue) {
         stopped = true;
         log.info("[{}] Handling queue deletion", queueKey);
         consumerWrapper.getConsumers().forEach(TbQueueConsumerTask::awaitCompletion);
@@ -213,7 +213,9 @@ public class TbRuleEngineQueueConsumerManager {
         List<TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>>> queueConsumers = consumerWrapper.getConsumers().stream()
                 .map(TbQueueConsumerTask::getConsumer).collect(Collectors.toList());
         ctx.getConsumersExecutor().submit(() -> {
-            drainQueue(queueConsumers);
+            if (drainQueue) {
+                drainQueue(queueConsumers);
+            }
 
             queueConsumers.forEach(consumer -> {
                 for (String topic : consumer.getFullTopicNames()) {

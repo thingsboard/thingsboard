@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -212,7 +212,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
     public void reportActivity() {
         for (TbCoapClientState state : clients.values()) {
             if (state.getSession() != null) {
-                transportService.reportActivity(state.getSession());
+                transportService.recordActivity(state.getSession());
             }
         }
     }
@@ -220,7 +220,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
     private void onUplink(TbCoapClientState client, boolean notifyOtherServers, long uplinkTs) {
         PowerMode powerMode = client.getPowerMode();
         PowerSavingConfiguration profileSettings = null;
-        if (powerMode == null) {
+        if (powerMode == null && client.getProfileId() != null) {
             var clientProfile = getProfile(client.getProfileId());
             if (clientProfile.isPresent()) {
                 profileSettings = clientProfile.get().getClientSettings();
@@ -726,7 +726,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
     private boolean isDownlinkAllowed(TbCoapClientState client) {
         PowerMode powerMode = client.getPowerMode();
         PowerSavingConfiguration profileSettings = null;
-        if (powerMode == null) {
+        if (powerMode == null && client.getProfileId() != null) {
             var clientProfile = getProfile(client.getProfileId());
             if (clientProfile.isPresent()) {
                 profileSettings = clientProfile.get().getClientSettings();
@@ -775,11 +775,12 @@ public class DefaultCoapClientContext implements CoapClientContext {
     private PowerMode getPowerMode(TbCoapClientState client) {
         PowerMode powerMode = client.getPowerMode();
         if (powerMode == null) {
-            Optional<CoapDeviceProfileTransportConfiguration> deviceProfile = getProfile(client.getProfileId());
-            if (deviceProfile.isPresent()) {
-                powerMode = deviceProfile.get().getClientSettings().getPowerMode();
-            } else {
-                powerMode = PowerMode.PSM;
+            powerMode = PowerMode.PSM;
+            if (client.getProfileId() != null) {
+                Optional<CoapDeviceProfileTransportConfiguration> deviceProfile = getProfile(client.getProfileId());
+                if (deviceProfile.isPresent()) {
+                    powerMode = deviceProfile.get().getClientSettings().getPowerMode();
+                }
             }
         }
         return powerMode;

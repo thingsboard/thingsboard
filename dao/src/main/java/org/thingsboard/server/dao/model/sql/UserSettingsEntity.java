@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import org.thingsboard.server.common.data.settings.UserSettingsCompositeKey;
 import org.thingsboard.server.common.data.settings.UserSettingsType;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.ToData;
-import org.thingsboard.server.dao.util.mapping.JsonStringType;
+import org.thingsboard.server.dao.util.mapping.JsonBinaryType;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -37,7 +37,7 @@ import java.util.UUID;
 
 @Data
 @NoArgsConstructor
-@TypeDef(name = "json", typeClass = JsonStringType.class)
+@TypeDef(name = "jsonb", typeClass = JsonBinaryType.class)
 @Entity
 @Table(name = ModelConstants.USER_SETTINGS_TABLE_NAME)
 @IdClass(UserSettingsCompositeKey.class)
@@ -49,8 +49,8 @@ public class UserSettingsEntity implements ToData<UserSettings> {
     @Id
     @Column(name = ModelConstants.USER_SETTINGS_TYPE_PROPERTY)
     private String type;
-    @Type(type = "json")
-    @Column(name = ModelConstants.USER_SETTINGS_SETTINGS)
+    @Type(type = "jsonb")
+    @Column(name = ModelConstants.USER_SETTINGS_SETTINGS, columnDefinition = "jsonb")
     private JsonNode settings;
 
     public UserSettingsEntity(UserSettings userSettings) {

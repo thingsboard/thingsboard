@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@
   <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" fxFlex="100">
     <div fxFlex fxLayout="row" fxLayoutGap="8px">
       <label fxFlex="26" class="tb-title no-padding" translate>device-profile.snmp.data-type</label>
-      <label fxFlex="37" class="tb-title no-padding" translate>device-profile.snmp.data-key</label>
-      <label fxFlex="37" class="tb-title no-padding" translate>device-profile.snmp.oid</label>
+      <label fxFlex="37" class="tb-title tb-required no-padding" translate>device-profile.snmp.data-key</label>
+      <label fxFlex="37" class="tb-title tb-required no-padding" translate>device-profile.snmp.oid</label>
       <span style="min-width: 40px" [fxShow]="!disabled"></span>
     </div>
   </div>
@@ -28,7 +28,7 @@
   <div *ngFor="let mappingConfig of mappingsConfigFormArray.controls; let $index = index;
                last as isLast;" fxLayout="row" fxLayoutAlign="start center"
        fxLayoutGap="8px" [formGroup]="mappingConfig" class="mapping-list">
-    <div fxFlex fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start">
+    <div class="tb-layout-fill" fxFlex fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start">
       <mat-form-field fxFlex="26">
         <mat-select formControlName="dataType" required>
           <mat-option *ngFor="let dataType of dataTypes" [value]="dataType">

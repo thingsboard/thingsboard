@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -32,7 +32,8 @@ import {
   backgroundStyle,
   ColorRange,
   ComponentStyle,
-  DateFormatProcessor, filterIncludingColorRanges,
+  DateFormatProcessor,
+  filterIncludingColorRanges,
   getDataKey,
   overlayStyle,
   sortedColorRange,
@@ -41,46 +42,18 @@ import {
 import { ResizeObserver } from '@juggle/resize-observer';
 import * as echarts from 'echarts/core';
 import { formatValue, isDefinedAndNotNull, isNumber } from '@core/utils';
-import {
-  DataZoomComponent,
-  DataZoomComponentOption,
-  GridComponent,
-  GridComponentOption,
-  MarkLineComponent,
-  MarkLineComponentOption,
-  TooltipComponent,
-  TooltipComponentOption,
-  VisualMapComponent,
-  VisualMapComponentOption
-} from 'echarts/components';
-import { LineChart, LineSeriesOption, } from 'echarts/charts';
-import { CanvasRenderer } from 'echarts/renderers';
 import { rangeChartDefaultSettings, RangeChartWidgetSettings } from './range-chart-widget.models';
-import { DataSet } from '@shared/models/widget.models';
 import { Observable } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
-
-echarts.use([
-  TooltipComponent,
-  GridComponent,
-  VisualMapComponent,
-  DataZoomComponent,
-  MarkLineComponent,
-  LineChart,
-  CanvasRenderer
-]);
-
-type EChartsOption = echarts.ComposeOption<
-  | TooltipComponentOption
-  | GridComponentOption
-  | VisualMapComponentOption
-  | DataZoomComponentOption
-  | MarkLineComponentOption
-  | LineSeriesOption
->;
-
-type ECharts = echarts.ECharts;
+import {
+  ECharts,
+  echartsModule,
+  EChartsOption,
+  echartsTooltipFormatter,
+  toNamedData
+} from '@home/components/widget/lib/chart/echarts-widget.models';
+import { CallbackDataParams } from 'echarts/types/dist/shared';
 
 interface VisualPiece {
   lt?: number;
@@ -178,17 +151,6 @@ const toRangeItems = (colorRanges: Array<ColorRange>): RangeItem[] => {
     }
   }
   return rangeItems;
-};
-
-const toNamedData = (data: DataSet): {name: string; value: [number, any]}[] => {
-  if (!data?.length) {
-    return [];
-  } else {
-    return data.map(d => ({
-      name: d[0] + '',
-      value: d
-    }));
-  }
 };
 
 const getMarkPoints = (ranges: Array<RangeItem>): number[] => {
@@ -324,7 +286,8 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
       this.rangeChart.setOption({
         xAxis: {
           min: this.ctx.defaultSubscription.timeWindow.minTime,
-          max: this.ctx.defaultSubscription.timeWindow.maxTime
+          max: this.ctx.defaultSubscription.timeWindow.maxTime,
+          tbTimeWindow: this.ctx.defaultSubscription.timeWindow
         },
         series: [
           {data: this.ctx.data?.length ? toNamedData(this.ctx.data[0].data) : []}
@@ -346,13 +309,26 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
   }
 
   private drawChart() {
+    echartsModule.init();
     const dataKey = getDataKey(this.ctx.datasources);
     this.rangeChart = echarts.init(this.chartShape.nativeElement, null, {
       renderer: 'canvas',
     });
     this.rangeChartOptions = {
       tooltip: {
-        trigger: 'none'
+        trigger: 'axis',
+        confine: true,
+        appendToBody: true,
+        axisPointer: {
+          type: 'shadow'
+        },
+        formatter: (params: CallbackDataParams[]) =>
+          this.settings.showTooltip ? echartsTooltipFormatter(this.renderer, this.tooltipDateFormat,
+            this.settings, params, this.decimals, this.units, 0) : undefined,
+        padding: [8, 12],
+        backgroundColor: this.settings.tooltipBackgroundColor,
+        borderWidth: 0,
+        extraCssText: `line-height: 1; backdrop-filter: blur(${this.settings.tooltipBackgroundBlur}px);`
       },
       grid: {
         containLabel: true,
@@ -379,7 +355,7 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
       yAxis: {
         type: 'value',
         axisLabel: {
-          formatter: value => formatValue(value, this.decimals, this.units, false)
+          formatter: (value: any) => formatValue(value, this.decimals, this.units, false)
         }
       },
       series: [{
@@ -429,6 +405,7 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
         show: false,
         type: 'piecewise',
         selected: this.selectedRanges,
+        dimension: 1,
         pieces: this.rangeItems.map(item => item.piece),
         outOfRange: {
           color: this.settings.outOfRangeColor
@@ -439,77 +416,7 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
       }
     };
 
-    if (this.settings.showTooltip) {
-      this.rangeChartOptions.tooltip = {
-        trigger: 'axis',
-        formatter: (params) => {
-          if (!params.length || !params[0]) {
-            return null;
-          }
-          const seriesParams = params[0];
-          const value = formatValue(seriesParams.value[1], this.decimals, this.units, false);
-          const tooltipElement: HTMLElement = this.renderer.createElement('div');
-          this.renderer.setStyle(tooltipElement, 'display', 'flex');
-          this.renderer.setStyle(tooltipElement, 'flex-direction', 'column');
-          this.renderer.setStyle(tooltipElement, 'align-items', 'flex-start');
-          this.renderer.setStyle(tooltipElement, 'gap', '4px');
-          if (this.settings.tooltipShowDate) {
-            const dateElement: HTMLElement = this.renderer.createElement('div');
-            const ts = seriesParams.value[0];
-            this.tooltipDateFormat.update(ts);
-            this.renderer.appendChild(dateElement, this.renderer.createText(this.tooltipDateFormat.formatted));
-            this.renderer.setStyle(dateElement, 'font-family', this.settings.tooltipDateFont.family);
-            this.renderer.setStyle(dateElement, 'font-size', this.settings.tooltipDateFont.size + this.settings.tooltipDateFont.sizeUnit);
-            this.renderer.setStyle(dateElement, 'font-style', this.settings.tooltipDateFont.style);
-            this.renderer.setStyle(dateElement, 'font-weight', this.settings.tooltipDateFont.weight);
-            this.renderer.setStyle(dateElement, 'line-height', this.settings.tooltipDateFont.lineHeight);
-            this.renderer.setStyle(dateElement, 'color', this.settings.tooltipDateColor);
-            this.renderer.appendChild(tooltipElement, dateElement);
-          }
-          const labelValueElement: HTMLElement = this.renderer.createElement('div');
-          this.renderer.setStyle(labelValueElement, 'display', 'flex');
-          this.renderer.setStyle(labelValueElement, 'flex-direction', 'row');
-          this.renderer.setStyle(labelValueElement, 'align-items', 'center');
-          this.renderer.setStyle(labelValueElement, 'align-self', 'stretch');
-          this.renderer.setStyle(labelValueElement, 'gap', '12px');
-          this.renderer.appendChild(tooltipElement, labelValueElement);
-          const labelElement: HTMLElement = this.renderer.createElement('div');
-          this.renderer.setStyle(labelElement, 'display', 'flex');
-          this.renderer.setStyle(labelElement, 'align-items', 'center');
-          this.renderer.setStyle(labelElement, 'gap', '8px');
-          this.renderer.appendChild(labelValueElement, labelElement);
-          const circleElement: HTMLElement = this.renderer.createElement('div');
-          this.renderer.setStyle(circleElement, 'width', '8px');
-          this.renderer.setStyle(circleElement, 'height', '8px');
-          this.renderer.setStyle(circleElement, 'border-radius', '50%');
-          this.renderer.setStyle(circleElement, 'background', seriesParams.color);
-          this.renderer.appendChild(labelElement, circleElement);
-          const labelTextElement: HTMLElement = this.renderer.createElement('div');
-          this.renderer.appendChild(labelTextElement, this.renderer.createText(seriesParams.seriesName));
-          this.renderer.setStyle(labelTextElement, 'font-family', 'Roboto');
-          this.renderer.setStyle(labelTextElement, 'font-size', '12px');
-          this.renderer.setStyle(labelTextElement, 'font-style', 'normal');
-          this.renderer.setStyle(labelTextElement, 'font-weight', '400');
-          this.renderer.setStyle(labelTextElement, 'line-height', '16px');
-          this.renderer.setStyle(labelTextElement, 'letter-spacing', '0.4px');
-          this.renderer.setStyle(labelTextElement, 'color', 'rgba(0, 0, 0, 0.76)');
-          this.renderer.appendChild(labelElement, labelTextElement);
-          const valueElement: HTMLElement = this.renderer.createElement('div');
-          this.renderer.appendChild(valueElement, this.renderer.createText(value));
-          this.renderer.setStyle(valueElement, 'font-family', this.settings.tooltipValueFont.family);
-          this.renderer.setStyle(valueElement, 'font-size', this.settings.tooltipValueFont.size + this.settings.tooltipValueFont.sizeUnit);
-          this.renderer.setStyle(valueElement, 'font-style', this.settings.tooltipValueFont.style);
-          this.renderer.setStyle(valueElement, 'font-weight', this.settings.tooltipValueFont.weight);
-          this.renderer.setStyle(valueElement, 'line-height', this.settings.tooltipValueFont.lineHeight);
-          this.renderer.setStyle(valueElement, 'color', this.settings.tooltipValueColor);
-          this.renderer.appendChild(labelValueElement, valueElement);
-          return tooltipElement;
-        },
-        padding: [8, 12],
-        backgroundColor: this.settings.tooltipBackgroundColor,
-        extraCssText: `line-height: 1; backdrop-filter: blur(${this.settings.tooltipBackgroundBlur}px);`
-      };
-    }
+    (this.rangeChartOptions.xAxis as any).tbTimeWindow = this.ctx.defaultSubscription.timeWindow;
 
     this.rangeChart.setOption(this.rangeChartOptions);
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,9 @@ package org.thingsboard.server.dao.user;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.settings.UserSettings;
 import org.thingsboard.server.common.data.settings.UserSettingsCompositeKey;
+import org.thingsboard.server.common.data.settings.UserSettingsType;
+
+import java.util.List;
 
 public interface UserSettingsDao {
 
@@ -26,5 +29,7 @@ public interface UserSettingsDao {
     UserSettings findById(TenantId tenantId, UserSettingsCompositeKey key);
 
     void removeById(TenantId tenantId, UserSettingsCompositeKey key);
+
+    List<UserSettings> findByTypeAndPath(TenantId tenantId, UserSettingsType type, String... path);
 
 }

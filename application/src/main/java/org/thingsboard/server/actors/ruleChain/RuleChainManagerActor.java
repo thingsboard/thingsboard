@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,8 @@ public abstract class RuleChainManagerActor extends ContextAwareActor {
     @Getter
     protected TbActorRef rootChainActor;
 
+    protected boolean ruleChainsInitialized;
+
     public RuleChainManagerActor(ActorSystemContext systemContext, TenantId tenantId) {
         super(systemContext);
         this.tenantId = tenantId;
@@ -57,6 +59,7 @@ public abstract class RuleChainManagerActor extends ContextAwareActor {
     }
 
     protected void initRuleChains() {
+        ruleChainsInitialized = true;
         for (RuleChain ruleChain : new PageDataIterable<>(link -> ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.CORE, link), ContextAwareActor.ENTITY_PACK_LIMIT)) {
             RuleChainId ruleChainId = ruleChain.getId();
             log.debug("[{}|{}] Creating rule chain actor", ruleChainId.getEntityType(), ruleChain.getId());
@@ -70,6 +73,7 @@ public abstract class RuleChainManagerActor extends ContextAwareActor {
         for (RuleChain ruleChain : new PageDataIterable<>(link -> ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.CORE, link), ContextAwareActor.ENTITY_PACK_LIMIT)) {
             ctx.stop(new TbEntityActorId(ruleChain.getId()));
         }
+        ruleChainsInitialized = false;
     }
 
     protected void visit(RuleChain entity, TbActorRef actorRef) {

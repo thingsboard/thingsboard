@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import {
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import {
   Datasource,
-  DatasourceType,
+  DatasourceType, datasourceValid,
   JsonSettingsSchema,
   WidgetConfigMode,
   widgetType
@@ -317,6 +317,9 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
   }
 
   private datasourcesUpdated(datasources: Datasource[]) {
+    if (this.datasourcesOptional) {
+      datasources = datasources ? datasources.filter(d => datasourceValid(d)) : [];
+    }
     this.propagateChange(datasources);
   }
 

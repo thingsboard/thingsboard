@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -180,9 +180,11 @@ export interface WidgetTypeParameters {
   previewWidth?: string;
   previewHeight?: string;
   embedTitlePanel?: boolean;
+  overflowVisible?: boolean;
   hideDataSettings?: boolean;
   defaultDataKeysFunction?: (configComponent: any, configData: any) => DataKey[];
   defaultLatestDataKeysFunction?: (configComponent: any, configData: any) => DataKey[];
+  displayRpcMessageToast?: boolean;
 }
 
 export interface WidgetControllerDescriptor {
@@ -409,6 +411,39 @@ export interface Datasource {
   [key: string]: any;
 }
 
+export const datasourceValid = (datasource: Datasource): boolean => {
+  const type: DatasourceType = datasource?.type;
+  if (type) {
+    switch (type) {
+      case DatasourceType.function:
+      case DatasourceType.alarmCount:
+        return true;
+      case DatasourceType.device:
+        return !!datasource.deviceId;
+      case DatasourceType.entity:
+      case DatasourceType.entityCount:
+        return !!datasource.entityAliasId;
+    }
+  }
+  return false;
+};
+
+export enum TargetDeviceType {
+  device = 'device',
+  entity = 'entity'
+}
+
+export interface TargetDevice {
+  type?: TargetDeviceType;
+  deviceId?: string;
+  entityAliasId?: string;
+}
+
+export const targetDeviceValid = (targetDevice?: TargetDevice): boolean =>
+  !!targetDevice && !!targetDevice.type &&
+    ((targetDevice.type === TargetDeviceType.device && !!targetDevice.deviceId) ||
+      (targetDevice.type === TargetDeviceType.entity && !!targetDevice.entityAliasId));
+
 export const datasourcesHasAggregation = (datasources?: Array<Datasource>): boolean => {
   if (datasources) {
     const foundDatasource = datasources.find(datasource => {
@@ -461,7 +496,13 @@ export interface ReplaceInfo {
   dataKeyName: string;
 }
 
-export type DataSet = [number, any][];
+export type DataEntry = [number, any, [number, number]?];
+
+export type DataSet = DataEntry[];
+
+export interface IndexedData {
+  [id: number]: DataSet;
+}
 
 export interface DataSetHolder {
   data: DataSet;
@@ -497,7 +538,8 @@ export enum WidgetActionType {
   openDashboard = 'openDashboard',
   custom = 'custom',
   customPretty = 'customPretty',
-  mobileAction = 'mobileAction'
+  mobileAction = 'mobileAction',
+  openURL = 'openURL'
 }
 
 export enum WidgetMobileActionType {
@@ -518,7 +560,8 @@ export const widgetActionTypeTranslationMap = new Map<WidgetActionType, string>(
     [ WidgetActionType.openDashboard, 'widget-action.open-dashboard' ],
     [ WidgetActionType.custom, 'widget-action.custom' ],
     [ WidgetActionType.customPretty, 'widget-action.custom-pretty' ],
-    [ WidgetActionType.mobileAction, 'widget-action.mobile-action' ]
+    [ WidgetActionType.mobileAction, 'widget-action.mobile-action' ],
+    [ WidgetActionType.openURL, 'widget-action.open-URL' ]
   ]
 );
 
@@ -609,11 +652,7 @@ export interface CustomActionDescriptor {
   customModules?: Type<any>[];
 }
 
-export interface WidgetActionDescriptor extends CustomActionDescriptor {
-  id: string;
-  name: string;
-  icon: string;
-  displayName?: string;
+export interface WidgetAction extends CustomActionDescriptor {
   type: WidgetActionType;
   targetDashboardId?: string;
   targetDashboardStateId?: string;
@@ -634,9 +673,36 @@ export interface WidgetActionDescriptor extends CustomActionDescriptor {
   setEntityId?: boolean;
   stateEntityParamName?: string;
   mobileAction?: WidgetMobileActionDescriptor;
+  url?: string;
+}
+
+export interface WidgetActionDescriptor extends WidgetAction {
+  id: string;
+  name: string;
+  icon: string;
+  displayName?: string;
   useShowWidgetActionFunction?: boolean;
   showWidgetActionFunction?: string;
 }
+
+export const actionDescriptorToAction = (descriptor: WidgetActionDescriptor): WidgetAction => {
+  const result: WidgetActionDescriptor = {...descriptor};
+  delete result.id;
+  delete result.name;
+  delete result.icon;
+  delete result.displayName;
+  delete result.useShowWidgetActionFunction;
+  delete result.showWidgetActionFunction;
+  return result;
+};
+
+export const defaultWidgetAction = (setEntityId = true): WidgetAction => ({
+    type: WidgetActionType.updateDashboardState,
+    targetDashboardStateId: null,
+    openRightLayout: false,
+    setEntityId,
+    stateEntityParamName: null
+  });
 
 export interface WidgetComparisonSettings {
   comparisonEnabled?: boolean;
@@ -691,7 +757,7 @@ export interface WidgetConfig {
   alarmSource?: Datasource;
   alarmFilterConfig?: AlarmFilterConfig;
   datasources?: Array<Datasource>;
-  targetDeviceAliasIds?: Array<string>;
+  targetDevice?: TargetDevice;
   [key: string]: any;
 }
 

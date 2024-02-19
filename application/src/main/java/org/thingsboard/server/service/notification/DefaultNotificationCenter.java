@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
-import org.thingsboard.server.dao.util.limits.RateLimitService;
+import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.TopicService;
@@ -154,6 +154,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
             }
         }
         NotificationSettings settings = notificationSettingsService.findNotificationSettings(tenantId);
+        NotificationSettings systemSettings = tenantId.isSysTenantId() ? settings : notificationSettingsService.findNotificationSettings(TenantId.SYS_TENANT_ID);
 
         log.debug("Processing notification request (tenantId: {}, targets: {})", tenantId, request.getTargets());
         request.setStatus(NotificationRequestStatus.PROCESSING);
@@ -165,6 +166,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                 .deliveryMethods(deliveryMethods)
                 .template(notificationTemplate)
                 .settings(settings)
+                .systemSettings(systemSettings)
                 .build();
 
         processNotificationRequestAsync(ctx, targets, callback);
@@ -243,11 +245,11 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                 if (targetConfig.getUsersFilter().getType().isForRules() && ctx.getRequest().getInfo() instanceof RuleOriginatedNotificationInfo) {
                     recipients = new PageDataIterable<>(pageLink -> {
                         return notificationTargetService.findRecipientsForRuleNotificationTargetConfig(ctx.getTenantId(), targetConfig, (RuleOriginatedNotificationInfo) ctx.getRequest().getInfo(), pageLink);
-                    }, 500);
+                    }, 256);
                 } else {
                     recipients = new PageDataIterable<>(pageLink -> {
                         return notificationTargetService.findRecipientsForNotificationTargetConfig(ctx.getTenantId(), targetConfig, pageLink);
-                    }, 500);
+                    }, 256);
                 }
                 break;
             }

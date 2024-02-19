@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,7 +118,7 @@ final class MqttClientImpl implements MqttClient {
      * @return A future which will be completed when the connection is opened and we received an CONNACK
      */
     @Override
-    public Future<MqttConnectResult> connect(String host) {
+    public Promise<MqttConnectResult> connect(String host) {
         return connect(host, 1883);
     }
 
@@ -130,11 +130,11 @@ final class MqttClientImpl implements MqttClient {
      * @return A future which will be completed when the connection is opened and we received an CONNACK
      */
     @Override
-    public Future<MqttConnectResult> connect(String host, int port) {
+    public Promise<MqttConnectResult> connect(String host, int port) {
         return connect(host, port, false);
     }
 
-    private Future<MqttConnectResult> connect(String host, int port, boolean reconnect) {
+    private Promise<MqttConnectResult> connect(String host, int port, boolean reconnect) {
         log.trace("[{}] Connecting to server, isReconnect - {}", channel != null ? channel.id() : "UNKNOWN", reconnect);
         if (this.eventLoop == null) {
             this.eventLoop = new NioEventLoopGroup();
@@ -199,7 +199,7 @@ final class MqttClientImpl implements MqttClient {
     }
 
     @Override
-    public Future<MqttConnectResult> reconnect() {
+    public Promise<MqttConnectResult> reconnect() {
         log.trace("[{}] Reconnecting to server, isReconnect - {}", channel != null ? channel.id() : "UNKNOWN", reconnect);
         if (host == null) {
             throw new IllegalStateException("Cannot reconnect. Call connect() first");

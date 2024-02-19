@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -165,8 +165,8 @@
                         [matTooltip]="cellTooltip(entity, column, row)"
                         matTooltipPosition="above"
                         [ngStyle]="cellStyle(entity, column, row)">
-                <ng-container *ngIf="column.type == 'link'; else defaultContent">
-                  <a [routerLink]="column.entityURL(entity)" [innerHTML]="cellContent(entity, column, row)" (click)="$event.stopPropagation();"></a>
+                <ng-container *ngIf="column.type == 'link' && column.entityURL(entity) as detailsPageURL; else defaultContent">
+                  <a [routerLink]="detailsPageURL" [innerHTML]="cellContent(entity, column, row)" (click)="$event.stopPropagation();"></a>
                 </ng-container>
                 <ng-template #defaultContent>
                   <span [innerHTML]="cellContent(entity, column, row)"></span>

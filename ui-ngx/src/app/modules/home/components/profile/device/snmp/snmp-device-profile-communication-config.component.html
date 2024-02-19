@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
   <div *ngFor="let deviceProfileCommunication of communicationConfigFormArray.controls; let $index = index;
                last as isLast;" fxLayout="row" fxLayoutAlign="start center"
        fxLayoutGap="8px" class="scope-row" [formGroup]="deviceProfileCommunication">
-    <div class="communication-config" fxFlex fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start">
+    <div class="communication-config">
       <mat-form-field class="spec mat-block" floatLabel="always" hideRequiredMarker>
         <mat-label translate>device-profile.snmp.scope</mat-label>
         <mat-select formControlName="spec" required>

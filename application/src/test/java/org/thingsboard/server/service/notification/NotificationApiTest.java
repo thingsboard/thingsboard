@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.client.RestTemplate;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.NotificationCenter;
+import org.thingsboard.rule.engine.api.notification.FirebaseService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -34,6 +38,7 @@ import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.mobile.MobileSessionInfo;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
@@ -44,11 +49,13 @@ import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.info.EntityActionNotificationInfo;
+import org.thingsboard.server.common.data.notification.settings.MobileAppNotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.settings.SlackNotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.settings.UserNotificationSettings;
 import org.thingsboard.server.common.data.notification.targets.MicrosoftTeamsNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
+import org.thingsboard.server.common.data.notification.targets.platform.AllUsersFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.CustomerUsersFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.platform.SystemAdministratorsFilter;
@@ -60,6 +67,7 @@ import org.thingsboard.server.common.data.notification.template.DeliveryMethodNo
 import org.thingsboard.server.common.data.notification.template.EmailDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.MicrosoftTeamsDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.MicrosoftTeamsDeliveryMethodNotificationTemplate.Button.LinkType;
+import org.thingsboard.server.common.data.notification.template.MobileAppDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
 import org.thingsboard.server.common.data.notification.template.SlackDeliveryMethodNotificationTemplate;
@@ -70,7 +78,6 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.notification.DefaultNotifications;
 import org.thingsboard.server.dao.notification.NotificationDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.notification.channels.MicrosoftTeamsNotificationChannel;
 import org.thingsboard.server.service.ws.notification.cmd.UnreadNotificationsUpdate;
 
@@ -86,11 +93,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
 @Slf4j
@@ -101,9 +113,9 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
     @Autowired
     private NotificationDao notificationDao;
     @Autowired
-    private DbCallbackExecutorService executor;
-    @Autowired
     private MicrosoftTeamsNotificationChannel microsoftTeamsNotificationChannel;
+    @MockBean
+    private FirebaseService firebaseService;
 
     @Before
     public void beforeEach() throws Exception {
@@ -706,6 +718,71 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         assertThat(message.getSections().get(0).getActivitySubtitle()).isEqualTo("Body: " + expectedParams);
         assertThat(message.getPotentialAction().get(0).getName()).isEqualTo("Button: " + expectedParams);
         assertThat(message.getPotentialAction().get(0).getTargets().get(0).getUri()).isEqualTo("https://" + expectedParams);
+    }
+
+    @Test
+    public void testMobileAppNotifications() throws Exception {
+        loginSysAdmin();
+        MobileAppNotificationDeliveryMethodConfig config = new MobileAppNotificationDeliveryMethodConfig();
+        config.setFirebaseServiceAccountCredentials("testCredentials");
+        saveNotificationSettings(config);
+
+        loginCustomerUser();
+        mobileToken = "customerFcmToken";
+        doPost("/api/user/mobile/session", new MobileSessionInfo()).andExpect(status().isOk());
+
+        loginTenantAdmin();
+        mobileToken = "tenantFcmToken1";
+        doPost("/api/user/mobile/session", new MobileSessionInfo()).andExpect(status().isOk());
+        mobileToken = "tenantFcmToken2";
+        doPost("/api/user/mobile/session", new MobileSessionInfo()).andExpect(status().isOk());
+
+        loginDifferentCustomer(); // with no mobile info
+
+        loginTenantAdmin();
+        NotificationTarget target = createNotificationTarget(new AllUsersFilter());
+        NotificationTemplate template = createNotificationTemplate(NotificationType.GENERAL, "Title", "Message", NotificationDeliveryMethod.MOBILE_APP);
+        ((MobileAppDeliveryMethodNotificationTemplate) template.getConfiguration().getDeliveryMethodsTemplates().get(NotificationDeliveryMethod.MOBILE_APP))
+                .setAdditionalConfig(JacksonUtil.newObjectNode().set("test", JacksonUtil.newObjectNode().put("test", "test")));
+        saveNotificationTemplate(template);
+
+        NotificationRequest request = submitNotificationRequest(List.of(target.getId()), template.getId(), 0);
+        NotificationRequestStats stats = awaitNotificationRequest(request.getId());
+        assertThat(stats.getSent().get(NotificationDeliveryMethod.MOBILE_APP)).hasValue(2);
+        assertThat(stats.getErrors().get(NotificationDeliveryMethod.MOBILE_APP).get(differentCustomerUser.getEmail()))
+                .contains("doesn't use the mobile app");
+
+        verify(firebaseService).sendMessage(eq(tenantId), eq("testCredentials"),
+                eq("tenantFcmToken1"), eq("Title"), eq("Message"), argThat(data -> "test".equals(data.get("test.test"))));
+        verify(firebaseService).sendMessage(eq(tenantId), eq("testCredentials"),
+                eq("tenantFcmToken2"), eq("Title"), eq("Message"), argThat(data -> "test".equals(data.get("test.test"))));
+        verify(firebaseService).sendMessage(eq(tenantId), eq("testCredentials"),
+                eq("customerFcmToken"), eq("Title"), eq("Message"), argThat(data -> "test".equals(data.get("test.test"))));
+        verifyNoMoreInteractions(firebaseService);
+        clearInvocations(firebaseService);
+
+        doDelete("/api/user/mobile/session").andExpect(status().isOk());
+        request = submitNotificationRequest(List.of(target.getId()), template.getId(), 0);
+        awaitNotificationRequest(request.getId());
+        verify(firebaseService).sendMessage(eq(tenantId), eq("testCredentials"),
+                eq("tenantFcmToken1"), eq("Title"), eq("Message"), anyMap());
+        verify(firebaseService).sendMessage(eq(tenantId), eq("testCredentials"),
+                eq("customerFcmToken"), eq("Title"), eq("Message"), anyMap());
+        verifyNoMoreInteractions(firebaseService);
+    }
+
+    @Test
+    public void testMobileSettings_tenantLevel() throws Exception {
+        MobileAppNotificationDeliveryMethodConfig config = new MobileAppNotificationDeliveryMethodConfig();
+        config.setFirebaseServiceAccountCredentials("testCredentials");
+        NotificationSettings settings = new NotificationSettings();
+        settings.setDeliveryMethodsConfigs(Map.of(
+                NotificationDeliveryMethod.MOBILE_APP, config
+        ));
+
+        ResultActions result = doPost("/api/notification/settings", settings)
+                .andExpect(status().isBadRequest());
+        assertThat(getErrorMessage(result)).contains("can only be configured by system administrator");
     }
 
     private NotificationRequestStats submitNotificationRequestAndWait(NotificationRequest notificationRequest) throws Exception {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,6 +64,8 @@ public class CassandraTsLatestToSqlMigrateService implements TsLatestMigrateServ
     private static final int MAX_KEY_LENGTH = 255;
     private static final int MAX_STR_V_LENGTH = 10000000;
 
+    private static final String SQL_DIR = "sql";
+
     @Autowired
     private InsertLatestTsRepository insertLatestTsRepository;
 
@@ -93,7 +95,7 @@ public class CassandraTsLatestToSqlMigrateService implements TsLatestMigrateServ
     public void migrate() throws Exception {
         log.info("Performing migration of latest timeseries data from cassandra to SQL database ...");
         try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
-            Path schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.0.1", "schema_ts_latest.sql");
+            Path schemaUpdateFile = Paths.get(installScripts.getDataDir(), SQL_DIR, "schema-ts-latest-psql.sql");
             loadSql(schemaUpdateFile, conn);
             conn.setAutoCommit(false);
             for (CassandraToSqlTable table : tables) {
