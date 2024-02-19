@@ -18,13 +18,12 @@ package org.thingsboard.rule.engine.action;
 import org.junit.jupiter.params.provider.Arguments;
 import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
 import org.thingsboard.rule.engine.api.TbNode;
-import org.thingsboard.rule.engine.profile.TbDeviceProfileNode;
 
 import java.util.stream.Stream;
 
 import static org.mockito.Mockito.spy;
 
-public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
+public class TbAlarmRulesNodeTest extends AbstractRuleNodeUpgradeTest {
     // Rule nodes upgrade
     private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
         return Stream.of(
@@ -43,6 +42,6 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
 
     @Override
     protected TbNode getTestNode() {
-        return spy(TbDeviceProfileNode.class);
+        return spy(TbAlarmRulesNode.class);
     }
 }

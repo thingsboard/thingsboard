@@ -65,6 +65,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import static org.thingsboard.server.common.data.DataConstants.ALARM_RULES_NODE_TYPE;
+import static org.thingsboard.server.common.data.DataConstants.DEVICE_PROFILE_NODE_TYPE;
+
 @Service
 @Profile("install")
 @Slf4j
@@ -212,7 +215,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                                                     continue;
                                                 }
 
-                                                List<JsonNode> states = alarmRuleService.findRuleNodeStatesByRuleChainIdAndType(deviceProfileId, ruleChainId, "org.thingsboard.rule.engine.profile.TbDeviceProfileNode");
+                                                List<JsonNode> states = alarmRuleService.findRuleNodeStatesByRuleChainIdAndType(deviceProfileId, ruleChainId, DEVICE_PROFILE_NODE_TYPE);
                                                 states.forEach(stateNode -> {
                                                     Map<String, PersistedAlarmState> alarmStates = new HashMap<>();
                                                     DeviceId deviceId = new DeviceId(UUID.fromString(stateNode.get("entity_id").asText()));
@@ -252,6 +255,13 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                         Futures.allAsList(futures).get();
                     } catch (InterruptedException | ExecutionException e) {
                         log.warn("Failed to await rules migration!!!", e);
+                    }
+
+                    log.info("Updating device profile nodes...");
+
+                    try {
+                        conn.createStatement().execute(String.format("UPDATE rule_node rn SET type = '%s' WHERE rn.type = '%s';", ALARM_RULES_NODE_TYPE, DEVICE_PROFILE_NODE_TYPE));
+                    } catch (Exception e) {
                     }
 
                     try {

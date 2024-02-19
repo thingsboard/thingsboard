@@ -98,7 +98,7 @@
           "layoutX": 209,
           "layoutY": 307
         },
-        "type": "org.thingsboard.rule.engine.profile.TbDeviceProfileNode",
+        "type": "org.thingsboard.rule.engine.action.TbAlarmRulesNode",
         "name": "Alarm Rules Node",
         "debugMode": false,
         "configuration": {}

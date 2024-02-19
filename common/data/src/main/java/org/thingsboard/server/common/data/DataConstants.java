@@ -140,4 +140,7 @@ public class DataConstants {
     public static final String INTERNAL_QUEUE_TOPIC = "tb_rule_engine.internal";
     public static final String QUEUE_NAME = "queueName";
 
+    public static final String DEVICE_PROFILE_NODE_TYPE = "org.thingsboard.rule.engine.profile.TbDeviceProfileNode";
+    public static final String ALARM_RULES_NODE_TYPE = "org.thingsboard.rule.engine.action.TbAlarmRulesNode";
+
 }
