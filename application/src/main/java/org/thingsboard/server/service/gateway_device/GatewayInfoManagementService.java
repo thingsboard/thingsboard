@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.device;
+package org.thingsboard.server.service.gateway_device;
 
-import lombok.Data;
+import org.thingsboard.server.dao.device.GatewayInfo;
 
-import java.util.List;
 
-@Data
-public class GatewayInfo {
-    private List<String> availableVersions;
-    private String version;
+public interface GatewayInfoManagementService {
+
+    void updateAvailableVersions(GatewayInfo newGatewayInfo);
 }

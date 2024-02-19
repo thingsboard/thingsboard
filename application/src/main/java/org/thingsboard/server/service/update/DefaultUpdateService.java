@@ -31,10 +31,12 @@ import org.thingsboard.server.common.data.EdgeUpgradeMessage;
 import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.notification.rule.trigger.NewPlatformVersionTrigger;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
+import org.thingsboard.server.dao.device.GatewayInfo;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.instructions.EdgeInstallInstructionsService;
 import org.thingsboard.server.service.edge.instructions.EdgeUpgradeInstructionsService;
+import org.thingsboard.server.service.gateway_device.GatewayInfoManagementService;
 
 import javax.annotation.PreDestroy;
 import java.io.IOException;
@@ -53,7 +55,7 @@ import java.util.concurrent.TimeUnit;
 public class DefaultUpdateService implements UpdateService {
 
     private static final String INSTANCE_ID_FILE = ".instance_id";
-    private static final String UPDATE_SERVER_BASE_URL = "https://updates.thingsboard.io";
+    private static final String UPDATE_SERVER_BASE_URL = "http://updates.thingsboard.io:8090";
 
     private static final String PLATFORM_PARAM = "platform";
     private static final String VERSION_PARAM = "version";
@@ -67,6 +69,9 @@ public class DefaultUpdateService implements UpdateService {
 
     @Autowired
     private NotificationRuleProcessor notificationRuleProcessor;
+
+    @Autowired
+    private GatewayInfoManagementService gatewayInfoManagementService;
 
     @Autowired(required = false)
     private EdgeInstallInstructionsService edgeInstallInstructionsService;
@@ -159,6 +164,10 @@ public class DefaultUpdateService implements UpdateService {
             EdgeUpgradeMessage edgeUpgradeMessage = restClient.postForObject(UPDATE_SERVER_BASE_URL + "/api/v1/edge/upgradeMapping", new HttpEntity<>(edgeRequest.toString(), headers), EdgeUpgradeMessage.class);
             if (edgeUpgradeMessage != null) {
                 edgeUpgradeInstructionsService.updateInstructionMap(edgeUpgradeMessage.getEdgeVersions());
+            }
+            GatewayInfo gatewayInfo = restClient.postForObject(UPDATE_SERVER_BASE_URL + "/api/v1/gateway/info", new HttpEntity<>(null, headers), GatewayInfo.class);
+            if (gatewayInfo != null) {
+                gatewayInfoManagementService.updateAvailableVersions(gatewayInfo);
             }
         } catch (Exception e) {
             log.trace(e.getMessage());
