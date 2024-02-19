@@ -57,7 +57,6 @@ public class PskLwm2mIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
         this.basicTestConnection(security,
                 null,
                 deviceCredentials,
-                COAP_CONFIG,
                 clientEndpoint,
                 transportConfiguration,
                 "await on client state (Psk_Lwm2m)",
@@ -103,7 +102,6 @@ public class PskLwm2mIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, null, null, PSK, false);
         this.basicTestConnection(null, securityBs,
                 deviceCredentials,
-                COAP_CONFIG_BS,
                 clientEndpoint,
                 transportConfiguration,
                 "await on client state (PskBS two section)",

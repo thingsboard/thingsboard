@@ -21,7 +21,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
-import org.eclipse.californium.elements.config.Configuration;
 import org.eclipse.leshan.client.LeshanClient;
 import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.core.ResponseCode;
@@ -86,8 +85,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
-import static org.eclipse.californium.core.config.CoapConfig.COAP_PORT;
-import static org.eclipse.californium.core.config.CoapConfig.COAP_SECURE_PORT;
 import static org.eclipse.leshan.client.object.Security.noSec;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertEquals;
@@ -135,8 +132,6 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     public static final String SECURE_URI = COAPS + host + ":" + securityPort;
     public static final String URI_BS = COAP + hostBs + ":" + portBs;
     public static final String SECURE_URI_BS = COAPS + hostBs + ":" + securityPortBs;
-    public static final Configuration COAP_CONFIG = new Configuration().set(COAP_PORT, port).set(COAP_SECURE_PORT, securityPort);
-    public static Configuration COAP_CONFIG_BS = new Configuration().set(COAP_PORT, portBs).set(COAP_SECURE_PORT, securityPortBs);
     public static final Security SECURITY_NO_SEC = noSec(URI, shortServerId);
 
     protected final String OBSERVE_ATTRIBUTES_WITHOUT_PARAMS =
@@ -219,7 +214,6 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
 
     public void basicTestConnectionObserveTelemetry(Security security,
                                                     LwM2MDeviceCredentials deviceCredentials,
-                                                    Configuration coapConfig,
                                                     String endpoint,
                                                     boolean queueMode) throws Exception {
         Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITH_PARAMS, getBootstrapServerCredentialsNoSec(NONE));
@@ -238,7 +232,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         getWsClient().waitForReply();
 
         getWsClient().registerWaitForUpdate();
-        createNewClient(security, null, coapConfig, false, endpoint, null, queueMode);
+        createNewClient(security, null, false, endpoint, null, queueMode);
         deviceId = device.getId().getId().toString();
         awaitObserveReadAll(0, deviceId);
         String msg = getWsClient().waitForUpdate();
@@ -306,24 +300,24 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         this.resources = resources;
     }
 
-    public void createNewClient(Security security, Security securityBs, Configuration coapConfig, boolean isRpc,
+    public void createNewClient(Security security, Security securityBs, boolean isRpc,
                                 String endpoint) throws Exception {
-        this.createNewClient(security, securityBs, coapConfig, isRpc, endpoint, null, false);
+        this.createNewClient(security, securityBs, isRpc, endpoint, null, false);
     }
 
-    public void createNewClient(Security security, Security securityBs, Configuration coapConfig, boolean isRpc,
+    public void createNewClient(Security security, Security securityBs, boolean isRpc,
                                 String endpoint, Integer clientDtlsCidLength) throws Exception {
-        this.createNewClient(security, securityBs, coapConfig, isRpc, endpoint, clientDtlsCidLength, false);
+        this.createNewClient(security, securityBs, isRpc, endpoint, clientDtlsCidLength, false);
     }
 
-    public void createNewClient(Security security, Security securityBs, Configuration coapConfig, boolean isRpc,
+    public void createNewClient(Security security, Security securityBs, boolean isRpc,
                                 String endpoint, Integer clientDtlsCidLength, boolean queueMode) throws Exception {
         this.clientDestroy();
         lwM2MTestClient = new LwM2MTestClient(this.executor, endpoint);
 
         try (ServerSocket socket = new ServerSocket(0)) {
             int clientPort = socket.getLocalPort();
-            lwM2MTestClient.init(security, securityBs, coapConfig, clientPort, isRpc,
+            lwM2MTestClient.init(security, securityBs, clientPort, isRpc,
                     this.defaultLwM2mUplinkMsgHandlerTest, this.clientContextTest, isWriteAttribute
                     , clientDtlsCidLength, queueMode);
         }

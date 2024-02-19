@@ -59,7 +59,7 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
         createDeviceProfile(transportConfiguration);
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(this.CLIENT_ENDPOINT_WITHOUT_FW_INFO));
         final Device device = createDevice(deviceCredentials, this.CLIENT_ENDPOINT_WITHOUT_FW_INFO);
-        createNewClient(SECURITY_NO_SEC,  null, COAP_CONFIG, false, this.CLIENT_ENDPOINT_WITHOUT_FW_INFO);
+        createNewClient(SECURITY_NO_SEC,  null, false, this.CLIENT_ENDPOINT_WITHOUT_FW_INFO);
         awaitObserveReadAll(0, device.getId().getId().toString());
 
         device.setFirmwareId(createFirmware().getId());
@@ -84,7 +84,7 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
         createDeviceProfile(transportConfiguration);
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(this.CLIENT_ENDPOINT_OTA5));
         final Device device = createDevice(deviceCredentials, this.CLIENT_ENDPOINT_OTA5);
-        createNewClient(SECURITY_NO_SEC, null,  COAP_CONFIG, false, this.CLIENT_ENDPOINT_OTA5);
+        createNewClient(SECURITY_NO_SEC, null, false, this.CLIENT_ENDPOINT_OTA5);
         awaitObserveReadAll(9, device.getId().getId().toString());
 
         device.setFirmwareId(createFirmware().getId());
@@ -114,7 +114,7 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
         createDeviceProfile(transportConfiguration);
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(this.CLIENT_ENDPOINT_OTA9));
         final Device device = createDevice(deviceCredentials, this.CLIENT_ENDPOINT_OTA9);
-        createNewClient(SECURITY_NO_SEC, null, COAP_CONFIG, false, this.CLIENT_ENDPOINT_OTA9);
+        createNewClient(SECURITY_NO_SEC, null, false, this.CLIENT_ENDPOINT_OTA9);
         awaitObserveReadAll(9, device.getId().getId().toString());
 
         device.setSoftwareId(createSoftware().getId());

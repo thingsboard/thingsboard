@@ -52,7 +52,7 @@ public abstract class AbstractLwM2MIntegrationDiffPortTest extends AbstractSecur
 
         createDeviceProfile(transportConfiguration);
         createDevice(deviceCredentials, clientEndpoint);
-        createNewClient(security, null, COAP_CONFIG, true, clientEndpoint);
+        createNewClient(security, null, true, clientEndpoint);
         lwM2MTestClient.start(true);
         await(awaitAlias)
                 .atMost(40, TimeUnit.SECONDS)
