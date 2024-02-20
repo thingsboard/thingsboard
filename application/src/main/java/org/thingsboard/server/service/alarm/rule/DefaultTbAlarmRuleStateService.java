@@ -287,7 +287,7 @@ public class DefaultTbAlarmRuleStateService extends AbstractPartitionBasedServic
                 });
             } else {
                 Set<EntityId> toAdd = CollectionsUtil.diffSets(oldIds, newIds);
-                Set<EntityId> toUpdate = CollectionsUtil.diffSets(newIds, toAdd);
+                Set<EntityId> toUpdate = CollectionsUtil.diffSets(toAdd, newIds);
                 Set<EntityId> toRemove = CollectionsUtil.diffSets(newIds, oldIds);
 
                 toAdd.forEach(entityId -> {
