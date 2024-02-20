@@ -92,7 +92,7 @@ public class TbTransportQueueProducerProvider implements TbQueueProducerProvider
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToHousekeeperServiceMsg>> getHousekeeperDelayedMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToHousekeeperServiceMsg>> getHousekeeperReprocessingMsgProducer() {
         throw new RuntimeException("Not Implemented! Should not be used by Transport!");
     }
 }

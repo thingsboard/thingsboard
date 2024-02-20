@@ -330,22 +330,22 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToHousekeeperServiceMsg>> createHousekeeperDelayedMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToHousekeeperServiceMsg>> createHousekeeperReprocessingMsgProducer() {
         return TbKafkaProducerTemplate.<TbProtoQueueMsg<TransportProtos.ToHousekeeperServiceMsg>>builder()
                 .settings(kafkaSettings)
-                .clientId("tb-core-housekeeper-delayed-producer-" + serviceInfoProvider.getServiceId())
-                .defaultTopic(topicService.buildTopicName(coreSettings.getHousekeeperDelayedTopic()))
+                .clientId("tb-core-housekeeper-reprocessing-producer-" + serviceInfoProvider.getServiceId())
+                .defaultTopic(topicService.buildTopicName(coreSettings.getHousekeeperReprocessingTopic()))
                 .admin(housekeeperAdmin)
                 .build();
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToHousekeeperServiceMsg>> createHousekeeperDelayedMsgConsumer() {
+    public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToHousekeeperServiceMsg>> createHousekeeperReprocessingMsgConsumer() {
         return TbKafkaConsumerTemplate.<TbProtoQueueMsg<TransportProtos.ToHousekeeperServiceMsg>>builder()
                 .settings(kafkaSettings)
-                .topic(topicService.buildTopicName(coreSettings.getHousekeeperDelayedTopic()))
-                .clientId("tb-core-housekeeper-delayed-consumer-" + serviceInfoProvider.getServiceId())
-                .groupId(topicService.buildTopicName("tb-core-housekeeper-delayed-consumer"))
+                .topic(topicService.buildTopicName(coreSettings.getHousekeeperReprocessingTopic()))
+                .clientId("tb-core-housekeeper-reprocessing-consumer-" + serviceInfoProvider.getServiceId())
+                .groupId(topicService.buildTopicName("tb-core-housekeeper-reprocessing-consumer"))
                 .decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportProtos.ToHousekeeperServiceMsg.parseFrom(msg.getData()), msg.getHeaders()))
                 .admin(housekeeperAdmin)
                 .statsService(consumerStatsService)

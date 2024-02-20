@@ -16,7 +16,6 @@
 package org.thingsboard.server.queue.provider;
 
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperServiceMsg;
@@ -44,7 +43,7 @@ public class TbCoreQueueProducerProvider implements TbQueueProducerProvider {
     private TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> toUsageStats;
     private TbQueueProducer<TbProtoQueueMsg<ToVersionControlServiceMsg>> toVersionControl;
     private TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> toHousekeeper;
-    private TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> toHousekeeperDelayed;
+    private TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> toHousekeeperReprocessing;
 
     public TbCoreQueueProducerProvider(TbCoreQueueFactory tbQueueProvider) {
         this.tbQueueProvider = tbQueueProvider;
@@ -60,7 +59,7 @@ public class TbCoreQueueProducerProvider implements TbQueueProducerProvider {
         this.toUsageStats = tbQueueProvider.createToUsageStatsServiceMsgProducer();
         this.toVersionControl = tbQueueProvider.createVersionControlMsgProducer();
         this.toHousekeeper = tbQueueProvider.createHousekeeperMsgProducer();
-        this.toHousekeeperDelayed = tbQueueProvider.createHousekeeperDelayedMsgProducer();
+        this.toHousekeeperReprocessing = tbQueueProvider.createHousekeeperReprocessingMsgProducer();
     }
 
     @Override
@@ -104,8 +103,8 @@ public class TbCoreQueueProducerProvider implements TbQueueProducerProvider {
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> getHousekeeperDelayedMsgProducer() {
-        return toHousekeeperDelayed;
+    public TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> getHousekeeperReprocessingMsgProducer() {
+        return toHousekeeperReprocessing;
     }
 
 }

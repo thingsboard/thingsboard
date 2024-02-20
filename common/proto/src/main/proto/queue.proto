@@ -24,36 +24,36 @@ option java_outer_classname = "TransportProtos";
  * Common data structures
  */
 enum EntityTypeProto {
-  UNSPECIFIED           = 0;
-  TENANT                = 1;
-  CUSTOMER              = 2;
-  USER                  = 3;
-  DASHBOARD             = 4;
-  ASSET                 = 5;
-  DEVICE                = 6;
-  ALARM                 = 7;
+  UNSPECIFIED = 0;
+  TENANT = 1;
+  CUSTOMER = 2;
+  USER = 3;
+  DASHBOARD = 4;
+  ASSET = 5;
+  DEVICE = 6;
+  ALARM = 7;
   // next 3 reserved for PE;
-  RULE_CHAIN            = 11;
-  RULE_NODE             = 12;
+  RULE_CHAIN = 11;
+  RULE_NODE = 12;
   // next 2 reserved for PE;
-  ENTITY_VIEW           = 15;
-  WIDGETS_BUNDLE        = 16;
-  WIDGET_TYPE           = 17;
+  ENTITY_VIEW = 15;
+  WIDGETS_BUNDLE = 16;
+  WIDGET_TYPE = 17;
   // next 2 reserved for PE;
-  TENANT_PROFILE        = 20;
-  DEVICE_PROFILE        = 21;
-  ASSET_PROFILE         = 22;
-  API_USAGE_STATE       = 23;
-  TB_RESOURCE           = 24;
-  OTA_PACKAGE           = 25;
-  EDGE                  = 26;
-  RPC                   = 27;
-  QUEUE                 = 28;
-  NOTIFICATION_TARGET   = 29;
+  TENANT_PROFILE = 20;
+  DEVICE_PROFILE = 21;
+  ASSET_PROFILE = 22;
+  API_USAGE_STATE = 23;
+  TB_RESOURCE = 24;
+  OTA_PACKAGE = 25;
+  EDGE = 26;
+  RPC = 27;
+  QUEUE = 28;
+  NOTIFICATION_TARGET = 29;
   NOTIFICATION_TEMPLATE = 30;
-  NOTIFICATION_REQUEST  = 31;
-  NOTIFICATION          = 32;
-  NOTIFICATION_RULE     = 33;
+  NOTIFICATION_REQUEST = 31;
+  NOTIFICATION = 32;
+  NOTIFICATION_RULE = 33;
 }
 
 /**
@@ -133,9 +133,9 @@ message KeyValueProto {
 }
 
 enum AttributeScopeProto {
-    CLIENT_SCOPE = 0;
-    SERVER_SCOPE = 1;
-    SHARED_SCOPE = 2;
+  CLIENT_SCOPE = 0;
+  SERVER_SCOPE = 1;
+  SHARED_SCOPE = 2;
 }
 
 message AttributeKey {
@@ -259,7 +259,7 @@ message GetOrCreateDeviceFromGatewayResponseMsg {
 }
 
 enum TransportApiRequestErrorCode {
-  UNKNOWN_TRANSPORT_API_ERROR  = 0;
+  UNKNOWN_TRANSPORT_API_ERROR = 0;
   ENTITY_LIMIT = 1;
 }
 
@@ -894,15 +894,15 @@ message FromDeviceRPCResponseProto {
 }
 
 enum ComponentLifecycleEvent {
-    CREATED       = 0;
-    STARTED       = 1;
-    ACTIVATED     = 2;
-    SUSPENDED     = 3;
-    UPDATED       = 4;
-    STOPPED       = 5;
-    DELETED       = 6;
-    FAILED        = 7;
-    DEACTIVATED   = 8;
+  CREATED = 0;
+  STARTED = 1;
+  ACTIVATED = 2;
+  SUSPENDED = 3;
+  UPDATED = 4;
+  STOPPED = 5;
+  DELETED = 6;
+  FAILED = 7;
+  DEACTIVATED = 8;
 }
 
 message ComponentLifecycleMsgProto {
@@ -1399,5 +1399,8 @@ message ToHousekeeperServiceMsg {
 message HousekeeperTaskProto {
   bytes value = 1;
   int64 ts = 2;
-  int32 attempt = 3;
+
+  // reprocessing
+  int32 attempt = 50;
+  repeated string errors = 51;
 }

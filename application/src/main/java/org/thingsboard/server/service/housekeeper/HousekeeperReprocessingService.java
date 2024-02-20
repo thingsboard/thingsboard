@@ -16,18 +16,23 @@
 package org.thingsboard.server.service.housekeeper;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos.HousekeeperTaskProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperServiceMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
-import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import javax.annotation.PreDestroy;
@@ -42,35 +47,46 @@ import java.util.concurrent.TimeUnit;
 public class HousekeeperReprocessingService {
 
     private final DefaultHousekeeperService housekeeperService;
+    private final PartitionService partitionService;
+    private final TbCoreQueueFactory queueFactory;
     private final TbQueueProducerProvider producerProvider;
-    private final TbQueueConsumer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> consumer;
+
     private final ExecutorService consumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("housekeeper-reprocessing-consumer"));
 
+    private static final int startDelay = 15; // fixme - to 5 minutes
+    private static final int reprocessingDelay = 30; // seconds
+    private static final int maxReprocessingAttempts = 5;
     @Value("${queue.core.housekeeper.poll-interval-ms:500}")
     private int pollInterval;
 
-    private final long startTs = System.currentTimeMillis(); // fixme: some other tb-core might start earlier and submit for reprocessing
     private boolean stopped;
     // todo: stats
 
     public HousekeeperReprocessingService(@Lazy DefaultHousekeeperService housekeeperService,
-                                          TbCoreQueueFactory queueFactory,
+                                          PartitionService partitionService, TbCoreQueueFactory queueFactory,
                                           TbQueueProducerProvider producerProvider) {
         this.housekeeperService = housekeeperService;
-        this.consumer = queueFactory.createHousekeeperDelayedMsgConsumer();
+        this.partitionService = partitionService;
+        this.queueFactory = queueFactory;
         this.producerProvider = producerProvider;
     }
 
-    @AfterStartUp(order = AfterStartUp.REGULAR_SERVICE)
-    public void afterStartUp() {
+    @Scheduled(initialDelay = startDelay, fixedDelay = reprocessingDelay, timeUnit = TimeUnit.SECONDS)
+    public void startReprocessing() {
+        if (!partitionService.isMyPartition(ServiceType.TB_CORE, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID)) {
+            return;
+        }
+
+        var consumer = queueFactory.createHousekeeperReprocessingMsgConsumer();
         consumer.subscribe();
         consumerExecutor.submit(() -> {
-            while (!stopped && !consumer.isStopped()) {
+            log.info("Starting Housekeeper tasks reprocessing");
+            long startTs = System.currentTimeMillis();
+            while (!stopped) {
                 try {
                     List<TbProtoQueueMsg<ToHousekeeperServiceMsg>> msgs = consumer.poll(pollInterval);
                     if (msgs.isEmpty() || msgs.stream().anyMatch(msg -> msg.getValue().getTask().getTs() >= startTs)) { // msg batch size should be 1. otherwise some tasks won't be reprocessed immediately
-                        stop();
-                        return;
+                        break;
                     }
 
                     for (TbProtoQueueMsg<ToHousekeeperServiceMsg> msg : msgs) {
@@ -78,7 +94,7 @@ public class HousekeeperReprocessingService {
                             housekeeperService.processTask(msg);
                         } catch (Exception e) {
                             log.error("Unexpected error during message reprocessing [{}]", msg, e);
-                            submitForReprocessing(msg);
+                            submitForReprocessing(msg, e);
                         }
                     }
                     consumer.commit();
@@ -93,31 +109,33 @@ public class HousekeeperReprocessingService {
                     }
                 }
             }
+            consumer.unsubscribe();
+            log.info("Stopped Housekeeper tasks reprocessing");
         });
-        log.info("Started Housekeeper tasks reprocessing");
     }
 
-    public void submitForReprocessing(TbProtoQueueMsg<ToHousekeeperServiceMsg> queueMsg) {
+    // todo: dead letter queue if attempts count exceeds the configured maximum
+    public void submitForReprocessing(TbProtoQueueMsg<ToHousekeeperServiceMsg> queueMsg, Throwable error) {
         ToHousekeeperServiceMsg msg = queueMsg.getValue();
         HousekeeperTaskProto task = msg.getTask();
         int attempt = task.getAttempt() + 1;
         msg = msg.toBuilder()
                 .setTask(task.toBuilder()
                         .setAttempt(attempt)
-                        .setTs(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1)) // so that it is not reprocessed by anyone in the nearest hour
+                        .addErrors(StringUtils.truncate(ExceptionUtils.getStackTrace(error), 1024))
+                        .setTs(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(reprocessingDelay))
                         .build())
                 .build();
 
-        var producer = producerProvider.getHousekeeperDelayedMsgProducer();
+        log.trace("Submitting for reprocessing: {}", msg);
+        var producer = producerProvider.getHousekeeperReprocessingMsgProducer();
         TopicPartitionInfo tpi = TopicPartitionInfo.builder().topic(producer.getDefaultTopic()).build();
         producer.send(tpi, new TbProtoQueueMsg<>(queueMsg.getKey(), msg), null);
     }
 
     @PreDestroy
     private void stop() {
-        log.info("Stopped Housekeeper tasks reprocessing");
         stopped = true;
-        consumer.unsubscribe();
         consumerExecutor.shutdownNow();
     }
 

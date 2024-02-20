@@ -99,7 +99,7 @@ public class DefaultHousekeeperService implements HousekeeperService {
                             processTask(msg);
                         } catch (Throwable e) {
                             log.error("Unexpected error during message processing [{}]", msg, e);
-                            reprocessingService.submitForReprocessing(msg);
+                            reprocessingService.submitForReprocessing(msg, e);
                         }
                     }
                     consumer.commit();
@@ -131,23 +131,23 @@ public class DefaultHousekeeperService implements HousekeeperService {
                 return null;
             });
             future.get(taskProcessingTimeout, TimeUnit.SECONDS);
-        } catch (ExecutionException executionException) {
-            Throwable error = executionException.getCause();
+        } catch (Throwable e) {
+            Throwable error = e;
+            if (e instanceof ExecutionException) {
+                error = error.getCause();
+            } else if (e instanceof TimeoutException) {
+                error = new TimeoutException("Timeout after " + taskProcessingTimeout + " seconds");
+            }
             log.error("[{}][{}][{}] {} task processing failed, submitting for reprocessing (attempt {}): {}",
                     task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(),
                     task.getTaskType(), msg.getTask().getAttempt(), task, error);
-            reprocessingService.submitForReprocessing(queueMsg);
-        } catch (TimeoutException timeoutException) {
-            log.error("[{}][{}][{}] {} task processing timeout after {} seconds, submitting for reprocessing (attempt {}): {}",
-                    task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(),
-                    task.getTaskType(), taskProcessingTimeout, msg.getTask().getAttempt(), task);
-            reprocessingService.submitForReprocessing(queueMsg); // fixme: we should schedule such task for later (separate queue?)
+            reprocessingService.submitForReprocessing(queueMsg, error);
         }
     }
 
     @Override
     public void submitTask(HousekeeperTask task) {
-        submitTask(UUID.randomUUID(), task);
+        submitTask(task.getEntityId().getId(), task);
     }
 
     @Override

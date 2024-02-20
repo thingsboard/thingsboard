@@ -29,6 +29,7 @@ public class EventsDeletionTaskProcessor implements HousekeeperTaskProcessor<Hou
     @Override
     public void process(HousekeeperTask task) throws Exception {
         eventService.removeEvents(task.getTenantId(), task.getEntityId(), null, 0L, System.currentTimeMillis());
+        throw new RuntimeException("test error");
     }
 
     @Override

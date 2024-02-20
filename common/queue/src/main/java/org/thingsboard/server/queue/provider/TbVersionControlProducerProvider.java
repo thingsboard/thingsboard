@@ -88,7 +88,7 @@ public class TbVersionControlProducerProvider implements TbQueueProducerProvider
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToHousekeeperServiceMsg>> getHousekeeperDelayedMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToHousekeeperServiceMsg>> getHousekeeperReprocessingMsgProducer() {
         throw new RuntimeException("Not Implemented! Should not be used by Version Control Service!");
     }
 }

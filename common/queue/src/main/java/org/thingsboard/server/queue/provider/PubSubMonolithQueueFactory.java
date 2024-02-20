@@ -239,12 +239,12 @@ public class PubSubMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEng
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> createHousekeeperDelayedMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> createHousekeeperReprocessingMsgProducer() {
         return null;
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> createHousekeeperDelayedMsgConsumer() {
+    public TbQueueConsumer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> createHousekeeperReprocessingMsgConsumer() {
         return null;
     }
 

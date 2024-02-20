@@ -96,7 +96,7 @@ public class TbRuleEngineProducerProvider implements TbQueueProducerProvider {
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToHousekeeperServiceMsg>> getHousekeeperDelayedMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToHousekeeperServiceMsg>> getHousekeeperReprocessingMsgProducer() {
         throw new RuntimeException("Not Implemented! Should not be used by Rule Engine!");
     }
 
