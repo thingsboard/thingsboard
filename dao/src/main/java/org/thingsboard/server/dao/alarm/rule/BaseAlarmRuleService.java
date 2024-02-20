@@ -54,7 +54,12 @@ public class BaseAlarmRuleService extends AbstractEntityService implements Alarm
         alarmRuleDataValidator.validate(alarmRule, AlarmRule::getTenantId);
         try {
             AlarmRule saved = alarmRuleDao.save(tenantId, alarmRule);
-            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(saved.getId()).created(alarmRule.getId() == null).build());
+            boolean updated = alarmRule.getId() == null;
+            if (updated || alarmRule.isEnabled()) {
+                eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(saved.getId()).created(!updated).build());
+            } else {
+                //No need to send an event if new rule is disabled
+            }
             return saved;
         } catch (Exception e) {
             checkConstraintViolation(e, "alarm_rule_name_unq_key", "Alarm rule with such name already exists!");

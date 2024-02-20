@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.service.alarm.rule;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,7 +59,6 @@ import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -86,13 +87,17 @@ public class DefaultTbAlarmRuleStateService extends AbstractPartitionBasedServic
     private final TbAssetProfileCache assetProfileCache;
 
     private final Map<EntityId, EntityState> entityStates = new ConcurrentHashMap<>();
-    private final Map<TenantId, Map<AlarmRuleId, AlarmRule>> rules = new ConcurrentHashMap<>();
     private final Map<AlarmRuleId, Set<EntityId>> myEntityStateIdsPerAlarmRule = new ConcurrentHashMap<>();
     private final Map<TenantId, Set<EntityId>> myEntityStateIds = new ConcurrentHashMap<>();
+    private Cache<TenantId, ConcurrentHashMap<AlarmRuleId, AlarmRule>> rulesCache;
 
     @PostConstruct
     protected void init() {
         super.init();
+        rulesCache = Caffeine.newBuilder()
+                .expireAfterAccess(24, TimeUnit.HOURS)
+                .maximumSize(1024).build();
+
         scheduledExecutor.scheduleAtFixedRate(this::harvestAlarms, 1, 1, TimeUnit.MINUTES);
     }
 
@@ -166,8 +171,7 @@ public class DefaultTbAlarmRuleStateService extends AbstractPartitionBasedServic
             case ALARM_RULE -> {
                 AlarmRuleId alarmRuleId = (AlarmRuleId) entityId;
                 switch (event) {
-                    case CREATED -> createAlarmRule(tenantId, alarmRuleId);
-                    case UPDATED -> updateAlarmRule(tenantId, alarmRuleId);
+                    case CREATED, UPDATED -> createOrUpdateAlarmRule(tenantId, alarmRuleId);
                     case DELETED -> deleteAlarmRule(tenantId, alarmRuleId);
                 }
             }
@@ -249,67 +253,78 @@ public class DefaultTbAlarmRuleStateService extends AbstractPartitionBasedServic
         EntityState state = entityStates.remove(entityId);
         if (state != null) {
             myEntityStateIdsPerAlarmRule.values().forEach(ids -> ids.remove(entityId));
-            myEntityStateIds.get(tenantId).remove(entityId);
+            Set<EntityId> myEntityIds = myEntityStateIds.get(tenantId);
+            if (myEntityIds != null) {
+                myEntityIds.remove(entityId);
+            }
             stateStore.remove(tenantId, entityId);
             partitionedEntities.remove(getTpi(tenantId, entityId));
         }
     }
 
-    private void createAlarmRule(TenantId tenantId, AlarmRuleId alarmRuleId) {
-        AlarmRule alarmRule = alarmRuleService.findAlarmRuleById(tenantId, alarmRuleId);
-        if (alarmRule.isEnabled()) {
-            addAlarmRule(tenantId, alarmRule);
-        }
-    }
+    private void createOrUpdateAlarmRule(TenantId tenantId, AlarmRuleId alarmRuleId) {
+        if (myEntityStateIds.containsKey(tenantId)) {
+            AlarmRule alarmRule = alarmRuleService.findAlarmRuleById(tenantId, alarmRuleId);
 
-    private void updateAlarmRule(TenantId tenantId, AlarmRuleId alarmRuleId) {
-        AlarmRule alarmRule = alarmRuleService.findAlarmRuleById(tenantId, alarmRuleId);
-        if (alarmRule.isEnabled()) {
-            Map<AlarmRuleId, AlarmRule> tenantRules = rules.get(tenantId);
+            if (!alarmRule.isEnabled()) {
+                deleteAlarmRule(tenantId, alarmRuleId);
+                return;
+            }
+
+            ConcurrentHashMap<AlarmRuleId, AlarmRule> tenantRules = rulesCache.getIfPresent(tenantId);
             if (tenantRules != null) {
-                if (tenantRules.containsKey(alarmRuleId)) {
-                    tenantRules.put(alarmRule.getId(), alarmRule);
+                tenantRules.put(alarmRuleId, alarmRule);
+            }
 
-                    Set<EntityId> stateIds = myEntityStateIdsPerAlarmRule.get(alarmRule.getId());
-                    if (stateIds != null) {
-                        stateIds.forEach(stateId -> {
-                            EntityState entityState = entityStates.get(stateId);
-                            try {
-                                entityState.updateAlarmRule(alarmRule);
-                            } catch (Exception e) {
-                                log.error("[{}] [{}] Failed to update alarm rule!", tenantId, alarmRule.getName(), e);
-                            }
-                        });
+            Set<EntityId> newIds = myEntityStateIds.get(tenantId).stream().filter(entityId -> isEntityMatches(tenantId, entityId, alarmRule)).collect(Collectors.toSet());
+            Set<EntityId> oldIds = myEntityStateIdsPerAlarmRule.get(alarmRuleId);
+
+            if (CollectionsUtil.isEmpty(oldIds)) {
+                newIds.forEach(entityId -> {
+                    EntityState entityState = entityStates.get(entityId);
+                    myEntityStateIdsPerAlarmRule.computeIfAbsent(alarmRuleId, key -> ConcurrentHashMap.newKeySet()).add(entityId);
+                    entityState.addAlarmRule(alarmRule);
+                });
+            } else {
+                Set<EntityId> toAdd = CollectionsUtil.diffSets(oldIds, newIds);
+                Set<EntityId> toUpdate = CollectionsUtil.diffSets(newIds, toAdd);
+                Set<EntityId> toRemove = CollectionsUtil.diffSets(newIds, oldIds);
+
+                toAdd.forEach(entityId -> {
+                    EntityState entityState = entityStates.get(entityId);
+                    myEntityStateIdsPerAlarmRule.computeIfAbsent(alarmRuleId, key -> ConcurrentHashMap.newKeySet()).add(entityId);
+                    entityState.addAlarmRule(alarmRule);
+                });
+
+                toUpdate.forEach(entityId -> {
+                    EntityState entityState = entityStates.get(entityId);
+                    try {
+                        entityState.updateAlarmRule(alarmRule);
+                    } catch (Exception e) {
+                        log.error("[{}] [{}] Failed to update alarm rule!", tenantId, alarmRule.getName(), e);
                     }
-                } else {
-                    addAlarmRule(tenantId, alarmRule);
-                }
+                });
+
+                toRemove.forEach(entityId -> {
+                    EntityState entityState = entityStates.get(entityId);
+                    entityState.removeAlarmRule(alarmRuleId);
+                    myEntityStateIdsPerAlarmRule.get(alarmRuleId).remove(entityId);
+                    if (entityState.isEmpty()) {
+                        cleanupEntityState(tenantId, entityId);
+                    }
+                });
             }
         } else {
-            deleteAlarmRule(tenantId, alarmRuleId);
-        }
-    }
-
-    private void addAlarmRule(TenantId tenantId, AlarmRule alarmRule) {
-        Map<AlarmRuleId, AlarmRule> tenantRules = rules.get(tenantId);
-        if (tenantRules != null) {
-            tenantRules.put(alarmRule.getId(), alarmRule);
-            myEntityStateIds.get(tenantId).stream().filter(entityId -> isEntityMatches(tenantId, entityId, alarmRule)).forEach(entityId -> {
-                EntityState entityState = entityStates.get(entityId);
-                myEntityStateIdsPerAlarmRule.computeIfAbsent(alarmRule.getId(), key -> ConcurrentHashMap.newKeySet()).add(entityId);
-                entityState.addAlarmRule(alarmRule);
-            });
+            rulesCache.invalidate(tenantId);
         }
     }
 
     private void deleteAlarmRule(TenantId tenantId, AlarmRuleId alarmRuleId) {
-        Map<AlarmRuleId, AlarmRule> tenantRules = rules.get(tenantId);
+        Map<AlarmRuleId, AlarmRule> tenantRules = rulesCache.getIfPresent(tenantId);
 
-        if (tenantRules == null) {
-            return;
+        if (tenantRules != null) {
+            tenantRules.remove(alarmRuleId);
         }
-
-        tenantRules.remove(alarmRuleId);
 
         Set<EntityId> stateIds = myEntityStateIdsPerAlarmRule.remove(alarmRuleId);
 
@@ -331,10 +346,15 @@ public class DefaultTbAlarmRuleStateService extends AbstractPartitionBasedServic
     }
 
     private void deleteTenant(TenantId tenantId) {
-        Map<AlarmRuleId, AlarmRule> tenantRules = rules.get(tenantId);
+        Map<AlarmRuleId, AlarmRule> tenantRules = rulesCache.getIfPresent(tenantId);
         if (tenantRules != null) {
             tenantRules.keySet().forEach(alarmRuleId -> deleteAlarmRule(tenantId, alarmRuleId));
-            rules.remove(tenantId);
+            rulesCache.invalidate(tenantRules);
+        } else {
+            Set<EntityId> ids = myEntityStateIds.remove(tenantId);
+            if (CollectionsUtil.isNotEmpty(ids)) {
+                ids.forEach(entityId -> cleanupEntityState(tenantId, entityId));
+            }
         }
     }
 
@@ -388,7 +408,7 @@ public class DefaultTbAlarmRuleStateService extends AbstractPartitionBasedServic
             myEntityStateIds.computeIfAbsent(tenantId, key -> ConcurrentHashMap.newKeySet()).add(targetEntityId);
             entityStates.put(targetEntityId, entityState);
             alarmRules.forEach(alarmRule -> myEntityStateIdsPerAlarmRule.computeIfAbsent(alarmRule.getId(), key -> ConcurrentHashMap.newKeySet()).add(targetEntityId));
-            partitionedEntities.get(getTpi(tenantId, targetEntityId)).add(targetEntityId);
+            partitionedEntities.computeIfAbsent(getTpi(tenantId, targetEntityId), key -> ConcurrentHashMap.newKeySet()).add(targetEntityId);
         } else {
             for (AlarmRule alarmRule : alarmRules) {
                 Set<EntityId> entityIds = myEntityStateIdsPerAlarmRule.get(alarmRule.getId());
@@ -423,11 +443,9 @@ public class DefaultTbAlarmRuleStateService extends AbstractPartitionBasedServic
     }
 
     private Collection<AlarmRule> getOrFetchAlarmRules(TenantId tenantId) {
-        return rules.computeIfAbsent(tenantId, key -> {
-            Map<AlarmRuleId, AlarmRule> map = new HashMap<>();
-            fetchAlarmRules(key).forEach(alarmRule -> {
-                map.put(alarmRule.getId(), alarmRule);
-            });
+        return rulesCache.get(tenantId, key -> {
+            ConcurrentHashMap<AlarmRuleId, AlarmRule> map = new ConcurrentHashMap<>();
+            fetchAlarmRules(key).forEach(alarmRule -> map.put(alarmRule.getId(), alarmRule));
             return map;
         }).values();
     }
