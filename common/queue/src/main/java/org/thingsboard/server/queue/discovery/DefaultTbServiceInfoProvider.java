@@ -81,7 +81,7 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
         }
         log.info("Current Service ID: {}", serviceId);
         if (serviceType.equalsIgnoreCase("monolith")) {
-            serviceTypes = Collections.unmodifiableList(Arrays.asList(ServiceType.values()));
+            serviceTypes = List.of(ServiceType.values());
         } else {
             serviceTypes = Collections.singletonList(ServiceType.of(serviceType));
         }

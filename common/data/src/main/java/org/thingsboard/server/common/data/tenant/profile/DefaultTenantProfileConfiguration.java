@@ -81,6 +81,9 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
 
     private String cassandraQueryTenantRateLimitsConfiguration;
 
+    private String edgeEventRateLimits;
+    private String edgeEventRateLimitsPerEdge;
+
     private int defaultStorageTtlDays;
     private int alarmsTtlDays;
     private int rpcTtlDays;

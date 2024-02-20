@@ -233,6 +233,36 @@
     }
   }
 
+  .tb-flex {
+    display: flex;
+    flex: 1;
+    gap: 8px;
+    &.row {
+      flex-direction: row;
+    }
+    &.column {
+      flex-direction: column;
+    }
+    &.flex-start {
+      justify-content: flex-start;
+    }
+    &.flex-end {
+      justify-content: flex-end;
+    }
+    &.space-between {
+      justify-content: space-between;
+    }
+    &.align-center {
+      align-items: center;
+    }
+    &.no-gap {
+      gap: 0;
+    }
+    &.fill-width {
+      width: 100%;
+    }
+  }
+
   .tb-form-panel, .tb-form-row {
     .mat-slide {
       margin: 0;
@@ -621,7 +651,8 @@
       &.mdc-evolution-chip--with-primary-graphic {
         .mdc-evolution-chip__action--primary {
           width: 100%;
-          padding-right: 0;
+          padding-left: 12px;
+          padding-right: 12px;
           gap: 0;
           .mdc-evolution-chip__graphic {
             padding: 0;

@@ -73,6 +73,9 @@ import {
 import { SingleSwitchWidgetComponent } from '@home/components/widget/lib/rpc/single-switch-widget.component';
 import { ActionButtonWidgetComponent } from '@home/components/widget/lib/button/action-button-widget.component';
 import { CommandButtonWidgetComponent } from '@home/components/widget/lib/button/command-button-widget.component';
+import { PowerButtonWidgetComponent } from '@home/components/widget/lib/rpc/power-button-widget.component';
+import { SliderWidgetComponent } from '@home/components/widget/lib/rpc/slider-widget.component';
+import { ToggleButtonWidgetComponent } from '@home/components/widget/lib/button/toggle-button-widget.component';
 
 @NgModule({
   declarations:
@@ -118,7 +121,10 @@ import { CommandButtonWidgetComponent } from '@home/components/widget/lib/button
       BarChartWithLabelsWidgetComponent,
       SingleSwitchWidgetComponent,
       ActionButtonWidgetComponent,
-      CommandButtonWidgetComponent
+      CommandButtonWidgetComponent,
+      PowerButtonWidgetComponent,
+      SliderWidgetComponent,
+      ToggleButtonWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -168,7 +174,10 @@ import { CommandButtonWidgetComponent } from '@home/components/widget/lib/button
         BarChartWithLabelsWidgetComponent,
         SingleSwitchWidgetComponent,
         ActionButtonWidgetComponent,
-        CommandButtonWidgetComponent
+        CommandButtonWidgetComponent,
+        PowerButtonWidgetComponent,
+        SliderWidgetComponent,
+        ToggleButtonWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }

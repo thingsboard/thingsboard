@@ -108,6 +108,11 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
         launchMainConsumers();
     }
 
+    @Override
+    protected boolean filterTbApplicationEvent(PartitionChangeEvent event) {
+        return event.getServiceType() == getServiceType();
+    }
+
     protected abstract ServiceType getServiceType();
 
     protected abstract void launchMainConsumers();

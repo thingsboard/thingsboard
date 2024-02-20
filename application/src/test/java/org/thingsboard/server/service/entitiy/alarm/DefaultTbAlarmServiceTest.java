@@ -129,7 +129,7 @@ public class DefaultTbAlarmServiceTest {
     public void testDelete() {
         service.delete(new Alarm(), new User());
 
-        verify(notificationEntityService, times(1)).logEntityAction(any(), any(), any(), any(), eq(ActionType.DELETED), any());
+        verify(notificationEntityService, times(1)).logEntityAction(any(), any(), any(), any(), eq(ActionType.ALARM_DELETE), any());
         verify(alarmSubscriptionService, times(1)).deleteAlarm(any(), any());
     }
 

@@ -37,7 +37,10 @@ public class TbCoreConsumerStats {
     public static final String DEVICE_STATES = "deviceState";
     public static final String SUBSCRIPTION_MSGS = "subMsgs";
     public static final String EDGE_NOTIFICATIONS = "edgeNfs";
+    public static final String DEVICE_CONNECTS = "deviceConnect";
     public static final String DEVICE_ACTIVITIES = "deviceActivity";
+    public static final String DEVICE_DISCONNECTS = "deviceDisconnect";
+    public static final String DEVICE_INACTIVITIES = "deviceInactivity";
 
     public static final String TO_CORE_NF_OTHER = "coreNfOther"; // normally, there is no messages when codebase is fine
     public static final String TO_CORE_NF_COMPONENT_LIFECYCLE = "coreNfCompLfcl";
@@ -63,7 +66,10 @@ public class TbCoreConsumerStats {
     private final StatsCounter deviceStateCounter;
     private final StatsCounter subscriptionMsgCounter;
     private final StatsCounter edgeNotificationsCounter;
+    private final StatsCounter deviceConnectsCounter;
     private final StatsCounter deviceActivitiesCounter;
+    private final StatsCounter deviceDisconnectsCounter;
+    private final StatsCounter deviceInactivitiesCounter;
 
     private final StatsCounter toCoreNfOtherCounter;
     private final StatsCounter toCoreNfComponentLifecycleCounter;
@@ -94,7 +100,10 @@ public class TbCoreConsumerStats {
         this.deviceStateCounter = register(statsFactory.createStatsCounter(statsKey, DEVICE_STATES));
         this.subscriptionMsgCounter = register(statsFactory.createStatsCounter(statsKey, SUBSCRIPTION_MSGS));
         this.edgeNotificationsCounter = register(statsFactory.createStatsCounter(statsKey, EDGE_NOTIFICATIONS));
+        this.deviceConnectsCounter = register(statsFactory.createStatsCounter(statsKey, DEVICE_CONNECTS));
         this.deviceActivitiesCounter = register(statsFactory.createStatsCounter(statsKey, DEVICE_ACTIVITIES));
+        this.deviceDisconnectsCounter = register(statsFactory.createStatsCounter(statsKey, DEVICE_DISCONNECTS));
+        this.deviceInactivitiesCounter = register(statsFactory.createStatsCounter(statsKey, DEVICE_INACTIVITIES));
 
         // Core notification counters
         this.toCoreNfOtherCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_OTHER));
@@ -152,9 +161,24 @@ public class TbCoreConsumerStats {
         edgeNotificationsCounter.increment();
     }
 
+    public void log(TransportProtos.DeviceConnectProto msg) {
+        totalCounter.increment();
+        deviceConnectsCounter.increment();
+    }
+
     public void log(TransportProtos.DeviceActivityProto msg) {
         totalCounter.increment();
         deviceActivitiesCounter.increment();
+    }
+
+    public void log(TransportProtos.DeviceDisconnectProto msg) {
+        totalCounter.increment();
+        deviceDisconnectsCounter.increment();
+    }
+
+    public void log(TransportProtos.DeviceInactivityProto msg) {
+        totalCounter.increment();
+        deviceInactivitiesCounter.increment();
     }
 
     public void log(TransportProtos.SubscriptionMgrMsgProto msg) {
@@ -184,9 +208,9 @@ public class TbCoreConsumerStats {
             toCoreNfEdgeSyncResponseCounter.increment();
         } else if (!msg.getFromEdgeSyncResponseMsg().isEmpty()) {
             toCoreNfEdgeSyncResponseCounter.increment();
-        } else if (msg.hasQueueUpdateMsg()) {
+        } else if (msg.getQueueUpdateMsgsCount() > 0) {
             toCoreNfQueueUpdateCounter.increment();
-        } else if (msg.hasQueueDeleteMsg()) {
+        } else if (msg.getQueueDeleteMsgsCount() > 0) {
             toCoreNfQueueDeleteCounter.increment();
         } else if (msg.hasVcResponseMsg()) {
             toCoreNfVersionControlResponseCounter.increment();

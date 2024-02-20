@@ -13,20 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.api.slack;
+package org.thingsboard.server.common.data.mobile;
 
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.notification.targets.slack.SlackConversation;
-import org.thingsboard.server.common.data.notification.targets.slack.SlackConversationType;
+import lombok.Data;
 
-import java.util.List;
+import java.util.Map;
 
-public interface SlackService {
+@Data
+public class UserMobileInfo {
 
-    void sendMessage(TenantId tenantId, String token, String conversationId, String message);
-
-    List<SlackConversation> listConversations(TenantId tenantId, String token, SlackConversationType conversationType);
-
-    String getToken(TenantId tenantId);
+    private Map<String, MobileSessionInfo> sessions;
 
 }

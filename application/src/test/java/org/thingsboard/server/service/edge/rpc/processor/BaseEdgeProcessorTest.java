@@ -55,6 +55,7 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
@@ -208,6 +209,9 @@ public abstract class BaseEdgeProcessorTest {
 
     @MockBean
     protected AttributesService attributesService;
+
+    @MockBean
+    protected TimeseriesService timeseriesService;
 
     @MockBean
     protected TbClusterService tbClusterService;

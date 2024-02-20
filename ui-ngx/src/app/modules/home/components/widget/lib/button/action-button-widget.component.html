@@ -27,10 +27,4 @@
     [ctx]="ctx"
     (clicked)="onClick($event)">
   </tb-widget-button>
-  <div *ngIf="error" class="tb-action-widget-error-container">
-    <div class="tb-action-widget-error-panel">
-      <div class="tb-action-widget-error-text" [innerHTML]="error | safe: 'html'"></div>
-      <button class="tb-action-widget-error-clear tb-mat-20" mat-icon-button (click)="clearError()"><mat-icon>close</mat-icon></button>
-    </div>
-  </div>
 </div>

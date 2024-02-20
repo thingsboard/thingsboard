@@ -15,7 +15,7 @@
 
 Should return an array of `string` values presenting **link names** that the Rule Engine should use to further route the incoming Message.<br>
 If the result is an empty array - message will not be routed to any Node and will be immediately 
-<a href="https://thingsboard.io/docs/user-guide/rule-engine-2-0/overview/#message-processing-result" target="_blank">acknowledged</a>.
+<a href="${siteBaseUrl}/docs/user-guide/rule-engine-2-0/overview/#message-processing-result" target="_blank">acknowledged</a>.
 
 <div class="divider"></div>
 

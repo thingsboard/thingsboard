@@ -551,12 +551,36 @@ message GetOtaPackageResponseMsg {
   string fileName = 8;
 }
 
+message DeviceConnectProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  int64 lastConnectTime = 5;
+}
+
 message DeviceActivityProto {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
   int64 deviceIdMSB = 3;
   int64 deviceIdLSB = 4;
   int64 lastActivityTime = 5;
+}
+
+message DeviceDisconnectProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  int64 lastDisconnectTime = 5;
+}
+
+message DeviceInactivityProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  int64 lastInactivityTime = 5;
 }
 
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.
@@ -1271,6 +1295,9 @@ message ToCoreMsg {
   LifecycleEventProto lifecycleEventMsg = 8;
   ErrorEventProto errorEventMsg = 9;
   ToDeviceActorNotificationMsgProto toDeviceActorNotification = 10;
+  DeviceConnectProto deviceConnectMsg = 50;
+  DeviceDisconnectProto deviceDisconnectMsg = 51;
+  DeviceInactivityProto deviceInactivityMsg = 52;
 }
 
 /* High priority messages with low latency are handled by ThingsBoard Core Service separately */
@@ -1280,8 +1307,8 @@ message ToCoreNotificationMsg {
   FromDeviceRPCResponseProto fromDeviceRpcResponse = 2;
   bytes componentLifecycleMsg = 3 [deprecated = true];
   bytes edgeEventUpdateMsg = 4 [deprecated = true];
-  QueueUpdateMsg queueUpdateMsg = 5;
-  QueueDeleteMsg queueDeleteMsg = 6;
+  repeated QueueUpdateMsg queueUpdateMsgs = 5;
+  repeated QueueDeleteMsg queueDeleteMsgs = 6;
   VersionControlResponseMsg vcResponseMsg = 7;
   bytes toEdgeSyncRequestMsg = 8 [deprecated = true];
   bytes fromEdgeSyncResponseMsg = 9 [deprecated = true];
@@ -1307,8 +1334,8 @@ message ToRuleEngineMsg {
 message ToRuleEngineNotificationMsg {
   bytes componentLifecycleMsg = 1 [deprecated = true];
   FromDeviceRPCResponseProto fromDeviceRpcResponse = 2;
-  QueueUpdateMsg queueUpdateMsg = 3;
-  QueueDeleteMsg queueDeleteMsg = 4;
+  repeated QueueUpdateMsg queueUpdateMsgs = 3;
+  repeated QueueDeleteMsg queueDeleteMsgs = 4;
   ComponentLifecycleMsgProto componentLifecycle = 5;
 }
 
@@ -1328,8 +1355,8 @@ message ToTransportMsg {
   ResourceUpdateMsg resourceUpdateMsg = 12;
   ResourceDeleteMsg resourceDeleteMsg = 13;
   UplinkNotificationMsg uplinkNotificationMsg = 14;
-  QueueUpdateMsg queueUpdateMsg = 15;
-  QueueDeleteMsg queueDeleteMsg = 16;
+  repeated QueueUpdateMsg queueUpdateMsgs = 15;
+  repeated QueueDeleteMsg queueDeleteMsgs = 16;
 }
 
 message UsageStatsKVProto{

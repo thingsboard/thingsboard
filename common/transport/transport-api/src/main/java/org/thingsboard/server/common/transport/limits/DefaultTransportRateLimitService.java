@@ -93,7 +93,7 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
         EntityTransportRateLimits deviceRateLimitPrototype = createRateLimits(update.getProfile(), false);
         for (TenantId tenantId : update.getAffectedTenants()) {
             mergeLimits(tenantId, tenantRateLimitPrototype, perTenantLimits::get, perTenantLimits::put);
-            tenantDevices.get(tenantId).forEach(deviceId -> {
+            getTenantDevices(tenantId).forEach(deviceId -> {
                 mergeLimits(deviceId, deviceRateLimitPrototype, perDeviceLimits::get, perDeviceLimits::put);
             });
         }
@@ -104,7 +104,7 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
         EntityTransportRateLimits tenantRateLimitPrototype = createRateLimits(tenantProfileCache.get(tenantId), true);
         EntityTransportRateLimits deviceRateLimitPrototype = createRateLimits(tenantProfileCache.get(tenantId), false);
         mergeLimits(tenantId, tenantRateLimitPrototype, perTenantLimits::get, perTenantLimits::put);
-        tenantDevices.get(tenantId).forEach(deviceId -> {
+        getTenantDevices(tenantId).forEach(deviceId -> {
             mergeLimits(deviceId, deviceRateLimitPrototype, perDeviceLimits::get, perDeviceLimits::put);
         });
     }
@@ -259,8 +259,13 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
     private EntityTransportRateLimits getDeviceRateLimits(TenantId tenantId, DeviceId deviceId) {
         return perDeviceLimits.computeIfAbsent(deviceId, k -> {
             EntityTransportRateLimits limits = createRateLimits(tenantProfileCache.get(tenantId), false);
-            tenantDevices.computeIfAbsent(tenantId, id -> ConcurrentHashMap.newKeySet()).add(deviceId);
+            getTenantDevices(tenantId).add(deviceId);
             return limits;
         });
     }
+
+    private Set<DeviceId> getTenantDevices(TenantId tenantId) {
+        return tenantDevices.computeIfAbsent(tenantId, id -> ConcurrentHashMap.newKeySet());
+    }
+
 }

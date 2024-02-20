@@ -321,6 +321,15 @@ import {
 import {
   CommandButtonWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/button/command-button-widget-settings.component';
+import {
+  PowerButtonWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/button/power-button-widget-settings.component';
+import {
+  SliderWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/control/slider-widget-settings.component';
+import {
+  ToggleButtonWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/button/toggle-button-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -436,7 +445,10 @@ import {
     BarChartWithLabelsWidgetSettingsComponent,
     SingleSwitchWidgetSettingsComponent,
     ActionButtonWidgetSettingsComponent,
-    CommandButtonWidgetSettingsComponent
+    CommandButtonWidgetSettingsComponent,
+    PowerButtonWidgetSettingsComponent,
+    SliderWidgetSettingsComponent,
+    ToggleButtonWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -557,7 +569,10 @@ import {
     BarChartWithLabelsWidgetSettingsComponent,
     SingleSwitchWidgetSettingsComponent,
     ActionButtonWidgetSettingsComponent,
-    CommandButtonWidgetSettingsComponent
+    CommandButtonWidgetSettingsComponent,
+    PowerButtonWidgetSettingsComponent,
+    SliderWidgetSettingsComponent,
+    ToggleButtonWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -645,5 +660,8 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-bar-chart-with-labels-widget-settings': BarChartWithLabelsWidgetSettingsComponent,
   'tb-single-switch-widget-settings': SingleSwitchWidgetSettingsComponent,
   'tb-action-button-widget-settings': ActionButtonWidgetSettingsComponent,
-  'tb-command-button-widget-settings': CommandButtonWidgetSettingsComponent
+  'tb-command-button-widget-settings': CommandButtonWidgetSettingsComponent,
+  'tb-power-button-widget-settings': PowerButtonWidgetSettingsComponent,
+  'tb-slider-widget-settings': SliderWidgetSettingsComponent,
+  'tb-toggle-button-widget-settings': ToggleButtonWidgetSettingsComponent
 };

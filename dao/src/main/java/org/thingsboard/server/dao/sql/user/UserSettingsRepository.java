@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.settings.UserSettingsCompositeKey;
 import org.thingsboard.server.dao.model.sql.UserSettingsEntity;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface UserSettingsRepository extends JpaRepository<UserSettingsEntity, UserSettingsCompositeKey> {
@@ -31,5 +32,8 @@ public interface UserSettingsRepository extends JpaRepository<UserSettingsEntity
     @Modifying
     @Query("DELETE FROM UserSettingsEntity s WHERE s.userId = :userId")
     void deleteByUserId(@Param("userId") UUID userId);
+
+    @Query(value = "SELECT * FROM user_settings WHERE type = :type AND (settings #> :path) IS NOT NULL", nativeQuery = true)
+    List<UserSettingsEntity> findByTypeAndPathExisting(@Param("type") String type, @Param("path") String[] path);
 
 }
