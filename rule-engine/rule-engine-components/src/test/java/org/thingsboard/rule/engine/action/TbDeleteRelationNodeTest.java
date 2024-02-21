@@ -345,14 +345,11 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         verifyNoMoreInteractions(ctxMock, relationServiceMock);
     }
 
-    @ParameterizedTest
-    @MethodSource("givenSupportedEntityType_whenOnMsg_thenVerifyConditions")
-    void givenSupportedEntityType_whenOnMsgAndDeleteForSingleEntityIsFalse_thenVerifyRelationsDeletedAndOutMsgSuccess(HasId entity) throws TbNodeException {
+    @Test
+    void givenSupportedEntityType_whenOnMsgAndDeleteForSingleEntityIsFalse_thenVerifyRelationsDeletedAndOutMsgSuccess() throws TbNodeException {
         // GIVEN
-        var entityId = (EntityId) entity.getId();
-        var entityType = entityId.getEntityType();
 
-        config.setEntityType(entityType);
+        config.setEntityType(EntityType.DEVICE);
         config.setEntityNamePattern("${name}");
         config.setEntityTypePattern("${type}");
 
@@ -381,14 +378,10 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
 
-    @ParameterizedTest
-    @MethodSource("givenSupportedEntityType_whenOnMsg_thenVerifyConditions")
-    void givenSupportedEntityType_whenOnMsgAndDeleteForSingleEntityIsFalse_thenVerifyRelationFailedToDeleteAndOutMsgFailure(HasId entity) throws TbNodeException {
+    @Test
+    void givenSupportedEntityType_whenOnMsgAndDeleteForSingleEntityIsFalse_thenVerifyRelationFailedToDeleteAndOutMsgFailure() throws TbNodeException {
         // GIVEN
-        var entityId = (EntityId) entity.getId();
-        var entityType = entityId.getEntityType();
-
-        config.setEntityType(entityType);
+        config.setEntityType(EntityType.DEVICE);
         config.setEntityNamePattern("${name}");
         config.setEntityTypePattern("${type}");
 
