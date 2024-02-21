@@ -285,10 +285,9 @@ public class AlarmRuleTest extends AbstractContainerTest {
         highTempFilter.setRightArgId("temperatureThreshold");
         highTempFilter.setOperation(Operation.GREATER);
         AlarmCondition alarmCondition = new AlarmCondition();
-        alarmCondition.setCondition(highTempFilter);
+        alarmCondition.setConditionFilter(highTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
-        alarmRuleCondition.setArguments(Map.of("temperatureKey", temperatureKey, "temperatureThreshold", temperatureThreshold));
-        alarmRuleCondition.setCondition(alarmCondition);
+        alarmRuleCondition.setAlarmCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
 
@@ -304,10 +303,10 @@ public class AlarmRuleTest extends AbstractContainerTest {
         lowTempFilter.setOperation(Operation.LESS);
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
-        clearRule.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
-        clearCondition.setCondition(lowTempFilter);
-        clearRule.setCondition(clearCondition);
+        clearCondition.setConditionFilter(lowTempFilter);
+        clearRule.setAlarmCondition(clearCondition);
         alarmRuleConfiguration.setClearRule(clearRule);
+        alarmRuleConfiguration.setArguments(Map.of("temperatureKey", temperatureKey, "temperatureThreshold", temperatureThreshold, "lowTemperatureConst", lowTemperatureConst));
 
         AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(device.getDeviceProfileId()));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));

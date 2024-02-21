@@ -43,6 +43,7 @@ import org.thingsboard.server.service.alarm.rule.state.PersistedAlarmRuleState;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -61,15 +62,17 @@ class AlarmRuleState {
     private PersistedAlarmRuleState state;
     private boolean updateFlag;
     private final DynamicPredicateValueCtx dynamicPredicateValueCtx;
+    private final Map<String, AlarmRuleArgument> arguments;
 
     AlarmRuleState(AlarmSeverity severity, AlarmRuleCondition alarmRule, Set<AlarmConditionFilterKey> entityKeys,
-                   PersistedAlarmRuleState state, DynamicPredicateValueCtx dynamicPredicateValueCtx) {
+                   PersistedAlarmRuleState state, DynamicPredicateValueCtx dynamicPredicateValueCtx, Map<String, AlarmRuleArgument> arguments) {
         this.severity = severity;
         this.alarmRule = alarmRule;
         this.entityKeys = entityKeys;
         this.state = Objects.requireNonNullElseGet(state, () -> new PersistedAlarmRuleState(0L, 0L, 0L));
         this.spec = getSpec(alarmRule);
         this.dynamicPredicateValueCtx = dynamicPredicateValueCtx;
+        this.arguments = arguments;
     }
 
     public boolean validateTsUpdate(Set<AlarmConditionFilterKey> changedKeys) {
@@ -97,7 +100,7 @@ class AlarmRuleState {
     }
 
     public AlarmConditionSpec getSpec(AlarmRuleCondition alarmRule) {
-        AlarmConditionSpec spec = alarmRule.getCondition().getSpec();
+        AlarmConditionSpec spec = alarmRule.getAlarmCondition().getSpec();
         if (spec == null) {
             spec = new SimpleAlarmConditionSpec();
         }
@@ -118,7 +121,7 @@ class AlarmRuleState {
             return AlarmEvalResult.FALSE;
         }
         return switch (spec.getType()) {
-            case SIMPLE -> eval(alarmRule.getCondition(), data) ? AlarmEvalResult.TRUE : AlarmEvalResult.FALSE;
+            case SIMPLE -> eval(alarmRule.getAlarmCondition(), data) ? AlarmEvalResult.TRUE : AlarmEvalResult.FALSE;
             case DURATION -> evalDuration(data);
             case REPEATING -> evalRepeating(data);
             case NO_UPDATE -> evalNoUpdate(data);
@@ -141,7 +144,7 @@ class AlarmRuleState {
 
     private AlarmSchedule getSchedule(DataSnapshot data, AlarmRuleCondition alarmRule) {
         AlarmSchedule schedule = alarmRule.getSchedule();
-        EntityKeyValue dynamicValue = getDynamicPredicateValue(data, getArgument(schedule.getArgumentId()));
+        EntityKeyValue dynamicValue = getDynamicPredicateValue(data, arguments.get(schedule.getArgumentId()));
 
         if (dynamicValue != null) {
             try {
@@ -212,7 +215,7 @@ class AlarmRuleState {
     }
 
     private AlarmEvalResult evalRepeating(DataSnapshot data) {
-        if (eval(alarmRule.getCondition(), data)) {
+        if (eval(alarmRule.getAlarmCondition(), data)) {
             state.setEventCount(state.getEventCount() + 1);
             updateFlag = true;
             long requiredRepeats = resolveRequiredRepeats(data);
@@ -223,7 +226,7 @@ class AlarmRuleState {
     }
 
     private AlarmEvalResult evalDuration(DataSnapshot data) {
-        if (eval(alarmRule.getCondition(), data)) {
+        if (eval(alarmRule.getAlarmCondition(), data)) {
             if (state.getLastEventTs() > 0) {
                 if (data.getTs() > state.getLastEventTs()) {
                     state.setDuration(state.getDuration() + (data.getTs() - state.getLastEventTs()));
@@ -243,7 +246,7 @@ class AlarmRuleState {
     }
 
     private AlarmEvalResult evalNoUpdate(DataSnapshot data) {
-        String argId = ((SimpleAlarmConditionFilter) alarmRule.getCondition().getCondition()).getLeftArgId();
+        String argId = ((SimpleAlarmConditionFilter) alarmRule.getAlarmCondition().getConditionFilter()).getLeftArgId();
         EntityKeyValue value = getValue(argId, data);
         if (value == null && state.getLastEventTs() > 0) {
             return getNoUpdateResult(data);
@@ -288,7 +291,7 @@ class AlarmRuleState {
     }
 
     private Long resolveDynamicValue(DataSnapshot data, String argId) {
-        AlarmRuleArgument argument = getArgument(argId);
+        AlarmRuleArgument argument = arguments.get(argId);
         Long defaultValue = Double.valueOf(argument.getDefaultValue().toString()).longValue();
         if (argument.isConstant()) {
             return defaultValue;
@@ -332,7 +335,7 @@ class AlarmRuleState {
     }
 
     private boolean eval(AlarmCondition condition, DataSnapshot data) {
-        return eval(condition.getCondition(), data);
+        return eval(condition.getConditionFilter(), data);
     }
 
     private boolean eval(AlarmConditionFilter filter, DataSnapshot data) {
@@ -372,7 +375,7 @@ class AlarmRuleState {
             return false;
         }
 
-        return switch (getArgument(filter.getLeftArgId()).getValueType()) {
+        return switch (arguments.get(filter.getLeftArgId()).getValueType()) {
             case STRING -> filter.getOperation().process(getStrValue(left), getStrValue(right), filter.isIgnoreCase());
             case BOOLEAN -> filter.getOperation().process(getBoolValue(left), getBoolValue(right));
             case NUMERIC -> filter.getOperation().process(getDblValue(left), getDblValue(right));
@@ -381,7 +384,7 @@ class AlarmRuleState {
     }
 
     private EntityKeyValue getValue(String argId, DataSnapshot data) {
-        var argument = getArgument(argId);
+        var argument = arguments.get(argId);
         EntityKeyValue value;
         if (argument.isConstant()) {
             try {
@@ -517,9 +520,5 @@ class AlarmRuleState {
             default:
                 return null;
         }
-    }
-
-    private AlarmRuleArgument getArgument(String id) {
-        return alarmRule.getArguments().get(id);
     }
 }

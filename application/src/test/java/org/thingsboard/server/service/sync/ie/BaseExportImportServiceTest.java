@@ -283,13 +283,11 @@ public abstract class BaseExportImportServiceTest extends AbstractControllerTest
         highTempFilter.setOperation(Operation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
-        alarmCondition.setCondition(highTempFilter);
+        alarmCondition.setConditionFilter(highTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
-        alarmRuleCondition.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
-        alarmRuleCondition.setCondition(alarmCondition);
+        alarmRuleCondition.setAlarmCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
-
 
         AlarmRuleArgument lowTemperatureConst = AlarmRuleArgument.builder()
                 .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
@@ -303,9 +301,9 @@ public abstract class BaseExportImportServiceTest extends AbstractControllerTest
 
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
-        clearRule.setArguments(Map.of("temperatureKey", temperatureKey, "lowTemperatureConst", lowTemperatureConst));
-        clearCondition.setCondition(lowTempFilter);
-        clearRule.setCondition(clearCondition);
+        alarmRuleConfiguration.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst, "lowTemperatureConst", lowTemperatureConst));
+        clearCondition.setConditionFilter(lowTempFilter);
+        clearRule.setAlarmCondition(clearCondition);
         alarmRuleConfiguration.setClearRule(clearRule);
 
         AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfileId));

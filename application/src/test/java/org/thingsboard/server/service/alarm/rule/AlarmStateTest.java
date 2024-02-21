@@ -77,9 +77,9 @@ public class AlarmStateTest {
         alarmCondition.setSpec(spec);
 
         AlarmRuleCondition alarmRule = new AlarmRuleCondition();
-        alarmRule.setCondition(alarmCondition);
+        alarmRule.setAlarmCondition(alarmCondition);
 
-        return new AlarmRuleState(null, alarmRule, null, null, null);
+        return new AlarmRuleState(null, alarmRule, null, null, null, null);
     }
 
     private AlarmState createMockAlarmState() {

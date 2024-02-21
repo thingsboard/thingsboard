@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleEntityFilte
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 
 @Schema
@@ -37,6 +38,9 @@ public class AlarmRuleConfiguration implements Serializable {
 
     @Schema(description = "JSON object representing target entity where the alarm will be created")
     private AlarmRuleTargetEntity alarmTargetEntity;
+
+    @Schema(description = "JSON object representing the alarm rule arguments")
+    private Map<String, AlarmRuleArgument> arguments;
 
     @Valid
     @Schema(description = "Complex JSON object representing create alarm rules. The unique create alarm rule can be created for each alarm severity type. " +

@@ -22,18 +22,14 @@ import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.io.Serializable;
-import java.util.Map;
 
 @Schema
 @Data
 public class AlarmRuleCondition implements Serializable {
 
-    @Schema(description = "JSON object representing the alarm rule arguments")
-    private Map<String, AlarmRuleArgument> arguments;
-
     @Valid
     @Schema(description = "JSON object representing the alarm rule condition")
-    private AlarmCondition condition;
+    private AlarmCondition alarmCondition;
     @Schema(description = "JSON object representing time interval during which the rule is active")
     private AlarmSchedule schedule;
     // Advanced

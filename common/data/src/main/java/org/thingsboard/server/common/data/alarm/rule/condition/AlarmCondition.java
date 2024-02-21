@@ -28,7 +28,7 @@ import java.io.Serializable;
 public class AlarmCondition implements Serializable {
     @Valid
     @Schema(description = "JSON array of alarm condition filters")
-    private AlarmConditionFilter condition;
+    private AlarmConditionFilter conditionFilter;
     @Schema(description = "JSON object representing alarm condition type")
     private AlarmConditionSpec spec;
 

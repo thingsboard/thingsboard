@@ -36,4 +36,6 @@ public interface AlarmConditionSpec extends Serializable {
     @JsonIgnore
     AlarmConditionSpecType getType();
 
+    String getArgumentId();
+
 }

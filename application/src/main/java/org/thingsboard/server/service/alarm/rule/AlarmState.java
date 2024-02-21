@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionSpecType;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleArgument;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -257,12 +258,12 @@ class AlarmState {
                 }
             }
             createRulesSortedBySeverityDesc.add(new AlarmRuleState(severity, rule,
-                    entityRulesState.getCreateAlarmKeys(alarm.getId(), severity), ruleState, dynamicPredicateValueCtx));
+                    entityRulesState.getCreateAlarmKeys(alarm.getId(), severity), ruleState, dynamicPredicateValueCtx, alarmDefinition.getConfiguration().getArguments()));
         });
         createRulesSortedBySeverityDesc.sort(Comparator.comparingInt(state -> state.getSeverity().ordinal()));
         PersistedAlarmRuleState ruleState = alarmState == null ? null : alarmState.getClearRuleState();
         if (alarmDefinition.getConfiguration().getClearRule() != null) {
-            clearState = new AlarmRuleState(null, alarmDefinition.getConfiguration().getClearRule(), entityRulesState.getClearAlarmKeys(alarm.getId()), ruleState, dynamicPredicateValueCtx);
+            clearState = new AlarmRuleState(null, alarmDefinition.getConfiguration().getClearRule(), entityRulesState.getClearAlarmKeys(alarm.getId()), ruleState, dynamicPredicateValueCtx, alarmDefinition.getConfiguration().getArguments());
         }
     }
 
@@ -318,7 +319,7 @@ class AlarmState {
         if (StringUtils.isNotEmpty(alarmDetailsStr) || dashboardId != null) {
             ObjectNode newDetails = JacksonUtil.newObjectNode();
             if (StringUtils.isNotEmpty(alarmDetailsStr)) {
-                for (var argument : ruleState.getAlarmRule().getArguments().values()) {
+                for (var argument : alarmDefinition.getConfiguration().getArguments().values()) {
                     if (argument.isDynamic()) {
                         continue;
                     }

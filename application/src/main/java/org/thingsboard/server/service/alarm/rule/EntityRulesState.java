@@ -19,17 +19,25 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilter;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilterKey;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleArgument;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleCondition;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfiguration;
+import org.thingsboard.server.common.data.alarm.rule.condition.ComplexAlarmConditionFilter;
+import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionFilter;
 import org.thingsboard.server.common.data.id.AlarmRuleId;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 class EntityRulesState {
 
@@ -77,7 +85,7 @@ class EntityRulesState {
         Map<AlarmSeverity, Set<AlarmConditionFilterKey>> createAlarmKeys = alarmCreateKeys.computeIfAbsent(alarmRule.getId(), id -> new HashMap<>());
         configuration.getCreateRules().forEach(((severity, alarmRuleCondition) -> {
             var ruleKeys = createAlarmKeys.computeIfAbsent(severity, id -> new HashSet<>());
-            for (var argument : alarmRuleCondition.getArguments().values()) {
+            for (var argument : getArguments(alarmRuleCondition, configuration.getArguments())) {
                 if (!argument.isConstant()) {
                     entityKeys.add(argument.getKey());
                     ruleKeys.add(argument.getKey());
@@ -86,10 +94,54 @@ class EntityRulesState {
         }));
         if (configuration.getClearRule() != null) {
             var clearAlarmKeys = alarmClearKeys.computeIfAbsent(alarmRule.getId(), id -> new HashSet<>());
-            for (var argument : configuration.getClearRule().getArguments().values()) {
-                if (!argument.isConstant())
-                    entityKeys.add(argument.getKey());
+            for (var argument : getArguments(configuration.getClearRule(), configuration.getArguments())) {
+                if (!argument.isConstant()) entityKeys.add(argument.getKey());
                 clearAlarmKeys.add(argument.getKey());
+            }
+        }
+    }
+
+    private Set<AlarmRuleArgument> getArguments(AlarmRuleCondition condition, Map<String, AlarmRuleArgument> argumentMap) {
+        Set<String> argumentIds = new HashSet<>();
+
+        if (condition.getSchedule() != null) {
+            String scheduleArgId = condition.getSchedule().getArgumentId();
+            if (scheduleArgId != null) {
+                argumentIds.add(scheduleArgId);
+            }
+        }
+
+        if (condition.getAlarmCondition().getSpec() != null) {
+            String specArgId = condition.getAlarmCondition().getSpec().getArgumentId();
+            if (specArgId != null) {
+                argumentIds.add(specArgId);
+            }
+        }
+
+        addArgumentIds(condition.getAlarmCondition().getConditionFilter(), argumentIds);
+        return argumentIds.stream().map(argumentMap::get).collect(Collectors.toSet());
+    }
+
+    private void addArgumentIds(AlarmConditionFilter rootCondition, Set<String> argumentIds) {
+        Queue<AlarmConditionFilter> queue = new LinkedList<>();
+        queue.add(rootCondition);
+
+        while (!queue.isEmpty()) {
+            AlarmConditionFilter condition = queue.poll();
+            switch (condition.getType()) {
+                case SIMPLE -> {
+                    var simpleFilter = (SimpleAlarmConditionFilter) condition;
+                    argumentIds.add(simpleFilter.getLeftArgId());
+                    String rightArgId = simpleFilter.getRightArgId();
+                    // No update hasn't rightArgId
+                    if (rightArgId != null) {
+                        argumentIds.add(rightArgId);
+                    }
+                }
+                case COMPLEX -> {
+                    var complexFilter = (ComplexAlarmConditionFilter) condition;
+                    queue.addAll(complexFilter.getConditions());
+                }
             }
         }
     }

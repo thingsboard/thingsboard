@@ -179,10 +179,10 @@ public class EntityStateTest {
         AlarmRuleConfiguration alarmConfig = new AlarmRuleConfiguration();
         AlarmRuleCondition alarmRule = new AlarmRuleCondition();
         AlarmCondition alarmCondition = new AlarmCondition();
-        alarmRule.setArguments(Map.of("enabledKey", enabledKey, "enabledConst", enabledConst));
+        alarmConfig.setArguments(Map.of("enabledKey", enabledKey, "enabledConst", enabledConst));
         alarmCondition.setSpec(new SimpleAlarmConditionSpec());
-        alarmCondition.setCondition(condition);
-        alarmRule.setCondition(alarmCondition);
+        alarmCondition.setConditionFilter(condition);
+        alarmRule.setAlarmCondition(alarmCondition);
         alarmConfig.setCreateRules(new TreeMap<>(Map.of(AlarmSeverity.CRITICAL, alarmRule)));
 
         alarmConfig.setSourceEntityFilters(Collections.singletonList(new AlarmRuleAllDevicesEntityFilter()));

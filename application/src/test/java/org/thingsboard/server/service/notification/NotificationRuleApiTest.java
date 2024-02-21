@@ -870,12 +870,12 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         alarmConditionFilter.setLeftArgId("boolKey");
         alarmConditionFilter.setRightArgId("boolConst");
         alarmConditionFilter.setOperation(Operation.EQUAL);
-        alarmCondition.setCondition(alarmConditionFilter);
+        alarmCondition.setConditionFilter(alarmConditionFilter);
 
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
-        alarmRuleCondition.setArguments(Map.of("boolKey", boolKey, "boolConst", boolConst));
-        alarmRuleCondition.setCondition(alarmCondition);
+        alarmRuleCondition.setAlarmCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
+        alarmRuleConfiguration.setArguments(Map.of("boolKey", boolKey, "boolConst", boolConst));
 
         AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfileId));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));

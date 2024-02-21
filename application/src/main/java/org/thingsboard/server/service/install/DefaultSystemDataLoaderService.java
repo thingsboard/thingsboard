@@ -76,7 +76,6 @@ import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.query.DynamicValueSourceType;
 import org.thingsboard.server.common.data.queue.ProcessingStrategy;
 import org.thingsboard.server.common.data.queue.ProcessingStrategyType;
 import org.thingsboard.server.common.data.queue.Queue;
@@ -419,29 +418,29 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         temperatureTimeseriesFilter.setRightArgId("temperatureAlarmThresholdKey");
         temperatureTimeseriesFilter.setOperation(Operation.GREATER);
 
-        temperatureCondition.setCondition(new ComplexAlarmConditionFilter(Arrays.asList(temperatureAlarmFlagAttributeFilter, temperatureTimeseriesFilter), ComplexAlarmConditionFilter.ComplexOperation.AND));
-        temperatureRule.setArguments(Map.of(
-                "temperatureAlarmFlagKey", temperatureAlarmFlagKey,
-                "temperatureAlarmFlagConst", temperatureAlarmFlagConst,
-                "temperatureKey", temperatureKey,
-                "temperatureAlarmThresholdKey", temperatureAlarmThresholdKey));
+        temperatureCondition.setConditionFilter(new ComplexAlarmConditionFilter(Arrays.asList(temperatureAlarmFlagAttributeFilter, temperatureTimeseriesFilter), ComplexAlarmConditionFilter.ComplexOperation.AND));
 
         temperatureRule.setAlarmDetails("Current temperature = ${temperature}");
-        temperatureRule.setCondition(temperatureCondition);
+        temperatureRule.setAlarmCondition(temperatureCondition);
         highTemperature.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.MAJOR, temperatureRule)));
 
         AlarmRuleCondition clearTemperatureRule = new AlarmRuleCondition();
         AlarmCondition clearTemperatureCondition = new AlarmCondition();
-        clearTemperatureRule.setArguments(Map.of("temperatureKey", temperatureKey, "temperatureAlarmThresholdKey", temperatureAlarmThresholdKey));
         clearTemperatureCondition.setSpec(new SimpleAlarmConditionSpec());
+
+        highTemperature.setArguments(Map.of(
+                "temperatureAlarmFlagKey", temperatureAlarmFlagKey,
+                "temperatureAlarmFlagConst", temperatureAlarmFlagConst,
+                "temperatureKey", temperatureKey,
+                "temperatureAlarmThresholdKey", temperatureAlarmThresholdKey));
 
         SimpleAlarmConditionFilter clearTemperatureTimeseriesFilter = new SimpleAlarmConditionFilter();
         clearTemperatureTimeseriesFilter.setLeftArgId("temperatureKey");
         clearTemperatureTimeseriesFilter.setRightArgId("temperatureAlarmThresholdKey");
         clearTemperatureTimeseriesFilter.setOperation(Operation.LESS_OR_EQUAL);
 
-        clearTemperatureCondition.setCondition(clearTemperatureTimeseriesFilter);
-        clearTemperatureRule.setCondition(clearTemperatureCondition);
+        clearTemperatureCondition.setConditionFilter(clearTemperatureTimeseriesFilter);
+        clearTemperatureRule.setAlarmCondition(clearTemperatureCondition);
         clearTemperatureRule.setAlarmDetails("Current temperature = ${temperature}");
         highTemperature.setClearRule(clearTemperatureRule);
 
@@ -495,14 +494,8 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         humidityTimeseriesFilter.setRightArgId("humidityAlarmThresholdKey");
         humidityTimeseriesFilter.setOperation(Operation.LESS);
 
-        humidityCondition.setCondition(new ComplexAlarmConditionFilter(Arrays.asList(humidityAlarmFlagAttributeFilter, humidityTimeseriesFilter), ComplexAlarmConditionFilter.ComplexOperation.AND));
-        humidityRule.setArguments(Map.of(
-                "humidityAlarmFlagKey", humidityAlarmFlagKey,
-                "humidityAlarmFlagConst", humidityAlarmFlagConst,
-                "humidityKey", humidityKey,
-                "humidityAlarmThresholdKey", humidityAlarmThresholdKey));
-
-        humidityRule.setCondition(humidityCondition);
+        humidityCondition.setConditionFilter(new ComplexAlarmConditionFilter(Arrays.asList(humidityAlarmFlagAttributeFilter, humidityTimeseriesFilter), ComplexAlarmConditionFilter.ComplexOperation.AND));
+        humidityRule.setAlarmCondition(humidityCondition);
         humidityRule.setAlarmDetails("Current humidity = ${humidity}");
         lowHumidity.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.MINOR, humidityRule)));
 
@@ -515,12 +508,16 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         clearHumidityTimeseriesFilter.setRightArgId("humidityAlarmThresholdKey");
         clearHumidityTimeseriesFilter.setOperation(Operation.GREATER_OR_EQUAL);
 
-        clearHumidityRule.setArguments(Map.of("humidityKey", humidityKey, "humidityAlarmThresholdKey", humidityAlarmThresholdKey));
-
-        clearHumidityCondition.setCondition(clearHumidityTimeseriesFilter);
-        clearHumidityRule.setCondition(clearHumidityCondition);
+        clearHumidityCondition.setConditionFilter(clearHumidityTimeseriesFilter);
+        clearHumidityRule.setAlarmCondition(clearHumidityCondition);
         clearHumidityRule.setAlarmDetails("Current humidity = ${humidity}");
         lowHumidity.setClearRule(clearHumidityRule);
+
+        lowHumidity.setArguments(Map.of(
+                "humidityAlarmFlagKey", humidityAlarmFlagKey,
+                "humidityAlarmFlagConst", humidityAlarmFlagConst,
+                "humidityKey", humidityKey,
+                "humidityAlarmThresholdKey", humidityAlarmThresholdKey));
 
         lowHumidityRule.setConfiguration(lowHumidity);
 

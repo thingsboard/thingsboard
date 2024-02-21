@@ -263,10 +263,10 @@ public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
                                                         List.of(new SimpleAlarmConditionFilter()), AND)), AND)), AND)), AND)), AND)), AND);
 
         AlarmCondition alarmCondition = new AlarmCondition();
-        alarmCondition.setCondition(complexFilterRoot);
+        alarmCondition.setConditionFilter(complexFilterRoot);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
 
-        alarmRuleCondition.setCondition(alarmCondition);
+        alarmRuleCondition.setAlarmCondition(alarmCondition);
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
 
         AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfileId));
@@ -323,15 +323,16 @@ public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
         temperatureFilter.setOperation(Operation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
-        alarmCondition.setCondition(new ComplexAlarmConditionFilter(Arrays.asList(alarmEnabledFilter, temperatureFilter), ComplexAlarmConditionFilter.ComplexOperation.AND));
+        alarmCondition.setConditionFilter(new ComplexAlarmConditionFilter(Arrays.asList(alarmEnabledFilter, temperatureFilter), ComplexAlarmConditionFilter.ComplexOperation.AND));
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
-        alarmRuleCondition.setArguments(Map.of(
+
+        alarmRuleCondition.setAlarmCondition(alarmCondition);
+        AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
+        alarmRuleConfiguration.setArguments(Map.of(
                 "alarmEnabledConst", alarmEnabledConst,
                 "alarmEnabledKey", alarmEnabledKey,
                 "temperatureKey", temperatureKey,
                 "temperatureConst", temperatureConst));
-        alarmRuleCondition.setCondition(alarmCondition);
-        AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
 
         AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfileId));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));

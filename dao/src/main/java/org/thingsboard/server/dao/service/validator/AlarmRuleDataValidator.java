@@ -97,10 +97,10 @@ public class AlarmRuleDataValidator extends DataValidator<AlarmRule> {
             throw new DataValidationException("Alarm create rule should be specified!");
         }
         configuration.getCreateRules().values().forEach(condition -> {
-            validateAlarmConditionFilterDepth(condition.getCondition().getCondition(), MAX_DEPTH);
+            validateAlarmConditionFilterDepth(condition.getAlarmCondition().getConditionFilter(), MAX_DEPTH);
         });
         if (configuration.getClearRule() != null) {
-            validateAlarmConditionFilterDepth(configuration.getClearRule().getCondition().getCondition(), MAX_DEPTH);
+            validateAlarmConditionFilterDepth(configuration.getClearRule().getAlarmCondition().getConditionFilter(), MAX_DEPTH);
         }
 
         //TODO: validate arguments if needed

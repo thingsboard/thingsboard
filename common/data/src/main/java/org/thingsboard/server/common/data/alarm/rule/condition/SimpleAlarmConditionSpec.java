@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.alarm.rule.condition;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
@@ -25,5 +26,11 @@ public class SimpleAlarmConditionSpec implements AlarmConditionSpec {
     @Override
     public AlarmConditionSpecType getType() {
         return AlarmConditionSpecType.SIMPLE;
+    }
+
+    @Override
+    @JsonIgnore
+    public String getArgumentId() {
+        return null;
     }
 }

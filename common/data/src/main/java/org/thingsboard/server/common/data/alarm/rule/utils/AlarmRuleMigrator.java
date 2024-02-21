@@ -48,7 +48,6 @@ import org.thingsboard.server.common.data.device.profile.alarm.rule.OldCustomTim
 import org.thingsboard.server.common.data.device.profile.alarm.rule.OldDurationAlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.alarm.rule.OldRepeatingAlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.alarm.rule.OldSpecificTimeSchedule;
-import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
 import org.thingsboard.server.common.data.query.DynamicValue;
@@ -88,22 +87,24 @@ public class AlarmRuleMigrator {
         configuration.setPropagateToTenant(oldRule.isPropagateToTenant());
         configuration.setPropagateRelationTypes(oldRule.getPropagateRelationTypes());
 
+        Map<TbPair<String, Integer>, AlarmRuleArgument> arguments = new HashMap<>();
+
         TreeMap<AlarmSeverity, AlarmRuleCondition> createRules = new TreeMap<>();
-        oldRule.getCreateRules().forEach((severity, oldAlarmRule) -> createRules.put(severity, getAlarmRuleCondition(oldAlarmRule)));
+        oldRule.getCreateRules().forEach((severity, oldAlarmRule) -> createRules.put(severity, getAlarmRuleCondition(oldAlarmRule, arguments)));
         configuration.setCreateRules(createRules);
         if (oldRule.getClearRule() != null) {
-            configuration.setClearRule(getAlarmRuleCondition(oldRule.getClearRule()));
+            configuration.setClearRule(getAlarmRuleCondition(oldRule.getClearRule(), arguments));
         }
+
+        configuration.setArguments(arguments.entrySet().stream().collect(Collectors.toMap(entry -> getArgumentId(entry.getKey()), Map.Entry::getValue)));
         alarmRule.setConfiguration(configuration);
         return alarmRule;
     }
 
-    private static AlarmRuleCondition getAlarmRuleCondition(OldAlarmRule oldRule) {
+    private static AlarmRuleCondition getAlarmRuleCondition(OldAlarmRule oldRule, Map<TbPair<String, Integer>, AlarmRuleArgument> arguments) {
         var newCondition = new AlarmRuleCondition();
         newCondition.setDashboardId(oldRule.getDashboardId());
         newCondition.setAlarmDetails(oldRule.getAlarmDetails());
-
-        Map<TbPair<String, Integer>, AlarmRuleArgument> arguments = new HashMap<>();
 
         newCondition.setSchedule(getSchedule(oldRule.getSchedule(), arguments));
 
@@ -122,10 +123,8 @@ public class AlarmRuleMigrator {
             rootCondition = filters.get(0);
         }
 
-        alarmCondition.setCondition(rootCondition);
-        newCondition.setCondition(alarmCondition);
-
-        newCondition.setArguments(arguments.entrySet().stream().collect(Collectors.toMap(entry -> getArgumentId(entry.getKey()), Map.Entry::getValue)));
+        alarmCondition.setConditionFilter(rootCondition);
+        newCondition.setAlarmCondition(alarmCondition);
 
         return newCondition;
     }
