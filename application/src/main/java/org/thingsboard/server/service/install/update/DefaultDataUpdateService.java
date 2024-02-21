@@ -26,12 +26,15 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
+import org.thingsboard.server.dao.customer.CustomerDao;
+import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceConnectivityConfiguration;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
@@ -42,6 +45,7 @@ import org.thingsboard.server.utils.TbNodeUpgradeUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 @Service
@@ -54,6 +58,12 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
     @Autowired
     private RuleChainService ruleChainService;
+
+    @Autowired
+    private CustomerDao customerDao;
+
+    @Autowired
+    private CustomerService customerService;
 
     @Autowired
     private ComponentDiscoveryService componentDiscoveryService;
@@ -74,8 +84,47 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 log.info("Updating data from version 3.6.0 to 3.6.1 ...");
                 migrateDeviceConnectivity();
                 break;
+            case "3.6.3":
+                log.info("Updating data from version 3.6.3 to 3.6.4 ...");
+                updateCustomersWithTheSameTitle();
+                break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
+        }
+    }
+
+    private void updateCustomersWithTheSameTitle() {
+        var customers = new ArrayList<Customer>();
+        new PageDataIterable<>(pageLink ->
+                customerDao.findCustomersWithTheSameTitle(pageLink), DEFAULT_PAGE_SIZE
+        ).forEach(customers::add);
+        if (customers.isEmpty()) {
+            return;
+        }
+        var firstCustomer = customers.get(0);
+        var titleToDeduplicate = firstCustomer.getTitle();
+        var tenantIdToDeduplicate = firstCustomer.getTenantId();
+
+        for (int i = 1; i < customers.size(); i++) {
+            var currentCustomer = customers.get(i);
+            if (currentCustomer.getTitle().equals(titleToDeduplicate) && currentCustomer.getTenantId().equals(tenantIdToDeduplicate)) {
+                reSaveCustomerWithNewTitle(currentCustomer);
+                continue;
+            }
+            titleToDeduplicate = currentCustomer.getTitle();
+            tenantIdToDeduplicate = currentCustomer.getTenantId();
+        }
+    }
+
+    private void reSaveCustomerWithNewTitle(Customer currentCustomer) {
+        String currentTitle = currentCustomer.getTitle();
+        String newTitle = currentTitle + "-" + UUID.randomUUID();
+        currentCustomer.setTitle(newTitle);
+        try {
+            customerService.saveCustomer(currentCustomer);
+        } catch (Exception e) {
+            log.error("[{}] Failed to update customer with id and title: {}, oldTitle: {}",
+                    currentCustomer.getTenantId(), newTitle, currentTitle, e);
         }
     }
 
