@@ -82,6 +82,7 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
     private final TbQueueAdmin fwUpdatesAdmin;
     private final TbQueueAdmin vcAdmin;
     private final TbQueueAdmin housekeeperAdmin;
+    private final TbQueueAdmin housekeeperReprocessingAdmin;
 
     public KafkaTbCoreQueueFactory(TopicService topicService,
                                    TbKafkaSettings kafkaSettings,
@@ -115,6 +116,7 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
         this.fwUpdatesAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getFwUpdatesConfigs());
         this.vcAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getVcConfigs());
         this.housekeeperAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getHousekeeperConfigs());
+        this.housekeeperReprocessingAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getHousekeeperReprocessingConfigs());
     }
 
     @Override
@@ -335,7 +337,7 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
                 .settings(kafkaSettings)
                 .clientId("tb-core-housekeeper-reprocessing-producer-" + serviceInfoProvider.getServiceId())
                 .defaultTopic(topicService.buildTopicName(coreSettings.getHousekeeperReprocessingTopic()))
-                .admin(housekeeperAdmin)
+                .admin(housekeeperReprocessingAdmin)
                 .build();
     }
 
@@ -347,7 +349,7 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
                 .clientId("tb-core-housekeeper-reprocessing-consumer-" + serviceInfoProvider.getServiceId())
                 .groupId(topicService.buildTopicName("tb-core-housekeeper-reprocessing-consumer"))
                 .decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportProtos.ToHousekeeperServiceMsg.parseFrom(msg.getData()), msg.getHeaders()))
-                .admin(housekeeperAdmin)
+                .admin(housekeeperReprocessingAdmin)
                 .statsService(consumerStatsService)
                 .build();
     }

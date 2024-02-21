@@ -15,7 +15,13 @@
  */
 package org.thingsboard.server.dao.housekeeper.data;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import lombok.AccessLevel;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
@@ -24,13 +30,20 @@ import org.thingsboard.server.common.data.id.TenantId;
 
 import java.io.Serializable;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "taskType", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY, defaultImpl = HousekeeperTask.class)
+@JsonSubTypes({
+        @Type(name = "DELETE_ENTITIES", value = EntitiesDeletionHousekeeperTask.class),
+        @Type(name = "UNASSIGN_ALARMS", value = AlarmsUnassignHousekeeperTask.class)
+})
 @Data
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class HousekeeperTask implements Serializable {
 
-    private final TenantId tenantId;
-    private final EntityId entityId;
-    private final HousekeeperTaskType taskType;
-    private final long ts;
+    private TenantId tenantId;
+    private EntityId entityId;
+    private HousekeeperTaskType taskType;
+    private long ts;
 
     protected HousekeeperTask(@NonNull TenantId tenantId, @NonNull EntityId entityId, @NonNull HousekeeperTaskType taskType) {
         this.tenantId = tenantId;

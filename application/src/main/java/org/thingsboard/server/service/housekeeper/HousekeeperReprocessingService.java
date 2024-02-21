@@ -28,7 +28,8 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos.HousekeeperTaskProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperServiceMsg;
-import org.thingsboard.server.queue.TbQueueConsumer;
+import org.thingsboard.server.queue.TbQueueCallback;
+import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
@@ -36,7 +37,9 @@ import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import javax.annotation.PreDestroy;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -90,11 +93,15 @@ public class HousekeeperReprocessingService {
                     }
 
                     for (TbProtoQueueMsg<ToHousekeeperServiceMsg> msg : msgs) {
+                        log.trace("Reprocessing task: {}", msg);
                         try {
                             housekeeperService.processTask(msg);
-                        } catch (Exception e) {
+                        } catch (InterruptedException e) {
+                            return;
+                        } catch (Throwable e) {
                             log.error("Unexpected error during message reprocessing [{}]", msg, e);
                             submitForReprocessing(msg, e);
+                            // fixme: msgs are duplicated
                         }
                     }
                     consumer.commit();
@@ -118,12 +125,15 @@ public class HousekeeperReprocessingService {
     public void submitForReprocessing(TbProtoQueueMsg<ToHousekeeperServiceMsg> queueMsg, Throwable error) {
         ToHousekeeperServiceMsg msg = queueMsg.getValue();
         HousekeeperTaskProto task = msg.getTask();
+
         int attempt = task.getAttempt() + 1;
+        Set<String> errors = new LinkedHashSet<>(task.getErrorsList());
+        errors.add(StringUtils.truncate(ExceptionUtils.getStackTrace(error), 1024));
         msg = msg.toBuilder()
                 .setTask(task.toBuilder()
                         .setAttempt(attempt)
-                        .addErrors(StringUtils.truncate(ExceptionUtils.getStackTrace(error), 1024))
-                        .setTs(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(reprocessingDelay))
+                        .clearErrors().addAllErrors(errors)
+                        .setTs(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis((long) (reprocessingDelay * 0.8)))
                         .build())
                 .build();
 

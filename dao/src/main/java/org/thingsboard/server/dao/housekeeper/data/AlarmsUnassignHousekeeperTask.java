@@ -15,13 +15,15 @@
  */
 package org.thingsboard.server.dao.housekeeper.data;
 
-import lombok.Getter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.User;
 
-@Getter
+@Data
+@EqualsAndHashCode(callSuper = true)
 public class AlarmsUnassignHousekeeperTask extends HousekeeperTask {
 
-    private final String userTitle;
+    private String userTitle;
 
     protected AlarmsUnassignHousekeeperTask(User user) {
         super(user.getTenantId(), user.getId(), HousekeeperTaskType.UNASSIGN_ALARMS);

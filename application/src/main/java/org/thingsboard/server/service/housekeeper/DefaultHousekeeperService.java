@@ -15,11 +15,11 @@
  */
 package org.thingsboard.server.service.housekeeper;
 
-import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.housekeeper.HousekeeperService;
@@ -40,7 +40,6 @@ import org.thingsboard.server.service.housekeeper.processor.HousekeeperTaskProce
 import javax.annotation.PreDestroy;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -95,8 +94,11 @@ public class DefaultHousekeeperService implements HousekeeperService {
                     }
 
                     for (TbProtoQueueMsg<ToHousekeeperServiceMsg> msg : msgs) {
+                        log.trace("Processing task: {}", msg);
                         try {
                             processTask(msg);
+                        } catch (InterruptedException e) {
+                            return;
                         } catch (Throwable e) {
                             log.error("Unexpected error during message processing [{}]", msg, e);
                             reprocessingService.submitForReprocessing(msg, e);
@@ -121,16 +123,20 @@ public class DefaultHousekeeperService implements HousekeeperService {
     @SuppressWarnings("unchecked")
     protected <T extends HousekeeperTask> void processTask(TbProtoQueueMsg<ToHousekeeperServiceMsg> queueMsg) throws Exception {
         ToHousekeeperServiceMsg msg = queueMsg.getValue();
-        HousekeeperTask task = dataDecodingEncodingService.<HousekeeperTask>decode(msg.getTask().getValue().toByteArray()).get();
-        HousekeeperTaskProcessor<T> taskProcessor = getTaskProcessor(task.getTaskType());
+        HousekeeperTask task = JacksonUtil.fromString(msg.getTask().getValue(), HousekeeperTask.class);
+        HousekeeperTaskProcessor<T> taskProcessor = (HousekeeperTaskProcessor<T>) taskProcessors.get(task.getTaskType());
+        if (taskProcessor == null) {
+            throw new IllegalArgumentException("Unsupported task type " + task.getTaskType());
+        }
 
-        log.info("[{}][{}][{}] Processing task: {}", task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(), task);
         try {
             Future<Object> future = executor.submit(() -> {
                 taskProcessor.process((T) task);
                 return null;
             });
             future.get(taskProcessingTimeout, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            throw e;
         } catch (Throwable e) {
             Throwable error = e;
             if (e instanceof ExecutionException) {
@@ -152,21 +158,15 @@ public class DefaultHousekeeperService implements HousekeeperService {
 
     @Override
     public void submitTask(UUID key, HousekeeperTask task) {
+        log.trace("[{}][{}][{}] Submitting task: {}", task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(), task.getTaskType());
         TopicPartitionInfo tpi = TopicPartitionInfo.builder().topic(producer.getDefaultTopic()).build();
         producer.send(tpi, new TbProtoQueueMsg<>(key, ToHousekeeperServiceMsg.newBuilder()
                 .setTask(HousekeeperTaskProto.newBuilder()
-                        .setValue(ByteString.copyFrom(dataDecodingEncodingService.encode(task)))
+                        .setValue(JacksonUtil.toString(task))
                         .setTs(task.getTs())
                         .setAttempt(0)
                         .build())
                 .build()), null);
-        log.trace("[{}][{}][{}] Submitted task: {}", task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(), task.getTaskType());
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T extends HousekeeperTask> HousekeeperTaskProcessor<T> getTaskProcessor(HousekeeperTaskType taskType) {
-        return Optional.ofNullable((HousekeeperTaskProcessor<T>) taskProcessors.get(taskType))
-                .orElseThrow(() -> new IllegalArgumentException("Unsupported task type " + taskType));
     }
 
     @PreDestroy

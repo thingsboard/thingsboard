@@ -84,6 +84,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
     private final TbQueueAdmin fwUpdatesAdmin;
     private final TbQueueAdmin vcAdmin;
     private final TbQueueAdmin housekeeperAdmin;
+    private final TbQueueAdmin housekeeperReprocessingAdmin;
 
     private final AtomicLong consumerCount = new AtomicLong();
 
@@ -118,6 +119,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
         this.fwUpdatesAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getFwUpdatesConfigs());
         this.vcAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getVcConfigs());
         this.housekeeperAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getHousekeeperConfigs());
+        this.housekeeperReprocessingAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getHousekeeperReprocessingConfigs());
     }
 
     @Override
@@ -378,7 +380,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
                 .settings(kafkaSettings)
                 .clientId("monolith-housekeeper-reprocessing-producer-" + serviceInfoProvider.getServiceId())
                 .defaultTopic(topicService.buildTopicName(coreSettings.getHousekeeperReprocessingTopic()))
-                .admin(housekeeperAdmin)
+                .admin(housekeeperReprocessingAdmin)
                 .build();
     }
 
@@ -390,7 +392,7 @@ public class KafkaMonolithQueueFactory implements TbCoreQueueFactory, TbRuleEngi
                 .clientId("monolith-housekeeper-reprocessing-consumer-" + serviceInfoProvider.getServiceId())
                 .groupId(topicService.buildTopicName("monolith-housekeeper-reprocessing-consumer"))
                 .decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToHousekeeperServiceMsg.parseFrom(msg.getData()), msg.getHeaders()))
-                .admin(housekeeperAdmin)
+                .admin(housekeeperReprocessingAdmin)
                 .statsService(consumerStatsService)
                 .build();
     }
