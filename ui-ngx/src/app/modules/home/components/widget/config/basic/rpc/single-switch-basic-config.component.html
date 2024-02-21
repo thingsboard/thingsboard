@@ -36,7 +36,6 @@
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.turn-on-hint' | translate}}" translate>widgets.rpc-state.turn-on</div>
       <tb-set-value-action-settings fxFlex
                                     panelTitle="widgets.rpc-state.turn-on"
-                                    [valueType]="valueType.BOOLEAN"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
@@ -46,7 +45,6 @@
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.turn-off-hint' | translate}}" translate>widgets.rpc-state.turn-off</div>
       <tb-set-value-action-settings fxFlex
                                     panelTitle="widgets.rpc-state.turn-off"
-                                    [valueType]="valueType.BOOLEAN"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
@@ -84,7 +82,7 @@
         {{ 'widgets.single-switch.auto-scale' | translate }}
       </mat-slide-toggle>
     </div>
-    <div class="tb-form-row">
+    <div class="tb-form-row column-xs">
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showLabel">
         {{ 'widgets.single-switch.label' | translate }}
       </mat-slide-toggle>
@@ -101,7 +99,7 @@
         </tb-color-input>
       </div>
     </div>
-    <div class="tb-form-row">
+    <div class="tb-form-row column-xs">
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showIcon">
         {{ 'widgets.single-switch.icon' | translate }}
       </mat-slide-toggle>

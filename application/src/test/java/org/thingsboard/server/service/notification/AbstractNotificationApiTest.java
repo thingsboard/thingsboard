@@ -22,7 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.util.Pair;
 import org.thingsboard.rule.engine.api.MailService;
-import org.thingsboard.rule.engine.api.slack.SlackService;
+import org.thingsboard.rule.engine.api.notification.SlackService;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
@@ -41,6 +41,7 @@ import org.thingsboard.server.common.data.notification.rule.DefaultNotificationR
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.rule.NotificationRuleInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.settings.NotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
@@ -48,6 +49,8 @@ import org.thingsboard.server.common.data.notification.targets.platform.UserList
 import org.thingsboard.server.common.data.notification.targets.platform.UsersFilter;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.EmailDeliveryMethodNotificationTemplate;
+import org.thingsboard.server.common.data.notification.template.HasSubject;
+import org.thingsboard.server.common.data.notification.template.MobileAppDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
 import org.thingsboard.server.common.data.notification.template.SmsDeliveryMethodNotificationTemplate;
@@ -59,6 +62,7 @@ import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationRuleService;
+import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
@@ -92,6 +96,8 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
     @Autowired
     protected NotificationRequestService notificationRequestService;
     @Autowired
+    protected NotificationSettingsService notificationSettingsService;
+    @Autowired
     protected SqlPartitioningRepository partitioningRepository;
 
     public static final String DEFAULT_NOTIFICATION_SUBJECT = "Just a test";
@@ -104,6 +110,7 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
         notificationTemplateService.deleteNotificationTemplatesByTenantId(TenantId.SYS_TENANT_ID);
         notificationTargetService.deleteNotificationTargetsByTenantId(TenantId.SYS_TENANT_ID);
         partitioningRepository.dropPartitionsBefore("notification", Long.MAX_VALUE, 1);
+        notificationSettingsService.deleteNotificationSettings(TenantId.SYS_TENANT_ID);
     }
 
     protected NotificationTarget createNotificationTarget(UserId... usersIds) {
@@ -168,26 +175,28 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
             DeliveryMethodNotificationTemplate deliveryMethodNotificationTemplate;
             switch (deliveryMethod) {
                 case WEB: {
-                    WebDeliveryMethodNotificationTemplate template = new WebDeliveryMethodNotificationTemplate();
-                    template.setSubject(subject);
-                    deliveryMethodNotificationTemplate = template;
+                    deliveryMethodNotificationTemplate = new WebDeliveryMethodNotificationTemplate();
                     break;
                 }
                 case EMAIL: {
-                    EmailDeliveryMethodNotificationTemplate template = new EmailDeliveryMethodNotificationTemplate();
-                    template.setSubject(subject);
-                    deliveryMethodNotificationTemplate = template;
+                    deliveryMethodNotificationTemplate = new EmailDeliveryMethodNotificationTemplate();
                     break;
                 }
                 case SMS: {
                     deliveryMethodNotificationTemplate = new SmsDeliveryMethodNotificationTemplate();
                     break;
                 }
+                case MOBILE_APP:
+                    deliveryMethodNotificationTemplate = new MobileAppDeliveryMethodNotificationTemplate();
+                    break;
                 default:
                     throw new IllegalArgumentException("Unsupported delivery method " + deliveryMethod);
             }
             deliveryMethodNotificationTemplate.setEnabled(true);
             deliveryMethodNotificationTemplate.setBody(text);
+            if (deliveryMethodNotificationTemplate instanceof HasSubject) {
+                ((HasSubject) deliveryMethodNotificationTemplate).setSubject(subject);
+            }
             config.getDeliveryMethodsTemplates().put(deliveryMethod, deliveryMethodNotificationTemplate);
         }
         notificationTemplate.setConfiguration(config);
@@ -200,6 +209,15 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
 
     protected void saveNotificationSettings(NotificationSettings notificationSettings) throws Exception {
         doPost("/api/notification/settings", notificationSettings).andExpect(status().isOk());
+    }
+
+    protected void saveNotificationSettings(NotificationDeliveryMethodConfig... configs) throws Exception {
+        NotificationSettings settings = new NotificationSettings();
+        settings.setDeliveryMethodsConfigs(Arrays.stream(configs)
+                .collect(Collectors.toMap(
+                        NotificationDeliveryMethodConfig::getMethod, config -> config
+                )));
+        saveNotificationSettings(settings);
     }
 
     protected Pair<User, NotificationApiWsClient> createUserAndConnectWsClient(Authority authority) throws Exception {

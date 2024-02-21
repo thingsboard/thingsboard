@@ -17,7 +17,10 @@ package org.thingsboard.server.dao.device;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class GatewayInfo {
+    private List<String> availableVersions;
     private String version;
 }

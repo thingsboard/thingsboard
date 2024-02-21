@@ -108,6 +108,7 @@ public class DeviceConnectivityController extends BaseController {
     }
 
     @ApiOperation(value = "Download generated docker-compose.yml file for gateway (downloadGatewayDockerCompose)", notes = "Download generated docker-compose.yml for gateway.")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device-connectivity/gateway-launch/{deviceId}/docker-compose/download", method = RequestMethod.GET)
     @ResponseBody
     public ResponseEntity<org.springframework.core.io.Resource> downloadGatewayDockerCompose(@ApiParam(value = DEVICE_ID_PARAM_DESCRIPTION)

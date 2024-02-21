@@ -28,7 +28,7 @@
       {{ widgetButtonTypeTranslationMap.get(type) | translate }}
     </tb-image-cards-select-option>
   </tb-image-cards-select>
-  <div class="tb-form-row">
+  <div *ngIf="withAutoScale" class="tb-form-row">
     <mat-slide-toggle class="mat-slide" formControlName="autoScale">
       {{ 'widgets.button.auto-scale' | translate }}
     </mat-slide-toggle>
@@ -56,7 +56,11 @@
       </tb-material-icon-select>
     </div>
   </div>
-  <div class="tb-form-row space-between">
+  <div *ngIf="withBorderRadius" class="tb-form-row">
+    <div class="fixed-title-width">{{ 'widgets.button.border-radius' | translate }}</div>
+    <tb-css-size-input flex formControlName="borderRadius"></tb-css-size-input>
+  </div>
+  <div class="tb-form-row space-between column-xs">
     <div>{{ 'widgets.button.color-palette' | translate }}</div>
     <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="12px">
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
@@ -88,6 +92,7 @@
             [state]="state"
             [appearance]="this.appearanceFormGroup.value"
             [borderRadius]="borderRadius"
+            [autoScale]="autoScale"
             [formControlName]="state">
           </tb-widget-button-custom-style>
         </div>

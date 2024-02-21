@@ -318,6 +318,18 @@ import {
 import {
   ActionButtonWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/button/action-button-widget-settings.component';
+import {
+  CommandButtonWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/button/command-button-widget-settings.component';
+import {
+  PowerButtonWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/button/power-button-widget-settings.component';
+import {
+  SliderWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/control/slider-widget-settings.component';
+import {
+  ToggleButtonWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/button/toggle-button-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -432,7 +444,11 @@ import {
     RangeChartWidgetSettingsComponent,
     BarChartWithLabelsWidgetSettingsComponent,
     SingleSwitchWidgetSettingsComponent,
-    ActionButtonWidgetSettingsComponent
+    ActionButtonWidgetSettingsComponent,
+    CommandButtonWidgetSettingsComponent,
+    PowerButtonWidgetSettingsComponent,
+    SliderWidgetSettingsComponent,
+    ToggleButtonWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -552,7 +568,11 @@ import {
     RangeChartWidgetSettingsComponent,
     BarChartWithLabelsWidgetSettingsComponent,
     SingleSwitchWidgetSettingsComponent,
-    ActionButtonWidgetSettingsComponent
+    ActionButtonWidgetSettingsComponent,
+    CommandButtonWidgetSettingsComponent,
+    PowerButtonWidgetSettingsComponent,
+    SliderWidgetSettingsComponent,
+    ToggleButtonWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -639,5 +659,9 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-range-chart-widget-settings': RangeChartWidgetSettingsComponent,
   'tb-bar-chart-with-labels-widget-settings': BarChartWithLabelsWidgetSettingsComponent,
   'tb-single-switch-widget-settings': SingleSwitchWidgetSettingsComponent,
-  'tb-action-button-widget-settings': ActionButtonWidgetSettingsComponent
+  'tb-action-button-widget-settings': ActionButtonWidgetSettingsComponent,
+  'tb-command-button-widget-settings': CommandButtonWidgetSettingsComponent,
+  'tb-power-button-widget-settings': PowerButtonWidgetSettingsComponent,
+  'tb-slider-widget-settings': SliderWidgetSettingsComponent,
+  'tb-toggle-button-widget-settings': ToggleButtonWidgetSettingsComponent
 };

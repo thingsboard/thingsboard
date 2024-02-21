@@ -538,7 +538,8 @@ export enum WidgetActionType {
   openDashboard = 'openDashboard',
   custom = 'custom',
   customPretty = 'customPretty',
-  mobileAction = 'mobileAction'
+  mobileAction = 'mobileAction',
+  openURL = 'openURL'
 }
 
 export enum WidgetMobileActionType {
@@ -559,7 +560,8 @@ export const widgetActionTypeTranslationMap = new Map<WidgetActionType, string>(
     [ WidgetActionType.openDashboard, 'widget-action.open-dashboard' ],
     [ WidgetActionType.custom, 'widget-action.custom' ],
     [ WidgetActionType.customPretty, 'widget-action.custom-pretty' ],
-    [ WidgetActionType.mobileAction, 'widget-action.mobile-action' ]
+    [ WidgetActionType.mobileAction, 'widget-action.mobile-action' ],
+    [ WidgetActionType.openURL, 'widget-action.open-URL' ]
   ]
 );
 
@@ -671,6 +673,7 @@ export interface WidgetAction extends CustomActionDescriptor {
   setEntityId?: boolean;
   stateEntityParamName?: string;
   mobileAction?: WidgetMobileActionDescriptor;
+  url?: string;
 }
 
 export interface WidgetActionDescriptor extends WidgetAction {

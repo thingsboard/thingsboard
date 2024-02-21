@@ -39,12 +39,6 @@ $switchColorDisabled: var(--tb-single-switch-color-disabled, #D5D7E5);
     position: absolute;
     inset: 12px;
   }
-  .tb-single-switch-progress {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-  }
   > div.tb-single-switch-title-panel {
     position: absolute;
     top: 12px;

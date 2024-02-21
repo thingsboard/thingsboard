@@ -131,6 +131,11 @@ public final class TbMsg implements Serializable {
                 metaData.copy(), TbMsgDataType.JSON, data, null, null, null, TbMsgCallback.EMPTY);
     }
 
+    public static TbMsg newMsg(TbMsgType type, EntityId originator, TbMsgMetaData metaData, String data, long ts) {
+        return new TbMsg(null, UUID.randomUUID(), ts, type, originator, null,
+                metaData.copy(), TbMsgDataType.JSON, data, null, null, null, TbMsgCallback.EMPTY);
+    }
+
     // REALLY NEW MSG
 
     /**
@@ -335,7 +340,7 @@ public final class TbMsg implements Serializable {
         this.originator = originator;
         if (customerId == null || customerId.isNullUid()) {
             if (originator != null && originator.getEntityType() == EntityType.CUSTOMER) {
-                this.customerId = (CustomerId) originator;
+                this.customerId = new CustomerId(originator.getId());
             } else {
                 this.customerId = null;
             }

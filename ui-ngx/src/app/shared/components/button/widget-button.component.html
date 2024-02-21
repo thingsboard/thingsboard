@@ -25,15 +25,16 @@
         (mouseleave)="mousePressed = false"
         [disabled]="disabled"
         [class]="'tb-'+appearance.type"
+        [class.tb-icon-only]="appearance.showIcon && !appearance.showLabel"
         [class.tb-pressed]="mousePressed"
         [class.tb-pressed-state]="pressed"
         [class.tb-hover-state]="hovered"
         [class.tb-active-state]="activated"
         [class.tb-disabled-state]="disabled"
-        [style.border-radius]="borderRadius"
+        [style.border-radius]="computedBorderRadius"
         [style.pointer-events]="disableEvents ? 'none' : ''">
   <div #widgetButtonContent class="tb-widget-button-content" *ngIf="appearance.showIcon || appearance.showLabel">
     <tb-icon matButtonIcon *ngIf="appearance.showIcon" [style]="iconStyle">{{ appearance.icon }}</tb-icon>
-    <span *ngIf="appearance.showLabel" class="tb-widget-button-label">{{ appearance.label }}</span>
+    <span *ngIf="appearance.showLabel" class="tb-widget-button-label">{{ label$ | async }}</span>
   </div>
 </button>

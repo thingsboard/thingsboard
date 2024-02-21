@@ -25,7 +25,8 @@ import {
   OnInit,
   Output,
   Renderer2,
-  SimpleChanges, ViewChild,
+  SimpleChanges,
+  ViewChild,
   ViewEncapsulation
 } from '@angular/core';
 import {
@@ -33,9 +34,12 @@ import {
   widgetButtonDefaultAppearance
 } from '@shared/components/button/widget-button.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import { ComponentStyle, iconStyle } from '@shared/models/widget-settings.models';
+import { ComponentStyle, iconStyle, validateCssSize } from '@shared/models/widget-settings.models';
 import { UtilsService } from '@core/services/utils.service';
 import { ResizeObserver } from '@juggle/resize-observer';
+import { Observable, of } from 'rxjs';
+import { WidgetContext } from '@home/models/widget-component.models';
+import { isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
 
 const initialButtonHeight = 60;
 const horizontalLayoutPadding = 24;
@@ -62,6 +66,9 @@ export class WidgetButtonComponent implements OnInit, AfterViewInit, OnDestroy, 
   borderRadius = '4px';
 
   @Input()
+  autoScale: boolean;
+
+  @Input()
   @coerceBoolean()
   disabled = false;
 
@@ -81,10 +88,17 @@ export class WidgetButtonComponent implements OnInit, AfterViewInit, OnDestroy, 
   @coerceBoolean()
   disableEvents = false;
 
+  @Input()
+  ctx: WidgetContext;
+
   @Output()
   clicked = new EventEmitter<MouseEvent>();
 
+  label$: Observable<string>;
+
   iconStyle: ComponentStyle = {};
+
+  computedBorderRadius: string;
 
   mousePressed = false;
 
@@ -106,6 +120,10 @@ export class WidgetButtonComponent implements OnInit, AfterViewInit, OnDestroy, 
       if (!change.firstChange) {
         if (propName === 'appearance') {
           this.updateAppearance();
+        } else if (propName === 'borderRadius') {
+          this.updateBorderRadius();
+        } else if (propName === 'autoScale') {
+          this.updateAutoScale();
         }
       }
     }
@@ -122,15 +140,34 @@ export class WidgetButtonComponent implements OnInit, AfterViewInit, OnDestroy, 
     this.clearAppearanceCss();
   }
 
+  public validateSize() {
+    if (this.appearance.autoScale && this.widgetButton.nativeElement) {
+      this.onResize();
+    }
+  }
+
   private updateAppearance(): void {
     this.clearAppearanceCss();
     if (this.appearance.showIcon) {
       this.iconStyle = iconStyle(this.appearance.iconSize, this.appearance.iconSizeUnit);
     }
+    if (this.appearance.showLabel) {
+      this.label$ = this.ctx ? this.ctx.registerLabelPattern(this.appearance.label, this.label$) : of(this.appearance.label);
+    }
+    this.updateBorderRadius();
     const appearanceCss = generateWidgetButtonAppearanceCss(this.appearance);
     this.appearanceCssClass = this.utils.applyCssToElement(this.renderer, this.elementRef.nativeElement,
       'tb-widget-button', appearanceCss);
     this.updateAutoScale();
+  }
+
+  private updateBorderRadius(): void {
+    const validatedBorderRadius = validateCssSize(this.appearance.borderRadius);
+    if (validatedBorderRadius) {
+      this.computedBorderRadius = validatedBorderRadius;
+    } else {
+      this.computedBorderRadius = this.borderRadius;
+    }
   }
 
   private clearAppearanceCss(): void {
@@ -145,7 +182,8 @@ export class WidgetButtonComponent implements OnInit, AfterViewInit, OnDestroy, 
       this.buttonResize$.disconnect();
     }
     if (this.widgetButton && this.widgetButtonContent) {
-      if (this.appearance.autoScale) {
+      const autoScale = isDefinedAndNotNull(this.autoScale) ? this.autoScale : this.appearance.autoScale;
+      if (autoScale) {
         this.buttonResize$ = new ResizeObserver(() => {
           this.onResize();
         });

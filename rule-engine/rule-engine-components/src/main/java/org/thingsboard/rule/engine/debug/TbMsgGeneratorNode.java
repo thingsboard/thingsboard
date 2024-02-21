@@ -79,7 +79,6 @@ public class TbMsgGeneratorNode implements TbNode {
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        log.trace("init generator with config {}", configuration);
         this.config = TbNodeUtils.convert(configuration, TbMsgGeneratorNodeConfiguration.class);
         this.delay = TimeUnit.SECONDS.toMillis(config.getPeriodInSeconds());
         this.currentMsgCount = 0;
@@ -90,17 +89,18 @@ public class TbMsgGeneratorNode implements TbNode {
         } else {
             originatorId = ctx.getSelfId();
         }
+        log.debug("[{}] Initializing generator with config {}", originatorId, configuration);
         updateGeneratorState(ctx);
     }
 
     @Override
     public void onPartitionChangeMsg(TbContext ctx, PartitionChangeMsg msg) {
-        log.trace("onPartitionChangeMsg, PartitionChangeMsg {}, config {}", msg, config);
+        log.debug("[{}] Handling partition change msg: {}", originatorId, msg);
         updateGeneratorState(ctx);
     }
 
     private void updateGeneratorState(TbContext ctx) {
-        log.trace("updateGeneratorState, config {}", config);
+        log.trace("[{}] Updating generator state, config {}", originatorId, config);
         if (ctx.isLocalEntity(originatorId)) {
             if (initialized.compareAndSet(false, true)) {
                 this.scriptEngine = ctx.createScriptEngine(config.getScriptLang(),
@@ -114,7 +114,7 @@ public class TbMsgGeneratorNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        log.trace("onMsg, config {}, msg {}", config, msg);
+        log.trace("[{}] onMsg. Expected msg id: {}, msg: {}, config: {}", originatorId, nextTickId, msg, config);
         if (initialized.get() && msg.isTypeOf(TbMsgType.GENERATOR_NODE_SELF_MSG) && msg.getId().equals(nextTickId)) {
             TbStopWatch sw = TbStopWatch.create();
             withCallback(generate(ctx, msg),
@@ -138,7 +138,6 @@ public class TbMsgGeneratorNode implements TbNode {
     }
 
     private void scheduleTickMsg(TbContext ctx, TbMsg msg) {
-        log.trace("scheduleTickMsg, config {}", config);
         long curTs = System.currentTimeMillis();
         if (lastScheduledTs == 0L) {
             lastScheduledTs = curTs;
@@ -149,6 +148,7 @@ public class TbMsgGeneratorNode implements TbNode {
                 getCustomerIdFromMsg(msg), TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
         nextTickId = tickMsg.getId();
         ctx.tellSelf(tickMsg, curDelay);
+        log.trace("[{}] Scheduled tick msg with delay {}, msg: {}, config: {}", originatorId, curDelay, tickMsg, config);
     }
 
     private ListenableFuture<TbMsg> generate(TbContext ctx, TbMsg msg) {
@@ -175,8 +175,11 @@ public class TbMsgGeneratorNode implements TbNode {
 
     @Override
     public void destroy() {
-        log.trace("destroy, config {}", config);
+        log.debug("[{}] Stopping generator", originatorId);
+        initialized.set(false);
         prevMsg = null;
+        nextTickId = null;
+        lastScheduledTs = 0;
         if (scriptEngine != null) {
             scriptEngine.destroy();
             scriptEngine = null;

@@ -48,8 +48,10 @@
         widgets.button.preview
       </div>
       <tb-widget-button
+        #widgetButtonPreview
         [appearance]="previewAppearance"
         [borderRadius]="borderRadius"
+        [autoScale]="autoScale"
         disableEvents
         [hovered]="state === widgetButtonState.hovered"
         [pressed]="state === widgetButtonState.pressed"

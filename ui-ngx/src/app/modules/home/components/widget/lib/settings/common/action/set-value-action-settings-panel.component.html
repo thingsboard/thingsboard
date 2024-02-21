@@ -97,7 +97,8 @@
         <div class="fixed-title-width">{{ (setValueSettingsFormGroup.get('action').value === setValueAction.EXECUTE_RPC ?
           'widgets.value-action.parameters' : 'widgets.value-action.value') | translate }}</div>
         <tb-toggle-select fxFlex formControlName="type">
-          <tb-toggle-option [value]="valueToDataType.CONSTANT">{{ 'widgets.value-action.converter-constant' | translate }}</tb-toggle-option>
+          <tb-toggle-option *ngIf="valueType !== ValueType.BOOLEAN" [value]="valueToDataType.VALUE">{{ 'widgets.value-action.converter-value' | translate }}</tb-toggle-option>
+          <tb-toggle-option *ngIf="valueType === ValueType.BOOLEAN" [value]="valueToDataType.CONSTANT">{{ 'widgets.value-action.converter-constant' | translate }}</tb-toggle-option>
           <tb-toggle-option [value]="valueToDataType.FUNCTION">{{ 'widgets.value-action.converter-function' | translate }}</tb-toggle-option>
           <tb-toggle-option *ngIf="setValueSettingsFormGroup.get('action').value === setValueAction.EXECUTE_RPC"
                               [value]="valueToDataType.NONE">{{ 'widgets.value-action.converter-none' | translate }}</tb-toggle-option>

@@ -30,13 +30,13 @@ import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { SetValueAction, SetValueSettings, ValueToDataType } from '@shared/models/action-widget-settings.models';
 import { TranslateService } from '@ngx-translate/core';
-import { ValueType } from '@shared/models/constants';
 import { IAliasController } from '@core/api/widget-api.models';
 import { TargetDevice, widgetType } from '@shared/models/widget.models';
 import { isDefinedAndNotNull } from '@core/utils';
 import {
   SetValueActionSettingsPanelComponent
 } from '@home/components/widget/lib/settings/common/action/set-value-action-settings-panel.component';
+import { ValueType } from '@shared/models/constants';
 
 @Component({
   selector: 'tb-set-value-action-settings',
@@ -60,7 +60,7 @@ export class SetValueActionSettingsComponent implements OnInit, ControlValueAcce
   panelTitle: string;
 
   @Input()
-  valueType: ValueType;
+  valueType = ValueType.BOOLEAN;
 
   @Input()
   aliasController: IAliasController;
@@ -142,6 +142,9 @@ export class SetValueActionSettingsComponent implements OnInit, ControlValueAcce
   private updateDisplayValue() {
     let value: any;
     switch (this.modelValue.valueToData.type) {
+      case ValueToDataType.VALUE:
+        value = 'value';
+        break;
       case ValueToDataType.CONSTANT:
         value = this.modelValue.valueToData.constantValue;
         break;

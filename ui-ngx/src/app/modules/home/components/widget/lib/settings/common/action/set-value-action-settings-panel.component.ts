@@ -22,18 +22,17 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { merge } from 'rxjs';
 import {
-  getValueActions,
   SetValueAction,
-  setValueActions, setValueActionsByWidgetType,
+  setValueActionsByWidgetType,
   setValueActionTranslations,
   SetValueSettings,
   ValueToDataType
 } from '@shared/models/action-widget-settings.models';
-import { ValueType } from '@shared/models/constants';
 import { TargetDevice, widgetType } from '@shared/models/widget.models';
 import { AttributeScope, DataKeyType, telemetryTypeTranslationsShort } from '@shared/models/telemetry/telemetry.models';
 import { IAliasController } from '@core/api/widget-api.models';
 import { WidgetService } from '@core/http/widget.service';
+import { ValueType } from '@shared/models/constants';
 
 @Component({
   selector: 'tb-set-value-action-settings-panel',
@@ -48,10 +47,10 @@ export class SetValueActionSettingsPanelComponent extends PageComponent implemen
   panelTitle: string;
 
   @Input()
-  setValueSettings: SetValueSettings;
+  valueType = ValueType.BOOLEAN;
 
   @Input()
-  valueType: ValueType;
+  setValueSettings: SetValueSettings;
 
   @Input()
   aliasController: IAliasController;
