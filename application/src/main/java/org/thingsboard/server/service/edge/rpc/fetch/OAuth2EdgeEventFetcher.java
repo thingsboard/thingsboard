@@ -29,25 +29,29 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @AllArgsConstructor
 @Slf4j
-public class OAuth2EdgeEventFetcher extends BasePageableEdgeEventFetcher<OAuth2Info> {
+public class OAuth2EdgeEventFetcher implements EdgeEventFetcher {
 
     private final OAuth2Service oAuth2Service;
 
     @Override
-    PageData<OAuth2Info> fetchPageData(TenantId tenantId, Edge edge, PageLink pageLink) {
-        OAuth2Info result = oAuth2Service.findOAuth2Info();
-
-        // return PageData object to be in sync with other fetchers
-        return new PageData<>(List.of(result), 1, 1, false);
+    public PageLink getPageLink(int pageSize) {
+        return null;
     }
 
     @Override
-    EdgeEvent constructEdgeEvent(TenantId tenantId, Edge edge, OAuth2Info entity) {
-        return EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.OAUTH2,
-                EdgeEventActionType.ADDED, null, JacksonUtil.valueToTree(entity));
+    public PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, Edge edge, PageLink pageLink) {
+        List<EdgeEvent> result = new ArrayList<>();
+        OAuth2Info oAuth2Info = oAuth2Service.findOAuth2Info();
+        if (oAuth2Info.isEdgeEnabled()) {
+            result.add(EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.OAUTH2,
+                    EdgeEventActionType.ADDED, null, JacksonUtil.valueToTree(oAuth2Info)));
+        }
+        // returns PageData object to be in sync with other fetchers
+        return new PageData<>(result, 1, result.size(), false);
     }
 }

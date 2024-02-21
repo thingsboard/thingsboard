@@ -46,7 +46,7 @@ public class CustomerEdgeEventFetcher implements EdgeEventFetcher {
         List<EdgeEvent> result = new ArrayList<>();
         result.add(EdgeUtils.constructEdgeEvent(edge.getTenantId(), edge.getId(),
                 EdgeEventType.CUSTOMER, EdgeEventActionType.ADDED, customerId, null));
-        // @voba - returns PageData object to be in sync with other fetchers
+        // returns PageData object to be in sync with other fetchers
         return new PageData<>(result, 1, result.size(), false);
     }
 }

@@ -165,6 +165,9 @@ public class EdgeEventSourcingListener {
             }
         } else if (entity instanceof AlarmApiCallResult || entity instanceof Alarm) {
             return false;
+        } else if (entity instanceof OAuth2Info) {
+            OAuth2Info oAuth2Info = (OAuth2Info) entity;
+            return oAuth2Info.isEdgeEnabled();
         }
         // Default: If the entity doesn't match any of the conditions, consider it as valid.
         return true;

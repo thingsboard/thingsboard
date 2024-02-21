@@ -283,6 +283,7 @@
           "domain-schema-https": "HTTPS",
           "domain-schema-mixed": "HTTP+HTTPS",
           "enable": "Enable OAuth2 settings",
+          "edge-enable": "Propagate OAuth2 setting to Edge",
           "domains": "Domains",
           "mobile-apps": "Mobile applications",
           "no-mobile-apps": "No applications configured",

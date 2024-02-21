@@ -204,7 +204,8 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
   private buildOAuth2SettingsForm(): void {
     this.oauth2SettingsForm = this.fb.group({
       oauth2ParamsInfos: this.fb.array([]),
-      enabled: [false]
+      enabled: [false],
+      edgeEnabled: [false]
     });
   }
 
