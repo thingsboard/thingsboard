@@ -20,7 +20,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.Data;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
-import org.thingsboard.server.common.data.alarm.rule.AlarmRuleTargetEntity;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleEntityFilter;
 
 import java.io.Serializable;
@@ -35,9 +34,6 @@ public class AlarmRuleConfiguration implements Serializable {
 
     @Schema(description = "List of JSON objects representing source entity filters. These filters select a certain entity on which the specific Alarm Rule condition will be applied.")
     private List<AlarmRuleEntityFilter> sourceEntityFilters;
-
-    @Schema(description = "JSON object representing target entity where the alarm will be created")
-    private AlarmRuleTargetEntity alarmTargetEntity;
 
     @Schema(description = "JSON object representing the alarm rule arguments")
     private Map<String, AlarmRuleArgument> arguments;

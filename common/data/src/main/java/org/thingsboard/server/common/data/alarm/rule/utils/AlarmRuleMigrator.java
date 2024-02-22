@@ -18,7 +18,6 @@ package org.thingsboard.server.common.data.alarm.rule.utils;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
-import org.thingsboard.server.common.data.alarm.rule.AlarmRuleOriginatorTargetEntity;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilter;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilterKey;
@@ -81,7 +80,6 @@ public class AlarmRuleMigrator {
 
         var configuration = new AlarmRuleConfiguration();
         configuration.setSourceEntityFilters(Collections.singletonList(new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfile.getId()))));
-        configuration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
         configuration.setPropagate(oldRule.isPropagate());
         configuration.setPropagateToOwner(oldRule.isPropagateToOwner());
         configuration.setPropagateToTenant(oldRule.isPropagateToTenant());

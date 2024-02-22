@@ -18,7 +18,6 @@ package org.thingsboard.server.service.alarm.rule;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.SneakyThrows;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.locationtech.jts.util.Assert;
 import org.mockito.Mockito;
@@ -37,9 +36,6 @@ import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
-import org.thingsboard.server.common.data.alarm.rule.AlarmRuleOriginatorTargetEntity;
-import org.thingsboard.server.common.data.alarm.rule.AlarmRuleRelationTargetEntity;
-import org.thingsboard.server.common.data.alarm.rule.AlarmRuleSpecifiedTargetEntity;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionKeyType;
@@ -75,9 +71,6 @@ import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
-import org.thingsboard.server.common.data.relation.EntityRelation;
-import org.thingsboard.server.common.data.relation.EntitySearchDirection;
-import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
@@ -91,7 +84,6 @@ import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.queue.DefaultTbClusterService;
 
@@ -113,9 +105,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
     @Autowired
     private AlarmRuleService alarmRuleService;
-
-    @Autowired
-    private RelationService relationService;
 
     @Autowired
     private TbAlarmRuleStateService alarmRuleStateService;
@@ -211,7 +200,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfile.getId()));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         alarmRule.setConfiguration(alarmRuleConfiguration);
 
@@ -324,7 +312,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfile.getId()));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         alarmRule.setConfiguration(alarmRuleConfiguration);
 
@@ -415,7 +402,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfile.getId()));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
 
@@ -512,7 +498,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfile.getId()));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
 
@@ -537,239 +522,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmInfo alarm = alarms.get(0);
         Assert.equals("alarmEnabledAlarm", alarm.getName());
-        Assert.equals(AlarmStatus.ACTIVE_UNACK, alarm.getStatus());
-    }
-
-    @Test
-    @Ignore
-    public void testCreateAlarmForSpecifiedEntity() throws Exception {
-        DeviceProfile deviceProfile = createDeviceProfile("test profile");
-        deviceProfile.setTenantId(tenantId);
-        deviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
-
-        Device device = new Device();
-        device.setTenantId(tenantId);
-        device.setName("temperature sensor");
-        device.setDeviceProfileId(deviceProfile.getId());
-        device = deviceService.saveDevice(device);
-
-        Device targetEntity = new Device();
-        targetEntity.setTenantId(tenantId);
-        targetEntity.setName("alarm owner");
-        targetEntity.setDeviceProfileId(deviceProfile.getId());
-        targetEntity = deviceService.saveDevice(targetEntity);
-
-        DeviceId deviceId = device.getId();
-
-        AlarmRule alarmRule = new AlarmRule();
-        alarmRule.setTenantId(tenantId);
-        alarmRule.setAlarmType("highTemperatureAlarm");
-        alarmRule.setName("highTemperatureAlarmRule");
-        alarmRule.setEnabled(true);
-
-        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
-                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
-                .valueType(ArgumentValueType.NUMERIC)
-                .build();
-
-        AlarmRuleArgument highTemperatureConst = AlarmRuleArgument.builder()
-                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
-                .valueType(ArgumentValueType.NUMERIC)
-                .defaultValue(30.0)
-                .build();
-
-        SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
-        highTempFilter.setLeftArgId("temperatureKey");
-        highTempFilter.setRightArgId("temperatureConst");
-        highTempFilter.setOperation(Operation.GREATER);
-
-        AlarmCondition alarmCondition = new AlarmCondition();
-        alarmCondition.setConditionFilter(highTempFilter);
-        AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
-        alarmRuleCondition.setAlarmCondition(alarmCondition);
-        AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
-        alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
-
-
-        AlarmRuleArgument lowTemperatureConst = AlarmRuleArgument.builder()
-                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
-                .valueType(ArgumentValueType.NUMERIC)
-                .defaultValue(10.0)
-                .build();
-        SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
-        lowTempFilter.setLeftArgId("temperatureKey");
-        lowTempFilter.setRightArgId("lowTemperatureConst");
-        lowTempFilter.setOperation(Operation.LESS);
-
-        AlarmRuleCondition clearRule = new AlarmRuleCondition();
-        AlarmCondition clearCondition = new AlarmCondition();
-        clearCondition.setConditionFilter(lowTempFilter);
-        clearRule.setAlarmCondition(clearCondition);
-        alarmRuleConfiguration.setClearRule(clearRule);
-        alarmRuleConfiguration.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst, "lowTemperatureConst", lowTemperatureConst));
-
-        AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfile.getId()));
-        alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleSpecifiedTargetEntity(targetEntity.getId()));
-
-        alarmRule.setConfiguration(alarmRuleConfiguration);
-
-        alarmRuleService.saveAlarmRule(tenantId, alarmRule);
-
-        ObjectNode data = JacksonUtil.newObjectNode();
-        data.put("temperature", 42);
-        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
-                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
-
-        alarmRuleStateService.process(ctx, msg);
-
-        Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(targetEntity.getId()), any(), eq(Collections.singleton("Alarm Created")), any());
-
-        PageData<AlarmInfo> pageData = alarmService.findAlarms(tenantId, new AlarmQuery(targetEntity.getId(),
-                new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
-
-        List<AlarmInfo> alarms = pageData.getData();
-        Assert.equals(1, alarms.size());
-
-        AlarmInfo alarm = alarms.get(0);
-        Assert.equals("highTemperatureAlarm", alarm.getName());
-        Assert.equals(AlarmStatus.ACTIVE_UNACK, alarm.getStatus());
-    }
-
-    @Test
-    @Ignore
-    public void testCreateAlarmForRelatedEntities() throws Exception {
-        DeviceProfile deviceProfile = createDeviceProfile("test profile");
-        deviceProfile.setTenantId(tenantId);
-        deviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
-
-        Device device = new Device();
-        device.setTenantId(tenantId);
-        device.setName("temperature sensor");
-        device.setDeviceProfileId(deviceProfile.getId());
-        device = deviceService.saveDevice(device);
-
-        DeviceId deviceId = device.getId();
-
-        AssetProfile assetProfile = createAssetProfile("asset profile");
-        assetProfile.setTenantId(tenantId);
-        assetProfile = assetProfileService.saveAssetProfile(assetProfile);
-
-        Asset relatedAsset1 = new Asset();
-        relatedAsset1.setTenantId(tenantId);
-        relatedAsset1.setName("alarm owner 1");
-        relatedAsset1.setAssetProfileId(assetProfile.getId());
-        relatedAsset1 = assetService.saveAsset(relatedAsset1);
-
-        AssetId relatedAsset1Id = relatedAsset1.getId();
-
-        Asset relatedAsset2 = new Asset();
-        relatedAsset2.setTenantId(tenantId);
-        relatedAsset2.setName("alarm owner 2");
-        relatedAsset2.setAssetProfileId(assetProfile.getId());
-        relatedAsset2 = assetService.saveAsset(relatedAsset2);
-
-        AssetId relatedAsset2Id = relatedAsset2.getId();
-
-        EntityRelation relation1 = new EntityRelation();
-        relation1.setFrom(deviceId);
-        relation1.setTo(relatedAsset1Id);
-        relation1.setType("test type");
-        relation1.setTypeGroup(RelationTypeGroup.COMMON);
-
-        EntityRelation relation2 = new EntityRelation();
-        relation2.setFrom(deviceId);
-        relation2.setTo(relatedAsset2Id);
-        relation2.setType("test type");
-        relation2.setTypeGroup(RelationTypeGroup.COMMON);
-
-        relationService.saveRelations(tenantId, Arrays.asList(relation1, relation2));
-
-        AlarmRule alarmRule = new AlarmRule();
-        alarmRule.setTenantId(tenantId);
-        alarmRule.setAlarmType("highTemperatureAlarm");
-        alarmRule.setName("highTemperatureAlarmRule");
-        alarmRule.setEnabled(true);
-
-        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
-                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
-                .valueType(ArgumentValueType.NUMERIC)
-                .build();
-
-        AlarmRuleArgument highTemperatureConst = AlarmRuleArgument.builder()
-                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
-                .valueType(ArgumentValueType.NUMERIC)
-                .defaultValue(30.0)
-                .build();
-
-        SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
-        highTempFilter.setLeftArgId("temperatureKey");
-        highTempFilter.setRightArgId("temperatureConst");
-        highTempFilter.setOperation(Operation.GREATER);
-
-        AlarmCondition alarmCondition = new AlarmCondition();
-        alarmCondition.setConditionFilter(highTempFilter);
-        AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
-        alarmRuleCondition.setAlarmCondition(alarmCondition);
-        AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
-        alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
-
-
-        AlarmRuleArgument lowTemperatureConst = AlarmRuleArgument.builder()
-                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
-                .valueType(ArgumentValueType.NUMERIC)
-                .defaultValue(10.0)
-                .build();
-        SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
-        lowTempFilter.setLeftArgId("temperatureKey");
-        lowTempFilter.setRightArgId("lowTemperatureConst");
-        lowTempFilter.setOperation(Operation.LESS);
-
-        AlarmRuleCondition clearRule = new AlarmRuleCondition();
-        AlarmCondition clearCondition = new AlarmCondition();
-        clearCondition.setConditionFilter(lowTempFilter);
-        clearRule.setAlarmCondition(clearCondition);
-        alarmRuleConfiguration.setClearRule(clearRule);
-        alarmRuleConfiguration.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst, "lowTemperatureConst", lowTemperatureConst));
-
-        AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfile.getId()));
-        alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleRelationTargetEntity(EntitySearchDirection.TO, "test type"));
-
-        alarmRule.setConfiguration(alarmRuleConfiguration);
-
-        alarmRuleService.saveAlarmRule(tenantId, alarmRule);
-
-        ObjectNode data = JacksonUtil.newObjectNode();
-        data.put("temperature", 42);
-        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
-                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
-
-        alarmRuleStateService.process(ctx, msg);
-
-        Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(relatedAsset1Id), any(), eq(Collections.singleton("Alarm Created")), any());
-
-        PageData<AlarmInfo> pageData = alarmService.findAlarms(tenantId, new AlarmQuery(relatedAsset1Id,
-                new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
-
-        List<AlarmInfo> alarms = pageData.getData();
-        Assert.equals(1, alarms.size());
-
-        AlarmInfo alarm = alarms.get(0);
-        Assert.equals("highTemperatureAlarm", alarm.getName());
-        Assert.equals(AlarmStatus.ACTIVE_UNACK, alarm.getStatus());
-
-
-        Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(relatedAsset2Id), any(), eq(Collections.singleton("Alarm Created")), any());
-
-        pageData = alarmService.findAlarms(tenantId, new AlarmQuery(relatedAsset2Id,
-                new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
-
-        alarms = pageData.getData();
-        Assert.equals(1, alarms.size());
-
-        alarm = alarms.get(0);
-        Assert.equals("highTemperatureAlarm", alarm.getName());
         Assert.equals(AlarmStatus.ACTIVE_UNACK, alarm.getStatus());
     }
 
@@ -842,7 +594,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleSingleEntityFilter sourceFilter = new AlarmRuleSingleEntityFilter(sourceEntity.getId());
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         alarmRule.setConfiguration(alarmRuleConfiguration);
 
@@ -947,7 +698,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(sourceDeviceProfile.getId()));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         alarmRule.setConfiguration(alarmRuleConfiguration);
 
@@ -1052,7 +802,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleEntityFilter sourceFilter = new AlarmRuleAssetTypeEntityFilter(List.of(sourceAssetProfile.getId()));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
         alarmRuleConfiguration.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst, "lowTemperatureConst", lowTemperatureConst));
 
         alarmRule.setConfiguration(alarmRuleConfiguration);
@@ -1161,7 +910,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleEntityFilter sourceFilter = new AlarmRuleAllDevicesEntityFilter();
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         alarmRule.setConfiguration(alarmRuleConfiguration);
 
@@ -1269,7 +1017,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleEntityFilter sourceFilter = new AlarmRuleAllAssetsEntityFilter();
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         alarmRule.setConfiguration(alarmRuleConfiguration);
 
@@ -1374,7 +1121,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleEntityFilter sourceFilter = new AlarmRuleEntityListEntityFilter(EntityType.DEVICE, Arrays.asList(device1Id, device2Id));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         alarmRule.setConfiguration(alarmRuleConfiguration);
 
@@ -1492,7 +1238,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         AlarmRuleEntityFilter deviceTypeFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfile.getId()));
         AlarmRuleEntityFilter assetTypeFilter = new AlarmRuleAssetTypeEntityFilter(List.of(assetProfile.getId()));
         alarmRuleConfiguration.setSourceEntityFilters(Arrays.asList(deviceTypeFilter, assetTypeFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         alarmRule.setConfiguration(alarmRuleConfiguration);
 
@@ -1585,7 +1330,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfile.getId()));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         alarmRule.setConfiguration(alarmRuleConfiguration);
 
@@ -1678,7 +1422,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfile.getId()));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         alarmRule.setConfiguration(alarmRuleConfiguration);
 
@@ -1789,7 +1532,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfile.getId()));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         alarmRule.setConfiguration(alarmRuleConfiguration);
 
@@ -1893,7 +1635,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfile.getId()));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         alarmRule.setConfiguration(alarmRuleConfiguration);
 
@@ -1989,7 +1730,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfile.getId()));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         alarmRule.setConfiguration(alarmRuleConfiguration);
 
@@ -2089,7 +1829,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfile.getId()));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         alarmRule.setConfiguration(alarmRuleConfiguration);
 
@@ -2194,7 +1933,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfile.getId()));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         alarmRule.setConfiguration(alarmRuleConfiguration);
 
@@ -2284,7 +2022,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfile.getId()));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         alarmRule.setConfiguration(alarmRuleConfiguration);
 
@@ -2386,7 +2123,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfile.getId()));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         alarmRule.setConfiguration(alarmRuleConfiguration);
 
@@ -2484,7 +2220,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfile.getId()));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         alarmRule.setConfiguration(alarmRuleConfiguration);
 
@@ -2556,7 +2291,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfile.getId()));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         alarmRule.setConfiguration(alarmRuleConfiguration);
 
@@ -2632,7 +2366,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfile.getId()));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         alarmRule.setConfiguration(alarmRuleConfiguration);
 
@@ -2708,7 +2441,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfile.getId()));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         alarmRule.setConfiguration(alarmRuleConfiguration);
 
@@ -2788,7 +2520,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfile.getId()));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         alarmRule.setConfiguration(alarmRuleConfiguration);
 
@@ -2872,7 +2603,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfile.getId()));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         alarmRule.setConfiguration(alarmRuleConfiguration);
 
@@ -2981,7 +2711,6 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfile.getId()));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         alarmRule.setConfiguration(alarmRuleConfiguration);
 

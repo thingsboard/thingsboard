@@ -30,7 +30,6 @@ import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
-import org.thingsboard.server.common.data.alarm.rule.AlarmRuleOriginatorTargetEntity;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionKeyType;
@@ -186,7 +185,6 @@ public class EntityStateTest {
         alarmConfig.setCreateRules(new TreeMap<>(Map.of(AlarmSeverity.CRITICAL, alarmRule)));
 
         alarmConfig.setSourceEntityFilters(Collections.singletonList(new AlarmRuleAllDevicesEntityFilter()));
-        alarmConfig.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         return alarmConfig;
     }

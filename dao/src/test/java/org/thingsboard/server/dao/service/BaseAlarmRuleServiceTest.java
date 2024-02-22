@@ -28,7 +28,6 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleInfo;
-import org.thingsboard.server.common.data.alarm.rule.AlarmRuleOriginatorTargetEntity;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionKeyType;
@@ -226,17 +225,6 @@ public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testSaveAlarmRuleWithEmptyTargetEntity() {
-        AlarmRule alarmRule = createAlarmRule(tenantId, ALARM_RULE_NAME);
-        var configuration = alarmRule.getConfiguration();
-        configuration.setAlarmTargetEntity(null);
-        Assertions.assertThrows(
-                DataValidationException.class,
-                () -> alarmRuleService.saveAlarmRule(tenantId, alarmRule)
-        );
-    }
-
-    @Test
     public void testSaveAlarmRuleWithEmptyCreateRules() {
         AlarmRule alarmRule = createAlarmRule(tenantId, ALARM_RULE_NAME);
         var configuration = alarmRule.getConfiguration();
@@ -271,7 +259,6 @@ public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
 
         AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfileId));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
 
@@ -336,7 +323,6 @@ public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
 
         AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfileId));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
-        alarmRuleConfiguration.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
 

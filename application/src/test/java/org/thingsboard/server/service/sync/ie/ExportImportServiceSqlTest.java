@@ -738,7 +738,6 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
         var configuration = alarmRule.getConfiguration();
         var importedConfiguration = importedRule.getConfiguration();
 
-        assertThat(importedConfiguration.getAlarmTargetEntity()).isEqualTo(configuration.getAlarmTargetEntity());
         assertThat(importedConfiguration.getCreateRules()).isEqualTo(configuration.getCreateRules());
         assertThat(importedConfiguration.getClearRule()).isEqualTo(configuration.getClearRule());
         assertThat(importedConfiguration.isPropagate()).isEqualTo(configuration.isPropagate());

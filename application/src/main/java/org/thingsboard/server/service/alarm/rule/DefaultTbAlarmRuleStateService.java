@@ -82,7 +82,6 @@ public class DefaultTbAlarmRuleStateService extends AbstractPartitionBasedServic
     private final TbAlarmRuleContext ctx;
     private final AlarmRuleService alarmRuleService;
     private final AlarmRuleEntityStateStore stateStore;
-    //    private final RelationService relationService;
     private final TbDeviceProfileCache deviceProfileCache;
     private final TbAssetProfileCache assetProfileCache;
 
@@ -381,19 +380,6 @@ public class DefaultTbAlarmRuleStateService extends AbstractPartitionBasedServic
         if (filteredRules.isEmpty()) {
             return null;
         }
-
-//        Map<EntityId, List<AlarmRule>> entityAlarmRules = new HashMap<>();
-//
-//        filteredRules.forEach(alarmRule -> {
-//            List<EntityId> targetEntities = getTargetEntities(tenantId, msgOriginator, alarmRule.getConfiguration().getAlarmTargetEntity());
-//            targetEntities.forEach(targetEntityId -> entityAlarmRules.computeIfAbsent(targetEntityId, key -> new ArrayList<>()).add(alarmRule));
-//        });
-
-//        return entityAlarmRules
-//                .entrySet()
-//                .stream()
-//                .map(entry -> getOrCreateEntityState(tenantId, entry.getKey(), entry.getValue(), null))
-//                .collect(Collectors.toList());
         return getOrCreateEntityState(tenantId, msgOriginator, filteredRules, null);
     }
 
@@ -456,25 +442,6 @@ public class DefaultTbAlarmRuleStateService extends AbstractPartitionBasedServic
         pageIterable.forEach(alarmRules::add);
         return alarmRules;
     }
-
-//    private List<EntityId> getTargetEntities(TenantId tenantId, EntityId originator, AlarmRuleTargetEntity targetEntity) {
-//        switch (targetEntity.getType()) {
-//            case ORIGINATOR:
-//                return Collections.singletonList(originator);
-//            case SINGLE_ENTITY:
-//                return Collections.singletonList(((AlarmRuleSpecifiedTargetEntity) targetEntity).getEntityId());
-//            case RELATION:
-//                AlarmRuleRelationTargetEntity relationTargetEntity = (AlarmRuleRelationTargetEntity) targetEntity;
-//                if (EntitySearchDirection.FROM == relationTargetEntity.getDirection()) {
-//                    List<EntityRelation> relations = relationService.findByToAndType(tenantId, originator, relationTargetEntity.getRelationType(), RelationTypeGroup.COMMON);
-//                    return relations.stream().map(EntityRelation::getFrom).collect(Collectors.toList());
-//                } else {
-//                    List<EntityRelation> relations = relationService.findByFromAndType(tenantId, originator, relationTargetEntity.getRelationType(), RelationTypeGroup.COMMON);
-//                    return relations.stream().map(EntityRelation::getTo).collect(Collectors.toList());
-//                }
-//        }
-//        return Collections.emptyList();
-//    }
 
     private boolean isEntityMatches(TenantId tenantId, EntityId entityId, AlarmRule alarmRule) {
         List<AlarmRuleEntityFilter> sourceEntityFilters = alarmRule.getConfiguration().getSourceEntityFilters();

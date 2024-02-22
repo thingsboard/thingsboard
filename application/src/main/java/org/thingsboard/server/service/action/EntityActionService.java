@@ -48,7 +48,6 @@ import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.dao.audit.AuditLogService;
-import org.thingsboard.server.queue.discovery.PartitionService;
 
 import java.util.List;
 import java.util.Map;
@@ -61,7 +60,6 @@ import java.util.stream.Collectors;
 public class EntityActionService {
     private final TbClusterService tbClusterService;
     private final AuditLogService auditLogService;
-    private final PartitionService partitionService;
     private final NotificationRuleProcessor notificationRuleProcessor;
 
     public void pushEntityActionToRuleEngine(EntityId entityId, HasName entity, TenantId tenantId, CustomerId customerId,

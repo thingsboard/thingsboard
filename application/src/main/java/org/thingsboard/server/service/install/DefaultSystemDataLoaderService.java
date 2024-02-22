@@ -48,7 +48,6 @@ import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
-import org.thingsboard.server.common.data.alarm.rule.AlarmRuleOriginatorTargetEntity;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionKeyType;
@@ -380,7 +379,6 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         AlarmRuleConfiguration highTemperature = new AlarmRuleConfiguration();
 
         highTemperature.setSourceEntityFilters(Collections.singletonList(new AlarmRuleDeviceTypeEntityFilter(List.of(savedThermostatDeviceProfile.getId()))));
-        highTemperature.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         AlarmRuleCondition temperatureRule = new AlarmRuleCondition();
         AlarmCondition temperatureCondition = new AlarmCondition();
@@ -457,7 +455,6 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         AlarmRuleConfiguration lowHumidity = new AlarmRuleConfiguration();
 
         lowHumidity.setSourceEntityFilters(Collections.singletonList(new AlarmRuleDeviceTypeEntityFilter(List.of(savedThermostatDeviceProfile.getId()))));
-        lowHumidity.setAlarmTargetEntity(new AlarmRuleOriginatorTargetEntity());
 
         AlarmRuleCondition humidityRule = new AlarmRuleCondition();
         AlarmCondition humidityCondition = new AlarmCondition();

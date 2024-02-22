@@ -90,9 +90,6 @@ public class AlarmRuleDataValidator extends DataValidator<AlarmRule> {
         }
         configuration.getSourceEntityFilters().forEach(filter -> validateSourceEntityFilter(tenantId, filter));
 
-        if (configuration.getAlarmTargetEntity() == null) {
-            throw new DataValidationException("Alarm rule target entity should be specified!");
-        }
         if (CollectionUtils.isEmpty(configuration.getCreateRules())) {
             throw new DataValidationException("Alarm create rule should be specified!");
         }
@@ -108,10 +105,14 @@ public class AlarmRuleDataValidator extends DataValidator<AlarmRule> {
 
     private void validateSourceEntityFilter(TenantId tenantId, AlarmRuleEntityFilter entityFilter) {
         switch (entityFilter.getType()) {
-            case SINGLE_ENTITY -> validateSourceEntityFilter(tenantId, ((AlarmRuleSingleEntityFilter) entityFilter).getEntityId(), SINGLE_ENTITY);
-            case DEVICE_TYPE -> validateSourceEntityListFilter(tenantId, ((AlarmRuleDeviceTypeEntityFilter) entityFilter).getDeviceProfileIds(), DEVICE_TYPE);
-            case ASSET_TYPE -> validateSourceEntityListFilter(tenantId, ((AlarmRuleAssetTypeEntityFilter) entityFilter).getAssetProfileIds(), ASSET_TYPE);
-            case ENTITY_LIST -> validateSourceEntityListFilter(tenantId, ((AlarmRuleEntityListEntityFilter) entityFilter).getEntityIds(), ENTITY_LIST);
+            case SINGLE_ENTITY ->
+                    validateSourceEntityFilter(tenantId, ((AlarmRuleSingleEntityFilter) entityFilter).getEntityId(), SINGLE_ENTITY);
+            case DEVICE_TYPE ->
+                    validateSourceEntityListFilter(tenantId, ((AlarmRuleDeviceTypeEntityFilter) entityFilter).getDeviceProfileIds(), DEVICE_TYPE);
+            case ASSET_TYPE ->
+                    validateSourceEntityListFilter(tenantId, ((AlarmRuleAssetTypeEntityFilter) entityFilter).getAssetProfileIds(), ASSET_TYPE);
+            case ENTITY_LIST ->
+                    validateSourceEntityListFilter(tenantId, ((AlarmRuleEntityListEntityFilter) entityFilter).getEntityIds(), ENTITY_LIST);
         }
     }
 
@@ -132,7 +133,8 @@ public class AlarmRuleDataValidator extends DataValidator<AlarmRule> {
             case ASSET -> assetService.findAssetById(tenantId, (AssetId) entityId);
             case DEVICE_PROFILE -> deviceProfileService.findDeviceProfileById(tenantId, (DeviceProfileId) entityId);
             case ASSET_PROFILE -> assetProfileService.findAssetProfileById(tenantId, (AssetProfileId) entityId);
-            default -> throw new DataValidationException(String.format("%s entity type does not supported in Alarm Rule %s filter!", entityId.getEntityType(), entityFilterType));
+            default ->
+                    throw new DataValidationException(String.format("%s entity type does not supported in Alarm Rule %s filter!", entityId.getEntityType(), entityFilterType));
         };
 
         if (entity == null) {
