@@ -676,15 +676,7 @@ public abstract class BaseController {
     }
 
     AlarmRule checkAlarmRuleId(AlarmRuleId alarmRuleId, Operation operation) throws ThingsboardException {
-        try {
-            validateId(alarmRuleId, "Incorrect alarmRuleId " + alarmRuleId);
-            AlarmRule alarmRule = alarmRuleService.findAlarmRuleById(getCurrentUser().getTenantId(), alarmRuleId);
-            checkNotNull(alarmRule, "AlarmRule with id [" + alarmRuleId + "] is not found");
-            accessControlService.checkPermission(getCurrentUser(), Resource.ALARM_RULE, operation, alarmRuleId, alarmRule);
-            return alarmRule;
-        } catch (Exception e) {
-            throw handleException(e, false);
-        }
+        return checkEntityId(alarmRuleId, alarmRuleService::findAlarmRuleById, operation);
     }
 
     AlarmComment checkAlarmCommentId(AlarmCommentId alarmCommentId, AlarmId alarmId) throws ThingsboardException {
