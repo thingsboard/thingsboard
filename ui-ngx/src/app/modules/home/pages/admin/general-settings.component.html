@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<!-- <mat-card appearance="outlined" class="settings-card">
+<mat-card appearance="outlined" class="settings-card">
   <mat-card-header>
     <mat-card-title>
       <div fxLayout="row">
@@ -128,7 +128,7 @@
       </form>
     </section>
   </mat-card-content>
-</mat-card> -->
+</mat-card>
 <mat-card appearance="outlined" class="settings-card">
   <mat-card-header>
     <mat-card-title>
@@ -151,43 +151,23 @@
           <span>{{ propertyRow.controls.property.value }}</span>
         </div>
         <div class="property-value">
-          <mat-form-field>
-            <input matInput formControlName="value" [value]="propertyRow.controls.value.value"/>
-          </mat-form-field>
+          <ng-container *ngIf="propertyRow.controls.property.value === 'version'; else defaultVersionTemplate">
+            <mat-form-field formControlName="value">
+              <mat-select [value]="defaultVersion">
+                <mat-option *ngFor="let version of propertyRow.controls.value.value" [value]="version">
+                  {{ version }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </ng-container>
+          <ng-template #defaultVersionTemplate>
+            <mat-form-field>
+              <input matInput formControlName="value" [value]="propertyRow.controls.value.value"/>
+            </mat-form-field>
+          </ng-template>
         </div>
       </div>
-      <!-- <div class="tb-form-row no-border" [formGroup]="propertyRow" *ngFor="let propertyRow of gatewaySettingsArray.controls">
-        <div>{{ propertyRow.controls.property.value }}</div>
-        <div>
-          <mat-form-field>
-            <input matInput formControlName="value" [value]="propertyRow.controls.value.value"/>
-          </mat-form-field>
-        </div>
-      </div> -->
     </div>
-      <!-- <div class="mat-elevation-z8">
-        <table mat-table [dataSource]="dataSource">
-          <ng-container matColumnDef="Property">
-            <mat-header-cell *matHeaderCellDef class="mat-column-key">Property</mat-header-cell>
-            <mat-cell *matCellDef="let element" class="table-cell">
-              {{ element.controls.property.value }}
-            </mat-cell>
-          </ng-container>
-          <ng-container matColumnDef="Value">
-            <mat-header-cell *matHeaderCellDef class="mat-column-key">Value</mat-header-cell>
-            <mat-cell *matCellDef="let element" class="table-cell">
-              <form [formGroup]="element" class="tb-form-panel no-border no-padding">
-                <mat-form-field fxFlex>
-                  <input matInput type="text" formControlName="value" [value]="element.controls.value.value"/>
-                  <mat-error *ngIf="element.controls.value.hasError('required')">UPS</mat-error>
-                </mat-form-field>
-              </form>
-            </mat-cell>
-          </ng-container>
-          <tr mat-header-row *matHeaderRowDef="gatewaySettingsColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: gatewaySettingsColumns;" class="table-row"></tr>
-        </table>
-      </div> -->
       <div fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="8px" class="layout-wrap">
         <button mat-button color="primary"
                 [disabled]="gatewaySettingsArray.pristine"

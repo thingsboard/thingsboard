@@ -18,7 +18,7 @@ import { Component, OnDestroy } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
-import { AbstractControl, FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import {
   AdminSettings,
   DeviceConnectivityProtocol,
@@ -30,7 +30,7 @@ import { AdminService } from '@core/http/admin.service';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { MatTableDataSource } from '@angular/material/table';
+import { property } from 'lodash';
 
 @Component({
   selector: 'tb-general-settings',
@@ -42,12 +42,14 @@ export class GeneralSettingsComponent extends PageComponent implements HasConfir
   generalSettings: FormGroup;
   deviceConnectivitySettingsForm: FormGroup;
   gatewaySettingsArray: FormArray = this.fb.array([]);
+  isHasAvailableVersions = false;
 
   protocol: DeviceConnectivityProtocol = 'http';
 
   private adminSettings: AdminSettings<GeneralSettings>;
   private deviceConnectivitySettings: AdminSettings<DeviceConnectivitySettings>;
   private gatewaySettings: AdminSettings<GatewaySettings>;
+  defaultVersion: string;
 
   private readonly destroy$ = new Subject<void>();
 
@@ -61,8 +63,13 @@ export class GeneralSettingsComponent extends PageComponent implements HasConfir
     this.buildDeviceConnectivitySettingsForm();
     this.adminService.getAdminSettings<DeviceConnectivitySettings>('connectivity')
       .subscribe(deviceConnectivitySettings => this.processDeviceConnectivitySettings(deviceConnectivitySettings));
-    this.adminService.getAdminSettings<GatewaySettings>('gatewaySettings')
-      .subscribe(gatewaySettings => this.processGatewaySettings(gatewaySettings));
+    this.adminService.getAdminSettings<GatewaySettings>('gateway')
+      .subscribe(gatewaySettings => {
+        this.isHasAvailableVersions = gatewaySettings.jsonValue.availableVersions
+                                      && !!gatewaySettings.jsonValue.availableVersions.length;
+        // gatewaySettings.jsonValue = {"availableVersions":["latest","3.4.4","3.4.3.1","3.4.3","3.4.2","3.4"],"version":"latest", "key": "test"};
+        this.processGatewaySettings(gatewaySettings)
+      });
     // this.adminService('/api/notification')
   }
 
@@ -79,7 +86,7 @@ export class GeneralSettingsComponent extends PageComponent implements HasConfir
     });
   }
 
-  private buildGatewayServerSettingsForm(settingsPairs = [{property: 'version', value: 'latest'}]) {
+  private buildGatewayServerSettingsForm(settingsPairs) {
     this.gatewaySettingsArray.controls = [];
     settingsPairs.forEach(item => {
       this.gatewaySettingsArray.push(this.fb.group({
@@ -172,12 +179,32 @@ export class GeneralSettingsComponent extends PageComponent implements HasConfir
 
   private processGatewaySettings(gatewaySettings: AdminSettings<GatewaySettings>): void {
     this.gatewaySettings = gatewaySettings;
+    this.defaultVersion = gatewaySettings.jsonValue.version;
     const settingsPairs = [];
+    
+    let availableVersions = this.gatewaySettings.jsonValue && this.gatewaySettings.jsonValue.availableVersions
+                              ? this.gatewaySettings.jsonValue.availableVersions
+                              : [];
+    console.log('availableVersions', availableVersions)
+    if (availableVersions.length === 0) {
+        const version = this.gatewaySettings.jsonValue && this.gatewaySettings.jsonValue.version
+                              ? this.gatewaySettings.jsonValue.version
+                              : 'latest';
+        availableVersions.push(version);
+    }
+
     Object.entries(this.gatewaySettings.jsonValue).forEach(([property, value]) => {
-      settingsPairs.push({
-        property,
-        value
-      });
+      if (property === 'version') {
+        settingsPairs.push({
+          property,
+          value: availableVersions
+        });
+      } else if (property !== 'availableVersions') {
+        settingsPairs.push({
+          property,
+          value
+        });
+      }
     })
     this.buildGatewayServerSettingsForm(settingsPairs)
   }
