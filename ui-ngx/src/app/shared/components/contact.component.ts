@@ -16,11 +16,13 @@
 
 import { Component, Input } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
-import { COUNTRIES } from '@home/models/contact.models';
-
+import { CountryData } from '../models/country.models';
 @Component({
   selector: 'tb-contact',
-  templateUrl: './contact.component.html'
+  templateUrl: './contact.component.html',
+  providers: [
+    CountryData
+  ]
 })
 export class ContactComponent {
 
@@ -29,6 +31,7 @@ export class ContactComponent {
 
   @Input() isEdit: boolean;
 
-  countries = COUNTRIES;
+  countries = this.countryData.allCountries;
 
+  constructor(private countryData: CountryData) {}
 }
