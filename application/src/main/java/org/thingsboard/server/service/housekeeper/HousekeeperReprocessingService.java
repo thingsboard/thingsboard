@@ -19,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.StringUtils;
@@ -28,20 +27,20 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos.HousekeeperTaskProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperServiceMsg;
-import org.thingsboard.server.queue.TbQueueCallback;
-import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 @TbCoreComponent
@@ -54,16 +53,19 @@ public class HousekeeperReprocessingService {
     private final TbCoreQueueFactory queueFactory;
     private final TbQueueProducerProvider producerProvider;
 
-    private final ExecutorService consumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("housekeeper-reprocessing-consumer"));
-
-    private static final int startDelay = 15; // fixme - to 5 minutes
-    private static final int reprocessingDelay = 30; // seconds
-    private static final int maxReprocessingAttempts = 5;
+    @Value("${queue.core.housekeeper.reprocessing-start-delay-sec:15}") //  fixme: to 5 minutes
+    private int startDelay;
+    @Value("${queue.core.housekeeper.task-reprocessing-delay-sec:30}") // fixme: to 30 minutes or 1 hour
+    private int reprocessingDelay;
+    @Value("${queue.core.housekeeper.max-reprocessing-attempts:10}")
+    private int maxReprocessingAttempts;
     @Value("${queue.core.housekeeper.poll-interval-ms:500}")
     private int pollInterval;
 
+    private final ExecutorService consumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("housekeeper-reprocessing-consumer"));
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("housekeeper-reprocessing-scheduler"));
+
     private boolean stopped;
-    // todo: stats
 
     public HousekeeperReprocessingService(@Lazy DefaultHousekeeperService housekeeperService,
                                           PartitionService partitionService, TbCoreQueueFactory queueFactory,
@@ -74,7 +76,17 @@ public class HousekeeperReprocessingService {
         this.producerProvider = producerProvider;
     }
 
-    @Scheduled(initialDelay = startDelay, fixedDelay = reprocessingDelay, timeUnit = TimeUnit.SECONDS)
+    @PostConstruct
+    private void init() {
+        scheduler.scheduleWithFixedDelay(() -> {
+            try {
+                startReprocessing();
+            } catch (Throwable e) {
+                log.error("Unexpected error during reprocessing", e);
+            }
+        }, startDelay, reprocessingDelay, TimeUnit.SECONDS);
+    }
+
     public void startReprocessing() {
         if (!partitionService.isMyPartition(ServiceType.TB_CORE, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID)) {
             return;
@@ -146,6 +158,7 @@ public class HousekeeperReprocessingService {
     @PreDestroy
     private void stop() {
         stopped = true;
+        scheduler.shutdownNow();
         consumerExecutor.shutdownNow();
     }
 

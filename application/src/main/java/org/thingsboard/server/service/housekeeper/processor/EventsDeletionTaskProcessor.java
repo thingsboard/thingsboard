@@ -24,16 +24,17 @@ import org.thingsboard.server.dao.housekeeper.data.HousekeeperTaskType;
 @Component
 @RequiredArgsConstructor
 public class EventsDeletionTaskProcessor implements HousekeeperTaskProcessor<HousekeeperTask> {
+
     private final EventService eventService;
 
     @Override
     public void process(HousekeeperTask task) throws Exception {
         eventService.removeEvents(task.getTenantId(), task.getEntityId(), null, 0L, System.currentTimeMillis());
-        throw new RuntimeException("test error");
     }
 
     @Override
     public HousekeeperTaskType getTaskType() {
         return HousekeeperTaskType.DELETE_EVENTS;
     }
+
 }

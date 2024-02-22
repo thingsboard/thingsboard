@@ -32,7 +32,7 @@ public class AttributesDeletionTaskProcessor implements HousekeeperTaskProcessor
     @Override
     public void process(HousekeeperTask task) throws Exception {
         int deletedCount = attributesService.removeAllByEntityId(task.getTenantId(), task.getEntityId());
-        log.trace("[{}][{}][{}] Deleted {} attributes", task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(), deletedCount);
+        log.debug("[{}][{}][{}] Deleted {} attributes", task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(), deletedCount);
     }
 
     @Override

@@ -17,8 +17,13 @@ package org.thingsboard.server.common.stats;
 
 import io.micrometer.core.instrument.Timer;
 
+import java.util.Map;
+
 public interface StatsFactory {
+
     StatsCounter createStatsCounter(String key, String statsName);
+
+    StatsCounter createStatsCounter(String key, String statsName, Map<String, String> tags);
 
     DefaultCounter createDefaultCounter(String key, String... tags);
 

@@ -36,7 +36,7 @@ public class AlarmsUnassignTaskProcessor implements HousekeeperTaskProcessor<Ala
     @Override
     public void process(AlarmsUnassignHousekeeperTask task) throws Exception {
         List<AlarmId> alarms = alarmService.unassignDeletedUserAlarms(task.getTenantId(), (UserId) task.getEntityId(), task.getUserTitle(), task.getTs());
-        log.trace("[{}][{}] Unassigned {} alarms", task.getTenantId(), task.getEntityId(), alarms.size());
+        log.debug("[{}][{}] Unassigned {} alarms", task.getTenantId(), task.getEntityId(), alarms.size());
     }
 
     @Override

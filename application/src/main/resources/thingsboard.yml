@@ -1585,9 +1585,14 @@ queue:
       # Statistics printing interval for Core microservices
       print-interval-ms: "${TB_QUEUE_CORE_STATS_PRINT_INTERVAL_MS:60000}"
     housekeeper:
-      topic: "tb_housekeeper"
-      reprocessing-topic: "tb_housekeeper.reprocessing"
-      poll-interval-ms: "1000"
+      topic: "${TB_HOUSEKEEPER_TOPIC:tb_housekeeper}"
+      reprocessing-topic: "${TB_HOUSEKEEPER_REPROCESSING_TOPIC:tb_housekeeper.reprocessing}"
+      poll-interval-ms: "${TB_HOUSEKEEPER_POLL_INTERVAL_MS:500}"
+      task-processing-timeout-ms: "${TB_HOUSEKEEPER_TASK_PROCESSING_TIMEOUT_MS:120000}"
+      reprocessing-start-delay-sec: "${TB_HOUSEKEEPER_REPROCESSING_START_DELAY_SEC:15}" # fixme: to 5 minutes
+      task-reprocessing-delay-sec: "${TB_HOUSEKEEPER_TASK_REPROCESSING_DELAY_SEC:30}" # fixme: to 30 minutes or 1 hour
+      max-reprocessing-attempts: "${TB_HOUSEKEEPER_MAX_REPROCESSING_ATTEMPTS:30}"
+
   vc:
     # Default topic name for Kafka, RabbitMQ, etc.
     topic: "${TB_QUEUE_VC_TOPIC:tb_version_control}"

@@ -40,7 +40,7 @@ public class TelemetryDeletionTaskProcessor implements HousekeeperTaskProcessor<
             DeleteTsKvQuery deleteQuery = new BaseDeleteTsKvQuery(key, 0, System.currentTimeMillis(), false, true);
             timeseriesService.remove(task.getTenantId(), task.getEntityId(), List.of(deleteQuery)).get();
         }
-        log.trace("[{}][{}][{}] Deleted {} telemetry keys", task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(), keys.size());
+        log.debug("[{}][{}][{}] Deleted {} telemetry keys", task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(), keys.size());
     }
 
     @Override
