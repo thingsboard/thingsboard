@@ -37,13 +37,11 @@ public class CleanUpService {
     private final HousekeeperService housekeeperService;
     private final RelationService relationService;
 
-    @TransactionalEventListener(fallbackExecution = true) // todo: consider moving this to HousekeeperService
+    @TransactionalEventListener(fallbackExecution = true)
     public void handleEntityDeletionEvent(DeleteEntityEvent<?> event) {
         TenantId tenantId = event.getTenantId();
         EntityId entityId = event.getEntityId();
-        log.trace("[{}] DeleteEntityEvent handler: {}", tenantId, event);
-
-        log.info("[{}][{}][{}] Handling DeleteEntityEvent", tenantId, entityId.getEntityType(), entityId.getId());
+        log.trace("[{}] Handling entity deletion event: {}", tenantId, event);
         cleanUpRelatedData(tenantId, entityId);
         if (entityId.getEntityType() == EntityType.USER) {
             housekeeperService.submitTask(HousekeeperTask.unassignAlarms((User) event.getEntity()));
@@ -60,7 +58,7 @@ public class CleanUpService {
     }
 
     public void removeTenantEntities(TenantId tenantId, EntityType... entityTypes) {
-        UUID tasksKey = UUID.randomUUID(); // so that all tasks are processed synchronously from one partition
+        UUID tasksKey = UUID.randomUUID(); // so that all tasks are pushed to single partition to be processed synchronously
         for (EntityType entityType : entityTypes) {
             housekeeperService.submitTask(tasksKey, HousekeeperTask.deleteEntities(tenantId, entityType));
         }

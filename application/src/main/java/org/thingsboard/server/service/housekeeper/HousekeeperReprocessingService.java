@@ -38,6 +38,7 @@ import javax.annotation.PreDestroy;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -107,12 +108,12 @@ public class HousekeeperReprocessingService {
                     for (TbProtoQueueMsg<ToHousekeeperServiceMsg> msg : msgs) {
                         log.trace("Reprocessing task: {}", msg);
                         try {
-                            housekeeperService.processTask(msg);
+                            housekeeperService.processTask(msg.getValue());
                         } catch (InterruptedException e) {
                             return;
                         } catch (Throwable e) {
                             log.error("Unexpected error during message reprocessing [{}]", msg, e);
-                            submitForReprocessing(msg, e);
+                            submitForReprocessing(msg.getValue(), e);
                             // fixme: msgs are duplicated
                         }
                     }
@@ -134,8 +135,7 @@ public class HousekeeperReprocessingService {
     }
 
     // todo: dead letter queue if attempts count exceeds the configured maximum
-    public void submitForReprocessing(TbProtoQueueMsg<ToHousekeeperServiceMsg> queueMsg, Throwable error) {
-        ToHousekeeperServiceMsg msg = queueMsg.getValue();
+    public void submitForReprocessing(ToHousekeeperServiceMsg msg, Throwable error) {
         HousekeeperTaskProto task = msg.getTask();
 
         int attempt = task.getAttempt() + 1;
@@ -152,7 +152,7 @@ public class HousekeeperReprocessingService {
         log.trace("Submitting for reprocessing: {}", msg);
         var producer = producerProvider.getHousekeeperReprocessingMsgProducer();
         TopicPartitionInfo tpi = TopicPartitionInfo.builder().topic(producer.getDefaultTopic()).build();
-        producer.send(tpi, new TbProtoQueueMsg<>(queueMsg.getKey(), msg), null);
+        producer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), null); // reprocessing topic has single partition, so we don't care about the msg key
     }
 
     @PreDestroy

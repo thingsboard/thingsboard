@@ -67,8 +67,8 @@ public class HousekeeperStatsService {
         }
     }
 
-    public void reportProcessed(HousekeeperTask task, ToHousekeeperServiceMsg msg) {
-        HousekeeperStats stats = this.stats.get(task.getTaskType());
+    public void reportProcessed(HousekeeperTaskType taskType, ToHousekeeperServiceMsg msg) {
+        HousekeeperStats stats = this.stats.get(taskType);
         if (msg.getTask().getErrorsCount() == 0) {
             stats.getProcessedCounter().increment();
         } else {
@@ -76,8 +76,8 @@ public class HousekeeperStatsService {
         }
     }
 
-    public void reportFailure(HousekeeperTask task, ToHousekeeperServiceMsg msg) {
-        HousekeeperStats stats = this.stats.get(task.getTaskType());
+    public void reportFailure(HousekeeperTaskType taskType, ToHousekeeperServiceMsg msg) {
+        HousekeeperStats stats = this.stats.get(taskType);
         if (msg.getTask().getErrorsCount() == 0) {
             stats.getFailedProcessingCounter().increment();
         } else {

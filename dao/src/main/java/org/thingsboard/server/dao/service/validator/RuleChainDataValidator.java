@@ -53,6 +53,7 @@ public class RuleChainDataValidator extends DataValidator<RuleChain> {
     private RuleChainService ruleChainService;
 
     @Autowired
+    @Lazy
     private TenantService tenantService;
 
     @Override

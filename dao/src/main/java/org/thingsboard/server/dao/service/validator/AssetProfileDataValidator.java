@@ -42,6 +42,7 @@ public class AssetProfileDataValidator extends DataValidator<AssetProfile> {
     @Lazy
     private AssetProfileService assetProfileService;
     @Autowired
+    @Lazy
     private TenantService tenantService;
     @Lazy
     @Autowired

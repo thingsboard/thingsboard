@@ -97,12 +97,12 @@ public class DefaultHousekeeperService implements HousekeeperService {
                     for (TbProtoQueueMsg<ToHousekeeperServiceMsg> msg : msgs) {
                         log.trace("Processing task: {}", msg);
                         try {
-                            processTask(msg);
+                            processTask(msg.getValue());
                         } catch (InterruptedException e) {
                             return;
                         } catch (Throwable e) {
                             log.error("Unexpected error during message processing [{}]", msg, e);
-                            reprocessingService.submitForReprocessing(msg, e);
+                            reprocessingService.submitForReprocessing(msg.getValue(), e);
                         }
                     }
                     consumer.commit();
@@ -122,8 +122,7 @@ public class DefaultHousekeeperService implements HousekeeperService {
     }
 
     @SuppressWarnings("unchecked")
-    protected <T extends HousekeeperTask> void processTask(TbProtoQueueMsg<ToHousekeeperServiceMsg> queueMsg) throws Exception {
-        ToHousekeeperServiceMsg msg = queueMsg.getValue();
+    protected <T extends HousekeeperTask> void processTask(ToHousekeeperServiceMsg msg) throws Exception {
         HousekeeperTask task = JacksonUtil.fromString(msg.getTask().getValue(), HousekeeperTask.class);
         HousekeeperTaskProcessor<T> taskProcessor = (HousekeeperTaskProcessor<T>) taskProcessors.get(task.getTaskType());
         if (taskProcessor == null) {
@@ -131,8 +130,9 @@ public class DefaultHousekeeperService implements HousekeeperService {
         }
 
         if (log.isDebugEnabled()) {
-            log.debug("[{}][{}][{}] {} task {}", task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(),
-                    msg.getTask().getErrorsCount() == 0 ? "Processing" : "Reprocessing", task.getTaskType());
+            log.debug("[{}] {} task {}", task.getTenantId(),
+                    msg.getTask().getErrorsCount() == 0 ? "Processing" : "Reprocessing",
+                    msg.getTask().getValue());
         }
         try {
             Future<Object> future = executor.submit(() -> {
@@ -140,7 +140,7 @@ public class DefaultHousekeeperService implements HousekeeperService {
                 return null;
             });
             future.get(taskProcessingTimeout, TimeUnit.MILLISECONDS);
-            statsService.reportProcessed(task, msg);
+            statsService.reportProcessed(task.getTaskType(), msg);
         } catch (InterruptedException e) {
             throw e;
         } catch (Throwable e) {
@@ -153,8 +153,8 @@ public class DefaultHousekeeperService implements HousekeeperService {
             log.error("[{}][{}][{}] {} task processing failed, submitting for reprocessing (attempt {}): {}",
                     task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(),
                     task.getTaskType(), msg.getTask().getAttempt(), task, error);
-            reprocessingService.submitForReprocessing(queueMsg, error);
-            statsService.reportFailure(task, msg);
+            reprocessingService.submitForReprocessing(msg, error);
+            statsService.reportFailure(task.getTaskType(), msg);
         }
     }
 

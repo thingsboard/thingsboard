@@ -15,13 +15,16 @@
  */
 package org.thingsboard.server.dao.housekeeper.data;
 
+import lombok.AccessLevel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class EntitiesDeletionHousekeeperTask extends HousekeeperTask {
 
     private EntityType entityType;

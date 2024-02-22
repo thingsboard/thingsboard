@@ -18,7 +18,6 @@ package org.thingsboard.server.dao.device;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -47,7 +46,6 @@ import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -90,10 +88,6 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
 
     @Autowired
     private DataValidator<DeviceProfile> deviceProfileValidator;
-
-    @Lazy
-    @Autowired
-    private QueueService queueService;
 
     @Autowired
     private ImageService imageService;

@@ -59,7 +59,7 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
     private final DataValidator<ApiUsageState> apiUsageStateValidator;
 
     public ApiUsageStateServiceImpl(ApiUsageStateDao apiUsageStateDao, TenantProfileDao tenantProfileDao,
-                                    TenantService tenantService, @Lazy TimeseriesService tsService,
+                                    @Lazy TenantService tenantService, @Lazy TimeseriesService tsService,
                                     DataValidator<ApiUsageState> apiUsageStateValidator) {
         this.apiUsageStateDao = apiUsageStateDao;
         this.tenantProfileDao = tenantProfileDao;
