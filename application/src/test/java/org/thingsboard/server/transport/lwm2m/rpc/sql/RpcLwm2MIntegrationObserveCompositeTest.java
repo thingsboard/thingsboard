@@ -355,8 +355,8 @@ public class RpcLwm2MIntegrationObserveCompositeTest extends AbstractRpcLwM2MInt
     }
 
     /**
-     *  ObserveComposite {"ids":["/3/0/9", "/3/0/14", "/5/0/3", "/19/1/0/0"]} - Ok
-     *  ObserveCompositeCancel {"ids":["/3", "/19/1/0/0"]} - Ok
+     *  ObserveComposite {"ids":["/3/0/9", "/5/0/5", "/5/0/3", "/5/0/7", "/19/1/0/0"]} - Ok
+     *  ObserveCompositeCancel {"ids":["/5", "/19/1/0/0"]} - Ok
      *  last Observation
      * @throws Exception
      */
@@ -380,7 +380,7 @@ public class RpcLwm2MIntegrationObserveCompositeTest extends AbstractRpcLwM2MInt
         actualResult =  sendCompositeRPCByIds("ObserveCompositeCancel", expectedIds);
         rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
-        assertEquals("4", rpcActualResult.get("value").asText());
+        assertEquals("4", rpcActualResult.get("value").asText());   // CNT = 4 ("/5/0/5", "/5/0/3", "/5/0/7", "/19/1/0/0"9)
 
         String actualResultReadAll = sendCompositeRPCByKeys("ObserveReadAll", null);
         ObjectNode rpcActualResultReadAll = JacksonUtil.fromString(actualResultReadAll, ObjectNode.class);
@@ -411,7 +411,7 @@ public class RpcLwm2MIntegrationObserveCompositeTest extends AbstractRpcLwM2MInt
         actualResult =  sendCompositeRPCByIds("ObserveCompositeCancel", expectedIds);
         rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.BAD_REQUEST.getName(), rpcActualResult.get("result").asText());
-        String expectedValue = "for observation path " + fromVersionedIdToObjectId(idVer_3_0_9) + ", that includes this observation path " + fromVersionedIdToObjectId(objectIdVer_3);
+        String expectedValue = "for observation path [" + fromVersionedIdToObjectId(objectIdVer_3) + "], that includes this observation path [" + fromVersionedIdToObjectId(idVer_3_0_9);
         assertTrue(rpcActualResult.get("error").asText().contains(expectedValue));
 
             // ObserveCompositeCancel

@@ -1089,6 +1089,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           this.router.navigateByUrl(url);
         }
         break;
+      case WidgetActionType.openURL:
+        window.open(descriptor.url, descriptor.openNewBrowserTab ? '_blank' : '_self');
+        break;
       case WidgetActionType.custom:
         const customFunction = descriptor.customFunction;
         if (customFunction && customFunction.length > 0) {

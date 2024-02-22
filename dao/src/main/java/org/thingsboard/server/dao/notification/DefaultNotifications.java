@@ -40,9 +40,9 @@ import org.thingsboard.server.common.data.notification.rule.trigger.config.Alarm
 import org.thingsboard.server.common.data.notification.rule.trigger.config.ApiUsageLimitNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.DeviceActivityNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.DeviceActivityNotificationRuleTriggerConfig.DeviceEvent;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeCommunicationFailureNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeConnectionNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeConnectionNotificationRuleTriggerConfig.EdgeConnectivityEvent;
-import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeCommunicationFailureNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.EntitiesLimitNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.EntityActionNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NewPlatformVersionNotificationRuleTriggerConfig;
@@ -347,7 +347,7 @@ public class DefaultNotifications {
     public static final DefaultNotification edgeCommunicationFailures = DefaultNotification.builder()
             .name("Edge communication failure notification")
             .type(NotificationType.EDGE_COMMUNICATION_FAILURE)
-            .subject("Edge '${edgeName}' communication failure occured")
+            .subject("Edge '${edgeName}' communication failure occurred")
             .text("Failure message: '${failureMsg}'")
             .icon("error").color(RED_COLOR)
             .button("Go to Edge").link("/edgeManagement/instances/${edgeId}")

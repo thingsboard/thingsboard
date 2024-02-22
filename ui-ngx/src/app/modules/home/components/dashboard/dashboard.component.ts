@@ -214,7 +214,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       disableAutoPositionOnConflict: false,
       pushItems: false,
       swap: false,
-      maxRows: 100,
+      maxRows: 3000,
       minCols: this.columns ? this.columns : 24,
       maxCols: 3000,
       maxItemCols: 1000,
@@ -293,11 +293,11 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       this.dashboardTimewindowChangedSubject.next(this.dashboardTimewindow);
     }
 
-    if (updateMobileOpts) {
-      this.updateMobileOpts();
-    }
     if (updateLayoutOpts) {
       this.updateLayoutOpts();
+    }
+    if (updateMobileOpts) {
+      this.updateMobileOpts();
     }
     if (updateEditingOpts) {
       this.updateEditingOpts();
