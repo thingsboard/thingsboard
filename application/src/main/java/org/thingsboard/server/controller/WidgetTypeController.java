@@ -48,6 +48,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.widgets.type.TbWidgetTypeService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
+import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -76,6 +77,12 @@ public class WidgetTypeController extends AutoCommitController {
 
     private final TbWidgetTypeService tbWidgetTypeService;
     private final ImageService imageService;
+
+    public WidgetTypeController(EntitiesVersionControlService vcService, TbWidgetTypeService tbWidgetTypeService, ImageService imageService) {
+        super(vcService);
+        this.tbWidgetTypeService = tbWidgetTypeService;
+        this.imageService = imageService;
+    }
 
     private static final String WIDGET_TYPE_DESCRIPTION = "Widget Type represents the template for widget creation. Widget Type and Widget are similar to class and object in OOP theory.";
     private static final String WIDGET_TYPE_DETAILS_DESCRIPTION = "Widget Type Details extend Widget Type and add image and description properties. " +
