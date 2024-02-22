@@ -120,14 +120,14 @@ public class DefaultTbAlarmRuleStateService extends AbstractPartitionBasedServic
         addedPartitions.stream().map(tpi -> tpi.getTenantId().orElse(TenantId.SYS_TENANT_ID)).distinct().forEach(tenantId -> {
             List<PersistedEntityState> states = stateStore.getAll(tenantId);
             addedEntityStates.addAndGet(states.size());
-            states.forEach(ares -> {
+            states.forEach(state -> {
                 try {
-                    EntityId entityId = ares.getEntityId();
+                    EntityId entityId = state.getEntityId();
                     if (!entityStates.containsKey(entityId)) {
-                        createEntityState(ares.getTenantId(), entityId, ares);
+                        createEntityState(state.getTenantId(), entityId, state);
                     }
                 } catch (Exception e) {
-                    log.warn("Failed to create entity state [{}]!", e.getMessage());
+                    log.error("Failed to create entity state during repartitioning!", e);
                 }
             });
         });
@@ -138,7 +138,7 @@ public class DefaultTbAlarmRuleStateService extends AbstractPartitionBasedServic
     @Override
     protected void cleanupEntitiesOnPartitionRemoval(Set<EntityId> ids) {
         ids.forEach(entityStates::remove);
-        myEntityStateIdsPerAlarmRule.values().forEach(set -> ids.forEach(ids::remove));
+        myEntityStateIdsPerAlarmRule.values().forEach(set -> set.removeAll(ids));
     }
 
     @Override

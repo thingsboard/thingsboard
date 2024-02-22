@@ -36,7 +36,7 @@ import static org.thingsboard.server.common.data.DataConstants.INTERNAL_QUEUE_NA
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
 public class RedisAlarmRuleEntityStateStore implements AlarmRuleEntityStateStore {
 
-    private static final String KEY_PREFIX = "A_R";
+    private static final String KEY_PREFIX = "AR_ENTITY_STATE";
 
     private final PartitionService partitionService;
     private final RedisConnectionFactory redisConnectionFactory;
