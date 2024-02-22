@@ -22,20 +22,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
-import org.thingsboard.server.common.data.alarm.rule.utils.AlarmRuleMigrator;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.device.profile.alarm.rule.DeviceProfileAlarm;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileSaveResult;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
-
-import java.util.Collections;
-import java.util.List;
 
 @Service
 @TbCoreComponent
@@ -51,37 +45,19 @@ public class DefaultTbDeviceProfileService extends AbstractTbEntityService imple
         ActionType actionType = deviceProfile.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = deviceProfile.getTenantId();
         try {
-            List<DeviceProfileAlarm> alarms = deviceProfile.getProfileData().getAlarms();
-            deviceProfile.getProfileData().setAlarms(null);
-
-            DeviceProfile savedDeviceProfile = checkNotNull(deviceProfileService.saveDeviceProfile(deviceProfile));
-
-            List<Runnable> alarmRuleCallbacks = Collections.emptyList();
-
-            if (CollectionsUtil.isNotEmpty(alarms)) {
-                alarmRuleCallbacks = alarms.stream().map(oldRule -> saveAlarmRule(tenantId, savedDeviceProfile, oldRule, user)).toList();
-            }
-
+            DeviceProfileSaveResult deviceProfileResult = deviceProfileService.saveDeviceProfileWithAlarmRules(deviceProfile);
+            DeviceProfile savedDeviceProfile = deviceProfileResult.deviceProfile();
             autoCommit(user, savedDeviceProfile.getId());
             logEntityActionService.logEntityAction(tenantId, savedDeviceProfile.getId(), savedDeviceProfile, null, actionType, user);
-            alarmRuleCallbacks.forEach(Runnable::run);
+            deviceProfileResult.alarmRulePairs().forEach(pair -> {
+                var alarmRule = pair.getFirst();
+                logEntityActionService.logEntityAction(tenantId, alarmRule.getId(), alarmRule, null, pair.getSecond() ? ActionType.ADDED : ActionType.UPDATED, user);
+            });
             return savedDeviceProfile;
         } catch (Exception e) {
             logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.DEVICE_PROFILE), deviceProfile, actionType, user, e);
             throw e;
         }
-    }
-
-    private Runnable saveAlarmRule(TenantId tenantId, DeviceProfile deviceProfile, DeviceProfileAlarm oldRule, User user) {
-        AlarmRule alarmRule = AlarmRuleMigrator.migrate(tenantId, deviceProfile, oldRule);
-        AlarmRule foundAlarmRule = alarmRuleService.findAlarmRuleByName(tenantId, alarmRule.getName());
-        if (foundAlarmRule != null) {
-            alarmRule.setId(foundAlarmRule.getId());
-            alarmRule.setCreatedTime(foundAlarmRule.getCreatedTime());
-        }
-        ActionType actionType = alarmRule.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
-        var savedAlarmRule = alarmRuleService.saveAlarmRule(tenantId, alarmRule);
-        return () -> logEntityActionService.logEntityAction(tenantId, savedAlarmRule.getId(), savedAlarmRule, null, actionType, user);
     }
 
     @Override

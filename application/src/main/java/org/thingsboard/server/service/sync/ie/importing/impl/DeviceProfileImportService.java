@@ -21,9 +21,8 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
-import org.thingsboard.server.common.data.alarm.rule.utils.AlarmRuleMigrator;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.device.profile.alarm.rule.DeviceProfileAlarm;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileSaveResult;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
@@ -32,8 +31,6 @@ import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
-
-import java.util.List;
 
 @Service
 @TbCoreComponent
@@ -60,26 +57,19 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
 
     @Override
     protected DeviceProfile saveOrUpdate(EntitiesImportCtx ctx, DeviceProfile deviceProfile, EntityExportData<DeviceProfile> exportData, IdProvider idProvider) {
-        List<DeviceProfileAlarm> alarms = deviceProfile.getProfileData().getAlarms();
-        deviceProfile.getProfileData().setAlarms(null);
-        DeviceProfile savedProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
+        DeviceProfileSaveResult deviceProfileResult = deviceProfileService.saveDeviceProfileWithAlarmRules(deviceProfile);
         TenantId tenantId = ctx.getTenantId();
-        if (CollectionsUtil.isNotEmpty(alarms)) {
-            alarms.forEach(dpAlarm -> {
-                AlarmRule alarmRule = AlarmRuleMigrator.migrate(tenantId, deviceProfile, dpAlarm);
-                AlarmRule foundAlarmRule = alarmRuleService.findAlarmRuleByName(tenantId, alarmRule.getName());
-                if (foundAlarmRule != null) {
-                    alarmRule.setId(foundAlarmRule.getId());
-                    alarmRule.setCreatedTime(foundAlarmRule.getCreatedTime());
-                }
-                boolean created = alarmRule.getId() == null;
+        var alarmRulePairs = deviceProfileResult.alarmRulePairs();
+        if (CollectionsUtil.isNotEmpty(alarmRulePairs)) {
+            alarmRulePairs.forEach(pair -> {
+                AlarmRule alarmRule = pair.getFirst();
+                Boolean created = pair.getSecond();
                 ActionType actionType = created ? ActionType.ADDED : ActionType.UPDATED;
-                var savedAlarmRule = alarmRuleService.saveAlarmRule(tenantId, alarmRule);
                 ctx.registerResult(EntityType.ALARM_RULE, created);
-                ctx.addEventCallback(() -> logEntityActionService.logEntityAction(tenantId, savedAlarmRule.getId(), savedAlarmRule, null, actionType, ctx.getUser()));
+                ctx.addEventCallback(() -> logEntityActionService.logEntityAction(tenantId, alarmRule.getId(), alarmRule, null, actionType, ctx.getUser()));
             });
         }
-        return savedProfile;
+        return deviceProfileResult.deviceProfile();
     }
 
     @Override
