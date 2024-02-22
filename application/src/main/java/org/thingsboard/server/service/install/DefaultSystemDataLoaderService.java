@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.install;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -290,6 +291,18 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         connectivitySettings.setKey("connectivity");
         connectivitySettings.setJsonValue(JacksonUtil.valueToTree(connectivityConfiguration.getConnectivity()));
         adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, connectivitySettings);
+
+        AdminSettings gatewaySettings = new AdminSettings();
+        gatewaySettings.setTenantId(TenantId.SYS_TENANT_ID);
+        gatewaySettings.setKey("gateway");
+        ObjectNode gatewayInfo = JacksonUtil.newObjectNode();
+        ArrayNode availableVersions = JacksonUtil.newArrayNode();
+        availableVersions.add("latest");
+        gatewayInfo.set("availableVersions", availableVersions);
+        gatewayInfo.put("version", "latest");
+        gatewaySettings.setJsonValue(gatewayInfo);
+        adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, gatewaySettings);
+
     }
 
     @Override
