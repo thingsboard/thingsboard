@@ -1,0 +1,85 @@
+#
+# Copyright © 2016-2024 The Thingsboard Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+queue_type: "TB_QUEUE_TYPE" #kafka (Apache Kafka) or aws-sqs (AWS SQS) or pubsub (PubSub) or service-bus (Azure Service Bus) or rabbitmq (RabbitMQ)
+queue_prefix: "TB_QUEUE_PREFIX"
+request_topic: "REMOTE_JS_EVAL_REQUEST_TOPIC"
+http_port: "HTTP_PORT"      # /livenessProbe
+
+js:
+  response_poll_interval: "REMOTE_JS_RESPONSE_POLL_INTERVAL_MS"
+  max_result_size: "JS_MAX_RESULT_SIZE"
+
+kafka:
+  bootstrap:
+    # Kafka Bootstrap Servers
+    servers: "TB_KAFKA_SERVERS"
+  replication_factor: "TB_QUEUE_KAFKA_REPLICATION_FACTOR"
+  acks: "TB_KAFKA_ACKS" # -1 = all; 0 = no acknowledgments; 1 = only waits for the leader to acknowledge
+  batch_size: "TB_KAFKA_BATCH_SIZE" # for producer
+  linger_ms: "TB_KAFKA_LINGER_MS" # for producer
+  partitions_consumed_concurrently: "TB_KAFKA_PARTITIONS_CONSUMED_CONCURRENTLY" # (EXPERIMENTAL) increase this value if you are planning to handle more than one partition (scale up, scale down) - this will decrease the latency
+  requestTimeout: "TB_QUEUE_KAFKA_REQUEST_TIMEOUT_MS"
+  connectionTimeout: "TB_KAFKA_CONNECTION_TIMEOUT_MS"
+  compression: "TB_QUEUE_KAFKA_COMPRESSION" # gzip or uncompressed
+  topic_properties: "TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES"
+  use_confluent_cloud: "TB_QUEUE_KAFKA_USE_CONFLUENT_CLOUD"
+  client_id: "KAFKA_CLIENT_ID" #inject pod name to easy identify the client using /opt/kafka/bin/kafka-consumer-groups.sh
+  confluent:
+    sasl:
+      mechanism: "TB_QUEUE_KAFKA_CONFLUENT_SASL_MECHANISM"
+    username: "TB_QUEUE_KAFKA_CONFLUENT_USERNAME"
+    password: "TB_QUEUE_KAFKA_CONFLUENT_PASSWORD"
+
+pubsub:
+  project_id: "TB_QUEUE_PUBSUB_PROJECT_ID"
+  service_account: "TB_QUEUE_PUBSUB_SERVICE_ACCOUNT"
+  queue_properties: "TB_QUEUE_PUBSUB_JE_QUEUE_PROPERTIES"
+
+aws_sqs:
+  access_key_id: "TB_QUEUE_AWS_SQS_ACCESS_KEY_ID"
+  secret_access_key: "TB_QUEUE_AWS_SQS_SECRET_ACCESS_KEY"
+  region: "TB_QUEUE_AWS_SQS_REGION"
+  queue_properties: "TB_QUEUE_AWS_SQS_JE_QUEUE_PROPERTIES"
+
+rabbitmq:
+  host: "TB_QUEUE_RABBIT_MQ_HOST"
+  port: "TB_QUEUE_RABBIT_MQ_PORT"
+  virtual_host: "TB_QUEUE_RABBIT_MQ_VIRTUAL_HOST"
+  username: "TB_QUEUE_RABBIT_MQ_USERNAME"
+  password: "TB_QUEUE_RABBIT_MQ_PASSWORD"
+  queue_properties: "TB_QUEUE_RABBIT_MQ_JE_QUEUE_PROPERTIES"
+
+service_bus:
+  namespace_name: "TB_QUEUE_SERVICE_BUS_NAMESPACE_NAME"
+  sas_key_name: "TB_QUEUE_SERVICE_BUS_SAS_KEY_NAME"
+  sas_key: "TB_QUEUE_SERVICE_BUS_SAS_KEY"
+  max_messages: "TB_QUEUE_SERVICE_BUS_MAX_MESSAGES"
+  queue_properties: "TB_QUEUE_SERVICE_BUS_JE_QUEUE_PROPERTIES"
+
+logger:
+  level: "LOGGER_LEVEL"
+  path: "LOG_FOLDER"
+  filename: "LOGGER_FILENAME"
+
+script:
+  use_sandbox: "SCRIPT_USE_SANDBOX"
+  memory_usage_trace_frequency: "MEMORY_USAGE_TRACE_FREQUENCY"
+  stat_print_frequency: "SCRIPT_STAT_PRINT_FREQUENCY"
+  script_body_trace_frequency: "SCRIPT_BODY_TRACE_FREQUENCY"
+  max_active_scripts: "MAX_ACTIVE_SCRIPTS"
+  slow_query_log_ms: "SLOW_QUERY_LOG_MS" #1.123456
+  slow_query_log_body: "SLOW_QUERY_LOG_BODY" #true or false

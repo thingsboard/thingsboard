@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<!DOCTYPE configuration>
+<configuration scan="true" scanPeriod="10 seconds">
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="org.thingsboard.server" level="INFO"/>
+    <logger name="org.apache.kafka.common.utils.AppInfoParser" level="WARN"/>
+    <logger name="org.apache.kafka.clients" level="WARN"/>
+    <!-- To enable the logging of scanned rule engine components-->
+    <!--    <logger name="org.thingsboard.server.service.component.AnnotationComponentDiscoveryService" level="DEBUG" />-->
+    <!-- To enable the debug logging of rule node upgrade -->
+    <!--    <logger name="org.thingsboard.server.service.install.update.DefaultDataUpdateService" level="DEBUG"/>-->
+    <!-- Other useful logs -->
+    <!--    <logger name="org.springframework.jdbc.core" level="TRACE" />-->
+    <!--    <logger name="org.hibernate.SQL" level="DEBUG" />-->
+    <!--    <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE" />-->
+
+    <!--    <logger name="org.thingsboard.server.service.queue" level="TRACE" />-->
+    <!--    <logger name="org.thingsboard.server.service.transport" level="TRACE" />-->
+    <!--    <logger name="org.thingsboard.server.queue.memory.InMemoryStorage" level="DEBUG" />-->
+    <!--    <logger name="org.thingsboard.server.service.ttl.AbstractCleanUpService" level="DEBUG" />-->
+
+    <!--    <logger name="org.thingsboard.server.service.subscription" level="TRACE"/>-->
+    <!--    <logger name="org.thingsboard.server.service.telemetry" level="TRACE"/>-->
+    <!--    <logger name="org.eclipse.californium.scandium.DTLSConnector" level="TRACE" />-->
+    <!--    <logger name="org.eclipse.californium.scandium.dtls.Handshaker" level="DEBUG" />-->
+
+    <!-- Top Rule Nodes by max execution time -->
+    <!--    <logger name="org.thingsboard.server.service.queue.TbMsgPackProcessingContext" level="DEBUG" /> -->
+
+    <!-- MQTT transport debug -->
+    <!--    <logger name="org.thingsboard.server.transport.mqtt.MqttTransportHandler" level="DEBUG" /> -->
+
+    <!-- Device actor message processor debug -->
+    <!--    <logger name="org.thingsboard.server.actors.device.DeviceActorMessageProcessor" level="DEBUG" />-->
+
+    <logger name="com.microsoft.azure.servicebus.primitives.CoreMessageReceiver" level="OFF" />
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+
+</configuration>

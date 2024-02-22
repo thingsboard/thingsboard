@@ -1,0 +1,60 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import "../../../../../../scss/constants";
+
+:host {
+  form.tb-dialog-container {
+    min-width: 600px;
+    max-height: 100vh;
+    color: rgba(0, 0, 0, 0.87);
+  }
+
+  .mat-dialog-content {
+    height: 85%;
+  }
+
+  .tb-title {
+    display: block;
+    padding-bottom: 6px;
+  }
+
+  .tb-notification-tenant-group {
+    width: 280px;
+    margin-bottom: 16px;
+  }
+}
+
+:host ::ng-deep {
+  .mat-mdc-radio-group {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 22px;
+    gap: 12px;
+
+    .mat-mdc-radio-button {
+      flex: 1 1 100%;
+      padding: 4px;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 6px;
+    }
+  }
+
+  @media #{$mat-xs} {
+    .mat-mdc-radio-group {
+      flex-direction: column;
+    }
+  }
+}

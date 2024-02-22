@@ -1,0 +1,81 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import '../../../scss/constants';
+
+.tb-widgets-bundle-select {
+  .mdc-list-item__primary-text {
+    width: 100%;
+  }
+}
+
+tb-widgets-bundle-select {
+  .mat-mdc-select-arrow {
+    width: 18px;
+  }
+}
+
+tb-widgets-bundle-select, .tb-widgets-bundle-select {
+  .tb-bundle-item {
+    .tb-bundle-system {
+      float: right;
+      font-size: .8rem;
+      opacity: .8;
+    }
+  }
+}
+
+mat-toolbar {
+  tb-widgets-bundle-select {
+    .mat-mdc-text-field-wrapper {
+      border-radius: 0;
+      .mat-mdc-form-field-infix {
+        background: rgba(255, 255, 255, .2);
+        padding: 5px 20px !important;
+        min-height: 44.5px;
+        .mat-mdc-select {
+          .mat-mdc-select-trigger {
+            height: 34.5px;
+            .mat-mdc-select-value {
+              vertical-align: middle;
+              min-height: 30px;
+              height: 30px;
+              padding: 2px 2px 1px;
+              .mat-mdc-select-value-text {
+                font-size: 1.2rem;
+                color: #fff;
+              }
+            }
+          }
+          .mat-mdc-select-arrow {
+            width: 18px;
+          }
+        }
+        @media #{$mat-xs} {
+          width: auto;
+        }
+      }
+      .mdc-line-ripple {
+        display: none;
+      }
+    }
+    .mat-mdc-form-field-subscript-wrapper {
+      display: none;
+    }
+    .mat-mdc-form-field.mat-focused.mat-primary .mat-mdc-select-arrow-wrapper .mat-mdc-select-arrow {
+      color: #fff;
+    }
+  }
+}

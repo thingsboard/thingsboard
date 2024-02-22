@@ -1,0 +1,96 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-two-factor-auth-login-content mat-app-background tb-dark" fxLayout="row" fxLayoutAlign="center center"
+     style="width: 100%;">
+  <mat-card appearance="raised" fxFlex="initial" class="tb-two-factor-auth-login-card" >
+    <mat-card-header>
+      <mat-card-title class="mat-headline-5" fxLayout="row" fxLayoutAlign="start center">
+        <button mat-icon-button type="button" (click)="cancelLogin()">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+        {{ 'login.verify-your-identity' | translate }}
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="providers-container tb-default" fxLayout="column" fxLayoutGap="8px" *ngIf="!selectedProvider">
+        <p class="mat-body" translate>login.select-way-to-verify</p>
+        <ng-container *ngFor="let provider of allowProviders">
+          <button type="button" mat-stroked-button class="provider" (click)="selectProvider(provider)">
+            <mat-icon class="tb-mat-18" svgIcon="{{ providersData.get(provider).icon }}"></mat-icon>
+            {{ providersData.get(provider).name | translate }}
+          </button>
+        </ng-container>
+      </div>
+      <form [formGroup]="verificationForm" (ngSubmit)="sendVerificationCode()" *ngIf="selectedProvider">
+        <fieldset [disabled]="isLoading$ | async">
+          <div tb-toast fxLayout="column">
+            <p class="mat-body">{{ providerDescription }}</p>
+            <div fxLayout="row" class="code-block" fxLayoutGap="8px">
+              <mat-form-field class="mat-block tb-appearance-transparent" fxFlex>
+                <input matInput formControlName="verificationCode"
+                       required [maxlength]="maxLengthInput" type="text"
+                       [attr.inputmode]="inputMode" [pattern]="pattern"
+                       autocomplete="off"
+                       placeholder="{{ providersData.get(selectedProvider).placeholder | translate }}"/>
+                <mat-error *ngIf="verificationForm.get('verificationCode').getError('required') ||
+                                  verificationForm.get('verificationCode').getError('minlength') ||
+                                  verificationForm.get('verificationCode').getError('maxlength') ||
+                                  verificationForm.get('verificationCode').getError('pattern')">
+                  {{ 'security.2fa.dialog.verification-code-invalid' | translate }}
+                </mat-error>
+                <mat-error *ngIf="verificationForm.get('verificationCode').getError('incorrectCode')">
+                  {{ 'security.2fa.dialog.verification-code-incorrect' | translate }}
+                </mat-error>
+                <mat-error *ngIf="verificationForm.get('verificationCode').getError('tooManyRequest')">
+                  {{ 'security.2fa.dialog.verification-code-many-request' | translate }}
+                </mat-error>
+              </mat-form-field>
+            </div>
+            <span style="height: 50px;"></span>
+            <button mat-raised-button
+                    color="accent"
+                    [disabled]="(isLoading$ | async) || verificationForm.invalid"
+                    type="submit">
+              {{ 'action.continue' | translate }}
+            </button>
+            <span style="height: 16px;"></span>
+            <div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="8px" class="action-row">
+              <div *ngIf="showResendAction" fxFlex fxLayoutAlign="center center" class="action-resend">
+                <div *ngIf="countDownTime" class="timer">
+                  {{ 'login.resend-code-wait' | translate : {time: countDownTime} }}
+                </div>
+                <button [fxShow]="!hideResendButton"
+                        mat-button fxFlex
+                        (click)="sendCode($event)"
+                        type="button">
+                  {{ 'login.resend-code' | translate }}
+                </button>
+              </div>
+              <button mat-button fxFlex
+                      type="button"
+                      *ngIf="allowProviders.length > 1"
+                      (click)="selectProvider(null)">
+                {{ 'login.try-another-way' | translate }}
+              </button>
+            </div>
+          </div>
+        </fieldset>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

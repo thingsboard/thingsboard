@@ -1,0 +1,71 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section class="tb-widget-settings" [formGroup]="flotPieWidgetSettingsForm" fxLayout="column">
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>widgets.chart.common-pie-settings</legend>
+    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px">
+      <mat-form-field fxFlex class="mat-block">
+        <mat-label translate>widgets.chart.radius</mat-label>
+        <input matInput type="number" step="0.1" min="0" max="1" formControlName="radius">
+        <mat-error *ngIf="flotPieWidgetSettingsForm.get('radius').hasError('min') || flotPieWidgetSettingsForm.get('radius').hasError('max')">
+          {{ 'widgets.chart.common-pie-settings-range-error' | translate }}
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field fxFlex class="mat-block">
+        <mat-label translate>widgets.chart.inner-radius</mat-label>
+        <input matInput type="number" step="0.1" min="0" max="1" formControlName="innerRadius">
+        <mat-error *ngIf="flotPieWidgetSettingsForm.get('innerRadius').hasError('min') || flotPieWidgetSettingsForm.get('innerRadius').hasError('max')">
+          {{ 'widgets.chart.common-pie-settings-range-error' | translate }}
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field fxFlex class="mat-block">
+        <mat-label translate>widgets.chart.tilt</mat-label>
+        <input matInput type="number" step="0.1" min="0" max="1" formControlName="tilt">
+        <mat-error *ngIf="flotPieWidgetSettingsForm.get('tilt').hasError('min') || flotPieWidgetSettingsForm.get('tilt').hasError('max')">
+          {{ 'widgets.chart.common-pie-settings-range-error' | translate }}
+        </mat-error>
+      </mat-form-field>
+    </section>
+    <mat-slide-toggle formControlName="showLabels" class="slide-block">
+      {{ 'widgets.chart.show-labels' | translate }}
+    </mat-slide-toggle>
+    <mat-slide-toggle formControlName="showTooltip" class="slide-block">
+      {{ 'widgets.chart.show-tooltip' | translate }}
+    </mat-slide-toggle>
+  </fieldset>
+  <fieldset class="fields-group" formGroupName="stroke">
+    <legend class="group-title" translate>widgets.chart.stroke-settings</legend>
+    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
+      <mat-form-field fxFlex class="mat-block">
+        <mat-label translate>widgets.chart.width-pixels</mat-label>
+        <input matInput type="number" min="0" formControlName="width">
+      </mat-form-field>
+      <tb-color-input fxFlex
+        formControlName="color"
+        icon="format_color_fill"
+        label="{{ 'widgets.chart.color' | translate }}" openOnInput colorClearButton>
+      </tb-color-input>
+    </section>
+  </fieldset>
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>widgets.chart.animation-settings</legend>
+    <mat-slide-toggle formControlName="animatedPie" class="slide-block">
+      {{ 'widgets.chart.animated-pie' | translate }}
+    </mat-slide-toggle>
+  </fieldset>
+</section>

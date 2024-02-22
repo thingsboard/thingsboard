@@ -1,0 +1,90 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form class="tb-add-widget-dialog" [formGroup]="widgetFormGroup">
+  <mat-toolbar color="primary">
+    <div class="tb-add-widget-toolbar">
+      <h2>{{'widget.add' | translate}}:</h2>
+      <span fxFlex>{{data.widgetInfo.widgetName}}</span>
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap.gt-xs="16px" style="min-width: fit-content;">
+        <tb-toggle-select *ngIf="widgetConfig.hasBasicMode" appearance="fill-invert" selectMediaBreakpoint="xs"
+                          [(ngModel)]="widgetConfigMode" [ngModelOptions]="{standalone: true}">
+          <tb-toggle-option value="basic">{{ 'widget.basic-mode' | translate }}</tb-toggle-option>
+          <tb-toggle-option value="advanced">{{ 'widget.advanced-mode' | translate }}</tb-toggle-option>
+        </tb-toggle-select>
+        <div [tb-help]="helpLinkIdForWidgetType()"></div>
+      </div>
+    </div>
+    <button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <div mat-dialog-content>
+    <tb-widget-config
+      #widgetConfigComponent
+      class="tb-absolute-fill"
+      [aliasController]="aliasController"
+      [functionsOnly]="false"
+      [dashboard]="dashboard"
+      [widget]="widget"
+      [hideHeader]="hideHeader"
+      isAdd
+      formControlName="widgetConfig">
+    </tb-widget-config>
+    <tb-widget-preview *ngIf="previewMode" class="tb-absolute-fill"
+      [aliasController]="aliasController"
+      [stateController]="stateController"
+      [dashboardTimewindow]="dashboard.configuration.timewindow"
+      [widget]="widget"
+      [widgetConfig]="widgetFormGroup.get('widgetConfig').value.config"
+      [previewWidth]="widgetConfig.typeParameters.previewWidth"
+      [previewHeight]="widgetConfig.typeParameters.previewHeight">
+      <div class="tb-preview-panel-content">
+        <button mat-button
+                (click)="previewMode = false">
+          <mat-icon>chevron_left</mat-icon>
+          {{ 'action.back' | translate }}
+        </button>
+      </div>
+    </tb-widget-preview>
+  </div>
+  <div mat-dialog-actions fxLayoutAlign="space-between center">
+    <button mat-button color="primary"
+            type="button"
+            (click)="cancel()"
+            cdkFocusInitial>
+      {{ 'action.cancel' | translate }}
+    </button>
+    <div fxLayout="row" fxLayoutGap="8px">
+      <button *ngIf="!previewMode"
+              mat-button color="primary"
+              type="button"
+              [disabled]="!widgetFormGroup.valid"
+              (click)="previewMode = true"
+              cdkFocusInitial>
+        {{ 'widget-config.preview' | translate }}
+      </button>
+      <button mat-raised-button color="primary"
+              (click)="add()"
+              [disabled]="!widgetFormGroup.valid">
+        {{ 'action.add' | translate }}
+      </button>
+    </div>
+  </div>
+</form>

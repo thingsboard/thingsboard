@@ -1,0 +1,59 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-json-input" tb-toast toastTarget="{{ toastTargetId }}">
+  <form *ngIf="attributeUpdateFormGroup"
+        fxLayout="column"
+        class="tb-json-input__form"
+        [formGroup]="attributeUpdateFormGroup"
+        (ngSubmit)="save()">
+      <div fxLayout="column" fxLayoutGap="10px" fxFlex *ngIf="datasourceDetected && !errorMessage; else errorContainer">
+        <fieldset fxFlex>
+          <tb-json-object-edit
+            [editorStyle]="{minHeight: '100px'}"
+            fillHeight="true"
+            [jsonRequired]="settings.attributeRequired"
+            label="{{ settings.showLabel ? labelValue : '' }}"
+            formControlName="currentValue"
+            (focusin)="isFocused = true;"
+            (focusout)="isFocused = false;"
+          ></tb-json-object-edit>
+        </fieldset>
+        <div class="tb-json-input__actions" fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="20px">
+          <button mat-button color="primary"
+                  type="button"
+                  [disabled]="!attributeUpdateFormGroup.dirty"
+                  (click)="discard()"
+                  matTooltip="{{ 'widgets.input-widgets.discard-changes' | translate }}"
+                  matTooltipPosition="above">
+            {{ "action.undo" | translate }}
+          </button>
+          <button mat-raised-button color="primary"
+                  type="submit"
+                  [disabled]="attributeUpdateFormGroup.invalid || !attributeUpdateFormGroup.dirty">
+            {{ "action.save" | translate }}
+          </button>
+        </div>
+      </div>
+
+    <ng-template #errorContainer>
+      <div class="tb-json-input__error" fxLayout="column" fxLayoutAlign="center center" fxFlex>
+        {{ errorMessage | translate }}
+      </div>
+    </ng-template>
+  </form>
+</div>

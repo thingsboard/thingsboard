@@ -1,0 +1,65 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section class="tb-widget-settings" [formGroup]="dashboardStateWidgetSettingsForm" fxLayout="column">
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>widgets.dashboard-state.dashboard-state-settings</legend>
+    <mat-form-field class="mat-block">
+      <input matInput type="text" placeholder="{{ 'widgets.dashboard-state.dashboard-state' | translate }}"
+             #dashboardStateInput
+             formControlName="stateId"
+             [matAutocomplete]="dashboardStateAutocomplete">
+      <button *ngIf="dashboardStateWidgetSettingsForm.get('stateId').value"
+              type="button"
+              matSuffix mat-icon-button aria-label="Clear"
+              (click)="clearDashboardState()">
+        <mat-icon class="material-icons">close</mat-icon>
+      </button>
+      <mat-autocomplete
+        class="tb-autocomplete"
+        #dashboardStateAutocomplete="matAutocomplete">
+        <mat-option *ngFor="let state of filteredDashboardStates | async" [value]="state">
+          <span [innerHTML]="state | highlight:dashboardStateSearchText"></span>
+        </mat-option>
+      </mat-autocomplete>
+    </mat-form-field>
+    <mat-expansion-panel class="tb-settings">
+      <mat-expansion-panel-header>
+        <mat-panel-description fxLayoutAlign="end" translate>
+          widget-config.advanced-settings
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <mat-slide-toggle class="mat-slide" formControlName="defaultAutofillLayout">
+          {{ 'widgets.dashboard-state.autofill-state-layout' | translate }}
+        </mat-slide-toggle>
+        <mat-form-field fxFlex class="mat-block">
+          <mat-label translate>widgets.dashboard-state.default-margin</mat-label>
+          <input matInput type="number" min="0" step="1" formControlName="defaultMargin">
+        </mat-form-field>
+        <tb-color-input
+          formControlName="defaultBackgroundColor"
+          icon="format_color_fill"
+          label="{{ 'widgets.dashboard-state.default-background-color' | translate }}" openOnInput colorClearButton>
+        </tb-color-input>
+        <mat-slide-toggle class="mat-slide" formControlName="syncParentStateParams">
+          {{ 'widgets.dashboard-state.sync-parent-state-params' | translate }}
+        </mat-slide-toggle>
+      </ng-template>
+    </mat-expansion-panel>
+  </fieldset>
+</section>

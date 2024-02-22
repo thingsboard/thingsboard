@@ -1,0 +1,71 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import '../../../../../scss/constants';
+
+.entity-version-diff-view {
+  position: relative;
+  &:not(.tb-fullscreen) {
+    max-height: 95vh;
+    &.content-ready {
+      width: 600px;
+      @media #{$mat-gt-sm} {
+        width: 800px;
+      }
+      @media #{$mat-gt-md} {
+        width: 1000px
+      }
+      @media #{$mat-gt-xmd} {
+        width: 1200px
+      }
+    }
+  }
+  &.tb-fullscreen {
+    height: 100%;
+    background: #fff;
+    .bottom-panel {
+      margin-bottom: 16px;
+    }
+  }
+  .mat-toolbar {
+    background: #fff;
+    .mat-divider-vertical {
+      height: 40px;
+      margin-right: 16px;
+      margin-left: 16px;
+      @media #{$mat-xs} {
+        margin-right: 8px;
+        margin-left: 8px;
+      }
+    }
+    .diff-count {
+      font-size: 16px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+  .version-title {
+    margin-left: 4px;
+  }
+  .diff-viewer {
+    position: relative;
+    border: 1px solid #c0c0c0;
+    margin-top: 4px;
+    margin-bottom: 16px;
+    .acediff__diffLine {
+      z-index: 1;
+    }
+  }
+}

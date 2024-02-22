@@ -1,0 +1,148 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-card appearance="outlined" class="tb-bundle-widgets-card">
+  <mat-card-header>
+    <mat-card-title>
+      <div class="title-container">
+        <button mat-icon-button
+                matTooltip="{{ 'action.back' | translate }}"
+                matTooltipPosition="above"
+                (click)="goBack()">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <span class="mat-headline-5">{{ widgetsBundle.title }}: {{ 'widget.widgets' | translate }}</span>
+        <span fxFlex></span>
+        <button mat-icon-button [disabled]="isLoading$ | async"
+                *ngIf="!isReadOnly"
+                matTooltip="{{ 'widget.add-new-widget' | translate }}"
+                matTooltipPosition="above"
+                [matMenuTriggerFor]="addWidgetMenu">
+          <mat-icon>add</mat-icon>
+        </button>
+        <mat-menu #addWidgetMenu="matMenu" xPosition="before">
+          <button mat-menu-item (click)="addWidgetType($event)">
+            <mat-icon>insert_drive_file</mat-icon>
+            <span>{{ 'dashboard.create-new-widget' | translate }}</span>
+          </button>
+          <button mat-menu-item (click)="importWidgetType()">
+            <mat-icon>file_upload</mat-icon>
+            <span>{{ 'widget.import' | translate }}</span>
+          </button>
+        </mat-menu>
+        <button mat-icon-button
+                matTooltip="{{ 'widgets-bundle.export' | translate }}"
+                matTooltipPosition="above"
+                (click)="exportWidgetsBundle()">
+          <mat-icon>file_download</mat-icon>
+        </button>
+      </div>
+    </mat-card-title>
+  </mat-card-header>
+  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+  </mat-progress-bar>
+  <div style="height: 4px;" *ngIf="(isLoading$ | async) === false"></div>
+  <mat-card-content>
+    <div class="tb-drop-list tb-bundle-widgets-container" cdkDropList cdkDropListOrientation="vertical"
+         (cdkDropListDropped)="widgetDrop($event)" [cdkDropListDisabled]="!editMode || widgets?.length < 2">
+      <div cdkDrag class="tb-draggable tb-bundle-widget-row" *ngFor="let widget of widgets; trackBy: trackByWidget;
+               let $index = index; last as isLast;">
+        <div class="tb-bundle-widget-row-details">
+          <img class="tb-bundle-widget-image-preview" [src]="widget.image | image: {preview: true, emptyUrl: '/assets/widget-preview-empty.svg'} | async" alt="{{ widget.name }}">
+          <div class="tb-bundle-widget-details">
+            <div class="tb-bundle-widget-title">{{ widget.name }}</div>
+            <div *ngIf="widget.deprecated" class="tb-bundle-widget-deprecated">{{ 'widget.deprecated' | translate }}</div>
+          </div>
+        </div>
+        <button *ngIf="!editMode"
+                mat-icon-button
+                (click)="openWidgetEditor($event, widget)"
+                matTooltip="{{ 'widget.edit' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button *ngIf="!editMode"
+                mat-icon-button
+                (click)="exportWidgetType($event, widget)"
+                matTooltip="{{ 'widget.export' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>file_download</mat-icon>
+        </button>
+        <button *ngIf="editMode && !addMode"
+                mat-icon-button
+                (click)="removeWidgetType($event, widget)"
+                matTooltip="{{'widget.remove' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>delete</mat-icon>
+        </button>
+        <button cdkDragHandle *ngIf="editMode"
+                [fxShow]="widgets?.length > 1"
+                mat-icon-button
+                matTooltip="{{ 'action.drag' | translate }}"
+                matTooltipPosition="above"
+                class="tb-drag-handle">
+          <tb-icon>drag_indicator</tb-icon>
+        </button>
+      </div>
+    </div>
+    <div *ngIf="editMode && !addMode && widgets?.length" class="tb-add-widget-button"
+         matTooltip="{{ 'widget.add-existing-widget' | translate }}"
+         matTooltipPosition="above"
+         (click)="addWidgetMode()">
+      <tb-icon color="primary" class="tb-add-widget-icon">add</tb-icon>
+    </div>
+    <div *ngIf="editMode && !addMode && !widgets?.length" class="tb-add-widget-button-panel">
+      <div class="tb-add-widget-button-with-text" (click)="addWidgetMode()">
+        <tb-icon color="primary" class="tb-add-widget-icon">add</tb-icon>
+        <div class="tb-add-widget-button-text" translate>widget.add-existing-widget</div>
+      </div>
+    </div>
+    <div *ngIf="isReadOnly && !widgets?.length" class="tb-no-data-available">
+      <div class="tb-no-data-bg"></div>
+      <div class="tb-no-data-text" translate>widget.no-widgets</div>
+    </div>
+    <div *ngIf="addMode" class="tb-add-bundle-widget-form">
+      <tb-widget-type-autocomplete
+        required
+        placeholder="{{ 'widget.select-widget' | translate }}"
+        [excludeWidgetTypeIds]="excludeWidgetTypeIds"
+        [formControl]="addWidgetFormControl">
+      </tb-widget-type-autocomplete>
+      <div class="tb-add-bundle-widget-actions">
+        <button mat-button color="primary"
+                [disabled]="(isLoading$ | async)"
+                (click)="cancelAddWidgetMode()">{{'action.cancel' | translate}}
+        </button>
+      </div>
+    </div>
+  </mat-card-content>
+  <mat-card-actions>
+    <button mat-button color="primary" *ngIf="editMode && (widgets?.length || isDirty)"
+            [disabled]="(isLoading$ | async)"
+            (click)="cancel()">{{'action.cancel' | translate}}
+    </button>
+    <button mat-raised-button color="primary" *ngIf="editMode && (widgets?.length || isDirty)"
+            [disabled]="(isLoading$ | async) || !isDirty"
+            (click)="save()">{{'action.save' | translate}}
+    </button>
+    <button mat-raised-button color="primary" *ngIf="!isReadOnly && !editMode"
+            [disabled]="(isLoading$ | async)"
+            (click)="edit()">{{'action.edit' | translate}}
+    </button>
+  </mat-card-actions>
+</mat-card>
+

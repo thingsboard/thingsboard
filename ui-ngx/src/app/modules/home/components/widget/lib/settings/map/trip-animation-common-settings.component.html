@@ -1,0 +1,94 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section class="tb-widget-settings" [formGroup]="tripAnimationCommonSettingsFormGroup">
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>widgets.maps.trip-animation-settings</legend>
+    <mat-form-field fxFlex class="mat-block">
+      <mat-label translate>widgets.maps.normalization-step</mat-label>
+      <input matInput type="number" min="1" formControlName="normalizationStep">
+    </mat-form-field>
+    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px">
+      <tb-datasources-key-autocomplete fxFlex
+                                       required
+                                       [datasources]="widget?.config?.datasources"
+                                       label="widgets.maps.latitude-key-name"
+                                       formControlName="latKeyName">
+      </tb-datasources-key-autocomplete>
+      <tb-datasources-key-autocomplete fxFlex
+                                       required
+                                       [datasources]="widget?.config?.datasources"
+                                       label="widgets.maps.longitude-key-name"
+                                       formControlName="lngKeyName">
+      </tb-datasources-key-autocomplete>
+    </section>
+    <fieldset class="fields-group fields-group-slider">
+      <legend class="group-title" translate>widgets.maps.tooltip</legend>
+      <mat-expansion-panel class="tb-settings" [expanded]="tripAnimationCommonSettingsFormGroup.get('showTooltip').value">
+        <mat-expansion-panel-header fxLayout="row wrap">
+          <mat-panel-title>
+            <mat-slide-toggle formControlName="showTooltip" (click)="$event.stopPropagation()"
+                              fxLayoutAlign="center">
+              {{ 'widgets.maps.show-tooltip' | translate }}
+            </mat-slide-toggle>
+          </mat-panel-title>
+          <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+            widget-config.advanced-settings
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+        <ng-template matExpansionPanelContent>
+          <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px">
+            <tb-color-input
+              fxFlex
+              formControlName="tooltipColor"
+              icon="format_color_fill"
+              label="{{ 'widgets.maps.tooltip-background-color' | translate }}" openOnInput colorClearButton>
+            </tb-color-input>
+            <tb-color-input
+              fxFlex
+              formControlName="tooltipFontColor"
+              icon="format_color_fill"
+              label="{{ 'widgets.maps.tooltip-font-color' | translate }}" openOnInput colorClearButton>
+            </tb-color-input>
+            <mat-form-field fxFlex class="mat-block">
+              <mat-label translate>widgets.maps.tooltip-opacity</mat-label>
+              <input matInput type="number" min="0" max="1" formControlName="tooltipOpacity">
+            </mat-form-field>
+          </section>
+          <mat-slide-toggle formControlName="autocloseTooltip" class="slide-block">
+            {{ 'widgets.maps.auto-close-tooltip' | translate }}
+          </mat-slide-toggle>
+          <mat-slide-toggle formControlName="useTooltipFunction" class="slide-block">
+            {{ 'widgets.maps.use-tooltip-function' | translate }}
+          </mat-slide-toggle>
+          <tb-html [fxShow]="!tripAnimationCommonSettingsFormGroup.get('useTooltipFunction').value"
+                   formControlName="tooltipPattern"
+                   minHeight="100px"
+                   label="{{ 'widgets.maps.tooltip-pattern' | translate }}">
+          </tb-html>
+          <tb-js-func [fxShow]="tripAnimationCommonSettingsFormGroup.get('useTooltipFunction').value"
+                      formControlName="tooltipFunction"
+                      [globalVariables]="functionScopeVariables"
+                      [functionArgs]="['data', 'dsData', 'dsIndex']"
+                      functionTitle="{{ 'widgets.maps.tooltip-function' | translate }}"
+                      helpId="widget/lib/map/tooltip_fn">
+          </tb-js-func>
+        </ng-template>
+      </mat-expansion-panel>
+    </fieldset>
+  </fieldset>
+</section>

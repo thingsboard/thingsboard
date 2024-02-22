@@ -1,0 +1,74 @@
+#
+# Copyright © 2016-2024 The Thingsboard Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+queue_type: "kafka"
+request_topic: "js_eval.requests"
+queue_prefix: ""
+http_port: "8888" # /livenessProbe
+
+js:
+  response_poll_interval: "25"
+  max_result_size: "300000"
+
+kafka:
+  bootstrap:
+    # Kafka Bootstrap Servers
+    servers: "localhost:9092"
+  replication_factor: "1"
+  acks: "1" # -1 = all; 0 = no acknowledgments; 1 = only waits for the leader to acknowledge
+  batch_size: "128" # for producer
+  linger_ms: "5" # for producer
+  partitions_consumed_concurrently: "1" # (EXPERIMENTAL) increase this value if you are planning to handle more than one partition (scale up, scale down) - this will decrease the latency
+  requestTimeout: "30000" # The default value in kafkajs is: 30000
+  connectionTimeout: "1000" # The default value in kafkajs is: 1000
+  compression: "gzip" # gzip or uncompressed
+  topic_properties: "retention.ms:604800000;segment.bytes:26214400;retention.bytes:104857600;partitions:100;min.insync.replicas:1"
+  use_confluent_cloud: false
+  client_id: "kafkajs" #inject pod name to easy identify the client using /opt/kafka/bin/kafka-consumer-groups.sh
+  confluent:
+    sasl:
+      mechanism: "PLAIN"
+
+pubsub:
+  queue_properties: "ackDeadlineInSec:30;messageRetentionInSec:604800"
+
+aws_sqs:
+  queue_properties: "VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800"
+
+rabbitmq:
+  host: "localhost"
+  port: "5672"
+  virtual_host: "/"
+  username: "admin"
+  password: "password"
+  queue_properties: "x-max-length-bytes:1048576000;x-message-ttl:604800000"
+
+service_bus:
+  queue_properties: "lockDurationInSec:30;maxSizeInMb:1024;messageTimeToLiveInSec:604800"
+
+logger:
+  level: "info"
+  path: "logs"
+  filename: "tb-js-executor-%DATE%.log"
+
+script:
+  use_sandbox: "true"
+  memory_usage_trace_frequency: "1000"
+  script_body_trace_frequency: "10000"
+  stat_print_frequency: "10000"
+  max_active_scripts: "1000"
+  slow_query_log_ms: "5.000000" #millis
+  slow_query_log_body: "false"

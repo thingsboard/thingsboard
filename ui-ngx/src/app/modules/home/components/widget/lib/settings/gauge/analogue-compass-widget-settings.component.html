@@ -1,0 +1,197 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ng-container [formGroup]="analogueCompassWidgetSettingsForm">
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.gauge.ticks-settings</div>
+    <div class="tb-form-row">
+      <div class="fixed-title-width" translate>widgets.gauge.labels</div>
+      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <tb-string-items-list
+          style="display: flex"
+          fxFlex
+          appearance="outline"
+          subscriptSizing="dynamic"
+          editable
+          formControlName="majorTicks">
+        </tb-string-items-list>
+      </div>
+    </div>
+    <div class="tb-form-row space-between">
+      <div translate>widgets.gauge.label-style</div>
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <tb-font-settings formControlName="majorTickFont"
+                          disabledLineHeight>
+        </tb-font-settings>
+        <tb-color-input asBoxInput
+                        colorClearButton
+                        formControlName="majorTickColor">
+        </tb-color-input>
+      </div>
+    </div>
+
+    <div class="tb-form-row space-between">
+      <div translate>widgets.gauge.major-ticks</div>
+      <tb-color-input asBoxInput
+                      colorClearButton
+                      formControlName="colorMajorTicks">
+      </tb-color-input>
+    </div>
+    <div class="tb-form-row space-between">
+      <div translate>widgets.gauge.minor-ticks</div>
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput type="number" min="0" formControlName="minorTicks">
+        </mat-form-field>
+        <tb-color-input asBoxInput
+                        colorClearButton
+                        formControlName="colorMinorTicks">
+        </tb-color-input>
+      </div>
+    </div>
+
+    <div class="tb-form-row">
+      <mat-slide-toggle class="mat-slide" formControlName="showStrokeTicks">
+        {{ 'widgets.gauge.show-stroke-ticks' | translate }}
+      </mat-slide-toggle>
+    </div>
+  </div>
+
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.gauge.plate-settings</div>
+    <div class="tb-form-row space-between">
+      <div translate>widgets.gauge.plate-color</div>
+      <tb-color-input asBoxInput
+                      colorClearButton
+                      formControlName="colorPlate">
+      </tb-color-input>
+    </div>
+    <div class="tb-form-row space-between column-xs">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showBorder">
+        {{ 'widgets.gauge.show-plate-border' | translate }}
+      </mat-slide-toggle>
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <mat-form-field class="number" appearance="outline" subscriptSizing="dynamic">
+          <input matInput type="number" min="0" formControlName="borderOuterWidth" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <tb-color-input asBoxInput
+                        colorClearButton
+                        formControlName="colorBorder">
+        </tb-color-input>
+      </div>
+    </div>
+  </div>
+
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.gauge.needle-settings</div>
+    <div class="tb-form-row space-between column-xs">
+      <div translate>widgets.gauge.needle-circle</div>
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <mat-form-field class="number" appearance="outline" subscriptSizing="dynamic">
+          <input matInput type="number" min="0" formControlName="needleCircleSize" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <tb-color-input asBoxInput
+                        colorClearButton
+                        formControlName="colorNeedleCircle">
+        </tb-color-input>
+      </div>
+    </div>
+    <div class="tb-form-row space-between">
+      <div translate>widgets.gauge.needle-color</div>
+      <tb-color-input asBoxInput
+                      colorClearButton
+                      formControlName="colorNeedle">
+      </tb-color-input>
+    </div>
+  </div>
+
+  <div class="tb-form-panel tb-slide-toggle">
+    <mat-expansion-panel class="tb-settings" [expanded]="analogueCompassWidgetSettingsForm.get('animation').value">
+      <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-panel-title>
+          <mat-slide-toggle class="mat-slide" formControlName="animation" (click)="$event.stopPropagation()"
+                            fxLayoutAlign="center">
+            {{ 'widgets.gauge.enable-animation' | translate }}
+          </mat-slide-toggle>
+        </mat-panel-title>
+        <mat-panel-description fxFlex="40" fxLayoutAlign="end center" fxHide.xs translate>
+          widget-config.advanced-settings
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <div class="tb-form-row">
+          <div class="fixed-title-width" translate>widgets.gauge.animation-target</div>
+          <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="animationTarget">
+              <mat-option [value]="'needle'">
+                {{ 'widgets.gauge.animation-target-needle' | translate }}
+              </mat-option>
+              <mat-option [value]="'plate'">
+                {{ 'widgets.gauge.animation-target-plate' | translate }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row space-between">
+          <div translate>widgets.gauge.animation-duration-rule</div>
+          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+              <input matInput type="number" min="0" formControlName="animationDuration" placeholder="{{ 'widget-config.set' | translate }}">
+            </mat-form-field>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-select formControlName="animationRule">
+                <mat-option [value]="'linear'">
+                  {{ 'widgets.gauge.animation-linear' | translate }}
+                </mat-option>
+                <mat-option [value]="'quad'">
+                  {{ 'widgets.gauge.animation-quad' | translate }}
+                </mat-option>
+                <mat-option [value]="'quint'">
+                  {{ 'widgets.gauge.animation-quint' | translate }}
+                </mat-option>
+                <mat-option [value]="'cycle'">
+                  {{ 'widgets.gauge.animation-cycle' | translate }}
+                </mat-option>
+                <mat-option [value]="'bounce'">
+                  {{ 'widgets.gauge.animation-bounce' | translate }}
+                </mat-option>
+                <mat-option [value]="'elastic'">
+                  {{ 'widgets.gauge.animation-elastic' | translate }}
+                </mat-option>
+                <mat-option [value]="'dequad'">
+                  {{ 'widgets.gauge.animation-dequad' | translate }}
+                </mat-option>
+                <mat-option [value]="'dequint'">
+                  {{ 'widgets.gauge.animation-dequint' | translate }}
+                </mat-option>
+                <mat-option [value]="'decycle'">
+                  {{ 'widgets.gauge.animation-decycle' | translate }}
+                </mat-option>
+                <mat-option [value]="'debounce'">
+                  {{ 'widgets.gauge.animation-debounce' | translate }}
+                </mat-option>
+                <mat-option [value]="'delastic'">
+                  {{ 'widgets.gauge.animation-delastic' | translate }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </div>
+      </ng-template>
+    </mat-expansion-panel>
+  </div>
+</ng-container>

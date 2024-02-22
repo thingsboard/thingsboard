@@ -1,0 +1,221 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.thingsboard</groupId>
+        <version>3.6.3-SNAPSHOT</version>
+        <artifactId>msa</artifactId>
+    </parent>
+    <groupId>org.thingsboard.msa</groupId>
+    <artifactId>black-box-tests</artifactId>
+
+    <name>ThingsBoard Black Box Tests</name>
+    <url>https://thingsboard.io</url>
+    <description>Project for ThingsBoard black box testing with using Docker</description>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <main.dir>${basedir}/../..</main.dir>
+        <suite>connectivity</suite>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.zeroturnaround</groupId>
+            <artifactId>zt-exec</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.java-websocket</groupId>
+            <artifactId>Java-WebSocket</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.rest-assured</groupId>
+            <artifactId>rest-assured</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-all</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.californium</groupId>
+            <artifactId>californium-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard</groupId>
+            <artifactId>netty-mqtt</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard</groupId>
+            <artifactId>tools</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard</groupId>
+            <artifactId>rest-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.msa</groupId>
+            <artifactId>js-executor</artifactId>
+            <type>docker-info</type>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.msa</groupId>
+            <artifactId>web-ui</artifactId>
+            <type>docker-info</type>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.msa</groupId>
+            <artifactId>tb-node</artifactId>
+            <type>docker-info</type>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.msa.transport</groupId>
+            <artifactId>coap</artifactId>
+            <type>docker-info</type>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.msa.transport</groupId>
+            <artifactId>http</artifactId>
+            <type>docker-info</type>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.msa.transport</groupId>
+            <artifactId>mqtt</artifactId>
+            <type>docker-info</type>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.msa.transport</groupId>
+            <artifactId>lwm2m</artifactId>
+            <type>docker-info</type>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.msa.transport</groupId>
+            <artifactId>snmp</artifactId>
+            <type>docker-info</type>
+        </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common</groupId>
+            <artifactId>message</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-java</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.github.bonigarcia</groupId>
+            <artifactId>webdrivermanager</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.qameta.allure</groupId>
+            <artifactId>allure-testng</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <suiteXmlFiles>
+                        <suiteXmlFile>src/test/resources/${suite}.xml</suiteXmlFile>
+                    </suiteXmlFiles>
+                    <skipTests>${blackBoxTests.skip}</skipTests>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.maven.surefire</groupId>
+                        <artifactId>surefire-testng</artifactId>
+                        <version>${surefire.version}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+            <plugin>
+                <groupId>io.qameta.allure</groupId>
+                <artifactId>allure-maven</artifactId>
+                <version>${allure-maven.version}</version>
+                <configuration>
+                    <reportVersion>${allure-testng.version}</reportVersion>
+                    <propertiesFilePath>src/test/resources/allure.properties</propertiesFilePath>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

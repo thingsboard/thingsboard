@@ -1,0 +1,11 @@
+[Unit]
+Description=${pkg.name}
+After=syslog.target
+
+[Service]
+User=${pkg.user}
+ExecStart=${pkg.installFolder}/bin/${pkg.name}.jar
+SuccessExitStatus=143
+
+[Install]
+WantedBy=multi-user.target

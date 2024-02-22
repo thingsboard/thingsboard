@@ -1,0 +1,58 @@
+{
+  "type": "DEFAULT",
+  "image": null,
+  "defaultQueueName": null,
+  "transportType": "LWM2M",
+  "provisionType": "DISABLED",
+  "description": "",
+  "profileData": {
+    "configuration": {
+      "type": "DEFAULT"
+    },
+    "transportConfiguration": {
+      "observeAttr": {
+        "observe": [
+          "/3_1.0/0/0"
+        ],
+        "attribute": [],
+        "telemetry": [
+          "/3_1.0/0/0"
+        ],
+        "keyName": {
+          "/3_1.0/0/0": "testData"
+        },
+        "attributeLwm2m": {}
+      },
+      "bootstrap": [
+        {
+          "shortServerId": 123,
+          "bootstrapServerIs": false,
+          "host": "0.0.0.0",
+          "port": 5685,
+          "clientHoldOffTime": 1,
+          "serverPublicKey": "",
+          "serverCertificate": "",
+          "bootstrapServerAccountTimeout": 0,
+          "lifetime": 300,
+          "defaultMinPeriod": 1,
+          "notifIfDisabled": true,
+          "binding": "U",
+          "securityMode": "NO_SEC"
+        }
+      ],
+      "clientLwM2mSettings": {
+        "clientOnlyObserveAfterConnect": 1,
+        "fwUpdateStrategy": 1,
+        "swUpdateStrategy": 1,
+        "powerMode": "DRX",
+        "compositeOperationsSupport": false
+      },
+      "bootstrapServerUpdateEnable": false,
+      "type": "LWM2M"
+    },
+    "alarms": null,
+    "provisionConfiguration": {
+      "type": "DISABLED"
+    }
+  }
+}

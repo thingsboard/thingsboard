@@ -1,0 +1,214 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import "../../../../../scss/constants";
+
+$toolbar-height: 50px !default;
+$fullscreen-toolbar-height: 64px !default;
+$mobile-toolbar-height: 80px !default;
+$half-mobile-toolbar-height: 40px !default;
+$mobile-toolbar-height-total: 84px !default;
+
+$mobile-app-toolbar-height: 40px !default;
+
+div.tb-dashboard-page.mobile-app {
+  tb-dashboard-toolbar {
+    .mat-fab-toolbar {
+      .mat-fab-toolbar-wrapper {
+        height: $mobile-app-toolbar-height;
+        .mat-toolbar.mat-toolbar-single-row {
+          height: $mobile-app-toolbar-height;
+          min-height: $mobile-app-toolbar-height;
+          .mat-toolbar-tools {
+            height: $mobile-app-toolbar-height;
+            min-height: $mobile-app-toolbar-height;
+          }
+          mat-fab-actions {
+            height: $mobile-app-toolbar-height;
+            max-height: $mobile-app-toolbar-height;
+            .mat-fab-action-item {
+              height: $mobile-app-toolbar-height;
+              .tb-dashboard-action-panels {
+                height: $mobile-app-toolbar-height;
+                .tb-dashboard-action-panel {
+                  height: $mobile-app-toolbar-height;
+                  > div {
+                    height: $mobile-app-toolbar-height;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+tb-dashboard-toolbar {
+  .mat-fab-toolbar {
+    mat-fab-trigger {
+      .mat-mdc-fab {
+        width: 36px;
+        height: 36px;
+        margin: 4px 0 0 4px;
+      }
+    }
+
+    &.is-fullscreen {
+
+      .mat-fab-toolbar-wrapper {
+        height: $mobile-toolbar-height-total;
+
+        @media #{$mat-gt-sm} {
+          height: $fullscreen-toolbar-height;
+        }
+
+        .mat-toolbar.mat-toolbar-single-row {
+          height: $mobile-toolbar-height;
+          min-height: $mobile-toolbar-height;
+          .mat-toolbar-tools {
+            height: $mobile-toolbar-height;
+            min-height: $mobile-toolbar-height;
+          }
+          @media #{$mat-gt-sm} {
+            height: $fullscreen-toolbar-height;
+            min-height: $fullscreen-toolbar-height;
+            .mat-toolbar-tools {
+              height: $fullscreen-toolbar-height;
+              min-height: $fullscreen-toolbar-height;
+            }
+          }
+        }
+      }
+    }
+
+    .mat-fab-toolbar-wrapper {
+      height: $mobile-toolbar-height-total;
+
+      @media #{$mat-gt-sm} {
+        height: $toolbar-height;
+      }
+
+      .mat-toolbar.mat-toolbar-single-row {
+        height: $mobile-toolbar-height;
+        min-height: $mobile-toolbar-height;
+        .mat-toolbar-tools {
+          height: $mobile-toolbar-height;
+          min-height: $mobile-toolbar-height;
+        }
+
+        @media #{$mat-gt-sm} {
+          height: $toolbar-height;
+          min-height: $toolbar-height;
+          .mat-toolbar-tools {
+            height: $toolbar-height;
+            min-height: $toolbar-height;
+          }
+        }
+
+        mat-fab-actions {
+          margin-top: 0;
+          font-size: 16px;
+
+          @media #{$mat-lt-md} {
+            height: $mobile-toolbar-height;
+            max-height: $mobile-toolbar-height;
+            padding: 0 8px !important;
+          }
+
+          .close-action {
+            margin-right: -18px;
+          }
+
+          .mat-fab-action-item {
+            width: 100%;
+            height: $mobile-toolbar-height;
+
+            @media #{$mat-gt-sm} {
+              height: 46px;
+            }
+
+            .tb-dashboard-action-panels {
+              height: $mobile-toolbar-height;
+
+              @media #{$mat-gt-sm} {
+                height: 46px;
+              }
+
+              .tb-dashboard-action-panel {
+                min-width: 0;
+                height: $half-mobile-toolbar-height;
+                flex: 1 0 auto;
+                display: flex;
+                flex-direction: row-reverse;
+                place-content: center space-between;
+                align-items: center;
+                &.tb-left-panel {
+                  flex: 1 1 auto;
+                }
+
+                @media #{$mat-lt-md} {
+                  padding-left: 12px;
+                }
+
+                @media #{$mat-xs} {
+                  gap: 3px;
+                  padding-left: 0;
+                  &.tb-left-panel {
+                    padding-left: 12px;
+                  }
+                }
+
+                @media #{$mat-sm} {
+                  gap: 6px;
+                }
+
+                @media #{$mat-md} {
+                  gap: 6px;
+                }
+
+                @media #{$mat-gt-md} {
+                  gap: 12px;
+                }
+
+                @media #{$mat-gt-sm} {
+                  place-content: center flex-start;
+                  &.tb-left-panel {
+                    place-content: center flex-end;
+                  }
+                  height: 46px;
+                }
+
+                > div {
+                  height: $half-mobile-toolbar-height;
+
+                  @media #{$mat-gt-sm} {
+                    height: 46px;
+                  }
+                }
+
+                tb-states-component,
+                tb-entity-state-controller {
+                  pointer-events: all;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

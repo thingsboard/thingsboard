@@ -1,0 +1,88 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div fxLayout="row" *ngIf="addMode || editMode; else quickLinkTemplate">
+  <div fxFlex class="tb-edit-link" [ngClass]="{'edit-mode': editMode}" [formGroup]="editQuickLinkFormGroup" fxLayout="column">
+    <mat-form-field fxFlex class="mat-block">
+      <mat-label translate>widgets.quick-links.quick-link</mat-label>
+      <input matInput type="text"
+             #linkInput
+             formControlName="link"
+             (focusin)="onFocus()"
+             required
+             [matAutocomplete]="linkAutocomplete">
+      <tb-icon matPrefix *ngIf="quickLink" color="primary">{{ quickLink.icon }}</tb-icon>
+      <button *ngIf="editQuickLinkFormGroup.get('link').value && !disabled"
+              type="button"
+              matSuffix mat-icon-button aria-label="Clear"
+              (click)="clear()">
+        <tb-icon>close</tb-icon>
+      </button>
+      <mat-autocomplete
+        class="tb-autocomplete tb-quick-links"
+        #linkAutocomplete="matAutocomplete"
+        [displayWith]="displayLinkFn">
+        <mat-option *ngFor="let link of filteredLinks | async" [value]="link">
+          <tb-icon>{{ link.icon }}</tb-icon>
+          <span [innerHTML]="link.name | highlight:searchText"></span>
+        </mat-option>
+        <mat-option *ngIf="!(filteredLinks | async)?.length" [value]="null">
+          <span>
+              {{ translate.get('widgets.quick-links.no-links-matching', {name: searchText}) | async }}
+          </span>
+        </mat-option>
+      </mat-autocomplete>
+      <mat-error *ngIf="editQuickLinkFormGroup.get('link').hasError('required')">
+        {{ 'widgets.quick-links.quick-link-required' | translate }}
+      </mat-error>
+    </mat-form-field>
+    <div *ngIf="addMode" fxLayout="row" fxLayoutAlign="end" fxLayoutGap="8px">
+      <button *ngIf="!addOnly" mat-button color="primary" (click)="cancelAdd()">{{ 'action.cancel' | translate }}</button>
+      <button mat-raised-button color="primary" (click)="add()">{{ 'action.add' | translate }}</button>
+    </div>
+  </div>
+  <div *ngIf="editMode" fxLayout="row" class="tb-edit-buttons">
+    <button mat-icon-button (click)="apply()"><tb-icon>check</tb-icon></button>
+    <button mat-icon-button (click)="cancelEdit()"><tb-icon>close</tb-icon></button>
+  </div>
+</div>
+<ng-template #quickLinkTemplate>
+  <div fxLayout="row">
+    <div fxFlex class="tb-link">
+      <div class="tb-link-container">
+        <div class="tb-link-icon-container">
+          <tb-icon color="primary">{{ quickLink?.icon }}</tb-icon>
+        </div>
+        <div class="tb-link-text">{{ displayLinkFn(quickLink) }}</div>
+      </div>
+    </div>
+    <div fxLayout="row" fxLayoutAlign="start center" class="tb-edit-buttons">
+      <button mat-icon-button
+              matTooltip="{{ 'action.edit' | translate }}"
+              matTooltipPosition="above"
+              (click)="switchToEditMode()">
+        <tb-icon>edit</tb-icon>
+      </button>
+      <button mat-icon-button
+              matTooltip="{{ 'action.delete' | translate }}"
+              matTooltipPosition="above"
+              (click)="delete()">
+        <tb-icon>delete</tb-icon>
+      </button>
+    </div>
+  </div>
+</ng-template>

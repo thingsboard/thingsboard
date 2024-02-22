@@ -1,0 +1,289 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "thingsboard": {
+      "root": "",
+      "sourceRoot": "src",
+      "projectType": "application",
+      "prefix": "tb",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss"
+        },
+        "@schematics/angular:application": {
+          "strict": true
+        }
+      },
+      "architect": {
+        "build": {
+          "builder": "@angular-builders/custom-webpack:browser",
+          "options": {
+            "outputPath": "target/generated-resources/public",
+            "index": "src/index.html",
+            "main": "src/main.ts",
+            "polyfills": "src/polyfills.ts",
+            "tsConfig": "src/tsconfig.app.json",
+            "aot": true,
+            "assets": [
+              "src/thingsboard.ico",
+              "src/assets",
+              {
+                "glob": "*.svg",
+                "input": "./node_modules/@mdi/svg/svg/",
+                "output": "/assets/mdi/"
+              },
+              {
+                "glob": "worker-html.js",
+                "input": "./node_modules/ace-builds/src-noconflict/",
+                "output": "/"
+              },
+              {
+                "glob": "worker-css.js",
+                "input": "./node_modules/ace-builds/src-noconflict/",
+                "output": "/"
+              },
+              {
+                "glob": "worker-json.js",
+                "input": "./node_modules/ace-builds/src-noconflict/",
+                "output": "/"
+              },
+              {
+                "glob": "worker-javascript.js",
+                "input": "./node_modules/ace-builds/src-noconflict/",
+                "output": "/"
+              },
+              {
+                "glob": "worker-tbel.js",
+                "input": "./src/app/shared/models/ace/tbel/",
+                "output": "/"
+              },
+              {
+                "glob": "**/*",
+                "input": "node_modules/tinymce",
+                "output": "/assets/tinymce/"
+              },
+              {
+                "glob": "marker-icon-2x.png",
+                "input": "node_modules/leaflet/dist/images/",
+                "output": "/"
+              },
+              {
+                "glob": "marker-icon.png",
+                "input": "node_modules/leaflet/dist/images/",
+                "output": "/"
+              },
+              {
+                "glob": "marker-shadow.png",
+                "input": "node_modules/leaflet/dist/images/",
+                "output": "/"
+              }
+            ],
+            "styles": [
+              "src/styles.scss",
+              "src/form.scss",
+              "node_modules/jquery.terminal/css/jquery.terminal.min.css",
+              "node_modules/tooltipster/dist/css/tooltipster.bundle.min.css",
+              "node_modules/tooltipster/dist/css/plugins/tooltipster/sideTip/themes/tooltipster-sideTip-shadow.min.css",
+              "src/app/shared/components/json-form/react/json-form.scss",
+              "node_modules/rc-select/assets/index.less",
+              "node_modules/jstree-bootstrap-theme/dist/themes/proton/style.min.css",
+              "node_modules/leaflet/dist/leaflet.css",
+              "src/app/modules/home/components/widget/lib/maps/markers.scss",
+              "src/app/modules/home/components/widget/lib/home-page/home-page.scss",
+              "node_modules/leaflet.markercluster/dist/MarkerCluster.css",
+              "node_modules/leaflet.markercluster/dist/MarkerCluster.Default.css",
+              "node_modules/@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css",
+              "node_modules/prismjs/themes/prism.css",
+              "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.css",
+              "node_modules/ace-diff/dist/ace-diff.min.css"
+            ],
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "src/scss"
+              ]
+            },
+            "scripts": [
+              "node_modules/tinycolor2/dist/tinycolor-min.js",
+              "node_modules/split.js/dist/split.min.js",
+              "node_modules/systemjs/dist/system.min.js",
+              "node_modules/marked/lib/marked.umd.js",
+              "node_modules/prismjs/prism.js",
+              "node_modules/prismjs/components/prism-css.min.js",
+              "node_modules/prismjs/components/prism-bash.min.js",
+              "node_modules/prismjs/components/prism-json.min.js",
+              "node_modules/prismjs/components/prism-javascript.min.js",
+              "node_modules/prismjs/components/prism-typescript.min.js",
+              "node_modules/prismjs/plugins/line-numbers/prism-line-numbers.min.js"
+            ],
+            "customWebpackConfig": {
+              "path": "./extra-webpack.config.js"
+            },
+            "allowedCommonJsDependencies": [
+              "hammerjs",
+              "react",
+              "react-dom",
+              "reactcss",
+              "react-ace",
+              "schema-inspector",
+              "@flowjs/flow.js",
+              "@material-ui/icons/Add",
+              "@material-ui/icons/Clear",
+              "js-beautify",
+              "mousetrap",
+              "prop-types",
+              "react-is",
+              "hoist-non-react-statics",
+              "classnames",
+              "raf",
+              "moment-timezone",
+              "tinycolor2",
+              "json-schema-defaults",
+              "leaflet-providers",
+              "lodash",
+              "jquery",
+              "jquery.terminal",
+              "tooltipster",
+              "jstree",
+              "qrcode",
+              "wcwidth",
+              "leaflet-polylinedecorator",
+              "ace-diff",
+              "messageformat-parser",
+              "html2canvas",
+              "jszip",
+              "moment",
+              "ace",
+              "ace-builds",
+              "diff-match-patch",
+              "tv4",
+              "@messageformat/parser",
+              "sorted-btree"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ],
+              "optimization": {
+                "scripts": true,
+                "styles": {
+                  "minify": true,
+                  "inlineCritical": false
+                },
+                "fonts": false
+              },
+              "outputHashing": "all",
+              "sourceMap": false,
+              "namedChunks": false,
+              "extractLicenses": true,
+              "vendorChunk": false,
+              "buildOptimizer": false,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "9mb",
+                  "maximumError": "12mb"
+                }
+              ]
+            },
+            "development": {
+              "buildOptimizer": false,
+              "optimization": {
+                "scripts": false,
+                "styles": {
+                  "minify": false,
+                  "inlineCritical": false
+                },
+                "fonts": false
+              },
+              "vendorChunk": true,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "namedChunks": true
+            }
+          }
+        },
+        "serve": {
+          "builder": "@angular-builders/custom-webpack:dev-server",
+          "options": {
+            "browserTarget": "thingsboard:build",
+            "proxyConfig": "proxy.conf.js"
+          },
+          "configurations": {
+            "production": {
+              "browserTarget": "thingsboard:build:production"
+            },
+            "development": {
+              "browserTarget": "thingsboard:build:development"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "extract-i18n": {
+          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "options": {
+            "browserTarget": "thingsboard:build"
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "src/test.ts",
+            "polyfills": "src/polyfills.ts",
+            "tsConfig": "src/tsconfig.spec.json",
+            "karmaConfig": "src/karma.conf.js",
+            "styles": [
+              "src/styles.scss"
+            ],
+            "scripts": [],
+            "assets": [
+              "src/favicon.ico",
+              "src/assets"
+            ]
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "src/**/*.ts",
+              "src/**/*.html"
+            ]
+          }
+        }
+      }
+    },
+    "thingsboard-e2e": {
+      "root": "e2e/",
+      "projectType": "application",
+      "prefix": "",
+      "architect": {
+        "e2e": {
+          "builder": "@angular-devkit/build-angular:protractor",
+          "options": {
+            "protractorConfig": "e2e/protractor.conf.js",
+            "devServerTarget": "thingsboard:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "thingsboard:serve:production"
+            }
+          }
+        }
+      }
+    }
+  },
+  "cli": {
+    "packageManager": "yarn",
+    "analytics": false,
+    "schematicCollections": [
+      "@angular-eslint/schematics"
+    ]
+  }
+}

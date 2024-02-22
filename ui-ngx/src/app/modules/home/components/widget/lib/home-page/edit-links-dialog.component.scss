@@ -1,0 +1,65 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+:host {
+  .tb-edit-links-dialog {
+    width: 480px;
+    .mat-mdc-dialog-content {
+      max-height: 50vh;
+    }
+    .mat-toolbar-single-row {
+      padding: 0 24px;
+    }
+    h2 {
+      color: rgba(0, 0, 0, 0.76);
+    }
+    .mat-icon {
+      color: rgba(0, 0, 0, 0.54);
+    }
+    .mat-mdc-dialog-content {
+      padding: 24px 24px 8px 24px;
+    }
+    .mdc-dialog__actions {
+      padding: 0 24px 24px;
+    }
+  }
+  .tb-drag-handle {
+    height: 24px;
+    margin-left: 12px;
+    .mat-icon {
+      color: rgba(0, 0, 0, 0.38);
+    }
+  }
+  .tb-add-link-button {
+    height: 55px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: #FFFFFF;
+    padding: 8px;
+    border: 2px dashed rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    .tb-add-icon {
+      color: rgba(0, 0, 0, 0.12);
+    }
+    &:hover {
+      .tb-add-icon {
+        color: rgba(0, 0, 0, 0.38);
+      }
+    }
+  }
+}

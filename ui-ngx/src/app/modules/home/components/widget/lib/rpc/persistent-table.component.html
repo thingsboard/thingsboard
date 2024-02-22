@@ -1,0 +1,126 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-table-widget tb-absolute-fill">
+  <div fxFlex fxLayout="column" class="tb-absolute-fill">
+    <div fxFlex class="table-container">
+      <table mat-table [dataSource]="persistentDatasource"
+             matSort [matSortActive]="pageLink.sortOrder.property"
+             [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
+        <ng-container matColumnDef="rpcId">
+          <mat-header-cell *matHeaderCellDef class="column-id">
+            {{ 'widgets.persistent-table.rpc-id' | translate }}
+          </mat-header-cell>
+          <mat-cell *matCellDef="let column">
+            {{ column.id.id }}
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="createdTime">
+          <mat-header-cell *matHeaderCellDef class="column-time"  mat-sort-header>
+            {{ 'widgets.persistent-table.created-time' | translate }}
+          </mat-header-cell>
+          <mat-cell *matCellDef="let column">
+            {{ column.createdTime | date:'yyyy-MM-dd HH:mm:ss' }}
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="expirationTime">
+          <mat-header-cell *matHeaderCellDef class="column-time" mat-sort-header>
+            {{ 'widgets.persistent-table.expiration-time' | translate }}
+          </mat-header-cell>
+          <mat-cell *matCellDef="let column">
+            {{ column.expirationTime | date:'yyyy-MM-dd HH:mm:ss' }}
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="status">
+          <mat-header-cell *matHeaderCellDef  mat-sort-header>
+            {{ 'widgets.persistent-table.status' | translate }}
+          </mat-header-cell>
+          <mat-cell *matCellDef="let column"
+                    [ngStyle]="{fontWeight: 'bold', color: rpcStatusColor.get((column.status))}">
+            {{ rpcStatusTranslation.get(column.status) | translate }}
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="messageType">
+          <mat-header-cell *matHeaderCellDef>
+            {{ 'widgets.persistent-table.message-type' | translate }}
+          </mat-header-cell>
+          <mat-cell *matCellDef="let column">
+            {{ 'widgets.persistent-table.message-types.' + column.request.oneway | translate }}
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="method">
+          <mat-header-cell *matHeaderCellDef>
+            {{ 'widgets.persistent-table.method' | translate }}
+          </mat-header-cell>
+          <mat-cell *matCellDef="let column">
+            {{ column.request.body.method }}
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="actions" [stickyEnd]="enableStickyAction">
+          <mat-header-cell *matHeaderCellDef>
+          </mat-header-cell>
+          <mat-cell *matCellDef="let column">
+            <div fxHide fxShow.gt-md fxLayout="row" fxLayoutAlign="end">
+              <ng-container *ngFor="let actionDescriptor of actionCellButtonAction">
+                <button mat-icon-button [disabled]="isLoading$ | async"
+                        matTooltip="{{ actionDescriptor.displayName }}"
+                        matTooltipPosition="above"
+                        (click)="onActionButtonClick($event, column, actionDescriptor)">
+                  <tb-icon>{{ actionDescriptor.icon }}</tb-icon>
+                </button>
+              </ng-container>
+            </div>
+            <div fxHide fxShow.lt-lg *ngIf="actionCellButtonAction.length">
+              <button mat-icon-button
+                      (click)="$event.stopPropagation(); ctx.detectChanges();"
+                      [matMenuTriggerFor]="cellActionsMenu">
+                <tb-icon>more_vert</tb-icon>
+              </button>
+              <mat-menu #cellActionsMenu="matMenu" xPosition="before">
+                <ng-container *ngFor="let actionDescriptor of actionCellButtonAction">
+                  <button mat-menu-item *ngIf="actionDescriptor.icon"
+                          [disabled]="(isLoading$ | async)"
+                          (click)="onActionButtonClick($event, column, actionDescriptor)">
+                    <tb-icon matMenuItemIcon>{{actionDescriptor.icon}}</tb-icon>
+                    <span>{{ actionDescriptor.displayName }}</span>
+                  </button>
+                </ng-container>
+              </mat-menu>
+            </div>
+          </mat-cell>
+        </ng-container>
+        <mat-header-row *matHeaderRowDef="displayedColumns; sticky: enableStickyHeader"></mat-header-row>
+        <mat-row *matRowDef="let column; columns: displayedColumns"
+                 [fxShow]="!persistentDatasource.dataLoading"></mat-row>
+      </table>
+      <span [fxShow]="(persistentDatasource.isEmpty() | async) && !persistentDatasource.dataLoading && hasData"
+            fxLayoutAlign="center center"
+            class="no-data-found">{{ noDataDisplayMessageText }}</span>
+      <span [fxShow]="persistentDatasource.dataLoading"
+            fxLayoutAlign="center center"
+            class="no-data-found">{{ 'common.loading' | translate }}</span>
+  </div>
+  <mat-divider *ngIf="displayPagination"></mat-divider>
+  <mat-paginator *ngIf="displayPagination"
+                 [length]="persistentDatasource.total() | async"
+                 [pageIndex]="pageLink.page"
+                 [pageSize]="pageLink.pageSize"
+                 [pageSizeOptions]="pageSizeOptions"
+                 [hidePageSize]="hidePageSize"
+                 showFirstLastButtons></mat-paginator>
+  </div>
+</div>

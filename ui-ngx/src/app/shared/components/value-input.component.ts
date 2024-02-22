@@ -1,0 +1,206 @@
+///
+/// Copyright © 2016-2024 The Thingsboard Authors
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///     http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
+
+import { Component, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, NgForm } from '@angular/forms';
+import { resolveBreakpoint, ValueType, valueTypesMap } from '@shared/models/constants';
+import { isObject } from '@core/utils';
+import { MatDialog } from '@angular/material/dialog';
+import {
+  JsonObjectEditDialogComponent,
+  JsonObjectEditDialogData
+} from '@shared/components/dialog/json-object-edit-dialog.component';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { Subscription } from 'rxjs';
+
+type Layout = 'column' | 'row';
+
+export interface ValueInputLayout {
+  layout: Layout;
+  breakpoints?: {[breakpoint: string]: Layout};
+}
+
+@Component({
+  selector: 'tb-value-input',
+  templateUrl: './value-input.component.html',
+  styleUrls: ['./value-input.component.scss'],
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => ValueInputComponent),
+      multi: true
+    }
+  ]
+})
+export class ValueInputComponent implements OnInit, OnDestroy, ControlValueAccessor {
+
+  @Input()
+  disabled: boolean;
+
+  @Input()
+  requiredText: string;
+
+  @Input()
+  valueType: ValueType;
+
+  @Input()
+  trueLabel = 'value.true';
+
+  @Input()
+  falseLabel = 'value.false';
+
+  @Input()
+  layout: ValueInputLayout | Layout = 'row';
+
+  @ViewChild('inputForm', {static: true}) inputForm: NgForm;
+
+  modelValue: any;
+
+  public valueTypeEnum = ValueType;
+
+  valueTypeKeys = Object.keys(ValueType);
+
+  valueTypes = valueTypesMap;
+
+  showValueType = true;
+
+  computedLayout: Layout;
+
+  private propagateChange = null;
+
+  private _subscription: Subscription;
+
+  constructor(
+    private breakpointObserver: BreakpointObserver,
+    public dialog: MatDialog,
+  ) {
+
+  }
+
+  ngOnInit(): void {
+    this._subscription = new Subscription();
+    this.showValueType = !this.valueType;
+    this.computedLayout = this._computeLayout();
+    if (typeof this.layout === 'object' && this.layout.breakpoints) {
+      const breakpoints = Object.keys(this.layout.breakpoints);
+      this._subscription.add(this.breakpointObserver.observe(breakpoints.map(breakpoint => resolveBreakpoint(breakpoint))).subscribe(
+        () => {
+          this.computedLayout = this._computeLayout();
+        }
+      ));
+    }
+  }
+
+  ngOnDestroy() {
+    this._subscription.unsubscribe();
+  }
+
+  openEditJSONDialog($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialog.open<JsonObjectEditDialogComponent, JsonObjectEditDialogData, object>(JsonObjectEditDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        jsonValue: this.modelValue,
+        required: true
+      }
+    }).afterClosed().subscribe(
+      (res) => {
+        if (res) {
+          this.modelValue = res;
+          this.inputForm.control.patchValue({value: this.modelValue});
+          this.updateView();
+        }
+      }
+    );
+  }
+
+  registerOnChange(fn: any): void {
+    this.propagateChange = fn;
+  }
+
+  registerOnTouched(fn: any): void {
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    this.disabled = isDisabled;
+  }
+
+  writeValue(value: any): void {
+    this.modelValue = value;
+    if (this.showValueType) {
+      if (this.modelValue === true || this.modelValue === false) {
+        this.valueType = ValueType.BOOLEAN;
+      } else if (typeof this.modelValue === 'number') {
+        if (this.modelValue.toString().indexOf('.') === -1) {
+          this.valueType = ValueType.INTEGER;
+        } else {
+          this.valueType = ValueType.DOUBLE;
+        }
+      } else if (isObject(this.modelValue)) {
+        this.valueType = ValueType.JSON;
+      } else {
+        this.valueType = ValueType.STRING;
+      }
+    }
+  }
+
+  updateView() {
+    if (this.inputForm.valid || this.valueType === ValueType.BOOLEAN ||
+        (this.valueType === ValueType.JSON && Array.isArray(this.modelValue))) {
+      this.propagateChange(this.modelValue);
+    } else {
+      this.propagateChange(null);
+    }
+  }
+
+  onValueTypeChanged() {
+    if (this.valueType === ValueType.BOOLEAN) {
+      this.modelValue = false;
+    } else if (this.valueType === ValueType.JSON) {
+      this.modelValue = {};
+      this.inputForm.form.get('value').patchValue({});
+    } else {
+      this.modelValue = null;
+    }
+    this.updateView();
+  }
+
+  onValueChanged() {
+    this.updateView();
+  }
+
+  private _computeLayout(): Layout {
+    if (typeof this.layout !== 'object') {
+      return this.layout;
+    } else {
+      let layout = this.layout.layout;
+      if (this.layout.breakpoints) {
+        for (const breakpoint of Object.keys(this.layout.breakpoints)) {
+          const breakpointValue = resolveBreakpoint(breakpoint);
+          if (this.breakpointObserver.isMatched(breakpointValue)) {
+            layout = this.layout.breakpoints[breakpoint];
+            break;
+          }
+        }
+      }
+      return layout;
+    }
+  }
+
+}

@@ -1,0 +1,93 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-toolbar fxLayout="row" color="primary">
+  <h2 translate>security.2fa.dialog.enable-totp-title</h2>
+  <span fxFlex></span>
+  <button mat-icon-button
+          (click)="closeDialog()"
+          type="button">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+<mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+</mat-progress-bar>
+<div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
+<div mat-dialog-content tb-toast style="padding: 0">
+  <mat-stepper linear #stepper>
+    <ng-template matStepperIcon="edit">
+      <mat-icon>done</mat-icon>
+    </ng-template>
+    <mat-step>
+      <ng-template matStepLabel>{{ 'security.2fa.dialog.totp-step-label' | translate }}</ng-template>
+      <div>
+        <p class="mat-body-2" translate>security.2fa.dialog.totp-step-description-open</p>
+        <p class="mat-body-2" translate>security.2fa.dialog.totp-step-description-install</p>
+        <div fxLayout="row" fxLayoutAlign="end center">
+          <button mat-raised-button
+                  type="button"
+                  color="primary"
+                  matStepperNext>
+            {{ 'security.2fa.dialog.next' | translate }}
+          </button>
+        </div>
+      </div>
+    </mat-step>
+    <mat-step [stepControl]="totpConfigForm">
+      <ng-template matStepLabel>{{ 'security.2fa.dialog.verification-step-label' | translate }}</ng-template>
+      <form [formGroup]="totpConfigForm" fxLayoutAlign="start center" fxLayout="column" (ngSubmit)="onSaveConfig()">
+        <p class="mat-body qr-code-description" translate>security.2fa.dialog.scan-qr-code</p>
+        <canvas fxFlex #canvas [ngStyle]="{display: totpAuthURL ? 'block' : 'none'}"></canvas>
+        <p class="mat-body qr-code-description" style="margin-top: 30px;" translate>security.2fa.dialog.enter-verification-code</p>
+        <mat-form-field fxFlex class="mat-block code-container">
+          <input matInput formControlName="verificationCode"
+                 maxlength="6" type="text" required
+                 inputmode="numeric" pattern="[0-9]*"
+                 autocomplete="off"
+                 placeholder="{{ 'security.2fa.dialog.verification-code' | translate }}">
+          <mat-error *ngIf="totpConfigForm.get('verificationCode').invalid">
+            {{ 'security.2fa.dialog.verification-code-invalid' | translate }}
+          </mat-error>
+        </mat-form-field>
+      </form>
+      <div fxLayout="row" fxLayoutAlign="end center">
+        <button mat-raised-button
+                type="button"
+                color="primary"
+                (click)="onSaveConfig()"
+                [disabled]="(isLoading$ | async) || totpConfigForm.invalid">
+          {{ 'security.2fa.dialog.next' | translate }}
+        </button>
+      </div>
+    </mat-step>
+    <mat-step>
+      <ng-template matStepLabel matStepperIcon="done">{{ 'security.2fa.dialog.activation-step-label' | translate }}</ng-template>
+      <div>
+        <h3 class="result-title" translate>security.2fa.dialog.success</h3>
+        <p class="mat-body result-description" translate>security.2fa.dialog.activation-step-description-totp</p>
+        <div fxLayout="row" fxLayoutAlign="end center">
+          <button mat-raised-button
+                  type="button"
+                  color="primary"
+                  (click)="closeDialog()">
+            {{ 'action.done' | translate }}
+          </button>
+        </div>
+      </div>
+    </mat-step>
+  </mat-stepper>
+</div>

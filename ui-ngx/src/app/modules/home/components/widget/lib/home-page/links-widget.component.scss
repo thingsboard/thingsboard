@@ -1,0 +1,120 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import "../../../../../../../scss/constants";
+
+:host {
+  .tb-card-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .tb-title-icon {
+    color: rgba(0, 0, 0, 0.38);
+    width: 32px;
+    height: 32px;
+    padding: 4px;
+  }
+
+  .tb-links-list {
+    overflow: auto;
+  }
+
+  .mat-grid-tile.tb-links-tile {
+    overflow: visible;
+  }
+
+  .tb-link-button {
+    height: 55px;
+    display: flex;
+    overflow: hidden;
+    flex-direction: column;
+    justify-content: center;
+    padding: 8px;
+    background: #FFFFFF;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 5px 16px rgba(0, 0, 0, 0.04);
+    border-radius: 10px;
+    @media #{$mat-md-lg} {
+      height: 18px;
+      padding: 0 8px;
+    }
+    &:hover {
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      box-shadow: 0 4px 10px rgba(23, 33, 90, 0.08);
+    }
+    .tb-link-container {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      .tb-link-icon-container {
+        height: 40px;
+        padding: 8px;
+        background: #F3F6FA;
+        border-radius: 6px;
+        margin-right: 8px;
+        @media #{$mat-md-lg} {
+          display: none;
+        }
+      }
+      .tb-link-text {
+        font-weight: 400;
+        font-size: 14px;
+        line-height: 20px;
+        letter-spacing: 0.2px;
+        color: rgba(0, 0, 0, 0.87);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        @media #{$mat-md-lg} {
+          font-size: 11px;
+          line-height: 16px;
+        }
+      }
+    }
+  }
+
+  .tb-add-link-button {
+    height: 55px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: #FFFFFF;
+    padding: 8px;
+    border: 2px dashed rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    @media #{$mat-md-lg} {
+      height: 18px;
+      padding: 0 8px;
+      .tb-add-icon {
+        height: 12px;
+        width: 12px;
+        font-size: 12px;
+      }
+    }
+    .tb-add-icon {
+      color: rgba(0, 0, 0, 0.12);
+    }
+    &:hover {
+      .tb-add-icon {
+        color: rgba(0, 0, 0, 0.38);
+      }
+    }
+  }
+}

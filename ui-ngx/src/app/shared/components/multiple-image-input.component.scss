@@ -1,0 +1,167 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import "../../../scss/constants";
+
+$imagesContainerHeight: 106px !default;
+$containerHeight: 120px !default;
+$previewSize: 64px !default;
+
+.image-card {
+  margin-bottom: 8px;
+  &.image-dnd-placeholder {
+    height: 82px;
+    width: 146px;
+    border: 2px dashed rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+  }
+  &.image-dragging {
+    display: none !important;
+  }
+}
+
+
+.image-title {
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 14px;
+  color: rgba(0, 0, 0, 0.6);
+  padding-bottom: 4px;
+}
+
+.image-content-container {
+  background: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  height: $previewSize;
+}
+
+.tb-image-preview {
+  width: auto;
+  max-width: $previewSize - 2px;
+  height: auto;
+  max-height: $previewSize  - 2px;
+}
+
+.tb-image-preview-container {
+  position: relative;
+  width: $previewSize;
+  height: $previewSize;
+  margin-top: -1px;
+  margin-bottom: -1px;
+  border: 1px solid rgba(0, 0, 0, 0.54);
+
+  .tb-image-preview {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.tb-image-action-container {
+  position: relative;
+  height: $previewSize - 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+}
+
+:host {
+
+  .tb-container {
+    margin-top: 0;
+    label.tb-title {
+      display: block;
+      padding-bottom: 8px;
+    }
+  }
+
+  .tb-image-select-container {
+    position: relative;
+    width: 100%;
+  }
+
+  .images-container {
+    padding: 12px 12px 4px;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 4px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+    &.no-images {
+      height: $imagesContainerHeight;
+      padding-bottom: 12px;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  .no-images-prompt {
+    font-size: 18px;
+    color: rgba(0, 0, 0, 0.54);
+  }
+
+  .file-input {
+    display: none;
+  }
+
+  .tb-flow-drop {
+    position: relative;
+    height: $containerHeight;
+    overflow: hidden;
+    border: 2px dashed rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    box-sizing: border-box;
+
+    &.float-left {
+      float: left;
+    }
+
+    .upload-label {
+      width: 100%;
+      height: 100%;
+      padding: 0 16px;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      font-size: 16px;
+      color: rgba(0, 0, 0, 0.54);
+      text-align: center;
+      .mat-icon {
+        margin-right: 17px;
+      }
+    }
+  }
+
+  .tb-hint{
+    margin-top: 8px;
+  }
+}
+
+:host ::ng-deep {
+  button.browse-file {
+    padding: 0;
+    font-size: 16px;
+    label {
+      display: block;
+      cursor: pointer;
+      padding: 0 16px;
+    }
+  }
+}
+

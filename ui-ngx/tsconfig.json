@@ -1,0 +1,73 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "baseUrl": "./",
+    "outDir": "./dist/out-tsc",
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "sourceMap": true,
+    "declaration": false,
+    "downlevelIteration": true,
+    "experimentalDecorators": true,
+    "moduleResolution": "node",
+    "importHelpers": true,
+    "target": "ES2022",
+    "module": "es2020",
+    "emitDecoratorMetadata": true,
+    "allowSyntheticDefaultImports": true,
+    "jsx": "react",
+    "typeRoots": [
+      "node_modules/@types",
+      "src/typings"
+    ],
+    "paths": {
+      "@app/*": [
+        "src/app/*"
+      ],
+      "@env/*": [
+        "src/environments/*"
+      ],
+      "@core/*": [
+        "src/app/core/*"
+      ],
+      "@modules/*": [
+        "src/app/modules/*"
+      ],
+      "@shared/*": [
+        "src/app/shared/*"
+      ],
+      "@home/*": [
+        "src/app/modules/home/*"
+      ],
+      "jszip": [
+        "node_modules/jszip/dist/jszip.min.js"
+      ],
+      "ace": [
+        "node_modules/ace-builds/src-noconflict/ace.js"
+      ],
+      "jquery": [
+        "node_modules/jquery/dist/jquery.min.js"
+      ],
+      "jquery.terminal": [
+        "node_modules/jquery.terminal/js/jquery.terminal.js"
+      ],
+      "tooltipster": [
+        "node_modules/tooltipster/dist/js/tooltipster.bundle.min.js"
+      ],
+      "jstree": [
+        "node_modules/jstree/dist/jstree.min.js"
+      ]
+    },
+    "lib": [
+      "es2020",
+      "dom"
+    ],
+    "useDefineForClassFields": false
+  },
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "strictTemplates": false
+  }
+}

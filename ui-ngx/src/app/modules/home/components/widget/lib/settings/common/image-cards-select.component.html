@@ -1,0 +1,43 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-image-cards-select tb-form-panel stroked no-padding">
+  <mat-expansion-panel class="tb-settings" [expanded]="expanded" disabled>
+    <mat-expansion-panel-header fxLayout="row wrap">
+      <div fxFlex class="tb-form-row no-border"  [class.expanded]="expanded">
+        <div class="fixed-title-width">{{ label }}</div>
+        <mat-form-field class="tb-image-cards-value-field" fxFlex appearance="outline" subscriptSizing="dynamic" (click)="toggleSelectPanel($event)">
+          <input readonly matInput [formControl]="valueFormControl" placeholder="{{ 'widget-config.set' | translate }}">
+          <mat-icon matSuffix>{{ expanded ? 'expand_less' : 'expand_more' }}</mat-icon>
+        </mat-form-field>
+      </div>
+    </mat-expansion-panel-header>
+    <ng-template matExpansionPanelContent>
+      <mat-grid-list class="tb-image-cards-options" [cols]="cols$ | async" [rowHeight]="rowHeight" gutterSize="8">
+        <mat-grid-tile *ngFor="let option of options" (click)="updateModel(option.value)">
+          <div class="tb-image-cards-option" [class.selected]="modelValue === option.value">
+            <div class="tb-image-cards-option-background"></div>
+            <div class="tb-image-cards-option-title">{{ option.name }}</div>
+            <div class="tb-image-cards-option-image-container">
+              <img class="tb-image-cards-option-image" [src]="option.image"/>
+            </div>
+          </div>
+        </mat-grid-tile>
+      </mat-grid-list>
+    </ng-template>
+  </mat-expansion-panel>
+</div>

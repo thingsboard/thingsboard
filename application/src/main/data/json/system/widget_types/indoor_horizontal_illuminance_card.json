@@ -1,0 +1,37 @@
+{
+  "fqn": "indoor_horizontal_illuminance_card",
+  "name": "Indoor horizontal illuminance card",
+  "deprecated": false,
+  "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAAmVBMVEUAAADg4ODf39/g4ODg4OD////g4ODzaQD7x6D2jkD82r/x8fH+7N+srKz+9u/Ozs6QkJD0fCDIyMg9PT35tIDz8/P5+fnb29u3t7d0dHTj4+PCwsL3oWD0chC8vLz4q3Dn5+f0eyD9489mZmbV1dX9/f31hTD70K/U1NRYWFj3l1D6vZCdnZ1LS0s8PDwvLy8hISH6vpCCgoLwemShAAAABXRSTlMA7yC/r1EOHTEAAANOSURBVHja7dqLbqJAGIZhtf38OSMIogIi6mrVdk/3f3E7DN1l27V1jcag+R4bMgxJM28GqYntEBEREREREREREREREREREREREREREdHJeg/d/q177KmOrv0FN+6L3e11Hm3cAfuh07/5/ah86Xb6uAt9hrQMQ9qGIW3DkLY5HFIEuDWHQzLB38ZT1w1dNOwB2uZ9iJd56mhkUPYL1CbhYOAObBtTTPURrh7AttWPOsW0PrmMjeGo48LQquVYP6INXlli/leIIWsPtUjMv0PUC0N8m3xdLpf1IHzeLl33ZTnEz+V2Oth+DXEJhoih7wrNqRaiBN5pIYgieNFunS2wML1/Q75j4E6HqF4TdzpYTtwJhvYQq+mL+3OCC3CCOsSUfb0jlpTWYifFiSH6N1UiKJ+HbGfPTchwHE5xAYUEOmQtqGXVqSd5E+I5XrVO50hIIDXrXcjqZfntbcjzdqtDMFi+TJ+HSxfnc6QwdYjk8ABdZOlVOX9CLMk9GFJ6n4YYUjuwhfaHE3Z9uICgdMzXLchFdo5O0CFWc2sVEqHatw9DfpgFCvkNlmniyiIxoEMcybOilOBgiJfnkWT4OCRSIVkTsrl6iCMZ6hB4TrVgsQ6FYF8/z064ta4skMgw1pJtUMskOhji5LLGkRCvlJqBq/PkVQDLcFC/GUypsnLxmhAVmIt19PFbvn/8xjggtt9PxDibVVlLscBedq/7EEkBLKREE+JIaUjgHQnBRpQdGuM6JoadQBuNMOr71UQfIwBzd45RktQX1MR5SfVTq5QsMqvle7kaBWquCanOdhIdC1mIkr0NWa38JAx9NUqRJulsNE791Sr0Z7Y/GwH+PJ7NEsS+vuCHs7ND4JgiYupPXaVIvkcTEkmp3yaLIyHYGIbhvA15ehrHoT/365D5U6LGam6e+GmoQ/pJokLC2TyMVW4a43z6D7jm6NHpH+Mt0yzwF9dPUn+8CtO42hF/lqTjeBz6as5WC/dRhYyqHZnP3OrCKk1xDcdD1kGBTyRzfOwpTHB9OuRko9FnF2P8j1aEtBFD2oYhbcOQtrmjkO59fBna7zzcx9fTj/fzDwOd3mP/1nUfeh0iIiIiIiIiIiIiIiIiIiIiIiIiIiIiOtUvJ7/Ykm8IwzsAAAAASUVORK5CYII=",
+  "description": "Displays the latest indoor illuminance telemetry in a scalable horizontal layout.",
+  "descriptor": {
+    "type": "latest",
+    "sizeX": 5,
+    "sizeY": 1,
+    "resources": [],
+    "templateHtml": "<tb-value-card-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-value-card-widget>",
+    "templateCss": "",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.valueCardWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.valueCardWidget.onDataUpdated();\n};\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        horizontal: true,\n        previewWidth: '420px',\n        previewHeight: '90px',\n        embedTitlePanel: true,\n        defaultDataKeysFunction: function() {\n            return [{ name: 'illuminance', label: 'Illuminance', type: 'timeseries' }];\n        }\n    };\n};\n\nself.onDestroy = function() {\n};\n",
+    "settingsSchema": "",
+    "dataKeySettingsSchema": "",
+    "settingsDirective": "tb-value-card-widget-settings",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-value-card-basic-config",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Illuminance\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.2392660816082064,\"funcBody\":\"var value = prevValue + Math.random() * 400 - 200;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 1000) {\\n\\tvalue = 1000;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}],\"alarmFilterConfig\":{\"statusList\":[\"ACTIVE\"]}}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"labelPosition\":\"top\",\"layout\":\"horizontal\",\"showLabel\":true,\"labelFont\":{\"family\":\"Roboto\",\"size\":16,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\"},\"labelColor\":{\"type\":\"constant\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"showIcon\":true,\"iconSize\":40,\"iconSizeUnit\":\"px\",\"icon\":\"mdi:lightbulb-on\",\"iconColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"rangeList\":[{\"from\":null,\"to\":100,\"color\":\"rgba(0, 0, 0, 0.76)\"},{\"from\":100,\"to\":300,\"color\":\"#FFA600\"},{\"from\":300,\"to\":500,\"color\":\"#F36900\"},{\"from\":500,\"to\":null,\"color\":\"#D81838\"}],\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"valueFont\":{\"size\":36,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\"},\"valueColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\",\"rangeList\":[{\"from\":null,\"to\":100,\"color\":\"rgba(0, 0, 0, 0.76)\"},{\"from\":100,\"to\":300,\"color\":\"#FFA600\"},{\"from\":300,\"to\":500,\"color\":\"#F36900\"},{\"from\":500,\"to\":null,\"color\":\"#D81838\"}]},\"showDate\":true,\"dateFormat\":{\"format\":null,\"lastUpdateAgo\":true,\"custom\":false},\"dateFont\":{\"family\":\"Roboto\",\"size\":12,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\"},\"dateColor\":{\"type\":\"constant\",\"color\":\"rgba(0, 0, 0, 0.38)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}},\"autoScale\":true},\"title\":\"Indoor horizontal illuminance card\",\"dropShadow\":true,\"enableFullscreen\":false,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"units\":\"lx\",\"decimals\":0,\"useDashboardTimewindow\":true,\"showLegend\":false,\"widgetStyle\":{},\"actions\":{},\"configMode\":\"basic\",\"displayTimewindow\":true,\"margin\":\"0px\",\"borderRadius\":\"0px\",\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showTitleIcon\":false,\"titleTooltip\":\"\",\"titleFont\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1.6\"},\"titleIcon\":\"\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"iconSize\":\"14px\",\"timewindowStyle\":{\"showIcon\":true,\"iconSize\":\"14px\",\"icon\":\"query_builder\",\"iconPosition\":\"left\",\"font\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1\"},\"color\":null}}"
+  },
+  "externalId": null,
+  "tags": [
+    "environment",
+    "illuminance",
+    "indoor",
+    "brightness",
+    "luminance",
+    "luminosity",
+    "light",
+    "light level",
+    "light intensity",
+    "lux",
+    "candela",
+    "foot-candle"
+  ]
+}

@@ -1,0 +1,40 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section class="tb-widget-settings" [formGroup]="markdownWidgetSettingsForm" fxLayout="column">
+  <mat-slide-toggle class="mat-slide" formControlName="useMarkdownTextFunction">
+    {{ 'widgets.markdown.use-markdown-text-function' | translate }}
+  </mat-slide-toggle>
+  <tb-js-func [fxShow]="markdownWidgetSettingsForm.get('useMarkdownTextFunction').value"
+              formControlName="markdownTextFunction"
+              [globalVariables]="functionScopeVariables"
+              [functionArgs]="['data', 'ctx']"
+              functionTitle="{{ 'widgets.markdown.markdown-text-function' | translate }}"
+              helpId="widget/lib/markdown/markdown_text_fn">
+  </tb-js-func>
+  <tb-markdown-editor [fxShow]="!markdownWidgetSettingsForm.get('useMarkdownTextFunction').value"
+                      formControlName="markdownTextPattern"
+                      label="{{ 'widgets.markdown.markdown-text-pattern' | translate }}"
+                      helpId="widget/editor/widget_js_markdown_pattern">
+  </tb-markdown-editor>
+  <mat-slide-toggle class="mat-slide" formControlName="applyDefaultMarkdownStyle">
+    {{ 'widgets.markdown.apply-default-markdown-style' | translate }}
+  </mat-slide-toggle>
+  <tb-css formControlName="markdownCss"
+          label="{{ 'widgets.markdown.markdown-css' | translate }}">
+  </tb-css>
+</section>

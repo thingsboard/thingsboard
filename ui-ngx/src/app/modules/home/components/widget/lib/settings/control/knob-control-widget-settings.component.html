@@ -1,0 +1,80 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section class="tb-widget-settings" [formGroup]="knobControlWidgetSettingsForm" fxLayout="column">
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>widgets.rpc.common-settings</legend>
+    <mat-form-field fxFlex class="mat-block">
+      <mat-label translate>widgets.rpc.knob-title</mat-label>
+      <input matInput formControlName="title">
+    </mat-form-field>
+  </fieldset>
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>widgets.rpc.value-settings</legend>
+    <mat-form-field fxFlex class="mat-block">
+      <mat-label translate>widgets.rpc.initial-value</mat-label>
+      <input matInput type="number" formControlName="initialValue">
+    </mat-form-field>
+    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
+      <mat-form-field fxFlex class="mat-block">
+        <mat-label translate>widgets.rpc.min-value</mat-label>
+        <input required matInput type="number" formControlName="minValue">
+      </mat-form-field>
+      <mat-form-field fxFlex class="mat-block">
+        <mat-label translate>widgets.rpc.max-value</mat-label>
+        <input required matInput type="number" formControlName="maxValue">
+      </mat-form-field>
+    </section>
+    <mat-form-field fxFlex class="mat-block">
+      <mat-label translate>widgets.rpc.get-value-method</mat-label>
+      <input required matInput formControlName="getValueMethod">
+    </mat-form-field>
+    <mat-form-field fxFlex class="mat-block">
+      <mat-label translate>widgets.rpc.set-value-method</mat-label>
+      <input required matInput formControlName="setValueMethod">
+    </mat-form-field>
+  </fieldset>
+  <fieldset class="fields-group">
+    <legend class="group-title" translate>widgets.rpc.rpc-settings</legend>
+    <mat-form-field fxFlex class="mat-block">
+      <mat-label translate>widgets.rpc.request-timeout</mat-label>
+      <input required matInput type="number" min="0" formControlName="requestTimeout">
+    </mat-form-field>
+    <fieldset class="fields-group fields-group-slider">
+      <legend class="group-title" translate>widgets.rpc.persistent-rpc-settings</legend>
+      <mat-expansion-panel class="tb-settings" [expanded]="knobControlWidgetSettingsForm.get('requestPersistent').value">
+        <mat-expansion-panel-header fxLayout="row wrap">
+          <mat-panel-title>
+            <mat-slide-toggle formControlName="requestPersistent" (click)="$event.stopPropagation()"
+                              fxLayoutAlign="center">
+              {{ 'widgets.rpc.request-persistent' | translate }}
+            </mat-slide-toggle>
+          </mat-panel-title>
+          <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+            widget-config.advanced-settings
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+        <ng-template matExpansionPanelContent>
+          <mat-form-field fxFlex class="mat-block">
+            <mat-label translate>widgets.rpc.persistent-polling-interval</mat-label>
+            <input matInput type="number" min="1000" formControlName="persistentPollingInterval">
+          </mat-form-field>
+        </ng-template>
+      </mat-expansion-panel>
+    </fieldset>
+  </fieldset>
+</section>

@@ -1,0 +1,128 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div>
+  <mat-card appearance="outlined" class="auto-commit-settings settings-card">
+    <mat-card-header>
+      <mat-card-title>
+        <span class="mat-headline-5" translate>admin.auto-commit-settings</span>
+      </mat-card-title>
+      <span fxFlex></span>
+      <div tb-help="autoCommitSettings"></div>
+    </mat-card-header>
+    <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+    </mat-progress-bar>
+    <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
+    <mat-card-content style="padding-top: 16px;">
+      <form [formGroup]="autoCommitSettingsForm" #formDirective="ngForm" (ngSubmit)="save()">
+        <fieldset class="fields-group" [disabled]="(isLoading$ | async) || (isReadOnly | async)">
+          <legend class="group-title" translate>admin.auto-commit-entities</legend>
+          <div fxLayout="column">
+            <div *ngFor="let entityTypeFormGroup of entityTypesFormGroupArray(); trackBy: trackByEntityType;
+               let $index = index; last as isLast;"
+                 fxLayout="row" fxLayoutAlign="start center" [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
+              <mat-expansion-panel class="entity-type-config" fxFlex [formGroup]="entityTypeFormGroup" [expanded]="entityTypesFormGroupExpanded(entityTypeFormGroup)">
+                <mat-expansion-panel-header>
+                  <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+                    <mat-panel-title>
+                      <div fxLayout="row" fxFlex fxLayoutAlign="start center">
+                        <div [innerHTML]="entityTypeText(entityTypeFormGroup)"></div>
+                      </div>
+                    </mat-panel-title>
+                    <span fxFlex></span>
+                    <button mat-icon-button style="min-width: 40px;"
+                            type="button"
+                            (click)="removeEntityType($index)"
+                            matTooltip="{{ 'action.remove' | translate }}"
+                            matTooltipPosition="above">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                </mat-expansion-panel-header>
+                <ng-template matExpansionPanelContent>
+                  <div class="entity-type-config-content" fxLayout="column" fxLayoutGap="0.5em">
+                    <mat-divider></mat-divider>
+                    <div fxLayout="column" fxLayout.gt-lg="row" fxLayoutGap.gt-lg="16px">
+                      <div fxLayout="row" fxLayoutGap="16px" fxLayout.xs="column" fxLayoutGap.xs="0px">
+                        <tb-entity-type-select
+                          showLabel
+                          formControlName="entityType"
+                          required
+                          [filterAllowedEntityTypes]="false"
+                          [allowedEntityTypes]="allowedEntityTypes(entityTypeFormGroup)">
+                        </tb-entity-type-select>
+                        <div formGroupName="config">
+                          <tb-branch-autocomplete
+                            emptyPlaceholder="{{ 'version-control.default' | translate }}"
+                            [selectDefaultBranch]="false"
+                            formControlName="branch">
+                          </tb-branch-autocomplete>
+                        </div>
+                      </div>
+                      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px"
+                           fxLayout.xs="column" fxLayoutAlign.xs="start start" fxLayoutGap.xs="0px"  formGroupName="config">
+                        <mat-checkbox *ngIf="entityTypeFormGroup.get('entityType').value === entityTypes.DEVICE" formControlName="saveCredentials">
+                          {{ 'version-control.export-credentials' | translate }}
+                        </mat-checkbox>
+                        <mat-checkbox formControlName="saveAttributes">
+                          {{ 'version-control.export-attributes' | translate }}
+                        </mat-checkbox>
+                        <mat-checkbox formControlName="saveRelations">
+                          {{ 'version-control.export-relations' | translate }}
+                        </mat-checkbox>
+                      </div>
+                    </div>
+                  </div>
+                </ng-template>
+              </mat-expansion-panel>
+            </div>
+            <div *ngIf="!entityTypesFormGroupArray().length">
+              <span translate fxLayoutAlign="center center"
+                    class="tb-prompt">admin.no-auto-commit-entities-prompt</span>
+            </div>
+            <div style="padding-top: 16px;" fxLayout="row">
+              <button mat-raised-button color="primary"
+                      type="button"
+                      [disabled]="!addEnabled()"
+                      (click)="addEntityType()">
+                <span translate>version-control.add-entity-type</span>
+              </button>
+              <span fxFlex></span>
+              <button mat-raised-button color="primary"
+                      type="button"
+                      [disabled]="!entityTypesFormGroupArray().length"
+                      (click)="removeAll()">
+                <span translate>version-control.remove-all</span>
+              </button>
+            </div>
+          </div>
+        </fieldset>
+        <div class="tb-hint" *ngIf="isReadOnly | async" translate>version-control.auto-commit-settings-read-only-hint</div>
+        <div fxLayout="row" fxLayoutAlign="end center" fxLayout.xs="column" fxLayoutAlign.xs="end" fxLayoutGap="16px">
+          <button mat-raised-button color="warn" type="button" [fxShow]="settings !== null"
+                  [disabled]="(isLoading$ | async) || (isReadOnly | async)" (click)="delete(formDirective)">
+            {{'action.delete' | translate}}
+          </button>
+          <span fxFlex></span>
+          <button mat-raised-button color="primary" [disabled]="(isLoading$ | async) || (isReadOnly | async) || autoCommitSettingsForm.invalid || !autoCommitSettingsForm.dirty"
+                  type="submit">{{'action.save' | translate}}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

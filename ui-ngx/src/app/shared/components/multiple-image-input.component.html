@@ -1,0 +1,69 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-container">
+  <label class="tb-title" *ngIf="label" [ngClass]="{'tb-error': !disabled && (required && !safeImageUrls.length), 'tb-required': !disabled && required}">{{label}}</label>
+  <ng-container #flow="flow"
+                [flowConfig]="{allowDuplicateUploads: true}">
+    <div class="tb-image-select-container" #flowDrop="flowDrop" flowDrop [flow]="flow.flowJs">
+      <div class="images-container" dndDropzone [dndHorizontal]="true" dndEffectAllowed="move"
+           [dndDisableIf]="disabled" (dndDrop)="imageDrop($event)"
+           fxLayout="row" fxLayoutGap="8px" [ngClass]="{'no-images': !safeImageUrls.length}">
+        <div dndPlaceholderRef class="image-card image-dnd-placeholder"></div>
+        <div *ngFor="let safeImageUrl of safeImageUrls; let $index = index;"
+             (dndStart)="imageDragStart($index)"
+             (dndEnd)="imageDragEnd()"
+             [dndDraggable]="safeImageUrl"
+             [dndDisableIf]="disabled"
+             dndEffectAllowed="move"
+             [ngClass]="{'image-dragging': dragIndex === $index}"
+             class="image-card" fxLayout="column">
+          <span class="image-title">{{ 'image-input.images' | translate }} [{{ $index }}]</span>
+          <div class="image-content-container" fxLayout="row">
+            <div dndHandle *ngIf="!disabled" class="tb-image-action-container tb-drag-handle">
+              <mat-icon color="primary">drag_indicator</mat-icon>
+            </div>
+            <div class="tb-image-preview-container">
+              <img class="tb-image-preview" [src]="safeImageUrl" />
+            </div>
+            <div *ngIf="!disabled" class="tb-image-action-container">
+              <button mat-icon-button color="primary"
+                      type="button"
+                      (click)="clearImage($index)"
+                      matTooltip="{{ 'action.remove' | translate }}"
+                      matTooltipPosition="above">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="no-images-prompt" *ngIf="!safeImageUrls.length">{{ 'image-input.no-images' | translate }}</div>
+      </div>
+      <div *ngIf="!disabled" class="drop-area tb-flow-drop">
+        <div class="upload-label">
+          <mat-icon>cloud_upload</mat-icon>
+          <span translate>image-input.drop-images-or</span>
+          <button type="button" mat-button color="primary" class="browse-file">
+            <label for="{{inputId}}">{{'file-input.browse-files' | translate}}</label>
+          </button>
+          <input class="file-input" flowButton type="file" [flow]="flow.flowJs" [flowAttributes]="{accept: 'image/*'}" id="{{inputId}}">
+        </div>
+      </div>
+    </div>
+  </ng-container>
+  <div class="tb-hint" *ngIf="maxSizeByte && !disabled" translate [translateParams]="{ size: maxSizeByte | fileSize}">dashboard.maximum-upload-file-size</div>
+</div>

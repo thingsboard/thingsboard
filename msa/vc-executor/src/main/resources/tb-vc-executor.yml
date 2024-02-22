@@ -1,0 +1,312 @@
+#
+# Copyright © 2016-2024 The Thingsboard Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# Spring common parameters
+spring.main.web-environment: "${WEB_APPLICATION_ENABLE:false}" # If you enabled process metrics you should also enable 'web-environment'.
+spring.main.web-application-type: "${WEB_APPLICATION_TYPE:none}" # If you enabled process metrics you should set 'web-application-type' to 'servlet' value.
+spring.main.allow-circular-references: "true" # Spring Boot configuration property that controls whether circular dependencies between beans are allowed.
+
+# Server common parameters
+server:
+  # Server bind address (has no effect if web-environment is disabled).
+  address: "${HTTP_BIND_ADDRESS:0.0.0.0}"
+  # Server bind port (has no effect if web-environment is disabled).
+  port: "${HTTP_BIND_PORT:8086}"
+
+# Zookeeper connection parameters. Used for service discovery.
+zk:
+  # Enable/disable zookeeper discovery service.
+  enabled: "${ZOOKEEPER_ENABLED:true}"
+  # Zookeeper connect string
+  url: "${ZOOKEEPER_URL:localhost:2181}"
+  # Zookeeper retry interval in milliseconds
+  retry_interval_ms: "${ZOOKEEPER_RETRY_INTERVAL_MS:3000}"
+  # Zookeeper connection timeout in milliseconds
+  connection_timeout_ms: "${ZOOKEEPER_CONNECTION_TIMEOUT_MS:3000}"
+  # Zookeeper session timeout in milliseconds
+  session_timeout_ms: "${ZOOKEEPER_SESSION_TIMEOUT_MS:3000}"
+  # Name of the directory in zookeeper 'filesystem'
+  zk_dir: "${ZOOKEEPER_NODES_DIR:/thingsboard}"
+  # The recalculate_delay property is recommended in a microservices architecture setup for rule-engine services.
+  # This property provides a pause to ensure that when a rule-engine service is restarted, other nodes don't immediately attempt to recalculate their partitions.
+  # The delay is recommended because the initialization of rule chain actors is time-consuming. Avoiding unnecessary recalculations during a restart can enhance system performance and stability.
+  recalculate_delay: "${ZOOKEEPER_RECALCULATE_DELAY_MS:0}"
+
+# Queue configuration parameters
+queue:
+  type: "${TB_QUEUE_TYPE:kafka}" # in-memory or kafka (Apache Kafka) or aws-sqs (AWS SQS) or pubsub (PubSub) or service-bus (Azure Service Bus) or rabbitmq (RabbitMQ)
+  prefix: "${TB_QUEUE_PREFIX:}" # Global queue prefix. If specified, prefix is added before default topic name: 'prefix.default_topic_name'. Prefix is applied to all topics (and consumer groups for kafka).
+  in_memory:
+    stats:
+      # For debug lvl
+      print-interval-ms: "${TB_QUEUE_IN_MEMORY_STATS_PRINT_INTERVAL_MS:60000}"
+  kafka:
+    # Kafka Bootstrap Servers
+    bootstrap.servers: "${TB_KAFKA_SERVERS:localhost:9092}"
+    ssl:
+      # Enable/Disable SSL Kafka communication
+      enabled: "${TB_KAFKA_SSL_ENABLED:false}"
+      # The location of the trust store file
+      truststore.location: "${TB_KAFKA_SSL_TRUSTSTORE_LOCATION:}"
+      # The password of trust store file if specified
+      truststore.password: "${TB_KAFKA_SSL_TRUSTSTORE_PASSWORD:}"
+      # The location of the key store file. This is optional for the client and can be used for two-way authentication for the client
+      keystore.location: "${TB_KAFKA_SSL_KEYSTORE_LOCATION:}"
+      # The store password for the key store file. This is optional for the client and only needed if ‘ssl.keystore.location’ is configured. Key store password is not supported for PEM format
+      keystore.password: "${TB_KAFKA_SSL_KEYSTORE_PASSWORD:}"
+      # The password of the private key in the key store file or the PEM key specified in ‘keystore.key’
+      key.password: "${TB_KAFKA_SSL_KEY_PASSWORD:}"
+    # The number of acknowledgments the producer requires the leader to have received before considering a request complete. This controls the durability of records that are sent. The following settings are allowed:0,1 and all
+    acks: "${TB_KAFKA_ACKS:all}"
+    # Number of retries. Resend any record whose send fails with a potentially transient error
+    retries: "${TB_KAFKA_RETRIES:1}"
+    compression.type: "${TB_KAFKA_COMPRESSION_TYPE:none}" # none or gzip
+    # Default batch size. This setting gives the upper bound of the batch size to be sent
+    batch.size: "${TB_KAFKA_BATCH_SIZE:16384}"
+    # This variable creates a small amount of artificial delay—that is, rather than immediately sending out a record
+    linger.ms: "${TB_KAFKA_LINGER_MS:1}"
+    # The maximum size of a request in bytes. This setting will limit the number of record batches the producer will send in a single request to avoid sending huge requests
+    max.request.size: "${TB_KAFKA_MAX_REQUEST_SIZE:1048576}"
+    # The maximum number of unacknowledged requests the client will send on a single connection before blocking
+    max.in.flight.requests.per.connection: "${TB_KAFKA_MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION:5}"
+    # The total bytes of memory the producer can use to buffer records waiting to be sent to the server
+    buffer.memory: "${TB_BUFFER_MEMORY:33554432}"
+    # The multiple copies of data over the multiple brokers of Kafka
+    replication_factor: "${TB_QUEUE_KAFKA_REPLICATION_FACTOR:1}"
+    # The maximum delay between invocations of poll() when using consumer group management. This places an upper bound on the amount of time that the consumer can be idle before fetching more records
+    max_poll_interval_ms: "${TB_QUEUE_KAFKA_MAX_POLL_INTERVAL_MS:300000}"
+    # The maximum number of records returned in a single call to poll()
+    max_poll_records: "${TB_QUEUE_KAFKA_MAX_POLL_RECORDS:8192}"
+    # The maximum amount of data per-partition the server will return. Records are fetched in batches by the consumer
+    max_partition_fetch_bytes: "${TB_QUEUE_KAFKA_MAX_PARTITION_FETCH_BYTES:16777216}"
+    # The maximum amount of data the server will return. Records are fetched in batches by the consumer
+    fetch_max_bytes: "${TB_QUEUE_KAFKA_FETCH_MAX_BYTES:134217728}"
+    request.timeout.ms: "${TB_QUEUE_KAFKA_REQUEST_TIMEOUT_MS:30000}" # (30 seconds) # refer to https://docs.confluent.io/platform/current/installation/configuration/producer-configs.html#producerconfigs_request.timeout.ms
+    session.timeout.ms: "${TB_QUEUE_KAFKA_SESSION_TIMEOUT_MS:10000}" # (10 seconds) # refer to https://docs.confluent.io/platform/current/installation/configuration/consumer-configs.html#consumerconfigs_session.timeout.ms
+    auto_offset_reset: "${TB_QUEUE_KAFKA_AUTO_OFFSET_RESET:earliest}" # earliest, latest or none
+    # Enable/Disable using of Confluent Cloud
+    use_confluent_cloud: "${TB_QUEUE_KAFKA_USE_CONFLUENT_CLOUD:false}"
+    confluent:
+      # The endpoint identification algorithm used by clients to validate server hostname. The default value is https
+      ssl.algorithm: "${TB_QUEUE_KAFKA_CONFLUENT_SSL_ALGORITHM:https}"
+      # The mechanism used to authenticate Schema Registry requests. SASL/PLAIN should only be used with TLS/SSL as a transport layer to ensure that clear passwords are not transmitted on the wire without encryption
+      sasl.mechanism: "${TB_QUEUE_KAFKA_CONFLUENT_SASL_MECHANISM:PLAIN}"
+      # Using JAAS Configuration for specifying multiple SASL mechanisms on a broker
+      sasl.config: "${TB_QUEUE_KAFKA_CONFLUENT_SASL_JAAS_CONFIG:org.apache.kafka.common.security.plain.PlainLoginModule required username=\"CLUSTER_API_KEY\" password=\"CLUSTER_API_SECRET\";}"
+      # Protocol used to communicate with brokers. Valid values are: PLAINTEXT, SSL, SASL_PLAINTEXT, SASL_SSL
+      security.protocol: "${TB_QUEUE_KAFKA_CONFLUENT_SECURITY_PROTOCOL:SASL_SSL}"
+    # Key-value properties for Kafka consumer per specific topic, e.g. tb_ota_package is a topic name for ota, tb_rule_engine.sq is a topic name for default SequentialByOriginator queue.
+    # Check TB_QUEUE_CORE_OTA_TOPIC and TB_QUEUE_RE_SQ_TOPIC params
+    consumer-properties-per-topic:
+      tb_ota_package:
+        # Key-value properties for Kafka consumer per specific topic, e.g. tb_ota_package is a topic name for ota, tb_rule_engine.sq is a topic name for default SequentialByOriginator queue. Check TB_QUEUE_CORE_OTA_TOPIC and TB_QUEUE_RE_SQ_TOPIC params
+        - key: max.poll.records
+          # Example of specific consumer properties value per topic
+          value: "${TB_QUEUE_KAFKA_OTA_MAX_POLL_RECORDS:10}"
+      tb_version_control:
+        # Example of specific consumer properties value per topic for VC
+        - key: max.poll.interval.ms
+          # Example of specific consumer properties value per topic for VC
+          value: "${TB_QUEUE_KAFKA_VC_MAX_POLL_INTERVAL_MS:600000}"
+    #      tb_rule_engine.sq:
+    #        - key: max.poll.records
+    #          value: "${TB_QUEUE_KAFKA_SQ_MAX_POLL_RECORDS:1024}"
+    other-inline: "${TB_QUEUE_KAFKA_OTHER_PROPERTIES:}" # In this section you can specify custom parameters (semicolon separated) for Kafka consumer/producer/admin # Example "metrics.recording.level:INFO;metrics.sample.window.ms:30000"
+    other: # DEPRECATED. In this section you can specify custom parameters for Kafka consumer/producer and expose the env variables to configure outside
+    #  - key: "request.timeout.ms" # refer to https://docs.confluent.io/platform/current/installation/configuration/producer-configs.html#producerconfigs_request.timeout.ms
+    #    value: "${TB_QUEUE_KAFKA_REQUEST_TIMEOUT_MS:30000}" # (30 seconds)
+    #  - key: "session.timeout.ms" # refer to https://docs.confluent.io/platform/current/installation/configuration/consumer-configs.html#consumerconfigs_session.timeout.ms
+    #    value: "${TB_QUEUE_KAFKA_SESSION_TIMEOUT_MS:10000}" # (10 seconds)
+    topic-properties:
+      # Kafka properties for Core topics
+      core: "${TB_QUEUE_KAFKA_CORE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      # Kafka properties for Notifications topics
+      notifications: "${TB_QUEUE_KAFKA_NOTIFICATIONS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      # Kafka properties for Core topics
+      version-control: "${TB_QUEUE_KAFKA_VC_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+    consumer-stats:
+      # Prints lag between consumer group offset and last messages offset in Kafka topics
+      enabled: "${TB_QUEUE_KAFKA_CONSUMER_STATS_ENABLED:true}"
+      # Statistics printing interval for Kafka's consumer-groups stats
+      print-interval-ms: "${TB_QUEUE_KAFKA_CONSUMER_STATS_MIN_PRINT_INTERVAL_MS:60000}"
+      # Time to wait for the stats-loading requests to Kafka to finis
+      kafka-response-timeout-ms: "${TB_QUEUE_KAFKA_CONSUMER_STATS_RESPONSE_TIMEOUT_MS:1000}"
+  aws_sqs:
+    # Use the default credentials provider for AWS SQS
+    use_default_credential_provider_chain: "${TB_QUEUE_AWS_SQS_USE_DEFAULT_CREDENTIAL_PROVIDER_CHAIN:false}"
+    # Access key ID from AWS IAM user
+    access_key_id: "${TB_QUEUE_AWS_SQS_ACCESS_KEY_ID:YOUR_KEY}"
+    # Secret access key from AWS IAM user
+    secret_access_key: "${TB_QUEUE_AWS_SQS_SECRET_ACCESS_KEY:YOUR_SECRET}"
+    # Region from AWS account
+    region: "${TB_QUEUE_AWS_SQS_REGION:YOUR_REGION}"
+    # Number of threads per each AWS SQS queue in consumer
+    threads_per_topic: "${TB_QUEUE_AWS_SQS_THREADS_PER_TOPIC:1}"
+    # Thread pool size for aws_sqs queue producer executor provider. Default value equals to AmazonSQSAsyncClient.DEFAULT_THREAD_POOL_SIZE
+    producer_thread_pool_size: "${TB_QUEUE_AWS_SQS_EXECUTOR_THREAD_POOL_SIZE:50}"
+    queue-properties:
+      # AWS SQS queue properties. VisibilityTimeout in seconds;MaximumMessageSize in bytes;MessageRetentionPeriod in seconds
+      core: "${TB_QUEUE_AWS_SQS_CORE_QUEUE_PROPERTIES:VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800}"
+      # AWS SQS queue properties. VisibilityTimeout in seconds;MaximumMessageSize in bytes;MessageRetentionPeriod in seconds
+      notifications: "${TB_QUEUE_AWS_SQS_NOTIFICATIONS_QUEUE_PROPERTIES:VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800}"
+      # VisibilityTimeout in seconds;MaximumMessageSize in bytes;MessageRetentionPeriod in seconds
+      version-control: "${TB_QUEUE_AWS_SQS_VC_QUEUE_PROPERTIES:VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800}"
+      #    VisibilityTimeout in seconds;MaximumMessageSize in bytes;MessageRetentionPeriod in seconds
+  pubsub:
+    # Project ID from Google Cloud
+    project_id: "${TB_QUEUE_PUBSUB_PROJECT_ID:YOUR_PROJECT_ID}"
+    # API Credentials in JSON format
+    service_account: "${TB_QUEUE_PUBSUB_SERVICE_ACCOUNT:YOUR_SERVICE_ACCOUNT}"
+    # Message size for PubSub queue.Value in bytes
+    max_msg_size: "${TB_QUEUE_PUBSUB_MAX_MSG_SIZE:1048576}" #in bytes
+    # Number of messages per consumer
+    max_messages: "${TB_QUEUE_PUBSUB_MAX_MESSAGES:1000}"
+    # Thread pool size for pubsub queue executor provider. If not set - default pubsub executor provider value will be used (5 * number of available processors)
+    executor_thread_pool_size: "${TB_QUEUE_PUBSUB_EXECUTOR_THREAD_POOL_SIZE:0}"
+    queue-properties:
+      # Pub/Sub properties for Core subscribers, messages which will commit after ackDeadlineInSec period can be consumed again
+      core: "${TB_QUEUE_PUBSUB_CORE_QUEUE_PROPERTIES:ackDeadlineInSec:30;messageRetentionInSec:604800}"
+      # Pub/Sub properties for Version Control subscribers, messages which will commit after ackDeadlineInSec period can be consumed again
+      notifications: "${TB_QUEUE_PUBSUB_NOTIFICATIONS_QUEUE_PROPERTIES:ackDeadlineInSec:30;messageRetentionInSec:604800}"
+      # Pub/Sub properties for Transport Api subscribers, messages which will commit after ackDeadlineInSec period can be consumed again
+      version-control: "${TB_QUEUE_PUBSUB_VC_QUEUE_PROPERTIES:ackDeadlineInSec:30;messageRetentionInSec:604800}"
+  service_bus:
+    # Azure namespace
+    namespace_name: "${TB_QUEUE_SERVICE_BUS_NAMESPACE_NAME:YOUR_NAMESPACE_NAME}"
+    # Azure Service Bus Shared Access Signatures key name
+    sas_key_name: "${TB_QUEUE_SERVICE_BUS_SAS_KEY_NAME:YOUR_SAS_KEY_NAME}"
+    # Azure Service Bus Shared Access Signatures key
+    sas_key: "${TB_QUEUE_SERVICE_BUS_SAS_KEY:YOUR_SAS_KEY}"
+    # Number of messages per a consumer
+    max_messages: "${TB_QUEUE_SERVICE_BUS_MAX_MESSAGES:1000}"
+    queue-properties:
+      # Azure Service Bus properties for Core queues
+      core: "${TB_QUEUE_SERVICE_BUS_CORE_QUEUE_PROPERTIES:lockDurationInSec:30;maxSizeInMb:1024;messageTimeToLiveInSec:604800}"
+      # Azure Service Bus properties for Notification queues
+      notifications: "${TB_QUEUE_SERVICE_BUS_NOTIFICATIONS_QUEUE_PROPERTIES:lockDurationInSec:30;maxSizeInMb:1024;messageTimeToLiveInSec:604800}"
+      # Azure Service Bus properties for Version Control queues
+      version-control: "${TB_QUEUE_SERVICE_BUS_VC_QUEUE_PROPERTIES:lockDurationInSec:30;maxSizeInMb:1024;messageTimeToLiveInSec:604800}"
+  rabbitmq:
+    # By default empty
+    exchange_name: "${TB_QUEUE_RABBIT_MQ_EXCHANGE_NAME:}"
+    # RabbitMQ host used to establish connection
+    host: "${TB_QUEUE_RABBIT_MQ_HOST:localhost}"
+    # RabbitMQ host used to establish a connection
+    port: "${TB_QUEUE_RABBIT_MQ_PORT:5672}"
+    # Virtual hosts provide logical grouping and separation of resources
+    virtual_host: "${TB_QUEUE_RABBIT_MQ_VIRTUAL_HOST:/}"
+    # Username for RabbitMQ user account
+    username: "${TB_QUEUE_RABBIT_MQ_USERNAME:YOUR_USERNAME}"
+    # User password for RabbitMQ user account
+    password: "${TB_QUEUE_RABBIT_MQ_PASSWORD:YOUR_PASSWORD}"
+    # Network connection between clients and RabbitMQ nodes can fail. RabbitMQ Java client supports automatic recovery of connections and topology (queues, exchanges, bindings, and consumers)
+    automatic_recovery_enabled: "${TB_QUEUE_RABBIT_MQ_AUTOMATIC_RECOVERY_ENABLED:false}"
+    # The connection timeout for the RabbitMQ connection factory
+    connection_timeout: "${TB_QUEUE_RABBIT_MQ_CONNECTION_TIMEOUT:60000}"
+    # RabbitMQ has a timeout for connection handshake. When clients run in heavily constrained environments, it may be necessary to increase the timeout
+    handshake_timeout: "${TB_QUEUE_RABBIT_MQ_HANDSHAKE_TIMEOUT:10000}"
+    queue-properties:
+      # RabbitMQ properties for Core queues
+      core: "${TB_QUEUE_RABBIT_MQ_CORE_QUEUE_PROPERTIES:x-max-length-bytes:1048576000;x-message-ttl:604800000}"
+      # RabbitMQ properties for Transport API queues
+      transport-api: "${TB_QUEUE_RABBIT_MQ_TA_QUEUE_PROPERTIES:x-max-length-bytes:1048576000;x-message-ttl:604800000}"
+      # RabbitMQ properties for Version Control queues
+      version-control: "${TB_QUEUE_RABBIT_MQ_VC_QUEUE_PROPERTIES:x-max-length-bytes:1048576000;x-message-ttl:604800000}"
+  partitions:
+    hash_function_name: "${TB_QUEUE_PARTITIONS_HASH_FUNCTION_NAME:murmur3_128}" # murmur3_32, murmur3_128 or sha256
+  core:
+    # Default topic name of Kafka, RabbitMQ, etc. queue
+    topic: "${TB_QUEUE_CORE_TOPIC:tb_core}"
+    # Interval in milliseconds to poll messages by Core microservices
+    poll-interval: "${TB_QUEUE_CORE_POLL_INTERVAL_MS:25}"
+    # Amount of partitions used by Core microservices
+    partitions: "${TB_QUEUE_CORE_PARTITIONS:10}"
+    # Timeout for processing a message pack by Core microservices
+    pack-processing-timeout: "${TB_QUEUE_CORE_PACK_PROCESSING_TIMEOUT_MS:2000}"
+    ota:
+      # Default topic name for OTA updates
+      topic: "${TB_QUEUE_CORE_OTA_TOPIC:tb_ota_package}"
+      # The interval of processing the OTA updates for devices. Used to avoid any harm to the network due to many parallel OTA updates
+      pack-interval-ms: "${TB_QUEUE_CORE_OTA_PACK_INTERVAL_MS:60000}"
+      # The size of OTA updates notifications fetched from the queue. The queue stores pairs of firmware and device ids
+      pack-size: "${TB_QUEUE_CORE_OTA_PACK_SIZE:100}"
+    # Stats topic name for queue Kafka, RabbitMQ, etc.
+    usage-stats-topic: "${TB_QUEUE_US_TOPIC:tb_usage_stats}"
+    stats:
+      # Enable/disable statistics for Core microservices
+      enabled: "${TB_QUEUE_CORE_STATS_ENABLED:true}"
+      # Statistics printing interval for Core microservices
+      print-interval-ms: "${TB_QUEUE_CORE_STATS_PRINT_INTERVAL_MS:60000}"
+  vc:
+    # Default topic name for Kafka, RabbitMQ, etc.
+    topic: "${TB_QUEUE_VC_TOPIC:tb_version_control}"
+    # Number of partitions to associate with this queue. Used for scaling the number of messages that can be processed in parallel
+    partitions: "${TB_QUEUE_VC_PARTITIONS:10}"
+    # Interval in milliseconds between polling of the messages if no new messages arrive
+    poll-interval: "${TB_QUEUE_VC_INTERVAL_MS:25}"
+    # Timeout before retrying all failed and timed-out messages from the processing pack
+    pack-processing-timeout: "${TB_QUEUE_VC_PACK_PROCESSING_TIMEOUT_MS:180000}"
+    # Queue settings for Kafka, RabbitMQ, etc. Limit for single message size
+    msg-chunk-size: "${TB_QUEUE_VC_MSG_CHUNK_SIZE:250000}"
+
+# Version control parameters
+vc:
+  # Pool size for handling export tasks
+  thread_pool_size: "${TB_VC_POOL_SIZE:6}"
+  git:
+    # Pool size for handling the git IO operations
+    io_pool_size: "${TB_VC_GIT_POOL_SIZE:3}"
+    # Default storing repository path
+    repositories-folder: "${TB_VC_GIT_REPOSITORIES_FOLDER:${java.io.tmpdir}/repositories}"
+
+# Usage statistics parameters
+usage:
+  stats:
+    report:
+      # Enable/Disable the collection of statistics about API usage. Collected on a system and tenant level by default
+      enabled: "${USAGE_STATS_REPORT_ENABLED:true}"
+      # Enable/Disable collection of statistics about API usage on a customer level
+      enabled_per_customer: "${USAGE_STATS_REPORT_PER_CUSTOMER_ENABLED:false}"
+      # Interval of reporting the statistics. By default, the summarized statistics are sent every 10 seconds
+      interval: "${USAGE_STATS_REPORT_INTERVAL:10}"
+
+# Metrics parameters
+metrics:
+  # Enable/disable actuator metrics.
+  enabled: "${METRICS_ENABLED:false}"
+  timer:
+    # Metrics percentiles returned by actuator for timer metrics. List of double values (divided by ,).
+    percentiles: "${METRICS_TIMER_PERCENTILES:0.5}"
+
+# General management parameters
+management:
+  endpoints:
+    web:
+      exposure:
+        # Expose metrics endpoint (use value 'prometheus' to enable prometheus metrics).
+        include: '${METRICS_ENDPOINTS_EXPOSE:info}'
+
+# Service common properties
+service:
+  type: "${TB_SERVICE_TYPE:tb-vc-executor}" # service type
+  # Unique id for this service (autogenerated if empty)
+  id: "${TB_SERVICE_ID:}"
+
+# Notification system parameters
+notification_system:
+  rules:
+    # Semicolon-separated deduplication durations (in millis) for trigger types. Format: 'NotificationRuleTriggerType1:123;NotificationRuleTriggerType2:456'
+    deduplication_durations: "${TB_NOTIFICATION_RULES_DEDUPLICATION_DURATIONS:RATE_LIMITS:14400000;}"

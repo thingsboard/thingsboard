@@ -1,0 +1,147 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+.tb-widget-container {
+  position: absolute;
+  inset: 0;
+}
+
+.tb-widget {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  overflow: hidden;
+  outline: none;
+
+  transition: all .2s ease-in-out;
+
+  &.tb-overflow-visible {
+    overflow: visible;
+    .tb-widget {
+      overflow: visible;
+    }
+  }
+}
+
+div.tb-widget {
+  display: flex;
+  flex-direction: column;
+  .tb-widget-header {
+    display: flex;
+    flex-direction: row;
+    place-content: flex-start space-between;
+    align-items: flex-start;
+  }
+
+  .tb-widget-title {
+    display: flex;
+    flex-direction: column;
+    place-content: flex-start center;
+    align-items: flex-start;
+    max-height: 65px;
+    padding-top: 5px;
+    padding-left: 5px;
+    overflow: hidden;
+
+    tb-timewindow {
+      font-size: 14px;
+      opacity: .85;
+    }
+
+    .title-row {
+      display: flex;
+      flex-direction: row;
+      place-content: center flex-start;
+      align-items: center;
+      gap: 4px;
+      width: 100%;
+    }
+
+    .title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      line-height: 24px;
+      letter-spacing: normal;
+      margin: 0;
+    }
+  }
+
+  .tb-widget-actions {
+    display: flex;
+    flex-direction: row;
+    place-content: center flex-start;
+    align-items: center;
+    z-index: 19;
+    margin: 5px 0 0;
+
+    &-absolute {
+      position: absolute;
+      top: 3px;
+      right: 8px;
+      z-index: 150;
+    }
+
+    button.mat-mdc-icon-button {
+      width: 32px;
+      min-width: 32px;
+      height: 32px;
+      min-height: 32px;
+      padding: 0 !important;
+      margin: 0 !important;
+      line-height: 20px;
+
+      .mat-icon {
+        width: 20px;
+        min-width: 20px;
+        height: 20px;
+        min-height: 20px;
+        font-size: 20px;
+        line-height: 20px;
+        svg {
+          width: 20px;
+          height: 20px;
+        }
+      }
+    }
+  }
+
+  .tb-widget-title, .tb-widget-actions {
+    .mat-icon {
+      vertical-align: bottom;
+    }
+  }
+
+  .tb-widget-content {
+    flex: 1;
+    position: relative;
+    &.tb-no-interaction {
+      pointer-events: none;
+    }
+  }
+
+  &.tb-highlighted {
+    border: 1px solid #039be5;
+    box-shadow: 0 0 20px #039be5;
+  }
+
+  &.tb-not-highlighted {
+    opacity: .5;
+  }
+
+  &.tb-edit {
+    cursor: pointer;
+  }
+}

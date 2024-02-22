@@ -1,0 +1,129 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ng-container [formGroup]="alarmsTableWidgetSettingsForm">
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.table.table-header</div>
+    <div class="tb-form-row">
+      <div class="fixed-title-width">{{ 'widgets.table.alarms-table-title' | translate }}</div>
+      <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="alarmsTitle" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row">
+      <mat-slide-toggle class="mat-slide"  formControlName="enableStickyHeader">
+        {{ 'widgets.table.enable-sticky-header' | translate }}
+      </mat-slide-toggle>
+    </div>
+    <div class="tb-form-panel stroked">
+      <div class="tb-form-panel-title" translate>widgets.table.header-buttons</div>
+      <mat-slide-toggle class="mat-slide"  formControlName="enableSearch">
+        {{ 'widgets.table.enable-alarms-search' | translate }}
+      </mat-slide-toggle>
+      <mat-slide-toggle class="mat-slide"  formControlName="enableSelectColumnDisplay">
+        {{ 'widgets.table.enable-select-column-display' | translate }}
+      </mat-slide-toggle>
+      <mat-slide-toggle class="mat-slide"  formControlName="enableFilter">
+        {{ 'widgets.table.enable-alarm-filter' | translate }}
+      </mat-slide-toggle>
+    </div>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.table.columns</div>
+    <mat-slide-toggle class="mat-slide"  formControlName="enableSelection">
+      {{ 'widgets.table.enable-alarms-selection' | translate }}
+    </mat-slide-toggle>
+    <div class="tb-form-panel stroked">
+      <mat-slide-toggle class="mat-slide"  formControlName="enableStickyAction">
+        {{ 'widgets.table.enable-sticky-action' | translate }}
+      </mat-slide-toggle>
+      <mat-slide-toggle class="mat-slide"  formControlName="showCellActionsMenu">
+        {{ 'widgets.table.show-cell-actions-menu-mobile' | translate }}
+      </mat-slide-toggle>
+    </div>
+    <div class="tb-form-panel stroked">
+      <div class="tb-form-panel-title" translate>widgets.table.table-buttons</div>
+      <mat-slide-toggle class="mat-slide" formControlName="displayActivity">
+        {{ 'widgets.table.display-alarm-activity' | translate }}
+      </mat-slide-toggle>
+      <mat-slide-toggle class="mat-slide" formControlName="displayDetails">
+        {{ 'widgets.table.display-alarm-details' | translate }}
+      </mat-slide-toggle>
+      <mat-slide-toggle class="mat-slide" formControlName="allowAssign">
+        {{ 'widgets.table.allow-alarms-assign' | translate }}
+      </mat-slide-toggle>
+      <mat-slide-toggle class="mat-slide" formControlName="allowAcknowledgment">
+        {{ 'widgets.table.allow-alarms-ack' | translate }}
+      </mat-slide-toggle>
+      <mat-slide-toggle class="mat-slide" formControlName="allowClear">
+        {{ 'widgets.table.allow-alarms-clear' | translate }}
+      </mat-slide-toggle>
+    </div>
+    <mat-form-field fxFlex subscriptSizing="dynamic">
+      <mat-label translate>widgets.table.hidden-cell-button-display-mode</mat-label>
+      <mat-select formControlName="reserveSpaceForHiddenAction">
+        <mat-option [value]="'true'">
+          {{ 'widgets.table.show-empty-space-hidden-action' | translate }}
+        </mat-option>
+        <mat-option [value]="'false'">
+          {{ 'widgets.table.dont-reserve-space-hidden-action' | translate }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field fxFlex subscriptSizing="dynamic">
+      <mat-label translate>widgets.table.default-sort-order</mat-label>
+      <input matInput formControlName="defaultSortOrder">
+    </mat-form-field>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.table.pagination</div>
+    <mat-slide-toggle class="mat-slide" formControlName="displayPagination">
+      {{ 'widgets.table.display-pagination' | translate }}
+    </mat-slide-toggle>
+    <div class="tb-form-row space-between column-xs">
+      <div translate>widgets.table.default-page-size</div>
+      <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+        <input matInput formControlName="defaultPageSize" type="number" min="1" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+  </div>
+  <div class="tb-form-panel tb-slide-toggle">
+    <div class="tb-form-panel-title" translate>widgets.table.rows</div>
+    <mat-expansion-panel class="tb-settings" [expanded]="alarmsTableWidgetSettingsForm.get('useRowStyleFunction').value">
+      <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-panel-title>
+          <mat-slide-toggle class="mat-slide" formControlName="useRowStyleFunction" (click)="$event.stopPropagation()"
+                            fxLayoutAlign="center">
+            {{ 'widgets.table.use-row-style-function' | translate }}
+          </mat-slide-toggle>
+        </mat-panel-title>
+        <mat-panel-description fxFlex="40" fxLayoutAlign="end center" fxHide.xs translate>
+          widget-config.advanced-settings
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <tb-js-func required
+                    formControlName="rowStyleFunction"
+                    [globalVariables]="functionScopeVariables"
+                    [functionArgs]="['alarm', 'ctx']"
+                    functionTitle="{{ 'widgets.table.row-style-function' | translate }}"
+                    helpId="widget/lib/alarm/row_style_fn">
+        </tb-js-func>
+      </ng-template>
+    </mat-expansion-panel>
+  </div>
+</ng-container>

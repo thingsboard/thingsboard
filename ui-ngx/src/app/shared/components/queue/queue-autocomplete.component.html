@@ -1,0 +1,59 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-form-field [formGroup]="selectQueueFormGroup"
+                class="mat-block autocomplete-queue" subscriptSizing="{{subscriptSizing}}">
+  <mat-label>{{ 'queue.queue-name' | translate }}</mat-label>
+  <input matInput type="text"
+         #queueInput
+         formControlName="queueName"
+         (focusin)="onFocus()"
+         [required]="required"
+         [matAutocomplete]="queueAutocomplete">
+  <button *ngIf="selectQueueFormGroup.get('queueName').value && !disabled"
+          type="button"
+          matSuffix mat-icon-button aria-label="Clear"
+          (click)="clear()">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+  <mat-autocomplete class="tb-autocomplete"
+                    #queueAutocomplete="matAutocomplete"
+                    [displayWith]="displayQueueFn"
+                    >
+    <mat-option *ngFor="let queue of filteredQueues | async" [value]="queue" class="queue-option">
+      <span [innerHTML]="queue.name | highlight:searchText"></span>
+      <small class="queue-option-description">{{getDescription(queue)}}</small>
+    </mat-option>
+    <mat-option *ngIf="!(filteredQueues | async)?.length" [value]="null" class="tb-not-found">
+      <div class="tb-not-found-content" (click)="$event.stopPropagation()">
+        <div *ngIf="!textIsNotEmpty(searchText); else searchNotEmpty">
+          <span translate>queue.no-queues-found</span>
+        </div>
+        <ng-template #searchNotEmpty>
+          <span>
+              {{ translate.get('queue.no-queues-matching',
+            {queue: truncate.transform(searchText, true, 6, &apos;...&apos;)}) | async }}
+          </span>
+        </ng-template>
+      </div>
+    </mat-option>
+  </mat-autocomplete>
+  <mat-hint *ngIf = "autocompleteHint">{{ autocompleteHint | translate }}</mat-hint>
+  <mat-error *ngIf="selectQueueFormGroup.get('queueName').hasError('required')">
+    {{ 'queue.queue-required' | translate }}
+  </mat-error>
+</mat-form-field>

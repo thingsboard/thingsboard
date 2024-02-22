@@ -1,0 +1,213 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import "../../../../../../../scss/constants";
+
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  .tb-title {
+    font-weight: 600;
+    font-size: 20px;
+    line-height: 24px;
+    letter-spacing: 0.1px;
+    color: rgba(0, 0, 0, 0.76);
+    padding-bottom: 24px;
+    @media #{$mat-md-lg} {
+      font-weight: 500;
+      font-size: 14px;
+      line-height: 20px;
+      letter-spacing: 0.25px;
+      padding-bottom: 20px;
+    }
+  }
+  .tb-get-started-container {
+    flex: 1;
+    overflow: auto;
+  }
+}
+
+:host ::ng-deep {
+
+  .tb-get-started .mat-vertical-stepper-header {
+    border-radius: 12px;
+    padding: 12px;
+    height: auto;
+  }
+
+  .tb-get-started .mat-vertical-stepper-header[aria-selected="true"] {
+    background: rgba(0, 0, 0, 0.03);
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+  }
+
+  .tb-get-started .mat-vertical-content-container {
+    margin-left: 0;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    background: rgba(0, 0, 0, 0.03);
+  }
+
+  .tb-get-started .mat-stepper-vertical-line::before {
+    content: none;
+  }
+
+  .tb-get-started .mat-step-label {
+    width: 100%;
+    white-space: inherit;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 20px;
+    color: rgba(0, 0, 0, 0.76);
+  }
+
+  .tb-get-started .mat-step-label.mat-step-label-selected {
+    font-weight: 500;
+    font-size: 16px;
+    line-height: 24px;
+    color: rgba(0, 0, 0, 0.87);
+  }
+
+  .tb-get-started .mat-vertical-content {
+    p, li {
+      font-style: normal;
+      font-weight: 400;
+      font-size: 14px;
+      line-height: 20px;
+      letter-spacing: 0.2px;
+      color: rgba(0, 0, 0, 0.54);
+      em {
+        font-style: normal;
+        font-weight: 500;
+        font-size: 13px;
+        color: rgba(0, 0, 0, 0.38);
+      }
+    }
+    ul {
+      padding-inline-start: 20px;
+    }
+    .tb-bordered-content {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+      border-radius: 8px;
+      padding: 16px;
+      p {
+        margin-top: 16px;
+        margin-bottom: 8px;
+      }
+    }
+    .tb-markdown-view {
+      .tb-getting-started-code {
+        .code-wrapper {
+          padding: 0;
+          pre[class*=language-] {
+            margin: 0;
+            padding: 9px 38px 9px 16px;
+            background: rgba(0, 0, 0, 0.03);
+            border-radius: 6px;
+            border: none;
+          }
+          code[class*="language-"], pre[class*="language-"] {
+            font-family: 'Roboto';
+            font-style: normal;
+            font-weight: 400;
+            font-size: 12px;
+            line-height: 16px;
+            letter-spacing: 0.25px;
+            color: rgba(0, 0, 0, 0.38);
+            overflow: hidden;
+            white-space: break-spaces;
+            word-break: break-all;
+            & * {
+              color: rgba(0, 0, 0, 0.38);
+              cursor: inherit;
+              background: transparent;
+            }
+          }
+          button.clipboard-btn {
+            right: 0;
+            height: 34px;
+            p, div {
+              background: transparent;
+            }
+            p {
+              margin: 0;
+              padding: 7px;
+              color: #305680;
+            }
+            div {
+              top: 0;
+              padding: 8px;
+              height: 34px;
+              width: 34px;
+              img {
+                display: none;
+              }
+              &:after {
+                content: "";
+                position: initial;
+                display: block;
+                width: 18px;
+                height: 18px;
+                background: #305680;
+                -webkit-mask-image: url(/assets/copy-code-icon.svg);
+                -webkit-mask-repeat: no-repeat;
+                mask-image: url(/assets/copy-code-icon.svg);
+                mask-repeat: no-repeat;
+              }
+            }
+          }
+        }
+      }
+    }
+    @media #{$mat-md-lg} {
+      .tb-bordered-content {
+        padding: 4px;
+      }
+    }
+  }
+
+  @media #{$mat-md-lg} {
+    .tb-get-started .mat-step-label {
+      font-size: 12px;
+      line-height: 16px;
+    }
+    .tb-get-started .mat-step-label.mat-step-label-selected {
+      font-size: 13px;
+      line-height: 16px;
+    }
+
+    .tb-get-started .mdc-button {
+      font-size: 12px;
+      line-height: 16px;
+    }
+
+    .tb-get-started .mat-vertical-content {
+      p, li {
+        font-size: 12px;
+        line-height: 16px;
+        letter-spacing: 0.25px;
+      }
+    }
+
+    .tb-get-started .mat-vertical-content {
+      padding: 0 16px 16px 16px;
+    }
+  }
+}

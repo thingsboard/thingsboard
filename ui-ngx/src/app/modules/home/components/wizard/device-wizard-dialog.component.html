@@ -1,0 +1,124 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-toolbar color="primary">
+  <h2 translate>device.add-device-text</h2>
+  <span fxFlex></span>
+  <div [tb-help]="'devices'"></div>
+  <button mat-icon-button
+          (click)="cancel()"
+          type="button">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+<mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+</mat-progress-bar>
+<div mat-dialog-content>
+  <mat-horizontal-stepper #addDeviceWizardStepper
+                          [linear]="true"
+                          [labelPosition]="(stepperLabelPosition | async)"
+                          [orientation]="(stepperOrientation | async)"
+                          (selectionChange)="changeStep($event)">
+    <ng-template matStepperIcon="edit">
+      <mat-icon>check</mat-icon>
+    </ng-template>
+    <mat-step [stepControl]="deviceWizardFormGroup">
+      <form [formGroup]="deviceWizardFormGroup" style="padding-bottom: 16px;">
+        <ng-template matStepLabel>{{ 'device.wizard.device-details' | translate}}</ng-template>
+        <fieldset [disabled]="isLoading$ | async">
+          <mat-form-field class="mat-block">
+            <mat-label translate>device.name</mat-label>
+            <input matInput formControlName="name" required>
+            <mat-error *ngIf="deviceWizardFormGroup.get('name').hasError('required')">
+              {{ 'device.name-required' | translate }}
+            </mat-error>
+            <mat-error *ngIf="deviceWizardFormGroup.get('name').hasError('maxlength')">
+              {{ 'device.name-max-length' | translate }}
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field class="mat-block">
+            <mat-label translate>device.label</mat-label>
+            <input matInput formControlName="label">
+            <mat-error *ngIf="deviceWizardFormGroup.get('label').hasError('maxlength')">
+              {{ 'device.label-max-length' | translate }}
+            </mat-error>
+          </mat-form-field>
+          <tb-device-profile-autocomplete
+            required
+            addNewProfile
+            showCreateNewButton
+            selectDefaultProfile
+            formControlName="deviceProfileId"
+            (deviceProfileChanged)="deviceProfileChanged($event)">
+          </tb-device-profile-autocomplete>
+          <div class="toggle-group">
+            <mat-slide-toggle formControlName="gateway" style="min-width: 165px">
+              {{ 'device.is-gateway' | translate }}
+            </mat-slide-toggle>
+            <mat-slide-toggle *ngIf="deviceWizardFormGroup.get('gateway').value"
+                              formControlName="overwriteActivityTime">
+              {{ 'device.overwrite-activity-time' | translate }}
+            </mat-slide-toggle>
+          </div>
+          <tb-entity-autocomplete
+            useFullEntityId
+            formControlName="customerId"
+            labelText="device.assign-to-customer"
+            [entityType]="entityType.CUSTOMER">
+          </tb-entity-autocomplete>
+          <mat-form-field class="mat-block" subscriptSizing="dynamic">
+            <mat-label translate>device.description</mat-label>
+            <textarea matInput formControlName="description" rows="1"></textarea>
+          </mat-form-field>
+        </fieldset>
+      </form>
+    </mat-step>
+    <mat-step [stepControl]="credentialsFormGroup" [optional]="credentialsOptionalStep">
+      <ng-template matStepLabel>{{ 'device.credentials' | translate }}</ng-template>
+      <form [formGroup]="credentialsFormGroup" style="padding-bottom: 16px;">
+        <tb-device-credentials
+          [deviceTransportType]="deviceTransportType"
+          initAccessToken
+          formControlName="credential">
+        </tb-device-credentials>
+      </form>
+    </mat-step>
+  </mat-horizontal-stepper>
+</div>
+<div mat-dialog-actions class="tb-dialog-actions">
+  <div class="dialog-actions-row">
+    <button mat-stroked-button *ngIf="selectedIndex > 0"
+            [disabled]="(isLoading$ | async)"
+            (click)="previousStep()">{{ 'action.back' | translate }}</button>
+    <span fxFlex></span>
+    <button mat-stroked-button
+            color="primary"
+            *ngIf="showNext"
+            [disabled]="(isLoading$ | async)"
+            (click)="nextStep()">{{ 'action.next-with-label' | translate:{label: (getFormLabel(this.selectedIndex+1) | translate)} }}</button>
+  </div>
+  <mat-divider style="width: 100%"></mat-divider>
+  <div class="dialog-actions-row">
+    <button mat-button
+            [disabled]="(isLoading$ | async)"
+            (click)="cancel()">{{ 'action.cancel' | translate }}</button>
+    <button mat-raised-button
+            [disabled]="(isLoading$ | async)"
+            color="primary"
+            (click)="add()">{{ 'action.add' | translate }}</button>
+  </div>
+</div>

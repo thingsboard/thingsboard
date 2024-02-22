@@ -1,0 +1,81 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form [formGroup]="widgetFormGroup">
+  <fieldset [disabled]="isLoading$ | async">
+    <tb-widget-config
+      #widgetConfigComponent
+      [aliasController]="aliasController"
+      [functionsOnly]="widgetEditMode"
+      [dashboard]="dashboard"
+      [widget]="widget"
+      [hideToggleHeader]="previewMode"
+      formControlName="widgetConfig">
+      <div class="tb-widget-config-header-prefix">
+        <button mat-button
+                *ngIf="previewMode"
+                (click)="previewMode = false">
+          <mat-icon>chevron_left</mat-icon>
+          {{ 'action.back' | translate }}
+        </button>
+        <button *ngIf="!previewMode"
+                fxHide.gt-sm
+                [disabled]="!widgetFormGroup.valid"
+                mat-button color="primary"
+                (click)="previewMode = true">
+          <mat-icon>visibility</mat-icon>
+          {{ 'widget-config.preview' | translate }}
+        </button>
+      </div>
+      <div fxFlex.lt-md class="tb-widget-config-header-suffix" fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="12px">
+        <button *ngIf="!previewMode"
+                fxHide.lt-md
+                [disabled]="!widgetFormGroup.valid"
+                mat-button color="primary"
+                (click)="previewMode = true">
+          <mat-icon>visibility</mat-icon>
+          {{ 'widget-config.preview' | translate }}
+        </button>
+        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="12px">
+          <button [disabled]="!widgetFormGroup.dirty"
+            mat-stroked-button color="primary"
+            (click)="onRevertWidgetConfig()">
+            <mat-icon>close</mat-icon>
+            {{ 'action.decline' | translate }}
+          </button>
+          <button [disabled]="!widgetFormGroup.valid || !widgetFormGroup.dirty"
+            mat-flat-button color="primary"
+            (click)="onApplyWidgetConfig()">
+            <mat-icon>done</mat-icon>
+            {{ 'action.apply' | translate }}
+          </button>
+        </div>
+      </div>
+    </tb-widget-config>
+    <div *ngIf="previewMode" class="widget-preview-background">
+      <tb-widget-preview class="widget-preview-section"
+                         [aliasController]="aliasController"
+                         [stateController]="stateController"
+                         [dashboardTimewindow]="dashboard.configuration.timewindow"
+                         [widget]="widget"
+                         [widgetConfig]="widgetFormGroup.get('widgetConfig').value.config"
+                         [previewWidth]="widgetConfig.typeParameters.previewWidth"
+                         [previewHeight]="widgetConfig.typeParameters.previewHeight">
+      </tb-widget-preview>
+    </div>
+  </fieldset>
+</form>

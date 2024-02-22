@@ -1,0 +1,572 @@
+{
+  "title": "Customer User Home Page",
+  "image": null,
+  "mobileHide": false,
+  "mobileOrder": null,
+  "configuration": {
+    "description": "",
+    "widgets": {
+      "867f82cf-ecf2-2d5c-35cb-08c6f2edc3a4": {
+        "type": "static",
+        "sizeX": 7.5,
+        "sizeY": 3,
+        "config": {
+          "datasources": [],
+          "timewindow": {
+            "realtime": {
+              "timewindowMs": 60000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "rgb(255, 255, 255)",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {
+            "columns": 2
+          },
+          "title": "Documentation",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": "",
+          "showLegend": false
+        },
+        "row": 0,
+        "col": 0,
+        "id": "867f82cf-ecf2-2d5c-35cb-08c6f2edc3a4",
+        "typeFullFqn": "system.home_page_widgets.documentation_links"
+      },
+      "9e3ef045-d8bc-1640-a3f4-2dd10b19d50e": {
+        "type": "static",
+        "sizeX": 7.5,
+        "sizeY": 3,
+        "config": {
+          "showTitle": false,
+          "backgroundColor": "rgb(255, 255, 255)",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {
+            "columns": 2
+          },
+          "title": "Quick links",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": "",
+          "showLegend": false,
+          "datasources": []
+        },
+        "row": 0,
+        "col": 0,
+        "id": "9e3ef045-d8bc-1640-a3f4-2dd10b19d50e",
+        "typeFullFqn": "system.home_page_widgets.quick_links"
+      },
+      "6d6e2b1d-6ce7-4678-3745-c6b0897b2674": {
+        "type": "static",
+        "sizeX": 7.5,
+        "sizeY": 6.5,
+        "config": {
+          "showTitle": false,
+          "backgroundColor": "rgb(255, 255, 255)",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {},
+          "title": "Dashboards",
+          "dropShadow": true,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": "",
+          "showLegend": false,
+          "datasources": []
+        },
+        "row": 0,
+        "col": 0,
+        "id": "6d6e2b1d-6ce7-4678-3745-c6b0897b2674",
+        "typeFullFqn": "system.home_page_widgets.dashboards"
+      },
+      "35d3ac3b-f1af-dc3d-a1d1-11f351d16fc6": {
+        "type": "latest",
+        "sizeX": 5,
+        "sizeY": 3.5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entityCount",
+              "name": null,
+              "entityAliasId": "a1ddb8fa-90ff-5598-e7f2-e254194d055d",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "totalDevices",
+                  "color": "#2196f3",
+                  "settings": {},
+                  "_hash": 0.8491768696709192,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            },
+            {
+              "type": "entityCount",
+              "name": null,
+              "entityAliasId": "a1ddb8fa-90ff-5598-e7f2-e254194d055d",
+              "filterId": "42f42812-92fe-a13a-b0ba-c6e0dfab3584",
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "activeDevices",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.1262449138010293,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            },
+            {
+              "type": "entityCount",
+              "name": null,
+              "entityAliasId": "a1ddb8fa-90ff-5598-e7f2-e254194d055d",
+              "filterId": "39d92c21-2426-7346-4484-452829146c33",
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "inactiveDevices",
+                  "color": "#f44336",
+                  "settings": {},
+                  "_hash": 0.39119172615806797,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1680168340431,
+                "endTimeMs": 1680254740431
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {
+            "useMarkdownTextFunction": false,
+            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-content-container\">\n        <div class=\"tb-card-header\">\n            <div class=\"tb-card-title\">\n                <a class=\"tb-home-widget-title tb-home-widget-link\" routerLink=\"/entities/devices\">{{ 'device.devices' | translate }}</a>\n            </div>\n            <div fxLayout=\"row\" fxLayoutGap=\"12px\">\n                <a mat-stroked-button color=\"primary\" href=\"https://thingsboard.io/docs\" target=\"_blank\">{{ 'widgets.devices.view-docs' | translate }}</a>\n            </div>\n        </div>\n        <div class=\"tb-item-cards\">\n            <a class=\"tb-item-card tb-inactive\" routerLink=\"/entities/devices\">\n                <div class=\"tb-item-title-container\">\n                    <div class=\"tb-item-title tb-home-widget-link\" translate>widgets.devices.inactive</div>\n                </div>\n                <div class=\"tb-count-container\">\n                    <div class=\"tb-count\">${inactiveDevices:0}</div>\n                </div>\n            </a>\n            <a class=\"tb-item-card tb-active\" routerLink=\"/entities/devices\">\n                <div class=\"tb-item-title-container\">\n                    <div class=\"tb-item-title tb-home-widget-link\" translate>widgets.devices.active</div>\n                </div>    \n                <div class=\"tb-count-container\">\n                    <div class=\"tb-count\">${activeDevices:0}</div>\n                </div>\n            </a>\n            <a fxHide.md class=\"tb-item-card tb-total\" routerLink=\"/entities/devices\">\n                <div class=\"tb-item-title-container\">\n                    <div class=\"tb-item-title tb-home-widget-link\" translate>widgets.devices.total</div>\n                </div>    \n                <div class=\"tb-count-container\">\n                    <div class=\"tb-count\">${totalDevices:0}</div>\n                </div>\n            </a>\n        </div>\n    </div>\n</div>",
+            "applyDefaultMarkdownStyle": false,
+            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: row;\n}\n\n.tb-content-container {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    justify-content: flex-start;\n    gap: 12px;\n}\n\n.tb-card-header {\n    height: 36px;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-item-cards {\n    flex: 1;\n    display: flex;\n    flex-direction: row;\n    gap: 12px;\n}\n\na.tb-item-card {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    padding: 8px 12px;\n    border: 1px solid;\n    border-radius: 10px;\n    margin-bottom: 12px;\n}\n\na.tb-item-card.tb-inactive {\n    background: rgba(209, 39, 48, 0.04);\n    border-color: rgba(209, 39, 48, 0.06);\n}\n\na.tb-item-card.tb-active {\n    background: rgba(48, 86, 128, 0.04);\n    border-color: rgba(48, 86, 128, 0.12);\n}\n\na.tb-item-card.tb-total {\n    background: rgba(0, 0, 0, 0.01);\n    border-color: rgba(0, 0, 0, 0.05);\n}\n\n.tb-item-title-container {\n    display: grid;\n}\n\n.tb-item-title {\n    font-weight: 400;\n    font-size: 14px;\n    line-height: 20px;\n    letter-spacing: 0.2px;\n    white-space: nowrap;\n    overflow: hidden;\n    text-overflow: ellipsis;    \n    color: rgba(0, 0, 0, 0.76);\n}\n\n.tb-item-title.tb-home-widget-link:after {\n    position: absolute;\n    right: 0;\n}\n\na.tb-item-card:hover .tb-item-title.tb-home-widget-link:after { \n    color: rgba(0, 0, 0, 0.38);\n}\n\na.tb-item-card:hover {\n    box-shadow: 0px 4px 10px rgba(23, 33, 90, 0.08);\n}\n\n.tb-count-container {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    align-items: flex-start;\n    justify-content: center;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 24px;\n    line-height: 36px;\n    white-space: nowrap;\n    color: rgba(0, 0, 0, 0.87);\n}\n\n@media screen and (max-width: 959px) {\n    .tb-item-cards {\n        flex-direction: column;\n    }\n    a.tb-item-card {\n        margin-bottom: 0;\n    }\n}\n\n@media screen and (max-width: 1279px) {\n    a.tb-item-card {\n        flex-direction: row;\n        align-items: center;\n    }\n    .tb-item-title.tb-home-widget-link:after {\n        position: relative;\n    }\n    .tb-count-container {\n        align-items: flex-end;\n    }\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-item-title {\n        font-size: 11px;\n        line-height: 16px;\n    }\n    .tb-count {\n        font-size: 16px;\n        line-height: 24px;\n    }\n    a.tb-item-card {\n        padding: 4px 8px;\n        margin-bottom: 6px;\n    }\n    a.tb-item-card:hover {\n        box-shadow: 0px 2px 5px rgba(23, 33, 90, 0.08);\n    }\n}\n"
+          },
+          "title": "Devices",
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "showLegend": false,
+          "useDashboardTimewindow": true,
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "35d3ac3b-f1af-dc3d-a1d1-11f351d16fc6",
+        "typeFullFqn": "system.cards.markdown_card"
+      },
+      "7ac20b6a-dc40-b18e-9f5f-bca20bc693bb": {
+        "type": "latest",
+        "sizeX": 5,
+        "sizeY": 3.5,
+        "config": {
+          "datasources": [
+            {
+              "type": "alarmCount",
+              "name": null,
+              "entityAliasId": null,
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "totalAlarms",
+                  "color": "#ffc107",
+                  "settings": {},
+                  "_hash": 0.8743321483507485,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ],
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ]
+              }
+            },
+            {
+              "type": "alarmCount",
+              "name": null,
+              "entityAliasId": null,
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "assignedToMeAlarms",
+                  "color": "#ffc107",
+                  "settings": {},
+                  "_hash": 0.6392390736755882,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ],
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ],
+                "assignedToCurrentUser": true
+              }
+            },
+            {
+              "type": "alarmCount",
+              "name": null,
+              "entityAliasId": null,
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "criticalAlarms",
+                  "color": "#ffc107",
+                  "settings": {},
+                  "_hash": 0.8329478098552843,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ],
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ],
+                "severityList": [
+                  "CRITICAL"
+                ]
+              }
+            }
+          ],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1680168340431,
+                "endTimeMs": 1680254740431
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {
+            "useMarkdownTextFunction": false,
+            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-content-container\">\n        <div class=\"tb-card-header\">\n            <div class=\"tb-card-title\">\n                <a class=\"tb-home-widget-title tb-home-widget-link\" routerLink=\"/alarms\">{{ 'alarm.alarms' | translate }}</a>\n            </div>\n        </div>\n        <div class=\"tb-item-cards\">\n            <a class=\"tb-item-card tb-critical\" routerLink=\"/alarms\" [queryParams]=\"{severityList: ['CRITICAL']}\">\n                <div class=\"tb-item-title-container\">\n                    <div class=\"tb-item-title tb-home-widget-link\" translate>widgets.alarms.critical</div>\n                </div>    \n                <div class=\"tb-count-container\">\n                    <div class=\"tb-count\">${criticalAlarms:0}</div>\n                </div>\n            </a>\n            <a class=\"tb-item-card tb-assigned\" routerLink=\"/alarms\" [queryParams]=\"{assignedToMe: true}\">\n                <div class=\"tb-item-title-container\">\n                    <div class=\"tb-item-title tb-home-widget-link\" translate>widgets.alarms.assigned-to-me</div>\n                </div>    \n                <div class=\"tb-count-container\">\n                    <div class=\"tb-count\">${assignedToMeAlarms:0}</div>\n                </div>\n            </a>\n            <a fxHide.md class=\"tb-item-card tb-total\" routerLink=\"/alarms\">\n                <div class=\"tb-item-title-container\">\n                    <div class=\"tb-item-title tb-home-widget-link\" translate>widgets.alarms.total</div>\n                </div>    \n                <div class=\"tb-count-container\">\n                    <div class=\"tb-count\">${totalAlarms:0}</div>\n                </div>\n            </a>\n        </div>\n    </div>\n</div>",
+            "applyDefaultMarkdownStyle": false,
+            "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: row;\n}\n\n.tb-content-container {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    justify-content: flex-start;\n    gap: 12px;\n}\n\n.tb-card-header {\n    height: 36px;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-item-cards {\n    flex: 1;\n    display: flex;\n    flex-direction: row;\n    gap: 12px;\n}\n\na.tb-item-card {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    padding: 8px 12px;\n    border: 1px solid;\n    border-radius: 10px;\n    margin-bottom: 12px;\n}\n\na.tb-item-card.tb-critical {\n    background: rgba(209, 39, 48, 0.04);\n    border-color: rgba(209, 39, 48, 0.06);\n}\n\na.tb-item-card.tb-assigned {\n    background: rgba(48, 86, 128, 0.04);\n    border-color: rgba(48, 86, 128, 0.12);\n}\n\na.tb-item-card.tb-total {\n    background: rgba(0, 0, 0, 0.01);\n    border-color: rgba(0, 0, 0, 0.05);\n}\n\n.tb-item-title-container {\n    display: grid;\n}\n\n.tb-item-title {\n    font-weight: 400;\n    font-size: 14px;\n    line-height: 20px;\n    letter-spacing: 0.2px;\n    white-space: nowrap;\n    overflow: hidden;\n    text-overflow: ellipsis;    \n    color: rgba(0, 0, 0, 0.76);\n}\n\n.tb-item-title.tb-home-widget-link:after {\n    position: absolute;\n    right: 0;\n}\n\na.tb-item-card:hover .tb-item-title.tb-home-widget-link:after { \n    color: rgba(0, 0, 0, 0.38);\n}\n\na.tb-item-card:hover {\n    box-shadow: 0px 4px 10px rgba(23, 33, 90, 0.08);\n}\n\n.tb-count-container {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    align-items: flex-start;\n    justify-content: center;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 24px;\n    line-height: 36px;\n    white-space: nowrap;\n    color: rgba(0, 0, 0, 0.87);\n}\n\na.tb-item-card.tb-critical .tb-count:after {\n    content: \"warning\";\n    display: inline-block;\n    position: relative;\n    font-family: 'Material Icons Round';\n    color: #D12730;\n    vertical-align: bottom;\n    margin-left: 6px;\n}\n\n@media screen and (max-width: 959px) {\n    .tb-item-cards {\n        flex-direction: column;\n    }\n    a.tb-item-card {\n        margin-bottom: 0;\n    }\n}\n\n@media screen and (max-width: 1279px) {\n    a.tb-item-card {\n        flex-direction: row;\n        align-items: center;\n    }\n    .tb-item-title.tb-home-widget-link:after {\n        position: relative;\n    }\n    .tb-count-container {\n        align-items: flex-end;\n    }\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-item-title {\n        font-size: 11px;\n        line-height: 16px;\n    }\n    .tb-count {\n        font-size: 16px;\n        line-height: 24px;\n    }\n    a.tb-item-card {\n        padding: 4px 8px;\n        margin-bottom: 6px;\n    }\n    a.tb-item-card:hover {\n        box-shadow: 0px 2px 5px rgba(23, 33, 90, 0.08);\n    }\n    a.tb-item-card.tb-critical .tb-count:after {\n        margin-left: 2px;\n    }\n}\n"
+          },
+          "title": "Alarms",
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "showLegend": false,
+          "useDashboardTimewindow": true,
+          "widgetCss": "",
+          "pageSize": 1024,
+          "noDataDisplayMessage": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "7ac20b6a-dc40-b18e-9f5f-bca20bc693bb",
+        "typeFullFqn": "system.cards.markdown_card"
+      }
+    },
+    "states": {
+      "default": {
+        "name": "Customer User Home Page",
+        "root": true,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "867f82cf-ecf2-2d5c-35cb-08c6f2edc3a4": {
+                "sizeX": 42,
+                "sizeY": 16,
+                "row": 42,
+                "col": 78,
+                "mobileHide": false,
+                "mobileOrder": 4,
+                "mobileHeight": 7
+              },
+              "9e3ef045-d8bc-1640-a3f4-2dd10b19d50e": {
+                "sizeX": 42,
+                "sizeY": 16,
+                "row": 26,
+                "col": 78,
+                "mobileHide": false,
+                "mobileOrder": 3,
+                "mobileHeight": 7
+              },
+              "6d6e2b1d-6ce7-4678-3745-c6b0897b2674": {
+                "sizeX": 78,
+                "sizeY": 58,
+                "row": 0,
+                "col": 0,
+                "mobileOrder": 2,
+                "mobileHeight": 10
+              },
+              "35d3ac3b-f1af-dc3d-a1d1-11f351d16fc6": {
+                "sizeX": 42,
+                "sizeY": 13,
+                "row": 13,
+                "col": 78,
+                "mobileHeight": 9,
+                "mobileOrder": 1
+              },
+              "7ac20b6a-dc40-b18e-9f5f-bca20bc693bb": {
+                "sizeX": 42,
+                "sizeY": 13,
+                "mobileHeight": 9,
+                "row": 0,
+                "col": 78,
+                "mobileOrder": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "columns": 120,
+              "margin": 12,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": true,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 20,
+              "outerMargin": true
+            }
+          }
+        }
+      }
+    },
+    "entityAliases": {
+      "a1ddb8fa-90ff-5598-e7f2-e254194d055d": {
+        "id": "a1ddb8fa-90ff-5598-e7f2-e254194d055d",
+        "alias": "Devices",
+        "filter": {
+          "type": "entityType",
+          "resolveMultiple": true,
+          "entityType": "DEVICE"
+        }
+      },
+      "d9229b29-3f46-de8d-7fe8-eb0c43c75079": {
+        "id": "d9229b29-3f46-de8d-7fe8-eb0c43c75079",
+        "alias": "Api Usage State",
+        "filter": {
+          "type": "apiUsageState",
+          "resolveMultiple": true
+        }
+      }
+    },
+    "filters": {
+      "42f42812-92fe-a13a-b0ba-c6e0dfab3584": {
+        "id": "42f42812-92fe-a13a-b0ba-c6e0dfab3584",
+        "filter": "Active Devices",
+        "keyFilters": [
+          {
+            "key": {
+              "type": "SERVER_ATTRIBUTE",
+              "key": "active"
+            },
+            "valueType": "BOOLEAN",
+            "predicates": [
+              {
+                "keyFilterPredicate": {
+                  "operation": "EQUAL",
+                  "value": {
+                    "defaultValue": true,
+                    "dynamicValue": null
+                  },
+                  "type": "BOOLEAN"
+                },
+                "userInfo": {
+                  "editable": true,
+                  "label": "",
+                  "autogeneratedLabel": true,
+                  "order": 0
+                }
+              }
+            ]
+          }
+        ],
+        "editable": false
+      },
+      "39d92c21-2426-7346-4484-452829146c33": {
+        "id": "39d92c21-2426-7346-4484-452829146c33",
+        "filter": "Inactive Devices",
+        "keyFilters": [
+          {
+            "key": {
+              "type": "SERVER_ATTRIBUTE",
+              "key": "active"
+            },
+            "valueType": "BOOLEAN",
+            "predicates": [
+              {
+                "keyFilterPredicate": {
+                  "operation": "EQUAL",
+                  "value": {
+                    "defaultValue": false,
+                    "dynamicValue": null
+                  },
+                  "type": "BOOLEAN"
+                },
+                "userInfo": {
+                  "editable": true,
+                  "label": "",
+                  "autogeneratedLabel": true,
+                  "order": 0
+                }
+              }
+            ]
+          }
+        ],
+        "editable": false
+      }
+    },
+    "timewindow": {
+      "displayValue": "",
+      "hideInterval": false,
+      "hideLastInterval": false,
+      "hideQuickInterval": false,
+      "hideAggregation": false,
+      "hideAggInterval": false,
+      "hideTimezone": false,
+      "selectedTab": 0,
+      "realtime": {
+        "realtimeType": 0,
+        "interval": 1000,
+        "timewindowMs": 60000,
+        "quickInterval": "CURRENT_DAY"
+      },
+      "history": {
+        "historyType": 0,
+        "interval": 1000,
+        "timewindowMs": 60000,
+        "fixedTimewindow": {
+          "startTimeMs": 1680168326072,
+          "endTimeMs": 1680254726072
+        },
+        "quickInterval": "CURRENT_DAY"
+      },
+      "aggregation": {
+        "type": "AVG",
+        "limit": 25000
+      }
+    },
+    "settings": {
+      "stateControllerId": "entity",
+      "showTitle": false,
+      "showDashboardsSelect": true,
+      "showEntitiesSelect": true,
+      "showDashboardTimewindow": true,
+      "showDashboardExport": true,
+      "toolbarAlwaysOpen": true,
+      "titleColor": "rgba(0,0,0,0.870588)",
+      "showDashboardLogo": false,
+      "dashboardLogoUrl": null,
+      "hideToolbar": true,
+      "showFilters": true,
+      "showUpdateDashboardImage": true,
+      "dashboardCss": ".tb-widget-container > .tb-widget {\n    border: 1px solid rgba(0, 0, 0, 0.05);\n    box-shadow: 0px 5px 16px rgba(0, 0, 0, 0.04);\n    border-radius: 12px;\n}\n\n.tb-widget-container > .tb-widget:not([style*=\"padding: 0\"]) {\n    padding: 16px !important;\n}\n\n.tb-card-title {\n    display: grid;\n}\n\n.tb-home-widget-title {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 14px;\n    line-height: 20px;\n    letter-spacing: 0.25px;\n    color: rgba(0, 0, 0, 0.54);\n    white-space: nowrap;\n    overflow: hidden;\n    text-overflow: ellipsis;\n}\n\n.tb-home-widget-link {\n    position: relative;\n    border-bottom: none;\n}\n\n.tb-home-widget-link:hover {\n    border-bottom: none;\n}\n\n.tb-home-widget-link:focus {\n    border-bottom: none;\n}\n\n.tb-home-widget-link::after {\n    content: 'arrow_forward';\n    display: inline-block;\n    transform: rotate(315deg);\n    font-family: 'Material Icons';\n    font-weight: normal;\n    font-style: normal;\n    font-size: 18px;\n    color: rgba(0, 0, 0, 0.12);\n    vertical-align: bottom;\n    margin-left: 6px;    \n}\n\n.tb-home-widget-link:hover::after {\n    color: inherit;\n}\n\n.tb-home-widget-info-icon {\n    color: rgba(0, 0, 0, 0.12);\n    font-size: 16px;\n    width: 16px;\n    height: 16px;\n    line-height: 15px;\n    vertical-align: middle;\n}\n\n.tb-widget-container > .tb-widget .tb-timewindow {\n    font-size: 14px;\n    line-height: 20px;\n    letter-spacing: 0.25px;\n    color: rgba(0, 0, 0, 0.54);\n    padding: 0;\n}\n\n.tb-widget-container > .tb-widget .tb-legend-keys .tb-legend-label {\n    cursor: pointer;\n    user-select: none;\n    font-weight: 400;\n    font-size: 14px;\n    line-height: 20px;\n    letter-spacing: 0.2px;\n    color: rgba(0, 0, 0, 0.54);\n}\n\n@media screen and (min-width: 960px) and (max-width: 1279px) {\n    .tb-widget-container > .tb-widget {\n        border-radius: 4px;\n    }\n    .tb-widget-container > .tb-widget:not([style*=\"padding: 0\"]) {\n        padding: 2px !important;\n    }\n    .tb-hide-md {\n        display: none;\n    }\n}\n\n@media screen and (min-width: 1280px) and (max-width: 1819px) {\n    .tb-widget-container > .tb-widget:not([style*=\"padding: 0\"]) {\n        padding: 8px !important;\n    }\n    .tb-hide-lg {\n        display: none;\n    }\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-hide-md-lg {\n        display: none;\n    }\n\n    .tb-home-widget-title {\n        font-size: 12px;\n        line-height: 16px;\n    }\n    \n    .tb-widget-container > .tb-widget .tb-widget-title {\n        padding: 0;\n    }\n\n    .tb-widget-container > .tb-widget .tb-timewindow {\n        font-size: 12px;\n        line-height: 16px;\n        min-height: 24px;\n        padding: 0;\n    }\n\n    .tb-widget-container > .tb-widget .tb-timewindow .mat-mdc-icon-button.tb-mat-32 {\n        width: 24px;\n        height: 24px;\n        line-height: 24px;\n    }\n\n    .tb-widget-container > .tb-widget .tb-timewindow .mat-mdc-icon-button.tb-mat-32 .mat-icon {\n        width: 18px;\n        height: 18px;\n        font-size: 18px;\n    }\n    \n    .tb-widget-container > .tb-widget tb-legend {\n        padding-bottom: 0 !important;\n    }\n    \n    .tb-widget-container > .tb-widget .tb-legend-keys .tb-legend-label {\n        font-size: 11px;\n        line-height: 16px;\n        letter-spacing: 0.25px;\n    }\n}\n\n@media screen and (max-width: 959px), screen and (min-width: 1820px) {\n    .tb-hide-not-md-lg {\n        display: none;\n    }\n}\n"
+    }
+  },
+  "externalId": null,
+  "name": "Customer User Home Page"
+}

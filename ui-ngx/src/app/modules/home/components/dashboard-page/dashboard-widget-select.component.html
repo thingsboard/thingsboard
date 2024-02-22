@@ -1,0 +1,127 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-dashboard-widget-select">
+  <ng-container *ngIf="selectWidgetMode === 'bundles'; else allWidgets">
+    <ng-container *ngIf="widgetsBundle; else bundles">
+      <ng-container *ngTemplateOutlet="widgets; context:{ fetchFunction: widgetsFetchFunction, filter: widgetsFilter }"></ng-container>
+    </ng-container>
+  </ng-container>
+  <ng-template #allWidgets>
+    <ng-container *ngTemplateOutlet="widgets; context:{ fetchFunction: allWidgetsFetchFunction, filter: allWidgetsFilter }"></ng-container>
+  </ng-template>
+  <ng-template #widgets let-fetchFunction="fetchFunction" let-filter="filter">
+    <tb-scroll-grid
+      [columns]="columns"
+      [itemSize]="gridWidgetsItemSizeStrategy"
+      [fetchFunction]="fetchFunction"
+      [filter]="filter"
+      [itemCard]="widgetCard"
+      [loadingCell]="widgetLoadingCard"
+      [dataLoading]="loadingWidgets"
+      [noData]="noWidgets">
+    </tb-scroll-grid>
+    <ng-template #widgetCard let-item="item">
+      <mat-card class="tb-widget-preview-card" appearance="raised" fxLayout="column" fxLayoutGap="8px" (click)="onWidgetClicked($event, item)">
+        <div class="title-container">
+          <div title="{{item.name}}" class="widget-title">
+            {{item.name}}
+          </div>
+          <div class="title-items-container">
+            <div class="title-items">
+              <div class="widget-type">{{ 'widget.' + item.widgetType + '-short' | translate }}</div>
+              <div tb-popover [tbPopoverContent]="item.description" [tbPopoverOverlayStyle]="{maxWidth: '300px'}" tbPopoverShowCloseButton="false" class="info-banner tb-primary-fill"><span>i</span></div>
+            </div>
+            <div *ngIf="item.deprecated" class="widget-deprecated" translate>widget.deprecated</div>
+          </div>
+        </div>
+        <div class="preview-container">
+          <div class="preview-spacer"></div>
+          <img class="preview" [src]="item.image | image: {emptyUrl: '/assets/widget-preview-empty.svg'} | async" alt="{{ item.title }}">
+        </div>
+      </mat-card>
+    </ng-template>
+    <ng-template #loadingWidgets>
+      <div fxLayout="column"
+           fxLayoutAlign="center center" class="tb-absolute-fill">
+        <span class="mat-headline-5" style="padding-bottom: 20px;">
+          {{ 'widget.loading-widgets' | translate }}
+        </span>
+        <mat-spinner color="accent" strokeWidth="5"></mat-spinner>
+      </div>
+    </ng-template>
+    <ng-template #noWidgets>
+        <span style="display: flex;"
+              fxLayoutAlign="center center"
+              class="mat-headline-5 tb-absolute-fill">{{(selectWidgetMode === 'bundles' ? 'widgets-bundle.empty' : 'widget.no-widgets-text') | translate}}</span>
+    </ng-template>
+  </ng-template>
+
+  <ng-template #bundles>
+    <tb-scroll-grid
+      [columns]="columns"
+      [itemSize]="gridWidgetsItemSizeStrategy"
+      [fetchFunction]="widgetBundlesFetchFunction"
+      [filter]="widgetsBundleFilter"
+      [itemCard]="widgetsBundleCard"
+      [loadingCell]="widgetLoadingCard"
+      [dataLoading]="loadingWidgetBundles"
+      [noData]="noWidgetBundles">
+    </tb-scroll-grid>
+    <ng-template #widgetsBundleCard let-item="item">
+      <mat-card class="tb-widget-preview-card" appearance="raised" fxLayout="column" fxLayoutGap="8px" (click)="selectBundle($event, item)">
+        <div class="title-container">
+          <div title="{{item.name}}" class="widget-title">
+            {{item.title}}
+          </div>
+          <div class="title-items">
+            <div *ngIf="isSystem(item)" class="widget-type">sys</div>
+            <div tb-popover [tbPopoverContent]="item.description" [tbPopoverOverlayStyle]="{maxWidth: '300px'}" tbPopoverShowCloseButton="false" class="info-banner tb-primary-fill"><span>i</span></div>
+          </div>
+        </div>
+        <div class="preview-container">
+          <div class="preview-spacer"></div>
+          <img class="preview" [src]="item.image | image: {emptyUrl: '/assets/widget-preview-empty.svg'} | async" alt="{{ item.title }}">
+        </div>
+      </mat-card>
+    </ng-template>
+    <ng-template #loadingWidgetBundles>
+      <div fxLayout="column"
+           fxLayoutAlign="center center" class="tb-absolute-fill">
+        <span class="mat-headline-5" style="padding-bottom: 20px;">
+          {{ 'widgets-bundle.loading-widgets-bundles' | translate }}
+        </span>
+        <mat-spinner strokeWidth="5"></mat-spinner>
+      </div>
+    </ng-template>
+    <ng-template #noWidgetBundles>
+        <span translate
+              style="display: flex;"
+              fxLayoutAlign="center center"
+              class="mat-headline-5 tb-absolute-fill">widgets-bundle.no-widgets-bundles-text</span>
+    </ng-template>
+  </ng-template>
+  <ng-template #widgetLoadingCard>
+    <mat-card class="tb-widget-preview-card loading-cell" appearance="raised" fxLayout="column" fxLayoutGap="8px">
+      <div class="title-container">
+      </div>
+      <div class="preview-container">
+        <div class="preview-spacer"></div>
+      </div>
+    </mat-card>
+  </ng-template>
+</div>

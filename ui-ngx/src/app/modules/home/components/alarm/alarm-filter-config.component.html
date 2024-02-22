@@ -1,0 +1,95 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ng-container *ngIf="panelMode; else componentMode">
+  <ng-container *ngTemplateOutlet="alarmFilterPanel"></ng-container>
+</ng-container>
+<ng-template #componentMode>
+  <ng-container *ngIf="buttonMode; else alarmFilter">
+    <button color="primary"
+            matTooltip="{{buttonDisplayValue}}"
+            matTooltipPosition="above"
+            mat-stroked-button
+            (click)="toggleAlarmFilterPanel($event)">
+      <mat-icon>filter_list</mat-icon>{{buttonDisplayValue}}
+    </button>
+  </ng-container>
+</ng-template>
+<ng-template #alarmFilterPanel>
+  <form fxLayout="column" class="mat-content mat-padding" (ngSubmit)="update()">
+    <ng-container *ngTemplateOutlet="alarmFilter"></ng-container>
+    <div fxLayout="row" class="tb-panel-actions" fxLayoutAlign="end center">
+      <button type="button"
+              mat-button
+              color="primary"
+              (click)="reset()">
+        {{ 'action.reset' | translate }}
+      </button>
+      <span fxFlex></span>
+      <button type="button"
+              mat-button
+              (click)="cancel()">
+        {{ 'action.cancel' | translate }}
+      </button>
+      <button type="submit"
+              mat-raised-button
+              color="primary"
+              [disabled]="alarmFilterConfigForm.invalid || !alarmFilterConfigForm.dirty">
+        {{ 'action.update' | translate }}
+      </button>
+    </div>
+  </form>
+</ng-template>
+<ng-template #alarmFilter>
+  <div class="tb-form-panel tb-alarm-filter-config-component no-padding no-border" [formGroup]="alarmFilterConfigForm">
+    <div class="tb-form-row space-between column-xs">
+      <div class="fixed-title-width" translate>alarm.alarm-status-list</div>
+      <mat-chip-listbox multiple formControlName="statusList">
+        <mat-chip-option *ngFor="let searchStatus of alarmSearchStatuses" [value]="searchStatus">
+          {{ alarmSearchStatusTranslationMap.get(searchStatus) | translate }}
+        </mat-chip-option>
+      </mat-chip-listbox>
+    </div>
+    <div class="tb-form-row space-between column-xs">
+      <div class="fixed-title-width" translate>alarm.alarm-severity-list</div>
+      <mat-chip-listbox multiple formControlName="severityList">
+        <mat-chip-option *ngFor="let alarmSeverity of alarmSeverities" [value]="alarmSeverity">
+          {{ alarmSeverityTranslationMap.get(alarmSeverityEnum[alarmSeverity]) | translate }}
+        </mat-chip-option>
+      </mat-chip-listbox>
+    </div>
+    <div class="tb-form-row column-xs">
+      <div class="fixed-title-width" ngClass.xs="filters-title-mobile" translate>alarm.alarm-type-list</div>
+      <tb-entity-subtype-list subscriptSizing="dynamic"
+                              formControlName="typeList"
+                              appearance="outline"
+                              [additionalClasses]="['tb-chips', 'flex']"
+                              [entityType]="entityType.ALARM">
+      </tb-entity-subtype-list>
+    </div>
+    <div class="tb-form-row column-xs">
+      <div class="fixed-title-width" translate>alarm.assignee</div>
+      <tb-alarm-assignee-select fxFlex inline="true"
+                                [userMode]="userMode"
+        formControlName="assigneeId">
+      </tb-alarm-assignee-select>
+    </div>
+    <mat-slide-toggle class="mat-slide" *ngIf="propagatedFilter" formControlName="searchPropagatedAlarms">
+      {{ 'alarm.search-propagated-alarms' | translate }}
+    </mat-slide-toggle>
+  </div>
+</ng-template>

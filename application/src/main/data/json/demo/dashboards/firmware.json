@@ -1,0 +1,2605 @@
+{
+  "title": "Firmware",
+  "image": null,
+  "mobileHide": false,
+  "mobileOrder": null,
+  "configuration": {
+    "description": "",
+    "widgets": {
+      "cd03188e-cd9d-9601-fd57-da4cb95fc016": {
+        "type": "latest",
+        "sizeX": 7.5,
+        "sizeY": 6.5,
+        "config": {
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 86400000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1694085363133,
+                "endTimeMs": 1694171763133
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "NONE",
+              "limit": 200
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "rgb(255, 255, 255)",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "4px",
+          "settings": {
+            "enableSearch": true,
+            "displayPagination": true,
+            "defaultPageSize": 10,
+            "defaultSortOrder": "entityName",
+            "displayEntityName": true,
+            "displayEntityType": false,
+            "enableSelectColumnDisplay": false,
+            "enableStickyHeader": true,
+            "enableStickyAction": false,
+            "entitiesTitle": "Devices",
+            "displayEntityLabel": false,
+            "entityNameColumnTitle": "Device"
+          },
+          "title": "New Entities table",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400,
+            "padding": "5px 10px 5px 10px"
+          },
+          "useDashboardTimewindow": false,
+          "showLegend": false,
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "639da5b4-31f0-0151-6282-c37a3897b7e8",
+              "filterId": "8fdb88d0-50ac-2232-fdb7-69c30c16544e",
+              "dataKeys": [
+                {
+                  "name": "current_fw_title",
+                  "type": "timeseries",
+                  "label": "Current FW title",
+                  "color": "#2196f3",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled"
+                  },
+                  "_hash": 0.09545533885166413,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "current_fw_version",
+                  "type": "timeseries",
+                  "label": "Current FW version",
+                  "color": "#4caf50",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled"
+                  },
+                  "_hash": 0.7206056602328659,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "target_fw_title",
+                  "type": "timeseries",
+                  "label": "Target FW title",
+                  "color": "#ffc107",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled"
+                  },
+                  "_hash": 0.9934225682766313,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "target_fw_version",
+                  "type": "timeseries",
+                  "label": "Target FW version",
+                  "color": "#607d8b",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "cellContentFunction": "",
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled"
+                  },
+                  "_hash": 0.5251724416842531,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "target_fw_ts",
+                  "type": "timeseries",
+                  "label": "Target FW set time",
+                  "color": "#e91e63",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": true,
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled",
+                    "cellContentFunction": "if (value !== '') {\n    return ctx.date.transform(value, 'yyyy-MM-dd HH:mm:ss');\n}\nreturn '';"
+                  },
+                  "_hash": 0.31823244858578237,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "fw_state",
+                  "type": "timeseries",
+                  "label": "Progress",
+                  "color": "#9c27b0",
+                  "settings": {
+                    "columnWidth": "30%",
+                    "useCellStyleFunction": true,
+                    "useCellContentFunction": true,
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled",
+                    "cellStyleFunction": "return {\n    'padding-right': '30px'\n}",
+                    "cellContentFunction": "if (value !== '') {\n    var mapProgress = {\n        'QUEUED': 0,\n        'INITIATED': 5,\n        'DOWNLOADING': 10,\n        'DOWNLOADED': 55,\n        'VERIFIED': 60,\n        'UPDATING': 70,\n        'FAILED': 99,\n        'UPDATED': 100\n    }\n    var color = 'mat-primary';\n    var progress = mapProgress[value];\n    if (value == 'FAILED') {\n        color = 'mat-accent';\n    }\n    return `<mat-progress-bar style=\"height: 8px\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" tabindex=\"-1\" mode=\"determinate\" value=\"${progress}\" class=\"mat-progress-bar ${color}\" aria-valuenow=\"${progress}\"><div aria-hidden=\"true\"><svg width=\"100%\" height=\"8\" focusable=\"false\" class=\"mat-progress-bar-background mat-progress-bar-element\"><defs><pattern x=\"4\" y=\"0\" width=\"8\" height=\"4\" patternUnits=\"userSpaceOnUse\" id=\"mat-progress-bar-0\"><circle cx=\"2\" cy=\"2\" r=\"2\"></circle></pattern></defs><rect width=\"100%\" height=\"100%\" fill=\"url(\"/components/progress-bar/overview#mat-progress-bar-0\")\"></rect></svg><div class=\"mat-progress-bar-buffer mat-progress-bar-element\"></div><div class=\"mat-progress-bar-primary mat-progress-bar-fill mat-progress-bar-element\" style=\"transform: scale3d(${progress / 100}, 1, 1);\"></div><div class=\"mat-progress-bar-secondary mat-progress-bar-fill mat-progress-bar-element\"></div></div></mat-progress-bar>`;\n}"
+                  },
+                  "_hash": 0.8174211757846257,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "fw_state",
+                  "type": "timeseries",
+                  "label": "Status",
+                  "color": "#f44336",
+                  "settings": {
+                    "columnWidth": "130px",
+                    "useCellStyleFunction": true,
+                    "useCellContentFunction": true,
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled",
+                    "cellStyleFunction": "if (value == 'FAILED') {\n    return {'color' : '#D93025'};\n}\nreturn {};",
+                    "cellContentFunction": "function icon(value) {\n    if (value == 'QUEUED') {\n        return '<mat-icon _role=\"img\" class=\"mat-icon notranslate material-icons mat-icon-no-color\" aria-hidden=\"true\" data-mat-icon-type=\"font\" style=\"color: #000;\"><svg style=\"width:24px;height:24px\" viewBox=\"0 0 24 24\"><path fill=\"currentColor\" d=\"M6,2V8H6V8L10,12L6,16V16H6V22H18V16H18V16L14,12L18,8V8H18V2H6M16,16.5V20H8V16.5L12,12.5L16,16.5M12,11.5L8,7.5V4H16V7.5L12,11.5Z\" /></svg></mat-icon>';\n    }\n    if (value == 'INITIATED' || value == 'DOWNLOADING' || value == 'DOWNLOADED') {\n        return '<mat-icon _role=\"img\" class=\"mat-icon notranslate material-icons mat-icon-no-color\" aria-hidden=\"true\" data-mat-icon-type=\"font\" style=\"color: #000\"><svg viewBox=\"0 0 16 16\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M12.74 2.1951C11.63 1.2876 10.2575 0.687598 8.75 0.537598V2.0526C9.845 2.1876 10.8425 2.6226 11.675 3.2676L12.74 2.1951ZM13.9475 7.2501H15.4625C15.3125 5.7426 14.7125 4.3701 13.805 3.2601L12.7325 4.3251C13.3775 5.1576 13.8125 6.1551 13.9475 7.2501ZM12.7325 11.6751L13.805 12.7476C14.7125 11.6376 15.3125 10.2576 15.4625 8.7576H13.9475C13.8125 9.8451 13.3775 10.8426 12.7325 11.6751ZM8.75 13.9476V15.4626C10.2575 15.3126 11.63 14.7126 12.74 13.8051L11.6675 12.7326C10.8425 13.3776 9.845 13.8126 8.75 13.9476ZM8.75 8.0001V4.2501H7.25V8.0001H4.25L8 11.7501L11.75 8.0001H8.75ZM7.25 13.9476V15.4626C3.4625 15.0876 0.5 11.8926 0.5 8.0001C0.5 4.1076 3.4625 0.912598 7.25 0.537598V2.0526C4.2875 2.4201 2 4.9401 2 8.0001C2 11.0601 4.2875 13.5801 7.25 13.9476Z\" fill=\"black\"/></svg></mat-icon>';\n    }\n    if (value == 'VERIFIED' || value == 'UPDATING' ) {\n        return '<mat-icon _role=\"img\" class=\"mat-icon notranslate material-icons mat-icon-no-color\" aria-hidden=\"true\" data-mat-icon-type=\"font\" style=\"color: #000\">update</mat-icon>';\n    }\n    if (value == 'UPDATED') {\n        return '<mat-icon _role=\"img\" class=\"mat-icon notranslate material-icons mat-icon-no-color\" aria-hidden=\"true\" data-mat-icon-type=\"font\" style=\"color: #000\"><svg style=\"width:22px;height:22px\" viewBox=\"0 0 34 32\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M33.26 2.82L30.44 0L12.06 18.38L3.55999 9.9L0.73999 12.72L12.06 24.04L33.26 2.82Z\" fill=\"black\"/><path d=\"M31 28H3V32H31V28Z\" fill=\"black\"/></svg></mat-icon>';\n    }\n    if (value == 'FAILED') {\n        return '<mat-icon _role=\"img\" class=\"mat-icon notranslate material-icons mat-icon-no-color\" aria-hidden=\"true\" data-mat-icon-type=\"font\" style=\"color: #D93025\">warning</mat-icon>';\n    }\n    return '';\n}\nfunction capitalize (s) {\n  if (typeof s !== 'string') return '';\n  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();\n}\n\nreturn icon(value) + '<span style=\"vertical-align: super;padding-left: 8px;\">' + capitalize(value) + '</span>';"
+                  },
+                  "_hash": 0.7764426948615217,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "fw_checksum",
+                  "type": "attribute",
+                  "label": "fw_checksum",
+                  "color": "#3f51b5",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "defaultColumnVisibility": "hidden",
+                    "columnSelectionToDisplay": "disabled"
+                  },
+                  "_hash": 0.5594087842471693,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "fw_url",
+                  "type": "attribute",
+                  "label": "fw_url",
+                  "color": "#e91e63",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "cellContentFunction": "",
+                    "defaultColumnVisibility": "hidden",
+                    "columnSelectionToDisplay": "disabled"
+                  },
+                  "_hash": 0.4204673738685043,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "actions": {
+            "actionCellButton": [
+              {
+                "name": "History firmware update",
+                "icon": "history",
+                "type": "openDashboardState",
+                "targetDashboardStateId": "device_firmware_history",
+                "setEntityId": true,
+                "stateEntityParamName": null,
+                "openInSeparateDialog": false,
+                "dialogTitle": "",
+                "dialogHideDashboardToolbar": true,
+                "dialogWidth": null,
+                "dialogHeight": null,
+                "openRightLayout": false,
+                "id": "98a1406c-3301-bc2f-2c5d-d637ce3b663b"
+              },
+              {
+                "name": "Edit firmware",
+                "icon": "edit",
+                "type": "customPretty",
+                "customHtml": "<form #editEntityForm=\"ngForm\" [formGroup]=\"editEntityFormGroup\"\n      (ngSubmit)=\"save()\"  class=\"edit-entity-form\">\n    <mat-toolbar fxLayout=\"row\" color=\"primary\">\n        <h2>Edit firmware {{entityName}}</h2>\n        <span fxFlex></span>\n        <button mat-icon-button (click)=\"cancel()\" type=\"button\">\n            <mat-icon class=\"material-icons\">close</mat-icon>\n        </button>\n    </mat-toolbar>\n    <mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\n    </mat-progress-bar>\n    <div style=\"height: 4px;\" *ngIf=\"!(isLoading$ | async)\"></div>\n    <div *ngIf=\"entity.deviceProfileId\" mat-dialog-content fxLayout=\"column\">\n        <tb-ota-package-autocomplete\n            [useFullEntityId]=\"true\"\n            [deviceProfileId]=\"entity.deviceProfileId.id\"\n            formControlName=\"firmwareId\">\n        </tb-ota-package-autocomplete>\n    </div>\n    <div mat-dialog-actions fxLayout=\"row\" fxLayoutAlign=\"end center\">\n        <button mat-button color=\"primary\"\n                type=\"button\"\n                [disabled]=\"(isLoading$ | async)\"\n                (click)=\"cancel()\" cdkFocusInitial>\n            Cancel\n        </button>\n        <button mat-button mat-raised-button color=\"primary\"\n                type=\"submit\"\n                [disabled]=\"(isLoading$ | async) || editEntityForm.invalid || !editEntityForm.dirty\">\n            Save\n        </button>\n    </div>\n</form>",
+                "customCss": "form {\n    min-width: 300px !important;\n}",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\n\nopenEditEntityDialog();\n\nfunction openEditEntityDialog() {\n    customDialog.customDialog(htmlTemplate, EditEntityDialogController).subscribe();\n}\n\nfunction EditEntityDialogController(instance) {\n    let vm = instance;\n\n    vm.entityName = entityName;\n    vm.entity = {};\n\n    vm.editEntityFormGroup = vm.fb.group({\n        firmwareId: [null]\n    });\n\n    getEntityInfo();\n\n    vm.cancel = function() {\n        vm.dialogRef.close(null);\n    };\n\n    vm.save = function() {\n        vm.editEntityFormGroup.markAsPristine();\n        saveEntity().subscribe(\n            function () {\n                // widgetContext.updateAliases();\n                vm.dialogRef.close(null);\n            }\n        );\n    };\n\n\n    function getEntityInfo() {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                vm.entity = data;\n                vm.editEntityFormGroup.patchValue({\n                    firmwareId: vm.entity.firmwareId\n                }, {emitEvent: false});\n            }\n        );\n    }\n\n    function saveEntity() {\n        const formValues = vm.editEntityFormGroup.value;\n        vm.entity.firmwareId = formValues.firmwareId;\n        return deviceService.saveDevice(vm.entity);\n    }\n}",
+                "customResources": [],
+                "id": "23099c1d-454b-25dc-8bc0-7cf33c21c5d5"
+              },
+              {
+                "name": "Download firmware",
+                "icon": "file_download",
+                "type": "custom",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet otaPackageService = $injector.get(widgetContext.servicesMap.get('otaPackageService'));\nlet deviceProfileService = $injector.get(widgetContext.servicesMap.get('deviceProfileService'));\n\ngetDeviceFirmware();\n\nfunction getDeviceFirmware() {\n    var entityIdValue = entityId.id;\n    var data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_url');\n    var url = data.data[0][1];\n    if (url === '') {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                if (data.firmwareId !== null) {\n                    otaPackageService.downloadOtaPackage(data.firmwareId.id).subscribe();    \n                } else {\n                    deviceProfileService.getDeviceProfile(data.deviceProfileId.id).subscribe(\n                        function (deviceProfile) {\n                            if (deviceProfile.firmwareId !== null) {\n                                otaPackageService.downloadOtaPackage(deviceProfile.firmwareId.id).subscribe();\n                            } else {\n                                widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n                            }\n                    });\n                }\n            }\n        );\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n    }\n}",
+                "id": "12533058-42f6-e75f-620c-219c48d01ec0"
+              },
+              {
+                "name": "Copy checksum/URL",
+                "icon": "content_copy",
+                "type": "custom",
+                "customFunction": "function copyToClipboard(text) {\n    if (window.clipboardData && window.clipboardData.setData) {\n        return window.clipboardData.setData(\"Text\", text);\n\n    }\n    else if (document.queryCommandSupported && document.queryCommandSupported(\"copy\")) {\n        var textarea = document.createElement(\"textarea\");\n        textarea.textContent = text;\n        textarea.style.position = \"fixed\";\n        document.body.appendChild(textarea);\n        textarea.select();\n        try {\n            return document.execCommand(\"copy\");\n        }\n        catch (ex) {\n            console.warn(\"Copy to clipboard failed.\", ex);\n            return false;\n        }\n        document.body.removeChild(textarea);\n    }\n}\nvar entityIdValue = entityId.id;\nvar data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_checksum');\nvar checksum = data.data[0][1];\nif (checksum !== '') {\n    copyToClipboard(checksum);\n    widgetContext.showSuccessToast('Firmware checksum has been copied to clipboard', 2000, 'top');\n} else {\n    data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_url');\n    var url = data.data[0][1];\n    if (url !== '') {\n        copyToClipboard(url);\n        widgetContext.showSuccessToast('Firmware direct URL has been copied to clipboard', 2000, 'top');\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n    }\n}",
+                "id": "09323079-7111-87f7-90d1-c62cd7d85dc7"
+              }
+            ]
+          },
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "widgetStyle": {}
+        },
+        "row": 0,
+        "col": 0,
+        "id": "cd03188e-cd9d-9601-fd57-da4cb95fc016",
+        "typeFullFqn": "system.cards.entities_table"
+      },
+      "100b756c-0082-6505-3ae1-3603e6deea48": {
+        "type": "timeseries",
+        "sizeX": 8,
+        "sizeY": 6.5,
+        "config": {
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "19f41c21-d9af-e666-8f50-e1748778f955",
+              "filterId": null,
+              "dataKeys": [
+                {
+                  "name": "current_fw_title",
+                  "type": "timeseries",
+                  "label": "Current firmware title",
+                  "color": "#2196f3",
+                  "settings": {
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "cellContentFunction": ""
+                  },
+                  "_hash": 0.5978079905579401,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "current_fw_version",
+                  "type": "timeseries",
+                  "label": "Current firmware version",
+                  "color": "#4caf50",
+                  "settings": {
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "cellContentFunction": ""
+                  },
+                  "_hash": 0.027392025058568192,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "target_fw_title",
+                  "type": "timeseries",
+                  "label": "Target firmware title",
+                  "color": "#f44336",
+                  "settings": {
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "cellContentFunction": ""
+                  },
+                  "_hash": 0.9496350796287059,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "target_fw_version",
+                  "type": "timeseries",
+                  "label": "Target firmware version",
+                  "color": "#ffc107",
+                  "settings": {
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "cellContentFunction": ""
+                  },
+                  "_hash": 0.6734152252264187,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "fw_state",
+                  "type": "timeseries",
+                  "label": "Status",
+                  "color": "#607d8b",
+                  "settings": {
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "cellContentFunction": ""
+                  },
+                  "_hash": 0.2983399718643074,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": true,
+                  "postFuncBody": "function capitalize (s) {\n  if (typeof s !== 'string') return '';\n  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();\n}\nif (value !== '') {\n    return capitalize(value);\n}\nreturn value;"
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "hideInterval": false,
+            "hideAggregation": false,
+            "hideAggInterval": false,
+            "hideTimezone": false,
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 0,
+              "timewindowMs": 2592000000,
+              "quickInterval": "CURRENT_DAY",
+              "interval": 1000
+            },
+            "aggregation": {
+              "type": "NONE",
+              "limit": 200
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "rgb(255, 255, 255)",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "8px",
+          "settings": {
+            "showTimestamp": true,
+            "displayPagination": true,
+            "defaultPageSize": 10,
+            "enableSearch": true,
+            "enableStickyHeader": true,
+            "enableStickyAction": true
+          },
+          "title": "Firmware history",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400,
+            "padding": "5px 10px 5px 10px"
+          },
+          "useDashboardTimewindow": false,
+          "showLegend": false,
+          "widgetStyle": {},
+          "actions": {},
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "displayTimewindow": true,
+          "titleTooltip": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "100b756c-0082-6505-3ae1-3603e6deea48",
+        "typeFullFqn": "system.cards.timeseries_table"
+      },
+      "17543c57-af4a-2c1e-bf12-53a7b46791e6": {
+        "type": "latest",
+        "sizeX": 8,
+        "sizeY": 3,
+        "config": {
+          "datasources": [
+            {
+              "type": "entityCount",
+              "name": "",
+              "entityAliasId": "639da5b4-31f0-0151-6282-c37a3897b7e8",
+              "filterId": "19a0ad1c-b31d-4a29-9d7b-5d87e2a8ea6e",
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "waitingDevicesNumber",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.7404827038869322,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1694085363133,
+                "endTimeMs": 1694171763133
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "0px",
+          "settings": {
+            "cardHtml": "<div class='card' id=\"activeDevices\">\n    <div class='content' id=\"activeDevices\">\n        <img id=\"activeDevices\" src='data:image/svg+xml;utf8,<svg width=\"24\" height=\"40\" viewBox=\"0 0 24 40\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path d=\"M0 0V12H0.0200005L0 12.02L8 20L0 28L0.0200005 28.02H0V40H24V28.02H23.98L24 28L16 20L24 12.02L23.98 12H24V0H0ZM20 29V36H4V29L12 21L20 29ZM12 19L4 11V4H20V11L12 19Z\" fill=\"black\"/>\n</svg>\n'>\n        <div class='value' id=\"activeDevices\">\n            ${waitingDevicesNumber:0}\n        </div> \n        <div class='description' id=\"activeDevices\">\n            Device Waiting\n        </div>\n    </div>\n</div>",
+            "cardCss": ".card {\n   width: 100%;\n   height: 100%;\n   border: 1px solid #E0E0E0;\n   box-sizing: border-box;\n}\n\n.card .content {\n   padding: 20px 10px;\n   display: flex;\n   flex-direction: column;\n   align-items: center;\n   justify-content: center;\n   height: 100%;\n   box-sizing: border-box;\n}\n\n.card .value {\n    margin: 18px 0 5px;\n    font-weight: 500;\n    font-size: 3em;\n    line-height: 1.1em;\n    text-align: center;\n    letter-spacing: -0.02em;\n    color: #333333;\n}\n\n.card .description {\n    font-size: 1em;\n    line-height: 1.1em;\n    color: #000000;\n    opacity: 0.6;\n    text-align: center;\n    letter-spacing: -0.02em;\n}\n\n@media (min-width: 960px) and (max-width: 1200px) {\n    .card .content img {\n        height: 28px;    \n    }\n    \n    .card .value {\n        margin: 12px 0 5px;\n        font-size: 2em;\n        line-height: 1;\n    }\n    \n    .card .description {\n        font-size: 0.8em;\n        line-height: 1;\n    }\n}"
+          },
+          "title": "New HTML Value Card",
+          "dropShadow": true,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "useDashboardTimewindow": true,
+          "showLegend": false,
+          "actions": {
+            "elementClick": [
+              {
+                "name": "activeDevices",
+                "icon": "more_horiz",
+                "type": "openDashboardState",
+                "targetDashboardStateId": "device_waiting",
+                "setEntityId": false,
+                "stateEntityParamName": null,
+                "openInSeparateDialog": false,
+                "dialogTitle": "",
+                "dialogHideDashboardToolbar": true,
+                "dialogWidth": null,
+                "dialogHeight": null,
+                "openRightLayout": false,
+                "id": "4d9a77a2-f0a5-690c-a83b-b0e940be788c"
+              }
+            ]
+          },
+          "showTitleIcon": false,
+          "titleIcon": null,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "enableDataExport": false,
+          "displayTimewindow": true
+        },
+        "id": "17543c57-af4a-2c1e-bf12-53a7b46791e6",
+        "typeFullFqn": "system.cards.html_value_card"
+      },
+      "6c1c4e1a-bce0-f5ad-ff8b-ba1dfc5a4ec6": {
+        "type": "latest",
+        "sizeX": 8,
+        "sizeY": 3,
+        "config": {
+          "datasources": [
+            {
+              "type": "entityCount",
+              "name": "",
+              "entityAliasId": "639da5b4-31f0-0151-6282-c37a3897b7e8",
+              "filterId": "579f0468-9ce9-7e3e-b34c-88dd3de59897",
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "updatingDevicesNumber",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.7404827038869322,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1694085363133,
+                "endTimeMs": 1694171763133
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "0px",
+          "settings": {
+            "cardHtml": "<div class='card' id=\"activeDevices\">\n    <div class='content' id=\"activeDevices\">\n        <img id=\"activeDevices\" src='data:image/svg+xml;utf8,<svg width=\"36\" height=\"36\" viewBox=\"0 0 36 36\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path d=\"M36 14.24H22.44L27.92 8.6C22.46 3.2 13.62 3 8.16001 8.4C2.70001 13.82 2.70001 22.56 8.16001 27.98C13.62 33.4 22.46 33.4 27.92 27.98C30.64 25.3 32 22.16 32 18.2H36C36 22.16 34.24 27.3 30.72 30.78C23.7 37.74 12.3 37.74 5.28001 30.78C-1.71999 23.84 -1.77999 12.56 5.24001 5.62C12.26 -1.32 23.52 -1.32 30.54 5.62L36 0V14.24ZM19 10V18.5L26 22.66L24.56 25.08L16 20V10H19Z\" fill=\"black\"/>\n</svg>'>\n        <div class='value' id=\"activeDevices\">\n            ${updatingDevicesNumber:0}\n        </div> \n        <div class='description' id=\"activeDevices\">\n            Device Updating\n        </div>\n    </div>\n</div>",
+            "cardCss": ".card {\n   width: 100%;\n   height: 100%;\n   border: 1px solid #E0E0E0;\n   box-sizing: border-box;\n}\n\n.card .content {\n   padding: 20px 10px;\n   display: flex;\n   flex-direction: column;\n   align-items: center;\n   justify-content: center;\n   height: 100%;\n   box-sizing: border-box;\n}\n\n.card .value {\n    margin: 18px 0 5px;\n    font-weight: 500;\n    font-size: 3em;\n    line-height: 1.1em;\n    text-align: center;\n    letter-spacing: -0.02em;\n    color: #333333;\n}\n\n.card .description {\n    font-size: 1em;\n    line-height: 1.1em;\n    color: #000000;\n    opacity: 0.6;\n    text-align: center;\n    letter-spacing: -0.02em;\n}\n\n@media (min-width: 960px) and (max-width: 1200px) {\n    .card .content img {\n        height: 28px;    \n    }\n    \n    .card .value {\n        margin: 12px 0 5px;\n        font-size: 2em;\n        line-height: 1;\n    }\n    \n    .card .description {\n        font-size: 0.8em;\n        line-height: 1;\n    }\n}"
+          },
+          "title": "New HTML Value Card",
+          "dropShadow": true,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "useDashboardTimewindow": true,
+          "showLegend": false,
+          "actions": {
+            "elementClick": [
+              {
+                "name": "activeDevices",
+                "icon": "more_horiz",
+                "type": "openDashboardState",
+                "targetDashboardStateId": "device_updating",
+                "setEntityId": false,
+                "stateEntityParamName": null,
+                "openInSeparateDialog": false,
+                "dialogTitle": "",
+                "dialogHideDashboardToolbar": true,
+                "dialogWidth": null,
+                "dialogHeight": null,
+                "openRightLayout": false,
+                "id": "57d39904-2350-b29b-78ed-56b8268814cb"
+              }
+            ]
+          },
+          "showTitleIcon": false,
+          "titleIcon": null,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "enableDataExport": false,
+          "displayTimewindow": true
+        },
+        "id": "6c1c4e1a-bce0-f5ad-ff8b-ba1dfc5a4ec6",
+        "typeFullFqn": "system.cards.html_value_card"
+      },
+      "e6674227-9cf3-a2f6-ecac-5ccfc38a3c81": {
+        "type": "latest",
+        "sizeX": 8,
+        "sizeY": 3,
+        "config": {
+          "datasources": [
+            {
+              "type": "entityCount",
+              "name": "",
+              "entityAliasId": "639da5b4-31f0-0151-6282-c37a3897b7e8",
+              "filterId": "6044e198-df64-cd76-f339-696f220c4943",
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "updatedDevicesNumber",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.7404827038869322,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1694085363133,
+                "endTimeMs": 1694171763133
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "0px",
+          "settings": {
+            "cardHtml": "<div class='card' id=\"activeDevices\">\n    <div class='content' id=\"activeDevices\">\n        <img id=\"activeDevices\" src='data:image/svg+xml;utf8,<svg width=\"34\" height=\"32\" viewBox=\"0 0 34 32\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n<path d=\"M33.26 2.82L30.44 0L12.06 18.38L3.55999 9.9L0.73999 12.72L12.06 24.04L33.26 2.82Z\" fill=\"black\"/>\n<path d=\"M31 28H3V32H31V28Z\" fill=\"black\"/>\n</svg>'>\n        <div class='value' id=\"activeDevices\">\n            ${updatedDevicesNumber:0}\n        </div> \n        <div class='description' id=\"activeDevices\">\n            Device Updated\n        </div>\n    </div>\n</div>",
+            "cardCss": ".card {\n   width: 100%;\n   height: 100%;\n   border: 1px solid #E0E0E0;\n   box-sizing: border-box;\n}\n\n.card .content {\n   padding: 20px 10px;\n   display: flex;\n   flex-direction: column;\n   align-items: center;\n   justify-content: center;\n   height: 100%;\n   box-sizing: border-box;\n}\n\n.card .value {\n    margin: 18px 0 5px;\n    font-weight: 500;\n    font-size: 3em;\n    line-height: 1.1em;\n    text-align: center;\n    letter-spacing: -0.02em;\n    color: #333333;\n}\n\n.card .description {\n    font-size: 1em;\n    line-height: 1.1em;\n    color: #000000;\n    opacity: 0.6;\n    text-align: center;\n    letter-spacing: -0.02em;\n}\n\n@media (min-width: 960px) and (max-width: 1200px) {\n    .card .content img {\n        height: 28px;    \n    }\n    \n    .card .value {\n        margin: 12px 0 5px;\n        font-size: 2em;\n        line-height: 1;\n    }\n    \n    .card .description {\n        font-size: 0.8em;\n        line-height: 1;\n    }\n}"
+          },
+          "title": "New HTML Value Card",
+          "dropShadow": true,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "useDashboardTimewindow": true,
+          "showLegend": false,
+          "actions": {
+            "elementClick": [
+              {
+                "name": "activeDevices",
+                "icon": "more_horiz",
+                "type": "openDashboardState",
+                "targetDashboardStateId": "device_updated",
+                "setEntityId": false,
+                "stateEntityParamName": null,
+                "openInSeparateDialog": false,
+                "dialogTitle": "",
+                "dialogHideDashboardToolbar": true,
+                "dialogWidth": null,
+                "dialogHeight": null,
+                "openRightLayout": false,
+                "id": "d787c212-8c56-34f0-349a-5aae2ffd1eae"
+              }
+            ]
+          },
+          "showTitleIcon": false,
+          "titleIcon": null,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "enableDataExport": false,
+          "displayTimewindow": true
+        },
+        "id": "e6674227-9cf3-a2f6-ecac-5ccfc38a3c81",
+        "typeFullFqn": "system.cards.html_value_card"
+      },
+      "77b10144-b904-edd5-8c7c-8fb75616c6d8": {
+        "type": "latest",
+        "sizeX": 8,
+        "sizeY": 3,
+        "config": {
+          "datasources": [
+            {
+              "type": "entityCount",
+              "name": "",
+              "entityAliasId": "639da5b4-31f0-0151-6282-c37a3897b7e8",
+              "filterId": "bdbc6ea1-95a7-3912-341a-58dc7704a00f",
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "updatingDevicesNumber",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.7404827038869322,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1694085363133,
+                "endTimeMs": 1694171763133
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "AVG",
+              "limit": 25000
+            }
+          },
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "0px",
+          "settings": {
+            "cardHtml": "<div class='card' id=\"activeDevices\">\n    <div class='content' id=\"activeDevices\">\n        <div class=\"container-svg\" id=\"activeDevices\">\n            <svg viewBox=\"0 0 24 24\" id=\"activeDevices\">\n                <path id=\"activeDevices\" fill=\"currentColor\" d=\"M13 14H11V9H13M13 18H11V16H13M1 21H23L12 2L1 21Z\" />\n            </svg>\n        </div>\n        <div class='value error_firmware_failed_count' id=\"activeDevices\">\n            ${updatingDevicesNumber:0}\n        </div> \n        <script type=\"text/javascript\">\n            function init() {\n                var counter = $('.error_firmware_failed_count');\n                var value = +counter.text();\n                if(value) {\n                    counter.css('color', '#D93025');\n                }\n            };\n            init();\n        </script>\n        <div class='description' id=\"activeDevices\">\n            Device Failed\n        </div>\n    </div>\n</div>",
+            "cardCss": ".card {\n   width: 100%;\n   height: 100%;\n   border: 1px solid #E0E0E0;\n   box-sizing: border-box;\n}\n\n.card .content {\n   padding: 20px 10px;\n   display: flex;\n   flex-direction: column;\n   align-items: center;\n   justify-content: center;\n   height: 100%;\n   box-sizing: border-box;\n}\n\n.card .container-svg {\n    height: 40px;\n    width: 40px;\n}\n\n.card .value {\n    margin: 18px 0 5px;\n    font-weight: 500;\n    font-size: 3em;\n    line-height: 1.1em;\n    text-align: center;\n    letter-spacing: -0.02em;\n    color: #333333;\n}\n\n.card .description {\n    font-size: 1em;\n    line-height: 1.1em;\n    color: #000000;\n    opacity: 0.6;\n    text-align: center;\n    letter-spacing: -0.02em;\n}\n\n@media (min-width: 960px) and (max-width: 1200px) {\n    .card .container-svg {\n        height: 28px;\n        width: 28px;\n    }\n    \n    .card .value {\n        margin: 12px 0 5px;\n        font-size: 2em;\n        line-height: 1;\n    }\n    \n    .card .description {\n        font-size: 0.8em;\n        line-height: 1;\n    }\n}"
+          },
+          "title": "New HTML Value Card",
+          "dropShadow": true,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "useDashboardTimewindow": true,
+          "showLegend": false,
+          "actions": {
+            "elementClick": [
+              {
+                "name": "activeDevices",
+                "icon": "more_horiz",
+                "type": "openDashboardState",
+                "targetDashboardStateId": "device_error",
+                "setEntityId": false,
+                "stateEntityParamName": null,
+                "openInSeparateDialog": false,
+                "dialogTitle": "",
+                "dialogHideDashboardToolbar": true,
+                "dialogWidth": null,
+                "dialogHeight": null,
+                "openRightLayout": false,
+                "id": "0b3d2887-9929-84d5-3795-0763dca15cba"
+              }
+            ]
+          },
+          "showTitleIcon": false,
+          "titleIcon": null,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "enableDataExport": false,
+          "displayTimewindow": true
+        },
+        "id": "77b10144-b904-edd5-8c7c-8fb75616c6d8",
+        "typeFullFqn": "system.cards.html_value_card"
+      },
+      "21be08bb-ec90-f760-ad6f-e7678f12c401": {
+        "type": "latest",
+        "sizeX": 7.5,
+        "sizeY": 6.5,
+        "config": {
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 86400000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1694085363133,
+                "endTimeMs": 1694171763133
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "NONE",
+              "limit": 200
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "rgb(255, 255, 255)",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "4px",
+          "settings": {
+            "enableSearch": true,
+            "displayPagination": true,
+            "defaultPageSize": 10,
+            "defaultSortOrder": "entityName",
+            "displayEntityName": true,
+            "displayEntityType": false,
+            "enableSelectColumnDisplay": false,
+            "enableStickyHeader": true,
+            "enableStickyAction": true,
+            "entitiesTitle": "Devices",
+            "displayEntityLabel": false,
+            "entityNameColumnTitle": "Device"
+          },
+          "title": "New Entities table",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400,
+            "padding": "5px 10px 5px 10px"
+          },
+          "useDashboardTimewindow": false,
+          "showLegend": false,
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "639da5b4-31f0-0151-6282-c37a3897b7e8",
+              "filterId": "19a0ad1c-b31d-4a29-9d7b-5d87e2a8ea6e",
+              "dataKeys": [
+                {
+                  "name": "current_fw_title",
+                  "type": "timeseries",
+                  "label": "Current FW title",
+                  "color": "#2196f3",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled"
+                  },
+                  "_hash": 0.09545533885166413,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "current_fw_version",
+                  "type": "timeseries",
+                  "label": "Current FW version",
+                  "color": "#4caf50",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled"
+                  },
+                  "_hash": 0.7206056602328659,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "target_fw_title",
+                  "type": "timeseries",
+                  "label": "Target FW title",
+                  "color": "#ffc107",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled"
+                  },
+                  "_hash": 0.9934225682766313,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "target_fw_version",
+                  "type": "timeseries",
+                  "label": "Target FW version",
+                  "color": "#607d8b",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "cellContentFunction": "",
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled"
+                  },
+                  "_hash": 0.5251724416842531,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "target_fw_ts",
+                  "type": "timeseries",
+                  "label": "Target FW set time",
+                  "color": "#e91e63",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": true,
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled",
+                    "cellContentFunction": "if (value !== '') {\n    return ctx.date.transform(value, 'yyyy-MM-dd HH:mm:ss');\n}\nreturn '';"
+                  },
+                  "_hash": 0.31823244858578237,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "fw_state",
+                  "type": "timeseries",
+                  "label": "Progress",
+                  "color": "#9c27b0",
+                  "settings": {
+                    "columnWidth": "30%",
+                    "useCellStyleFunction": true,
+                    "useCellContentFunction": true,
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled",
+                    "cellStyleFunction": "return {\n    'padding-right': '30px'\n}",
+                    "cellContentFunction": "if (value !== '') {\n    var mapProgress = {\n        'QUEUED': 0,\n        'INITIATED': 5,\n        'DOWNLOADING': 10,\n        'DOWNLOADED': 55,\n        'VERIFIED': 60,\n        'UPDATING': 70,\n        'FAILED': 99,\n        'UPDATED': 100\n    }\n    var color = 'mat-primary';\n    var progress = mapProgress[value];\n    if (value == 'FAILED') {\n        color = 'mat-accent';\n    }\n    return `<mat-progress-bar style=\"height: 8px\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" tabindex=\"-1\" mode=\"determinate\" value=\"${progress}\" class=\"mat-progress-bar ${color}\" aria-valuenow=\"${progress}\"><div aria-hidden=\"true\"><svg width=\"100%\" height=\"8\" focusable=\"false\" class=\"mat-progress-bar-background mat-progress-bar-element\"><defs><pattern x=\"4\" y=\"0\" width=\"8\" height=\"4\" patternUnits=\"userSpaceOnUse\" id=\"mat-progress-bar-0\"><circle cx=\"2\" cy=\"2\" r=\"2\"></circle></pattern></defs><rect width=\"100%\" height=\"100%\" fill=\"url(\"/components/progress-bar/overview#mat-progress-bar-0\")\"></rect></svg><div class=\"mat-progress-bar-buffer mat-progress-bar-element\"></div><div class=\"mat-progress-bar-primary mat-progress-bar-fill mat-progress-bar-element\" style=\"transform: scale3d(${progress / 100}, 1, 1);\"></div><div class=\"mat-progress-bar-secondary mat-progress-bar-fill mat-progress-bar-element\"></div></div></mat-progress-bar>`;\n}"
+                  },
+                  "_hash": 0.8174211757846257,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "fw_state",
+                  "type": "timeseries",
+                  "label": "Status",
+                  "color": "#f44336",
+                  "settings": {
+                    "columnWidth": "130px",
+                    "useCellStyleFunction": true,
+                    "useCellContentFunction": true,
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled",
+                    "cellStyleFunction": "if (value == 'FAILED') {\n    return {'color' : '#D93025'};\n}\nreturn {};",
+                    "cellContentFunction": "function icon(value) {\n    if (value == 'QUEUED') {\n        return '<mat-icon _role=\"img\" class=\"mat-icon notranslate material-icons mat-icon-no-color\" aria-hidden=\"true\" data-mat-icon-type=\"font\" style=\"color: #000;\"><svg style=\"width:24px;height:24px\" viewBox=\"0 0 24 24\"><path fill=\"currentColor\" d=\"M6,2V8H6V8L10,12L6,16V16H6V22H18V16H18V16L14,12L18,8V8H18V2H6M16,16.5V20H8V16.5L12,12.5L16,16.5M12,11.5L8,7.5V4H16V7.5L12,11.5Z\" /></svg></mat-icon>';\n    }\n    if (value == 'INITIATED' || value == 'DOWNLOADING' || value == 'DOWNLOADED') {\n        return '<mat-icon _role=\"img\" class=\"mat-icon notranslate material-icons mat-icon-no-color\" aria-hidden=\"true\" data-mat-icon-type=\"font\" style=\"color: #000\"><svg viewBox=\"0 0 16 16\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M12.74 2.1951C11.63 1.2876 10.2575 0.687598 8.75 0.537598V2.0526C9.845 2.1876 10.8425 2.6226 11.675 3.2676L12.74 2.1951ZM13.9475 7.2501H15.4625C15.3125 5.7426 14.7125 4.3701 13.805 3.2601L12.7325 4.3251C13.3775 5.1576 13.8125 6.1551 13.9475 7.2501ZM12.7325 11.6751L13.805 12.7476C14.7125 11.6376 15.3125 10.2576 15.4625 8.7576H13.9475C13.8125 9.8451 13.3775 10.8426 12.7325 11.6751ZM8.75 13.9476V15.4626C10.2575 15.3126 11.63 14.7126 12.74 13.8051L11.6675 12.7326C10.8425 13.3776 9.845 13.8126 8.75 13.9476ZM8.75 8.0001V4.2501H7.25V8.0001H4.25L8 11.7501L11.75 8.0001H8.75ZM7.25 13.9476V15.4626C3.4625 15.0876 0.5 11.8926 0.5 8.0001C0.5 4.1076 3.4625 0.912598 7.25 0.537598V2.0526C4.2875 2.4201 2 4.9401 2 8.0001C2 11.0601 4.2875 13.5801 7.25 13.9476Z\" fill=\"black\"/></svg></mat-icon>';\n    }\n    if (value == 'VERIFIED' || value == 'UPDATING' ) {\n        return '<mat-icon _role=\"img\" class=\"mat-icon notranslate material-icons mat-icon-no-color\" aria-hidden=\"true\" data-mat-icon-type=\"font\" style=\"color: #000\">update</mat-icon>';\n    }\n    if (value == 'UPDATED') {\n        return '<mat-icon _role=\"img\" class=\"mat-icon notranslate material-icons mat-icon-no-color\" aria-hidden=\"true\" data-mat-icon-type=\"font\" style=\"color: #000\"><svg style=\"width:22px;height:22px\" viewBox=\"0 0 34 32\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M33.26 2.82L30.44 0L12.06 18.38L3.55999 9.9L0.73999 12.72L12.06 24.04L33.26 2.82Z\" fill=\"black\"/><path d=\"M31 28H3V32H31V28Z\" fill=\"black\"/></svg></mat-icon>';\n    }\n    if (value == 'FAILED') {\n        return '<mat-icon _role=\"img\" class=\"mat-icon notranslate material-icons mat-icon-no-color\" aria-hidden=\"true\" data-mat-icon-type=\"font\" style=\"color: #D93025\">warning</mat-icon>';\n    }\n    return '';\n}\nfunction capitalize (s) {\n  if (typeof s !== 'string') return '';\n  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();\n}\n\nreturn icon(value) + '<span style=\"vertical-align: super;padding-left: 8px;\">' + capitalize(value) + '</span>';"
+                  },
+                  "_hash": 0.7764426948615217,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "fw_checksum",
+                  "type": "attribute",
+                  "label": "fw_checksum",
+                  "color": "#3f51b5",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "defaultColumnVisibility": "hidden",
+                    "columnSelectionToDisplay": "disabled"
+                  },
+                  "_hash": 0.5594087842471693,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "fw_url",
+                  "type": "attribute",
+                  "label": "fw_url",
+                  "color": "#e91e63",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "cellContentFunction": "",
+                    "defaultColumnVisibility": "hidden",
+                    "columnSelectionToDisplay": "disabled"
+                  },
+                  "_hash": 0.4204673738685043,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "actions": {
+            "actionCellButton": [
+              {
+                "name": "History firmware update",
+                "icon": "history",
+                "type": "openDashboardState",
+                "targetDashboardStateId": "device_firmware_history",
+                "setEntityId": true,
+                "stateEntityParamName": null,
+                "openInSeparateDialog": false,
+                "dialogTitle": "",
+                "dialogHideDashboardToolbar": true,
+                "dialogWidth": null,
+                "dialogHeight": null,
+                "openRightLayout": false,
+                "id": "98a1406c-3301-bc2f-2c5d-d637ce3b663b"
+              },
+              {
+                "name": "Edit firmware",
+                "icon": "edit",
+                "type": "customPretty",
+                "customHtml": "<form #editEntityForm=\"ngForm\" [formGroup]=\"editEntityFormGroup\"\n      (ngSubmit)=\"save()\"  class=\"edit-entity-form\">\n    <mat-toolbar fxLayout=\"row\" color=\"primary\">\n        <h2>Edit firmware {{entityName}}</h2>\n        <span fxFlex></span>\n        <button mat-icon-button (click)=\"cancel()\" type=\"button\">\n            <mat-icon class=\"material-icons\">close</mat-icon>\n        </button>\n    </mat-toolbar>\n    <mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\n    </mat-progress-bar>\n    <div style=\"height: 4px;\" *ngIf=\"!(isLoading$ | async)\"></div>\n    <div *ngIf=\"entity.deviceProfileId\" mat-dialog-content fxLayout=\"column\">\n        <tb-ota-package-autocomplete\n            [useFullEntityId]=\"true\"\n            [deviceProfileId]=\"entity.deviceProfileId.id\"\n            formControlName=\"firmwareId\">\n        </tb-ota-package-autocomplete>\n    </div>\n    <div mat-dialog-actions fxLayout=\"row\" fxLayoutAlign=\"end center\">\n        <button mat-button color=\"primary\"\n                type=\"button\"\n                [disabled]=\"(isLoading$ | async)\"\n                (click)=\"cancel()\" cdkFocusInitial>\n            Cancel\n        </button>\n        <button mat-button mat-raised-button color=\"primary\"\n                type=\"submit\"\n                [disabled]=\"(isLoading$ | async) || editEntityForm.invalid || !editEntityForm.dirty\">\n            Save\n        </button>\n    </div>\n</form>",
+                "customCss": "form {\n    min-width: 300px !important;\n}",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\n\nopenEditEntityDialog();\n\nfunction openEditEntityDialog() {\n    customDialog.customDialog(htmlTemplate, EditEntityDialogController).subscribe();\n}\n\nfunction EditEntityDialogController(instance) {\n    let vm = instance;\n\n    vm.entityName = entityName;\n    vm.entity = {};\n\n    vm.editEntityFormGroup = vm.fb.group({\n        firmwareId: [null]\n    });\n\n    getEntityInfo();\n\n    vm.cancel = function() {\n        vm.dialogRef.close(null);\n    };\n\n    vm.save = function() {\n        vm.editEntityFormGroup.markAsPristine();\n        saveEntity().subscribe(\n            function () {\n                // widgetContext.updateAliases();\n                vm.dialogRef.close(null);\n            }\n        );\n    };\n\n\n    function getEntityInfo() {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                vm.entity = data;\n                vm.editEntityFormGroup.patchValue({\n                    firmwareId: vm.entity.firmwareId\n                }, {emitEvent: false});\n            }\n        );\n    }\n\n    function saveEntity() {\n        const formValues = vm.editEntityFormGroup.value;\n        vm.entity.firmwareId = formValues.firmwareId;\n        return deviceService.saveDevice(vm.entity);\n    }\n}",
+                "customResources": [],
+                "id": "23099c1d-454b-25dc-8bc0-7cf33c21c5d5"
+              },
+              {
+                "name": "Download firmware",
+                "icon": "file_download",
+                "type": "custom",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet otaPackageService = $injector.get(widgetContext.servicesMap.get('otaPackageService'));\nlet deviceProfileService = $injector.get(widgetContext.servicesMap.get('deviceProfileService'));\n\ngetDeviceFirmware();\n\nfunction getDeviceFirmware() {\n    var entityIdValue = entityId.id;\n    var data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_url');\n    var url = data.data[0][1];\n    if (url === '') {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                if (data.firmwareId !== null) {\n                    otaPackageService.downloadOtaPackage(data.firmwareId.id).subscribe();    \n                } else {\n                    deviceProfileService.getDeviceProfile(data.deviceProfileId.id).subscribe(\n                        function (deviceProfile) {\n                            if (deviceProfile.firmwareId !== null) {\n                                otaPackageService.downloadOtaPackage(deviceProfile.firmwareId.id).subscribe();\n                            } else {\n                                widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n                            }\n                    });\n                }\n            }\n        );\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n    }\n}",
+                "id": "12533058-42f6-e75f-620c-219c48d01ec0"
+              },
+              {
+                "name": "Copy checksum/URL",
+                "icon": "content_copy",
+                "type": "custom",
+                "customFunction": "function copyToClipboard(text) {\n    if (window.clipboardData && window.clipboardData.setData) {\n        return window.clipboardData.setData(\"Text\", text);\n\n    }\n    else if (document.queryCommandSupported && document.queryCommandSupported(\"copy\")) {\n        var textarea = document.createElement(\"textarea\");\n        textarea.textContent = text;\n        textarea.style.position = \"fixed\";\n        document.body.appendChild(textarea);\n        textarea.select();\n        try {\n            return document.execCommand(\"copy\");\n        }\n        catch (ex) {\n            console.warn(\"Copy to clipboard failed.\", ex);\n            return false;\n        }\n        document.body.removeChild(textarea);\n    }\n}\nvar entityIdValue = entityId.id;\nvar data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_checksum');\nvar checksum = data.data[0][1];\nif (checksum !== '') {\n    copyToClipboard(checksum);\n    widgetContext.showSuccessToast('Firmware checksum has been copied to clipboard', 2000, 'top');\n} else {\n    data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_url');\n    var url = data.data[0][1];\n    if (url !== '') {\n        copyToClipboard(url);\n        widgetContext.showSuccessToast('Firmware direct URL has been copied to clipboard', 2000, 'top');\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n    }\n}",
+                "id": "09323079-7111-87f7-90d1-c62cd7d85dc7"
+              }
+            ]
+          },
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "widgetStyle": {}
+        },
+        "row": 0,
+        "col": 0,
+        "id": "21be08bb-ec90-f760-ad6f-e7678f12c401",
+        "typeFullFqn": "system.cards.entities_table"
+      },
+      "e8280043-d3dc-7acb-c2ff-a4522972ff91": {
+        "type": "latest",
+        "sizeX": 7.5,
+        "sizeY": 6.5,
+        "config": {
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 86400000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1694085363133,
+                "endTimeMs": 1694171763133
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "NONE",
+              "limit": 200
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "rgb(255, 255, 255)",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "4px",
+          "settings": {
+            "enableSearch": true,
+            "displayPagination": true,
+            "defaultPageSize": 10,
+            "defaultSortOrder": "entityName",
+            "displayEntityName": true,
+            "displayEntityType": false,
+            "enableSelectColumnDisplay": false,
+            "enableStickyHeader": true,
+            "enableStickyAction": true,
+            "entitiesTitle": "Devices",
+            "displayEntityLabel": false,
+            "entityNameColumnTitle": "Device"
+          },
+          "title": "New Entities table",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400,
+            "padding": "5px 10px 5px 10px"
+          },
+          "useDashboardTimewindow": false,
+          "showLegend": false,
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "639da5b4-31f0-0151-6282-c37a3897b7e8",
+              "filterId": "579f0468-9ce9-7e3e-b34c-88dd3de59897",
+              "dataKeys": [
+                {
+                  "name": "current_fw_title",
+                  "type": "timeseries",
+                  "label": "Current FW title",
+                  "color": "#2196f3",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled"
+                  },
+                  "_hash": 0.09545533885166413,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "current_fw_version",
+                  "type": "timeseries",
+                  "label": "Current FW version",
+                  "color": "#4caf50",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled"
+                  },
+                  "_hash": 0.7206056602328659,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "target_fw_title",
+                  "type": "timeseries",
+                  "label": "Target FW title",
+                  "color": "#ffc107",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled"
+                  },
+                  "_hash": 0.9934225682766313,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "target_fw_version",
+                  "type": "timeseries",
+                  "label": "Target FW version",
+                  "color": "#607d8b",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "cellContentFunction": "",
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled"
+                  },
+                  "_hash": 0.5251724416842531,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "target_fw_ts",
+                  "type": "timeseries",
+                  "label": "Target FW set time",
+                  "color": "#e91e63",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": true,
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled",
+                    "cellContentFunction": "if (value !== '') {\n    return ctx.date.transform(value, 'yyyy-MM-dd HH:mm:ss');\n}\nreturn '';"
+                  },
+                  "_hash": 0.31823244858578237,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "fw_state",
+                  "type": "timeseries",
+                  "label": "Progress",
+                  "color": "#9c27b0",
+                  "settings": {
+                    "columnWidth": "30%",
+                    "useCellStyleFunction": true,
+                    "useCellContentFunction": true,
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled",
+                    "cellStyleFunction": "return {\n    'padding-right': '30px'\n}",
+                    "cellContentFunction": "if (value !== '') {\n    var mapProgress = {\n        'QUEUED': 0,\n        'INITIATED': 5,\n        'DOWNLOADING': 10,\n        'DOWNLOADED': 55,\n        'VERIFIED': 60,\n        'UPDATING': 70,\n        'FAILED': 99,\n        'UPDATED': 100\n    }\n    var color = 'mat-primary';\n    var progress = mapProgress[value];\n    if (value == 'FAILED') {\n        color = 'mat-accent';\n    }\n    return `<mat-progress-bar style=\"height: 8px\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" tabindex=\"-1\" mode=\"determinate\" value=\"${progress}\" class=\"mat-progress-bar ${color}\" aria-valuenow=\"${progress}\"><div aria-hidden=\"true\"><svg width=\"100%\" height=\"8\" focusable=\"false\" class=\"mat-progress-bar-background mat-progress-bar-element\"><defs><pattern x=\"4\" y=\"0\" width=\"8\" height=\"4\" patternUnits=\"userSpaceOnUse\" id=\"mat-progress-bar-0\"><circle cx=\"2\" cy=\"2\" r=\"2\"></circle></pattern></defs><rect width=\"100%\" height=\"100%\" fill=\"url(\"/components/progress-bar/overview#mat-progress-bar-0\")\"></rect></svg><div class=\"mat-progress-bar-buffer mat-progress-bar-element\"></div><div class=\"mat-progress-bar-primary mat-progress-bar-fill mat-progress-bar-element\" style=\"transform: scale3d(${progress / 100}, 1, 1);\"></div><div class=\"mat-progress-bar-secondary mat-progress-bar-fill mat-progress-bar-element\"></div></div></mat-progress-bar>`;\n}"
+                  },
+                  "_hash": 0.8174211757846257,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "fw_state",
+                  "type": "timeseries",
+                  "label": "Status",
+                  "color": "#f44336",
+                  "settings": {
+                    "columnWidth": "130px",
+                    "useCellStyleFunction": true,
+                    "useCellContentFunction": true,
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled",
+                    "cellStyleFunction": "if (value == 'FAILED') {\n    return {'color' : '#D93025'};\n}\nreturn {};",
+                    "cellContentFunction": "function icon(value) {\n    if (value == 'QUEUED') {\n        return '<mat-icon _role=\"img\" class=\"mat-icon notranslate material-icons mat-icon-no-color\" aria-hidden=\"true\" data-mat-icon-type=\"font\" style=\"color: #000;\"><svg style=\"width:24px;height:24px\" viewBox=\"0 0 24 24\"><path fill=\"currentColor\" d=\"M6,2V8H6V8L10,12L6,16V16H6V22H18V16H18V16L14,12L18,8V8H18V2H6M16,16.5V20H8V16.5L12,12.5L16,16.5M12,11.5L8,7.5V4H16V7.5L12,11.5Z\" /></svg></mat-icon>';\n    }\n    if (value == 'INITIATED' || value == 'DOWNLOADING' || value == 'DOWNLOADED') {\n        return '<mat-icon _role=\"img\" class=\"mat-icon notranslate material-icons mat-icon-no-color\" aria-hidden=\"true\" data-mat-icon-type=\"font\" style=\"color: #000\"><svg viewBox=\"0 0 16 16\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M12.74 2.1951C11.63 1.2876 10.2575 0.687598 8.75 0.537598V2.0526C9.845 2.1876 10.8425 2.6226 11.675 3.2676L12.74 2.1951ZM13.9475 7.2501H15.4625C15.3125 5.7426 14.7125 4.3701 13.805 3.2601L12.7325 4.3251C13.3775 5.1576 13.8125 6.1551 13.9475 7.2501ZM12.7325 11.6751L13.805 12.7476C14.7125 11.6376 15.3125 10.2576 15.4625 8.7576H13.9475C13.8125 9.8451 13.3775 10.8426 12.7325 11.6751ZM8.75 13.9476V15.4626C10.2575 15.3126 11.63 14.7126 12.74 13.8051L11.6675 12.7326C10.8425 13.3776 9.845 13.8126 8.75 13.9476ZM8.75 8.0001V4.2501H7.25V8.0001H4.25L8 11.7501L11.75 8.0001H8.75ZM7.25 13.9476V15.4626C3.4625 15.0876 0.5 11.8926 0.5 8.0001C0.5 4.1076 3.4625 0.912598 7.25 0.537598V2.0526C4.2875 2.4201 2 4.9401 2 8.0001C2 11.0601 4.2875 13.5801 7.25 13.9476Z\" fill=\"black\"/></svg></mat-icon>';\n    }\n    if (value == 'VERIFIED' || value == 'UPDATING' ) {\n        return '<mat-icon _role=\"img\" class=\"mat-icon notranslate material-icons mat-icon-no-color\" aria-hidden=\"true\" data-mat-icon-type=\"font\" style=\"color: #000\">update</mat-icon>';\n    }\n    if (value == 'UPDATED') {\n        return '<mat-icon _role=\"img\" class=\"mat-icon notranslate material-icons mat-icon-no-color\" aria-hidden=\"true\" data-mat-icon-type=\"font\" style=\"color: #000\"><svg style=\"width:22px;height:22px\" viewBox=\"0 0 34 32\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M33.26 2.82L30.44 0L12.06 18.38L3.55999 9.9L0.73999 12.72L12.06 24.04L33.26 2.82Z\" fill=\"black\"/><path d=\"M31 28H3V32H31V28Z\" fill=\"black\"/></svg></mat-icon>';\n    }\n    if (value == 'FAILED') {\n        return '<mat-icon _role=\"img\" class=\"mat-icon notranslate material-icons mat-icon-no-color\" aria-hidden=\"true\" data-mat-icon-type=\"font\" style=\"color: #D93025\">warning</mat-icon>';\n    }\n    return '';\n}\nfunction capitalize (s) {\n  if (typeof s !== 'string') return '';\n  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();\n}\n\nreturn icon(value) + '<span style=\"vertical-align: super;padding-left: 8px;\">' + capitalize(value) + '</span>';"
+                  },
+                  "_hash": 0.7764426948615217,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "fw_checksum",
+                  "type": "attribute",
+                  "label": "fw_checksum",
+                  "color": "#3f51b5",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "defaultColumnVisibility": "hidden",
+                    "columnSelectionToDisplay": "disabled"
+                  },
+                  "_hash": 0.5594087842471693,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "fw_url",
+                  "type": "attribute",
+                  "label": "fw_url",
+                  "color": "#e91e63",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "cellContentFunction": "",
+                    "defaultColumnVisibility": "hidden",
+                    "columnSelectionToDisplay": "disabled"
+                  },
+                  "_hash": 0.4204673738685043,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "actions": {
+            "actionCellButton": [
+              {
+                "name": "History firmware update",
+                "icon": "history",
+                "type": "openDashboardState",
+                "targetDashboardStateId": "device_firmware_history",
+                "setEntityId": true,
+                "stateEntityParamName": null,
+                "openInSeparateDialog": false,
+                "dialogTitle": "",
+                "dialogHideDashboardToolbar": true,
+                "dialogWidth": null,
+                "dialogHeight": null,
+                "openRightLayout": false,
+                "id": "98a1406c-3301-bc2f-2c5d-d637ce3b663b"
+              },
+              {
+                "name": "Edit firmware",
+                "icon": "edit",
+                "type": "customPretty",
+                "customHtml": "<form #editEntityForm=\"ngForm\" [formGroup]=\"editEntityFormGroup\"\n      (ngSubmit)=\"save()\"  class=\"edit-entity-form\">\n    <mat-toolbar fxLayout=\"row\" color=\"primary\">\n        <h2>Edit firmware {{entityName}}</h2>\n        <span fxFlex></span>\n        <button mat-icon-button (click)=\"cancel()\" type=\"button\">\n            <mat-icon class=\"material-icons\">close</mat-icon>\n        </button>\n    </mat-toolbar>\n    <mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\n    </mat-progress-bar>\n    <div style=\"height: 4px;\" *ngIf=\"!(isLoading$ | async)\"></div>\n    <div *ngIf=\"entity.deviceProfileId\" mat-dialog-content fxLayout=\"column\">\n        <tb-ota-package-autocomplete\n            [useFullEntityId]=\"true\"\n            [deviceProfileId]=\"entity.deviceProfileId.id\"\n            formControlName=\"firmwareId\">\n        </tb-ota-package-autocomplete>\n    </div>\n    <div mat-dialog-actions fxLayout=\"row\" fxLayoutAlign=\"end center\">\n        <button mat-button color=\"primary\"\n                type=\"button\"\n                [disabled]=\"(isLoading$ | async)\"\n                (click)=\"cancel()\" cdkFocusInitial>\n            Cancel\n        </button>\n        <button mat-button mat-raised-button color=\"primary\"\n                type=\"submit\"\n                [disabled]=\"(isLoading$ | async) || editEntityForm.invalid || !editEntityForm.dirty\">\n            Save\n        </button>\n    </div>\n</form>",
+                "customCss": "form {\n    min-width: 300px !important;\n}",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\n\nopenEditEntityDialog();\n\nfunction openEditEntityDialog() {\n    customDialog.customDialog(htmlTemplate, EditEntityDialogController).subscribe();\n}\n\nfunction EditEntityDialogController(instance) {\n    let vm = instance;\n\n    vm.entityName = entityName;\n    vm.entity = {};\n\n    vm.editEntityFormGroup = vm.fb.group({\n        firmwareId: [null]\n    });\n\n    getEntityInfo();\n\n    vm.cancel = function() {\n        vm.dialogRef.close(null);\n    };\n\n    vm.save = function() {\n        vm.editEntityFormGroup.markAsPristine();\n        saveEntity().subscribe(\n            function () {\n                // widgetContext.updateAliases();\n                vm.dialogRef.close(null);\n            }\n        );\n    };\n\n\n    function getEntityInfo() {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                vm.entity = data;\n                vm.editEntityFormGroup.patchValue({\n                    firmwareId: vm.entity.firmwareId\n                }, {emitEvent: false});\n            }\n        );\n    }\n\n    function saveEntity() {\n        const formValues = vm.editEntityFormGroup.value;\n        vm.entity.firmwareId = formValues.firmwareId;\n        return deviceService.saveDevice(vm.entity);\n    }\n}",
+                "customResources": [],
+                "id": "23099c1d-454b-25dc-8bc0-7cf33c21c5d5"
+              },
+              {
+                "name": "Download firmware",
+                "icon": "file_download",
+                "type": "custom",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet otaPackageService = $injector.get(widgetContext.servicesMap.get('otaPackageService'));\nlet deviceProfileService = $injector.get(widgetContext.servicesMap.get('deviceProfileService'));\n\ngetDeviceFirmware();\n\nfunction getDeviceFirmware() {\n    var entityIdValue = entityId.id;\n    var data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_url');\n    var url = data.data[0][1];\n    if (url === '') {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                if (data.firmwareId !== null) {\n                    otaPackageService.downloadOtaPackage(data.firmwareId.id).subscribe();    \n                } else {\n                    deviceProfileService.getDeviceProfile(data.deviceProfileId.id).subscribe(\n                        function (deviceProfile) {\n                            if (deviceProfile.firmwareId !== null) {\n                                otaPackageService.downloadOtaPackage(deviceProfile.firmwareId.id).subscribe();\n                            } else {\n                                widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n                            }\n                    });\n                }\n            }\n        );\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n    }\n}",
+                "id": "12533058-42f6-e75f-620c-219c48d01ec0"
+              },
+              {
+                "name": "Copy checksum/URL",
+                "icon": "content_copy",
+                "type": "custom",
+                "customFunction": "function copyToClipboard(text) {\n    if (window.clipboardData && window.clipboardData.setData) {\n        return window.clipboardData.setData(\"Text\", text);\n\n    }\n    else if (document.queryCommandSupported && document.queryCommandSupported(\"copy\")) {\n        var textarea = document.createElement(\"textarea\");\n        textarea.textContent = text;\n        textarea.style.position = \"fixed\";\n        document.body.appendChild(textarea);\n        textarea.select();\n        try {\n            return document.execCommand(\"copy\");\n        }\n        catch (ex) {\n            console.warn(\"Copy to clipboard failed.\", ex);\n            return false;\n        }\n        document.body.removeChild(textarea);\n    }\n}\nvar entityIdValue = entityId.id;\nvar data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_checksum');\nvar checksum = data.data[0][1];\nif (checksum !== '') {\n    copyToClipboard(checksum);\n    widgetContext.showSuccessToast('Firmware checksum has been copied to clipboard', 2000, 'top');\n} else {\n    data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_url');\n    var url = data.data[0][1];\n    if (url !== '') {\n        copyToClipboard(url);\n        widgetContext.showSuccessToast('Firmware direct URL has been copied to clipboard', 2000, 'top');\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n    }\n}",
+                "id": "09323079-7111-87f7-90d1-c62cd7d85dc7"
+              }
+            ]
+          },
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "widgetStyle": {}
+        },
+        "row": 0,
+        "col": 0,
+        "id": "e8280043-d3dc-7acb-c2ff-a4522972ff91",
+        "typeFullFqn": "system.cards.entities_table"
+      },
+      "3624013b-378c-f110-5eba-ae95c25a4dcc": {
+        "type": "latest",
+        "sizeX": 7.5,
+        "sizeY": 6.5,
+        "config": {
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 86400000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1694085363133,
+                "endTimeMs": 1694171763133
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "NONE",
+              "limit": 200
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "rgb(255, 255, 255)",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "4px",
+          "settings": {
+            "enableSearch": true,
+            "displayPagination": true,
+            "defaultPageSize": 10,
+            "defaultSortOrder": "entityName",
+            "displayEntityName": true,
+            "displayEntityType": false,
+            "enableSelectColumnDisplay": false,
+            "enableStickyHeader": true,
+            "enableStickyAction": true,
+            "entitiesTitle": "Devices",
+            "displayEntityLabel": false,
+            "entityNameColumnTitle": "Device"
+          },
+          "title": "New Entities table",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400,
+            "padding": "5px 10px 5px 10px"
+          },
+          "useDashboardTimewindow": false,
+          "showLegend": false,
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "639da5b4-31f0-0151-6282-c37a3897b7e8",
+              "filterId": "bdbc6ea1-95a7-3912-341a-58dc7704a00f",
+              "dataKeys": [
+                {
+                  "name": "current_fw_title",
+                  "type": "timeseries",
+                  "label": "Current FW title",
+                  "color": "#2196f3",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled"
+                  },
+                  "_hash": 0.09545533885166413,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "current_fw_version",
+                  "type": "timeseries",
+                  "label": "Current FW version",
+                  "color": "#4caf50",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled"
+                  },
+                  "_hash": 0.7206056602328659,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "target_fw_title",
+                  "type": "timeseries",
+                  "label": "Target FW title",
+                  "color": "#ffc107",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled"
+                  },
+                  "_hash": 0.9934225682766313,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "target_fw_version",
+                  "type": "timeseries",
+                  "label": "Target FW version",
+                  "color": "#607d8b",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "cellContentFunction": "",
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled"
+                  },
+                  "_hash": 0.5251724416842531,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "target_fw_ts",
+                  "type": "timeseries",
+                  "label": "Target FW set time",
+                  "color": "#e91e63",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": true,
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled",
+                    "cellContentFunction": "if (value !== '') {\n    return ctx.date.transform(value, 'yyyy-MM-dd HH:mm:ss');\n}\nreturn '';"
+                  },
+                  "_hash": 0.31823244858578237,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "fw_state",
+                  "type": "timeseries",
+                  "label": "Progress",
+                  "color": "#9c27b0",
+                  "settings": {
+                    "columnWidth": "30%",
+                    "useCellStyleFunction": true,
+                    "useCellContentFunction": true,
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled",
+                    "cellStyleFunction": "return {\n    'padding-right': '30px'\n}",
+                    "cellContentFunction": "if (value !== '') {\n    var mapProgress = {\n        'QUEUED': 0,\n        'INITIATED': 5,\n        'DOWNLOADING': 10,\n        'DOWNLOADED': 55,\n        'VERIFIED': 60,\n        'UPDATING': 70,\n        'FAILED': 99,\n        'UPDATED': 100\n    }\n    var color = 'mat-primary';\n    var progress = mapProgress[value];\n    if (value == 'FAILED') {\n        color = 'mat-accent';\n    }\n    return `<mat-progress-bar style=\"height: 8px\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" tabindex=\"-1\" mode=\"determinate\" value=\"${progress}\" class=\"mat-progress-bar ${color}\" aria-valuenow=\"${progress}\"><div aria-hidden=\"true\"><svg width=\"100%\" height=\"8\" focusable=\"false\" class=\"mat-progress-bar-background mat-progress-bar-element\"><defs><pattern x=\"4\" y=\"0\" width=\"8\" height=\"4\" patternUnits=\"userSpaceOnUse\" id=\"mat-progress-bar-0\"><circle cx=\"2\" cy=\"2\" r=\"2\"></circle></pattern></defs><rect width=\"100%\" height=\"100%\" fill=\"url(\"/components/progress-bar/overview#mat-progress-bar-0\")\"></rect></svg><div class=\"mat-progress-bar-buffer mat-progress-bar-element\"></div><div class=\"mat-progress-bar-primary mat-progress-bar-fill mat-progress-bar-element\" style=\"transform: scale3d(${progress / 100}, 1, 1);\"></div><div class=\"mat-progress-bar-secondary mat-progress-bar-fill mat-progress-bar-element\"></div></div></mat-progress-bar>`;\n}"
+                  },
+                  "_hash": 0.8174211757846257,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "fw_state",
+                  "type": "timeseries",
+                  "label": "Status",
+                  "color": "#f44336",
+                  "settings": {
+                    "columnWidth": "130px",
+                    "useCellStyleFunction": true,
+                    "useCellContentFunction": true,
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled",
+                    "cellStyleFunction": "if (value == 'FAILED') {\n    return {'color' : '#D93025'};\n}\nreturn {};",
+                    "cellContentFunction": "function icon(value) {\n    if (value == 'QUEUED') {\n        return '<mat-icon _role=\"img\" class=\"mat-icon notranslate material-icons mat-icon-no-color\" aria-hidden=\"true\" data-mat-icon-type=\"font\" style=\"color: #000;\"><svg style=\"width:24px;height:24px\" viewBox=\"0 0 24 24\"><path fill=\"currentColor\" d=\"M6,2V8H6V8L10,12L6,16V16H6V22H18V16H18V16L14,12L18,8V8H18V2H6M16,16.5V20H8V16.5L12,12.5L16,16.5M12,11.5L8,7.5V4H16V7.5L12,11.5Z\" /></svg></mat-icon>';\n    }\n    if (value == 'INITIATED' || value == 'DOWNLOADING' || value == 'DOWNLOADED') {\n        return '<mat-icon _role=\"img\" class=\"mat-icon notranslate material-icons mat-icon-no-color\" aria-hidden=\"true\" data-mat-icon-type=\"font\" style=\"color: #000\"><svg viewBox=\"0 0 16 16\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M12.74 2.1951C11.63 1.2876 10.2575 0.687598 8.75 0.537598V2.0526C9.845 2.1876 10.8425 2.6226 11.675 3.2676L12.74 2.1951ZM13.9475 7.2501H15.4625C15.3125 5.7426 14.7125 4.3701 13.805 3.2601L12.7325 4.3251C13.3775 5.1576 13.8125 6.1551 13.9475 7.2501ZM12.7325 11.6751L13.805 12.7476C14.7125 11.6376 15.3125 10.2576 15.4625 8.7576H13.9475C13.8125 9.8451 13.3775 10.8426 12.7325 11.6751ZM8.75 13.9476V15.4626C10.2575 15.3126 11.63 14.7126 12.74 13.8051L11.6675 12.7326C10.8425 13.3776 9.845 13.8126 8.75 13.9476ZM8.75 8.0001V4.2501H7.25V8.0001H4.25L8 11.7501L11.75 8.0001H8.75ZM7.25 13.9476V15.4626C3.4625 15.0876 0.5 11.8926 0.5 8.0001C0.5 4.1076 3.4625 0.912598 7.25 0.537598V2.0526C4.2875 2.4201 2 4.9401 2 8.0001C2 11.0601 4.2875 13.5801 7.25 13.9476Z\" fill=\"black\"/></svg></mat-icon>';\n    }\n    if (value == 'VERIFIED' || value == 'UPDATING' ) {\n        return '<mat-icon _role=\"img\" class=\"mat-icon notranslate material-icons mat-icon-no-color\" aria-hidden=\"true\" data-mat-icon-type=\"font\" style=\"color: #000\">update</mat-icon>';\n    }\n    if (value == 'UPDATED') {\n        return '<mat-icon _role=\"img\" class=\"mat-icon notranslate material-icons mat-icon-no-color\" aria-hidden=\"true\" data-mat-icon-type=\"font\" style=\"color: #000\"><svg style=\"width:22px;height:22px\" viewBox=\"0 0 34 32\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M33.26 2.82L30.44 0L12.06 18.38L3.55999 9.9L0.73999 12.72L12.06 24.04L33.26 2.82Z\" fill=\"black\"/><path d=\"M31 28H3V32H31V28Z\" fill=\"black\"/></svg></mat-icon>';\n    }\n    if (value == 'FAILED') {\n        return '<mat-icon _role=\"img\" class=\"mat-icon notranslate material-icons mat-icon-no-color\" aria-hidden=\"true\" data-mat-icon-type=\"font\" style=\"color: #D93025\">warning</mat-icon>';\n    }\n    return '';\n}\nfunction capitalize (s) {\n  if (typeof s !== 'string') return '';\n  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();\n}\n\nreturn icon(value) + '<span style=\"vertical-align: super;padding-left: 8px;\">' + capitalize(value) + '</span>';"
+                  },
+                  "_hash": 0.7764426948615217,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "fw_checksum",
+                  "type": "attribute",
+                  "label": "fw_checksum",
+                  "color": "#3f51b5",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "defaultColumnVisibility": "hidden",
+                    "columnSelectionToDisplay": "disabled"
+                  },
+                  "_hash": 0.5594087842471693,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "fw_url",
+                  "type": "attribute",
+                  "label": "fw_url",
+                  "color": "#e91e63",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "cellContentFunction": "",
+                    "defaultColumnVisibility": "hidden",
+                    "columnSelectionToDisplay": "disabled"
+                  },
+                  "_hash": 0.4204673738685043,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "actions": {
+            "actionCellButton": [
+              {
+                "name": "History firmware update",
+                "icon": "history",
+                "type": "openDashboardState",
+                "targetDashboardStateId": "device_firmware_history",
+                "setEntityId": true,
+                "stateEntityParamName": null,
+                "openInSeparateDialog": false,
+                "dialogTitle": "",
+                "dialogHideDashboardToolbar": true,
+                "dialogWidth": null,
+                "dialogHeight": null,
+                "openRightLayout": false,
+                "id": "98a1406c-3301-bc2f-2c5d-d637ce3b663b"
+              },
+              {
+                "name": "Edit firmware",
+                "icon": "edit",
+                "type": "customPretty",
+                "customHtml": "<form #editEntityForm=\"ngForm\" [formGroup]=\"editEntityFormGroup\"\n      (ngSubmit)=\"save()\"  class=\"edit-entity-form\">\n    <mat-toolbar fxLayout=\"row\" color=\"primary\">\n        <h2>Edit firmware {{entityName}}</h2>\n        <span fxFlex></span>\n        <button mat-icon-button (click)=\"cancel()\" type=\"button\">\n            <mat-icon class=\"material-icons\">close</mat-icon>\n        </button>\n    </mat-toolbar>\n    <mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\n    </mat-progress-bar>\n    <div style=\"height: 4px;\" *ngIf=\"!(isLoading$ | async)\"></div>\n    <div *ngIf=\"entity.deviceProfileId\" mat-dialog-content fxLayout=\"column\">\n        <tb-ota-package-autocomplete\n            [useFullEntityId]=\"true\"\n            [deviceProfileId]=\"entity.deviceProfileId.id\"\n            formControlName=\"firmwareId\">\n        </tb-ota-package-autocomplete>\n    </div>\n    <div mat-dialog-actions fxLayout=\"row\" fxLayoutAlign=\"end center\">\n        <button mat-button color=\"primary\"\n                type=\"button\"\n                [disabled]=\"(isLoading$ | async)\"\n                (click)=\"cancel()\" cdkFocusInitial>\n            Cancel\n        </button>\n        <button mat-button mat-raised-button color=\"primary\"\n                type=\"submit\"\n                [disabled]=\"(isLoading$ | async) || editEntityForm.invalid || !editEntityForm.dirty\">\n            Save\n        </button>\n    </div>\n</form>",
+                "customCss": "form {\n    min-width: 300px !important;\n}",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\n\nopenEditEntityDialog();\n\nfunction openEditEntityDialog() {\n    customDialog.customDialog(htmlTemplate, EditEntityDialogController).subscribe();\n}\n\nfunction EditEntityDialogController(instance) {\n    let vm = instance;\n\n    vm.entityName = entityName;\n    vm.entity = {};\n\n    vm.editEntityFormGroup = vm.fb.group({\n        firmwareId: [null]\n    });\n\n    getEntityInfo();\n\n    vm.cancel = function() {\n        vm.dialogRef.close(null);\n    };\n\n    vm.save = function() {\n        vm.editEntityFormGroup.markAsPristine();\n        saveEntity().subscribe(\n            function () {\n                // widgetContext.updateAliases();\n                vm.dialogRef.close(null);\n            }\n        );\n    };\n\n\n    function getEntityInfo() {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                vm.entity = data;\n                vm.editEntityFormGroup.patchValue({\n                    firmwareId: vm.entity.firmwareId\n                }, {emitEvent: false});\n            }\n        );\n    }\n\n    function saveEntity() {\n        const formValues = vm.editEntityFormGroup.value;\n        vm.entity.firmwareId = formValues.firmwareId;\n        return deviceService.saveDevice(vm.entity);\n    }\n}",
+                "customResources": [],
+                "id": "23099c1d-454b-25dc-8bc0-7cf33c21c5d5"
+              },
+              {
+                "name": "Download firmware",
+                "icon": "file_download",
+                "type": "custom",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet otaPackageService = $injector.get(widgetContext.servicesMap.get('otaPackageService'));\nlet deviceProfileService = $injector.get(widgetContext.servicesMap.get('deviceProfileService'));\n\ngetDeviceFirmware();\n\nfunction getDeviceFirmware() {\n    var entityIdValue = entityId.id;\n    var data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_url');\n    var url = data.data[0][1];\n    if (url === '') {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                if (data.firmwareId !== null) {\n                    otaPackageService.downloadOtaPackage(data.firmwareId.id).subscribe();    \n                } else {\n                    deviceProfileService.getDeviceProfile(data.deviceProfileId.id).subscribe(\n                        function (deviceProfile) {\n                            if (deviceProfile.firmwareId !== null) {\n                                otaPackageService.downloadOtaPackage(deviceProfile.firmwareId.id).subscribe();\n                            } else {\n                                widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n                            }\n                    });\n                }\n            }\n        );\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n    }\n}",
+                "id": "12533058-42f6-e75f-620c-219c48d01ec0"
+              },
+              {
+                "name": "Copy checksum/URL",
+                "icon": "content_copy",
+                "type": "custom",
+                "customFunction": "function copyToClipboard(text) {\n    if (window.clipboardData && window.clipboardData.setData) {\n        return window.clipboardData.setData(\"Text\", text);\n\n    }\n    else if (document.queryCommandSupported && document.queryCommandSupported(\"copy\")) {\n        var textarea = document.createElement(\"textarea\");\n        textarea.textContent = text;\n        textarea.style.position = \"fixed\";\n        document.body.appendChild(textarea);\n        textarea.select();\n        try {\n            return document.execCommand(\"copy\");\n        }\n        catch (ex) {\n            console.warn(\"Copy to clipboard failed.\", ex);\n            return false;\n        }\n        document.body.removeChild(textarea);\n    }\n}\nvar entityIdValue = entityId.id;\nvar data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_checksum');\nvar checksum = data.data[0][1];\nif (checksum !== '') {\n    copyToClipboard(checksum);\n    widgetContext.showSuccessToast('Firmware checksum has been copied to clipboard', 2000, 'top');\n} else {\n    data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_url');\n    var url = data.data[0][1];\n    if (url !== '') {\n        copyToClipboard(url);\n        widgetContext.showSuccessToast('Firmware direct URL has been copied to clipboard', 2000, 'top');\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n    }\n}",
+                "id": "09323079-7111-87f7-90d1-c62cd7d85dc7"
+              }
+            ]
+          },
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "widgetStyle": {}
+        },
+        "row": 0,
+        "col": 0,
+        "id": "3624013b-378c-f110-5eba-ae95c25a4dcc",
+        "typeFullFqn": "system.cards.entities_table"
+      },
+      "d2d13e0d-4e71-889f-9343-ad2f0af9f176": {
+        "type": "latest",
+        "sizeX": 7.5,
+        "sizeY": 6.5,
+        "config": {
+          "timewindow": {
+            "displayValue": "",
+            "selectedTab": 0,
+            "realtime": {
+              "realtimeType": 1,
+              "interval": 1000,
+              "timewindowMs": 86400000,
+              "quickInterval": "CURRENT_DAY"
+            },
+            "history": {
+              "historyType": 0,
+              "interval": 1000,
+              "timewindowMs": 60000,
+              "fixedTimewindow": {
+                "startTimeMs": 1694085363133,
+                "endTimeMs": 1694171763133
+              },
+              "quickInterval": "CURRENT_DAY"
+            },
+            "aggregation": {
+              "type": "NONE",
+              "limit": 200
+            }
+          },
+          "showTitle": true,
+          "backgroundColor": "rgb(255, 255, 255)",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "4px",
+          "settings": {
+            "enableSearch": true,
+            "displayPagination": true,
+            "defaultPageSize": 10,
+            "defaultSortOrder": "entityName",
+            "displayEntityName": true,
+            "displayEntityType": false,
+            "enableSelectColumnDisplay": false,
+            "enableStickyHeader": true,
+            "enableStickyAction": true,
+            "entitiesTitle": "Devices",
+            "displayEntityLabel": false,
+            "entityNameColumnTitle": "Device"
+          },
+          "title": "New Entities table",
+          "dropShadow": true,
+          "enableFullscreen": true,
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400,
+            "padding": "5px 10px 5px 10px"
+          },
+          "useDashboardTimewindow": false,
+          "showLegend": false,
+          "datasources": [
+            {
+              "type": "entity",
+              "name": null,
+              "entityAliasId": "639da5b4-31f0-0151-6282-c37a3897b7e8",
+              "filterId": "6044e198-df64-cd76-f339-696f220c4943",
+              "dataKeys": [
+                {
+                  "name": "current_fw_title",
+                  "type": "timeseries",
+                  "label": "Current FW title",
+                  "color": "#2196f3",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled"
+                  },
+                  "_hash": 0.09545533885166413,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "current_fw_version",
+                  "type": "timeseries",
+                  "label": "Current FW version",
+                  "color": "#4caf50",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled"
+                  },
+                  "_hash": 0.7206056602328659,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "target_fw_title",
+                  "type": "timeseries",
+                  "label": "Target FW title",
+                  "color": "#ffc107",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled"
+                  },
+                  "_hash": 0.9934225682766313,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "target_fw_version",
+                  "type": "timeseries",
+                  "label": "Target FW version",
+                  "color": "#607d8b",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "cellContentFunction": "",
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled"
+                  },
+                  "_hash": 0.5251724416842531,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "target_fw_ts",
+                  "type": "timeseries",
+                  "label": "Target FW set time",
+                  "color": "#e91e63",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": true,
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled",
+                    "cellContentFunction": "if (value !== '') {\n    return ctx.date.transform(value, 'yyyy-MM-dd HH:mm:ss');\n}\nreturn '';"
+                  },
+                  "_hash": 0.31823244858578237,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "fw_state",
+                  "type": "timeseries",
+                  "label": "Progress",
+                  "color": "#9c27b0",
+                  "settings": {
+                    "columnWidth": "30%",
+                    "useCellStyleFunction": true,
+                    "useCellContentFunction": true,
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled",
+                    "cellStyleFunction": "return {\n    'padding-right': '30px'\n}",
+                    "cellContentFunction": "if (value !== '') {\n    var mapProgress = {\n        'QUEUED': 0,\n        'INITIATED': 5,\n        'DOWNLOADING': 10,\n        'DOWNLOADED': 55,\n        'VERIFIED': 60,\n        'UPDATING': 70,\n        'FAILED': 99,\n        'UPDATED': 100\n    }\n    var color = 'mat-primary';\n    var progress = mapProgress[value];\n    if (value == 'FAILED') {\n        color = 'mat-accent';\n    }\n    return `<mat-progress-bar style=\"height: 8px\" role=\"progressbar\" aria-valuemin=\"0\" aria-valuemax=\"100\" tabindex=\"-1\" mode=\"determinate\" value=\"${progress}\" class=\"mat-progress-bar ${color}\" aria-valuenow=\"${progress}\"><div aria-hidden=\"true\"><svg width=\"100%\" height=\"8\" focusable=\"false\" class=\"mat-progress-bar-background mat-progress-bar-element\"><defs><pattern x=\"4\" y=\"0\" width=\"8\" height=\"4\" patternUnits=\"userSpaceOnUse\" id=\"mat-progress-bar-0\"><circle cx=\"2\" cy=\"2\" r=\"2\"></circle></pattern></defs><rect width=\"100%\" height=\"100%\" fill=\"url(\"/components/progress-bar/overview#mat-progress-bar-0\")\"></rect></svg><div class=\"mat-progress-bar-buffer mat-progress-bar-element\"></div><div class=\"mat-progress-bar-primary mat-progress-bar-fill mat-progress-bar-element\" style=\"transform: scale3d(${progress / 100}, 1, 1);\"></div><div class=\"mat-progress-bar-secondary mat-progress-bar-fill mat-progress-bar-element\"></div></div></mat-progress-bar>`;\n}"
+                  },
+                  "_hash": 0.8174211757846257,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "fw_state",
+                  "type": "timeseries",
+                  "label": "Status",
+                  "color": "#f44336",
+                  "settings": {
+                    "columnWidth": "130px",
+                    "useCellStyleFunction": true,
+                    "useCellContentFunction": true,
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled",
+                    "cellStyleFunction": "if (value == 'FAILED') {\n    return {'color' : '#D93025'};\n}\nreturn {};",
+                    "cellContentFunction": "function icon(value) {\n    if (value == 'QUEUED') {\n        return '<mat-icon _role=\"img\" class=\"mat-icon notranslate material-icons mat-icon-no-color\" aria-hidden=\"true\" data-mat-icon-type=\"font\" style=\"color: #000;\"><svg style=\"width:24px;height:24px\" viewBox=\"0 0 24 24\"><path fill=\"currentColor\" d=\"M6,2V8H6V8L10,12L6,16V16H6V22H18V16H18V16L14,12L18,8V8H18V2H6M16,16.5V20H8V16.5L12,12.5L16,16.5M12,11.5L8,7.5V4H16V7.5L12,11.5Z\" /></svg></mat-icon>';\n    }\n    if (value == 'INITIATED' || value == 'DOWNLOADING' || value == 'DOWNLOADED') {\n        return '<mat-icon _role=\"img\" class=\"mat-icon notranslate material-icons mat-icon-no-color\" aria-hidden=\"true\" data-mat-icon-type=\"font\" style=\"color: #000\"><svg viewBox=\"0 0 16 16\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M12.74 2.1951C11.63 1.2876 10.2575 0.687598 8.75 0.537598V2.0526C9.845 2.1876 10.8425 2.6226 11.675 3.2676L12.74 2.1951ZM13.9475 7.2501H15.4625C15.3125 5.7426 14.7125 4.3701 13.805 3.2601L12.7325 4.3251C13.3775 5.1576 13.8125 6.1551 13.9475 7.2501ZM12.7325 11.6751L13.805 12.7476C14.7125 11.6376 15.3125 10.2576 15.4625 8.7576H13.9475C13.8125 9.8451 13.3775 10.8426 12.7325 11.6751ZM8.75 13.9476V15.4626C10.2575 15.3126 11.63 14.7126 12.74 13.8051L11.6675 12.7326C10.8425 13.3776 9.845 13.8126 8.75 13.9476ZM8.75 8.0001V4.2501H7.25V8.0001H4.25L8 11.7501L11.75 8.0001H8.75ZM7.25 13.9476V15.4626C3.4625 15.0876 0.5 11.8926 0.5 8.0001C0.5 4.1076 3.4625 0.912598 7.25 0.537598V2.0526C4.2875 2.4201 2 4.9401 2 8.0001C2 11.0601 4.2875 13.5801 7.25 13.9476Z\" fill=\"black\"/></svg></mat-icon>';\n    }\n    if (value == 'VERIFIED' || value == 'UPDATING' ) {\n        return '<mat-icon _role=\"img\" class=\"mat-icon notranslate material-icons mat-icon-no-color\" aria-hidden=\"true\" data-mat-icon-type=\"font\" style=\"color: #000\">update</mat-icon>';\n    }\n    if (value == 'UPDATED') {\n        return '<mat-icon _role=\"img\" class=\"mat-icon notranslate material-icons mat-icon-no-color\" aria-hidden=\"true\" data-mat-icon-type=\"font\" style=\"color: #000\"><svg style=\"width:22px;height:22px\" viewBox=\"0 0 34 32\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M33.26 2.82L30.44 0L12.06 18.38L3.55999 9.9L0.73999 12.72L12.06 24.04L33.26 2.82Z\" fill=\"black\"/><path d=\"M31 28H3V32H31V28Z\" fill=\"black\"/></svg></mat-icon>';\n    }\n    if (value == 'FAILED') {\n        return '<mat-icon _role=\"img\" class=\"mat-icon notranslate material-icons mat-icon-no-color\" aria-hidden=\"true\" data-mat-icon-type=\"font\" style=\"color: #D93025\">warning</mat-icon>';\n    }\n    return '';\n}\nfunction capitalize (s) {\n  if (typeof s !== 'string') return '';\n  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();\n}\n\nreturn icon(value) + '<span style=\"vertical-align: super;padding-left: 8px;\">' + capitalize(value) + '</span>';"
+                  },
+                  "_hash": 0.7764426948615217,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "fw_checksum",
+                  "type": "attribute",
+                  "label": "fw_checksum",
+                  "color": "#3f51b5",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "defaultColumnVisibility": "hidden",
+                    "columnSelectionToDisplay": "disabled"
+                  },
+                  "_hash": 0.5594087842471693,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "fw_url",
+                  "type": "attribute",
+                  "label": "fw_url",
+                  "color": "#e91e63",
+                  "settings": {
+                    "columnWidth": "0px",
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "cellContentFunction": "",
+                    "defaultColumnVisibility": "hidden",
+                    "columnSelectionToDisplay": "disabled"
+                  },
+                  "_hash": 0.4204673738685043,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
+            }
+          ],
+          "actions": {
+            "actionCellButton": [
+              {
+                "name": "History firmware update",
+                "icon": "history",
+                "type": "openDashboardState",
+                "targetDashboardStateId": "device_firmware_history",
+                "setEntityId": true,
+                "stateEntityParamName": null,
+                "openInSeparateDialog": false,
+                "dialogTitle": "",
+                "dialogHideDashboardToolbar": true,
+                "dialogWidth": null,
+                "dialogHeight": null,
+                "openRightLayout": false,
+                "id": "98a1406c-3301-bc2f-2c5d-d637ce3b663b"
+              },
+              {
+                "name": "Edit firmware",
+                "icon": "edit",
+                "type": "customPretty",
+                "customHtml": "<form #editEntityForm=\"ngForm\" [formGroup]=\"editEntityFormGroup\"\n      (ngSubmit)=\"save()\"  class=\"edit-entity-form\">\n    <mat-toolbar fxLayout=\"row\" color=\"primary\">\n        <h2>Edit firmware {{entityName}}</h2>\n        <span fxFlex></span>\n        <button mat-icon-button (click)=\"cancel()\" type=\"button\">\n            <mat-icon class=\"material-icons\">close</mat-icon>\n        </button>\n    </mat-toolbar>\n    <mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\n    </mat-progress-bar>\n    <div style=\"height: 4px;\" *ngIf=\"!(isLoading$ | async)\"></div>\n    <div *ngIf=\"entity.deviceProfileId\" mat-dialog-content fxLayout=\"column\">\n        <tb-ota-package-autocomplete\n            [useFullEntityId]=\"true\"\n            [deviceProfileId]=\"entity.deviceProfileId.id\"\n            formControlName=\"firmwareId\">\n        </tb-ota-package-autocomplete>\n    </div>\n    <div mat-dialog-actions fxLayout=\"row\" fxLayoutAlign=\"end center\">\n        <button mat-button color=\"primary\"\n                type=\"button\"\n                [disabled]=\"(isLoading$ | async)\"\n                (click)=\"cancel()\" cdkFocusInitial>\n            Cancel\n        </button>\n        <button mat-button mat-raised-button color=\"primary\"\n                type=\"submit\"\n                [disabled]=\"(isLoading$ | async) || editEntityForm.invalid || !editEntityForm.dirty\">\n            Save\n        </button>\n    </div>\n</form>",
+                "customCss": "form {\n    min-width: 300px !important;\n}",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\n\nopenEditEntityDialog();\n\nfunction openEditEntityDialog() {\n    customDialog.customDialog(htmlTemplate, EditEntityDialogController).subscribe();\n}\n\nfunction EditEntityDialogController(instance) {\n    let vm = instance;\n\n    vm.entityName = entityName;\n    vm.entity = {};\n\n    vm.editEntityFormGroup = vm.fb.group({\n        firmwareId: [null]\n    });\n\n    getEntityInfo();\n\n    vm.cancel = function() {\n        vm.dialogRef.close(null);\n    };\n\n    vm.save = function() {\n        vm.editEntityFormGroup.markAsPristine();\n        saveEntity().subscribe(\n            function () {\n                // widgetContext.updateAliases();\n                vm.dialogRef.close(null);\n            }\n        );\n    };\n\n\n    function getEntityInfo() {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                vm.entity = data;\n                vm.editEntityFormGroup.patchValue({\n                    firmwareId: vm.entity.firmwareId\n                }, {emitEvent: false});\n            }\n        );\n    }\n\n    function saveEntity() {\n        const formValues = vm.editEntityFormGroup.value;\n        vm.entity.firmwareId = formValues.firmwareId;\n        return deviceService.saveDevice(vm.entity);\n    }\n}",
+                "customResources": [],
+                "id": "23099c1d-454b-25dc-8bc0-7cf33c21c5d5"
+              },
+              {
+                "name": "Download firmware",
+                "icon": "file_download",
+                "type": "custom",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet entityService = $injector.get(widgetContext.servicesMap.get('entityService'));\nlet otaPackageService = $injector.get(widgetContext.servicesMap.get('otaPackageService'));\nlet deviceProfileService = $injector.get(widgetContext.servicesMap.get('deviceProfileService'));\n\ngetDeviceFirmware();\n\nfunction getDeviceFirmware() {\n    var entityIdValue = entityId.id;\n    var data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_url');\n    var url = data.data[0][1];\n    if (url === '') {\n        entityService.getEntity(entityId.entityType, entityId.id).subscribe(\n            function (data) {\n                if (data.firmwareId !== null) {\n                    otaPackageService.downloadOtaPackage(data.firmwareId.id).subscribe();    \n                } else {\n                    deviceProfileService.getDeviceProfile(data.deviceProfileId.id).subscribe(\n                        function (deviceProfile) {\n                            if (deviceProfile.firmwareId !== null) {\n                                otaPackageService.downloadOtaPackage(deviceProfile.firmwareId.id).subscribe();\n                            } else {\n                                widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n                            }\n                    });\n                }\n            }\n        );\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n    }\n}",
+                "id": "12533058-42f6-e75f-620c-219c48d01ec0"
+              },
+              {
+                "name": "Copy checksum/URL",
+                "icon": "content_copy",
+                "type": "custom",
+                "customFunction": "function copyToClipboard(text) {\n    if (window.clipboardData && window.clipboardData.setData) {\n        return window.clipboardData.setData(\"Text\", text);\n\n    }\n    else if (document.queryCommandSupported && document.queryCommandSupported(\"copy\")) {\n        var textarea = document.createElement(\"textarea\");\n        textarea.textContent = text;\n        textarea.style.position = \"fixed\";\n        document.body.appendChild(textarea);\n        textarea.select();\n        try {\n            return document.execCommand(\"copy\");\n        }\n        catch (ex) {\n            console.warn(\"Copy to clipboard failed.\", ex);\n            return false;\n        }\n        document.body.removeChild(textarea);\n    }\n}\nvar entityIdValue = entityId.id;\nvar data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_checksum');\nvar checksum = data.data[0][1];\nif (checksum !== '') {\n    copyToClipboard(checksum);\n    widgetContext.showSuccessToast('Firmware checksum has been copied to clipboard', 2000, 'top');\n} else {\n    data = widgetContext.data.find((el) => el.datasource.entityId === entityIdValue && el.dataKey.name === 'fw_url');\n    var url = data.data[0][1];\n    if (url !== '') {\n        copyToClipboard(url);\n        widgetContext.showSuccessToast('Firmware direct URL has been copied to clipboard', 2000, 'top');\n    } else {\n        widgetContext.showToast('warn', 'Device ' + entityName +' has not firmware set.', 2000, 'top');\n    }\n}",
+                "id": "09323079-7111-87f7-90d1-c62cd7d85dc7"
+              }
+            ]
+          },
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "widgetStyle": {}
+        },
+        "row": 0,
+        "col": 0,
+        "id": "d2d13e0d-4e71-889f-9343-ad2f0af9f176",
+        "typeFullFqn": "system.cards.entities_table"
+      }
+    },
+    "states": {
+      "default": {
+        "name": "Device list",
+        "root": true,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "cd03188e-cd9d-9601-fd57-da4cb95fc016": {
+                "sizeX": 19,
+                "sizeY": 12,
+                "row": 0,
+                "col": 0
+              },
+              "17543c57-af4a-2c1e-bf12-53a7b46791e6": {
+                "sizeX": 5,
+                "sizeY": 3,
+                "row": 0,
+                "col": 19
+              },
+              "6c1c4e1a-bce0-f5ad-ff8b-ba1dfc5a4ec6": {
+                "sizeX": 5,
+                "sizeY": 3,
+                "row": 3,
+                "col": 19
+              },
+              "e6674227-9cf3-a2f6-ecac-5ccfc38a3c81": {
+                "sizeX": 5,
+                "sizeY": 3,
+                "row": 9,
+                "col": 19
+              },
+              "77b10144-b904-edd5-8c7c-8fb75616c6d8": {
+                "sizeX": 5,
+                "sizeY": 3,
+                "row": 6,
+                "col": 19
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "color": "rgba(0,0,0,0.870588)",
+              "columns": 24,
+              "margin": 12,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": true,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": true,
+              "mobileRowHeight": 70,
+              "outerMargin": true
+            }
+          }
+        }
+      },
+      "device_firmware_history": {
+        "name": "Firmware history: ${entityName}",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "100b756c-0082-6505-3ae1-3603e6deea48": {
+                "sizeX": 24,
+                "sizeY": 12,
+                "row": 0,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "color": "rgba(0,0,0,0.870588)",
+              "columns": 24,
+              "margin": 10,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": true,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70,
+              "outerMargin": true
+            }
+          }
+        }
+      },
+      "device_waiting": {
+        "name": "Device waiting",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "21be08bb-ec90-f760-ad6f-e7678f12c401": {
+                "sizeX": 24,
+                "sizeY": 12,
+                "row": 0,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "color": "rgba(0,0,0,0.870588)",
+              "columns": 24,
+              "margin": 10,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": true,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70,
+              "outerMargin": true
+            }
+          }
+        }
+      },
+      "device_updating": {
+        "name": "Device updating",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "e8280043-d3dc-7acb-c2ff-a4522972ff91": {
+                "sizeX": 24,
+                "sizeY": 12,
+                "row": 0,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "color": "rgba(0,0,0,0.870588)",
+              "columns": 24,
+              "margin": 10,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": true,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70,
+              "outerMargin": true
+            }
+          }
+        }
+      },
+      "device_updated": {
+        "name": "Device updated",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "d2d13e0d-4e71-889f-9343-ad2f0af9f176": {
+                "sizeX": 27,
+                "sizeY": 12,
+                "row": 0,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "color": "rgba(0,0,0,0.870588)",
+              "columns": 24,
+              "margin": 10,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": true,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70,
+              "outerMargin": true
+            }
+          }
+        }
+      },
+      "device_error": {
+        "name": "Device failed",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "3624013b-378c-f110-5eba-ae95c25a4dcc": {
+                "sizeX": 24,
+                "sizeY": 12,
+                "row": 0,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "color": "rgba(0,0,0,0.870588)",
+              "columns": 24,
+              "margin": 10,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": true,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 70,
+              "outerMargin": true
+            }
+          }
+        }
+      }
+    },
+    "entityAliases": {
+      "639da5b4-31f0-0151-6282-c37a3897b7e8": {
+        "id": "639da5b4-31f0-0151-6282-c37a3897b7e8",
+        "alias": "All devices",
+        "filter": {
+          "type": "entityType",
+          "resolveMultiple": true,
+          "entityType": "DEVICE"
+        }
+      },
+      "19f41c21-d9af-e666-8f50-e1748778f955": {
+        "id": "19f41c21-d9af-e666-8f50-e1748778f955",
+        "alias": "State entity",
+        "filter": {
+          "type": "stateEntity",
+          "resolveMultiple": false,
+          "stateEntityParamName": null,
+          "defaultStateEntity": null
+        }
+      }
+    },
+    "filters": {
+      "19a0ad1c-b31d-4a29-9d7b-5d87e2a8ea6e": {
+        "id": "19a0ad1c-b31d-4a29-9d7b-5d87e2a8ea6e",
+        "filter": "WaitingDevicesFilter",
+        "keyFilters": [
+          {
+            "key": {
+              "type": "TIME_SERIES",
+              "key": "fw_state"
+            },
+            "valueType": "STRING",
+            "predicates": [
+              {
+                "keyFilterPredicate": {
+                  "operation": "EQUAL",
+                  "value": {
+                    "defaultValue": "QUEUED",
+                    "dynamicValue": null
+                  },
+                  "ignoreCase": false,
+                  "type": "STRING"
+                },
+                "userInfo": {
+                  "editable": true,
+                  "label": "",
+                  "autogeneratedLabel": true,
+                  "order": 0
+                }
+              }
+            ]
+          }
+        ],
+        "editable": false
+      },
+      "579f0468-9ce9-7e3e-b34c-88dd3de59897": {
+        "id": "579f0468-9ce9-7e3e-b34c-88dd3de59897",
+        "filter": "UpdatingDevicesFilter",
+        "keyFilters": [
+          {
+            "key": {
+              "type": "TIME_SERIES",
+              "key": "fw_state"
+            },
+            "valueType": "STRING",
+            "predicates": [
+              {
+                "keyFilterPredicate": {
+                  "operation": "OR",
+                  "predicates": [
+                    {
+                      "keyFilterPredicate": {
+                        "operation": "EQUAL",
+                        "value": {
+                          "defaultValue": "INITIATED",
+                          "dynamicValue": null
+                        },
+                        "ignoreCase": false,
+                        "type": "STRING"
+                      },
+                      "userInfo": {
+                        "editable": false,
+                        "label": "fw_state equel",
+                        "autogeneratedLabel": true,
+                        "order": 0
+                      }
+                    },
+                    {
+                      "keyFilterPredicate": {
+                        "operation": "EQUAL",
+                        "value": {
+                          "defaultValue": "DOWNLOADING",
+                          "dynamicValue": null
+                        },
+                        "ignoreCase": false,
+                        "type": "STRING"
+                      },
+                      "userInfo": {
+                        "editable": false,
+                        "label": "fw_state equal",
+                        "autogeneratedLabel": true,
+                        "order": 0
+                      }
+                    },
+                    {
+                      "keyFilterPredicate": {
+                        "operation": "EQUAL",
+                        "value": {
+                          "defaultValue": "DOWNLOADED",
+                          "dynamicValue": null
+                        },
+                        "ignoreCase": false,
+                        "type": "STRING"
+                      },
+                      "userInfo": {
+                        "editable": false,
+                        "label": "fw_state equal",
+                        "autogeneratedLabel": true,
+                        "order": 0
+                      }
+                    },
+                    {
+                      "keyFilterPredicate": {
+                        "operation": "EQUAL",
+                        "value": {
+                          "defaultValue": "VERIFIED",
+                          "dynamicValue": null
+                        },
+                        "ignoreCase": false,
+                        "type": "STRING"
+                      },
+                      "userInfo": {
+                        "editable": false,
+                        "label": "fw_state equal",
+                        "autogeneratedLabel": true,
+                        "order": 0
+                      }
+                    },
+                    {
+                      "keyFilterPredicate": {
+                        "operation": "EQUAL",
+                        "value": {
+                          "defaultValue": "UPDATING",
+                          "dynamicValue": null
+                        },
+                        "ignoreCase": false,
+                        "type": "STRING"
+                      },
+                      "userInfo": {
+                        "editable": false,
+                        "label": "fw_state equal",
+                        "autogeneratedLabel": true,
+                        "order": 0
+                      }
+                    }
+                  ],
+                  "type": "COMPLEX"
+                },
+                "userInfo": {
+                  "editable": true,
+                  "label": "",
+                  "autogeneratedLabel": true,
+                  "order": 0
+                }
+              }
+            ]
+          }
+        ],
+        "editable": false
+      },
+      "6044e198-df64-cd76-f339-696f220c4943": {
+        "id": "6044e198-df64-cd76-f339-696f220c4943",
+        "filter": "UpdetedDevicesFilter",
+        "keyFilters": [
+          {
+            "key": {
+              "type": "TIME_SERIES",
+              "key": "fw_state"
+            },
+            "valueType": "STRING",
+            "predicates": [
+              {
+                "keyFilterPredicate": {
+                  "operation": "EQUAL",
+                  "value": {
+                    "defaultValue": "UPDATED",
+                    "dynamicValue": null
+                  },
+                  "ignoreCase": false,
+                  "type": "STRING"
+                },
+                "userInfo": {
+                  "editable": true,
+                  "label": "",
+                  "autogeneratedLabel": true,
+                  "order": 0
+                }
+              }
+            ]
+          }
+        ],
+        "editable": false
+      },
+      "bdbc6ea1-95a7-3912-341a-58dc7704a00f": {
+        "id": "bdbc6ea1-95a7-3912-341a-58dc7704a00f",
+        "filter": "FailedDevicesFilter",
+        "keyFilters": [
+          {
+            "key": {
+              "type": "TIME_SERIES",
+              "key": "fw_state"
+            },
+            "valueType": "STRING",
+            "predicates": [
+              {
+                "keyFilterPredicate": {
+                  "operation": "EQUAL",
+                  "value": {
+                    "defaultValue": "FAILED",
+                    "dynamicValue": null
+                  },
+                  "ignoreCase": false,
+                  "type": "STRING"
+                },
+                "userInfo": {
+                  "editable": true,
+                  "label": "",
+                  "autogeneratedLabel": true,
+                  "order": 0
+                }
+              }
+            ]
+          }
+        ],
+        "editable": false
+      },
+      "8fdb88d0-50ac-2232-fdb7-69c30c16544e": {
+        "id": "8fdb88d0-50ac-2232-fdb7-69c30c16544e",
+        "filter": "DeviceSearch",
+        "keyFilters": [
+          {
+            "key": {
+              "type": "ENTITY_FIELD",
+              "key": "name"
+            },
+            "valueType": "STRING",
+            "predicates": [
+              {
+                "keyFilterPredicate": {
+                  "operation": "CONTAINS",
+                  "value": {
+                    "defaultValue": ""
+                  },
+                  "ignoreCase": true,
+                  "type": "STRING"
+                },
+                "userInfo": {
+                  "editable": true,
+                  "label": "Device name",
+                  "autogeneratedLabel": false,
+                  "order": 0
+                }
+              }
+            ]
+          }
+        ],
+        "editable": true
+      }
+    },
+    "timewindow": {
+      "displayValue": "",
+      "hideInterval": false,
+      "hideAggregation": false,
+      "hideAggInterval": false,
+      "hideTimezone": false,
+      "selectedTab": 0,
+      "realtime": {
+        "realtimeType": 0,
+        "interval": 1000,
+        "timewindowMs": 60000,
+        "quickInterval": "CURRENT_DAY"
+      },
+      "history": {
+        "historyType": 0,
+        "interval": 1000,
+        "timewindowMs": 60000,
+        "fixedTimewindow": {
+          "startTimeMs": 1618998609030,
+          "endTimeMs": 1619085009030
+        },
+        "quickInterval": "CURRENT_DAY"
+      },
+      "aggregation": {
+        "type": "AVG",
+        "limit": 25000
+      }
+    },
+    "settings": {
+      "stateControllerId": "entity",
+      "showTitle": false,
+      "showDashboardsSelect": false,
+      "showEntitiesSelect": false,
+      "showDashboardTimewindow": true,
+      "showDashboardExport": false,
+      "toolbarAlwaysOpen": true,
+      "titleColor": "rgba(0,0,0,0.870588)",
+      "showFilters": true,
+      "showDashboardLogo": false,
+      "dashboardLogoUrl": null,
+      "showUpdateDashboardImage": false
+    }
+  },
+  "externalId": null,
+  "name": "Firmware"
+}

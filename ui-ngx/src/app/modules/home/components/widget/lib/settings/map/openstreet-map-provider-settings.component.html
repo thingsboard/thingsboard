@@ -1,0 +1,46 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section class="tb-widget-settings" [formGroup]="providerSettingsFormGroup">
+  <mat-form-field fxFlex class="mat-block">
+    <mat-label translate>widgets.maps.openstreet-provider</mat-label>
+    <mat-select required formControlName="mapProvider">
+      <mat-option *ngFor="let provider of mapProviders" [value]="provider">
+        {{openStreetMapProviderTranslations.get(provider) | translate}}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+  <mat-expansion-panel class="tb-settings" [expanded]="providerSettingsFormGroup.get('useCustomProvider').value">
+    <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-panel-title>
+        <mat-slide-toggle formControlName="useCustomProvider" (click)="$event.stopPropagation()"
+                          fxLayoutAlign="center">
+          {{ 'widgets.maps.use-custom-provider' | translate }}
+        </mat-slide-toggle>
+      </mat-panel-title>
+      <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+        widget-config.advanced-settings
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+    <ng-template matExpansionPanelContent>
+      <mat-form-field fxFlex class="mat-block">
+        <mat-label translate>widgets.maps.custom-provider-tile-url</mat-label>
+        <input required matInput formControlName="customProviderTileUrl">
+      </mat-form-field>
+    </ng-template>
+  </mat-expansion-panel>
+</section>
