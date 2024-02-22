@@ -30,20 +30,20 @@ import java.util.UUID;
 public interface AlarmRuleRepository extends JpaRepository<AlarmRuleEntity, UUID>, ExportableEntityRepository<AlarmRuleEntity> {
 
     @Query("SELECT ai FROM AlarmRuleInfoEntity ai WHERE ai.tenantId = :tenantId " +
-            "AND LOWER(ai.name) LIKE LOWER(CONCAT('%', :searchText, '%'))")
+            "AND (:searchText IS NULL OR (ilike(ai.name, CONCAT('%', :searchText, '%')) = true))")
     Page<AlarmRuleInfoEntity> findInfosByTenantId(@Param("tenantId") UUID tenantId,
                                                   @Param("searchText") String searchText,
                                                   Pageable pageable);
 
     @Query("SELECT ai FROM AlarmRuleEntity ai WHERE ai.tenantId = :tenantId " +
-            "AND LOWER(ai.name) LIKE LOWER(CONCAT('%', :searchText, '%'))")
+            "AND (:searchText IS NULL OR (ilike(ai.name, CONCAT('%', :searchText, '%')) = true))")
     Page<AlarmRuleEntity> findByTenantId(@Param("tenantId") UUID tenantId,
                                          @Param("searchText") String searchText,
                                          Pageable pageable);
 
     @Query("SELECT ai FROM AlarmRuleEntity ai WHERE ai.tenantId = :tenantId " +
             "AND ai.enabled = true " +
-            "AND LOWER(ai.name) LIKE LOWER(CONCAT('%', :searchText, '%'))")
+            "AND (:searchText IS NULL OR (ilike(ai.name, CONCAT('%', :searchText, '%')) = true))")
     Page<AlarmRuleEntity> findByTenantIdAndEnabled(@Param("tenantId") UUID tenantId,
                                                    @Param("searchText") String searchText,
                                                    Pageable pageable);

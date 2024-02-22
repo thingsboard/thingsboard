@@ -69,7 +69,7 @@ public class JpaAlarmRuleDao extends JpaAbstractDao<AlarmRuleEntity, AlarmRule> 
         return DaoUtil.toPageData(alarmRuleRepository
                 .findInfosByTenantId(
                         tenantId,
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 
@@ -78,7 +78,7 @@ public class JpaAlarmRuleDao extends JpaAbstractDao<AlarmRuleEntity, AlarmRule> 
         return DaoUtil.toPageData(alarmRuleRepository
                 .findByTenantId(
                         tenantId,
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 
@@ -87,7 +87,7 @@ public class JpaAlarmRuleDao extends JpaAbstractDao<AlarmRuleEntity, AlarmRule> 
         return DaoUtil.toPageData(alarmRuleRepository
                 .findByTenantIdAndEnabled(
                         tenantId,
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 
