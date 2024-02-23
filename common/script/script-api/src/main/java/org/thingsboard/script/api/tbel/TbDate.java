@@ -35,7 +35,6 @@ import java.time.format.DateTimeParseException;
 import java.time.format.FormatStyle;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAccessor;
-import java.util.Arrays;
 import java.util.Locale;
 import java.util.function.BiFunction;
 
@@ -73,21 +72,37 @@ public class TbDate implements Serializable, Cloneable {
         instant = Instant.ofEpochMilli(dateMilliSecond);
     }
 
-    public TbDate(int year, int month, int date, String... tz) {
+    public TbDate(int year, int month, int date) {
+        this(year, month, date, 0, 0, 0, 0, null);
+    }
+
+    public TbDate(int year, int month, int date, String tz) {
         this(year, month, date, 0, 0, 0, 0, tz);
     }
 
-    public TbDate(int year, int month, int date, int hrs, int min, String... tz) {
+    public TbDate(int year, int month, int date, int hrs, int min) {
+        this(year, month, date, hrs, min, 0, 0, null);
+    }
+
+    public TbDate(int year, int month, int date, int hrs, int min, String tz) {
         this(year, month, date, hrs, min, 0, 0, tz);
     }
 
-    public TbDate(int year, int month, int date, int hrs, int min, int second, String... tz) {
+    public TbDate(int year, int month, int date, int hrs, int min, int second) {
+        this(year, month, date, hrs, min, second, 0, null);
+    }
+
+    public TbDate(int year, int month, int date, int hrs, int min, int second, String tz) {
         this(year, month, date, hrs, min, second, 0, tz);
     }
 
-    public TbDate(int year, int month, int date, int hrs, int min, int second, int secondMilli, String... tz) {
-        ZoneId zoneId = tz.length > 0 ? ZoneId.of(Arrays.stream(tz).findFirst().get()) : ZoneId.systemDefault();
-        instant = parseInstant(year, month, date, hrs, min, second,  secondMilli, zoneId);
+    public TbDate(int year, int month, int date, int hrs, int min, int second, int milliSecond) {
+        this(year, month, date, hrs, min, second, milliSecond, null);
+    }
+
+    public TbDate(int year, int month, int date, int hrs, int min, int second, int milliSecond, String tz) {
+        ZoneId zoneId = tz != null && tz.length() > 0 ? ZoneId.of(tz) : ZoneId.systemDefault();
+        instant = parseInstant(year, month, date, hrs, min, second,  milliSecond, zoneId);
     }
 
     public Instant getInstant() {
