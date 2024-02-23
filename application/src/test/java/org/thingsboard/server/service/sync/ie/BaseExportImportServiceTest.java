@@ -40,12 +40,12 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
-import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionKeyType;
-import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleCondition;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentValueType;
+import org.thingsboard.server.common.data.alarm.rule.condition.ConstantArgument;
+import org.thingsboard.server.common.data.alarm.rule.condition.FromMessageArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.Operation;
 import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionFilter;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleDeviceTypeEntityFilter;
@@ -265,16 +265,8 @@ public abstract class BaseExportImportServiceTest extends AbstractControllerTest
         alarmRule.setName("highTemperatureAlarmRule");
         alarmRule.setEnabled(true);
 
-        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
-                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
-                .valueType(ArgumentValueType.NUMERIC)
-                .build();
-
-        AlarmRuleArgument highTemperatureConst = AlarmRuleArgument.builder()
-                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
-                .valueType(ArgumentValueType.NUMERIC)
-                .defaultValue(30.0)
-                .build();
+        var temperatureKey = new FromMessageArgument(AlarmConditionKeyType.TIME_SERIES, "temperature", ArgumentValueType.NUMERIC);
+        var highTemperatureConst = new ConstantArgument(ArgumentValueType.NUMERIC, 30.0);
 
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
         highTempFilter.setLeftArgId("temperatureKey");
@@ -288,11 +280,8 @@ public abstract class BaseExportImportServiceTest extends AbstractControllerTest
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
 
-        AlarmRuleArgument lowTemperatureConst = AlarmRuleArgument.builder()
-                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
-                .valueType(ArgumentValueType.NUMERIC)
-                .defaultValue(10.0)
-                .build();
+        var lowTemperatureConst = new ConstantArgument(ArgumentValueType.NUMERIC, 10.0);
+
         SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
         lowTempFilter.setLeftArgId("temperatureKey");
         lowTempFilter.setRightArgId("lowTemperatureConst");

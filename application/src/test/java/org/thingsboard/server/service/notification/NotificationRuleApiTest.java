@@ -41,12 +41,12 @@ import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
-import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionKeyType;
-import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleCondition;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentValueType;
+import org.thingsboard.server.common.data.alarm.rule.condition.ConstantArgument;
+import org.thingsboard.server.common.data.alarm.rule.condition.FromMessageArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.Operation;
 import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionFilter;
 import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionSpec;
@@ -854,16 +854,8 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setSpec(new SimpleAlarmConditionSpec());
 
-        AlarmRuleArgument boolKey = AlarmRuleArgument.builder()
-                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "bool"))
-                .valueType(ArgumentValueType.BOOLEAN)
-                .build();
-
-        AlarmRuleArgument boolConst = AlarmRuleArgument.builder()
-                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "bool"))
-                .valueType(ArgumentValueType.BOOLEAN)
-                .defaultValue(Boolean.TRUE)
-                .build();
+        var boolKey = new FromMessageArgument(AlarmConditionKeyType.ATTRIBUTE, "bool", ArgumentValueType.BOOLEAN);
+        var boolConst = new ConstantArgument(ArgumentValueType.BOOLEAN, Boolean.TRUE);
 
         SimpleAlarmConditionFilter alarmConditionFilter = new SimpleAlarmConditionFilter();
         alarmConditionFilter.setLeftArgId("boolKey");

@@ -31,12 +31,12 @@ import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
-import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionKeyType;
-import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleCondition;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentValueType;
+import org.thingsboard.server.common.data.alarm.rule.condition.ConstantArgument;
+import org.thingsboard.server.common.data.alarm.rule.condition.FromMessageArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.Operation;
 import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionFilter;
 import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionSpec;
@@ -160,15 +160,8 @@ public class EntityStateTest {
     }
 
     private AlarmRuleConfiguration createAlarmConfigWithBoolAttrCondition(String key, boolean value) {
-        AlarmRuleArgument enabledKey = AlarmRuleArgument.builder()
-                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, key))
-                .valueType(ArgumentValueType.BOOLEAN)
-                .build();
-        AlarmRuleArgument enabledConst = AlarmRuleArgument.builder()
-                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, key))
-                .valueType(ArgumentValueType.BOOLEAN)
-                .defaultValue(value)
-                .build();
+        var enabledKey = new FromMessageArgument(AlarmConditionKeyType.ATTRIBUTE, key, ArgumentValueType.BOOLEAN);
+        var enabledConst = new ConstantArgument(ArgumentValueType.BOOLEAN, value);
 
         SimpleAlarmConditionFilter condition = new SimpleAlarmConditionFilter();
         condition.setLeftArgId("enabledKey");

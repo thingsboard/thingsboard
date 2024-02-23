@@ -49,13 +49,12 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
-import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilterKey;
-import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionKeyType;
-import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleCondition;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfiguration;
-import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentValueType;
+import org.thingsboard.server.common.data.alarm.rule.condition.AttributeArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.ComplexAlarmConditionFilter;
+import org.thingsboard.server.common.data.alarm.rule.condition.ConstantArgument;
+import org.thingsboard.server.common.data.alarm.rule.condition.FromMessageArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.Operation;
 import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionFilter;
 import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionSpec;
@@ -119,6 +118,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.thingsboard.server.common.data.DataConstants.DEFAULT_DEVICE_TYPE;
+import static org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionKeyType.ATTRIBUTE;
+import static org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionKeyType.TIME_SERIES;
+import static org.thingsboard.server.common.data.alarm.rule.condition.ArgumentValueType.BOOLEAN;
+import static org.thingsboard.server.common.data.alarm.rule.condition.ArgumentValueType.NUMERIC;
+import static org.thingsboard.server.common.data.alarm.rule.condition.ValueSourceType.CURRENT_ENTITY;
 
 @Service
 @Profile("install")
@@ -384,32 +388,16 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         AlarmCondition temperatureCondition = new AlarmCondition();
         temperatureCondition.setSpec(new SimpleAlarmConditionSpec());
 
-        AlarmRuleArgument temperatureAlarmFlagKey = AlarmRuleArgument.builder()
-                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "temperatureAlarmFlag"))
-                .valueType(ArgumentValueType.BOOLEAN)
-                .build();
-        AlarmRuleArgument temperatureAlarmFlagConst = AlarmRuleArgument.builder()
-                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperatureAlarmFlag"))
-                .valueType(ArgumentValueType.BOOLEAN)
-                .defaultValue(Boolean.TRUE)
-                .build();
+        var temperatureAlarmFlagKey = new FromMessageArgument(ATTRIBUTE, "temperatureAlarmFlag", BOOLEAN);
+        var temperatureAlarmFlagConst = new ConstantArgument(BOOLEAN, Boolean.TRUE);
 
         SimpleAlarmConditionFilter temperatureAlarmFlagAttributeFilter = new SimpleAlarmConditionFilter();
         temperatureAlarmFlagAttributeFilter.setRightArgId("temperatureAlarmFlagKey");
         temperatureAlarmFlagAttributeFilter.setLeftArgId("temperatureAlarmFlagConst");
         temperatureAlarmFlagAttributeFilter.setOperation(Operation.EQUAL);
 
-        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
-                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
-                .valueType(ArgumentValueType.NUMERIC)
-                .build();
-
-        AlarmRuleArgument temperatureAlarmThresholdKey = AlarmRuleArgument.builder()
-                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "temperatureAlarmThreshold"))
-                .valueType(ArgumentValueType.NUMERIC)
-                .sourceType(AlarmRuleArgument.ValueSourceType.CURRENT_ENTITY)
-                .defaultValue(25.0)
-                .build();
+        var temperatureKey = new FromMessageArgument(TIME_SERIES, "temperature", NUMERIC);
+        var temperatureAlarmThresholdKey = new AttributeArgument("temperatureAlarmThreshold", NUMERIC, CURRENT_ENTITY, 25.0, false);
 
         SimpleAlarmConditionFilter temperatureTimeseriesFilter = new SimpleAlarmConditionFilter();
         temperatureTimeseriesFilter.setLeftArgId("temperatureKey");
@@ -460,31 +448,16 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         AlarmCondition humidityCondition = new AlarmCondition();
         humidityCondition.setSpec(new SimpleAlarmConditionSpec());
 
-        AlarmRuleArgument humidityAlarmFlagKey = AlarmRuleArgument.builder()
-                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "humidityAlarmFlag"))
-                .valueType(ArgumentValueType.BOOLEAN)
-                .build();
-        AlarmRuleArgument humidityAlarmFlagConst = AlarmRuleArgument.builder()
-                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "humidityAlarmFlag"))
-                .valueType(ArgumentValueType.BOOLEAN)
-                .defaultValue(Boolean.TRUE)
-                .build();
+        var humidityAlarmFlagKey = new FromMessageArgument(ATTRIBUTE, "humidityAlarmFlag", BOOLEAN);
+        var humidityAlarmFlagConst = new ConstantArgument(BOOLEAN, Boolean.TRUE);
 
         SimpleAlarmConditionFilter humidityAlarmFlagAttributeFilter = new SimpleAlarmConditionFilter();
         humidityAlarmFlagAttributeFilter.setLeftArgId("humidityAlarmFlagKey");
         humidityAlarmFlagAttributeFilter.setRightArgId("humidityAlarmFlagConst");
         humidityAlarmFlagAttributeFilter.setOperation(Operation.EQUAL);
 
-        AlarmRuleArgument humidityKey = AlarmRuleArgument.builder()
-                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "humidity"))
-                .valueType(ArgumentValueType.NUMERIC)
-                .build();
-        AlarmRuleArgument humidityAlarmThresholdKey = AlarmRuleArgument.builder()
-                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "humidityAlarmThreshold"))
-                .valueType(ArgumentValueType.NUMERIC)
-                .sourceType(AlarmRuleArgument.ValueSourceType.CURRENT_ENTITY)
-                .defaultValue(60.0)
-                .build();
+        var humidityKey = new FromMessageArgument(TIME_SERIES, "humidity", NUMERIC);
+        var humidityAlarmThresholdKey = new AttributeArgument("humidityAlarmThreshold", NUMERIC, CURRENT_ENTITY, 60.0, false);
 
         SimpleAlarmConditionFilter humidityTimeseriesFilter = new SimpleAlarmConditionFilter();
         humidityTimeseriesFilter.setLeftArgId("humidityKey");

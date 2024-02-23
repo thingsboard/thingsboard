@@ -29,9 +29,12 @@ import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionSpecType;
-import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleArgument;
+import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentType;
+import org.thingsboard.server.common.data.alarm.rule.condition.AttributeArgument;
+import org.thingsboard.server.common.data.alarm.rule.condition.FromMessageArgument;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -51,6 +54,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.function.BiFunction;
+
+import static org.thingsboard.server.common.data.alarm.rule.condition.ArgumentType.ATTRIBUTE;
+import static org.thingsboard.server.common.data.alarm.rule.condition.ArgumentType.CONSTANT;
 
 @Data
 @Slf4j
@@ -320,10 +326,10 @@ class AlarmState {
             ObjectNode newDetails = JacksonUtil.newObjectNode();
             if (StringUtils.isNotEmpty(alarmDetailsStr)) {
                 for (var argument : alarmDefinition.getConfiguration().getArguments().values()) {
-                    if (argument.isDynamic()) {
+                    var keyFilter = argument.getKey();
+                    if (keyFilter == null) {
                         continue;
                     }
-                    var keyFilter = argument.getKey();
                     EntityKeyValue entityKeyValue = dataSnapshot.getValue(keyFilter);
                     if (entityKeyValue != null) {
                         alarmDetailsStr = alarmDetailsStr.replaceAll(String.format("\\$\\{%s}", keyFilter.getKey()), getValueAsString(entityKeyValue));

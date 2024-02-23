@@ -27,6 +27,10 @@ import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionKey
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionSpec;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionSpecType;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleArgument;
+import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentValueType;
+import org.thingsboard.server.common.data.alarm.rule.condition.AttributeArgument;
+import org.thingsboard.server.common.data.alarm.rule.condition.ConstantArgument;
+import org.thingsboard.server.common.data.alarm.rule.condition.FromMessageArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleCondition;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmSchedule;
 import org.thingsboard.server.common.data.alarm.rule.condition.ComplexAlarmConditionFilter;
@@ -144,13 +148,13 @@ class AlarmRuleState {
 
     private AlarmSchedule getSchedule(DataSnapshot data, AlarmRuleCondition alarmRule) {
         AlarmSchedule schedule = alarmRule.getSchedule();
-        EntityKeyValue dynamicValue = getDynamicPredicateValue(data, arguments.get(schedule.getArgumentId()));
+        EntityKeyValue value = getAttributeValue(data, (AttributeArgument) arguments.get(schedule.getArgumentId()));
 
-        if (dynamicValue != null) {
+        if (value != null) {
             try {
-                return JsonConverter.parse(dynamicValue.getJsonValue(), alarmRule.getSchedule().getClass());
+                return JsonConverter.parse(value.getJsonValue(), alarmRule.getSchedule().getClass());
             } catch (Exception e) {
-                log.trace("Failed to parse AlarmSchedule from dynamicValue: {}", dynamicValue.getJsonValue(), e);
+                log.trace("Failed to parse AlarmSchedule from value: {}", value.getJsonValue(), e);
             }
         }
         return schedule;
@@ -247,7 +251,7 @@ class AlarmRuleState {
 
     private AlarmEvalResult evalNoUpdate(DataSnapshot data) {
         String argId = ((SimpleAlarmConditionFilter) alarmRule.getAlarmCondition().getConditionFilter()).getLeftArgId();
-        EntityKeyValue value = getValue(argId, data);
+        EntityKeyValue value = getValue(data, argId);
         if (value == null && state.getLastEventTs() > 0) {
             return getNoUpdateResult(data);
         } else if (value != null && data.getTs() > state.getLastEventTs()) {
@@ -272,7 +276,7 @@ class AlarmRuleState {
         if (specType.equals(AlarmConditionSpecType.REPEATING)) {
             RepeatingAlarmConditionSpec repeating = (RepeatingAlarmConditionSpec) spec;
 
-            repeatingTimes = resolveDynamicValue(data, repeating.getArgumentId());
+            repeatingTimes = resolveValueForSpec(data, repeating.getArgumentId());
         }
         return repeatingTimes;
     }
@@ -285,27 +289,18 @@ class AlarmRuleState {
             DurationAlarmConditionSpec duration = (DurationAlarmConditionSpec) spec;
             TimeUnit timeUnit = duration.getUnit();
 
-            durationTimeInMs = timeUnit.toMillis(resolveDynamicValue(data, duration.getArgumentId()));
+            durationTimeInMs = timeUnit.toMillis(resolveValueForSpec(data, duration.getArgumentId()));
         }
         return durationTimeInMs;
     }
 
-    private Long resolveDynamicValue(DataSnapshot data, String argId) {
+    private Long resolveValueForSpec(DataSnapshot data, String argId) {
         AlarmRuleArgument argument = arguments.get(argId);
-        Long defaultValue = Double.valueOf(argument.getDefaultValue().toString()).longValue();
-        if (argument.isConstant()) {
-            return defaultValue;
-        }
-
-        EntityKeyValue keyValue = getDynamicPredicateValue(data, argument);
-        if (keyValue == null) {
-            return defaultValue;
-        }
+        EntityKeyValue keyValue = getValue(data, argId);
 
         var longValue = getLongValue(keyValue);
         if (longValue == null) {
-            String sourceAttribute = argument.getKey().getKey();
-            throw new NumericParseException(String.format("Could not convert attribute '%s' with value '%s' to numeric value!", sourceAttribute, getStrValue(keyValue)));
+            throw new NumericParseException(String.format("Could not convert attribute '%s' with value '%s' to numeric value!", argument, getStrValue(keyValue)));
         }
         return longValue;
     }
@@ -368,8 +363,8 @@ class AlarmRuleState {
     }
 
     private boolean eval(SimpleAlarmConditionFilter filter, DataSnapshot data) {
-        EntityKeyValue left = getValue(filter.getLeftArgId(), data);
-        EntityKeyValue right = getValue(filter.getRightArgId(), data);
+        EntityKeyValue left = getValue(data, filter.getLeftArgId());
+        EntityKeyValue right = getValue(data, filter.getRightArgId());
 
         if (left == null || right == null) {
             return false;
@@ -383,40 +378,47 @@ class AlarmRuleState {
         };
     }
 
-    private EntityKeyValue getValue(String argId, DataSnapshot data) {
+    private EntityKeyValue getValue(DataSnapshot data, String argId) {
         var argument = arguments.get(argId);
-        EntityKeyValue value;
-        if (argument.isConstant()) {
-            try {
-                value = getDefaultValue(argument);
-            } catch (RuntimeException e) {
-                log.warn("[{}] Failed to parse constant value from argument: {}", argId, argument, e);
-                value = null;
+
+        return switch (argument.getType()) {
+            case CONSTANT -> {
+                var constantArg = (ConstantArgument) argument;
+                yield getValue(constantArg.getValueType(), constantArg.getValue());
             }
-        } else if (argument.isDynamic()) {
-            value = getDynamicPredicateValue(data, argument);
-            if (value == null) {
-                value = getDefaultValue(argument);
+            case ATTRIBUTE -> {
+                var attributeArg = (AttributeArgument) argument;
+                var value = getAttributeValue(data, attributeArg);
+                if (value == null) {
+                    value = getValue(attributeArg.getValueType(), attributeArg.getDefaultValue());
+                }
+                yield value;
             }
-        } else {
-            value = data.getValue(argument.getKey());
-        }
-        return value;
+            case FROM_MESSAGE -> data.getValue(argument.getKey());
+        };
     }
 
-    private EntityKeyValue getDefaultValue(AlarmRuleArgument argument) {
-        EntityKeyValue value = new EntityKeyValue();
-        String valueStr = argument.getDefaultValue().toString();
-        switch (argument.getValueType()) {
-            case STRING -> value.setStrValue(valueStr);
-            case NUMERIC -> value.setDblValue(Double.valueOf(valueStr));
-            case BOOLEAN -> value.setBoolValue(Boolean.valueOf(valueStr));
-            case DATE_TIME -> value.setLngValue(Long.valueOf(valueStr));
+    private EntityKeyValue getValue(ArgumentValueType valueType, Object value) {
+        if (value == null) {
+            return null;
         }
-        return value;
+        try {
+            EntityKeyValue keyValue = new EntityKeyValue();
+            String valueStr = value.toString();
+            switch (valueType) {
+                case STRING -> keyValue.setStrValue(valueStr);
+                case NUMERIC -> keyValue.setDblValue(Double.valueOf(valueStr));
+                case BOOLEAN -> keyValue.setBoolValue(Boolean.valueOf(valueStr));
+                case DATE_TIME -> keyValue.setLngValue(Long.valueOf(valueStr));
+            }
+            return keyValue;
+        } catch (NumberFormatException e) {
+            log.warn("[{}] Failed to parse value from argument: {}", valueType, value, e);
+            return null;
+        }
     }
 
-    private EntityKeyValue getDynamicPredicateValue(DataSnapshot data, AlarmRuleArgument argument) {
+    private EntityKeyValue getAttributeValue(DataSnapshot data, AttributeArgument argument) {
         AlarmConditionFilterKey key = argument.getKey();
         EntityKeyValue ekv = null;
         switch (argument.getSourceType()) {

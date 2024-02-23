@@ -25,12 +25,13 @@ import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleInfo;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
-import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionKeyType;
-import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleCondition;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentValueType;
+import org.thingsboard.server.common.data.alarm.rule.condition.AttributeArgument;
+import org.thingsboard.server.common.data.alarm.rule.condition.ConstantArgument;
+import org.thingsboard.server.common.data.alarm.rule.condition.FromMessageArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.Operation;
 import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionFilter;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleDeviceTypeEntityFilter;
@@ -53,6 +54,7 @@ import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.thingsboard.server.common.data.alarm.rule.condition.ValueSourceType.CURRENT_ENTITY;
 import static org.thingsboard.server.msa.prototypes.DevicePrototypes.defaultDevicePrototype;
 
 @DisableUIListeners
@@ -267,17 +269,8 @@ public class AlarmRuleTest extends AbstractContainerTest {
         alarmRule.setName("highTemperatureAlarmRule");
         alarmRule.setEnabled(true);
 
-        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
-                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
-                .valueType(ArgumentValueType.NUMERIC)
-                .build();
-
-        AlarmRuleArgument temperatureThreshold = AlarmRuleArgument.builder()
-                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "temperatureThreshold"))
-                .valueType(ArgumentValueType.NUMERIC)
-                .defaultValue(30.0)
-                .sourceType(AlarmRuleArgument.ValueSourceType.CURRENT_ENTITY)
-                .build();
+        var temperatureKey = new FromMessageArgument(AlarmConditionKeyType.TIME_SERIES, "temperature", ArgumentValueType.NUMERIC);
+        var temperatureThreshold = new AttributeArgument("temperatureThreshold", ArgumentValueType.NUMERIC, CURRENT_ENTITY, 30.0, false);
 
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
         highTempFilter.setLeftArgId("temperatureKey");
@@ -290,11 +283,7 @@ public class AlarmRuleTest extends AbstractContainerTest {
         AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
         alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
 
-        AlarmRuleArgument lowTemperatureConst = AlarmRuleArgument.builder()
-                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
-                .valueType(ArgumentValueType.NUMERIC)
-                .defaultValue(10.0)
-                .build();
+        var lowTemperatureConst = new ConstantArgument(ArgumentValueType.NUMERIC, 10.0);
 
         SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
         lowTempFilter.setLeftArgId("temperatureKey");

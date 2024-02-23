@@ -18,5 +18,5 @@ package org.thingsboard.server.common.data.alarm.rule.condition;
 public enum AlarmConditionKeyType {
     ATTRIBUTE,
     TIME_SERIES,
-    CONSTANT
+    CONSTANT // used only for old rules from profile
 }

@@ -29,15 +29,17 @@ import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleInfo;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
-import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionKeyType;
-import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleCondition;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentValueType;
+import org.thingsboard.server.common.data.alarm.rule.condition.AttributeArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.ComplexAlarmConditionFilter;
+import org.thingsboard.server.common.data.alarm.rule.condition.ConstantArgument;
+import org.thingsboard.server.common.data.alarm.rule.condition.FromMessageArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.Operation;
 import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionFilter;
+import org.thingsboard.server.common.data.alarm.rule.condition.ValueSourceType;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleDeviceTypeEntityFilter;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
@@ -276,33 +278,16 @@ public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
         alarmRule.setAlarmType(name + "Alarm");
         alarmRule.setName(name);
 
-        AlarmRuleArgument alarmEnabledConst = AlarmRuleArgument.builder()
-                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "alarmEnabled"))
-                .valueType(ArgumentValueType.BOOLEAN)
-                .defaultValue(Boolean.TRUE)
-                .build();
-        AlarmRuleArgument alarmEnabledKey = AlarmRuleArgument.builder()
-                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "alarmEnabled"))
-                .valueType(ArgumentValueType.BOOLEAN)
-                .defaultValue(Boolean.FALSE)
-                .sourceType(AlarmRuleArgument.ValueSourceType.CURRENT_ENTITY)
-                .build();
+        var alarmEnabledConst = new ConstantArgument(ArgumentValueType.BOOLEAN, Boolean.TRUE);
+        var alarmEnabledKey = new AttributeArgument("alarmEnabled", ArgumentValueType.BOOLEAN,ValueSourceType.CURRENT_ENTITY, Boolean.FALSE, false);
 
         SimpleAlarmConditionFilter alarmEnabledFilter = new SimpleAlarmConditionFilter();
         alarmEnabledFilter.setLeftArgId("alarmEnabledConst");
         alarmEnabledFilter.setRightArgId("alarmEnabledKey");
         alarmEnabledFilter.setOperation(Operation.EQUAL);
 
-        AlarmRuleArgument temperatureKey = AlarmRuleArgument.builder()
-                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"))
-                .valueType(ArgumentValueType.NUMERIC)
-                .build();
-
-        AlarmRuleArgument temperatureConst = AlarmRuleArgument.builder()
-                .key(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "temperature"))
-                .valueType(ArgumentValueType.NUMERIC)
-                .defaultValue(20.0)
-                .build();
+        var temperatureKey = new FromMessageArgument(AlarmConditionKeyType.TIME_SERIES, "temperature", ArgumentValueType.NUMERIC);
+        var temperatureConst = new ConstantArgument(ArgumentValueType.NUMERIC, 20.0);
 
         SimpleAlarmConditionFilter temperatureFilter = new SimpleAlarmConditionFilter();
         temperatureFilter.setLeftArgId("temperatureKey");

@@ -20,7 +20,6 @@ import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilter;
-import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionSpec;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleArgument;
@@ -29,14 +28,18 @@ import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfigur
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmSchedule;
 import org.thingsboard.server.common.data.alarm.rule.condition.AnyTimeSchedule;
 import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentValueType;
+import org.thingsboard.server.common.data.alarm.rule.condition.AttributeArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.ComplexAlarmConditionFilter;
+import org.thingsboard.server.common.data.alarm.rule.condition.ConstantArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.CustomTimeSchedule;
 import org.thingsboard.server.common.data.alarm.rule.condition.DurationAlarmConditionSpec;
+import org.thingsboard.server.common.data.alarm.rule.condition.FromMessageArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.Operation;
 import org.thingsboard.server.common.data.alarm.rule.condition.RepeatingAlarmConditionSpec;
 import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionFilter;
 import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionSpec;
 import org.thingsboard.server.common.data.alarm.rule.condition.SpecificTimeSchedule;
+import org.thingsboard.server.common.data.alarm.rule.condition.ValueSourceType;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleDeviceTypeEntityFilter;
 import org.thingsboard.server.common.data.device.profile.alarm.rule.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.device.profile.alarm.rule.OldAlarmConditionFilter;
@@ -130,16 +133,17 @@ public class AlarmRuleMigrator {
     private static AlarmConditionFilter getConditionFilter(OldAlarmConditionFilter oldFilter, Map<TbPair<String, Integer>, AlarmRuleArgument> arguments) {
         ArgumentValueType valueType = getValueType(oldFilter.getValueType());
 
+        AlarmRuleArgument leftArg;
+
         var leftArgKey = oldFilter.getKey();
-        var leftArgumentBuilder = AlarmRuleArgument.builder()
-                .key(leftArgKey)
-                .valueType(valueType);
 
         if (leftArgKey.getType() == AlarmConditionKeyType.CONSTANT) {
-            leftArgumentBuilder.defaultValue(oldFilter.getValue());
+            leftArg = new ConstantArgument(valueType, oldFilter.getValue(), leftArgKey.getKey());
+        } else {
+            leftArg = new FromMessageArgument(leftArgKey, valueType);
         }
 
-        String leftArgId = addArgumentAndGetId(leftArgumentBuilder.build(), arguments);
+        String leftArgId = addArgumentAndGetId(leftArg, arguments);
 
         return getConditionFilter(oldFilter.getPredicate(), leftArgId, valueType, arguments);
     }
@@ -264,56 +268,42 @@ public class AlarmRuleMigrator {
     }
 
     private static AlarmRuleArgument createArgument(DynamicValue<?> dynamicValue, ArgumentValueType argumentValueType, Object value) {
-        var argument = AlarmRuleArgument.builder()
-                .valueType(argumentValueType)
-                .defaultValue(value);
-
-        AlarmConditionFilterKey key;
-        if (dynamicValue != null) {
-            argument.sourceType(getValueSourceType(dynamicValue.getSourceType())).inherit(dynamicValue.isInherit());
-            var keyType = dynamicValue.getSourceAttribute() == null ? AlarmConditionKeyType.CONSTANT : AlarmConditionKeyType.ATTRIBUTE;
-            key = new AlarmConditionFilterKey(keyType, dynamicValue.getSourceAttribute());
+        if (dynamicValue != null && dynamicValue.getSourceAttribute() != null) {
+            return new AttributeArgument(dynamicValue.getSourceAttribute(), argumentValueType, getValueSourceType(dynamicValue.getSourceType()), value, dynamicValue.isInherit());
         } else {
-            key = new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, null);
+            return new ConstantArgument(argumentValueType, value);
         }
-
-        argument.key(key);
-
-        return argument.build();
     }
 
-    private static AlarmRuleArgument.ValueSourceType getValueSourceType(DynamicValueSourceType dynamicValueSourceType) {
+    private static ValueSourceType getValueSourceType(DynamicValueSourceType dynamicValueSourceType) {
         return switch (dynamicValueSourceType) {
-            case CURRENT_TENANT -> AlarmRuleArgument.ValueSourceType.CURRENT_TENANT;
-            case CURRENT_CUSTOMER -> AlarmRuleArgument.ValueSourceType.CURRENT_CUSTOMER;
-            case CURRENT_DEVICE, CURRENT_USER -> AlarmRuleArgument.ValueSourceType.CURRENT_ENTITY;
+            case CURRENT_TENANT -> ValueSourceType.CURRENT_TENANT;
+            case CURRENT_CUSTOMER -> ValueSourceType.CURRENT_CUSTOMER;
+            case CURRENT_DEVICE, CURRENT_USER -> ValueSourceType.CURRENT_ENTITY;
         };
     }
 
     private static String getArgumentIdIgnoreValue(AlarmRuleArgument argument) {
         StringJoiner sj = new StringJoiner("_");
-        if (argument.isConstant()) {
-            sj.add("const");
-        } else {
-            if (argument.isDynamic()) {
-                sj.add("dynamic");
-                sj.add(argument.getSourceType().name().toLowerCase());
-            }
-            switch (argument.getKey().getType()) {
-                case ATTRIBUTE -> sj.add("attr");
-                case TIME_SERIES -> sj.add("ts");
-            }
-        }
-        var key = argument.getKey();
-        if (key != null && key.getKey() != null) {
-            sj.add(key.getKey());
-        }
+        sj.add(argument.getType().name().toLowerCase());
+        sj.add(argument.getValueType().name().toLowerCase());
 
-        switch (argument.getValueType()) {
-            case STRING -> sj.add("str");
-            case BOOLEAN -> sj.add("bool");
-            case NUMERIC -> sj.add("num");
-            case DATE_TIME -> sj.add("dt");
+        switch (argument.getType()) {
+            case CONSTANT -> {
+                var constArg = (ConstantArgument) argument;
+                if (constArg.getDescription() != null) {
+                    sj.add(constArg.getDescription());
+                }
+            }
+            case ATTRIBUTE -> {
+                var attrArg = (AttributeArgument) argument;
+                sj.add(attrArg.getAttribute());
+                sj.add(attrArg.getSourceType().name().toLowerCase());
+            }
+            case FROM_MESSAGE -> {
+                sj.add(argument.getKey().getType().name().toLowerCase());
+                sj.add(argument.getKey().getKey());
+            }
         }
 
         return sj.toString();

@@ -16,23 +16,15 @@
 package org.thingsboard.server.common.data.alarm.rule.condition;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.data.validation.NoXss;
+import lombok.Getter;
 
-import java.io.Serial;
-import java.io.Serializable;
-
-@Schema
 @Data
-public class AlarmConditionFilterKey implements Serializable {
+public abstract class AbstractArgument implements AlarmRuleArgument {
 
-    @Serial
-    private static final long serialVersionUID = 2902773563361949289L;
-
-    @Schema(description = "The key type", example = "TIME_SERIES")
-    private final AlarmConditionKeyType type;
-    @NoXss
-    @Schema(description = "String value representing the key", example = "temp")
-    private final String key;
+    @Schema(description = "String representation of the type of the value", example = "NUMERIC")
+    @Getter
+    private final ArgumentValueType valueType;
 
 }

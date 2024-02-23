@@ -22,6 +22,8 @@ import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilter;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleArgument;
+import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentType;
+import org.thingsboard.server.common.data.alarm.rule.condition.FromMessageArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleCondition;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.alarm.rule.condition.ComplexAlarmConditionFilter;
@@ -86,17 +88,21 @@ class EntityRulesState {
         configuration.getCreateRules().forEach(((severity, alarmRuleCondition) -> {
             var ruleKeys = createAlarmKeys.computeIfAbsent(severity, id -> new HashSet<>());
             for (var argument : getArguments(alarmRuleCondition, configuration.getArguments())) {
-                if (!argument.isConstant()) {
-                    entityKeys.add(argument.getKey());
-                    ruleKeys.add(argument.getKey());
+                var key = argument.getKey();
+                if (key != null) {
+                    entityKeys.add(key);
+                    ruleKeys.add(key);
                 }
             }
         }));
         if (configuration.getClearRule() != null) {
             var clearAlarmKeys = alarmClearKeys.computeIfAbsent(alarmRule.getId(), id -> new HashSet<>());
             for (var argument : getArguments(configuration.getClearRule(), configuration.getArguments())) {
-                if (!argument.isConstant()) entityKeys.add(argument.getKey());
-                clearAlarmKeys.add(argument.getKey());
+                var key = argument.getKey();
+                if (key != null) {
+                    entityKeys.add(key);
+                    clearAlarmKeys.add(key);
+                }
             }
         }
     }

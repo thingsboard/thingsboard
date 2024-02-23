@@ -16,51 +16,24 @@
 package org.thingsboard.server.common.data.alarm.rule.condition;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Builder;
-import lombok.Data;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.query.DynamicValueSourceType;
-import org.thingsboard.server.common.data.validation.NoXss;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import java.io.Serializable;
 
-@Schema
-@Data
-@Builder
-@RequiredArgsConstructor
-public class AlarmRuleArgument implements Serializable {
-    @Schema(description = "JSON object for specifying alarm condition by specific key")
-    private final AlarmConditionFilterKey key;
-    @Schema(description = "String representation of the type of the value", example = "NUMERIC")
-    private final ArgumentValueType valueType;
-    @Getter
-    @NoXss
-    private final Object defaultValue;
-
-    private final ValueSourceType sourceType;
-
-    private final boolean inherit;
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        property = "type")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = FromMessageArgument.class, name = "FROM_MESSAGE"),
+        @JsonSubTypes.Type(value = ConstantArgument.class, name = "CONSTANT"),
+        @JsonSubTypes.Type(value = AttributeArgument.class, name = "ATTRIBUTE")})
+public interface AlarmRuleArgument extends Serializable {
 
     @JsonIgnore
-    public boolean isDynamic() {
-        return sourceType != null && !isConstant();
-    }
+    ArgumentType getType();
 
-    @JsonIgnore
-    public boolean isConstant() {
-        return key == null
-                || key.getType() == null
-                || StringUtils.isEmpty(key.getKey())
-                || key.getType() == AlarmConditionKeyType.CONSTANT;
-    }
+    ArgumentValueType getValueType();
 
-    public enum ValueSourceType {
-        CURRENT_TENANT,
-        CURRENT_CUSTOMER,
-        CURRENT_ENTITY
-    }
-
+    AlarmConditionFilterKey getKey();
 }
