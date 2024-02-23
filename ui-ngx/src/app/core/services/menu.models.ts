@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ export interface MenuSection extends HasUUID{
   type: MenuSectionType;
   path: string;
   icon: string;
-  isMdiIcon?: boolean;
   pages?: Array<MenuSection>;
   opened?: boolean;
   disabled?: boolean;
@@ -39,6 +38,5 @@ export interface HomeSection {
 export interface HomeSectionPlace {
   name: string;
   icon: string;
-  isMdiIcon?: boolean;
   path: string;
 }

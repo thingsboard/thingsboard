@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ import org.thingsboard.server.queue.azure.servicebus.TbServiceBusSettings;
 import org.thingsboard.server.queue.common.DefaultTbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.TbProtoJsQueueMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.NotificationsTopicService;
+import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
 import org.thingsboard.server.queue.settings.TbQueueRemoteJsInvokeSettings;
@@ -55,7 +55,7 @@ import java.nio.charset.StandardCharsets;
 @ConditionalOnExpression("'${queue.type:null}'=='service-bus' && '${service.type:null}'=='tb-rule-engine'")
 public class ServiceBusTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
 
-    private final NotificationsTopicService notificationsTopicService;
+    private final TopicService topicService;
     private final TbQueueCoreSettings coreSettings;
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TbQueueRuleEngineSettings ruleEngineSettings;
@@ -68,14 +68,14 @@ public class ServiceBusTbRuleEngineQueueFactory implements TbRuleEngineQueueFact
     private final TbQueueAdmin jsExecutorAdmin;
     private final TbQueueAdmin notificationAdmin;
 
-    public ServiceBusTbRuleEngineQueueFactory(NotificationsTopicService notificationsTopicService, TbQueueCoreSettings coreSettings,
+    public ServiceBusTbRuleEngineQueueFactory(TopicService topicService, TbQueueCoreSettings coreSettings,
                                               TbQueueRuleEngineSettings ruleEngineSettings,
                                               TbServiceInfoProvider serviceInfoProvider,
                                               TbServiceBusSettings serviceBusSettings,
                                               TbQueueRemoteJsInvokeSettings jsInvokeSettings,
                                               TbQueueTransportNotificationSettings transportNotificationSettings,
                                               TbServiceBusQueueConfigs serviceBusQueueConfigs) {
-        this.notificationsTopicService = notificationsTopicService;
+        this.topicService = topicService;
         this.coreSettings = coreSettings;
         this.serviceInfoProvider = serviceInfoProvider;
         this.ruleEngineSettings = ruleEngineSettings;
@@ -91,39 +91,39 @@ public class ServiceBusTbRuleEngineQueueFactory implements TbRuleEngineQueueFact
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> createTransportNotificationsMsgProducer() {
-        return new TbServiceBusProducerTemplate<>(notificationAdmin, serviceBusSettings, transportNotificationSettings.getNotificationsTopic());
+        return new TbServiceBusProducerTemplate<>(notificationAdmin, serviceBusSettings, topicService.buildTopicName(transportNotificationSettings.getNotificationsTopic()));
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> createRuleEngineMsgProducer() {
-        return new TbServiceBusProducerTemplate<>(ruleEngineAdmin, serviceBusSettings, ruleEngineSettings.getTopic());
+        return new TbServiceBusProducerTemplate<>(ruleEngineAdmin, serviceBusSettings, topicService.buildTopicName(ruleEngineSettings.getTopic()));
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> createRuleEngineNotificationsMsgProducer() {
-        return new TbServiceBusProducerTemplate<>(notificationAdmin, serviceBusSettings, ruleEngineSettings.getTopic());
+        return new TbServiceBusProducerTemplate<>(notificationAdmin, serviceBusSettings, topicService.buildTopicName(ruleEngineSettings.getTopic()));
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> createTbCoreMsgProducer() {
-        return new TbServiceBusProducerTemplate<>(coreAdmin, serviceBusSettings, coreSettings.getTopic());
+        return new TbServiceBusProducerTemplate<>(coreAdmin, serviceBusSettings, topicService.buildTopicName(coreSettings.getTopic()));
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> createTbCoreNotificationsMsgProducer() {
-        return new TbServiceBusProducerTemplate<>(notificationAdmin, serviceBusSettings, coreSettings.getTopic());
+        return new TbServiceBusProducerTemplate<>(notificationAdmin, serviceBusSettings, topicService.buildTopicName(coreSettings.getTopic()));
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> createToRuleEngineMsgConsumer(Queue configuration) {
-        return new TbServiceBusConsumerTemplate<>(ruleEngineAdmin, serviceBusSettings, configuration.getTopic(),
+        return new TbServiceBusConsumerTemplate<>(ruleEngineAdmin, serviceBusSettings, topicService.buildTopicName(configuration.getTopic()),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), ToRuleEngineMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> createToRuleEngineNotificationsMsgConsumer() {
         return new TbServiceBusConsumerTemplate<>(notificationAdmin, serviceBusSettings,
-                notificationsTopicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, serviceInfoProvider.getServiceId()).getFullTopicName(),
+                topicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, serviceInfoProvider.getServiceId()).getFullTopicName(),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), ToRuleEngineNotificationMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
@@ -152,12 +152,12 @@ public class ServiceBusTbRuleEngineQueueFactory implements TbRuleEngineQueueFact
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> createToUsageStatsServiceMsgProducer() {
-        return new TbServiceBusProducerTemplate<>(coreAdmin, serviceBusSettings, coreSettings.getUsageStatsTopic());
+        return new TbServiceBusProducerTemplate<>(coreAdmin, serviceBusSettings, topicService.buildTopicName(coreSettings.getUsageStatsTopic()));
     }
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToOtaPackageStateServiceMsg>> createToOtaPackageStateServiceMsgProducer() {
-        return new TbServiceBusProducerTemplate<>(coreAdmin, serviceBusSettings, coreSettings.getOtaPackageTopic());
+        return new TbServiceBusProducerTemplate<>(coreAdmin, serviceBusSettings, topicService.buildTopicName(coreSettings.getOtaPackageTopic()));
     }
 
     @PreDestroy

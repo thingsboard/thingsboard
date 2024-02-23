@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import {
 } from '@home/pages/notification/inbox/inbox-notification-dialog.component';
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { UtilsService } from '@core/services/utils.service';
 
 @Injectable()
 export class InboxTableConfigResolver implements Resolve<EntityTableConfig<Notification>> {
@@ -48,7 +49,8 @@ export class InboxTableConfigResolver implements Resolve<EntityTableConfig<Notif
   constructor(private notificationService: NotificationService,
               private translate: TranslateService,
               private dialog: MatDialog,
-              private datePipe: DatePipe) {
+              private datePipe: DatePipe,
+              private utilsService: UtilsService) {
 
     this.config.entityType = EntityType.NOTIFICATION;
     this.config.detailsPanelEnabled = false;
@@ -92,8 +94,10 @@ export class InboxTableConfigResolver implements Resolve<EntityTableConfig<Notif
       new DateEntityTableColumn<Notification>('createdTime', 'common.created-time', this.datePipe, '170px'),
       new EntityTableColumn<Notification>('type', 'notification.type', '10%', (notification) =>
         this.translate.instant(NotificationTemplateTypeTranslateMap.get(notification.type).name)),
-      new EntityTableColumn<Notification>('subject', 'notification.subject', '30%'),
-      new EntityTableColumn<Notification>('text', 'notification.message', '60%')
+      new EntityTableColumn<Notification>('subject', 'notification.subject', '30%',
+        (entity) => this.utilsService.customTranslation(entity.subject, entity.subject)),
+      new EntityTableColumn<Notification>('text', 'notification.message', '60%',
+        (entity) => this.utilsService.customTranslation(entity.text, entity.text))
     );
 
   }
@@ -133,9 +137,10 @@ export class InboxTableConfigResolver implements Resolve<EntityTableConfig<Notif
         this.config.getTable().dataSource.pageData$.pipe(take(1)).subscribe(
           (value) => {
             if (value.data.length === 1 && this.config.getTable().pageLink.page) {
-              this.config.getTable().pageLink.page--;
+              this.config.getTable().paginator.previousPage();
+            } else {
+              this.config.updateData();
             }
-            this.config.updateData();
           }
         );
       } else {

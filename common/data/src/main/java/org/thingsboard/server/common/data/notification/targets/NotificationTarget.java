@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data.notification.targets;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
@@ -31,7 +32,7 @@ import javax.validation.constraints.NotNull;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class NotificationTarget extends BaseData<NotificationTargetId> implements HasTenantId, HasName {
+public class NotificationTarget extends BaseData<NotificationTargetId> implements HasTenantId, HasName, ExportableEntity<NotificationTargetId> {
 
     private TenantId tenantId;
     @NotBlank
@@ -41,5 +42,18 @@ public class NotificationTarget extends BaseData<NotificationTargetId> implement
     @NotNull
     @Valid
     private NotificationTargetConfig configuration;
+
+    private NotificationTargetId externalId;
+
+    public NotificationTarget() {
+    }
+
+    public NotificationTarget(NotificationTarget other) {
+        super(other);
+        this.tenantId = other.tenantId;
+        this.name = other.name;
+        this.configuration = other.configuration;
+        this.externalId = other.externalId;
+    }
 
 }

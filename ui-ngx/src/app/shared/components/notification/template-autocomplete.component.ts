@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Observable, of } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, map, share, switchMap, tap } from 'rxjs/operators';
+import { catchError, debounceTime, map, share, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
@@ -28,7 +28,7 @@ import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 import { emptyPageData } from '@shared/models/page/page-data';
 import {
-  NotificationDeliveryMethodTranslateMap,
+  NotificationDeliveryMethodInfoMap,
   NotificationTemplate,
   NotificationType
 } from '@shared/models/notification.models';
@@ -55,7 +55,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 })
 export class TemplateAutocompleteComponent implements ControlValueAccessor, OnInit {
 
-  notificationDeliveryMethodTranslateMap = NotificationDeliveryMethodTranslateMap;
+  notificationDeliveryMethodInfoMap = NotificationDeliveryMethodInfoMap;
   selectTemplateFormGroup: FormGroup;
 
   @Input()
@@ -65,6 +65,10 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
   @Input()
   @coerceBoolean()
   allowCreate = false;
+
+  @Input()
+  @coerceBoolean()
+  allowEdit = false;
 
 
   @Input()
@@ -196,18 +200,34 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
     }, 0);
   }
 
+  editTemplate($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.notificationService.getNotificationTemplateById(this.modelValue.id).subscribe(
+      (template) => {
+        this.openNotificationTemplateDialog({template});
+      }
+    );
+  }
+
   createTemplate($event: Event, button: MatButton) {
     if ($event) {
       $event.stopPropagation();
     }
     button._elementRef.nativeElement.blur();
+    this.openNotificationTemplateDialog({
+      isAdd: true,
+      predefinedType: this.notificationTypes
+    });
+  }
+
+  private openNotificationTemplateDialog(dialogData?: TemplateNotificationDialogData) {
     this.dialog.open<TemplateNotificationDialogComponent, TemplateNotificationDialogData,
       NotificationTemplate>(TemplateNotificationDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        predefinedType: this.notificationTypes
-      }
+      data: dialogData
     }).afterClosed()
       .subscribe((res) => {
         if (res) {

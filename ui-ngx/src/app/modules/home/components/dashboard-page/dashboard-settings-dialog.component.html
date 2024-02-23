@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@
           <mat-label translate>dashboard.state-controller</mat-label>
           <mat-select required formControlName="stateControllerId">
             <mat-option *ngFor="let stateControllerId of stateControllerIds" [value]="stateControllerId">
-              {{stateControllerId}}
+              {{ getStatesControllerTranslation(stateControllerId) }}
             </mat-option>
           </mat-select>
         </mat-form-field>
@@ -55,10 +55,10 @@
           <mat-slide-toggle formControlName="showDashboardLogo">
             {{ 'dashboard.display-dashboard-logo' | translate }}
           </mat-slide-toggle>
-          <tb-image-input fxFlex
+          <tb-gallery-image-input fxFlex
                           label="{{'dashboard.dashboard-logo-image' | translate}}"
                           formControlName="dashboardLogoUrl">
-          </tb-image-input>
+          </tb-gallery-image-input>
         </fieldset>
         <fieldset class="fields-group" fxLayout="column" fxLayoutGap="8px">
           <legend class="group-title" translate>dashboard.toolbar-settings</legend>
@@ -144,10 +144,10 @@
                           openOnInput
                           formControlName="backgroundColor">
           </tb-color-input>
-          <tb-image-input fxFlex
+          <tb-gallery-image-input fxFlex
                           label="{{'dashboard.background-image' | translate}}"
                           formControlName="backgroundImageUrl">
-          </tb-image-input>
+          </tb-gallery-image-input>
           <mat-form-field class="mat-block">
             <mat-label translate>dashboard.background-size-mode</mat-label>
             <mat-select formControlName="backgroundSizeMode">

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,12 +24,14 @@ import java.util.List;
 
 @Data
 public class TbCheckAlarmStatusNodeConfig implements NodeConfiguration<TbCheckAlarmStatusNodeConfig> {
+
     private List<AlarmStatus> alarmStatusList;
 
     @Override
     public TbCheckAlarmStatusNodeConfig defaultConfiguration() {
-        TbCheckAlarmStatusNodeConfig config = new TbCheckAlarmStatusNodeConfig();
+        var config = new TbCheckAlarmStatusNodeConfig();
         config.setAlarmStatusList(Arrays.asList(AlarmStatus.ACTIVE_ACK, AlarmStatus.ACTIVE_UNACK));
         return config;
     }
+
 }

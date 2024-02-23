@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -28,7 +28,8 @@ import {
   AlarmSeverity,
   AlarmStatus
 } from '@shared/models/alarm.models';
-import { UtilsService } from '@core/services/utils.service';
+import { EntitySubtype } from '@shared/models/entity-type.models';
+import { PageLink } from '@shared/models/page/page-link';
 
 @Injectable({
   providedIn: 'root'
@@ -36,8 +37,7 @@ import { UtilsService } from '@core/services/utils.service';
 export class AlarmService {
 
   constructor(
-    private http: HttpClient,
-    private utils: UtilsService
+    private http: HttpClient
   ) { }
 
   public getAlarm(alarmId: string, config?: RequestConfig): Observable<Alarm> {
@@ -52,12 +52,12 @@ export class AlarmService {
     return this.http.post<Alarm>('/api/alarm', alarm, defaultHttpOptionsFromConfig(config));
   }
 
-  public ackAlarm(alarmId: string, config?: RequestConfig): Observable<void> {
-    return this.http.post<void>(`/api/alarm/${alarmId}/ack`, null, defaultHttpOptionsFromConfig(config));
+  public ackAlarm(alarmId: string, config?: RequestConfig): Observable<AlarmInfo> {
+    return this.http.post<AlarmInfo>(`/api/alarm/${alarmId}/ack`, null, defaultHttpOptionsFromConfig(config));
   }
 
-  public clearAlarm(alarmId: string, config?: RequestConfig): Observable<void> {
-    return this.http.post<void>(`/api/alarm/${alarmId}/clear`, null, defaultHttpOptionsFromConfig(config));
+  public clearAlarm(alarmId: string, config?: RequestConfig): Observable<AlarmInfo> {
+    return this.http.post<AlarmInfo>(`/api/alarm/${alarmId}/clear`, null, defaultHttpOptionsFromConfig(config));
   }
 
   public assignAlarm(alarmId: string, assigneeId: string, config?: RequestConfig): Observable<void> {
@@ -68,8 +68,8 @@ export class AlarmService {
     return this.http.delete<void>(`/api/alarm/${alarmId}/assign`, defaultHttpOptionsFromConfig(config));
   }
 
-  public deleteAlarm(alarmId: string, config?: RequestConfig): Observable<void> {
-    return this.http.delete<void>(`/api/alarm/${alarmId}`, defaultHttpOptionsFromConfig(config));
+  public deleteAlarm(alarmId: string, config?: RequestConfig): Observable<boolean> {
+    return this.http.delete<boolean>(`/api/alarm/${alarmId}`, defaultHttpOptionsFromConfig(config));
   }
 
   public getAlarms(query: AlarmQuery,
@@ -106,6 +106,10 @@ export class AlarmService {
     }
     return this.http.get<AlarmSeverity>(url,
       defaultHttpOptionsFromConfig(config));
+  }
+
+  public getAlarmTypes(pageLink: PageLink, config?: RequestConfig): Observable<PageData<EntitySubtype>> {
+    return this.http.get<PageData<EntitySubtype>>(`/api/alarm/types${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config));
   }
 
 }

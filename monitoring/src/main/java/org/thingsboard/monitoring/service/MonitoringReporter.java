@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,8 +52,8 @@ public class MonitoringReporter {
 
     @Value("${monitoring.failures_threshold}")
     private int failuresThreshold;
-    @Value("${monitoring.send_repeated_failure_notification}")
-    private boolean sendRepeatedFailureNotification;
+    @Value("${monitoring.repeated_failure_notification}")
+    private int repeatedFailureNotification;
 
     @Value("${monitoring.latency.enabled}")
     private boolean latencyReportingEnabled;
@@ -63,30 +63,25 @@ public class MonitoringReporter {
     private String reportingAssetId;
 
     public void reportLatencies(TbClient tbClient) {
-        List<Latency> latencies = this.latencies.values().stream()
-                .filter(Latency::isNotEmpty)
-                .map(latency -> {
-                    Latency snapshot = latency.snapshot();
-                    latency.reset();
-                    return snapshot;
-                })
-                .collect(Collectors.toList());
         if (latencies.isEmpty()) {
             return;
         }
-        log.info("Latencies:\n{}", latencies.stream().map(latency -> latency.getKey() + ": " + latency.getAvg() + " ms")
-                .collect(Collectors.joining("\n")));
-
+        log.debug("Latencies:\n{}", latencies.values().stream().map(latency -> latency.getKey() + ": " + latency.getFormattedValue())
+                .collect(Collectors.joining("\n")) + "\n");
         if (!latencyReportingEnabled) return;
 
-        if (latencies.stream().anyMatch(latency -> latency.getAvg() >= (double) latencyThresholdMs)) {
-            HighLatencyNotification highLatencyNotification = new HighLatencyNotification(latencies, latencyThresholdMs);
+        List<Latency> highLatencies = latencies.values().stream()
+                .filter(latency -> latency.getValue() >= (double) latencyThresholdMs)
+                .collect(Collectors.toList());
+        if (!highLatencies.isEmpty()) {
+            HighLatencyNotification highLatencyNotification = new HighLatencyNotification(highLatencies, latencyThresholdMs);
             notificationService.sendNotification(highLatencyNotification);
+            log.warn("{}", highLatencyNotification.getText());
         }
 
         try {
             if (StringUtils.isBlank(reportingAssetId)) {
-                String assetName = "Monitoring";
+                String assetName = "[Monitoring] Latencies";
                 Asset monitoringAsset = tbClient.findAsset(assetName).orElseGet(() -> {
                     Asset asset = new Asset();
                     asset.setType("Monitoring");
@@ -99,10 +94,11 @@ public class MonitoringReporter {
             }
 
             ObjectNode msg = JacksonUtil.newObjectNode();
-            latencies.forEach(latency -> {
-                msg.set(latency.getKey(), new DoubleNode(latency.getAvg()));
+            latencies.values().forEach(latency -> {
+                msg.set(latency.getKey(), new DoubleNode(latency.getValue()));
             });
             tbClient.saveEntityTelemetry(new AssetId(UUID.fromString(reportingAssetId)), "time", msg);
+            latencies.clear();
         } catch (Exception e) {
             log.error("Failed to report latencies: {}", e.getMessage());
         }
@@ -112,7 +108,7 @@ public class MonitoringReporter {
         String latencyKey = key + "Latency";
         double latencyInMs = (double) latencyInNanos / 1000_000;
         log.trace("Reporting latency [{}]: {} ms", key, latencyInMs);
-        latencies.computeIfAbsent(latencyKey, k -> new Latency(latencyKey)).report(latencyInMs);
+        latencies.put(latencyKey, Latency.of(latencyKey, latencyInMs));
     }
 
     public void serviceFailure(Object serviceKey, Throwable error) {
@@ -122,7 +118,7 @@ public class MonitoringReporter {
         int failuresCount = failuresCounters.computeIfAbsent(serviceKey, k -> new AtomicInteger()).incrementAndGet();
         ServiceFailureNotification notification = new ServiceFailureNotification(serviceKey, error, failuresCount);
         log.error(notification.getText());
-        if (failuresCount == failuresThreshold || (sendRepeatedFailureNotification && failuresCount % failuresThreshold == 0)) {
+        if (failuresCount == failuresThreshold || (repeatedFailureNotification != 0 && failuresCount % repeatedFailureNotification == 0)) {
             notificationService.sendNotification(notification);
         }
     }

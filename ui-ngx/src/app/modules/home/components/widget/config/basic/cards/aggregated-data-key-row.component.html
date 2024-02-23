@@ -1,0 +1,97 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div [formGroup]="keyRowFormGroup" class="tb-form-table-row tb-aggregated-data-key-row">
+  <mat-form-field class="tb-inline-field tb-position-field" appearance="outline" subscriptSizing="dynamic">
+    <mat-select formControlName="position">
+      <mat-option *ngFor="let position of aggregatedValueCardKeyPositions" [value]="position">
+        {{ aggregatedValueCardKeyPositionTranslationMap.get(position) | translate }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field class="tb-inline-field tb-aggregation-field" subscriptSizing="dynamic">
+    <mat-chip-grid #chipList>
+      <mat-chip-row class="tb-datakey-chip">
+        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="4px" class="tb-attribute-chip">
+          <div class="tb-chip-labels">
+            <div class="tb-chip-label tb-chip-text">
+              <ng-container *ngTemplateOutlet="keyName"></ng-container>
+            </div>
+          </div>
+          <button type="button"
+                  (click)="editKey()" mat-icon-button class="tb-mat-24">
+            <mat-icon class="tb-mat-18">edit</mat-icon>
+          </button>
+        </div>
+      </mat-chip-row>
+    </mat-chip-grid>
+    <input matInput
+           type="text"
+           fxHide
+           readonly
+           [matChipInputFor]="chipList"
+    />
+  </mat-form-field>
+  <div class="tb-units-field">
+    <tb-unit-input formControlName="units">
+    </tb-unit-input>
+  </div>
+  <div class="tb-decimals-field">
+    <mat-form-field appearance="outline" class="tb-inline-field number" subscriptSizing="dynamic">
+      <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+    </mat-form-field>
+  </div>
+  <div class="tb-font-field">
+    <tb-font-settings formControlName="font"
+                      [previewText]="valuePreviewFn">
+    </tb-font-settings>
+  </div>
+  <div class="tb-color-field">
+    <tb-color-settings formControlName="color" settingsKey="{{ (index+1) }}. {{ aggregatedValueCardKeyPositionTranslationMap.get(keyRowFormGroup.get('position').value) | translate }}">
+    </tb-color-settings>
+  </div>
+  <div class="tb-arrow-field">
+    <mat-checkbox formControlName="showArrow"></mat-checkbox>
+  </div>
+  <div class="tb-form-table-row-cell-buttons">
+    <button type="button"
+            mat-icon-button
+            (click)="keyRemoved.emit()"
+            matTooltip="{{ 'widgets.aggregated-value-card.remove-value' | translate }}"
+            matTooltipPosition="above">
+      <mat-icon>delete</mat-icon>
+    </button>
+  </div>
+</div>
+<ng-template #keyName>
+  <ng-container *ngIf="dataKeyHasPostprocessing(); else keyName">
+    <strong><span>f(</span></strong><ng-container *ngTemplateOutlet="keyNameTemplate"></ng-container><strong><span>)</span></strong>
+  </ng-container>
+  <ng-template #keyName>
+    <ng-container *ngTemplateOutlet="keyNameTemplate"></ng-container>
+  </ng-template>
+</ng-template>
+<ng-template #keyNameTemplate>
+  <ng-container>
+    <strong><span class="tb-agg-func">{{ (modelValue?.aggregationType || aggregationTypes.NONE) }}</span></strong>
+    <span *ngIf="!modelValue?.aggregationType || modelValue?.aggregationType === aggregationTypes.NONE; else aggValue">({{ 'datakey.latest-value' | translate }})</span>
+  </ng-container>
+  <ng-template #aggValue>
+    <span *ngIf="modelValue?.comparisonEnabled && modelValue?.comparisonResultType !== comparisonResultTypes.PREVIOUS_VALUE">({{ 'datakey.delta' | translate }}:{{ (modelValue?.comparisonResultType === comparisonResultTypes.DELTA_PERCENT ? 'datakey.percent' : 'datakey.absolute') | translate }})</span>
+    <span *ngIf="modelValue?.comparisonEnabled && modelValue?.comparisonResultType === comparisonResultTypes.PREVIOUS_VALUE">({{ 'datakey.delta-calculation-result-previous-value' | translate }})</span>
+  </ng-template>
+</ng-template>

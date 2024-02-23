@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentType;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -81,7 +82,7 @@ public class DefaultTbAlarmCommentServiceTest {
         when(alarmCommentService.createOrUpdateAlarmComment(Mockito.any(), eq(alarmComment))).thenReturn(alarmComment);
         service.saveAlarmComment(alarm, alarmComment, new User());
 
-        verify(notificationEntityService, times(1)).notifyAlarmComment(any(), any(), any(), any());
+        verify(notificationEntityService, times(1)).logEntityAction(any(), any(), any(), any(), eq(ActionType.ADDED_COMMENT), any(), any());
     }
 
     @Test
@@ -95,7 +96,7 @@ public class DefaultTbAlarmCommentServiceTest {
         when(alarmCommentService.saveAlarmComment(Mockito.any(), eq(alarmComment))).thenReturn(alarmComment);
         service.deleteAlarmComment(new Alarm(alarmId), alarmComment, new User());
 
-        verify(notificationEntityService, times(1)).notifyAlarmComment(any(), any(), any(), any());
+        verify(notificationEntityService, times(1)).logEntityAction(any(), any(), any(), any(), eq(ActionType.DELETED_COMMENT), any(), any());
     }
 
     @Test

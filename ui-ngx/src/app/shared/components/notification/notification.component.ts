@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -139,7 +139,7 @@ export class NotificationComponent implements OnInit {
   }
 
   notificationColor(): string {
-    if (this.notification.type === NotificationType.ALARM) {
+    if (this.notification.type === NotificationType.ALARM && !this.notification.info.cleared) {
       return AlarmSeverityNotificationColors.get(this.notification.info.alarmSeverity);
     }
     return 'transparent';

@@ -1,0 +1,225 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import "../../../../scss/constants";
+
+$imagesContainerHeight: 106px !default;
+$selectContainerHeight: 96px !default;
+$previewSize: 64px !default;
+
+.image-card {
+  margin-bottom: 8px;
+  &.image-dnd-placeholder {
+    height: 82px;
+    width: 146px;
+    border: 2px dashed rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+  }
+  &.image-dragging {
+    display: none !important;
+  }
+  .image-title {
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 14px;
+    color: rgba(0, 0, 0, 0.6);
+    padding-bottom: 4px;
+  }
+
+  .image-content-container {
+    background: #FFFFFF;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    height: $previewSize;
+  }
+
+  .tb-image-preview {
+    width: auto;
+    max-width: $previewSize - 2px;
+    height: auto;
+    max-height: $previewSize  - 2px;
+  }
+
+  .tb-image-preview-container {
+    position: relative;
+    width: $previewSize;
+    height: $previewSize;
+    margin-top: -1px;
+    margin-bottom: -1px;
+    border: 1px solid rgba(0, 0, 0, 0.54);
+
+    .tb-image-preview {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+  }
+
+  .tb-image-action-container {
+    position: relative;
+    height: $previewSize - 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+  }
+}
+
+:host {
+  .tb-container {
+    margin-top: 0;
+    padding: 0 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    label.tb-title {
+      display: block;
+      padding-bottom: 0;
+    }
+  }
+
+  .images-container {
+    padding: 12px 12px 4px;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 4px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+    &.no-images {
+      height: $imagesContainerHeight;
+      padding-bottom: 12px;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+
+  .no-images-prompt {
+    font-size: 18px;
+    color: rgba(0, 0, 0, 0.54);
+  }
+
+  .tb-image-select-container {
+    width: 100%;
+    height: $selectContainerHeight;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    display: flex;
+    align-items: center;
+
+    .tb-image-container {
+      width: $selectContainerHeight - 1px;
+      height: $selectContainerHeight - 2px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 4px;
+      border-right: 1px solid rgba(0, 0, 0, 0.12);
+      background: #fff;
+      overflow: hidden;
+
+      .tb-image-preview {
+        width: auto;
+        max-width: $selectContainerHeight - 2px;
+        height: auto;
+        max-height: $selectContainerHeight  - 2px;
+      }
+
+      .tb-no-image {
+        text-align: center;
+        color: rgba(0, 0, 0, 0.38);
+        font-size: 12px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 16px;
+        letter-spacing: 0.4px;
+      }
+    }
+
+    .tb-image-info-container {
+      display: flex;
+      flex: 1;
+      align-self: stretch;
+      padding: 0 8px;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 4px;
+
+      .tb-external-image-container {
+        display: flex;
+        flex: 1;
+        align-self: stretch;
+        padding: 16px 8px 0 16px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+        .tb-external-link-label {
+          color: rgba(0, 0, 0, 0.54);
+          font-size: 12px;
+          font-style: normal;
+          font-weight: 400;
+          line-height: 16px;
+          letter-spacing: 0.4px;
+        }
+        .tb-external-link-input-container {
+          display: flex;
+          justify-content: flex-end;
+          align-items: center;
+          gap: 4px;
+          align-self: stretch;
+          .tb-inline-field {
+            width: 100%;
+          }
+          .tb-image-decline-btn {
+            color: rgba(0,0,0,0.38);
+          }
+        }
+      }
+
+    }
+
+    .tb-image-select-buttons-container {
+      display: flex;
+      flex: 1;
+      align-self: stretch;
+      padding: 8px;
+      gap: 8px;
+      justify-content: center;
+      align-items: flex-start;
+      .tb-image-select-button {
+        width: 100%;
+        height: 100%;
+        align-self: stretch;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 4px;
+        padding: 8px;
+        line-height: normal;
+        font-size: 12px;
+        @media #{$mat-gt-xs} {
+          padding: 16px;
+        }
+        .mat-icon {
+          width: 24px;
+          height: 24px;
+          font-size: 24px;
+          margin: 0;
+        }
+      }
+    }
+  }
+}

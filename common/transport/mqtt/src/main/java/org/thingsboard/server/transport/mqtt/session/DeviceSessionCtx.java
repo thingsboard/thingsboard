@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,8 +93,12 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
     private volatile boolean sendAckOnValidationException;
 
     @Getter
+    private volatile boolean deviceProfileMqttTransportType;
+
+    @Getter
     @Setter
     private TransportPayloadType provisionPayloadType = payloadType;
+
 
     public DeviceSessionCtx(UUID sessionId, ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap, MqttTransportContext context) {
         super(sessionId, mqttQoSMap);
@@ -165,6 +169,7 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
             MqttDeviceProfileTransportConfiguration mqttConfig = (MqttDeviceProfileTransportConfiguration) transportConfiguration;
             TransportPayloadTypeConfiguration transportPayloadTypeConfiguration = mqttConfig.getTransportPayloadTypeConfiguration();
             payloadType = transportPayloadTypeConfiguration.getTransportPayloadType();
+            deviceProfileMqttTransportType = true;
             telemetryTopicFilter = MqttTopicFilterFactory.toFilter(mqttConfig.getDeviceTelemetryTopic());
             attributesPublishTopicFilter = MqttTopicFilterFactory.toFilter(mqttConfig.getDeviceAttributesTopic());
             attributesSubscribeTopicFilter = MqttTopicFilterFactory.toFilter(mqttConfig.getDeviceAttributesSubscribeTopic());
@@ -179,6 +184,7 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
             telemetryTopicFilter = MqttTopicFilterFactory.getDefaultTelemetryFilter();
             attributesPublishTopicFilter = MqttTopicFilterFactory.getDefaultAttributesFilter();
             payloadType = TransportPayloadType.JSON;
+            deviceProfileMqttTransportType = false;
             sendAckOnValidationException = false;
         }
         updateAdaptor();

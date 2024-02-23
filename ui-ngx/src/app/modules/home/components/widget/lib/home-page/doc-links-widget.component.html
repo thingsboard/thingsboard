@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@
             matTooltipPosition="above"
             mat-icon-button
             (click)="edit()">
-      <mat-icon>edit</mat-icon>
+      <tb-icon>edit</tb-icon>
     </button>
   </div>
   <mat-grid-list class="tb-links-list" fxFlex [cols]="columns" [rowHeight]="rowHeight" [gutterSize]="gutterSize">
@@ -32,7 +32,7 @@
          [href]="docLink.link" target="_blank">
         <div class="tb-link-container">
           <div class="tb-link-icon-container">
-            <mat-icon color="primary">{{ docLink.icon }}</mat-icon>
+            <tb-icon color="primary">{{ docLink.icon }}</tb-icon>
           </div>
           <div class="tb-link-text">{{ docLink.name }}</div>
         </div>
@@ -43,7 +43,7 @@
            matTooltip="{{ 'widgets.documentation.add-link' | translate }}"
            matTooltipPosition="above"
            (click)="addLink()">
-        <mat-icon class="tb-add-icon">add</mat-icon>
+        <tb-icon class="tb-add-icon">add</tb-icon>
       </div>
     </mat-grid-tile>
   </mat-grid-list>

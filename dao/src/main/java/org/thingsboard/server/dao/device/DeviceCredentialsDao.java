@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.device;
 
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.Dao;
@@ -52,5 +53,7 @@ public interface DeviceCredentialsDao extends Dao<DeviceCredentials> {
      * @return the device credentials object
      */
     DeviceCredentials findByCredentialsId(TenantId tenantId, String credentialsId);
+
+    DeviceCredentials removeByDeviceId(TenantId tenantId, DeviceId deviceId);
 
 }

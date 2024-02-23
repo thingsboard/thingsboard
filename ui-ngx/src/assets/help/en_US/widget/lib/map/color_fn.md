@@ -31,7 +31,7 @@ if (type == 'colorpin') {
   var temperature = data['temperature'];
   if (typeof temperature !== undefined) {
     var percent = (temperature + 60)/120 * 100;
-    return tinycolor.mix('blue', 'red', amount = percent).toHexString();
+    return tinycolor.mix('blue', 'red', percent).toHexString();
   }
   return 'blue';
 }

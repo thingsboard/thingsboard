@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import io.netty.util.CharsetUtil;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.Promise;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -59,31 +58,36 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, MqttMessage msg) throws Exception {
-        switch (msg.fixedHeader().messageType()) {
-            case CONNACK:
-                handleConack(ctx.channel(), (MqttConnAckMessage) msg);
-                break;
-            case SUBACK:
-                handleSubAck((MqttSubAckMessage) msg);
-                break;
-            case PUBLISH:
-                handlePublish(ctx.channel(), (MqttPublishMessage) msg);
-                break;
-            case UNSUBACK:
-                handleUnsuback((MqttUnsubAckMessage) msg);
-                break;
-            case PUBACK:
-                handlePuback((MqttPubAckMessage) msg);
-                break;
-            case PUBREC:
-                handlePubrec(ctx.channel(), msg);
-                break;
-            case PUBREL:
-                handlePubrel(ctx.channel(), msg);
-                break;
-            case PUBCOMP:
-                handlePubcomp(msg);
-                break;
+        if (msg.decoderResult().isSuccess()) {
+            switch (msg.fixedHeader().messageType()) {
+                case CONNACK:
+                    handleConack(ctx.channel(), (MqttConnAckMessage) msg);
+                    break;
+                case SUBACK:
+                    handleSubAck((MqttSubAckMessage) msg);
+                    break;
+                case PUBLISH:
+                    handlePublish(ctx.channel(), (MqttPublishMessage) msg);
+                    break;
+                case UNSUBACK:
+                    handleUnsuback((MqttUnsubAckMessage) msg);
+                    break;
+                case PUBACK:
+                    handlePuback((MqttPubAckMessage) msg);
+                    break;
+                case PUBREC:
+                    handlePubrec(ctx.channel(), msg);
+                    break;
+                case PUBREL:
+                    handlePubrel(ctx.channel(), msg);
+                    break;
+                case PUBCOMP:
+                    handlePubcomp(msg);
+                    break;
+            }
+        } else {
+            log.error("[{}] Message decoding failed: {}", client.getClientConfig().getClientId(), msg.decoderResult().cause().getMessage());
+            ctx.close();
         }
     }
 
@@ -152,7 +156,7 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
         } finally {
             Futures.addCallback(future, new FutureCallback<>() {
                 @Override
-                public void onSuccess(@Nullable Void result) {
+                public void onSuccess(Void result) {
                     message.payload().release();
                 }
 

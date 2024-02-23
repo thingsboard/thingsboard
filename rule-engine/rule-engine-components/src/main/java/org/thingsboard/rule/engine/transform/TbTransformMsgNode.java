@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,38 +34,32 @@ import java.util.List;
         configClazz = TbTransformMsgNodeConfiguration.class,
         nodeDescription = "Change Message payload, Metadata or Message type using JavaScript",
         nodeDetails = "JavaScript function receive 3 input parameters <br/> " +
-                "<code>metadata</code> - is a Message metadata.<br/>" +
-                "<code>msg</code> - is a Message payload.<br/>" +
-                "<code>msgType</code> - is a Message type.<br/>" +
+                "<code>msg</code> - is a message payload.<br/>" +
+                "<code>metadata</code> - is a message metadata.<br/>" +
+                "<code>msgType</code> - is a message type.<br/>" +
                 "Should return the following structure:<br/>" +
                 "<code>{ msg: <i style=\"color: #666;\">new payload</i>,<br/>&nbsp&nbsp&nbspmetadata: <i style=\"color: #666;\">new metadata</i>,<br/>&nbsp&nbsp&nbspmsgType: <i style=\"color: #666;\">new msgType</i> }</code><br/>" +
-                "All fields in resulting object are optional and will be taken from original message if not specified.",
+                "All fields in resulting object are optional and will be taken from original message if not specified.<br><br>" +
+                "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbTransformationNodeScriptConfig"
 )
-public class TbTransformMsgNode extends TbAbstractTransformNode {
+public class TbTransformMsgNode extends TbAbstractTransformNode<TbTransformMsgNodeConfiguration> {
 
-    private TbTransformMsgNodeConfiguration config;
     private ScriptEngine scriptEngine;
 
     @Override
-    public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbTransformMsgNodeConfiguration.class);
+    protected TbTransformMsgNodeConfiguration loadNodeConfiguration(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
+        var config = TbNodeUtils.convert(configuration, TbTransformMsgNodeConfiguration.class);
         scriptEngine = ctx.createScriptEngine(config.getScriptLang(),
                 ScriptLanguage.TBEL.equals(config.getScriptLang()) ? config.getTbelScript() : config.getJsScript());
-        setConfig(config);
+        return config;
     }
 
     @Override
     protected ListenableFuture<List<TbMsg>> transform(TbContext ctx, TbMsg msg) {
         ctx.logJsEvalRequest();
         return scriptEngine.executeUpdateAsync(msg);
-    }
-
-    @Override
-    protected void transformSuccess(TbContext ctx, TbMsg msg, TbMsg m) {
-        ctx.logJsEvalResponse();
-        super.transformSuccess(ctx, msg, m);
     }
 
     @Override

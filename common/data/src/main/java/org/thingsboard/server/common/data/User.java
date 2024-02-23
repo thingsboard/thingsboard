@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 @ApiModel
 @EqualsAndHashCode(callSuper = true)
-public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements HasName, HasTenantId, HasCustomerId, NotificationRecipient {
+public class User extends BaseDataWithAdditionalInfo<UserId> implements HasName, HasTenantId, HasCustomerId, NotificationRecipient {
 
     private static final long serialVersionUID = 8250339805336035966L;
 
@@ -129,7 +129,7 @@ public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements H
         this.authority = authority;
     }
 
-    @ApiModelProperty(position = 8, required = true, value = "First name of the user", example = "John")
+    @ApiModelProperty(position = 8, required = false, value = "First name of the user", example = "John")
     public String getFirstName() {
         return firstName;
     }
@@ -138,7 +138,7 @@ public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements H
         this.firstName = firstName;
     }
 
-    @ApiModelProperty(position = 9, required = true, value = "Last name of the user", example = "Doe")
+    @ApiModelProperty(position = 9, required = false, value = "Last name of the user", example = "Doe")
     public String getLastName() {
         return lastName;
     }
@@ -147,7 +147,7 @@ public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements H
         this.lastName = lastName;
     }
 
-    @ApiModelProperty(position = 10, required = true, value = "Phone number of the user", example = "38012345123")
+    @ApiModelProperty(position = 10, required = false, value = "Phone number of the user", example = "38012345123")
     public String getPhone() {
         return phone;
     }
@@ -160,11 +160,6 @@ public class User extends SearchTextBasedWithAdditionalInfo<UserId> implements H
     @Override
     public JsonNode getAdditionalInfo() {
         return super.getAdditionalInfo();
-    }
-
-    @Override
-    public String getSearchText() {
-        return getEmail();
     }
 
     @JsonIgnore

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,20 +27,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
 @Getter
-public class NotificationsCountSubscription extends TbSubscription<NotificationsSubscriptionUpdate> {
-
-    private final AtomicInteger unreadCounter = new AtomicInteger();
+public class NotificationsCountSubscription extends AbstractNotificationSubscription<NotificationsSubscriptionUpdate> {
 
     @Builder
     public NotificationsCountSubscription(String serviceId, String sessionId, int subscriptionId, TenantId tenantId, EntityId entityId,
-                                          BiConsumer<NotificationsCountSubscription, NotificationsSubscriptionUpdate> updateProcessor) {
+                                          BiConsumer<TbSubscription<NotificationsSubscriptionUpdate>, NotificationsSubscriptionUpdate> updateProcessor) {
         super(serviceId, sessionId, subscriptionId, tenantId, entityId, TbSubscriptionType.NOTIFICATIONS_COUNT, updateProcessor);
     }
 
     public UnreadNotificationsCountUpdate createUpdate() {
         return UnreadNotificationsCountUpdate.builder()
                 .cmdId(getSubscriptionId())
-                .totalUnreadCount(unreadCounter.get())
+                .totalUnreadCount(totalUnreadCounter.get())
+                .sequenceNumber(sequence.incrementAndGet())
                 .build();
     }
 

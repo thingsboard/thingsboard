@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@
 import {
   AfterViewInit,
   ChangeDetectorRef,
-  Component,
+  Component, EventEmitter,
   Input,
   OnDestroy,
-  OnInit,
+  OnInit, Output,
   ViewChild,
   ViewContainerRef
 } from '@angular/core';
@@ -32,9 +32,10 @@ import { EntitiesTableComponent } from '@home/components/entity/entities-table.c
 import { EventTableConfig } from './event-table-config';
 import { EventService } from '@core/http/event.service';
 import { DialogService } from '@core/services/dialog.service';
-import { DebugEventType, EventType } from '@shared/models/event.models';
+import { DebugEventType, EventBody, EventType } from '@shared/models/event.models';
 import { Overlay } from '@angular/cdk/overlay';
 import { Subscription } from 'rxjs';
+import { isNotEmptyStr } from '@core/utils';
 
 @Component({
   selector: 'tb-event-table',
@@ -59,6 +60,10 @@ export class EventTableComponent implements OnInit, AfterViewInit, OnDestroy {
   dirtyValue = false;
   entityIdValue: EntityId;
 
+  get active(): boolean {
+    return this.activeValue;
+  }
+
   @Input()
   set active(active: boolean) {
     if (this.activeValue !== active) {
@@ -82,6 +87,28 @@ export class EventTableComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     }
   }
+
+  private functionTestButtonLabelValue: string;
+
+  get functionTestButtonLabel(): string {
+    return this.functionTestButtonLabelValue;
+  }
+
+  @Input()
+  set functionTestButtonLabel(value: string) {
+    if (isNotEmptyStr(value)) {
+      this.functionTestButtonLabelValue = value;
+    } else {
+      this.functionTestButtonLabelValue = '';
+    }
+    if (this.eventTableConfig) {
+      this.eventTableConfig.testButtonLabel = this.functionTestButtonLabel;
+      this.eventTableConfig.updateCellAction();
+    }
+  }
+
+  @Output()
+  debugEventSelected = new EventEmitter<EventBody>();
 
   @ViewChild(EntitiesTableComponent, {static: true}) entitiesTable: EntitiesTableComponent;
 
@@ -114,7 +141,9 @@ export class EventTableComponent implements OnInit, AfterViewInit, OnDestroy {
       this.debugEventTypes,
       this.overlay,
       this.viewContainerRef,
-      this.cd
+      this.cd,
+      this.functionTestButtonLabel,
+      this.debugEventSelected
     );
   }
 

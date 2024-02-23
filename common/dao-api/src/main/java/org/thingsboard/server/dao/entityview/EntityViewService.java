@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,8 @@ public interface EntityViewService extends EntityDaoService {
 
     EntityView saveEntityView(EntityView entityView);
 
+    EntityView saveEntityView(EntityView entityView, boolean doValidate);
+
     EntityView assignEntityViewToCustomer(TenantId tenantId, EntityViewId entityViewId, CustomerId customerId);
 
     EntityView unassignEntityViewFromCustomer(TenantId tenantId, EntityViewId entityViewId);
@@ -47,6 +49,8 @@ public interface EntityViewService extends EntityDaoService {
     EntityViewInfo findEntityViewInfoById(TenantId tenantId, EntityViewId entityViewId);
 
     EntityView findEntityViewById(TenantId tenantId, EntityViewId entityViewId);
+
+    EntityView findEntityViewById(TenantId tenantId, EntityViewId entityViewId, boolean putInCache);
 
     EntityView findEntityViewByTenantIdAndName(TenantId tenantId, String name);
 
@@ -73,6 +77,8 @@ public interface EntityViewService extends EntityDaoService {
     ListenableFuture<List<EntityView>> findEntityViewsByTenantIdAndEntityIdAsync(TenantId tenantId, EntityId entityId);
 
     List<EntityView> findEntityViewsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId);
+
+    boolean existsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId);
 
     void deleteEntityView(TenantId tenantId, EntityViewId entityViewId);
 

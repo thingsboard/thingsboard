@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2023 The Thingsboard Authors
+# Copyright © 2016-2024 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 FROM thingsboard/openjdk11:bullseye-slim
 
-ENV PG_MAJOR=12
+ENV PG_MAJOR=15
 
 ENV DATA_FOLDER=/data
 

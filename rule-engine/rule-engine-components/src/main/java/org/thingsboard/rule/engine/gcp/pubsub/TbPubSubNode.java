@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.api.gax.core.FixedExecutorProvider;
 import com.google.api.gax.retrying.RetrySettings;
 import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.cloud.pubsub.v1.Publisher;
@@ -29,7 +30,6 @@ import com.google.pubsub.v1.PubsubMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
@@ -69,7 +69,7 @@ public class TbPubSubNode extends TbAbstractExternalNode {
         super.init(ctx);
         this.config = TbNodeUtils.convert(configuration, TbPubSubNodeConfiguration.class);
         try {
-            this.pubSubClient = initPubSubClient();
+            this.pubSubClient = initPubSubClient(ctx);
         } catch (Exception e) {
             throw new TbNodeException(e);
         }
@@ -105,31 +105,31 @@ public class TbPubSubNode extends TbAbstractExternalNode {
         ApiFuture<String> messageIdFuture = this.pubSubClient.publish(pubsubMessageBuilder.build());
         ApiFutures.addCallback(messageIdFuture, new ApiFutureCallback<String>() {
                     public void onSuccess(String messageId) {
-                        TbMsg next = processPublishResult(ctx, msg, messageId);
+                        TbMsg next = processPublishResult(msg, messageId);
                         tellSuccess(ctx, next);
                     }
 
                     public void onFailure(Throwable t) {
-                        TbMsg next = processException(ctx, msg, t);
+                        TbMsg next = processException(msg, t);
                         tellFailure(ctx, next, t);
                     }
                 },
                 ctx.getExternalCallExecutor());
     }
 
-    private TbMsg processPublishResult(TbContext ctx, TbMsg origMsg, String messageId) {
+    private TbMsg processPublishResult(TbMsg origMsg, String messageId) {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue(MESSAGE_ID, messageId);
-        return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
+        return TbMsg.transformMsgMetadata(origMsg, metaData);
     }
 
-    private TbMsg processException(TbContext ctx, TbMsg origMsg, Throwable t) {
+    private TbMsg processException(TbMsg origMsg, Throwable t) {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue(ERROR, t.getClass() + ": " + t.getMessage());
-        return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
+        return TbMsg.transformMsgMetadata(origMsg, metaData);
     }
 
-    private Publisher initPubSubClient() throws IOException {
+    private Publisher initPubSubClient(TbContext ctx) throws IOException {
         ProjectTopicName topicName = ProjectTopicName.of(config.getProjectId(), config.getTopicName());
         ServiceAccountCredentials credentials =
                 ServiceAccountCredentials.fromStream(
@@ -149,6 +149,7 @@ public class TbPubSubNode extends TbAbstractExternalNode {
         return Publisher.newBuilder(topicName)
                 .setCredentialsProvider(credProvider)
                 .setRetrySettings(retrySettings)
+                .setExecutorProvider(FixedExecutorProvider.create(ctx.getPubSubRuleNodeExecutorProvider().getExecutor()))
                 .build();
     }
 }

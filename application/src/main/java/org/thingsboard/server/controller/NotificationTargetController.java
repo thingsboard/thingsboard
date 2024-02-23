@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,7 +139,7 @@ public class NotificationTargetController extends BaseController {
                                                                    @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
                                                                    @RequestParam int page,
                                                                    @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
-        // generic permission
+        // PE: generic permission
         NotificationTargetConfig targetConfig = notificationTarget.getConfiguration();
         if (targetConfig.getType() == NotificationTargetType.PLATFORM_USERS) {
             checkTargetUsers(user, targetConfig);
@@ -159,7 +159,7 @@ public class NotificationTargetController extends BaseController {
     public List<NotificationTarget> getNotificationTargetsByIds(@ApiParam(value = "Comma-separated list of uuids representing targets ids", required = true)
                                                                 @RequestParam("ids") UUID[] ids,
                                                                 @AuthenticationPrincipal SecurityUser user) {
-        // generic permission
+        // PE: generic permission
         List<NotificationTargetId> targetsIds = Arrays.stream(ids).map(NotificationTargetId::new).collect(Collectors.toList());
         return notificationTargetService.findNotificationTargetsByTenantIdAndIds(user.getTenantId(), targetsIds);
     }
@@ -181,7 +181,7 @@ public class NotificationTargetController extends BaseController {
                                                                @ApiParam(value = SORT_ORDER_DESCRIPTION)
                                                                @RequestParam(required = false) String sortOrder,
                                                                @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
-        // generic permission
+        // PE: generic permission
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return notificationTargetService.findNotificationTargetsByTenantId(user.getTenantId(), pageLink);
     }
@@ -199,6 +199,7 @@ public class NotificationTargetController extends BaseController {
                                                                                           @RequestParam(required = false) String sortOrder,
                                                                                           @RequestParam(required = false) NotificationType notificationType,
                                                                                           @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
+        // PE: generic permission
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return notificationTargetService.findNotificationTargetsByTenantIdAndSupportedNotificationType(user.getTenantId(), notificationType, pageLink);
     }
@@ -219,7 +220,7 @@ public class NotificationTargetController extends BaseController {
         if (user.isSystemAdmin()) {
             return;
         }
-        // generic permission for users
+        // PE: generic permission for users
         UsersFilter usersFilter = ((PlatformUsersNotificationTargetConfig) targetConfig).getUsersFilter();
         switch (usersFilter.getType()) {
             case USER_LIST:

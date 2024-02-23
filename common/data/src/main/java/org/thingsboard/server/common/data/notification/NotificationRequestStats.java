@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,6 @@ public class NotificationRequestStats {
 
     public void reportSent(NotificationDeliveryMethod deliveryMethod, NotificationRecipient recipient) {
         sent.computeIfAbsent(deliveryMethod, k -> new AtomicInteger()).incrementAndGet();
-        processedRecipients.computeIfAbsent(deliveryMethod, k -> ConcurrentHashMap.newKeySet()).add(recipient.getId());
     }
 
     public void reportError(NotificationDeliveryMethod deliveryMethod, Throwable error, NotificationRecipient recipient) {
@@ -62,7 +61,14 @@ public class NotificationRequestStats {
             return;
         }
         String errorMessage = error.getMessage();
+        if (errorMessage == null) {
+            errorMessage = error.getClass().getSimpleName();
+        }
         errors.computeIfAbsent(deliveryMethod, k -> new ConcurrentHashMap<>()).put(recipient.getTitle(), errorMessage);
+    }
+
+    public void reportProcessed(NotificationDeliveryMethod deliveryMethod, Object recipientId) {
+        processedRecipients.computeIfAbsent(deliveryMethod, k -> ConcurrentHashMap.newKeySet()).add(recipientId);
     }
 
     public boolean contains(NotificationDeliveryMethod deliveryMethod, Object recipientId) {

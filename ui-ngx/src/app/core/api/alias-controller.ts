@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,7 +16,14 @@
 
 import { AliasInfo, IAliasController, StateControllerHolder, StateEntityInfo } from '@core/api/widget-api.models';
 import { forkJoin, Observable, of, ReplaySubject, Subject } from 'rxjs';
-import { Datasource, DatasourceType, datasourceTypeTranslationMap } from '@app/shared/models/widget.models';
+import {
+  Datasource,
+  DatasourceType,
+  datasourceTypeTranslationMap,
+  TargetDevice,
+  TargetDeviceType,
+  targetDeviceValid
+} from '@app/shared/models/widget.models';
 import { deepClone, isDefinedAndNotNull, isEqual } from '@core/utils';
 import { EntityService } from '@core/http/entity.service';
 import { UtilsService } from '@core/services/utils.service';
@@ -24,10 +31,14 @@ import { AliasFilterType, EntityAliases, SingleEntityFilter } from '@shared/mode
 import { EntityInfo } from '@shared/models/entity.models';
 import { map, mergeMap } from 'rxjs/operators';
 import {
-  AlarmFilter,
-  AlarmFilterConfig,
   createDefaultEntityDataPageLink,
-  Filter, FilterInfo, filterInfoToKeyFilters, Filters, KeyFilter, singleEntityDataPageLink,
+  Filter,
+  FilterInfo,
+  filterInfoToKeyFilters,
+  Filters,
+  KeyFilter,
+  singleEntityDataPageLink,
+  singleEntityFilterFromDeviceId,
   updateDatasourceFromEntityInfo
 } from '@shared/models/query/query.models';
 import { TranslateService } from '@ngx-translate/core';
@@ -47,10 +58,10 @@ export class AliasController implements IAliasController {
   filters: Filters;
   userFilters: Filters;
 
-  resolvedAliases: {[aliasId: string]: AliasInfo} = {};
-  resolvedAliasesObservable: {[aliasId: string]: Observable<AliasInfo>} = {};
+  resolvedAliases: { [aliasId: string]: AliasInfo } = {};
+  resolvedAliasesObservable: { [aliasId: string]: Observable<AliasInfo> } = {};
 
-  resolvedAliasesToStateEntities: {[aliasId: string]: StateEntityInfo} = {};
+  resolvedAliasesToStateEntities: { [aliasId: string]: StateEntityInfo } = {};
 
   constructor(private utils: UtilsService,
               private entityService: EntityService,
@@ -244,9 +255,29 @@ export class AliasController implements IAliasController {
     );
   }
 
+  resolveSingleEntityInfoForDeviceId(deviceId: string): Observable<EntityInfo> {
+    const entityFilter = singleEntityFilterFromDeviceId(deviceId);
+    return this.entityService.findSingleEntityInfoByEntityFilter(entityFilter,
+      {ignoreLoading: true, ignoreErrors: true});
+  }
+
+  resolveSingleEntityInfoForTargetDevice(targetDevice: TargetDevice): Observable<EntityInfo> {
+    if (targetDeviceValid(targetDevice)) {
+      if (targetDevice.type === TargetDeviceType.entity) {
+        return this.resolveSingleEntityInfo(targetDevice.entityAliasId);
+      } else {
+        return this.resolveSingleEntityInfoForDeviceId(targetDevice.deviceId);
+      }
+    } else {
+      return of(null);
+    }
+  }
+
   private resolveDatasource(datasource: Datasource, forceFilter = false): Observable<Datasource> {
     const newDatasource = deepClone(datasource);
-    if (newDatasource.type === DatasourceType.entity || newDatasource.type === DatasourceType.entityCount
+    if (newDatasource.type === DatasourceType.entity
+      || newDatasource.type === DatasourceType.device
+      || newDatasource.type === DatasourceType.entityCount
       || newDatasource.type === DatasourceType.alarmCount) {
       if (newDatasource.filterId) {
         newDatasource.keyFilters = this.getKeyFilters(newDatasource.filterId);
@@ -254,7 +285,23 @@ export class AliasController implements IAliasController {
       if (newDatasource.type === DatasourceType.alarmCount) {
         newDatasource.alarmFilter = this.entityService.resolveAlarmFilter(newDatasource.alarmFilterConfig, false);
       }
-      if (newDatasource.entityAliasId) {
+      if (newDatasource.type === DatasourceType.device) {
+        newDatasource.type = DatasourceType.entity;
+        newDatasource.entityFilter = singleEntityFilterFromDeviceId(newDatasource.deviceId);
+        if (forceFilter) {
+          return this.entityService.findSingleEntityInfoByEntityFilter(newDatasource.entityFilter,
+            {ignoreLoading: true, ignoreErrors: true}).pipe(
+            map((entity) => {
+              if (entity) {
+                updateDatasourceFromEntityInfo(newDatasource, entity, true);
+              }
+              return newDatasource;
+            })
+          );
+        } else {
+          return of(newDatasource);
+        }
+      } else if (newDatasource.entityAliasId) {
         return this.getAliasInfo(newDatasource.entityAliasId).pipe(
           mergeMap((aliasInfo) => {
             newDatasource.aliasName = aliasInfo.alias;

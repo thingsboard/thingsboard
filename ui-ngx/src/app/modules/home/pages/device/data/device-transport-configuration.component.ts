@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,10 +17,10 @@
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
-  UntypedFormBuilder,
-  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   ValidationErrors,
   Validator,
   Validators
@@ -104,9 +104,7 @@ export class DeviceTransportConfigurationComponent implements ControlValueAccess
     if (configuration) {
       delete configuration.type;
     }
-    setTimeout(() => {
-      this.deviceTransportConfigurationFormGroup.patchValue({configuration}, {emitEvent: false});
-    }, 0);
+    this.deviceTransportConfigurationFormGroup.patchValue({configuration}, {emitEvent: false});
   }
 
   validate(): ValidationErrors | null {

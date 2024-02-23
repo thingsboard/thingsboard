@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@
   </tb-alarm-schedule-info>
   <div *ngIf="!disabled || alarmRuleFormGroup.get('alarmDetails').value" fxLayout="row" fxLayoutAlign="start center">
     <span class="tb-alarm-rule-details title" (click)="openEditDetailsDialog($event)">
-      {{ alarmRuleFormGroup.get('alarmDetails').value ? ('device-profile.alarm-rule-details' | translate) + ': '  : ('device-profile.add-alarm-rule-details' | translate) }}
+      {{ ('device-profile.alarm-rule-additional-info' | translate) + ': ' }}
     </span>
     <span *ngIf="alarmRuleFormGroup.get('alarmDetails').value" class="tb-alarm-rule-details"
           (click)="openEditDetailsDialog($event)"

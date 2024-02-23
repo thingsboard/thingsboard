@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -115,8 +115,9 @@ export class PageLink {
 
   public toQuery(): string {
     let query = `?pageSize=${this.pageSize}&page=${this.page}`;
-    if (this.textSearch && this.textSearch.length) {
-      const textSearch = encodeURIComponent(this.textSearch);
+    const textSearchParams = this.textSearch?.trim();
+    if (textSearchParams?.length) {
+      const textSearch = encodeURIComponent(textSearchParams);
       query += `&textSearch=${textSearch}`;
     }
     if (this.sortOrder) {

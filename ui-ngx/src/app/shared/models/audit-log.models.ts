@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -62,7 +62,8 @@ export enum ActionType {
   TIMESERIES_UPDATED = 'TIMESERIES_UPDATED',
   TIMESERIES_DELETED = 'TIMESERIES_DELETED',
   ASSIGNED_TO_EDGE = 'ASSIGNED_TO_EDGE',
-  UNASSIGNED_FROM_EDGE = 'UNASSIGNED_FROM_EDGE'
+  UNASSIGNED_FROM_EDGE = 'UNASSIGNED_FROM_EDGE',
+  SMS_SENT = 'SMS_SENT'
 }
 
 export enum ActionStatus {
@@ -105,7 +106,8 @@ export const actionTypeTranslations = new Map<ActionType, string>(
     [ActionType.TIMESERIES_UPDATED, 'audit-log.type-timeseries-updated'],
     [ActionType.TIMESERIES_DELETED, 'audit-log.type-timeseries-deleted'],
     [ActionType.ASSIGNED_TO_EDGE, 'audit-log.type-assigned-to-edge'],
-    [ActionType.UNASSIGNED_FROM_EDGE, 'audit-log.type-unassigned-from-edge']
+    [ActionType.UNASSIGNED_FROM_EDGE, 'audit-log.type-unassigned-from-edge'],
+    [ActionType.SMS_SENT, 'audit-log.type-sms-sent'],
   ]
 );
 

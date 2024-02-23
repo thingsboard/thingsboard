@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * Created by igor on 3/12/18.
@@ -45,7 +46,7 @@ public interface RuleChainService extends EntityDaoService {
 
     boolean setRootRuleChain(TenantId tenantId, RuleChainId ruleChainId);
 
-    RuleChainUpdateResult saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData);
+    RuleChainUpdateResult saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData, Function<RuleNode, RuleNode> ruleNodeUpdater);
 
     RuleChainMetaData loadRuleChainMetaData(TenantId tenantId, RuleChainId ruleChainId);
 
@@ -75,7 +76,7 @@ public interface RuleChainService extends EntityDaoService {
 
     RuleChainData exportTenantRuleChains(TenantId tenantId, PageLink pageLink) throws ThingsboardException;
 
-    List<RuleChainImportResult> importTenantRuleChains(TenantId tenantId, RuleChainData ruleChainData, boolean overwrite);
+    List<RuleChainImportResult> importTenantRuleChains(TenantId tenantId, RuleChainData ruleChainData, boolean overwrite, Function<RuleNode, RuleNode> ruleNodeUpdater);
 
     RuleChain assignRuleChainToEdge(TenantId tenantId, RuleChainId ruleChainId, EdgeId edgeId);
 
@@ -98,6 +99,13 @@ public interface RuleChainService extends EntityDaoService {
     List<RuleNode> findRuleNodesByTenantIdAndType(TenantId tenantId, String type);
 
     PageData<RuleNode> findAllRuleNodesByType(String type, PageLink pageLink);
+
+    @Deprecated(forRemoval = true, since = "3.6.3")
+    PageData<RuleNode> findAllRuleNodesByTypeAndVersionLessThan(String type, int version, PageLink pageLink);
+
+    PageData<RuleNodeId> findAllRuleNodeIdsByTypeAndVersionLessThan(String type, int version, PageLink pageLink);
+
+    List<RuleNode> findAllRuleNodesByIds(List<RuleNodeId> ruleNodeIds);
 
     RuleNode saveRuleNode(TenantId tenantId, RuleNode ruleNode);
 

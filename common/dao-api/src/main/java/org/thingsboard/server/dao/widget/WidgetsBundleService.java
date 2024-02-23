@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,13 +34,15 @@ public interface WidgetsBundleService extends EntityDaoService {
 
     WidgetsBundle findWidgetsBundleByTenantIdAndAlias(TenantId tenantId, String alias);
 
-    PageData<WidgetsBundle> findSystemWidgetsBundlesByPageLink(TenantId tenantId, PageLink pageLink);
+    PageData<WidgetsBundle> findSystemWidgetsBundlesByPageLink(TenantId tenantId, boolean fullSearch, PageLink pageLink);
 
     List<WidgetsBundle> findSystemWidgetsBundles(TenantId tenantId);
 
     PageData<WidgetsBundle> findTenantWidgetsBundlesByTenantId(TenantId tenantId, PageLink pageLink);
 
-    PageData<WidgetsBundle> findAllTenantWidgetsBundlesByTenantIdAndPageLink(TenantId tenantId, PageLink pageLink);
+    PageData<WidgetsBundle> findAllTenantWidgetsBundlesByTenantIdAndPageLink(TenantId tenantId, boolean fullSearch, PageLink pageLink);
+
+    PageData<WidgetsBundle> findTenantWidgetsBundlesByTenantIdAndPageLink(TenantId tenantId, boolean fullSearch, PageLink pageLink);
 
     List<WidgetsBundle> findAllTenantWidgetsBundlesByTenantId(TenantId tenantId);
 

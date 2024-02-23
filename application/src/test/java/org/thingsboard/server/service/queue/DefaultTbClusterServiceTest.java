@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,17 +29,19 @@ import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.NotificationsTopicService;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -73,12 +75,14 @@ public class DefaultTbClusterServiceTest {
     @MockBean
     protected GatewayNotificationsService gatewayNotificationsService;
     @MockBean
+    protected EdgeService edgeService;
+    @MockBean
     protected PartitionService partitionService;
     @MockBean
     protected TbQueueProducerProvider producerProvider;
 
     @SpyBean
-    protected NotificationsTopicService notificationsTopicService;
+    protected TopicService topicService;
     @SpyBean
     protected TbClusterService clusterService;
 
@@ -92,14 +96,14 @@ public class DefaultTbClusterServiceTest {
 
         when(producerProvider.getRuleEngineNotificationsMsgProducer()).thenReturn(tbQueueProducer);
 
-        clusterService.onQueueChange(createTestQueue());
+        clusterService.onQueuesUpdate(List.of(createTestQueue()));
 
-        verify(notificationsTopicService, times(1)).getNotificationsTopic(ServiceType.TB_RULE_ENGINE, MONOLITH);
-        verify(notificationsTopicService, never()).getNotificationsTopic(eq(ServiceType.TB_CORE), any());
-        verify(notificationsTopicService, never()).getNotificationsTopic(eq(ServiceType.TB_TRANSPORT), any());
+        verify(topicService, times(1)).getNotificationsTopic(ServiceType.TB_RULE_ENGINE, MONOLITH);
+        verify(topicService, never()).getNotificationsTopic(eq(ServiceType.TB_CORE), any());
+        verify(topicService, never()).getNotificationsTopic(eq(ServiceType.TB_TRANSPORT), any());
 
         verify(tbQueueProducer, times(1))
-                .send(eq(notificationsTopicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, MONOLITH)), any(TbProtoQueueMsg.class), isNull());
+                .send(eq(topicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, MONOLITH)), any(TbProtoQueueMsg.class), isNull());
 
         verify(producerProvider, never()).getTbCoreNotificationsMsgProducer();
         verify(producerProvider, never()).getTransportNotificationsMsgProducer();
@@ -117,17 +121,17 @@ public class DefaultTbClusterServiceTest {
 
         when(producerProvider.getRuleEngineNotificationsMsgProducer()).thenReturn(tbQueueProducer);
 
-        clusterService.onQueueChange(createTestQueue());
+        clusterService.onQueuesUpdate(List.of(createTestQueue()));
 
-        verify(notificationsTopicService, times(1)).getNotificationsTopic(ServiceType.TB_RULE_ENGINE, monolith1);
-        verify(notificationsTopicService, times(1)).getNotificationsTopic(ServiceType.TB_RULE_ENGINE, monolith2);
-        verify(notificationsTopicService, never()).getNotificationsTopic(eq(ServiceType.TB_CORE), any());
-        verify(notificationsTopicService, never()).getNotificationsTopic(eq(ServiceType.TB_TRANSPORT), any());
+        verify(topicService, times(1)).getNotificationsTopic(ServiceType.TB_RULE_ENGINE, monolith1);
+        verify(topicService, times(1)).getNotificationsTopic(ServiceType.TB_RULE_ENGINE, monolith2);
+        verify(topicService, never()).getNotificationsTopic(eq(ServiceType.TB_CORE), any());
+        verify(topicService, never()).getNotificationsTopic(eq(ServiceType.TB_TRANSPORT), any());
 
         verify(tbQueueProducer, times(1))
-                .send(eq(notificationsTopicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, monolith1)), any(TbProtoQueueMsg.class), isNull());
+                .send(eq(topicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, monolith1)), any(TbProtoQueueMsg.class), isNull());
         verify(tbQueueProducer, times(1))
-                .send(eq(notificationsTopicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, monolith2)), any(TbProtoQueueMsg.class), isNull());
+                .send(eq(topicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, monolith2)), any(TbProtoQueueMsg.class), isNull());
 
         verify(producerProvider, never()).getTbCoreNotificationsMsgProducer();
         verify(producerProvider, never()).getTransportNotificationsMsgProducer();
@@ -145,22 +149,22 @@ public class DefaultTbClusterServiceTest {
         when(producerProvider.getRuleEngineNotificationsMsgProducer()).thenReturn(tbREQueueProducer);
         when(producerProvider.getTransportNotificationsMsgProducer()).thenReturn(tbTransportQueueProducer);
 
-        clusterService.onQueueChange(createTestQueue());
+        clusterService.onQueuesUpdate(List.of(createTestQueue()));
 
-        verify(notificationsTopicService, times(1)).getNotificationsTopic(ServiceType.TB_RULE_ENGINE, MONOLITH);
-        verify(notificationsTopicService, times(1)).getNotificationsTopic(ServiceType.TB_TRANSPORT, TRANSPORT);
-        verify(notificationsTopicService, never()).getNotificationsTopic(eq(ServiceType.TB_CORE), any());
+        verify(topicService, times(1)).getNotificationsTopic(ServiceType.TB_RULE_ENGINE, MONOLITH);
+        verify(topicService, times(1)).getNotificationsTopic(ServiceType.TB_TRANSPORT, TRANSPORT);
+        verify(topicService, never()).getNotificationsTopic(eq(ServiceType.TB_CORE), any());
 
         verify(tbREQueueProducer, times(1))
-                .send(eq(notificationsTopicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, MONOLITH)), any(TbProtoQueueMsg.class), isNull());
+                .send(eq(topicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, MONOLITH)), any(TbProtoQueueMsg.class), isNull());
 
         verify(tbTransportQueueProducer, times(1))
-                .send(eq(notificationsTopicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, TRANSPORT)), any(TbProtoQueueMsg.class), isNull());
+                .send(eq(topicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, TRANSPORT)), any(TbProtoQueueMsg.class), isNull());
         verify(tbTransportQueueProducer, never())
-                .send(eq(notificationsTopicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, MONOLITH)), any(TbProtoQueueMsg.class), isNull());
+                .send(eq(topicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, MONOLITH)), any(TbProtoQueueMsg.class), isNull());
 
         verify(tbTransportQueueProducer, never())
-                .send(eq(notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, MONOLITH)), any(TbProtoQueueMsg.class), isNull());
+                .send(eq(topicService.getNotificationsTopic(ServiceType.TB_CORE, MONOLITH)), any(TbProtoQueueMsg.class), isNull());
 
         verify(producerProvider, never()).getTbCoreNotificationsMsgProducer();
     }
@@ -191,49 +195,49 @@ public class DefaultTbClusterServiceTest {
         when(producerProvider.getTbCoreNotificationsMsgProducer()).thenReturn(tbCoreQueueProducer);
         when(producerProvider.getTransportNotificationsMsgProducer()).thenReturn(tbTransportQueueProducer);
 
-        clusterService.onQueueChange(createTestQueue());
+        clusterService.onQueuesUpdate(List.of(createTestQueue()));
 
-        verify(notificationsTopicService, times(1)).getNotificationsTopic(ServiceType.TB_RULE_ENGINE, monolith1);
-        verify(notificationsTopicService, times(1)).getNotificationsTopic(ServiceType.TB_RULE_ENGINE, monolith2);
-        verify(notificationsTopicService, times(1)).getNotificationsTopic(ServiceType.TB_RULE_ENGINE, ruleEngine1);
-        verify(notificationsTopicService, times(1)).getNotificationsTopic(ServiceType.TB_RULE_ENGINE, ruleEngine2);
+        verify(topicService, times(1)).getNotificationsTopic(ServiceType.TB_RULE_ENGINE, monolith1);
+        verify(topicService, times(1)).getNotificationsTopic(ServiceType.TB_RULE_ENGINE, monolith2);
+        verify(topicService, times(1)).getNotificationsTopic(ServiceType.TB_RULE_ENGINE, ruleEngine1);
+        verify(topicService, times(1)).getNotificationsTopic(ServiceType.TB_RULE_ENGINE, ruleEngine2);
 
-        verify(notificationsTopicService, times(1)).getNotificationsTopic(ServiceType.TB_CORE, core1);
-        verify(notificationsTopicService, times(1)).getNotificationsTopic(ServiceType.TB_CORE, core2);
-        verify(notificationsTopicService, never()).getNotificationsTopic(ServiceType.TB_CORE, monolith1);
-        verify(notificationsTopicService, never()).getNotificationsTopic(ServiceType.TB_CORE, monolith2);
+        verify(topicService, times(1)).getNotificationsTopic(ServiceType.TB_CORE, core1);
+        verify(topicService, times(1)).getNotificationsTopic(ServiceType.TB_CORE, core2);
+        verify(topicService, never()).getNotificationsTopic(ServiceType.TB_CORE, monolith1);
+        verify(topicService, never()).getNotificationsTopic(ServiceType.TB_CORE, monolith2);
 
-        verify(notificationsTopicService, times(1)).getNotificationsTopic(ServiceType.TB_TRANSPORT, transport1);
-        verify(notificationsTopicService, times(1)).getNotificationsTopic(ServiceType.TB_TRANSPORT, transport2);
-        verify(notificationsTopicService, never()).getNotificationsTopic(ServiceType.TB_TRANSPORT, monolith1);
-        verify(notificationsTopicService, never()).getNotificationsTopic(ServiceType.TB_TRANSPORT, monolith2);
+        verify(topicService, times(1)).getNotificationsTopic(ServiceType.TB_TRANSPORT, transport1);
+        verify(topicService, times(1)).getNotificationsTopic(ServiceType.TB_TRANSPORT, transport2);
+        verify(topicService, never()).getNotificationsTopic(ServiceType.TB_TRANSPORT, monolith1);
+        verify(topicService, never()).getNotificationsTopic(ServiceType.TB_TRANSPORT, monolith2);
 
         verify(tbREQueueProducer, times(1))
-                .send(eq(notificationsTopicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, monolith1)), any(TbProtoQueueMsg.class), isNull());
+                .send(eq(topicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, monolith1)), any(TbProtoQueueMsg.class), isNull());
         verify(tbREQueueProducer, times(1))
-                .send(eq(notificationsTopicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, monolith2)), any(TbProtoQueueMsg.class), isNull());
+                .send(eq(topicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, monolith2)), any(TbProtoQueueMsg.class), isNull());
         verify(tbREQueueProducer, times(1))
-                .send(eq(notificationsTopicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, ruleEngine1)), any(TbProtoQueueMsg.class), isNull());
+                .send(eq(topicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, ruleEngine1)), any(TbProtoQueueMsg.class), isNull());
         verify(tbREQueueProducer, times(1))
-                .send(eq(notificationsTopicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, ruleEngine2)), any(TbProtoQueueMsg.class), isNull());
+                .send(eq(topicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, ruleEngine2)), any(TbProtoQueueMsg.class), isNull());
 
         verify(tbCoreQueueProducer, times(1))
-                .send(eq(notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, core1)), any(TbProtoQueueMsg.class), isNull());
+                .send(eq(topicService.getNotificationsTopic(ServiceType.TB_CORE, core1)), any(TbProtoQueueMsg.class), isNull());
         verify(tbCoreQueueProducer, times(1))
-                .send(eq(notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, core2)), any(TbProtoQueueMsg.class), isNull());
+                .send(eq(topicService.getNotificationsTopic(ServiceType.TB_CORE, core2)), any(TbProtoQueueMsg.class), isNull());
         verify(tbCoreQueueProducer, never())
-                .send(eq(notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, monolith1)), any(TbProtoQueueMsg.class), isNull());
+                .send(eq(topicService.getNotificationsTopic(ServiceType.TB_CORE, monolith1)), any(TbProtoQueueMsg.class), isNull());
         verify(tbCoreQueueProducer, never())
-                .send(eq(notificationsTopicService.getNotificationsTopic(ServiceType.TB_CORE, monolith2)), any(TbProtoQueueMsg.class), isNull());
+                .send(eq(topicService.getNotificationsTopic(ServiceType.TB_CORE, monolith2)), any(TbProtoQueueMsg.class), isNull());
 
         verify(tbTransportQueueProducer, times(1))
-                .send(eq(notificationsTopicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, transport1)), any(TbProtoQueueMsg.class), isNull());
+                .send(eq(topicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, transport1)), any(TbProtoQueueMsg.class), isNull());
         verify(tbTransportQueueProducer, times(1))
-                .send(eq(notificationsTopicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, transport2)), any(TbProtoQueueMsg.class), isNull());
+                .send(eq(topicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, transport2)), any(TbProtoQueueMsg.class), isNull());
         verify(tbTransportQueueProducer, never())
-                .send(eq(notificationsTopicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, monolith1)), any(TbProtoQueueMsg.class), isNull());
+                .send(eq(topicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, monolith1)), any(TbProtoQueueMsg.class), isNull());
         verify(tbTransportQueueProducer, never())
-                .send(eq(notificationsTopicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, monolith2)), any(TbProtoQueueMsg.class), isNull());
+                .send(eq(topicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, monolith2)), any(TbProtoQueueMsg.class), isNull());
     }
 
     protected Queue createTestQueue() {

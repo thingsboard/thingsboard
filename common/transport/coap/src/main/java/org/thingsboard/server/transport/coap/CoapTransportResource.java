@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,9 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.security.DeviceTokenCredentials;
 import org.thingsboard.server.common.msg.session.FeatureType;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
-import org.thingsboard.server.common.transport.adaptor.AdaptorException;
-import org.thingsboard.server.common.transport.adaptor.JsonConverter;
+import org.thingsboard.server.common.adaptor.AdaptorException;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.coap.callback.CoapDeviceAuthCallback;
@@ -121,7 +120,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         } else if (exchange.getRequestOptions().hasObserve()) {
             processExchangeGetRequest(exchange, featureType.get());
         } else if (featureType.get() == FeatureType.ATTRIBUTES) {
-            processRequest(exchange, SessionMsgType.GET_ATTRIBUTES_REQUEST);
+            processRequest(exchange, CoapSessionMsgType.GET_ATTRIBUTES_REQUEST);
         } else {
             log.trace("Invalid feature type parameter");
             exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
@@ -130,13 +129,13 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
 
     private void processExchangeGetRequest(CoapExchange exchange, FeatureType featureType) {
         boolean unsubscribe = exchange.getRequestOptions().getObserve() == 1;
-        SessionMsgType sessionMsgType;
+        CoapSessionMsgType coapSessionMsgType;
         if (featureType == FeatureType.RPC) {
-            sessionMsgType = unsubscribe ? SessionMsgType.UNSUBSCRIBE_RPC_COMMANDS_REQUEST : SessionMsgType.SUBSCRIBE_RPC_COMMANDS_REQUEST;
+            coapSessionMsgType = unsubscribe ? CoapSessionMsgType.UNSUBSCRIBE_RPC_COMMANDS_REQUEST : CoapSessionMsgType.SUBSCRIBE_RPC_COMMANDS_REQUEST;
         } else {
-            sessionMsgType = unsubscribe ? SessionMsgType.UNSUBSCRIBE_ATTRIBUTES_REQUEST : SessionMsgType.SUBSCRIBE_ATTRIBUTES_REQUEST;
+            coapSessionMsgType = unsubscribe ? CoapSessionMsgType.UNSUBSCRIBE_ATTRIBUTES_REQUEST : CoapSessionMsgType.SUBSCRIBE_ATTRIBUTES_REQUEST;
         }
-        processRequest(exchange, sessionMsgType);
+        processRequest(exchange, coapSessionMsgType);
     }
 
     @Override
@@ -148,21 +147,21 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         } else {
             switch (featureType.get()) {
                 case ATTRIBUTES:
-                    processRequest(exchange, SessionMsgType.POST_ATTRIBUTES_REQUEST);
+                    processRequest(exchange, CoapSessionMsgType.POST_ATTRIBUTES_REQUEST);
                     break;
                 case TELEMETRY:
-                    processRequest(exchange, SessionMsgType.POST_TELEMETRY_REQUEST);
+                    processRequest(exchange, CoapSessionMsgType.POST_TELEMETRY_REQUEST);
                     break;
                 case RPC:
                     Optional<Integer> requestId = getRequestId(exchange.advanced().getRequest());
                     if (requestId.isPresent()) {
-                        processRequest(exchange, SessionMsgType.TO_DEVICE_RPC_RESPONSE);
+                        processRequest(exchange, CoapSessionMsgType.TO_DEVICE_RPC_RESPONSE);
                     } else {
-                        processRequest(exchange, SessionMsgType.TO_SERVER_RPC_REQUEST);
+                        processRequest(exchange, CoapSessionMsgType.TO_SERVER_RPC_REQUEST);
                     }
                     break;
                 case CLAIM:
-                    processRequest(exchange, SessionMsgType.CLAIM_REQUEST);
+                    processRequest(exchange, CoapSessionMsgType.CLAIM_REQUEST);
                     break;
                 case PROVISION:
                     processProvision(exchange);
@@ -196,7 +195,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         }
     }
 
-    private void processRequest(CoapExchange exchange, SessionMsgType type) {
+    private void processRequest(CoapExchange exchange, CoapSessionMsgType type) {
         log.trace("Processing {}", exchange.advanced().getRequest());
         deferAccept(exchange);
         Exchange advanced = exchange.advanced();
@@ -219,7 +218,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
         }
     }
 
-    private void processAccessTokenRequest(CoapExchange exchange, SessionMsgType type, Request request) {
+    private void processAccessTokenRequest(CoapExchange exchange, CoapSessionMsgType type, Request request) {
         Optional<DeviceTokenCredentials> credentials = decodeCredentials(request);
         if (credentials.isEmpty()) {
             exchange.respond(CoAP.ResponseCode.UNAUTHORIZED);
@@ -229,7 +228,7 @@ public class CoapTransportResource extends AbstractCoapTransportResource {
                 new CoapDeviceAuthCallback(exchange, (deviceCredentials, deviceProfile) -> processRequest(exchange, type, request, deviceCredentials, deviceProfile)));
     }
 
-    private void processRequest(CoapExchange exchange, SessionMsgType type, Request request, ValidateDeviceCredentialsResponse deviceCredentials, DeviceProfile deviceProfile) {
+    private void processRequest(CoapExchange exchange, CoapSessionMsgType type, Request request, ValidateDeviceCredentialsResponse deviceCredentials, DeviceProfile deviceProfile) {
         TbCoapClientState clientState = null;
         try {
             clientState = clients.getOrCreateClient(type, deviceCredentials, deviceProfile);

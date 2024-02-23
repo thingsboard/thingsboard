@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -406,7 +406,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
                     .map(mapping -> {
                                 String paramName = mapping + "_lowerSearchText";
                                 ctx.addStringParameter(paramName, lowerSearchText);
-                                return String.format("LOWER(cast(%s as varchar)) LIKE concat('%%', :%s, '%%')", mapping, paramName);
+                                return String.format("cast(%s as varchar) ILIKE concat('%%', :%s, '%%')", mapping, paramName);
                             }
                     ).collect(Collectors.toList());
             return String.format("%s", String.join(" or ", searchPredicates));

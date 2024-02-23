@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package org.thingsboard.rule.engine.mqtt;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.ssl.SslContext;
-import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.Promise;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.mqtt.MqttClient;
 import org.thingsboard.mqtt.MqttClientConfig;
@@ -40,6 +40,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import javax.net.ssl.SSLException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -57,7 +58,7 @@ import java.util.concurrent.TimeoutException;
 )
 public class TbMqttNode extends TbAbstractExternalNode {
 
-    private static final Charset UTF8 = Charset.forName("UTF-8");
+    private static final Charset UTF8 = StandardCharsets.UTF_8;
 
     private static final String ERROR = "error";
 
@@ -85,16 +86,16 @@ public class TbMqttNode extends TbAbstractExternalNode {
                             if (future.isSuccess()) {
                                 tellSuccess(ctx, tbMsg);
                             } else {
-                                tellFailure(ctx, processException(ctx, tbMsg, future.cause()), future.cause());
+                                tellFailure(ctx, processException(tbMsg, future.cause()), future.cause());
                             }
                         }
                 );
     }
 
-    private TbMsg processException(TbContext ctx, TbMsg origMsg, Throwable e) {
+    private TbMsg processException(TbMsg origMsg, Throwable e) {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue(ERROR, e.getClass() + ": " + e.getMessage());
-        return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
+        return TbMsg.transformMsgMetadata(origMsg, metaData);
     }
 
     @Override
@@ -120,7 +121,7 @@ public class TbMqttNode extends TbAbstractExternalNode {
         prepareMqttClientConfig(config);
         MqttClient client = MqttClient.create(config, null, ctx.getExternalCallExecutor());
         client.setEventLoop(ctx.getSharedEventLoop());
-        Future<MqttConnectResult> connectFuture = client.connect(this.mqttNodeConfiguration.getHost(), this.mqttNodeConfiguration.getPort());
+        Promise<MqttConnectResult> connectFuture = client.connect(this.mqttNodeConfiguration.getHost(), this.mqttNodeConfiguration.getPort());
         MqttConnectResult result;
         try {
             result = connectFuture.get(this.mqttNodeConfiguration.getConnectTimeoutSec(), TimeUnit.SECONDS);

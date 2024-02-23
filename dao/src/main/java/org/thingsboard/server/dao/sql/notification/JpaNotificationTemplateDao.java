@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
@@ -49,12 +50,32 @@ public class JpaNotificationTemplateDao extends JpaAbstractDao<NotificationTempl
     @Override
     public PageData<NotificationTemplate> findByTenantIdAndNotificationTypesAndPageLink(TenantId tenantId, List<NotificationType> notificationTypes, PageLink pageLink) {
         return DaoUtil.toPageData(notificationTemplateRepository.findByTenantIdAndNotificationTypesAndSearchText(tenantId.getId(),
-                notificationTypes, Strings.nullToEmpty(pageLink.getTextSearch()), DaoUtil.toPageable(pageLink)));
+                notificationTypes, pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
     }
 
     @Override
     public void removeByTenantId(TenantId tenantId) {
         notificationTemplateRepository.deleteByTenantId(tenantId.getId());
+    }
+
+    @Override
+    public NotificationTemplate findByTenantIdAndExternalId(UUID tenantId, UUID externalId) {
+        return DaoUtil.getData(notificationTemplateRepository.findByTenantIdAndExternalId(tenantId, externalId));
+    }
+
+    @Override
+    public NotificationTemplate findByTenantIdAndName(UUID tenantId, String name) {
+        return DaoUtil.getData(notificationTemplateRepository.findByTenantIdAndName(tenantId, name));
+    }
+
+    @Override
+    public PageData<NotificationTemplate> findByTenantId(UUID tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(notificationTemplateRepository.findByTenantId(tenantId, DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public NotificationTemplateId getExternalIdByInternal(NotificationTemplateId internalId) {
+        return DaoUtil.toEntityId(notificationTemplateRepository.getExternalIdByInternal(internalId.getId()), NotificationTemplateId::new);
     }
 
     @Override

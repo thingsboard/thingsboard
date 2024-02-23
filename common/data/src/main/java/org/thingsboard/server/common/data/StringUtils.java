@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,18 @@ import com.google.common.base.Splitter;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import java.security.SecureRandom;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.List;
+import java.util.function.Function;
 
 import static org.apache.commons.lang3.StringUtils.repeat;
 
 public class StringUtils {
+
+    private static final int DEFAULT_TOKEN_LENGTH = 8;
+
     public static final SecureRandom RANDOM = new SecureRandom();
 
     public static final String EMPTY = "";
@@ -152,12 +159,29 @@ public class StringUtils {
     }
 
     public static boolean equalsAny(String string, String... otherStrings) {
+        return equalsAny(string, Arrays.asList(otherStrings));
+    }
+
+    public static boolean equalsAny(String string, List<String> otherStrings) {
         for (String otherString : otherStrings) {
             if (equals(string, otherString)) {
                 return true;
             }
         }
         return false;
+    }
+
+    public static boolean equalsAnyIgnoreCase(String string, String... otherStrings) {
+        for (String otherString : otherStrings) {
+            if (equalsIgnoreCase(string, otherString)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static String substringBeforeLast(String str, String separator) {
+        return org.apache.commons.lang3.StringUtils.substringBeforeLast(str, separator);
     }
 
     public static String substringAfterLast(String str, String sep) {
@@ -176,6 +200,13 @@ public class StringUtils {
 
     public static boolean contains(final CharSequence seq, final CharSequence searchSeq) {
         return org.apache.commons.lang3.StringUtils.contains(seq, searchSeq);
+    }
+
+    /**
+     * Use this to prevent org.postgresql.util.PSQLException: ERROR: invalid byte sequence for encoding "UTF8": 0x00
+     **/
+    public static boolean contains0x00(final String s) {
+        return s != null && s.contains("\u0000");
     }
 
     public static String randomNumeric(int length) {
@@ -203,6 +234,45 @@ public class StringUtils {
         RANDOM.nextBytes(bytes);
         Base64.Encoder encoder = Base64.getUrlEncoder().withoutPadding();
         return encoder.encodeToString(bytes);
+    }
+
+    public static String generateSafeToken() {
+        return generateSafeToken(DEFAULT_TOKEN_LENGTH);
+    }
+
+    public static String truncate(String string, int maxLength) {
+        return truncate(string, maxLength, n -> "...[truncated " + n + " symbols]");
+    }
+
+    public static String truncate(String string, int maxLength, Function<Integer, String> truncationMarkerFunc) {
+        if (string == null || maxLength <= 0 || string.length() <= maxLength) {
+            return string;
+        }
+        int truncatedSymbols = string.length() - maxLength;
+        return string.substring(0, maxLength) + truncationMarkerFunc.apply(truncatedSymbols);
+    }
+
+    public static List<String> splitByCommaWithoutQuotes(String value) {
+        List<String> splitValues = List.of(value.trim().split("\\s*,\\s*"));
+        List<String> result = new ArrayList<>();
+        char lastWayInputValue = '#';
+        for (String str : splitValues) {
+            char startWith = str.charAt(0);
+            char endWith = str.charAt(str.length() - 1);
+
+            // if first value is not quote, so we return values after split
+            if (startWith != '\'' && startWith != '"') return splitValues;
+
+            // if value is not in quote, so we return values after split
+            if (startWith != endWith) return splitValues;
+
+            // if different way values, so don't replace quote and return values after split
+            if (lastWayInputValue != '#' && startWith != lastWayInputValue) return splitValues;
+
+            result.add(str.substring(1, str.length() - 1));
+            lastWayInputValue = startWith;
+        }
+        return result;
     }
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,10 +74,14 @@ public class AppActor extends ContextAwareActor {
     @Override
     protected boolean doProcess(TbActorMsg msg) {
         if (!ruleChainsInitialized) {
-            initTenantActors();
-            ruleChainsInitialized = true;
-            if (msg.getMsgType() != MsgType.APP_INIT_MSG && msg.getMsgType() != MsgType.PARTITION_CHANGE_MSG) {
-                log.warn("Rule Chains initialized by unexpected message: {}", msg);
+            if (MsgType.APP_INIT_MSG.equals(msg.getMsgType())) {
+                initTenantActors();
+                ruleChainsInitialized = true;
+            } else {
+                if (!msg.getMsgType().isIgnoreOnStart()) {
+                    log.warn("Attempt to initialize Rule Chains by unexpected message: {}", msg);
+                }
+                return true;
             }
         }
         switch (msg.getMsgType()) {
@@ -198,8 +202,7 @@ public class AppActor extends ContextAwareActor {
         return Optional.ofNullable(ctx.getOrCreateChildActor(new TbEntityActorId(tenantId),
                 () -> DefaultActorService.TENANT_DISPATCHER_NAME,
                 () -> new TenantActor.ActorCreator(systemContext, tenantId),
-                () -> systemContext.getServiceInfoProvider().isService(ServiceType.TB_CORE) ||
-                        systemContext.getPartitionService().isManagedByCurrentService(tenantId)));
+                () -> true));
     }
 
     private void onToEdgeSessionMsg(EdgeSessionMsg msg) {

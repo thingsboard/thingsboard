@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,13 +30,14 @@ import java.util.Objects;
 import java.util.Set;
 
 @ApiModel
-public class DashboardInfo extends SearchTextBased<DashboardId> implements HasName, HasTenantId, HasTitle {
+public class DashboardInfo extends BaseData<DashboardId> implements HasName, HasTenantId, HasTitle, HasImage {
+
+    private static final long serialVersionUID = -9080404114760433799L;
 
     private TenantId tenantId;
     @NoXss
     @Length(fieldName = "title")
     private String title;
-    @Length(fieldName = "image", max = 1000000)
     private String image;
     @Valid
     private Set<ShortCustomerInfo> assignedCustomers;
@@ -85,7 +86,7 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
         this.tenantId = tenantId;
     }
 
-    @ApiModelProperty(position = 4, value = "Title of the dashboard.")
+    @ApiModelProperty(position = 4, required = true, value = "Title of the dashboard.")
     public String getTitle() {
         return title;
     }
@@ -184,11 +185,6 @@ public class DashboardInfo extends SearchTextBased<DashboardId> implements HasNa
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public String getName() {
         return title;
-    }
-
-    @Override
-    public String getSearchText() {
-        return getTitle();
     }
 
     @Override

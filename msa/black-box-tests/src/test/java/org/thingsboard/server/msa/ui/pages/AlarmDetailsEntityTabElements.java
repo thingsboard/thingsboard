@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ public class AlarmDetailsEntityTabElements extends OtherPageElements {
     private static final String ALARM_DETAILS_BTN = "//span[text() = '%s']/ancestor::mat-row//mat-icon[contains(text(),'more_horiz')]/parent::button";
     private static final String ACCESS_FORBIDDEN_DIALOG_VIEW = "//h2[text() = 'Access Forbidden']/parent::tb-confirm-dialog";
     private static final String ALARM_ASSIGNEE_DROPDOWN = "//tb-alarm-assignee-panel";
+    private static final String NO_USERS_FOUND_MESSAGE = "//div[@class='tb-not-found-content']/span";
 
     public WebElement assignBtn(String type) {
         return waitUntilElementToBeClickable(String.format(ASSIGN_BTN, type));
@@ -74,5 +75,9 @@ public class AlarmDetailsEntityTabElements extends OtherPageElements {
 
     public WebElement alarmAssigneeDropdown() {
         return waitUntilVisibilityOfElementLocated(ALARM_ASSIGNEE_DROPDOWN);
+    }
+
+    public WebElement noUsersFoundMessage() {
+        return waitUntilVisibilityOfElementLocated(NO_USERS_FOUND_MESSAGE);
     }
 }

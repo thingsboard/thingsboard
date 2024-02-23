@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import java.util.Optional;
 public class DefaultNotificationRequestService implements NotificationRequestService, EntityDaoService {
 
     private final NotificationRequestDao notificationRequestDao;
+    private final NotificationDao notificationDao;
 
     private final NotificationRequestValidator notificationRequestValidator = new NotificationRequestValidator();
 
@@ -81,10 +82,10 @@ public class DefaultNotificationRequestService implements NotificationRequestSer
         return notificationRequestDao.findByRuleIdAndOriginatorEntityId(tenantId, ruleId, originatorEntityId);
     }
 
-    // ON DELETE CASCADE is used: notifications for request are deleted as well
     @Override
     public void deleteNotificationRequest(TenantId tenantId, NotificationRequestId requestId) {
         notificationRequestDao.removeById(tenantId, requestId.getId());
+        notificationDao.deleteByRequestId(tenantId, requestId);
     }
 
     @Override
@@ -97,6 +98,7 @@ public class DefaultNotificationRequestService implements NotificationRequestSer
         notificationRequestDao.updateById(tenantId, requestId, requestStatus, stats);
     }
 
+    // notifications themselves are left in the database until removed by ttl
     @Override
     public void deleteNotificationRequestsByTenantId(TenantId tenantId) {
         notificationRequestDao.removeByTenantId(tenantId);

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -49,6 +52,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.mobile.MobileSessionInfo;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
@@ -105,6 +109,7 @@ import static org.thingsboard.server.controller.ControllerConstants.USER_ID_PARA
 import static org.thingsboard.server.controller.ControllerConstants.USER_SORT_PROPERTY_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.USER_TEXT_SEARCH_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
+import static org.thingsboard.server.dao.entity.BaseEntityService.NULL_CUSTOMER_ID;
 
 @RequiredArgsConstructor
 @RestController
@@ -116,6 +121,7 @@ public class UserController extends BaseController {
     public static final String PATHS = "paths";
     public static final String YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION = "You don't have permission to perform this operation!";
     public static final String ACTIVATE_URL_PATTERN = "%s/api/noauth/activate?activateToken=%s";
+    public static final String MOBILE_TOKEN_HEADER = "X-Mobile-Token";
 
     @Value("${security.user_token_access_enabled}")
     private boolean userTokenAccessEnabled;
@@ -439,32 +445,28 @@ public class UserController extends BaseController {
             @RequestParam(required = false) String sortProperty,
             @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
-        try {
-            checkParameter("alarmId", strAlarmId);
-            AlarmId alarmEntityId = new AlarmId(toUUID(strAlarmId));
-            Alarm alarm = checkAlarmId(alarmEntityId, Operation.READ);
-            SecurityUser currentUser = getCurrentUser();
-            TenantId tenantId = currentUser.getTenantId();
-            CustomerId originatorCustomerId = entityService.fetchEntityCustomerId(tenantId, alarm.getOriginator()).get();
-            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-            PageData<User> pageData;
-            if (Authority.TENANT_ADMIN.equals(currentUser.getAuthority())) {
-                if (alarm.getCustomerId() == null) {
-                    pageData = userService.findTenantAdmins(tenantId, pageLink);
-                } else {
-                    ArrayList<CustomerId> customerIds = new ArrayList<>(Collections.singletonList(new CustomerId(CustomerId.NULL_UUID)));
-                    if (!CustomerId.NULL_UUID.equals(originatorCustomerId.getId())) {
-                        customerIds.add(originatorCustomerId);
-                    }
-                    pageData = userService.findUsersByCustomerIds(tenantId, customerIds, pageLink);
-                }
+        checkParameter("alarmId", strAlarmId);
+        AlarmId alarmEntityId = new AlarmId(toUUID(strAlarmId));
+        Alarm alarm = checkAlarmId(alarmEntityId, Operation.READ);
+        SecurityUser currentUser = getCurrentUser();
+        TenantId tenantId = currentUser.getTenantId();
+        CustomerId originatorCustomerId = entityService.fetchEntityCustomerId(tenantId, alarm.getOriginator()).orElse(NULL_CUSTOMER_ID);
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        PageData<User> pageData;
+        if (Authority.TENANT_ADMIN.equals(currentUser.getAuthority())) {
+            if (alarm.getCustomerId() == null) {
+                pageData = userService.findTenantAdmins(tenantId, pageLink);
             } else {
-                pageData = userService.findCustomerUsers(tenantId, alarm.getCustomerId(), pageLink);
+                ArrayList<CustomerId> customerIds = new ArrayList<>(Collections.singletonList(NULL_CUSTOMER_ID));
+                if (!CustomerId.NULL_UUID.equals(originatorCustomerId.getId())) {
+                    customerIds.add(originatorCustomerId);
+                }
+                pageData = userService.findUsersByCustomerIds(tenantId, customerIds, pageLink);
             }
-            return pageData.mapData(user -> new UserEmailInfo(user.getId(), user.getEmail(), user.getFirstName(), user.getLastName()));
-        } catch (Exception e) {
-            throw handleException(e);
+        } else {
+            pageData = userService.findCustomerUsers(tenantId, alarm.getCustomerId(), pageLink);
         }
+        return pageData.mapData(user -> new UserEmailInfo(user.getId(), user.getEmail(), user.getFirstName(), user.getLastName()));
     }
 
     @ApiOperation(value = "Save user settings (saveUserSettings)",
@@ -585,6 +587,28 @@ public class UserController extends BaseController {
         checkDashboardInfoId(dashboardId, Operation.READ);
         SecurityUser currentUser = getCurrentUser();
         return userSettingsService.reportUserDashboardAction(currentUser.getTenantId(), currentUser.getId(), dashboardId, action);
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping("/user/mobile/session")
+    public MobileSessionInfo getMobileSession(@RequestHeader(MOBILE_TOKEN_HEADER) String mobileToken,
+                                              @AuthenticationPrincipal SecurityUser user) {
+        return userService.findMobileSession(user.getTenantId(), user.getId(), mobileToken);
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PostMapping("/user/mobile/session")
+    public void saveMobileSession(@RequestBody MobileSessionInfo sessionInfo,
+                                  @RequestHeader(MOBILE_TOKEN_HEADER) String mobileToken,
+                                  @AuthenticationPrincipal SecurityUser user) {
+        userService.saveMobileSession(user.getTenantId(), user.getId(), mobileToken, sessionInfo);
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @DeleteMapping("/user/mobile/session")
+    public void removeMobileSession(@RequestHeader(MOBILE_TOKEN_HEADER) String mobileToken,
+                                    @AuthenticationPrincipal SecurityUser user) {
+        userService.removeMobileSession(user.getTenantId(), mobileToken);
     }
 
     private void checkNotReserved(String strType, UserSettingsType type) throws ThingsboardException {

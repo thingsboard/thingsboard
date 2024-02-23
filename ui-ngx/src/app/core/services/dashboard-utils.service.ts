@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -29,20 +29,27 @@ import {
   GridSettings,
   WidgetLayout
 } from '@shared/models/dashboard.models';
-import { isDefined, isString, isUndefined } from '@core/utils';
+import { deepClone, isDefined, isDefinedAndNotNull, isNotEmptyStr, isString, isUndefined } from '@core/utils';
 import {
   Datasource,
   datasourcesHasOnlyComparisonAggregation,
   DatasourceType,
+  defaultLegendConfig,
+  isValidWidgetFullFqn,
+  TargetDevice,
+  TargetDeviceType,
   Widget,
   WidgetConfig,
-  widgetType
+  WidgetConfigMode,
+  widgetType,
+  WidgetTypeDescriptor
 } from '@app/shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AliasFilterType, EntityAlias, EntityAliasFilter } from '@app/shared/models/alias.models';
 import { EntityId } from '@app/shared/models/id/entity-id';
 import { initModelFromDefaultTimewindow } from '@shared/models/time/time.models';
 import { AlarmSearchStatus } from '@shared/models/alarm.models';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 
 @Injectable({
   providedIn: 'root'
@@ -112,7 +119,7 @@ export class DashboardUtilsService {
       }
     }
     const datasourcesByAliasId: {[aliasId: string]: Array<Datasource>} = {};
-    const targetDevicesByAliasId: {[aliasId: string]: Array<Array<string>>} = {};
+    const targetDevicesByAliasId: {[aliasId: string]: Array<TargetDevice>} = {};
     for (const widgetId of Object.keys(dashboard.configuration.widgets)) {
       const widget = dashboard.configuration.widgets[widgetId];
       const datasources = widget.type === widgetType.alarm ? [widget.config.alarmSource] : widget.config.datasources;
@@ -127,14 +134,14 @@ export class DashboardUtilsService {
           aliasDatasources.push(datasource);
         }
       });
-      if (widget.config.targetDeviceAliasIds && widget.config.targetDeviceAliasIds.length) {
-        const aliasId = widget.config.targetDeviceAliasIds[0];
-        let targetDeviceAliasIdsList = targetDevicesByAliasId[aliasId];
-        if (!targetDeviceAliasIdsList) {
-          targetDeviceAliasIdsList = [];
-          targetDevicesByAliasId[aliasId] = targetDeviceAliasIdsList;
+      if (widget.config.targetDevice?.type === TargetDeviceType.entity && widget.config.targetDevice.entityAliasId) {
+        const aliasId = widget.config.targetDevice.entityAliasId;
+        let targetDevicesList = targetDevicesByAliasId[aliasId];
+        if (!targetDevicesList) {
+          targetDevicesList = [];
+          targetDevicesByAliasId[aliasId] = targetDevicesList;
         }
-        targetDeviceAliasIdsList.push(widget.config.targetDeviceAliasIds);
+        targetDevicesList.push(widget.config.targetDevice);
       }
     }
 
@@ -210,9 +217,57 @@ export class DashboardUtilsService {
 
   public validateAndUpdateWidget(widget: Widget): Widget {
     widget.config = this.validateAndUpdateWidgetConfig(widget.config, widget.type);
+    widget = this.validateAndUpdateWidgetTypeFqn(widget);
+    if (isDefined((widget as any).title)) {
+      delete (widget as any).title;
+    }
+    if (isDefined((widget as any).image)) {
+      delete (widget as any).image;
+    }
+    if (isDefined((widget as any).description)) {
+      delete (widget as any).description;
+    }
     // Temp workaround
-    if (widget.isSystemType  && widget.bundleAlias === 'charts' && widget.typeAlias === 'timeseries') {
-      widget.typeAlias = 'basic_timeseries';
+    if (['system.charts.state_chart',
+         'system.charts.basic_timeseries',
+         'system.charts.timeseries_bars_flot'].includes(widget.typeFullFqn)) {
+      const widgetConfig = widget.config;
+      const widgetSettings = widget.config.settings;
+      if (isDefinedAndNotNull(widgetConfig.showLegend)) {
+        widgetSettings.showLegend = widgetConfig.showLegend;
+        delete widgetConfig.showLegend;
+      } else if (isUndefined(widgetSettings.showLegend)) {
+        widgetSettings.showLegend = true;
+      }
+      if (isDefinedAndNotNull(widgetConfig.legendConfig)) {
+        widgetSettings.legendConfig = widgetConfig.legendConfig;
+        delete widgetConfig.legendConfig;
+      } else if (isUndefined(widgetSettings.legendConfig)) {
+        widgetSettings.legendConfig = defaultLegendConfig(widget.type);
+      }
+    }
+    return widget;
+  }
+
+  private validateAndUpdateWidgetTypeFqn(widget: Widget): Widget {
+    const w = widget as any;
+    if (!isValidWidgetFullFqn(widget.typeFullFqn)) {
+      if (isDefinedAndNotNull(w.isSystemType) && isNotEmptyStr(w.bundleAlias) && isNotEmptyStr(w.typeAlias)) {
+        widget.typeFullFqn = (w.isSystemType ? 'system' : 'tenant') + '.' + w.bundleAlias + '.' + w.typeAlias;
+      }
+    }
+    if (isDefined(w.isSystemType)) {
+      delete w.isSystemType;
+    }
+    if (isDefined(w.bundleAlias)) {
+      delete w.bundleAlias;
+    }
+    if (isDefined(w.typeAlias)) {
+      delete w.typeAlias;
+    }
+    // Temp workaround
+    if (widget.typeFullFqn === 'system.charts.timeseries') {
+      widget.typeFullFqn = 'system.charts.basic_timeseries';
     }
     return widget;
   }
@@ -221,23 +276,23 @@ export class DashboardUtilsService {
     if (!widgetConfig) {
       widgetConfig = {};
     }
-    if (!widgetConfig.datasources) {
-      widgetConfig.datasources = [];
-    }
-    widgetConfig.datasources.forEach((datasource) => {
-      if (datasource.type === 'device') {
-        datasource.type = DatasourceType.entity;
-      }
-      if (datasource.deviceAliasId) {
-        datasource.entityAliasId = datasource.deviceAliasId;
-        delete datasource.deviceAliasId;
-      }
-    });
+    widgetConfig.datasources = this.validateAndUpdateDatasources(widgetConfig.datasources);
     if (type === widgetType.latest) {
       const onlyHistoryTimewindow = datasourcesHasOnlyComparisonAggregation(widgetConfig.datasources);
       widgetConfig.timewindow = initModelFromDefaultTimewindow(widgetConfig.timewindow, true, onlyHistoryTimewindow, this.timeService);
-    }
-    if (type === widgetType.alarm) {
+    } else if (type === widgetType.rpc) {
+      if (widgetConfig.targetDeviceAliasIds && widgetConfig.targetDeviceAliasIds.length) {
+        widgetConfig.targetDevice = {
+          type: TargetDeviceType.entity,
+          entityAliasId: widgetConfig.targetDeviceAliasIds[0]
+        };
+        delete widgetConfig.targetDeviceAliasIds;
+      } else if (!widgetConfig.targetDevice) {
+        widgetConfig.targetDevice = {
+          type: TargetDeviceType.device
+        };
+      }
+    } else if (type === widgetType.alarm) {
       if (!widgetConfig.alarmFilterConfig) {
         widgetConfig.alarmFilterConfig = {};
         const alarmFilterConfig = widgetConfig.alarmFilterConfig;
@@ -277,6 +332,35 @@ export class DashboardUtilsService {
     return widgetConfig;
   }
 
+  public validateAndUpdateDatasources(datasources?: Datasource[]): Datasource[] {
+    if (!datasources) {
+      datasources = [];
+    }
+    datasources.forEach((datasource) => {
+      if (datasource.deviceAliasId) {
+        datasource.type = DatasourceType.entity;
+        datasource.entityAliasId = datasource.deviceAliasId;
+        delete datasource.deviceAliasId;
+      }
+      if (datasource.deviceName) {
+        datasource.entityName = datasource.deviceName;
+        delete datasource.deviceName;
+      }
+      if (datasource.type === DatasourceType.entity && datasource.entityId) {
+        datasource.name = datasource.entityName;
+      }
+      if (!datasource.dataKeys) {
+        datasource.dataKeys = [];
+      }
+      datasource.dataKeys.forEach(dataKey => {
+        if (isUndefined(dataKey.label)) {
+          dataKey.label = dataKey.name;
+        }
+      });
+    });
+    return datasources;
+  }
+
   public createDefaultLayoutData(): DashboardLayout {
     return {
       widgets: {},
@@ -314,6 +398,47 @@ export class DashboardUtilsService {
       singleEntity: entityId,
       resolveMultiple: false
     };
+  }
+
+  public widgetConfigFromWidgetType(widgetTypeDescriptor: WidgetTypeDescriptor): WidgetConfig {
+    const config: WidgetConfig = JSON.parse(widgetTypeDescriptor.defaultConfig);
+    config.datasources = this.convertDatasourcesFromWidgetType(widgetTypeDescriptor, config, config.datasources);
+    if (isDefinedAndNotNull(config.alarmSource)) {
+      config.alarmSource = this.convertDatasourceFromWidgetType(widgetTypeDescriptor, config, config.alarmSource);
+    }
+    return config;
+  }
+
+  private convertDatasourcesFromWidgetType(widgetTypeDescriptor: WidgetTypeDescriptor,
+                                           config: WidgetConfig, datasources?: Datasource[]): Datasource[] {
+    const newDatasources: Datasource[] = [];
+    if (datasources?.length) {
+      newDatasources.push(this.convertDatasourceFromWidgetType(widgetTypeDescriptor, config, datasources[0]));
+    }
+    return newDatasources;
+  }
+
+  private convertDatasourceFromWidgetType(widgetTypeDescriptor: WidgetTypeDescriptor, config: WidgetConfig,
+                                          datasource: Datasource): Datasource {
+    const newDatasource = deepClone(datasource);
+    if (newDatasource.type === DatasourceType.function) {
+      newDatasource.type = DatasourceType.entity;
+      newDatasource.name = '';
+      if (widgetTypeDescriptor.hasBasicMode && config.configMode === WidgetConfigMode.basic) {
+        newDatasource.type = DatasourceType.device;
+      }
+      const dataKeys = newDatasource.dataKeys;
+      newDatasource.dataKeys = [];
+      if (widgetTypeDescriptor.type === widgetType.alarm) {
+        dataKeys.forEach(dataKey => {
+          const newDataKey = deepClone(dataKey);
+          newDataKey.funcBody = null;
+          newDataKey.type = DataKeyType.alarm;
+          newDatasource.dataKeys.push(newDataKey);
+        });
+      }
+    }
+    return newDatasource;
   }
 
   private validateAndUpdateState(state: DashboardState) {
@@ -424,12 +549,20 @@ export class DashboardUtilsService {
     return widgetsArray;
   }
 
+  public isEmptyDashboard(dashboard: Dashboard): boolean {
+    if (dashboard?.configuration?.widgets) {
+      return Object.keys(dashboard?.configuration?.widgets).length === 0;
+    } else {
+      return true;
+    }
+  }
+
   public addWidgetToLayout(dashboard: Dashboard,
                            targetState: string,
                            targetLayout: DashboardLayoutId,
                            widget: Widget,
                            originalColumns?: number,
-                           originalSize?: {sizeX: number, sizeY: number},
+                           originalSize?: {sizeX: number; sizeY: number},
                            row?: number,
                            column?: number): void {
     const dashboardConfiguration = dashboard.configuration;
@@ -502,7 +635,7 @@ export class DashboardUtilsService {
     this.removeUnusedWidgets(dashboard);
   }
 
-  public isSingleLayoutDashboard(dashboard: Dashboard): {state: string, layout: DashboardLayoutId} {
+  public isSingleLayoutDashboard(dashboard: Dashboard): {state: string; layout: DashboardLayoutId} {
     const dashboardConfiguration = dashboard.configuration;
     const states = dashboardConfiguration.states;
     const stateKeys = Object.keys(states);
@@ -582,7 +715,7 @@ export class DashboardUtilsService {
 
   private validateAndUpdateEntityAliases(configuration: DashboardConfiguration,
                                          datasourcesByAliasId: {[aliasId: string]: Array<Datasource>},
-                                         targetDevicesByAliasId: {[aliasId: string]: Array<Array<string>>}): DashboardConfiguration {
+                                         targetDevicesByAliasId: {[aliasId: string]: Array<TargetDevice>}): DashboardConfiguration {
     let entityAlias: EntityAlias;
     if (isUndefined(configuration.entityAliases)) {
       configuration.entityAliases = {};
@@ -612,7 +745,7 @@ export class DashboardUtilsService {
   private validateAndUpdateDeviceAlias(aliasId: string,
                                        deviceAlias: any,
                                        datasourcesByAliasId: {[aliasId: string]: Array<Datasource>},
-                                       targetDevicesByAliasId: {[aliasId: string]: Array<Array<string>>}): EntityAlias {
+                                       targetDevicesByAliasId: {[aliasId: string]: Array<TargetDevice>}): EntityAlias {
     aliasId = this.validateAliasId(aliasId, datasourcesByAliasId, targetDevicesByAliasId);
     const alias = deviceAlias.alias;
     const entityAlias: EntityAlias = {
@@ -641,7 +774,7 @@ export class DashboardUtilsService {
 
   private validateAndUpdateEntityAlias(aliasId: string, entityAlias: EntityAlias,
                                        datasourcesByAliasId: {[aliasId: string]: Array<Datasource>},
-                                       targetDevicesByAliasId: {[aliasId: string]: Array<Array<string>>}): EntityAlias {
+                                       targetDevicesByAliasId: {[aliasId: string]: Array<TargetDevice>}): EntityAlias {
     entityAlias.id = this.validateAliasId(aliasId, datasourcesByAliasId, targetDevicesByAliasId);
     if (!entityAlias.filter) {
       entityAlias.filter = {
@@ -703,7 +836,7 @@ export class DashboardUtilsService {
 
   private validateAliasId(aliasId: string,
                           datasourcesByAliasId: {[aliasId: string]: Array<Datasource>},
-                          targetDevicesByAliasId: {[aliasId: string]: Array<Array<string>>}): string {
+                          targetDevicesByAliasId: {[aliasId: string]: Array<TargetDevice>}): string {
     if (!aliasId || !isString(aliasId) || aliasId.length !== 36) {
       const newAliasId = this.utils.guid();
       const aliasDatasources = datasourcesByAliasId[aliasId];
@@ -714,11 +847,11 @@ export class DashboardUtilsService {
           }
         );
       }
-      const targetDeviceAliasIdsList = targetDevicesByAliasId[aliasId];
-      if (targetDeviceAliasIdsList) {
-        targetDeviceAliasIdsList.forEach(
-          (targetDeviceAliasIds) => {
-            targetDeviceAliasIds[0] = newAliasId;
+      const targetDevicesList = targetDevicesByAliasId[aliasId];
+      if (targetDevicesList) {
+        targetDevicesList.forEach(
+          (targetDevice) => {
+            targetDevice.entityAliasId = newAliasId;
           }
         );
       }

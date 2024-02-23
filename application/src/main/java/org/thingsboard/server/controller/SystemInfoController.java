@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +35,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.settings.UserSettings;
 import org.thingsboard.server.common.data.settings.UserSettingsType;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
@@ -131,6 +131,10 @@ public class SystemInfoController extends BaseController {
         }
         systemParams.setUserSettings(userSettingsNode);
         systemParams.setMaxDatapointsLimit(maxDatapointsLimit);
+        if (!currentUser.isSystemAdmin()) {
+            DefaultTenantProfileConfiguration tenantProfileConfiguration = tenantProfileCache.get(tenantId).getDefaultProfileConfiguration();
+            systemParams.setMaxResourceSize(tenantProfileConfiguration.getMaxResourceSize());
+        }
         return systemParams;
     }
 
@@ -142,8 +146,7 @@ public class SystemInfoController extends BaseController {
     }
 
     private JsonNode buildInfoObject() {
-        ObjectMapper objectMapper = new ObjectMapper();
-        ObjectNode infoObject = objectMapper.createObjectNode();
+        ObjectNode infoObject = JacksonUtil.newObjectNode();
         if (buildProperties != null) {
             infoObject.put("version", buildProperties.getVersion());
             infoObject.put("artifact", buildProperties.getArtifact());

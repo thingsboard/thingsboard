@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,8 @@ import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.script.api.AbstractScriptInvokeService;
 import org.thingsboard.script.api.ScriptType;
 import org.thingsboard.script.api.TbScriptException;
+import org.thingsboard.server.common.data.ApiUsageRecordKey;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.common.stats.TbApiUsageStateClient;
@@ -66,11 +68,11 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
 
     protected final Map<UUID, String> scriptIdToHash = new ConcurrentHashMap<>();
     protected final Map<String, TbelScript> scriptMap = new ConcurrentHashMap<>();
-    private final String tbelSwitch = "switch";
-    private final String tbelSwitchErrorMsg =  "TBEL does not support the 'switch'.";
     protected Cache<String, Serializable> compiledScriptsCache;
 
     private SandboxedParserConfiguration parserConfig;
+    private final Optional<TbApiUsageStateClient> apiUsageStateClient;
+    private final Optional<TbApiUsageReportClient> apiUsageReportClient;
 
     @Getter
     @Value("${tbel.max_total_args_size:100000}")
@@ -112,7 +114,8 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
     private final Lock lock = new ReentrantLock();
 
     protected DefaultTbelInvokeService(Optional<TbApiUsageStateClient> apiUsageStateClient, Optional<TbApiUsageReportClient> apiUsageReportClient) {
-        super(apiUsageStateClient, apiUsageReportClient);
+        this.apiUsageStateClient = apiUsageStateClient;
+        this.apiUsageReportClient = apiUsageReportClient;
     }
 
     @Scheduled(fixedDelayString = "${tbel.stats.print_interval_ms:10000}")
@@ -170,6 +173,16 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
     }
 
     @Override
+    protected boolean isExecEnabled(TenantId tenantId) {
+        return !apiUsageStateClient.isPresent() || apiUsageStateClient.get().getApiUsageState(tenantId).isTbelExecEnabled();
+    }
+
+    @Override
+    protected void reportExecution(TenantId tenantId, CustomerId customerId) {
+        apiUsageReportClient.ifPresent(client -> client.report(tenantId, customerId, ApiUsageRecordKey.TBEL_EXEC_COUNT, 1));
+    }
+
+    @Override
     protected ListenableFuture<UUID> doEvalScript(TenantId tenantId, ScriptType scriptType, String scriptBody, UUID scriptId, String[] argNames) {
         return executor.submit(() -> {
             try {
@@ -183,11 +196,6 @@ public class DefaultTbelInvokeService extends AbstractScriptInvokeService implem
                     lock.unlock();
                 }
                 return scriptId;
-            } catch (CompileException ce) {
-                if ( ce.getExpr() != null && new String(ce.getExpr()).contains(tbelSwitch)) {
-                    ce = new CompileException(tbelSwitchErrorMsg, ce.getExpr(), ce.getCursor(), ce.getCause());
-                }
-                throw new TbScriptException(scriptId, TbScriptException.ErrorCode.COMPILATION, scriptBody, ce);
             } catch (Exception e) {
                 throw new TbScriptException(scriptId, TbScriptException.ErrorCode.COMPILATION, scriptBody, e);
             }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -28,9 +28,9 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { PopoverPlacement } from '@shared/components/popover.models';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { isDefinedAndNotNull } from '@core/utils';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  // eslint-disable-next-line @angular-eslint/component-selector
   selector: '[tb-help-popup], [tb-help-popup-content]',
   templateUrl: './help-popup.component.html',
   styleUrls: ['./help-popup.component.scss'],
@@ -41,10 +41,8 @@ export class HelpPopupComponent implements OnChanges, OnDestroy {
   @ViewChild('toggleHelpButton', {read: ElementRef, static: false}) toggleHelpButton: ElementRef;
   @ViewChild('toggleHelpTextButton', {read: ElementRef, static: false}) toggleHelpTextButton: ElementRef;
 
-  // eslint-disable-next-line @angular-eslint/no-input-rename
   @Input('tb-help-popup') helpId: string;
 
-  // eslint-disable-next-line @angular-eslint/no-input-rename
   @Input('tb-help-popup-content') helpContent: string;
 
   // eslint-disable-next-line @angular-eslint/no-input-rename
@@ -61,6 +59,11 @@ export class HelpPopupComponent implements OnChanges, OnDestroy {
 
   popoverVisible = false;
   popoverReady = true;
+
+
+  @Input()
+  @coerceBoolean()
+  hintMode = false;
 
   triggerSafeHtml: SafeHtml = null;
   textMode = false;

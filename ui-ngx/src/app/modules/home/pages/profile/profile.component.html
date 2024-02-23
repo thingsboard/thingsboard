@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@
         <fieldset [disabled]="isLoading$ | async">
           <mat-form-field class="mat-block">
             <mat-label translate>user.email</mat-label>
-            <input matInput formControlName="email" required/>
+            <input matInput type="email" formControlName="email" required/>
             <mat-error *ngIf="profile.get('email').hasError('required')">
               {{ 'user.email-required' | translate }}
             </mat-error>

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.device.profile.AlarmConditionSpecType;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -189,7 +190,7 @@ class AlarmState {
             metaData.putValue(DataConstants.IS_CLEARED_ALARM, Boolean.TRUE.toString());
         }
         setAlarmConditionMetadata(ruleState, metaData);
-        TbMsg newMsg = ctx.newMsg(lastMsgQueueName != null ? lastMsgQueueName : null, "ALARM",
+        TbMsg newMsg = ctx.newMsg(lastMsgQueueName != null ? lastMsgQueueName : null, TbMsgType.ALARM,
                 originator, msg != null ? msg.getCustomerId() : null, metaData, data);
         ctx.enqueueForTellNext(newMsg, relationType);
     }

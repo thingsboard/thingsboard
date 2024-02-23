@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -31,11 +31,12 @@ import {
   NotificationTarget,
   NotificationTemplate,
   NotificationType,
+  NotificationUserSettings,
   SlackChanelType,
   SlackConversation
 } from '@shared/models/notification.models';
 import { User } from '@shared/models/user.model';
-import { isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
+import { isNotEmptyStr } from '@core/utils';
 
 @Injectable({
   providedIn: 'root'
@@ -169,9 +170,17 @@ export class NotificationService {
   public getNotificationTemplates(pageLink: PageLink, notificationTypes?: NotificationType,
                                   config?: RequestConfig): Observable<PageData<NotificationTemplate>> {
     let url = `/api/notification/templates${pageLink.toQuery()}`;
-    if (isDefinedAndNotNull(notificationTypes)) {
+    if (isNotEmptyStr(notificationTypes)) {
       url += `&notificationTypes=${notificationTypes}`;
     }
     return this.http.get<PageData<NotificationTemplate>>(url, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getNotificationUserSettings(config?: RequestConfig): Observable<NotificationUserSettings> {
+    return this.http.get<NotificationUserSettings>(`/api/notification/settings/user`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public saveNotificationUserSettings(settings: NotificationUserSettings, config?: RequestConfig): Observable<NotificationUserSettings> {
+    return this.http.post<NotificationUserSettings>('/api/notification/settings/user', settings, defaultHttpOptionsFromConfig(config));
   }
 }

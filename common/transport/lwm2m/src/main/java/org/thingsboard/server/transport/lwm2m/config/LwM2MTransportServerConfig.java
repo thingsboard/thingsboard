@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,10 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
     @Getter
     @Value("${transport.lwm2m.dtls.retransmission_timeout:9000}")
     private int dtlsRetransmissionTimeout;
+
+    @Getter
+    @Value("${transport.lwm2m.dtls.connection_id_length:6}")
+    private Integer dtlsConnectionIdLength;
 
     @Getter
     @Value("${transport.lwm2m.timeout:}")

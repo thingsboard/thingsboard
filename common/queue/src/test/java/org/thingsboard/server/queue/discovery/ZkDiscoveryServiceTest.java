@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -52,6 +53,8 @@ import static org.mockito.Mockito.when;
 public class ZkDiscoveryServiceTest {
 
     @Mock
+    private ApplicationEventPublisher applicationEventPublisher;
+    @Mock
     private TbServiceInfoProvider serviceInfoProvider;
 
     @Mock
@@ -77,7 +80,7 @@ public class ZkDiscoveryServiceTest {
 
     @Before
     public void setup() {
-        zkDiscoveryService = Mockito.spy(new ZkDiscoveryService(serviceInfoProvider, partitionService));
+        zkDiscoveryService = Mockito.spy(new ZkDiscoveryService(applicationEventPublisher, serviceInfoProvider, partitionService));
         ScheduledExecutorService zkExecutorService = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("zk-discovery"));
         when(client.getState()).thenReturn(CuratorFrameworkState.STARTED);
         ReflectionTestUtils.setField(zkDiscoveryService, "stopped", false);

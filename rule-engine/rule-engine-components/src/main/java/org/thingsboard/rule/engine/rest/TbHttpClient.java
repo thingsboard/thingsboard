@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.credentials.BasicCredentials;
 import org.thingsboard.rule.engine.credentials.ClientCredentials;
@@ -195,7 +194,7 @@ public class TbHttpClient {
                 config.isIgnoreRequestBody()) {
             entity = new HttpEntity<>(headers);
         } else {
-            entity = new HttpEntity<>(getData(msg), headers);
+            entity = new HttpEntity<>(getData(msg, config.isIgnoreRequestBody(), config.isParseToPlainText()), headers);
         }
 
         URI uri = buildEncodedUri(endpointUrl);
@@ -204,7 +203,7 @@ public class TbHttpClient {
         future.addCallback(new ListenableFutureCallback<>() {
             @Override
             public void onFailure(Throwable throwable) {
-                onFailure.accept(processException(ctx, msg, throwable), throwable);
+                onFailure.accept(processException(msg, throwable), throwable);
             }
 
             @Override
@@ -212,7 +211,7 @@ public class TbHttpClient {
                 if (responseEntity.getStatusCode().is2xxSuccessful()) {
                     onSuccess.accept(processResponse(ctx, msg, responseEntity));
                 } else {
-                    onFailure.accept(processFailureResponse(ctx, msg, responseEntity), null);
+                    onFailure.accept(processFailureResponse(msg, responseEntity), null);
                 }
             }
         });
@@ -243,12 +242,19 @@ public class TbHttpClient {
         return uri;
     }
 
-    private String getData(TbMsg msg) {
-        String data = msg.getData();
+    private String getData(TbMsg tbMsg, boolean ignoreBody, boolean parseToPlainText) {
+        if (!ignoreBody && parseToPlainText) {
+            return parseJsonStringToPlainText(tbMsg.getData());
+        }
+        return tbMsg.getData();
+    }
 
-        if (config.isTrimDoubleQuotes()) {
+    protected String parseJsonStringToPlainText(String data) {
+        if (data.startsWith("\"") && data.endsWith("\"") && data.length() >= 2) {
             final String dataBefore = data;
-            data = data.replaceAll("^\"|\"$", "");
+            try {
+                data = JacksonUtil.fromString(data, String.class);
+            } catch (Exception ignored) {}
             log.trace("Trimming double quotes. Before trim: [{}], after trim: [{}]", dataBefore, data);
         }
 
@@ -261,8 +267,8 @@ public class TbHttpClient {
         metaData.putValue(STATUS_CODE, response.getStatusCode().value() + "");
         metaData.putValue(STATUS_REASON, response.getStatusCode().getReasonPhrase());
         headersToMetaData(response.getHeaders(), metaData::putValue);
-        String body = response.getBody() == null ? "{}" : response.getBody();
-        return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, body);
+        String body = response.getBody() == null ? TbMsg.EMPTY_JSON_OBJECT : response.getBody();
+        return ctx.transformMsg(origMsg, metaData, body);
     }
 
     void headersToMetaData(Map<String, List<String>> headers, BiConsumer<String, String> consumer) {
@@ -280,17 +286,17 @@ public class TbHttpClient {
         });
     }
 
-    private TbMsg processFailureResponse(TbContext ctx, TbMsg origMsg, ResponseEntity<String> response) {
+    private TbMsg processFailureResponse(TbMsg origMsg, ResponseEntity<String> response) {
         TbMsgMetaData metaData = origMsg.getMetaData();
         metaData.putValue(STATUS, response.getStatusCode().name());
         metaData.putValue(STATUS_CODE, response.getStatusCode().value() + "");
         metaData.putValue(STATUS_REASON, response.getStatusCode().getReasonPhrase());
         metaData.putValue(ERROR_BODY, response.getBody());
         headersToMetaData(response.getHeaders(), metaData::putValue);
-        return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
+        return TbMsg.transformMsgMetadata(origMsg, metaData);
     }
 
-    private TbMsg processException(TbContext ctx, TbMsg origMsg, Throwable e) {
+    private TbMsg processException(TbMsg origMsg, Throwable e) {
         TbMsgMetaData metaData = origMsg.getMetaData();
         metaData.putValue(ERROR, e.getClass() + ": " + e.getMessage());
         if (e instanceof RestClientResponseException) {
@@ -299,7 +305,7 @@ public class TbHttpClient {
             metaData.putValue(STATUS_CODE, restClientResponseException.getRawStatusCode() + "");
             metaData.putValue(ERROR_BODY, restClientResponseException.getResponseBodyAsString());
         }
-        return ctx.transformMsg(origMsg, origMsg.getType(), origMsg.getOriginator(), metaData, origMsg.getData());
+        return TbMsg.transformMsgMetadata(origMsg, metaData);
     }
 
     private HttpHeaders prepareHeaders(TbMsg msg) {

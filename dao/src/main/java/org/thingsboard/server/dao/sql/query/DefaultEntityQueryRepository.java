@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,8 +66,10 @@ import java.util.stream.Collectors;
 @Slf4j
 public class DefaultEntityQueryRepository implements EntityQueryRepository {
     private static final Map<EntityType, String> entityTableMap = new HashMap<>();
+    private static final Map<EntityType, String> entityNameColumns = new HashMap<>();
     private static final String SELECT_PHONE = " CASE WHEN entity.entity_type = 'TENANT' THEN (select phone from tenant where id = entity_id)" +
-            " WHEN entity.entity_type = 'CUSTOMER' THEN (select phone from customer where id = entity_id) END as phone";
+            " WHEN entity.entity_type = 'CUSTOMER' THEN (select phone from customer where id = entity_id)" +
+            " WHEN entity.entity_type = 'USER' THEN (select phone from tb_user where id = entity_id) END as phone";
     private static final String SELECT_ZIP = " CASE WHEN entity.entity_type = 'TENANT' THEN (select zip from tenant where id = entity_id)" +
             " WHEN entity.entity_type = 'CUSTOMER' THEN (select zip from customer where id = entity_id) END as zip";
     private static final String SELECT_ADDRESS_2 = " CASE WHEN entity.entity_type = 'TENANT'" +
@@ -242,6 +244,24 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         entityTableMap.put(EntityType.DEVICE_PROFILE, "device_profile");
         entityTableMap.put(EntityType.ASSET_PROFILE, "asset_profile");
         entityTableMap.put(EntityType.TENANT_PROFILE, "tenant_profile");
+
+        entityNameColumns.put(EntityType.DEVICE, "name");
+        entityNameColumns.put(EntityType.CUSTOMER, "title");
+        entityNameColumns.put(EntityType.DASHBOARD, "title");
+        entityNameColumns.put(EntityType.RULE_CHAIN, "name");
+        entityNameColumns.put(EntityType.RULE_NODE, "name");
+        entityNameColumns.put(EntityType.OTA_PACKAGE, "title");
+        entityNameColumns.put(EntityType.ASSET_PROFILE, "name");
+        entityNameColumns.put(EntityType.ASSET, "name");
+        entityNameColumns.put(EntityType.DEVICE_PROFILE, "name");
+        entityNameColumns.put(EntityType.USER, "email");
+        entityNameColumns.put(EntityType.TENANT_PROFILE, "name");
+        entityNameColumns.put(EntityType.TENANT, "title");
+        entityNameColumns.put(EntityType.WIDGETS_BUNDLE, "title");
+        entityNameColumns.put(EntityType.ENTITY_VIEW, "name");
+        entityNameColumns.put(EntityType.TB_RESOURCE, "search_text");
+        entityNameColumns.put(EntityType.EDGE, "name");
+        entityNameColumns.put(EntityType.QUEUE, "name");
     }
 
     public static EntityType[] RELATION_QUERY_ENTITY_TYPES = new EntityType[]{
@@ -780,8 +800,8 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
 
     private String buildTextSearchQuery(QueryContext ctx, List<EntityKeyMapping> selectionMapping, String searchText) {
         if (!StringUtils.isEmpty(searchText) && !selectionMapping.isEmpty()) {
-            String lowerSearchText = "%" + searchText.toLowerCase() + "%";
-            ctx.addStringParameter("lowerSearchTextParam", lowerSearchText);
+            String sqlSearchText = "%" + searchText + "%";
+            ctx.addStringParameter("lowerSearchTextParam", sqlSearchText);
             List<String> searchAliases = selectionMapping.stream().filter(EntityKeyMapping::isSearchable).map(EntityKeyMapping::getValueAlias).collect(Collectors.toList());
             String searchAliasesExpression;
             if (searchAliases.size() > 1) {
@@ -789,7 +809,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             } else {
                 searchAliasesExpression = searchAliases.get(0);
             }
-            return String.format(" WHERE LOWER(%s) LIKE :%s", searchAliasesExpression, "lowerSearchTextParam");
+            return String.format(" WHERE %s ILIKE :%s", searchAliasesExpression, "lowerSearchTextParam");
         } else {
             return "";
         }
@@ -807,33 +827,38 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
 
     private String entityNameQuery(QueryContext ctx, EntityNameFilter filter) {
         ctx.addStringParameter("entity_filter_name_filter", filter.getEntityNameFilter());
-
+        String nameColumn = getNameColumn(filter.getEntityType());
         if (filter.getEntityNameFilter().startsWith("%") || filter.getEntityNameFilter().endsWith("%")) {
-            return "lower(e.search_text) like lower(:entity_filter_name_filter)";
+            return String.format("e.%s ilike :entity_filter_name_filter", nameColumn);
         }
 
-        return "lower(e.search_text) like lower(concat(:entity_filter_name_filter, '%%'))";
+        return String.format("e.%s ilike concat(:entity_filter_name_filter, '%%')", nameColumn);
     }
 
     private String typeQuery(QueryContext ctx, EntityFilter filter) {
         List<String> types;
         String name;
+        String nameColumn;
         switch (filter.getType()) {
             case ASSET_TYPE:
                 types = ((AssetTypeFilter) filter).getAssetTypes();
                 name = ((AssetTypeFilter) filter).getAssetNameFilter();
+                nameColumn = getNameColumn(EntityType.ASSET);
                 break;
             case DEVICE_TYPE:
                 types = ((DeviceTypeFilter) filter).getDeviceTypes();
                 name = ((DeviceTypeFilter) filter).getDeviceNameFilter();
+                nameColumn = getNameColumn(EntityType.DEVICE);
                 break;
             case ENTITY_VIEW_TYPE:
                 types = ((EntityViewTypeFilter) filter).getEntityViewTypes();
                 name = ((EntityViewTypeFilter) filter).getEntityViewNameFilter();
+                nameColumn = getNameColumn(EntityType.ENTITY_VIEW);
                 break;
             case EDGE_TYPE:
                 types = ((EdgeTypeFilter) filter).getEdgeTypes();
                 name = ((EdgeTypeFilter) filter).getEdgeNameFilter();
+                nameColumn = getNameColumn(EntityType.EDGE);
                 break;
             default:
                 throw new RuntimeException("Not supported!");
@@ -843,12 +868,21 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         if (!StringUtils.isEmpty(name)) {
             ctx.addStringParameter("entity_filter_type_query_name", name);
             if (name.startsWith("%") || name.endsWith("%")) {
-                return typesFilter + " and lower(e.search_text) like lower(:entity_filter_type_query_name)";
+                return typesFilter + " and e." + nameColumn + " ilike :entity_filter_type_query_name";
             }
-            return typesFilter + " and lower(e.search_text) like lower(concat(:entity_filter_type_query_name, '%%'))";
+            return typesFilter + " and e." + nameColumn + " ilike concat(:entity_filter_type_query_name, '%%')";
         } else {
             return typesFilter;
         }
+    }
+
+    private String getNameColumn(EntityType entityType) {
+        String nameColumn = entityNameColumns.get(entityType);
+        if (nameColumn == null) {
+            log.error("Name column is not defined in the entityNameColumns map for entity type {}.", entityType);
+            throw new RuntimeException("Name column is not defined for entity type: " + entityType);
+        }
+        return nameColumn;
     }
 
     public static EntityType resolveEntityType(EntityFilter entityFilter) {

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -127,6 +127,9 @@ export class SnmpDeviceTransportConfigurationComponent implements ControlValueAc
       this.snmpDeviceTransportConfigurationFormGroup.disable({emitEvent: false});
     } else {
       this.snmpDeviceTransportConfigurationFormGroup.enable({emitEvent: false});
+      this.updateDisabledFormValue(
+        this.snmpDeviceTransportConfigurationFormGroup.get('protocolVersion').value || SnmpDeviceProtocolVersion.V2C
+      );
     }
   }
 

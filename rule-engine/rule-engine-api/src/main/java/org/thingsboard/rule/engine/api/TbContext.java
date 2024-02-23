@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,9 @@
 package org.thingsboard.rule.engine.api;
 
 import io.netty.channel.EventLoopGroup;
+import org.thingsboard.common.util.ExecutorProvider;
 import org.thingsboard.common.util.ListeningExecutor;
-import org.thingsboard.rule.engine.api.slack.SlackService;
+import org.thingsboard.rule.engine.api.notification.SlackService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
@@ -36,6 +37,7 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleNode;
@@ -47,6 +49,7 @@ import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -55,7 +58,9 @@ import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 import org.thingsboard.server.dao.nosql.TbResultSetFuture;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
@@ -183,11 +188,40 @@ public interface TbContext {
 
     void ack(TbMsg tbMsg);
 
+    @Deprecated(since = "3.6.0", forRemoval = true)
     TbMsg newMsg(String queueName, String type, EntityId originator, TbMsgMetaData metaData, String data);
 
+    /**
+     * Creates a new TbMsg instance with the specified parameters.
+     *
+     * <p><strong>Deprecated:</strong> This method is deprecated since version 3.6.0 and should only be used when you need to
+     * specify a custom message type that doesn't exist in the {@link TbMsgType} enum. For standard message types,
+     * it is recommended to use the {@link #newMsg(String, TbMsgType, EntityId, CustomerId, TbMsgMetaData, String)}
+     * method instead.</p>
+     *
+     * @param queueName   the name of the queue where the message will be sent
+     * @param type        the type of the message
+     * @param originator  the originator of the message
+     * @param customerId  the ID of the customer associated with the message
+     * @param metaData    the metadata of the message
+     * @param data        the data of the message
+     * @return new TbMsg instance
+     */
+    @Deprecated(since = "3.6.0")
     TbMsg newMsg(String queueName, String type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, String data);
 
+    @Deprecated(since = "3.6.0", forRemoval = true)
     TbMsg transformMsg(TbMsg origMsg, String type, EntityId originator, TbMsgMetaData metaData, String data);
+
+    TbMsg newMsg(String queueName, TbMsgType type, EntityId originator, TbMsgMetaData metaData, String data);
+
+    TbMsg newMsg(String queueName, TbMsgType type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, String data);
+
+    TbMsg transformMsg(TbMsg origMsg, TbMsgType type, EntityId originator, TbMsgMetaData metaData, String data);
+
+    TbMsg transformMsg(TbMsg origMsg, TbMsgMetaData metaData, String data);
+
+    TbMsg transformMsgOriginator(TbMsg origMsg, EntityId originator);
 
     TbMsg customerCreatedMsg(Customer customer, RuleNodeId ruleNodeId);
 
@@ -195,8 +229,10 @@ public interface TbContext {
 
     TbMsg assetCreatedMsg(Asset asset, RuleNodeId ruleNodeId);
 
-    // TODO: Does this changes the message?
+    @Deprecated(since = "3.6.0", forRemoval = true)
     TbMsg alarmActionMsg(Alarm alarm, RuleNodeId ruleNodeId, String action);
+
+    TbMsg alarmActionMsg(Alarm alarm, RuleNodeId ruleNodeId, TbMsgType actionMsgType);
 
     TbMsg attributesUpdatedActionMsg(EntityId originator, RuleNodeId ruleNodeId, String scope, List<AttributeKvEntry> attributes);
 
@@ -222,6 +258,8 @@ public interface TbContext {
 
     String getRuleChainName();
 
+    String getQueueName();
+
     TenantId getTenantId();
 
     AttributesService getAttributesService();
@@ -241,6 +279,10 @@ public interface TbContext {
     AssetProfileService getAssetProfileService();
 
     DeviceCredentialsService getDeviceCredentialsService();
+
+    RuleEngineDeviceStateManager getDeviceStateManager();
+
+    String getDeviceStateNodeRateLimitConfig();
 
     TbClusterService getClusterService();
 
@@ -285,6 +327,8 @@ public interface TbContext {
     ListeningExecutor getExternalCallExecutor();
 
     ListeningExecutor getNotificationExecutor();
+
+    ExecutorProvider getPubSubRuleNodeExecutorProvider();
 
     MailService getMailService(boolean isSystem);
 
@@ -358,4 +402,10 @@ public interface TbContext {
     WidgetTypeService getWidgetTypeService();
 
     RuleEngineApiUsageStateService getRuleEngineApiUsageStateService();
+
+    EntityService getEntityService();
+
+    EventService getEventService();
+
+    AuditLogService getAuditLogService();
 }

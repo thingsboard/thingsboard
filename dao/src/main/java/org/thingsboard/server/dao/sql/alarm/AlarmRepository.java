@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,12 @@ package org.thingsboard.server.dao.sql.alarm;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.sql.AlarmEntity;
 import org.thingsboard.server.dao.model.sql.AlarmInfoEntity;
 
@@ -55,9 +58,9 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
             "AND ((:clearFilterEnabled) IS FALSE OR a.cleared = :clearFilter) " +
             "AND ((:ackFilterEnabled) IS FALSE OR a.acknowledged = :ackFilter) " +
             "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
-            "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-            "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-            "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) "
+            "AND (:searchText IS NULL OR (ilike(a.type, CONCAT('%', :searchText, '%')) = true  " +
+            "  OR ilike(a.severity, CONCAT('%', :searchText, '%')) = true " +
+            "  OR ilike(a.status, CONCAT('%', :searchText, '%')) = true)) "
             ,
             countQuery = "" +
                     "SELECT count(a) " + //alarms with relations only
@@ -72,9 +75,9 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                     "AND ((:clearFilterEnabled) IS FALSE OR a.cleared = :clearFilter) " +
                     "AND ((:ackFilterEnabled) IS FALSE OR a.acknowledged = :ackFilter) " +
                     "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
-                    "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-                    "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-                    "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) ")
+                    "AND (:searchText IS NULL OR (ilike(a.type, CONCAT('%', :searchText, '%')) = true " +
+                    "  OR ilike(a.severity, CONCAT('%', :searchText, '%')) = true  " +
+                    "  OR ilike(a.status, CONCAT('%', :searchText, '%')) = true))")
     Page<AlarmInfoEntity> findAlarms(@Param("tenantId") UUID tenantId,
                                      @Param("affectedEntityId") UUID affectedEntityId,
                                      @Param("affectedEntityType") String affectedEntityType,
@@ -102,9 +105,9 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
             "AND ((:clearFilterEnabled) IS FALSE OR a.cleared = :clearFilter) " +
             "AND ((:ackFilterEnabled) IS FALSE OR a.acknowledged = :ackFilter) " +
             "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
-            "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-            "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-            "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) "
+            "AND (:searchText IS NULL OR (ilike(a.type, CONCAT('%', :searchText, '%')) = true  " +
+            "  OR ilike(a.severity, CONCAT('%', :searchText, '%')) = true " +
+            "  OR ilike(a.status, CONCAT('%', :searchText, '%')) = true)) "
             ,
             countQuery = "" +
                     "SELECT count(a) " + //alarms with relations only
@@ -121,9 +124,9 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                     "AND ((:clearFilterEnabled) IS FALSE OR a.cleared = :clearFilter) " +
                     "AND ((:ackFilterEnabled) IS FALSE OR a.acknowledged = :ackFilter) " +
                     "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
-                    "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-                    "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-                    "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) ")
+                    "AND (:searchText IS NULL OR (ilike(a.type, CONCAT('%', :searchText, '%')) = true " +
+                    "  OR ilike(a.severity, CONCAT('%', :searchText, '%')) = true  " +
+                    "  OR ilike(a.status, CONCAT('%', :searchText, '%')) = true))")
     Page<AlarmInfoEntity> findAlarmsV2(@Param("tenantId") UUID tenantId,
                                        @Param("affectedEntityId") UUID affectedEntityId,
                                        @Param("affectedEntityType") String affectedEntityType,
@@ -147,9 +150,9 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
             "AND ((:clearFilterEnabled) IS FALSE OR a.cleared = :clearFilter) " +
             "AND ((:ackFilterEnabled) IS FALSE OR a.acknowledged = :ackFilter) " +
             "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
-            "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-            "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-            "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) ",
+            "AND (:searchText IS NULL OR (ilike(a.type, CONCAT('%', :searchText, '%')) = true  " +
+            "  OR ilike(a.severity, CONCAT('%', :searchText, '%')) = true " +
+            "  OR ilike(a.status, CONCAT('%', :searchText, '%')) = true)) ",
             countQuery = "" +
                     "SELECT count(a) " +
                     "FROM AlarmInfoEntity a " +
@@ -159,9 +162,9 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                     "AND ((:clearFilterEnabled) IS FALSE OR a.cleared = :clearFilter) " +
                     "AND ((:ackFilterEnabled) IS FALSE OR a.acknowledged = :ackFilter) " +
                     "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
-                    "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-                    "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-                    "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) ")
+                    "AND (:searchText IS NULL OR (ilike(a.type, CONCAT('%', :searchText, '%')) = true " +
+                    "  OR ilike(a.severity, CONCAT('%', :searchText, '%')) = true  " +
+                    "  OR ilike(a.status, CONCAT('%', :searchText, '%')) = true))")
     Page<AlarmInfoEntity> findAllAlarms(@Param("tenantId") UUID tenantId,
                                         @Param("startTime") Long startTime,
                                         @Param("endTime") Long endTime,
@@ -183,9 +186,9 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
             "AND ((:clearFilterEnabled) IS FALSE OR a.cleared = :clearFilter) " +
             "AND ((:ackFilterEnabled) IS FALSE OR a.acknowledged = :ackFilter) " +
             "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
-            "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-            "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-            "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) ",
+            "AND (:searchText IS NULL OR (ilike(a.type, CONCAT('%', :searchText, '%')) = true  " +
+            "  OR ilike(a.severity, CONCAT('%', :searchText, '%')) = true " +
+            "  OR ilike(a.status, CONCAT('%', :searchText, '%')) = true)) ",
             countQuery = "" +
                     "SELECT count(a) " +
                     "FROM AlarmInfoEntity a " +
@@ -197,9 +200,9 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                     "AND ((:clearFilterEnabled) IS FALSE OR a.cleared = :clearFilter) " +
                     "AND ((:ackFilterEnabled) IS FALSE OR a.acknowledged = :ackFilter) " +
                     "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
-                    "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-                    "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-                    "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) ")
+                    "AND (:searchText IS NULL OR (ilike(a.type, CONCAT('%', :searchText, '%')) = true " +
+                    "  OR ilike(a.severity, CONCAT('%', :searchText, '%')) = true  " +
+                    "  OR ilike(a.status, CONCAT('%', :searchText, '%')) = true))")
     Page<AlarmInfoEntity> findAllAlarmsV2(@Param("tenantId") UUID tenantId,
                                           @Param("startTime") Long startTime,
                                           @Param("endTime") Long endTime,
@@ -221,9 +224,9 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
             "AND ((:clearFilterEnabled) IS FALSE OR a.cleared = :clearFilter) " +
             "AND ((:ackFilterEnabled) IS FALSE OR a.acknowledged = :ackFilter) " +
             "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
-            "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-            "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-            "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) "
+            "AND (:searchText IS NULL OR (ilike(a.type, CONCAT('%', :searchText, '%')) = true  " +
+            "  OR ilike(a.severity, CONCAT('%', :searchText, '%')) = true " +
+            "  OR ilike(a.status, CONCAT('%', :searchText, '%')) = true)) "
             ,
             countQuery = "" +
                     "SELECT count(a) " +
@@ -234,9 +237,9 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                     "AND ((:clearFilterEnabled) IS FALSE OR a.cleared = :clearFilter) " +
                     "AND ((:ackFilterEnabled) IS FALSE OR a.acknowledged = :ackFilter) " +
                     "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
-                    "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-                    "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-                    "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) ")
+                    "AND (:searchText IS NULL OR (ilike(a.type, CONCAT('%', :searchText, '%')) = true " +
+                    "  OR ilike(a.severity, CONCAT('%', :searchText, '%')) = true  " +
+                    "  OR ilike(a.status, CONCAT('%', :searchText, '%')) = true))")
     Page<AlarmInfoEntity> findCustomerAlarms(@Param("tenantId") UUID tenantId,
                                              @Param("customerId") UUID customerId,
                                              @Param("startTime") Long startTime,
@@ -259,9 +262,9 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
             "AND ((:clearFilterEnabled) IS FALSE OR a.cleared = :clearFilter) " +
             "AND ((:ackFilterEnabled) IS FALSE OR a.acknowledged = :ackFilter) " +
             "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
-            "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-            "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-            "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) "
+            "AND (:searchText IS NULL OR (ilike(a.type, CONCAT('%', :searchText, '%')) = true  " +
+            "  OR ilike(a.severity, CONCAT('%', :searchText, '%')) = true " +
+            "  OR ilike(a.status, CONCAT('%', :searchText, '%')) = true)) "
             ,
             countQuery = "" +
                     "SELECT count(a) " +
@@ -274,9 +277,9 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                     "AND ((:clearFilterEnabled) IS FALSE OR a.cleared = :clearFilter) " +
                     "AND ((:ackFilterEnabled) IS FALSE OR a.acknowledged = :ackFilter) " +
                     "AND (:assigneeId IS NULL OR a.assigneeId = uuid(:assigneeId)) " +
-                    "AND (LOWER(a.type) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-                    "  OR LOWER(a.severity) LIKE LOWER(CONCAT('%', :searchText, '%')) " +
-                    "  OR LOWER(a.status) LIKE LOWER(CONCAT('%', :searchText, '%'))) ")
+                    "AND (:searchText IS NULL OR (ilike(a.type, CONCAT('%', :searchText, '%')) = true " +
+                    "  OR ilike(a.severity, CONCAT('%', :searchText, '%')) = true  " +
+                    "  OR ilike(a.status, CONCAT('%', :searchText, '%')) = true))")
     Page<AlarmInfoEntity> findCustomerAlarmsV2(@Param("tenantId") UUID tenantId,
                                                @Param("customerId") UUID customerId,
                                                @Param("startTime") Long startTime,
@@ -315,6 +318,9 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
     @Query(value = "SELECT a FROM AlarmInfoEntity a WHERE a.tenantId = :tenantId AND a.id = :alarmId")
     AlarmInfoEntity findAlarmInfoById(@Param("tenantId") UUID tenantId, @Param("alarmId") UUID alarmId);
 
+    @Query("SELECT a.id FROM AlarmEntity a WHERE a.tenantId = :tenantId AND a.assigneeId = :assigneeId")
+    Page<UUID> findAlarmIdsByAssigneeId(@Param("tenantId") UUID tenantId, @Param("assigneeId") UUID assigneeId, Pageable pageable);
+
     @Query(value = "SELECT create_or_update_active_alarm(:t_id, :c_id, :a_id, :a_created_ts, :a_o_id, :a_o_type, :a_type, :a_severity, " +
             ":a_start_ts, :a_end_ts, :a_details, :a_propagate, :a_propagate_to_owner, " +
             ":a_propagate_to_tenant, :a_propagation_types, :a_creation_enabled)", nativeQuery = true)
@@ -345,4 +351,13 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
 
     @Query(value = "SELECT unassign_alarm(:t_id, :a_id, :a_ts)", nativeQuery = true)
     String unassignAlarm(@Param("t_id") UUID tenantId, @Param("a_id") UUID alarmId, @Param("a_ts") long unassignTime);
+
+    @Query(value = "SELECT at.type FROM alarm_types AS at WHERE at.tenant_id = :tenantId AND at.type ILIKE CONCAT('%', :searchText, '%')", nativeQuery = true)
+    Page<String> findTenantAlarmTypes(@Param("tenantId") UUID tenantId, @Param("searchText") String searchText, Pageable pageable);
+
+    @Transactional
+    @Modifying
+    @Query(value = "DELETE FROM alarm_types AS at WHERE NOT EXISTS (SELECT 1 FROM alarm AS a WHERE a.tenant_id = at.tenant_id AND a.type = at.type) AND at.tenant_id = :tenantId AND at.type IN (:types)", nativeQuery = true)
+    int deleteTypeIfNoAlarmsExist(@Param("tenantId") UUID tenantId, @Param("types") Set<String> types);
+
 }

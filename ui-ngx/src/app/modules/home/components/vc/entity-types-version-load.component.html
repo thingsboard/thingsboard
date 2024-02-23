@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -66,10 +66,10 @@
                 <mat-checkbox *ngIf="entityTypeFormGroup.get('entityType').value === entityTypes.DEVICE" formControlName="loadCredentials">
                   {{ 'version-control.load-credentials' | translate }}
                 </mat-checkbox>
-                <mat-checkbox formControlName="loadAttributes">
+                <mat-checkbox *ngIf="!entityTypesWithoutRelatedData.has(entityTypeFormGroup.get('entityType').value)" formControlName="loadAttributes">
                   {{ 'version-control.load-attributes' | translate }}
                 </mat-checkbox>
-                <mat-checkbox formControlName="loadRelations">
+                <mat-checkbox *ngIf="!entityTypesWithoutRelatedData.has(entityTypeFormGroup.get('entityType').value)" formControlName="loadRelations">
                   {{ 'version-control.load-relations' | translate }}
                 </mat-checkbox>
               </div>

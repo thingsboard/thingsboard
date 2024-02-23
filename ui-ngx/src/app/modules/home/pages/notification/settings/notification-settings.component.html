@@ -1,0 +1,82 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div>
+  <mat-card appearance="outlined" class="settings-card tb-absolute-fill">
+    <mat-card-header>
+      <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.xs="8px"
+           fxLayoutAlign="space-between start" fxLayoutAlign.xs="start start">
+        <div fxFlex fxLayout="column">
+          <span class="mat-headline-5" translate>notification.settings.notification-settings</span>
+        </div>
+        <div fxLayout="column">
+          <button mat-button color="primary"
+                  [disabled]="(isLoading$ | async)"
+                  (click)="resetSettings()">{{ 'notification.settings.reset-all' | translate }}</button>
+        </div>
+      </div>
+    </mat-card-header>
+    <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+    </mat-progress-bar>
+    <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
+    <mat-card-content style="padding-top: 16px; overflow: hidden;">
+      <form [formGroup]="notificationSettings" class="notification-form">
+        <section class="notification-section">
+          <div  class="notification-section-block">
+            <div fxLayout="row" fxLayoutAlign="start center" style="height: 44px;">
+              <div fxFlex="50">
+                <mat-checkbox color="warn"
+                              (click)="$event.stopPropagation()"
+                              [indeterminate]="getIndeterminate()"
+                              (change)="changeInstanceTypeCheckBox($event.checked)"
+                              [checked]="getChecked()">
+                  <mat-label translate>notification.settings.type</mat-label>
+                </mat-checkbox>
+              </div>
+              <div fxFlex *ngFor="let deliveryMethods of notificationDeliveryMethods">
+                <div fxFlex fxLayoutAlign="start center">
+                  <mat-checkbox color="warn"
+                                [checked]="getChecked(deliveryMethods)"
+                                (change)="changeInstanceTypeCheckBox($event.checked, deliveryMethods)"
+                                [indeterminate]="getIndeterminate(deliveryMethods)"
+                                (click)="$event.stopPropagation()">
+                    <mat-label>{{ notificationDeliveryMethodInfoMap.get(deliveryMethods).name | translate }}</mat-label>
+                  </mat-checkbox>
+                </div>
+              </div>
+            </div>
+            <mat-divider></mat-divider>
+            <div *ngFor="let settingsControl of notificationSettingsFormArray.controls; let i = index; let $last = last;">
+              <tb-notification-setting-form [formControl]="settingsControl"
+                                            [deliveryMethods]="notificationDeliveryMethods">
+              </tb-notification-setting-form>
+              <mat-divider *ngIf="!$last"></mat-divider>
+            </div>
+          </div>
+        </section>
+      </form>
+    </mat-card-content>
+    <div fxLayout="row" fxLayoutAlign="end start" style="padding: 16px;">
+      <button mat-button mat-raised-button color="primary"
+              type="button"
+              (click)="save()"
+              [disabled]="(isLoading$ | async) || notificationSettings.invalid || !notificationSettings.dirty">
+        {{ 'action.save' | translate }}
+      </button>
+    </div>
+  </mat-card>
+</div>

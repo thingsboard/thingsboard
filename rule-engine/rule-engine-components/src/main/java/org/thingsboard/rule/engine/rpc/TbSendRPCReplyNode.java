@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,13 +98,13 @@ public class TbSendRPCReplyNode implements TbNode {
             return;
         }
 
-        ObjectNode body = JacksonUtil.OBJECT_MAPPER.createObjectNode();
+        ObjectNode body = JacksonUtil.newObjectNode();
         body.put("serviceId", serviceIdStr);
         body.put("sessionId", sessionIdStr);
         body.put("requestId", requestIdStr);
         body.put("response", msg.getData());
         EdgeEvent edgeEvent = EdgeUtils.constructEdgeEvent(ctx.getTenantId(), edgeId, EdgeEventType.DEVICE,
-                        EdgeEventActionType.RPC_CALL, deviceId, JacksonUtil.OBJECT_MAPPER.valueToTree(body));
+                        EdgeEventActionType.RPC_CALL, deviceId, JacksonUtil.valueToTree(body));
         ListenableFuture<Void> future = ctx.getEdgeEventService().saveAsync(edgeEvent);
         Futures.addCallback(future, new FutureCallback<>() {
             @Override

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<form [formGroup]="statesFormGroup" (ngSubmit)="save()" style="min-width: 480px;">
+<form [formGroup]="statesFormGroup" (ngSubmit)="save()" style="width: 750px;">
   <mat-toolbar color="primary">
     <h2 translate>dashboard.manage-states</h2>
     <span fxFlex></span>
@@ -96,7 +96,7 @@
                   </mat-cell>
                 </ng-container>
                 <ng-container matColumnDef="actions" stickyEnd>
-                  <mat-header-cell *matHeaderCellDef style="min-width: 80px; max-width: 80px; width: 80px">
+                  <mat-header-cell *matHeaderCellDef style="min-width: 120px; max-width: 120px; width: 120px">
                   </mat-header-cell>
                   <mat-cell *matCellDef="let state">
                     <div fxFlex fxLayout="row">
@@ -106,6 +106,13 @@
                               matTooltipPosition="above"
                               (click)="editState($event, state)">
                         <mat-icon>edit</mat-icon>
+                      </button>
+                      <button mat-icon-button [disabled]="isLoading$ | async"
+                              type="button"
+                              matTooltip="{{ 'dashboard.duplicate-state-action' | translate }}"
+                              matTooltipPosition="above"
+                              (click)="duplicateState($event, state)">
+                        <mat-icon>content_copy</mat-icon>
                       </button>
                       <button [fxShow]="!state.root" mat-icon-button [disabled]="isLoading$ | async"
                               type="button"

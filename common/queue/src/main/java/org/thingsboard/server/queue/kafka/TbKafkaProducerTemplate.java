@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,8 +85,8 @@ public class TbKafkaProducerTemplate<T extends TbQueueMsg> implements TbQueuePro
         if (log.isTraceEnabled()) {
             try {
                 StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-                int maxlevel = Math.min(stackTrace.length, 10);
-                for (int i = 2; i < maxlevel; i++) { // ignore two levels: getStackTrace and addAnalyticHeaders
+                int maxLevel = Math.min(stackTrace.length, 20);
+                for (int i = 2; i < maxLevel; i++) { // ignore two levels: getStackTrace and addAnalyticHeaders
                     headers.add(new RecordHeader("_stackTrace" + i, stackTrace[i].toString().getBytes(StandardCharsets.UTF_8)));
                 }
             } catch (Throwable t) {

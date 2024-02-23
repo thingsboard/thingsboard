@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,7 +140,7 @@ public class SqlPartitioningRepository {
             try {
                 partitions.add(Long.parseLong(partitionTsStr));
             } catch (NumberFormatException nfe) {
-                log.warn("Failed to parse table name: {}", partitionTableName);
+                log.debug("Failed to parse table name: {}", partitionTableName);
             }
         }
         return partitions;

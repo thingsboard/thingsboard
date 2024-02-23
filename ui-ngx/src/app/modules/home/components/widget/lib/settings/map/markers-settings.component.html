@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -170,10 +170,10 @@
           </mat-panel-description>
         </mat-expansion-panel-header>
         <ng-template matExpansionPanelContent>
-          <tb-image-input [fxShow]="!markersSettingsFormGroup.get('useMarkerImageFunction').value"
+          <tb-gallery-image-input [fxShow]="!markersSettingsFormGroup.get('useMarkerImageFunction').value"
                           label="{{ 'widgets.maps.custom-marker-image' | translate }}"
                           formControlName="markerImage">
-          </tb-image-input>
+          </tb-gallery-image-input>
           <mat-form-field [fxShow]="!markersSettingsFormGroup.get('useMarkerImageFunction').value"
                           fxFlex class="mat-block">
             <mat-label translate>widgets.maps.custom-marker-image-size</mat-label>
@@ -186,10 +186,10 @@
                       functionTitle="{{ 'widgets.maps.marker-image-function' | translate }}"
                       helpId="widget/lib/map/marker_image_fn">
           </tb-js-func>
-          <tb-multiple-image-input [fxShow]="markersSettingsFormGroup.get('useMarkerImageFunction').value"
-                                   label="{{ 'widgets.maps.marker-images' | translate }}"
-                                   formControlName="markerImages">
-          </tb-multiple-image-input>
+          <tb-multiple-gallery-image-input [fxShow]="markersSettingsFormGroup.get('useMarkerImageFunction').value"
+                                           label="{{ 'widgets.maps.marker-images' | translate }}"
+                                           formControlName="markerImages">
+          </tb-multiple-gallery-image-input>
         </ng-template>
       </mat-expansion-panel>
     </fieldset>

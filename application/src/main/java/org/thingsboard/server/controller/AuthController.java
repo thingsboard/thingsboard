@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,19 +38,17 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.event.UserCredentialsInvalidationEvent;
 import org.thingsboard.server.common.data.security.event.UserSessionInvalidationEvent;
 import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
-import org.thingsboard.server.common.msg.tools.TbRateLimits;
-import org.thingsboard.server.dao.audit.AuditLogService;
+import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
 import org.thingsboard.server.service.security.model.ActivateUserRequest;
@@ -65,8 +63,6 @@ import org.thingsboard.server.service.security.system.SystemSecurityService;
 import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 @RestController
 @TbCoreComponent
@@ -77,12 +73,11 @@ public class AuthController extends BaseController {
 
     @Value("${server.rest.rate_limits.reset_password_per_user:5:3600}")
     private String defaultLimitsConfiguration;
-    private final ConcurrentMap<UserId, TbRateLimits> resetPasswordRateLimits = new ConcurrentHashMap<>();
     private final BCryptPasswordEncoder passwordEncoder;
     private final JwtTokenFactory tokenFactory;
     private final MailService mailService;
     private final SystemSecurityService systemSecurityService;
-    private final AuditLogService auditLogService;
+    private final RateLimitService rateLimitService;
     private final ApplicationEventPublisher eventPublisher;
 
 
@@ -120,14 +115,12 @@ public class AuthController extends BaseController {
         if (!passwordEncoder.matches(currentPassword, userCredentials.getPassword())) {
             throw new ThingsboardException("Current password doesn't match!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
-        systemSecurityService.validatePassword(securityUser.getTenantId(), newPassword, userCredentials);
+        systemSecurityService.validatePassword(newPassword, userCredentials);
         if (passwordEncoder.matches(newPassword, userCredentials.getPassword())) {
             throw new ThingsboardException("New password should be different from existing!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
         userCredentials.setPassword(passwordEncoder.encode(newPassword));
         userService.replaceUserCredentials(securityUser.getTenantId(), userCredentials);
-
-        sendEntityNotificationMsg(getTenantId(), userCredentials.getUserId(), EdgeEventActionType.CREDENTIALS_UPDATED);
 
         eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(securityUser.getId()));
         ObjectNode response = JacksonUtil.newObjectNode();
@@ -142,7 +135,7 @@ public class AuthController extends BaseController {
     @ResponseBody
     public UserPasswordPolicy getUserPasswordPolicy() throws ThingsboardException {
         SecuritySettings securitySettings =
-                checkNotNull(systemSecurityService.getSecuritySettings(TenantId.SYS_TENANT_ID));
+                checkNotNull(systemSecurityService.getSecuritySettings());
         return securitySettings.getPasswordPolicy();
     }
 
@@ -210,8 +203,7 @@ public class AuthController extends BaseController {
         UserCredentials userCredentials = userService.findUserCredentialsByResetToken(TenantId.SYS_TENANT_ID, resetToken);
 
         if (userCredentials != null) {
-            TbRateLimits tbRateLimits = getTbRateLimits(userCredentials.getUserId());
-            if (!tbRateLimits.tryConsume()) {
+            if (!rateLimitService.checkRateLimit(LimitedApi.PASSWORD_RESET, userCredentials.getUserId(), defaultLimitsConfiguration)) {
                 return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
             }
             try {
@@ -245,7 +237,7 @@ public class AuthController extends BaseController {
             HttpServletRequest request) throws ThingsboardException {
         String activateToken = activateRequest.getActivateToken();
         String password = activateRequest.getPassword();
-        systemSecurityService.validatePassword(TenantId.SYS_TENANT_ID, password, null);
+        systemSecurityService.validatePassword(password, null);
         String encodedPassword = passwordEncoder.encode(password);
         UserCredentials credentials = userService.activateUserCredentials(TenantId.SYS_TENANT_ID, activateToken, encodedPassword);
         User user = userService.findUserById(TenantId.SYS_TENANT_ID, credentials.getUserId());
@@ -263,8 +255,6 @@ public class AuthController extends BaseController {
                 log.info("Unable to send account activation email [{}]", e.getMessage());
             }
         }
-
-        sendEntityNotificationMsg(user.getTenantId(), user.getId(), EdgeEventActionType.CREDENTIALS_UPDATED);
 
         return tokenFactory.createTokenPair(securityUser);
     }
@@ -284,7 +274,7 @@ public class AuthController extends BaseController {
         String password = resetPasswordRequest.getPassword();
         UserCredentials userCredentials = userService.findUserCredentialsByResetToken(TenantId.SYS_TENANT_ID, resetToken);
         if (userCredentials != null) {
-            systemSecurityService.validatePassword(TenantId.SYS_TENANT_ID, password, userCredentials);
+            systemSecurityService.validatePassword(password, userCredentials);
             if (passwordEncoder.matches(password, userCredentials.getPassword())) {
                 throw new ThingsboardException("New password should be different from existing!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
             }
@@ -314,8 +304,4 @@ public class AuthController extends BaseController {
         eventPublisher.publishEvent(new UserSessionInvalidationEvent(user.getSessionId()));
     }
 
-    private TbRateLimits getTbRateLimits(UserId userId) {
-        return resetPasswordRateLimits.computeIfAbsent(userId,
-                key -> new TbRateLimits(defaultLimitsConfiguration, true));
-    }
 }

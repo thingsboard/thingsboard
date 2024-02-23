@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -204,31 +204,32 @@ public class CustomerEditMenuTest extends AbstractDriverBaseTest {
 
     @Epic("Customers smoke tests")
     @Feature("Edit customer")
-    @Test(priority = 20, groups = "smoke")
+    @Test(priority = 20, groups = { "smoke", "broken" })
     @Description("Assigned dashboard without hide")
     public void assignedDashboardWithoutHide() {
         String customerName = ENTITY_NAME + random();
+        String dashboardName = "Firmware";
         testRestClient.postCustomer(defaultCustomerPrototype(customerName));
         this.customerName = customerName;
 
         sideBarMenuView.customerBtn().click();
         customerPage.manageCustomersDashboardsBtn(customerName).click();
-        customerPage.assignedDashboard();
+        customerPage.assignedDashboard(dashboardName);
         sideBarMenuView.customerBtn().click();
         customerPage.entity(customerName).click();
         jsClick(customerPage.editPencilBtn());
-        customerPage.chooseDashboard(customerPage.getDashboard());
-        customerPage.hideHomeDashboardToolbarCheckbox().click();
+        customerPage.chooseDashboard(dashboardName);
+        customerPage.disableHideHomeDashboardToolbar();
         customerPage.doneBtnEditView().click();
+        customerPage.waitUntilDashboardFieldToBeNotEmpty();
         customerPage.setDashboardFromView();
         customerPage.closeEntityViewBtn().click();
         jsClick(customerPage.manageCustomersUserBtn(customerName));
         customerPage.createCustomersUser();
         jsClick(customerPage.userLoginBtn());
 
-        Assert.assertNotNull(customerPage.usersWidget());
         Assert.assertTrue(customerPage.usersWidget().isDisplayed());
-        Assert.assertEquals(customerPage.getDashboard(), customerPage.getDashboardFromView());
+        Assert.assertEquals(dashboardName, customerPage.getDashboardFromView());
         Assert.assertNotNull(customerPage.stateController());
         Assert.assertNotNull(customerPage.filterBtn());
         Assert.assertNotNull(customerPage.timeBtn());

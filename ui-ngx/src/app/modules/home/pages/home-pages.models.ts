@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,9 +16,17 @@
 
 import { BreadCrumbLabelFunction } from '@shared/components/breadcrumb';
 import { EntityDetailsPageComponent } from '@home/components/entity/entity-details-page.component';
+import { EntityType } from '@shared/models/entity-type.models';
+import { ResourceInfo } from '@shared/models/resource.models';
+import { OtaPackage } from '@shared/models/ota-package.models';
 
 export const entityDetailsPageBreadcrumbLabelFunction: BreadCrumbLabelFunction<EntityDetailsPageComponent>
   = ((route, translate, component) => {
-  return component.entity?.name;
+  switch (component.entitiesTableConfig.entityType) {
+    case EntityType.TB_RESOURCE:
+    case EntityType.OTA_PACKAGE:
+      return (component.entity as ResourceInfo | OtaPackage)?.title;
+    default:
+      return component.entity?.name;
+  }
 });
-

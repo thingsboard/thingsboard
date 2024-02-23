@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,14 +48,14 @@ public abstract class AbstractGeofencingNode<T extends TbGpsGeofencingFilterNode
     abstract protected Class<T> getConfigClazz();
 
     protected boolean checkMatches(TbMsg msg) throws TbNodeException {
-        JsonElement msgDataElement = new JsonParser().parse(msg.getData());
+        JsonElement msgDataElement = JsonParser.parseString(msg.getData());
         if (!msgDataElement.isJsonObject()) {
-            throw new TbNodeException("Incoming Message is not a valid JSON object");
+            throw new TbNodeException("Incoming Message is not a valid JSON object!");
         }
         JsonObject msgDataObj = msgDataElement.getAsJsonObject();
         double latitude = getValueFromMessageByName(msg, msgDataObj, config.getLatitudeKeyName());
         double longitude = getValueFromMessageByName(msg, msgDataObj, config.getLongitudeKeyName());
-        List<Perimeter> perimeters = getPerimeters(msg, msgDataObj);
+        List<Perimeter> perimeters = getPerimeters(msg);
         boolean matches = false;
         for (Perimeter perimeter : perimeters) {
             if (checkMatches(perimeter, latitude, longitude)) {
@@ -74,11 +74,11 @@ public abstract class AbstractGeofencingNode<T extends TbGpsGeofencingFilterNode
         } else if (perimeter.getPerimeterType() == PerimeterType.POLYGON) {
             return GeoUtil.contains(perimeter.getPolygonsDefinition(), new Coordinates(latitude, longitude));
         } else {
-            throw new TbNodeException("Unsupported perimeter type: " + perimeter.getPerimeterType());
+            throw new TbNodeException("Unsupported perimeter type: " + perimeter.getPerimeterType()  + "!");
         }
     }
 
-    protected List<Perimeter> getPerimeters(TbMsg msg, JsonObject msgDataObj) throws TbNodeException {
+    protected List<Perimeter> getPerimeters(TbMsg msg) throws TbNodeException {
         if (config.isFetchPerimeterInfoFromMessageMetadata()) {
             if (StringUtils.isEmpty(config.getPerimeterKeyName())) {
                 // Old configuration before "perimeterKeyName" was introduced

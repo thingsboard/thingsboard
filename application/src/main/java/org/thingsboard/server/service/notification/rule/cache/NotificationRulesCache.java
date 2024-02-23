@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,12 @@ package org.thingsboard.server.service.notification.rule.cache;
 
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 
 import java.util.List;
 
 public interface NotificationRulesCache {
 
-    List<NotificationRule> get(TenantId tenantId, NotificationRuleTriggerType triggerType);
+    List<NotificationRule> getEnabled(TenantId tenantId, NotificationRuleTriggerType triggerType);
 
 }

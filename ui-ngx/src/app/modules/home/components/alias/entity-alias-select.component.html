@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -31,11 +31,18 @@
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
+  <button *ngIf="!selectEntityAliasFormGroup.get('entityAlias').value && !disabled"
+          style="margin-right: 8px;"
+          type="button"
+          matSuffix mat-button color="primary"
+          (click)="createEntityAlias($event, searchText, false)">
+    {{ 'entity.create-new' | translate }}
+  </button>
   <mat-autocomplete class="tb-autocomplete"
                     #entityAliasAutocomplete="matAutocomplete"
                     [displayWith]="displayEntityAliasFn">
     <mat-option *ngFor="let entityAlias of filteredEntityAliases | async" [value]="entityAlias">
-      <span [innerHTML]="entityAlias.alias | highlight:searchText"></span>
+      <span [innerHTML]="entityAlias.alias | highlight:searchText:true:'ig'"></span>
     </mat-option>
     <mat-option *ngIf="!(filteredEntityAliases | async)?.length" [value]="null" class="tb-not-found">
       <div class="tb-not-found-content" (click)="$event.stopPropagation()">

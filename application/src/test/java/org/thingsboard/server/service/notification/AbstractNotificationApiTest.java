@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,17 @@ package org.thingsboard.server.service.notification;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.junit.After;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.util.Pair;
 import org.thingsboard.rule.engine.api.MailService;
-import org.thingsboard.rule.engine.api.slack.SlackService;
+import org.thingsboard.rule.engine.api.notification.SlackService;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
@@ -38,13 +40,17 @@ import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.rule.DefaultNotificationRuleRecipientsConfig;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.rule.NotificationRuleInfo;
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.settings.NotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.platform.UserListFilter;
+import org.thingsboard.server.common.data.notification.targets.platform.UsersFilter;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.EmailDeliveryMethodNotificationTemplate;
+import org.thingsboard.server.common.data.notification.template.HasSubject;
+import org.thingsboard.server.common.data.notification.template.MobileAppDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
 import org.thingsboard.server.common.data.notification.template.SmsDeliveryMethodNotificationTemplate;
@@ -54,6 +60,12 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.notification.NotificationRequestService;
+import org.thingsboard.server.dao.notification.NotificationRuleService;
+import org.thingsboard.server.dao.notification.NotificationSettingsService;
+import org.thingsboard.server.dao.notification.NotificationTargetService;
+import org.thingsboard.server.dao.notification.NotificationTemplateService;
+import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
 
 import java.net.URISyntaxException;
 import java.util.Arrays;
@@ -72,21 +84,46 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
 
     @MockBean
     protected SlackService slackService;
-
     @Autowired
     protected MailService mailService;
+
+    @Autowired
+    protected NotificationRuleService notificationRuleService;
+    @Autowired
+    protected NotificationTemplateService notificationTemplateService;
+    @Autowired
+    protected NotificationTargetService notificationTargetService;
+    @Autowired
+    protected NotificationRequestService notificationRequestService;
+    @Autowired
+    protected NotificationSettingsService notificationSettingsService;
+    @Autowired
+    protected SqlPartitioningRepository partitioningRepository;
 
     public static final String DEFAULT_NOTIFICATION_SUBJECT = "Just a test";
     public static final NotificationType DEFAULT_NOTIFICATION_TYPE = NotificationType.GENERAL;
 
+    @After
+    public void afterEach() {
+        notificationRequestService.deleteNotificationRequestsByTenantId(TenantId.SYS_TENANT_ID);
+        notificationRuleService.deleteNotificationRulesByTenantId(TenantId.SYS_TENANT_ID);
+        notificationTemplateService.deleteNotificationTemplatesByTenantId(TenantId.SYS_TENANT_ID);
+        notificationTargetService.deleteNotificationTargetsByTenantId(TenantId.SYS_TENANT_ID);
+        partitioningRepository.dropPartitionsBefore("notification", Long.MAX_VALUE, 1);
+        notificationSettingsService.deleteNotificationSettings(TenantId.SYS_TENANT_ID);
+    }
+
     protected NotificationTarget createNotificationTarget(UserId... usersIds) {
-        NotificationTarget notificationTarget = new NotificationTarget();
-        notificationTarget.setTenantId(tenantId);
-        notificationTarget.setName("Users " + List.of(usersIds));
-        PlatformUsersNotificationTargetConfig targetConfig = new PlatformUsersNotificationTargetConfig();
         UserListFilter filter = new UserListFilter();
         filter.setUsersIds(DaoUtil.toUUIDs(List.of(usersIds)));
-        targetConfig.setUsersFilter(filter);
+        return createNotificationTarget(filter);
+    }
+
+    protected NotificationTarget createNotificationTarget(UsersFilter usersFilter) {
+        NotificationTarget notificationTarget = new NotificationTarget();
+        notificationTarget.setName(usersFilter.toString());
+        PlatformUsersNotificationTargetConfig targetConfig = new PlatformUsersNotificationTargetConfig();
+        targetConfig.setUsersFilter(usersFilter);
         notificationTarget.setConfiguration(targetConfig);
         return saveNotificationTarget(notificationTarget);
     }
@@ -138,26 +175,28 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
             DeliveryMethodNotificationTemplate deliveryMethodNotificationTemplate;
             switch (deliveryMethod) {
                 case WEB: {
-                    WebDeliveryMethodNotificationTemplate template = new WebDeliveryMethodNotificationTemplate();
-                    template.setSubject(subject);
-                    deliveryMethodNotificationTemplate = template;
+                    deliveryMethodNotificationTemplate = new WebDeliveryMethodNotificationTemplate();
                     break;
                 }
                 case EMAIL: {
-                    EmailDeliveryMethodNotificationTemplate template = new EmailDeliveryMethodNotificationTemplate();
-                    template.setSubject(subject);
-                    deliveryMethodNotificationTemplate = template;
+                    deliveryMethodNotificationTemplate = new EmailDeliveryMethodNotificationTemplate();
                     break;
                 }
                 case SMS: {
                     deliveryMethodNotificationTemplate = new SmsDeliveryMethodNotificationTemplate();
                     break;
                 }
+                case MOBILE_APP:
+                    deliveryMethodNotificationTemplate = new MobileAppDeliveryMethodNotificationTemplate();
+                    break;
                 default:
                     throw new IllegalArgumentException("Unsupported delivery method " + deliveryMethod);
             }
             deliveryMethodNotificationTemplate.setEnabled(true);
             deliveryMethodNotificationTemplate.setBody(text);
+            if (deliveryMethodNotificationTemplate instanceof HasSubject) {
+                ((HasSubject) deliveryMethodNotificationTemplate).setSubject(subject);
+            }
             config.getDeliveryMethodsTemplates().put(deliveryMethod, deliveryMethodNotificationTemplate);
         }
         notificationTemplate.setConfiguration(config);
@@ -170,6 +209,15 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
 
     protected void saveNotificationSettings(NotificationSettings notificationSettings) throws Exception {
         doPost("/api/notification/settings", notificationSettings).andExpect(status().isOk());
+    }
+
+    protected void saveNotificationSettings(NotificationDeliveryMethodConfig... configs) throws Exception {
+        NotificationSettings settings = new NotificationSettings();
+        settings.setDeliveryMethodsConfigs(Arrays.stream(configs)
+                .collect(Collectors.toMap(
+                        NotificationDeliveryMethodConfig::getMethod, config -> config
+                )));
+        saveNotificationSettings(settings);
     }
 
     protected Pair<User, NotificationApiWsClient> createUserAndConnectWsClient(Authority authority) throws Exception {
@@ -205,6 +253,7 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
 
         NotificationRule rule = new NotificationRule();
         rule.setName(triggerConfig.getTriggerType() + " " + Arrays.toString(targets));
+        rule.setEnabled(true);
         rule.setTemplateId(template.getId());
         rule.setTriggerType(triggerConfig.getTriggerType());
         rule.setTriggerConfig(triggerConfig);
@@ -228,8 +277,9 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
 
     @Override
     protected NotificationApiWsClient buildAndConnectWebSocketClient() throws URISyntaxException, InterruptedException {
-        NotificationApiWsClient wsClient = new NotificationApiWsClient(WS_URL + wsPort, token);
+        NotificationApiWsClient wsClient = new NotificationApiWsClient(WS_URL + wsPort);
         assertThat(wsClient.connectBlocking(TIMEOUT, TimeUnit.SECONDS)).isTrue();
+        wsClient.authenticate(token);
         return wsClient;
     }
 
@@ -238,4 +288,8 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
         return (NotificationApiWsClient) super.getWsClient();
     }
 
+    @Override
+    public NotificationApiWsClient getAnotherWsClient() {
+        return (NotificationApiWsClient) super.getAnotherWsClient();
+    }
 }

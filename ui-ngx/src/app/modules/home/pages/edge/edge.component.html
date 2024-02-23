@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -114,13 +114,26 @@
     </button>
   </div>
   <div fxLayout="row" fxLayout.xs="column">
-    <button mat-raised-button color="primary"
-            [disabled]="(isLoading$ | async)"
-            (click)="onEntityAction($event, 'openInstructions')"
-            [fxShow]="!isEdit && edgeScope !== 'customer_user'">
-      <mat-icon>info_outline</mat-icon>
-      <span>{{ 'edge.install-connect-instructions' | translate }}</span>
-    </button>
+    <div [ngSwitch]="upgradeAvailable">
+      <ng-container *ngSwitchCase="false">
+        <button mat-raised-button color="primary"
+                [disabled]="(isLoading$ | async)"
+                (click)="onEntityAction($event, 'openInstallInstructions')"
+                [fxShow]="!isEdit && edgeScope !== 'customer_user'">
+          <mat-icon>info_outline</mat-icon>
+          <span>{{ 'edge.install-connect-instructions' | translate }}</span>
+        </button>
+      </ng-container>
+      <ng-container *ngSwitchCase="true">
+        <button mat-raised-button color="primary"
+                [disabled]="(isLoading$ | async)"
+                (click)="onEntityAction($event, 'openUpgradeInstructions')"
+                [fxShow]="!isEdit && edgeScope !== 'customer_user'">
+          <mat-icon>info_outline</mat-icon>
+          <span>{{ 'edge.upgrade-instructions' | translate }}</span>
+        </button>
+      </ng-container>
+    </div>
   </div>
 </div>
 <div class="mat-padding" fxLayout="column">

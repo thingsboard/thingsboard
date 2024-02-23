@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,20 +68,22 @@ public class EntityFieldsData {
                 break;
             }
         }
-        if (current != null) {
-            if(current.isNull() && ignoreNullStrings){
+        if (current == null) {
+            return null;
+        }
+        if (current.isNull() && ignoreNullStrings) {
+            return null;
+        }
+        if (current.isValueNode()) {
+            String textValue = current.asText();
+            if (StringUtils.isEmpty(textValue) && ignoreNullStrings) {
                 return null;
             }
-            if (current.isValueNode()) {
-                return current.asText();
-            } else {
-                try {
-                    return mapper.writeValueAsString(current);
-                } catch (JsonProcessingException e) {
-                    return null;
-                }
-            }
-        } else {
+            return textValue;
+        }
+        try {
+            return mapper.writeValueAsString(current);
+        } catch (JsonProcessingException e) {
             return null;
         }
     }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,15 +40,14 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.device.DeviceDao;
 import org.thingsboard.server.dao.model.sql.DeviceEntity;
-import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
+import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+
+import static org.thingsboard.server.dao.DaoUtil.convertTenantEntityInfosToDto;
 
 /**
  * Created by Valerii Sosliuk on 5/6/2017.
@@ -56,13 +55,16 @@ import java.util.UUID;
 @Component
 @SqlDao
 @Slf4j
-public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device> implements DeviceDao {
+public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implements DeviceDao {
 
     @Autowired
     private DeviceRepository deviceRepository;
 
     @Autowired
     private NativeDeviceRepository nativeDeviceRepository;
+
+    @Autowired
+    private DeviceProfileRepository deviceProfileRepository;
 
     @Override
     protected Class<DeviceEntity> getEntityClass() {
@@ -98,7 +100,7 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
             return DaoUtil.toPageData(
                     deviceRepository.findByTenantId(
                             tenantId,
-                            Objects.toString(pageLink.getTextSearch(), ""),
+                            pageLink.getTextSearch(),
                             DaoUtil.toPageable(pageLink)));
         }
     }
@@ -114,7 +116,7 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
                         DaoUtil.getStringId(filter.getDeviceProfileId()),
                         filter.getActive() != null,
                         Boolean.TRUE.equals(filter.getActive()),
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 
@@ -139,7 +141,7 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
                 deviceRepository.findByTenantIdAndCustomerId(
                         tenantId,
                         customerId,
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 
@@ -149,7 +151,7 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
                 deviceRepository.findByTenantIdAndProfileId(
                         tenantId,
                         profileId,
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 
@@ -176,7 +178,7 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
                 deviceRepository.findByTenantIdAndType(
                         tenantId,
                         type,
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 
@@ -186,7 +188,7 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
                                                                            OtaPackageType type,
                                                                            PageLink pageLink) {
         Pageable pageable = DaoUtil.toPageable(pageLink);
-        String searchText = Objects.toString(pageLink.getTextSearch(), "");
+        String searchText = pageLink.getTextSearch();
         Page<DeviceEntity> page = OtaPackageUtil.getByOtaPackageType(
                 () -> deviceRepository.findByTenantIdAndTypeAndFirmwareIdIsNull(tenantId, deviceProfileId, searchText, pageable),
                 () -> deviceRepository.findByTenantIdAndTypeAndSoftwareIdIsNull(tenantId, deviceProfileId, searchText, pageable),
@@ -211,13 +213,13 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
                         tenantId,
                         customerId,
                         type,
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 
     @Override
     public ListenableFuture<List<EntitySubtype>> findTenantDeviceTypesAsync(UUID tenantId) {
-        return service.submit(() -> convertTenantDeviceTypesToDto(tenantId, deviceRepository.findTenantDeviceTypes(tenantId)));
+        return service.submit(() -> convertTenantEntityInfosToDto(tenantId, EntityType.DEVICE, deviceProfileRepository.findActiveTenantDeviceProfileNames(tenantId)));
     }
 
     @Override
@@ -240,17 +242,6 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
         return deviceRepository.countByTenantId(tenantId.getId());
     }
 
-    private List<EntitySubtype> convertTenantDeviceTypesToDto(UUID tenantId, List<String> types) {
-        List<EntitySubtype> list = Collections.emptyList();
-        if (types != null && !types.isEmpty()) {
-            list = new ArrayList<>();
-            for (String type : types) {
-                list.add(new EntitySubtype(TenantId.fromUUID(tenantId), EntityType.DEVICE, type));
-            }
-        }
-        return list;
-    }
-
     @Override
     public PageData<Device> findDevicesByTenantIdAndEdgeId(UUID tenantId, UUID edgeId, PageLink pageLink) {
         log.debug("Try to find devices by tenantId [{}], edgeId [{}] and pageLink [{}]", tenantId, edgeId, pageLink);
@@ -258,7 +249,7 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
                 .findByTenantIdAndEdgeId(
                         tenantId,
                         edgeId,
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 
@@ -270,7 +261,7 @@ public class JpaDeviceDao extends JpaAbstractSearchTextDao<DeviceEntity, Device>
                         tenantId,
                         edgeId,
                         type,
-                        Objects.toString(pageLink.getTextSearch(), ""),
+                        pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }
 

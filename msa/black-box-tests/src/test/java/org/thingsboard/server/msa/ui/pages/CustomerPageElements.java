@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public class CustomerPageElements extends OtherPageElementsHelper {
     private static final String ASSIGNED_BTN = "//button[@type='submit']";
     private static final String HIDE_HOME_DASHBOARD_TOOLBAR = "//mat-checkbox[@formcontrolname='homeDashboardHideToolbar']//label";
     private static final String FILTER_BTN = "//tb-filters-edit";
-    private static final String TIME_BTN = "//tb-timewindow";
+    private static final String TIME_BTN = "//tb-timewindow[not(@hidelabel)]";
     private static final String CUSTOMER_ICON_HEADER = "//tb-breadcrumb//span[contains(text(),'Customer %s')]";
     private static final String CUSTOMER_USER_ICON_HEADER = "Users";
     private static final String CUSTOMER_ASSETS_ICON_HEADER = "Assets";

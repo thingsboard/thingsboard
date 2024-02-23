@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -156,11 +156,12 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
 
     @Override
     public ListenableFuture<TsKvEntry> findLatest(TenantId tenantId, EntityId entityId, String key) {
-        TsKvEntry latest = doFindLatest(entityId, key);
-        if (latest == null) {
-            latest = new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry(key, null));
-        }
-        return Futures.immediateFuture(latest);
+        return Futures.immediateFuture(getLatestTsKvEntry(entityId, key));
+    }
+
+    @Override
+    public TsKvEntry findLatestSync(TenantId tenantId, EntityId entityId, String key) {
+        return getLatestTsKvEntry(entityId, key);
     }
 
     @Override
@@ -266,6 +267,14 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
         latestEntity.setJsonValue(tsKvEntry.getJsonValue().orElse(null));
 
         return tsLatestQueue.add(latestEntity);
+    }
+
+    private TsKvEntry getLatestTsKvEntry(EntityId entityId, String key) {
+        TsKvEntry latest = doFindLatest(entityId, key);
+        if (latest == null) {
+            latest = new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry(key, null));
+        }
+        return latest;
     }
 
 }

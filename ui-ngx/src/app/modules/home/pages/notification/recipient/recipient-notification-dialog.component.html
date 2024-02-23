@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -61,12 +61,11 @@
           <ng-container *ngSwitchCase="notificationTargetConfigType.TENANT_ADMINISTRATORS">
             <section *ngIf="isSysAdmin()">
               <div fxFlex fxLayoutAlign="center center">
-                <mat-button-toggle-group class="tb-notification-tenant-group"
-                                         style="width: 280px;"
-                                         formControlName="filterByTenants">
-                  <mat-button-toggle fxFlex [value]=true>{{ 'tenant.tenant' | translate }}</mat-button-toggle>
-                  <mat-button-toggle fxFlex [value]=false>{{ 'tenant-profile.tenant-profile' | translate }}</mat-button-toggle>
-                </mat-button-toggle-group>
+                <tb-toggle-select class="tb-notification-tenant-group" appearance="fill"
+                                  formControlName="filterByTenants">
+                  <tb-toggle-option [value]="true">{{ 'tenant.tenant' | translate }}</tb-toggle-option>
+                  <tb-toggle-option [value]="false">{{ 'tenant-profile.tenant-profile' | translate }}</tb-toggle-option>
+                </tb-toggle-select>
               </div>
               <ng-container *ngIf="targetNotificationForm.get('configuration.usersFilter.filterByTenants').value; else tenantProfiles">
                 <tb-entity-list
@@ -120,6 +119,22 @@
           formControlName="conversation" required
           [slackChanelType]="targetNotificationForm.get('configuration.conversationType').value">
         </tb-slack-conversation-autocomplete>
+      </section>
+      <section *ngIf="targetNotificationForm.get('configuration.type').value === notificationTargetType.MICROSOFT_TEAMS">
+        <mat-form-field class="mat-block">
+          <mat-label translate>notification.webhook-url</mat-label>
+          <input matInput formControlName="webhookUrl">
+          <mat-error *ngIf="targetNotificationForm.get('configuration.webhookUrl').hasError('required')">
+            {{ 'notification.webhook-url-required' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field class="mat-block">
+          <mat-label translate>notification.channel-name</mat-label>
+          <input matInput formControlName="channelName">
+          <mat-error *ngIf="targetNotificationForm.get('configuration.channelName').hasError('required')">
+            {{ 'notification.channel-name-required' | translate }}
+          </mat-error>
+        </mat-form-field>
       </section>
       <mat-form-field class="mat-block">
         <mat-label translate>notification.description</mat-label>

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import { AttributeData } from './telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { DeviceCredentialMQTTBasic } from '@shared/models/device.models';
 import { Lwm2mSecurityConfigModels } from '@shared/models/lwm2m-security-config.models';
+import { TenantId } from '@shared/models/id/tenant-id';
 
 export interface EntityInfo {
   name?: string;
@@ -162,3 +163,7 @@ export const entityFields: {[fieldName: string]: EntityField} = {
     value: 'label'
   }
 };
+
+export interface HasTenantId {
+  tenantId?: TenantId;
+}

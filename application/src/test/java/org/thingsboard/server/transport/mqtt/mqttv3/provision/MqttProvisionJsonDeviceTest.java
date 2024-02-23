@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
 import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestCallback;
+import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestSubscribeOnTopicCallback;
 import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestClient;
 
 import java.util.concurrent.TimeUnit;
@@ -270,7 +271,7 @@ public class MqttProvisionJsonDeviceTest extends AbstractMqttIntegrationTest {
         String provisionRequestMsg = createTestProvisionMessage(deviceCredentials);
         MqttTestClient client = new MqttTestClient();
         client.connectAndWait("provision");
-        MqttTestCallback onProvisionCallback = new MqttTestCallback(DEVICE_PROVISION_RESPONSE_TOPIC);
+        MqttTestCallback onProvisionCallback = new MqttTestSubscribeOnTopicCallback(DEVICE_PROVISION_RESPONSE_TOPIC);
         client.setCallback(onProvisionCallback);
         client.subscribe(DEVICE_PROVISION_RESPONSE_TOPIC, MqttQoS.AT_MOST_ONCE);
         client.publishAndWait(DEVICE_PROVISION_REQUEST_TOPIC, provisionRequestMsg.getBytes());

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.thingsboard.rule.engine.api.slack.SlackService;
+import org.thingsboard.rule.engine.api.notification.SlackService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
@@ -150,7 +150,7 @@ public class NotificationTemplateController extends BaseController {
                                                                    @ApiParam(value = "Comma-separated list of notification types to filter the templates")
                                                                    @RequestParam(required = false) NotificationType[] notificationTypes,
                                                                    @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
-        // generic permission
+        // PE: generic permission
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         if (notificationTypes == null || notificationTypes.length == 0) {
             notificationTypes = NotificationType.values();
@@ -180,7 +180,7 @@ public class NotificationTemplateController extends BaseController {
                                                           @ApiParam(value = "Slack bot token. If absent - system Slack settings will be used")
                                                           @RequestParam(required = false) String token,
                                                           @AuthenticationPrincipal SecurityUser user) {
-        // generic permission
+        // PE: generic permission
         if (StringUtils.isEmpty(token)) {
             NotificationSettings settings = notificationSettingsService.findNotificationSettings(user.getTenantId());
             SlackNotificationDeliveryMethodConfig slackConfig = (SlackNotificationDeliveryMethodConfig)

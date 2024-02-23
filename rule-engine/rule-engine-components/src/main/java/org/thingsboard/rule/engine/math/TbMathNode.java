@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,8 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.rule.engine.math.TbMathArgumentType.CONSTANT;
+
 @SuppressWarnings("UnstableApiUsage")
 @Slf4j
 @RuleNode(
@@ -82,7 +84,7 @@ import java.util.stream.Collectors;
 )
 public class TbMathNode implements TbNode {
 
-    private static final ConcurrentMap<EntityId, SemaphoreWithQueue<TbMsgTbContext>> locks = new ConcurrentReferenceHashMap<>(16, ConcurrentReferenceHashMap.ReferenceType.WEAK);
+    private static final ConcurrentMap<EntityId, SemaphoreWithQueue<TbMsgTbContextBiFunction>> locks = new ConcurrentReferenceHashMap<>(16, ConcurrentReferenceHashMap.ReferenceType.WEAK);
     private final ThreadLocal<Expression> customExpression = new ThreadLocal<>();
     private TbMathNodeConfiguration config;
     private boolean msgBodyToJsonConversionRequired;
@@ -109,21 +111,21 @@ public class TbMathNode implements TbNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         var semaphoreWithQueue = locks.computeIfAbsent(msg.getOriginator(), SemaphoreWithQueue::new);
-        semaphoreWithQueue.getQueue().add(new TbMsgTbContext(msg, ctx));
+        semaphoreWithQueue.getQueue().add(new TbMsgTbContextBiFunction(msg, ctx, this::processMsgAsync));
 
         tryProcessQueue(semaphoreWithQueue);
     }
 
-    void tryProcessQueue(SemaphoreWithQueue<TbMsgTbContext> lockAndQueue) {
+    void tryProcessQueue(SemaphoreWithQueue<TbMsgTbContextBiFunction> lockAndQueue) {
         final Semaphore semaphore = lockAndQueue.getSemaphore();
-        final Queue<TbMsgTbContext> queue = lockAndQueue.getQueue();
+        final Queue<TbMsgTbContextBiFunction> queue = lockAndQueue.getQueue();
         while (!queue.isEmpty()) {
             // The semaphore have to be acquired before EACH poll and released before NEXT poll.
             // Otherwise, some message will remain unprocessed in queue
             if (!semaphore.tryAcquire()) {
                 return;
             }
-            TbMsgTbContext tbMsgTbContext = null;
+            TbMsgTbContextBiFunction tbMsgTbContext = null;
             try {
                 tbMsgTbContext = queue.poll();
                 if (tbMsgTbContext == null) {
@@ -138,7 +140,7 @@ public class TbMathNode implements TbNode {
                 }
                 //DO PROCESSING
                 final TbContext ctx = tbMsgTbContext.getCtx();
-                final ListenableFuture<TbMsg> resultMsgFuture = processMsgAsync(ctx, msg);
+                final ListenableFuture<TbMsg> resultMsgFuture = tbMsgTbContext.getBiFunction().apply(ctx, msg);
                 DonAsynchron.withCallback(resultMsgFuture, resultMsg -> {
                     try {
                         ctx.tellSuccess(resultMsg);
@@ -154,10 +156,17 @@ public class TbMathNode implements TbNode {
                         tryProcessQueue(lockAndQueue);
                     }
                 }, ctx.getDbCallbackExecutor());
-            } catch (Throwable e) {
+            } catch (Throwable t) {
                 semaphore.release();
-                log.warn("[{}] Failed to process message: {}", lockAndQueue.getEntityId(), tbMsgTbContext == null ? null : tbMsgTbContext.getMsg(), e);
-                throw e;
+                if (tbMsgTbContext == null) { // if no message polled, the loop become infinite, will throw exception
+                    log.error("[{}] Failed to process TbMsgTbContext queue", lockAndQueue.getEntityId(), t);
+                    throw t;
+                }
+                TbMsg msg = tbMsgTbContext.getMsg();
+                TbContext ctx = tbMsgTbContext.getCtx();
+                log.warn("[{}] Failed to process message: {}", lockAndQueue.getEntityId(), msg, t);
+                ctx.tellFailure(msg, t); // you are not allowed to throw here, because queue will remain unprocessed
+                continue; // We are probably the last who process the queue. We have to continue poll until get successful callback or queue is empty
             }
             break; //submitted async exact one task. next poll will try on callback
         }
@@ -175,17 +184,18 @@ public class TbMathNode implements TbNode {
 
     private ListenableFuture<TbMsg> updateMsgAndDb(TbContext ctx, TbMsg msg, Optional<ObjectNode> msgBodyOpt, double result) {
         TbMathResult mathResultDef = config.getResult();
+        String mathResultKey = getKeyFromTemplate(msg, mathResultDef.getType(), mathResultDef.getKey());
         switch (mathResultDef.getType()) {
             case MESSAGE_BODY:
-                return Futures.immediateFuture(addToBody(msg, mathResultDef, msgBodyOpt, result));
+                return Futures.immediateFuture(addToBody(msg, mathResultDef, mathResultKey, msgBodyOpt, result));
             case MESSAGE_METADATA:
-                return Futures.immediateFuture(addToMeta(msg, mathResultDef, result));
+                return Futures.immediateFuture(addToMeta(msg, mathResultDef, mathResultKey, result));
             case ATTRIBUTE:
                 ListenableFuture<Void> attrSave = saveAttribute(ctx, msg, result, mathResultDef);
-                return Futures.transform(attrSave, attr -> addToBodyAndMeta(msg, msgBodyOpt, result, mathResultDef), ctx.getDbCallbackExecutor());
+                return Futures.transform(attrSave, attr -> addToBodyAndMeta(msg, msgBodyOpt, result, mathResultDef, mathResultKey), ctx.getDbCallbackExecutor());
             case TIME_SERIES:
                 ListenableFuture<Void> tsSave = saveTimeSeries(ctx, msg, result, mathResultDef);
-                return Futures.transform(tsSave, ts -> addToBodyAndMeta(msg, msgBodyOpt, result, mathResultDef), ctx.getDbCallbackExecutor());
+                return Futures.transform(tsSave, ts -> addToBodyAndMeta(msg, msgBodyOpt, result, mathResultDef, mathResultKey), ctx.getDbCallbackExecutor());
             default:
                 throw new RuntimeException("Result type is not supported: " + mathResultDef.getType() + "!");
         }
@@ -200,7 +210,7 @@ public class TbMathNode implements TbNode {
     private ListenableFuture<Void> saveAttribute(TbContext ctx, TbMsg msg, double result, TbMathResult mathResultDef) {
         String attributeScope = getAttributeScope(mathResultDef.getAttributeScope());
         if (isIntegerResult(mathResultDef, config.getOperation())) {
-            var value = toIntValue(mathResultDef, result);
+            var value = toIntValue(result);
             return ctx.getTelemetryService().saveAttrAndNotify(
                     ctx.getTenantId(), msg.getOriginator(), attributeScope, mathResultDef.getKey(), value);
         } else {
@@ -214,7 +224,7 @@ public class TbMathNode implements TbNode {
         return function.isIntegerResult() || mathResultDef.getResultValuePrecision() == 0;
     }
 
-    private long toIntValue(TbMathResult mathResultDef, double value) {
+    private long toIntValue(double value) {
         return (long) value;
     }
 
@@ -237,35 +247,35 @@ public class TbMathNode implements TbNode {
         return msgBodyOpt;
     }
 
-    private TbMsg addToBodyAndMeta(TbMsg msg, Optional<ObjectNode> msgBodyOpt, double result, TbMathResult mathResultDef) {
+    private TbMsg addToBodyAndMeta(TbMsg msg, Optional<ObjectNode> msgBodyOpt, double result, TbMathResult mathResultDef, String mathResultKey) {
         TbMsg tmpMsg = msg;
         if (mathResultDef.isAddToBody()) {
-            tmpMsg = addToBody(tmpMsg, mathResultDef, msgBodyOpt, result);
+            tmpMsg = addToBody(tmpMsg, mathResultDef, mathResultKey, msgBodyOpt, result);
         }
         if (mathResultDef.isAddToMetadata()) {
-            tmpMsg = addToMeta(tmpMsg, mathResultDef, result);
+            tmpMsg = addToMeta(tmpMsg, mathResultDef, mathResultKey, result);
         }
         return tmpMsg;
     }
 
-    private TbMsg addToBody(TbMsg msg, TbMathResult mathResultDef, Optional<ObjectNode> msgBodyOpt, double result) {
+    private TbMsg addToBody(TbMsg msg, TbMathResult mathResultDef, String mathResultKey, Optional<ObjectNode> msgBodyOpt, double result) {
         ObjectNode body = msgBodyOpt.get();
         if (isIntegerResult(mathResultDef, config.getOperation())) {
-            body.put(mathResultDef.getKey(), toIntValue(mathResultDef, result));
+            body.put(mathResultKey, toIntValue(result));
         } else {
-            body.put(mathResultDef.getKey(), toDoubleValue(mathResultDef, result));
+            body.put(mathResultKey, toDoubleValue(mathResultDef, result));
         }
         return TbMsg.transformMsgData(msg, JacksonUtil.toString(body));
     }
 
-    private TbMsg addToMeta(TbMsg msg, TbMathResult mathResultDef, double result) {
+    private TbMsg addToMeta(TbMsg msg, TbMathResult mathResultDef, String mathResultKey, double result) {
         var md = msg.getMetaData();
         if (isIntegerResult(mathResultDef, config.getOperation())) {
-            md.putValue(mathResultDef.getKey(), Long.toString(toIntValue(mathResultDef, result)));
+            md.putValue(mathResultKey, Long.toString(toIntValue(result)));
         } else {
-            md.putValue(mathResultDef.getKey(), Double.toString(toDoubleValue(mathResultDef, result)));
+            md.putValue(mathResultKey, Double.toString(toDoubleValue(mathResultDef, result)));
         }
-        return TbMsg.transformMsg(msg, md);
+        return TbMsg.transformMsgMetadata(msg, md);
     }
 
     private double calculateResult(List<TbMathArgumentValue> args) {
@@ -364,27 +374,32 @@ public class TbMathNode implements TbNode {
         return function.apply(arg1.getValue(), arg2.getValue());
     }
 
-    private ListenableFuture<TbMathArgumentValue> resolveArguments(TbContext ctx, TbMsg msg, Optional<ObjectNode> msgBodyOpt, TbMathArgument arg) {
+    ListenableFuture<TbMathArgumentValue> resolveArguments(TbContext ctx, TbMsg msg, Optional<ObjectNode> msgBodyOpt, TbMathArgument arg) {
+        String argKey = getKeyFromTemplate(msg, arg.getType(), arg.getKey());
         switch (arg.getType()) {
             case CONSTANT:
                 return Futures.immediateFuture(TbMathArgumentValue.constant(arg));
             case MESSAGE_BODY:
-                return Futures.immediateFuture(TbMathArgumentValue.fromMessageBody(arg, msgBodyOpt));
+                return Futures.immediateFuture(TbMathArgumentValue.fromMessageBody(arg, argKey, msgBodyOpt));
             case MESSAGE_METADATA:
-                return Futures.immediateFuture(TbMathArgumentValue.fromMessageMetadata(arg, msg.getMetaData()));
+                return Futures.immediateFuture(TbMathArgumentValue.fromMessageMetadata(arg, argKey, msg.getMetaData()));
             case ATTRIBUTE:
                 String scope = getAttributeScope(arg.getAttributeScope());
-                return Futures.transform(ctx.getAttributesService().find(ctx.getTenantId(), msg.getOriginator(), scope, arg.getKey()),
-                        opt -> getTbMathArgumentValue(arg, opt, "Attribute: " + arg.getKey() + " with scope: " + scope + " not found for entity: " + msg.getOriginator())
+                return Futures.transform(ctx.getAttributesService().find(ctx.getTenantId(), msg.getOriginator(), scope, argKey),
+                        opt -> getTbMathArgumentValue(arg, opt, "Attribute: " + argKey + " with scope: " + scope + " not found for entity: " + msg.getOriginator())
                         , MoreExecutors.directExecutor());
             case TIME_SERIES:
-                return Futures.transform(ctx.getTimeseriesService().findLatest(ctx.getTenantId(), msg.getOriginator(), arg.getKey()),
-                        opt -> getTbMathArgumentValue(arg, opt, "Time-series: " + arg.getKey() + " not found for entity: " + msg.getOriginator())
+                return Futures.transform(ctx.getTimeseriesService().findLatest(ctx.getTenantId(), msg.getOriginator(), argKey),
+                        opt -> getTbMathArgumentValue(arg, opt, "Time-series: " + argKey + " not found for entity: " + msg.getOriginator())
                         , MoreExecutors.directExecutor());
             default:
                 throw new RuntimeException("Unsupported argument type: " + arg.getType() + "!");
         }
 
+    }
+
+    private String getKeyFromTemplate(TbMsg msg, TbMathArgumentType type, String keyPattern) {
+        return CONSTANT.equals(type) ? keyPattern : TbNodeUtils.processPattern(keyPattern, msg);
     }
 
     private String getAttributeScope(String attrScope) {
@@ -425,9 +440,10 @@ public class TbMathNode implements TbNode {
 
     @Data
     @RequiredArgsConstructor
-    static public class TbMsgTbContext {
+    static public class TbMsgTbContextBiFunction {
         final TbMsg msg;
         final TbContext ctx;
+        final BiFunction<TbContext, TbMsg, ListenableFuture<TbMsg>> biFunction;
     }
 
 }

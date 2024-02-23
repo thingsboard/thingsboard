@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,15 +15,16 @@
 ///
 
 import _ from 'lodash';
-import { Observable, Subject } from 'rxjs';
+import { from, Observable, Subject } from 'rxjs';
 import { finalize, share } from 'rxjs/operators';
 import { Datasource, DatasourceData, FormattedData, ReplaceInfo } from '@app/shared/models/widget.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
-import { EntityType, baseDetailsPageByEntityType } from '@shared/models/entity-type.models';
+import { baseDetailsPageByEntityType, EntityType } from '@shared/models/entity-type.models';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { serverErrorCodesTranslations } from '@shared/models/constants';
+import { SubscriptionEntityInfo } from '@core/api/widget-api.models';
 
 const varsRegex = /\${([^}]*)}/g;
 
@@ -126,20 +127,11 @@ export function isString(value: any): boolean {
   return typeof value === 'string';
 }
 
-export function isEmpty(obj: any): boolean {
-  for (const key of Object.keys(obj)) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      return false;
-    }
-  }
-  return true;
-}
-
 export function isLiteralObject(value: any) {
   return (!!value) && (value.constructor === Object);
 }
 
-export function formatValue(value: any, dec?: number, units?: string, showZeroDecimals?: boolean): string | undefined {
+export const formatValue = (value: any, dec?: number, units?: string, showZeroDecimals?: boolean): string | undefined => {
   if (isDefinedAndNotNull(value) && isNumeric(value) &&
     (isDefinedAndNotNull(dec) || isDefinedAndNotNull(units) || Number(value).toString() === value)) {
     let formatted: string | number = Number(value);
@@ -156,6 +148,16 @@ export function formatValue(value: any, dec?: number, units?: string, showZeroDe
     return formatted;
   } else {
     return value !== null ? value : '';
+  }
+}
+
+export const formatNumberValue = (value: any, dec?: number): number | undefined => {
+  if (isDefinedAndNotNull(value) && isNumeric(value)) {
+    let formatted: string | number = Number(value);
+    if (isDefinedAndNotNull(dec)) {
+      formatted = formatted.toFixed(dec);
+    }
+    return Number(formatted);
   }
 }
 
@@ -189,9 +191,7 @@ export function objToBase64(obj: any): string {
 }
 
 export function base64toString(b64Encoded: string): string {
-  return decodeURIComponent(atob(b64Encoded).split('').map((c) => {
-    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-  }).join(''));
+  return decodeURIComponent(atob(b64Encoded).split('').map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
 }
 
 export function objToBase64URI(obj: any): string {
@@ -199,11 +199,23 @@ export function objToBase64URI(obj: any): string {
 }
 
 export function base64toObj(b64Encoded: string): any {
-  const json = decodeURIComponent(atob(b64Encoded).split('').map((c) => {
-    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-  }).join(''));
+  const json = decodeURIComponent(atob(b64Encoded).split('').map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
   return JSON.parse(json);
 }
+
+export function stringToBase64(value: string): string {
+  return btoa(encodeURIComponent(value).replace(/%([0-9A-F]{2})/g,
+    function toSolidBytes(match, p1) {
+      return String.fromCharCode(Number('0x' + p1));
+    }));
+}
+
+export const blobToBase64 = (blob: Blob): Observable<string> => from(new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(blob);
+    }
+  ));
 
 const scrollRegex = /(auto|scroll)/;
 
@@ -320,9 +332,31 @@ export function extractType<T extends object>(target: any, keysOfProps: (keyof T
   return _.pick(target, keysOfProps);
 }
 
-export function isEqual(a: any, b: any): boolean {
-  return _.isEqual(a, b);
-}
+export const isEqual = (a: any, b: any): boolean => _.isEqual(a, b);
+
+export const isEmpty = (a: any): boolean => _.isEmpty(a);
+
+export const unset = (object: any, path: string | symbol): boolean => _.unset(object, path);
+
+export const isEqualIgnoreUndefined = (a: any, b: any): boolean => {
+  if (a === b) {
+    return true;
+  }
+  if (isDefinedAndNotNull(a) && isDefinedAndNotNull(b)) {
+    return isEqual(a, b);
+  } else {
+    return (isUndefinedOrNull(a) || !a) && (isUndefinedOrNull(b) || !b);
+  }
+};
+
+export const isArraysEqualIgnoreUndefined = (a: any[], b: any[]): boolean => {
+  const res = isEqualIgnoreUndefined(a, b);
+  if (!res) {
+    return (isUndefinedOrNull(a) || !a?.length) && (isUndefinedOrNull(b) || !b?.length);
+  } else {
+    return res;
+  }
+};
 
 export function mergeDeep<T>(target: T, ...sources: T[]): T {
   return _.merge(target, ...sources);
@@ -342,9 +376,7 @@ const SNAKE_CASE_REGEXP = /[A-Z]/g;
 
 export function snakeCase(name: string, separator: string): string {
   separator = separator || '_';
-  return name.replace(SNAKE_CASE_REGEXP, (letter, pos) => {
-    return (pos ? separator : '') + letter.toLowerCase();
-  });
+  return name.replace(SNAKE_CASE_REGEXP, (letter, pos) => (pos ? separator : '') + letter.toLowerCase());
 }
 
 export function getDescendantProp(obj: any, path: string): any {
@@ -368,7 +400,7 @@ export function insertVariable(pattern: string, name: string, value: any): strin
   return result;
 }
 
-export function createLabelFromDatasource(datasource: Datasource, pattern: string): string {
+export const createLabelFromDatasource = (datasource: Datasource, pattern: string): string => {
   let label = pattern;
   if (!datasource) {
     return label;
@@ -393,20 +425,50 @@ export function createLabelFromDatasource(datasource: Datasource, pattern: strin
     match = varsRegex.exec(pattern);
   }
   return label;
-}
+};
 
-export function formattedDataFormDatasourceData(input: DatasourceData[], dataIndex?: number): FormattedData[] {
+export const createLabelFromSubscriptionEntityInfo = (entityInfo: SubscriptionEntityInfo, pattern: string): string => {
+  let label = pattern;
+  if (!entityInfo) {
+    return label;
+  }
+  let match = varsRegex.exec(pattern);
+  while (match !== null) {
+    const variable = match[0];
+    const variableName = match[1];
+    if (variableName === 'dsName') {
+      label = label.replace(variable, entityInfo.entityName);
+    } else if (variableName === 'entityName') {
+      label = label.replace(variable, entityInfo.entityName);
+    } else if (variableName === 'deviceName') {
+      label = label.replace(variable, entityInfo.entityName);
+    } else if (variableName === 'entityLabel') {
+      label = label.replace(variable, entityInfo.entityLabel || entityInfo.entityName);
+    } else if (variableName === 'aliasName') {
+      label = label.replace(variable, entityInfo.entityName);
+    } else if (variableName === 'entityDescription') {
+      label = label.replace(variable, entityInfo.entityDescription);
+    }
+    match = varsRegex.exec(pattern);
+  }
+  return label;
+};
+
+export const hasDatasourceLabelsVariables = (pattern: string): boolean => varsRegex.test(pattern) !== null;
+
+export function formattedDataFormDatasourceData(input: DatasourceData[], dataIndex?: number, ts?: number): FormattedData[] {
   return _(input).groupBy(el => el.datasource.entityName + el.datasource.entityType)
     .values().value().map((entityArray, i) => {
       const datasource = entityArray[0].datasource;
       const obj = formattedDataFromDatasource(datasource, i);
       entityArray.filter(el => el.data.length).forEach(el => {
         const index = isDefined(dataIndex) ? dataIndex : el.data.length - 1;
-        if (!obj.hasOwnProperty(el.dataKey.label) || el.data[index][1] !== '') {
-          obj[el.dataKey.label] = el.data[index][1];
-          obj[el.dataKey.label + '|ts'] = el.data[index][0];
+        const dataSet = isDefined(ts) ? el.data.find(data => data[0] === ts) : el.data[index];
+        if (dataSet !== undefined && (!obj.hasOwnProperty(el.dataKey.label) || dataSet[1] !== '')) {
+          obj[el.dataKey.label] = dataSet[1];
+          obj[el.dataKey.label + '|ts'] = dataSet[0];
           if (el.dataKey.label.toLowerCase() === 'type') {
-            obj.deviceType = el.data[index][1];
+            obj.deviceType = dataSet[1];
           }
         }
       });
@@ -677,11 +739,11 @@ export function randomAlphanumeric(length: number): string {
 }
 
 export function getEntityDetailsPageURL(id: string, entityType: EntityType): string {
-  return `${baseDetailsPageByEntityType.get(entityType)}/${id}`;
+  return baseDetailsPageByEntityType.has(entityType) ? `${baseDetailsPageByEntityType.get(entityType)}/${id}` : '';
 }
 
 export function parseHttpErrorMessage(errorResponse: HttpErrorResponse,
-                                      translate: TranslateService, responseType?: string): {message: string, timeout: number} {
+                                      translate: TranslateService, responseType?: string): {message: string; timeout: number} {
   let error = null;
   let errorMessage: string;
   let timeout = 0;
@@ -741,7 +803,7 @@ export function genNextLabel(name: string, datasources: Datasource[]): string {
         if (datasource) {
           if (datasource.dataKeys) {
             datasource.dataKeys.forEach((dataKey) => {
-              if (dataKey.label === label) {
+              if (dataKey?.label === label) {
                 i++;
                 label = name + ' ' + i;
                 matches = true;
@@ -750,7 +812,7 @@ export function genNextLabel(name: string, datasources: Datasource[]): string {
           }
           if (datasource.latestDataKeys) {
             datasource.latestDataKeys.forEach((dataKey) => {
-              if (dataKey.label === label) {
+              if (dataKey?.label === label) {
                 i++;
                 label = name + ' ' + i;
                 matches = true;
@@ -763,3 +825,34 @@ export function genNextLabel(name: string, datasources: Datasource[]): string {
   }
   return label;
 }
+
+export const getOS = (): string => {
+  const userAgent = window.navigator.userAgent.toLowerCase();
+  const macosPlatforms = /(macintosh|macintel|macppc|mac68k|macos|mac_powerpc)/i;
+  const windowsPlatforms = /(win32|win64|windows|wince)/i;
+  const iosPlatforms = /(iphone|ipad|ipod|darwin|ios)/i;
+  let os = null;
+
+  if (macosPlatforms.test(userAgent)) {
+    os = 'macos';
+  } else if (iosPlatforms.test(userAgent)) {
+    os = 'ios';
+  } else if (windowsPlatforms.test(userAgent)) {
+    os = 'windows';
+  } else if (/android/.test(userAgent)) {
+    os = 'android';
+  } else if (/linux/.test(userAgent)) {
+    os = 'linux';
+  }
+
+  return os;
+};
+
+
+export const camelCase = (str: string): string => {
+  return _.camelCase(str);
+};
+
+export const convertKeysToCamelCase = (obj: Record<string, any>): Record<string, any> => {
+  return _.mapKeys(obj, (value, key) => _.camelCase(key));
+};

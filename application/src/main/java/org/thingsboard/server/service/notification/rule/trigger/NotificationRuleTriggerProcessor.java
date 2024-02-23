@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 package org.thingsboard.server.service.notification.rule.trigger;
 
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerConfig;
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
-import org.thingsboard.server.common.msg.notification.trigger.NotificationRuleTrigger;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
+import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTrigger;
 
 public interface NotificationRuleTriggerProcessor<T extends NotificationRuleTrigger, C extends NotificationRuleTriggerConfig> {
 

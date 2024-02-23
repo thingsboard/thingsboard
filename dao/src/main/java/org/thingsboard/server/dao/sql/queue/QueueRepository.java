@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public interface QueueRepository extends JpaRepository<QueueEntity, UUID> {
     List<QueueEntity> findByTenantId(UUID tenantId);
 
     @Query("SELECT q FROM QueueEntity q WHERE q.tenantId = :tenantId " +
-            "AND LOWER(q.name) LIKE LOWER(CONCAT(:textSearch, '%'))")
+            "AND (:textSearch IS NULL OR ilike(q.name, CONCAT(:textSearch, '%')) = true)")
     Page<QueueEntity> findByTenantId(@Param("tenantId") UUID tenantId,
                                      @Param("textSearch") String textSearch,
                                      Pageable pageable);

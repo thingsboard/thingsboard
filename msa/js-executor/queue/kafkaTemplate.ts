@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -61,9 +61,10 @@ export class KafkaTemplate implements IQueue {
 
     async init(): Promise<void> {
         const kafkaBootstrapServers: string = config.get('kafka.bootstrap.servers');
-        const requestTopic: string = config.get('request_topic');
+        const queuePrefix: string = config.get('queue_prefix');
+        const requestTopic: string = queuePrefix ? queuePrefix + "." + config.get('request_topic') : config.get('request_topic');
         const useConfluent = config.get('kafka.use_confluent_cloud');
-
+        const groupId:string =  queuePrefix ? queuePrefix + ".js-executor-group" : "js-executor-group";
         this.logger.info('Kafka Bootstrap Servers: %s', kafkaBootstrapServers);
         this.logger.info('Kafka Requests Topic: %s', requestTopic);
 
@@ -118,7 +119,7 @@ export class KafkaTemplate implements IQueue {
             }
         }
 
-        this.consumer = this.kafkaClient.consumer({groupId: 'js-executor-group'});
+        this.consumer = this.kafkaClient.consumer({groupId: groupId});
         this.producer = this.kafkaClient.producer({createPartitioner: Partitioners.DefaultPartitioner});
 
         const {CRASH} = this.consumer.events;

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -36,9 +36,10 @@ import { QueuesTableConfigResolver } from '@home/pages/admin/queue/queues-table-
 import { RepositoryAdminSettingsComponent } from '@home/pages/admin/repository-admin-settings.component';
 import { AutoCommitAdminSettingsComponent } from '@home/pages/admin/auto-commit-admin-settings.component';
 import { TwoFactorAuthSettingsComponent } from '@home/pages/admin/two-factor-auth-settings.component';
-import { widgetsBundlesRoutes } from '@home/pages/widget/widget-library-routing.module';
+import { widgetsLibraryRoutes } from '@home/pages/widget/widget-library-routing.module';
 import { RouterTabsComponent } from '@home/components/router-tabs.component';
 import { auditLogsRoutes } from '@home/pages/audit-log/audit-log-routing.module';
+import { ImageGalleryComponent } from '@shared/components/image/image-gallery.component';
 
 @Injectable()
 export class OAuth2LoginProcessingUrlResolver implements Resolve<string> {
@@ -67,10 +68,29 @@ const routes: Routes = [
         children: [],
         data: {
           auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
-          redirectTo: '/resources/widgets-bundles'
+          redirectTo: '/resources/widgets-library'
         }
       },
-      ...widgetsBundlesRoutes,
+      ...widgetsLibraryRoutes,
+      {
+        path: 'images',
+        data: {
+          breadcrumb: {
+            label: 'image.gallery',
+            icon: 'filter'
+          }
+        },
+        children: [
+          {
+            path: '',
+            component: ImageGalleryComponent,
+            data: {
+              auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
+              title: 'image.gallery',
+            },
+          }
+        ]
+      },
       {
         path: 'resources-library',
         data: {
@@ -116,6 +136,7 @@ const routes: Routes = [
     component: RouterTabsComponent,
     data: {
       auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+      showMainLoadingBar: false,
       breadcrumb: {
         label: 'admin.settings',
         icon: 'settings'
@@ -319,8 +340,7 @@ const routes: Routes = [
           title: 'admin.2fa.2fa',
           breadcrumb: {
             label: 'admin.2fa.2fa',
-            icon: 'mdi:two-factor-authentication',
-            isMdiIcon: true
+            icon: 'mdi:two-factor-authentication'
           }
         }
       },

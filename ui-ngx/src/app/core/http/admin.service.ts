@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import { HttpClient } from '@angular/common/http';
 import {
   AdminSettings,
   AutoCommitSettings,
+  MailConfigTemplate,
   FeaturesInfo,
   JwtSettings,
   MailServerSettings,
@@ -135,5 +136,17 @@ export class AdminService {
 
   public getFeaturesInfo(config?: RequestConfig): Observable<FeaturesInfo> {
     return this.http.get<FeaturesInfo>('/api/admin/featuresInfo', defaultHttpOptionsFromConfig(config));
+  }
+
+  public getLoginProcessingUrl(config?: RequestConfig): Observable<string> {
+    return this.http.get<string>(`/api/admin/mail/oauth2/loginProcessingUrl`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public generateAccessToken(config?: RequestConfig): Observable<string> {
+    return this.http.get<string>(`/api/admin/mail/oauth2/authorize`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getMailConfigTemplate(config?: RequestConfig): Observable<Array<MailConfigTemplate>> {
+    return this.http.get<Array<MailConfigTemplate>>('/api/mail/config/template', defaultHttpOptionsFromConfig(config));
   }
 }

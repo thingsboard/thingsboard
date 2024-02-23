@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,8 @@ public class MqttTestCallback implements MqttCallback {
 
     protected CountDownLatch subscribeLatch;
     protected final CountDownLatch deliveryLatch;
-    protected int qoS;
+    protected int messageArrivedQoS;
     protected byte[] payloadBytes;
-    protected String awaitSubTopic;
     protected boolean pubAckReceived;
 
     public MqttTestCallback() {
@@ -45,12 +44,6 @@ public class MqttTestCallback implements MqttCallback {
         this.deliveryLatch = new CountDownLatch(1);
     }
 
-    public MqttTestCallback(String awaitSubTopic) {
-        this.subscribeLatch = new CountDownLatch(1);
-        this.deliveryLatch = new CountDownLatch(1);
-        this.awaitSubTopic = awaitSubTopic;
-    }
-
     @Override
     public void connectionLost(Throwable throwable) {
         log.warn("connectionLost: ", throwable);
@@ -59,23 +52,10 @@ public class MqttTestCallback implements MqttCallback {
 
     @Override
     public void messageArrived(String requestTopic, MqttMessage mqttMessage) {
-        if (awaitSubTopic == null) {
-            log.warn("messageArrived on topic: {}", requestTopic);
-            qoS = mqttMessage.getQos();
-            payloadBytes = mqttMessage.getPayload();
-            subscribeLatch.countDown();
-        } else {
-            messageArrivedOnAwaitSubTopic(requestTopic, mqttMessage);
-        }
-    }
-
-    protected void messageArrivedOnAwaitSubTopic(String requestTopic, MqttMessage mqttMessage) {
-        log.warn("messageArrived on topic: {}, awaitSubTopic: {}", requestTopic, awaitSubTopic);
-        if (awaitSubTopic.equals(requestTopic)) {
-            qoS = mqttMessage.getQos();
-            payloadBytes = mqttMessage.getPayload();
-            subscribeLatch.countDown();
-        }
+        log.warn("messageArrived on topic: {}", requestTopic);
+        messageArrivedQoS = mqttMessage.getQos();
+        payloadBytes = mqttMessage.getPayload();
+        subscribeLatch.countDown();
     }
 
     @Override
@@ -83,6 +63,5 @@ public class MqttTestCallback implements MqttCallback {
         log.warn("delivery complete: {}", iMqttDeliveryToken.getResponse());
         pubAckReceived = iMqttDeliveryToken.getResponse().getType() == MqttWireMessage.MESSAGE_TYPE_PUBACK;
         deliveryLatch.countDown();
-
     }
 }

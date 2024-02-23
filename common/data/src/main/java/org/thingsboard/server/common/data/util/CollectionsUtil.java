@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.thingsboard.server.common.data.util;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -51,18 +50,17 @@ public class CollectionsUtil {
     }
 
     @SuppressWarnings("unchecked")
-    public static <K, V> Map<K, V> mapOf(Object... kvs) {
-        Map<K, V> map = new HashMap<>();
+    public static <T> Map<T, T> mapOf(T... kvs) {
+        if (kvs.length % 2 != 0) {
+            throw new IllegalArgumentException("Invalid number of parameters");
+        }
+        Map<T, T> map = new HashMap<>();
         for (int i = 0; i < kvs.length; i += 2) {
-            K key = (K) kvs[i];
-            V value = (V) kvs[i + 1];
+            T key = kvs[i];
+            T value = kvs[i + 1];
             map.put(key, value);
         }
         return map;
-    }
-
-    public static <K, V> Map<K, V> unmodifiableMapOf(Object... kvs) {
-        return Collections.unmodifiableMap(mapOf(kvs));
     }
 
     public static <V> boolean emptyOrContains(Collection<V> collection, V element) {

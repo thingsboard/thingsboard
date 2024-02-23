@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -29,6 +29,14 @@
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
+  <button *ngIf="selectTemplateFormGroup.get('templateName').value && !disabled && allowEdit"
+          type="button"
+          matSuffix mat-icon-button aria-label="Edit"
+          matTooltip="{{ 'notification.edit-notification-template' | translate }}"
+          matTooltipPosition="above"
+          (click)="editTemplate($event)">
+    <mat-icon class="material-icons">edit</mat-icon>
+  </button>
   <button #createTemplateButton
           mat-button color="primary" matSuffix
           *ngIf="allowCreate && !selectTemplateFormGroup.get('templateName').value && !disabled"
@@ -43,7 +51,7 @@
       <span class="template-option-name" [innerHTML]="template.name | highlight:searchText"></span>
       <mat-chip-set>
         <mat-chip disabled *ngFor="let method of template.configuration.deliveryMethodsTemplates | keyvalue">
-          {{ notificationDeliveryMethodTranslateMap.get(method.key) | translate }}
+          {{ notificationDeliveryMethodInfoMap.get(method.key).name | translate }}
         </mat-chip>
       </mat-chip-set>
     </mat-option>

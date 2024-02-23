@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -226,16 +226,19 @@ export class FilterSelectComponent implements ControlValueAccessor, OnInit, Afte
     }
   }
 
-  createFilter($event: Event, filter: string) {
+  createFilter($event: Event, filter: string, focusOnCancel = true) {
     $event.preventDefault();
+    $event.stopPropagation();
     this.creatingFilter = true;
     if (this.callbacks && this.callbacks.createFilter) {
       this.callbacks.createFilter(filter).subscribe((newFilter) => {
           if (!newFilter) {
-            setTimeout(() => {
-              this.filterInput.nativeElement.blur();
-              this.filterInput.nativeElement.focus();
-            }, 0);
+            if (focusOnCancel) {
+              setTimeout(() => {
+                this.filterInput.nativeElement.blur();
+                this.filterInput.nativeElement.focus();
+              }, 0);
+            }
           } else {
             this.filterList.push(newFilter);
             this.modelValue = newFilter.id;

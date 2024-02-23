@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,7 +99,7 @@ public class RuleChainEditMenuTest extends AbstractRuleChainTest {
         assertThat(ruleChainsPage.getDescription()).as("The description changed correctly").isEqualTo(finalDescription);
     }
 
-    @Test(priority = 20, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "debugMode")
+    @Test(priority = 20, groups = "smoke", dataProviderClass = DataProviderCredential.class, dataProvider = "enable")
     @Description("Enable debug mode/Disable debug mode")
     public void debugMode(boolean debugMode) {
         ruleChainName = ENTITY_NAME + random();
