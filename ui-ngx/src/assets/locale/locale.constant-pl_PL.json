@@ -1,14 +1,14 @@
 {
     "access":{
-        "unauthorized":"Unauthorized",
-        "unauthorized-access":"Unauthorized Access",
-        "unauthorized-access-text":"You should sign in to have access to this resource!",
-        "access-forbidden":"Access Forbidden",
-        "access-forbidden-text":"You haven't access rights to this location!<br/>Try to sign in with different user if you still wish to gain access to this location.",
-        "refresh-token-expired":"Session has expired",
-        "refresh-token-failed":"Unable to refresh session",
-        "permission-denied":"Permission Denied",
-        "permission-denied-text":"You don't have permission to perform this operation!"
+        "unauthorized": "Brak autoryzacji",
+        "unauthorized-access": "Nieautoryzowany dostęp",
+        "unauthorized-access-text": "Aby uzyskać dostęp do tego zasobu, musisz się zalogować!",
+        "access-forbidden": "Dostęp zabroniony",
+        "access-forbidden-text": "Nie masz uprawnień dostępu do tego miejsca!<br/>Spróbuj zalogować się na inne konto, jeśli nadal chcesz uzyskać dostęp do tego miejsca.",
+        "refresh-token-expired": "Sesja wygasła",
+        "refresh-token-failed": "Nie można odświeżyć sesji",
+        "permission-denied": "Odmowa dostępu",
+        "permission-denied-text": "Nie masz uprawnień do wykonania tej operacji!"
     },
     "account":{
         "account":"Konto",
