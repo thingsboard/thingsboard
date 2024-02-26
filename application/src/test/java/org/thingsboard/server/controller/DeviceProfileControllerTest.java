@@ -207,6 +207,9 @@ public class DeviceProfileControllerTest extends AbstractControllerTest {
 
         Assert.assertEquals(expectedAlarmRule, foundRule);
 
+        testNotifyEntityAllOneTime(expectedAlarmRule, expectedAlarmRule.getId(), expectedAlarmRule.getId(), savedTenant.getId(),
+                tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED);
+
         alarmRule.setAlarmDetails("Updated Alarm Details");
         savedDeviceProfile.getProfileData().setAlarms(List.of(deviceProfileAlarm));
         savedDeviceProfile = doPost("/api/deviceProfile", savedDeviceProfile, DeviceProfile.class);
@@ -216,6 +219,9 @@ public class DeviceProfileControllerTest extends AbstractControllerTest {
         expectedAlarmRule.setCreatedTime(foundRule.getCreatedTime());
 
         Assert.assertEquals(expectedAlarmRule, foundRule);
+
+        testNotifyEntityAllOneTime(expectedAlarmRule, expectedAlarmRule.getId(), expectedAlarmRule.getId(), savedTenant.getId(),
+                tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UPDATED);
     }
 
     @Test
