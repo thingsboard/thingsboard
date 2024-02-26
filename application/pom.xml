@@ -362,6 +362,10 @@
             <groupId>com.google.firebase</groupId>
             <artifactId>firebase-admin</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.thingsboard.common</groupId>
+            <artifactId>transport</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

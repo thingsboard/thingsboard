@@ -78,7 +78,7 @@ public class AnnotationComponentDiscoveryService implements ComponentDiscoverySe
     private final Map<ComponentType, List<ComponentDescriptor>> edgeComponentsMap = new HashMap<>();
 
     private boolean isInstall() {
-        return environment.acceptsProfiles(Profiles.of("install"));
+        return environment.acceptsProfiles(Profiles.of("install", "update"));
     }
 
     @PostConstruct
