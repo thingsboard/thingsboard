@@ -30,7 +30,6 @@ import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleArgument
 import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentValueType;
 import org.thingsboard.server.common.data.alarm.rule.condition.AttributeArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.ConstantArgument;
-import org.thingsboard.server.common.data.alarm.rule.condition.FromMessageArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleCondition;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmSchedule;
 import org.thingsboard.server.common.data.alarm.rule.condition.ComplexAlarmConditionFilter;
@@ -47,8 +46,12 @@ import org.thingsboard.server.service.alarm.rule.state.PersistedAlarmRuleState;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -250,16 +253,37 @@ class AlarmRuleState {
     }
 
     private AlarmEvalResult evalNoUpdate(DataSnapshot data) {
-        String argId = ((SimpleAlarmConditionFilter) alarmRule.getAlarmCondition().getConditionFilter()).getLeftArgId();
-        EntityKeyValue value = getValue(data, argId);
-        if (value == null && state.getLastEventTs() > 0) {
-            return getNoUpdateResult(data);
-        } else if (value != null && data.getTs() > state.getLastEventTs()) {
-            var result = state.getLastEventTs() > 0 ? getNoUpdateResult(data) : AlarmEvalResult.NOT_YET_TRUE;
-            state.setLastEventTs(data.getTs());
-            updateFlag = true;
-            return result;
+        Queue<AlarmConditionFilter> queue = new LinkedList<>();
+        queue.add(alarmRule.getAlarmCondition().getConditionFilter());
+
+        List<String> argumentIds = new ArrayList<>();
+
+        while (!queue.isEmpty()) {
+            AlarmConditionFilter condition = queue.poll();
+            switch (condition.getType()) {
+                case SIMPLE -> {
+                    var simpleFilter = (SimpleAlarmConditionFilter) condition;
+                    argumentIds.add(simpleFilter.getLeftArgId());
+                }
+                case COMPLEX -> {
+                    var complexFilter = (ComplexAlarmConditionFilter) condition;
+                    queue.addAll(complexFilter.getConditions());
+                }
+            }
         }
+
+        for (String argId : argumentIds) {
+            EntityKeyValue value = getValue(data, argId);
+            if (value == null && state.getLastEventTs() > 0) {
+                return getNoUpdateResult(data);
+            } else if (value != null && data.getTs() > state.getLastEventTs()) {
+                var result = state.getLastEventTs() > 0 ? getNoUpdateResult(data) : AlarmEvalResult.NOT_YET_TRUE;
+                state.setLastEventTs(data.getTs());
+                updateFlag = true;
+                return result;
+            }
+        }
+
         return AlarmEvalResult.FALSE;
     }
 
