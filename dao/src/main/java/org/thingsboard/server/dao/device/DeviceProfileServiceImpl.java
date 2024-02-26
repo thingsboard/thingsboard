@@ -63,6 +63,8 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -184,7 +186,7 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
                 return new TbPair<>(alarmRuleService.saveAlarmRule(tenantId, alarmRule), alarmRule.getId() == null);
             }).toList();
         }
-        return null;
+        return Collections.emptyList();
     }
 
     @Override
