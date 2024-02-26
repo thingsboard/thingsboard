@@ -56,7 +56,11 @@ public class BaseAlarmRuleService extends AbstractEntityService implements Alarm
             AlarmRule saved = alarmRuleDao.save(tenantId, alarmRule);
             boolean updated = alarmRule.getId() != null;
             if (updated || alarmRule.isEnabled()) {
-                eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(saved.getId()).created(!updated).build());
+                eventPublisher.publishEvent(SaveEntityEvent.builder()
+                        .tenantId(tenantId)
+                        .entityId(saved.getId())
+                        .created(!updated)
+                        .build());
             } else {
                 //No need to send an event if new rule is disabled
             }
@@ -71,8 +75,10 @@ public class BaseAlarmRuleService extends AbstractEntityService implements Alarm
     public void deleteAlarmRule(TenantId tenantId, AlarmRuleId alarmRuleId) {
         log.debug("Deleting AlarmRule Id: {}", alarmRuleId);
         alarmRuleDao.removeById(tenantId, alarmRuleId.getId());
-        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId)
-                .entityId(alarmRuleId).build());
+        eventPublisher.publishEvent(DeleteEntityEvent.builder()
+                .tenantId(tenantId)
+                .entityId(alarmRuleId)
+                .build());
     }
 
     @Override

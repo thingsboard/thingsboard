@@ -24,11 +24,16 @@ import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.id.AlarmRuleId;
 
+import java.io.Serial;
+
 @Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 public class AlarmRule extends AlarmRuleInfo implements ExportableEntity<AlarmRuleId> {
+
+    @Serial
+    private static final long serialVersionUID = -6283966069145860173L;
 
     @Valid
     @Schema(description = "JSON object with Alarm Rule Configuration")

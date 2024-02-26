@@ -49,7 +49,7 @@ public class DefaultTbAlarmRuleService extends AbstractTbEntityService implement
         AlarmRuleId alarmRuleId = alarmRule.getId();
         try {
             alarmRuleService.deleteAlarmRule(tenantId, alarmRuleId);
-            logEntityActionService.logEntityAction(tenantId, alarmRuleId, alarmRule, null, ActionType.DELETED, null, user, alarmRuleId.toString());
+            logEntityActionService.logEntityAction(tenantId, alarmRuleId, alarmRule, null, ActionType.DELETED, user, alarmRuleId.toString());
         } catch (Exception e) {
             logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.ALARM_RULE), ActionType.DELETED, user, e, alarmRuleId.toString());
             throw e;
