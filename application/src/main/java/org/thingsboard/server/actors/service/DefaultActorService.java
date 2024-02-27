@@ -122,7 +122,7 @@ public class DefaultActorService extends TbApplicationEventListener<PartitionCha
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
         log.info("Received partition change event.");
-        appActor.tellWithHighPriority(new PartitionChangeMsg(event.getServiceType()));
+        this.appActor.tellWithHighPriority(new PartitionChangeMsg(event.getServiceType()));
     }
 
     @Override

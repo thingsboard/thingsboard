@@ -45,10 +45,8 @@
                                      widgetActionFormGroup.get('type').value === widgetActionType.openDashboard ?
                                      widgetActionFormGroup.get('type').value : ''">
       <div class="tb-form-row">
-        <div class="fixed-title-width">
-          <span>{{ 'widget-action.target-dashboard-state' | translate }}</span>
-          <span *ngIf="widgetActionFormGroup.get('type').value === widgetActionType.openDashboardState">*</span>
-        </div>
+        <div class="fixed-title-width">{{ 'widget-action.target-dashboard-state' | translate }}
+                                       {{widgetActionFormGroup.get('type').value === widgetActionType.openDashboardState ? '*' : ''}}</div>
         <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic"
                         [class.tb-suffix-absolute]="!actionTypeFormGroup.get('targetDashboardStateId').value">
           <input matInput type="text" placeholder="{{ 'widget-action.target-dashboard-state' | translate }}"

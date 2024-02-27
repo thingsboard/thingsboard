@@ -102,7 +102,6 @@ export class TemplateNotificationDialogComponent
       this.notificationTemplateConfigurationForm.patchValue({
         deliveryMethodsTemplates: this.templateNotification.configuration.deliveryMethodsTemplates
       }, {emitEvent: false});
-      this.deliveryConfiguration = this.templateNotificationForm.get('configuration.deliveryMethodsTemplates').value;
     }
   }
 

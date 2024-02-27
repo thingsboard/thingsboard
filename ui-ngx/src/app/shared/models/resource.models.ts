@@ -86,10 +86,6 @@ export interface ImageResourceInfo extends TbResourceInfo<ImageDescriptor> {
   publicLink?: string;
 }
 
-export interface ImageResource extends ImageResourceInfo {
-  base64?: string;
-}
-
 export interface ImageExportData {
   mediaType: string;
   fileName: string;

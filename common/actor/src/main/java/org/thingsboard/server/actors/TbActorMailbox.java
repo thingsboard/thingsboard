@@ -160,7 +160,7 @@ public final class TbActorMailbox implements TbActorCtx {
                     destroy(updateException.getCause());
                 } catch (Throwable t) {
                     log.debug("[{}] Failed to process message: {}", selfId, msg, t);
-                    ProcessFailureStrategy strategy = actor.onProcessFailure(msg, t);
+                    ProcessFailureStrategy strategy = actor.onProcessFailure(t);
                     if (strategy.isStop()) {
                         system.stop(selfId);
                     }
@@ -190,12 +190,7 @@ public final class TbActorMailbox implements TbActorCtx {
 
     @Override
     public void broadcastToChildren(TbActorMsg msg) {
-        broadcastToChildren(msg, false);
-    }
-
-    @Override
-    public void broadcastToChildren(TbActorMsg msg, boolean highPriority) {
-        system.broadcastToChildren(selfId, msg, highPriority);
+        system.broadcastToChildren(selfId, msg);
     }
 
     @Override

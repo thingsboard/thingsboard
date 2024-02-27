@@ -147,7 +147,6 @@ export class SentNotificationDialogComponent extends
       this.notificationRequestForm.reset({}, {emitEvent: false});
       this.notificationRequestForm.patchValue(this.data.request, {emitEvent: false});
       this.notificationRequestForm.get('template.name').setValue(guid());
-      this.notificationRequestForm.get('template.notificationType').setValue(NotificationType.GENERAL);
       let useTemplate = true;
       if (isDefinedAndNotNull(this.data.request.template)) {
         useTemplate = false;
@@ -156,7 +155,6 @@ export class SentNotificationDialogComponent extends
         }, {emitEvent: false});
       }
       this.notificationRequestForm.get('useTemplate').setValue(useTemplate, {onlySelf : true});
-      this.deliveryConfiguration = this.templateNotificationForm.get('configuration.deliveryMethodsTemplates').value;
     }
     this.refreshAllowDeliveryMethod();
   }

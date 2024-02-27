@@ -335,7 +335,7 @@ export class AlarmQueryV2 {
     let query = this.affectedEntityId ? `/${this.affectedEntityId.entityType}/${this.affectedEntityId.id}` : '';
     query += this.pageLink.toQuery();
     if (this.typeList && this.typeList.length) {
-      query += `&typeList=${this.typeList.map(type => encodeURIComponent(type)).join(',')}`;
+      query += `&typeList=${this.typeList.join(',')}`;
     }
     if (this.statusList && this.statusList.length) {
       query += `&statusList=${this.statusList.join(',')}`;

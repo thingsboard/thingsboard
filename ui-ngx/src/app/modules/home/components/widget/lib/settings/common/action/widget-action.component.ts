@@ -34,7 +34,7 @@ import {
 import { WidgetService } from '@core/http/widget.service';
 import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
 import { map, mergeMap, share, startWith, takeUntil, tap } from 'rxjs/operators';
-import { Observable, of, ReplaySubject, Subject, Subscription } from 'rxjs';
+import { Observable, of, Subject, Subscription } from 'rxjs';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { DashboardService } from '@core/http/dashboard.service';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
@@ -228,16 +228,16 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
             this.fb.control(action ? action.stateEntityParamName : null, [])
           );
           if (type === WidgetActionType.openDashboard) {
-            const targetDashboardId = action ? action.targetDashboardId : null;
             this.actionTypeFormGroup.addControl(
               'openNewBrowserTab',
               this.fb.control(action ? action.openNewBrowserTab : false, [])
             );
             this.actionTypeFormGroup.addControl(
               'targetDashboardId',
-              this.fb.control(targetDashboardId, [Validators.required])
+              this.fb.control(action ? action.targetDashboardId : null,
+                [Validators.required])
             );
-            this.setupSelectedDashboardStateIds(targetDashboardId);
+            this.setupSelectedDashboardStateIds();
           } else {
             if (type === WidgetActionType.openDashboardState) {
               const displayType = this.getStateDisplayType(action);
@@ -367,10 +367,9 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
     );
   }
 
-  private setupSelectedDashboardStateIds(targetDashboardId: string | null) {
+  private setupSelectedDashboardStateIds() {
     this.selectedDashboardStateIds =
       this.actionTypeFormGroup.get('targetDashboardId').valueChanges.pipe(
-        startWith(targetDashboardId),
         tap((dashboardId) => {
           if (!dashboardId) {
             this.actionTypeFormGroup.get('targetDashboardStateId')
@@ -401,12 +400,7 @@ export class WidgetActionComponent implements ControlValueAccessor, OnInit, Vali
             return [];
           }
         }),
-        share({
-          connector: () => new ReplaySubject(1),
-          resetOnError: false,
-          resetOnComplete: false,
-          resetOnRefCountZero: false
-        })
+        share()
       );
   }
 

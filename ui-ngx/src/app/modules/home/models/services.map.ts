@@ -44,19 +44,12 @@ import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service'
 import { NotificationService } from '@core/http/notification.service';
 import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-string.pipe';
 import { UserSettingsService } from '@core/http/user-settings.service';
-import { ImageService } from '@core/http/image.service';
-import { AlarmCommentService } from '@core/http/alarm-comment.service';
-import { TenantService } from '@core/http/tenant.service';
-import { TenantProfileService } from '@core/http/tenant-profile.service';
-import { UiSettingsService } from '@core/http/ui-settings.service';
-import { UsageInfoService } from '@core/http/usage-info.service';
 
 export const ServicesMap = new Map<string, Type<any>>(
   [
    ['broadcastService', BroadcastService],
    ['deviceService', DeviceService],
    ['alarmService', AlarmService],
-   ['alarmCommentService', AlarmCommentService],
    ['assetService', AssetService],
    ['entityViewService', EntityViewService],
    ['customerService', CustomerService],
@@ -73,7 +66,6 @@ export const ServicesMap = new Map<string, Type<any>>(
    ['translate', TranslateService],
    ['http', HttpClient],
    ['router', Router],
-   ['imageService', ImageService],
    ['importExport', ImportExportService],
    ['deviceProfileService', DeviceProfileService],
    ['assetProfileService', AssetProfileService],
@@ -82,11 +74,7 @@ export const ServicesMap = new Map<string, Type<any>>(
    ['resourceService', ResourceService],
    ['twoFactorAuthenticationService', TwoFactorAuthenticationService],
    ['telemetryWsService', TelemetryWebsocketService],
-   ['tenantService', TenantService],
-   ['tenantProfileService', TenantProfileService],
    ['userSettingsService', UserSettingsService],
-   ['uiSettingsService', UiSettingsService],
-   ['usageInfoService', UsageInfoService],
    ['notificationService', NotificationService]
   ]
 );

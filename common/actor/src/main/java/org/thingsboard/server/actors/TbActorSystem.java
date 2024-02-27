@@ -48,8 +48,6 @@ public interface TbActorSystem {
 
     void broadcastToChildren(TbActorId parent, TbActorMsg msg);
 
-    void broadcastToChildren(TbActorId parent, TbActorMsg msg, boolean highPriority);
-
     void broadcastToChildren(TbActorId parent, Predicate<TbActorId> childFilter, TbActorMsg msg);
 
     List<TbActorId> filterChildren(TbActorId parent, Predicate<TbActorId> childFilter);

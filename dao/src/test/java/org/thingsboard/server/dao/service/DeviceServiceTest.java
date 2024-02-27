@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -56,6 +57,7 @@ import org.thingsboard.server.dao.service.validator.DeviceCredentialsDataValidat
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 
 import java.nio.ByteBuffer;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -155,6 +157,24 @@ public class DeviceServiceTest extends AbstractServiceTest {
                 .hasMessageContaining("Device credentials are already assigned to another device!");
 
         Device deviceByName = deviceService.findDeviceByTenantIdAndName(tenantId, duplicatedDevice.getName());
+        Assertions.assertNull(deviceByName);
+    }
+
+    @Test
+    public void testShouldRollbackNotValidatedDeviceIfDeviceCredentialsValidationFailed() {
+        Mockito.reset(validator);
+        Mockito.doThrow(new DataValidationException("mock message"))
+                .when(validator).validate(any(), any());
+
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setName(StringUtils.randomAlphabetic(10));
+        device.setType("default");
+        assertThatThrownBy(() -> deviceService.saveDevice(device, false))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessageContaining("mock message");
+
+        Device deviceByName = deviceService.findDeviceByTenantIdAndName(tenantId, device.getName());
         Assertions.assertNull(deviceByName);
     }
 

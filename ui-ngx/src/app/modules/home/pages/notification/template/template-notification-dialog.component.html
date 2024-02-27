@@ -71,16 +71,14 @@
     </mat-step>
     <mat-step [stepControl]="notificationTemplateConfigurationForm" #composeStep=matStep>
       <ng-template matStepLabel>{{ 'notification.compose' | translate }}</ng-template>
-      <ng-template matStepContent>
-        <form [formGroup]="notificationTemplateConfigurationForm">
-          <tb-template-configuration
-            [notificationType]="templateNotificationForm.get('notificationType').value"
-            [predefinedDeliveryMethodsTemplate]="deliveryConfiguration"
-            [interacted]="composeStep.interacted"
-            formControlName="deliveryMethodsTemplates">
-          </tb-template-configuration>
-        </form>
-      </ng-template>
+      <form [formGroup]="notificationTemplateConfigurationForm">
+        <tb-template-configuration
+          [notificationType]="templateNotificationForm.get('notificationType').value"
+          [predefinedDeliveryMethodsTemplate]="deliveryConfiguration"
+          [interacted]="composeStep.interacted"
+          formControlName="deliveryMethodsTemplates">
+        </tb-template-configuration>
+      </form>
     </mat-step>
   </mat-horizontal-stepper>
 </div>

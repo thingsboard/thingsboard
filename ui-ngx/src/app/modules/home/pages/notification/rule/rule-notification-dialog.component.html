@@ -70,8 +70,6 @@
             formControlName="targets"
             subType="{{ ruleNotificationForm.get('triggerType').value }}"
             entityType="{{ entityType.NOTIFICATION_TARGET }}"
-            labelText="{{ 'notification.recipients' | translate }}"
-            requiredText="{{ 'notification.recipients-required' | translate }}"
             placeholderText="{{ 'notification.recipient' | translate }}">
             <button #createTargetButton
                     mat-button color="primary" matSuffix
@@ -455,7 +453,6 @@
           <fieldset class="fields-group tb-margin-before-field">
             <legend translate>notification.filter</legend>
             <tb-entity-list labelText="{{'edge.edge-instances' | translate}}"
-                            hint="{{ 'notification.edge-list-rule-hint' | translate }}"
                             [entityType]="entityType.EDGE"
                             formControlName="edges">
             </tb-entity-list>

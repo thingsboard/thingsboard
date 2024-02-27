@@ -156,29 +156,14 @@ public class DefaultTbActorSystem implements TbActorSystem {
 
     @Override
     public void broadcastToChildren(TbActorId parent, TbActorMsg msg) {
-        broadcastToChildren(parent, msg, false);
-    }
-
-    @Override
-    public void broadcastToChildren(TbActorId parent, TbActorMsg msg, boolean highPriority) {
-        broadcastToChildren(parent, id -> true, msg, highPriority);
+        broadcastToChildren(parent, id -> true, msg);
     }
 
     @Override
     public void broadcastToChildren(TbActorId parent, Predicate<TbActorId> childFilter, TbActorMsg msg) {
-        broadcastToChildren(parent, childFilter, msg, false);
-    }
-
-    private void broadcastToChildren(TbActorId parent, Predicate<TbActorId> childFilter, TbActorMsg msg, boolean highPriority) {
         Set<TbActorId> children = parentChildMap.get(parent);
         if (children != null) {
-            children.stream().filter(childFilter).forEach(id -> {
-                try {
-                    tell(id, msg, highPriority);
-                } catch (TbActorNotRegisteredException e) {
-                    log.warn("Actor is missing for {}", id);
-                }
-            });
+            children.stream().filter(childFilter).forEach(id -> tell(id, msg));
         }
     }
 
@@ -205,8 +190,6 @@ public class DefaultTbActorSystem implements TbActorSystem {
                 stop(child);
             }
         }
-        parentChildMap.values().forEach(parentChildren -> parentChildren.remove(actorId));
-
         TbActorMailbox mailbox = actors.remove(actorId);
         if (mailbox != null) {
             mailbox.destroy(null);

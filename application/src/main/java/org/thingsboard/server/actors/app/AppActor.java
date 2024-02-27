@@ -17,7 +17,6 @@ package org.thingsboard.server.actors.app;
 
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
-import org.thingsboard.server.actors.ProcessFailureStrategy;
 import org.thingsboard.server.actors.TbActor;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.TbActorException;
@@ -89,7 +88,7 @@ public class AppActor extends ContextAwareActor {
             case APP_INIT_MSG:
                 break;
             case PARTITION_CHANGE_MSG:
-                ctx.broadcastToChildren(msg, true);
+                ctx.broadcastToChildren(msg);
                 break;
             case COMPONENT_LIFE_CYCLE_MSG:
                 onComponentLifecycleMsg((ComponentLifecycleMsg) msg);
@@ -218,12 +217,6 @@ public class AppActor extends ContextAwareActor {
         } else {
             log.debug("[{}] Invalid edge session msg: {}", msg.getTenantId(), msg);
         }
-    }
-
-    @Override
-    public ProcessFailureStrategy onProcessFailure(TbActorMsg msg, Throwable t) {
-        log.error("Failed to process msg: {}", msg, t);
-        return doProcessFailure(t);
     }
 
     public static class ActorCreator extends ContextBasedCreator {
