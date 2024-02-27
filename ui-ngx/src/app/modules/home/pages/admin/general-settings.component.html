@@ -146,35 +146,41 @@
         <div class="property-header">Property</div>
         <div class="property-header">Value</div>
       </div>
-      <div class="property-row" [formGroup]="propertyRow" *ngFor="let propertyRow of gatewaySettingsArray.controls">
-        <div class="property-name">
-          <span>{{ propertyRow.controls.property.value }}</span>
-        </div>
-        <div class="property-value">
-          <ng-container *ngIf="propertyRow.controls.property.value === 'version'; else defaultVersionTemplate">
-            <mat-form-field formControlName="value">
-              <mat-select [value]="defaultVersion">
-                <mat-option *ngFor="let version of propertyRow.controls.value.value" [value]="version">
-                  {{ version }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-          </ng-container>
-          <ng-template #defaultVersionTemplate>
-            <mat-form-field>
-              <input matInput formControlName="value" [value]="propertyRow.controls.value.value"/>
-            </mat-form-field>
-          </ng-template>
-        </div>
+      <div class="property-row" [formGroup]="gatewaySettingsGroup">
+        <ng-container *ngFor="let propertyName of gatewayRawSettings">
+          <div class="property-name">
+            <span>{{ propertyName | titlecase }}</span>
+          </div>
+          <div class="property-value">
+            <ng-container *ngIf="propertyName === 'version'
+                                && gatewaySettings.jsonValue.availableVersions
+                                && gatewaySettings.jsonValue.availableVersions.length;
+                                  else defaultVersionTemplate">
+              <mat-form-field>
+                <mat-select formControlName="{{propertyName}}">
+                  <mat-option *ngFor="let version of gatewaySettings.jsonValue.availableVersions" [value]="version">
+                    {{ version }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </ng-container>
+            <ng-template #defaultVersionTemplate>
+              <mat-form-field>
+                <input matInput formControlName="{{propertyName}}" [value]="gatewaySettingsGroup.get(propertyName).value"/>
+              </mat-form-field>
+            </ng-template>
+          </div>
+        </ng-container>
       </div>
     </div>
       <div fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="8px" class="layout-wrap">
         <button mat-button color="primary"
-                [disabled]="gatewaySettingsArray.pristine"
+                [disabled]="gatewaySettingsGroup.pristine"
                 (click)="discardGatewaySettings()"
                 type="button">{{'action.undo' | translate}}
         </button>
-        <button mat-button mat-raised-button color="primary" [disabled]="(isLoading$ | async) || gatewaySettingsArray.invalid || !gatewaySettingsArray.dirty"
+        <button mat-button mat-raised-button color="primary"
+                [disabled]="(isLoading$ | async) || gatewaySettingsGroup.invalid || !gatewaySettingsGroup.dirty"
                 (click)="saveGatewaySettings()">{{'action.save' | translate}}
         </button>
       </div>

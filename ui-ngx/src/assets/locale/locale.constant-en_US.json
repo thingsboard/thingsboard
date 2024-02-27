@@ -482,7 +482,9 @@
         "slack-settings": "Slack settings",
         "mobile-settings": "Mobile settings",
         "firebase-service-account-file": "Firebase service account credentials JSON file",
-        "select-firebase-service-account-file": "Drag and drop your Firebase service account credentials file or "
+        "select-firebase-service-account-file": "Drag and drop your Firebase service account credentials file or ",
+        "settings-saved-successfully": "Settings saved successfully!",
+        "settings-saving-error": "Settings wasn't saved!"
       },
     "alarm": {
         "alarm": "Alarm",
