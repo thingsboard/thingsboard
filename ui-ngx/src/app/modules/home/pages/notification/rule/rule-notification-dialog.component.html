@@ -70,6 +70,8 @@
             formControlName="targets"
             subType="{{ ruleNotificationForm.get('triggerType').value }}"
             entityType="{{ entityType.NOTIFICATION_TARGET }}"
+            labelText="{{ 'notification.recipients' | translate }}"
+            requiredText="{{ 'notification.recipients-required' | translate }}"
             placeholderText="{{ 'notification.recipient' | translate }}">
             <button #createTargetButton
                     mat-button color="primary" matSuffix
