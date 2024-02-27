@@ -5328,7 +5328,8 @@
             "date": "Date",
             "active-bars-color": "Active signal bars color",
             "inactive-bars-color": "Inactive signal bars color",
-            "signal-strength-card-style": "Signal strength card style"
+            "signal-strength-card-style": "Signal strength card style",
+            "no-signal-rssi-value": "\"No signal\" rssi value"
         },
         "chart": {
             "common-settings": "Common settings",

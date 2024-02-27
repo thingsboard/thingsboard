@@ -53,6 +53,7 @@ export interface SignalStrengthWidgetSettings {
   dateFont: Font;
   dateColor: string;
   activeBarsColor: ColorSettings;
+  noSignalRssiValue: number;
   inactiveBarsColor: string;
   showTooltip: boolean;
   showTooltipValue: boolean;
@@ -91,6 +92,7 @@ export const signalStrengthDefaultSettings: SignalStrengthWidgetSettings = {
     ],
     colorFunction: defaultColorFunction
   },
+  noSignalRssiValue: -100,
   inactiveBarsColor: 'rgba(224, 224, 224, 1)',
   showTooltip: true,
   showTooltipValue: true,
