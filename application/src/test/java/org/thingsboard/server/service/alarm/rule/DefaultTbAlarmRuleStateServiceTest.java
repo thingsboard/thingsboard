@@ -17,6 +17,7 @@ package org.thingsboard.server.service.alarm.rule;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.SneakyThrows;
+import org.awaitility.Awaitility;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -25,7 +26,6 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.api.TbAlarmRuleStateService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Device;
@@ -62,6 +62,7 @@ import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleEntityListE
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleSingleEntityFilter;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.id.AlarmRuleId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -77,6 +78,7 @@ import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.alarm.AlarmService;
@@ -101,10 +103,12 @@ import java.util.concurrent.TimeUnit;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.thingsboard.server.common.data.alarm.rule.condition.ArgumentValueType.NUMERIC;
 import static org.thingsboard.server.common.data.alarm.rule.condition.ValueSourceType.CURRENT_CUSTOMER;
 import static org.thingsboard.server.common.data.alarm.rule.condition.ValueSourceType.CURRENT_ENTITY;
 import static org.thingsboard.server.common.data.alarm.rule.condition.ValueSourceType.CURRENT_TENANT;
+import static org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent.UPDATED;
 
 @DaoSqlTest
 @SuppressWarnings("removal")
@@ -113,8 +117,8 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
     @Autowired
     private AlarmRuleService alarmRuleService;
 
-    @Autowired
-    private TbAlarmRuleStateService alarmRuleStateService;
+    @SpyBean
+    private DefaultTbAlarmRuleStateService alarmRuleStateService;
 
     @Autowired
     private DeviceProfileService deviceProfileService;
@@ -543,7 +547,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         alarmRuleStateService.process(ctx, msgFromDifferentDevice);
 
-        Mockito.verify(clusterService, Mockito.never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
+        Mockito.verify(clusterService, never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
         TbMsg msgFromSourceEntity = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), sourceEntity.getId(), new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
@@ -636,7 +640,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         alarmRuleStateService.process(ctx, msgFromDifferentDevice);
 
-        Mockito.verify(clusterService, Mockito.never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
+        Mockito.verify(clusterService, never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
         TbMsg msgFromSourceEntity = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), sourceEntity.getId(), new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
@@ -729,7 +733,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         alarmRuleStateService.process(ctx, msgFromDifferentDevice);
 
-        Mockito.verify(clusterService, Mockito.never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
+        Mockito.verify(clusterService, never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
         TbMsg msgFromSourceEntity = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), sourceEntity.getId(), new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
@@ -825,7 +829,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         alarmRuleStateService.process(ctx, msgFromAsset);
 
-        Mockito.verify(clusterService, Mockito.never()).pushMsgToRuleEngine(eq(tenantId), eq(assetId), any(), eq(Collections.singleton("Alarm Created")), any());
+        Mockito.verify(clusterService, never()).pushMsgToRuleEngine(eq(tenantId), eq(assetId), any(), eq(Collections.singleton("Alarm Created")), any());
 
         TbMsg tbMsg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
@@ -921,7 +925,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         alarmRuleStateService.process(ctx, msgFromDevice);
 
-        Mockito.verify(clusterService, Mockito.never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
+        Mockito.verify(clusterService, never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
         TbMsg tbMsg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), assetId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
@@ -1286,7 +1290,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Thread.sleep(halfOfAlarmDelay);
 
-        Mockito.verify(clusterService, Mockito.never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
+        Mockito.verify(clusterService, never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
         Thread.sleep(halfOfAlarmDelay);
 
@@ -1380,7 +1384,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Thread.sleep(halfOfAlarmDelay);
 
-        Mockito.verify(clusterService, Mockito.never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
+        Mockito.verify(clusterService, never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
         Thread.sleep(halfOfAlarmDelay);
 
@@ -1462,7 +1466,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         alarmRuleStateService.process(ctx, msg);
 
-        Mockito.verify(clusterService, Mockito.never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
+        Mockito.verify(clusterService, never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
         TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
@@ -1542,7 +1546,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         alarmRuleStateService.process(ctx, msg);
 
-        Mockito.verify(clusterService, Mockito.never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
+        Mockito.verify(clusterService, never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
         TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
@@ -1635,7 +1639,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Thread.sleep(halfOfAlarmDelay);
 
-        Mockito.verify(clusterService, Mockito.never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
+        Mockito.verify(clusterService, never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
         Thread.sleep(halfOfAlarmDelay);
 
@@ -1718,7 +1722,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         alarmRuleStateService.process(ctx, msg);
 
-        Mockito.verify(clusterService, Mockito.never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
+        Mockito.verify(clusterService, never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
         TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
@@ -1795,7 +1799,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         alarmRuleStateService.process(ctx, msg);
 
-        Mockito.verify(clusterService, Mockito.never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
+        Mockito.verify(clusterService, never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
         ObjectNode differentData = JacksonUtil.newObjectNode();
         data.put("humidity", 85);
@@ -1804,7 +1808,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         alarmRuleStateService.process(ctx, msg2);
 
-        Mockito.verify(clusterService, Mockito.never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
+        Mockito.verify(clusterService, never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
         TbMsg msg3 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
@@ -1971,7 +1975,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         alarmRuleStateService.process(ctx, msg);
 
-        Mockito.verify(clusterService, Mockito.never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
+        Mockito.verify(clusterService, never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
         PageData<AlarmInfo> pageData = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
                 new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
@@ -2317,14 +2321,14 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Thread.sleep(halfOfAlarmDelay);
 
-        Mockito.verify(clusterService, Mockito.never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
+        Mockito.verify(clusterService, never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
         TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg2);
 
-        Mockito.verify(clusterService, Mockito.never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
+        Mockito.verify(clusterService, never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
         Thread.sleep(TimeUnit.SECONDS.toMillis(alarmDelayInSeconds) + 1);
 
@@ -2419,7 +2423,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Thread.sleep(halfOfAlarmDelay);
 
-        Mockito.verify(clusterService, Mockito.never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
+        Mockito.verify(clusterService, never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
         ObjectNode temperatureThresholdData = JacksonUtil.newObjectNode();
         temperatureData.put("temperatureThreshold", 100);
@@ -2429,7 +2433,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         alarmRuleStateService.process(ctx, msg2);
 
-        Mockito.verify(clusterService, Mockito.never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
+        Mockito.verify(clusterService, never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
         Thread.sleep(TimeUnit.SECONDS.toMillis(alarmDelayInSeconds) + 1);
 
@@ -2550,6 +2554,192 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         alarm = alarms.get(0);
         Assert.equals("highTemperatureAlarm", alarm.getName());
         Assert.equals(AlarmStatus.CLEARED_UNACK, alarm.getStatus());
+    }
+
+    @Test
+    public void testAddNewArgumentsAndUpdateAlarm() throws Exception {
+        DeviceProfile deviceProfile = createDeviceProfile("test profile");
+        deviceProfile.setTenantId(tenantId);
+        deviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
+
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setName("temperature sensor");
+        device.setDeviceProfileId(deviceProfile.getId());
+        device = deviceService.saveDevice(device);
+
+        DeviceId deviceId = device.getId();
+
+        AlarmRule alarmRule = new AlarmRule();
+        alarmRule.setTenantId(tenantId);
+        alarmRule.setAlarmType("highTemperatureAlarm");
+        alarmRule.setName("highTemperatureAlarmRule");
+        alarmRule.setEnabled(true);
+
+        var temperatureKey = new FromMessageArgument(AlarmConditionKeyType.TIME_SERIES, "temperature", NUMERIC);
+        var highTemperatureConst = new ConstantArgument(NUMERIC, 30.0);
+
+        SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
+        highTempFilter.setLeftArgId("temperatureKey");
+        highTempFilter.setRightArgId("highTemperatureConst");
+        highTempFilter.setOperation(Operation.GREATER);
+        AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setConditionFilter(highTempFilter);
+        AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setAlarmCondition(alarmCondition);
+        AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
+        alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
+        alarmRuleConfiguration.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst));
+
+        AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfile.getId()));
+        alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
+
+        alarmRule.setConfiguration(alarmRuleConfiguration);
+
+        alarmRule = alarmRuleService.saveAlarmRule(tenantId, alarmRule);
+
+        ObjectNode data = JacksonUtil.newObjectNode();
+        data.put("temperature", 42);
+        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+
+        alarmRuleStateService.process(ctx, msg);
+
+        Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
+
+        var humidityKey = new FromMessageArgument(AlarmConditionKeyType.TIME_SERIES, "humidity", NUMERIC);
+        var lowHumidityConst = new ConstantArgument(NUMERIC, 55.0);
+
+        alarmRuleConfiguration.setArguments(Map.of(
+                "temperatureKey", temperatureKey,
+                "highTemperatureConst", highTemperatureConst,
+                "humidityKey", humidityKey,
+                "lowHumidityConst", lowHumidityConst));
+
+        SimpleAlarmConditionFilter lowHumidityFilter = new SimpleAlarmConditionFilter();
+        lowHumidityFilter.setLeftArgId("humidityKey");
+        lowHumidityFilter.setRightArgId("lowHumidityConst");
+        lowHumidityFilter.setOperation(Operation.LESS);
+
+        alarmCondition.setConditionFilter(new ComplexAlarmConditionFilter(List.of(highTempFilter, lowHumidityFilter), ComplexAlarmConditionFilter.ComplexOperation.AND));
+        alarmRule.setConfiguration(alarmRuleConfiguration);
+
+        alarmRuleService.saveAlarmRule(tenantId, alarmRule);
+
+        AlarmRuleId alarmRuleId = alarmRule.getId();
+
+        Awaitility.await()
+                .atMost(5, TimeUnit.SECONDS)
+                .until(() -> {
+                    Mockito.verify(alarmRuleStateService).onComponentLifecycleEvent(eq(new ComponentLifecycleMsg(tenantId, alarmRuleId, UPDATED)));
+                    return true;
+                });
+
+        TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+
+        alarmRuleStateService.process(ctx, msg2);
+
+        Mockito.verify(clusterService, never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Updated")), any());
+
+        ObjectNode updateData = JacksonUtil.newObjectNode();
+        updateData.put("temperature", 42);
+        updateData.put("humidity", 54);
+        TbMsg updateMsg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+                TbMsgDataType.JSON, JacksonUtil.toString(updateData), null, null);
+
+        alarmRuleStateService.process(ctx, updateMsg);
+
+        Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Updated")), any());
+    }
+
+    @Test
+    public void testRemoveArgumentAndCreateAlarm() throws Exception {
+        DeviceProfile deviceProfile = createDeviceProfile("test profile");
+        deviceProfile.setTenantId(tenantId);
+        deviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
+
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setName("temperature sensor");
+        device.setDeviceProfileId(deviceProfile.getId());
+        device = deviceService.saveDevice(device);
+
+        DeviceId deviceId = device.getId();
+
+        AlarmRule alarmRule = new AlarmRule();
+        alarmRule.setTenantId(tenantId);
+        alarmRule.setAlarmType("highTemperatureAlarm");
+        alarmRule.setName("highTemperatureAlarmRule");
+        alarmRule.setEnabled(true);
+
+        var temperatureKey = new FromMessageArgument(AlarmConditionKeyType.TIME_SERIES, "temperature", NUMERIC);
+        var highTemperatureConst = new ConstantArgument(NUMERIC, 30.0);
+        var humidityKey = new FromMessageArgument(AlarmConditionKeyType.TIME_SERIES, "humidity", NUMERIC);
+        var lowHumidityConst = new ConstantArgument(NUMERIC, 55.0);
+
+        SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
+        highTempFilter.setLeftArgId("temperatureKey");
+        highTempFilter.setRightArgId("highTemperatureConst");
+        highTempFilter.setOperation(Operation.GREATER);
+
+        SimpleAlarmConditionFilter lowHumidityFilter = new SimpleAlarmConditionFilter();
+        lowHumidityFilter.setLeftArgId("humidityKey");
+        lowHumidityFilter.setRightArgId("lowHumidityConst");
+        lowHumidityFilter.setOperation(Operation.LESS);
+
+        AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setConditionFilter(new ComplexAlarmConditionFilter(List.of(highTempFilter, lowHumidityFilter), ComplexAlarmConditionFilter.ComplexOperation.AND));
+        AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setAlarmCondition(alarmCondition);
+        AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
+        alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
+
+        alarmRuleConfiguration.setArguments(Map.of(
+                "temperatureKey", temperatureKey,
+                "highTemperatureConst", highTemperatureConst,
+                "humidityKey", humidityKey,
+                "lowHumidityConst", lowHumidityConst));
+
+        AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfile.getId()));
+        alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
+
+        alarmRule.setConfiguration(alarmRuleConfiguration);
+
+        alarmRule = alarmRuleService.saveAlarmRule(tenantId, alarmRule);
+
+        ObjectNode data = JacksonUtil.newObjectNode();
+        data.put("temperature", 42);
+        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+
+        alarmRuleStateService.process(ctx, msg);
+
+        Mockito.verify(clusterService, never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
+
+        alarmRuleConfiguration.setArguments(Map.of(
+                "temperatureKey", temperatureKey,
+                "highTemperatureConst", highTemperatureConst));
+        alarmCondition.setConditionFilter(highTempFilter);
+        alarmRule.setConfiguration(alarmRuleConfiguration);
+
+        alarmRuleService.saveAlarmRule(tenantId, alarmRule);
+
+        AlarmRuleId alarmRuleId = alarmRule.getId();
+
+        Awaitility.await()
+                .atMost(5, TimeUnit.SECONDS)
+                .until(() -> {
+                    Mockito.verify(alarmRuleStateService).onComponentLifecycleEvent(eq(new ComponentLifecycleMsg(tenantId, alarmRuleId, UPDATED)));
+                    return true;
+                });
+
+        TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+                TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
+
+        alarmRuleStateService.process(ctx, msg2);
+
+        Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
     }
 
     private void saveAttribute(EntityId entityId, String key, Boolean value) {
