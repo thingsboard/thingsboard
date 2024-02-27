@@ -2347,6 +2347,111 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testCurrentDeviceAttributeForDynamicNoUpdateDurationValueWithCompositeCondition() throws Exception {
+        DeviceProfile deviceProfile = createDeviceProfile("test profile");
+        deviceProfile.setTenantId(tenantId);
+        deviceProfile = deviceProfileService.saveDeviceProfile(deviceProfile);
+
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setCustomerId(customerId);
+        device.setName("test device");
+        device.setDeviceProfileId(deviceProfile.getId());
+        device = deviceService.saveDevice(device);
+
+        DeviceId deviceId = device.getId();
+
+        saveAttribute(deviceId, "greaterAttribute", 30L);
+
+        long alarmDelayInSeconds = 5L;
+
+        saveAttribute(deviceId, "alarm_delay", alarmDelayInSeconds);
+
+        AlarmRule alarmRule = new AlarmRule();
+        alarmRule.setTenantId(tenantId);
+        alarmRule.setAlarmType("highTemperatureAlarm");
+        alarmRule.setName("highTemperatureAlarmRule");
+        alarmRule.setEnabled(true);
+
+        var temperatureKey = new FromMessageArgument(AlarmConditionKeyType.TIME_SERIES, "temperature", NUMERIC);
+        var temperatureThreshold = new FromMessageArgument(AlarmConditionKeyType.TIME_SERIES, "temperatureThreshold", NUMERIC);
+
+        SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
+        highTempFilter.setLeftArgId("temperatureKey");
+
+        SimpleAlarmConditionFilter temperatureThresholdFilter = new SimpleAlarmConditionFilter();
+        temperatureThresholdFilter.setLeftArgId("temperatureThreshold");
+
+        AlarmCondition alarmCondition = new AlarmCondition();
+        alarmCondition.setConditionFilter(new ComplexAlarmConditionFilter(List.of(highTempFilter, temperatureThresholdFilter), ComplexAlarmConditionFilter.ComplexOperation.AND));
+
+        var alarmDelayKey = new AttributeArgument("alarm_delay", NUMERIC, CURRENT_ENTITY, 10, false);
+
+        NoUpdateAlarmConditionSpec durationSpec = new NoUpdateAlarmConditionSpec();
+        durationSpec.setUnit(TimeUnit.SECONDS);
+        durationSpec.setArgumentId("alarmDelayKey");
+        alarmCondition.setSpec(durationSpec);
+
+        AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setAlarmCondition(alarmCondition);
+        AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
+        alarmRuleConfiguration.setArguments(Map.of("temperatureKey", temperatureKey, "temperatureThreshold", temperatureThreshold, "alarmDelayKey", alarmDelayKey));
+        alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
+
+        AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfile.getId()));
+        alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
+
+        alarmRule.setConfiguration(alarmRuleConfiguration);
+
+        alarmRuleService.saveAlarmRule(tenantId, alarmRule);
+
+        ObjectNode temperatureData = JacksonUtil.newObjectNode();
+        temperatureData.put("temperature", 35);
+        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+                TbMsgDataType.JSON, JacksonUtil.toString(temperatureData), null, null);
+
+        alarmRuleStateService.process(ctx, msg);
+
+        long halfOfAlarmDelay = new BigDecimal(alarmDelayInSeconds)
+                .multiply(BigDecimal.valueOf(1000))
+                .divide(BigDecimal.valueOf(2), 3, RoundingMode.HALF_EVEN)
+                .longValueExact();
+
+        Thread.sleep(halfOfAlarmDelay);
+
+        Mockito.verify(clusterService, Mockito.never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
+
+        ObjectNode temperatureThresholdData = JacksonUtil.newObjectNode();
+        temperatureData.put("temperatureThreshold", 100);
+
+        TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+                TbMsgDataType.JSON, JacksonUtil.toString(temperatureThresholdData), null, null);
+
+        alarmRuleStateService.process(ctx, msg2);
+
+        Mockito.verify(clusterService, Mockito.never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
+
+        Thread.sleep(TimeUnit.SECONDS.toMillis(alarmDelayInSeconds) + 1);
+
+        TbMsg msg3 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+                TbMsgDataType.JSON, JacksonUtil.toString(temperatureData), null, null);
+
+        alarmRuleStateService.process(ctx, msg3); //no update temperature
+
+        Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
+
+        PageData<AlarmInfo> pageData = alarmService.findAlarms(tenantId, new AlarmQuery(deviceId,
+                new TimePageLink(10), AlarmSearchStatus.ANY, null, null, true));
+
+        List<AlarmInfo> alarms = pageData.getData();
+        Assert.equals(1, alarms.size());
+
+        AlarmInfo alarm = alarms.get(0);
+        Assert.equals("highTemperatureAlarm", alarm.getName());
+        Assert.equals(AlarmStatus.ACTIVE_UNACK, alarm.getStatus());
+    }
+
+    @Test
     public void testCreateAndClearAlarmWithTelemetryArguments() throws Exception {
         DeviceProfile deviceProfile = createDeviceProfile("test profile");
         deviceProfile.setTenantId(tenantId);

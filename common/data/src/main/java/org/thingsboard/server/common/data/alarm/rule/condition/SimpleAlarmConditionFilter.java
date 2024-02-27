@@ -19,11 +19,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.validation.NoXss;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 @Schema
 @Data
 public class SimpleAlarmConditionFilter implements AlarmConditionFilter, Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 4931296874864969049L;
 
     @NoXss
     private String leftArgId;

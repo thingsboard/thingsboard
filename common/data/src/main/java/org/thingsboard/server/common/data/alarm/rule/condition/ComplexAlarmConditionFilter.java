@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
 
@@ -26,6 +27,9 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 public class ComplexAlarmConditionFilter implements AlarmConditionFilter, Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 3216411668468598473L;
 
     private List<AlarmConditionFilter> conditions;
 
