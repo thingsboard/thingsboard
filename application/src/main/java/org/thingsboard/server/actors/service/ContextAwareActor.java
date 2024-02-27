@@ -47,8 +47,8 @@ public abstract class ContextAwareActor extends AbstractTbActor {
     protected abstract boolean doProcess(TbActorMsg msg);
 
     @Override
-    public ProcessFailureStrategy onProcessFailure(Throwable t) {
-        log.debug("[{}] Processing failure: ", getActorRef().getActorId(), t);
+    public ProcessFailureStrategy onProcessFailure(TbActorMsg msg, Throwable t) {
+        log.debug("[{}] Processing failure for msg {}", getActorRef().getActorId(), msg, t);
         return doProcessFailure(t);
     }
 
