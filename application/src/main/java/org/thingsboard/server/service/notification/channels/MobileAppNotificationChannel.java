@@ -61,14 +61,7 @@ public class MobileAppNotificationChannel implements NotificationChannel<User, M
 
         String subject = processedTemplate.getSubject();
         String body = processedTemplate.getBody();
-        Map<String, String> data = Optional.ofNullable(processedTemplate.getAdditionalConfig())
-                .map(JacksonUtil::toFlatMap).orElseGet(HashMap::new);
-        Optional.ofNullable(ctx.getRequest().getInfo())
-                .map(NotificationInfo::getStateEntityId)
-                .ifPresent(stateEntityId -> {
-                    data.put("stateEntityId", stateEntityId.getId().toString());
-                    data.put("stateEntityType", stateEntityId.getEntityType().name());
-                });
+        Map<String, String> data = getNotificationData(processedTemplate, ctx);
         for (String token : mobileSessions.keySet()) {
             try {
                 firebaseService.sendMessage(ctx.getTenantId(), credentials, token, subject, body, data);
@@ -85,6 +78,23 @@ public class MobileAppNotificationChannel implements NotificationChannel<User, M
         if (validTokens.isEmpty()) {
             throw new IllegalArgumentException("User doesn't use the mobile app");
         }
+    }
+
+    private Map<String, String> getNotificationData(MobileAppDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) {
+        Map<String, String> data = Optional.ofNullable(processedTemplate.getAdditionalConfig())
+                .map(JacksonUtil::toFlatMap).orElseGet(HashMap::new);
+        NotificationInfo info = ctx.getRequest().getInfo();
+        Optional.ofNullable(info).map(NotificationInfo::getStateEntityId).ifPresent(stateEntityId -> {
+            data.put("stateEntityId", stateEntityId.getId().toString());
+            data.put("stateEntityType", stateEntityId.getEntityType().name());
+            if (!"true".equals(data.get("onClick.enabled")) && info.getDashboardId() != null) {
+                data.put("onClick.enabled", "true");
+                data.put("onClick.linkType", "DASHBOARD");
+                data.put("onClick.setEntityIdInState", "true");
+                data.put("onClick.dashboardId", info.getDashboardId().toString());
+            }
+        });
+        return data;
     }
 
     @Override
