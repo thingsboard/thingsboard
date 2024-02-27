@@ -228,8 +228,6 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                                 } catch (Exception e) {
                                     log.warn("Failed to migrate AlarmRules or Persisted States!", e);
                                 }
-
-                                profilePageLink = profilePageLink.nextPageLink();
                             } while (profiles.hasNext());
                         }));
                     }
