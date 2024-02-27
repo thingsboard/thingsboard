@@ -36,6 +36,7 @@ import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { isDefinedAndNotNull } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'tb-template-configuration',
@@ -96,7 +97,8 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
   private propagateChange = (v: any) => { };
   private readonly destroy$ = new Subject<void>();
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder,
+              private translate: TranslateService) {
     this.templateConfigurationForm = this.buildForm();
     this.templateConfigurationForm.valueChanges.pipe(
       takeUntil(this.destroy$)
@@ -135,6 +137,16 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
         valid: false,
       },
     };
+  }
+
+  get hotificationTapActionHint(): string {
+    switch (this.notificationType) {
+      case NotificationType.ALARM:
+      case NotificationType.ALARM_ASSIGNMENT:
+      case NotificationType.ALARM_COMMENT:
+        return this.translate.instant('notification.notification-tap-action-hint');
+    }
+    return '';
   }
 
   private updateDisabledForms(){
