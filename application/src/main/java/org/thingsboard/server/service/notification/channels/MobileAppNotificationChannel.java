@@ -84,7 +84,10 @@ public class MobileAppNotificationChannel implements NotificationChannel<User, M
         Map<String, String> data = Optional.ofNullable(processedTemplate.getAdditionalConfig())
                 .map(JacksonUtil::toFlatMap).orElseGet(HashMap::new);
         NotificationInfo info = ctx.getRequest().getInfo();
-        Optional.ofNullable(info).map(NotificationInfo::getStateEntityId).ifPresent(stateEntityId -> {
+        if (info == null) {
+            return data;
+        }
+        Optional.ofNullable(info.getStateEntityId()).ifPresent(stateEntityId -> {
             data.put("stateEntityId", stateEntityId.getId().toString());
             data.put("stateEntityType", stateEntityId.getEntityType().name());
             if (!"true".equals(data.get("onClick.enabled")) && info.getDashboardId() != null) {
@@ -94,6 +97,16 @@ public class MobileAppNotificationChannel implements NotificationChannel<User, M
                 data.put("onClick.dashboardId", info.getDashboardId().toString());
             }
         });
+        data.put("notificationType", ctx.getNotificationType().name());
+        switch (ctx.getNotificationType()) {
+            case ALARM:
+            case ALARM_ASSIGNMENT:
+            case ALARM_COMMENT:
+                info.getTemplateData().forEach((key, value) -> {
+                    data.put("info." + key, value);
+                });
+                break;
+        }
         return data;
     }
 
