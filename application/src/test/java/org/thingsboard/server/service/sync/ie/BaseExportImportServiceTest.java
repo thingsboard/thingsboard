@@ -270,7 +270,7 @@ public abstract class BaseExportImportServiceTest extends AbstractControllerTest
 
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
         highTempFilter.setLeftArgId("temperatureKey");
-        highTempFilter.setRightArgId("temperatureConst");
+        highTempFilter.setRightArgId("highTemperatureConst");
         highTempFilter.setOperation(Operation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
