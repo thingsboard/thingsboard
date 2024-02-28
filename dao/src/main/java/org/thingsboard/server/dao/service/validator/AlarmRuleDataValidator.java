@@ -20,9 +20,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilter;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionSpecType;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.alarm.rule.condition.ComplexAlarmConditionFilter;
+import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionFilter;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleAssetTypeEntityFilter;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleDeviceTypeEntityFilter;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleEntityFilter;
@@ -46,6 +50,7 @@ import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 
 import static org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleEntityFilterType.ASSET_TYPE;
@@ -94,13 +99,11 @@ public class AlarmRuleDataValidator extends DataValidator<AlarmRule> {
             throw new DataValidationException("Alarm create rule should be specified!");
         }
         configuration.getCreateRules().values().forEach(condition -> {
-            validateAlarmConditionFilterDepth(condition.getAlarmCondition().getConditionFilter(), MAX_DEPTH);
+            validateAlarmConditionFilterDepthAndArguments(condition.getAlarmCondition(), configuration.getArguments(), MAX_DEPTH);
         });
         if (configuration.getClearRule() != null) {
-            validateAlarmConditionFilterDepth(configuration.getClearRule().getAlarmCondition().getConditionFilter(), MAX_DEPTH);
+            validateAlarmConditionFilterDepthAndArguments(configuration.getClearRule().getAlarmCondition(), configuration.getArguments(), MAX_DEPTH);
         }
-
-        //TODO: validate arguments if needed
     }
 
     private void validateSourceEntityFilter(TenantId tenantId, AlarmRuleEntityFilter entityFilter) {
@@ -142,9 +145,9 @@ public class AlarmRuleDataValidator extends DataValidator<AlarmRule> {
         }
     }
 
-    private void validateAlarmConditionFilterDepth(AlarmConditionFilter rootFilter, int maxDepth) {
+    private void validateAlarmConditionFilterDepthAndArguments(AlarmCondition alarmCondition, Map<String, AlarmRuleArgument> arguments, int maxDepth) {
         Queue<TbPair<AlarmConditionFilter, Integer>> queue = new LinkedList<>();
-        queue.offer(new TbPair<>(rootFilter, 0));
+        queue.offer(new TbPair<>(alarmCondition.getConditionFilter(), 0));
 
         while (!queue.isEmpty()) {
             TbPair<AlarmConditionFilter, Integer> pair = queue.poll();
@@ -159,7 +162,37 @@ public class AlarmRuleDataValidator extends DataValidator<AlarmRule> {
                 for (AlarmConditionFilter child : complexFilter.getConditions()) {
                     queue.offer(new TbPair<>(child, currentDepth + 1));
                 }
+            } else {
+                var simpleCondition = (SimpleAlarmConditionFilter) currentFilter;
+
+                if (alarmCondition.getSpec() != null && alarmCondition.getSpec().getType() == AlarmConditionSpecType.NO_UPDATE) {
+                    checkAndGetArgument(simpleCondition.getLeftArgId(), arguments);
+                } else {
+                    var leftArg = checkAndGetArgument(simpleCondition.getLeftArgId(), arguments);
+                    var rightArg = checkAndGetArgument(simpleCondition.getRightArgId(), arguments);
+
+                    if (leftArg.getValueType() != rightArg.getValueType()) {
+                        throw new DataValidationException(String.format("Simple condition arguments have different value types, left: %s, right: %s!", leftArg.getValueType(), rightArg.getValueType()));
+                    }
+                    if (simpleCondition.getOperation() == null) {
+                        throw new DataValidationException("Operation in SimpleConditionFilter should be specified!");
+                    }
+                    if (!leftArg.getValueType().isAvailable(simpleCondition.getOperation())) {
+                        throw new DataValidationException(String.format("Argument value type: %s does not support operation: %s!", leftArg.getValueType(), simpleCondition.getOperation()));
+                    }
+                }
             }
         }
+    }
+
+    private AlarmRuleArgument checkAndGetArgument(String argumentId, Map<String, AlarmRuleArgument> arguments) {
+        if (argumentId == null) {
+            throw new DataValidationException("Alarm rule argument should be specified!");
+        }
+        AlarmRuleArgument argument = arguments.get(argumentId);
+        if (argument == null) {
+            throw new DataValidationException(String.format("Alarm rule argument with id: %s not found!", argumentId));
+        }
+        return argument;
     }
 }

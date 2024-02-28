@@ -124,7 +124,6 @@ class EntityState {
         }
     }
 
-    //TODO: check if we need to recalculate all keys
     public void updateAlarmRule(AlarmRule alarmRule) throws ExecutionException, InterruptedException {
         lock.lock();
         try {

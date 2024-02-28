@@ -29,7 +29,9 @@ import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleInfo;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilter;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionKeyType;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleCondition;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentValueType;
@@ -53,11 +55,13 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.data.alarm.AlarmSeverity.CRITICAL;
 import static org.thingsboard.server.common.data.alarm.rule.condition.ComplexAlarmConditionFilter.ComplexOperation.AND;
 
 @DaoSqlTest
@@ -262,9 +266,80 @@ public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
         AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfileId));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
 
-        alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
+        alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(CRITICAL, alarmRuleCondition)));
 
         alarmRule.setConfiguration(alarmRuleConfiguration);
+
+        Assertions.assertThrows(
+                DataValidationException.class,
+                () -> alarmRuleService.saveAlarmRule(tenantId, alarmRule)
+        );
+    }
+
+    @Test
+    public void testSaveAlarmRuleWithEmptyArgument() {
+        AlarmRule alarmRule = createAlarmRule(tenantId, ALARM_RULE_NAME);
+        var configuration = alarmRule.getConfiguration();
+        var complex = (ComplexAlarmConditionFilter) configuration.getCreateRules().get(CRITICAL).getAlarmCondition().getConditionFilter();
+        var simple = (SimpleAlarmConditionFilter) complex.getConditions().get(0);
+        simple.setRightArgId(null);
+
+        Assertions.assertThrows(
+                DataValidationException.class,
+                () -> alarmRuleService.saveAlarmRule(tenantId, alarmRule)
+        );
+    }
+
+    @Test
+    public void testSaveAlarmRuleWithUnknownArgument() {
+        AlarmRule alarmRule = createAlarmRule(tenantId, ALARM_RULE_NAME);
+        var configuration = alarmRule.getConfiguration();
+        var complex = (ComplexAlarmConditionFilter) configuration.getCreateRules().get(CRITICAL).getAlarmCondition().getConditionFilter();
+        var simple = (SimpleAlarmConditionFilter) complex.getConditions().get(0);
+        simple.setRightArgId("unknownArgumentId");
+
+        Assertions.assertThrows(
+                DataValidationException.class,
+                () -> alarmRuleService.saveAlarmRule(tenantId, alarmRule)
+        );
+    }
+
+    @Test
+    public void testSaveAlarmRuleWithArgumentDifferentValueTypes() {
+        AlarmRule alarmRule = createAlarmRule(tenantId, ALARM_RULE_NAME);
+        var temperatureKey = new FromMessageArgument(AlarmConditionKeyType.TIME_SERIES, "temperature", ArgumentValueType.STRING);
+        var configuration = alarmRule.getConfiguration();
+        var arguments = new HashMap<>(configuration.getArguments());
+        arguments.put("temperatureKey", temperatureKey);
+        configuration.setArguments(arguments);
+
+        Assertions.assertThrows(
+                DataValidationException.class,
+                () -> alarmRuleService.saveAlarmRule(tenantId, alarmRule)
+        );
+    }
+
+    @Test
+    public void testSaveAlarmRuleWithEmptyOperation() {
+        AlarmRule alarmRule = createAlarmRule(tenantId, ALARM_RULE_NAME);
+        var configuration = alarmRule.getConfiguration();
+        var complex = (ComplexAlarmConditionFilter) configuration.getCreateRules().get(CRITICAL).getAlarmCondition().getConditionFilter();
+        var simple = (SimpleAlarmConditionFilter) complex.getConditions().get(0);
+        simple.setOperation(null);
+
+        Assertions.assertThrows(
+                DataValidationException.class,
+                () -> alarmRuleService.saveAlarmRule(tenantId, alarmRule)
+        );
+    }
+
+    @Test
+    public void testSaveAlarmRuleWithNotSupportedOperation() {
+        AlarmRule alarmRule = createAlarmRule(tenantId, ALARM_RULE_NAME);
+        var configuration = alarmRule.getConfiguration();
+        var complex = (ComplexAlarmConditionFilter) configuration.getCreateRules().get(CRITICAL).getAlarmCondition().getConditionFilter();
+        var simple = (SimpleAlarmConditionFilter) complex.getConditions().get(0);
+        simple.setOperation(Operation.CONTAINS);
 
         Assertions.assertThrows(
                 DataValidationException.class,
@@ -279,7 +354,7 @@ public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
         alarmRule.setName(name);
 
         var alarmEnabledConst = new ConstantArgument(ArgumentValueType.BOOLEAN, Boolean.TRUE);
-        var alarmEnabledKey = new AttributeArgument("alarmEnabled", ArgumentValueType.BOOLEAN,ValueSourceType.CURRENT_ENTITY, Boolean.FALSE, false);
+        var alarmEnabledKey = new AttributeArgument("alarmEnabled", ArgumentValueType.BOOLEAN, ValueSourceType.CURRENT_ENTITY, Boolean.FALSE, false);
 
         SimpleAlarmConditionFilter alarmEnabledFilter = new SimpleAlarmConditionFilter();
         alarmEnabledFilter.setLeftArgId("alarmEnabledConst");
@@ -309,7 +384,7 @@ public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
         AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfileId));
         alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
 
-        alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
+        alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(CRITICAL, alarmRuleCondition)));
 
         alarmRule.setConfiguration(alarmRuleConfiguration);
         return alarmRule;
