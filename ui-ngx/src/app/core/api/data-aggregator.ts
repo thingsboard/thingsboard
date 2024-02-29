@@ -83,7 +83,7 @@ class AggDataMap {
   }
 
   updateLastInterval(endTs: number) {
-    if (endTs > this.endTs) {
+    if (endTs > this.endTs && this.subsTw.aggregation.type !== AggregationType.NONE) {
       this.endTs = endTs;
       const lastTs = this.map.maxKey();
       if (lastTs) {
