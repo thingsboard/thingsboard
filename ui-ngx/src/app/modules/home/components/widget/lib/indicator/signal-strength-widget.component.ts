@@ -157,7 +157,6 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
   ngOnInit(): void {
     this.ctx.$scope.signalStrengthWidget = this;
     this.settings = {...signalStrengthDefaultSettings, ...this.ctx.settings};
-
     this.layout = this.settings.layout;
 
     this.showDate = this.settings.showDate;
@@ -262,7 +261,7 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
       }
     }
 
-    this.noSignal = this.rssi <= -100;
+    this.noSignal = this.rssi <= this.settings.noSignalRssiValue;
 
     this.activeBarsColor.update(this.rssi);
 
@@ -404,5 +403,4 @@ export class SignalStrengthWidgetComponent implements OnInit, OnDestroy, AfterVi
       this.renderer.setStyle(this.signalStrengthTooltip.nativeElement, 'transform', `scale(${scale})`);
     }
   }
-
 }

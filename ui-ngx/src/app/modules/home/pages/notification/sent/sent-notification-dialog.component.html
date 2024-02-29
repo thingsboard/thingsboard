@@ -36,7 +36,7 @@
       <mat-icon>check</mat-icon>
     </ng-template>
     <mat-step [stepControl]="notificationRequestForm">
-      <ng-template matStepLabel>{{ 'notification.compose' | translate }}</ng-template>
+      <ng-template matStepLabel>{{ 'notification.setup' | translate }}</ng-template>
       <form [formGroup]="notificationRequestForm">
         <div fxLayoutAlign="center">
           <tb-toggle-select formControlName="useTemplate" appearance="fill">
@@ -140,20 +140,24 @@
     <mat-step *ngIf="!notificationRequestForm.get('useTemplate').value"
               [stepControl]="notificationTemplateConfigurationForm" #composeStep=matStep>
       <ng-template matStepLabel>{{ 'notification.compose' | translate }}</ng-template>
-      <form [formGroup]="notificationTemplateConfigurationForm">
-        <tb-template-configuration
-          [notificationType]="templateNotificationForm.get('notificationType').value"
-          [predefinedDeliveryMethodsTemplate]="deliveryConfiguration"
-          [interacted]="composeStep.interacted"
-          formControlName="deliveryMethodsTemplates">
-        </tb-template-configuration>
-      </form>
+      <ng-template matStepContent>
+        <form [formGroup]="notificationTemplateConfigurationForm">
+          <tb-template-configuration
+            notificationType="{{ notificationType.GENERAL }}"
+            [predefinedDeliveryMethodsTemplate]="deliveryConfiguration"
+            [interacted]="composeStep.interacted"
+            formControlName="deliveryMethodsTemplates">
+          </tb-template-configuration>
+        </form>
+      </ng-template>
     </mat-step>
     <mat-step>
       <ng-template matStepLabel>{{ 'notification.review' | translate }}</ng-template>
-      <mat-progress-spinner color="warn" mode="indeterminate"
-                            strokeWidth="5" *ngIf="(isLoading$ | async) && !preview">
-      </mat-progress-spinner>
+      <div class="tb-loader" *ngIf="(isLoading$ | async) && !preview">
+        <mat-progress-spinner color="warn" mode="indeterminate"
+                              strokeWidth="5">
+        </mat-progress-spinner>
+      </div>
       <div *ngIf="preview" class="tb-form-panel no-padding no-border">
         <section class="preview-group tb-form-panel stroked no-gap">
           <div fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start center">
