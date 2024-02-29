@@ -18,12 +18,13 @@
 <section [formGroup]="parentForm">
   <mat-form-field class="mat-block">
     <mat-label translate>contact.country</mat-label>
-    <mat-select class="country-select" formControlName="country">
-      <mat-option *ngFor="let country of countries" [value]="country.name">
+    <input type="text" matInput [formControl]="parentForm.get('country')" [matAutocomplete]="countryAutoComplete">
+    <mat-autocomplete #countryAutoComplete="matAutocomplete" [displayWith]="displayCountryWithFlag" (optionSelected)="onCountryChange($event)">
+      <mat-option *ngFor="let country of countriesFiltered | async" [value]="country.name">
         <span style="font-size: 20px;">{{country.flag}}</span>
         <span> {{country.name }}</span>
       </mat-option>
-    </mat-select>
+    </mat-autocomplete>
   </mat-form-field>
   <div fxLayout.gt-sm="row" fxLayoutGap.gt-sm="10px">
     <mat-form-field class="mat-block">
@@ -56,7 +57,9 @@
     <mat-label translate>contact.address2</mat-label>
     <input matInput formControlName="address2">
   </mat-form-field>
-  <tb-phone-input [required]="false"
+  <tb-phone-input #phoneInput
+                  [required]="false"
+                  [defaultCountry]="phoneInputDefaultCountry"
                   label="{{ 'contact.phone' | translate }}"
                   [enableFlagsSelect]="true"
                   formControlName="phone">
