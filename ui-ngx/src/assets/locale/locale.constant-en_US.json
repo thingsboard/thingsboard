@@ -3169,6 +3169,11 @@
         "avg": "avg",
         "total": "total",
         "latest": "latest",
+        "Min": "Min",
+        "Max": "Max",
+        "Avg": "Avg",
+        "Total": "Total",
+        "Latest": "Latest",
         "comparison-time-ago": {
             "previousInterval": "(previous interval)",
             "customInterval": "(custom interval)",

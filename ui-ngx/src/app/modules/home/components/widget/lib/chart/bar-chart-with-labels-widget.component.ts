@@ -53,19 +53,14 @@ import { CallbackDataParams, CustomSeriesRenderItem, LabelLayoutOptionCallback }
 import {
   ECharts,
   echartsModule,
-  EChartsOption,
+  EChartsOption, EChartsSeriesItem,
   echartsTooltipFormatter,
   NamedDataSet,
   toNamedData
 } from '@home/components/widget/lib/chart/echarts-widget.models';
 import { IntervalMath } from '@shared/models/time/time.models';
 
-interface BarChartDataItem {
-  id: string;
-  dataKey: DataKey;
-  data: NamedDataSet;
-  enabled: boolean;
-}
+type BarChartDataItem = EChartsSeriesItem;
 
 interface BarChartLegendItem {
   id: string;

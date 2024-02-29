@@ -8,6 +8,7 @@
     "name": "Charts"
   },
   "widgetTypeFqns": [
+    "time_series_chart",
     "charts.basic_timeseries",
     "charts.state_chart",
     "range_chart",
