@@ -19,8 +19,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 import org.thingsboard.server.dao.entity.EntityServiceRegistry;
-import org.thingsboard.server.dao.housekeeper.data.EntitiesDeletionHousekeeperTask;
-import org.thingsboard.server.dao.housekeeper.data.HousekeeperTaskType;
+import org.thingsboard.server.common.data.housekeeper.EntitiesDeletionHousekeeperTask;
+import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
 
 @Component
 @RequiredArgsConstructor

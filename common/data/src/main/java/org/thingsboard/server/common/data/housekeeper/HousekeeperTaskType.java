@@ -13,13 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.housekeeper.data;
+package org.thingsboard.server.common.data.housekeeper;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+@RequiredArgsConstructor
+@Getter
 public enum HousekeeperTaskType {
-    DELETE_ENTITIES,
-    DELETE_ATTRIBUTES,
-    DELETE_TELEMETRY, // maybe divide into latest and ts kv history?
-    DELETE_EVENTS,
-    UNASSIGN_ALARMS,
-    DELETE_ENTITY_ALARMS
+
+    DELETE_ENTITIES("entities deletion"),
+    DELETE_ATTRIBUTES("attributes deletion"),
+    DELETE_TELEMETRY("telemetry deletion"),
+    DELETE_EVENTS("events deletion"),
+    UNASSIGN_ALARMS("alarms unassigning"),
+    DELETE_ENTITY_ALARMS("entity alarms deletion");
+
+    private final String description;
+
 }

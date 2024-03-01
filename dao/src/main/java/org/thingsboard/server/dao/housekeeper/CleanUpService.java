@@ -21,12 +21,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
-import org.thingsboard.server.dao.housekeeper.data.HousekeeperTask;
 import org.thingsboard.server.dao.relation.RelationService;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Component
@@ -34,7 +35,7 @@ import java.util.UUID;
 @Slf4j
 public class CleanUpService {
 
-    private final HousekeeperService housekeeperService;
+    private final Optional<HousekeeperService> housekeeperService;
     private final RelationService relationService;
 
     @TransactionalEventListener(fallbackExecution = true)
@@ -44,24 +45,31 @@ public class CleanUpService {
         log.trace("[{}] Handling entity deletion event: {}", tenantId, event);
         cleanUpRelatedData(tenantId, entityId);
         if (entityId.getEntityType() == EntityType.USER) {
-            housekeeperService.submitTask(HousekeeperTask.unassignAlarms((User) event.getEntity()));
+            housekeeperService.ifPresent(housekeeperService -> {
+                housekeeperService.submitTask(HousekeeperTask.unassignAlarms((User) event.getEntity()));
+            });
         }
     }
 
     public void cleanUpRelatedData(TenantId tenantId, EntityId entityId) {
         // todo: skipped entities list
         relationService.deleteEntityRelations(tenantId, entityId);
-        housekeeperService.submitTask(HousekeeperTask.deleteAttributes(tenantId, entityId));
-        housekeeperService.submitTask(HousekeeperTask.deleteTelemetry(tenantId, entityId));
-        housekeeperService.submitTask(HousekeeperTask.deleteEvents(tenantId, entityId));
-        housekeeperService.submitTask(HousekeeperTask.deleteEntityAlarms(tenantId, entityId));
+        housekeeperService.ifPresent(housekeeperService -> {
+            housekeeperService.submitTask(HousekeeperTask.deleteAttributes(tenantId, entityId));
+            housekeeperService.submitTask(HousekeeperTask.deleteTelemetry(tenantId, entityId));
+            housekeeperService.submitTask(HousekeeperTask.deleteEvents(tenantId, entityId));
+            housekeeperService.submitTask(HousekeeperTask.deleteEntityAlarms(tenantId, entityId));
+        });
     }
 
     public void removeTenantEntities(TenantId tenantId, EntityType... entityTypes) {
         UUID tasksKey = UUID.randomUUID(); // so that all tasks are pushed to single partition to be processed synchronously
-        for (EntityType entityType : entityTypes) {
-            housekeeperService.submitTask(tasksKey, HousekeeperTask.deleteEntities(tenantId, entityType));
-        }
+        // todo: just use tenantId as key in the impl
+        housekeeperService.ifPresent(housekeeperService -> {
+            for (EntityType entityType : entityTypes) {
+                housekeeperService.submitTask(tasksKey, HousekeeperTask.deleteEntities(tenantId, entityType));
+            }
+        });
     }
 
 }

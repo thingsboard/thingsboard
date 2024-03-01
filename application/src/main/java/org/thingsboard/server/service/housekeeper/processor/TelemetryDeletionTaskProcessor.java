@@ -20,8 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.kv.BaseDeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
-import org.thingsboard.server.dao.housekeeper.data.HousekeeperTask;
-import org.thingsboard.server.dao.housekeeper.data.HousekeeperTaskType;
+import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
+import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
 import java.util.List;

@@ -23,8 +23,7 @@ import org.thingsboard.server.common.stats.DefaultCounter;
 import org.thingsboard.server.common.stats.StatsCounter;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.stats.StatsType;
-import org.thingsboard.server.dao.housekeeper.data.HousekeeperTask;
-import org.thingsboard.server.dao.housekeeper.data.HousekeeperTaskType;
+import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
 import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperServiceMsg;
 
 import java.util.ArrayList;

@@ -13,24 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.housekeeper.data;
+package org.thingsboard.server.common.data.housekeeper;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.TenantId;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class AlarmsUnassignHousekeeperTask extends HousekeeperTask {
+public class EntitiesDeletionHousekeeperTask extends HousekeeperTask {
 
-    private String userTitle;
+    private EntityType entityType;
 
-    protected AlarmsUnassignHousekeeperTask(User user) {
-        super(user.getTenantId(), user.getId(), HousekeeperTaskType.UNASSIGN_ALARMS);
-        this.userTitle = user.getTitle();
+    protected EntitiesDeletionHousekeeperTask(TenantId tenantId, EntityType entityType) {
+        super(tenantId, tenantId, HousekeeperTaskType.DELETE_ENTITIES);
+        this.entityType = entityType;
+    }
+
+    @JsonIgnore
+    @Override
+    public String getDescription() {
+        return entityType.getNormalName().toLowerCase() + "s deletion";
     }
 
 }

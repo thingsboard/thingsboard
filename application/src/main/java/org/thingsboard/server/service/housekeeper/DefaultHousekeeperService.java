@@ -21,10 +21,12 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
+import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
+import org.thingsboard.server.common.data.notification.rule.trigger.TaskProcessingFailureTrigger;
+import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.housekeeper.HousekeeperService;
-import org.thingsboard.server.dao.housekeeper.data.HousekeeperTask;
-import org.thingsboard.server.dao.housekeeper.data.HousekeeperTaskType;
 import org.thingsboard.server.gen.transport.TransportProtos.HousekeeperTaskProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperServiceMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
@@ -60,6 +62,7 @@ public class DefaultHousekeeperService implements HousekeeperService {
     private final TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> producer;
     private final HousekeeperReprocessingService reprocessingService;
     private final HousekeeperStatsService statsService;
+    private final NotificationRuleProcessor notificationRuleProcessor;
 
     private final ExecutorService consumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("housekeeper-consumer"));
     private final ExecutorService executor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("housekeeper-task-processor"));
@@ -75,11 +78,13 @@ public class DefaultHousekeeperService implements HousekeeperService {
                                      TbCoreQueueFactory queueFactory,
                                      TbQueueProducerProvider producerProvider,
                                      HousekeeperStatsService statsService,
+                                     NotificationRuleProcessor notificationRuleProcessor,
                                      @Lazy List<HousekeeperTaskProcessor<?>> taskProcessors) {
         this.consumer = queueFactory.createHousekeeperMsgConsumer();
         this.producer = producerProvider.getHousekeeperMsgProducer();
         this.reprocessingService = reprocessingService;
         this.statsService = statsService;
+        this.notificationRuleProcessor = notificationRuleProcessor;
         this.taskProcessors = taskProcessors.stream().collect(Collectors.toMap(HousekeeperTaskProcessor::getTaskType, p -> p));
     }
 
@@ -155,12 +160,12 @@ public class DefaultHousekeeperService implements HousekeeperService {
                     task.getTaskType(), msg.getTask().getAttempt(), task, error);
             reprocessingService.submitForReprocessing(msg, error);
             statsService.reportFailure(task.getTaskType(), msg);
+            notificationRuleProcessor.process(TaskProcessingFailureTrigger.builder()
+                    .task(task)
+                    .error(error)
+                    .attempt(msg.getTask().getAttempt())
+                    .build());
         }
-    }
-
-    @Override
-    public void submitTask(HousekeeperTask task) {
-        submitTask(task.getEntityId().getId(), task);
     }
 
     @Override

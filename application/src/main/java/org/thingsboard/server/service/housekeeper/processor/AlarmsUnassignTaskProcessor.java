@@ -20,8 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.dao.housekeeper.data.HousekeeperTaskType;
-import org.thingsboard.server.dao.housekeeper.data.AlarmsUnassignHousekeeperTask;
+import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
+import org.thingsboard.server.common.data.housekeeper.AlarmsUnassignHousekeeperTask;
 import org.thingsboard.server.service.entitiy.alarm.TbAlarmService;
 
 import java.util.List;

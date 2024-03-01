@@ -15,8 +15,8 @@
  */
 package org.thingsboard.server.service.housekeeper.processor;
 
-import org.thingsboard.server.dao.housekeeper.data.HousekeeperTask;
-import org.thingsboard.server.dao.housekeeper.data.HousekeeperTaskType;
+import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
+import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
 
 public interface HousekeeperTaskProcessor<T extends HousekeeperTask> {
 

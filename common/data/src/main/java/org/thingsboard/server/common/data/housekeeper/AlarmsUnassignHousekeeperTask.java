@@ -13,19 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.housekeeper;
+package org.thingsboard.server.common.data.housekeeper;
 
-import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
+import lombok.AccessLevel;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.User;
 
-import java.util.UUID;
+@Data
+@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class AlarmsUnassignHousekeeperTask extends HousekeeperTask {
 
-public interface HousekeeperService {
+    private String userTitle;
 
-    default void submitTask(HousekeeperTask task) {
-        submitTask(task.getEntityId().getId(), task);
+    protected AlarmsUnassignHousekeeperTask(User user) {
+        super(user.getTenantId(), user.getId(), HousekeeperTaskType.UNASSIGN_ALARMS);
+        this.userTitle = user.getTitle();
     }
-
-    // tasks with the same key will be pushed to the same partition and thus processed synchronously
-    void submitTask(UUID key, HousekeeperTask task);
 
 }
