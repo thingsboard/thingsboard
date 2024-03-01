@@ -131,7 +131,7 @@ export const singleSwitchDefaultSettings: SingleSwitchWidgetSettings = {
     },
     setAttribute: {
       key: 'state',
-      scope: AttributeScope.SHARED_SCOPE
+      scope: AttributeScope.SERVER_SCOPE
     },
     putTimeSeries: {
       key: 'state'
@@ -152,7 +152,7 @@ export const singleSwitchDefaultSettings: SingleSwitchWidgetSettings = {
     },
     setAttribute: {
       key: 'state',
-      scope: AttributeScope.SHARED_SCOPE
+      scope: AttributeScope.SERVER_SCOPE
     },
     putTimeSeries: {
       key: 'state'

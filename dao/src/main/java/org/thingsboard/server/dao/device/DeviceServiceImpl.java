@@ -163,7 +163,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         return doSaveDevice(device, accessToken, true);
     }
 
-    @Transactional
     @Override
     public Device saveDevice(Device device, boolean doValidate) {
         return doSaveDevice(device, null, doValidate);
