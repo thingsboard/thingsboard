@@ -21,6 +21,7 @@ import {
   createTimeSeriesXAxisOption,
   createTimeSeriesYAxis,
   generateChartData,
+  parseThresholdData, SeriesLabelPosition,
   TimeSeriesChartDataItem,
   timeSeriesChartDefaultSettings,
   timeSeriesChartKeyDefaultSettings,
@@ -30,8 +31,6 @@ import {
   TimeSeriesChartThresholdItem,
   TimeSeriesChartThresholdType,
   TimeSeriesChartYAxis,
-  parseThresholdData,
-  PointLabelPosition,
   updateDarkMode
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { ResizeObserver } from '@juggle/resize-observer';
@@ -60,8 +59,19 @@ import { BehaviorSubject } from 'rxjs';
 import { AggregationType } from '@shared/models/time/time.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetSubscriptionOptions } from '@core/api/widget-api.models';
+import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 
 export class TbTimeSeriesChart {
+
+  public static dataKeySettings(): DataKeySettingsFunction {
+    return (key, isLatestDataKey) => {
+      if (!isLatestDataKey) {
+        return mergeDeep<TimeSeriesChartKeySettings>({} as TimeSeriesChartKeySettings,
+          timeSeriesChartKeyDefaultSettings);
+      }
+      return null;
+    };
+  }
 
   private readonly shapeResize$: ResizeObserver;
 
@@ -247,7 +257,10 @@ export class TbTimeSeriesChart {
         for (const dataKey of dataKeys) {
           const keySettings = mergeDeep<TimeSeriesChartKeySettings>({} as TimeSeriesChartKeySettings,
             timeSeriesChartKeyDefaultSettings, dataKey.settings);
-          if (keySettings.showPointLabel && keySettings.pointLabelPosition === PointLabelPosition.top) {
+          if ((keySettings.type === TimeSeriesChartSeriesType.line && keySettings.lineSettings.showPointLabel &&
+              keySettings.lineSettings.pointLabelPosition === SeriesLabelPosition.top) ||
+            (keySettings.type === TimeSeriesChartSeriesType.bar && keySettings.barSettings.showLabel &&
+              keySettings.barSettings.labelPosition === SeriesLabelPosition.top)) {
             this.topPointLabels = true;
           }
           dataKey.settings = keySettings;
@@ -280,8 +293,9 @@ export class TbTimeSeriesChart {
         if (this.ctx.datasources.length) {
           for (const datasource of this.ctx.datasources) {
             latestDataKey = datasource.latestDataKeys?.find(d =>
-              (d.type === DataKeyType.function && d.label === threshold.latestKeyName) ||
-              (d.type !== DataKeyType.function && d.name === threshold.latestKeyName));
+              (d.type === DataKeyType.function && d.label === threshold.latestKey) ||
+              (d.type !== DataKeyType.function && d.name === threshold.latestKey &&
+               d.type === threshold.latestKeyType));
             if (latestDataKey) {
               break;
             }

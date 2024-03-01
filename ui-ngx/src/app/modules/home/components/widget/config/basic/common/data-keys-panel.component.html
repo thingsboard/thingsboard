@@ -25,6 +25,7 @@
       <div *ngIf="!hideDataKeyColor" class="tb-form-table-header-cell tb-color-header" translate>datakey.color</div>
       <div *ngIf="!hideUnits" class="tb-form-table-header-cell tb-units-header" translate>widget-config.units-short</div>
       <div *ngIf="!hideDecimals" class="tb-form-table-header-cell tb-decimals-header" translate>widget-config.decimals-short</div>
+      <div *ngIf="showTimeSeriesType" class="tb-form-table-header-cell tb-time-series-type-header" translate>widgets.time-series-chart.series.type</div>
       <div class="tb-form-table-header-cell tb-actions-header"></div>
     </div>
     <div *ngIf="keysFormArray().controls.length; else noKeys" class="tb-form-table-body tb-drop-list"
@@ -43,6 +44,7 @@
                          [hasAdditionalLatestDataKeys]="hasAdditionalLatestDataKeys"
                          [hideDataKeyColor]="hideDataKeyColor"
                          [hideDecimals]="hideDecimals"
+                         [showTimeSeriesType]="showTimeSeriesType"
                          [hideUnits]="hideUnits"
                          [hideDataKeyDecimals]="hideDataKeyDecimals"
                          [hideDataKeyUnits]="hideDataKeyUnits"

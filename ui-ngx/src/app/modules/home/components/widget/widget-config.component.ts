@@ -84,6 +84,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { basicWidgetConfigComponentsMap } from '@home/components/widget/config/basic/basic-widget-config.module';
 import { TimewindowConfigData } from '@home/components/widget/config/timewindow-config-panel.component';
 import Timeout = NodeJS.Timeout;
+import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 
 const emptySettingsSchema: JsonSchema = {
   type: 'object',
@@ -734,7 +735,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     }
   }
 
-  public generateDataKey(chip: any, type: DataKeyType, datakeySettingsSchema: JsonSettingsSchema): DataKey {
+  public generateDataKey(chip: any, type: DataKeyType, datakeySettingsSchema: JsonSettingsSchema,
+                         isLatestDataKey: boolean, dataKeySettingsFunction: DataKeySettingsFunction): DataKey {
     if (isObject(chip)) {
       (chip as DataKey)._hash = Math.random();
       return chip;
@@ -767,6 +769,11 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       }
       if (datakeySettingsSchema && isDefined(datakeySettingsSchema.schema)) {
         result.settings = this.utils.generateObjectFromJsonSchema(datakeySettingsSchema.schema);
+      } else if (dataKeySettingsFunction) {
+        const settings = dataKeySettingsFunction(result, isLatestDataKey);
+        if (settings) {
+          result.settings = settings;
+        }
       }
       return result;
     }

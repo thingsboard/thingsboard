@@ -4334,8 +4334,13 @@
         "preview": "Preview"
     },
     "tooltip": {
+        "trigger": "Trigger",
+        "trigger-point": "Point",
+        "trigger-axis": "Axis",
         "value": "Value",
         "date": "Date",
+        "show-date-time-interval": "Show date time interval",
+        "show-date-time-interval-hint": "Show date time interval according to the data aggregation.",
         "background-color": "Background color",
         "background-blur": "Background blur"
     },
@@ -6589,6 +6594,24 @@
             "alarm-column-error": "At least one alarm column should be specified",
             "table-tabs": "Table tabs",
             "show-cell-actions-menu-mobile": "Show cell actions dropdown menu in mobile mode"
+        },
+        "time-series-chart": {
+            "chart": "Chart",
+            "data-zoom": "Data zoom",
+            "stack-mode": "Stack mode",
+            "stack-mode-hint": "Stacks series on the chart. The series with the same unit would be put on top of each other.",
+            "axes": "Axes",
+            "series": {
+              "legend-settings": "Legend settings",
+              "show-in-legend": "Show in legend",
+              "show-in-legend-hint": "Show series name and data in legend.",
+              "hidden-by-default": "Hidden by default",
+              "hidden-by-default-hint": "Make series hidden in legend by default.",
+              "series-type": "Series type",
+              "type": "Type",
+              "type-line": "Line",
+              "type-bar": "Bar"
+            }
         },
         "wind-speed-direction": {
             "layout": "Layout",

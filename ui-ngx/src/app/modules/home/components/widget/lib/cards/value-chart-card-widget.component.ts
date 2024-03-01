@@ -148,13 +148,14 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
     if (this.ctx.defaultSubscription.firstDatasource?.dataKeys?.length) {
       this.lineChartDataKey = this.ctx.defaultSubscription.firstDatasource?.dataKeys[0];
       this.lineChartDataKey.settings = {
-        showPointLabel: false,
         type: TimeSeriesChartSeriesType.line,
         lineSettings: {
-          smooth: true,
           showLine: true,
+          step: false,
+          smooth: true,
           lineWidth: 2,
-          showPoints: false
+          showPoints: false,
+          showPointLabel: false
         }
       } as TimeSeriesChartKeySettings;
     }

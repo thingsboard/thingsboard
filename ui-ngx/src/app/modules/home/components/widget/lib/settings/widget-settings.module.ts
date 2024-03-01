@@ -330,6 +330,9 @@ import {
 import {
   ToggleButtonWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/button/toggle-button-widget-settings.component';
+import {
+  TimeSeriesChartKeySettingsComponent
+} from '@home/components/widget/lib/settings/chart/time-series-chart-key-settings.component';
 
 @NgModule({
   declarations: [
@@ -448,7 +451,8 @@ import {
     CommandButtonWidgetSettingsComponent,
     PowerButtonWidgetSettingsComponent,
     SliderWidgetSettingsComponent,
-    ToggleButtonWidgetSettingsComponent
+    ToggleButtonWidgetSettingsComponent,
+    TimeSeriesChartKeySettingsComponent
   ],
   imports: [
     CommonModule,
@@ -572,7 +576,8 @@ import {
     CommandButtonWidgetSettingsComponent,
     PowerButtonWidgetSettingsComponent,
     SliderWidgetSettingsComponent,
-    ToggleButtonWidgetSettingsComponent
+    ToggleButtonWidgetSettingsComponent,
+    TimeSeriesChartKeySettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -663,5 +668,6 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-command-button-widget-settings': CommandButtonWidgetSettingsComponent,
   'tb-power-button-widget-settings': PowerButtonWidgetSettingsComponent,
   'tb-slider-widget-settings': SliderWidgetSettingsComponent,
-  'tb-toggle-button-widget-settings': ToggleButtonWidgetSettingsComponent
+  'tb-toggle-button-widget-settings': ToggleButtonWidgetSettingsComponent,
+  'tb-time-series-chart-key-settings': TimeSeriesChartKeySettingsComponent
 };

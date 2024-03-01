@@ -52,7 +52,7 @@ import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { AggregationType } from '@shared/models/time/time.models';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
 import { MatChipGrid, MatChipInputEvent } from '@angular/material/chips';
-import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeysCallbacks, DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { Observable, of } from 'rxjs';
 import { filter, map, mergeMap, publishReplay, refCount, share, tap } from 'rxjs/operators';
@@ -68,6 +68,13 @@ import { IAliasController } from '@core/api/widget-api.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { alarmFields } from '@shared/models/alarm.models';
 import { UtilsService } from '@core/services/utils.service';
+import {
+  TimeSeriesChartKeySettings,
+  TimeSeriesChartSeriesType,
+  timeSeriesChartSeriesTypeIcons,
+  timeSeriesChartSeriesTypes,
+  timeSeriesChartSeriesTypeTranslations
+} from '@home/components/widget/lib/chart/time-series-chart.models';
 
 export const dataKeyValid = (key: DataKey): boolean => !!key && !!key.type && !!key.name;
 
@@ -98,6 +105,10 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
 
   dataKeyTypes = DataKeyType;
   widgetTypes = widgetType;
+
+  timeSeriesChartSeriesTypes = timeSeriesChartSeriesTypes;
+  timeSeriesChartSeriesTypeTranslations = timeSeriesChartSeriesTypeTranslations;
+  timeSeriesChartSeriesTypeIcons = timeSeriesChartSeriesTypeIcons;
 
   separatorKeysCodes: number[] = [ENTER, COMMA, SEMICOLON];
 
@@ -149,6 +160,10 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
   @Input()
   @coerceBoolean()
   hideDecimals = false;
+
+  @Input()
+  @coerceBoolean()
+  showTimeSeriesType = false;
 
   @Input()
   @coerceBoolean()
@@ -220,6 +235,10 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
     return this.widgetConfigComponent.modelValue?.latestDataKeySettingsDirective;
   }
 
+  get dataKeySettingsFunction(): DataKeySettingsFunction {
+    return this.widgetConfigComponent.modelValue?.dataKeySettingsFunction;
+  }
+
   get isEntityDatasource(): boolean {
     return [DatasourceType.device, DatasourceType.entity].includes(this.datasourceType);
   }
@@ -271,6 +290,9 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
       this.keyRowFormGroup.valueChanges.subscribe(
         () => this.clearKeySearchCache()
       );
+    }
+    if (this.showTimeSeriesType) {
+      this.keyRowFormGroup.addControl('timeSeriesType', this.fb.control(null));
     }
     this.keyRowFormGroup.valueChanges.subscribe(
       () => this.updateModel()
@@ -353,6 +375,13 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
         latest: (value as any)?.latest
       }, {emitEvent: false});
     }
+    if (this.showTimeSeriesType) {
+      const settings = value?.settings as TimeSeriesChartKeySettings;
+      const timeSeriesType = settings?.type || TimeSeriesChartSeriesType.line;
+      this.keyRowFormGroup.patchValue({
+        timeSeriesType
+      }, {emitEvent: false});
+    }
     this.keysFormControl.patchValue(this.modelValue ? [this.modelValue] : [], {emitEvent: false});
     this.cd.markForCheck();
   }
@@ -413,6 +442,9 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
         this.keyRowFormGroup.get('color').patchValue(this.modelValue.color, {emitEvent: false});
         this.keyRowFormGroup.get('units').patchValue(this.modelValue.units, {emitEvent: false});
         this.keyRowFormGroup.get('decimals').patchValue(this.modelValue.decimals, {emitEvent: false});
+        if (this.showTimeSeriesType) {
+          this.keyRowFormGroup.get('timeSeriesType').patchValue(this.modelValue.settings?.type, {emitEvent: false});
+        }
         this.updateModel();
         this.cd.markForCheck();
       }
@@ -497,9 +529,13 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
   }
 
   private addKeyFromChipValue(chip: DataKey) {
-    this.modelValue = this.callbacks.generateDataKey(chip.name, chip.type, this.dataKeySettingsSchema);
+    this.modelValue = this.callbacks.generateDataKey(chip.name, chip.type, this.dataKeySettingsSchema, this.isLatestDataKeys,
+      this.dataKeySettingsFunction);
     if (!this.keyRowFormGroup.get('label').value) {
       this.keyRowFormGroup.get('label').patchValue(this.modelValue.label, {emitEvent: false});
+    }
+    if (this.showTimeSeriesType) {
+      this.keyRowFormGroup.get('timeSeriesType').patchValue(this.modelValue.settings?.type, {emitEvent: false});
     }
     this.updateModel();
     this.clearKeyChip('', false);
@@ -516,6 +552,10 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
     if (this.modelValue !== null) {
       const value: DataKey = this.keyRowFormGroup.value;
       this.modelValue = {...this.modelValue, ...value};
+      if (this.showTimeSeriesType) {
+        this.modelValue.settings.type = (this.modelValue as any).timeSeriesType;
+        delete (this.modelValue as any).timeSeriesType;
+      }
     }
     this.propagateChange(this.modelValue);
   }

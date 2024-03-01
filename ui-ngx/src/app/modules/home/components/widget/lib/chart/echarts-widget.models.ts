@@ -44,7 +44,7 @@ import {
 } from 'echarts/charts';
 import { LabelLayout } from 'echarts/features';
 import { CanvasRenderer, SVGRenderer } from 'echarts/renderers';
-import { DataEntry, DataKey, DataSet } from '@shared/models/widget.models';
+import { DataEntry, DataKey, DataSet, LegendDirection } from '@shared/models/widget.models';
 import {
   calculateAggIntervalWithWidgetTimeWindow,
   IntervalMath,
@@ -303,6 +303,13 @@ export enum EChartsTooltipTrigger {
   point = 'point',
   axis = 'axis'
 }
+
+export const tooltipTriggerTranslationMap = new Map<EChartsTooltipTrigger, string>(
+  [
+    [ EChartsTooltipTrigger.point, 'tooltip.trigger-point' ],
+    [ EChartsTooltipTrigger.axis, 'tooltip.trigger-axis' ]
+  ]
+);
 
 export interface EChartsTooltipWidgetSettings {
   showTooltip: boolean;

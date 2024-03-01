@@ -59,7 +59,7 @@
     min-width: 100px;
   }
 
-  .tb-color-field, .tb-units-field, .tb-decimals-field {
+  .tb-color-field, .tb-units-field, .tb-decimals-field, .tb-time-series-type-field {
     display: flex;
     flex-direction: row;
     place-content: center;
@@ -79,6 +79,14 @@
   .tb-decimals-field {
     width: 60px;
     min-width: 60px;
+  }
+
+  .tb-time-series-type-field {
+    width: 60px;
+    min-width: 60px;
+    .mat-icon {
+      color: rgba(0,0,0,0.76);
+    }
   }
 
   .tb-label-field, .tb-units-field, .tb-color-field, .tb-decimals-field {
@@ -110,6 +118,14 @@
         width: auto;
         max-width: 140px;
       }
+    }
+  }
+}
+
+.tb-time-series-type-field {
+  .mat-mdc-option:not(.mdc-list-item--selected) {
+    .mat-icon {
+      color: rgba(0,0,0,0.54);
     }
   }
 }

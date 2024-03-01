@@ -148,13 +148,14 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
       if (this.ctx.defaultSubscription.firstDatasource?.dataKeys?.length) {
         this.lineChartDataKey = this.ctx.defaultSubscription.firstDatasource?.dataKeys[0];
         this.lineChartDataKey.settings = {
-          showPointLabel: false,
           type: TimeSeriesChartSeriesType.line,
           lineSettings: {
-            smooth: false,
             showLine: true,
+            step: false,
+            smooth: false,
             lineWidth: 2,
-            showPoints: false
+            showPoints: false,
+            showPointLabel: false
           }
         } as TimeSeriesChartKeySettings;
       }

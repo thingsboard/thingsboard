@@ -158,6 +158,21 @@
       <div *ngIf="singleRow" matSuffix fxHide.lt-md translate>widget-config.decimals-suffix</div>
     </mat-form-field>
   </div>
+  <div *ngIf="showTimeSeriesType" class="tb-time-series-type-field">
+    <mat-form-field *ngIf="displayUnitsOrDigits" class="tb-inline-field fixed-height" appearance="outline" subscriptSizing="dynamic">
+      <mat-select formControlName="timeSeriesType" panelClass="tb-time-series-type-field">
+        <mat-select-trigger>
+          <tb-icon *ngIf="keyRowFormGroup.get('timeSeriesType').value">
+            {{ timeSeriesChartSeriesTypeIcons.get(keyRowFormGroup.get('timeSeriesType').value) }}
+          </tb-icon>
+        </mat-select-trigger>
+        <mat-option *ngFor="let type of timeSeriesChartSeriesTypes" [value]="type" class="flex">
+          <tb-icon>{{ timeSeriesChartSeriesTypeIcons.get(type) }}</tb-icon>
+          <span>{{ timeSeriesChartSeriesTypeTranslations.get(type) | translate }}</span>
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
   <div *ngIf="!singleRow" class="tb-form-table-row-cell-buttons">
     <div fxHide.lt-lg class="tb-settings-button">
       <button *ngIf="modelValue"
