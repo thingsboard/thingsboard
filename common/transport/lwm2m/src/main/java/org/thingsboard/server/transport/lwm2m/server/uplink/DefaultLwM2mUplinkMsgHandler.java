@@ -498,7 +498,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
             targetIds.forEach(targetId -> sendObserveRequest(lwM2MClient, targetId,
                     new TbLwM2MLatchCallback<>(latch, new TbLwM2MObserveCallback(this, logService, lwM2MClient, targetId))));
 
-            latch.await();
+            latch.await(config.getTimeout(), TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             log.error("[{}] Failed to await Observe requests!", lwM2MClient.getEndpoint(), e);
         } catch (Exception e) {
