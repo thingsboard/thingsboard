@@ -22,7 +22,10 @@ import { AppState } from '@core/core.state';
 import { mergeDeep } from '@core/utils';
 import {
   timeSeriesChartKeyDefaultSettings,
-  TimeSeriesChartKeySettings
+  TimeSeriesChartKeySettings,
+  TimeSeriesChartSeriesType,
+  timeSeriesChartSeriesTypes,
+  timeSeriesChartSeriesTypeTranslations
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 
@@ -32,6 +35,12 @@ import { WidgetConfigComponentData } from '@home/models/widget-component.models'
   styleUrls: ['./../widget-settings.scss']
 })
 export class TimeSeriesChartKeySettingsComponent extends WidgetSettingsComponent {
+
+  TimeSeriesChartSeriesType = TimeSeriesChartSeriesType;
+
+  timeSeriesChartSeriesTypes = timeSeriesChartSeriesTypes;
+
+  timeSeriesChartSeriesTypeTranslations = timeSeriesChartSeriesTypeTranslations;
 
   timeSeriesChartKeySettingsForm: UntypedFormGroup;
 
@@ -60,23 +69,30 @@ export class TimeSeriesChartKeySettingsComponent extends WidgetSettingsComponent
       showInLegend: [seriesSettings.showInLegend, []],
       dataHiddenByDefault: [seriesSettings.dataHiddenByDefault, []],
       type: [seriesSettings.type, []],
-      lineSettings: [settings.lineSettings, []],
-      barSettings: [settings.barSettings, []]
+      lineSettings: [seriesSettings.lineSettings, []],
+      barSettings: [seriesSettings.barSettings, []]
     });
   }
 
   protected validatorTriggers(): string[] {
-    return ['showInLegend'];
+    return ['showInLegend', 'type'];
   }
 
   protected updateValidators(_emitEvent: boolean) {
     const showInLegend: boolean = this.timeSeriesChartKeySettingsForm.get('showInLegend').value;
+    const type: TimeSeriesChartSeriesType = this.timeSeriesChartKeySettingsForm.get('type').value;
     if (showInLegend) {
       this.timeSeriesChartKeySettingsForm.get('dataHiddenByDefault').enable();
     } else {
       this.timeSeriesChartKeySettingsForm.get('dataHiddenByDefault').patchValue(false, {emitEvent: false});
       this.timeSeriesChartKeySettingsForm.get('dataHiddenByDefault').disable();
     }
+    if (type === TimeSeriesChartSeriesType.line) {
+      this.timeSeriesChartKeySettingsForm.get('lineSettings').enable();
+      this.timeSeriesChartKeySettingsForm.get('barSettings').disable();
+    } else if (type === TimeSeriesChartSeriesType.bar) {
+      this.timeSeriesChartKeySettingsForm.get('lineSettings').disable();
+      this.timeSeriesChartKeySettingsForm.get('barSettings').enable();
+    }
   }
-
 }

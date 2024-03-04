@@ -333,6 +333,15 @@ import {
 import {
   TimeSeriesChartKeySettingsComponent
 } from '@home/components/widget/lib/settings/chart/time-series-chart-key-settings.component';
+import {
+  TimeSeriesChartLineSettingsComponent
+} from '@home/components/widget/lib/settings/chart/time-series-chart-line-settings.component';
+import {
+  TimeSeriesChartFillSettingsComponent
+} from '@home/components/widget/lib/settings/chart/time-series-chart-fill-settings.component';
+import {
+  TimeSeriesChartBarSettingsComponent
+} from '@home/components/widget/lib/settings/chart/time-series-chart-bar-settings.component';
 
 @NgModule({
   declarations: [
@@ -452,7 +461,10 @@ import {
     PowerButtonWidgetSettingsComponent,
     SliderWidgetSettingsComponent,
     ToggleButtonWidgetSettingsComponent,
-    TimeSeriesChartKeySettingsComponent
+    TimeSeriesChartKeySettingsComponent,
+    TimeSeriesChartLineSettingsComponent,
+    TimeSeriesChartBarSettingsComponent,
+    TimeSeriesChartFillSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -577,7 +589,10 @@ import {
     PowerButtonWidgetSettingsComponent,
     SliderWidgetSettingsComponent,
     ToggleButtonWidgetSettingsComponent,
-    TimeSeriesChartKeySettingsComponent
+    TimeSeriesChartKeySettingsComponent,
+    TimeSeriesChartLineSettingsComponent,
+    TimeSeriesChartBarSettingsComponent,
+    TimeSeriesChartFillSettingsComponent
   ]
 })
 export class WidgetSettingsModule {

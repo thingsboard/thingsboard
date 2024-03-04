@@ -96,11 +96,37 @@ export enum TimeSeriesChartShape {
   none = 'none'
 }
 
+export const timeSeriesChartShapes = Object.keys(TimeSeriesChartShape) as TimeSeriesChartShape[];
+
+export const timeSeriesChartShapeTranslations = new Map<TimeSeriesChartShape, string>(
+  [
+    [TimeSeriesChartShape.emptyCircle, 'widgets.time-series-chart.shape-empty-circle'],
+    [TimeSeriesChartShape.circle, 'widgets.time-series-chart.shape-circle'],
+    [TimeSeriesChartShape.rect, 'widgets.time-series-chart.shape-rect'],
+    [TimeSeriesChartShape.roundRect, 'widgets.time-series-chart.shape-round-rect'],
+    [TimeSeriesChartShape.triangle, 'widgets.time-series-chart.shape-triangle'],
+    [TimeSeriesChartShape.diamond, 'widgets.time-series-chart.shape-diamond'],
+    [TimeSeriesChartShape.pin, 'widgets.time-series-chart.shape-pin'],
+    [TimeSeriesChartShape.arrow, 'widgets.time-series-chart.shape-arrow'],
+    [TimeSeriesChartShape.none, 'widgets.time-series-chart.shape-none']
+  ]
+);
+
 export enum TimeSeriesChartLineType {
   solid = 'solid',
   dashed = 'dashed',
   dotted = 'dotted'
 }
+
+export const timeSeriesLineTypes = Object.keys(TimeSeriesChartLineType) as TimeSeriesChartLineType[];
+
+export const timeSeriesLineTypeTranslations = new Map<TimeSeriesChartLineType, string>(
+  [
+    [TimeSeriesChartLineType.solid, 'widgets.time-series-chart.line-type-solid'],
+    [TimeSeriesChartLineType.dashed, 'widgets.time-series-chart.line-type-dashed'],
+    [TimeSeriesChartLineType.dotted, 'widgets.time-series-chart.line-type-dotted']
+  ]
+);
 
 export enum ThresholdLabelPosition {
   start = 'start',
@@ -129,16 +155,45 @@ export enum SeriesFillType {
   gradient = 'gradient'
 }
 
+export const seriesFillTypes = Object.keys(SeriesFillType) as SeriesFillType[];
+
+export const seriesFillTypeTranslations = new Map<SeriesFillType, string>(
+  [
+    [SeriesFillType.none, 'widgets.time-series-chart.series.fill-type-none'],
+    [SeriesFillType.opacity, 'widgets.time-series-chart.series.fill-type-opacity'],
+    [SeriesFillType.gradient, 'widgets.time-series-chart.series.fill-type-gradient']
+  ]
+);
+
 export enum SeriesLabelPosition {
   top = 'top',
   bottom = 'bottom'
 }
+
+export const seriesLabelPositions = Object.keys(SeriesLabelPosition) as SeriesLabelPosition[];
+
+export const seriesLabelPositionTranslations = new Map<SeriesLabelPosition, string>(
+  [
+    [SeriesLabelPosition.top, 'widgets.time-series-chart.series.label-position-top'],
+    [SeriesLabelPosition.bottom, 'widgets.time-series-chart.series.label-position-bottom']
+  ]
+);
 
 export enum LineSeriesStepType {
   start = 'start',
   middle = 'middle',
   end = 'end'
 }
+
+export const lineSeriesStepTypes = Object.keys(LineSeriesStepType) as LineSeriesStepType[];
+
+export const lineSeriesStepTypeTranslations = new Map<LineSeriesStepType, string>(
+  [
+    [LineSeriesStepType.start, 'widgets.time-series-chart.series.line.step-type-start'],
+    [LineSeriesStepType.middle, 'widgets.time-series-chart.series.line.step-type-middle'],
+    [LineSeriesStepType.end, 'widgets.time-series-chart.series.line.step-type-end']
+  ]
+);
 
 export enum TimeSeriesChartSeriesType {
   line = 'line',

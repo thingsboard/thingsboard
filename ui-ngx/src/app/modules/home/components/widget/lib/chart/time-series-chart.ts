@@ -259,8 +259,7 @@ export class TbTimeSeriesChart {
             timeSeriesChartKeyDefaultSettings, dataKey.settings);
           if ((keySettings.type === TimeSeriesChartSeriesType.line && keySettings.lineSettings.showPointLabel &&
               keySettings.lineSettings.pointLabelPosition === SeriesLabelPosition.top) ||
-            (keySettings.type === TimeSeriesChartSeriesType.bar && keySettings.barSettings.showLabel &&
-              keySettings.barSettings.labelPosition === SeriesLabelPosition.top)) {
+            (keySettings.type === TimeSeriesChartSeriesType.bar && keySettings.barSettings.showLabel)) {
             this.topPointLabels = true;
           }
           dataKey.settings = keySettings;

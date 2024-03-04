@@ -6601,6 +6601,20 @@
             "stack-mode": "Stack mode",
             "stack-mode-hint": "Stacks series on the chart. The series with the same unit would be put on top of each other.",
             "axes": "Axes",
+            "line-type": "Line type",
+            "line-type-solid": "Solid",
+            "line-type-dashed": "Dashed",
+            "line-type-dotted": "Dotted",
+            "line-width": "Line width",
+            "shape-empty-circle": "Empty circle",
+            "shape-circle": "Circle",
+            "shape-rect": "Rectangle",
+            "shape-round-rect": "Rounded rectangle",
+            "shape-triangle": "Triangle",
+            "shape-diamond": "Diamond",
+            "shape-pin": "Pin",
+            "shape-arrow": "Arrow",
+            "shape-none": "None",
             "series": {
               "legend-settings": "Legend settings",
               "show-in-legend": "Show in legend",
@@ -6610,7 +6624,43 @@
               "series-type": "Series type",
               "type": "Type",
               "type-line": "Line",
-              "type-bar": "Bar"
+              "type-bar": "Bar",
+              "label-position-top": "Top",
+              "label-position-bottom": "Bottom",
+              "fill": "Fill",
+              "background": "Background",
+              "fill-type-none": "None",
+              "fill-type-solid": "Solid",
+              "fill-type-opacity": "Opacity",
+              "fill-type-gradient": "Gradient",
+              "opacity": "Opacity",
+              "gradient-stops": "Gradient stops",
+              "gradient-start": "start",
+              "gradient-end": "end",
+              "line": {
+                "line": "Line",
+                "show-line": "Show line",
+                "step-line": "Step line",
+                "step-type-start": "Start",
+                "step-type-middle": "Middle",
+                "step-type-end": "End",
+                "smooth-line": "Smooth line"
+              },
+              "point": {
+                "points": "Points",
+                "show-points": "Show points",
+                "point-label": "Point label",
+                "point-label-hint": "Display label with value over the series point.",
+                "point-shape": "Point shape",
+                "point-size": "Point size"
+              },
+              "bar": {
+                "show-border": "Show border",
+                "border-width": "Border width",
+                "border-radius": "Border radius",
+                "label": "Label",
+                "label-hint": "Display label with value over the bar."
+              }
             }
         },
         "wind-speed-direction": {

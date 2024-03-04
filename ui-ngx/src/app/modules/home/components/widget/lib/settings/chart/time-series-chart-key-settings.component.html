@@ -30,7 +30,17 @@
     </mat-slide-toggle>
   </div>
   <div class="tb-form-panel">
-    <div class="tb-form-panel-title" translate>widgets.time-series-chart.series.series-type</div>
-    TODO:
+    <div fxLayout="row" fxLayoutAlign="space-between center">
+      <div class="tb-form-panel-title" translate>widgets.time-series-chart.series.series-type</div>
+      <tb-toggle-select formControlName="type">
+        <tb-toggle-option *ngFor="let type of timeSeriesChartSeriesTypes" [value]="type">{{ timeSeriesChartSeriesTypeTranslations.get(type) | translate }}</tb-toggle-option>
+      </tb-toggle-select>
+    </div>
+    <tb-time-series-chart-line-settings [fxShow]="timeSeriesChartKeySettingsForm.get('type').value === TimeSeriesChartSeriesType.line"
+                                        formControlName="lineSettings">
+    </tb-time-series-chart-line-settings>
+    <tb-time-series-chart-bar-settings [fxShow]="timeSeriesChartKeySettingsForm.get('type').value === TimeSeriesChartSeriesType.bar"
+                                        formControlName="barSettings">
+    </tb-time-series-chart-bar-settings>
   </div>
 </ng-container>
