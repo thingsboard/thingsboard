@@ -92,6 +92,9 @@ import {
 import {
   WidgetButtonCustomStylePanelComponent
 } from '@home/components/widget/lib/settings/common/button/widget-button-custom-style-panel.component';
+import {
+  TimeSeriesChartAxisSettingsComponent
+} from '@home/components/widget/lib/settings/common/chart/time-series-chart-axis-settings.component';
 
 @NgModule({
   declarations: [
@@ -127,7 +130,8 @@ import {
     WidgetActionSettingsPanelComponent,
     WidgetButtonAppearanceComponent,
     WidgetButtonCustomStyleComponent,
-    WidgetButtonCustomStylePanelComponent
+    WidgetButtonCustomStylePanelComponent,
+    TimeSeriesChartAxisSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -167,7 +171,8 @@ import {
     WidgetActionSettingsPanelComponent,
     WidgetButtonAppearanceComponent,
     WidgetButtonCustomStyleComponent,
-    WidgetButtonCustomStylePanelComponent
+    WidgetButtonCustomStylePanelComponent,
+    TimeSeriesChartAxisSettingsComponent
   ],
   providers: [
     ColorSettingsComponentService,

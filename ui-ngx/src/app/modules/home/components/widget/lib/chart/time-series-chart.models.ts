@@ -84,6 +84,17 @@ export enum AxisPosition {
   bottom = 'bottom'
 }
 
+export const timeSeriesAxisPositions = Object.keys(AxisPosition) as AxisPosition[];
+
+export const timeSeriesAxisPositionTranslations = new Map<AxisPosition, string>(
+  [
+    [AxisPosition.left, 'widgets.time-series-chart.axis.position-left'],
+    [AxisPosition.right, 'widgets.time-series-chart.axis.position-right'],
+    [AxisPosition.top, 'widgets.time-series-chart.axis.position-top'],
+    [AxisPosition.bottom, 'widgets.time-series-chart.axis.position-bottom']
+  ]
+);
+
 export enum TimeSeriesChartShape {
   emptyCircle = 'emptyCircle',
   circle = 'circle',

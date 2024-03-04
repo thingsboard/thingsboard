@@ -100,13 +100,15 @@
     </div>
   </div>
   <div class="tb-form-panel">
-    <div class="tb-form-panel-title" translate>widgets.time-series-chart.axes</div>
-    <div class="tb-form-panel stroked">
-      TODO: Y Axis
-    </div>
-    <div class="tb-form-panel stroked">
-      TODO: X Axis
-    </div>
+    <div class="tb-form-panel-title" translate>widgets.time-series-chart.axis.axes</div>
+    <tb-time-series-chart-axis-settings
+      formControlName="yAxis"
+      axisType="yAxis">
+    </tb-time-series-chart-axis-settings>
+    <tb-time-series-chart-axis-settings
+      formControlName="xAxis"
+      axisType="xAxis">
+    </tb-time-series-chart-axis-settings>
   </div>
   <div class="tb-form-panel tb-slide-toggle">
     <mat-expansion-panel class="tb-settings" [expanded]="timeSeriesChartWidgetConfigForm.get('showLegend').value"
