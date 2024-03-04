@@ -43,7 +43,8 @@ public class WidgetMsgConstructorV1 extends BaseWidgetMsgConstructor {
 
     @Override
     public WidgetsBundleUpdateMsg constructWidgetsBundleUpdateMsg(UpdateMsgType msgType, WidgetsBundle widgetsBundle, List<String> widgets) {
-        imageService.inlineImageForEdge(widgetsBundle);
+        WidgetsBundle copy = JacksonUtil.clone(widgetsBundle);
+        imageService.inlineImageForEdge(copy);
         WidgetsBundleUpdateMsg.Builder builder = WidgetsBundleUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(widgetsBundle.getId().getId().getMostSignificantBits())
@@ -51,7 +52,7 @@ public class WidgetMsgConstructorV1 extends BaseWidgetMsgConstructor {
                 .setTitle(widgetsBundle.getTitle())
                 .setAlias(widgetsBundle.getAlias());
         if (widgetsBundle.getImage() != null) {
-            builder.setImage(ByteString.copyFrom(widgetsBundle.getImage().getBytes(StandardCharsets.UTF_8)));
+            builder.setImage(ByteString.copyFrom(copy.getImage().getBytes(StandardCharsets.UTF_8)));
         }
         if (widgetsBundle.getDescription() != null) {
             builder.setDescription(widgetsBundle.getDescription());
@@ -68,7 +69,8 @@ public class WidgetMsgConstructorV1 extends BaseWidgetMsgConstructor {
 
     @Override
     public WidgetTypeUpdateMsg constructWidgetTypeUpdateMsg(UpdateMsgType msgType, WidgetTypeDetails widgetTypeDetails, EdgeVersion edgeVersion) {
-        imageService.inlineImagesForEdge(widgetTypeDetails);
+        WidgetTypeDetails copy = JacksonUtil.clone(widgetTypeDetails);
+        imageService.inlineImagesForEdge(copy);
         WidgetTypeUpdateMsg.Builder builder = WidgetTypeUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(widgetTypeDetails.getId().getId().getMostSignificantBits())
@@ -93,7 +95,7 @@ public class WidgetMsgConstructorV1 extends BaseWidgetMsgConstructor {
             builder.setIsSystem(true);
         }
         if (widgetTypeDetails.getImage() != null) {
-            builder.setImage(widgetTypeDetails.getImage());
+            builder.setImage(copy.getImage());
         }
         if (widgetTypeDetails.getDescription() != null) {
             if (EdgeVersionUtils.isEdgeVersionOlderThan(edgeVersion, EdgeVersion.V_3_6_0) &&
