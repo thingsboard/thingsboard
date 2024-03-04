@@ -118,7 +118,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
     private void reSaveCustomerWithNewTitle(Customer currentCustomer) {
         String currentTitle = currentCustomer.getTitle();
-        String newTitle = currentTitle + "-" + UUID.randomUUID();
+        String newTitle = currentTitle + "_" + UUID.randomUUID();
         currentCustomer.setTitle(newTitle);
         try {
             customerService.saveCustomer(currentCustomer);
