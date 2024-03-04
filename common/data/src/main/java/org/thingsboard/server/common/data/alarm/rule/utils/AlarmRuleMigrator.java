@@ -172,7 +172,7 @@ public class AlarmRuleMigrator {
         }
 
         var predicateValue = simplePredicate.getValue();
-        var leftArgument = arguments.get(new TbPair<>(leftArgId, 1));
+        var leftArgument = arguments.get(new TbPair<>(leftArgId.substring(0, leftArgId.lastIndexOf("_1")), 1));
         String constantDescription;
         if (leftArgument.getType() == ArgumentType.CONSTANT) {
             constantDescription = ((ConstantArgument)leftArgument).getDescription();
