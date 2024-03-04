@@ -18,7 +18,7 @@ package org.thingsboard.rule.engine.api;
 import io.netty.channel.EventLoopGroup;
 import org.thingsboard.common.util.ExecutorProvider;
 import org.thingsboard.common.util.ListeningExecutor;
-import org.thingsboard.rule.engine.api.slack.SlackService;
+import org.thingsboard.rule.engine.api.notification.SlackService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
@@ -280,6 +280,10 @@ public interface TbContext {
     AssetProfileService getAssetProfileService();
 
     DeviceCredentialsService getDeviceCredentialsService();
+
+    RuleEngineDeviceStateManager getDeviceStateManager();
+
+    String getDeviceStateNodeRateLimitConfig();
 
     TbClusterService getClusterService();
 

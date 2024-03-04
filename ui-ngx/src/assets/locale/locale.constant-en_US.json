@@ -478,7 +478,10 @@
         "notifications-settings": "Notifications settings",
         "slack-api-token": "Slack API token",
         "slack": "Slack",
-        "slack-settings": "Slack settings"
+        "slack-settings": "Slack settings",
+        "mobile-settings": "Mobile settings",
+        "firebase-service-account-file": "Firebase service account credentials JSON file",
+        "select-firebase-service-account-file": "Drag and drop your Firebase service account credentials file or "
       },
     "alarm": {
         "alarm": "Alarm",
@@ -856,7 +859,9 @@
         "rest-api-requests-per-customer": "REST API requests per customer",
         "transport-messages": "Transport messages",
         "transport-messages-per-device": "Transport messages per device",
-        "ws-updates-per-session": "WS updates per session"
+        "ws-updates-per-session": "WS updates per session",
+        "edge-events": "Edge events",
+        "edge-events-per-edge": "Edge events per edge"
     },
     "audit-log": {
         "audit": "Audit",
@@ -1669,8 +1674,8 @@
         "alarm-rule-mobile-dashboard-hint": "Used by mobile application as an alarm details dashboard",
         "alarm-rule-no-mobile-dashboard": "No dashboard selected",
         "propagate-alarm": "Propagate alarm to related entities",
-        "alarm-rule-relation-types-list": "Relation types to propagate",
-        "alarm-rule-relation-types-list-hint": "If Propagate relation types are not selected, alarms will be propagated without filtering by relation type.",
+        "alarm-rule-relation-types-list": "Relation types",
+        "alarm-rule-relation-types-list-hint": "Defines relation types to filter the related entities. If not set, the alarm will be propagated to all related entities.",
         "propagate-alarm-to-owner": "Propagate alarm to entity owner (Customer or Tenant)",
         "propagate-alarm-to-tenant": "Propagate alarm to Tenant",
         "alarm-rule-condition": "Alarm rule condition",
@@ -2037,7 +2042,9 @@
         "missing-related-rule-chains-title": "Edge has missing related rule chain(s)",
         "missing-related-rule-chains-text": "Assigned to edge rule chain(s) use rule nodes that forward message(s) to rule chain(s) that are not assigned to this edge. <br><br> List of missing rule chain(s): <br> {{missingRuleChains}}",
         "upgrade-instructions": "Upgrade Instructions",
-        "widget-datasource-error": "This widget supports only EDGE entity datasource"
+        "widget-datasource-error": "This widget supports only EDGE entity datasource",
+        "connected": "Connected",
+        "disconnected": "Disconnected"
     },
     "edge-event": {
         "type-dashboard": "Dashboard",
@@ -2667,6 +2674,7 @@
          "current-user": "Current user",
          "current-device": "Current device",
          "default-value": "Default value",
+         "default-comma-separated-values": "Default comma-separated values",
          "dynamic-source-type": "Dynamic source type",
          "dynamic-value": "Dynamic value",
          "no-dynamic-value": "No dynamic value",
@@ -3250,6 +3258,7 @@
         "copy-template": "Copy template",
         "create-new": "Create new",
         "created": "Created",
+        "customize-messages": "Customize messages",
         "delete-notification-text": "Be careful, after the confirmation the notification will become unrecoverable.",
         "delete-notification-title": "Are you sure you want to delete the notification?",
         "delete-notifications-text": "Be careful, after the confirmation notifications will become unrecoverable.",
@@ -3282,7 +3291,9 @@
             "sms": "SMS",
             "sms-preview": "SMS notification preview",
             "web": "Web",
-            "web-preview": "Web notification preview"
+            "web-preview": "Web notification preview",
+            "mobile-app": "Mobile app",
+            "mobile-app-preview": "Mobile app notification preview"
         },
         "delivery-method-not-configure-click": "Delivery method is not configured. Click to setup.",
         "delivery-method-not-configure-contact": "Delivery method is not configured. Contact your system administrator.",
@@ -3292,6 +3303,8 @@
         "device-list-rule-hint": "If the field is empty, the trigger will be applied to all devices",
         "device-profiles-list-rule-hint": "If the field is empty, the trigger will be applied to all device profiles",
         "disabled": "Disabled",
+        "edge-trigger-settings": "Edge trigger settings",
+        "edge-list-rule-hint": "If the field is empty, the trigger will be applied to all edge instances",
         "edit-notification-recipients-group": "Edit notification recipients group",
         "edit-notification-template": "Edit notification template",
         "edit-rule": "Edit rule",
@@ -3339,6 +3352,7 @@
         "not-found-slack-recipient": "Slack recipient not found",
         "notification": "Notification",
         "notification-center": "Notification center",
+        "notification-tap-action": "Notification tap action",
         "notify": "notify",
         "notify-again": "Notify again",
         "notify-alarm-action": {
@@ -3408,6 +3422,7 @@
         "selected-template": "{ count, plural, =1 {1 template} other {# templates} } selected",
         "send-notification": "Send notification",
         "sent": "Sent",
+        "setup": "Setup",
         "notification-sent": "Notifications / Sent",
         "set-entity-from-notification": "Set entity from notification to dashboard state",
         "slack-chanel-type": "Slack channel type",
@@ -3421,6 +3436,7 @@
         "stop-escalation-alarm-status-become": "Stop the escalation on the alarm status become:",
         "subject": "Subject",
         "subject-required": "Subject is required",
+        "subject-max-length": "Subject should be less than or equal to {{ length }} characters",
         "template": "Template",
         "template-name": "Template name",
         "template-required": "Template is required",
@@ -3436,7 +3452,9 @@
             "rule-engine-lifecycle-event": "Rule engine lifecycle event",
             "rule-node": "Rule node",
             "new-platform-version": "New platform version",
-            "rate-limits": "Exceeded rate limits"
+            "rate-limits": "Exceeded rate limits",
+            "edge-communication-failure": "Edge communication failure",
+            "edge-connection": "Edge connection"
         },
         "templates": "Templates",
         "notification-templates": "Notifications / Templates",
@@ -3457,6 +3475,8 @@
             "rule-engine-lifecycle-event": "Rule engine lifecycle event",
             "new-platform-version": "New platform version",
             "rate-limits": "Exceeded rate limits",
+            "edge-connection": "Edge connection",
+            "edge-communication-failure": "Edge communication failure",
             "trigger": "Trigger",
             "trigger-required": "Trigger is required"
         },
@@ -4189,6 +4209,10 @@
             "edit-tenant-entity-import-rate-limit-title": "Edit entity version load rate limits",
             "edit-tenant-notification-request-rate-limit-title": "Edit notification requests rate limits",
             "edit-tenant-notification-requests-per-rule-rate-limit-title": "Edit notification requests per notification rule rate limits",
+            "edit-edge-events-rate-limit": "Edit edge events rate limits",
+            "edit-edge-events-per-edge-rate-limit": "Edit edge events per edge rate limits",
+            "edge-events-rate-limit": "Edge events",
+            "edge-events-per-edge-rate-limit": "Edge events per edge",
             "messages-per": "messages per",
             "not-set": "Not set",
             "number-of-messages": "Number of messages",
@@ -5026,6 +5050,9 @@
         "popover-height": "Popover height",
         "popover-style": "Popover style",
         "open-new-browser-tab": "Open in a new browser tab",
+        "open-URL": "Open URL",
+        "URL": "URL",
+        "url-required": "URL is required.",
         "mobile": {
           "action-type": "Mobile action type",
           "select-action-type": "Select mobile action type",
@@ -5186,6 +5213,83 @@
         "invalid-widget-file-error": "Unable to import widget: Invalid widget data structure."
     },
     "widgets": {
+        "action-button": {
+            "behavior": "Behavior",
+            "on-click": "On click",
+            "on-click-hint": "Action triggered when the button is clicked"
+        },
+        "command-button": {
+            "behavior": "Behavior",
+            "on-click": "On click",
+            "on-click-hint": "Action performed when the button is clicked."
+        },
+        "power-button": {
+            "behavior": "Behavior",
+            "power-on": "Power 'On'",
+            "power-on-hint": "Action performed to power ON the component.",
+            "power-off": "Power 'Off'",
+            "power-off-hint": "Action performed to power OFF the component.",
+            "on-label": "On",
+            "off-label": "Off",
+            "layout": "Layout",
+            "layout-default": "Default",
+            "layout-simplified": "Simplified",
+            "layout-outlined": "Outlined",
+            "layout-default-volume": "Default.Volume",
+            "layout-simplified-volume": "Simplified.Volume",
+            "layout-outlined-volume": "Outlined.Volume",
+            "main": "Main",
+            "background": "Background",
+            "power-on-colors": "Power 'On' colors",
+            "power-off-colors": "Power 'Off' colors",
+            "disabled-colors": "Disabled colors",
+            "button": "Button"
+        },
+        "toggle-button": {
+            "behavior": "Behavior",
+            "checked": "Checked",
+            "unchecked": "Unchecked",
+            "check": "Check",
+            "check-hint": "Action performed to check the component.",
+            "uncheck": "Uncheck",
+            "uncheck-hint": "Action performed to uncheck the component.",
+            "auto-scale": "Auto scale",
+            "horizontal-fill": "Horizontal fill",
+            "vertical-fill": "Vertical fill",
+            "button-appearance": "Button appearance"
+        },
+        "button": {
+            "layout": "Layout",
+            "outlined": "Outlined",
+            "filled": "Filled",
+            "underlined": "Underlined",
+            "basic": "Basic",
+            "auto-scale": "Auto scale",
+            "label": "Label",
+            "icon": "Icon",
+            "border-radius": "Border radius",
+            "color-palette": "Color palette",
+            "main": "Main",
+            "background": "Background",
+            "custom-styles": "Custom styles",
+            "clear-style": "Clear style",
+            "shadow": "Shadow",
+            "enabled": "Enabled",
+            "disabled": "Disabled",
+            "preview": "Preview",
+            "copy-style-from": "Copy style from"
+        },
+        "button-state": {
+            "activated-state": "Activated state",
+            "activated-state-hint": "Configure condition under which the button is active.",
+            "disabled-state": "Disabled state",
+            "disabled-state-hint": "Configure condition under which the button is disabled.",
+            "enabled": "Enabled",
+            "hovered": "Hovered",
+            "pressed": "Pressed",
+            "activated": "Activated",
+            "disabled": "Disabled"
+        },
         "background": {
             "background": "Background",
             "background-settings": "Background settings",
@@ -5228,7 +5332,8 @@
             "date": "Date",
             "active-bars-color": "Active signal bars color",
             "inactive-bars-color": "Inactive signal bars color",
-            "signal-strength-card-style": "Signal strength card style"
+            "signal-strength-card-style": "Signal strength card style",
+            "no-signal-rssi-value": "\"No signal\" rssi value"
         },
         "chart": {
             "common-settings": "Common settings",
@@ -6266,6 +6371,31 @@
             "off-label": "Off label",
             "switch": "Switch"
         },
+        "slider": {
+            "behavior": "Behavior",
+            "initial-value": "Initial value",
+            "initial-value-hint": "Action to get the initial value of the slider.",
+            "on-value-change": "On value change",
+            "on-value-change-hint": "Action triggered when the slider value is changed.",
+            "layout": "Layout",
+            "layout-default": "Default",
+            "layout-extended": "Extended",
+            "layout-simplified": "Simplified",
+            "auto-scale": "Auto scale",
+            "icon": "Icon",
+            "value": "Value",
+            "range": "Range",
+            "min": "min",
+            "max": "max",
+            "range-ticks": "Range ticks",
+            "tick-marks": "Tick marks",
+            "colors": "Colors",
+            "main": "Main",
+            "background": "Background",
+            "left-icon": "Left icon",
+            "right-icon": "Right icon",
+            "slider": "Slider"
+        },
         "value-card": {
             "layout": "Layout",
             "layout-square": "Square",
@@ -6288,6 +6418,7 @@
             "layout": "Layout",
             "background-overlay": "Value background overlay",
             "total-volume": "Total volume",
+            "total-volume-units": "Total volume units",
             "tank": "Tank",
             "shape": "Shape",
             "datasource-units": "Source units",
@@ -6487,24 +6618,33 @@
             "source-entity-alias": "Source entity alias",
             "source-entity-attribute": "Source entity attribute"
         },
-        "value-action": {
+        "rpc-state": {
             "initial-state": "Initial state",
-            "initial-state-hint": "Action to get the initial value of the component.",
+            "initial-state-hint": "Action to get the initial state (On/Off) of the component.",
+            "disabled-state": "Disabled state",
+            "disabled-state-hint": "Configure condition under which the component is disabled.",
             "turn-on": "Turn 'On'",
-            "turn-on-hint": "Action performed to turn ON the component.",
+            "turn-on-hint": "Action triggered when the slider is switched to 'On'",
             "turn-off": "Turn 'Off'",
-            "turn-off-hint": "Action performed to turn OFF the component.",
+            "turn-off-hint": "Action triggered when the slider is switched to 'Off'",
             "on": "On",
             "off": "Off",
+            "disabled": "Disabled"
+        },
+        "value-action": {
             "do-nothing": "Do nothing",
             "execute-rpc": "Execute RPC",
             "get-attribute": "Get attribute",
             "set-attribute": "Set attribute",
             "get-time-series": "Get time-series",
+            "get-dashboard-state": "Get dashboard state",
             "add-time-series": "Add time-series",
             "execute-rpc-text": "Execute RPC method '{{methodName}}'",
             "get-attribute-text": "Use attribute '{{key}}'",
             "get-time-series-text": "Use time-series '{{key}}'",
+            "get-dashboard-state-text": "Use dashboard state",
+            "when-dashboard-state-is-text": "When dashboard state is '{{state}}'",
+            "when-dashboard-state-function-is-text": "When f(dashboard state) is '{{state}}'",
             "set-attribute-to-value-text": "Set '{{key}}' attribute to: {{value}}",
             "add-time-series-value-text": "Add '{{key}}' time-series value: {{value}}",
             "set-attribute-text": "Set '{{key}}' attribute",
@@ -6527,14 +6667,13 @@
             "attribute-key-required": "Attribute key is required.",
             "time-series-key": "Time-series key",
             "time-series-key-required": "Time-series key is required.",
-            "subscribe-for-updates": "Subscribe for updates",
-            "subscribe-for-updates-hint": "Subscribe for updates",
             "action-result-converter": "Action result converter",
             "converter-none": "None",
             "converter-function": "Function",
             "converter-constant": "Constant",
+            "converter-value": "Value",
             "parse-value-function": "Parse value function",
-            "on-when-result-is": "'On' when result is",
+            "state-when-result-is": "'{{state}}' when result is",
             "parameters": "Parameters",
             "convert-value-function": "Convert value function",
             "error": {
@@ -6789,7 +6928,8 @@
             "element-click": "On HTML element click",
             "pie-slice-click": "On slice click",
             "row-double-click": "On row double click",
-            "card-click": "On card click"
+            "card-click": "On card click",
+            "click": "On click"
         }
     },
     "paginator" : {
@@ -6818,6 +6958,7 @@
             "ko_KR": "한국어",
             "lv_LV": "Latviešu",
             "nl_BE": "Koninkrijk België",
+            "pl_PL": "Polski",
             "pt_BR": "Português do Brasil",
             "ro_RO": "Română",
             "sl_SI": "Slovenščina",

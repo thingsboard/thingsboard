@@ -57,9 +57,6 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     @Autowired
     private DataValidator<Queue> queueValidator;
 
-//    @Autowired
-//    private QueueStatsService queueStatsService;
-
     @Override
     public Queue saveQueue(Queue queue) {
         log.trace("Executing createOrUpdateQueue [{}]", queue);

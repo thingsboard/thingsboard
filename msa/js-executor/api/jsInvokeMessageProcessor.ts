@@ -169,7 +169,7 @@ export class JsInvokeMessageProcessor {
             this.logger.info('[%s] Executing script body: [%s]', scriptId, invokeRequest.scriptBody);
         }
         if (this.executedScriptsCounter % memoryUsageTraceFrequency == 0) {
-            this.logger.info('Current memory usage: [%s]', process.memoryUsage());
+            this.logger.info('Current memory usage: %s', JSON.stringify(process.memoryUsage()));
         }
 
         this.getOrCompileScript(scriptId, invokeRequest.scriptBody).then(

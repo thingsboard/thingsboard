@@ -62,6 +62,13 @@
       <tb-background-settings formControlName="background">
       </tb-background-settings>
     </div>
+    <div class="tb-form-row space-between">
+      <div translate>widgets.signal-strength.no-signal-rssi-value</div>
+      <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+        <input matInput formControlName="noSignalRssiValue" type="number" step="1"
+               placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
   </div>
   <div class="tb-form-panel tb-slide-toggle">
     <mat-expansion-panel class="tb-settings" [expanded]="signalStrengthWidgetSettingsForm.get('showTooltip').value"

@@ -29,23 +29,15 @@ ALTER TABLE component_descriptor ADD COLUMN IF NOT EXISTS has_queue_name boolean
 
 -- RULE NODE QUEUE UPDATE END
 
--- QUEUE STATS UPDATE START
 
-CREATE TABLE IF NOT EXISTS queue_stats (
-    id uuid NOT NULL CONSTRAINT queue_stats_pkey PRIMARY KEY,
-    created_time bigint NOT NULL,
-    tenant_id uuid NOT NULL,
-    queue_name varchar(255) NOT NULL,
-    service_id varchar(255) NOT NULL,
-    CONSTRAINT queue_stats_name_unq_key UNIQUE (tenant_id, queue_name, service_id));
-
-INSERT INTO queue_stats
-    SELECT id, created_time, tenant_id, substring(name FROM 1 FOR position('_' IN name) - 1) AS queue_name,
-           substring(name FROM position('_' IN name) + 1) AS service_id
-    FROM asset
-    WHERE type = 'TbServiceQueue' and name LIKE '%\_%';
-
-DELETE FROM asset WHERE type='TbServiceQueue';
-DELETE FROM asset_profile WHERE name ='TbServiceQueue';
-
--- QUEUE STATS UPDATE END
+DO
+$$
+    BEGIN
+        IF NOT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name = 'user_settings' AND column_name = 'settings' AND data_type = 'jsonb') THEN
+            ALTER TABLE user_settings RENAME COLUMN settings to old_settings;
+            ALTER TABLE user_settings ADD COLUMN settings jsonb;
+            UPDATE user_settings SET settings = old_settings::jsonb WHERE old_settings IS NOT NULL;
+            ALTER TABLE user_settings DROP COLUMN old_settings;
+        END IF;
+    END;
+$$;

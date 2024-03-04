@@ -51,6 +51,7 @@ export const singleSwitchLayoutImages = new Map<SingleSwitchLayout, string>(
 
 export interface SingleSwitchWidgetSettings {
   initialState: GetValueSettings<boolean>;
+  disabledState: GetValueSettings<boolean>;
   onUpdateState: SetValueSettings;
   offUpdateState: SetValueSettings;
   layout: SingleSwitchLayout;
@@ -93,12 +94,26 @@ export const singleSwitchDefaultSettings: SingleSwitchWidgetSettings = {
     },
     getAttribute: {
       key: 'state',
-      scope: null,
-      subscribeForUpdates: false
+      scope: null
     },
     getTimeSeries: {
+      key: 'state'
+    },
+    dataToValue: {
+      type: DataToValueType.NONE,
+      compareToValue: true,
+      dataToValueFunction: '/* Should return boolean value */\nreturn data;'
+    }
+  },
+  disabledState: {
+    action: GetValueAction.DO_NOTHING,
+    defaultValue: false,
+    getAttribute: {
       key: 'state',
-      subscribeForUpdates: false
+      scope: null
+    },
+    getTimeSeries: {
+      key: 'state'
     },
     dataToValue: {
       type: DataToValueType.NONE,
@@ -116,7 +131,7 @@ export const singleSwitchDefaultSettings: SingleSwitchWidgetSettings = {
     },
     setAttribute: {
       key: 'state',
-      scope: AttributeScope.SHARED_SCOPE
+      scope: AttributeScope.SERVER_SCOPE
     },
     putTimeSeries: {
       key: 'state'
@@ -137,7 +152,7 @@ export const singleSwitchDefaultSettings: SingleSwitchWidgetSettings = {
     },
     setAttribute: {
       key: 'state',
-      scope: AttributeScope.SHARED_SCOPE
+      scope: AttributeScope.SERVER_SCOPE
     },
     putTimeSeries: {
       key: 'state'

@@ -28,19 +28,19 @@ import {
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
-import { GetValueAction, GetValueSettings } from '@shared/models/action-widget-settings.models';
+import { DataToValueType, GetValueAction, GetValueSettings } from '@shared/models/action-widget-settings.models';
 import { TranslateService } from '@ngx-translate/core';
 import { ValueType } from '@shared/models/constants';
 import {
   GetValueActionSettingsPanelComponent
 } from '@home/components/widget/lib/settings/common/action/get-value-action-settings-panel.component';
 import { IAliasController } from '@core/api/widget-api.models';
-import { TargetDevice } from '@shared/models/widget.models';
+import { TargetDevice, widgetType } from '@shared/models/widget.models';
 
 @Component({
   selector: 'tb-get-value-action-settings',
-  templateUrl: './value-action-settings-button.component.html',
-  styleUrls: ['./value-action-settings-button.scss'],
+  templateUrl: './action-settings-button.component.html',
+  styleUrls: ['./action-settings-button.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -62,10 +62,22 @@ export class GetValueActionSettingsComponent implements OnInit, ControlValueAcce
   valueType: ValueType;
 
   @Input()
+  trueLabel = 'value.true';
+
+  @Input()
+  falseLabel = 'value.false';
+
+  @Input()
+  stateLabel: string;
+
+  @Input()
   aliasController: IAliasController;
 
   @Input()
   targetDevice: TargetDevice;
+
+  @Input()
+  widgetType: widgetType;
 
   @Input()
   disabled = false;
@@ -103,7 +115,7 @@ export class GetValueActionSettingsComponent implements OnInit, ControlValueAcce
     this.updateDisplayValue();
   }
 
-  openValueActionSettingsPopup($event: Event, matButton: MatButton) {
+  openActionSettingsPopup($event: Event, matButton: MatButton) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -115,8 +127,12 @@ export class GetValueActionSettingsComponent implements OnInit, ControlValueAcce
         getValueSettings: this.modelValue,
         panelTitle: this.panelTitle,
         valueType: this.valueType,
+        trueLabel: this.trueLabel,
+        falseLabel: this.falseLabel,
+        stateLabel: this.stateLabel,
         aliasController: this.aliasController,
-        targetDevice: this.targetDevice
+        targetDevice: this.targetDevice,
+        widgetType: this.widgetType
       };
       const getValueSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
         this.viewContainerRef, GetValueActionSettingsPanelComponent,
@@ -138,7 +154,8 @@ export class GetValueActionSettingsComponent implements OnInit, ControlValueAcce
     switch (this.modelValue.action) {
       case GetValueAction.DO_NOTHING:
         if (this.valueType === ValueType.BOOLEAN) {
-          this.displayValue = this.translate.instant(!!this.modelValue.defaultValue ? 'widgets.value-action.on' : 'widgets.value-action.off');
+          this.displayValue =
+            this.translate.instant(!!this.modelValue.defaultValue ? this.trueLabel : this.falseLabel);
         } else {
           this.displayValue = this.modelValue.defaultValue + '';
         }
@@ -152,6 +169,18 @@ export class GetValueActionSettingsComponent implements OnInit, ControlValueAcce
         break;
       case GetValueAction.GET_TIME_SERIES:
         this.displayValue = this.translate.instant('widgets.value-action.get-time-series-text', {key: this.modelValue.getTimeSeries.key});
+        break;
+      case GetValueAction.GET_DASHBOARD_STATE:
+        if (this.valueType === ValueType.BOOLEAN) {
+          const state = this.modelValue.dataToValue?.compareToValue;
+          if (this.modelValue.dataToValue?.type === DataToValueType.FUNCTION) {
+            this.displayValue = this.translate.instant('widgets.value-action.when-dashboard-state-function-is-text', {state});
+          } else {
+            this.displayValue = this.translate.instant('widgets.value-action.when-dashboard-state-is-text', {state});
+          }
+        } else {
+          this.displayValue = this.translate.instant('widgets.value-action.get-dashboard-state-text');
+        }
         break;
     }
     this.cd.markForCheck();

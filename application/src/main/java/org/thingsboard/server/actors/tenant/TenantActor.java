@@ -17,6 +17,7 @@ package org.thingsboard.server.actors.tenant;
 
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.actors.ProcessFailureStrategy;
 import org.thingsboard.server.actors.TbActor;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.TbActorException;
@@ -102,6 +103,8 @@ public class TenantActor extends RuleChainManagerActor {
                             log.info("Failed to check ApiUsage \"ReExecEnabled\"!!!", e);
                             cantFindTenant = true;
                         }
+                    } else {
+                        log.info("Tenant {} is not managed by current service, skipping rule chains init", tenantId);
                     }
                 }
                 log.debug("[{}] Tenant actor started.", tenantId);
@@ -131,20 +134,7 @@ public class TenantActor extends RuleChainManagerActor {
         }
         switch (msg.getMsgType()) {
             case PARTITION_CHANGE_MSG:
-                PartitionChangeMsg partitionChangeMsg = (PartitionChangeMsg) msg;
-                ServiceType serviceType = partitionChangeMsg.getServiceType();
-                if (ServiceType.TB_RULE_ENGINE.equals(serviceType)) {
-                    //To Rule Chain Actors
-                    broadcast(msg);
-                } else if (ServiceType.TB_CORE.equals(serviceType)) {
-                    List<TbActorId> deviceActorIds = ctx.filterChildren(new TbEntityTypeActorIdPredicate(EntityType.DEVICE) {
-                        @Override
-                        protected boolean testEntityId(EntityId entityId) {
-                            return super.testEntityId(entityId) && !isMyPartition(entityId);
-                        }
-                    });
-                    deviceActorIds.forEach(id -> ctx.stop(id));
-                }
+                onPartitionChangeMsg((PartitionChangeMsg) msg);
                 break;
             case COMPONENT_LIFE_CYCLE_MSG:
                 onComponentLifecycleMsg((ComponentLifecycleMsg) msg);
@@ -239,6 +229,35 @@ public class TenantActor extends RuleChainManagerActor {
         }
     }
 
+    private void onPartitionChangeMsg(PartitionChangeMsg msg) {
+        ServiceType serviceType = msg.getServiceType();
+        if (ServiceType.TB_RULE_ENGINE.equals(serviceType)) {
+            if (systemContext.getPartitionService().isManagedByCurrentService(tenantId)) {
+                if (!ruleChainsInitialized) {
+                    log.info("Tenant {} is now managed by this service, initializing rule chains", tenantId);
+                    initRuleChains();
+                }
+            } else {
+                if (ruleChainsInitialized) {
+                    log.info("Tenant {} is no longer managed by this service, stopping rule chains", tenantId);
+                    destroyRuleChains();
+                }
+                return;
+            }
+
+            //To Rule Chain Actors
+            broadcast(msg);
+        } else if (ServiceType.TB_CORE.equals(serviceType)) {
+            List<TbActorId> deviceActorIds = ctx.filterChildren(new TbEntityTypeActorIdPredicate(EntityType.DEVICE) {
+                @Override
+                protected boolean testEntityId(EntityId entityId) {
+                    return super.testEntityId(entityId) && !isMyPartition(entityId);
+                }
+            });
+            deviceActorIds.forEach(id -> ctx.stop(id));
+        }
+    }
+
     private void onComponentLifecycleMsg(ComponentLifecycleMsg msg) {
         if (msg.getEntityId().getEntityType().equals(EntityType.API_USAGE_STATE)) {
             ApiUsageState old = getApiUsageState();
@@ -266,7 +285,7 @@ public class TenantActor extends RuleChainManagerActor {
             onToDeviceActorMsg(new DeviceDeleteMsg(tenantId, deviceId), true);
             deletedDevices.add(deviceId);
         }
-        if (isRuleEngine) {
+        if (isRuleEngine && ruleChainsInitialized) {
             TbActorRef target = getEntityActorRef(msg.getEntityId());
             if (target != null) {
                 if (msg.getEntityId().getEntityType() == EntityType.RULE_CHAIN) {
@@ -299,6 +318,12 @@ public class TenantActor extends RuleChainManagerActor {
             apiUsageState = new ApiUsageState(systemContext.getApiUsageStateService().getApiUsageState(tenantId));
         }
         return apiUsageState;
+    }
+
+    @Override
+    public ProcessFailureStrategy onProcessFailure(TbActorMsg msg, Throwable t) {
+        log.error("[{}] Failed to process msg: {}", tenantId, msg, t);
+        return doProcessFailure(t);
     }
 
     public static class ActorCreator extends ContextBasedCreator {

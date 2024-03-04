@@ -30,18 +30,18 @@ import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { SetValueAction, SetValueSettings, ValueToDataType } from '@shared/models/action-widget-settings.models';
 import { TranslateService } from '@ngx-translate/core';
-import { ValueType } from '@shared/models/constants';
 import { IAliasController } from '@core/api/widget-api.models';
-import { TargetDevice } from '@shared/models/widget.models';
+import { TargetDevice, widgetType } from '@shared/models/widget.models';
 import { isDefinedAndNotNull } from '@core/utils';
 import {
   SetValueActionSettingsPanelComponent
 } from '@home/components/widget/lib/settings/common/action/set-value-action-settings-panel.component';
+import { ValueType } from '@shared/models/constants';
 
 @Component({
   selector: 'tb-set-value-action-settings',
-  templateUrl: './value-action-settings-button.component.html',
-  styleUrls: ['./value-action-settings-button.scss'],
+  templateUrl: './action-settings-button.component.html',
+  styleUrls: ['./action-settings-button.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -60,13 +60,16 @@ export class SetValueActionSettingsComponent implements OnInit, ControlValueAcce
   panelTitle: string;
 
   @Input()
-  valueType: ValueType;
+  valueType = ValueType.BOOLEAN;
 
   @Input()
   aliasController: IAliasController;
 
   @Input()
   targetDevice: TargetDevice;
+
+  @Input()
+  widgetType: widgetType;
 
   @Input()
   disabled = false;
@@ -104,7 +107,7 @@ export class SetValueActionSettingsComponent implements OnInit, ControlValueAcce
     this.updateDisplayValue();
   }
 
-  openValueActionSettingsPopup($event: Event, matButton: MatButton) {
+  openActionSettingsPopup($event: Event, matButton: MatButton) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -117,7 +120,8 @@ export class SetValueActionSettingsComponent implements OnInit, ControlValueAcce
         panelTitle: this.panelTitle,
         valueType: this.valueType,
         aliasController: this.aliasController,
-        targetDevice: this.targetDevice
+        targetDevice: this.targetDevice,
+        widgetType: this.widgetType
       };
      const setValueSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
         this.viewContainerRef, SetValueActionSettingsPanelComponent,
@@ -138,6 +142,9 @@ export class SetValueActionSettingsComponent implements OnInit, ControlValueAcce
   private updateDisplayValue() {
     let value: any;
     switch (this.modelValue.valueToData.type) {
+      case ValueToDataType.VALUE:
+        value = 'value';
+        break;
       case ValueToDataType.CONSTANT:
         value = this.modelValue.valueToData.constantValue;
         break;
