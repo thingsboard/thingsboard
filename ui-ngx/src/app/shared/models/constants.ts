@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -30,7 +30,8 @@ export const Constants = {
     badRequestParams: 31,
     itemNotFound: 32,
     tooManyRequests: 33,
-    tooManyUpdates: 34
+    tooManyUpdates: 34,
+    passwordViolation: 45
   },
   entryPoints: {
     login: '/api/auth/login',
@@ -67,7 +68,15 @@ export const MediaBreakpoints = {
   'gt-sm': 'screen and (min-width: 960px)',
   'gt-md': 'screen and (min-width: 1280px)',
   'gt-lg': 'screen and (min-width: 1920px)',
-  'gt-xl': 'screen and (min-width: 5001px)'
+  'gt-xl': 'screen and (min-width: 5001px)',
+  'md-lg': 'screen and (min-width: 960px) and (max-width: 1819px)'
+};
+
+export const resolveBreakpoint = (breakpoint: string): string => {
+  if (MediaBreakpoints[breakpoint]) {
+    return MediaBreakpoints[breakpoint];
+  }
+  return breakpoint;
 };
 
 export const helpBaseUrl = 'https://thingsboard.io';
@@ -76,6 +85,7 @@ export const HelpLinks = {
   linksMap: {
     outgoingMailSettings: helpBaseUrl + '/docs/user-guide/ui/mail-settings',
     smsProviderSettings: helpBaseUrl + '/docs/user-guide/ui/sms-provider-settings',
+    slackSettings: helpBaseUrl + '/docs/user-guide/ui/slack-settings',
     securitySettings: helpBaseUrl + '/docs/user-guide/ui/security-settings',
     oauth2Settings: helpBaseUrl + '/docs/user-guide/oauth-2-support/',
     twoFactorAuthSettings: helpBaseUrl + '/docs/',
@@ -85,6 +95,9 @@ export const HelpLinks = {
     ruleNodeGpsGeofencingFilter: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#gps-geofencing-filter-node',
     ruleNodeJsFilter: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#script-filter-node',
     ruleNodeJsSwitch: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#switch-node',
+    ruleNodeAssetProfileSwitch: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#asset-profile-switch',
+    ruleNodeDeviceProfileSwitch: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#device-profile-switch',
+    ruleNodeCheckAlarmStatus: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#check-alarm-status',
     ruleNodeMessageTypeFilter: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#message-type-filter-node',
     ruleNodeMessageTypeSwitch: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#message-type-switch-node',
     ruleNodeOriginatorTypeFilter: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/filter-nodes/#originator-type-filter-node',
@@ -128,6 +141,7 @@ export const HelpLinks = {
     ruleNodeSendEmail: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#send-email-node',
     ruleNodeSendSms: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#send-sms-node',
     ruleNodeMath: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#math-function-node',
+    ruleNodeCalculateDelta: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/enrichment-nodes/#calculate-delta',
     tenants: helpBaseUrl + '/docs/user-guide/ui/tenants',
     tenantProfiles: helpBaseUrl + '/docs/user-guide/ui/tenant-profiles',
     customers: helpBaseUrl + '/docs/user-guide/ui/customers',
@@ -140,22 +154,29 @@ export const HelpLinks = {
     entityViews: helpBaseUrl + '/docs/user-guide/ui/entity-views',
     entitiesImport: helpBaseUrl + '/docs/user-guide/bulk-provisioning',
     rulechains: helpBaseUrl + '/docs/user-guide/ui/rule-chains',
-    resources: helpBaseUrl + '/docs/user-guide/ui/resources',
+    lwm2mResourceLibrary: helpBaseUrl + '/docs/reference/lwm2m-api',
     dashboards: helpBaseUrl + '/docs/user-guide/ui/dashboards',
     otaUpdates: helpBaseUrl + '/docs/user-guide/ota-updates',
-    widgetsBundles: helpBaseUrl + '/docs/user-guide/ui/widget-library#bundles',
-    widgetsConfig:  helpBaseUrl + '/docs/user-guide/ui/dashboards#widget-configuration',
-    widgetsConfigTimeseries:  helpBaseUrl + '/docs/user-guide/ui/dashboards#timeseries',
-    widgetsConfigLatest: helpBaseUrl +  '/docs/user-guide/ui/dashboards#latest',
-    widgetsConfigRpc: helpBaseUrl +  '/docs/user-guide/ui/dashboards#rpc',
-    widgetsConfigAlarm: helpBaseUrl +  '/docs/user-guide/ui/dashboards#alarm',
-    widgetsConfigStatic: helpBaseUrl +  '/docs/user-guide/ui/dashboards#static',
+    widgetTypes: helpBaseUrl + '/docs/user-guide/ui/widget-library/#widget-types',
+    widgetsBundles: helpBaseUrl + '/docs/user-guide/ui/widget-library/#widgets-library-bundles',
+    widgetsConfig:  helpBaseUrl + '/docs/user-guide/ui/widget-library',
+    widgetsConfigTimeseries:  helpBaseUrl + '/docs/user-guide/ui/widget-library#time-series',
+    widgetsConfigLatest: helpBaseUrl +  '/docs/user-guide/ui/widget-library#latest-values',
+    widgetsConfigRpc: helpBaseUrl +  '/docs/user-guide/ui/widget-library#control-widget',
+    widgetsConfigAlarm: helpBaseUrl +  '/docs/user-guide/ui/widget-library#alarm-widget',
+    widgetsConfigStatic: helpBaseUrl +  '/docs/user-guide/ui/widget-library#static',
     ruleNodePushToCloud: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#push-to-cloud',
     ruleNodePushToEdge: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#push-to-edge',
     queue: helpBaseUrl + '/docs/user-guide/queue',
     repositorySettings: helpBaseUrl + '/docs/user-guide/version-control/#git-settings-configuration',
     autoCommitSettings: helpBaseUrl + '/docs/user-guide/version-control/#auto-commit',
-    twoFactorAuthentication: helpBaseUrl + '/docs/user-guide/two-factor-authentication'
+    twoFactorAuthentication: helpBaseUrl + '/docs/user-guide/two-factor-authentication',
+    sentNotification: helpBaseUrl + '/docs/user-guide/notifications/#send-notification',
+    templateNotifications: helpBaseUrl + '/docs/user-guide/notifications/#templates',
+    recipientNotifications: helpBaseUrl + '/docs/user-guide/notifications/#recipients',
+    ruleNotifications: helpBaseUrl + '/docs/user-guide/notifications/#rules',
+    jwtSecuritySettings: helpBaseUrl + '/docs/user-guide/ui/jwt-security-settings/',
+    gatewayInstall: helpBaseUrl + '/docs/iot-gateway/install/docker-installation/',
   }
 };
 

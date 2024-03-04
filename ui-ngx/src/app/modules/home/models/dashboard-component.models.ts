@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,12 +27,21 @@ import { WidgetLayout, WidgetLayouts } from '@app/shared/models/dashboard.models
 import { IDashboardWidget, WidgetAction, WidgetContext, WidgetHeaderAction } from './widget-component.models';
 import { Timewindow } from '@shared/models/time/time.models';
 import { Observable, of, Subject } from 'rxjs';
-import { formattedDataFormDatasourceData, guid, isDefined, isEqual, isUndefined } from '@app/core/utils';
+import {
+  convertKeysToCamelCase,
+  formattedDataFormDatasourceData,
+  guid,
+  isDefined,
+  isEmpty,
+  isEqual,
+  isUndefined
+} from '@app/core/utils';
 import { IterableDiffer, KeyValueDiffer } from '@angular/core';
 import { IAliasController, IStateController } from '@app/core/api/widget-api.models';
 import { enumerable } from '@shared/decorators/enumerable';
 import { UtilsService } from '@core/services/utils.service';
 import { TbPopoverComponent } from '@shared/components/popover.component';
+import { ComponentStyle, iconStyle, textStyle } from '@shared/models/widget-settings.models';
 
 export interface WidgetsData {
   widgets: Array<Widget>;
@@ -116,8 +125,12 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
   }
 
   get activeDashboardWidgets(): Array<DashboardWidget> {
-    if (this.dashboard.isMobileSize && !this.dashboard.isEdit) {
-      return this.dashboardWidgets.filter(w => !w.mobileHide);
+    if (!this.dashboard.isEdit) {
+      if (this.dashboard.isMobileSize) {
+        return this.dashboardWidgets.filter(w => !w.mobileHide);
+      } else {
+        return this.dashboardWidgets.filter(w => !w.desktopHide);
+      }
     }
     return this.dashboardWidgets;
   }
@@ -281,7 +294,7 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
     return this.dashboardWidgets.find((dashboardWidget) => dashboardWidget.widgetId === widgetId);
   }
 
-  private updateRowsAndSort() {
+  updateRowsAndSort() {
     let maxRows = this.dashboard.gridsterOpts.maxRows;
     this.activeDashboardWidgets.forEach((dashboardWidget) => {
       const bottom = dashboardWidget.y + dashboardWidget.rows;
@@ -296,6 +309,13 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
     this.dashboardWidgets.sort((widget1, widget2) => {
       const row1 = widget1.widgetOrder;
       const row2 = widget2.widgetOrder;
+      if (isDefined(row1) && isUndefined(row2)) {
+        return -1;
+      } else if (isUndefined(row1) && isDefined(row2)) {
+        return 1;
+      } else if (isUndefined(row1) && isUndefined(row2)) {
+        return 0;
+      }
       let res = row1 - row2;
       if (res === 0) {
         res = widget1.x - widget2.x;
@@ -317,16 +337,16 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
   backgroundColor: string;
   padding: string;
   margin: string;
+  borderRadius: string;
 
-  title: string;
-  customTranslatedTitle: string;
+  title$: Observable<string>;
   titleTooltip: string;
   showTitle: boolean;
-  titleStyle: {[klass: string]: any};
+  titleStyle: ComponentStyle;
 
   titleIcon: string;
   showTitleIcon: boolean;
-  titleIconStyle: {[klass: string]: any};
+  titleIconStyle: ComponentStyle;
 
   dropShadow: boolean;
   enableFullscreen: boolean;
@@ -339,7 +359,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
 
   onlyHistoryTimewindow: boolean;
 
-  style: {[klass: string]: any};
+  style: ComponentStyle;
 
   showWidgetTitlePanel: boolean;
   showWidgetActions: boolean;
@@ -356,6 +376,10 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
 
   get mobileHide(): boolean {
     return this.widgetLayout ? this.widgetLayout.mobileHide === true : false;
+  }
+
+  get desktopHide(): boolean {
+    return this.widgetLayout ? this.widgetLayout.desktopHide === true : false;
   }
 
   set gridsterItemComponent(item: GridsterItemComponentInterface) {
@@ -412,26 +436,25 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     this.backgroundColor = this.widget.config.backgroundColor || '#fff';
     this.padding = this.widget.config.padding || '8px';
     this.margin = this.widget.config.margin || '0px';
+    this.borderRadius = this.widget.config.borderRadius;
 
-    this.title = isDefined(this.widgetContext.widgetTitle)
+    const title = isDefined(this.widgetContext.widgetTitle)
       && this.widgetContext.widgetTitle.length ? this.widgetContext.widgetTitle : this.widget.config.title;
-    this.customTranslatedTitle = this.dashboard.utils.customTranslation(this.title, this.title);
+    this.title$ = this.widgetContext.registerLabelPattern(title, this.title$);
     this.titleTooltip = isDefined(this.widgetContext.widgetTitleTooltip)
       && this.widgetContext.widgetTitleTooltip.length ? this.widgetContext.widgetTitleTooltip : this.widget.config.titleTooltip;
     this.titleTooltip = this.dashboard.utils.customTranslation(this.titleTooltip, this.titleTooltip);
     this.showTitle = isDefined(this.widget.config.showTitle) ? this.widget.config.showTitle : true;
-    this.titleStyle = this.widget.config.titleStyle ? this.widget.config.titleStyle : {};
-
+    this.titleStyle = {...(this.widget.config.titleStyle || {}), ...textStyle(this.widget.config.titleFont)};
+    if (this.widget.config.titleColor) {
+      this.titleStyle.color = this.widget.config.titleColor;
+    }
     this.titleIcon = isDefined(this.widget.config.titleIcon) ? this.widget.config.titleIcon : '';
     this.showTitleIcon = isDefined(this.widget.config.showTitleIcon) ? this.widget.config.showTitleIcon : false;
-    this.titleIconStyle = {};
+    this.titleIconStyle = this.widget.config.iconSize ? iconStyle(this.widget.config.iconSize) : {};
     if (this.widget.config.iconColor) {
       this.titleIconStyle.color = this.widget.config.iconColor;
     }
-    if (this.widget.config.iconSize) {
-      this.titleIconStyle.fontSize = this.widget.config.iconSize;
-    }
-
     this.dropShadow = isDefined(this.widget.config.dropShadow) ? this.widget.config.dropShadow : true;
     this.enableFullscreen = isDefined(this.widget.config.enableFullscreen) ? this.widget.config.enableFullscreen : true;
 
@@ -463,9 +486,10 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
       color: this.color,
       backgroundColor: this.backgroundColor,
       padding: this.padding,
-      margin: this.margin};
-    if (this.widget.config.widgetStyle) {
-      this.style = {...this.style, ...this.widget.config.widgetStyle};
+      margin: this.margin,
+      borderRadius: this.borderRadius };
+    if (!isEmpty(this.widget.config.widgetStyle)) {
+      this.style = {...this.style, ...convertKeysToCamelCase(this.widget.config.widgetStyle)};
     }
 
     this.showWidgetTitlePanel = this.widgetContext.hideTitlePanel ? false :
@@ -473,14 +497,22 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
 
     this.showWidgetActions = !this.widgetContext.hideTitlePanel;
 
-    this.updateCustomHeaderActions();
+    this.updateParamsFromData();
     this.widgetActions = this.widgetContext.widgetActions ? this.widgetContext.widgetActions : [];
     if (detectChanges) {
       this.widgetContext.detectContainerChanges();
     }
   }
 
-  updateCustomHeaderActions(detectChanges = false) {
+  updateParamsFromData(detectChanges = false) {
+    this.widgetContext.updateLabelPatterns();
+    const update = this.updateCustomHeaderActions();
+    if (update && detectChanges) {
+      this.widgetContext.detectContainerChanges();
+    }
+  }
+
+  private updateCustomHeaderActions(): boolean {
     let customHeaderActions: Array<WidgetHeaderAction>;
     if (this.widgetContext.customHeaderActions) {
       let data: FormattedData[] = [];
@@ -493,10 +525,9 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     }
     if (!isEqual(this.customHeaderActions, customHeaderActions)) {
       this.customHeaderActions = customHeaderActions;
-      if (detectChanges) {
-        this.widgetContext.detectContainerChanges();
-      }
+      return true;
     }
+    return false;
   }
 
   private filterCustomHeaderAction(action: WidgetHeaderAction, data: FormattedData[]): boolean {
@@ -619,10 +650,12 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
       order = this.widgetLayout.mobileOrder;
     } else if (isDefined(this.widget.config.mobileOrder) && this.widget.config.mobileOrder >= 0) {
       order = this.widget.config.mobileOrder;
-    } else if (this.widgetLayout) {
-      order = this.widgetLayout.row;
-    } else {
-      order = this.widget.row;
+    } else if (!this.dashboard.isMobileSize) {
+      if (this.widgetLayout) {
+        order = this.widgetLayout.row;
+      } else {
+        order = this.widget.row;
+      }
     }
     return order;
   }

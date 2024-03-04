@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,12 +18,12 @@ import { ChangeDetectorRef, Component, Inject, Optional } from '@angular/core';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityComponent } from '../../components/entity/entity.component';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { User } from '@shared/models/user.model';
 import { selectAuth } from '@core/auth/auth.selectors';
 import { map } from 'rxjs/operators';
 import { Authority } from '@shared/models/authority.enum';
-import { isDefinedAndNotNull, isUndefined } from '@core/utils';
+import { isDefinedAndNotNull } from '@core/utils';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { ActionNotificationShow } from '@app/core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
@@ -45,7 +45,7 @@ export class UserComponent extends EntityComponent<User> {
   constructor(protected store: Store<AppState>,
               @Optional() @Inject('entity') protected entityValue: User,
               @Optional() @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<User>,
-              public fb: FormBuilder,
+              public fb: UntypedFormBuilder,
               protected cd: ChangeDetectorRef,
               protected translate: TranslateService) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
@@ -64,15 +64,16 @@ export class UserComponent extends EntityComponent<User> {
   }
 
   isUserCredentialPresent(): boolean {
-    return this.entity && this.entity.additionalInfo && isDefinedAndNotNull(this.entity.additionalInfo.userCredentialsEnabled);
+    return isDefinedAndNotNull(this.entity?.additionalInfo?.userCredentialsEnabled);
   }
 
-  buildForm(entity: User): FormGroup {
+  buildForm(entity: User): UntypedFormGroup {
     return this.fb.group(
       {
         email: [entity ? entity.email : '', [Validators.required, Validators.email]],
         firstName: [entity ? entity.firstName : ''],
         lastName: [entity ? entity.lastName : ''],
+        phone: [entity ? entity.phone : ''],
         additionalInfo: this.fb.group(
           {
             description: [entity && entity.additionalInfo ? entity.additionalInfo.description : ''],
@@ -91,6 +92,7 @@ export class UserComponent extends EntityComponent<User> {
     this.entityForm.patchValue({email: entity.email});
     this.entityForm.patchValue({firstName: entity.firstName});
     this.entityForm.patchValue({lastName: entity.lastName});
+    this.entityForm.patchValue({phone: entity.phone});
     this.entityForm.patchValue({additionalInfo: {description: entity.additionalInfo ? entity.additionalInfo.description : ''}});
     this.entityForm.patchValue({additionalInfo:
         {defaultDashboardId: entity.additionalInfo ? entity.additionalInfo.defaultDashboardId : null}});
@@ -112,7 +114,7 @@ export class UserComponent extends EntityComponent<User> {
         verticalPosition: 'bottom',
         horizontalPosition: 'right'
       }
-    ))
+    ));
   }
 
 }

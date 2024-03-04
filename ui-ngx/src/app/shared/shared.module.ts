@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,7 +24,8 @@ import { FlowInjectionToken, NgxFlowModule } from '@flowjs/ngx-flow';
 import { NgxFlowchartModule } from 'ngx-flowchart';
 import Flow from '@flowjs/flow.js';
 
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MAT_AUTOCOMPLETE_DEFAULT_OPTIONS, MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
@@ -42,7 +43,7 @@ import { MatPaginatorIntl, MatPaginatorModule } from '@angular/material/paginato
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatRadioModule } from '@angular/material/radio';
-import { MatSelectModule } from '@angular/material/select';
+import { MAT_SELECT_CONFIG, MatSelectModule } from '@angular/material/select';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSliderModule } from '@angular/material/slider';
@@ -52,7 +53,7 @@ import { MatStepperModule } from '@angular/material/stepper';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { MAT_TOOLTIP_DEFAULT_OPTIONS, MatTooltipModule } from '@angular/material/tooltip';
 import { MatListModule } from '@angular/material/list';
 import { DatetimeAdapter, MatDatetimepickerModule, MatNativeDatetimeModule } from '@mat-datetimepicker/core';
 import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
@@ -62,8 +63,9 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ShareModule as ShareButtonsModule } from 'ngx-sharebuttons';
 import { HotkeyModule } from 'angular2-hotkeys';
-import { ColorPickerModule } from 'ngx-color-picker';
+import { ColorPickerModule } from '@iplab/ngx-color-picker';
 import { NgxHmCarouselModule } from 'ngx-hm-carousel';
+import { EditorModule, TINYMCE_SCRIPT_SRC } from '@tinymce/tinymce-angular';
 import { UserMenuComponent } from '@shared/components/user-menu.component';
 import { NospacePipe } from '@shared/pipe/nospace.pipe';
 import { TranslateModule } from '@ngx-translate/core';
@@ -84,6 +86,7 @@ import { MarkdownEditorComponent } from '@shared/components/markdown-editor.comp
 import { FullscreenDirective } from '@shared/components/fullscreen.directive';
 import { HighlightPipe } from '@shared/pipe/highlight.pipe';
 import { DashboardAutocompleteComponent } from '@shared/components/dashboard-autocomplete.component';
+import { DashboardStateAutocompleteComponent } from '@shared/components/dashboard-state-autocomplete.component';
 import { EntitySubTypeAutocompleteComponent } from '@shared/components/entity/entity-subtype-autocomplete.component';
 import { EntitySubTypeSelectComponent } from '@shared/components/entity/entity-subtype-select.component';
 import { EntityAutocompleteComponent } from '@shared/components/entity/entity-autocomplete.component';
@@ -93,6 +96,7 @@ import { EntitySelectComponent } from '@shared/components/entity/entity-select.c
 import { DatetimeComponent } from '@shared/components/time/datetime.component';
 import { EntityKeysListComponent } from '@shared/components/entity/entity-keys-list.component';
 import { SocialSharePanelComponent } from '@shared/components/socialshare-panel.component';
+import { StringItemsListComponent } from '@shared/components/string-items-list.component';
 import { RelationTypeAutocompleteComponent } from '@shared/components/relation/relation-type-autocomplete.component';
 import { EntityListSelectComponent } from '@shared/components/entity/entity-list-select.component';
 import { JsonObjectEditComponent } from '@shared/components/json-object-edit.component';
@@ -114,12 +118,12 @@ import { EntitySubTypeListComponent } from '@shared/components/entity/entity-sub
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 import { TbJsonPipe } from '@shared/pipe/tbJson.pipe';
 import { ColorPickerDialogComponent } from '@shared/components/dialog/color-picker-dialog.component';
-import { MatChipDraggableDirective } from '@shared/components/mat-chip-draggable.directive';
 import { ColorInputComponent } from '@shared/components/color-input.component';
 import { JsFuncComponent } from '@shared/components/js-func.component';
 import { JsonFormComponent } from '@shared/components/json-form/json-form.component';
 import { ConfirmDialogComponent } from '@shared/components/dialog/confirm-dialog.component';
 import { AlertDialogComponent } from '@shared/components/dialog/alert-dialog.component';
+import { ErrorAlertDialogComponent } from '@shared/components/dialog/error-alert-dialog.component';
 import { TodoDialogComponent } from '@shared/components/dialog/todo-dialog.component';
 import { MaterialIconsDialogComponent } from '@shared/components/dialog/material-icons-dialog.component';
 import { MaterialIconSelectComponent } from '@shared/components/material-icon-select.component';
@@ -169,6 +173,51 @@ import { PhoneInputComponent } from '@shared/components/phone-input.component';
 import { CustomDateAdapter } from '@shared/adapter/custom-datatime-adapter';
 import { CustomPaginatorIntl } from '@shared/services/custom-paginator-intl';
 import { TbScriptLangComponent } from '@shared/components/script-lang.component';
+import { NotificationComponent } from '@shared/components/notification/notification.component';
+import { TemplateAutocompleteComponent } from '@shared/components/notification/template-autocomplete.component';
+import { SlackConversationAutocompleteComponent } from '@shared/components/slack-conversation-autocomplete.component';
+import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
+import {
+  TbBreakPointsProvider,
+  MdLgLayoutDirective,
+  MdLgLayoutAlignDirective,
+  MdLgLayoutGapDirective,
+  MdLgShowHideDirective,
+  GtMdLgLayoutDirective,
+  GtMdLgLayoutAlignDirective,
+  GtMdLgLayoutGapDirective,
+  GtMdLgShowHideDirective
+} from '@shared/layout/layout.directives';
+import { ColorPickerComponent } from '@shared/components/color-picker/color-picker.component';
+import { ResourceAutocompleteComponent } from '@shared/components/resource/resource-autocomplete.component';
+import { ShortNumberPipe } from '@shared/pipe/short-number.pipe';
+import { ToggleHeaderComponent, ToggleOption } from '@shared/components/toggle-header.component';
+import { RuleChainSelectComponent } from '@shared/components/rule-chain/rule-chain-select.component';
+import { ToggleSelectComponent } from '@shared/components/toggle-select.component';
+import { UnitInputComponent } from '@shared/components/unit-input.component';
+import { MaterialIconsComponent } from '@shared/components/material-icons.component';
+import { ColorPickerPanelComponent } from '@shared/components/color-picker/color-picker-panel.component';
+import { TbIconComponent } from '@shared/components/icon.component';
+import { HintTooltipIconComponent } from '@shared/components/hint-tooltip-icon.component';
+import { StringAutocompleteComponent } from '@shared/components/string-autocomplete.component';
+import { ImagePipe } from '@shared/pipe/image.pipe';
+import { ImportExportService } from '@shared/import-export/import-export.service';
+import { ImportDialogComponent } from '@shared/import-export/import-dialog.component';
+import { ImportDialogCsvComponent } from '@shared/import-export/import-dialog-csv.component';
+import { ExportWidgetsBundleDialogComponent } from '@shared/import-export/export-widgets-bundle-dialog.component';
+import { TableColumnsAssignmentComponent } from '@shared/import-export/table-columns-assignment.component';
+import { ScrollGridComponent } from '@shared/components/grid/scroll-grid.component';
+import { ImageGalleryComponent } from '@shared/components/image/image-gallery.component';
+import { UploadImageDialogComponent } from '@shared/components/image/upload-image-dialog.component';
+import { ImageDialogComponent } from '@shared/components/image/image-dialog.component';
+import { ImageReferencesComponent } from '@shared/components/image/image-references.component';
+import { ImagesInUseDialogComponent } from '@shared/components/image/images-in-use-dialog.component';
+import { GalleryImageInputComponent } from '@shared/components/image/gallery-image-input.component';
+import { MultipleGalleryImageInputComponent } from '@shared/components/image/multiple-gallery-image-input.component';
+import { EmbedImageDialogComponent } from '@shared/components/image/embed-image-dialog.component';
+import { ImageGalleryDialogComponent } from '@shared/components/image/image-gallery-dialog.component';
+import { RuleChainSelectPanelComponent } from '@shared/components/rule-chain/rule-chain-select-panel.component';
+import { WidgetButtonComponent } from '@shared/components/button/widget-button.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -183,10 +232,17 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TruncatePipe,
     TbJsonPipe,
     FileSizePipe,
+    DateAgoPipe,
     SafePipe,
+    ShortNumberPipe,
+    ImagePipe,
     {
       provide: FlowInjectionToken,
       useValue: Flow
+    },
+    {
+      provide: TINYMCE_SCRIPT_SRC,
+      useValue: 'assets/tinymce/tinymce.min.js'
     },
     {
       provide: MAT_DATE_LOCALE,
@@ -196,7 +252,28 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     { provide: HELP_MARKDOWN_COMPONENT_TOKEN, useValue: HelpMarkdownComponent },
     { provide: SHARED_MODULE_TOKEN, useValue: SharedModule },
     { provide: MatPaginatorIntl, useClass: CustomPaginatorIntl },
-    TbPopoverService
+    TbPopoverService,
+    ImportExportService,
+    {
+      provide: MAT_SELECT_CONFIG,
+      useValue: {
+        overlayPanelClass: 'tb-select-overlay',
+        hideSingleSelectionIndicator: true
+      }
+    },
+    {
+      provide: MAT_AUTOCOMPLETE_DEFAULT_OPTIONS,
+      useValue: {
+        hideSingleSelectionIndicator: true
+      }
+    },
+    {
+      provide: MAT_TOOLTIP_DEFAULT_OPTIONS,
+      useValue: {
+        disableTooltipInteractivity: true
+      }
+    },
+    TbBreakPointsProvider
   ],
   declarations: [
     FooterComponent,
@@ -205,7 +282,6 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ToastDirective,
     FullscreenDirective,
     CircularProgressDirective,
-    MatChipDraggableDirective,
     TbHotkeysDirective,
     TbAnchorComponent,
     TbPopoverComponent,
@@ -233,6 +309,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TimezoneSelectComponent,
     ValueInputComponent,
     DashboardAutocompleteComponent,
+    DashboardStateAutocompleteComponent,
     EntitySubTypeAutocompleteComponent,
     EntitySubTypeSelectComponent,
     EntitySubTypeListComponent,
@@ -246,6 +323,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     QueueAutocompleteComponent,
     RelationTypeAutocompleteComponent,
     SocialSharePanelComponent,
+    StringItemsListComponent,
     JsonObjectEditComponent,
     JsonObjectViewComponent,
     JsonContentComponent,
@@ -258,6 +336,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     WidgetsBundleSelectComponent,
     ConfirmDialogComponent,
     AlertDialogComponent,
+    ErrorAlertDialogComponent,
     TodoDialogComponent,
     ColorPickerDialogComponent,
     MaterialIconsDialogComponent,
@@ -280,7 +359,10 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TruncatePipe,
     TbJsonPipe,
     FileSizePipe,
+    DateAgoPipe,
+    ImagePipe,
     SafePipe,
+    ShortNumberPipe,
     SelectableColumnsPipe,
     KeyboardShortcutPipe,
     TbJsonToStringDirective,
@@ -295,12 +377,52 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ProtobufContentComponent,
     BranchAutocompleteComponent,
     PhoneInputComponent,
-    TbScriptLangComponent
+    TbScriptLangComponent,
+    NotificationComponent,
+    TemplateAutocompleteComponent,
+    SlackConversationAutocompleteComponent,
+    MdLgLayoutDirective,
+    MdLgLayoutAlignDirective,
+    MdLgLayoutGapDirective,
+    MdLgShowHideDirective,
+    GtMdLgLayoutDirective,
+    GtMdLgLayoutAlignDirective,
+    GtMdLgLayoutGapDirective,
+    GtMdLgShowHideDirective,
+    ColorPickerComponent,
+    ColorPickerPanelComponent,
+    ResourceAutocompleteComponent,
+    ToggleHeaderComponent,
+    ToggleOption,
+    ToggleSelectComponent,
+    UnitInputComponent,
+    StringAutocompleteComponent,
+    MaterialIconsComponent,
+    RuleChainSelectComponent,
+    RuleChainSelectPanelComponent,
+    TbIconComponent,
+    HintTooltipIconComponent,
+    ImportDialogComponent,
+    ImportDialogCsvComponent,
+    ExportWidgetsBundleDialogComponent,
+    TableColumnsAssignmentComponent,
+    ScrollGridComponent,
+    ImageGalleryComponent,
+    UploadImageDialogComponent,
+    ImageDialogComponent,
+    ImageReferencesComponent,
+    ImagesInUseDialogComponent,
+    GalleryImageInputComponent,
+    MultipleGalleryImageInputComponent,
+    EmbedImageDialogComponent,
+    ImageGalleryDialogComponent,
+    WidgetButtonComponent
   ],
   imports: [
     CommonModule,
     RouterModule,
     TranslateModule,
+    MatBadgeModule,
     MatButtonModule,
     MatButtonToggleModule,
     MatCheckboxModule,
@@ -365,7 +487,6 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ToastDirective,
     FullscreenDirective,
     CircularProgressDirective,
-    MatChipDraggableDirective,
     TbHotkeysDirective,
     TbAnchorComponent,
     TbStringTemplateOutletDirective,
@@ -389,6 +510,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     DatetimeComponent,
     TimezoneSelectComponent,
     DashboardAutocompleteComponent,
+    DashboardStateAutocompleteComponent,
     EntitySubTypeAutocompleteComponent,
     EntitySubTypeSelectComponent,
     EntitySubTypeListComponent,
@@ -402,6 +524,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     QueueAutocompleteComponent,
     RelationTypeAutocompleteComponent,
     SocialSharePanelComponent,
+    StringItemsListComponent,
     JsonObjectEditComponent,
     JsonObjectViewComponent,
     JsonContentComponent,
@@ -410,9 +533,11 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     HtmlComponent,
     FabTriggerDirective,
     FabActionsDirective,
+    TbJsonToStringDirective,
     FabToolbarComponent,
     WidgetsBundleSelectComponent,
     ValueInputComponent,
+    MatBadgeModule,
     MatButtonModule,
     MatButtonToggleModule,
     MatCheckboxModule,
@@ -457,11 +582,13 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     HotkeyModule,
     ColorPickerModule,
     NgxHmCarouselModule,
+    EditorModule,
     DndModule,
     NgxFlowchartModule,
     MarkdownModule,
     ConfirmDialogComponent,
     AlertDialogComponent,
+    ErrorAlertDialogComponent,
     TodoDialogComponent,
     ColorPickerDialogComponent,
     MaterialIconsDialogComponent,
@@ -485,7 +612,10 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TbJsonPipe,
     KeyboardShortcutPipe,
     FileSizePipe,
+    DateAgoPipe,
+    ImagePipe,
     SafePipe,
+    ShortNumberPipe,
     SelectableColumnsPipe,
     RouterModule,
     TranslateModule,
@@ -500,7 +630,46 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ProtobufContentComponent,
     BranchAutocompleteComponent,
     PhoneInputComponent,
-    TbScriptLangComponent
+    TbScriptLangComponent,
+    NotificationComponent,
+    TemplateAutocompleteComponent,
+    SlackConversationAutocompleteComponent,
+    MdLgLayoutDirective,
+    MdLgLayoutAlignDirective,
+    MdLgLayoutGapDirective,
+    MdLgShowHideDirective,
+    GtMdLgLayoutDirective,
+    GtMdLgLayoutAlignDirective,
+    GtMdLgLayoutGapDirective,
+    GtMdLgShowHideDirective,
+    ColorPickerComponent,
+    ColorPickerPanelComponent,
+    ResourceAutocompleteComponent,
+    ToggleHeaderComponent,
+    ToggleOption,
+    ToggleSelectComponent,
+    UnitInputComponent,
+    StringAutocompleteComponent,
+    MaterialIconsComponent,
+    RuleChainSelectComponent,
+    RuleChainSelectPanelComponent,
+    TbIconComponent,
+    HintTooltipIconComponent,
+    ImportDialogComponent,
+    ImportDialogCsvComponent,
+    ExportWidgetsBundleDialogComponent,
+    TableColumnsAssignmentComponent,
+    ScrollGridComponent,
+    ImageGalleryComponent,
+    UploadImageDialogComponent,
+    ImageDialogComponent,
+    ImageReferencesComponent,
+    ImagesInUseDialogComponent,
+    GalleryImageInputComponent,
+    MultipleGalleryImageInputComponent,
+    EmbedImageDialogComponent,
+    ImageGalleryDialogComponent,
+    WidgetButtonComponent
   ]
 })
 export class SharedModule { }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ import { ChangeDetectorRef, Component, Inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityComponent } from '../../components/entity/entity.component';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -30,6 +30,7 @@ import {
 import { DashboardService } from '@core/http/dashboard.service';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { isEqual } from '@core/utils';
+import { EntityType } from '@shared/models/entity-type.models';
 
 @Component({
   selector: 'tb-dashboard-form',
@@ -43,13 +44,14 @@ export class DashboardFormComponent extends EntityComponent<Dashboard> {
 
   publicLink: string;
   assignedCustomersText: string;
+  entityType = EntityType;
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
               private dashboardService: DashboardService,
               @Inject('entity') protected entityValue: Dashboard,
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<Dashboard>,
-              public fb: FormBuilder,
+              public fb: UntypedFormBuilder,
               protected cd: ChangeDetectorRef) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
@@ -76,9 +78,9 @@ export class DashboardFormComponent extends EntityComponent<Dashboard> {
     }
   }
 
-  buildForm(entity: Dashboard): FormGroup {
+  buildForm(entity: Dashboard): UntypedFormGroup {
     this.updateFields(entity);
-    return this.fb.group(
+    const form = this.fb.group(
       {
         title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],
         image: [entity ? entity.image : null],
@@ -91,6 +93,11 @@ export class DashboardFormComponent extends EntityComponent<Dashboard> {
         )
       }
     );
+    if (this.isAdd) {
+      form.addControl('assignedCustomerIds', this.fb.control([]));
+    }
+
+    return form;
   }
 
   updateForm(entity: Dashboard) {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,6 @@ import org.thingsboard.server.dao.service.Validator;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -134,6 +133,15 @@ public class BaseTimeseriesService implements TimeseriesService {
     }
 
     @Override
+    public List<TsKvEntry> findLatestSync(TenantId tenantId, EntityId entityId, Collection<String> keys) {
+        validate(entityId);
+        List<TsKvEntry> latestEntries = Lists.newArrayListWithExpectedSize(keys.size());
+        keys.forEach(key -> Validator.validateString(key, "Incorrect key " + key));
+        keys.forEach(key -> latestEntries.add(timeseriesLatestDao.findLatestSync(tenantId, entityId, key)));
+        return latestEntries;
+    }
+
+    @Override
     public ListenableFuture<List<TsKvEntry>> findAllLatest(TenantId tenantId, EntityId entityId) {
         validate(entityId);
         return timeseriesLatestDao.findAllLatest(tenantId, entityId);
@@ -157,9 +165,6 @@ public class BaseTimeseriesService implements TimeseriesService {
     @Override
     public ListenableFuture<Integer> save(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry) {
         validate(entityId);
-        if (tsKvEntry == null) {
-            throw new IncorrectParameterException("Key value entry can't be null");
-        }
         List<ListenableFuture<Integer>> futures = Lists.newArrayListWithExpectedSize(INSERTS_PER_ENTRY);
         saveAndRegisterFutures(tenantId, futures, entityId, tsKvEntry, 0L);
         return Futures.transform(Futures.allAsList(futures), SUM_ALL_INTEGERS, MoreExecutors.directExecutor());
@@ -179,9 +184,6 @@ public class BaseTimeseriesService implements TimeseriesService {
         int inserts = saveLatest ? INSERTS_PER_ENTRY : INSERTS_PER_ENTRY_WITHOUT_LATEST;
         List<ListenableFuture<Integer>> futures = Lists.newArrayListWithExpectedSize(tsKvEntries.size() * inserts);
         for (TsKvEntry tsKvEntry : tsKvEntries) {
-            if (tsKvEntry == null) {
-                throw new IncorrectParameterException("Key value entry can't be null");
-            }
             if (saveLatest) {
                 saveAndRegisterFutures(tenantId, futures, entityId, tsKvEntry, ttl);
             } else {
@@ -195,9 +197,6 @@ public class BaseTimeseriesService implements TimeseriesService {
     public ListenableFuture<List<Void>> saveLatest(TenantId tenantId, EntityId entityId, List<TsKvEntry> tsKvEntries) {
         List<ListenableFuture<Void>> futures = Lists.newArrayListWithExpectedSize(tsKvEntries.size());
         for (TsKvEntry tsKvEntry : tsKvEntries) {
-            if (tsKvEntry == null) {
-                throw new IncorrectParameterException("Key value entry can't be null");
-            }
             futures.add(timeseriesLatestDao.saveLatest(tenantId, entityId, tsKvEntry));
         }
         return Futures.allAsList(futures);
@@ -235,7 +234,7 @@ public class BaseTimeseriesService implements TimeseriesService {
             } else {
                 endTs = query.getEndTs();
             }
-            return new BaseReadTsKvQuery(query.getKey(), startTs, endTs, query.getInterval(), query.getLimit(), query.getAggregation(), query.getOrder());
+            return new BaseReadTsKvQuery(query, startTs, endTs);
         }).collect(Collectors.toList());
     }
 
@@ -276,8 +275,9 @@ public class BaseTimeseriesService implements TimeseriesService {
 
     private void deleteAndRegisterFutures(TenantId tenantId, List<ListenableFuture<TsKvLatestRemovingResult>> futures, EntityId entityId, DeleteTsKvQuery query) {
         futures.add(Futures.transform(timeseriesDao.remove(tenantId, entityId, query), v -> null, MoreExecutors.directExecutor()));
-        futures.add(timeseriesLatestDao.removeLatest(tenantId, entityId, query));
-        futures.add(Futures.transform(timeseriesDao.removePartition(tenantId, entityId, query), v -> null, MoreExecutors.directExecutor()));
+        if (query.getDeleteLatest()) {
+            futures.add(timeseriesLatestDao.removeLatest(tenantId, entityId, query));
+        }
     }
 
     private static void validate(EntityId entityId) {

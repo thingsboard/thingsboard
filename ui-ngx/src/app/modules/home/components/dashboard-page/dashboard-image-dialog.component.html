@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
   <mat-toolbar color="primary">
     <h2 translate>dashboard.update-image</h2>
     <span fxFlex></span>
-    <button mat-button mat-icon-button
+    <button mat-icon-button
             (click)="cancel()"
             type="button">
       <mat-icon class="material-icons">close</mat-icon>
@@ -28,7 +28,7 @@
   <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
   </mat-progress-bar>
   <div mat-dialog-content style="position: relative;">
-    <fieldset [disabled]="(isLoading$ | async) || (takingScreenshot$ | async)" fxLayout="column" fxLayoutAlign="center center" fxLayoutGap="8px">
+    <fieldset [disabled]="(isLoading$ | async) || (takingScreenshot$ | async)" fxLayout="column" fxLayoutAlign="center stretch" fxLayoutGap="8px">
       <div [formGroup]="dashboardRectFormGroup" fxLayout="column" fxLayoutGap="8px" fxLayoutAlign="center center">
         <mat-form-field class="rect-field">
           <mat-label>Top %</mat-label>
@@ -40,8 +40,8 @@
             <input matInput formControlName="left" type="number" step="1" min="0" max="100">
           </mat-form-field>
           <div class="tb-image-preview-container">
-            <div *ngIf="!safeImageUrl; else elseBlock">{{ 'dashboard.no-image' | translate }}</div>
-            <ng-template #elseBlock><img class="tb-image-preview" [src]="safeImageUrl" /></ng-template>
+            <div *ngIf="!imageUrl; else elseBlock">{{ 'dashboard.no-image' | translate }}</div>
+            <ng-template #elseBlock><img class="tb-image-preview" [src]="imageUrl | image | async" /></ng-template>
           </div>
           <mat-form-field class="rect-field">
             <mat-label>Right %</mat-label>
@@ -53,18 +53,18 @@
           <input matInput formControlName="bottom" type="number" step="1" min="0" max="100">
         </mat-form-field>
       </div>
-      <div [formGroup]="dashboardRectFormGroup" fxFlex fxLayout="row" fxLayoutGap="8px">
+      <div fxLayout="row" fxLayoutAlign="center center">
+        <button mat-raised-button color="accent"
+                type="button"
+                [disabled]="(isLoading$ | async) || (takingScreenshot$ | async)"
+                (click)="takeScreenShot()">
+          {{ 'dashboard.take-screenshot' | translate }}
+        </button>
       </div>
-      <button mat-raised-button color="accent"
-              type="button"
-              [disabled]="(isLoading$ | async) || (takingScreenshot$ | async)"
-              (click)="takeScreenShot()">
-        {{ 'dashboard.take-screenshot' | translate }}
-      </button>
       <div [formGroup]="dashboardImageFormGroup">
-        <tb-image-input [showPreview]="false" label="{{'dashboard.image' | translate}}"
+        <tb-gallery-image-input label="{{'dashboard.image' | translate}}"
                         formControlName="dashboardImage">
-        </tb-image-input>
+        </tb-gallery-image-input>
       </div>
     </fieldset>
     <div *ngIf="takingScreenshot$ | async" class="taking-screenshot-progress tb-absolute-fill" fxLayout="column"

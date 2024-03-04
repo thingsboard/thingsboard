@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,89 +16,57 @@
 
 import { Inject, Injectable, NgZone } from '@angular/core';
 import {
+  AlarmCountCmd,
+  AlarmCountUnsubscribeCmd,
+  AlarmCountUpdate,
   AlarmDataCmd,
   AlarmDataUnsubscribeCmd,
   AlarmDataUpdate,
-  AttributesSubscriptionCmd,
-  EntityCountCmd, EntityCountUnsubscribeCmd,
+  EntityCountCmd,
+  EntityCountUnsubscribeCmd,
   EntityCountUpdate,
   EntityDataCmd,
   EntityDataUnsubscribeCmd,
   EntityDataUpdate,
-  GetHistoryCmd,
+  isAlarmCountUpdateMsg,
   isAlarmDataUpdateMsg,
   isEntityCountUpdateMsg,
   isEntityDataUpdateMsg,
+  isNotificationCountUpdateMsg,
+  isNotificationsUpdateMsg,
+  MarkAllAsReadCmd,
+  MarkAsReadCmd,
+  NotificationCountUpdate,
+  NotificationSubscriber,
+  NotificationsUpdate,
   SubscriptionCmd,
   SubscriptionUpdate,
-  TelemetryFeature,
   TelemetryPluginCmdsWrapper,
-  TelemetryService,
   TelemetrySubscriber,
-  TimeseriesSubscriptionCmd,
+  UnreadCountSubCmd,
+  UnreadSubCmd,
+  UnsubscribeCmd,
   WebsocketDataMsg
 } from '@app/shared/models/telemetry/telemetry.models';
-import { select, Store } from '@ngrx/store';
+import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { AuthService } from '@core/auth/auth.service';
-import { selectIsAuthenticated } from '@core/auth/auth.selectors';
 import { WINDOW } from '@core/services/window.service';
-import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
-import { ActionNotificationShow } from '@core/notification/notification.actions';
-import Timeout = NodeJS.Timeout;
-
-const RECONNECT_INTERVAL = 2000;
-const WS_IDLE_TIMEOUT = 90000;
-const MAX_PUBLISH_COMMANDS = 10;
+import { WebsocketService } from '@core/ws/websocket.service';
 
 // @dynamic
 @Injectable({
   providedIn: 'root'
 })
-export class TelemetryWebsocketService implements TelemetryService {
+export class TelemetryWebsocketService extends WebsocketService<TelemetrySubscriber> {
 
-  isActive = false;
-  isOpening = false;
-  isOpened = false;
-  isReconnect = false;
+  cmdWrapper: TelemetryPluginCmdsWrapper;
 
-  socketCloseTimer: Timeout;
-  reconnectTimer: Timeout;
-
-  lastCmdId = 0;
-  subscribersCount = 0;
-  subscribersMap = new Map<number, TelemetrySubscriber>();
-
-  reconnectSubscribers = new Set<TelemetrySubscriber>();
-
-  cmdsWrapper = new TelemetryPluginCmdsWrapper();
-  telemetryUri: string;
-
-  dataStream: WebSocketSubject<TelemetryPluginCmdsWrapper | WebsocketDataMsg>;
-
-  constructor(private store: Store<AppState>,
-              private authService: AuthService,
-              private ngZone: NgZone,
-              @Inject(WINDOW) private window: Window) {
-    this.store.pipe(select(selectIsAuthenticated)).subscribe(
-      () => {
-        this.reset(true);
-      }
-    );
-
-    let port = this.window.location.port;
-    if (this.window.location.protocol === 'https:') {
-      if (!port) {
-        port = '443';
-      }
-      this.telemetryUri = 'wss:';
-    } else {
-      if (!port) {
-        port = '80';
-      }
-      this.telemetryUri = 'ws:';
-    }
-    this.telemetryUri += `//${this.window.location.hostname}:${port}/api/ws/plugins/telemetry`;
+  constructor(protected store: Store<AppState>,
+              protected authService: AuthService,
+              protected ngZone: NgZone,
+              @Inject(WINDOW) protected window: Window) {
+    super(store, authService, ngZone, 'api/ws', new TelemetryPluginCmdsWrapper(), window);
   }
 
   public subscribe(subscriber: TelemetrySubscriber) {
@@ -106,23 +74,11 @@ export class TelemetryWebsocketService implements TelemetryService {
     subscriber.subscriptionCommands.forEach(
       (subscriptionCommand) => {
         const cmdId = this.nextCmdId();
-        this.subscribersMap.set(cmdId, subscriber);
-        subscriptionCommand.cmdId = cmdId;
-        if (subscriptionCommand instanceof SubscriptionCmd) {
-          if (subscriptionCommand.getType() === TelemetryFeature.TIMESERIES) {
-            this.cmdsWrapper.tsSubCmds.push(subscriptionCommand as TimeseriesSubscriptionCmd);
-          } else {
-            this.cmdsWrapper.attrSubCmds.push(subscriptionCommand as AttributesSubscriptionCmd);
-          }
-        } else if (subscriptionCommand instanceof GetHistoryCmd) {
-          this.cmdsWrapper.historyCmds.push(subscriptionCommand);
-        } else if (subscriptionCommand instanceof EntityDataCmd) {
-          this.cmdsWrapper.entityDataCmds.push(subscriptionCommand);
-        } else if (subscriptionCommand instanceof AlarmDataCmd) {
-          this.cmdsWrapper.alarmDataCmds.push(subscriptionCommand);
-        } else if (subscriptionCommand instanceof EntityCountCmd) {
-          this.cmdsWrapper.entityCountCmds.push(subscriptionCommand);
+        if (!(subscriptionCommand instanceof MarkAsReadCmd) && !(subscriptionCommand instanceof MarkAllAsReadCmd)) {
+          this.subscribersMap.set(cmdId, subscriber);
         }
+        subscriptionCommand.cmdId = cmdId;
+        this.cmdWrapper.cmds.push(subscriptionCommand);
       }
     );
     this.subscribersCount++;
@@ -133,8 +89,8 @@ export class TelemetryWebsocketService implements TelemetryService {
     if (!this.isReconnect) {
       subscriber.subscriptionCommands.forEach(
         (subscriptionCommand) => {
-          if (subscriptionCommand.cmdId && subscriptionCommand instanceof EntityDataCmd) {
-            this.cmdsWrapper.entityDataCmds.push(subscriptionCommand);
+          if (subscriptionCommand.cmdId && (subscriptionCommand instanceof EntityDataCmd || subscriptionCommand instanceof UnreadSubCmd)) {
+            this.cmdWrapper.cmds.push(subscriptionCommand);
           }
         }
       );
@@ -148,23 +104,27 @@ export class TelemetryWebsocketService implements TelemetryService {
         (subscriptionCommand) => {
           if (subscriptionCommand instanceof SubscriptionCmd) {
             subscriptionCommand.unsubscribe = true;
-            if (subscriptionCommand.getType() === TelemetryFeature.TIMESERIES) {
-              this.cmdsWrapper.tsSubCmds.push(subscriptionCommand as TimeseriesSubscriptionCmd);
-            } else {
-              this.cmdsWrapper.attrSubCmds.push(subscriptionCommand as AttributesSubscriptionCmd);
-            }
+            this.cmdWrapper.cmds.push(subscriptionCommand);
           } else if (subscriptionCommand instanceof EntityDataCmd) {
             const entityDataUnsubscribeCmd = new EntityDataUnsubscribeCmd();
             entityDataUnsubscribeCmd.cmdId = subscriptionCommand.cmdId;
-            this.cmdsWrapper.entityDataUnsubscribeCmds.push(entityDataUnsubscribeCmd);
+            this.cmdWrapper.cmds.push(entityDataUnsubscribeCmd);
           } else if (subscriptionCommand instanceof AlarmDataCmd) {
             const alarmDataUnsubscribeCmd = new AlarmDataUnsubscribeCmd();
             alarmDataUnsubscribeCmd.cmdId = subscriptionCommand.cmdId;
-            this.cmdsWrapper.alarmDataUnsubscribeCmds.push(alarmDataUnsubscribeCmd);
+            this.cmdWrapper.cmds.push(alarmDataUnsubscribeCmd);
           } else if (subscriptionCommand instanceof EntityCountCmd) {
             const entityCountUnsubscribeCmd = new EntityCountUnsubscribeCmd();
             entityCountUnsubscribeCmd.cmdId = subscriptionCommand.cmdId;
-            this.cmdsWrapper.entityCountUnsubscribeCmds.push(entityCountUnsubscribeCmd);
+            this.cmdWrapper.cmds.push(entityCountUnsubscribeCmd);
+          } else if (subscriptionCommand instanceof AlarmCountCmd) {
+            const alarmCountUnsubscribeCmd = new AlarmCountUnsubscribeCmd();
+            alarmCountUnsubscribeCmd.cmdId = subscriptionCommand.cmdId;
+            this.cmdWrapper.cmds.push(alarmCountUnsubscribeCmd);
+          } else if (subscriptionCommand instanceof UnreadCountSubCmd || subscriptionCommand instanceof UnreadSubCmd) {
+            const notificationsUnsubCmds = new UnsubscribeCmd();
+            notificationsUnsubCmds.cmdId = subscriptionCommand.cmdId;
+            this.cmdWrapper.cmds.push(notificationsUnsubCmds);
           }
           const cmdId = subscriptionCommand.cmdId;
           if (cmdId) {
@@ -178,193 +138,33 @@ export class TelemetryWebsocketService implements TelemetryService {
     }
   }
 
-  private nextCmdId(): number {
-    this.lastCmdId++;
-    return this.lastCmdId;
-  }
-
-  private publishCommands() {
-    while (this.isOpened && this.cmdsWrapper.hasCommands()) {
-      this.dataStream.next(this.cmdsWrapper.preparePublishCommands(MAX_PUBLISH_COMMANDS));
-      this.checkToClose();
-    }
-    this.tryOpenSocket();
-  }
-
-  private checkToClose() {
-    if (this.subscribersCount === 0 && this.isOpened) {
-      if (!this.socketCloseTimer) {
-        this.socketCloseTimer = setTimeout(
-          () => this.closeSocket(), WS_IDLE_TIMEOUT);
-      }
-    }
-  }
-
-  private reset(close: boolean) {
-    if (this.socketCloseTimer) {
-      clearTimeout(this.socketCloseTimer);
-      this.socketCloseTimer = null;
-    }
-    this.lastCmdId = 0;
-    this.subscribersMap.clear();
-    this.subscribersCount = 0;
-    this.cmdsWrapper.clear();
-    if (close) {
-      this.closeSocket();
-    }
-  }
-
-  private closeSocket() {
-    this.isActive = false;
-    if (this.isOpened) {
-      this.dataStream.unsubscribe();
-    }
-  }
-
-  private tryOpenSocket() {
-    if (this.isActive) {
-      if (!this.isOpened && !this.isOpening) {
-        this.isOpening = true;
-        if (AuthService.isJwtTokenValid()) {
-          this.openSocket(AuthService.getJwtToken());
-        } else {
-          this.authService.refreshJwtToken().subscribe(() => {
-              this.openSocket(AuthService.getJwtToken());
-            },
-            () => {
-              this.isOpening = false;
-              this.authService.logout(true);
-            }
-          );
+  processOnMessage(message: WebsocketDataMsg) {
+    let subscriber: TelemetrySubscriber | NotificationSubscriber;
+    if ('cmdId' in message && message.cmdId) {
+      subscriber = this.subscribersMap.get(message.cmdId);
+      if (subscriber instanceof NotificationSubscriber) {
+        if (isNotificationCountUpdateMsg(message)) {
+          subscriber.onNotificationCountUpdate(new NotificationCountUpdate(message));
+        } else if (isNotificationsUpdateMsg(message)) {
+          subscriber.onNotificationsUpdate(new NotificationsUpdate(message));
         }
-      }
-      if (this.socketCloseTimer) {
-        clearTimeout(this.socketCloseTimer);
-        this.socketCloseTimer = null;
-      }
-    }
-  }
-
-  private openSocket(token: string) {
-    const uri = `${this.telemetryUri}?token=${token}`;
-    this.dataStream = webSocket(
-      {
-        url: uri,
-        openObserver: {
-          next: () => {
-            this.onOpen();
-          }
-        },
-        closeObserver: {
-          next: (e: CloseEvent) => {
-            this.onClose(e);
-          }
-        }
-      }
-    );
-
-    this.dataStream.subscribe((message) => {
-        this.ngZone.runOutsideAngular(() => {
-          this.onMessage(message as WebsocketDataMsg);
-        });
-    },
-    (error) => {
-      this.onError(error);
-    });
-  }
-
-  private onOpen() {
-    this.isOpening = false;
-    this.isOpened = true;
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
-    }
-    if (this.isReconnect) {
-      this.isReconnect = false;
-      this.reconnectSubscribers.forEach(
-        (reconnectSubscriber) => {
-          reconnectSubscriber.onReconnected();
-          this.subscribe(reconnectSubscriber);
-        }
-      );
-      this.reconnectSubscribers.clear();
-    } else {
-      this.publishCommands();
-    }
-  }
-
-  private onMessage(message: WebsocketDataMsg) {
-    if (message.errorCode) {
-      this.showWsError(message.errorCode, message.errorMsg);
-    } else {
-      let subscriber: TelemetrySubscriber;
-      if (isEntityDataUpdateMsg(message)) {
-        subscriber = this.subscribersMap.get(message.cmdId);
-        if (subscriber) {
+      } else if (subscriber instanceof TelemetrySubscriber) {
+        if (isEntityDataUpdateMsg(message)) {
           subscriber.onEntityData(new EntityDataUpdate(message));
-        }
-      } else if (isAlarmDataUpdateMsg(message)) {
-        subscriber = this.subscribersMap.get(message.cmdId);
-        if (subscriber) {
+        } else if (isAlarmDataUpdateMsg(message)) {
           subscriber.onAlarmData(new AlarmDataUpdate(message));
-        }
-      } else if (isEntityCountUpdateMsg(message)) {
-        subscriber = this.subscribersMap.get(message.cmdId);
-        if (subscriber) {
+        } else if (isEntityCountUpdateMsg(message)) {
           subscriber.onEntityCount(new EntityCountUpdate(message));
-        }
-      } else if (message.subscriptionId) {
-        subscriber = this.subscribersMap.get(message.subscriptionId);
-        if (subscriber) {
-          subscriber.onData(new SubscriptionUpdate(message));
+        } else if (isAlarmCountUpdateMsg(message)) {
+          subscriber.onAlarmCount(new AlarmCountUpdate(message));
         }
       }
-    }
-    this.checkToClose();
-  }
-
-  private onError(errorEvent) {
-    if (errorEvent) {
-      console.warn('WebSocket error event', errorEvent);
-    }
-    this.isOpening = false;
-  }
-
-  private onClose(closeEvent: CloseEvent) {
-    if (closeEvent && closeEvent.code > 1001 && closeEvent.code !== 1006
-      && closeEvent.code !== 1011 && closeEvent.code !== 1012 && closeEvent.code !== 4500) {
-      this.showWsError(closeEvent.code, closeEvent.reason);
-    }
-    this.isOpening = false;
-    this.isOpened = false;
-    if (this.isActive) {
-      if (!this.isReconnect) {
-        this.reconnectSubscribers.clear();
-        this.subscribersMap.forEach(
-          (subscriber) => {
-            this.reconnectSubscribers.add(subscriber);
-          }
-        );
-        this.reset(false);
-        this.isReconnect = true;
+    } else if ('subscriptionId' in message && message.subscriptionId) {
+      subscriber = this.subscribersMap.get(message.subscriptionId) as TelemetrySubscriber;
+      if (subscriber) {
+        subscriber.onData(new SubscriptionUpdate(message));
       }
-      if (this.reconnectTimer) {
-        clearTimeout(this.reconnectTimer);
-      }
-      this.reconnectTimer = setTimeout(() => this.tryOpenSocket(), RECONNECT_INTERVAL);
     }
-  }
-
-  private showWsError(errorCode: number, errorMsg: string) {
-    let message = errorMsg;
-    if (!message) {
-      message += `WebSocket Error: error code - ${errorCode}.`;
-    }
-    this.store.dispatch(new ActionNotificationShow(
-      {
-        message, type: 'error'
-      }));
   }
 
 }

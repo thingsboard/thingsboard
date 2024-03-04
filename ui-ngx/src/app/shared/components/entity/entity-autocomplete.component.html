@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,16 +15,21 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="selectEntityFormGroup" class="mat-block">
-  <input matInput type="text" placeholder="{{ entityText | translate }}"
+<mat-form-field [formGroup]="selectEntityFormGroup" class="mat-block" [appearance]="appearance">
+  <mat-label>{{ label | translate }}</mat-label>
+  <input matInput type="text"
          #entityInput
          formControlName="entity"
          (focusin)="onFocus()"
          [required]="required"
-         [matAutocomplete]="entityAutocomplete">
+         [matAutocomplete]="entityAutocomplete"
+         [fxShow]="!disabled || !selectEntityFormGroup.get('entity').value">
+  <a *ngIf="selectEntityFormGroup.get('entity').value && disabled" aria-label="Open device profile" [routerLink]=entityURL>
+    {{ displayEntityFn(selectEntityFormGroup.get('entity').value) }}
+  </a>
   <button *ngIf="selectEntityFormGroup.get('entity').value && !disabled"
           type="button"
-          matSuffix mat-button mat-icon-button aria-label="Clear"
+          matSuffix mat-icon-button aria-label="Clear"
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
@@ -32,7 +37,7 @@
                     #entityAutocomplete="matAutocomplete"
                     [displayWith]="displayEntityFn">
     <mat-option *ngFor="let entity of filteredEntities | async" [value]="entity">
-      <span [innerHTML]="entity.name | highlight:searchText"></span>
+      <span [innerHTML]="entity.name | highlight:searchText:true:'ig'"></span>
     </mat-option>
     <mat-option *ngIf="!(filteredEntities | async)?.length" [value]="null">
       <span>
@@ -41,6 +46,6 @@
     </mat-option>
   </mat-autocomplete>
   <mat-error *ngIf="selectEntityFormGroup.get('entity').hasError('required')">
-    {{ entityRequiredText | translate }}
+    {{ requiredErrorText | translate }}
   </mat-error>
 </mat-form-field>

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,6 +24,13 @@ import { Observable } from 'rxjs';
 
 export declare type DashboardPageScope = 'tenant' | 'customer';
 
+export interface DashboardPageInitData {
+  dashboard: Dashboard;
+  currentDashboardId?: string;
+  widgetEditMode?: boolean;
+  singlePageMode?: boolean;
+}
+
 export interface DashboardContext {
   instanceId: string;
   state: string;
@@ -32,6 +39,7 @@ export interface DashboardContext {
   aliasController: IAliasController;
   stateController: IStateController;
   stateChanged: Observable<string>;
+  stateId: Observable<string>;
   runChangeDetection: () => void;
 }
 

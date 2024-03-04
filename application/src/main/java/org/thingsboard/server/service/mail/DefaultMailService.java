@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import org.thingsboard.rule.engine.api.TbEmail;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.ApiFeature;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
-import org.thingsboard.server.common.data.ApiUsageStateMailMessage;
+import org.thingsboard.server.common.data.ApiUsageRecordState;
 import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
@@ -53,7 +53,6 @@ import java.io.ByteArrayInputStream;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -61,11 +60,8 @@ import java.util.concurrent.TimeoutException;
 @Slf4j
 public class DefaultMailService implements MailService {
 
-    public static final String MAIL_PROP = "mail.";
     public static final String TARGET_EMAIL = "targetEmail";
     public static final String UTF_8 = "UTF-8";
-    public static final int _10K = 10000;
-    public static final int _1M = 1000000;
 
     private final MessageSource messages;
     private final Configuration freemarkerConfig;
@@ -84,7 +80,10 @@ public class DefaultMailService implements MailService {
     @Autowired
     private PasswordResetExecutorService passwordResetExecutorService;
 
-    private JavaMailSenderImpl mailSender;
+    @Autowired
+    private TbMailContextComponent tbMailContextComponent;
+
+    private TbMailSender mailSender;
 
     private String mailFrom;
 
@@ -107,70 +106,11 @@ public class DefaultMailService implements MailService {
         AdminSettings settings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
         if (settings != null) {
             JsonNode jsonConfig = settings.getJsonValue();
-            mailSender = createMailSender(jsonConfig);
+            mailSender = new TbMailSender(tbMailContextComponent, jsonConfig);
             mailFrom = jsonConfig.get("mailFrom").asText();
             timeout = jsonConfig.get("timeout").asLong(DEFAULT_TIMEOUT);
         } else {
             throw new IncorrectParameterException("Failed to update mail configuration. Settings not found!");
-        }
-    }
-
-    private JavaMailSenderImpl createMailSender(JsonNode jsonConfig) {
-        JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
-        mailSender.setHost(jsonConfig.get("smtpHost").asText());
-        mailSender.setPort(parsePort(jsonConfig.get("smtpPort").asText()));
-        mailSender.setUsername(jsonConfig.get("username").asText());
-        mailSender.setPassword(jsonConfig.get("password").asText());
-        mailSender.setJavaMailProperties(createJavaMailProperties(jsonConfig));
-        return mailSender;
-    }
-
-    private Properties createJavaMailProperties(JsonNode jsonConfig) {
-        Properties javaMailProperties = new Properties();
-        String protocol = jsonConfig.get("smtpProtocol").asText();
-        javaMailProperties.put("mail.transport.protocol", protocol);
-        javaMailProperties.put(MAIL_PROP + protocol + ".host", jsonConfig.get("smtpHost").asText());
-        javaMailProperties.put(MAIL_PROP + protocol + ".port", jsonConfig.get("smtpPort").asText());
-        javaMailProperties.put(MAIL_PROP + protocol + ".timeout", jsonConfig.get("timeout").asText());
-        javaMailProperties.put(MAIL_PROP + protocol + ".auth", String.valueOf(StringUtils.isNotEmpty(jsonConfig.get("username").asText())));
-        boolean enableTls = false;
-        if (jsonConfig.has("enableTls")) {
-            if (jsonConfig.get("enableTls").isBoolean() && jsonConfig.get("enableTls").booleanValue()) {
-                enableTls = true;
-            } else if (jsonConfig.get("enableTls").isTextual()) {
-                enableTls = "true".equalsIgnoreCase(jsonConfig.get("enableTls").asText());
-            }
-        }
-        javaMailProperties.put(MAIL_PROP + protocol + ".starttls.enable", enableTls);
-        if (enableTls && jsonConfig.has("tlsVersion") && !jsonConfig.get("tlsVersion").isNull()) {
-            String tlsVersion = jsonConfig.get("tlsVersion").asText();
-            if (StringUtils.isNoneEmpty(tlsVersion)) {
-                javaMailProperties.put(MAIL_PROP + protocol + ".ssl.protocols", tlsVersion);
-            }
-        }
-
-        boolean enableProxy = jsonConfig.has("enableProxy") && jsonConfig.get("enableProxy").asBoolean();
-
-        if (enableProxy) {
-            javaMailProperties.put(MAIL_PROP + protocol + ".proxy.host", jsonConfig.get("proxyHost").asText());
-            javaMailProperties.put(MAIL_PROP + protocol + ".proxy.port", jsonConfig.get("proxyPort").asText());
-            String proxyUser = jsonConfig.get("proxyUser").asText();
-            if (StringUtils.isNoneEmpty(proxyUser)) {
-                javaMailProperties.put(MAIL_PROP + protocol + ".proxy.user", proxyUser);
-            }
-            String proxyPassword = jsonConfig.get("proxyPassword").asText();
-            if (StringUtils.isNoneEmpty(proxyPassword)) {
-                javaMailProperties.put(MAIL_PROP + protocol + ".proxy.password", proxyPassword);
-            }
-        }
-        return javaMailProperties;
-    }
-
-    private int parsePort(String strPort) {
-        try {
-            return Integer.valueOf(strPort);
-        } catch (NumberFormatException e) {
-            throw new IncorrectParameterException(String.format("Invalid smtp port value: %s", strPort));
         }
     }
 
@@ -181,7 +121,7 @@ public class DefaultMailService implements MailService {
 
     @Override
     public void sendTestMail(JsonNode jsonConfig, String email) throws ThingsboardException {
-        JavaMailSenderImpl testMailSender = createMailSender(jsonConfig);
+        TbMailSender testMailSender = new TbMailSender(tbMailContextComponent, jsonConfig);
         String mailFrom = jsonConfig.get("mailFrom").asText();
         String subject = messages.getMessage("test.message.subject", null, Locale.US);
         long timeout = jsonConfig.get("timeout").asLong(DEFAULT_TIMEOUT);
@@ -241,7 +181,7 @@ public class DefaultMailService implements MailService {
         passwordResetExecutorService.execute(() -> {
             try {
                 this.sendResetPasswordEmail(passwordResetLink, email);
-            } catch (ThingsboardException e) {
+            } catch (Exception e) {
                 log.error("Error occurred: {} ", e.getMessage());
             }
         });
@@ -335,7 +275,7 @@ public class DefaultMailService implements MailService {
     }
 
     @Override
-    public void sendApiFeatureStateEmail(ApiFeature apiFeature, ApiUsageStateValue stateValue, String email, ApiUsageStateMailMessage msg) throws ThingsboardException {
+    public void sendApiFeatureStateEmail(ApiFeature apiFeature, ApiUsageStateValue stateValue, String email, ApiUsageRecordState recordState) throws ThingsboardException {
         String subject = messages.getMessage("api.usage.state", null, Locale.US);
 
         Map<String, Object> model = new HashMap<>();
@@ -350,11 +290,11 @@ public class DefaultMailService implements MailService {
                 message = mergeTemplateIntoString("state.enabled.ftl", model);
                 break;
             case WARNING:
-                model.put("apiValueLabel", toDisabledValueLabel(apiFeature) + " " + toWarningValueLabel(msg.getKey(), msg.getValue(), msg.getThreshold()));
+                model.put("apiValueLabel", toDisabledValueLabel(apiFeature) + " " + toWarningValueLabel(recordState));
                 message = mergeTemplateIntoString("state.warning.ftl", model);
                 break;
             case DISABLED:
-                model.put("apiLimitValueLabel", toDisabledValueLabel(apiFeature) + " " + toDisabledValueLabel(msg.getKey(), msg.getThreshold()));
+                model.put("apiLimitValueLabel", toDisabledValueLabel(apiFeature) + " " + toDisabledValueLabel(recordState));
                 message = mergeTemplateIntoString("state.disabled.ftl", model);
                 break;
         }
@@ -364,6 +304,11 @@ public class DefaultMailService implements MailService {
     @Override
     public void testConnection(TenantId tenantId) throws Exception {
         mailSender.testConnection();
+    }
+
+    @Override
+    public boolean isConfigured(TenantId tenantId) {
+        return mailSender != null;
     }
 
     private String toEnabledValueLabel(ApiFeature apiFeature) {
@@ -406,10 +351,10 @@ public class DefaultMailService implements MailService {
         }
     }
 
-    private String toWarningValueLabel(ApiUsageRecordKey key, long value, long threshold) {
-        String valueInM = getValueAsString(value);
-        String thresholdInM = getValueAsString(threshold);
-        switch (key) {
+    private String toWarningValueLabel(ApiUsageRecordState recordState) {
+        String valueInM = recordState.getValueAsString();
+        String thresholdInM = recordState.getThresholdAsString();
+        switch (recordState.getKey()) {
             case STORAGE_DP_COUNT:
             case TRANSPORT_DP_COUNT:
                 return valueInM + " out of " + thresholdInM + " allowed data points";
@@ -417,6 +362,8 @@ public class DefaultMailService implements MailService {
                 return valueInM + " out of " + thresholdInM + " allowed messages";
             case JS_EXEC_COUNT:
                 return valueInM + " out of " + thresholdInM + " allowed JavaScript functions";
+            case TBEL_EXEC_COUNT:
+                return valueInM + " out of " + thresholdInM + " allowed Tbel functions";
             case RE_EXEC_COUNT:
                 return valueInM + " out of " + thresholdInM + " allowed Rule Engine messages";
             case EMAIL_EXEC_COUNT:
@@ -428,33 +375,25 @@ public class DefaultMailService implements MailService {
         }
     }
 
-    private String toDisabledValueLabel(ApiUsageRecordKey key, long value) {
-        switch (key) {
+    private String toDisabledValueLabel(ApiUsageRecordState recordState) {
+        switch (recordState.getKey()) {
             case STORAGE_DP_COUNT:
             case TRANSPORT_DP_COUNT:
-                return getValueAsString(value) + " data points";
+                return recordState.getValueAsString() + " data points";
             case TRANSPORT_MSG_COUNT:
-                return getValueAsString(value) + " messages";
+                return recordState.getValueAsString() + " messages";
             case JS_EXEC_COUNT:
-                return "JavaScript functions " + getValueAsString(value) + " times";
+                return "JavaScript functions " + recordState.getValueAsString() + " times";
+            case TBEL_EXEC_COUNT:
+                return "TBEL functions " + recordState.getValueAsString() + " times";
             case RE_EXEC_COUNT:
-                return getValueAsString(value) + " Rule Engine messages";
+                return recordState.getValueAsString() + " Rule Engine messages";
             case EMAIL_EXEC_COUNT:
-                return getValueAsString(value) + " Email messages";
+                return recordState.getValueAsString() + " Email messages";
             case SMS_EXEC_COUNT:
-                return getValueAsString(value) + " SMS messages";
+                return recordState.getValueAsString() + " SMS messages";
             default:
                 throw new RuntimeException("Not implemented!");
-        }
-    }
-
-    private String getValueAsString(long value) {
-        if (value > _1M && value % _1M < _10K) {
-            return value / _1M + "M";
-        } else if (value > _10K) {
-            return String.format("%.2fM", ((double) value) / 1000000);
-        } else {
-            return value + "";
         }
     }
 

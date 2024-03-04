@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
 ///
 
 import { Component } from '@angular/core';
-import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { TargetDevice, WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { switchRpcDefaultSettings } from '@home/components/widget/lib/settings/control/switch-rpc-settings.component';
@@ -29,22 +29,18 @@ import { deepClone } from '@core/utils';
 })
 export class SwitchControlWidgetSettingsComponent extends WidgetSettingsComponent {
 
-  switchControlWidgetSettingsForm: FormGroup;
+  switchControlWidgetSettingsForm: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 
-  get targetDeviceAliasId(): string {
-    const aliasIds = this.widget?.config?.targetDeviceAliasIds;
-    if (aliasIds && aliasIds.length) {
-      return aliasIds[0];
-    }
-    return null;
+  get targetDevice(): TargetDevice {
+    return this.widgetConfig?.config?.targetDevice;
   }
 
-  protected settingsForm(): FormGroup {
+  protected settingsForm(): UntypedFormGroup {
     return this.switchControlWidgetSettingsForm;
   }
 
@@ -75,9 +71,9 @@ export class SwitchControlWidgetSettingsComponent extends WidgetSettingsComponen
 
   protected prepareOutputSettings(settings: any): WidgetSettings {
     return {
+      ...settings.switchRpcSettings,
       title: settings.title,
-      showOnOffLabels: settings.showOnOffLabels,
-      ...settings.switchRpcSettings
+      showOnOffLabels: settings.showOnOffLabels
     };
   }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,8 @@ public abstract class AbstractControllerTest extends AbstractNotifyEntityTest {
     @LocalServerPort
     protected int wsPort;
 
-    private TbTestWebSocketClient wsClient; // lazy
+    protected volatile TbTestWebSocketClient wsClient; // lazy
+    protected volatile TbTestWebSocketClient anotherWsClient; // lazy
 
     public TbTestWebSocketClient getWsClient() {
         if (wsClient == null) {
@@ -69,6 +70,21 @@ public abstract class AbstractControllerTest extends AbstractNotifyEntityTest {
         return wsClient;
     }
 
+    public TbTestWebSocketClient getAnotherWsClient() {
+        if (anotherWsClient == null) {
+            synchronized (this) {
+                try {
+                    if (anotherWsClient == null) {
+                        anotherWsClient = buildAndConnectWebSocketClient();
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+        return anotherWsClient;
+    }
+
     @Before
     public void beforeWsTest() throws Exception {
         // placeholder
@@ -79,11 +95,21 @@ public abstract class AbstractControllerTest extends AbstractNotifyEntityTest {
         if (wsClient != null) {
             wsClient.close();
         }
+        if (anotherWsClient != null) {
+            anotherWsClient.close();
+        }
     }
 
-    private TbTestWebSocketClient buildAndConnectWebSocketClient() throws URISyntaxException, InterruptedException {
-        TbTestWebSocketClient wsClient = new TbTestWebSocketClient(new URI(WS_URL + wsPort + "/api/ws/plugins/telemetry?token=" + token));
+    protected TbTestWebSocketClient buildAndConnectWebSocketClient() throws URISyntaxException, InterruptedException {
+        return buildAndConnectWebSocketClient("/api/ws");
+    }
+
+    protected TbTestWebSocketClient buildAndConnectWebSocketClient(String path) throws URISyntaxException, InterruptedException {
+        TbTestWebSocketClient wsClient = new TbTestWebSocketClient(new URI(WS_URL + wsPort + path));
         assertThat(wsClient.connectBlocking(TIMEOUT, TimeUnit.SECONDS)).isTrue();
+        if (!path.contains("token=")) {
+            wsClient.authenticate(token);
+        }
         return wsClient;
     }
 

@@ -1,4 +1,4 @@
-#### Additional params object  
+#### Additional params object
 
 <div class="divider"></div>
 <br/>
@@ -16,10 +16,10 @@ An optional key/value object holding additional entity parameters depending on w
       </li>
     </ul>
   </li>        
-  <li>Alarms table widget (<i>On row click</i> or <i>Action cell button</i>) - <b>additionalParams:</b> <code>{ alarm: <a href="https://github.com/thingsboard/thingsboard/blob/e264f7b8ddff05bda85c4833bf497f47f447496e/ui-ngx/src/app/shared/models/alarm.models.ts#L108" target="_blank">AlarmDataInfo</a> }</code>:
+  <li>Alarms table widget (<i>On row click</i> or <i>Action cell button</i>) - <b>additionalParams:</b> <code>{ alarm: <a href="https://github.com/thingsboard/thingsboard/blob/7049f564b4f2a1f49f730c72a1c62f9f24aeb7cc/ui-ngx/src/app/shared/models/alarm.models.ts#L147" target="_blank">AlarmDataInfo</a> }</code>:
     <ul>
-      <li><b>alarm:</b> <code><a href="https://github.com/thingsboard/thingsboard/blob/e264f7b8ddff05bda85c4833bf497f47f447496e/ui-ngx/src/app/shared/models/alarm.models.ts#L108" target="_blank">AlarmDataInfo</a></code> - An 
-            <a href="https://github.com/thingsboard/thingsboard/blob/e264f7b8ddff05bda85c4833bf497f47f447496e/ui-ngx/src/app/shared/models/alarm.models.ts#L108" target="_blank">AlarmDataInfo</a> object
+      <li><b>alarm:</b> <code><a href="https://github.com/thingsboard/thingsboard/blob/7049f564b4f2a1f49f730c72a1c62f9f24aeb7cc/ui-ngx/src/app/shared/models/alarm.models.ts#L147" target="_blank">AlarmDataInfo</a></code> - An 
+            <a href="https://github.com/thingsboard/thingsboard/blob/7049f564b4f2a1f49f730c72a1c62f9f24aeb7cc/ui-ngx/src/app/shared/models/alarm.models.ts#L147" target="_blank">AlarmDataInfo</a> object
             presenting basic alarm properties (ex. <code>type</code>, <code>severity</code>, <code>originator</code>, etc.) and <br> provides access to other alarm or originator entity fields/attributes/timeseries declared in widget datasource configuration.
       </li>
     </ul>

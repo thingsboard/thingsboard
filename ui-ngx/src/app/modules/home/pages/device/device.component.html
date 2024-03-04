@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -45,6 +45,12 @@
           (click)="onEntityAction($event, 'manageCredentials')"
           [fxShow]="!isEdit">
     {{ ((deviceScope === 'customer_user' || deviceScope === 'edge_customer_user') ? 'device.view-credentials' : 'device.manage-credentials') | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'checkConnectivity')"
+          [fxShow]="!isEdit">
+    {{ 'device.connectivity.check-connectivity' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
@@ -133,14 +139,14 @@
         required>
       </tb-device-data>
       <div formGroupName="additionalInfo" fxLayout="column">
-        <div fxLayout="row" fxLayout.xs="column" style="padding-bottom: 16px;">
-          <mat-checkbox fxFlex.gt-sm="30" fxFlex formControlName="gateway">
+        <div class="toggle-group">
+          <mat-slide-toggle formControlName="gateway" style="min-width: 165px">
             {{ 'device.is-gateway' | translate }}
-          </mat-checkbox>
-          <mat-checkbox fxFlex *ngIf="entityForm.get('additionalInfo.gateway').value"
-                        formControlName="overwriteActivityTime">
+          </mat-slide-toggle>
+          <mat-slide-toggle *ngIf="entityForm.get('additionalInfo.gateway').value"
+                            formControlName="overwriteActivityTime">
             {{ 'device.overwrite-activity-time' | translate }}
-          </mat-checkbox>
+          </mat-slide-toggle>
         </div>
         <mat-form-field class="mat-block">
           <mat-label translate>device.description</mat-label>

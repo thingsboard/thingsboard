@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,12 +92,8 @@ public class BaseEventService implements EventService {
 
     private <T extends Event> void truncateField(T event, Function<T, String> getter, BiConsumer<T, String> setter) {
         var str = getter.apply(event);
-        if (StringUtils.isNotEmpty(str)) {
-            var length = str.length();
-            if (length > maxDebugEventSymbols) {
-                setter.accept(event, str.substring(0, maxDebugEventSymbols) + "...[truncated " + (length - maxDebugEventSymbols) + " symbols]");
-            }
-        }
+        str = StringUtils.truncate(str, maxDebugEventSymbols);
+        setter.accept(event, str);
     }
 
     @Override
@@ -134,11 +130,6 @@ public class BaseEventService implements EventService {
         eventDao.cleanupEvents(regularEventExpTs, debugEventExpTs, cleanupDb);
     }
 
-    @Override
-    public void migrateEvents() {
-        eventDao.migrateEvents(ttlInSec > 0 ? (System.currentTimeMillis() - ttlInSec * 1000) : 0, debugTtlInSec > 0 ? (System.currentTimeMillis() - debugTtlInSec * 1000) : 0);
-    }
-
     private PageData<EventInfo> convert(EntityType entityType, PageData<? extends Event> pd) {
         return new PageData<>(pd.getData() == null ? null :
                 pd.getData().stream().map(e -> e.toInfo(entityType)).collect(Collectors.toList())
@@ -148,4 +139,5 @@ public class BaseEventService implements EventService {
     private List<EventInfo> convert(EntityType entityType, List<? extends Event> list) {
         return list == null ? null : list.stream().map(e -> e.toInfo(entityType)).collect(Collectors.toList());
     }
+
 }

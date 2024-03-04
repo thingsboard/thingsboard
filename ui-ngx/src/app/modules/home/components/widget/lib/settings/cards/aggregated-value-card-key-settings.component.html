@@ -1,0 +1,48 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ng-container [formGroup]="aggregatedValueCardKeySettingsForm">
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.aggregated-value-card.value-appearance</div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widgets.aggregated-value-card.position' | translate }}</div>
+      <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="position">
+          <mat-option *ngFor="let position of aggregatedValueCardKeyPositions" [value]="position">
+            {{ aggregatedValueCardKeyPositionTranslationMap.get(position) | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widgets.aggregated-value-card.font' | translate }}</div>
+      <tb-font-settings formControlName="font"
+                        previewText="22 °C">
+      </tb-font-settings>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widgets.aggregated-value-card.color' | translate }}</div>
+      <tb-color-settings formControlName="color" settingsKey="{{'widgets.aggregated-value-card.color' | translate }}">
+      </tb-color-settings>
+    </div>
+    <div class="tb-form-row">
+      <mat-slide-toggle class="mat-slide" formControlName="showArrow">
+        {{ 'widgets.aggregated-value-card.display-up-down-arrow' | translate }}
+      </mat-slide-toggle>
+    </div>
+  </div>
+</ng-container>

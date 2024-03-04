@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.google.gson.JsonPrimitive;
 import lombok.Data;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -46,7 +47,7 @@ import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportColumn
 import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportRequest;
 import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportResult;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
-import org.thingsboard.server.common.transport.adaptor.JsonConverter;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.controller.BaseController;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.action.EntityActionService;
@@ -57,7 +58,7 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.utils.CsvUtils;
-import org.thingsboard.server.utils.TypeCastUtil;
+import org.thingsboard.server.common.data.util.TypeCastUtil;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
@@ -87,7 +88,7 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
     @Autowired
     private EntityActionService entityActionService;
 
-    private static ThreadPoolExecutor executor;
+    private ThreadPoolExecutor executor;
 
     @PostConstruct
     private void initExecutor() {
@@ -113,8 +114,9 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
                     ImportedEntityInfo<E> importedEntityInfo = saveEntity(entityData.getFields(), user);
                     E entity = importedEntityInfo.getEntity();
 
-                    saveKvs(user, entity, entityData.getKvs());
-
+                    if (request.getMapping().getUpdate() || !importedEntityInfo.isUpdated()) {
+                        saveKvs(user, entity, entityData.getKvs());
+                    }
                     return importedEntityInfo;
                 },
                 importedEntityInfo -> {
@@ -268,7 +270,7 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
                                 if (!entry.getKey().getType().isKv()) {
                                     entityData.getFields().put(entry.getKey().getType(), entry.getValue());
                                 } else {
-                                    Map.Entry<DataType, Object> castResult = TypeCastUtil.castValue(entry.getValue());
+                                    Pair<DataType, Object> castResult = TypeCastUtil.castValue(entry.getValue());
                                     entityData.getKvs().put(entry.getKey(), new ParsedValue(castResult.getValue(), castResult.getKey()));
                                 }
                             });

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,45 +15,57 @@
  */
 @import "../../../scss/constants";
 
-$containerHeight: 120px !default;
-$previewContainerWidth: 168px !default;
-$previewSize: 96px !default;
+$containerHeight: 96px !default;
+$previewSize: 78px !default;
 
 :host {
 
   .tb-container {
     margin-top: 0;
+    padding: 0 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
     label.tb-title {
       display: block;
-      padding-bottom: 8px;
+      padding-bottom: 0px;
     }
   }
 
   .tb-image-select-container {
-    position: relative;
     width: 100%;
     height: $containerHeight;
+    display: flex;
+    gap: 12px;
+    align-items: center;
   }
 
   .image-container {
-    position: relative;
-    float: left;
-    height: $containerHeight;
-    padding: 12px;
-    margin-right: 8px;
-    background: rgba(0, 0, 0, 0.03);
+    background: #F3F6FA;
     border-radius: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 8px 12px 8px 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    &.disabled {
+      padding: 8px;
+    }
   }
 
-  .image-content-container {
-    background: #FFFFFF;
-    border: 1px solid rgba(0, 0, 0, 0.2);
-    border-radius: 4px;
-    padding-left: 8px;
+  .tb-image-preview-container {
+    width: $previewSize;
     height: $previewSize;
-    &.no-padding {
-      padding-left: 0px;
-    }
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .tb-image-preview-text {
+    font-size: 14px;
+    text-align: center;
   }
 
   .tb-image-preview {
@@ -63,39 +75,28 @@ $previewSize: 96px !default;
     max-height: $previewSize  - 2px;
   }
 
-  .tb-image-preview-container {
-    position: relative;
-    float: left;
-    width: $previewSize;
-    height: $previewSize;
-    margin-top: -1px;
-    margin-bottom: -1px;
-    border: 1px solid rgba(0, 0, 0, 0.54);
-
-    div {
-      width: 100%;
-      font-size: 18px;
-      text-align: center;
-    }
-
-    div,
-    .tb-image-preview {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-    }
+  .tb-image-info-container {
+    display: flex;
+    gap: 12px;
+    font-size: 13px;
+    font-style: normal;
+    line-height: 16px;
+    letter-spacing: normal;
   }
 
-  .tb-image-clear-container {
-    position: relative;
-    float: right;
-    height: $previewSize;
-    display: flex;
-    align-items: center;
-    &.full-height {
-      height: $containerHeight;
-    }
+  .tb-image-file-name {
+    width: 136px;
+    color: rgba(0, 0, 0, 0.54);
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tb-image-file-hint {
+    color: rgba(0, 0, 0, 0.38);
+    font-weight: 400;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .file-input {
@@ -103,16 +104,12 @@ $previewSize: 96px !default;
   }
 
   .tb-flow-drop {
-    position: relative;
-    height: $containerHeight;
+    height: 100%;
+    flex: 1;
     overflow: hidden;
     border: 2px dashed rgba(0, 0, 0, 0.2);
     border-radius: 4px;
     box-sizing: border-box;
-
-    &.float-left {
-      float: left;
-    }
 
     .upload-label {
       width: 100%;
@@ -122,31 +119,48 @@ $previewSize: 96px !default;
       flex-direction: row;
       justify-content: center;
       align-items: center;
-      font-size: 16px;
-      color: rgba(0, 0, 0, 0.54);
-      text-align: center;
+      gap: 8px;
       .mat-icon {
-        margin-right: 17px;
+        color: rgba(0,0,0,0.12);
+      }
+      .upload-text-area {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        font-size: 16px;
+        line-height: 24px;
+        color: rgba(0, 0, 0, 0.54);
+        text-align: center;
+        .hide-xs {
+          @media #{$mat-xs} {
+            display: none;
+          }
+        }
+      }
+      .upload-button-area {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        gap: 6px;
       }
     }
   }
 
   .tb-hint{
     margin-top: 8px;
+    padding-bottom: 0;
   }
 }
 
 :host ::ng-deep {
-  button.browse-file {
+  button.mat-mdc-button.mat-mdc-button-base.browse-file {
     padding: 0;
+    min-width: 0;
+    height: 24px;
     font-size: 16px;
-    span.mat-button-wrapper {
+    label {
       display: block;
-      label {
-        display: block;
-        cursor: pointer;
-        padding: 0 16px;
-      }
+      cursor: pointer;
     }
   }
 }

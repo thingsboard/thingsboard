@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.thingsboard.rule.engine.api.NodeConfiguration;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CalculateDeltaNodeConfiguration implements NodeConfiguration<CalculateDeltaNodeConfiguration> {
+
     private String inputValueKey;
     private String outputValueKey;
     private boolean useCache;
@@ -32,7 +33,7 @@ public class CalculateDeltaNodeConfiguration implements NodeConfiguration<Calcul
 
     @Override
     public CalculateDeltaNodeConfiguration defaultConfiguration() {
-        CalculateDeltaNodeConfiguration configuration = new CalculateDeltaNodeConfiguration();
+        var configuration = new CalculateDeltaNodeConfiguration();
         configuration.setInputValueKey("pulseCounter");
         configuration.setOutputValueKey("delta");
         configuration.setUseCache(true);

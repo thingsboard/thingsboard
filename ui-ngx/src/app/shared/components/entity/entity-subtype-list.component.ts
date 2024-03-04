@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,26 +16,26 @@
 
 import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
-import { Observable, Subscription, throwError } from 'rxjs';
-import { map, mergeMap, publishReplay, refCount, share } from 'rxjs/operators';
-import { Store } from '@ngrx/store';
-import { AppState } from '@app/core/core.state';
+import { Observable, ReplaySubject, Subscription, throwError } from 'rxjs';
+import { debounceTime, map, mergeMap, share } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { EntitySubtype, EntityType } from '@shared/models/entity-type.models';
 import { MatAutocomplete, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
-import { MatChipInputEvent, MatChipList } from '@angular/material/chips';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { AssetService } from '@core/http/asset.service';
-import { DeviceService } from '@core/http/device.service';
-import { EdgeService } from '@core/http/edge.service';
-import { EntityViewService } from '@core/http/entity-view.service';
+import { MatChipGrid, MatChipInputEvent } from '@angular/material/chips';
 import { BroadcastService } from '@core/services/broadcast.service';
 import { COMMA, ENTER, SEMICOLON } from '@angular/cdk/keycodes';
+import { AlarmService } from '@core/http/alarm.service';
+import { FloatLabelType, MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
+import { coerceArray, coerceBoolean } from '@shared/decorators/coercion';
+import { PageLink } from '@shared/models/page/page-link';
+import { PageData } from '@shared/models/page/page-data';
+import { UtilsService } from '@core/services/utils.service';
+import { EntityService } from '@core/http/entity.service';
 
 @Component({
   selector: 'tb-entity-subtype-list',
   templateUrl: './entity-subtype-list.component.html',
-  styleUrls: ['./entity-subtype-list.component.scss'],
+  styleUrls: [],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -51,17 +51,25 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
   modelValue: Array<string> | null;
 
   private requiredValue: boolean;
+
   get required(): boolean {
     return this.requiredValue;
   }
+
   @Input()
+  @coerceBoolean()
   set required(value: boolean) {
-    const newVal = coerceBooleanProperty(value);
-    if (this.requiredValue !== newVal) {
-      this.requiredValue = newVal;
+    if (this.requiredValue !== value) {
+      this.requiredValue = value;
       this.updateValidators();
     }
   }
+
+  @Input()
+  floatLabel: FloatLabelType = 'auto';
+
+  @Input()
+  label: string;
 
   @Input()
   disabled: boolean;
@@ -69,13 +77,29 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
   @Input()
   entityType: EntityType;
 
+  @Input()
+  emptyInputPlaceholder: string;
+
+  @Input()
+  filledInputPlaceholder: string;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
+
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
+
+  @Input()
+  @coerceArray()
+  additionalClasses: Array<string>;
+
   @ViewChild('entitySubtypeInput') entitySubtypeInput: ElementRef<HTMLInputElement>;
   @ViewChild('entitySubtypeAutocomplete') entitySubtypeAutocomplete: MatAutocomplete;
-  @ViewChild('chipList', {static: true}) chipList: MatChipList;
+  @ViewChild('chipList', {static: true}) chipList: MatChipGrid;
 
   entitySubtypeList: Array<string> = [];
   filteredEntitySubtypeList: Observable<Array<string>>;
-  entitySubtypes: Observable<Array<string>>;
+  private entitySubtypes: Observable<Array<string>>;
 
   private broadcastSubscription: Subscription;
 
@@ -92,19 +116,22 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
 
   private propagateChange = (v: any) => { };
 
-  constructor(private store: Store<AppState>,
-              private broadcast: BroadcastService,
+  private hasPageDataEntitySubTypes = new Set<EntityType>([
+    EntityType.ALARM
+  ]);
+
+  constructor(private broadcast: BroadcastService,
               public translate: TranslateService,
-              private assetService: AssetService,
-              private deviceService: DeviceService,
-              private edgeService: EdgeService,
-              private entityViewService: EntityViewService,
-              private fb: FormBuilder) {
+              private alarmService: AlarmService,
+              private utils: UtilsService,
+              private fb: FormBuilder,
+              private entityService: EntityService) {
     this.entitySubtypeListFormGroup = this.fb.group({
       entitySubtypeList: [this.entitySubtypeList, this.required ? [Validators.required] : []],
       entitySubtype: [null]
     });
   }
+
 
   updateValidators() {
     this.entitySubtypeListFormGroup.get('entitySubtypeList').setValidators(this.required ? [Validators.required] : []);
@@ -119,7 +146,6 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
   }
 
   ngOnInit() {
-
     switch (this.entityType) {
       case EntityType.ASSET:
         this.placeholder = this.required ? this.translate.instant('asset.enter-asset-type')
@@ -136,7 +162,7 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
           : this.translate.instant('device.any-device');
         this.secondaryPlaceholder = '+' + this.translate.instant('device.device-type');
         this.noSubtypesMathingText = 'device.no-device-types-matching';
-        this.subtypeListEmptyText = 'device.device-type-list-empty';
+        this.subtypeListEmptyText = 'device.device-profile-type-list-empty';
         this.broadcastSubscription = this.broadcast.on('deviceSaved', () => {
           this.entitySubtypes = null;
         });
@@ -161,14 +187,28 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
           this.entitySubtypes = null;
         });
         break;
+      case EntityType.ALARM:
+        this.placeholder = this.required ? this.translate.instant('alarm.enter-alarm-type')
+          : this.translate.instant('alarm.any-type');
+        this.secondaryPlaceholder = '+' + this.translate.instant('alarm.alarm-type');
+        this.noSubtypesMathingText = 'alarm.no-alarm-types-matching';
+        this.subtypeListEmptyText = 'alarm.alarm-type-list-empty';
+        break;
     }
 
-    this.filteredEntitySubtypeList = this.entitySubtypeListFormGroup.get('entitySubtype').valueChanges
-      .pipe(
-        map(value => value ? value : ''),
-        mergeMap(name => this.fetchEntitySubtypes(name) ),
-        share()
-      );
+    if (this.emptyInputPlaceholder) {
+      this.placeholder = this.emptyInputPlaceholder;
+    }
+    if (this.filledInputPlaceholder) {
+      this.secondaryPlaceholder = this.filledInputPlaceholder;
+    }
+
+    this.filteredEntitySubtypeList = this.entitySubtypeListFormGroup.get('entitySubtype').valueChanges.pipe(
+      debounceTime(150),
+      map(value => value ? value : ''),
+      mergeMap(name => this.fetchEntitySubtypes(name)),
+      share()
+    );
   }
 
   ngAfterViewInit(): void {
@@ -219,8 +259,16 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
     const value = (event.value || '').trim();
     if (value) {
       this.add(value);
+      this.clear('');
     }
-    this.clear('');
+  }
+
+  addOnBlur(event: FocusEvent) {
+    if (!event.relatedTarget) {
+      return;
+    }
+    const value = this.entitySubtypeInput.nativeElement.value;
+    this.chipAdd({value} as MatChipInputEvent);
   }
 
   remove(entitySubtype: string) {
@@ -245,14 +293,17 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
     return entitySubtype ? entitySubtype : undefined;
   }
 
-  fetchEntitySubtypes(searchText?: string): Observable<Array<string>> {
+  private fetchEntitySubtypes(searchText?: string): Observable<Array<string>> {
     this.searchText = searchText;
-    return this.getEntitySubtypes().pipe(
+    return this.getEntitySubtypes(searchText).pipe(
       map(subTypes => {
-        let result = subTypes.filter( subType => {
-          return searchText ? subType.toUpperCase().startsWith(searchText.toUpperCase()) : true;
-        });
-        if (!result.length) {
+        let result;
+        if (this.hasPageDataEntitySubTypes.has(this.entityType)) {
+          result = subTypes;
+        } else {
+          result = subTypes.filter(subType => searchText ? subType.toUpperCase().startsWith(searchText.toUpperCase()) : true);
+        }
+        if (!result.length && searchText.length) {
           result = [searchText];
         }
         return result;
@@ -260,28 +311,33 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
     );
   }
 
-  getEntitySubtypes(): Observable<Array<string>> {
-    if (!this.entitySubtypes) {
-      let subTypesObservable: Observable<Array<EntitySubtype>>;
+  private getEntitySubtypes(searchText?: string): Observable<Array<string>> {
+    if (this.hasPageDataEntitySubTypes.has(this.entityType)) {
+      const pageLink = new PageLink(25, 0, searchText);
+      let subTypesPagesObservable: Observable<PageData<EntitySubtype>>;
       switch (this.entityType) {
-        case EntityType.ASSET:
-          subTypesObservable = this.assetService.getAssetTypes({ignoreLoading: true});
-          break;
-        case EntityType.DEVICE:
-          subTypesObservable = this.deviceService.getDeviceTypes({ignoreLoading: true});
-          break;
-        case EntityType.EDGE:
-          subTypesObservable = this.edgeService.getEdgeTypes({ignoreLoading: true});
-          break;
-        case EntityType.ENTITY_VIEW:
-          subTypesObservable = this.entityViewService.getEntityViewTypes({ignoreLoading: true});
+        case EntityType.ALARM:
+          subTypesPagesObservable = this.alarmService.getAlarmTypes(pageLink, {ignoreLoading: true});
           break;
       }
+      if (subTypesPagesObservable) {
+        this.entitySubtypes = subTypesPagesObservable.pipe(
+            map(subTypesPage => subTypesPage.data.map(subType => subType.type)),
+        );
+      } else {
+        return throwError(null);
+      }
+    }
+    if (!this.entitySubtypes) {
+      const subTypesObservable = this.entityService.getEntitySubtypesObservable(this.entityType);
       if (subTypesObservable) {
         this.entitySubtypes = subTypesObservable.pipe(
-          map(subTypes => subTypes.map(subType => subType.type)),
-          publishReplay(1),
-          refCount()
+          share({
+            connector: () => new ReplaySubject(1),
+            resetOnError: false,
+            resetOnComplete: false,
+            resetOnRefCountZero: true,
+          }),
         );
       } else {
         return throwError(null);
@@ -304,6 +360,10 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
       this.entitySubtypeInput.nativeElement.blur();
       this.entitySubtypeInput.nativeElement.focus();
     }, 0);
+  }
+
+  customTranslate(entity: string) {
+    return this.utils.customTranslation(entity, entity);
   }
 
 }

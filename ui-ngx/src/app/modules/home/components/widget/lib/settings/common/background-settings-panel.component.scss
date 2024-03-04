@@ -1,0 +1,86 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import '../../../../../../../../scss/constants';
+
+.tb-background-settings-panel {
+  width: 620px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  @media #{$mat-lt-md} {
+    width: 90vw;
+  }
+  .tb-background-settings-title {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 24px;
+    letter-spacing: 0.25px;
+    color: rgba(0, 0, 0, 0.87);
+  }
+  .tb-background-form-panel {
+    height: 192px;
+    .tb-background-color-field {
+      height: auto;
+    }
+  }
+  .tb-background-settings-preview {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    padding: 12px 16px 24px 16px;
+    align-items: center;
+    gap: 12px;
+  }
+  .tb-background-settings-preview-title {
+    align-self: stretch;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 24px;
+    color: rgba(0, 0, 0, 0.38);
+  }
+  .tb-background-settings-preview-box {
+    position: relative;
+    width: 136px;
+    height: 118px;
+    border-radius: 2.666px;
+  }
+  .tb-background-settings-preview-overlay {
+    position: absolute;
+    border-radius: 2.666px;
+    top: 7.998px;
+    bottom: 7.998px;
+    left: 7.998px;
+    right: 7.998px;
+  }
+  .tb-background-settings-panel-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow: auto;
+    margin: -10px;
+    padding: 10px;
+  }
+  .tb-background-settings-panel-buttons {
+    height: 40px;
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    justify-content: flex-end;
+    align-items: flex-end;
+  }
+}

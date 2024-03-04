@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import {
   NodeScriptTestDialogComponent,
   NodeScriptTestDialogData
 } from '@shared/components/dialog/node-script-test-dialog.component';
-import { sortObjectKeys } from '@core/utils';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
+import { DebugRuleNodeEventBody } from '@shared/models/event.models';
 
 @Injectable({
   providedIn: 'root'
@@ -37,41 +37,41 @@ export class NodeScriptTestService {
 
   testNodeScript(script: string, scriptType: string, functionTitle: string,
                  functionName: string, argNames: string[], ruleNodeId: string, helpId?: string,
-                 scriptLang?: ScriptLanguage): Observable<string> {
-    if (ruleNodeId) {
+                 scriptLang?: ScriptLanguage, debugEventBody?: DebugRuleNodeEventBody): Observable<string> {
+    if (ruleNodeId && !debugEventBody) {
       return this.ruleChainService.getLatestRuleNodeDebugInput(ruleNodeId).pipe(
         switchMap((debugIn) => {
-          let msg: any;
-          let metadata: {[key: string]: string};
-          let msgType: string;
-          if (debugIn) {
-            if (debugIn.data) {
-              msg = JSON.parse(debugIn.data);
-            }
-            if (debugIn.metadata) {
-              metadata = JSON.parse(debugIn.metadata);
-            }
-            msgType = debugIn.msgType;
-          }
           return this.openTestScriptDialog(script, scriptType, functionTitle,
-            functionName, argNames, msg, metadata, msgType, helpId, scriptLang);
+            functionName, argNames, debugIn, helpId, scriptLang);
         })
       );
     } else {
       return this.openTestScriptDialog(script, scriptType, functionTitle,
-        functionName, argNames, null, null, null, helpId, scriptLang);
+        functionName, argNames, debugEventBody, helpId, scriptLang);
     }
   }
 
-  private openTestScriptDialog(script: string, scriptType: string,
-                               functionTitle: string, functionName: string, argNames: string[],
-                               msg?: any, metadata?: {[key: string]: string}, msgType?: string, helpId?: string,
+  private openTestScriptDialog(script: string, scriptType: string, functionTitle: string, functionName: string,
+                               argNames: string[], eventBody: DebugRuleNodeEventBody, helpId?: string,
                                scriptLang?: ScriptLanguage): Observable<string> {
+    let msg: any;
+    let metadata: {[key: string]: string};
+    let msgType: string;
+    if (eventBody && eventBody.data) {
+      try {
+        msg = JSON.parse(eventBody.data);
+      } catch (e) {}
+    }
     if (!msg) {
       msg = {
         temperature: 22.4,
         humidity: 78
       };
+    }
+    if (eventBody && eventBody.metadata) {
+      try {
+        metadata = JSON.parse(eventBody.metadata);
+      } catch (e) {}
     }
     if (!metadata) {
       metadata = {
@@ -79,10 +79,10 @@ export class NodeScriptTestService {
         deviceType: 'default',
         ts: new Date().getTime() + ''
       };
-    } else {
-      metadata = sortObjectKeys(metadata);
     }
-    if (!msgType) {
+    if (eventBody && eventBody.msgType) {
+      msgType = eventBody.msgType;
+    } else {
       msgType = 'POST_TELEMETRY_REQUEST';
     }
     return this.dialog.open<NodeScriptTestDialogComponent, NodeScriptTestDialogData, string>(NodeScriptTestDialogComponent,

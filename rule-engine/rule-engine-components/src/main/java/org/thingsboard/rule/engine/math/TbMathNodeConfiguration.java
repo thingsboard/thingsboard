@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,10 @@ public class TbMathNodeConfiguration implements NodeConfiguration<TbMathNodeConf
     @Override
     public TbMathNodeConfiguration defaultConfiguration() {
         TbMathNodeConfiguration configuration = new TbMathNodeConfiguration();
-        configuration.setOperation(TbRuleNodeMathFunctionType.ADD);
-        configuration.setArguments(Arrays.asList(new TbMathArgument("x", TbMathArgumentType.CONSTANT, "2"), new TbMathArgument("y", TbMathArgumentType.CONSTANT, "2")));
-        configuration.setResult(new TbMathResult(TbMathArgumentType.MESSAGE_BODY, "result", 2, false, false, null));
+        configuration.setOperation(TbRuleNodeMathFunctionType.CUSTOM);
+        configuration.setCustomFunction("(x - 32) / 1.8");
+        configuration.setArguments(List.of(new TbMathArgument("x", TbMathArgumentType.MESSAGE_BODY, "temperature")));
+        configuration.setResult(new TbMathResult(TbMathArgumentType.MESSAGE_BODY, "temperatureCelsius", 2, false, false, null));
         return configuration;
     }
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ import { Component, ElementRef, Inject, Input, NgZone, OnDestroy, OnInit, ViewCh
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { AbstractControl, FormArray, FormBuilder, FormGroup, NgForm, Validators } from '@angular/forms';
+import { AbstractControl, UntypedFormArray, UntypedFormBuilder, UntypedFormGroup, NgForm, Validators } from '@angular/forms';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { UtilsService } from '@core/services/utils.service';
 import {
@@ -57,7 +57,7 @@ import { AttributeService } from '@core/http/attribute.service';
 import { AttributeData, AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { forkJoin, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { ImportExportService } from '@shared/import-export/import-export.service';
 import { ResizeObserver } from '@juggle/resize-observer';
 
 // @dynamic
@@ -73,7 +73,7 @@ export class GatewayFormComponent extends PageComponent implements OnInit, OnDes
     private elementRef: ElementRef,
     private utils: UtilsService,
     private ngZone: NgZone,
-    private fb: FormBuilder,
+    private fb: UntypedFormBuilder,
     @Inject(WINDOW) private window: Window,
     private dialog: MatDialog,
     private translate: TranslateService,
@@ -84,8 +84,8 @@ export class GatewayFormComponent extends PageComponent implements OnInit, OnDes
     super(store);
   }
 
-  get connectors(): FormArray {
-    return this.gatewayConfigurationGroup.get('connectors') as FormArray;
+  get connectors(): UntypedFormArray {
+    return this.gatewayConfigurationGroup.get('connectors') as UntypedFormArray;
   }
 
   @ViewChild('formContainer', {static: true}) formContainerRef: ElementRef<HTMLElement>;
@@ -101,7 +101,7 @@ export class GatewayFormComponent extends PageComponent implements OnInit, OnDes
   alignment = 'row';
   layoutGap = '5px';
   gatewayType: string;
-  gatewayConfigurationGroup: FormGroup;
+  gatewayConfigurationGroup: UntypedFormGroup;
   securityTypes = SecurityTypeTranslationMap;
   gatewayLogLevels = Object.keys(GatewayLogLevel).map(itm => GatewayLogLevel[itm]);
   connectorTypes = Object.keys(ConnectorType);
@@ -286,6 +286,7 @@ export class GatewayFormComponent extends PageComponent implements OnInit, OnDes
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         jsonValue: config,
+        required: true,
         title: this.translate.instant('gateway.title-connectors-json', {typeName: type})
       }
     }).afterClosed().subscribe(

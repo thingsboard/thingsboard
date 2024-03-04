@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,9 +27,18 @@ export interface BaseData<T extends HasId> {
   label?: string;
 }
 
+export function sortEntitiesByIds<I extends HasId, T extends BaseData<I>>(entities: T[], entityIds: string[]): T[] {
+  entities.sort((entity1, entity2) => {
+    const id1 = entity1.id.id;
+    const id2 = entity2.id.id;
+    const index1 = entityIds.indexOf(id1);
+    const index2 = entityIds.indexOf(id2);
+    return index1 - index2;
+  });
+  return entities;
+}
+
 export interface ExportableEntity<T extends EntityId> {
-  createdTime?: number;
-  id?: T;
   externalId?: T;
 }
 

@@ -1,0 +1,56 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ng-container [formGroup]="entityCountWidgetConfigForm">
+  <tb-datasources
+    [configMode]="basicMode"
+    hideDatasourcesMode
+    hideDatasourceLabel
+    hideDataKeys
+    displayDatasourceFilterForBasicMode
+    formControlName="datasources">
+  </tb-datasources>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widget-config.appearance</div>
+    <tb-count-widget-settings alarmElseEntity="false" formControlName="settings"></tb-count-widget-settings>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widget-config.card-appearance</div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widgets.background.background' | translate }}</div>
+      <tb-color-input asBoxInput
+                      colorClearButton
+                      formControlName="backgroundColor">
+      </tb-color-input>
+    </div>
+    <div class="tb-form-row space-between column-lt-md">
+      <div translate>widget-config.show-card-buttons</div>
+      <mat-chip-listbox multiple formControlName="cardButtons">
+        <mat-chip-option value="fullscreen">{{ 'fullscreen.fullscreen' | translate }}</mat-chip-option>
+      </mat-chip-listbox>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widget-config.card-border-radius' | translate }}</div>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="borderRadius" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+  </div>
+  <tb-widget-actions-panel
+    formControlName="actions">
+  </tb-widget-actions-panel>
+</ng-container>

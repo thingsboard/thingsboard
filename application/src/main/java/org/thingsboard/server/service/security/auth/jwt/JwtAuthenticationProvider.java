@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,14 @@
 package org.thingsboard.server.service.security.auth.jwt;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.service.security.auth.TokenOutdatingService;
 import org.thingsboard.server.service.security.auth.JwtAuthenticationToken;
+import org.thingsboard.server.service.security.auth.TokenOutdatingService;
 import org.thingsboard.server.service.security.exception.JwtExpiredTokenException;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
@@ -37,13 +39,19 @@ public class JwtAuthenticationProvider implements AuthenticationProvider {
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         RawAccessJwtToken rawAccessToken = (RawAccessJwtToken) authentication.getCredentials();
-        SecurityUser securityUser = tokenFactory.parseAccessJwtToken(rawAccessToken);
+        SecurityUser securityUser = authenticate(rawAccessToken.getToken());
+        return new JwtAuthenticationToken(securityUser);
+    }
 
-        if (tokenOutdatingService.isOutdated(rawAccessToken, securityUser.getId())) {
+    public SecurityUser authenticate(String accessToken) throws AuthenticationException {
+        if (StringUtils.isEmpty(accessToken)) {
+            throw new BadCredentialsException("Token is invalid");
+        }
+        SecurityUser securityUser = tokenFactory.parseAccessJwtToken(accessToken);
+        if (tokenOutdatingService.isOutdated(accessToken, securityUser.getId())) {
             throw new JwtExpiredTokenException("Token is outdated");
         }
-
-        return new JwtAuthenticationToken(securityUser);
+        return securityUser;
     }
 
     @Override

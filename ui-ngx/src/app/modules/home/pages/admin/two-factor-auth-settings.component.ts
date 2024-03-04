@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import { PageComponent } from '@shared/components/page.component';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormArray, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormArray, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { TwoFactorAuthenticationService } from '@core/http/two-factor-authentication.service';
 import {
   TwoFactorAuthProviderConfigForm,
@@ -43,15 +43,17 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
   private readonly destroy$ = new Subject<void>();
   private readonly posIntValidation = [Validators.required, Validators.min(1), Validators.pattern(/^\d*$/)];
 
-  twoFaFormGroup: FormGroup;
+  twoFaFormGroup: UntypedFormGroup;
   twoFactorAuthProviderType = TwoFactorAuthProviderType;
   twoFactorAuthProvidersData = twoFactorAuthProvidersData;
+
+  showMainLoadingBar = false;
 
   @ViewChildren(MatExpansionPanel) expansionPanel: QueryList<MatExpansionPanel>;
 
   constructor(protected store: Store<AppState>,
               private twoFaService: TwoFactorAuthenticationService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 
@@ -68,7 +70,7 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
     this.destroy$.complete();
   }
 
-  confirmForm(): FormGroup {
+  confirmForm(): UntypedFormGroup {
     return this.twoFaFormGroup;
   }
 
@@ -99,9 +101,9 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
       $event.stopPropagation();
     }
     if (currentState) {
-      this.getByIndexPanel(index).close();
-    } else {
       this.getByIndexPanel(index).open();
+    } else {
+      this.getByIndexPanel(index).close();
     }
   }
 
@@ -109,8 +111,8 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
     return item;
   }
 
-  get providersForm(): FormArray {
-    return this.twoFaFormGroup.get('providers') as FormArray;
+  get providersForm(): UntypedFormArray {
+    return this.twoFaFormGroup.get('providers') as UntypedFormArray;
   }
 
   private build2faSettingsForm(): void {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,18 +20,18 @@ import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
 
 @Data
-public class TbTransformMsgNodeConfiguration extends TbTransformNodeConfiguration implements NodeConfiguration {
+public class TbTransformMsgNodeConfiguration implements NodeConfiguration<TbTransformMsgNodeConfiguration> {
 
     private ScriptLanguage scriptLang;
     private String jsScript;
-    private String mvelScript;
+    private String tbelScript;
 
     @Override
     public TbTransformMsgNodeConfiguration defaultConfiguration() {
         TbTransformMsgNodeConfiguration configuration = new TbTransformMsgNodeConfiguration();
-        configuration.setScriptLang(ScriptLanguage.MVEL);
+        configuration.setScriptLang(ScriptLanguage.TBEL);
         configuration.setJsScript("return {msg: msg, metadata: metadata, msgType: msgType};");
-        configuration.setMvelScript("return {msg: msg, metadata: metadata, msgType: msgType};");
+        configuration.setTbelScript("return {msg: msg, metadata: metadata, msgType: msgType};");
         return configuration;
     }
 }

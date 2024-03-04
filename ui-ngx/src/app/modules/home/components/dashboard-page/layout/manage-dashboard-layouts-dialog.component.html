@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@
   <mat-toolbar color="primary">
     <h2 translate>layout.manage</h2>
     <span fxFlex></span>
-    <button mat-button mat-icon-button
+    <button mat-icon-button
       (click)="cancel()"
             type="button">
       <mat-icon class="material-icons">close</mat-icon>
@@ -65,12 +65,15 @@
                     mat-raised-button
                     color="primary"
                     class="tb-layout-button"
-                    [matTooltip]="layoutButtonText('main')"
-                    matTooltipPosition="above"
-                    matTooltipClass="tb-layout-button-tooltip"
+                    (mouseover)="mainLayoutTooltip.show()"
+                    (mouseleave)="mainLayoutTooltip.hide()"
                     (click)="setFixedLayout('main')"
                     [ngClass]="layoutButtonClass('main', true)">
-              <span>{{ (layoutsFormGroup.value.right ? 'layout.left' : 'layout.main')  | translate }}</span>
+              <span [matTooltip]="layoutButtonText('main')"
+                    #mainLayoutTooltip="matTooltip"
+                    matTooltipPosition="above">
+                {{ (layoutsFormGroup.value.right ? 'layout.left' : 'layout.main')  | translate }}
+              </span>
             </button>
             <div fxFlex class="tb-layout-preview-element tb-layout-preview-input" *ngIf="showPreviewInputs('main')">
               <input *ngIf="layoutsFormGroup.get('type').value !== layoutWidthType.FIXED"
@@ -106,12 +109,15 @@
                     mat-raised-button
                     color="primary"
                     class="tb-layout-button tb-layout-button-right"
-                    [matTooltip]="layoutButtonText('right')"
-                    matTooltipPosition="above"
-                    matTooltipClass="tb-layout-button-tooltip"
+                    (mouseover)="rightLayoutTooltip.show()"
+                    (mouseleave)="rightLayoutTooltip.hide()"
                     (click)="setFixedLayout('right')"
                     [ngClass]="layoutButtonClass('right')">
-              <span>{{ 'layout.right' | translate }}</span>
+              <span [matTooltip]="layoutButtonText('right')"
+                    #rightLayoutTooltip="matTooltip"
+                    matTooltipPosition="above">
+                {{ 'layout.right' | translate }}
+              </span>
             </button>
             <div fxFlex class="tb-layout-preview-element tb-layout-preview-input" *ngIf="showPreviewInputs('right')">
               <input *ngIf="layoutsFormGroup.get('type').value !== layoutWidthType.FIXED"
@@ -139,9 +145,8 @@
                     max="{{ layoutPercentageSize.MAX }}"
                     style="width: 100%;"
                     color="accent"
-                    formControlName="sliderPercentage"
-                    thumbLabel
-                    [displayWith]="formatSliderTooltipLabel.bind(this)">
+                    discrete
+                    [displayWith]="formatSliderTooltipLabel.bind(this)"><input matSliderThumb formControlName="sliderPercentage"/>
         </mat-slider>
         <mat-slider *ngIf="layoutsFormGroup.get('type').value !== layoutWidthType.PERCENTAGE"
                     step="1"
@@ -149,9 +154,8 @@
                     max="{{ layoutFixedSize.MAX }}"
                     style="width: 100%;"
                     color="accent"
-                    formControlName="sliderFixed"
-                    thumbLabel
-                    [displayWith]="formatSliderTooltipLabel.bind(this)">
+                    discrete
+                    [displayWith]="formatSliderTooltipLabel.bind(this)"><input matSliderThumb formControlName="sliderFixed"/>
         </mat-slider>
         <div fxLayout="row" fxLayoutAlign="space-between center" class="tb-hint tb-hint-group" style="width: 100%;">
           <label>

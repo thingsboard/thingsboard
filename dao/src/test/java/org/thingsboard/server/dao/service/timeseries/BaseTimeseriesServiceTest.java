@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -32,13 +33,17 @@ import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
+import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.objects.TelemetryEntityView;
+import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
+import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,8 +53,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Andrew Shvayka
@@ -57,7 +65,14 @@ import static org.junit.Assert.assertNotNull;
 
 @Slf4j
 public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
-    static final int MAX_TIMEOUT = 30;
+
+    @Autowired
+    protected TimeseriesService tsService;
+
+    @Autowired
+    EntityViewService entityViewService;
+
+    protected static final int MAX_TIMEOUT = 30;
 
     private static final String STRING_KEY = "stringKey";
     private static final String LONG_KEY = "longKey";
@@ -72,7 +87,7 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
     KvEntry doubleKvEntry = new DoubleDataEntry(DOUBLE_KEY, Double.MAX_VALUE);
     KvEntry booleanKvEntry = new BooleanDataEntry(BOOLEAN_KEY, Boolean.TRUE);
 
-    private TenantId tenantId;
+    protected TenantId tenantId;
 
     @Before
     public void before() {
@@ -342,6 +357,36 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         Assert.assertEquals(toTsEntry(TS - 1, stringKvEntry), entries.get(0));
         Assert.assertEquals(toTsEntry(TS - 2, stringKvEntry), entries.get(1));
         Assert.assertEquals(toTsEntry(TS - 3, stringKvEntry), entries.get(2));
+    }
+
+    @Test
+    public void testFindAllByQueries_verifyQueryId() throws Exception {
+        DeviceId deviceId = new DeviceId(Uuids.timeBased());
+        saveEntries(deviceId, TS);
+        saveEntries(deviceId, TS - 2);
+        saveEntries(deviceId, TS - 10);
+
+        BaseReadTsKvQuery query = new BaseReadTsKvQuery(STRING_KEY, TS - 10, TS + 1, 0, 1000, Aggregation.NONE, "DESC");
+        findAndVerifyQueryId(deviceId, query);
+    }
+
+    @Test
+    public void testFindAllByQueries_verifyQueryId_forEntityView() throws Exception {
+        DeviceId deviceId = new DeviceId(Uuids.timeBased());
+        saveEntries(deviceId, TS);
+        saveEntries(deviceId, TS - 2);
+        saveEntries(deviceId, TS - 12);
+
+        EntityView entityView = saveAndCreateEntityView(deviceId, List.of(LONG_KEY));
+
+        BaseReadTsKvQuery query = new BaseReadTsKvQuery(LONG_KEY, TS - 10, TS + 1, 0, 1000, Aggregation.NONE, "DESC");
+        findAndVerifyQueryId(entityView.getId(), query);
+    }
+
+    private void findAndVerifyQueryId(EntityId entityId, ReadTsKvQuery query) throws InterruptedException, ExecutionException, TimeoutException {
+        List<ReadTsKvQueryResult> results = tsService.findAllByQueries(tenantId, entityId, List.of(query)).get(MAX_TIMEOUT, TimeUnit.SECONDS);
+        assertThat(results).isNotEmpty();
+        assertThat(results).extracting(ReadTsKvQueryResult::getQueryId).containsOnly(query.getId());
     }
 
     @Test
@@ -631,6 +676,32 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         assertEquals(3, list.size());
     }
 
+    @Test
+    public void shouldSaveEntryOfEachType() throws Exception {
+        BasicTsKvEntry booleanEntry = new BasicTsKvEntry(TimeUnit.MINUTES.toMillis(1), new BooleanDataEntry("test", true));
+        BasicTsKvEntry stringEntry = new BasicTsKvEntry(TimeUnit.MINUTES.toMillis(2), new StringDataEntry("test", "text"));
+        BasicTsKvEntry longEntry = new BasicTsKvEntry(TimeUnit.MINUTES.toMillis(3), new LongDataEntry("test", 15L));
+        BasicTsKvEntry doubleEntry = new BasicTsKvEntry(TimeUnit.MINUTES.toMillis(4), new DoubleDataEntry("test", 10.5));
+        BasicTsKvEntry jsonEntry = new BasicTsKvEntry(TimeUnit.MINUTES.toMillis(5), new JsonDataEntry("test", "{\"test\":\"testValue\"}"));
+        List<TsKvEntry> timeseries = List.of(booleanEntry, stringEntry, longEntry, doubleEntry, jsonEntry);
+
+        DeviceId deviceId = new DeviceId(Uuids.timeBased());
+        for (TsKvEntry tsKvEntry : timeseries) {
+            save(tenantId, deviceId, tsKvEntry);
+        }
+
+        List<TsKvEntry> listUntil3Minutes = tsService.findAll(tenantId, deviceId, Collections.singletonList(new BaseReadTsKvQuery("test", 0L,
+                TimeUnit.MINUTES.toMillis(3), 1000, 10, Aggregation.NONE))).get(MAX_TIMEOUT, TimeUnit.SECONDS);
+        assertEquals(2, listUntil3Minutes.size());
+        assertThat(listUntil3Minutes).containsOnlyOnceElementsOf(List.of(
+                booleanEntry, stringEntry));
+
+        List<TsKvEntry> fullList = tsService.findAll(tenantId, deviceId, Collections.singletonList(new BaseReadTsKvQuery("test", 0L,
+                TimeUnit.MINUTES.toMillis(6), 1000, 10, Aggregation.NONE))).get(MAX_TIMEOUT, TimeUnit.SECONDS);
+        assertEquals(5, fullList.size());
+        assertThat(fullList).containsOnlyOnceElementsOf(timeseries);
+    }
+
     private TsKvEntry save(DeviceId deviceId, long ts, long value) throws Exception {
         TsKvEntry entry = new BasicTsKvEntry(ts, new LongDataEntry(LONG_KEY, value));
         tsService.save(tenantId, deviceId, entry).get(MAX_TIMEOUT, TimeUnit.SECONDS);
@@ -649,6 +720,9 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         return entry;
     }
 
+    private void save(TenantId tenantId, DeviceId deviceId, TsKvEntry tsKvEntry) throws Exception {
+        tsService.save(tenantId, deviceId, tsKvEntry).get(MAX_TIMEOUT, TimeUnit.SECONDS);
+    }
 
     private void saveEntries(DeviceId deviceId, long ts) throws ExecutionException, InterruptedException, TimeoutException {
         tsService.save(tenantId, deviceId, toTsEntry(ts, stringKvEntry)).get(MAX_TIMEOUT, TimeUnit.SECONDS);

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import org.thingsboard.server.common.data.id.WidgetTypeId;
 @Data
 public class WidgetType extends BaseWidgetType {
 
-    @ApiModelProperty(position = 7, value = "Complex JSON object that describes the widget type", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @ApiModelProperty(position = 8, value = "Complex JSON object that describes the widget type")
     private transient JsonNode descriptor;
 
     public WidgetType() {

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,6 +16,6 @@
 
 -->
 <a mat-raised-button color="primary" class="tb-nav-button" href="{{settings.path}}" (click)="navigate($event, settings.path)">
-  <mat-icon class="material-icons tb-mat-96">{{settings.icon}}</mat-icon>
+  <tb-icon matButtonIcon class="tb-mat-96">{{settings.icon}}</tb-icon>
   <span>{{translatedName}}</span>
 </a>

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import {
@@ -63,14 +63,15 @@ export class KeyFilterDialogComponent extends
 
   private dirty = false;
   private entityKeysName: Observable<Array<string>>;
-  private destroy$ = new Subject();
+  private destroy$ = new Subject<void>();
 
-  keyFilterFormGroup: FormGroup;
+  keyFilterFormGroup: UntypedFormGroup;
 
   entityKeyTypes =
     this.data.telemetryKeysOnly ?
       [EntityKeyType.ATTRIBUTE, EntityKeyType.TIME_SERIES, EntityKeyType.CONSTANT] :
-      [EntityKeyType.ENTITY_FIELD, EntityKeyType.ATTRIBUTE, EntityKeyType.TIME_SERIES];
+      [EntityKeyType.ENTITY_FIELD, EntityKeyType.ATTRIBUTE, EntityKeyType.CLIENT_ATTRIBUTE,
+        EntityKeyType.SERVER_ATTRIBUTE, EntityKeyType.SHARED_ATTRIBUTE, EntityKeyType.TIME_SERIES];
 
   entityKeyTypeTranslations = entityKeyTypeTranslationMap;
 
@@ -96,7 +97,7 @@ export class KeyFilterDialogComponent extends
               private deviceProfileService: DeviceProfileService,
               private dialogs: DialogService,
               private translate: TranslateService,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
 
     this.keyFilterFormGroup = this.fb.group(
@@ -191,7 +192,7 @@ export class KeyFilterDialogComponent extends
     this.destroy$.complete();
   }
 
-  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
     const customErrorState = !!(control && control.invalid && this.submitted);
     return originalErrorState || customErrorState;

@@ -1,0 +1,10 @@
+{
+  "name": "Asset Profile For Import",
+  "description": null,
+  "image": null,
+  "defaultRuleChainId": null,
+  "defaultDashboardId": null,
+  "defaultQueueName": null,
+  "externalId": null,
+  "default": false
+}

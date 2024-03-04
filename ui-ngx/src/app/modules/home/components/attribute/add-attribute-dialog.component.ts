@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -23,12 +23,13 @@ import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Valida
 import { EntityId } from '@shared/models/id/entity-id';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
-import { AttributeData, AttributeScope } from '@shared/models/telemetry/telemetry.models';
+import { AttributeData, AttributeScope, LatestTelemetry, TelemetryType } from '@shared/models/telemetry/telemetry.models';
 import { AttributeService } from '@core/http/attribute.service';
+import { Observable } from 'rxjs';
 
 export interface AddAttributeDialogData {
   entityId: EntityId;
-  attributeScope: AttributeScope;
+  attributeScope: TelemetryType;
 }
 
 @Component({
@@ -43,6 +44,8 @@ export class AddAttributeDialogComponent extends DialogComponent<AddAttributeDia
   attributeFormGroup: FormGroup;
 
   submitted = false;
+
+  isTelemetry = false;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -59,12 +62,18 @@ export class AddAttributeDialogComponent extends DialogComponent<AddAttributeDia
       key: ['', [Validators.required, Validators.maxLength(255)]],
       value: [null, [Validators.required]]
     });
+    this.isTelemetry = this.data.attributeScope === LatestTelemetry.LATEST_TELEMETRY;
   }
 
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
     const customErrorState = !!(control && control.invalid && this.submitted);
     return originalErrorState || customErrorState;
+  }
+
+  invalid(): boolean {
+    const value = this.attributeFormGroup.get('value').value;
+    return !Array.isArray(value) && this.attributeFormGroup.invalid;
   }
 
   cancel(): void {
@@ -78,11 +87,14 @@ export class AddAttributeDialogComponent extends DialogComponent<AddAttributeDia
       key: this.attributeFormGroup.get('key').value.trim(),
       value: this.attributeFormGroup.get('value').value
     };
-    this.attributeService.saveEntityAttributes(this.data.entityId,
-      this.data.attributeScope, [attribute]).subscribe(
-          () => {
-            this.dialogRef.close(true);
-          }
-    );
+    let task: Observable<any>;
+    if (this.data.attributeScope === LatestTelemetry.LATEST_TELEMETRY) {
+      task = this.attributeService.saveEntityTimeseries(this.data.entityId,
+        this.data.attributeScope, [attribute]);
+    } else {
+      task = this.attributeService.saveEntityAttributes(this.data.entityId,
+        this.data.attributeScope as AttributeScope, [attribute]);
+    }
+    task.subscribe(() => this.dialogRef.close(true));
   }
 }

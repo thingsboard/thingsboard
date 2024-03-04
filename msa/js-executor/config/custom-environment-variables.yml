@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2022 The Thingsboard Authors
+# Copyright © 2016-2024 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 #
 
 queue_type: "TB_QUEUE_TYPE" #kafka (Apache Kafka) or aws-sqs (AWS SQS) or pubsub (PubSub) or service-bus (Azure Service Bus) or rabbitmq (RabbitMQ)
+queue_prefix: "TB_QUEUE_PREFIX"
 request_topic: "REMOTE_JS_EVAL_REQUEST_TOPIC"
 http_port: "HTTP_PORT"      # /livenessProbe
 
@@ -32,6 +33,7 @@ kafka:
   linger_ms: "TB_KAFKA_LINGER_MS" # for producer
   partitions_consumed_concurrently: "TB_KAFKA_PARTITIONS_CONSUMED_CONCURRENTLY" # (EXPERIMENTAL) increase this value if you are planning to handle more than one partition (scale up, scale down) - this will decrease the latency
   requestTimeout: "TB_QUEUE_KAFKA_REQUEST_TIMEOUT_MS"
+  connectionTimeout: "TB_KAFKA_CONNECTION_TIMEOUT_MS"
   compression: "TB_QUEUE_KAFKA_COMPRESSION" # gzip or uncompressed
   topic_properties: "TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES"
   use_confluent_cloud: "TB_QUEUE_KAFKA_USE_CONFLUENT_CLOUD"
@@ -75,6 +77,7 @@ logger:
 
 script:
   use_sandbox: "SCRIPT_USE_SANDBOX"
+  memory_usage_trace_frequency: "MEMORY_USAGE_TRACE_FREQUENCY"
   stat_print_frequency: "SCRIPT_STAT_PRINT_FREQUENCY"
   script_body_trace_frequency: "SCRIPT_BODY_TRACE_FREQUENCY"
   max_active_scripts: "MAX_ACTIVE_SCRIPTS"

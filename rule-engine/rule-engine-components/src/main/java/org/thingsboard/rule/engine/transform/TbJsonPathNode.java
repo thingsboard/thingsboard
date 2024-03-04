@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.transform;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.jayway.jsonpath.Configuration;
 import com.jayway.jsonpath.JsonPath;
 import com.jayway.jsonpath.PathNotFoundException;
@@ -39,10 +38,8 @@ import java.util.concurrent.ExecutionException;
         name = "json path",
         configClazz = TbJsonPathNodeConfiguration.class,
         nodeDescription = "Transforms incoming message body using JSONPath expression.",
-        nodeDetails = "JSONPath expression specifies a path to an element or a set of elements in a JSON structure. <br/>"
-                + "<b>'$'</b> represents the root object or array. <br/>"
-                + "If JSONPath expression evaluation failed, incoming message routes via <code>Failure</code> chain, "
-                + "otherwise <code>Success</code> chain is used.",
+        nodeDetails = "JSONPath expression specifies a path to an element or a set of elements in a JSON structure.<br><br>" +
+                "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         icon = "functions",
         configDirective = "tbTransformationNodeJsonPathConfig"
@@ -70,8 +67,8 @@ public class TbJsonPathNode implements TbNode {
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
         if (!TbJsonPathNodeConfiguration.DEFAULT_JSON_PATH.equals(this.jsonPathValue)) {
             try {
-                JsonNode jsonPathData = jsonPath.read(msg.getData(), this.configurationJsonPath);
-                ctx.tellSuccess(TbMsg.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), JacksonUtil.toString(jsonPathData)));
+                Object jsonPathData = jsonPath.read(msg.getData(), this.configurationJsonPath);
+                ctx.tellSuccess(TbMsg.transformMsgData(msg, JacksonUtil.toString(jsonPathData)));
             } catch (PathNotFoundException e) {
                 ctx.tellFailure(msg, e);
             }

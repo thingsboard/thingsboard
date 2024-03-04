@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,9 @@ import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 import java.util.Collections;
 
 @Data
-public class TbChangeOriginatorNodeConfiguration extends TbTransformNodeConfiguration implements NodeConfiguration {
+public class TbChangeOriginatorNodeConfiguration implements NodeConfiguration<TbChangeOriginatorNodeConfiguration> {
+
+    private static final String CUSTOMER_SOURCE = "CUSTOMER";
 
     private String originatorSource;
 
@@ -36,7 +38,7 @@ public class TbChangeOriginatorNodeConfiguration extends TbTransformNodeConfigur
     @Override
     public TbChangeOriginatorNodeConfiguration defaultConfiguration() {
         TbChangeOriginatorNodeConfiguration configuration = new TbChangeOriginatorNodeConfiguration();
-        configuration.setOriginatorSource(TbChangeOriginatorNode.CUSTOMER_SOURCE);
+        configuration.setOriginatorSource(CUSTOMER_SOURCE);
 
         RelationsQuery relationsQuery = new RelationsQuery();
         relationsQuery.setDirection(EntitySearchDirection.FROM);

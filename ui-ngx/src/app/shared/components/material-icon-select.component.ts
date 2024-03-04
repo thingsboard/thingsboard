@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,14 +14,18 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, forwardRef, Input, OnInit, Renderer2, ViewContainerRef } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { DialogService } from '@core/services/dialog.service';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { TranslateService } from '@ngx-translate/core';
+import { coerceBoolean } from '@shared/decorators/coercion';
+import { TbPopoverService } from '@shared/components/popover.service';
+import { MaterialIconsComponent } from '@shared/components/material-icons.component';
+import { MatButton } from '@angular/material/button';
 
 @Component({
   selector: 'tb-material-icon-select',
@@ -38,22 +42,24 @@ import { TranslateService } from '@ngx-translate/core';
 export class MaterialIconSelectComponent extends PageComponent implements OnInit, ControlValueAccessor {
 
   @Input()
+  @coerceBoolean()
+  asBoxInput = false;
+
+  @Input()
   label = this.translate.instant('icon.icon');
+
+  @Input()
+  color: string;
+
+  @Input()
+  backgroundColor: string;
 
   @Input()
   disabled: boolean;
 
-  private iconClearButtonValue: boolean;
-  get iconClearButton(): boolean {
-    return this.iconClearButtonValue;
-  }
   @Input()
-  set iconClearButton(value: boolean) {
-    const newVal = coerceBooleanProperty(value);
-    if (this.iconClearButtonValue !== newVal) {
-      this.iconClearButtonValue = newVal;
-    }
-  }
+  @coerceBoolean()
+  iconClearButton = false;
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -68,12 +74,16 @@ export class MaterialIconSelectComponent extends PageComponent implements OnInit
 
   private propagateChange = null;
 
-  public materialIconFormGroup: FormGroup;
+  public materialIconFormGroup: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
               private dialogs: DialogService,
               private translate: TranslateService,
-              private fb: FormBuilder) {
+              private popoverService: TbPopoverService,
+              private renderer: Renderer2,
+              private viewContainerRef: ViewContainerRef,
+              private fb: UntypedFormBuilder,
+              private cd: ChangeDetectorRef) {
     super(store);
   }
 
@@ -120,19 +130,49 @@ export class MaterialIconSelectComponent extends PageComponent implements OnInit
 
   openIconDialog() {
     if (!this.disabled) {
-      this.dialogs.materialIconPicker(this.materialIconFormGroup.get('icon').value).subscribe(
-        (icon) => {
-          if (icon) {
+      this.dialogs.materialIconPicker(this.materialIconFormGroup.get('icon').value,
+        this.iconClearButton).subscribe(
+        (result) => {
+          if (!result?.canceled) {
             this.materialIconFormGroup.patchValue(
-              {icon}, {emitEvent: true}
+              {icon: result?.icon}, {emitEvent: true}
             );
+            this.cd.markForCheck();
           }
         }
       );
     }
   }
 
+  openIconPopup($event: Event, matButton: MatButton) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const trigger = matButton._elementRef.nativeElement;
+    if (this.popoverService.hasPopover(trigger)) {
+      this.popoverService.hidePopover(trigger);
+    } else {
+      const materialIconsPopover = this.popoverService.displayPopover(trigger, this.renderer,
+        this.viewContainerRef, MaterialIconsComponent, 'left', true, null,
+        {
+          selectedIcon: this.materialIconFormGroup.get('icon').value,
+          iconClearButton: this.iconClearButton
+        },
+        {},
+        {}, {}, true);
+      materialIconsPopover.tbComponentRef.instance.popover = materialIconsPopover;
+      materialIconsPopover.tbComponentRef.instance.iconSelected.subscribe((icon) => {
+        materialIconsPopover.hide();
+        this.materialIconFormGroup.patchValue(
+          {icon}, {emitEvent: true}
+        );
+        this.cd.markForCheck();
+      });
+    }
+  }
+
   clear() {
     this.materialIconFormGroup.get('icon').patchValue(null, {emitEvent: true});
+    this.cd.markForCheck();
   }
 }

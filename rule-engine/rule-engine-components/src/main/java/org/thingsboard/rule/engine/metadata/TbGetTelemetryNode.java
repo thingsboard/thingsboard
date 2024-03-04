@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,41 +15,34 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.json.JsonWriteFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.gson.JsonParseException;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.thingsboard.common.util.DonAsynchron;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import static org.thingsboard.rule.engine.metadata.TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL;
-import static org.thingsboard.rule.engine.metadata.TbGetTelemetryNodeConfiguration.FETCH_MODE_FIRST;
-import static org.thingsboard.rule.engine.metadata.TbGetTelemetryNodeConfiguration.MAX_FETCH_SIZE;
 
 /**
  * Created by mshvayka on 04.09.18.
@@ -58,13 +51,11 @@ import static org.thingsboard.rule.engine.metadata.TbGetTelemetryNodeConfigurati
 @RuleNode(type = ComponentType.ENRICHMENT,
         name = "originator telemetry",
         configClazz = TbGetTelemetryNodeConfiguration.class,
-        nodeDescription = "Add Message Originator Telemetry for selected time range into Message Metadata\n",
-        nodeDetails = "The node allows you to select fetch mode: <b>FIRST/LAST/ALL</b> to fetch telemetry of certain time range that are added into Message metadata without any prefix. " +
-                "If selected fetch mode <b>ALL</b> Telemetry will be added like array into Message Metadata where <b>key</b> is Timestamp and <b>value</b> is value of Telemetry.</br>" +
-                "If selected fetch mode <b>FIRST</b> or <b>LAST</b> Telemetry will be added like string without Timestamp.</br>" +
-                "Also, the rule node allows you to select telemetry sampling order: <b>ASC</b> or <b>DESC</b>. </br>" +
-                "Aggregation feature allows you to fetch aggregated telemetry as a single value by <b>AVG, COUNT, SUM, MIN, MAX, NONE</b>. </br>" +
-                "<b>Note</b>: The maximum size of the fetched array is 1000 records.\n ",
+        nodeDescription = "Adds message originator telemetry for selected time range into message metadata",
+        nodeDetails = "Useful when you need to get telemetry data set from the message originator for a specific time range " +
+                "instead of fetching just the latest telemetry or if you need to get the closest telemetry to the fetch interval start or end. " +
+                "Also, this node can be used for telemetry aggregation within configured fetch interval.<br><br>" +
+                "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbEnrichmentNodeGetTelemetryFromDatabase")
 public class TbGetTelemetryNode implements TbNode {
@@ -75,7 +66,6 @@ public class TbGetTelemetryNode implements TbNode {
     private TbGetTelemetryNodeConfiguration config;
     private List<String> tsKeyNames;
     private int limit;
-    private ObjectMapper mapper;
     private String fetchMode;
     private String orderByFetchAll;
     private Aggregation aggregation;
@@ -84,21 +74,17 @@ public class TbGetTelemetryNode implements TbNode {
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbGetTelemetryNodeConfiguration.class);
         tsKeyNames = config.getLatestTsKeyNames();
-        limit = config.getFetchMode().equals(FETCH_MODE_ALL) ? validateLimit(config.getLimit()) : 1;
+        limit = config.getFetchMode().equals(TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL) ? validateLimit(config.getLimit()) : 1;
         fetchMode = config.getFetchMode();
         orderByFetchAll = config.getOrderBy();
         if (StringUtils.isEmpty(orderByFetchAll)) {
             orderByFetchAll = ASC_ORDER;
         }
         aggregation = parseAggregationConfig(config.getAggregation());
-
-        mapper = new ObjectMapper();
-        mapper.configure(JsonWriteFeature.QUOTE_FIELD_NAMES.mappedFeature(), false);
-        mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
     }
 
     Aggregation parseAggregationConfig(String aggName) {
-        if (StringUtils.isEmpty(aggName) || !fetchMode.equals(FETCH_MODE_ALL)) {
+        if (StringUtils.isEmpty(aggName) || !fetchMode.equals(TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL)) {
             return Aggregation.NONE;
         }
         return Aggregation.valueOf(aggName);
@@ -114,8 +100,8 @@ public class TbGetTelemetryNode implements TbNode {
                 List<String> keys = TbNodeUtils.processPatterns(tsKeyNames, msg);
                 ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), buildQueries(interval, keys));
                 DonAsynchron.withCallback(list, data -> {
-                    process(data, msg, keys);
-                    ctx.tellSuccess(ctx.transformMsg(msg, msg.getType(), msg.getOriginator(), msg.getMetaData(), msg.getData()));
+                    var metaData = updateMetadata(data, msg, keys);
+                    ctx.tellSuccess(TbMsg.transformMsgMetadata(msg, metaData));
                 }, error -> ctx.tellFailure(msg, error), ctx.getDbCallbackExecutor());
             } catch (Exception e) {
                 ctx.tellFailure(msg, e);
@@ -136,28 +122,29 @@ public class TbGetTelemetryNode implements TbNode {
 
     private String getOrderBy() {
         switch (fetchMode) {
-            case FETCH_MODE_ALL:
+            case TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL:
                 return orderByFetchAll;
-            case FETCH_MODE_FIRST:
+            case TbGetTelemetryNodeConfiguration.FETCH_MODE_FIRST:
                 return ASC_ORDER;
             default:
                 return DESC_ORDER;
         }
     }
 
-    private void process(List<TsKvEntry> entries, TbMsg msg, List<String> keys) {
-        ObjectNode resultNode = mapper.createObjectNode();
-        if (FETCH_MODE_ALL.equals(fetchMode)) {
+    private TbMsgMetaData updateMetadata(List<TsKvEntry> entries, TbMsg msg, List<String> keys) {
+        ObjectNode resultNode = JacksonUtil.newObjectNode(JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER);
+        if (TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL.equals(fetchMode)) {
             entries.forEach(entry -> processArray(resultNode, entry));
         } else {
             entries.forEach(entry -> processSingle(resultNode, entry));
         }
-
+        var copy = msg.getMetaData().copy();
         for (String key : keys) {
             if (resultNode.has(key)) {
-                msg.getMetaData().putValue(key, resultNode.get(key).toString());
+                copy.putValue(key, resultNode.get(key).toString());
             }
         }
+        return copy;
     }
 
     private void processSingle(ObjectNode node, TsKvEntry entry) {
@@ -169,36 +156,16 @@ public class TbGetTelemetryNode implements TbNode {
             ArrayNode arrayNode = (ArrayNode) node.get(entry.getKey());
             arrayNode.add(buildNode(entry));
         } else {
-            ArrayNode arrayNode = mapper.createArrayNode();
+            ArrayNode arrayNode = JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER.createArrayNode();
             arrayNode.add(buildNode(entry));
             node.set(entry.getKey(), arrayNode);
         }
     }
 
     private ObjectNode buildNode(TsKvEntry entry) {
-        ObjectNode obj = mapper.createObjectNode()
-                .put("ts", entry.getTs());
-        switch (entry.getDataType()) {
-            case STRING:
-                obj.put("value", entry.getValueAsString());
-                break;
-            case LONG:
-                obj.put("value", entry.getLongValue().get());
-                break;
-            case BOOLEAN:
-                obj.put("value", entry.getBooleanValue().get());
-                break;
-            case DOUBLE:
-                obj.put("value", entry.getDoubleValue().get());
-                break;
-            case JSON:
-                try {
-                    obj.set("value", mapper.readTree(entry.getJsonValue().get()));
-                } catch (IOException e) {
-                    throw new JsonParseException("Can't parse jsonValue: " + entry.getJsonValue().get(), e);
-                }
-                break;
-        }
+        ObjectNode obj = JacksonUtil.newObjectNode(JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER);
+        obj.put("ts", entry.getTs());
+        JacksonUtil.addKvEntry(obj, entry, "value", JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER);
         return obj;
     }
 
@@ -248,7 +215,7 @@ public class TbGetTelemetryNode implements TbNode {
         if (limit != 0) {
             return limit;
         } else {
-            return MAX_FETCH_SIZE;
+            return TbGetTelemetryNodeConfiguration.MAX_FETCH_SIZE;
         }
     }
 

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ import {
   HeaderActionDescriptor
 } from '@home/models/entity/entities-table-config.models';
 import { ActivatedRoute } from '@angular/router';
+
+export type EntitiesTableAction = 'add';
 
 export interface IEntitiesTableComponent {
   entitiesTableConfig: EntityTableConfig<BaseData<HasId>>;
@@ -78,6 +80,7 @@ export interface IEntitiesTableComponent {
   exitFilterMode(): void;
   resetSortAndFilter(update?: boolean, preserveTimewindow?: boolean): void;
   columnsUpdated(resetData?: boolean): void;
+  cellActionDescriptorsUpdated(): void;
   headerCellStyle(column: EntityColumn<BaseData<HasId>>): any;
   clearCellCache(col: number, row: number): void;
   cellContent(entity: BaseData<HasId>, column: EntityColumn<BaseData<HasId>>, row: number): any;
@@ -85,4 +88,5 @@ export interface IEntitiesTableComponent {
   cellStyle(entity: BaseData<HasId>, column: EntityColumn<BaseData<HasId>>, row: number): any;
   trackByColumnKey(index, column: EntityTableColumn<BaseData<HasId>>): string;
   trackByEntityId(index: number, entity: BaseData<HasId>): string;
+  detectChanges(): void;
 }

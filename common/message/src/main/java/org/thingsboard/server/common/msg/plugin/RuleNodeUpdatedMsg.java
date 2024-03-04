@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,20 @@
  */
 package org.thingsboard.server.common.msg.plugin;
 
+import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.MsgType;
 
-import java.util.Optional;
-
 /**
  * @author Andrew Shvayka
+ * This class used only to tell local rule-node actor like 'existing.getSelfActor().tellWithHighPriority(new RuleNodeUpdatedMs( ...'
+ * Never serialized to/from proto, otherwise you need to change proto mappers in ProtoUtils class
  */
-@ToString
+@ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
 public class RuleNodeUpdatedMsg extends ComponentLifecycleMsg {
 
     public RuleNodeUpdatedMsg(TenantId tenantId, EntityId entityId) {

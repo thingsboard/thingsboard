@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import io.swagger.annotations.ApiModel;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.TenantProfileType;
+
+import java.io.Serializable;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
@@ -30,13 +31,16 @@ import org.thingsboard.server.common.data.TenantProfileType;
         property = "type")
 @JsonSubTypes({
         @JsonSubTypes.Type(value = DefaultTenantProfileConfiguration.class, name = "DEFAULT")})
-public interface TenantProfileConfiguration {
+public interface TenantProfileConfiguration extends Serializable {
 
     @JsonIgnore
     TenantProfileType getType();
 
     @JsonIgnore
     long getProfileThreshold(ApiUsageRecordKey key);
+
+    @JsonIgnore
+    boolean getProfileFeatureEnabled(ApiUsageRecordKey key);
 
     @JsonIgnore
     long getWarnThreshold(ApiUsageRecordKey key);

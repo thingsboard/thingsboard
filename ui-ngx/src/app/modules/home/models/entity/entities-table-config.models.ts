@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import { EntityTabsComponent } from '../../components/entity/entity-tabs.compone
 import { DAY, historyInterval } from '@shared/models/time/time.models';
 import { IEntitiesTableComponent } from '@home/models/entity/entity-table-component.models';
 import { IEntityDetailsPageComponent } from '@home/models/entity/entity-details-page-component.models';
-import { templateJitUrl } from '@angular/compiler';
 
 export type EntityBooleanFunction<T extends BaseData<HasId>> = (entity: T) => boolean;
 export type EntityStringFunction<T extends BaseData<HasId>> = (entity: T) => string;
@@ -58,7 +57,7 @@ export interface CellActionDescriptor<T extends BaseData<HasId>> {
   name: string;
   nameFunction?: (entity: T) => string;
   icon?: string;
-  mdiIcon?: string;
+  iconFunction?: (entity: T) => string;
   style?: any;
   isEnabled: (entity: T) => boolean;
   onAction: ($event: MouseEvent, entity: T) => any;
@@ -75,12 +74,11 @@ export interface GroupActionDescriptor<T extends BaseData<HasId>> {
 export interface HeaderActionDescriptor {
   name: string;
   icon: string;
-  isMdiIcon?: boolean;
   isEnabled: () => boolean;
   onAction: ($event: MouseEvent) => void;
 }
 
-export type EntityTableColumnType = 'content' | 'action';
+export type EntityTableColumnType = 'content' | 'action' | 'link';
 
 export class BaseEntityTableColumn<T extends BaseData<HasId>> {
   constructor(public type: EntityTableColumnType,
@@ -117,6 +115,16 @@ export class EntityActionTableColumn<T extends BaseData<HasId>> extends BaseEnti
   }
 }
 
+export class EntityLinkTableColumn<T extends BaseData<HasId>> extends BaseEntityTableColumn<T> {
+  constructor(public key: string,
+              public title: string,
+              public width: string = '0px',
+              public cellContentFunction: CellContentFunction<T> = (entity, property) => entity[property] ? entity[property] : '',
+              public entityURL: (entity) => string) {
+    super('link', key, title, width, false);
+  }
+}
+
 export class DateEntityTableColumn<T extends BaseData<HasId>> extends EntityTableColumn<T> {
   constructor(key: string,
               title: string,
@@ -132,7 +140,7 @@ export class DateEntityTableColumn<T extends BaseData<HasId>> extends EntityTabl
   }
 }
 
-export type EntityColumn<T extends BaseData<HasId>> = EntityTableColumn<T> | EntityActionTableColumn<T>;
+export type EntityColumn<T extends BaseData<HasId>> = EntityTableColumn<T> | EntityActionTableColumn<T> | EntityLinkTableColumn<T>;
 
 export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = PageLink, L extends BaseData<HasId> = T> {
 
@@ -146,6 +154,7 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   loadDataOnInit = true;
   onLoadAction: (route: ActivatedRoute) => void = null;
   useTimePageLink = false;
+  forAllTimeEnabled = false;
   defaultTimewindowInterval = historyInterval(DAY);
   entityType: EntityType = null;
   tableTitle = '';
@@ -155,6 +164,7 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   entitiesDeleteEnabled = true;
   detailsPanelEnabled = true;
   hideDetailsTabsOnEdit = true;
+  rowPointer = false;
   actionsColumnTitle = null;
   entityTranslations: EntityTypeTranslation;
   entityResources: EntityTypeResource<T>;
@@ -173,9 +183,8 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   headerComponent: Type<EntityTableHeaderComponent<T, P, L>>;
   addEntity: CreateEntityOperation<T> = null;
   dataSource: (dataLoadedFunction: (col?: number, row?: number) => void)
-    => EntitiesDataSource<L> = (dataLoadedFunction: (col?: number, row?: number) => void) => {
-    return new EntitiesDataSource(this.entitiesFetchFunction, this.entitySelectionEnabled, dataLoadedFunction);
-  }
+    => EntitiesDataSource<L> = (dataLoadedFunction: (col?: number, row?: number) => void) =>
+    new EntitiesDataSource(this.entitiesFetchFunction, this.entitySelectionEnabled, dataLoadedFunction);
   detailsReadonly: EntityBooleanFunction<T> = () => false;
   entitySelectionEnabled: EntityBooleanFunction<L> = () => true;
   deleteEnabled: EntityBooleanFunction<T | L> = () => true;
@@ -220,6 +229,20 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
     }
   }
 
+  toggleEntityDetails($event: Event, entity: T) {
+    if (this.table) {
+      this.table.toggleEntityDetails($event, entity);
+    }
+  }
+
+  isDetailsOpen(): boolean {
+    if (this.table) {
+      return this.table.isDetailsOpen;
+    } else {
+      return false;
+    }
+  }
+
   getActivatedRoute(): ActivatedRoute {
     if (this.table) {
       return this.table.route;
@@ -229,6 +252,5 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   }
 }
 
-export function checkBoxCell(value: boolean): string {
-  return `<mat-icon class="material-icons mat-icon">${value ? 'check_box' : 'check_box_outline_blank'}</mat-icon>`;
-}
+export const checkBoxCell =
+  (value: boolean): string => `<mat-icon class="material-icons mat-icon">${value ? 'check_box' : 'check_box_outline_blank'}</mat-icon>`;

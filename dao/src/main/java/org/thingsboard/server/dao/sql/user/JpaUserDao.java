@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,17 +20,19 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.UserEntity;
-import org.thingsboard.server.dao.sql.JpaAbstractSearchTextDao;
+import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.user.UserDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import java.util.Objects;
+import java.util.List;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
@@ -40,7 +42,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
  */
 @Component
 @SqlDao
-public class JpaUserDao extends JpaAbstractSearchTextDao<UserEntity, User> implements UserDao {
+public class JpaUserDao extends JpaAbstractDao<UserEntity, User> implements UserDao {
 
     @Autowired
     private UserRepository userRepository;
@@ -71,7 +73,7 @@ public class JpaUserDao extends JpaAbstractSearchTextDao<UserEntity, User> imple
                 userRepository
                         .findByTenantId(
                                 tenantId,
-                                Objects.toString(pageLink.getTextSearch(), ""),
+                                pageLink.getTextSearch(),
                                 DaoUtil.toPageable(pageLink)));
     }
 
@@ -82,7 +84,7 @@ public class JpaUserDao extends JpaAbstractSearchTextDao<UserEntity, User> imple
                         .findUsersByAuthority(
                                 tenantId,
                                 NULL_UUID,
-                                Objects.toString(pageLink.getTextSearch(), ""),
+                                pageLink.getTextSearch(),
                                 Authority.TENANT_ADMIN,
                                 DaoUtil.toPageable(pageLink)));
     }
@@ -94,10 +96,42 @@ public class JpaUserDao extends JpaAbstractSearchTextDao<UserEntity, User> imple
                         .findUsersByAuthority(
                                 tenantId,
                                 customerId,
-                                Objects.toString(pageLink.getTextSearch(), ""),
+                                pageLink.getTextSearch(),
                                 Authority.CUSTOMER_USER,
                                 DaoUtil.toPageable(pageLink)));
 
+    }
+
+    @Override
+    public PageData<User> findUsersByCustomerIds(UUID tenantId, List<CustomerId> customerIds, PageLink pageLink) {
+        return DaoUtil.toPageData(
+                userRepository
+                        .findTenantAndCustomerUsers(
+                                tenantId,
+                                DaoUtil.toUUIDs(customerIds),
+                                pageLink.getTextSearch(),
+                                DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<User> findAll(PageLink pageLink) {
+        return DaoUtil.toPageData(userRepository.findAll(DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<User> findAllByAuthority(Authority authority, PageLink pageLink) {
+        return DaoUtil.toPageData(userRepository.findAllByAuthority(authority, DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<User> findByAuthorityAndTenantsIds(Authority authority, List<TenantId> tenantsIds, PageLink pageLink) {
+        return DaoUtil.toPageData(userRepository.findByAuthorityAndTenantIdIn(authority, DaoUtil.toUUIDs(tenantsIds), DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<User> findByAuthorityAndTenantProfilesIds(Authority authority, List<TenantProfileId> tenantProfilesIds, PageLink pageLink) {
+        return DaoUtil.toPageData(userRepository.findByAuthorityAndTenantProfilesIds(authority, DaoUtil.toUUIDs(tenantProfilesIds),
+                DaoUtil.toPageable(pageLink)));
     }
 
     @Override

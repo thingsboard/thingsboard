@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 import { Injectable } from '@angular/core';
 
-import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
 import {
   CellActionDescriptor,
   checkBoxCell,
@@ -30,11 +30,17 @@ import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { AddEntityDialogData, EntityAction } from '@home/models/entity/entity-component.models';
-import { Device, DeviceCredentials, DeviceInfo } from '@app/shared/models/device.models';
+import {
+  Device,
+  DeviceCredentials,
+  DeviceInfo,
+  DeviceInfoFilter,
+  DeviceInfoQuery
+} from '@app/shared/models/device.models';
 import { DeviceComponent } from '@modules/home/pages/device/device.component';
 import { forkJoin, Observable, of, Subject } from 'rxjs';
 import { select, Store } from '@ngrx/store';
-import { selectAuthUser } from '@core/auth/auth.selectors';
+import { selectAuthUser, selectUserSettingsProperty } from '@core/auth/auth.selectors';
 import { map, mergeMap, take, tap } from 'rxjs/operators';
 import { AppState } from '@core/core.state';
 import { DeviceService } from '@app/core/http/device.service';
@@ -63,12 +69,26 @@ import { DeviceTabsComponent } from '@home/pages/device/device-tabs.component';
 import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
 import { DeviceWizardDialogComponent } from '@home/components/wizard/device-wizard-dialog.component';
 import { BaseData, HasId } from '@shared/models/base-data';
-import { isDefinedAndNotNull } from '@core/utils';
+import { deepClone, isDefined, isDefinedAndNotNull } from '@core/utils';
 import { EdgeService } from '@core/http/edge.service';
 import {
   AddEntitiesToEdgeDialogComponent,
   AddEntitiesToEdgeDialogData
 } from '@home/dialogs/add-entities-to-edge-dialog.component';
+import { EdgeId } from '@shared/models/id/edge-id';
+import { CustomerId } from '@shared/models/id/customer-id';
+import { PageLink, PageQueryParam } from '@shared/models/page/page-link';
+import { DeviceProfileId } from '@shared/models/id/device-profile-id';
+import {
+  DeviceCheckConnectivityDialogComponent,
+  DeviceCheckConnectivityDialogData
+} from '@home/pages/device/device-check-connectivity-dialog.component';
+import { EntityId } from '@shared/models/id/entity-id';
+
+interface DevicePageQueryParams extends PageQueryParam {
+  deviceProfileId?: string;
+  active?: boolean | string;
+}
 
 @Injectable()
 export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<DeviceInfo>> {
@@ -103,17 +123,16 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     this.config.deleteEntitiesContent = () => this.translate.instant('device.delete-devices-text');
 
     this.config.loadEntity = id => this.deviceService.getDeviceInfo(id.id);
-    this.config.saveEntity = device => {
-      return this.deviceService.saveDevice(device).pipe(
+    this.config.saveEntity = device => this.deviceService.saveDevice(device).pipe(
         tap(() => {
           this.broadcast.broadcast('deviceSaved');
         }),
         mergeMap((savedDevice) => this.deviceService.getDeviceInfo(savedDevice.id.id)
         ));
-    };
     this.config.onEntityAction = action => this.onDeviceAction(action, this.config);
     this.config.detailsReadonly = () =>
       (this.config.componentsData.deviceScope === 'customer_user' || this.config.componentsData.deviceScope === 'edge_customer_user');
+    this.config.onLoadAction = (route) => this.onLoadAction(route);
 
     this.config.headerComponent = DeviceTableHeaderComponent;
 
@@ -123,7 +142,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     const routeParams = route.params;
     this.config.componentsData = {
       deviceScope: route.data.devicesType,
-      deviceProfileId: null,
+      deviceInfoFilter: {},
       deviceCredentials$: new Subject<DeviceCredentials>(),
       edgeId: routeParams.edgeId
     };
@@ -162,7 +181,8 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
         this.config.cellActionDescriptors = this.configureCellActions(this.config.componentsData.deviceScope);
         this.config.groupActionDescriptors = this.configureGroupActions(this.config.componentsData.deviceScope);
         this.config.addActionDescriptors = this.configureAddActions(this.config.componentsData.deviceScope);
-        this.config.addEnabled = !(this.config.componentsData.deviceScope === 'customer_user' || this.config.componentsData.deviceScope === 'edge_customer_user');
+        this.config.addEnabled = !(this.config.componentsData.deviceScope === 'customer_user' ||
+          this.config.componentsData.deviceScope === 'edge_customer_user');
         this.config.entitiesDeleteEnabled = this.config.componentsData.deviceScope === 'tenant';
         this.config.deleteEnabled = () => this.config.componentsData.deviceScope === 'tenant';
         return this.config;
@@ -170,48 +190,97 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     );
   }
 
+  onLoadAction(route: ActivatedRoute): void {
+    const routerQueryParams: DevicePageQueryParams = route.snapshot.queryParams;
+    if (routerQueryParams) {
+      const queryParams = deepClone(routerQueryParams);
+      let replaceUrl = false;
+      if (routerQueryParams?.deviceProfileId) {
+        this.config.componentsData.deviceInfoFilter.deviceProfileId = new DeviceProfileId(routerQueryParams?.deviceProfileId);
+        delete queryParams.deviceProfileId;
+        replaceUrl = true;
+      }
+      if (isDefined(routerQueryParams?.active)) {
+        this.config.componentsData.deviceInfoFilter.active = (routerQueryParams?.active === true || routerQueryParams?.active === 'true');
+        delete queryParams.active;
+        replaceUrl = true;
+      }
+      if (replaceUrl) {
+        this.router.navigate([], {
+          relativeTo: route,
+          queryParams,
+          queryParamsHandling: '',
+          replaceUrl: true
+        });
+      }
+    }
+  }
+
   configureColumns(deviceScope: string): Array<EntityTableColumn<DeviceInfo>> {
     const columns: Array<EntityTableColumn<DeviceInfo>> = [
       new DateEntityTableColumn<DeviceInfo>('createdTime', 'common.created-time', this.datePipe, '150px'),
       new EntityTableColumn<DeviceInfo>('name', 'device.name', '25%'),
       new EntityTableColumn<DeviceInfo>('deviceProfileName', 'device-profile.device-profile', '25%'),
-      new EntityTableColumn<DeviceInfo>('label', 'device.label', '25%')
+      new EntityTableColumn<DeviceInfo>('label', 'device.label', '25%'),
+      new EntityTableColumn<DeviceInfo>('active', 'device.state', '80px',
+        entity => this.deviceState(entity), entity => this.deviceStateStyle(entity))
     ];
     if (deviceScope === 'tenant') {
       columns.push(
         new EntityTableColumn<DeviceInfo>('customerTitle', 'customer.customer', '25%'),
         new EntityTableColumn<DeviceInfo>('customerIsPublic', 'device.public', '60px',
-          entity => {
-            return checkBoxCell(entity.customerIsPublic);
-          }, () => ({}), false),
+          entity => checkBoxCell(entity.customerIsPublic), () => ({})),
       );
     }
     columns.push(
       new EntityTableColumn<DeviceInfo>('gateway', 'device.is-gateway', '60px',
-        entity => {
-          return checkBoxCell(entity.additionalInfo && entity.additionalInfo.gateway);
-        }, () => ({}), false)
+        entity => checkBoxCell(entity.additionalInfo && entity.additionalInfo.gateway), () => ({}), false)
     );
     return columns;
   }
 
-  configureEntityFunctions(deviceScope: string): void {
-    if (deviceScope === 'tenant') {
-      this.config.entitiesFetchFunction = pageLink =>
-        this.deviceService.getTenantDeviceInfosByDeviceProfileId(pageLink,
-          this.config.componentsData.deviceProfileId !== null ?
-            this.config.componentsData.deviceProfileId.id : '');
-      this.config.deleteEntity = id => this.deviceService.deleteDevice(id.id);
-    } else if (deviceScope === 'edge' || deviceScope === 'edge_customer_user') {
-      this.config.entitiesFetchFunction = pageLink =>
-        this.deviceService.getEdgeDevices(this.config.componentsData.edgeId, pageLink, this.config.componentsData.edgeType);
-    } else {
-      this.config.entitiesFetchFunction = pageLink =>
-        this.deviceService.getCustomerDeviceInfosByDeviceProfileId(this.customerId, pageLink,
-          this.config.componentsData.deviceProfileId !== null ?
-            this.config.componentsData.deviceProfileId.id : '');
-      this.config.deleteEntity = id => this.deviceService.unassignDeviceFromCustomer(id.id);
+  private deviceState(device: DeviceInfo): string {
+    let translateKey = 'device.active';
+    let backgroundColor = 'rgba(25, 128, 56, 0.08)';
+    if (!device.active) {
+      translateKey = 'device.inactive';
+      backgroundColor = 'rgba(209, 39, 48, 0.08)';
     }
+    return `<div class="status" style="border-radius: 16px; height: 32px;
+                line-height: 32px; padding: 0 12px; width: fit-content; background-color: ${backgroundColor}">
+                ${this.translate.instant(translateKey)}
+            </div>`;
+  }
+
+  private deviceStateStyle(device: DeviceInfo): object {
+    const styleObj = {
+      fontSize: '14px',
+      color: '#198038',
+      cursor: 'pointer'
+    };
+    if (!device.active) {
+      styleObj.color = '#d12730';
+    }
+    return styleObj;
+  }
+
+  configureEntityFunctions(deviceScope: string): void {
+    this.config.entitiesFetchFunction = pageLink => this.deviceService.getDeviceInfosByQuery(this.prepareDeviceInfoQuery(pageLink));
+    if (deviceScope === 'tenant') {
+      this.config.deleteEntity = id => this.deviceService.deleteDevice(id.id);
+    } else {
+      this.config.deleteEntity = () => of();
+    }
+  }
+
+  prepareDeviceInfoQuery(pageLink: PageLink): DeviceInfoQuery {
+    const deviceInfoFilter: DeviceInfoFilter = deepClone(this.config.componentsData.deviceInfoFilter);
+    if (this.config.componentsData.deviceScope === 'edge' || this.config.componentsData.deviceScope === 'edge_customer_user') {
+      deviceInfoFilter.edgeId = new EdgeId(this.config.componentsData.edgeId);
+    } else if (this.config.componentsData.deviceScope !== 'tenant') {
+      deviceInfoFilter.customerId = new CustomerId(this.customerId);
+    }
+    return new DeviceInfoQuery(pageLink, deviceInfoFilter);
   }
 
   configureCellActions(deviceScope: string): Array<CellActionDescriptor<DeviceInfo>> {
@@ -331,6 +400,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
   }
 
   configureAddActions(deviceScope: string): Array<HeaderActionDescriptor> {
+    this.config.addEntity = null;
     const actions: Array<HeaderActionDescriptor> = [];
     if (deviceScope === 'tenant') {
       actions.push(
@@ -347,6 +417,7 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
           onAction: ($event) => this.importDevices($event)
         },
       );
+      this.config.addEntity = () => {this.deviceWizard(null); return of(null); };
     }
     if (deviceScope === 'customer') {
       actions.push(
@@ -390,16 +461,21 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
 
   deviceWizard($event: Event) {
     this.dialog.open<DeviceWizardDialogComponent, AddEntityDialogData<BaseData<HasId>>,
-      boolean>(DeviceWizardDialogComponent, {
+      Device>(DeviceWizardDialogComponent, {
       disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        entitiesTableConfig: this.config
-      }
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog']
     }).afterClosed().subscribe(
       (res) => {
         if (res) {
-          this.config.updateData();
+          this.store.pipe(select(selectUserSettingsProperty( 'notDisplayConnectivityAfterAddDevice'))).pipe(
+            take(1)
+          ).subscribe((settings: boolean) => {
+            if(!settings) {
+              this.checkConnectivity(null, res.id, true);
+            } else {
+              this.config.updateData();
+            }
+          });
         }
       }
     );
@@ -538,7 +614,8 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
       data: {
         deviceId: device.id.id,
         deviceProfileId: device.deviceProfileId.id,
-        isReadOnly: this.config.componentsData.deviceScope === 'customer_user' || this.config.componentsData.deviceScope === 'edge_customer_user'
+        isReadOnly: this.config.componentsData.deviceScope === 'customer_user' ||
+          this.config.componentsData.deviceScope === 'edge_customer_user'
       }
     }).afterClosed().subscribe(deviceCredentials => {
       if (isDefinedAndNotNull(deviceCredentials)) {
@@ -566,6 +643,9 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
         return true;
       case 'manageCredentials':
         this.manageCredentials(action.event, action.entity);
+        return true;
+      case 'checkConnectivity':
+        this.checkConnectivity(action.event, action.entity.id);
         return true;
     }
     return false;
@@ -641,4 +721,24 @@ export class DevicesTableConfigResolver implements Resolve<EntityTableConfig<Dev
     );
   }
 
+  checkConnectivity($event: Event, deviceId: EntityId, afterAdd = false) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.dialog.open<DeviceCheckConnectivityDialogComponent, DeviceCheckConnectivityDialogData>
+      (DeviceCheckConnectivityDialogComponent, {
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        data: {
+          deviceId,
+          afterAdd
+        }
+      })
+      .afterClosed()
+      .subscribe(() => {
+        if (afterAdd ) {
+          this.config.updateData();
+        }
+      });
+  }
 }

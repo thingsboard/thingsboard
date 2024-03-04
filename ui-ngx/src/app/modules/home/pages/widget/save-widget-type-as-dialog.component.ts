@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,14 +21,12 @@ import { AppState } from '@core/core.state';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
-import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 
 export interface SaveWidgetTypeAsDialogResult {
   widgetName: string;
-  bundleId: string;
-  bundleAlias: string;
+  widgetBundleId?: string;
 }
 
 @Component({
@@ -40,7 +38,6 @@ export class SaveWidgetTypeAsDialogComponent extends
   DialogComponent<SaveWidgetTypeAsDialogComponent, SaveWidgetTypeAsDialogResult> implements OnInit {
 
   saveWidgetTypeAsFormGroup: FormGroup;
-
   bundlesScope: string;
 
   constructor(protected store: Store<AppState>,
@@ -60,7 +57,7 @@ export class SaveWidgetTypeAsDialogComponent extends
   ngOnInit(): void {
     this.saveWidgetTypeAsFormGroup = this.fb.group({
       title: [null, [Validators.required]],
-      widgetsBundle: [null, [Validators.required]]
+      widgetsBundle: [null]
     });
   }
 
@@ -70,11 +67,10 @@ export class SaveWidgetTypeAsDialogComponent extends
 
   saveAs(): void {
     const widgetName: string = this.saveWidgetTypeAsFormGroup.get('title').value;
-    const widgetsBundle: WidgetsBundle = this.saveWidgetTypeAsFormGroup.get('widgetsBundle').value;
+    const widgetBundleId: string = this.saveWidgetTypeAsFormGroup.get('widgetsBundle').value?.id?.id;
     const result: SaveWidgetTypeAsDialogResult = {
       widgetName,
-      bundleId: widgetsBundle.id.id,
-      bundleAlias: widgetsBundle.alias
+      widgetBundleId
     };
     this.dialogRef.close(result);
   }

@@ -1,0 +1,72 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-form-field [formGroup]="selectTemplateFormGroup" class="mat-block">
+  <mat-label translate>notification.template</mat-label>
+  <input matInput type="text"
+         #templateInput
+         formControlName="templateName"
+         (focusin)="onFocus()"
+         [required]="required"
+         [matAutocomplete]="templateAutocomplete">
+  <button *ngIf="selectTemplateFormGroup.get('templateName').value && !disabled"
+          type="button"
+          matSuffix mat-icon-button aria-label="Clear"
+          (click)="clear()">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+  <button *ngIf="selectTemplateFormGroup.get('templateName').value && !disabled && allowEdit"
+          type="button"
+          matSuffix mat-icon-button aria-label="Edit"
+          matTooltip="{{ 'notification.edit-notification-template' | translate }}"
+          matTooltipPosition="above"
+          (click)="editTemplate($event)">
+    <mat-icon class="material-icons">edit</mat-icon>
+  </button>
+  <button #createTemplateButton
+          mat-button color="primary" matSuffix
+          *ngIf="allowCreate && !selectTemplateFormGroup.get('templateName').value && !disabled"
+          (click)="createTemplate($event, createTemplateButton)">
+    <span style="white-space: nowrap">{{ 'notification.create-new' | translate }}</span>
+  </button>
+  <mat-autocomplete class="tb-autocomplete"
+                    #templateAutocomplete="matAutocomplete"
+                    [displayWith]="displayTemplateFn"
+                    >
+    <mat-option *ngFor="let template of filteredTemplate | async" [value]="template" class="template-option">
+      <span class="template-option-name" [innerHTML]="template.name | highlight:searchText"></span>
+      <mat-chip-set>
+        <mat-chip disabled *ngFor="let method of template.configuration.deliveryMethodsTemplates | keyvalue">
+          {{ notificationDeliveryMethodInfoMap.get(method.key).name | translate }}
+        </mat-chip>
+      </mat-chip-set>
+    </mat-option>
+    <mat-option *ngIf="!(filteredTemplate | async)?.length" [value]="null" class="tb-not-found">
+      <div class="tb-not-found-content" (click)="$event.stopPropagation()">
+        <div *ngIf="!textIsNotEmpty(searchText); else searchNotEmpty">
+          <span translate>notification.no-notification-templates</span>
+        </div>
+        <ng-template #searchNotEmpty>
+          <span>{{ 'notification.no-template-matching' | translate : {template: truncate.transform(searchText, true, 6, &apos;...&apos;)} }}</span>
+        </ng-template>
+      </div>
+    </mat-option>
+  </mat-autocomplete>
+  <mat-error *ngIf="selectTemplateFormGroup.get('templateName').hasError('required')">
+    {{ 'notification.template-required' | translate }}
+  </mat-error>
+</mat-form-field>

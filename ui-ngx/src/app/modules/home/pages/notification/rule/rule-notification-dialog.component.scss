@@ -1,0 +1,177 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import "../../../../../../scss/constants";
+
+:host {
+  width: 900px;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100vh;
+  display: flex;
+  flex-direction: column;
+
+  .tb-hint {
+    margin-top: -1.25em;
+    padding: 0;
+  }
+
+  .fields-group {
+    padding: 0 16px;
+    border: 1px groove rgba(0, 0, 0, .25);
+    border-radius: 4px;
+
+    &.tb-margin {
+      margin-bottom: 12px;
+    }
+
+    &.tb-margin-before-field {
+      margin-bottom: 12px;
+    }
+
+    &.tb-hierarchy {
+      padding: 0 0 8px 16px;
+    }
+
+    legend {
+      margin-bottom: 8px;
+      color: rgba(0, 0, 0, .7);
+      width: fit-content;
+    }
+
+    .mat-body-2 {
+      margin-bottom: 8px;
+      color: rgba(0,0,0,.76);
+    }
+
+    .clear-button-space {
+      margin-right: 48px;
+    }
+
+    .mat-mdc-slide-toggle {
+      margin-bottom: 16px;
+    }
+  }
+
+  .limit-slider-container {
+    .limit-slider-value {
+      margin-left: 16px;
+      min-width: 25px;
+      max-width: 100px;
+    }
+    mat-form-field input[type=number] {
+      text-align: center;
+    }
+  }
+
+  @media #{$mat-gt-sm} {
+    .history-time-input {
+      min-width: 364px;
+    }
+    .limit-slider-container {
+      > label {
+        margin-right: 16px;
+        width: min-content;
+        max-width: 40%;
+      }
+    }
+  }
+
+  ::ng-deep {
+
+    .mat-mdc-dialog-content {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      padding: 0 !important;
+      color: rgba(0, 0, 0, 0.87);
+
+      .mat-stepper-horizontal {
+        display: flex;
+        height: 100%;
+        overflow: hidden;
+
+        .mat-horizontal-stepper-wrapper {
+          flex: 1 1 100%;
+        }
+
+        .mat-horizontal-content-container {
+          height: 700px;
+          max-height: 100%;
+          width: 100%;;
+          overflow-y: auto;
+          scrollbar-gutter: stable;
+          @media #{$mat-gt-sm} {
+            min-width: 500px;
+          }
+        }
+      }
+    }
+
+    .mat-button-toggle-group.tb-notification-unread-toggle-group {
+      &.mat-button-toggle-group-appearance-standard {
+        border: none;
+        border-radius: 18px;
+        margin-bottom: 8px;
+
+        .mat-button-toggle + .mat-button-toggle {
+          border-left: none;
+        }
+      }
+
+      .mat-button-toggle {
+        background: rgba(0, 0, 0, 0.06);
+        height: 36px;
+        align-items: center;
+        display: flex;
+
+        .mat-button-toggle-ripple {
+          top: 2px;
+          left: 2px;
+          right: 2px;
+          bottom: 2px;
+          border-radius: 18px;
+        }
+      }
+
+      .mat-button-toggle-button {
+        color: #959595;
+      }
+
+      .mat-button-toggle-focus-overlay {
+        border-radius: 18px;
+        margin: 2px;
+      }
+
+      .mat-button-toggle-checked .mat-button-toggle-button {
+        background-color: $tb-primary-color;
+        color: #fff;
+        border-radius: 18px;
+        margin-left: 2px;
+        margin-right: 2px;
+      }
+
+      .mat-button-toggle-appearance-standard .mat-button-toggle-label-content {
+        line-height: 34px;
+        font-size: 16px;
+        font-weight: 500;
+      }
+
+      .mat-button-toggle-checked.mat-button-toggle-appearance-standard:not(.mat-button-toggle-disabled):hover .mat-button-toggle-focus-overlay {
+        opacity: .01;
+      }
+    }
+  }
+}

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,12 +27,12 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 @Component
-public class DefaultSchedulerComponent implements SchedulerComponent{
+public class DefaultSchedulerComponent implements SchedulerComponent {
 
     protected ScheduledExecutorService schedulerExecutor;
 
     @PostConstruct
-    public void init(){
+    public void init() {
         this.schedulerExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("queue-scheduler"));
     }
 

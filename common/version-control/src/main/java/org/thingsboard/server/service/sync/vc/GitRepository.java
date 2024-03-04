@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import org.eclipse.jgit.diff.EditList;
 import org.eclipse.jgit.diff.HistogramDiff;
 import org.eclipse.jgit.diff.RawText;
 import org.eclipse.jgit.diff.RawTextComparator;
+import org.eclipse.jgit.errors.LargeObjectException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
@@ -197,12 +198,7 @@ public class GitRepository {
         LogCommand command = git.log()
                 .add(branchId);
 
-        if (StringUtils.isNotEmpty(pageLink.getTextSearch())) {
-            command.setRevFilter(new NoMergesAndCommitMessageFilter(pageLink.getTextSearch()));
-        } else {
-            command.setRevFilter(RevFilter.NO_MERGES);
-        }
-
+        command.setRevFilter(new CommitFilter(pageLink.getTextSearch(), settings.isShowMergeCommits()));
         if (StringUtils.isNotEmpty(path)) {
             command.addPath(path);
         }
@@ -241,8 +237,12 @@ public class GitRepository {
             ObjectId blobId = treeWalk.getObjectId(0);
             try (ObjectReader objectReader = git.getRepository().newObjectReader()) {
                 ObjectLoader objectLoader = objectReader.open(blobId);
-                byte[] bytes = objectLoader.getBytes();
-                return new String(bytes, StandardCharsets.UTF_8);
+                try {
+                    byte[] bytes = objectLoader.getBytes();
+                    return new String(bytes, StandardCharsets.UTF_8);
+                } catch (LargeObjectException e) {
+                    throw new RuntimeException("File " + file + " is too big to load");
+                }
             }
         }
     }
@@ -478,17 +478,20 @@ public class GitRepository {
         }
     }
 
-    private static class NoMergesAndCommitMessageFilter extends RevFilter {
+    private static class CommitFilter extends RevFilter {
 
         private final String textSearch;
+        private final boolean showMergeCommits;
 
-        NoMergesAndCommitMessageFilter(String textSearch) {
+        CommitFilter(String textSearch, boolean showMergeCommits) {
             this.textSearch = textSearch.toLowerCase();
+            this.showMergeCommits = showMergeCommits;
         }
 
         @Override
         public boolean include(RevWalk walker, RevCommit c) {
-            return c.getParentCount() < 2 && c.getFullMessage().toLowerCase().contains(this.textSearch);
+            return (showMergeCommits || c.getParentCount() < 2) && (StringUtils.isEmpty(textSearch)
+                    || c.getFullMessage().toLowerCase().contains(textSearch));
         }
 
         @Override
@@ -501,10 +504,6 @@ public class GitRepository {
             return false;
         }
 
-        @Override
-        public String toString() {
-            return "NO_MERGES_AND_COMMIT_MESSAGE";
-        }
     }
 
     @Data

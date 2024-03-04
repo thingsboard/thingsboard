@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
-import { FormBuilder, FormGroup, FormGroupDirective, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, FormGroupDirective, Validators } from '@angular/forms';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { AdminService } from '@core/http/admin.service';
@@ -34,6 +34,7 @@ import { selectHasRepository } from '@core/auth/auth.selectors';
 import { catchError, mergeMap, take } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { TbPopoverComponent } from '@shared/components/popover.component';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-repository-settings',
@@ -48,7 +49,11 @@ export class RepositorySettingsComponent extends PageComponent implements OnInit
   @Input()
   popoverComponent: TbPopoverComponent;
 
-  repositorySettingsForm: FormGroup;
+  @Input()
+  @coerceBoolean()
+  hideLoadingBar = false;
+
+  repositorySettingsForm: UntypedFormGroup;
   settings: RepositorySettings = null;
 
   repositoryAuthMethod = RepositoryAuthMethod;
@@ -66,7 +71,7 @@ export class RepositorySettingsComponent extends PageComponent implements OnInit
               private dialogService: DialogService,
               private translate: TranslateService,
               private cd: ChangeDetectorRef,
-              public fb: FormBuilder) {
+              public fb: UntypedFormBuilder) {
     super(store);
   }
 
@@ -75,6 +80,7 @@ export class RepositorySettingsComponent extends PageComponent implements OnInit
       repositoryUri: [null, [Validators.required]],
       defaultBranch: ['main', []],
       readOnly: [false, []],
+      showMergeCommits: [false, []],
       authMethod: [RepositoryAuthMethod.USERNAME_PASSWORD, [Validators.required]],
       username: [null, []],
       password: [null, []],

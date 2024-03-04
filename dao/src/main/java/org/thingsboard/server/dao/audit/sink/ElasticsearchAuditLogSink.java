@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.audit.sink;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
@@ -34,14 +33,19 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Component
 @ConditionalOnProperty(prefix = "audit-log.sink", value = "type", havingValue = "elasticsearch")
@@ -51,8 +55,6 @@ public class ElasticsearchAuditLogSink implements AuditLogSink {
     private static final String TENANT_PLACEHOLDER = "@{TENANT}";
     private static final String DATE_PLACEHOLDER = "@{DATE}";
     private static final String INDEX_TYPE = "audit_log";
-
-    private final ObjectMapper mapper = new ObjectMapper();
 
     @Value("${audit-log.sink.index_pattern}")
     private String indexPattern;
@@ -70,6 +72,7 @@ public class ElasticsearchAuditLogSink implements AuditLogSink {
     private String dateFormat;
 
     private RestClient restClient;
+    private ExecutorService executor;
 
     @PostConstruct
     public void init() {
@@ -89,14 +92,32 @@ public class ElasticsearchAuditLogSink implements AuditLogSink {
             }
 
             this.restClient = builder.build();
+            this.executor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("elasticsearch-audit-log"));
         } catch (Exception e) {
             log.error("Sink init failed!", e);
             throw new RuntimeException(e.getMessage(), e);
         }
     }
 
+    @PreDestroy
+    private void destroy() {
+        if (executor != null) {
+            executor.shutdownNow();
+        }
+    }
+
     @Override
     public void logAction(AuditLog auditLogEntry) {
+        executor.execute(() -> {
+            try {
+                doLogAction(auditLogEntry);
+            } catch (Exception e) {
+                log.error("Failed to log action", e);
+            }
+        });
+    }
+
+    private void doLogAction(AuditLog auditLogEntry) {
         String jsonContent = createElasticJsonRecord(auditLogEntry);
 
         HttpEntity entity = new NStringEntity(
@@ -112,7 +133,7 @@ public class ElasticsearchAuditLogSink implements AuditLogSink {
     }
 
     private String createElasticJsonRecord(AuditLog auditLog) {
-        ObjectNode auditLogNode = mapper.createObjectNode();
+        ObjectNode auditLogNode = JacksonUtil.newObjectNode();
         auditLogNode.put("postDate", LocalDateTime.now().toString());
         auditLogNode.put("id", auditLog.getId().getId().toString());
         auditLogNode.put("entityName", auditLog.getEntityName());

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbMsg;
 
+import java.util.Objects;
+
 @Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
@@ -54,9 +56,13 @@ public class TbLogNode implements TbNode {
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbLogNodeConfiguration.class);
-        this.standard = new TbLogNodeConfiguration().defaultConfiguration().getJsScript().equals(config.getJsScript());
-        this.scriptEngine = this.standard ? null : ctx.createScriptEngine(config.getScriptLang(),
-                ScriptLanguage.MVEL.equals(config.getScriptLang()) ? config.getMvelScript() : config.getJsScript());
+        this.standard = isStandard(config);
+        this.scriptEngine = this.standard ? null : createScriptEngine(ctx, config);
+    }
+
+    ScriptEngine createScriptEngine(TbContext ctx, TbLogNodeConfiguration config) {
+        return ctx.createScriptEngine(config.getScriptLang(),
+                ScriptLanguage.TBEL.equals(config.getScriptLang()) ? config.getTbelScript() : config.getJsScript());
     }
 
     @Override
@@ -81,6 +87,20 @@ public class TbLogNode implements TbNode {
                 ctx.tellFailure(msg, t);
             }
         }, MoreExecutors.directExecutor()); //usually js responses runs on js callback executor
+    }
+
+    boolean isStandard(TbLogNodeConfiguration conf) {
+        Objects.requireNonNull(conf, "node config is null");
+        final TbLogNodeConfiguration defaultConfig = new TbLogNodeConfiguration().defaultConfiguration();
+
+        if (conf.getScriptLang() == null || conf.getScriptLang().equals(ScriptLanguage.JS)) {
+            return defaultConfig.getJsScript().equals(conf.getJsScript());
+        } else if (conf.getScriptLang().equals(ScriptLanguage.TBEL)) {
+            return defaultConfig.getTbelScript().equals(conf.getTbelScript());
+        } else {
+            log.warn("No rule to define isStandard script for script language [{}], assuming that is non-standard", conf.getScriptLang());
+            return false;
+        }
     }
 
     void logStandard(TbContext ctx, TbMsg msg) {

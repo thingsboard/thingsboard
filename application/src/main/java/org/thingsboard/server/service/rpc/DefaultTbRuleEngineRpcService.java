@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,19 +19,24 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceRpcRequest;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceRpcResponse;
+import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.id.RpcId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.rpc.Rpc;
+import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
+import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequest;
+import org.thingsboard.server.dao.rpc.RpcService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
-import org.thingsboard.server.cluster.TbClusterService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -52,6 +57,7 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
     private final PartitionService partitionService;
     private final TbClusterService clusterService;
     private final TbServiceInfoProvider serviceInfoProvider;
+    private final RpcService rpcService;
 
     private final ConcurrentMap<UUID, Consumer<FromDeviceRpcResponse>> toDeviceRpcRequests = new ConcurrentHashMap<>();
 
@@ -61,10 +67,12 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
 
     public DefaultTbRuleEngineRpcService(PartitionService partitionService,
                                          TbClusterService clusterService,
-                                         TbServiceInfoProvider serviceInfoProvider) {
+                                         TbServiceInfoProvider serviceInfoProvider,
+                                         RpcService rpcService) {
         this.partitionService = partitionService;
         this.clusterService = clusterService;
         this.serviceInfoProvider = serviceInfoProvider;
+        this.rpcService = rpcService;
     }
 
     @Autowired(required = false)
@@ -117,6 +125,11 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
                     .response(response.getResponse())
                     .build());
         });
+    }
+
+    @Override
+    public Rpc findRpcById(TenantId tenantId, RpcId id) {
+        return rpcService.findById(tenantId, id);
     }
 
     @Override

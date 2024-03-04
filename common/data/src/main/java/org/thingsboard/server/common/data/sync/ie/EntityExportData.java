@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import java.util.Map;
 @JsonSubTypes({
         @Type(name = "DEVICE", value = DeviceExportData.class),
         @Type(name = "RULE_CHAIN", value = RuleChainExportData.class),
+        @Type(name = "WIDGET_TYPE", value = WidgetTypeExportData.class),
         @Type(name = "WIDGETS_BUNDLE", value = WidgetsBundleExportData.class)
 })
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -55,7 +56,6 @@ public class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
             .comparing(AttributeExportData::getKey).thenComparing(AttributeExportData::getLastUpdateTs);
 
     @JsonProperty(index = 2)
-    @JsonIgnoreProperties({"tenantId", "createdTime"})
     @JsonTbEntity
     private E entity;
     @JsonProperty(index = 1)

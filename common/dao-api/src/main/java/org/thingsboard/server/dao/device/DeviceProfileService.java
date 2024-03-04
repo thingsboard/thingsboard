@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,14 +22,23 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.entity.EntityDaoService;
 
-public interface DeviceProfileService {
+import java.util.List;
+
+public interface DeviceProfileService extends EntityDaoService {
 
     DeviceProfile findDeviceProfileById(TenantId tenantId, DeviceProfileId deviceProfileId);
 
+    DeviceProfile findDeviceProfileById(TenantId tenantId, DeviceProfileId deviceProfileId, boolean putInCache);
+
     DeviceProfile findDeviceProfileByName(TenantId tenantId, String profileName);
 
+    DeviceProfile findDeviceProfileByName(TenantId tenantId, String profileName, boolean putInCache);
+
     DeviceProfileInfo findDeviceProfileInfoById(TenantId tenantId, DeviceProfileId deviceProfileId);
+
+    DeviceProfile saveDeviceProfile(DeviceProfile deviceProfile, boolean doValidate);
 
     DeviceProfile saveDeviceProfile(DeviceProfile deviceProfile);
 
@@ -38,6 +47,8 @@ public interface DeviceProfileService {
     PageData<DeviceProfile> findDeviceProfiles(TenantId tenantId, PageLink pageLink);
 
     PageData<DeviceProfileInfo> findDeviceProfileInfos(TenantId tenantId, PageLink pageLink, String transportType);
+
+    DeviceProfile findDeviceProfileByProvisionDeviceKey(String provisionDeviceKey);
 
     DeviceProfile findOrCreateDeviceProfile(TenantId tenantId, String profileName);
 
@@ -50,5 +61,7 @@ public interface DeviceProfileService {
     boolean setDefaultDeviceProfile(TenantId tenantId, DeviceProfileId deviceProfileId);
 
     void deleteDeviceProfilesByTenantId(TenantId tenantId);
+
+    List<EntityInfo> findDeviceProfileNamesByTenantId(TenantId tenantId, boolean activeOnly);
 
 }

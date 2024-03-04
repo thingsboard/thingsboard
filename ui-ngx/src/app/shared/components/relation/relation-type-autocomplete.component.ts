@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -22,8 +22,9 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { BroadcastService } from '@app/core/services/broadcast.service';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { RelationTypes } from '@app/shared/models/relation.models';
+import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
+import { coerceArray, coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-relation-type-autocomplete',
@@ -41,17 +42,26 @@ export class RelationTypeAutocompleteComponent implements ControlValueAccessor, 
 
   modelValue: string | null;
 
-  private requiredValue: boolean;
-  get required(): boolean {
-    return this.requiredValue;
-  }
   @Input()
-  set required(value: boolean) {
-    this.requiredValue = coerceBooleanProperty(value);
-  }
+  @coerceBoolean()
+  showLabel = true;
+
+  @Input()
+  @coerceArray()
+  additionalClasses: Array<string>;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
+
+  @Input()
+  @coerceBoolean()
+  required: boolean;
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
 
   @ViewChild('relationTypeInput', {static: true}) relationTypeInput: ElementRef;
 

@@ -1,0 +1,122 @@
+#
+# Copyright © 2016-2024 The Thingsboard Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+monitoring:
+  # Monitored server domain
+  domain: "${DOMAIN:localhost}"
+  rest:
+    # Base REST API url, https://DOMAIN by default
+    base_url: '${REST_BASE_URL:https://${monitoring.domain}}'
+    # Authentication username
+    username: '${REST_AUTH_USERNAME:tenant@thingsboard.org}'
+    # Authentication password
+    password: '${REST_AUTH_PASSWORD:tenant}'
+    # REST request timeout in milliseconds
+    request_timeout_ms: '${REST_REQUEST_TIMEOUT_MS:5000}'
+  ws:
+    # WebSocket url, wss://DOMAIN by default
+    base_url: '${WS_BASE_URL:wss://${monitoring.domain}}'
+    # WebSocket request timeout
+    request_timeout_ms: '${WS_REQUEST_TIMEOUT_MS:3000}'
+
+  # Checks frequency in milliseconds
+  monitoring_rate_ms: '${MONITORING_RATE_MS:10000}'
+  # Maximum time between request to transport and WebSocket update
+  check_timeout_ms: '${CHECK_TIMEOUT_MS:5000}'
+
+  # Failures threshold for notifying
+  failures_threshold: '${FAILURES_THRESHOLD:1}'
+  # Notify after each REPEATED_FAILURE_NOTIFICATION subsequent failures, 0 to notify only once on first failure
+  repeated_failure_notification: '${REPEATED_FAILURE_NOTIFICATION:4}'
+
+  transports:
+    mqtt:
+      # Enable MQTT transport checks
+      enabled: '${MQTT_TRANSPORT_MONITORING_ENABLED:true}'
+      # MQTT request timeout in milliseconds
+      request_timeout_ms: '${MQTT_REQUEST_TIMEOUT_MS:4000}'
+      # MQTT QoS
+      qos: '${MQTT_QOS_LEVEL:1}'
+      targets:
+          # MQTT transport base url, tcp://DOMAIN:1883 by default
+        - base_url: '${MQTT_TRANSPORT_BASE_URL:tcp://${monitoring.domain}:1883}'
+          # Queue to use for target device
+          queue: '${MQTT_TRANSPORT_USED_QUEUE:Main}'
+          # Whether to monitor IPs associated with the domain from base url
+          check_domain_ips: '${MQTT_TRANSPORT_CHECK_DOMAIN_IPS:false}'
+        # To add more targets, use following environment variables:
+        # monitoring.transports.mqtt.targets[1].base_url, monitoring.transports.mqtt.targets[2].base_url, etc.
+
+    coap:
+      # Enable CoAP transport checks
+      enabled: '${COAP_TRANSPORT_MONITORING_ENABLED:true}'
+      # CoAP request timeout in milliseconds
+      request_timeout_ms: '${COAP_REQUEST_TIMEOUT_MS:4000}'
+      targets:
+          # CoAP transport base url, coap://DOMAIN by default
+        - base_url: '${COAP_TRANSPORT_BASE_URL:coap://${monitoring.domain}}'
+          # Queue to use for target device
+          queue: '${COAP_TRANSPORT_USED_QUEUE:Main}'
+          # Whether to monitor IPs associated with the domain from base url
+          check_domain_ips: '${COAP_TRANSPORT_CHECK_DOMAIN_IPS:false}'
+        # To add more targets, use following environment variables:
+        # monitoring.transports.coap.targets[1].base_url, monitoring.transports.coap.targets[2].base_url, etc.
+
+    http:
+      # Enable HTTP transport checks
+      enabled: '${HTTP_TRANSPORT_MONITORING_ENABLED:true}'
+      # HTTP request timeout in milliseconds
+      request_timeout_ms: '${HTTP_REQUEST_TIMEOUT_MS:4000}'
+      targets:
+          # HTTP transport base url, http://DOMAIN by default
+        - base_url: '${HTTP_TRANSPORT_BASE_URL:http://${monitoring.domain}}'
+          # Queue to use for target device
+          queue: '${HTTP_TRANSPORT_USED_QUEUE:Main}'
+          # Whether to monitor IPs associated with the domain from base url
+          check_domain_ips: '${HTTP_TRANSPORT_CHECK_DOMAIN_IPS:false}'
+        # To add more targets, use following environment variables:
+        # monitoring.transports.http.targets[1].base_url, monitoring.transports.http.targets[2].base_url, etc.
+
+    lwm2m:
+      # Enable LwM2M transport checks
+      enabled: '${LWM2M_TRANSPORT_MONITORING_ENABLED:true}'
+      # LwM2M request timeout in milliseconds
+      request_timeout_ms: '${LWM2M_REQUEST_TIMEOUT_MS:4000}'
+      targets:
+          # LwM2M transport base url, coap://DOMAIN:5685 by default
+        - base_url: '${LWM2M_TRANSPORT_BASE_URL:coap://${monitoring.domain}:5685}'
+          # Queue to use for target device
+          queue: '${LWM2M_TRANSPORT_USED_QUEUE:Main}'
+          # Whether to monitor IPs associated with the domain from base url
+          check_domain_ips: '${LWM2M_TRANSPORT_CHECK_DOMAIN_IPS:false}'
+        # To add more targets, use following environment variables:
+        # monitoring.transports.lwm2m.targets[1].base_url, monitoring.transports.lwm2m.targets[2].base_url, etc.
+
+  notifications:
+    message_prefix: '${NOTIFICATION_MESSAGE_PREFIX:}'
+    slack:
+      # Enable notifying via Slack
+      enabled: '${SLACK_NOTIFICATION_CHANNEL_ENABLED:false}'
+      # Slack webhook url
+      webhook_url: '${SLACK_WEBHOOK_URL:}'
+
+  latency:
+    # Enable latencies reporting
+    enabled: "${LATENCY_REPORTING_ENABLED:true}"
+    # Latency threshold for notifying
+    threshold_ms: '${LATENCY_THRESHOLD:2000}'
+    # ID of the asset to save latencies to. If not set and latencies reporting is enabled - asset will be found or created automatically
+    reporting_asset_id: '${LATENCY_REPORTING_ASSET_ID:}'

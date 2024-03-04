@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,23 +15,29 @@
 ///
 
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
-  Component, ElementRef,
-  EventEmitter, HostBinding, Inject,
-  Input, OnDestroy,
+  Component,
+  ElementRef,
+  EventEmitter,
+  HostBinding,
+  Input,
+  OnDestroy,
   OnInit,
-  Output, Renderer2, ViewChild
+  Output,
+  Renderer2,
+  ViewChild,
+  ViewEncapsulation
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { DashboardWidget, DashboardWidgets } from '@home/models/dashboard-component.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { SafeStyle } from '@angular/platform-browser';
-import { guid, hashCode, isNotEmptyStr } from '@core/utils';
-import cssjs from '@core/css/css';
-import { DOCUMENT } from '@angular/common';
+import { isNotEmptyStr } from '@core/utils';
 import { GridsterItemComponent } from 'angular-gridster2';
+import { UtilsService } from '@core/services/utils.service';
 
 export enum WidgetComponentActionType {
   MOUSE_DOWN,
@@ -52,9 +58,10 @@ export class WidgetComponentAction {
   selector: 'tb-widget-container',
   templateUrl: './widget-container.component.html',
   styleUrls: ['./widget-container.component.scss'],
+  encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class WidgetContainerComponent extends PageComponent implements OnInit, OnDestroy {
+export class WidgetContainerComponent extends PageComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @HostBinding('class')
   widgetContainerClass = 'tb-widget-container';
@@ -76,6 +83,9 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
 
   @Input()
   isEdit: boolean;
+
+  @Input()
+  isPreview: boolean;
 
   @Input()
   isMobile: boolean;
@@ -106,7 +116,7 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
   constructor(protected store: Store<AppState>,
               private cd: ChangeDetectorRef,
               private renderer: Renderer2,
-              @Inject(DOCUMENT) private document: Document) {
+              private utils: UtilsService) {
     super(store);
   }
 
@@ -114,21 +124,18 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
     this.widget.widgetContext.containerChangeDetector = this.cd;
     const cssString = this.widget.widget.config.widgetCss;
     if (isNotEmptyStr(cssString)) {
-      const cssParser = new cssjs();
-      cssParser.testMode = false;
-      this.cssClass = 'tb-widget-css-' + guid();
-      this.renderer.addClass(this.gridsterItem.el, this.cssClass);
-      cssParser.cssPreviewNamespace = this.cssClass;
-      cssParser.createStyleElement(this.cssClass, cssString);
+      this.cssClass =
+        this.utils.applyCssToElement(this.renderer, this.gridsterItem.el, 'tb-widget-css', cssString);
     }
+  }
+
+  ngAfterViewInit(): void {
+    this.widget.widgetContext.$widgetElement = $(this.tbWidgetElement.nativeElement);
   }
 
   ngOnDestroy(): void {
     if (this.cssClass) {
-      const el = this.document.getElementById(this.cssClass);
-      if (el) {
-        el.parentNode.removeChild(el);
-      }
+      this.utils.clearCssElement(this.renderer, this.cssClass);
     }
   }
 

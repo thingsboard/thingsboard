@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -20,16 +20,20 @@ import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import {
   AdminSettings,
-  RepositorySettings,
+  AutoCommitSettings,
+  MailConfigTemplate,
+  FeaturesInfo,
+  JwtSettings,
   MailServerSettings,
+  RepositorySettings,
+  RepositorySettingsInfo,
   SecuritySettings,
   TestSmsRequest,
-  UpdateMessage,
-  AutoCommitSettings,
-  RepositorySettingsInfo
+  UpdateMessage
 } from '@shared/models/settings.models';
 import { EntitiesVersionControlService } from '@core/http/entities-version-control.service';
 import { tap } from 'rxjs/operators';
+import { LoginResponse } from '@shared/models/login.models';
 
 @Injectable({
   providedIn: 'root'
@@ -68,6 +72,14 @@ export class AdminService {
                               config?: RequestConfig): Observable<SecuritySettings> {
     return this.http.post<SecuritySettings>('/api/admin/securitySettings', securitySettings,
       defaultHttpOptionsFromConfig(config));
+  }
+
+  public getJwtSettings(config?: RequestConfig): Observable<JwtSettings> {
+    return this.http.get<JwtSettings>(`/api/admin/jwtSettings`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public saveJwtSettings(jwtSettings: JwtSettings, config?: RequestConfig): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>('/api/admin/jwtSettings', jwtSettings, defaultHttpOptionsFromConfig(config));
   }
 
   public getRepositorySettings(config?: RequestConfig): Observable<RepositorySettings> {
@@ -120,5 +132,21 @@ export class AdminService {
 
   public checkUpdates(config?: RequestConfig): Observable<UpdateMessage> {
     return this.http.get<UpdateMessage>(`/api/admin/updates`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getFeaturesInfo(config?: RequestConfig): Observable<FeaturesInfo> {
+    return this.http.get<FeaturesInfo>('/api/admin/featuresInfo', defaultHttpOptionsFromConfig(config));
+  }
+
+  public getLoginProcessingUrl(config?: RequestConfig): Observable<string> {
+    return this.http.get<string>(`/api/admin/mail/oauth2/loginProcessingUrl`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public generateAccessToken(config?: RequestConfig): Observable<string> {
+    return this.http.get<string>(`/api/admin/mail/oauth2/authorize`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getMailConfigTemplate(config?: RequestConfig): Observable<Array<MailConfigTemplate>> {
+    return this.http.get<Array<MailConfigTemplate>>('/api/mail/config/template', defaultHttpOptionsFromConfig(config));
   }
 }

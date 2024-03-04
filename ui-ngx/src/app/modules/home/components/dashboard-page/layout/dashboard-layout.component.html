@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2022 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -21,13 +21,13 @@
   </mat-spinner>
 </div>
 <div class="mat-content"
-          style="position: relative; width: 100%; height: 100%;" tb-hotkeys [hotkeys]="hotKeys"
+          style="position: relative; width: 100%; height: 100%;" [tb-hotkeys]="hotKeys"
           [cheatSheet]="dashboardCheatSheet"
-          [style.backgroundImage]="backgroundImage"
+          [style.backgroundImage]="backgroundImage$ | async"
           [ngStyle]="dashboardStyle">
   <section *ngIf="layoutCtx.widgets.isEmpty()" fxLayoutAlign="center center"
            style="display: flex; z-index: 1; pointer-events: none;"
-           class="mat-headline tb-absolute-fill">
+           class="mat-headline-5 tb-absolute-fill">
     <span *ngIf="!isEdit" style="text-align: center;">
       {{'dashboard.no-widgets' | translate}}
     </span>
@@ -38,10 +38,11 @@
     </button>
   </section>
   <tb-dashboard #dashboard [dashboardStyle]="dashboardStyle"
-                [backgroundImage]="backgroundImage"
+                [backgroundImage]="backgroundImage$ | async"
                 [widgets]="layoutCtx.widgets"
                 [widgetLayouts]="layoutCtx.widgetLayouts"
                 [columns]="layoutCtx.gridSettings.columns"
+                [outerMargin]="layoutCtx.gridSettings.outerMargin"
                 [margin]="layoutCtx.gridSettings.margin"
                 [aliasController]="dashboardCtx.aliasController"
                 [stateController]="dashboardCtx.stateController"

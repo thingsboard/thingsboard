@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,10 @@ package org.thingsboard.server.service.stats;
 
 import com.google.common.util.concurrent.FutureCallback;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -27,8 +28,9 @@ import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.asset.AssetService;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.queue.TbRuleEngineConsumerStats;
@@ -39,6 +41,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -46,9 +49,11 @@ import java.util.stream.Collectors;
 @TbRuleEngineComponent
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsService {
 
     public static final String TB_SERVICE_QUEUE = "TbServiceQueue";
+    public static final String RULE_ENGINE_EXCEPTION = "ruleEngineException";
     public static final FutureCallback<Integer> CALLBACK = new FutureCallback<Integer>() {
         @Override
         public void onSuccess(@Nullable Integer result) {
@@ -63,45 +68,46 @@ public class DefaultRuleEngineStatisticsService implements RuleEngineStatisticsS
 
     private final TbServiceInfoProvider serviceInfoProvider;
     private final TelemetrySubscriptionService tsService;
-    private final Lock lock = new ReentrantLock();
     private final AssetService assetService;
-    private final ConcurrentMap<TenantQueueKey, AssetId> tenantQueueAssets;
+    private final ApiLimitService apiLimitService;
+    private final Lock lock = new ReentrantLock();
+    private final ConcurrentMap<TenantQueueKey, AssetId> tenantQueueAssets = new ConcurrentHashMap<>();
 
-    public DefaultRuleEngineStatisticsService(TelemetrySubscriptionService tsService, TbServiceInfoProvider serviceInfoProvider, AssetService assetService) {
-        this.tsService = tsService;
-        this.serviceInfoProvider = serviceInfoProvider;
-        this.assetService = assetService;
-        this.tenantQueueAssets = new ConcurrentHashMap<>();
-    }
+    @Value("${queue.rule-engine.stats.max-error-message-length:4096}")
+    private int maxErrorMessageLength;
 
     @Override
     public void reportQueueStats(long ts, TbRuleEngineConsumerStats ruleEngineStats) {
         String queueName = ruleEngineStats.getQueueName();
         ruleEngineStats.getTenantStats().forEach((id, stats) -> {
-            TenantId tenantId = TenantId.fromUUID(id);
             try {
+                TenantId tenantId = TenantId.fromUUID(id);
                 AssetId serviceAssetId = getServiceAssetId(tenantId, queueName);
                 if (stats.getTotalMsgCounter().get() > 0) {
                     List<TsKvEntry> tsList = stats.getCounters().entrySet().stream()
                             .map(kv -> new BasicTsKvEntry(ts, new LongDataEntry(kv.getKey(), (long) kv.getValue().get())))
                             .collect(Collectors.toList());
                     if (!tsList.isEmpty()) {
-                        tsService.saveAndNotifyInternal(tenantId, serviceAssetId, tsList, CALLBACK);
+                        long ttl = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getQueueStatsTtlDays);
+                        ttl = TimeUnit.DAYS.toSeconds(ttl);
+                        tsService.saveAndNotifyInternal(tenantId, serviceAssetId, tsList, ttl, CALLBACK);
                     }
                 }
-            } catch (DataValidationException e) {
-                if (!e.getMessage().equalsIgnoreCase("Asset is referencing to non-existent tenant!")) {
-                    throw e;
+            } catch (Exception e) {
+                if (!"Asset is referencing to non-existent tenant!".equalsIgnoreCase(e.getMessage())) {
+                    log.debug("[{}] Failed to store the statistics", id, e);
                 }
             }
         });
         ruleEngineStats.getTenantExceptions().forEach((tenantId, e) -> {
-            TsKvEntry tsKv = new BasicTsKvEntry(e.getTs(), new JsonDataEntry("ruleEngineException", e.toJsonString()));
             try {
-                tsService.saveAndNotifyInternal(tenantId, getServiceAssetId(tenantId, queueName), Collections.singletonList(tsKv), CALLBACK);
-            } catch (DataValidationException e2) {
-                if (!e2.getMessage().equalsIgnoreCase("Asset is referencing to non-existent tenant!")) {
-                    throw e2;
+                TsKvEntry tsKv = new BasicTsKvEntry(e.getTs(), new JsonDataEntry(RULE_ENGINE_EXCEPTION, e.toJsonString(maxErrorMessageLength)));
+                long ttl = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getRuleEngineExceptionsTtlDays);
+                ttl = TimeUnit.DAYS.toSeconds(ttl);
+                tsService.saveAndNotifyInternal(tenantId, getServiceAssetId(tenantId, queueName), Collections.singletonList(tsKv), ttl, CALLBACK);
+            } catch (Exception e2) {
+                if (!"Asset is referencing to non-existent tenant!".equalsIgnoreCase(e2.getMessage())) {
+                    log.debug("[{}] Failed to store the statistics", tenantId, e2);
                 }
             }
         });

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,22 +16,29 @@
 package org.thingsboard.rule.engine.transform;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -69,8 +76,8 @@ public class TbRenameKeysNodeTest {
     @Test
     void givenDefaultConfig_whenVerify_thenOK() {
         TbRenameKeysNodeConfiguration defaultConfig = new TbRenameKeysNodeConfiguration().defaultConfiguration();
-        assertThat(defaultConfig.getRenameKeysMapping()).isEqualTo(Map.of("temp", "temperature"));
-        assertThat(defaultConfig.isFromMetadata()).isEqualTo(false);
+        assertThat(defaultConfig.getRenameKeysMapping()).isEqualTo(Map.of("temperatureCelsius", "temperature"));
+        assertThat(defaultConfig.getRenameIn()).isEqualTo(TbMsgSource.DATA);
     }
 
     @Test
@@ -94,7 +101,7 @@ public class TbRenameKeysNodeTest {
     void givenMetadata_whenOnMsg_thenVerifyOutput() throws Exception {
         config = new TbRenameKeysNodeConfiguration().defaultConfiguration();
         config.setRenameKeysMapping(Map.of("TestKey_1", "Attribute_1", "TestKey_2", "Attribute_2"));
-        config.setFromMetadata(true);
+        config.setRenameIn(TbMsgSource.METADATA);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
 
@@ -134,8 +141,7 @@ public class TbRenameKeysNodeTest {
 
     @Test
     void givenMsgDataNotJSONObject_whenOnMsg_thenVerifyOutput() throws Exception {
-        String data = "[]";
-        TbMsg msg = getTbMsg(deviceId, data);
+        TbMsg msg = getTbMsg(deviceId, TbMsg.EMPTY_JSON_ARRAY);
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
@@ -148,12 +154,40 @@ public class TbRenameKeysNodeTest {
         assertThat(newMsg).isSameAs(msg);
     }
 
+    private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyUpgradeResultAndConfig() {
+        return Stream.of(
+                Arguments.of(0, "{\"fromMetadata\":false,\"renameKeysMapping\":{\"temp\":\"temperature\"}}", true, "{\"renameIn\":\"DATA\",\"renameKeysMapping\":{\"temp\":\"temperature\"}}"),
+                Arguments.of(0, "{\"fromMetadata\":true,\"renameKeysMapping\":{\"temp\":\"temperature\"}}", true, "{\"renameIn\":\"METADATA\",\"renameKeysMapping\":{\"temp\":\"temperature\"}}"),
+                Arguments.of(1, "{\"fromMetadata\":\"METADATA\",\"renameKeysMapping\":{\"temp\":\"temperature\"}}", true, "{\"renameIn\":\"METADATA\",\"renameKeysMapping\":{\"temp\":\"temperature\"}}"),
+                Arguments.of(1, "{\"fromMetadata\":\"DATA\",\"renameKeysMapping\":{\"temp\":\"temperature\"}}", true, "{\"renameIn\":\"DATA\",\"renameKeysMapping\":{\"temp\":\"temperature\"}}"),
+                Arguments.of(1, "{\"renameIn\":\"METADATA\",\"renameKeysMapping\":{\"temp\":\"temperature\"}}", false, "{\"renameIn\":\"METADATA\",\"renameKeysMapping\":{\"temp\":\"temperature\"}}"),
+                Arguments.of(1, "{\"renameIn\":\"DATA\",\"renameKeysMapping\":{\"temp\":\"temperature\"}}", false, "{\"renameIn\":\"DATA\",\"renameKeysMapping\":{\"temp\":\"temperature\"}}")
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void givenFromVersionAndConfig_whenUpgrade_thenVerifyUpgradeResultAndConfig(int givenVersion, String givenConfigStr,
+                                                                                boolean hasChanges, String expectedConfigStr) throws Exception {
+        // GIVEN
+        JsonNode givenConfig = JacksonUtil.toJsonNode(givenConfigStr);
+        JsonNode expectedConfig = JacksonUtil.toJsonNode(expectedConfigStr);
+
+        // WHEN
+        var upgradeResult = node.upgrade(givenVersion, givenConfig);
+
+        // THEN
+        assertThat(upgradeResult.getFirst()).isEqualTo(hasChanges);
+        ObjectNode upgradedConfig = (ObjectNode) upgradeResult.getSecond();
+        assertThat(upgradedConfig).isEqualTo(expectedConfig);
+    }
+
     private TbMsg getTbMsg(EntityId entityId, String data) {
         final Map<String, String> mdMap = Map.of(
                 "TestKey_1", "Test",
                 "country", "US",
                 "city", "NY"
         );
-        return TbMsg.newMsg("POST_ATTRIBUTES_REQUEST", entityId, new TbMsgMetaData(mdMap), data, callback);
+        return TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, entityId, new TbMsgMetaData(mdMap), data, callback);
     }
 }

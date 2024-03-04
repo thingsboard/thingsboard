@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,12 +18,10 @@ import * as CanvasGauges from 'canvas-gauges';
 import { FontSettings, getFontFamily } from '@home/components/widget/lib/settings.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { isDefined } from '@core/utils';
-import * as tinycolor_ from 'tinycolor2';
+import tinycolor from 'tinycolor2';
 import Highlight = CanvasGauges.Highlight;
 import BaseGauge = CanvasGauges.BaseGauge;
 import GenericOptions = CanvasGauges.GenericOptions;
-
-const tinycolor = tinycolor_;
 
 export type AnimationRule = 'linear' | 'quad' | 'quint' | 'cycle'
                             | 'bounce' | 'elastic' | 'dequad' | 'dequint'
@@ -87,7 +85,7 @@ export abstract class TbBaseGauge<S, O extends GenericOptions> {
       if (cellData.data.length > 0) {
         const tvPair = cellData.data[cellData.data.length -
         1];
-        const value = tvPair[1];
+        const value = parseFloat(tvPair[1]);
         if (value !== this.gauge.value) {
           this.gauge.value = value;
         }
@@ -132,7 +130,7 @@ export abstract class TbAnalogueGauge<S extends AnalogueGaugeSettings, O extends
 
     const valueDec = getValueDec(this.ctx, settings);
 
-    step = parseFloat(parseFloat(step + '').toFixed(valueDec));
+    step = parseFloat(parseFloat(step + '').toFixed(valueDec)) || 1;
 
     const majorTicks: number[] = [];
     const highlights: Highlight[] = [];

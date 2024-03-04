@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ///
 
 import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Observable, of } from 'rxjs';
 import { filter, map, mergeMap, share, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
@@ -24,8 +24,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { AliasEntityType, EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { EntityService } from '@core/http/entity.service';
 import { MatAutocomplete } from '@angular/material/autocomplete';
-import { MatChipList } from '@angular/material/chips';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { MatChipGrid } from '@angular/material/chips';
+import { FloatLabelType, MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
+import { coerceArray, coerceBoolean } from '@shared/decorators/coercion';
 
 interface EntityTypeInfo {
   name: string;
@@ -54,27 +55,51 @@ export class EntityTypeListComponent implements ControlValueAccessor, OnInit, Af
   get required(): boolean {
     return this.requiredValue;
   }
+
   @Input()
+  @coerceBoolean()
   set required(value: boolean) {
-    const newVal = coerceBooleanProperty(value);
-    if (this.requiredValue !== newVal) {
-      this.requiredValue = newVal;
+    if (this.requiredValue !== value) {
+      this.requiredValue = value;
       this.updateValidators();
     }
   }
 
   @Input()
+  @coerceArray()
+  additionalClasses: Array<string>;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
+
+  @Input()
+  label: string;
+
+  @Input()
+  floatLabel: FloatLabelType = 'auto';
+
+  @Input()
   disabled: boolean;
+
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
 
   @Input()
   allowedEntityTypes: Array<EntityType | AliasEntityType>;
 
   @Input()
+  emptyInputPlaceholder: string;
+
+  @Input()
+  filledInputPlaceholder: string;
+
+  @Input()
+  @coerceBoolean()
   ignoreAuthorityFilter: boolean;
 
   @ViewChild('entityTypeInput') entityTypeInput: ElementRef<HTMLInputElement>;
   @ViewChild('entityTypeAutocomplete') entityTypeAutocomplete: MatAutocomplete;
-  @ViewChild('chipList', {static: true}) chipList: MatChipList;
+  @ViewChild('chipList', {static: true}) chipList: MatChipGrid;
 
   allEntityTypeList: Array<EntityTypeInfo> = [];
   entityTypeList: Array<EntityTypeInfo> = [];
@@ -112,11 +137,17 @@ export class EntityTypeListComponent implements ControlValueAccessor, OnInit, Af
   }
 
   ngOnInit() {
-
-    this.placeholder = this.required ? this.translate.instant('entity.enter-entity-type')
-      : this.translate.instant('entity.any-entity');
-    this.secondaryPlaceholder = '+' + this.translate.instant('entity.entity-type');
-
+    if (this.emptyInputPlaceholder) {
+      this.placeholder = this.emptyInputPlaceholder;
+    } else {
+      this.placeholder = this.required ? this.translate.instant('entity.enter-entity-type') :
+        this.translate.instant('entity.any-entity');
+    }
+    if (this.filledInputPlaceholder) {
+      this.secondaryPlaceholder = this.filledInputPlaceholder;
+    } else {
+      this.secondaryPlaceholder = '+' + this.translate.instant('entity.entity-type');
+    }
     let entityTypes: Array<EntityType | AliasEntityType>;
     if (this.ignoreAuthorityFilter && this.allowedEntityTypes
       && this.allowedEntityTypes.length) {
@@ -239,5 +270,4 @@ export class EntityTypeListComponent implements ControlValueAccessor, OnInit, Af
       this.entityTypeInput.nativeElement.focus();
     }, 0);
   }
-
 }

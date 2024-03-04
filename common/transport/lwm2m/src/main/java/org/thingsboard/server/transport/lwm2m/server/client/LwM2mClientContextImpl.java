@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ import org.thingsboard.server.transport.lwm2m.server.ota.LwM2MOtaUpdateService;
 import org.thingsboard.server.transport.lwm2m.server.session.LwM2MSessionManager;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MClientStore;
 import org.thingsboard.server.transport.lwm2m.server.store.TbMainSecurityStore;
-import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2mUplinkMsgHandler;
+import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil;
 
 import java.util.Arrays;
@@ -75,7 +75,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
 
     @Autowired
     @Lazy
-    private DefaultLwM2mUplinkMsgHandler defaultLwM2MUplinkMsgHandler;
+    private LwM2mUplinkMsgHandler defaultLwM2MUplinkMsgHandler;
     @Autowired
     @Lazy
     private LwM2MOtaUpdateService otaUpdateService;
@@ -411,7 +411,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     public boolean isDownlinkAllowed(LwM2mClient client) {
         PowerMode powerMode = client.getPowerMode();
         OtherConfiguration profileSettings = null;
-        if (powerMode == null) {
+        if (powerMode == null && client.getProfileId() != null) {
             var clientProfile = getProfile(client.getProfileId());
             profileSettings = clientProfile.getClientLwM2mSettings();
             powerMode = profileSettings.getPowerMode();
@@ -419,7 +419,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
                 powerMode = PowerMode.DRX;
             }
         }
-        if (PowerMode.DRX.equals(powerMode) || otaUpdateService.isOtaDownloading(client)) {
+        if (powerMode == null || PowerMode.DRX.equals(powerMode) || otaUpdateService.isOtaDownloading(client)) {
             return true;
         }
         client.lock();
@@ -460,7 +460,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     public void onUplink(LwM2mClient client) {
         PowerMode powerMode = client.getPowerMode();
         OtherConfiguration profileSettings = null;
-        if (powerMode == null) {
+        if (powerMode == null && client.getProfileId() != null) {
             var clientProfile = getProfile(client.getProfileId());
             profileSettings = clientProfile.getClientLwM2mSettings();
             powerMode = profileSettings.getPowerMode();
@@ -468,7 +468,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
                 powerMode = PowerMode.DRX;
             }
         }
-        if (PowerMode.DRX.equals(powerMode)) {
+        if (powerMode == null || PowerMode.DRX.equals(powerMode)) {
             client.updateLastUplinkTime();
             return;
         }

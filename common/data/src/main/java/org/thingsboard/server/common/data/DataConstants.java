@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ public class DataConstants {
     public static final String CLIENT_SCOPE = "CLIENT_SCOPE";
     public static final String SERVER_SCOPE = "SERVER_SCOPE";
     public static final String SHARED_SCOPE = "SHARED_SCOPE";
+    public static final String NOTIFY_DEVICE_METADATA_KEY = "notifyDevice";
     public static final String LATEST_TS = "LATEST_TS";
     public static final String IS_NEW_ALARM = "isNewAlarm";
     public static final String IS_EXISTING_ALARM = "isExistingAlarm";
@@ -40,11 +41,16 @@ public class DataConstants {
     public static final String EXPIRATION_TIME = "expirationTime";
     public static final String ADDITIONAL_INFO = "additionalInfo";
     public static final String RETRIES = "retries";
+    public static final String EDGE_ID = "edgeId";
+    public static final String DEVICE_ID = "deviceId";
+    public static final String GATEWAY_PARAMETER = "gateway";
     public static final String COAP_TRANSPORT_NAME = "COAP";
     public static final String LWM2M_TRANSPORT_NAME = "LWM2M";
     public static final String MQTT_TRANSPORT_NAME = "MQTT";
     public static final String HTTP_TRANSPORT_NAME = "HTTP";
     public static final String SNMP_TRANSPORT_NAME = "SNMP";
+    public static final String MAXIMUM_NUMBER_OF_DEVICES_REACHED = "Maximum number of devices reached!";
+    public static final String TB_IMAGE_PREFIX = "tb-image;";
 
 
     public static final String[] allScopes() {
@@ -71,7 +77,11 @@ public class DataConstants {
     public static final String TIMESERIES_DELETED = "TIMESERIES_DELETED";
     public static final String ALARM_ACK = "ALARM_ACK";
     public static final String ALARM_CLEAR = "ALARM_CLEAR";
+    public static final String ALARM_ASSIGNED = "ALARM_ASSIGNED";
+    public static final String ALARM_UNASSIGNED = "ALARM_UNASSIGNED";
     public static final String ALARM_DELETE = "ALARM_DELETE";
+    public static final String COMMENT_CREATED = "COMMENT_CREATED";
+    public static final String COMMENT_UPDATED = "COMMENT_UPDATED";
     public static final String ENTITY_ASSIGNED_FROM_TENANT = "ENTITY_ASSIGNED_FROM_TENANT";
     public static final String ENTITY_ASSIGNED_TO_TENANT = "ENTITY_ASSIGNED_TO_TENANT";
     public static final String PROVISION_SUCCESS = "PROVISION_SUCCESS";
@@ -102,6 +112,7 @@ public class DataConstants {
     public static final String PROVISION_KEY = "provisionDeviceKey";
     public static final String PROVISION_SECRET = "provisionDeviceSecret";
 
+    public static final String DEFAULT_DEVICE_TYPE = "default";
     public static final String DEVICE_NAME = "deviceName";
     public static final String DEVICE_TYPE = "deviceType";
     public static final String CERT_PUB_KEY = "x509CertPubKey";
@@ -113,6 +124,18 @@ public class DataConstants {
     public static final String PASSWORD = "password";
     public static final String EDGE_MSG_SOURCE = "edge";
     public static final String MSG_SOURCE_KEY = "source";
+    public static final String EDGE_VERSION_ATTR_KEY = "edgeVersion";
 
     public static final String LAST_CONNECTED_GATEWAY = "lastConnectedGateway";
+
+    public static final String MQTT_TOPIC = "mqttTopic";
+
+    public static final String MAIN_QUEUE_NAME = "Main";
+    public static final String MAIN_QUEUE_TOPIC = "tb_rule_engine.main";
+    public static final String HP_QUEUE_NAME = "HighPriority";
+    public static final String HP_QUEUE_TOPIC = "tb_rule_engine.hp";
+    public static final String SQ_QUEUE_NAME = "SequentialByOriginator";
+    public static final String SQ_QUEUE_TOPIC = "tb_rule_engine.sq";
+    public static final String QUEUE_NAME = "queueName";
+
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2022 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 import { Component } from '@angular/core';
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 
@@ -27,25 +27,27 @@ import { AppState } from '@core/core.state';
 })
 export class TimeseriesTableWidgetSettingsComponent extends WidgetSettingsComponent {
 
-  timeseriesTableWidgetSettingsForm: FormGroup;
+  timeseriesTableWidgetSettingsForm: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
-              private fb: FormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
   }
 
-  protected settingsForm(): FormGroup {
+  protected settingsForm(): UntypedFormGroup {
     return this.timeseriesTableWidgetSettingsForm;
   }
 
   protected defaultSettings(): WidgetSettings {
     return {
       enableSearch: true,
+      enableSelectColumnDisplay: true,
       enableStickyHeader: true,
       enableStickyAction: true,
+      showCellActionsMenu: true,
       reserveSpaceForHiddenAction: 'true',
       showTimestamp: true,
-      showMilliseconds: false,
+      dateFormat: {format: 'yyyy-MM-dd HH:mm:ss'},
       displayPagination: true,
       useEntityLabel: false,
       defaultPageSize: 10,
@@ -57,13 +59,21 @@ export class TimeseriesTableWidgetSettingsComponent extends WidgetSettingsCompon
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
+    // For backward compatibility
+    const dateFormat = settings.dateFormat;
+    if (settings?.showMilliseconds) {
+      dateFormat.format = 'yyyy-MM-dd HH:mm:ss.SSS';
+    }
+
     this.timeseriesTableWidgetSettingsForm = this.fb.group({
       enableSearch: [settings.enableSearch, []],
+      enableSelectColumnDisplay: [settings.enableSelectColumnDisplay, []],
       enableStickyHeader: [settings.enableStickyHeader, []],
       enableStickyAction: [settings.enableStickyAction, []],
+      showCellActionsMenu: [settings.showCellActionsMenu, []],
       reserveSpaceForHiddenAction: [settings.reserveSpaceForHiddenAction, []],
       showTimestamp: [settings.showTimestamp, []],
-      showMilliseconds: [settings.showMilliseconds, []],
+      dateFormat: [dateFormat, []],
       displayPagination: [settings.displayPagination, []],
       useEntityLabel: [settings.useEntityLabel, []],
       defaultPageSize: [settings.defaultPageSize, [Validators.min(1)]],

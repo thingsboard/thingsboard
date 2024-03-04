@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2022 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,12 +49,8 @@ public class EdgeDataValidator extends DataValidator<Edge> {
 
     @Override
     protected void validateDataImpl(TenantId tenantId, Edge edge) {
-        if (StringUtils.isEmpty(edge.getType())) {
-            throw new DataValidationException("Edge type should be specified!");
-        }
-        if (StringUtils.isEmpty(edge.getName())) {
-            throw new DataValidationException("Edge name should be specified!");
-        }
+        validateString("Edge name", edge.getName());
+        validateString("Edge type", edge.getType());
         if (StringUtils.isEmpty(edge.getSecret())) {
             throw new DataValidationException("Edge secret should be specified!");
         }
