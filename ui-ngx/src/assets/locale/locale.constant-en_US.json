@@ -3349,6 +3349,7 @@
         "notification": "Notification",
         "notification-center": "Notification center",
         "notification-tap-action": "Notification tap action",
+        "notification-tap-action-hint": "If not enabled, the default alarm dashboard will be used",
         "notify": "notify",
         "notify-again": "Notify again",
         "notify-alarm-action": {

@@ -20,10 +20,12 @@
                        [expanded]="actionButtonConfigForm.get('enabled').value">
     <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
       <mat-panel-title fxFlex="60">
-        <mat-slide-toggle class="mat-slide" formControlName="enabled" (click)="$event.stopPropagation()"
-                          fxLayoutAlign="center">
-          {{ actionTitle }}
-        </mat-slide-toggle>
+        <div tb-hint-tooltip-icon="{{ sliderHint }}" class="tb-form-row no-border no-padding">
+          <mat-slide-toggle class="mat-slide" formControlName="enabled" (click)="$event.stopPropagation()"
+                            fxLayoutAlign="center">
+            {{ actionTitle }}
+          </mat-slide-toggle>
+        </div>
       </mat-panel-title>
     </mat-expansion-panel-header>
     <ng-template matExpansionPanelContent class="tb-extension-panel">
