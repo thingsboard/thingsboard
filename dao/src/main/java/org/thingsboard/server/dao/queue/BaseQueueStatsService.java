@@ -73,7 +73,7 @@ public class BaseQueueStatsService extends AbstractEntityService implements Queu
 
     @Override
     public void deleteByTenantId(TenantId tenantId) {
-        log.trace("Executing deleteDevicesByTenantId, tenantId [{}]", tenantId);
+        log.trace("Executing deleteByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         queueStatsDao.deleteByTenantId(tenantId);
     }
