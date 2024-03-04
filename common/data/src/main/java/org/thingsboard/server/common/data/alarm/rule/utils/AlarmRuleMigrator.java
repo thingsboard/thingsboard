@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConditio
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmSchedule;
 import org.thingsboard.server.common.data.alarm.rule.condition.AnyTimeSchedule;
+import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentType;
 import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentValueType;
 import org.thingsboard.server.common.data.alarm.rule.condition.AttributeArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.ComplexAlarmConditionFilter;
@@ -171,7 +172,14 @@ public class AlarmRuleMigrator {
         }
 
         var predicateValue = simplePredicate.getValue();
-        var rightArgument = createArgument(predicateValue.getDynamicValue(), valueType, predicateValue.getDefaultValue());
+        var leftArgument = arguments.get(new TbPair<>(leftArgId, 1));
+        String constantDescription;
+        if (leftArgument.getType() == ArgumentType.CONSTANT) {
+            constantDescription = ((ConstantArgument)leftArgument).getDescription();
+        } else {
+            constantDescription = leftArgument.getKey().getKey();
+        }
+        var rightArgument = createArgument(predicateValue.getDynamicValue(), valueType, predicateValue.getDefaultValue(), constantDescription);
 
         simpleFilter.setRightArgId(addArgumentAndGetId(rightArgument, arguments));
 
@@ -194,7 +202,7 @@ public class AlarmRuleMigrator {
                 var oldRepeating = (OldRepeatingAlarmConditionSpec) oldSpec;
                 var repeating = new RepeatingAlarmConditionSpec();
                 var predicate = oldRepeating.getPredicate();
-                AlarmRuleArgument argument = createArgument(predicate.getDynamicValue(), ArgumentValueType.NUMERIC, predicate.getDefaultValue());
+                AlarmRuleArgument argument = createArgument(predicate.getDynamicValue(), ArgumentValueType.NUMERIC, predicate.getDefaultValue(), "repeating");
                 repeating.setArgumentId(addArgumentAndGetId(argument, arguments));
                 yield repeating;
             }
@@ -202,7 +210,7 @@ public class AlarmRuleMigrator {
                 var oldDuration = (OldDurationAlarmConditionSpec) oldSpec;
                 var duration = new DurationAlarmConditionSpec();
                 var predicate = oldDuration.getPredicate();
-                AlarmRuleArgument argument = createArgument(predicate.getDynamicValue(), ArgumentValueType.NUMERIC, predicate.getDefaultValue());
+                AlarmRuleArgument argument = createArgument(predicate.getDynamicValue(), ArgumentValueType.NUMERIC, predicate.getDefaultValue(), "duration");
                 duration.setArgumentId(addArgumentAndGetId(argument, arguments));
                 duration.setUnit(oldDuration.getUnit());
                 yield duration;
@@ -268,10 +276,16 @@ public class AlarmRuleMigrator {
     }
 
     private static AlarmRuleArgument createArgument(DynamicValue<?> dynamicValue, ArgumentValueType argumentValueType, Object value) {
+        return createArgument(dynamicValue, argumentValueType, value, null);
+    }
+
+    private static AlarmRuleArgument createArgument(DynamicValue<?> dynamicValue, ArgumentValueType argumentValueType, Object value, String constantDescription) {
         if (dynamicValue != null && dynamicValue.getSourceAttribute() != null) {
             return new AttributeArgument(dynamicValue.getSourceAttribute(), argumentValueType, getValueSourceType(dynamicValue.getSourceType()), value, dynamicValue.isInherit());
+        } else if (value != null) {
+            return new ConstantArgument(argumentValueType, value, constantDescription);
         } else {
-            return new ConstantArgument(argumentValueType, value);
+            return null;
         }
     }
 
