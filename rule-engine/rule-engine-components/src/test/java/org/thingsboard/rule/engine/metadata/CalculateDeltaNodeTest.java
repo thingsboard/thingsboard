@@ -21,14 +21,18 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.provider.Arguments;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
 import org.thingsboard.rule.engine.TestDbCallbackExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -48,6 +52,7 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -66,7 +71,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class CalculateDeltaNodeTest {
+public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private static final DeviceId DUMMY_DEVICE_ORIGINATOR = new DeviceId(UUID.randomUUID());
     private static final TenantId TENANT_ID = new TenantId(UUID.randomUUID());
@@ -75,13 +80,13 @@ public class CalculateDeltaNodeTest {
     private TbContext ctxMock;
     @Mock
     private TimeseriesService timeseriesServiceMock;
+    @Spy
     private CalculateDeltaNode node;
     private CalculateDeltaNodeConfiguration config;
     private TbNodeConfiguration nodeConfiguration;
 
     @BeforeEach
     public void setUp() throws TbNodeException {
-        node = new CalculateDeltaNode();
         config = new CalculateDeltaNodeConfiguration().defaultConfiguration();
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         when(ctxMock.getTimeseriesService()).thenReturn(timeseriesServiceMock);
@@ -424,6 +429,31 @@ public class CalculateDeltaNodeTest {
                 .hasMessage("Calculation failed. JSON values are not supported!");
     }
 
+    @Test
+    public void givenDeltaValueIsZeroAndOnlyComputeTrueDeltasTrue_whenOnMsg_thenShouldReturnMsgWithoutDelta() throws TbNodeException {
+        // GIVEN
+        config.setOnlyComputeTrueDeltas(true);
+        config.setInputValueKey("temperature");
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctxMock, nodeConfiguration);
+
+        mockFindLatest(new BasicTsKvEntry(1L, new DoubleDataEntry("temperature", 40.0)));
+
+        var msgData = "{\"temperature\":40,\"airPressure\":123}";
+        var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, msgData);
+
+        // WHEN
+
+        node.onMsg(ctxMock, msg);
+
+        // THEN
+
+        verify(ctxMock).tellSuccess(eq(msg));
+        verify(ctxMock, never()).tellNext(any(), anyString());
+        verify(ctxMock, never()).tellNext(any(), anySet());
+        verify(ctxMock, never()).tellFailure(any(), any());
+    }
+
     private void mockFindLatest(TsKvEntry tsKvEntry) {
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
         when(timeseriesServiceMock.findLatestSync(
@@ -457,4 +487,24 @@ public class CalculateDeltaNodeTest {
 
     }
 
+    private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
+        return Stream.of(
+                // default config for version 0
+                Arguments.of(0,
+                        "{\"inputValueKey\":\"pulseCounter\",\"outputValueKey\":\"delta\",\"useCache\":true,\"addPeriodBetweenMsgs\":false, \"periodValueKey\":\"periodInMs\", \"round\":null,\"tellFailureIfDeltaIsNegative\":true}",
+                        true,
+                        "{\"inputValueKey\":\"pulseCounter\",\"outputValueKey\":\"delta\",\"useCache\":true,\"addPeriodBetweenMsgs\":false, \"periodValueKey\":\"periodInMs\", \"round\":null,\"tellFailureIfDeltaIsNegative\":true, \"onlyComputeTrueDeltas\":false}"),
+                // default config for version 1 with upgrade from version 0
+                Arguments.of(1,
+                        "{\"inputValueKey\":\"pulseCounter\",\"outputValueKey\":\"delta\",\"useCache\":true,\"addPeriodBetweenMsgs\":false, \"periodValueKey\":\"periodInMs\", \"round\":null,\"tellFailureIfDeltaIsNegative\":true, \"onlyComputeTrueDeltas\":false}",
+                        false,
+                        "{\"inputValueKey\":\"pulseCounter\",\"outputValueKey\":\"delta\",\"useCache\":true,\"addPeriodBetweenMsgs\":false, \"periodValueKey\":\"periodInMs\", \"round\":null,\"tellFailureIfDeltaIsNegative\":true, \"onlyComputeTrueDeltas\":false}")
+        );
+
+    }
+
+    @Override
+    protected TbNode getTestNode() {
+        return node;
+    }
 }
