@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ public interface WebSocketService {
 
     void handleCommands(WebSocketSessionRef sessionRef, WsCommandsWrapper commandsWrapper);
 
-    void sendUpdate(String sessionId, TelemetrySubscriptionUpdate update);
+    void sendUpdate(String sessionId, int cmdId, TelemetrySubscriptionUpdate update);
 
     void sendUpdate(String sessionId, CmdUpdate update);
 

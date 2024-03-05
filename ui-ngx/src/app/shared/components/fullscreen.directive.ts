@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,8 +24,7 @@ import {
   Output,
   Renderer2,
   SecurityContext,
-  SimpleChanges,
-  ViewContainerRef
+  SimpleChanges
 } from '@angular/core';
 import { Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
@@ -33,6 +32,7 @@ import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 import { DomSanitizer, SafeStyle } from '@angular/platform-browser';
 
 @Directive({
+  // eslint-disable-next-line @angular-eslint/directive-selector
   selector: '[tb-fullscreen]'
 })
 export class FullscreenDirective implements OnChanges, OnDestroy {
@@ -60,7 +60,6 @@ export class FullscreenDirective implements OnChanges, OnDestroy {
   constructor(public elementRef: ElementRef,
               private renderer: Renderer2,
               private sanitizer: DomSanitizer,
-              private viewContainerRef: ViewContainerRef,
               private overlay: Overlay) {
   }
 
@@ -118,10 +117,10 @@ export class FullscreenDirective implements OnChanges, OnDestroy {
     this.fullscreenChanged.emit(true);
   }
 
-  private setStyle(el: any, nameAndUnit: string, value: any): void {
+  private setStyle(_el: any, nameAndUnit: string, value: any): void {
     const [name, unit] = nameAndUnit.split('.');
-    let renderValue: string|null =
-      this.sanitizer.sanitize(SecurityContext.STYLE, value as{} | string);
+    let renderValue: string | null =
+      this.sanitizer.sanitize(SecurityContext.STYLE, value);
     if (renderValue != null) {
       renderValue = renderValue.toString();
     }

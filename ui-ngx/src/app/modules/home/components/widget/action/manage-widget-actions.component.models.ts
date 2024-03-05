@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
 ///
 
 import {
-  CustomActionDescriptor,
   WidgetActionDescriptor,
   WidgetActionSource,
   widgetActionTypeTranslationMap
@@ -27,11 +26,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { PageLink } from '@shared/models/page/page-link';
 import { catchError, map, publishReplay, refCount } from 'rxjs/operators';
 import { UtilsService } from '@core/services/utils.service';
-import { deepClone, isDefined, isUndefined } from '@core/utils';
-
-import customSampleJs from '!raw-loader!./custom-sample-js.raw';
-import customSampleCss from '!raw-loader!./custom-sample-css.raw';
-import customSampleHtml from '!raw-loader!./custom-sample-html.raw';
+import { deepClone } from '@core/utils';
 
 export interface WidgetActionCallbacks {
   fetchDashboardStates: (query: string) => Array<string>;
@@ -48,32 +43,13 @@ export interface WidgetActionDescriptorInfo extends WidgetActionDescriptor {
   typeName?: string;
 }
 
-export function toWidgetActionDescriptor(action: WidgetActionDescriptorInfo): WidgetActionDescriptor {
+export const toWidgetActionDescriptor = (action: WidgetActionDescriptorInfo): WidgetActionDescriptor => {
   const copy = deepClone(action);
   delete copy.actionSourceId;
   delete copy.actionSourceName;
   delete copy.typeName;
   return copy;
-}
-
-export function toCustomAction(action: WidgetActionDescriptorInfo): CustomActionDescriptor {
-  let result: CustomActionDescriptor;
-  if (!action || (isUndefined(action.customFunction) && isUndefined(action.customHtml) && isUndefined(action.customCss))) {
-    result = {
-      customHtml: customSampleHtml,
-      customCss: customSampleCss,
-      customFunction: customSampleJs
-    };
-  } else {
-    result = {
-      customHtml: action.customHtml,
-      customCss: action.customCss,
-      customFunction: action.customFunction
-    };
-  }
-  result.customResources = action && isDefined(action.customResources) ? deepClone(action.customResources) : [];
-  return result;
-}
+};
 
 export class WidgetActionsDatasource implements DataSource<WidgetActionDescriptorInfo> {
 

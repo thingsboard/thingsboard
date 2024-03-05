@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,11 +24,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { EntityService } from '@core/http/entity.service';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
-import {
-  NotificationDeliveryMethodTranslateMap,
-  SlackChanelType,
-  SlackConversation
-} from '@shared/models/notification.models';
+import { SlackChanelType, SlackConversation } from '@shared/models/notification.models';
 import { NotificationService } from '@core/http/notification.service';
 import { isEqual } from '@core/utils';
 
@@ -44,7 +40,6 @@ import { isEqual } from '@core/utils';
 })
 export class SlackConversationAutocompleteComponent implements ControlValueAccessor, OnInit, OnChanges {
 
-  notificationDeliveryMethodTranslateMap = NotificationDeliveryMethodTranslateMap;
   conversationSlackFormGroup: FormGroup;
 
   @Input()

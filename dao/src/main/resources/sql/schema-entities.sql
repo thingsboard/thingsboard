@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2023 The Thingsboard Authors
+-- Copyright © 2016-2024 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -126,7 +126,8 @@ CREATE TABLE IF NOT EXISTS component_descriptor (
     name varchar(255),
     scope varchar(255),
     type varchar(255),
-    clustering_mode varchar(255)
+    clustering_mode varchar(255),
+    has_queue_name boolean DEFAULT false
 );
 
 CREATE TABLE IF NOT EXISTS customer (
@@ -187,6 +188,7 @@ CREATE TABLE IF NOT EXISTS rule_node (
     name varchar(255),
     debug_mode boolean,
     singleton_mode boolean,
+    queue_name varchar(255),
     external_id uuid
 );
 
@@ -871,7 +873,7 @@ CREATE TABLE IF NOT EXISTS notification (
 CREATE TABLE IF NOT EXISTS user_settings (
     user_id uuid NOT NULL,
     type VARCHAR(50) NOT NULL,
-    settings varchar(10000),
+    settings jsonb,
     CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES tb_user(id) ON DELETE CASCADE,
     CONSTRAINT user_settings_pkey PRIMARY KEY (user_id, type)
 );

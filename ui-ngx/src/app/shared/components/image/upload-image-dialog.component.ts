@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -30,8 +30,10 @@ import {
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 import { ImageService } from '@core/http/image.service';
-import { ImageResourceInfo, imageResourceType } from '@shared/models/resource.models';
+import { ImageResource, ImageResourceInfo, imageResourceType } from '@shared/models/resource.models';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
+import { forkJoin } from 'rxjs';
+import { blobToBase64 } from '@core/utils';
 
 export interface UploadImageDialogData {
   image?: ImageResourceInfo;
@@ -44,7 +46,7 @@ export interface UploadImageDialogData {
   styleUrls: []
 })
 export class UploadImageDialogComponent extends
-  DialogComponent<UploadImageDialogComponent, ImageResourceInfo> implements OnInit, ErrorStateMatcher {
+  DialogComponent<UploadImageDialogComponent, ImageResource> implements OnInit, ErrorStateMatcher {
 
   uploadImageFormGroup: UntypedFormGroup;
 
@@ -59,7 +61,7 @@ export class UploadImageDialogComponent extends
               private imageService: ImageService,
               @Inject(MAT_DIALOG_DATA) public data: UploadImageDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
-              public dialogRef: MatDialogRef<UploadImageDialogComponent, ImageResourceInfo>,
+              public dialogRef: MatDialogRef<UploadImageDialogComponent, ImageResource>,
               public fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
   }
@@ -98,18 +100,20 @@ export class UploadImageDialogComponent extends
     const file: File = this.uploadImageFormGroup.get('file').value;
     if (this.uploadImage) {
       const title: string = this.uploadImageFormGroup.get('title').value;
-      this.imageService.uploadImage(file, title).subscribe(
-        (res) => {
-          this.dialogRef.close(res);
-        }
-      );
+      forkJoin([
+        this.imageService.uploadImage(file, title),
+        blobToBase64(file)
+      ]).subscribe(([imageInfo, base64]) => {
+        this.dialogRef.close(Object.assign(imageInfo, {base64}));
+      });
     } else {
       const image = this.data.image;
-      this.imageService.updateImage(imageResourceType(image), image.resourceKey, file).subscribe(
-        (res) => {
-          this.dialogRef.close(res);
-        }
-      );
+      forkJoin([
+        this.imageService.updateImage(imageResourceType(image), image.resourceKey, file),
+        blobToBase64(file)
+      ]).subscribe(([imageInfo, base64]) => {
+        this.dialogRef.close(Object.assign(imageInfo, {base64}));
+      });
     }
   }
 }

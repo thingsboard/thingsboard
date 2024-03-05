@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,17 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatchers;
 import org.mockito.stubbing.Answer;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.deduplication.DeduplicationStrategy;
@@ -55,6 +60,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -68,7 +74,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @Slf4j
-public class TbMsgDeduplicationNodeTest {
+public class TbMsgDeduplicationNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private TbContext ctx;
 
@@ -139,12 +145,23 @@ public class TbMsgDeduplicationNodeTest {
         node.destroy();
     }
 
-    @Test
-    public void given_100_messages_strategy_first_then_verifyOutput() throws TbNodeException, ExecutionException, InterruptedException {
+    private static Stream<Arguments> given_100_messages_strategy_first_then_verifyOutput() {
+        return Stream.of(
+                Arguments.of((String) null),
+                Arguments.of(DataConstants.MAIN_QUEUE_NAME),
+                Arguments.of(DataConstants.HP_QUEUE_NAME)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    public void given_100_messages_strategy_first_then_verifyOutput(String queueName) throws TbNodeException, ExecutionException, InterruptedException {
         int wantedNumberOfTellSelfInvocation = 2;
         int msgCount = 100;
         awaitTellSelfLatch = new CountDownLatch(wantedNumberOfTellSelfInvocation);
         invokeTellSelf(wantedNumberOfTellSelfInvocation);
+
+        when(ctx.getQueueName()).thenReturn(queueName);
 
         config.setInterval(deduplicationInterval);
         config.setMaxPendingMsgs(msgCount);
@@ -182,6 +199,12 @@ public class TbMsgDeduplicationNodeTest {
         Assertions.assertEquals(firstMsg.getData(), actualMsg.getData());
         Assertions.assertEquals(firstMsg.getMetaData(), actualMsg.getMetaData());
         Assertions.assertEquals(firstMsg.getType(), actualMsg.getType());
+
+        if (queueName == null) {
+            Assertions.assertEquals(firstMsg.getQueueName(), actualMsg.getQueueName());
+        } else {
+            Assertions.assertEquals(ctx.getQueueName(), actualMsg.getQueueName());
+        }
     }
 
     @Test
@@ -238,10 +261,10 @@ public class TbMsgDeduplicationNodeTest {
         awaitTellSelfLatch = new CountDownLatch(wantedNumberOfTellSelfInvocation);
         invokeTellSelf(wantedNumberOfTellSelfInvocation);
 
+        when(ctx.getQueueName()).thenReturn(DataConstants.HP_QUEUE_NAME);
         config.setInterval(deduplicationInterval);
         config.setStrategy(DeduplicationStrategy.ALL);
         config.setOutMsgType(TbMsgType.POST_ATTRIBUTES_REQUEST.name());
-        config.setQueueName(DataConstants.HP_QUEUE_NAME);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
 
@@ -268,7 +291,7 @@ public class TbMsgDeduplicationNodeTest {
         Assertions.assertEquals(getMergedData(inputMsgs), outMessage.getData());
         Assertions.assertEquals(deviceId, outMessage.getOriginator());
         Assertions.assertEquals(config.getOutMsgType(), outMessage.getType());
-        Assertions.assertEquals(config.getQueueName(), outMessage.getQueueName());
+        Assertions.assertEquals(DataConstants.HP_QUEUE_NAME, outMessage.getQueueName());
     }
 
     @Test
@@ -278,10 +301,10 @@ public class TbMsgDeduplicationNodeTest {
         awaitTellSelfLatch = new CountDownLatch(wantedNumberOfTellSelfInvocation);
         invokeTellSelf(wantedNumberOfTellSelfInvocation, true, 3);
 
+        when(ctx.getQueueName()).thenReturn(DataConstants.HP_QUEUE_NAME);
         config.setInterval(deduplicationInterval);
         config.setStrategy(DeduplicationStrategy.ALL);
         config.setOutMsgType(TbMsgType.POST_ATTRIBUTES_REQUEST.name());
-        config.setQueueName(DataConstants.HP_QUEUE_NAME);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
 
@@ -292,7 +315,7 @@ public class TbMsgDeduplicationNodeTest {
         for (TbMsg msg : firstMsgPack) {
             node.onMsg(ctx, msg);
         }
-        long firstPackDeduplicationPackEndTs =  firstMsgPack.get(0).getMetaDataTs() + TimeUnit.SECONDS.toMillis(deduplicationInterval);
+        long firstPackDeduplicationPackEndTs = firstMsgPack.get(0).getMetaDataTs() + TimeUnit.SECONDS.toMillis(deduplicationInterval);
 
         List<TbMsg> secondMsgPack = getTbMsgs(deviceId, msgCount / 2, firstPackDeduplicationPackEndTs, 500);
         for (TbMsg msg : secondMsgPack) {
@@ -316,13 +339,13 @@ public class TbMsgDeduplicationNodeTest {
         Assertions.assertEquals(getMergedData(firstMsgPack), firstMsg.getData());
         Assertions.assertEquals(deviceId, firstMsg.getOriginator());
         Assertions.assertEquals(config.getOutMsgType(), firstMsg.getType());
-        Assertions.assertEquals(config.getQueueName(), firstMsg.getQueueName());
+        Assertions.assertEquals(DataConstants.HP_QUEUE_NAME, firstMsg.getQueueName());
 
         TbMsg secondMsg = resultMsgs.get(1);
         Assertions.assertEquals(getMergedData(secondMsgPack), secondMsg.getData());
         Assertions.assertEquals(deviceId, secondMsg.getOriginator());
         Assertions.assertEquals(config.getOutMsgType(), secondMsg.getType());
-        Assertions.assertEquals(config.getQueueName(), secondMsg.getQueueName());
+        Assertions.assertEquals(DataConstants.HP_QUEUE_NAME, secondMsg.getQueueName());
     }
 
     @Test
@@ -385,6 +408,27 @@ public class TbMsgDeduplicationNodeTest {
         Assertions.assertEquals(msgWithLatestTsInSecondPack.getType(), actualMsg.getType());
     }
 
+    // Rule nodes upgrade
+    private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
+        return Stream.of(
+                // default config for version 0
+                Arguments.of(0,
+                        "{\"interval\":60,\"strategy\":\"FIRST\",\"outMsgType\":null,\"maxPendingMsgs\":100,\"maxRetries\":3, \"queueName\":null}",
+                        true,
+                        "{\"interval\":60,\"strategy\":\"FIRST\",\"outMsgType\":null,\"maxPendingMsgs\":100,\"maxRetries\":3}"),
+                // default config for version 0 with queueName
+                Arguments.of(0,
+                        "{\"interval\":60,\"strategy\":\"FIRST\",\"outMsgType\":null,\"maxPendingMsgs\":100,\"maxRetries\":3, \"queueName\":\"Main\"}",
+                        true,
+                        "{\"interval\":60,\"strategy\":\"FIRST\",\"outMsgType\":null,\"maxPendingMsgs\":100,\"maxRetries\":3}"),
+                // default config for version 1 with upgrade from version 0
+                Arguments.of(0,
+                        "{\"interval\":60,\"strategy\":\"FIRST\",\"outMsgType\":null,\"maxPendingMsgs\":100,\"maxRetries\":3}",
+                        false,
+                        "{\"interval\":60,\"strategy\":\"FIRST\",\"outMsgType\":null,\"maxPendingMsgs\":100,\"maxRetries\":3}")
+        );
+    }
+
     private TbMsg getMsgWithLatestTs(List<TbMsg> firstMsgPack) {
         int indexOfLastMsgInArray = firstMsgPack.size() - 1;
         int indexToSetMaxTs = new Random().nextInt(indexOfLastMsgInArray) + 1;
@@ -427,6 +471,11 @@ public class TbMsgDeduplicationNodeTest {
             mergedData.add(msgNode);
         });
         return JacksonUtil.toString(mergedData);
+    }
+
+    @Override
+    protected TbNode getTestNode() {
+        return node;
     }
 
 }

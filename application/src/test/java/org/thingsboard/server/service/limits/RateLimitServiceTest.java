@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
+import org.thingsboard.server.cache.limits.DefaultRateLimitService;
+import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
@@ -28,9 +30,7 @@ import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
-import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
-import org.thingsboard.server.dao.util.limits.DefaultRateLimitService;
-import org.thingsboard.server.dao.util.limits.RateLimitService;
+import org.thingsboard.server.dao.tenant.DefaultTbTenantProfileCache;
 
 import java.util.List;
 import java.util.UUID;
@@ -46,12 +46,12 @@ import static org.mockito.Mockito.when;
 public class RateLimitServiceTest {
 
     private RateLimitService rateLimitService;
-    private TbTenantProfileCache tenantProfileCache;
+    private DefaultTbTenantProfileCache tenantProfileCache;
     private TenantId tenantId;
 
     @Before
     public void beforeEach() {
-        tenantProfileCache = Mockito.mock(TbTenantProfileCache.class);
+        tenantProfileCache = Mockito.mock(DefaultTbTenantProfileCache.class);
         rateLimitService = new DefaultRateLimitService(tenantProfileCache, mock(NotificationRuleProcessor.class), 60, 100);
         tenantId = new TenantId(UUID.randomUUID());
     }
@@ -69,6 +69,10 @@ public class RateLimitServiceTest {
         profileConfiguration.setCustomerServerRestLimitsConfiguration(rateLimit);
         profileConfiguration.setWsUpdatesPerSessionRateLimit(rateLimit);
         profileConfiguration.setCassandraQueryTenantRateLimitsConfiguration(rateLimit);
+        profileConfiguration.setEdgeEventRateLimits(rateLimit);
+        profileConfiguration.setEdgeEventRateLimitsPerEdge(rateLimit);
+        profileConfiguration.setEdgeUplinkMessagesRateLimits(rateLimit);
+        profileConfiguration.setEdgeUplinkMessagesRateLimitsPerEdge(rateLimit);
         updateTenantProfileConfiguration(profileConfiguration);
 
         for (LimitedApi limitedApi : List.of(
@@ -76,7 +80,11 @@ public class RateLimitServiceTest {
                 LimitedApi.ENTITY_IMPORT,
                 LimitedApi.NOTIFICATION_REQUESTS,
                 LimitedApi.REST_REQUESTS_PER_CUSTOMER,
-                LimitedApi.CASSANDRA_QUERIES
+                LimitedApi.CASSANDRA_QUERIES,
+                LimitedApi.EDGE_EVENTS,
+                LimitedApi.EDGE_EVENTS_PER_EDGE,
+                LimitedApi.EDGE_UPLINK_MESSAGES,
+                LimitedApi.EDGE_UPLINK_MESSAGES_PER_EDGE
         )) {
             testRateLimits(limitedApi, max, tenantId);
         }

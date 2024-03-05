@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,14 +26,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -48,14 +49,15 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageDataIterableByTenantIdEntityId;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -64,7 +66,7 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
-import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 
 import javax.annotation.Nullable;
@@ -105,7 +107,11 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     private RelationService relationService;
 
     @Autowired
-    private TenantService tenantService;
+    @Lazy
+    private TimeseriesService timeseriesService;
+
+    @Autowired
+    private AttributesService attributesService;
 
     @Autowired
     private DataValidator<Edge> edgeValidator;
@@ -113,6 +119,8 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     @Value("${edges.enabled}")
     @Getter
     private boolean edgesEnabled;
+    @Value("${edges.state.persistToTelemetry:false}")
+    private boolean persistToTelemetry;
 
     @TransactionalEventListener(classes = EdgeCacheEvictEvent.class)
     @Override
@@ -528,6 +536,18 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
             }
         }
         return result.toString();
+    }
+
+    @Override
+    public ListenableFuture<Boolean> isEdgeActiveAsync(TenantId tenantId, EdgeId edgeId, String key) {
+        ListenableFuture<? extends Optional<? extends KvEntry>> futureKvEntry;
+        if (persistToTelemetry) {
+            futureKvEntry = timeseriesService.findLatest(tenantId, edgeId, key);
+        } else {
+            futureKvEntry = attributesService.find(tenantId, edgeId, DataConstants.SERVER_SCOPE, key);
+        }
+        return Futures.transformAsync(futureKvEntry, kvEntryOpt ->
+                Futures.immediateFuture(kvEntryOpt.flatMap(KvEntry::getBooleanValue).orElse(false)), MoreExecutors.directExecutor());
     }
 
     private List<RuleChain> findEdgeRuleChains(TenantId tenantId, EdgeId edgeId) {

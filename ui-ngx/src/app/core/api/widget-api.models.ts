@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import {
   DatasourceType,
   KeyInfo,
   LegendConfig,
-  LegendData,
+  LegendData, TargetDevice,
   WidgetActionDescriptor,
   widgetType
 } from '@shared/models/widget.models';
@@ -37,7 +37,7 @@ import { RafService } from '@core/services/raf.service';
 import { EntityAliases } from '@shared/models/alias.models';
 import { EntityInfo } from '@app/shared/models/entity.models';
 import { IDashboardComponent } from '@home/models/dashboard-component.models';
-import * as moment_ from 'moment';
+import moment_ from 'moment';
 import {
   AlarmData,
   AlarmDataPageLink,
@@ -57,6 +57,7 @@ import { IDashboardController } from '@home/components/dashboard-page/dashboard-
 import { PopoverPlacement } from '@shared/components/popover.models';
 import { PersistentRpc } from '@shared/models/rpc.models';
 import { EventEmitter } from '@angular/core';
+import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 
 export interface TimewindowFunctions {
   onUpdateTimewindow: (startTimeMs: number, endTimeMs: number, interval?: number) => void;
@@ -81,6 +82,7 @@ export interface RpcApi {
 
 export interface IWidgetUtils {
   formatValue: (value: any, dec?: number, units?: string, showZeroDecimals?: boolean) => string | undefined;
+  getEntityDetailsPageURL: (id: string, entityType: EntityType) => string;
 }
 
 export interface WidgetActionsApi {
@@ -90,6 +92,7 @@ export interface WidgetActionsApi {
                        entityId?: EntityId, entityName?: string, additionalParams?: any, entityLabel?: string) => void;
   elementClick: ($event: Event) => void;
   cardClick: ($event: Event) => void;
+  click: ($event: Event) => void;
   getActiveEntityInfo: () => SubscriptionEntityInfo;
   openDashboardStateInSeparateDialog: (targetDashboardStateId: string, params?: StateParams, dialogTitle?: string,
                                        hideDashboardToolbar?: boolean, dialogWidth?: number, dialogHeight?: number) => void;
@@ -121,18 +124,20 @@ export interface IAliasController {
   getEntityAliasId(aliasName: string): string;
   getInstantAliasInfo(aliasId: string): AliasInfo;
   resolveSingleEntityInfo(aliasId: string): Observable<EntityInfo>;
+  resolveSingleEntityInfoForDeviceId(deviceId: string): Observable<EntityInfo>;
+  resolveSingleEntityInfoForTargetDevice(targetDevice: TargetDevice): Observable<EntityInfo>;
   resolveDatasources(datasources: Array<Datasource>, singleEntity?: boolean, pageSize?: number): Observable<Array<Datasource>>;
   resolveAlarmSource(alarmSource: Datasource): Observable<Datasource>;
   getEntityAliases(): EntityAliases;
   getFilters(): Filters;
   getFilterInfo(filterId: string): FilterInfo;
   getKeyFilters(filterId: string): Array<KeyFilter>;
-  updateCurrentAliasEntity(aliasId: string, currentEntity: EntityInfo);
-  updateUserFilter(filter: Filter);
-  updateEntityAliases(entityAliases: EntityAliases);
-  updateFilters(filters: Filters);
-  updateAliases(aliasIds?: Array<string>);
-  dashboardStateChanged();
+  updateCurrentAliasEntity(aliasId: string, currentEntity: EntityInfo): void;
+  updateUserFilter(filter: Filter): void;
+  updateEntityAliases(entityAliases: EntityAliases): void;
+  updateFilters(filters: Filters): void;
+  updateAliases(aliasIds?: Array<string>): void;
+  dashboardStateChanged(): void;
 }
 
 export interface StateObject {
@@ -154,6 +159,7 @@ export interface IStateController {
   dashboardCtrl: IDashboardController;
   getStateParams(): StateParams;
   stateChanged(): Observable<string>;
+  stateId(): Observable<string>;
   getStateParamsByStateId(stateId: string): StateParams;
   openState(id: string, params?: StateParams, openRightLayout?: boolean): void;
   updateState(id?: string, params?: StateParams, openRightLayout?: boolean): void;
@@ -208,6 +214,7 @@ export class WidgetSubscriptionContext {
   entityDataService: EntityDataService;
   alarmDataService: AlarmDataService;
   utils: UtilsService;
+  dashboardUtils: DashboardUtilsService;
   raf: RafService;
   widgetUtils: IWidgetUtils;
   getServerTimeDiff: () => Observable<number>;
@@ -250,6 +257,7 @@ export interface WidgetSubscriptionOptions {
   ignoreDataUpdateOnIntervalTick?: boolean;
   targetDeviceAliasIds?: Array<string>;
   targetDeviceIds?: Array<string>;
+  targetDevice?: TargetDevice;
   useDashboardTimewindow?: boolean;
   displayTimewindow?: boolean;
   timeWindowConfig?: Timewindow;
@@ -305,13 +313,12 @@ export interface IWidgetSubscription {
   alarms?: PageData<AlarmData>;
   alarmSource?: Datasource;
 
-  targetDeviceAliasIds?: Array<string>;
-  targetDeviceIds?: Array<string>;
+  targetEntityId?: EntityId;
 
   rpcEnabled?: boolean;
   executingRpcRequest?: boolean;
   rpcErrorText?: string;
-  rpcRejection?: HttpErrorResponse;
+  rpcRejection?: HttpErrorResponse | Error;
 
   getFirstEntityInfo(): SubscriptionEntityInfo;
 

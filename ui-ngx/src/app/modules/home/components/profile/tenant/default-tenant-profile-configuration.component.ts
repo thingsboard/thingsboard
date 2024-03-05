@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -106,7 +106,11 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       maxWsSubscriptionsPerRegularUser: [null, [Validators.min(0)]],
       maxWsSubscriptionsPerPublicUser: [null, [Validators.min(0)]],
       wsUpdatesPerSessionRateLimit: [null, []],
-      cassandraQueryTenantRateLimitsConfiguration: [null, []]
+      cassandraQueryTenantRateLimitsConfiguration: [null, []],
+      edgeEventRateLimits: [null, []],
+      edgeEventRateLimitsPerEdge: [null, []],
+      edgeUplinkMessagesRateLimits: [null, []],
+      edgeUplinkMessagesRateLimitsPerEdge: [null, []]
     });
 
     this.defaultTenantProfileConfigurationFormGroup.get('smsEnabled').valueChanges.pipe(

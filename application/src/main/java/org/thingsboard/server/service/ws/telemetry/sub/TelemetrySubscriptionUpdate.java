@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.ws.telemetry.sub;
 
+import lombok.AllArgsConstructor;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.service.subscription.SubscriptionErrorCode;
 
@@ -26,8 +27,8 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+@AllArgsConstructor
 public class TelemetrySubscriptionUpdate {
-
     private final int subscriptionId;
     private int errorCode;
     private String errorMsg;
@@ -91,6 +92,10 @@ public class TelemetrySubscriptionUpdate {
 
     public String getErrorMsg() {
         return errorMsg;
+    }
+
+    public TelemetrySubscriptionUpdate copyWithNewSubscriptionId(int subscriptionId){
+        return new TelemetrySubscriptionUpdate(subscriptionId, errorCode, errorMsg, data);
     }
 
     @Override

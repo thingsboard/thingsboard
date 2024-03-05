@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,6 +85,7 @@ import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.device.DeviceConnectivityConfiguration;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -168,6 +169,9 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     @Autowired
     private TimeseriesService tsService;
+
+    @Autowired
+    private DeviceConnectivityConfiguration connectivityConfiguration;
 
     @Value("${state.persistToTelemetry:false}")
     @Getter
@@ -260,7 +264,6 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         ObjectNode node = JacksonUtil.newObjectNode();
         node.put("baseUrl", "http://localhost:8080");
         node.put("prohibitDifferentUrl", false);
-        node.set("connectivity", createDeviceConnectivityConfiguration());
         generalSettings.setJsonValue(node);
         adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, generalSettings);
 
@@ -285,59 +288,13 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         AdminSettings connectivitySettings = new AdminSettings();
         connectivitySettings.setTenantId(TenantId.SYS_TENANT_ID);
         connectivitySettings.setKey("connectivity");
-        connectivitySettings.setJsonValue(createDeviceConnectivityConfiguration());
+        connectivitySettings.setJsonValue(JacksonUtil.valueToTree(connectivityConfiguration.getConnectivity()));
         adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, connectivitySettings);
-    }
-
-    private ObjectNode createDeviceConnectivityConfiguration() {
-        ObjectNode config = JacksonUtil.newObjectNode();
-
-        ObjectNode http = JacksonUtil.newObjectNode();
-        http.put("enabled", true);
-        http.put("host", "");
-        http.put("port", 8080);
-        config.set("http", http);
-
-        ObjectNode https = JacksonUtil.newObjectNode();
-        https.put("enabled", false);
-        https.put("host", "");
-        https.put("port", 443);
-        config.set("https", https);
-
-        ObjectNode mqtt = JacksonUtil.newObjectNode();
-        mqtt.put("enabled", true);
-        mqtt.put("host", "");
-        mqtt.put("port", 1883);
-        config.set("mqtt", mqtt);
-
-        ObjectNode mqtts = JacksonUtil.newObjectNode();
-        mqtts.put("enabled", false);
-        mqtts.put("host", "");
-        mqtts.put("port", 8883);
-        config.set("mqtts", mqtts);
-
-        ObjectNode coap = JacksonUtil.newObjectNode();
-        coap.put("enabled", true);
-        coap.put("host", "");
-        coap.put("port", 5683);
-        config.set("coap", coap);
-
-        ObjectNode coaps = JacksonUtil.newObjectNode();
-        coaps.put("enabled", false);
-        coaps.put("host", "");
-        coaps.put("port", 5684);
-        config.set("coaps", coaps);
-        return config;
     }
 
     @Override
     public void createRandomJwtSettings() throws Exception {
         jwtSettingsService.createRandomJwtSettings();
-    }
-
-    @Override
-    public void saveLegacyYmlSettings() throws Exception {
-        jwtSettingsService.saveLegacyYmlSettings();
     }
 
     @Override
@@ -734,7 +691,23 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     }
 
     @Override
+    @SneakyThrows
     public void updateDefaultNotificationConfigs() {
+        PageDataIterable<TenantId> tenants = new PageDataIterable<>(tenantService::findTenantsIds, 500);
+        ExecutorService executor = Executors.newFixedThreadPool(Math.max(Runtime.getRuntime().availableProcessors(), 4));
+        log.info("Updating default edge failure notification configs for all tenants");
+        AtomicInteger count = new AtomicInteger();
+        for (TenantId tenantId : tenants) {
+            executor.submit(() -> {
+                notificationSettingsService.updateDefaultNotificationConfigs(tenantId);
+                int n = count.incrementAndGet();
+                if (n % 500 == 0) {
+                    log.info("{} tenants processed", n);
+                }
+            });
+        }
+        executor.shutdown();
+        executor.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
         notificationSettingsService.updateDefaultNotificationConfigs(TenantId.SYS_TENANT_ID);
     }
 

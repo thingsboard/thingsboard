@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -189,6 +189,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected String token;
     protected String refreshToken;
+    protected String mobileToken;
     protected String username;
 
     protected TenantId tenantId;
@@ -572,6 +573,9 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected void setJwtToken(MockHttpServletRequestBuilder request) {
         if (this.token != null) {
             request.header(ThingsboardSecurityConfiguration.JWT_TOKEN_HEADER_PARAM, "Bearer " + this.token);
+        }
+        if (this.mobileToken != null) {
+            request.header(UserController.MOBILE_TOKEN_HEADER, this.mobileToken);
         }
     }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 package org.thingsboard.server.dao.sql.notification;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
-import com.google.common.base.Strings;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -34,7 +32,7 @@ import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.sql.NotificationEntity;
 import org.thingsboard.server.dao.notification.NotificationDao;
-import org.thingsboard.server.dao.sql.JpaAbstractDao;
+import org.thingsboard.server.dao.sql.JpaPartitionedAbstractDao;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
 import org.thingsboard.server.dao.util.SqlDao;
 
@@ -44,25 +42,13 @@ import java.util.concurrent.TimeUnit;
 @Component
 @SqlDao
 @RequiredArgsConstructor
-public class JpaNotificationDao extends JpaAbstractDao<NotificationEntity, Notification> implements NotificationDao {
+public class JpaNotificationDao extends JpaPartitionedAbstractDao<NotificationEntity, Notification> implements NotificationDao {
 
     private final NotificationRepository notificationRepository;
     private final SqlPartitioningRepository partitioningRepository;
 
     @Value("${sql.notifications.partition_size:168}")
     private int partitionSizeInHours;
-
-    @Override
-    public Notification save(TenantId tenantId, Notification notification) {
-        if (notification.getId() == null) {
-            UUID uuid = Uuids.timeBased();
-            notification.setId(new NotificationId(uuid));
-            notification.setCreatedTime(Uuids.unixTimestamp(uuid));
-            partitioningRepository.createPartitionIfNotExists(ModelConstants.NOTIFICATION_TABLE_NAME,
-                    notification.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
-        }
-        return super.save(tenantId, notification);
-    }
 
     @Override
     public PageData<Notification> findUnreadByRecipientIdAndPageLink(TenantId tenantId, UserId recipientId, PageLink pageLink) {
@@ -112,6 +98,12 @@ public class JpaNotificationDao extends JpaAbstractDao<NotificationEntity, Notif
     @Override
     public void deleteByRecipientId(TenantId tenantId, UserId recipientId) {
         notificationRepository.deleteByRecipientId(recipientId.getId());
+    }
+
+    @Override
+    public void createPartition(NotificationEntity entity) {
+        partitioningRepository.createPartitionIfNotExists(ModelConstants.NOTIFICATION_TABLE_NAME,
+                entity.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
     }
 
     @Override

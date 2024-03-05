@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,14 @@ import lombok.Getter;
 
 public enum UserSettingsType {
 
-    GENERAL, VISITED_DASHBOARDS(true), QUICK_LINKS, DOC_LINKS, DASHBOARDS, GETTING_STARTED, NOTIFICATIONS;
+    GENERAL,
+    VISITED_DASHBOARDS(true),
+    QUICK_LINKS,
+    DOC_LINKS,
+    DASHBOARDS,
+    GETTING_STARTED,
+    NOTIFICATIONS,
+    MOBILE(true);
 
     @Getter
     private final boolean reserved;

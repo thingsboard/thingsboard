@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,11 +128,6 @@ public class BaseEventService implements EventService {
     @Override
     public void cleanupEvents(long regularEventExpTs, long debugEventExpTs, boolean cleanupDb) {
         eventDao.cleanupEvents(regularEventExpTs, debugEventExpTs, cleanupDb);
-    }
-
-    @Override
-    public void migrateEvents() {
-        eventDao.migrateEvents(ttlInSec > 0 ? (System.currentTimeMillis() - ttlInSec * 1000) : 0, debugTtlInSec > 0 ? (System.currentTimeMillis() - debugTtlInSec * 1000) : 0);
     }
 
     private PageData<EventInfo> convert(EntityType entityType, PageData<? extends Event> pd) {

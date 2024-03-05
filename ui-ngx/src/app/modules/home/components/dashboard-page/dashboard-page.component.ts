@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -270,6 +270,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     state: null,
     stateController: null,
     stateChanged: null,
+    stateId: null,
     aliasController: null,
     runChangeDetection: this.runChangeDetection.bind(this)
   };
@@ -1049,26 +1050,20 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         this.onAddWidgetClosed();
         this.isAddingWidgetClosed = true;
       }
-      if (this.widgetEditMode) {
-        if (revert) {
-          this.dashboard = this.prevDashboard;
-          this.dashboardLogoCache = undefined;
-          this.dashboardConfiguration = this.dashboard.configuration;
-        }
-      } else {
-        this.resetHighlight();
-        if (revert) {
-          this.dashboard = this.prevDashboard;
-          this.dashboardLogoCache = undefined;
-          this.dashboardConfiguration = this.dashboard.configuration;
+      this.resetHighlight();
+      if (revert) {
+        this.dashboard = this.prevDashboard;
+        this.dashboardLogoCache = undefined;
+        this.dashboardConfiguration = this.dashboard.configuration;
+        if (!this.widgetEditMode) {
           this.dashboardCtx.dashboardTimewindow = this.dashboardConfiguration.timewindow;
           this.updateDashboardCss();
           this.entityAliasesUpdated();
           this.filtersUpdated();
           this.updateLayouts();
-        } else {
-          this.dashboard.configuration.timewindow = this.dashboardCtx.dashboardTimewindow;
         }
+      } else if (!this.widgetEditMode) {
+        this.dashboard.configuration.timewindow = this.dashboardCtx.dashboardTimewindow;
       }
     }
   }

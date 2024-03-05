@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import { fillDataPattern, isDefined, isDefinedAndNotNull, processDataPattern, sa
 import LeafletMap from './leaflet-map';
 import { FormattedData } from '@shared/models/widget.models';
 import { ImagePipe } from '@shared/pipe/image.pipe';
+import { ReplaySubject } from 'rxjs';
 
 export class Marker {
 
@@ -33,6 +34,7 @@ export class Marker {
     tooltipOffset: L.LatLngTuple;
     markerOffset: L.LatLngTuple;
     tooltip: L.Popup;
+    createMarkerIconSubject = new ReplaySubject<MarkerIconInfo>();
 
   constructor(private map: LeafletMap,
               private location: L.LatLng,
@@ -148,6 +150,7 @@ export class Marker {
                 this.labelOffset = [0, -iconInfo.size[1] * this.markerOffset[1] + 10];
             }
             this.updateMarkerLabel(settings);
+            this.createMarkerIconSubject.next(iconInfo);
         });
     }
 

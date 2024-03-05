@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,11 @@ import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
 import org.thingsboard.server.common.data.notification.info.AlarmNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
+import org.thingsboard.server.common.data.notification.rule.trigger.AlarmTrigger;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.AlarmNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.AlarmNotificationRuleTriggerConfig.AlarmAction;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.AlarmNotificationRuleTriggerConfig.ClearRule;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
-import org.thingsboard.server.common.data.notification.rule.trigger.AlarmTrigger;
 
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 import static org.thingsboard.server.common.data.util.CollectionsUtil.emptyOrContains;
@@ -111,6 +111,7 @@ public class AlarmTriggerProcessor implements NotificationRuleTriggerProcessor<A
                 .acknowledged(alarmInfo.isAcknowledged())
                 .cleared(alarmInfo.isCleared())
                 .alarmCustomerId(alarmInfo.getCustomerId())
+                .dashboardId(alarmInfo.getDashboardId())
                 .build();
     }
 
