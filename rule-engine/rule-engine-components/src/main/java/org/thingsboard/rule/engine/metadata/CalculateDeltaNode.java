@@ -99,13 +99,13 @@ public class CalculateDeltaNode implements TbNode {
 
                     BigDecimal delta = BigDecimal.valueOf(previousData != null ? currentValue - previousData.value : 0.0);
 
-                    if (config.isOnlyComputeTrueDeltas() && delta.doubleValue() == 0) {
-                        ctx.tellSuccess(msg);
+                    if (config.isTellFailureIfDeltaIsNegative() && delta.doubleValue() < 0) {
+                        ctx.tellFailure(msg, new IllegalArgumentException("Delta value is negative!"));
                         return;
                     }
 
-                    if (config.isTellFailureIfDeltaIsNegative() && delta.doubleValue() < 0) {
-                        ctx.tellFailure(msg, new IllegalArgumentException("Delta value is negative!"));
+                    if (config.isExcludeZeroDeltasFromOutboundMessage() && delta.doubleValue() == 0) {
+                        ctx.tellSuccess(msg);
                         return;
                     }
 
@@ -141,10 +141,10 @@ public class CalculateDeltaNode implements TbNode {
         boolean hasChanges = false;
         switch (fromVersion) {
             case 0:
-                String onlyComputeTrueDeltas = "onlyComputeTrueDeltas";
-                if (!oldConfiguration.has(onlyComputeTrueDeltas)) {
+                String excludeZeroDeltasFromOutboundMessage = "excludeZeroDeltasFromOutboundMessage";
+                if (!oldConfiguration.has(excludeZeroDeltasFromOutboundMessage)) {
                     hasChanges = true;
-                    ((ObjectNode) oldConfiguration).put(onlyComputeTrueDeltas, false);
+                    ((ObjectNode) oldConfiguration).put(excludeZeroDeltasFromOutboundMessage, false);
                 }
                 break;
             default:

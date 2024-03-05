@@ -30,7 +30,7 @@ public class CalculateDeltaNodeConfiguration implements NodeConfiguration<Calcul
     private String periodValueKey;
     private Integer round;
     private boolean tellFailureIfDeltaIsNegative;
-    private boolean onlyComputeTrueDeltas;
+    private boolean excludeZeroDeltasFromOutboundMessage;
 
     @Override
     public CalculateDeltaNodeConfiguration defaultConfiguration() {
@@ -41,7 +41,8 @@ public class CalculateDeltaNodeConfiguration implements NodeConfiguration<Calcul
         configuration.setAddPeriodBetweenMsgs(false);
         configuration.setPeriodValueKey("periodInMs");
         configuration.setTellFailureIfDeltaIsNegative(true);
-        configuration.setOnlyComputeTrueDeltas(false);
+        configuration.setExcludeZeroDeltasFromOutboundMessage(false);
         return configuration;
     }
+
 }
