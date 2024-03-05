@@ -95,6 +95,7 @@ public class DeviceMsgConstructorV1 extends BaseDeviceMsgConstructor {
 
     @Override
     public DeviceProfileUpdateMsg constructDeviceProfileUpdatedMsg(UpdateMsgType msgType, DeviceProfile deviceProfile) {
+        deviceProfile = JacksonUtil.clone(deviceProfile);
         imageService.inlineImageForEdge(deviceProfile);
         DeviceProfileUpdateMsg.Builder builder = DeviceProfileUpdateMsg.newBuilder()
                 .setMsgType(msgType)
@@ -140,4 +141,5 @@ public class DeviceMsgConstructorV1 extends BaseDeviceMsgConstructor {
         }
         return builder.build();
     }
+
 }
