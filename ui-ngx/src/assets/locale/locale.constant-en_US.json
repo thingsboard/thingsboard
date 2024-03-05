@@ -2711,6 +2711,8 @@
         "connectors-table-actions": "Actions",
         "connectors-table-key": "Key",
         "connectors-table-class": "Class",
+        "connector-created": "Connector created.",
+        "connector-updated": "Connector updated.",
         "rpc-command-send": "Send",
         "rpc-command-result": "Response",
         "rpc-command-edit-params": "Edit parameters",
