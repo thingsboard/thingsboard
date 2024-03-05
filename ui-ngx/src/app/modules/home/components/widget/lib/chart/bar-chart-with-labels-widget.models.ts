@@ -21,6 +21,7 @@ import { EChartsTooltipWidgetSettings } from '@home/components/widget/lib/chart/
 export interface BarChartWithLabelsWidgetSettings extends EChartsTooltipWidgetSettings {
   showBarLabel: boolean;
   barLabelFont: Font;
+  defaultBarWidth: number;
   barLabelColor: string;
   showBarValue: boolean;
   barValueFont: Font;
@@ -52,6 +53,7 @@ export const barChartWithLabelsDefaultSettings: BarChartWithLabelsWidgetSettings
     weight: '700',
     lineHeight: '12px'
   },
+  defaultBarWidth: 1000,
   barValueColor: 'rgba(0, 0, 0, 0.76)',
   showLegend: true,
   legendPosition: LegendPosition.top,

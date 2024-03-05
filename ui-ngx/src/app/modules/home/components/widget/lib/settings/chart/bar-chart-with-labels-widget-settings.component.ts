@@ -67,6 +67,7 @@ export class BarChartWithLabelsWidgetSettingsComponent extends WidgetSettingsCom
       showBarLabel: [settings.showBarLabel, []],
       barLabelFont: [settings.barLabelFont, []],
       barLabelColor: [settings.barLabelColor, []],
+      defaultBarWidth: [settings.defaultBarWidth, []],
       showBarValue: [settings.showBarValue, []],
       barValueFont: [settings.barValueFont, []],
       barValueColor: [settings.barValueColor, []],

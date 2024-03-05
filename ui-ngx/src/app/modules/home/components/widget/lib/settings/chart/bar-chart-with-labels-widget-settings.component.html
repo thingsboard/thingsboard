@@ -50,6 +50,12 @@
         </tb-color-input>
       </div>
     </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widgets.chart.default-bar-width' | translate }}</div>
+      <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+        <input matInput formControlName="defaultBarWidth" type="number" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
     <div class="tb-form-panel tb-slide-toggle">
       <mat-expansion-panel class="tb-settings" [expanded]="barChartWidgetSettingsForm.get('showLegend').value" [disabled]="!barChartWidgetSettingsForm.get('showLegend').value">
         <mat-expansion-panel-header fxLayout="row wrap">
