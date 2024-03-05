@@ -440,7 +440,7 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
     public void givenCalculateDeltaConfig_whenOnMsg_thenVerify(CalculateDeltaTestConfig testConfig) throws TbNodeException {
         // GIVEN
         config.setTellFailureIfDeltaIsNegative(testConfig.isTellFailureIfDeltaIsNegative());
-        config.setExcludeZeroDeltasFromOutboundMessage(testConfig.isComputeOnlyTrueDeltas());
+        config.setExcludeZeroDeltas(testConfig.isComputeOnlyTrueDeltas());
         config.setInputValueKey("temperature");
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctxMock, nodeConfiguration);
@@ -460,7 +460,7 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
 
     static Stream<CalculateDeltaTestConfig> CalculateDeltaTestConfig() {
         return Stream.of(
-                // delta = 0, tell failure if delta is negative is set to true and exclude zero deltas from outbound message is set to true so delta should filter out the message.
+                // delta = 0, tell failure if delta is negative is set to true and exclude zero deltas is set to true so delta should filter out the message.
                 new CalculateDeltaTestConfig(true, true, 40, 40, (ctx, msg) -> {
                     verify(ctx).tellSuccess(eq(msg));
                     verify(ctx).getDbCallbackExecutor();
@@ -474,7 +474,7 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
                     verifyNoMoreInteractions(ctx);
                     assertThat(errorCaptor.getValue()).isInstanceOf(IllegalArgumentException.class).hasMessage("Delta value is negative!");
                 }),
-                // delta < 0, exclude zero deltas from outbound message is set to true so it should return message with delta if delta is negative is set to false.
+                // delta < 0, exclude zero deltas is set to true so it should return message with delta if delta is negative is set to false.
                 new CalculateDeltaTestConfig(false, true, 40, 41, (ctx, msg) -> {
                     var actualMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
                     verify(ctx).tellSuccess(actualMsgCaptor.capture());
@@ -483,13 +483,13 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
                     String expectedMsgData = "{\"temperature\":40.0,\"airPressure\":123,\"delta\":-1}";
                     assertEquals(expectedMsgData, actualMsgCaptor.getValue().getData());
                 }),
-                // delta = 0, tell failure if delta is negative is set to false and exclude zero deltas from outbound message is set to true so delta should filter out the message.
+                // delta = 0, tell failure if delta is negative is set to false and exclude zero deltas is set to true so delta should filter out the message.
                 new CalculateDeltaTestConfig(false, true, 40, 40, (ctx, msg) -> {
                     verify(ctx).tellSuccess(eq(msg));
                     verify(ctx).getDbCallbackExecutor();
                     verifyNoMoreInteractions(ctx);
                 }),
-                // delta > 0, exclude zero deltas from outbound message is set to true so it should return message with delta.
+                // delta > 0, exclude zero deltas is set to true so it should return message with delta.
                 new CalculateDeltaTestConfig(false, true, 40, 39, (ctx, msg) -> {
                     var actualMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
                     verify(ctx).tellSuccess(actualMsgCaptor.capture());
@@ -498,7 +498,7 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
                     String expectedMsgData = "{\"temperature\":40.0,\"airPressure\":123,\"delta\":1}";
                     assertEquals(expectedMsgData, actualMsgCaptor.getValue().getData());
                 }),
-                // delta > 0, exclude zero deltas from outbound message is set to false so it should return message with delta.
+                // delta > 0, exclude zero deltas is set to false so it should return message with delta.
                 new CalculateDeltaTestConfig(false, false, 40, 39, (ctx, msg) -> {
                     var actualMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
                     verify(ctx).tellSuccess(actualMsgCaptor.capture());
@@ -559,12 +559,12 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
                 Arguments.of(0,
                         "{\"inputValueKey\":\"pulseCounter\",\"outputValueKey\":\"delta\",\"useCache\":true,\"addPeriodBetweenMsgs\":false, \"periodValueKey\":\"periodInMs\", \"round\":null,\"tellFailureIfDeltaIsNegative\":true}",
                         true,
-                        "{\"inputValueKey\":\"pulseCounter\",\"outputValueKey\":\"delta\",\"useCache\":true,\"addPeriodBetweenMsgs\":false, \"periodValueKey\":\"periodInMs\", \"round\":null,\"tellFailureIfDeltaIsNegative\":true, \"excludeZeroDeltasFromOutboundMessage\":false}"),
+                        "{\"inputValueKey\":\"pulseCounter\",\"outputValueKey\":\"delta\",\"useCache\":true,\"addPeriodBetweenMsgs\":false, \"periodValueKey\":\"periodInMs\", \"round\":null,\"tellFailureIfDeltaIsNegative\":true, \"excludeZeroDeltas\":false}"),
                 // default config for version 1 with upgrade from version 0
                 Arguments.of(1,
-                        "{\"inputValueKey\":\"pulseCounter\",\"outputValueKey\":\"delta\",\"useCache\":true,\"addPeriodBetweenMsgs\":false, \"periodValueKey\":\"periodInMs\", \"round\":null,\"tellFailureIfDeltaIsNegative\":true, \"excludeZeroDeltasFromOutboundMessage\":false}",
+                        "{\"inputValueKey\":\"pulseCounter\",\"outputValueKey\":\"delta\",\"useCache\":true,\"addPeriodBetweenMsgs\":false, \"periodValueKey\":\"periodInMs\", \"round\":null,\"tellFailureIfDeltaIsNegative\":true, \"excludeZeroDeltas\":false}",
                         false,
-                        "{\"inputValueKey\":\"pulseCounter\",\"outputValueKey\":\"delta\",\"useCache\":true,\"addPeriodBetweenMsgs\":false, \"periodValueKey\":\"periodInMs\", \"round\":null,\"tellFailureIfDeltaIsNegative\":true, \"excludeZeroDeltasFromOutboundMessage\":false}")
+                        "{\"inputValueKey\":\"pulseCounter\",\"outputValueKey\":\"delta\",\"useCache\":true,\"addPeriodBetweenMsgs\":false, \"periodValueKey\":\"periodInMs\", \"round\":null,\"tellFailureIfDeltaIsNegative\":true, \"excludeZeroDeltas\":false}")
         );
 
     }

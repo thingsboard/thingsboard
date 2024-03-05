@@ -104,7 +104,7 @@ public class CalculateDeltaNode implements TbNode {
                         return;
                     }
 
-                    if (config.isExcludeZeroDeltasFromOutboundMessage() && delta.doubleValue() == 0) {
+                    if (config.isExcludeZeroDeltas() && delta.doubleValue() == 0) {
                         ctx.tellSuccess(msg);
                         return;
                     }
@@ -141,10 +141,10 @@ public class CalculateDeltaNode implements TbNode {
         boolean hasChanges = false;
         switch (fromVersion) {
             case 0:
-                String excludeZeroDeltasFromOutboundMessage = "excludeZeroDeltasFromOutboundMessage";
-                if (!oldConfiguration.has(excludeZeroDeltasFromOutboundMessage)) {
+                String excludeZeroDeltas = "excludeZeroDeltas";
+                if (!oldConfiguration.has(excludeZeroDeltas)) {
                     hasChanges = true;
-                    ((ObjectNode) oldConfiguration).put(excludeZeroDeltasFromOutboundMessage, false);
+                    ((ObjectNode) oldConfiguration).put(excludeZeroDeltas, false);
                 }
                 break;
             default:
