@@ -39,9 +39,13 @@
       [entityAliasId]="datasource?.entityAliasId"
       formControlName="series">
   </tb-data-keys-panel>
-  <div class="tb-form-panel">
-    <div class="tb-form-panel-title">TODO: Thresholds</div>
-  </div>
+  <tb-time-series-chart-thresholds-panel
+    formControlName="thresholds"
+    [aliasController]="aliasController"
+    [dataKeyCallbacks]="callbacks"
+    [datasource]="datasource"
+    [widgetConfig]="widgetConfig?.config">
+  </tb-time-series-chart-thresholds-panel>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widget-config.appearance</div>
     <div class="tb-form-row column-xs">

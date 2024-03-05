@@ -16,37 +16,13 @@
 @import '../../../../../../../../scss/constants';
 
 .tb-data-key-row {
-  .mat-mdc-form-field.tb-inline-field.tb-key-field {
-    .mat-mdc-text-field-wrapper:not(.mdc-text-field--outlined) {
-      padding-left: 8px;
-      padding-right: 0;
-      .mat-mdc-form-field-infix {
-        padding-top: 0;
-        padding-bottom: 6px;
-        .mdc-evolution-chip-set .mdc-evolution-chip {
-          margin: 0;
-        }
-        input.mat-mdc-chip-input {
-          height: 32px;
-          margin-left: 0;
-        }
-      }
-    }
-    .mat-mdc-chip.mat-mdc-standard-chip.tb-datakey-chip {
-      .tb-attribute-chip {
-        .tb-chip-labels {
-          background: transparent;
-        }
-      }
-    }
-  }
 
   .tb-source-field {
     width: 108px;
     min-width: 108px;
   }
 
-  .tb-key-field {
+  .tb-data-key-input {
     flex: 1;
     min-width: 150px;
     @media #{$mat-gt-sm} {

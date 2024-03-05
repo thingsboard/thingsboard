@@ -25,7 +25,7 @@ import {
 import { ComponentStyle, Font, simpleDateFormat, textStyle } from '@shared/models/widget-settings.models';
 import { XAXisOption, YAXisOption } from 'echarts/types/dist/shared';
 import { CustomSeriesOption, LineSeriesOption } from 'echarts/charts';
-import { formatValue, isDefinedAndNotNull, parseFunction } from '@core/utils';
+import { formatValue, isDefinedAndNotNull, isUndefinedOrNull, parseFunction } from '@core/utils';
 import { LinearGradientObject } from 'zrender/lib/graphic/LinearGradient';
 import tinycolor from 'tinycolor2';
 import Axis2D from 'echarts/types/src/coord/cartesian/Axis2D';
@@ -40,7 +40,8 @@ import {
 import { DataKey } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { TbColorScheme } from '@shared/models/color.models';
-import { DoughnutLayout } from '@home/components/widget/lib/chart/doughnut-widget.models';
+import { AbstractControl, ValidationErrors } from '@angular/forms';
+import { MarkLine2DDataItemOption } from 'echarts/types/src/component/marker/MarkLineModel';
 
 const timeSeriesChartColorScheme: TbColorScheme = {
   'threshold.line': {
@@ -154,11 +155,40 @@ export enum ThresholdLabelPosition {
   insideEndBottom = 'insideEndBottom'
 }
 
+export const timeSeriesThresholdLabelPositions = Object.keys(ThresholdLabelPosition) as ThresholdLabelPosition[];
+
+export const timeSeriesThresholdLabelPositionTranslations = new Map<ThresholdLabelPosition, string>(
+  [
+    [ThresholdLabelPosition.start, 'widgets.time-series-chart.threshold.label-position-start'],
+    [ThresholdLabelPosition.middle, 'widgets.time-series-chart.threshold.label-position-middle'],
+    [ThresholdLabelPosition.end, 'widgets.time-series-chart.threshold.label-position-end'],
+    [ThresholdLabelPosition.insideStart, 'widgets.time-series-chart.threshold.label-position-inside-start'],
+    [ThresholdLabelPosition.insideStartTop, 'widgets.time-series-chart.threshold.label-position-inside-start-top'],
+    [ThresholdLabelPosition.insideStartBottom, 'widgets.time-series-chart.threshold.label-position-inside-start-bottom'],
+    [ThresholdLabelPosition.insideMiddle, 'widgets.time-series-chart.threshold.label-position-inside-middle'],
+    [ThresholdLabelPosition.insideMiddleTop, 'widgets.time-series-chart.threshold.label-position-inside-middle-top'],
+    [ThresholdLabelPosition.insideMiddleBottom, 'widgets.time-series-chart.threshold.label-position-inside-middle-bottom'],
+    [ThresholdLabelPosition.insideEnd, 'widgets.time-series-chart.threshold.label-position-inside-end'],
+    [ThresholdLabelPosition.insideEndTop, 'widgets.time-series-chart.threshold.label-position-inside-end-top'],
+    [ThresholdLabelPosition.insideEndBottom, 'widgets.time-series-chart.threshold.label-position-inside-end-bottom']
+  ]
+);
+
 export enum TimeSeriesChartThresholdType {
   constant = 'constant',
   latestKey = 'latestKey',
   entity = 'entity'
 }
+
+export const timeSeriesThresholdTypes = Object.keys(TimeSeriesChartThresholdType) as TimeSeriesChartThresholdType[];
+
+export const timeSeriesThresholdTypeTranslations = new Map<TimeSeriesChartThresholdType, string>(
+  [
+    [TimeSeriesChartThresholdType.constant, 'widgets.time-series-chart.threshold.type-constant'],
+    [TimeSeriesChartThresholdType.latestKey, 'widgets.time-series-chart.threshold.type-latest-key'],
+    [TimeSeriesChartThresholdType.entity, 'widgets.time-series-chart.threshold.type-entity']
+  ]
+);
 
 export enum SeriesFillType {
   none = 'none',
@@ -272,6 +302,40 @@ export interface TimeSeriesChartThreshold {
   labelFont: Font;
   labelColor: string;
 }
+
+export const timeSeriesChartThresholdValid = (threshold: TimeSeriesChartThreshold): boolean => {
+  if (!threshold.type) {
+    return false;
+  }
+  switch (threshold.type) {
+    case TimeSeriesChartThresholdType.constant:
+      if (isUndefinedOrNull(threshold.value)) {
+        return false;
+      }
+      break;
+    case TimeSeriesChartThresholdType.latestKey:
+      if (!threshold.latestKey || !threshold.latestKeyType) {
+        return false;
+      }
+      break;
+    case TimeSeriesChartThresholdType.entity:
+      if (!threshold.entityAlias || !threshold.entityKey || !threshold.entityKeyType) {
+        return false;
+      }
+      break;
+  }
+  return true;
+};
+
+export const timeSeriesChartThresholdValidator = (control: AbstractControl): ValidationErrors | null => {
+  const threshold: TimeSeriesChartThreshold = control.value;
+  if (!timeSeriesChartThresholdValid(threshold)) {
+    return {
+      threshold: true
+    };
+  }
+  return null;
+};
 
 export const timeSeriesChartThresholdDefaultSettings: TimeSeriesChartThreshold = {
   type: TimeSeriesChartThresholdType.constant,
@@ -709,8 +773,6 @@ const generateChartThresholds = (thresholdItems: TimeSeriesChartThresholdItem[],
           },
           markLine: {
             animation: true,
-            symbol: [item.settings.startSymbol, item.settings.endSymbol],
-            symbolSize: [item.settings.startSymbolSize, item.settings.endSymbolSize],
             lineStyle: {
               width: item.settings.lineWidth,
               color: prepareChartThemeColor(item.settings.lineColor, darkMode, 'threshold.line'),
@@ -737,20 +799,33 @@ const generateChartThresholds = (thresholdItems: TimeSeriesChartThresholdItem[],
       seriesOption.markLine.data = [];
       if (Array.isArray(item.value)) {
         for (const val of item.value) {
-          seriesOption.markLine.data.push({
-            yAxis: val
-          });
+          seriesOption.markLine.data.push(createThresholdData(val, item));
         }
       } else {
-        seriesOption.markLine.data.push({
-          yAxis: item.value
-        });
+        seriesOption.markLine.data.push(createThresholdData(item.value, item));
       }
       series.push(seriesOption);
     }
   }
   return series;
 };
+
+const createThresholdData = (val: string | number, item: TimeSeriesChartThresholdItem): MarkLine2DDataItemOption => [
+    {
+      xAxis: 'min',
+      yAxis: val,
+      value: val,
+      symbol: item.settings.startSymbol,
+      symbolSize: item.settings.startSymbolSize
+    },
+    {
+      xAxis: 'max',
+      yAxis: val,
+      value: val,
+      symbol: item.settings.endSymbol,
+      symbolSize: item.settings.endSymbolSize
+    }
+  ];
 
 const generateChartSeries = (dataItems: TimeSeriesChartDataItem[],
                              timeInterval: Interval,

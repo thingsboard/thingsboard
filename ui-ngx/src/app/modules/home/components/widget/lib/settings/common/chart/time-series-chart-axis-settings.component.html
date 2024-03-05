@@ -36,6 +36,8 @@
             </mat-form-field>
             <tb-font-settings formControlName="labelFont"
                               clearButton
+                              disabledLineHeight
+                              forceSizeUnit="px"
                               [previewText]="axisSettingsFormGroup.get('label').value">
             </tb-font-settings>
             <tb-color-input asBoxInput
@@ -61,6 +63,8 @@
           <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
             <tb-font-settings formControlName="tickLabelFont"
                               clearButton
+                              disabledLineHeight
+                              forceSizeUnit="px"
                               previewText="100">
             </tb-font-settings>
             <tb-color-input asBoxInput
