@@ -95,8 +95,8 @@ public class DeviceMsgConstructorV1 extends BaseDeviceMsgConstructor {
 
     @Override
     public DeviceProfileUpdateMsg constructDeviceProfileUpdatedMsg(UpdateMsgType msgType, DeviceProfile deviceProfile) {
-        DeviceProfile copy = JacksonUtil.clone(deviceProfile);
-        imageService.inlineImageForEdge(copy);
+        deviceProfile = JacksonUtil.clone(deviceProfile);
+        imageService.inlineImageForEdge(deviceProfile);
         DeviceProfileUpdateMsg.Builder builder = DeviceProfileUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(deviceProfile.getId().getId().getMostSignificantBits())
@@ -121,7 +121,7 @@ public class DeviceMsgConstructorV1 extends BaseDeviceMsgConstructor {
             builder.setProvisionDeviceKey(deviceProfile.getProvisionDeviceKey());
         }
         if (deviceProfile.getImage() != null) {
-            builder.setImage(ByteString.copyFrom(copy.getImage().getBytes(StandardCharsets.UTF_8)));
+            builder.setImage(ByteString.copyFrom(deviceProfile.getImage().getBytes(StandardCharsets.UTF_8)));
         }
         if (deviceProfile.getFirmwareId() != null) {
             builder.setFirmwareIdMSB(deviceProfile.getFirmwareId().getId().getMostSignificantBits())
@@ -141,4 +141,5 @@ public class DeviceMsgConstructorV1 extends BaseDeviceMsgConstructor {
         }
         return builder.build();
     }
+
 }

@@ -33,8 +33,8 @@ public class DashboardMsgConstructorV1 extends BaseDashboardMsgConstructor {
 
     @Override
     public DashboardUpdateMsg constructDashboardUpdatedMsg(UpdateMsgType msgType, Dashboard dashboard) {
-        Dashboard copy = JacksonUtil.clone(dashboard);
-        imageService.inlineImagesForEdge(copy);
+        dashboard = JacksonUtil.clone(dashboard);
+        imageService.inlineImagesForEdge(dashboard);
         DashboardUpdateMsg.Builder builder = DashboardUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(dashboard.getId().getId().getMostSignificantBits())
@@ -46,11 +46,12 @@ public class DashboardMsgConstructorV1 extends BaseDashboardMsgConstructor {
             builder.setAssignedCustomers(JacksonUtil.toString(dashboard.getAssignedCustomers()));
         }
         if (dashboard.getImage() != null) {
-            builder.setImage(copy.getImage());
+            builder.setImage(dashboard.getImage());
         }
         if (dashboard.getMobileOrder() != null) {
             builder.setMobileOrder(dashboard.getMobileOrder());
         }
         return builder.build();
     }
+
 }

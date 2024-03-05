@@ -63,8 +63,8 @@ public class AssetMsgConstructorV1 extends BaseAssetMsgConstructor {
 
     @Override
     public AssetProfileUpdateMsg constructAssetProfileUpdatedMsg(UpdateMsgType msgType, AssetProfile assetProfile) {
-        AssetProfile copy = JacksonUtil.clone(assetProfile);
-        imageService.inlineImageForEdge(copy);
+        assetProfile = JacksonUtil.clone(assetProfile);
+        imageService.inlineImageForEdge(assetProfile);
         AssetProfileUpdateMsg.Builder builder = AssetProfileUpdateMsg.newBuilder()
                 .setMsgType(msgType)
                 .setIdMSB(assetProfile.getId().getId().getMostSignificantBits())
@@ -82,7 +82,7 @@ public class AssetMsgConstructorV1 extends BaseAssetMsgConstructor {
             builder.setDescription(assetProfile.getDescription());
         }
         if (assetProfile.getImage() != null) {
-            builder.setImage(ByteString.copyFrom(copy.getImage().getBytes(StandardCharsets.UTF_8)));
+            builder.setImage(ByteString.copyFrom(assetProfile.getImage().getBytes(StandardCharsets.UTF_8)));
         }
         if (assetProfile.getDefaultEdgeRuleChainId() != null) {
             builder.setDefaultRuleChainIdMSB(assetProfile.getDefaultEdgeRuleChainId().getId().getMostSignificantBits())
@@ -90,4 +90,5 @@ public class AssetMsgConstructorV1 extends BaseAssetMsgConstructor {
         }
         return builder.build();
     }
+
 }
