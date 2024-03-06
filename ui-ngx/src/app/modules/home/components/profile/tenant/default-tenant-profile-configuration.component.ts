@@ -108,7 +108,9 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       wsUpdatesPerSessionRateLimit: [null, []],
       cassandraQueryTenantRateLimitsConfiguration: [null, []],
       edgeEventRateLimits: [null, []],
-      edgeEventRateLimitsPerEdge: [null, []]
+      edgeEventRateLimitsPerEdge: [null, []],
+      edgeUplinkMessagesRateLimits: [null, []],
+      edgeUplinkMessagesRateLimitsPerEdge: [null, []]
     });
 
     this.defaultTenantProfileConfigurationFormGroup.get('smsEnabled').valueChanges.pipe(

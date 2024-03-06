@@ -16,7 +16,7 @@
 
 -->
 <div [formGroup]="cssSizeFormGroup" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-inline-field tb-suffix-absolute number">
+  <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-inline-field tb-suffix-absolute number" [class.flex]="flex">
     <input matInput [required]="required"
            type="number" min="0" formControlName="size" placeholder="{{ 'widget-config.set' | translate }}">
     <mat-icon matSuffix
@@ -29,5 +29,6 @@
       warning
     </mat-icon>
   </mat-form-field>
-  <tb-css-unit-select [allowEmpty]="allowEmptyUnit" width="" formControlName="unit"></tb-css-unit-select>
+  <tb-css-unit-select [allowEmpty]="allowEmptyUnit" [style.flex]="flex ? '1' : null"
+                      [width]="flex ? '100%' : ''" formControlName="unit"></tb-css-unit-select>
 </div>

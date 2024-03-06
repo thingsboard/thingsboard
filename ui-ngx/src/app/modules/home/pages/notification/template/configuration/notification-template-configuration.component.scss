@@ -1,0 +1,72 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+:host {
+  .tb-template-header {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    padding-bottom: 12px;
+    background-color: var(--mdc-dialog-container-color, white);
+
+    .tb-hint-available-params {
+      color: rgba(0, 0, 0, 0.54);
+      letter-spacing: 0.4px;
+
+      .content {
+        vertical-align: middle;
+      }
+    }
+  }
+
+  .template-tittle {
+    gap: 12px;
+    font-weight: normal;
+
+    tb-icon {
+      color: rgba(0, 0, 0, .38);
+    }
+  }
+
+  .tb-mat-error {
+    font-size: 13px;
+  }
+
+  .tb-title {
+    font-size: 16px;
+    line-height: 24px;
+
+    &.tb-required::after {
+      font-size: initial;
+      content: "*";
+    }
+
+    &.tb-error {
+      color: var(--mdc-theme-error, #f44336);
+
+      &.tb-required::after {
+        color: var(--mdc-theme-error, #f44336);
+      }
+    }
+  }
+}
+
+:host ::ng-deep {
+  .tb-form-panel .mat-expansion-panel.tb-settings {
+    & > .mat-expansion-panel-content > .mat-expansion-panel-body {
+      gap: 0;
+    }
+  }
+}

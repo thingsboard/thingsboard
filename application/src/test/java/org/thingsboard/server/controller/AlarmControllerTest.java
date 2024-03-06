@@ -261,7 +261,7 @@ public class AlarmControllerTest extends AbstractControllerTest {
         doDelete("/api/alarm/" + alarm.getId()).andExpect(status().isOk());
 
         testNotifyEntityAllOneTime(new Alarm(alarm), alarm.getId(), alarm.getOriginator(),
-                tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.DELETED);
+                tenantId, customerId, customerUserId, CUSTOMER_USER_EMAIL, ActionType.ALARM_DELETE);
     }
 
     @Test
@@ -274,7 +274,7 @@ public class AlarmControllerTest extends AbstractControllerTest {
         doDelete("/api/alarm/" + alarm.getId()).andExpect(status().isOk());
 
         testNotifyEntityAllOneTime(new Alarm(alarm), alarm.getId(), alarm.getOriginator(),
-                tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.DELETED);
+                tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL, ActionType.ALARM_DELETE);
     }
 
     @Test

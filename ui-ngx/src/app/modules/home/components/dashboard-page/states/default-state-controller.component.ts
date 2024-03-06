@@ -240,6 +240,7 @@ export class DefaultStateControllerComponent extends StateControllerComponent im
   private gotoState(stateId: string, update: boolean, openRightLayout?: boolean) {
     if (this.dashboardCtrl.dashboardCtx.state !== stateId) {
       this.dashboardCtrl.openDashboardState(stateId, openRightLayout);
+      this.stateIdSubject.next(stateId);
       if (this.syncStateWithQueryParam && stateId && this.statesValue[stateId]) {
         this.mobileService.handleDashboardStateName(this.getStateName(stateId, this.statesValue[stateId]));
       }

@@ -34,7 +34,8 @@ import java.util.List;
         @Type(name = "EMAIL", value = EmailDeliveryMethodNotificationTemplate.class),
         @Type(name = "SMS", value = SmsDeliveryMethodNotificationTemplate.class),
         @Type(name = "SLACK", value = SlackDeliveryMethodNotificationTemplate.class),
-        @Type(name = "MICROSOFT_TEAMS", value = MicrosoftTeamsDeliveryMethodNotificationTemplate.class)
+        @Type(name = "MICROSOFT_TEAMS", value = MicrosoftTeamsDeliveryMethodNotificationTemplate.class),
+        @Type(name = "MOBILE_APP", value = MobileAppDeliveryMethodNotificationTemplate.class)
 })
 @Data
 @NoArgsConstructor

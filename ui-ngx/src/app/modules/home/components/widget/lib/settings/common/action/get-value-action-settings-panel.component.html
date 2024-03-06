@@ -125,6 +125,8 @@
         <div class="fixed-title-width fixed-title-height">{{ 'widgets.value-action.state-when-result-is' | translate:{state: (stateLabel | translate)} }}</div>
         <tb-value-input
           fxFlex
+          [valueType]="(getValueSettingsFormGroup.get('action').value === getValueAction.GET_DASHBOARD_STATE &&
+                        getValueSettingsFormGroup.get('dataToValue').get('type').value === dataToValueType.NONE) ? ValueType.STRING : null"
           layout="column"
           formControlName="compareToValue">
         </tb-value-input>

@@ -10,6 +10,7 @@
   "widgetTypeFqns": [
     "action_button",
     "command_button",
+    "toggle_button",
     "power_button"
   ]
 }
