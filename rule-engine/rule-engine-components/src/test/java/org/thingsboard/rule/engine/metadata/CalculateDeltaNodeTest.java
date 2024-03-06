@@ -440,7 +440,7 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
     public void givenCalculateDeltaConfig_whenOnMsg_thenVerify(CalculateDeltaTestConfig testConfig) throws TbNodeException {
         // GIVEN
         config.setTellFailureIfDeltaIsNegative(testConfig.isTellFailureIfDeltaIsNegative());
-        config.setExcludeZeroDeltas(testConfig.isComputeOnlyTrueDeltas());
+        config.setExcludeZeroDeltas(testConfig.isExcludeZeroDeltas());
         config.setInputValueKey("temperature");
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctxMock, nodeConfiguration);
@@ -458,7 +458,7 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
         testConfig.getVerificationMethod().accept(ctxMock, msg);
     }
 
-    static Stream<CalculateDeltaTestConfig> CalculateDeltaTestConfig() {
+    private static Stream<CalculateDeltaTestConfig> CalculateDeltaTestConfig() {
         return Stream.of(
                 // delta = 0, tell failure if delta is negative is set to true and exclude zero deltas is set to true so delta should filter out the message.
                 new CalculateDeltaTestConfig(true, true, 40, 40, (ctx, msg) -> {
@@ -467,7 +467,7 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
                     verifyNoMoreInteractions(ctx);
                 }),
                 // delta < 0, tell failure if delta is negative is set to true so it should throw exception.
-                new CalculateDeltaTestConfig(true, true, 40, 41, (ctx, msg) -> {
+                new CalculateDeltaTestConfig(true, true, 41, 40, (ctx, msg) -> {
                     var errorCaptor = ArgumentCaptor.forClass(Throwable.class);
                     verify(ctx).tellFailure(eq(msg), errorCaptor.capture());
                     verify(ctx).getDbCallbackExecutor();
@@ -475,7 +475,7 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
                     assertThat(errorCaptor.getValue()).isInstanceOf(IllegalArgumentException.class).hasMessage("Delta value is negative!");
                 }),
                 // delta < 0, exclude zero deltas is set to true so it should return message with delta if delta is negative is set to false.
-                new CalculateDeltaTestConfig(false, true, 40, 41, (ctx, msg) -> {
+                new CalculateDeltaTestConfig(false, true, 41, 40, (ctx, msg) -> {
                     var actualMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
                     verify(ctx).tellSuccess(actualMsgCaptor.capture());
                     verify(ctx).getDbCallbackExecutor();
@@ -490,7 +490,7 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
                     verifyNoMoreInteractions(ctx);
                 }),
                 // delta > 0, exclude zero deltas is set to true so it should return message with delta.
-                new CalculateDeltaTestConfig(false, true, 40, 39, (ctx, msg) -> {
+                new CalculateDeltaTestConfig(false, true, 39, 40, (ctx, msg) -> {
                     var actualMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
                     verify(ctx).tellSuccess(actualMsgCaptor.capture());
                     verify(ctx).getDbCallbackExecutor();
@@ -499,7 +499,7 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
                     assertEquals(expectedMsgData, actualMsgCaptor.getValue().getData());
                 }),
                 // delta > 0, exclude zero deltas is set to false so it should return message with delta.
-                new CalculateDeltaTestConfig(false, false, 40, 39, (ctx, msg) -> {
+                new CalculateDeltaTestConfig(false, false, 39, 40, (ctx, msg) -> {
                     var actualMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
                     verify(ctx).tellSuccess(actualMsgCaptor.capture());
                     verify(ctx).getDbCallbackExecutor();
@@ -512,11 +512,11 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
 
     @Data
     @RequiredArgsConstructor
-    static class CalculateDeltaTestConfig {
+    private static class CalculateDeltaTestConfig {
         private final boolean tellFailureIfDeltaIsNegative;
-        private final boolean computeOnlyTrueDeltas;
-        private final double currentValue;
+        private final boolean excludeZeroDeltas;
         private final double prevValue;
+        private final double currentValue;
         private final BiConsumer<TbContext, TbMsg> verificationMethod;
     }
 
