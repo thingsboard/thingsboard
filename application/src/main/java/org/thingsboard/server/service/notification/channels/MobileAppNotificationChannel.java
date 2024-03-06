@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.service.notification.channels;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.base.Strings;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.MessagingErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -82,7 +84,7 @@ public class MobileAppNotificationChannel implements NotificationChannel<User, M
 
     private Map<String, String> getNotificationData(MobileAppDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) {
         Map<String, String> data = Optional.ofNullable(processedTemplate.getAdditionalConfig())
-                .map(JacksonUtil::toFlatMap).orElseGet(HashMap::new);
+                .filter(JsonNode::isObject).map(JacksonUtil::toFlatMap).orElseGet(HashMap::new);
         NotificationInfo info = ctx.getRequest().getInfo();
         if (info == null) {
             return data;
@@ -107,6 +109,7 @@ public class MobileAppNotificationChannel implements NotificationChannel<User, M
                 });
                 break;
         }
+        data.replaceAll((key, value) -> Strings.nullToEmpty(value));
         return data;
     }
 
