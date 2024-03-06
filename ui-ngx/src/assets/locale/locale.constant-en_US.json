@@ -861,7 +861,9 @@
         "transport-messages-per-device": "Transport messages per device",
         "ws-updates-per-session": "WS updates per session",
         "edge-events": "Edge events",
-        "edge-events-per-edge": "Edge events per edge"
+        "edge-events-per-edge": "Edge events per edge",
+        "edge-uplink-messages": "Edge uplink messages",
+        "edge-uplink-messages-per-edge": "Edge uplink messages per edge"
     },
     "audit-log": {
         "audit": "Audit",
@@ -3354,6 +3356,7 @@
         "notification": "Notification",
         "notification-center": "Notification center",
         "notification-tap-action": "Notification tap action",
+        "notification-tap-action-hint": "If not enabled, the default alarm dashboard will be used",
         "notify": "notify",
         "notify-again": "Notify again",
         "notify-alarm-action": {
@@ -4214,6 +4217,10 @@
             "edit-edge-events-per-edge-rate-limit": "Edit edge events per edge rate limits",
             "edge-events-rate-limit": "Edge events",
             "edge-events-per-edge-rate-limit": "Edge events per edge",
+            "edit-edge-uplink-messages-rate-limit": "Edit edge uplink messages rate limits",
+            "edit-edge-uplink-messages-per-edge-rate-limit": "Edit edge uplink messages per edge rate limits",
+            "edge-uplink-messages-rate-limit": "Edge uplink messages",
+            "edge-uplink-messages-per-edge-rate-limit": "Edge uplink messages per edge",
             "messages-per": "messages per",
             "not-set": "Not set",
             "number-of-messages": "Number of messages",
