@@ -50,6 +50,8 @@ public abstract class RuleChainManagerActor extends ContextAwareActor {
     @Getter
     protected TbActorRef rootChainActor;
 
+    protected boolean ruleChainsInitialized;
+
     public RuleChainManagerActor(ActorSystemContext systemContext, TenantId tenantId) {
         super(systemContext);
         this.tenantId = tenantId;
@@ -57,6 +59,7 @@ public abstract class RuleChainManagerActor extends ContextAwareActor {
     }
 
     protected void initRuleChains() {
+        log.debug("[{}] Initializing rule chains", tenantId);
         for (RuleChain ruleChain : new PageDataIterable<>(link -> ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.CORE, link), ContextAwareActor.ENTITY_PACK_LIMIT)) {
             RuleChainId ruleChainId = ruleChain.getId();
             log.debug("[{}|{}] Creating rule chain actor", ruleChainId.getEntityType(), ruleChain.getId());
@@ -64,12 +67,15 @@ public abstract class RuleChainManagerActor extends ContextAwareActor {
             visit(ruleChain, actorRef);
             log.debug("[{}|{}] Rule Chain actor created.", ruleChainId.getEntityType(), ruleChainId.getId());
         }
+        ruleChainsInitialized = true;
     }
 
     protected void destroyRuleChains() {
+        log.debug("[{}] Destroying rule chains", tenantId);
         for (RuleChain ruleChain : new PageDataIterable<>(link -> ruleChainService.findTenantRuleChainsByType(tenantId, RuleChainType.CORE, link), ContextAwareActor.ENTITY_PACK_LIMIT)) {
             ctx.stop(new TbEntityActorId(ruleChain.getId()));
         }
+        ruleChainsInitialized = false;
     }
 
     protected void visit(RuleChain entity, TbActorRef actorRef) {

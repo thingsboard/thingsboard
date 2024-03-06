@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.NotificationCenter;
+import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -62,7 +63,6 @@ import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
-import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.TopicService;
@@ -154,6 +154,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
             }
         }
         NotificationSettings settings = notificationSettingsService.findNotificationSettings(tenantId);
+        NotificationSettings systemSettings = tenantId.isSysTenantId() ? settings : notificationSettingsService.findNotificationSettings(TenantId.SYS_TENANT_ID);
 
         log.debug("Processing notification request (tenantId: {}, targets: {})", tenantId, request.getTargets());
         request.setStatus(NotificationRequestStatus.PROCESSING);
@@ -165,6 +166,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                 .deliveryMethods(deliveryMethods)
                 .template(notificationTemplate)
                 .settings(settings)
+                .systemSettings(systemSettings)
                 .build();
 
         processNotificationRequestAsync(ctx, targets, callback);
@@ -202,6 +204,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
 
     private void processNotificationRequestAsync(NotificationProcessingContext ctx, List<NotificationTarget> targets, FutureCallback<NotificationRequestStats> callback) {
         notificationExecutor.submit(() -> {
+            long startTs = System.currentTimeMillis();
             NotificationRequestId requestId = ctx.getRequest().getId();
             for (NotificationTarget target : targets) {
                 try {
@@ -217,9 +220,16 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                     return;
                 }
             }
-            log.debug("[{}] Notification request processing is finished", requestId);
 
             NotificationRequestStats stats = ctx.getStats();
+            long time = System.currentTimeMillis() - startTs;
+            int sent = stats.getTotalSent().get();
+            int errors = stats.getTotalErrors().get();
+            if (errors > 0) {
+                log.info("[{}][{}] Notification request processing finished in {} ms (sent: {}, errors: {})", ctx.getTenantId(), requestId, time, sent, errors);
+            } else {
+                log.info("[{}][{}] Notification request processing finished in {} ms (sent: {})", ctx.getTenantId(), requestId, time, sent);
+            }
             updateRequestStats(ctx, requestId, stats);
             if (callback != null) {
                 callback.onSuccess(stats);
@@ -243,11 +253,11 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                 if (targetConfig.getUsersFilter().getType().isForRules() && ctx.getRequest().getInfo() instanceof RuleOriginatedNotificationInfo) {
                     recipients = new PageDataIterable<>(pageLink -> {
                         return notificationTargetService.findRecipientsForRuleNotificationTargetConfig(ctx.getTenantId(), targetConfig, (RuleOriginatedNotificationInfo) ctx.getRequest().getInfo(), pageLink);
-                    }, 500);
+                    }, 256);
                 } else {
                     recipients = new PageDataIterable<>(pageLink -> {
                         return notificationTargetService.findRecipientsForNotificationTargetConfig(ctx.getTenantId(), targetConfig, pageLink);
-                    }, 500);
+                    }, 256);
                 }
                 break;
             }

@@ -14,7 +14,17 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  forwardRef,
+  Input,
+  OnChanges,
+  OnDestroy,
+  OnInit,
+  SimpleChanges,
+  ViewChild
+} from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, NgForm } from '@angular/forms';
 import { resolveBreakpoint, ValueType, valueTypesMap } from '@shared/models/constants';
 import { isObject } from '@core/utils';
@@ -45,7 +55,7 @@ export interface ValueInputLayout {
     }
   ]
 })
-export class ValueInputComponent implements OnInit, OnDestroy, ControlValueAccessor {
+export class ValueInputComponent implements OnInit, OnDestroy, OnChanges, ControlValueAccessor {
 
   @Input()
   disabled: boolean;
@@ -85,6 +95,7 @@ export class ValueInputComponent implements OnInit, OnDestroy, ControlValueAcces
 
   constructor(
     private breakpointObserver: BreakpointObserver,
+    private cd: ChangeDetectorRef,
     public dialog: MatDialog,
   ) {
 
@@ -101,6 +112,23 @@ export class ValueInputComponent implements OnInit, OnDestroy, ControlValueAcces
           this.computedLayout = this._computeLayout();
         }
       ));
+    }
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    for (const propName of Object.keys(changes)) {
+      const change = changes[propName];
+      if (!change.firstChange) {
+        if (propName === 'valueType') {
+          this.showValueType = !this.valueType;
+          if (this.valueType) {
+            this.updateModelToValueType();
+          } else {
+            this.detectValueType();
+          }
+          this.cd.markForCheck();
+        }
+      }
     }
   }
 
@@ -144,19 +172,12 @@ export class ValueInputComponent implements OnInit, OnDestroy, ControlValueAcces
   writeValue(value: any): void {
     this.modelValue = value;
     if (this.showValueType) {
-      if (this.modelValue === true || this.modelValue === false) {
-        this.valueType = ValueType.BOOLEAN;
-      } else if (typeof this.modelValue === 'number') {
-        if (this.modelValue.toString().indexOf('.') === -1) {
-          this.valueType = ValueType.INTEGER;
-        } else {
-          this.valueType = ValueType.DOUBLE;
-        }
-      } else if (isObject(this.modelValue)) {
-        this.valueType = ValueType.JSON;
-      } else {
-        this.valueType = ValueType.STRING;
-      }
+      this.detectValueType();
+    } else {
+      setTimeout(() => {
+        this.updateModelToValueType();
+        this.cd.markForCheck();
+      }, 0);
     }
   }
 
@@ -183,6 +204,39 @@ export class ValueInputComponent implements OnInit, OnDestroy, ControlValueAcces
 
   onValueChanged() {
     this.updateView();
+  }
+
+  private detectValueType() {
+    if (this.modelValue === true || this.modelValue === false) {
+      this.valueType = ValueType.BOOLEAN;
+    } else if (typeof this.modelValue === 'number') {
+      if (this.modelValue.toString().indexOf('.') === -1) {
+        this.valueType = ValueType.INTEGER;
+      } else {
+        this.valueType = ValueType.DOUBLE;
+      }
+    } else if (isObject(this.modelValue)) {
+      this.valueType = ValueType.JSON;
+    } else {
+      this.valueType = ValueType.STRING;
+    }
+  }
+
+  private updateModelToValueType() {
+    if (this.valueType === ValueType.BOOLEAN && typeof this.modelValue !== 'boolean') {
+      this.modelValue = !!this.modelValue;
+      this.updateView();
+    } else if (this.valueType === ValueType.STRING && typeof this.modelValue !== 'string') {
+      this.modelValue = null;
+      this.updateView();
+    } else if ([ValueType.DOUBLE, ValueType.INTEGER].includes(this.valueType) && typeof this.modelValue !== 'number') {
+      this.modelValue = null;
+      this.updateView();
+    } else if (this.valueType === ValueType.JSON && typeof this.modelValue !== 'object') {
+      this.modelValue = {};
+      this.inputForm.form.get('value').patchValue({});
+      this.updateView();
+    }
   }
 
   private _computeLayout(): Layout {

@@ -651,7 +651,8 @@
       &.mdc-evolution-chip--with-primary-graphic {
         .mdc-evolution-chip__action--primary {
           width: 100%;
-          padding-right: 0;
+          padding-left: 12px;
+          padding-right: 12px;
           gap: 0;
           .mdc-evolution-chip__graphic {
             padding: 0;

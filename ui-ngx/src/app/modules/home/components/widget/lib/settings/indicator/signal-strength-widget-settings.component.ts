@@ -86,7 +86,8 @@ export class SignalStrengthWidgetSettingsComponent extends WidgetSettingsCompone
       tooltipBackgroundColor: [settings.tooltipBackgroundColor, []],
       tooltipBackgroundBlur: [settings.tooltipBackgroundBlur, []],
 
-      background: [settings.background, []]
+      background: [settings.background, []],
+      noSignalRssiValue: [settings.noSignalRssiValue, []]
     });
   }
 

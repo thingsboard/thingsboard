@@ -49,7 +49,6 @@ import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsServ
 
 import javax.annotation.PreDestroy;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -75,14 +74,14 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     protected final ApplicationEventPublisher eventPublisher;
 
     protected final TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer;
-    protected final Optional<JwtSettingsService> jwtSettingsService;
+    protected final JwtSettingsService jwtSettingsService;
 
 
     public AbstractConsumerService(ActorSystemContext actorContext, DataDecodingEncodingService encodingService,
                                    TbTenantProfileCache tenantProfileCache, TbDeviceProfileCache deviceProfileCache,
                                    TbAssetProfileCache assetProfileCache, TbApiUsageStateService apiUsageStateService,
                                    PartitionService partitionService, ApplicationEventPublisher eventPublisher,
-                                   TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer, Optional<JwtSettingsService> jwtSettingsService) {
+                                   TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer, JwtSettingsService jwtSettingsService) {
         this.actorContext = actorContext;
         this.encodingService = encodingService;
         this.tenantProfileCache = tenantProfileCache;
@@ -106,6 +105,11 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
         this.isReady = true;
         launchNotificationsConsumer();
         launchMainConsumers();
+    }
+
+    @Override
+    protected boolean filterTbApplicationEvent(PartitionChangeEvent event) {
+        return event.getServiceType() == getServiceType();
     }
 
     protected abstract ServiceType getServiceType();
@@ -176,7 +180,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
             }
         } else if (EntityType.TENANT.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
             if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
-                jwtSettingsService.ifPresent(JwtSettingsService::reloadJwtSettings);
+                jwtSettingsService.reloadJwtSettings();
                 return;
             } else {
                 tenantProfileCache.evict(tenantId);
