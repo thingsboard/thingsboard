@@ -111,8 +111,7 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
             }
         }
         String errorMessage;
-        Throwable throwable = (Throwable)
-                request.getAttribute(ERROR_EXCEPTION);
+        Throwable throwable = (Throwable) request.getAttribute(ERROR_EXCEPTION);
         if (throwable != null) {
             errorMessage = throwable.getMessage();
         } else {
