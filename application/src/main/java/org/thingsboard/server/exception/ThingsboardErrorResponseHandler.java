@@ -16,6 +16,7 @@
 package org.thingsboard.server.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -28,7 +29,9 @@ import org.springframework.security.authentication.LockedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.context.request.WebRequest;
@@ -43,6 +46,7 @@ import org.thingsboard.server.service.security.exception.JwtExpiredTokenExceptio
 import org.thingsboard.server.service.security.exception.UserPasswordExpiredException;
 import org.thingsboard.server.service.security.exception.UserPasswordNotValidException;
 
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -50,9 +54,15 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static javax.servlet.RequestDispatcher.ERROR_EXCEPTION;
+
 @Slf4j
+@Controller
 @RestControllerAdvice
-public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHandler implements AccessDeniedHandler {
+public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHandler implements AccessDeniedHandler, ErrorController {
+
+    public static final String PATH_NOT_FOUND_ERROR_DESCRIPTION = "Path is not found.";
+    public static final String GENERAL_ERROR_DESCRIPTION = "Something went wrong!";
 
     private static final Map<HttpStatus, ThingsboardErrorCode> statusToErrorCodeMap = new HashMap<>();
     static {
@@ -88,6 +98,27 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
 
     private static HttpStatus errorCodeToStatus(ThingsboardErrorCode errorCode) {
         return errorCodeToStatusMap.getOrDefault(errorCode, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @RequestMapping("/error")
+    public ResponseEntity<Object> handleError(HttpServletRequest request) {
+        Object status = request.getAttribute(RequestDispatcher.ERROR_STATUS_CODE);
+
+        if (status != null) {
+            int statusCode = Integer.parseInt(status.toString());
+            if(statusCode == HttpStatus.NOT_FOUND.value()) {
+                return new ResponseEntity<>(ThingsboardErrorResponse.of(PATH_NOT_FOUND_ERROR_DESCRIPTION, ThingsboardErrorCode.ITEM_NOT_FOUND, HttpStatus.NOT_FOUND), HttpStatus.NOT_FOUND);
+            }
+        }
+        String errorMessage;
+        Throwable throwable = (Throwable)
+                request.getAttribute(ERROR_EXCEPTION);
+        if (throwable != null) {
+            errorMessage = throwable.getMessage();
+        } else {
+            errorMessage = GENERAL_ERROR_DESCRIPTION;
+        }
+        return new ResponseEntity<>(ThingsboardErrorResponse.of(errorMessage, ThingsboardErrorCode.GENERAL, HttpStatus.INTERNAL_SERVER_ERROR), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Override
