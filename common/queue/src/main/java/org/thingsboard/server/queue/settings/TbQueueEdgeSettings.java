@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.stats;
+package org.thingsboard.server.queue.settings;
 
-public enum StatsType {
-    RULE_ENGINE("ruleEngine"), CORE("core"), TRANSPORT("transport"), JS_INVOKE("jsInvoke"), RATE_EXECUTOR("rateExecutor"), EDGE("edge");
+import lombok.Data;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Component;
 
-    private final String name;
+@Lazy
+@Data
+@Component
+public class TbQueueEdgeSettings {
 
-    StatsType(String name) {
-        this.name = name;
-    }
+    @Value("${queue.edge.topic}")
+    private String topic;
 
-    public String getName() {
-        return name;
-    }
 }

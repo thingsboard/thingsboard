@@ -27,6 +27,7 @@ import java.util.Map;
 @Component
 @ConditionalOnProperty(prefix = "queue", value = "type", havingValue = "kafka")
 public class TbKafkaTopicConfigs {
+
     public static final String NUM_PARTITIONS_SETTING = "partitions";
 
     @Value("${queue.kafka.topic-properties.core:}")
@@ -43,6 +44,8 @@ public class TbKafkaTopicConfigs {
     private String fwUpdatesProperties;
     @Value("${queue.kafka.topic-properties.version-control:}")
     private String vcProperties;
+    @Value("${queue.kafka.topic-properties.edge:}")
+    private String edgeProperties;
 
     @Getter
     private Map<String, String> coreConfigs;
@@ -62,6 +65,8 @@ public class TbKafkaTopicConfigs {
     private Map<String, String> fwUpdatesConfigs;
     @Getter
     private Map<String, String> vcConfigs;
+    @Getter
+    private Map<String, String> edgeConfigs;
 
     @PostConstruct
     private void init() {
@@ -76,6 +81,7 @@ public class TbKafkaTopicConfigs {
         jsExecutorResponseConfigs.put(NUM_PARTITIONS_SETTING, "1");
         fwUpdatesConfigs = PropertyUtils.getProps(fwUpdatesProperties);
         vcConfigs = PropertyUtils.getProps(vcProperties);
+        edgeConfigs = PropertyUtils.getProps(edgeProperties);
     }
 
 }

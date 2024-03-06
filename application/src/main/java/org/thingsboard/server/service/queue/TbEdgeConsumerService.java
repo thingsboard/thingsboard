@@ -13,17 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge;
+package org.thingsboard.server.service.queue;
 
-import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.id.RuleChainId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.gen.transport.TransportProtos;
+import org.springframework.context.ApplicationListener;
+import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 
-public interface EdgeNotificationService {
+public interface TbEdgeConsumerService extends ApplicationListener<PartitionChangeEvent> {
 
-    Edge setEdgeRootRuleChain(TenantId tenantId, Edge edge, RuleChainId ruleChainId) throws Exception;
-
-    void pushNotificationToEdge(TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg, TbCallback callback);
 }

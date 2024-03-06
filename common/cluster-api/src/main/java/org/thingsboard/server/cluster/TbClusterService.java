@@ -35,6 +35,7 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToVersionControlServiceMsg;
@@ -51,7 +52,7 @@ public interface TbClusterService extends TbQueueClusterService {
 
     void pushMsgToCore(ToDeviceActorNotificationMsg msg, TbQueueCallback callback);
 
-    void broadcastToCore(TransportProtos.ToCoreNotificationMsg msg);
+    void broadcastToCore(ToCoreNotificationMsg msg);
 
     void pushMsgToVersionControl(TenantId tenantId, ToVersionControlServiceMsg msg, TbQueueCallback callback);
 
@@ -93,9 +94,11 @@ public interface TbClusterService extends TbQueueClusterService {
 
     void onEdgeEventUpdate(TenantId tenantId, EdgeId edgeId);
 
-    void pushEdgeSyncRequestToCore(ToEdgeSyncRequest toEdgeSyncRequest);
+    void pushMsgToEdge(TenantId tenantId, EntityId entityId, TransportProtos.ToEdgeMsg msg, TbQueueCallback callback);
 
-    void pushEdgeSyncResponseToCore(FromEdgeSyncResponse fromEdgeSyncResponse);
+    void pushEdgeSyncRequestToCore(ToEdgeSyncRequest toEdgeSyncRequest, String serviceId);
+
+    void pushEdgeSyncResponseToCore(FromEdgeSyncResponse fromEdgeSyncResponse, String serviceId);
 
     void sendNotificationMsgToEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, EdgeEventActionType action, EdgeId sourceEdgeId);
 

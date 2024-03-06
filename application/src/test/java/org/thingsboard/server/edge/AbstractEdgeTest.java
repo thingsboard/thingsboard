@@ -203,7 +203,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
                 + "/asset/" + savedAsset.getUuidId(), Asset.class);
 
         // wait until assign device and asset events are fully processed by edge notification service
-        TimeUnit.MILLISECONDS.sleep(500);
+        TimeUnit.MILLISECONDS.sleep(1000);
     }
 
     protected void extendDeviceProfileData(DeviceProfile deviceProfile) {

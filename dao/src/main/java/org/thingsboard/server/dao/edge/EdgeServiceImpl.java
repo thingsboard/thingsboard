@@ -17,7 +17,6 @@ package org.thingsboard.server.dao.edge;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -51,6 +50,7 @@ import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageDataIterableByTenantIdEntityId;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -69,7 +69,6 @@ import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -91,8 +90,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String INCORRECT_CUSTOMER_ID = "Incorrect customerId ";
     public static final String INCORRECT_EDGE_ID = "Incorrect edgeId ";
-
-    private static final int DEFAULT_PAGE_SIZE = 1000;
+    public static final String EDGE_IS_ROOT_BODY_KEY = "isRoot";
 
     @Autowired
     private EdgeDao edgeDao;
@@ -349,16 +347,9 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
             return Futures.successfulAsList(futures);
         }, MoreExecutors.directExecutor());
 
-        edges = Futures.transform(edges, new Function<List<Edge>, List<Edge>>() {
-            @Nullable
-            @Override
-            public List<Edge> apply(@Nullable List<Edge> edgeList) {
-                return edgeList == null ?
-                        Collections.emptyList() :
-                        edgeList.stream().filter(edge -> query.getEdgeTypes().contains(edge.getType())).collect(Collectors.toList());
-            }
-        }, MoreExecutors.directExecutor());
-
+        edges = Futures.transform(edges, edgeList -> edgeList == null ?
+                Collections.emptyList() :
+                edgeList.stream().filter(edge -> query.getEdgeTypes().contains(edge.getType())).collect(Collectors.toList()), MoreExecutors.directExecutor());
         return edges;
     }
 
@@ -377,19 +368,11 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     @Override
     public void assignDefaultRuleChainsToEdge(TenantId tenantId, EdgeId edgeId) {
         log.trace("Executing assignDefaultRuleChainsToEdge, tenantId [{}], edgeId [{}]", tenantId, edgeId);
-        PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
-        PageData<RuleChain> pageData;
-        do {
-            pageData = ruleChainService.findAutoAssignToEdgeRuleChainsByTenantId(tenantId, pageLink);
-            if (pageData.getData().size() > 0) {
-                for (RuleChain ruleChain : pageData.getData()) {
-                    ruleChainService.assignRuleChainToEdge(tenantId, ruleChain.getId(), edgeId);
-                }
-            }
-            if (pageData.hasNext()) {
-                pageLink = pageLink.nextPageLink();
-            }
-        } while (pageData.hasNext());
+        PageDataIterable<RuleChain> ruleChains = new PageDataIterable<>(
+                link -> ruleChainService.findAutoAssignToEdgeRuleChainsByTenantId(tenantId, link), 1024);
+        for (RuleChain ruleChain : ruleChains) {
+            ruleChainService.assignRuleChainToEdge(tenantId, ruleChain.getId(), edgeId);
+        }
     }
 
     @Override
@@ -409,7 +392,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     }
 
     private PaginatedRemover<TenantId, Edge> tenantEdgesRemover =
-            new PaginatedRemover<TenantId, Edge>() {
+            new PaginatedRemover<>() {
 
                 @Override
                 protected PageData<Edge> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
@@ -422,7 +405,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
                 }
             };
 
-    private PaginatedRemover<CustomerId, Edge> customerEdgeUnassigner = new PaginatedRemover<CustomerId, Edge>() {
+    private PaginatedRemover<CustomerId, Edge> customerEdgeUnassigner = new PaginatedRemover<>() {
 
         @Override
         protected PageData<Edge> findEntities(TenantId tenantId, CustomerId id, PageLink pageLink) {
@@ -444,7 +427,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
             return Collections.singletonList(new EdgeId(entityId.getId()));
         }
         PageDataIterableByTenantIdEntityId<EdgeId> relatedEdgeIdsIterator =
-                new PageDataIterableByTenantIdEntityId<>(edgeService::findRelatedEdgeIdsByEntityId, tenantId, entityId, DEFAULT_PAGE_SIZE);
+                new PageDataIterableByTenantIdEntityId<>(this::findRelatedEdgeIdsByEntityId, tenantId, entityId, 1024);
         List<EdgeId> result = new ArrayList<>();
         for (EdgeId edgeId : relatedEdgeIdsIterator) {
             result.add(edgeId);
@@ -539,6 +522,17 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     }
 
     @Override
+    public Edge setEdgeRootRuleChain(TenantId tenantId, Edge edge, RuleChainId ruleChainId) {
+        edge.setRootRuleChainId(ruleChainId);
+        Edge savedEdge = saveEdge(edge);
+        ObjectNode isRootBody = JacksonUtil.newObjectNode();
+        isRootBody.put(EDGE_IS_ROOT_BODY_KEY, Boolean.TRUE);
+        eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edge.getId()).entityId(ruleChainId)
+                .body(JacksonUtil.toString(isRootBody)).actionType(ActionType.UPDATED).build());
+        return savedEdge;
+    }
+
+    @Override
     public ListenableFuture<Boolean> isEdgeActiveAsync(TenantId tenantId, EdgeId edgeId, String key) {
         ListenableFuture<? extends Optional<? extends KvEntry>> futureKvEntry;
         if (persistToTelemetry) {
@@ -552,17 +546,11 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
 
     private List<RuleChain> findEdgeRuleChains(TenantId tenantId, EdgeId edgeId) {
         List<RuleChain> result = new ArrayList<>();
-        PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
-        PageData<RuleChain> pageData;
-        do {
-            pageData = ruleChainService.findRuleChainsByTenantIdAndEdgeId(tenantId, edgeId, pageLink);
-            if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
-                result.addAll(pageData.getData());
-                if (pageData.hasNext()) {
-                    pageLink = pageLink.nextPageLink();
-                }
-            }
-        } while (pageData != null && pageData.hasNext());
+        PageDataIterable<RuleChain> ruleChains = new PageDataIterable<>(
+                link -> ruleChainService.findRuleChainsByTenantIdAndEdgeId(tenantId, edgeId, link), 1024);
+        for (RuleChain ruleChain : ruleChains) {
+            result.add(ruleChain);
+        }
         return result;
     }
 

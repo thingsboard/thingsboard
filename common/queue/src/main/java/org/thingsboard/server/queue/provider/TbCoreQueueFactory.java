@@ -18,6 +18,7 @@ package org.thingsboard.server.queue.provider;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToOtaPackageStateServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
@@ -130,4 +131,19 @@ public interface TbCoreQueueFactory extends TbUsageStatsClientQueueFactory {
      * @return
      */
     TbQueueProducer<TbProtoQueueMsg<ToVersionControlServiceMsg>> createVersionControlMsgProducer();
+
+
+    /**
+     * Used to consume messages from TB Core Service (Edge queue)
+     *
+     * @return
+     */
+    TbQueueConsumer<TbProtoQueueMsg<ToEdgeMsg>> createEdgeMsgConsumer();
+
+    /**
+     * Used to push messages to instances of Tb Core Service (Edge queue)
+     *
+     * @return
+     */
+    TbQueueProducer<TbProtoQueueMsg<ToEdgeMsg>> createEdgeMsgProducer();
 }

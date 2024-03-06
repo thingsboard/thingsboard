@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.msg;
 
 import lombok.Getter;
+import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 
@@ -36,7 +37,7 @@ public enum MsgType {
     /**
      * ADDED/UPDATED/DELETED events for main entities.
      *
-     * See {@link org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg}
+     * See {@link ComponentLifecycleMsg}
      */
     COMPONENT_LIFE_CYCLE_MSG,
 
@@ -143,4 +144,5 @@ public enum MsgType {
     MsgType(boolean ignoreOnStart) {
         this.ignoreOnStart = ignoreOnStart;
     }
+
 }

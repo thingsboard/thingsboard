@@ -16,21 +16,18 @@
 package org.thingsboard.server.dao.edge;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.cache.CacheSpecsMap;
-import org.thingsboard.server.cache.RedisTbTransactionalCache;
-import org.thingsboard.server.cache.TBRedisCacheConfiguration;
-import org.thingsboard.server.cache.TbFSTRedisSerializer;
+import org.thingsboard.server.cache.CaffeineTbTransactionalCache;
 import org.thingsboard.server.common.data.CacheConstants;
-import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.EdgeId;
 
-@ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
-@Service("EdgeCache")
-public class EdgeRedisCache extends RedisTbTransactionalCache<EdgeCacheKey, Edge> {
+@ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "caffeine", matchIfMissing = true)
+@Service("EdgeSessionCache")
+public class EdgeSessionCaffeineCache extends CaffeineTbTransactionalCache<EdgeId, String> {
 
-    public EdgeRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
-        super(CacheConstants.EDGE_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbFSTRedisSerializer<>());
+    public EdgeSessionCaffeineCache(CacheManager cacheManager) {
+        super(cacheManager, CacheConstants.EDGE_SESSIONS_CACHE);
     }
 
 }
