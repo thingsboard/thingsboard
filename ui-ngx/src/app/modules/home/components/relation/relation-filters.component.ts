@@ -117,18 +117,20 @@ export class RelationFiltersComponent extends PageComponent implements ControlVa
   public addFilter() {
     const filter: RelationEntityTypeFilter = {
       relationType: null,
-      entityTypes: [],
-      negate: false
+      entityTypes: []
     };
     this.relationFiltersFormArray.push(this.createRelationFilterFormGroup(filter));
   }
 
   private createRelationFilterFormGroup(filter: RelationEntityTypeFilter): AbstractControl {
-    return this.fb.group({
+    const formGroup = this.fb.group({
       relationType: [filter ? filter.relationType : null],
-      entityTypes: [filter ? filter.entityTypes : []],
-      negate: [filter ? filter.negate : false],
+      entityTypes: [filter ? filter.entityTypes : []]
     });
+    if (this.enableNotOption) {
+      formGroup.addControl('negate', this.fb.control(filter ? filter.negate : false));
+    }
+    return formGroup;
   }
 
   private updateModel() {
