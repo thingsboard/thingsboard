@@ -499,6 +499,9 @@
     &.no-padding-right {
       padding-right: 0;
     }
+    &.align-start {
+      align-items: start;
+    }
     @media #{$mat-gt-md} {
       gap: 12px;
       padding-left: 12px;
