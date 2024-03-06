@@ -21,15 +21,18 @@ import {
   createTimeSeriesXAxisOption,
   createTimeSeriesYAxis,
   generateChartData,
-  parseThresholdData, SeriesLabelPosition,
+  parseThresholdData,
+  SeriesLabelPosition,
   TimeSeriesChartDataItem,
   timeSeriesChartDefaultSettings,
   timeSeriesChartKeyDefaultSettings,
   TimeSeriesChartKeySettings,
   TimeSeriesChartSeriesType,
   TimeSeriesChartSettings,
+  TimeSeriesChartShape,
   TimeSeriesChartThresholdItem,
   TimeSeriesChartThresholdType,
+  TimeSeriesChartType,
   TimeSeriesChartYAxis,
   updateDarkMode
 } from '@home/components/widget/lib/chart/time-series-chart.models';
@@ -63,11 +66,23 @@ import { DataKeySettingsFunction } from '@home/components/widget/config/data-key
 
 export class TbTimeSeriesChart {
 
-  public static dataKeySettings(): DataKeySettingsFunction {
+  public static dataKeySettings(type = TimeSeriesChartType.default): DataKeySettingsFunction {
     return (key, isLatestDataKey) => {
       if (!isLatestDataKey) {
-        return mergeDeep<TimeSeriesChartKeySettings>({} as TimeSeriesChartKeySettings,
+        const settings = mergeDeep<TimeSeriesChartKeySettings>({} as TimeSeriesChartKeySettings,
           timeSeriesChartKeyDefaultSettings);
+        if (type === TimeSeriesChartType.line) {
+          settings.type = TimeSeriesChartSeriesType.line;
+        } else if (type === TimeSeriesChartType.bar) {
+          settings.type = TimeSeriesChartSeriesType.bar;
+        } else if (type === TimeSeriesChartType.point) {
+          settings.type = TimeSeriesChartSeriesType.line;
+          settings.lineSettings.showLine = false;
+          settings.lineSettings.showPoints = true;
+          settings.lineSettings.pointShape = TimeSeriesChartShape.circle;
+          settings.lineSettings.pointSize = 8;
+        }
+        return settings;
       }
       return null;
     };

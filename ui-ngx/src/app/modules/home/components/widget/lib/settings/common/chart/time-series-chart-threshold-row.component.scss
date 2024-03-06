@@ -13,14 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.tb-time-series-threshold-row {
+
+@import '../../../../../../../../../scss/constants';
+
+.tb-form-table-row.tb-time-series-threshold-row {
+  @media #{$mat-lt-md} {
+    align-items: flex-start;
+  }
   .tb-threshold-source-field {
     flex: 1;
-    min-width: 200px;
+    min-width: 100px;
     display: flex;
-    align-items: center;
-    flex-direction: row;
-    gap: 12px;
+    flex-direction: column;
+    gap: 8px;
+    @media #{$mat-gt-sm} {
+      flex-direction: row;
+      align-items: center;
+      gap: 12px;
+    }
+    @media #{$mat-gt-md} {
+      min-width: 200px;
+    }
   }
 
   .tb-threshold-type-field {
@@ -33,13 +46,16 @@
 
   .tb-threshold-key-value-field {
     flex: 1;
-    min-width: 150px;
-    .tb-inline-field, .tb-data-key-input {
-      flex: 1;
+    min-width: 100px;
+    .tb-inline-field {
+      width: 100%;
+    }
+    @media #{$mat-gt-md} {
+      min-width: 150px;
     }
   }
 
-  .tb-threshold-key-value-field, .tb-color-field, .tb-units-field, .tb-decimals-field {
+  .tb-color-field, .tb-units-field, .tb-decimals-field {
     display: flex;
     flex-direction: row;
     place-content: center;
@@ -59,6 +75,13 @@
   .tb-decimals-field {
     width: 60px;
     min-width: 60px;
+  }
+
+  .tb-units-field, .tb-color-field, .tb-decimals-field {
+    display: none;
+    @media #{$mat-gt-md} {
+      display: flex;
+    }
   }
 
 }

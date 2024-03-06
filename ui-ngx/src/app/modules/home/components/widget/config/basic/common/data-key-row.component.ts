@@ -322,6 +322,7 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit {
         if (this.showTimeSeriesType) {
           this.keyRowFormGroup.get('timeSeriesType').patchValue(this.modelValue.settings?.type, {emitEvent: false});
         }
+        this.keyFormControl.patchValue(deepClone(this.modelValue), {emitEvent: false});
         this.updateModel();
         this.cd.markForCheck();
       }

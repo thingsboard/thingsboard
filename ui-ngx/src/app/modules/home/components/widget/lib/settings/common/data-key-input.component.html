@@ -15,7 +15,8 @@
     limitations under the License.
 
 -->
-<mat-form-field class="tb-inline-field tb-key-field" subscriptSizing="dynamic">
+<mat-form-field class="tb-inline-field tb-key-field" subscriptSizing="dynamic"
+                [class.tb-suffix-absolute]="!keysFormControl.value?.length">
   <mat-chip-grid #chipList [formControl]="keysFormControl">
     <mat-chip-row class="tb-datakey-chip" *ngIf="modelValue?.type"
                   (removed)="removeKey()">
@@ -74,6 +75,15 @@
            (matChipInputTokenEnd)="addKey($event)"
     />
   </mat-chip-grid>
+  <mat-icon matSuffix
+            matTooltipPosition="above"
+            matTooltipClass="tb-error-tooltip"
+            [matTooltip]="requiredText | translate"
+            *ngIf="requiredText && keysFormControl.hasError('required')
+                                && keysFormControl.touched"
+            class="tb-error">
+    warning
+  </mat-icon>
   <mat-autocomplete #keyAutocomplete="matAutocomplete"
                     class="tb-autocomplete"
                     panelWidth="fit-content"

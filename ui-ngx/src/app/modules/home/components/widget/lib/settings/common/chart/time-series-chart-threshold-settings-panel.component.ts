@@ -74,6 +74,8 @@ export class TimeSeriesChartThresholdSettingsPanelComponent implements OnInit {
   ngOnInit(): void {
     this.thresholdSettingsFormGroup = this.fb.group(
       {
+        units: [this.thresholdSettings.units, []],
+        decimals: [this.thresholdSettings.decimals, [Validators.min(0)]],
         lineColor: [this.thresholdSettings.lineColor, []],
         lineType: [this.thresholdSettings.lineType, []],
         lineWidth: [this.thresholdSettings.lineWidth, [Validators.min(0)]],
@@ -130,9 +132,10 @@ export class TimeSeriesChartThresholdSettingsPanelComponent implements OnInit {
   }
 
   private _labelPreviewFn(): string {
-    const units = this.thresholdSettings.units && this.thresholdSettings.units.length ?
-      this.thresholdSettings.units : this.widgetConfig.units;
-    const decimals = isDefinedAndNotNull(this.thresholdSettings.decimals) ? this.thresholdSettings.decimals :
+    let units: string = this.thresholdSettingsFormGroup.get('units').value;
+    units = units && units.length ? units : this.widgetConfig.units;
+    let decimals: number = this.thresholdSettingsFormGroup.get('decimals').value;
+    decimals = isDefinedAndNotNull(decimals) ? decimals :
       (isDefinedAndNotNull(this.widgetConfig.decimals) ? this.widgetConfig.decimals : 2);
     return formatValue(22, decimals, units, false);
   }

@@ -13,15 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+@import '../../../../../../../../../scss/constants';
+
 .tb-time-series-thresholds-panel {
   .tb-form-table-header-cell {
     &.tb-threshold-source-header {
       flex: 1;
-      min-width: 200px;
+      min-width: 100px;
+      @media #{$mat-gt-md} {
+        min-width: 200px;
+      }
     }
     &.tb-threshold-key-value-header {
       flex: 1;
-      min-width: 150px;
+      min-width: 100px;
+      @media #{$mat-gt-md} {
+        min-width: 150px;
+      }
     }
 
     &.tb-units-header {
@@ -42,6 +51,24 @@
     &.tb-actions-header {
       width: 80px;
       min-width: 80px;
+    }
+
+    &.tb-units-header, &.tb-color-header, &.tb-decimals-header {
+      display: none;
+      @media #{$mat-gt-md} {
+        display: block;
+      }
+    }
+  }
+  .tb-form-table-body {
+    .tb-time-series-threshold-row {
+      overflow: hidden;
+    }
+    .mat-divider {
+      margin-top: 8px;
+      @media #{$mat-gt-sm} {
+        display: none;
+      }
     }
   }
 }

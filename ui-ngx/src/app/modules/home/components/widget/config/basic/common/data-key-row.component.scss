@@ -68,7 +68,13 @@
   .tb-label-field, .tb-units-field, .tb-color-field, .tb-decimals-field {
     display: none;
     @media #{$mat-gt-sm} {
-      display: block;
+      display: flex;
+    }
+  }
+
+  .tb-time-series-type-field {
+    @media #{$mat-md} {
+      display: none;
     }
   }
 

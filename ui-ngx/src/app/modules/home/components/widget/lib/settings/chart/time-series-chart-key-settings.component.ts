@@ -19,13 +19,13 @@ import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.m
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { mergeDeep } from '@core/utils';
+import { isDefinedAndNotNull, mergeDeep } from '@core/utils';
 import {
   timeSeriesChartKeyDefaultSettings,
   TimeSeriesChartKeySettings,
   TimeSeriesChartSeriesType,
   timeSeriesChartSeriesTypes,
-  timeSeriesChartSeriesTypeTranslations
+  timeSeriesChartSeriesTypeTranslations, TimeSeriesChartType, timeSeriesChartTypeTranslations
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 
@@ -36,6 +36,10 @@ import { WidgetConfigComponentData } from '@home/models/widget-component.models'
 })
 export class TimeSeriesChartKeySettingsComponent extends WidgetSettingsComponent {
 
+  TimeSeriesChartType = TimeSeriesChartType;
+
+  timeSeriesChartTypeTranslations = timeSeriesChartTypeTranslations;
+
   TimeSeriesChartSeriesType = TimeSeriesChartSeriesType;
 
   timeSeriesChartSeriesTypes = timeSeriesChartSeriesTypes;
@@ -43,6 +47,8 @@ export class TimeSeriesChartKeySettingsComponent extends WidgetSettingsComponent
   timeSeriesChartSeriesTypeTranslations = timeSeriesChartSeriesTypeTranslations;
 
   timeSeriesChartKeySettingsForm: UntypedFormGroup;
+
+  chartType = TimeSeriesChartType.default;
 
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder) {
@@ -55,7 +61,9 @@ export class TimeSeriesChartKeySettingsComponent extends WidgetSettingsComponent
 
   protected onWidgetConfigSet(widgetConfig: WidgetConfigComponentData) {
     const params = widgetConfig.typeParameters as any;
-    // const timeSeriesChartType = params.timeSeriesChartType;
+    if (isDefinedAndNotNull(params.chartType)) {
+      this.chartType = params.chartType;
+    }
   }
 
   protected defaultSettings(): WidgetSettings {

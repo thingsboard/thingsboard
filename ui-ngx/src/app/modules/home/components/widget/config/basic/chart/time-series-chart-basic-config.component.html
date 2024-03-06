@@ -32,7 +32,7 @@
       removeKeyTitle="{{ 'widgets.chart.remove-series' | translate }}"
       noKeysText="{{ 'widgets.chart.no-series' | translate }}"
       requiredKeysText="{{ 'widgets.chart.no-series-error' | translate }}"
-      showTimeSeriesType
+      [showTimeSeriesType]="chartType === TimeSeriesChartType.default"
       hideSourceSelection
       [datasourceType]="datasource?.type"
       [deviceId]="datasource?.deviceId"

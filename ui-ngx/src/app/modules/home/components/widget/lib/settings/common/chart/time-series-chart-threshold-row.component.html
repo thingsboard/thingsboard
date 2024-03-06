@@ -49,10 +49,12 @@
     <tb-data-key-input
       *ngIf="thresholdFormGroup.get('type').value === TimeSeriesChartThresholdType.latestKey"
       required
+      requiredText="widgets.time-series-chart.threshold.key-required"
       [datasourceType]="datasource?.type"
       [entityAliasId]="datasource?.entityAliasId"
       [deviceId]="datasource?.deviceId"
       [aliasController]="aliasController"
+      [dataKeyType]="datasource?.type === DatasourceType.function ? DataKeyType.function : null"
       [dataKeyTypes]="[DataKeyType.attribute, DataKeyType.timeseries]"
       [callbacks]="dataKeyCallbacks"
       [editable]="false"
@@ -61,6 +63,7 @@
     <tb-data-key-input
       *ngIf="thresholdFormGroup.get('type').value === TimeSeriesChartThresholdType.entity"
       required
+      requiredText="widgets.time-series-chart.threshold.entity-key-required"
       [datasourceType]="DatasourceType.entity"
       [aliasController]="aliasController"
       [entityAlias]="thresholdFormGroup.get('entityAlias').value"

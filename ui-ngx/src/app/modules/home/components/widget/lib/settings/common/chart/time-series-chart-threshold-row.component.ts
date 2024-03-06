@@ -212,7 +212,11 @@ export class TimeSeriesChartThresholdRowComponent implements ControlValueAccesso
         thresholdSettingsPanelPopover.hide();
         this.modelValue = {...this.modelValue, ...thresholdSettings};
         this.thresholdFormGroup.patchValue(
-          {lineColor: this.modelValue.lineColor},
+          {
+            units: this.modelValue.units,
+            decimals: this.modelValue.decimals,
+            lineColor: this.modelValue.lineColor
+          },
           {emitEvent: false});
         this.propagateChange(this.modelValue);
       });

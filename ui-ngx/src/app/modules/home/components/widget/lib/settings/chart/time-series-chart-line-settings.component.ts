@@ -29,7 +29,7 @@ import {
   seriesLabelPositions,
   seriesLabelPositionTranslations,
   timeSeriesChartShapes,
-  timeSeriesChartShapeTranslations,
+  timeSeriesChartShapeTranslations, TimeSeriesChartType,
   timeSeriesLineTypes,
   timeSeriesLineTypeTranslations
 } from '@home/components/widget/lib/chart/time-series-chart.models';
@@ -53,6 +53,8 @@ import { DataKeyConfigComponent } from '@home/components/widget/config/data-key-
 })
 export class TimeSeriesChartLineSettingsComponent implements OnInit, ControlValueAccessor {
 
+  TimeSeriesChartType = TimeSeriesChartType;
+
   lineSeriesStepTypes = lineSeriesStepTypes;
 
   lineSeriesStepTypeTranslations = lineSeriesStepTypeTranslations;
@@ -73,6 +75,9 @@ export class TimeSeriesChartLineSettingsComponent implements OnInit, ControlValu
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  chartType: TimeSeriesChartType;
 
   private modelValue: LineSeriesSettings;
 

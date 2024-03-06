@@ -6597,6 +6597,7 @@
         },
         "time-series-chart": {
             "chart": "Chart",
+            "chart-style": "Chart style",
             "data-zoom": "Data zoom",
             "stack-mode": "Stack mode",
             "stack-mode-hint": "Stacks series on the chart. The series with the same unit would be put on top of each other.",
@@ -6615,6 +6616,9 @@
             "shape-pin": "Pin",
             "shape-arrow": "Arrow",
             "shape-none": "None",
+            "type-line": "Line",
+            "type-bar": "Bar",
+            "type-point": "Point",
             "threshold": {
               "thresholds": "Thresholds",
               "source": "Source",
@@ -6627,6 +6631,8 @@
               "threshold-settings": "Threshold settings",
               "remove-threshold": "Remove threshold",
               "threshold-value-required": "Threshold value is required.",
+              "key-required": "Key is required.",
+              "entity-key-required": "Entity key is required.",
               "line-appearance": "Line appearance",
               "line-color": "Line color",
               "start-symbol": "Start symbol",

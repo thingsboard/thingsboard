@@ -43,6 +43,21 @@ import { TbColorScheme } from '@shared/models/color.models';
 import { AbstractControl, ValidationErrors } from '@angular/forms';
 import { MarkLine2DDataItemOption } from 'echarts/types/src/component/marker/MarkLineModel';
 
+export enum TimeSeriesChartType {
+  default = 'default',
+  line = 'line',
+  bar = 'bar',
+  point = 'point'
+}
+
+export const timeSeriesChartTypeTranslations = new Map<TimeSeriesChartType, string>(
+  [
+    [TimeSeriesChartType.line, 'widgets.time-series-chart.type-line'],
+    [TimeSeriesChartType.bar, 'widgets.time-series-chart.type-bar'],
+    [TimeSeriesChartType.point, 'widgets.time-series-chart.type-point']
+  ]
+);
+
 const timeSeriesChartColorScheme: TbColorScheme = {
   'threshold.line': {
     light: 'rgba(0, 0, 0, 0.76)',

@@ -10,12 +10,12 @@
     "sizeY": 5,
     "resources": [],
     "templateHtml": "<tb-time-series-chart-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-time-series-chart-widget>",
-    "templateCss": ".legend {\n    font-size: 13px;\n    line-height: 10px;\n}\n\n.legend table { \n    border-spacing: 0px;\n    border-collapse: separate;\n}\n\n.mouse-events .flot-overlay {\n    cursor: crosshair; \n}\n\n",
+    "templateCss": "",
     "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.timeSeriesChartWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.timeSeriesChartWidget.onDataUpdated();\n}\n\nself.onLatestDataUpdated = function() {\n    self.ctx.$scope.timeSeriesChartWidget.onLatestDataUpdated();\n}\n\nself.typeParameters = function() {\n    return {\n        previewWidth: '80%',\n        embedTitlePanel: true,\n        hasAdditionalLatestDataKeys: true,\n        dataKeySettingsFunction: TbTimeSeriesChart.dataKeySettings(),\n        defaultDataKeysFunction: function() {\n            return [{ name: 'temperature', label: 'Temperature', type: 'timeseries', units: '°C', decimals: 0 }];\n        }\n    };\n}\n",
     "settingsSchema": "{}",
     "dataKeySettingsSchema": "{}",
     "latestDataKeySettingsSchema": "{}",
-    "settingsDirective": "",
+    "settingsDirective": "tb-time-series-chart-widget-settings",
     "dataKeySettingsDirective": "tb-time-series-chart-key-settings",
     "latestDataKeySettingsDirective": "",
     "hasBasicMode": true,
@@ -29,6 +29,8 @@
     "line",
     "line chart",
     "bar",
-    "bar chart"
+    "bar chart",
+    "point",
+    "point chart"
   ]
 }

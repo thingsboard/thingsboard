@@ -33,7 +33,7 @@ import {
   getTimewindowConfig,
   setTimewindowConfig
 } from '@home/components/widget/config/timewindow-config-panel.component';
-import { formatValue, isUndefined, mergeDeep } from '@core/utils';
+import { formatValue, isDefinedAndNotNull, isUndefined, mergeDeep } from '@core/utils';
 import {
   cssSizeToStrSize,
   DateFormatProcessor,
@@ -44,8 +44,8 @@ import {
   timeSeriesChartWidgetDefaultSettings,
   TimeSeriesChartWidgetSettings
 } from '@home/components/widget/lib/chart/time-series-chart-widget.models';
-import { ValueType } from '@shared/models/constants';
 import { EChartsTooltipTrigger } from '@home/components/widget/lib/chart/echarts-widget.models';
+import { TimeSeriesChartType } from '@home/components/widget/lib/chart/time-series-chart.models';
 
 @Component({
   selector: 'tb-time-series-chart-basic-config',
@@ -63,6 +63,8 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
     }
   }
 
+  TimeSeriesChartType = TimeSeriesChartType;
+
   EChartsTooltipTrigger = EChartsTooltipTrigger;
 
   legendPositions = legendPositions;
@@ -75,6 +77,8 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
 
   tooltipDatePreviewFn = this._tooltipDatePreviewFn.bind(this);
 
+  chartType = TimeSeriesChartType.default;
+
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
               private $injector: Injector,
@@ -84,6 +88,14 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
 
   protected configForm(): UntypedFormGroup {
     return this.timeSeriesChartWidgetConfigForm;
+  }
+
+  protected setupConfig(widgetConfig: WidgetConfigComponentData) {
+    const params = widgetConfig.typeParameters as any;
+    if (isDefinedAndNotNull(params.chartType)) {
+      this.chartType = params.chartType;
+    }
+    super.setupConfig(widgetConfig);
   }
 
   protected defaultDataKeys(configData: WidgetConfigComponentData): DataKey[] {
@@ -309,6 +321,4 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
     processor.update(Date.now());
     return processor.formatted;
   }
-
-  protected readonly ValueType = ValueType;
 }

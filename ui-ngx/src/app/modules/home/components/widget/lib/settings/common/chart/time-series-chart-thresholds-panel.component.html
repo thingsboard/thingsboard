@@ -27,11 +27,12 @@
       <div class="tb-form-table-header-cell tb-actions-header"></div>
     </div>
     <div *ngIf="thresholdsFormArray().controls.length; else noThresholds" class="tb-form-table-body">
-      <div *ngFor="let thresholdControl of thresholdsFormArray().controls; trackBy: trackByThreshold; let $index = index;">
+      <div *ngFor="let thresholdControl of thresholdsFormArray().controls; trackBy: trackByThreshold; let $index = index; let $last = last">
         <tb-time-series-chart-threshold-row fxFlex
                                     [formControl]="thresholdControl"
                                     (thresholdRemoved)="removeThreshold($index)">
         </tb-time-series-chart-threshold-row>
+        <mat-divider *ngIf="!$last"></mat-divider>
       </div>
     </div>
   </div>

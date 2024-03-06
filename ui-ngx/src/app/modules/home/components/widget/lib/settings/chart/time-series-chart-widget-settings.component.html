@@ -15,33 +15,42 @@
     limitations under the License.
 
 -->
-<ng-container [formGroup]="rangeChartWidgetSettingsForm">
+<ng-container [formGroup]="timeSeriesChartWidgetSettingsForm">
+  <tb-time-series-chart-thresholds-panel
+      formControlName="thresholds"
+      [aliasController]="aliasController"
+      [dataKeyCallbacks]="dataKeyCallbacks"
+      [datasource]="datasource"
+      [widgetConfig]="widgetConfig?.config">
+  </tb-time-series-chart-thresholds-panel>
   <div class="tb-form-panel">
-    <div class="tb-form-panel-title" translate>widgets.range-chart.range-chart-card-style</div>
+    <div class="tb-form-panel-title" translate>widgets.time-series-chart.chart-style</div>
     <div class="tb-form-row">
       <mat-slide-toggle class="mat-slide" formControlName="dataZoom">
-        {{ 'widgets.range-chart.data-zoom' | translate }}
+        {{ 'widgets.time-series-chart.data-zoom' | translate }}
       </mat-slide-toggle>
-    </div>
-    <div class="tb-form-row space-between">
-      <div>{{ 'widgets.range-chart.range-colors' | translate }}</div>
-      <tb-color-range-settings formControlName="rangeColors">
-      </tb-color-range-settings>
-    </div>
-    <div class="tb-form-row space-between">
-      <div>{{ 'widgets.range-chart.out-of-range-color' | translate }}</div>
-      <tb-color-input asBoxInput
-                      colorClearButton
-                      formControlName="outOfRangeColor">
-      </tb-color-input>
     </div>
     <div class="tb-form-row">
-      <mat-slide-toggle class="mat-slide" formControlName="fillArea">
-        {{ 'widgets.range-chart.fill-area' | translate }}
+      <mat-slide-toggle class="mat-slide" formControlName="stack">
+        <div tb-hint-tooltip-icon="{{'widgets.time-series-chart.stack-mode-hint' | translate}}">
+          {{ 'widgets.time-series-chart.stack-mode' | translate }}
+        </div>
       </mat-slide-toggle>
     </div>
+    <div class="tb-form-panel">
+      <div class="tb-form-panel-title" translate>widgets.time-series-chart.axis.axes</div>
+      <tb-time-series-chart-axis-settings
+          formControlName="yAxis"
+          axisType="yAxis">
+      </tb-time-series-chart-axis-settings>
+      <tb-time-series-chart-axis-settings
+          formControlName="xAxis"
+          axisType="xAxis">
+      </tb-time-series-chart-axis-settings>
+    </div>
     <div class="tb-form-panel tb-slide-toggle">
-      <mat-expansion-panel class="tb-settings" [expanded]="rangeChartWidgetSettingsForm.get('showLegend').value" [disabled]="!rangeChartWidgetSettingsForm.get('showLegend').value">
+      <mat-expansion-panel class="tb-settings" [expanded]="timeSeriesChartWidgetSettingsForm.get('showLegend').value"
+                           [disabled]="!timeSeriesChartWidgetSettingsForm.get('showLegend').value">
         <mat-expansion-panel-header fxLayout="row wrap">
           <mat-panel-title>
             <mat-slide-toggle class="mat-slide" formControlName="showLegend" (click)="$event.stopPropagation()"
@@ -52,20 +61,10 @@
         </mat-expansion-panel-header>
         <ng-template matExpansionPanelContent>
           <div class="tb-form-row space-between">
-            <div>{{ 'legend.position' | translate }}</div>
-            <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
-              <mat-select formControlName="legendPosition">
-                <mat-option *ngFor="let pos of legendPositions" [value]="pos">
-                  {{ legendPositionTranslationMap.get(pos) | translate }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-          </div>
-          <div class="tb-form-row space-between">
             <div>{{ 'legend.label' | translate }}</div>
             <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
               <tb-font-settings formControlName="legendLabelFont"
-                                previewText="20 - 30">
+                                previewText="Temperature">
               </tb-font-settings>
               <tb-color-input asBoxInput
                               colorClearButton
@@ -73,11 +72,15 @@
               </tb-color-input>
             </div>
           </div>
+          <tb-legend-config hideDirection
+                            formControlName="legendConfig">
+          </tb-legend-config>
         </ng-template>
       </mat-expansion-panel>
     </div>
     <div class="tb-form-panel tb-slide-toggle">
-      <mat-expansion-panel class="tb-settings" [expanded]="rangeChartWidgetSettingsForm.get('showTooltip').value" [disabled]="!rangeChartWidgetSettingsForm.get('showTooltip').value">
+      <mat-expansion-panel class="tb-settings" [expanded]="timeSeriesChartWidgetSettingsForm.get('showTooltip').value"
+                           [disabled]="!timeSeriesChartWidgetSettingsForm.get('showTooltip').value">
         <mat-expansion-panel-header fxLayout="row wrap">
           <mat-panel-title>
             <mat-slide-toggle class="mat-slide" formControlName="showTooltip" (click)="$event.stopPropagation()"
@@ -87,6 +90,15 @@
           </mat-panel-title>
         </mat-expansion-panel-header>
         <ng-template matExpansionPanelContent>
+          <div class="tb-form-row space-between">
+            <div>{{ 'tooltip.trigger' | translate }}</div>
+            <mat-chip-listbox class="center-stretch" formControlName="tooltipTrigger">
+              <mat-chip-option [selectable]="timeSeriesChartWidgetSettingsForm.get('tooltipTrigger').value !== EChartsTooltipTrigger.point"
+                               [value]="EChartsTooltipTrigger.point">{{ 'tooltip.trigger-point' | translate }}</mat-chip-option>
+              <mat-chip-option [selectable]="timeSeriesChartWidgetSettingsForm.get('tooltipTrigger').value !== EChartsTooltipTrigger.axis"
+                               [value]="EChartsTooltipTrigger.axis">{{ 'tooltip.trigger-axis' | translate }}</mat-chip-option>
+            </mat-chip-listbox>
+          </div>
           <div class="tb-form-row space-between">
             <div>{{ 'tooltip.value' | translate }}</div>
             <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">

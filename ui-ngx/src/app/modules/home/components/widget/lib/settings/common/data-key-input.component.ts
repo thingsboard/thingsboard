@@ -88,6 +88,9 @@ export class DataKeyInputComponent implements ControlValueAccessor, OnInit, OnCh
   required = false;
 
   @Input()
+  requiredText: string;
+
+  @Input()
   @coerceBoolean()
   isLatestDataKeys = false;
 

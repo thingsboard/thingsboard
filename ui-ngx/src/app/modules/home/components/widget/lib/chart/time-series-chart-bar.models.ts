@@ -119,10 +119,17 @@ export const renderTimeSeriesBar = (params: CustomSeriesRenderItemParams, api: C
     style.rich = renderCtx.labelOption.rich;
   }
 
+  let borderRadius: number[];
+  if (value < 0) {
+    borderRadius = [0, 0, renderCtx.visualSettings.borderRadius, renderCtx.visualSettings.borderRadius];
+  } else {
+    borderRadius = [renderCtx.visualSettings.borderRadius, renderCtx.visualSettings.borderRadius, 0, 0];
+  }
+
   return rectShape && {
     type: 'rect',
     id: time + '',
-    shape: {...rectShape, r: renderCtx.visualSettings.borderRadius},
+    shape: {...rectShape, r: borderRadius},
     style,
     focus: 'series',
     transition: 'all',
