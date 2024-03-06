@@ -55,28 +55,23 @@
     </tr>
     <tr class="tb-legend-keys" *ngIf="isRowDirection && legendConfig.showMin === true">
       <td class="tb-legend-type">{{ 'legend.min' | translate }}</td>
-      <td class="tb-legend-value" *ngFor="let legendKey of legendKeys()" [innerHTML]="legendData.data[legendKey.dataIndex].min">
-      </td>
+      <td class="tb-legend-value" *ngFor="let legendKey of legendKeys()" [innerHTML]="legendData.data[legendKey.dataIndex].min"></td>
     </tr>
     <tr class="tb-legend-keys" *ngIf="isRowDirection && legendConfig.showMax === true">
       <td class="tb-legend-type">{{ 'legend.max' | translate }}</td>
-      <td class="tb-legend-value" *ngFor="let legendKey of legendKeys()" [innerHTML]="legendData.data[legendKey.dataIndex].max">
-      </td>
+      <td class="tb-legend-value" *ngFor="let legendKey of legendKeys()" [innerHTML]="legendData.data[legendKey.dataIndex].max"></td>
     </tr>
     <tr class="tb-legend-keys" *ngIf="isRowDirection && legendConfig.showAvg === true">
       <td class="tb-legend-type">{{ 'legend.avg' | translate }}</td>
-      <td class="tb-legend-value" *ngFor="let legendKey of legendKeys()" [innerHTML]="legendData.data[legendKey.dataIndex].avg">
-      </td>
+      <td class="tb-legend-value" *ngFor="let legendKey of legendKeys()" [innerHTML]="legendData.data[legendKey.dataIndex].avg"></td>
     </tr>
     <tr class="tb-legend-keys" *ngIf="isRowDirection && legendConfig.showTotal === true">
       <td class="tb-legend-type">{{ 'legend.total' | translate }}</td>
-      <td class="tb-legend-value" *ngFor="let legendKey of legendKeys()" [innerHTML]="legendData.data[legendKey.dataIndex].total">
-      </td>
+      <td class="tb-legend-value" *ngFor="let legendKey of legendKeys()" [innerHTML]="legendData.data[legendKey.dataIndex].total"></td>
     </tr>
     <tr class="tb-legend-keys" *ngIf="isRowDirection && legendConfig.showLatest === true">
       <td class="tb-legend-type">{{ 'legend.latest' | translate }}</td>
-      <td class="tb-legend-value" *ngFor="let legendKey of legendKeys()" [innerHTML]="legendData.data[legendKey.dataIndex].latest">
-      </td>
+      <td class="tb-legend-value" *ngFor="let legendKey of legendKeys()" [innerHTML]="legendData.data[legendKey.dataIndex].latest"></td>
     </tr>
   </tbody>
 </table>
