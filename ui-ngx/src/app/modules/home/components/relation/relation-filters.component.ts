@@ -30,6 +30,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-relation-filters',
@@ -48,6 +49,10 @@ export class RelationFiltersComponent extends PageComponent implements ControlVa
   @Input() disabled: boolean;
 
   @Input() allowedEntityTypes: Array<EntityType | AliasEntityType>;
+
+  @Input()
+  @coerceBoolean()
+  enableNotOption = false;
 
   relationFiltersFormGroup: UntypedFormGroup;
 
