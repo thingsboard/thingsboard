@@ -123,13 +123,9 @@ export class MarkedOptionsService extends MarkedOptions {
   }
 
   private wrapCopyCode(id: number, content: string, context: CodeContext): string {
-    let copyCodeButtonClass = 'clipboard-btn';
-    if (context.multiline) {
-      copyCodeButtonClass += ' multiline';
-    }
     return `<div class="code-wrapper noChars" id="codeWrapper${id}" onClick="markdownCopyCode(${id})">${content}` +
       `<span id="copyCodeId${id}" style="display: none;">${encodeURIComponent(context.code)}</span>` +
-      `<button class="${copyCodeButtonClass}">\n` +
+      `<button class="clipboard-btn small">\n` +
       `    <p>${this.translate.instant('markdown.copy-code')}</p>\n` +
       `    <div>\n` +
       `       <img src="/assets/copy-code-icon.svg" alt="${this.translate.instant('markdown.copy-code')}">\n` +
