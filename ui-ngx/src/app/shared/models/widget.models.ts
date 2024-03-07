@@ -553,7 +553,7 @@ export enum WidgetMobileActionType {
   takeScreenshot = 'takeScreenshot'
 }
 
-export const widgetActionTypes = Object.keys(WidgetActionType);
+export const widgetActionTypes = Object.keys(WidgetActionType) as WidgetActionType[];
 
 export const widgetActionTypeTranslationMap = new Map<WidgetActionType, string>(
   [
