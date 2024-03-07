@@ -26,8 +26,10 @@ import java.util.UUID;
 
 public class AutoCommitController extends BaseController {
 
-    @Autowired
-    private EntitiesVersionControlService vcService;
+    private final EntitiesVersionControlService vcService;
+    public AutoCommitController(EntitiesVersionControlService vcService) {
+        this.vcService = vcService;
+    }
 
     protected ListenableFuture<UUID> autoCommit(User user, EntityId entityId) throws Exception {
         if (vcService != null) {
