@@ -22,6 +22,7 @@ import { WINDOW } from '@core/services/window.service';
 import { Tokenizer, marked } from 'marked';
 import { Clipboard } from '@angular/cdk/clipboard';
 
+const smallCopyCodeBlock = '{:copy-code.small}';
 const copyCodeBlock = '{:copy-code}';
 const codeStyleRegex = '^{:code-style="(.*)"}\n';
 const autoBlock = '{:auto}';
@@ -54,7 +55,7 @@ export class MarkedOptionsService extends MarkedOptions {
     // @ts-ignore
     const tokenizer: Tokenizer = {
       autolink(src: string, mangle: (cap: string) => string): marked.Tokens.Link {
-        if (src.endsWith(copyCodeBlock)) {
+        if (src.endsWith(copyCodeBlock || smallCopyCodeBlock)) {
           return undefined;
         } else {
           // @ts-ignore
@@ -62,7 +63,7 @@ export class MarkedOptionsService extends MarkedOptions {
         }
       },
       url(src: string, mangle: (cap: string) => string): marked.Tokens.Link {
-        if (src.endsWith(copyCodeBlock)) {
+        if (src.endsWith(copyCodeBlock || smallCopyCodeBlock)) {
           return undefined;
         } else {
           // @ts-ignore
@@ -125,7 +126,7 @@ export class MarkedOptionsService extends MarkedOptions {
   private wrapCopyCode(id: number, content: string, context: CodeContext): string {
     return `<div class="code-wrapper noChars" id="codeWrapper${id}" onClick="markdownCopyCode(${id})">${content}` +
       `<span id="copyCodeId${id}" style="display: none;">${encodeURIComponent(context.code)}</span>` +
-      `<button class="clipboard-btn small">\n` +
+      `<button class="clipboard-btn${context.small ? ' small' : ''}">\n` +
       `    <p>${this.translate.instant('markdown.copy-code')}</p>\n` +
       `    <div>\n` +
       `       <img src="/assets/copy-code-icon.svg" alt="${this.translate.instant('markdown.copy-code')}">\n` +
@@ -191,6 +192,7 @@ export class MarkedOptionsService extends MarkedOptions {
 
 interface CodeContext {
   copyCode: boolean;
+  small: boolean;
   multiline: boolean;
   codeStyle?: string;
   code: string;
@@ -198,13 +200,13 @@ interface CodeContext {
 
 function processCode(code: string): CodeContext {
   const context: CodeContext = {
-    copyCode: false,
+    copyCode: code.endsWith(copyCodeBlock) || code.endsWith(smallCopyCodeBlock),
+    small: code.endsWith(smallCopyCodeBlock),
     multiline: false,
     code
   };
-  if (context.code.endsWith(copyCodeBlock)) {
-    context.code = context.code.substring(0, context.code.length - copyCodeBlock.length);
-    context.copyCode = true;
+  if (context.copyCode) {
+    context.code = context.code.substring(0, context.code.length - (context.small ? smallCopyCodeBlock.length : copyCodeBlock.length));
   }
   const codeStyleMatch = context.code.match(new RegExp(codeStyleRegex));
   if (codeStyleMatch) {

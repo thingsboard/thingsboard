@@ -138,7 +138,7 @@ export class DeviceCheckConnectivityDialogComponent extends
   private createMarkDownSingleCommand(command: string): string {
     return '```bash\n' +
       command +
-      '{:copy-code}\n' +
+      '{:copy-code.small}\n' +
       '```';
   }
 

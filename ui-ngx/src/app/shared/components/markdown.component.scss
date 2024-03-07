@@ -309,6 +309,18 @@
             filter: invert(51%) sepia(6%) saturate(172%) hue-rotate(177deg) brightness(94%) contrast(92%);
           }
         }
+
+        &.small {
+          height: 32px;
+          p {
+            padding: 5px 8px;
+          }
+          div {
+            width: 36px;
+            height: 36px;
+            top: 1px;
+          }
+        }
       }
 
       &:hover {
