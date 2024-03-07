@@ -16,6 +16,7 @@
 package org.thingsboard.server.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -50,9 +51,11 @@ import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.swing.text.html.Option;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import static javax.servlet.RequestDispatcher.ERROR_EXCEPTION;
 
@@ -102,22 +105,13 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
 
     @RequestMapping("/error")
     public ResponseEntity<Object> handleError(HttpServletRequest request) {
-        Object status = request.getAttribute(RequestDispatcher.ERROR_STATUS_CODE);
-
-        if (status != null) {
-            int statusCode = Integer.parseInt(status.toString());
-            if(statusCode == HttpStatus.NOT_FOUND.value()) {
-                return new ResponseEntity<>(ThingsboardErrorResponse.of(PATH_NOT_FOUND_ERROR_DESCRIPTION, ThingsboardErrorCode.ITEM_NOT_FOUND, HttpStatus.NOT_FOUND), HttpStatus.NOT_FOUND);
-            }
-        }
-        String errorMessage;
-        Throwable throwable = (Throwable) request.getAttribute(ERROR_EXCEPTION);
-        if (throwable != null) {
-            errorMessage = throwable.getMessage();
-        } else {
-            errorMessage = GENERAL_ERROR_DESCRIPTION;
-        }
-        return new ResponseEntity<>(ThingsboardErrorResponse.of(errorMessage, ThingsboardErrorCode.GENERAL, HttpStatus.INTERNAL_SERVER_ERROR), HttpStatus.INTERNAL_SERVER_ERROR);
+        HttpStatus httpStatus = Optional.ofNullable(request.getAttribute(RequestDispatcher.ERROR_STATUS_CODE))
+                .map(status -> HttpStatus.resolve(Integer.parseInt(status.toString())))
+                .orElse(HttpStatus.INTERNAL_SERVER_ERROR);
+        String errorMessage = Optional.ofNullable(request.getAttribute(ERROR_EXCEPTION))
+                .map(e -> (ExceptionUtils.getMessage((Throwable) e)))
+                .orElse(httpStatus.getReasonPhrase());
+        return new ResponseEntity<>(ThingsboardErrorResponse.of(errorMessage, statusToErrorCode(httpStatus), httpStatus), httpStatus);
     }
 
     @Override
