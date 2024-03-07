@@ -34,7 +34,9 @@ import {
   ColorProcessor,
   ComponentStyle,
   getDataKey,
-  overlayStyle, resolveCssSize,
+  overlayStyle,
+  resolveCssSize,
+  simpleDateFormat,
   textStyle
 } from '@shared/models/widget-settings.models';
 import { WidgetComponent } from '@home/components/widget/widget.component';
@@ -44,16 +46,20 @@ import {
   ValueChartCardLayout,
   ValueChartCardWidgetSettings
 } from '@home/components/widget/lib/cards/value-chart-card-widget.models';
-import { TbFlot } from '@home/components/widget/lib/flot-widget';
 import { DataKey } from '@shared/models/widget.models';
-import { TbFlotKeySettings, TbFlotSettings } from '@home/components/widget/lib/flot-widget.models';
 import { getTsValueByLatestDataKey } from '@home/components/widget/lib/cards/aggregated-value-card.models';
 import { Observable } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
+import { TbTimeSeriesChart } from '@home/components/widget/lib/chart/time-series-chart';
+import {
+  TimeSeriesChartKeySettings,
+  TimeSeriesChartSeriesType,
+  TimeSeriesChartSettings
+} from '@home/components/widget/lib/chart/time-series-chart.models';
 
 const layoutHeight = 56;
-const valueRelativeMaxWidth = 0.5;
+const valueRelativeWidth = 0.35;
 
 @Component({
   selector: 'tb-value-chart-card-widget',
@@ -81,6 +87,7 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
   widgetTitlePanel: TemplateRef<any>;
 
   layout: ValueChartCardLayout;
+  autoScale: boolean;
 
   showValue = true;
   valueText = 'N/A';
@@ -90,8 +97,8 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
 
-  private flot: TbFlot;
-  private flotDataKey: DataKey;
+  private lineChart: TbTimeSeriesChart;
+  private lineChartDataKey: DataKey;
 
   private valueKey: DataKey;
   private contentResize$: ResizeObserver;
@@ -129,6 +136,7 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
     }
 
     this.layout = this.settings.layout;
+    this.autoScale = this.settings.autoScale;
 
     this.showValue = this.settings.showValue;
     this.valueStyle = textStyle(this.settings.valueFont);
@@ -138,37 +146,35 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
 
     if (this.ctx.defaultSubscription.firstDatasource?.dataKeys?.length) {
-      this.flotDataKey = this.ctx.defaultSubscription.firstDatasource?.dataKeys[0];
-      this.flotDataKey.settings = {
-        fillLines: false,
-        showLines: true,
-        lineWidth: 2
-      } as TbFlotKeySettings;
+      this.lineChartDataKey = this.ctx.defaultSubscription.firstDatasource?.dataKeys[0];
+      this.lineChartDataKey.settings = {
+        type: TimeSeriesChartSeriesType.line,
+        lineSettings: {
+          showLine: true,
+          step: false,
+          smooth: true,
+          lineWidth: 2,
+          showPoints: false,
+          showPointLabel: false
+        }
+      } as TimeSeriesChartKeySettings;
     }
   }
 
   public ngAfterViewInit() {
-    const settings = {
-      shadowSize: 0,
-      enableSelection: false,
-      smoothLines: true,
-      grid: {
-        tickColor: 'rgba(0,0,0,0.12)',
-        horizontalLines: false,
-        verticalLines: false,
-        outlineWidth: 0,
-        minBorderMargin: 0,
-        margin: 0
+    const settings: TimeSeriesChartSettings = {
+      dataZoom: false,
+      xAxis: {
+        show: false
       },
-      yaxis: {
-        showLabels: false,
-        tickGenerator: 'return [(axis.max + axis.min) / 2];'
+      yAxis: {
+        show: false
       },
-      xaxis: {
-        showLabels: false
-      }
-    } as TbFlotSettings;
-    this.flot = new TbFlot(this.ctx, 'line', $(this.chartElement.nativeElement), settings);
+      tooltipDateInterval: false,
+      tooltipDateFormat: simpleDateFormat('dd MMM yyyy HH:mm:ss')
+    } as TimeSeriesChartSettings;
+
+    this.lineChart = new TbTimeSeriesChart(this.ctx, settings, this.chartElement.nativeElement, this.renderer, false);
 
     this.contentResize$ = new ResizeObserver(() => {
       this.onResize();
@@ -190,7 +196,9 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
   }
 
   public onDataUpdated() {
-    this.flot.update();
+    if (this.lineChart) {
+      this.lineChart.update();
+    }
   }
 
   public onLatestDataUpdated() {
@@ -206,20 +214,21 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
       this.valueColor.update(value);
       this.cd.detectChanges();
       setTimeout(() => {
-        this.onResize(false);
+        this.onResize();
       }, 0);
     }
   }
 
   public onEditModeChanged() {
-    this.flot.checkMouseEvents();
   }
 
   public onDestroy() {
-    this.flot.destroy();
+    if (this.lineChart) {
+      this.lineChart.destroy();
+    }
   }
 
-  private onResize(fitTargetHeight = true) {
+  private onResize(fitTargetWidth = true) {
     if (this.settings.autoScale && this.showValue) {
       const contentWidth = this.valueChartCardContent.nativeElement.getBoundingClientRect().width;
       const contentHeight = this.valueChartCardContent.nativeElement.getBoundingClientRect().height;
@@ -228,26 +237,26 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
         this.valueFontSize = resolveCssSize(fontSize)[0];
       }
       const valueRelativeHeight = Math.min(this.valueFontSize / layoutHeight, 1);
-      const targetValueHeight = contentHeight * valueRelativeHeight;
-      const maxValueWidth = contentWidth * valueRelativeMaxWidth;
-      this.setValueFontSize(targetValueHeight, maxValueWidth, fitTargetHeight);
+      const targetValueWidth = contentWidth * valueRelativeWidth;
+      const maxValueHeight = contentHeight * valueRelativeHeight;
+      this.setValueFontSize(targetValueWidth, maxValueHeight, fitTargetWidth);
     }
-    this.flot.resize();
+    this.lineChart.resize();
   }
 
-  private setValueFontSize(targetHeight: number, maxWidth: number, fitTargetHeight = true) {
+  private setValueFontSize(targetWidth: number, maxHeight: number, fitTargetWidth = true) {
     const fontSize = getComputedStyle(this.valueChartCardValue.nativeElement).fontSize;
     let valueFontSize = resolveCssSize(fontSize)[0];
     this.renderer.setStyle(this.valueChartCardValue.nativeElement, 'fontSize', valueFontSize + 'px');
     this.renderer.setStyle(this.valueChartCardValue.nativeElement, 'lineHeight', '1');
-    let valueHeight = this.valueChartCardValue.nativeElement.getBoundingClientRect().height;
-    while (fitTargetHeight && valueHeight < targetHeight) {
+    let valueWidth = this.valueChartCardValue.nativeElement.getBoundingClientRect().width;
+    while (fitTargetWidth && valueWidth < targetWidth) {
       valueFontSize++;
       this.renderer.setStyle(this.valueChartCardValue.nativeElement, 'fontSize', valueFontSize + 'px');
-      valueHeight = this.valueChartCardValue.nativeElement.getBoundingClientRect().height;
+      valueWidth = this.valueChartCardValue.nativeElement.getBoundingClientRect().width;
     }
-    let valueWidth = this.valueChartCardValue.nativeElement.getBoundingClientRect().width;
-    while ((valueHeight > targetHeight || valueWidth > maxWidth) && valueFontSize > 6) {
+    let valueHeight = this.valueChartCardValue.nativeElement.getBoundingClientRect().height;
+    while ((valueWidth > targetWidth || valueHeight > maxHeight) && valueFontSize > 6) {
       valueFontSize--;
       this.renderer.setStyle(this.valueChartCardValue.nativeElement, 'fontSize', valueFontSize + 'px');
       valueWidth = this.valueChartCardValue.nativeElement.getBoundingClientRect().width;

@@ -55,6 +55,9 @@
     &.no-padding-bottom {
       padding-bottom: 0;
     }
+    &.no-padding-top {
+      padding-top: 0;
+    }
     &.no-padding {
       padding: 0;
     }
@@ -467,6 +470,17 @@
         }
       }
     }
+    &.fixed-height {
+      .mat-mdc-form-field-infix {
+        max-height: 40px;
+        .mat-mdc-select {
+          max-height: 24px;
+          .mat-mdc-select-trigger {
+            max-height: 24px;
+          }
+        }
+      }
+    }
   }
 
   .tb-form-table {
@@ -667,6 +681,16 @@
             width: 20px;
           }
         }
+      }
+    }
+  }
+
+  .mat-mdc-option {
+    &.flex {
+      .mdc-list-item__primary-text {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
       }
     }
   }

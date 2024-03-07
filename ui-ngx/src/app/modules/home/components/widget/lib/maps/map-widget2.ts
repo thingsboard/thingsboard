@@ -298,6 +298,6 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 }
 
-export let TbMapWidgetV2: MapWidgetStaticInterface = MapWidgetController;
+export const TbMapWidgetV2: MapWidgetStaticInterface = MapWidgetController;
 
 
