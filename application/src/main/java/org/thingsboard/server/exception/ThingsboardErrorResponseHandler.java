@@ -51,7 +51,6 @@ import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.swing.text.html.Option;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -63,9 +62,6 @@ import static javax.servlet.RequestDispatcher.ERROR_EXCEPTION;
 @Controller
 @RestControllerAdvice
 public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHandler implements AccessDeniedHandler, ErrorController {
-
-    public static final String PATH_NOT_FOUND_ERROR_DESCRIPTION = "Path is not found.";
-    public static final String GENERAL_ERROR_DESCRIPTION = "Something went wrong!";
 
     private static final Map<HttpStatus, ThingsboardErrorCode> statusToErrorCodeMap = new HashMap<>();
     static {
