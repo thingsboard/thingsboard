@@ -48,6 +48,19 @@ public class Validator {
     }
 
     /**
+     * This method validate <code>EntityId</code> entity id. If entity id is invalid than throw
+     * <code>IncorrectParameterException</code> exception
+     *
+     * @param entityId                  the entityId
+     * @param errorMessageFunction      the error message for exception that apply entityId
+     */
+    public static void validateEntityId(EntityId entityId, Function<EntityId, String> errorMessageFunction) {
+        if (entityId == null || entityId.getId() == null) {
+            throw new IncorrectParameterException(errorMessageFunction.apply(entityId));
+        }
+    }
+
+    /**
      * This method validate <code>String</code> string. If string is invalid than throw
      * <code>IncorrectParameterException</code> exception
      *
