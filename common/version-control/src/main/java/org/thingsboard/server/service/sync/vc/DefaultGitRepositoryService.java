@@ -157,7 +157,7 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
 
     @Override
     public void fetch(TenantId tenantId) throws GitAPIException {
-        var repository = repositories.get(tenantId);
+        var repository = checkRepository(tenantId);
         if (repository != null) {
             log.debug("[{}] Fetching tenant repository.", tenantId);
             repository.fetch();
@@ -195,8 +195,17 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     }
 
     private GitRepository checkRepository(TenantId tenantId) {
-        return Optional.ofNullable(repositories.get(tenantId))
+        GitRepository gitRepository = Optional.ofNullable(repositories.get(tenantId))
                 .orElseThrow(() -> new IllegalStateException("Repository is not initialized"));
+
+        if (!Files.exists(Path.of(gitRepository.getDirectory()))) {
+            try {
+                return cloneRepository(tenantId, gitRepository.getSettings());
+            } catch (Exception e) {
+                throw new IllegalStateException("Repository is not initialized");
+            }
+        }
+        return gitRepository;
     }
 
     @Override
@@ -229,17 +238,7 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
         testRepository(tenantId, settings);
 
         clearRepository(tenantId);
-        log.debug("[{}] Init tenant repository started.", tenantId);
-        Path repositoryDirectory = Path.of(repositoriesFolder, tenantId.getId().toString());
-        GitRepository repository;
-        if (Files.exists(repositoryDirectory)) {
-            FileUtils.forceDelete(repositoryDirectory.toFile());
-        }
-
-        Files.createDirectories(repositoryDirectory);
-        repository = GitRepository.clone(settings, repositoryDirectory.toFile());
-        repositories.put(tenantId, repository);
-        log.debug("[{}] Init tenant repository completed.", tenantId);
+        cloneRepository(tenantId, settings);
     }
 
     @Override
@@ -275,5 +274,19 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
         EntityType entityType = EntityType.valueOf(StringUtils.substringBefore(path, "/").toUpperCase());
         String entityId = StringUtils.substringBetween(path, "/", ".json");
         return EntityIdFactory.getByTypeAndUuid(entityType, entityId);
+    }
+
+    private GitRepository cloneRepository(TenantId tenantId, RepositorySettings settings) throws Exception {
+        log.debug("[{}] Init tenant repository started.", tenantId);
+        Path repositoryDirectory = Path.of(repositoriesFolder, tenantId.getId().toString());
+
+        if (Files.exists(repositoryDirectory)) {
+            FileUtils.forceDelete(repositoryDirectory.toFile());
+        }
+        Files.createDirectories(repositoryDirectory);
+        GitRepository repository = GitRepository.clone(settings, repositoryDirectory.toFile());
+        repositories.put(tenantId, repository);
+        log.debug("[{}] Init tenant repository completed.", tenantId);
+        return repository;
     }
 }
