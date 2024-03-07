@@ -6677,6 +6677,7 @@
               "position-top": "Top",
               "position-bottom": "Bottom",
               "tick-labels": "Tick labels",
+              "ticks-formatter-function": "Ticks formatter function",
               "show-ticks": "Show ticks",
               "show-line": "Show line",
               "show-split-lines": "Show split lines",
