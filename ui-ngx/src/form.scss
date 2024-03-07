@@ -29,9 +29,11 @@
   @media #{$breakpoint} {
     @include form-row-column;
     .mat-mdc-form-field, tb-unit-input {
-      width: auto;
-      &.medium-width {
+      &:not(.fixed-width) {
         width: auto;
+        &.medium-width {
+          width: auto;
+        }
       }
     }
   }

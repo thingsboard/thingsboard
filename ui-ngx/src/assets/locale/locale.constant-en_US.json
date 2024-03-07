@@ -6629,8 +6629,10 @@
             "no-aggregation-bar-width-strategy": "Bar width strategy for non-aggregated data",
             "no-aggregation-bar-width-strategy-group": "Group",
             "no-aggregation-bar-width-strategy-separate": "Separate",
-            "bar-group-interval-width": "Bar group interval width",
-            "separate-bar-width": "Separate bar width",
+            "bar-group-width": "Bar group width",
+            "bar-width": "Bar width",
+            "bar-width-relative": "Percentage of time window",
+            "bar-width-absolute": "Absolute (ms)",
             "threshold": {
               "thresholds": "Thresholds",
               "source": "Source",

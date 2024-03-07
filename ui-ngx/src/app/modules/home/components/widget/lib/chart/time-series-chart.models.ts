@@ -391,10 +391,16 @@ export const timeSeriesChartNoAggregationBarWidthStrategyTranslations = new Map<
   ]
 );
 
+export interface TimeSeriesChartBarWidth {
+  relative?: boolean;
+  relativeWidth?: number;
+  absoluteWidth?: number;
+}
+
 export interface TimeSeriesChartNoAggregationBarWidthSettings {
   strategy: TimeSeriesChartNoAggregationBarWidthStrategy;
-  groupIntervalWidth?: number;
-  separateBarWidth?: number;
+  groupWidth?: TimeSeriesChartBarWidth;
+  barWidth?: TimeSeriesChartBarWidth;
 }
 
 export interface TimeSeriesChartSettings extends EChartsTooltipWidgetSettings {
@@ -474,8 +480,16 @@ export const timeSeriesChartDefaultSettings: TimeSeriesChartSettings = {
   },
   noAggregationBarWidthSettings: {
     strategy: TimeSeriesChartNoAggregationBarWidthStrategy.group,
-    groupIntervalWidth: 1000,
-    separateBarWidth: 1000
+    groupWidth: {
+      relative: true,
+      relativeWidth: 2,
+      absoluteWidth: 1000
+    },
+    barWidth: {
+      relative: true,
+      relativeWidth: 2,
+      absoluteWidth: 1000
+    }
   },
   showTooltip: true,
   tooltipTrigger: EChartsTooltipTrigger.axis,
@@ -757,12 +771,12 @@ export const createTimeSeriesXAxisOption = (settings: TimeSeriesChartAxisSetting
 export const generateChartData = (dataItems: TimeSeriesChartDataItem[],
                                   thresholdItems: TimeSeriesChartThresholdItem[],
                                   timeInterval: Interval,
+                                  stack: boolean,
                                   noAggregation: boolean,
                                   noAggregationBarWidthSettings: TimeSeriesChartNoAggregationBarWidthSettings,
-                                  stack: boolean,
                                   darkMode: boolean): Array<LineSeriesOption | CustomSeriesOption> => {
   let series = generateChartSeries(dataItems, timeInterval,
-    noAggregation, noAggregationBarWidthSettings, stack, darkMode);
+    stack, noAggregation, noAggregationBarWidthSettings, darkMode);
   if (thresholdItems.length) {
     const thresholds = generateChartThresholds(thresholdItems, darkMode);
     series = series.concat(thresholds);
@@ -874,9 +888,9 @@ const createThresholdData = (val: string | number, item: TimeSeriesChartThreshol
 
 const generateChartSeries = (dataItems: TimeSeriesChartDataItem[],
                              timeInterval: Interval,
+                             stack: boolean,
                              noAggregation: boolean,
                              noAggregationBarWidthSettings: TimeSeriesChartNoAggregationBarWidthSettings,
-                             stack: boolean,
                              darkMode: boolean): Array<LineSeriesOption | CustomSeriesOption> => {
   const series: Array<LineSeriesOption | CustomSeriesOption> = [];
   const enabledDataItems = dataItems.filter(d => d.enabled);
@@ -895,7 +909,17 @@ const generateChartSeries = (dataItems: TimeSeriesChartDataItem[],
   for (const item of enabledDataItems) {
     if (item.dataKey.settings.type === TimeSeriesChartSeriesType.bar) {
       if (!item.barRenderContext) {
-        item.barRenderContext = {noAggregation, noAggregationBarWidthSettings};
+        item.barRenderContext = {noAggregation,
+          noAggregationBarWidthStrategy: noAggregationBarWidthSettings.strategy};
+        const targetWidth = noAggregationBarWidthSettings.strategy === TimeSeriesChartNoAggregationBarWidthStrategy.group ?
+          noAggregationBarWidthSettings.groupWidth : noAggregationBarWidthSettings.barWidth;
+        if (targetWidth.relative) {
+          item.barRenderContext.noAggregationWidthRelative = true;
+          item.barRenderContext.noAggregationWidth = targetWidth.relativeWidth;
+        } else {
+          item.barRenderContext.noAggregationWidthRelative = false;
+          item.barRenderContext.noAggregationWidth = targetWidth.absoluteWidth;
+        }
       }
       item.barRenderContext.noAggregation = noAggregation;
       item.barRenderContext.barsCount = barsCount;

@@ -22,8 +22,6 @@ import {
   TimeSeriesChartAxisSettings,
   TimeSeriesChartYAxisSettings
 } from '@home/components/widget/lib/chart/time-series-chart.models';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
 import { merge } from 'rxjs';
 
 @Component({
@@ -60,8 +58,7 @@ export class TimeSeriesChartAxisSettingsComponent implements OnInit, ControlValu
 
   public axisSettingsFormGroup: UntypedFormGroup;
 
-  constructor(protected store: Store<AppState>,
-              private fb: UntypedFormBuilder) {
+  constructor(private fb: UntypedFormBuilder) {
   }
 
   ngOnInit(): void {

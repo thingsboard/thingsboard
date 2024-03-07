@@ -48,33 +48,10 @@
           axisType="xAxis">
       </tb-time-series-chart-axis-settings>
     </div>
-    <div *ngIf="chartType === TimeSeriesChartType.default || chartType === TimeSeriesChartType.bar"
-         class="tb-form-panel" formGroupName="noAggregationBarWidthSettings">
-      <div fxLayout="row" fxLayoutAlign="space-between center">
-        <div fxFlex translate>widgets.time-series-chart.no-aggregation-bar-width-strategy</div>
-        <tb-toggle-select formControlName="strategy" selectMediaBreakpoint="xs">
-          <tb-toggle-option *ngFor="let strategy of timeSeriesChartNoAggregationBarWidthStrategies" [value]="strategy">
-            {{ timeSeriesChartNoAggregationBarWidthStrategyTranslations.get(strategy) | translate }}
-          </tb-toggle-option>
-        </tb-toggle-select>
-      </div>
-      <div *ngIf="timeSeriesChartWidgetSettingsForm.get('noAggregationBarWidthSettings.strategy').value === TimeSeriesChartNoAggregationBarWidthStrategy.group"
-           class="tb-form-row space-between column-xs">
-        <div translate>widgets.time-series-chart.bar-group-interval-width</div>
-        <mat-form-field class="medium-width number" appearance="outline" subscriptSizing="dynamic">
-          <input matInput type="number" formControlName="groupIntervalWidth" min="100" step="1" placeholder="{{ 'widget-config.set' | translate }}"/>
-          <span matSuffix>ms</span>
-        </mat-form-field>
-      </div>
-      <div *ngIf="timeSeriesChartWidgetSettingsForm.get('noAggregationBarWidthSettings.strategy').value === TimeSeriesChartNoAggregationBarWidthStrategy.separate"
-           class="tb-form-row space-between column-xs">
-        <div translate>widgets.time-series-chart.separate-bar-width</div>
-        <mat-form-field class="medium-width number" appearance="outline" subscriptSizing="dynamic">
-          <input matInput type="number" formControlName="separateBarWidth" min="100" step="1" placeholder="{{ 'widget-config.set' | translate }}"/>
-          <span matSuffix>ms</span>
-        </mat-form-field>
-      </div>
-    </div>
+    <tb-time-series-no-aggregation-bar-width-settings
+      *ngIf="chartType === TimeSeriesChartType.default || chartType === TimeSeriesChartType.bar"
+      formControlName="noAggregationBarWidthSettings">
+    </tb-time-series-no-aggregation-bar-width-settings>
     <div class="tb-form-panel tb-slide-toggle">
       <mat-expansion-panel class="tb-settings" [expanded]="timeSeriesChartWidgetSettingsForm.get('showLegend').value"
                            [disabled]="!timeSeriesChartWidgetSettingsForm.get('showLegend').value">

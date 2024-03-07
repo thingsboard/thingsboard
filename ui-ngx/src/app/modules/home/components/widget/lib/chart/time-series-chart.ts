@@ -492,8 +492,9 @@ export class TbTimeSeriesChart {
   private updateSeries(): Array<LineSeriesOption | CustomSeriesOption> {
     return generateChartData(this.dataItems, this.thresholdItems,
       this.ctx.timeWindow.interval,
+      this.settings.stack,
       this.noAggregation,
-      this.settings.noAggregationBarWidthSettings, this.settings.stack, this.darkMode);
+      this.settings.noAggregationBarWidthSettings, this.darkMode);
   }
 
   private updateAxes() {

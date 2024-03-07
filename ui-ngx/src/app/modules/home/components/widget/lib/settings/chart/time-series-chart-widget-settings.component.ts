@@ -22,23 +22,17 @@ import {
   WidgetSettings,
   WidgetSettingsComponent
 } from '@shared/models/widget.models';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { formatValue, isDefinedAndNotNull, mergeDeep } from '@core/utils';
 import { DateFormatProcessor, DateFormatSettings } from '@shared/models/widget-settings.models';
-import {
-  barChartWithLabelsDefaultSettings
-} from '@home/components/widget/lib/chart/bar-chart-with-labels-widget.models';
 import { EChartsTooltipTrigger } from '../../chart/echarts-widget.models';
 import {
-  timeSeriesChartWidgetDefaultSettings, TimeSeriesChartWidgetSettings
+  timeSeriesChartWidgetDefaultSettings,
+  TimeSeriesChartWidgetSettings
 } from '@home/components/widget/lib/chart/time-series-chart-widget.models';
-import {
-  timeSeriesChartNoAggregationBarWidthStrategies,
-  TimeSeriesChartNoAggregationBarWidthStrategy,
-  timeSeriesChartNoAggregationBarWidthStrategyTranslations, TimeSeriesChartType
-} from '@home/components/widget/lib/chart/time-series-chart.models';
+import { TimeSeriesChartType } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 
 @Component({
@@ -64,12 +58,6 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
   legendPositions = legendPositions;
 
   legendPositionTranslationMap = legendPositionTranslationMap;
-
-  TimeSeriesChartNoAggregationBarWidthStrategy = TimeSeriesChartNoAggregationBarWidthStrategy;
-
-  timeSeriesChartNoAggregationBarWidthStrategies = timeSeriesChartNoAggregationBarWidthStrategies;
-
-  timeSeriesChartNoAggregationBarWidthStrategyTranslations = timeSeriesChartNoAggregationBarWidthStrategyTranslations;
 
   timeSeriesChartWidgetSettingsForm: UntypedFormGroup;
 
@@ -111,11 +99,7 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
       yAxis: [settings.yAxis, []],
       xAxis: [settings.xAxis, []],
 
-      noAggregationBarWidthSettings: this.fb.group({
-        strategy: [settings.noAggregationBarWidthSettings.strategy, []],
-        groupIntervalWidth: [settings.noAggregationBarWidthSettings.groupIntervalWidth, [Validators.min(100)]],
-        separateBarWidth: [settings.noAggregationBarWidthSettings.separateBarWidth, [Validators.min(100)]],
-      }),
+      noAggregationBarWidthSettings: [settings.noAggregationBarWidthSettings, []],
 
       showLegend: [settings.showLegend, []],
       legendLabelFont: [settings.legendLabelFont, []],
@@ -140,23 +124,13 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
   }
 
   protected validatorTriggers(): string[] {
-    return ['showLegend', 'showTooltip', 'tooltipShowDate', 'noAggregationBarWidthSettings.strategy'];
+    return ['showLegend', 'showTooltip', 'tooltipShowDate'];
   }
 
   protected updateValidators(emitEvent: boolean) {
     const showLegend: boolean = this.timeSeriesChartWidgetSettingsForm.get('showLegend').value;
     const showTooltip: boolean = this.timeSeriesChartWidgetSettingsForm.get('showTooltip').value;
     const tooltipShowDate: boolean = this.timeSeriesChartWidgetSettingsForm.get('tooltipShowDate').value;
-    const noAggregationBarWidthSettingsStrategy: TimeSeriesChartNoAggregationBarWidthStrategy =
-      this.timeSeriesChartWidgetSettingsForm.get('noAggregationBarWidthSettings').get('strategy').value;
-
-    if (noAggregationBarWidthSettingsStrategy === TimeSeriesChartNoAggregationBarWidthStrategy.group) {
-      this.timeSeriesChartWidgetSettingsForm.get('noAggregationBarWidthSettings').get('groupIntervalWidth').enable();
-      this.timeSeriesChartWidgetSettingsForm.get('noAggregationBarWidthSettings').get('separateBarWidth').disable();
-    } else if (noAggregationBarWidthSettingsStrategy === TimeSeriesChartNoAggregationBarWidthStrategy.separate) {
-      this.timeSeriesChartWidgetSettingsForm.get('noAggregationBarWidthSettings').get('groupIntervalWidth').disable();
-      this.timeSeriesChartWidgetSettingsForm.get('noAggregationBarWidthSettings').get('separateBarWidth').enable();
-    }
 
     if (showLegend) {
       this.timeSeriesChartWidgetSettingsForm.get('legendLabelFont').enable();
