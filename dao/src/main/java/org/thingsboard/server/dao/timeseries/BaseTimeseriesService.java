@@ -286,7 +286,7 @@ public class BaseTimeseriesService implements TimeseriesService {
     }
 
     private static void validate(EntityId entityId) {
-        Validator.validateEntityId(entityId, "Incorrect entityId " + entityId);
+        Validator.validateEntityId(entityId, id -> "Incorrect entityId " + id);
     }
 
     private void validate(ReadTsKvQuery query) {
