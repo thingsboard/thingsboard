@@ -158,11 +158,9 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     @Override
     public void fetch(TenantId tenantId) throws GitAPIException {
         var repository = checkRepository(tenantId);
-        if (repository != null) {
-            log.debug("[{}] Fetching tenant repository.", tenantId);
-            repository.fetch();
-            log.debug("[{}] Fetched tenant repository.", tenantId);
-        }
+        log.debug("[{}] Fetching tenant repository.", tenantId);
+        repository.fetch();
+        log.debug("[{}] Fetched tenant repository.", tenantId);
     }
 
     @Override
@@ -202,7 +200,7 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
             try {
                 return cloneRepository(tenantId, gitRepository.getSettings());
             } catch (Exception e) {
-                throw new IllegalStateException("Repository is not initialized");
+                throw new IllegalStateException("Could not initialize the repository: " + e.getMessage(), e);
             }
         }
         return gitRepository;
