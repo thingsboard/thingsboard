@@ -85,7 +85,7 @@ public class NotificationTemplateController extends BaseController {
                     "      \"WEB\": {\n" +
                     "        \"enabled\": true,\n" +
                     "        \"subject\": \"Greetings\",\n" +
-                    "        \"body\": \"Hi there, ${recipientTitle}\",\n" +
+                    "        \"body\": \"Hi there, $${recipientTitle:{recipientTitle}}\",\n" +
                     "        \"additionalConfig\": {\n" +
                     "          \"icon\": {\n" +
                     "            \"enabled\": true,\n" +
@@ -100,12 +100,12 @@ public class NotificationTemplateController extends BaseController {
                     "      },\n" +
                     "      \"SMS\": {\n" +
                     "        \"enabled\": true,\n" +
-                    "        \"body\": \"Hi there, ${recipientTitle}\",\n" +
+                    "        \"body\": \"Hi there, $${recipientTitle:{recipientTitle}}\",\n" +
                     "        \"method\": \"SMS\"\n" +
                     "      },\n" +
                     "      \"SLACK\": {\n" +
                     "        \"enabled\": true,\n" +
-                    "        \"body\": \"Hi there, @${recipientTitle}\",\n" +
+                    "        \"body\": \"Hi there, @$${recipientTitle:{recipientTitle}}\",\n" +
                     "        \"method\": \"SLACK\"\n" +
                     "      }\n" +
                     "    }\n" +
