@@ -43,6 +43,7 @@ import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.Validator;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -126,18 +127,22 @@ public class BaseTimeseriesService implements TimeseriesService {
     @Override
     public ListenableFuture<List<TsKvEntry>> findLatest(TenantId tenantId, EntityId entityId, Collection<String> keys) {
         validate(entityId);
-        List<ListenableFuture<TsKvEntry>> futures = Lists.newArrayListWithExpectedSize(keys.size());
-        keys.forEach(key -> Validator.validateString(key, "Incorrect key " + key));
-        keys.forEach(key -> futures.add(timeseriesLatestDao.findLatest(tenantId, entityId, key)));
+        List<ListenableFuture<TsKvEntry>> futures = new ArrayList<>(keys.size());
+        keys.forEach(key -> Validator.validateString(key, k -> "Incorrect key " + k));
+        for (String key : keys) {
+            futures.add(timeseriesLatestDao.findLatest(tenantId, entityId, key));
+        }
         return Futures.allAsList(futures);
     }
 
     @Override
     public List<TsKvEntry> findLatestSync(TenantId tenantId, EntityId entityId, Collection<String> keys) {
         validate(entityId);
-        List<TsKvEntry> latestEntries = Lists.newArrayListWithExpectedSize(keys.size());
-        keys.forEach(key -> Validator.validateString(key, "Incorrect key " + key));
-        keys.forEach(key -> latestEntries.add(timeseriesLatestDao.findLatestSync(tenantId, entityId, key)));
+        List<TsKvEntry> latestEntries = new ArrayList(keys.size());
+        keys.forEach(key -> Validator.validateString(key, k -> "Incorrect key " + k));
+        for (String key : keys) {
+            latestEntries.add(timeseriesLatestDao.findLatestSync(tenantId, entityId, key));
+        }
         return latestEntries;
     }
 
