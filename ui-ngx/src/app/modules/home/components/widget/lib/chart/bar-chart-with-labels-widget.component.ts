@@ -28,16 +28,9 @@ import {
   ViewEncapsulation
 } from '@angular/core';
 import { WidgetContext } from '@home/models/widget-component.models';
-import {
-  backgroundStyle,
-  ComponentStyle,
-  DateFormatProcessor,
-  overlayStyle,
-  textStyle
-} from '@shared/models/widget-settings.models';
+import { backgroundStyle, ComponentStyle, DateFormatProcessor, overlayStyle, textStyle } from '@shared/models/widget-settings.models';
 import { ResizeObserver } from '@juggle/resize-observer';
-import { deepClone, formatValue, isDefinedAndNotNull } from '@core/utils';
-import { DataKey } from '@shared/models/widget.models';
+import { formatValue, isDefinedAndNotNull } from '@core/utils';
 import { Observable } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -53,12 +46,12 @@ import { CallbackDataParams, CustomSeriesRenderItem, LabelLayoutOptionCallback }
 import {
   ECharts,
   echartsModule,
-  EChartsOption, EChartsSeriesItem,
+  EChartsOption,
+  EChartsSeriesItem,
   echartsTooltipFormatter,
-  NamedDataSet,
   toNamedData
 } from '@home/components/widget/lib/chart/echarts-widget.models';
-import { AggregationType, IntervalMath } from '@shared/models/time/time.models';
+import { IntervalMath } from '@shared/models/time/time.models';
 
 type BarChartDataItem = EChartsSeriesItem;
 
@@ -186,8 +179,6 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
       const time = api.value(0) as number;
       let start = api.value(2) as number;
       const end = api.value(3) as number;
-      console.log('time', time);
-      console.log('start', start);
       let interval = end - start;
       if (!start || !end || !interval) {
         interval =  IntervalMath.numberValue(isDefinedAndNotNull(this.settings.defaultBarWidth) ?
@@ -203,11 +194,9 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
       const startTime = start + intervalGap + barInterval * index;
       const delta = barInterval;
       const lowerLeft = api.coord([startTime, value >= 0 ? value : 0]);
-      // const size = api.size([delta, value]);
-
-      const height =  api.size([delta, value])[1];
-
-      const width = api.size([delta, 10])[0];
+      const size = api.size([delta, value]);
+      const height =  size[1];
+      const width = size[0];
 
       const coordSys: {x: number; y: number; width: number; height: number} = params.coordSys as any;
 
@@ -300,13 +289,10 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
   }
 
   public onDataUpdated() {
-    // console.log('_______________________');
-    // console.log('onDataUpdated', deepClone(this.ctx.data));
     for (const item of this.dataItems) {
       const datasourceData = this.ctx.data ? this.ctx.data.find(d => d.dataKey === item.dataKey) : null;
       item.data = datasourceData?.data ? toNamedData(datasourceData.data) : [];
     }
-    // console.log('afterDataUpdate', deepClone(this.dataItems));
     if (this.barChart) {
       (this.barChartOptions.xAxis as any).min = this.ctx.defaultSubscription.timeWindow.minTime;
       (this.barChartOptions.xAxis as any).max = this.ctx.defaultSubscription.timeWindow.maxTime;
@@ -318,9 +304,6 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
 
   private updateSeries(): Array<CustomSeriesOption> {
     const series: Array<CustomSeriesOption> = [];
-    // console.log('-------------------');
-    // console.log('dataItemsTest', deepClone(this.dataItems));
-    // console.log('dataItems', this.dataItems);
     for (const item of this.dataItems) {
       if (item.enabled) {
         const seriesOption: CustomSeriesOption = {
@@ -343,8 +326,6 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
         series.push(seriesOption);
       }
     }
-    console.log('Series', series);
-    // console.log('______________');
     return series;
   }
 
