@@ -70,11 +70,10 @@ public class TbUnassignFromCustomerNode extends TbAbstractCustomerActionNode<TbU
                         originator.getId() + "' from customer! Customer title should be specified!");
             }
             var customerIdFuture = getCustomerIdFuture(ctx, msg);
-            return Futures.transformAsync(customerIdFuture, customerId ->
-                    ctx.getDbCallbackExecutor().submit(() -> {
-                        ctx.getDashboardService().unassignDashboardFromCustomer(tenantId, new DashboardId(originator.getId()), customerId);
-                        return null;
-                    }), MoreExecutors.directExecutor());
+            return Futures.transformAsync(customerIdFuture, customerId -> {
+                ctx.getDashboardService().unassignDashboardFromCustomer(tenantId, new DashboardId(originator.getId()), customerId);
+                return Futures.immediateFuture(null);
+            }, MoreExecutors.directExecutor());
         }
         return ctx.getDbCallbackExecutor().submit(() -> {
             switch (originatorType) {

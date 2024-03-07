@@ -28,11 +28,9 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
-import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import java.util.ArrayList;
-import java.util.stream.Collectors;
+import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
 
 @Slf4j
@@ -78,35 +76,19 @@ public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteR
     }
 
     @Override
-    protected ListenableFuture<TbPair<TbMsg, Boolean>> processEntityRelationAction(TbContext ctx, TbMsg msg) {
-        if (config.isDeleteForSingleEntity()) {
-            return Futures.transformAsync(getTargetEntityId(ctx, msg), targetEntityId -> {
-                var deleteRelationFuture = deleteRelationToSpecificEntity(ctx, msg, targetEntityId);
-                return Futures.transform(deleteRelationFuture, deletedOrMissing ->
-                        new TbPair<>(msg, deletedOrMissing), MoreExecutors.directExecutor());
-            }, MoreExecutors.directExecutor());
-        }
-        return Futures.transform(deleteAllRelations(ctx, msg), result -> new TbPair<>(msg, result), MoreExecutors.directExecutor());
-    }
-
-    private ListenableFuture<Boolean> deleteAllRelations(TbContext ctx, TbMsg msg) {
-        var relationType = processPattern(msg, config.getRelationType());
-        var tenantId = ctx.getTenantId();
-        var originator = msg.getOriginator();
-        var relationService = ctx.getRelationService();
-        var originatorRelationsFuture = EntitySearchDirection.FROM.equals(config.getDirection()) ?
-                relationService.findByFromAndTypeAsync(tenantId, originator, relationType, RelationTypeGroup.COMMON) :
-                relationService.findByToAndTypeAsync(tenantId, originator, relationType, RelationTypeGroup.COMMON);
-        return Futures.transformAsync(originatorRelationsFuture, originatorRelations -> {
-            if (originatorRelations.isEmpty()) {
-                return Futures.immediateFuture(true);
-            }
-            var deleteRelationFutures = originatorRelations.stream()
-                    .map(entityRelation -> relationService.deleteRelationAsync(tenantId, entityRelation))
-                    .collect(Collectors.toCollection(ArrayList::new));
-            return Futures.transform(Futures.allAsList(deleteRelationFutures), deleteResults ->
-                    deleteResults.stream().allMatch(Boolean::booleanValue), MoreExecutors.directExecutor());
-        }, MoreExecutors.directExecutor());
+    public void onMsg(TbContext ctx, TbMsg msg) {
+        ListenableFuture<Boolean> deleteResultFuture = config.isDeleteForSingleEntity() ?
+                Futures.transformAsync(getTargetEntityId(ctx, msg), targetEntityId ->
+                        deleteRelationToSpecificEntity(ctx, msg, targetEntityId), MoreExecutors.directExecutor()) :
+                deleteRelationsByTypeAndDirection(ctx, msg, ctx.getDbCallbackExecutor());
+        withCallback(deleteResultFuture, deleted -> {
+                    if (deleted) {
+                        ctx.tellSuccess(msg);
+                        return;
+                    }
+                    ctx.tellFailure(msg, new RuntimeException("Failed to delete relation(s) with originator!"));
+                },
+                t -> ctx.tellFailure(msg, t), MoreExecutors.directExecutor());
     }
 
     private ListenableFuture<Boolean> deleteRelationToSpecificEntity(TbContext ctx, TbMsg msg, EntityId targetEntityId) {

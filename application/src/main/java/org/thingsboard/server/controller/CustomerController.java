@@ -183,6 +183,6 @@ public class CustomerController extends BaseController {
             @ApiParam(value = "A string value representing the Customer title.")
             @RequestParam String customerTitle) throws ThingsboardException {
             TenantId tenantId = getCurrentUser().getTenantId();
-        return checkNotNull(customerService.findCustomerByTenantIdAndTitleUsingCache(tenantId, customerTitle), "Customer with title [" + customerTitle + "] is not found");
+        return checkNotNull(customerService.findCustomerByTenantIdAndTitle(tenantId, customerTitle), "Customer with title [" + customerTitle + "] is not found");
     }
 }

@@ -37,6 +37,7 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -54,7 +55,7 @@ public class CustomerServiceTest extends AbstractServiceTest {
     @Before
     public void before() {
         executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(8, getClass()));
-      }
+    }
 
     @After
     public void after() {
@@ -275,8 +276,9 @@ public class CustomerServiceTest extends AbstractServiceTest {
         Assert.assertEquals(customer.getTenantId(), savedCustomer.getTenantId());
         Assert.assertEquals(customer.getTitle(), savedCustomer.getTitle());
 
-        Customer foundCustomer = customerService.findCustomerByTenantIdAndTitleUsingCache(tenantId, savedCustomer.getTitle());
-        Assert.assertEquals(foundCustomer.getTitle(), savedCustomer.getTitle());
+        Optional<Customer> foundCustomerOpt = customerService.findCustomerByTenantIdAndTitle(tenantId, savedCustomer.getTitle());
+        Assert.assertTrue(foundCustomerOpt.isPresent());
+        Assert.assertEquals(foundCustomerOpt.get().getTitle(), savedCustomer.getTitle());
 
         customerService.deleteCustomer(tenantId, savedCustomer.getId());
     }

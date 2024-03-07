@@ -23,6 +23,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
@@ -52,7 +53,6 @@ import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
-import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
@@ -72,6 +72,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -82,6 +83,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -94,7 +97,7 @@ import static org.mockito.Mockito.when;
 public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private static final Set<EntityType> supportedEntityTypes = EnumSet.of(EntityType.TENANT, EntityType.DEVICE,
-                    EntityType.ASSET, EntityType.CUSTOMER, EntityType.ENTITY_VIEW, EntityType.DASHBOARD, EntityType.EDGE, EntityType.USER);
+            EntityType.ASSET, EntityType.CUSTOMER, EntityType.ENTITY_VIEW, EntityType.DASHBOARD, EntityType.EDGE, EntityType.USER);
 
     private static final String supportedEntityTypesStr = supportedEntityTypes.stream().map(Enum::name).collect(Collectors.joining(" ,"));
 
@@ -253,7 +256,9 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         verify(relationServiceMock).checkRelationAsync(eq(tenantId), eq(originatorId), eq(entityId), eq(EntityRelation.CONTAINS_TYPE), eq(RelationTypeGroup.COMMON));
         verify(relationServiceMock).deleteRelationAsync(eq(tenantId), eq(originatorId), eq(entityId), eq(EntityRelation.CONTAINS_TYPE), eq(RelationTypeGroup.COMMON));
 
-        verify(ctxMock).tellNext(eq(msg), eq(TbNodeConnectionType.SUCCESS));
+        verify(ctxMock).tellSuccess(eq(msg));
+        verify(ctxMock, never()).tellNext(any(), anyString());
+        verify(ctxMock, never()).tellNext(any(), anySet());
         verify(ctxMock, never()).tellFailure(any(), any());
         verify(ctxMock).getDbCallbackExecutor();
         verifyNoMoreInteractions(ctxMock, relationServiceMock);
@@ -297,10 +302,14 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         verify(relationServiceMock).checkRelationAsync(eq(tenantId), eq(originatorId), eq(entityId), eq(EntityRelation.CONTAINS_TYPE), eq(RelationTypeGroup.COMMON));
         verify(relationServiceMock).deleteRelationAsync(eq(tenantId), eq(originatorId), eq(entityId), eq(EntityRelation.CONTAINS_TYPE), eq(RelationTypeGroup.COMMON));
 
-        verify(ctxMock).tellNext(eq(msg), eq(TbNodeConnectionType.FAILURE));
-        verify(ctxMock, never()).tellFailure(any(), any());
+        var throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
+        verify(ctxMock).tellFailure(eq(msg), throwableCaptor.capture());
+        verify(ctxMock, never()).tellNext(any(), anyString());
+        verify(ctxMock, never()).tellNext(any(), anySet());
+        verify(ctxMock, never()).tellSuccess(any());
         verify(ctxMock).getDbCallbackExecutor();
         verifyNoMoreInteractions(ctxMock, relationServiceMock);
+        assertThat(throwableCaptor.getValue()).isInstanceOf(RuntimeException.class).hasMessage("Failed to delete relation(s) with originator!");
     }
 
     @ParameterizedTest
@@ -339,7 +348,9 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
 
         verify(relationServiceMock).checkRelationAsync(eq(tenantId), eq(originatorId), eq(entityId), eq(EntityRelation.CONTAINS_TYPE), eq(RelationTypeGroup.COMMON));
 
-        verify(ctxMock).tellNext(eq(msg), eq(TbNodeConnectionType.SUCCESS));
+        verify(ctxMock).tellSuccess(eq(msg));
+        verify(ctxMock, never()).tellNext(any(), anyString());
+        verify(ctxMock, never()).tellNext(any(), anySet());
         verify(ctxMock, never()).tellFailure(any(), any());
         verify(ctxMock).getDbCallbackExecutor();
         verifyNoMoreInteractions(ctxMock, relationServiceMock);
@@ -358,6 +369,7 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
 
         when(ctxMock.getTenantId()).thenReturn(tenantId);
         when(ctxMock.getRelationService()).thenReturn(relationServiceMock);
+        when(ctxMock.getDbCallbackExecutor()).thenReturn(dbExecutor);
 
         var relationToDelete = new EntityRelation();
         when(relationServiceMock.findByFromAndTypeAsync(any(), any(), any(), any())).thenReturn(Futures.immediateFuture(List.of(relationToDelete)));
@@ -372,7 +384,9 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         verify(relationServiceMock).findByFromAndTypeAsync(eq(tenantId), eq(originatorId), eq(EntityRelation.CONTAINS_TYPE), eq(RelationTypeGroup.COMMON));
         verify(relationServiceMock).deleteRelationAsync(eq(tenantId), eq(relationToDelete));
 
-        verify(ctxMock).tellNext(eq(msg), eq(TbNodeConnectionType.SUCCESS));
+        verify(ctxMock).tellSuccess(eq(msg));
+        verify(ctxMock, never()).tellNext(any(), anyString());
+        verify(ctxMock, never()).tellNext(any(), anySet());
         verify(ctxMock, never()).tellFailure(any(), any());
         verifyNoMoreInteractions(ctxMock, relationServiceMock);
     }
@@ -390,6 +404,7 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
 
         when(ctxMock.getTenantId()).thenReturn(tenantId);
         when(ctxMock.getRelationService()).thenReturn(relationServiceMock);
+        when(ctxMock.getDbCallbackExecutor()).thenReturn(dbExecutor);
 
         var relationToDelete = new EntityRelation();
         when(relationServiceMock.findByFromAndTypeAsync(any(), any(), any(), any())).thenReturn(Futures.immediateFuture(List.of(relationToDelete)));
@@ -404,9 +419,13 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         verify(relationServiceMock).findByFromAndTypeAsync(eq(tenantId), eq(originatorId), eq(EntityRelation.CONTAINS_TYPE), eq(RelationTypeGroup.COMMON));
         verify(relationServiceMock).deleteRelationAsync(eq(tenantId), eq(relationToDelete));
 
-        verify(ctxMock).tellNext(eq(msg), eq(TbNodeConnectionType.FAILURE));
-        verify(ctxMock, never()).tellFailure(any(), any());
+        var throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
+        verify(ctxMock).tellFailure(eq(msg), throwableCaptor.capture());
+        verify(ctxMock, never()).tellNext(any(), anyString());
+        verify(ctxMock, never()).tellNext(any(), anySet());
+        verify(ctxMock, never()).tellSuccess(any());
         verifyNoMoreInteractions(ctxMock, relationServiceMock);
+        assertThat(throwableCaptor.getValue()).isInstanceOf(RuntimeException.class).hasMessage("Failed to delete relation(s) with originator!");
     }
 
 
@@ -422,7 +441,7 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
                 },
                 EntityType.CUSTOMER, () -> {
                     when(ctxMock.getCustomerService()).thenReturn(customerServiceMock);
-                    when(customerServiceMock.findCustomerByTenantIdAndTitleUsingCache(any(), any())).thenReturn(null);
+                    when(customerServiceMock.findCustomerByTenantIdAndTitle(any(), any())).thenReturn(Optional.empty());
                 },
                 EntityType.ENTITY_VIEW, () -> {
                     when(ctxMock.getEntityViewService()).thenReturn(entityViewServiceMock);
@@ -458,7 +477,7 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
                 EntityType.CUSTOMER, hasId -> {
                     var customer = (Customer) hasId;
                     when(ctxMock.getCustomerService()).thenReturn(customerServiceMock);
-                    when(customerServiceMock.findCustomerByTenantIdAndTitleUsingCache(any(), any())).thenReturn(customer);
+                    when(customerServiceMock.findCustomerByTenantIdAndTitle(any(), any())).thenReturn(Optional.ofNullable(customer));
                 },
                 EntityType.ENTITY_VIEW, hasId -> {
                     var entityView = (EntityView) hasId;
@@ -497,7 +516,7 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
                     verifyNoMoreInteractions(assetServiceMock);
                 },
                 EntityType.CUSTOMER, hasId -> {
-                    verify(customerServiceMock).findCustomerByTenantIdAndTitleUsingCache(eq(tenantId), eq("EntityName"));
+                    verify(customerServiceMock).findCustomerByTenantIdAndTitle(eq(tenantId), eq("EntityName"));
                     verifyNoMoreInteractions(customerServiceMock);
                 },
                 EntityType.ENTITY_VIEW, hasId -> {
@@ -516,7 +535,8 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
                     verify(dashboardServiceMock).findFirstDashboardInfoByTenantIdAndName(eq(tenantId), eq("EntityName"));
                     verifyNoMoreInteractions(dashboardServiceMock);
                 },
-                EntityType.TENANT, hasId -> {}
+                EntityType.TENANT, hasId -> {
+                }
         );
     }
 

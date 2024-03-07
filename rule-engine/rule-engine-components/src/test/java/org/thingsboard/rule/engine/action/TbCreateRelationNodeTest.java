@@ -55,7 +55,6 @@ import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
-import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
@@ -75,6 +74,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
@@ -271,7 +271,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         verify(relationServiceMock).checkRelationAsync(eq(tenantId), eq(originatorId), eq(entityId), eq(EntityRelation.CONTAINS_TYPE), eq(RelationTypeGroup.COMMON));
         verify(relationServiceMock).saveRelationAsync(eq(tenantId), eq(new EntityRelation(originatorId, entityId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON)));
 
-        verify(ctxMock).tellNext(eq(msg), eq(TbNodeConnectionType.SUCCESS));
+        verify(ctxMock).tellSuccess(eq(msg));
         verify(ctxMock, never()).tellFailure(any(), any());
         verify(ctxMock).getDbCallbackExecutor();
         verifyNoMoreInteractions(ctxMock, relationServiceMock);
@@ -322,7 +322,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         verify(relationServiceMock).checkRelationAsync(eq(tenantId), eq(originatorId), eq(entityId), eq(EntityRelation.CONTAINS_TYPE), eq(RelationTypeGroup.COMMON));
         verify(relationServiceMock).saveRelationAsync(eq(tenantId), eq(new EntityRelation(originatorId, entityId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON)));
 
-        verify(ctxMock).tellNext(eq(msg), eq(TbNodeConnectionType.SUCCESS));
+        verify(ctxMock).tellSuccess(eq(msg));
         verify(ctxMock, never()).tellFailure(any(), any());
         verify(ctxMock).getDbCallbackExecutor();
         verifyNoMoreInteractions(ctxMock, relationServiceMock);
@@ -381,7 +381,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         verify(relationServiceMock).checkRelationAsync(eq(tenantId), eq(originatorId), eq(entityId), eq(EntityRelation.CONTAINS_TYPE), eq(RelationTypeGroup.COMMON));
         verify(relationServiceMock).saveRelationAsync(eq(tenantId), eq(new EntityRelation(originatorId, entityId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON)));
 
-        verify(ctxMock).tellNext(eq(msg), eq(TbNodeConnectionType.SUCCESS));
+        verify(ctxMock).tellSuccess(eq(msg));
         verify(ctxMock, never()).tellFailure(any(), any());
         verify(ctxMock).getDbCallbackExecutor();
         verifyNoMoreInteractions(ctxMock, relationServiceMock);
@@ -431,7 +431,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         verify(relationServiceMock).saveRelationAsync(eq(tenantId), eq(new EntityRelation(originatorId, entityId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON)));
 
         verify(ctxMock).transformMsgOriginator(eq(msg), eq(entityId));
-        verify(ctxMock).tellNext(eq(msgAfterOriginatorChanged), eq(TbNodeConnectionType.SUCCESS));
+        verify(ctxMock).tellSuccess(eq(msgAfterOriginatorChanged));
         verify(ctxMock, never()).tellFailure(any(), any());
         verify(ctxMock).getDbCallbackExecutor();
         verifyNoMoreInteractions(ctxMock, relationServiceMock);
@@ -479,7 +479,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         verify(relationServiceMock).checkRelationAsync(eq(tenantId), eq(originatorId), eq(entityId), eq(EntityRelation.CONTAINS_TYPE), eq(RelationTypeGroup.COMMON));
         verify(relationServiceMock).saveRelationAsync(eq(tenantId), eq(new EntityRelation(originatorId, entityId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON)));
 
-        verify(ctxMock).tellNext(eq(msg), eq(TbNodeConnectionType.SUCCESS));
+        verify(ctxMock).tellSuccess(eq(msg));
         verify(ctxMock, never()).tellFailure(any(), any());
         verify(ctxMock).getDbCallbackExecutor();
         verifyNoMoreInteractions(ctxMock, relationServiceMock);
@@ -500,7 +500,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
                 EntityType.CUSTOMER, hasId -> {
                     var customer = (Customer) hasId;
                     when(ctxMock.getCustomerService()).thenReturn(customerServiceMock);
-                    when(customerServiceMock.findCustomerByTenantIdAndTitleUsingCache(any(), any())).thenReturn(customer);
+                    when(customerServiceMock.findCustomerByTenantIdAndTitle(any(), any())).thenReturn(Optional.ofNullable(customer));
                 },
                 EntityType.ENTITY_VIEW, hasId -> {
                     var entityView = (EntityView) hasId;
@@ -538,7 +538,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
                     verifyNoMoreInteractions(assetServiceMock);
                 },
                 EntityType.CUSTOMER, () -> {
-                    verify(customerServiceMock).findCustomerByTenantIdAndTitleUsingCache(eq(tenantId), eq("EntityName"));
+                    verify(customerServiceMock).findCustomerByTenantIdAndTitle(eq(tenantId), eq("EntityName"));
                     verifyNoMoreInteractions(customerServiceMock);
                 },
                 EntityType.ENTITY_VIEW, () -> {
@@ -582,7 +582,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
                 EntityType.CUSTOMER, (hasId, entityCreatedMsg) -> {
                     var customer = (Customer) hasId;
                     when(ctxMock.getCustomerService()).thenReturn(customerServiceMock);
-                    when(customerServiceMock.findCustomerByTenantIdAndTitleUsingCache(any(), any())).thenReturn(null);
+                    when(customerServiceMock.findCustomerByTenantIdAndTitle(any(), any())).thenReturn(Optional.empty());
                     when(customerServiceMock.saveCustomer(any())).thenReturn(customer);
                     doAnswer(invocation -> entityCreatedMsg).when(ctxMock).customerCreatedMsg(any(), any());
                 }
@@ -606,7 +606,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
                     verifyNoMoreInteractions(assetServiceMock);
                 },
                 EntityType.CUSTOMER, (hasId, entityCreatedMsg) -> {
-                    verify(customerServiceMock).findCustomerByTenantIdAndTitleUsingCache(eq(tenantId), eq("EntityName"));
+                    verify(customerServiceMock).findCustomerByTenantIdAndTitle(eq(tenantId), eq("EntityName"));
                     verify(customerServiceMock).saveCustomer(any());
                     verify(ctxMock).enqueue(eq(entityCreatedMsg), any(), any());
                     verifyNoMoreInteractions(customerServiceMock);
@@ -626,7 +626,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
                 },
                 EntityType.CUSTOMER, () -> {
                     when(ctxMock.getCustomerService()).thenReturn(customerServiceMock);
-                    when(customerServiceMock.findCustomerByTenantIdAndTitleUsingCache(any(), any())).thenReturn(null);
+                    when(customerServiceMock.findCustomerByTenantIdAndTitle(any(), any())).thenReturn(Optional.empty());
                 },
                 EntityType.ENTITY_VIEW, () -> {
                     when(ctxMock.getEntityViewService()).thenReturn(entityViewServiceMock);

@@ -190,7 +190,7 @@ public abstract class AbstractOAuth2ClientMapper {
         if (StringUtils.isEmpty(customerName)) {
             return null;
         }
-        Optional<Customer> customerOpt = Optional.ofNullable(customerService.findCustomerByTenantIdAndTitleUsingCache(tenantId, customerName));
+        Optional<Customer> customerOpt = customerService.findCustomerByTenantIdAndTitle(tenantId, customerName);
         if (customerOpt.isPresent()) {
             return customerOpt.get().getId();
         } else {

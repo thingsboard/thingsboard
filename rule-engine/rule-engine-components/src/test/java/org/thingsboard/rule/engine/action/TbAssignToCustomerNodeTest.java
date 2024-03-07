@@ -63,6 +63,7 @@ import org.thingsboard.server.dao.entityview.EntityViewService;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -187,7 +188,7 @@ class TbAssignToCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
         var msg = getTbMsg(originator);
         var customer = createCustomer(customerTitle);
 
-        when(customerServiceMock.findCustomerByTenantIdAndTitleUsingCache(eq(TENANT_ID), eq(customerTitle))).thenReturn(customer);
+        when(customerServiceMock.findCustomerByTenantIdAndTitle(eq(TENANT_ID), eq(customerTitle))).thenReturn(Optional.of(customer));
         Map<EntityType, Consumer<EntityId>> entityTypeToAssignConsumerMap = mockMethodCallsForSupportedTypes();
         entityTypeToAssignConsumerMap.get(type).accept(originator);
 
@@ -218,7 +219,7 @@ class TbAssignToCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
         var msg = getTbMsg(originator);
         var customer = createCustomer(customerTitle);
 
-        when(customerServiceMock.findCustomerByTenantIdAndTitleUsingCache(eq(TENANT_ID), eq(customerTitle))).thenReturn(null);
+        when(customerServiceMock.findCustomerByTenantIdAndTitle(eq(TENANT_ID), eq(customerTitle))).thenReturn(Optional.empty());
         when(customerServiceMock.saveCustomer(any(Customer.class))).thenReturn(customer);
         Map<EntityType, Consumer<EntityId>> entityTypeToEntityIdConsumerMap = mockMethodCallsForSupportedTypes();
         entityTypeToEntityIdConsumerMap.get(type).accept(originator);
@@ -250,7 +251,7 @@ class TbAssignToCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
         var originator = toOriginator(type);
         var msg = getTbMsg(originator);
 
-        when(customerServiceMock.findCustomerByTenantIdAndTitleUsingCache(eq(TENANT_ID), eq(customerTitle))).thenReturn(null);
+        when(customerServiceMock.findCustomerByTenantIdAndTitle(eq(TENANT_ID), eq(customerTitle))).thenReturn(Optional.empty());
 
         // WHEN
         var exception = assertThrows(RuntimeException.class, () -> node.onMsg(ctxMock, msg));

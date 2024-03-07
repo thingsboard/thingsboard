@@ -36,7 +36,6 @@ import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.EnumSet;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
@@ -84,7 +83,7 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
             var customerCreationLock = new CustomerCreationLock(tenantId, customerTitle);
             synchronized (customerCreationLocks.computeIfAbsent(customerCreationLock, k -> new Object())) {
                 return ctx.getDbCallbackExecutor().submit(() -> {
-                    var customerOptional = Optional.ofNullable(ctx.getCustomerService().findCustomerByTenantIdAndTitleUsingCache(tenantId, customerTitle));
+                    var customerOptional = ctx.getCustomerService().findCustomerByTenantIdAndTitle(tenantId, customerTitle);
                     if (customerOptional.isPresent()) {
                         return customerOptional.get().getId();
                     }
@@ -100,7 +99,7 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
             }
         }
         return ctx.getDbCallbackExecutor().submit(() -> {
-            var customerOptional = Optional.ofNullable(ctx.getCustomerService().findCustomerByTenantIdAndTitleUsingCache(tenantId, customerTitle));
+            var customerOptional = ctx.getCustomerService().findCustomerByTenantIdAndTitle(tenantId, customerTitle);
             if (customerOptional.isPresent()) {
                 return customerOptional.get().getId();
             }

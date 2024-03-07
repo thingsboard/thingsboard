@@ -17,8 +17,8 @@ package org.thingsboard.rule.engine.action;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -42,11 +43,8 @@ import java.util.EnumSet;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
-
-import static org.thingsboard.common.util.DonAsynchron.withCallback;
-import static org.thingsboard.server.common.data.msg.TbNodeConnectionType.FAILURE;
-import static org.thingsboard.server.common.data.msg.TbNodeConnectionType.SUCCESS;
 
 @Slf4j
 public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationActionNodeConfiguration> implements TbNode {
@@ -64,15 +62,6 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = loadEntityNodeActionConfig(configuration);
     }
-
-    @Override
-    public void onMsg(TbContext ctx, TbMsg msg) {
-        withCallback(processEntityRelationAction(ctx, msg),
-                actionResultAndMsg -> ctx.tellNext(actionResultAndMsg.getFirst(), actionResultAndMsg.getSecond() ? SUCCESS : FAILURE),
-                t -> ctx.tellFailure(msg, t), MoreExecutors.directExecutor());
-    }
-
-    protected abstract ListenableFuture<TbPair<TbMsg, Boolean>> processEntityRelationAction(TbContext ctx, TbMsg msg);
 
     protected abstract boolean createEntityIfNotExists();
 
@@ -158,9 +147,9 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                     var entityCreationLock = new EntityCreationLock(tenantId, entityType, targetEntityName);
                     synchronized (entitiesCreationLocks.computeIfAbsent(entityCreationLock, k -> new Object())) {
                         return ctx.getDbCallbackExecutor().executeAsync(() -> {
-                            var customer = customerService.findCustomerByTenantIdAndTitleUsingCache(tenantId, targetEntityName);
-                            if (customer != null) {
-                                return customer.getId();
+                            var customerOpt = customerService.findCustomerByTenantIdAndTitle(tenantId, targetEntityName);
+                            if (customerOpt.isPresent()) {
+                                return customerOpt.get().getId();
                             }
                             var newCustomer = new Customer();
                             newCustomer.setTitle(targetEntityName);
@@ -174,11 +163,11 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                     }
                 }
                 return ctx.getDbCallbackExecutor().executeAsync(() -> {
-                    var customer = customerService.findCustomerByTenantIdAndTitleUsingCache(tenantId, targetEntityName);
-                    if (customer == null) {
+                    var customerOpt = customerService.findCustomerByTenantIdAndTitle(tenantId, targetEntityName);
+                    if (customerOpt.isEmpty()) {
                         throw new NoSuchElementException("Customer with title '" + targetEntityName + "' doesn't exist!");
                     }
-                    return customer.getId();
+                    return customerOpt.get().getId();
                 });
             case ENTITY_VIEW:
                 return ctx.getDbCallbackExecutor().executeAsync(() -> {
@@ -221,6 +210,30 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
         }
     }
 
+    protected ListenableFuture<Boolean> deleteRelationsByTypeAndDirection(TbContext ctx, TbMsg msg, Executor executor) {
+        var relationType = processPattern(msg, config.getRelationType());
+        return deleteRelationsByTypeAndDirection(ctx, msg, relationType, executor);
+    }
+
+    protected ListenableFuture<Boolean> deleteRelationsByTypeAndDirection(TbContext ctx, TbMsg msg, String relationType, Executor executor) {
+        var tenantId = ctx.getTenantId();
+        var originator = msg.getOriginator();
+        var relationService = ctx.getRelationService();
+        var originatorRelationsFuture = EntitySearchDirection.FROM.equals(config.getDirection()) ?
+                relationService.findByFromAndTypeAsync(tenantId, originator, relationType, RelationTypeGroup.COMMON) :
+                relationService.findByToAndTypeAsync(tenantId, originator, relationType, RelationTypeGroup.COMMON);
+        return Futures.transformAsync(originatorRelationsFuture, originatorRelations -> {
+            if (originatorRelations.isEmpty()) {
+                return Futures.immediateFuture(true);
+            }
+            var deleteRelationFutures = originatorRelations.stream()
+                    .map(entityRelation -> relationService.deleteRelationAsync(tenantId, entityRelation))
+                    .collect(Collectors.toList());
+            return Futures.transform(Futures.allAsList(deleteRelationFutures), deleteResults ->
+                    deleteResults.stream().allMatch(Boolean::booleanValue), executor);
+        }, executor);
+    }
+
     protected void checkIfConfigEntityTypeIsSupported(EntityType entityType) throws TbNodeException {
         if (!supportedEntityTypes.contains(entityType)) {
             throw new TbNodeException(unsupportedEntityTypeErrorMessage(entityType), true);
@@ -235,33 +248,33 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
     @Override
     public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
         boolean hasChanges = false;
-        var newConfigObjectNode = (ObjectNode) oldConfiguration;
+        var config = (ObjectNode) oldConfiguration;
         switch (fromVersion) {
             case 0: {
-                if (!oldConfiguration.has("entityCacheExpiration")) {
+                if (!config.has("entityCacheExpiration")) {
                     break;
                 }
-                newConfigObjectNode.remove("entityCacheExpiration");
+                config.remove("entityCacheExpiration");
 
                 var directionPropertyName = "direction";
-                if (!newConfigObjectNode.has(directionPropertyName)) {
+                if (!config.has(directionPropertyName)) {
                     throw new TbNodeException("property to update: '" + directionPropertyName + "' doesn't exists in configuration!");
                 }
-                String direction = newConfigObjectNode.get(directionPropertyName).asText();
+                String direction = config.get(directionPropertyName).asText();
                 if (EntitySearchDirection.TO.name().equals(direction)) {
-                    newConfigObjectNode.put(directionPropertyName, EntitySearchDirection.FROM.name());
+                    config.put(directionPropertyName, EntitySearchDirection.FROM.name());
                     hasChanges = true;
                     break;
                 }
                 if (EntitySearchDirection.FROM.name().equals(direction)) {
-                    newConfigObjectNode.put(directionPropertyName, EntitySearchDirection.TO.name());
+                    config.put(directionPropertyName, EntitySearchDirection.TO.name());
                     hasChanges = true;
                     break;
                 }
                 throw new TbNodeException("property to update: '" + directionPropertyName + "' has invalid value!");
             }
         }
-        return new TbPair<>(hasChanges, newConfigObjectNode);
+        return new TbPair<>(hasChanges, config);
     }
 
     @Data

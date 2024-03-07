@@ -61,6 +61,7 @@ import org.thingsboard.server.dao.entityview.EntityViewService;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -185,7 +186,7 @@ class TbUnassignFromCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
         if (type.equals(EntityType.DASHBOARD)) {
             when(ctxMock.getCustomerService()).thenReturn(customerServiceMock);
             var customer = createCustomer(customerTitle);
-            when(customerServiceMock.findCustomerByTenantIdAndTitleUsingCache(eq(TENANT_ID), eq(customerTitle))).thenReturn(customer);
+            when(customerServiceMock.findCustomerByTenantIdAndTitle(eq(TENANT_ID), eq(customerTitle))).thenReturn(Optional.of(customer));
         }
         Map<EntityType, Consumer<EntityId>> entityTypeToEntityIdConsumerMap = mockMethodCallsForSupportedTypes();
         entityTypeToEntityIdConsumerMap.get(type).accept(originator);
@@ -216,7 +217,7 @@ class TbUnassignFromCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
         // we search for the customer only if incoming message originator is dashboard.
         if (type.equals(EntityType.DASHBOARD)) {
             when(ctxMock.getCustomerService()).thenReturn(customerServiceMock);
-            when(customerServiceMock.findCustomerByTenantIdAndTitleUsingCache(eq(TENANT_ID), eq(customerTitle))).thenReturn(null);
+            when(customerServiceMock.findCustomerByTenantIdAndTitle(eq(TENANT_ID), eq(customerTitle))).thenReturn(Optional.empty());
 
             // DASHBOARD WHEN
             var exception = assertThrows(RuntimeException.class, () -> node.onMsg(ctxMock, msg));

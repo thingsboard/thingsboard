@@ -109,17 +109,12 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
     }
 
     @Override
-    public Customer findCustomerByTenantIdAndTitleUsingCache(TenantId tenantId, String title) {
-        log.trace("Executing findCustomerByTenantIdAndTitleUsingCache [{}] [{}]", tenantId, title);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        return cache.getAndPutInTransaction(new CustomerCacheKey(tenantId, title),
-                () -> customerDao.findCustomersByTenantIdAndTitle(tenantId.getId(), title)
-                        .orElse(null), true);
-    }
-
-    @Override
     public Optional<Customer> findCustomerByTenantIdAndTitle(TenantId tenantId, String title) {
-        return Optional.ofNullable(findCustomerByTenantIdAndTitleUsingCache(tenantId, title));
+        log.trace("Executing findCustomerByTenantIdAndTitle [{}] [{}]", tenantId, title);
+        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        return Optional.ofNullable(cache.getAndPutInTransaction(new CustomerCacheKey(tenantId, title),
+                () -> customerDao.findCustomersByTenantIdAndTitle(tenantId.getId(), title)
+                        .orElse(null), true));
     }
 
     @Override
@@ -190,7 +185,7 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
     public Customer findOrCreatePublicCustomer(TenantId tenantId) {
         log.trace("Executing findOrCreatePublicCustomer, tenantId [{}]", tenantId);
         Validator.validateId(tenantId, INCORRECT_CUSTOMER_ID + tenantId);
-        Optional<Customer> publicCustomerOpt = Optional.ofNullable(findCustomerByTenantIdAndTitleUsingCache(tenantId, PUBLIC_CUSTOMER_TITLE));
+        Optional<Customer> publicCustomerOpt = findCustomerByTenantIdAndTitle(tenantId, PUBLIC_CUSTOMER_TITLE);
         if (publicCustomerOpt.isPresent()) {
             return publicCustomerOpt.get();
         } else {

@@ -19,7 +19,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.CollectionUtils;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -30,11 +29,9 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
-import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import java.util.ArrayList;
-import java.util.stream.Collectors;
+import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
 @Slf4j
 @RuleNode(
@@ -84,38 +81,40 @@ public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateR
     }
 
     @Override
-    protected ListenableFuture<TbPair<TbMsg, Boolean>> processEntityRelationAction(TbContext ctx, TbMsg msg) {
-        return Futures.transformAsync(getTargetEntityId(ctx, msg), targetEntityId -> {
+    public void onMsg(TbContext ctx, TbMsg msg) {
+        var targetEntityIdFuture = getTargetEntityId(ctx, msg);
+        var createRelationResultFuture = Futures.transformAsync(targetEntityIdFuture, targetEntityId -> {
             var originator = msg.getOriginator();
             var relationType = processPattern(msg, config.getRelationType());
-            var createRelationFuture = Futures.transformAsync(deleteCurrentRelationsIfNeeded(ctx, msg.getOriginator(), relationType), __ ->
-                    checkRelationAndCreateIfAbsent(ctx, originator, targetEntityId, relationType), MoreExecutors.directExecutor());
-            return Futures.transform(createRelationFuture, createdOrAlreadyExists -> {
-                if (createdOrAlreadyExists && config.isChangeOriginatorToRelatedEntity()) {
-                    TbMsg tbMsg = ctx.transformMsgOriginator(msg, targetEntityId);
-                    return new TbPair<>(tbMsg, true);
-                }
-                return new TbPair<>(msg, createdOrAlreadyExists);
-            }, MoreExecutors.directExecutor());
-        }, MoreExecutors.directExecutor());
-    }
-
-    private ListenableFuture<Void> deleteCurrentRelationsIfNeeded(TbContext ctx, EntityId originator, String relationType) {
-        if (!config.isRemoveCurrentRelations()) {
-            return Futures.immediateFuture(null);
-        }
-        var originatorRelationsFuture = EntitySearchDirection.FROM.equals(config.getDirection()) ?
-                ctx.getRelationService().findByFromAndTypeAsync(ctx.getTenantId(), originator, relationType, RelationTypeGroup.COMMON) :
-                ctx.getRelationService().findByToAndTypeAsync(ctx.getTenantId(), originator, relationType, RelationTypeGroup.COMMON);
-        return Futures.transformAsync(originatorRelationsFuture, originatorRelations -> {
-            if (CollectionUtils.isEmpty(originatorRelations)) {
-                return Futures.immediateFuture(null);
+            if (config.isRemoveCurrentRelations()) {
+                var removalOfCurrentRelationsFuture = deleteRelationsByTypeAndDirection(ctx, msg, relationType, MoreExecutors.directExecutor());
+                return Futures.transformAsync(removalOfCurrentRelationsFuture, __ ->
+                        checkRelationAndCreateIfAbsent(ctx, originator, targetEntityId, relationType), MoreExecutors.directExecutor());
             }
-            var deletedRelationsFutures = originatorRelations.stream()
-                    .map(relation -> ctx.getRelationService().deleteRelationAsync(ctx.getTenantId(), relation))
-                    .collect(Collectors.toCollection(ArrayList::new));
-            return Futures.transform(Futures.allAsList(deletedRelationsFutures), result -> null, MoreExecutors.directExecutor());
+            return checkRelationAndCreateIfAbsent(ctx, originator, targetEntityId, relationType);
         }, MoreExecutors.directExecutor());
+        if (!config.isChangeOriginatorToRelatedEntity()) {
+            withCallback(createRelationResultFuture,
+                    relationCreated -> {
+                        if (relationCreated) {
+                            ctx.tellSuccess(msg);
+                            return;
+                        }
+                        ctx.tellFailure(msg, new RuntimeException("Failed to create originator relation with target entity!"));
+                    },
+                    t -> ctx.tellFailure(msg, t), MoreExecutors.directExecutor());
+            return;
+        }
+        withCallback(Futures.allAsList(targetEntityIdFuture, createRelationResultFuture), result -> {
+            var targetEntityId = (EntityId) result.get(0);
+            var relationCreated = (Boolean) result.get(1);
+            if (relationCreated) {
+                var transformedMsg = ctx.transformMsgOriginator(msg, targetEntityId);
+                ctx.tellSuccess(transformedMsg);
+                return;
+            }
+            ctx.tellFailure(msg, new RuntimeException("Failed to create originator relation with target entity!"));
+        }, t -> ctx.tellFailure(msg, t), MoreExecutors.directExecutor());
     }
 
     private ListenableFuture<Boolean> checkRelationAndCreateIfAbsent(TbContext ctx, EntityId originator, EntityId targetEntityId, String relationType) {
@@ -130,9 +129,10 @@ public class TbCreateRelationNode extends TbAbstractRelationActionNode<TbCreateR
         }
         var checkRelationFuture = ctx.getRelationService().checkRelationAsync(ctx.getTenantId(), fromId, toId, relationType, RelationTypeGroup.COMMON);
         return Futures.transformAsync(checkRelationFuture, relationExists ->
-                relationExists ?
-                        Futures.immediateFuture(true) :
-                        ctx.getRelationService().saveRelationAsync(ctx.getTenantId(), new EntityRelation(fromId, toId, relationType, RelationTypeGroup.COMMON)),
+                        relationExists ?
+                                Futures.immediateFuture(true) :
+                                ctx.getRelationService().
+                                        saveRelationAsync(ctx.getTenantId(), new EntityRelation(fromId, toId, relationType, RelationTypeGroup.COMMON)),
                 MoreExecutors.directExecutor());
     }
 

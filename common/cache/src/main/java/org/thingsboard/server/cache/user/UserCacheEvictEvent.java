@@ -21,8 +21,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 
 @Data
 @RequiredArgsConstructor
-public
-class UserCacheEvictEvent {
+public class UserCacheEvictEvent {
 
     private final TenantId tenantId;
     private final String newEmail;
