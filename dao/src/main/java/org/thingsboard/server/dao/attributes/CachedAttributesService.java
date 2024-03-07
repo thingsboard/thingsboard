@@ -234,7 +234,7 @@ public class CachedAttributesService implements AttributesService {
         validate(entityId, scope);
         AttributeUtils.validate(attribute, valueNoXssValidation);
         ListenableFuture<String> future = attributesDao.save(tenantId, entityId, scope, attribute);
-        return Futures.transform(future, key -> evict(entityId, scope, attribute, key), cacheExecutor);
+        return Futures.transform(future, key -> put(entityId, scope, attribute, key), cacheExecutor);
     }
 
     @Override
@@ -245,16 +245,16 @@ public class CachedAttributesService implements AttributesService {
         List<ListenableFuture<String>> futures = new ArrayList<>(attributes.size());
         for (var attribute : attributes) {
             ListenableFuture<String> future = attributesDao.save(tenantId, entityId, scope, attribute);
-            futures.add(Futures.transform(future, key -> evict(entityId, scope, attribute, key), cacheExecutor));
+            futures.add(Futures.transform(future, key -> put(entityId, scope, attribute, key), cacheExecutor));
         }
 
         return Futures.allAsList(futures);
     }
 
-    private String evict(EntityId entityId, String scope, AttributeKvEntry attribute, String key) {
-        log.trace("[{}][{}][{}] Before cache evict: {}", entityId, scope, key, attribute);
-        cache.evictOrPut(new AttributeCacheKey(scope, entityId, key), attribute);
-        log.trace("[{}][{}][{}] after cache evict.", entityId, scope, key);
+    private String put(EntityId entityId, String scope, AttributeKvEntry attribute, String key) {
+        log.trace("[{}][{}][{}] Before cache put: {}", entityId, scope, key, attribute);
+        cache.put(new AttributeCacheKey(scope, entityId, key), attribute);
+        log.trace("[{}][{}][{}] after cache put", entityId, scope, key);
         return key;
     }
 
