@@ -196,7 +196,7 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
       const lowerLeft = api.coord([startTime, value >= 0 ? value : 0]);
       const size = api.size([delta, value]);
       const height =  size[1];
-      const width = size[0];
+      const width = size[0] >= 1 ? size[0] : 1;
 
       const coordSys: {x: number; y: number; width: number; height: number} = params.coordSys as any;
 
