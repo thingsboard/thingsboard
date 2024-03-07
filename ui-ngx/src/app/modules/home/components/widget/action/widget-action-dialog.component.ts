@@ -204,7 +204,7 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
     this.submitted = true;
     if (this.widgetActionFormGroup.valid) {
       const result: WidgetActionDescriptorInfo =
-        {...this.widgetActionFormGroup.value, ...this.widgetActionFormGroup.get('widgetAction').value};
+        {...this.widgetActionFormGroup.get('widgetAction').value, ...this.widgetActionFormGroup.value};
       delete (result as any).widgetAction;
       result.id = this.action.id;
       this.dialogRef.close(result);
