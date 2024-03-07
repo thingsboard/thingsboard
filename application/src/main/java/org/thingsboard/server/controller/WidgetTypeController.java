@@ -75,11 +75,13 @@ import static org.thingsboard.server.controller.ControllerConstants.WIDGET_TYPE_
 @RequiredArgsConstructor
 public class WidgetTypeController extends AutoCommitController {
 
+    private final EntitiesVersionControlService vcService;
     private final TbWidgetTypeService tbWidgetTypeService;
     private final ImageService imageService;
 
     public WidgetTypeController(EntitiesVersionControlService vcService, TbWidgetTypeService tbWidgetTypeService, ImageService imageService) {
         super(vcService);
+        this.vcService=vcService;
         this.tbWidgetTypeService = tbWidgetTypeService;
         this.imageService = imageService;
     }
