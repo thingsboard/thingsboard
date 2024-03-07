@@ -376,6 +376,27 @@ export const timeSeriesChartThresholdDefaultSettings: TimeSeriesChartThreshold =
   labelColor: timeSeriesChartColorScheme['threshold.label'].light
 };
 
+export enum TimeSeriesChartNoAggregationBarWidthStrategy {
+  group = 'group',
+  separate = 'separate'
+}
+
+export const timeSeriesChartNoAggregationBarWidthStrategies =
+  Object.keys(TimeSeriesChartNoAggregationBarWidthStrategy) as TimeSeriesChartNoAggregationBarWidthStrategy[];
+
+export const timeSeriesChartNoAggregationBarWidthStrategyTranslations = new Map<TimeSeriesChartNoAggregationBarWidthStrategy, string>(
+  [
+    [TimeSeriesChartNoAggregationBarWidthStrategy.group, 'widgets.time-series-chart.no-aggregation-bar-width-strategy-group'],
+    [TimeSeriesChartNoAggregationBarWidthStrategy.separate, 'widgets.time-series-chart.no-aggregation-bar-width-strategy-separate']
+  ]
+);
+
+export interface TimeSeriesChartNoAggregationBarWidthSettings {
+  strategy: TimeSeriesChartNoAggregationBarWidthStrategy;
+  groupIntervalWidth?: number;
+  separateBarWidth?: number;
+}
+
 export interface TimeSeriesChartSettings extends EChartsTooltipWidgetSettings {
   thresholds: TimeSeriesChartThreshold[];
   darkMode: boolean;
@@ -383,6 +404,7 @@ export interface TimeSeriesChartSettings extends EChartsTooltipWidgetSettings {
   stack: boolean;
   yAxis: TimeSeriesChartYAxisSettings;
   xAxis: TimeSeriesChartAxisSettings;
+  noAggregationBarWidthSettings: TimeSeriesChartNoAggregationBarWidthSettings;
 }
 
 export const timeSeriesChartDefaultSettings: TimeSeriesChartSettings = {
@@ -449,6 +471,11 @@ export const timeSeriesChartDefaultSettings: TimeSeriesChartSettings = {
     lineColor: timeSeriesChartColorScheme['axis.line'].light,
     showSplitLines: true,
     splitLinesColor: timeSeriesChartColorScheme['axis.splitLine'].light
+  },
+  noAggregationBarWidthSettings: {
+    strategy: TimeSeriesChartNoAggregationBarWidthStrategy.group,
+    groupIntervalWidth: 1000,
+    separateBarWidth: 1000
   },
   showTooltip: true,
   tooltipTrigger: EChartsTooltipTrigger.axis,
@@ -730,9 +757,12 @@ export const createTimeSeriesXAxisOption = (settings: TimeSeriesChartAxisSetting
 export const generateChartData = (dataItems: TimeSeriesChartDataItem[],
                                   thresholdItems: TimeSeriesChartThresholdItem[],
                                   timeInterval: Interval,
+                                  noAggregation: boolean,
+                                  noAggregationBarWidthSettings: TimeSeriesChartNoAggregationBarWidthSettings,
                                   stack: boolean,
                                   darkMode: boolean): Array<LineSeriesOption | CustomSeriesOption> => {
-  let series = generateChartSeries(dataItems, timeInterval, stack, darkMode);
+  let series = generateChartSeries(dataItems, timeInterval,
+    noAggregation, noAggregationBarWidthSettings, stack, darkMode);
   if (thresholdItems.length) {
     const thresholds = generateChartThresholds(thresholdItems, darkMode);
     series = series.concat(thresholds);
@@ -844,6 +874,8 @@ const createThresholdData = (val: string | number, item: TimeSeriesChartThreshol
 
 const generateChartSeries = (dataItems: TimeSeriesChartDataItem[],
                              timeInterval: Interval,
+                             noAggregation: boolean,
+                             noAggregationBarWidthSettings: TimeSeriesChartNoAggregationBarWidthSettings,
                              stack: boolean,
                              darkMode: boolean): Array<LineSeriesOption | CustomSeriesOption> => {
   const series: Array<LineSeriesOption | CustomSeriesOption> = [];
@@ -863,8 +895,9 @@ const generateChartSeries = (dataItems: TimeSeriesChartDataItem[],
   for (const item of enabledDataItems) {
     if (item.dataKey.settings.type === TimeSeriesChartSeriesType.bar) {
       if (!item.barRenderContext) {
-        item.barRenderContext = {};
+        item.barRenderContext = {noAggregation, noAggregationBarWidthSettings};
       }
+      item.barRenderContext.noAggregation = noAggregation;
       item.barRenderContext.barsCount = barsCount;
       item.barRenderContext.barIndex = stack ? barGroups.indexOf(item.yAxisIndex) : barDataItems.indexOf(item);
       item.barRenderContext.timeInterval = timeInterval;

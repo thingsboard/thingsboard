@@ -22,10 +22,10 @@ import {
   WidgetSettings,
   WidgetSettingsComponent
 } from '@shared/models/widget.models';
-import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { formatValue, mergeDeep } from '@core/utils';
+import { formatValue, isDefinedAndNotNull, mergeDeep } from '@core/utils';
 import { DateFormatProcessor, DateFormatSettings } from '@shared/models/widget-settings.models';
 import {
   barChartWithLabelsDefaultSettings
@@ -34,6 +34,12 @@ import { EChartsTooltipTrigger } from '../../chart/echarts-widget.models';
 import {
   timeSeriesChartWidgetDefaultSettings, TimeSeriesChartWidgetSettings
 } from '@home/components/widget/lib/chart/time-series-chart-widget.models';
+import {
+  timeSeriesChartNoAggregationBarWidthStrategies,
+  TimeSeriesChartNoAggregationBarWidthStrategy,
+  timeSeriesChartNoAggregationBarWidthStrategyTranslations, TimeSeriesChartType
+} from '@home/components/widget/lib/chart/time-series-chart.models';
+import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 
 @Component({
   selector: 'tb-time-series-chart-widget-settings',
@@ -51,17 +57,27 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
     }
   }
 
+  TimeSeriesChartType = TimeSeriesChartType;
+
   EChartsTooltipTrigger = EChartsTooltipTrigger;
 
   legendPositions = legendPositions;
 
   legendPositionTranslationMap = legendPositionTranslationMap;
 
+  TimeSeriesChartNoAggregationBarWidthStrategy = TimeSeriesChartNoAggregationBarWidthStrategy;
+
+  timeSeriesChartNoAggregationBarWidthStrategies = timeSeriesChartNoAggregationBarWidthStrategies;
+
+  timeSeriesChartNoAggregationBarWidthStrategyTranslations = timeSeriesChartNoAggregationBarWidthStrategyTranslations;
+
   timeSeriesChartWidgetSettingsForm: UntypedFormGroup;
 
   tooltipValuePreviewFn = this._tooltipValuePreviewFn.bind(this);
 
   tooltipDatePreviewFn = this._tooltipDatePreviewFn.bind(this);
+
+  chartType: TimeSeriesChartType = TimeSeriesChartType.default;
 
   constructor(protected store: Store<AppState>,
               private $injector: Injector,
@@ -71,6 +87,13 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
 
   protected settingsForm(): UntypedFormGroup {
     return this.timeSeriesChartWidgetSettingsForm;
+  }
+
+  protected onWidgetConfigSet(widgetConfig: WidgetConfigComponentData) {
+    const params = widgetConfig.typeParameters as any;
+    if (isDefinedAndNotNull(params.chartType)) {
+      this.chartType = params.chartType;
+    }
   }
 
   protected defaultSettings(): WidgetSettings {
@@ -87,6 +110,12 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
 
       yAxis: [settings.yAxis, []],
       xAxis: [settings.xAxis, []],
+
+      noAggregationBarWidthSettings: this.fb.group({
+        strategy: [settings.noAggregationBarWidthSettings.strategy, []],
+        groupIntervalWidth: [settings.noAggregationBarWidthSettings.groupIntervalWidth, [Validators.min(100)]],
+        separateBarWidth: [settings.noAggregationBarWidthSettings.separateBarWidth, [Validators.min(100)]],
+      }),
 
       showLegend: [settings.showLegend, []],
       legendLabelFont: [settings.legendLabelFont, []],
@@ -111,13 +140,23 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
   }
 
   protected validatorTriggers(): string[] {
-    return ['showLegend', 'showTooltip', 'tooltipShowDate'];
+    return ['showLegend', 'showTooltip', 'tooltipShowDate', 'noAggregationBarWidthSettings.strategy'];
   }
 
   protected updateValidators(emitEvent: boolean) {
     const showLegend: boolean = this.timeSeriesChartWidgetSettingsForm.get('showLegend').value;
     const showTooltip: boolean = this.timeSeriesChartWidgetSettingsForm.get('showTooltip').value;
     const tooltipShowDate: boolean = this.timeSeriesChartWidgetSettingsForm.get('tooltipShowDate').value;
+    const noAggregationBarWidthSettingsStrategy: TimeSeriesChartNoAggregationBarWidthStrategy =
+      this.timeSeriesChartWidgetSettingsForm.get('noAggregationBarWidthSettings').get('strategy').value;
+
+    if (noAggregationBarWidthSettingsStrategy === TimeSeriesChartNoAggregationBarWidthStrategy.group) {
+      this.timeSeriesChartWidgetSettingsForm.get('noAggregationBarWidthSettings').get('groupIntervalWidth').enable();
+      this.timeSeriesChartWidgetSettingsForm.get('noAggregationBarWidthSettings').get('separateBarWidth').disable();
+    } else if (noAggregationBarWidthSettingsStrategy === TimeSeriesChartNoAggregationBarWidthStrategy.separate) {
+      this.timeSeriesChartWidgetSettingsForm.get('noAggregationBarWidthSettings').get('groupIntervalWidth').disable();
+      this.timeSeriesChartWidgetSettingsForm.get('noAggregationBarWidthSettings').get('separateBarWidth').enable();
+    }
 
     if (showLegend) {
       this.timeSeriesChartWidgetSettingsForm.get('legendLabelFont').enable();
@@ -170,5 +209,4 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
     processor.update(Date.now());
     return processor.formatted;
   }
-
 }

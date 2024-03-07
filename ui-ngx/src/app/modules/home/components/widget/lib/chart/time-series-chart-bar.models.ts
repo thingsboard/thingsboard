@@ -17,7 +17,11 @@
 import { LinearGradientObject } from 'zrender/lib/graphic/LinearGradient';
 import { Interval, IntervalMath } from '@shared/models/time/time.models';
 import { LabelFormatterCallback, SeriesLabelOption } from 'echarts/types/src/util/types';
-import { TimeSeriesChartDataItem } from '@home/components/widget/lib/chart/time-series-chart.models';
+import {
+  TimeSeriesChartDataItem,
+  TimeSeriesChartNoAggregationBarWidthSettings,
+  TimeSeriesChartNoAggregationBarWidthStrategy
+} from '@home/components/widget/lib/chart/time-series-chart.models';
 import { CustomSeriesRenderItemParams } from 'echarts';
 import { CustomSeriesRenderItemAPI, CustomSeriesRenderItemReturn } from 'echarts/types/dist/shared';
 import { isNumeric } from '@core/utils';
@@ -33,6 +37,8 @@ export interface BarVisualSettings {
 export interface BarRenderContext {
   barsCount?: number;
   barIndex?: number;
+  noAggregation: boolean;
+  noAggregationBarWidthSettings: TimeSeriesChartNoAggregationBarWidthSettings;
   timeInterval?: Interval;
   visualSettings?: BarVisualSettings;
   labelOption?: SeriesLabelOption;
@@ -44,19 +50,35 @@ export const renderTimeSeriesBar = (params: CustomSeriesRenderItemParams, api: C
                                     renderCtx: BarRenderContext): CustomSeriesRenderItemReturn => {
   const time = api.value(0) as number;
   let start = api.value(2) as number;
-  const end = api.value(3) as number;
+  let end = api.value(3) as number;
   let interval = end - start;
   const ts = start ? start : time;
+
+  const noAggregationGroup = renderCtx.noAggregation &&
+    renderCtx.noAggregationBarWidthSettings.strategy === TimeSeriesChartNoAggregationBarWidthStrategy.group;
+  const separateBar = renderCtx.noAggregation &&
+    renderCtx.noAggregationBarWidthSettings.strategy === TimeSeriesChartNoAggregationBarWidthStrategy.separate;
+
+  if (renderCtx.noAggregation) {
+    if (noAggregationGroup) {
+      interval = renderCtx.noAggregationBarWidthSettings.groupIntervalWidth;
+    } else {
+      interval = renderCtx.noAggregationBarWidthSettings.separateBarWidth;
+    }
+    start = time - interval / 2;
+    end = time + interval / 2;
+  }
   if (!start || !end || !interval) {
     interval = IntervalMath.numberValue(renderCtx.timeInterval);
     start = time - interval / 2;
   }
+
   const gap = 0.3;
-  const barInterval = interval / (renderCtx.barsCount + gap * (renderCtx.barsCount + 3));
+  const barInterval = separateBar ? interval : interval / (renderCtx.barsCount + gap * (renderCtx.barsCount + 3));
   const intervalGap = barInterval * gap * 2;
   const barGap = barInterval * gap;
   const value = api.value(1);
-  const startTime = start + intervalGap + (barInterval + barGap) * renderCtx.barIndex;
+  const startTime = separateBar ? start : start + intervalGap + (barInterval + barGap) * renderCtx.barIndex;
   const delta = barInterval;
   let offset = 0;
   if (renderCtx.currentStackItems?.length) {

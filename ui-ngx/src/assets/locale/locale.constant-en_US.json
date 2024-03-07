@@ -6626,6 +6626,11 @@
             "type-line": "Line",
             "type-bar": "Bar",
             "type-point": "Point",
+            "no-aggregation-bar-width-strategy": "Bar width strategy for non-aggregated data",
+            "no-aggregation-bar-width-strategy-group": "Group",
+            "no-aggregation-bar-width-strategy-separate": "Separate",
+            "bar-group-interval-width": "Bar group interval width",
+            "separate-bar-width": "Separate bar width",
             "threshold": {
               "thresholds": "Thresholds",
               "source": "Source",
