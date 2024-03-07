@@ -30,6 +30,8 @@ public class EntityAlarmsDeletionTaskProcessor implements HousekeeperTaskProcess
     @Override
     public void process(HousekeeperTask task) throws Exception {
         alarmService.deleteEntityAlarmRecords(task.getTenantId(), task.getEntityId());
+        // fixme: do we need to remove alarms by originator ???
+        // fixme: why alarm comments are not deleted ??
     }
 
     @Override

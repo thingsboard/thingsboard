@@ -42,7 +42,6 @@ import org.thingsboard.server.service.housekeeper.stats.HousekeeperStatsService;
 import javax.annotation.PreDestroy;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -58,11 +57,12 @@ public class DefaultHousekeeperService implements HousekeeperService {
 
     private final Map<HousekeeperTaskType, HousekeeperTaskProcessor<?>> taskProcessors;
 
-    private final TbQueueConsumer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> consumer;
-    private final TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> producer;
     private final HousekeeperReprocessingService reprocessingService;
     private final HousekeeperStatsService statsService;
     private final NotificationRuleProcessor notificationRuleProcessor;
+    private final TbQueueConsumer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> consumer;
+    private final TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> producer;
+    private final TopicPartitionInfo submitTpi;
 
     private final ExecutorService consumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("housekeeper-consumer"));
     private final ExecutorService executor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("housekeeper-task-processor"));
@@ -80,11 +80,12 @@ public class DefaultHousekeeperService implements HousekeeperService {
                                      HousekeeperStatsService statsService,
                                      NotificationRuleProcessor notificationRuleProcessor,
                                      @Lazy List<HousekeeperTaskProcessor<?>> taskProcessors) {
-        this.consumer = queueFactory.createHousekeeperMsgConsumer();
-        this.producer = producerProvider.getHousekeeperMsgProducer();
         this.reprocessingService = reprocessingService;
         this.statsService = statsService;
         this.notificationRuleProcessor = notificationRuleProcessor;
+        this.consumer = queueFactory.createHousekeeperMsgConsumer();
+        this.producer = producerProvider.getHousekeeperMsgProducer();
+        this.submitTpi = TopicPartitionInfo.builder().topic(producer.getDefaultTopic()).build();
         this.taskProcessors = taskProcessors.stream().collect(Collectors.toMap(HousekeeperTaskProcessor::getTaskType, p -> p));
     }
 
@@ -169,10 +170,13 @@ public class DefaultHousekeeperService implements HousekeeperService {
     }
 
     @Override
-    public void submitTask(UUID key, HousekeeperTask task) {
+    public void submitTask(HousekeeperTask task) {
         log.trace("[{}][{}][{}] Submitting task: {}", task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(), task.getTaskType());
-        TopicPartitionInfo tpi = TopicPartitionInfo.builder().topic(producer.getDefaultTopic()).build();
-        producer.send(tpi, new TbProtoQueueMsg<>(key, ToHousekeeperServiceMsg.newBuilder()
+        /*
+         * using msg key as entity id so that msgs related to certain entity are pushed to same partition,
+         * e.g. on tenant deletion (entity id is tenant id), we need to clean up tenant entities in certain order
+         * */
+        producer.send(submitTpi, new TbProtoQueueMsg<>(task.getEntityId().getId(), ToHousekeeperServiceMsg.newBuilder()
                 .setTask(HousekeeperTaskProto.newBuilder()
                         .setValue(JacksonUtil.toString(task))
                         .setTs(task.getTs())

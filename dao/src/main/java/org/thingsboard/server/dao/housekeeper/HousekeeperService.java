@@ -17,15 +17,8 @@ package org.thingsboard.server.dao.housekeeper;
 
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
 
-import java.util.UUID;
-
 public interface HousekeeperService {
 
-    default void submitTask(HousekeeperTask task) {
-        submitTask(task.getEntityId().getId(), task);
-    }
-
-    // tasks with the same key will be pushed to the same partition and thus processed synchronously
-    void submitTask(UUID key, HousekeeperTask task);
+    void submitTask(HousekeeperTask task);
 
 }

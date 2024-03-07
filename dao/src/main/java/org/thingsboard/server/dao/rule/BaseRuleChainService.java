@@ -438,12 +438,14 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         checkRuleNodesAndDelete(tenantId, ruleChainId);
     }
 
+    @Transactional
     @Override
     public void deleteRuleChainsByTenantId(TenantId tenantId) {
         Validator.validateId(tenantId, "Incorrect tenant id for delete rule chains request.");
         tenantRuleChainsRemover.removeEntities(tenantId, tenantId);
     }
 
+    @Transactional
     @Override
     public void deleteByTenantId(TenantId tenantId) {
         deleteRuleChainsByTenantId(tenantId);
@@ -776,10 +778,10 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
     private void deleteRuleNodes(TenantId tenantId, List<RuleNode> ruleNodes) {
         List<RuleNodeId> ruleNodeIds = ruleNodes.stream().map(RuleNode::getId).collect(Collectors.toList());
-        for (var node : ruleNodes) {
-            cleanUpService.cleanUpRelatedData(tenantId, node.getId());
-        }
         ruleNodeDao.deleteByIdIn(ruleNodeIds);
+        for (var nodeId : ruleNodeIds) {
+            cleanUpService.cleanUpRelatedData(tenantId, nodeId);
+        }
     }
 
     @Override
