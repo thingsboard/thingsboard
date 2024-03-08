@@ -23,7 +23,7 @@ $maxLegendHeight: 35%;
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
   padding: 20px 24px 24px 24px;
   > div:not(.tb-time-series-chart-overlay) {
     z-index: 1;
@@ -44,7 +44,7 @@ $maxLegendHeight: 35%;
     min-height: 0;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 8px;
     &.legend-top {
       flex-direction: column-reverse;
     }

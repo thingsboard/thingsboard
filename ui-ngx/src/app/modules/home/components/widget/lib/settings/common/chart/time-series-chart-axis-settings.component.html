@@ -56,21 +56,32 @@
             </mat-select>
           </mat-form-field>
         </div>
-        <div class="tb-form-row space-between column-xs">
-          <mat-slide-toggle class="mat-slide" formControlName="showTickLabels">
-            <div translate>widgets.time-series-chart.axis.tick-labels</div>
-          </mat-slide-toggle>
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-            <tb-font-settings formControlName="tickLabelFont"
-                              clearButton
-                              disabledLineHeight
-                              forceSizeUnit="px"
-                              previewText="100">
-            </tb-font-settings>
-            <tb-color-input asBoxInput
-                            colorClearButton
-                            formControlName="tickLabelColor">
-            </tb-color-input>
+        <div class="tb-form-panel no-padding stroked">
+          <div class="tb-form-row no-border space-between column-xs">
+            <mat-slide-toggle class="mat-slide" formControlName="showTickLabels">
+              <div translate>widgets.time-series-chart.axis.tick-labels</div>
+            </mat-slide-toggle>
+            <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+              <tb-font-settings formControlName="tickLabelFont"
+                                clearButton
+                                disabledLineHeight
+                                forceSizeUnit="px"
+                                previewText="100">
+              </tb-font-settings>
+              <tb-color-input asBoxInput
+                              colorClearButton
+                              formControlName="tickLabelColor">
+              </tb-color-input>
+            </div>
+          </div>
+          <div *ngIf="axisType === 'yAxis' && advanced" class="tb-form-row no-border">
+            <tb-js-func fxFlex
+              formControlName="ticksFormatter"
+              [globalVariables]="functionScopeVariables"
+              [functionArgs]="['value']"
+              functionTitle="{{ 'widgets.time-series-chart.axis.ticks-formatter-function' | translate }}"
+              helpId="widget/lib/flot/ticks_formatter_fn">
+            </tb-js-func>
           </div>
         </div>
         <div class="tb-form-row space-between">

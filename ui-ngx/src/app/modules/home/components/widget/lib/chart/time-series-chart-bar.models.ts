@@ -19,7 +19,6 @@ import { Interval, IntervalMath } from '@shared/models/time/time.models';
 import { LabelFormatterCallback, SeriesLabelOption } from 'echarts/types/src/util/types';
 import {
   TimeSeriesChartDataItem,
-  TimeSeriesChartNoAggregationBarWidthSettings,
   TimeSeriesChartNoAggregationBarWidthStrategy
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { CustomSeriesRenderItemParams } from 'echarts';
@@ -38,7 +37,9 @@ export interface BarRenderContext {
   barsCount?: number;
   barIndex?: number;
   noAggregation: boolean;
-  noAggregationBarWidthSettings: TimeSeriesChartNoAggregationBarWidthSettings;
+  noAggregationBarWidthStrategy: TimeSeriesChartNoAggregationBarWidthStrategy;
+  noAggregationWidthRelative?: boolean;
+  noAggregationWidth?: number;
   timeInterval?: Interval;
   visualSettings?: BarVisualSettings;
   labelOption?: SeriesLabelOption;
@@ -54,16 +55,15 @@ export const renderTimeSeriesBar = (params: CustomSeriesRenderItemParams, api: C
   let interval = end - start;
   const ts = start ? start : time;
 
-  const noAggregationGroup = renderCtx.noAggregation &&
-    renderCtx.noAggregationBarWidthSettings.strategy === TimeSeriesChartNoAggregationBarWidthStrategy.group;
   const separateBar = renderCtx.noAggregation &&
-    renderCtx.noAggregationBarWidthSettings.strategy === TimeSeriesChartNoAggregationBarWidthStrategy.separate;
+    renderCtx.noAggregationBarWidthStrategy === TimeSeriesChartNoAggregationBarWidthStrategy.separate;
 
   if (renderCtx.noAggregation) {
-    if (noAggregationGroup) {
-      interval = renderCtx.noAggregationBarWidthSettings.groupIntervalWidth;
+    if (renderCtx.noAggregationWidthRelative) {
+      const scaleWidth = api.getWidth() / api.size([1,0])[0];
+      interval = scaleWidth * (renderCtx.noAggregationWidth / 100);
     } else {
-      interval = renderCtx.noAggregationBarWidthSettings.separateBarWidth;
+      interval = renderCtx.noAggregationWidth;
     }
     start = time - interval / 2;
     end = time + interval / 2;

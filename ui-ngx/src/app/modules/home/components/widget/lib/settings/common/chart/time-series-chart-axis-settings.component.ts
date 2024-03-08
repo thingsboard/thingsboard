@@ -22,9 +22,9 @@ import {
   TimeSeriesChartAxisSettings,
   TimeSeriesChartYAxisSettings
 } from '@home/components/widget/lib/chart/time-series-chart.models';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
 import { merge } from 'rxjs';
+import { coerceBoolean } from '@shared/decorators/coercion';
+import { WidgetService } from '@core/http/widget.service';
 
 @Component({
   selector: 'tb-time-series-chart-axis-settings',
@@ -48,11 +48,17 @@ export class TimeSeriesChartAxisSettingsComponent implements OnInit, ControlValu
 
   timeSeriesAxisPositionTranslations = timeSeriesAxisPositionTranslations;
 
+  functionScopeVariables = this.widgetService.getWidgetScopeVariables();
+
   @Input()
   disabled: boolean;
 
   @Input()
   axisType: 'xAxis' | 'yAxis' = 'xAxis';
+
+  @Input()
+  @coerceBoolean()
+  advanced = false;
 
   private modelValue: TimeSeriesChartAxisSettings | TimeSeriesChartYAxisSettings;
 
@@ -60,8 +66,8 @@ export class TimeSeriesChartAxisSettingsComponent implements OnInit, ControlValu
 
   public axisSettingsFormGroup: UntypedFormGroup;
 
-  constructor(protected store: Store<AppState>,
-              private fb: UntypedFormBuilder) {
+  constructor(private fb: UntypedFormBuilder,
+              private widgetService: WidgetService,) {
   }
 
   ngOnInit(): void {
@@ -88,6 +94,7 @@ export class TimeSeriesChartAxisSettingsComponent implements OnInit, ControlValu
       splitLinesColor: [null, []]
     });
     if (this.axisType === 'yAxis') {
+      this.axisSettingsFormGroup.addControl('ticksFormatter', this.fb.control(null, []));
       this.axisSettingsFormGroup.addControl('min', this.fb.control(null, []));
       this.axisSettingsFormGroup.addControl('max', this.fb.control(null, []));
     }
@@ -143,9 +150,15 @@ export class TimeSeriesChartAxisSettingsComponent implements OnInit, ControlValu
       if (showTickLabels) {
         this.axisSettingsFormGroup.get('tickLabelFont').enable({emitEvent: false});
         this.axisSettingsFormGroup.get('tickLabelColor').enable({emitEvent: false});
+        if (this.axisType === 'yAxis') {
+          this.axisSettingsFormGroup.get('ticksFormatter').enable({emitEvent: false});
+        }
       } else {
         this.axisSettingsFormGroup.get('tickLabelFont').disable({emitEvent: false});
         this.axisSettingsFormGroup.get('tickLabelColor').disable({emitEvent: false});
+        if (this.axisType === 'yAxis') {
+          this.axisSettingsFormGroup.get('ticksFormatter').disable({emitEvent: false});
+        }
       }
       if (showTicks) {
         this.axisSettingsFormGroup.get('ticksColor').enable({emitEvent: false});

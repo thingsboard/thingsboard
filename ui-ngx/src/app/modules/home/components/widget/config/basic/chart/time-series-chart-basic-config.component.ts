@@ -45,12 +45,7 @@ import {
   TimeSeriesChartWidgetSettings
 } from '@home/components/widget/lib/chart/time-series-chart-widget.models';
 import { EChartsTooltipTrigger } from '@home/components/widget/lib/chart/echarts-widget.models';
-import {
-  timeSeriesChartNoAggregationBarWidthStrategies,
-  TimeSeriesChartNoAggregationBarWidthStrategy,
-  timeSeriesChartNoAggregationBarWidthStrategyTranslations,
-  TimeSeriesChartType
-} from '@home/components/widget/lib/chart/time-series-chart.models';
+import { TimeSeriesChartType } from '@home/components/widget/lib/chart/time-series-chart.models';
 
 @Component({
   selector: 'tb-time-series-chart-basic-config',
@@ -75,12 +70,6 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
   legendPositions = legendPositions;
 
   legendPositionTranslationMap = legendPositionTranslationMap;
-
-  TimeSeriesChartNoAggregationBarWidthStrategy = TimeSeriesChartNoAggregationBarWidthStrategy;
-
-  timeSeriesChartNoAggregationBarWidthStrategies = timeSeriesChartNoAggregationBarWidthStrategies;
-
-  timeSeriesChartNoAggregationBarWidthStrategyTranslations = timeSeriesChartNoAggregationBarWidthStrategyTranslations;
 
   timeSeriesChartWidgetConfigForm: UntypedFormGroup;
 
@@ -140,11 +129,7 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
       yAxis: [settings.yAxis, []],
       xAxis: [settings.xAxis, []],
 
-      noAggregationBarWidthSettings: this.fb.group({
-        strategy: [settings.noAggregationBarWidthSettings.strategy, []],
-        groupIntervalWidth: [settings.noAggregationBarWidthSettings.groupIntervalWidth, [Validators.min(100)]],
-        separateBarWidth: [settings.noAggregationBarWidthSettings.separateBarWidth, [Validators.min(100)]],
-      }),
+      noAggregationBarWidthSettings: [settings.noAggregationBarWidthSettings, []],
 
       showLegend: [settings.showLegend, []],
       legendLabelFont: [settings.legendLabelFont, []],
@@ -227,7 +212,7 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
   }
 
   protected validatorTriggers(): string[] {
-    return ['showTitle', 'showIcon', 'showLegend', 'showTooltip', 'tooltipShowDate', 'noAggregationBarWidthSettings.strategy'];
+    return ['showTitle', 'showIcon', 'showLegend', 'showTooltip', 'tooltipShowDate'];
   }
 
   protected updateValidators(emitEvent: boolean, trigger?: string) {
@@ -236,8 +221,6 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
     const showLegend: boolean = this.timeSeriesChartWidgetConfigForm.get('showLegend').value;
     const showTooltip: boolean = this.timeSeriesChartWidgetConfigForm.get('showTooltip').value;
     const tooltipShowDate: boolean = this.timeSeriesChartWidgetConfigForm.get('tooltipShowDate').value;
-    const noAggregationBarWidthSettingsStrategy: TimeSeriesChartNoAggregationBarWidthStrategy =
-      this.timeSeriesChartWidgetConfigForm.get('noAggregationBarWidthSettings').get('strategy').value;
 
     if (showTitle) {
       this.timeSeriesChartWidgetConfigForm.get('title').enable();
@@ -264,14 +247,6 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
       this.timeSeriesChartWidgetConfigForm.get('iconSizeUnit').disable();
       this.timeSeriesChartWidgetConfigForm.get('icon').disable();
       this.timeSeriesChartWidgetConfigForm.get('iconColor').disable();
-    }
-
-    if (noAggregationBarWidthSettingsStrategy === TimeSeriesChartNoAggregationBarWidthStrategy.group) {
-      this.timeSeriesChartWidgetConfigForm.get('noAggregationBarWidthSettings').get('groupIntervalWidth').enable();
-      this.timeSeriesChartWidgetConfigForm.get('noAggregationBarWidthSettings').get('separateBarWidth').disable();
-    } else if (noAggregationBarWidthSettingsStrategy === TimeSeriesChartNoAggregationBarWidthStrategy.separate) {
-      this.timeSeriesChartWidgetConfigForm.get('noAggregationBarWidthSettings').get('groupIntervalWidth').disable();
-      this.timeSeriesChartWidgetConfigForm.get('noAggregationBarWidthSettings').get('separateBarWidth').enable();
     }
 
     if (showLegend) {

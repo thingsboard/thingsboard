@@ -25,7 +25,7 @@ import {
 import { ComponentStyle, Font, simpleDateFormat, textStyle } from '@shared/models/widget-settings.models';
 import { XAXisOption, YAXisOption } from 'echarts/types/dist/shared';
 import { CustomSeriesOption, LineSeriesOption } from 'echarts/charts';
-import { formatValue, isDefinedAndNotNull, isUndefinedOrNull, parseFunction } from '@core/utils';
+import { formatValue, isDefinedAndNotNull, isUndefined, isUndefinedOrNull, parseFunction } from '@core/utils';
 import { LinearGradientObject } from 'zrender/lib/graphic/LinearGradient';
 import tinycolor from 'tinycolor2';
 import Axis2D from 'echarts/types/src/coord/cartesian/Axis2D';
@@ -293,6 +293,7 @@ export interface TimeSeriesChartYAxisSettings extends TimeSeriesChartAxisSetting
   min?: number | string;
   max?: number | string;
   intervalCalculator?: string;
+  ticksFormatter?: string;
 }
 
 export interface TimeSeriesChartThreshold {
@@ -391,10 +392,16 @@ export const timeSeriesChartNoAggregationBarWidthStrategyTranslations = new Map<
   ]
 );
 
+export interface TimeSeriesChartBarWidth {
+  relative?: boolean;
+  relativeWidth?: number;
+  absoluteWidth?: number;
+}
+
 export interface TimeSeriesChartNoAggregationBarWidthSettings {
   strategy: TimeSeriesChartNoAggregationBarWidthStrategy;
-  groupIntervalWidth?: number;
-  separateBarWidth?: number;
+  groupWidth?: TimeSeriesChartBarWidth;
+  barWidth?: TimeSeriesChartBarWidth;
 }
 
 export interface TimeSeriesChartSettings extends EChartsTooltipWidgetSettings {
@@ -435,6 +442,7 @@ export const timeSeriesChartDefaultSettings: TimeSeriesChartSettings = {
       lineHeight: '1'
     },
     tickLabelColor: timeSeriesChartColorScheme['axis.tickLabel'].light,
+    ticksFormatter: null,
     showTicks: true,
     ticksColor: timeSeriesChartColorScheme['axis.ticks'].light,
     showLine: true,
@@ -474,8 +482,16 @@ export const timeSeriesChartDefaultSettings: TimeSeriesChartSettings = {
   },
   noAggregationBarWidthSettings: {
     strategy: TimeSeriesChartNoAggregationBarWidthStrategy.group,
-    groupIntervalWidth: 1000,
-    separateBarWidth: 1000
+    groupWidth: {
+      relative: true,
+      relativeWidth: 2,
+      absoluteWidth: 1000
+    },
+    barWidth: {
+      relative: true,
+      relativeWidth: 2,
+      absoluteWidth: 1000
+    }
   },
   showTooltip: true,
   tooltipTrigger: EChartsTooltipTrigger.axis,
@@ -633,6 +649,7 @@ export interface TimeSeriesChartYAxis {
   units: string;
   option: YAXisOption & ValueAxisBaseOption;
   intervalCalculator?: (axis: Axis2D) => number;
+  ticksFormatter?: (value: any) => string;
 }
 
 export const createTimeSeriesYAxis = (axisId: string, units: string,
@@ -642,6 +659,10 @@ export const createTimeSeriesYAxis = (axisId: string, units: string,
     settings.tickLabelColor, darkMode, 'axis.tickLabel');
   const yAxisNameStyle = createChartTextStyle(settings.labelFont,
     settings.labelColor, darkMode, 'axis.label');
+  let ticksFormatter: (value: any) => string;
+  if (settings.ticksFormatter && settings.ticksFormatter.length) {
+    ticksFormatter = parseFunction(settings.ticksFormatter, ['value']);
+  }
   const yAxis: TimeSeriesChartYAxis = {
     id: axisId,
     units,
@@ -685,7 +706,18 @@ export const createTimeSeriesYAxis = (axisId: string, units: string,
         fontWeight: yAxisTickLabelStyle.fontWeight,
         fontFamily: yAxisTickLabelStyle.fontFamily,
         fontSize: yAxisTickLabelStyle.fontSize,
-        formatter: (value: any) => formatValue(value, decimals, units, false)
+        formatter: (value: any) => {
+          let result: string;
+          if (ticksFormatter) {
+            try {
+              result = ticksFormatter(value);
+            } catch (_e) {}
+          }
+          if (isUndefined(result)) {
+            result = formatValue(value, decimals, units, false);
+          }
+          return result;
+        }
       },
       splitLine: {
         show: settings.showSplitLines,
@@ -757,12 +789,12 @@ export const createTimeSeriesXAxisOption = (settings: TimeSeriesChartAxisSetting
 export const generateChartData = (dataItems: TimeSeriesChartDataItem[],
                                   thresholdItems: TimeSeriesChartThresholdItem[],
                                   timeInterval: Interval,
+                                  stack: boolean,
                                   noAggregation: boolean,
                                   noAggregationBarWidthSettings: TimeSeriesChartNoAggregationBarWidthSettings,
-                                  stack: boolean,
                                   darkMode: boolean): Array<LineSeriesOption | CustomSeriesOption> => {
   let series = generateChartSeries(dataItems, timeInterval,
-    noAggregation, noAggregationBarWidthSettings, stack, darkMode);
+    stack, noAggregation, noAggregationBarWidthSettings, darkMode);
   if (thresholdItems.length) {
     const thresholds = generateChartThresholds(thresholdItems, darkMode);
     series = series.concat(thresholds);
@@ -874,9 +906,9 @@ const createThresholdData = (val: string | number, item: TimeSeriesChartThreshol
 
 const generateChartSeries = (dataItems: TimeSeriesChartDataItem[],
                              timeInterval: Interval,
+                             stack: boolean,
                              noAggregation: boolean,
                              noAggregationBarWidthSettings: TimeSeriesChartNoAggregationBarWidthSettings,
-                             stack: boolean,
                              darkMode: boolean): Array<LineSeriesOption | CustomSeriesOption> => {
   const series: Array<LineSeriesOption | CustomSeriesOption> = [];
   const enabledDataItems = dataItems.filter(d => d.enabled);
@@ -895,7 +927,17 @@ const generateChartSeries = (dataItems: TimeSeriesChartDataItem[],
   for (const item of enabledDataItems) {
     if (item.dataKey.settings.type === TimeSeriesChartSeriesType.bar) {
       if (!item.barRenderContext) {
-        item.barRenderContext = {noAggregation, noAggregationBarWidthSettings};
+        item.barRenderContext = {noAggregation,
+          noAggregationBarWidthStrategy: noAggregationBarWidthSettings.strategy};
+        const targetWidth = noAggregationBarWidthSettings.strategy === TimeSeriesChartNoAggregationBarWidthStrategy.group ?
+          noAggregationBarWidthSettings.groupWidth : noAggregationBarWidthSettings.barWidth;
+        if (targetWidth.relative) {
+          item.barRenderContext.noAggregationWidthRelative = true;
+          item.barRenderContext.noAggregationWidth = targetWidth.relativeWidth;
+        } else {
+          item.barRenderContext.noAggregationWidthRelative = false;
+          item.barRenderContext.noAggregationWidth = targetWidth.absoluteWidth;
+        }
       }
       item.barRenderContext.noAggregation = noAggregation;
       item.barRenderContext.barsCount = barsCount;
