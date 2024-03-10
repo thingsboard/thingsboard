@@ -28,8 +28,8 @@
     <inceptionYear>2016</inceptionYear>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
         <main.dir>${basedir}</main.dir>
         <pkg.disabled>true</pkg.disabled>
         <pkg.process-resources.phase>none</pkg.process-resources.phase>
@@ -39,16 +39,16 @@
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
         <jakarta-annotation.version>2.1.1</jakarta-annotation.version>
-        <jakarta.xml.bind-api.version>4.0.0</jakarta.xml.bind-api.version>
+        <jakarta.xml.bind-api.version>4.0.2</jakarta.xml.bind-api.version>
         <javax.xml.bind-api.version>2.4.0-b180830.0359</javax.xml.bind-api.version>
         <jaxb-runtime.version>4.0.2</jaxb-runtime.version>
-        <spring-boot.version>3.1.0</spring-boot.version>
-        <spring-data.version>3.1.0</spring-data.version>
-        <spring.version>6.0.9</spring.version>
-        <spring-redis.version>6.1.0</spring-redis.version>
-        <spring-security.version>6.1.0</spring-security.version>
-        <spring-data-redis.version>3.1.0</spring-data-redis.version>
-        <jedis.version>4.3.2</jedis.version>
+        <spring-boot.version>3.2.3</spring-boot.version>
+        <spring-data.version>3.2.3</spring-data.version>
+        <spring.version>6.1.4</spring.version>
+        <spring-redis.version>6.2.2</spring-redis.version>
+        <spring-security.version>6.2.2</spring-security.version>
+        <spring-data-redis.version>3.2.3</spring-data-redis.version>
+        <jedis.version>5.1.2</jedis.version>
         <jjwt.version>0.9.1</jjwt.version>
         <slf4j.version>2.0.7</slf4j.version>
         <log4j.version>2.19.0</log4j.version>
@@ -82,7 +82,7 @@
         <protobuf.version>3.21.9</protobuf.version>
         <grpc.version>1.42.1</grpc.version>
         <tbel.version>1.1.5</tbel.version>
-        <lombok.version>1.18.26</lombok.version>
+        <lombok.version>1.18.30</lombok.version>
         <paho.client.version>1.2.4</paho.client.version>
         <paho.mqttv5.client.version>1.2.5</paho.mqttv5.client.version>
         <netty.version>4.1.93.Final</netty.version>
@@ -124,7 +124,7 @@
         <protobuf-dynamic.version>1.0.4TB</protobuf-dynamic.version>
         <wire-schema.version>3.4.0</wire-schema.version>
         <twilio.version>9.6.1</twilio.version>
-        <hibernate-validator.version>8.0.0.Final</hibernate-validator.version>
+        <hibernate-validator.version>8.0.1.Final</hibernate-validator.version>
         <hypersistence-utils.version>3.5.2</hypersistence-utils.version>
         <jakarta.el.version>4.0.2</jakarta.el.version>
         <jakarta.validation-api.version>3.0.2</jakarta.validation-api.version>

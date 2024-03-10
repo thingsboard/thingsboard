@@ -31,7 +31,7 @@ public class ThingsboardPostgreSQLDialect extends PostgreSQLDialect {
 
         functionRegistry.registerPattern(
                 "ilike",
-                "(?1 ILIKE ?2)",
+                "(?1 ILIKE CAST(?2 AS TEXT))",
                 basicTypeRegistry.resolve(StandardBasicTypes.BOOLEAN));
     }
 }
