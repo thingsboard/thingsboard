@@ -136,10 +136,10 @@ public interface DeviceRepository extends JpaRepository<DeviceEntity, UUID>, Exp
             "OR ilike(d.type, CONCAT('%', :textSearch, '%')) = true " +
             "OR ilike(d.customerTitle, CONCAT('%', :textSearch, '%')) = true)")
     Page<DeviceInfoEntity> findDeviceInfosByFilter(@Param("tenantId") UUID tenantId,
-                                                   @Param("customerId") UUID customerId, // Changed from String to UUID
-                                                   @Param("edgeId") UUID edgeId, // Changed from String to UUID
+                                                   @Param("customerId") UUID customerId,
+                                                   @Param("edgeId") UUID edgeId,
                                                    @Param("deviceType") String type,
-                                                   @Param("deviceProfileId") UUID deviceProfileId, // Changed from String to UUID
+                                                   @Param("deviceProfileId") UUID deviceProfileId,
                                                    @Param("filterByActive") boolean filterByActive,
                                                    @Param("deviceActive") boolean active,
                                                    @Param("textSearch") String textSearch,

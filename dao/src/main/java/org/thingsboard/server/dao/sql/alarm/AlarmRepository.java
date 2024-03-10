@@ -100,10 +100,8 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
             "AND ea.entityType = :affectedEntityType " +
             "AND (:startTime IS NULL OR (a.createdTime >= :startTime AND ea.createdTime >= :startTime)) " +
             "AND (:endTime IS NULL OR (a.createdTime <= :endTime AND ea.createdTime <= :endTime)) " +
-            "AND ((:#{#alarmTypes == null} = true) OR a.type IN (:alarmTypes)) " + //HHH-15968
-            "AND ((:#{#alarmSeverities == null} = true) OR a.severity IN (:alarmSeverities)) " + //HHH-15968
-//            "AND ((:alarmTypes) IS NULL OR a.type IN (:alarmTypes)) " +
-//            "AND ((:alarmSeverities) IS NULL OR a.severity IN (:alarmSeverities)) " +
+            "AND ((:alarmTypes) IS NULL OR a.type IN (:alarmTypes)) " +
+            "AND ((:alarmSeverities) IS NULL OR a.severity IN (:alarmSeverities)) " +
             "AND ((:clearFilterEnabled) = FALSE OR a.cleared = :clearFilter) " +
             "AND ((:ackFilterEnabled) = FALSE OR a.acknowledged = :ackFilter) " +
             "AND (:assigneeId IS NULL OR a.assigneeId = :assigneeId) " +
@@ -121,10 +119,8 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                     "AND ea.entityType = :affectedEntityType " +
                     "AND (:startTime IS NULL OR (a.createdTime >= :startTime AND ea.createdTime >= :startTime)) " +
                     "AND (:endTime IS NULL OR (a.createdTime <= :endTime AND ea.createdTime <= :endTime)) " +
-                    "AND ((:#{#alarmTypes == null} = true) OR a.type IN (:alarmTypes)) " + //HHH-15968
-                    "AND ((:#{#alarmSeverities == null} = true) OR a.severity IN (:alarmSeverities)) " + //HHH-15968
-//                    "AND ((:alarmTypes) IS NULL OR a.type IN (:alarmTypes)) " +
-//                    "AND ((:alarmSeverities) IS NULL OR a.severity IN (:alarmSeverities)) " +
+                    "AND ((:alarmTypes) IS NULL OR a.type IN (:alarmTypes)) " +
+                    "AND ((:alarmSeverities) IS NULL OR a.severity IN (:alarmSeverities)) " +
                     "AND ((:clearFilterEnabled) = FALSE OR a.cleared = :clearFilter) " +
                     "AND ((:ackFilterEnabled) = FALSE OR a.acknowledged = :ackFilter) " +
                     "AND (:assigneeId IS NULL OR a.assigneeId = :assigneeId) " +
@@ -185,10 +181,8 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
             "WHERE a.tenantId = :tenantId " +
             "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
             "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
-            "AND ((:#{#alarmTypes == null} = true) OR a.type IN (:alarmTypes)) " + //HHH-15968
-            "AND ((:#{#alarmSeverities == null} = true) OR a.severity IN (:alarmSeverities)) " + //HHH-15968
-//            "AND ((:alarmTypes) IS NULL OR a.type IN (:alarmTypes)) " +
-//            "AND ((:alarmSeverities) IS NULL OR a.severity IN (:alarmSeverities)) " +
+            "AND ((:alarmTypes) IS NULL OR a.type IN (:alarmTypes)) " +
+            "AND ((:alarmSeverities) IS NULL OR a.severity IN (:alarmSeverities)) " +
             "AND ((:clearFilterEnabled) = FALSE OR a.cleared = :clearFilter) " +
             "AND ((:ackFilterEnabled) = FALSE OR a.acknowledged = :ackFilter) " +
             "AND (:assigneeId IS NULL OR a.assigneeId = :assigneeId) " +
@@ -201,10 +195,8 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                     "WHERE a.tenantId = :tenantId " +
                     "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
                     "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
-                    "AND ((:#{#alarmTypes == null} = true) OR a.type IN (:alarmTypes)) " + //HHH-15968
-                    "AND ((:#{#alarmSeverities == null} = true) OR a.severity IN (:alarmSeverities)) " + //HHH-15968
-//                    "AND ((:alarmTypes) IS NULL OR a.type IN (:alarmTypes)) " +
-//                    "AND ((:alarmSeverities) IS NULL OR a.severity IN (:alarmSeverities)) " +
+                    "AND ((:alarmTypes) IS NULL OR a.type IN (:alarmTypes)) " +
+                    "AND ((:alarmSeverities) IS NULL OR a.severity IN (:alarmSeverities)) " +
                     "AND ((:clearFilterEnabled) = FALSE OR a.cleared = :clearFilter) " +
                     "AND ((:ackFilterEnabled) = FALSE OR a.acknowledged = :ackFilter) " +
                     "AND (:assigneeId IS NULL OR a.assigneeId = :assigneeId) " +
@@ -265,10 +257,8 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
             "WHERE a.tenantId = :tenantId AND a.customerId = :customerId " +
             "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
             "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
-            "AND ((:#{#alarmTypes == null} = true) OR a.type IN (:alarmTypes)) " + //HHH-15968
-            "AND ((:#{#alarmSeverities == null} = true) OR a.severity IN (:alarmSeverities)) " + //HHH-15968
-//            "AND ((:alarmTypes) IS NULL OR a.type IN (:alarmTypes)) " +
-//            "AND ((:alarmSeverities) IS NULL OR a.severity IN (:alarmSeverities)) " +
+            "AND ((:alarmTypes) IS NULL OR a.type IN (:alarmTypes)) " +
+            "AND ((:alarmSeverities) IS NULL OR a.severity IN (:alarmSeverities)) " +
             "AND ((:clearFilterEnabled) = FALSE OR a.cleared = :clearFilter) " +
             "AND ((:ackFilterEnabled) = FALSE OR a.acknowledged = :ackFilter) " +
             "AND (:assigneeId IS NULL OR a.assigneeId = :assigneeId) " +
@@ -282,10 +272,8 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                     "WHERE a.tenantId = :tenantId AND a.customerId = :customerId " +
                     "AND (:startTime IS NULL OR a.createdTime >= :startTime) " +
                     "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
-                    "AND ((:#{#alarmTypes == null} = true) OR a.type IN (:alarmTypes)) " + //HHH-15968
-                    "AND ((:#{#alarmSeverities == null} = true) OR a.severity IN (:alarmSeverities)) " + //HHH-15968
-//                    "AND ((:alarmTypes) IS NULL OR a.type IN (:alarmTypes)) " +
-//                    "AND ((:alarmSeverities) IS NULL OR a.severity IN (:alarmSeverities)) " +
+                    "AND ((:alarmTypes) IS NULL OR a.type IN (:alarmTypes)) " +
+                    "AND ((:alarmSeverities) IS NULL OR a.severity IN (:alarmSeverities)) " +
                     "AND ((:clearFilterEnabled) = FALSE OR a.cleared = :clearFilter) " +
                     "AND ((:ackFilterEnabled) = FALSE OR a.acknowledged = :ackFilter) " +
                     "AND (:assigneeId IS NULL OR a.assigneeId = :assigneeId) " +
