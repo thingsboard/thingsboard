@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.sql.widget;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,6 +44,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
@@ -158,6 +160,29 @@ public class JpaWidgetTypeDaoTest extends AbstractJpaDaoTest {
                 new PageLink(1024, 0, "hfgfd tag2_2 ghg", new SortOrder("createdTime")));
         assertEquals(1, widgetTypes.getData().size());
         assertEquals(new WidgetTypeInfo(widgetTypeList.get(2)), widgetTypes.getData().get(0));
+    }
+
+    @Test
+    public void testFindSystemWidgetTypesForSameName() throws InterruptedException {
+        List<WidgetTypeDetails> widgetTypeList = new ArrayList<>();
+
+        for (int i = 0; i < 20; i++) {
+            Thread.sleep(2);
+            var widgetType = saveWidgetType(TenantId.SYS_TENANT_ID, "widgetName");
+            widgetTypeList.add(widgetType);
+        }
+        widgetTypeList.sort(Comparator.comparing(BaseWidgetType::getName).thenComparing((BaseWidgetType baseWidgetType) -> baseWidgetType.getId().getId()));
+        List<WidgetTypeInfo> expected = widgetTypeList.stream().map(WidgetTypeInfo::new).collect(Collectors.toList());
+
+        PageData<WidgetTypeInfo> widgetTypesFirstPage = widgetTypeDao.findSystemWidgetTypes(TenantId.SYS_TENANT_ID, true, DeprecatedFilter.ALL, Collections.singletonList("static"),
+                new PageLink(10, 0, null, new SortOrder("name")));
+        assertEquals(10, widgetTypesFirstPage.getData().size());
+        assertThat(widgetTypesFirstPage.getData()).containsExactlyElementsOf(expected.subList(0, 10));
+
+        PageData<WidgetTypeInfo> widgetTypesSecondPage = widgetTypeDao.findSystemWidgetTypes(TenantId.SYS_TENANT_ID, true, DeprecatedFilter.ALL, Collections.singletonList("static"),
+                new PageLink(10, 0, null, new SortOrder("name")));
+        assertEquals(10, widgetTypesSecondPage.getData().size());
+        assertThat(widgetTypesSecondPage.getData()).containsExactlyElementsOf(expected.subList(10, 20));
     }
 
     @Test
@@ -354,5 +379,15 @@ public class JpaWidgetTypeDaoTest extends AbstractJpaDaoTest {
         result = widgetTypeDao.findByTenantAndImageLink(tenantId, "/image/tenant/widget2.png", 3);
         assertEquals(0, result.size());
         widgetTypeDao.removeById(tenantId, details.getUuidId());
+    }
+
+    private WidgetTypeDetails saveWidgetType(TenantId tenantId, String name) {
+        WidgetTypeDetails widgetType = new WidgetTypeDetails();
+        widgetType.setTenantId(tenantId);
+        widgetType.setName(name);
+        var descriptor = JacksonUtil.newObjectNode();
+        descriptor.put("type","static");
+        widgetType.setDescriptor(descriptor);
+        return widgetTypeDao.save(TenantId.SYS_TENANT_ID, widgetType);
     }
 }

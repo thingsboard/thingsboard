@@ -76,20 +76,4 @@ public class TimePageLink extends PageLink {
         }
     }
 
-    @Override
-    public Sort toSort(List<SortOrder> sortOrders, Map<String,String> columnMap) {
-        if (!isDefaultSortOrderAvailable(sortOrders)) {
-            sortOrders.add(new SortOrder(DEFAULT_SORT_PROPERTY, SortOrder.Direction.ASC));
-        }
-        return super.toSort(sortOrders, columnMap);
-    }
-
-    private boolean isDefaultSortOrderAvailable(List<SortOrder> sortOrders) {
-        for (SortOrder sortOrder : sortOrders) {
-            if (DEFAULT_SORT_PROPERTY.equals(sortOrder.getProperty())) {
-                return true;
-            }
-        }
-        return false;
-    }
 }

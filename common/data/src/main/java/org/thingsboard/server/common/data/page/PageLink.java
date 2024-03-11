@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import org.springframework.data.domain.Sort;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -66,18 +67,13 @@ public class PageLink {
     }
 
     public Sort toSort(SortOrder sortOrder, Map<String,String> columnMap) {
-        if (sortOrder == null) {
-            return DEFAULT_SORT;
-        } else {
-            String property = sortOrder.getProperty();
-            if (columnMap.containsKey(property)) {
-                property = columnMap.get(property);
-            }
-            return Sort.by(Sort.Direction.fromString(sortOrder.getDirection().name()), property);
-        }
+        return toSort(new ArrayList<>(List.of(sortOrder)), columnMap);
     }
 
     public Sort toSort(List<SortOrder> sortOrders, Map<String,String> columnMap) {
+        if (!isDefaultSortOrderAvailable(sortOrders)) {
+            sortOrders.add(new SortOrder(DEFAULT_SORT_PROPERTY, SortOrder.Direction.ASC));
+        }
         return Sort.by(sortOrders.stream().map(s -> toSortOrder(s, columnMap)).collect(Collectors.toList()));
     }
 
@@ -87,6 +83,15 @@ public class PageLink {
             property = columnMap.get(property);
         }
         return new Sort.Order(Sort.Direction.fromString(sortOrder.getDirection().name()), property, Sort.NullHandling.NULLS_LAST);
+    }
+
+    public boolean isDefaultSortOrderAvailable(List<SortOrder> sortOrders) {
+        for (SortOrder sortOrder : sortOrders) {
+            if (DEFAULT_SORT_PROPERTY.equals(sortOrder.getProperty())) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }
