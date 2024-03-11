@@ -134,18 +134,19 @@
         <awaitility.version>4.2.0</awaitility.version>
         <dbunit.version>2.7.2</dbunit.version>
         <java-websocket.version>1.5.2</java-websocket.version>
-        <jupiter.version>5.9.3</jupiter.version> <!-- keep the same version as spring-boot-starter-test depend on jupiter-->
+        <jupiter.version>5.10.2</jupiter.version> <!-- keep the same version as spring-boot-starter-test depend on jupiter-->
         <json-path.version>2.6.0</json-path.version>
         <mock-server.version>5.15.0</mock-server.version>
         <spring-test-dbunit.version>1.3.0</spring-test-dbunit.version> <!-- 2016 -->
         <takari-cpsuite.version>1.2.7</takari-cpsuite.version> <!-- 2015 -->
         <jeasy.version>5.0.0</jeasy.version>
+        <bytebuddy.version>1.14.12</bytebuddy.version>
         <!--      BLACKBOX TEST SCOPE     -->
         <testng.version>7.6.1</testng.version>
         <assertj.version>3.23.1</assertj.version>
         <rest-assured.version>5.2.0</rest-assured.version>
         <hamcrest.version>1.3</hamcrest.version>
-        <testcontainers.version>1.18.3</testcontainers.version>
+        <testcontainers.version>1.19.7</testcontainers.version>
         <zeroturnaround.version>1.12</zeroturnaround.version>
         <opensmpp.version>3.0.0</opensmpp.version>
         <jgit.version>6.1.0.202203080745-r</jgit.version>
@@ -616,7 +617,7 @@
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.11.0</version>
                     <configuration>
-                        <release>17</release>
+                        <release>21</release>
                         <compilerArgs>
                             <arg>-Xlint:deprecation</arg>
                             <arg>-Xlint:removal</arg>
@@ -674,6 +675,7 @@
                     <configuration>
                         <argLine>
                             -XX:+UseStringDeduplication -XX:MaxGCPauseMillis=20
+                            -XX:+EnableDynamicAgentLoading
                             --add-opens java.base/java.lang.reflect=ALL-UNNAMED
                         </argLine>
                     </configuration>
@@ -2019,6 +2021,18 @@
                         <artifactId>junit</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy</artifactId>
+                <version>${bytebuddy.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy-agent</artifactId>
+                <version>${bytebuddy.version}</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.zeroturnaround</groupId>
