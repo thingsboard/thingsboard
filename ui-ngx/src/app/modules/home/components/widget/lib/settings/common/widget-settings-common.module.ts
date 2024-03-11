@@ -118,6 +118,9 @@ import {
 import {
   TimeSeriesChartYAxisSettingsPanelComponent
 } from '@home/components/widget/lib/settings/common/chart/time-series-chart-y-axis-settings-panel.component';
+import {
+  TimeSeriesChartAnimationSettingsComponent
+} from '@home/components/widget/lib/settings/common/chart/time-series-chart-animation-settings.component';
 
 @NgModule({
   declarations: [
@@ -162,6 +165,7 @@ import {
     TimeSeriesChartYAxesPanelComponent,
     TimeSeriesChartYAxisRowComponent,
     TimeSeriesChartYAxisSettingsPanelComponent,
+    TimeSeriesChartAnimationSettingsComponent,
     DataKeyInputComponent,
     EntityAliasInputComponent
   ],
@@ -212,6 +216,7 @@ import {
     TimeSeriesChartYAxesPanelComponent,
     TimeSeriesChartYAxisRowComponent,
     TimeSeriesChartYAxisSettingsPanelComponent,
+    TimeSeriesChartAnimationSettingsComponent,
     DataKeyInputComponent,
     EntityAliasInputComponent
   ],

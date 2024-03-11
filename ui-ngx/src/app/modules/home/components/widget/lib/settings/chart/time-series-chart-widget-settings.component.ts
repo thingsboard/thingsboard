@@ -138,6 +138,8 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
       tooltipBackgroundColor: [settings.tooltipBackgroundColor, []],
       tooltipBackgroundBlur: [settings.tooltipBackgroundBlur, []],
 
+      animation: [settings.animation, []],
+
       background: [settings.background, []]
     });
   }

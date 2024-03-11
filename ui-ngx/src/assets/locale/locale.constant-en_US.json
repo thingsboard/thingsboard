@@ -6696,6 +6696,16 @@
               "show": "Show",
               "add-y-axis": "Add Y axis"
             },
+            "animation": {
+              "animation": "Animation",
+              "animation-threshold": "Animation threshold",
+              "animation-duration": "Animation duration",
+              "animation-easing": "Animation easing",
+              "animation-delay": "Animation delay",
+              "update-animation-duration": "Update animation duration",
+              "update-animation-easing": "Update animation easing",
+              "update-animation-delay": "Update animation delay"
+            },
             "series": {
               "legend-settings": "Legend settings",
               "show-in-legend": "Show in legend",

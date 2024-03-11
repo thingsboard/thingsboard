@@ -168,6 +168,8 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
       tooltipBackgroundColor: [settings.tooltipBackgroundColor, []],
       tooltipBackgroundBlur: [settings.tooltipBackgroundBlur, []],
 
+      animation: [settings.animation, []],
+
       background: [settings.background, []],
 
       cardButtons: [this.getCardButtons(configData.config), []],
@@ -220,6 +222,8 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
     this.widgetConfig.config.settings.tooltipDateInterval = config.tooltipDateInterval;
     this.widgetConfig.config.settings.tooltipBackgroundColor = config.tooltipBackgroundColor;
     this.widgetConfig.config.settings.tooltipBackgroundBlur = config.tooltipBackgroundBlur;
+
+    this.widgetConfig.config.settings.animation = config.animation;
 
     this.widgetConfig.config.settings.background = config.background;
 
