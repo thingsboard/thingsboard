@@ -313,12 +313,14 @@
         &.small {
           height: 32px;
           p {
-            padding: 5px 8px;
+            top: 9px;
+            padding: 1px 8px;
           }
           div {
             width: 36px;
-            height: 36px;
-            top: 1px;
+            height: 32px;
+            top: 4px;
+            padding-bottom: 2px;
           }
         }
       }
