@@ -57,6 +57,14 @@
     min-width: 60px;
   }
 
+  .tb-y-axis-field {
+    width: 100px;
+    min-width: 100px;
+    .mat-mdc-form-field {
+      width: 100%;
+    }
+  }
+
   .tb-time-series-type-field {
     width: 60px;
     min-width: 60px;
@@ -72,7 +80,16 @@
     }
   }
 
+  .tb-y-axis-field {
+    @media #{$mat-md} {
+      display: none;
+    }
+  }
+
   .tb-time-series-type-field {
+    @media #{$mat-xs} {
+      display: none;
+    }
     @media #{$mat-md} {
       display: none;
     }

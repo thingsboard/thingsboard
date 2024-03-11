@@ -19,10 +19,10 @@ import {
   Component,
   EventEmitter,
   forwardRef,
-  Input,
+  Input, OnChanges,
   OnInit,
   Output,
-  Renderer2,
+  Renderer2, SimpleChanges,
   ViewContainerRef,
   ViewEncapsulation
 } from '@angular/core';
@@ -36,7 +36,7 @@ import {
 } from '@angular/forms';
 import {
   TimeSeriesChartThreshold,
-  TimeSeriesChartThresholdType,
+  TimeSeriesChartThresholdType, TimeSeriesChartYAxisId,
   timeSeriesThresholdTypes,
   timeSeriesThresholdTypeTranslations
 } from '@home/components/widget/lib/chart/time-series-chart.models';
@@ -67,7 +67,7 @@ import {
   ],
   encapsulation: ViewEncapsulation.None
 })
-export class TimeSeriesChartThresholdRowComponent implements ControlValueAccessor, OnInit {
+export class TimeSeriesChartThresholdRowComponent implements ControlValueAccessor, OnInit, OnChanges {
 
   DataKeyType = DataKeyType;
 
@@ -98,6 +98,9 @@ export class TimeSeriesChartThresholdRowComponent implements ControlValueAccesso
   @Input()
   disabled: boolean;
 
+  @Input()
+  yAxisIds: TimeSeriesChartYAxisId[];
+
   @Output()
   thresholdRemoved = new EventEmitter();
 
@@ -124,6 +127,7 @@ export class TimeSeriesChartThresholdRowComponent implements ControlValueAccesso
       type: [null, []],
       value: [null, [Validators.required]],
       entityAlias: [null, [Validators.required]],
+      yAxisId: [null, [Validators.required]],
       lineColor: [null, []],
       units: [null, []],
       decimals: [null, []]
@@ -142,6 +146,20 @@ export class TimeSeriesChartThresholdRowComponent implements ControlValueAccesso
     this.thresholdFormGroup.get('type').valueChanges.subscribe(() => {
       this.updateValidators();
     });
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    for (const propName of Object.keys(changes)) {
+      const change = changes[propName];
+      if (!change.firstChange && change.currentValue !== change.previousValue) {
+        if (['yAxisIds'].includes(propName)) {
+          if (this.modelValue?.yAxisId &&
+            !this.yAxisIds.includes(this.modelValue.yAxisId)) {
+            this.thresholdFormGroup.patchValue({yAxisId: 'default'}, {emitEvent: true});
+          }
+        }
+      }
+    }
   }
 
   registerOnChange(fn: any): void {
@@ -170,6 +188,7 @@ export class TimeSeriesChartThresholdRowComponent implements ControlValueAccesso
         type: value.type,
         value: value.value,
         entityAlias: value.entityAlias,
+        yAxisId: value.yAxisId,
         lineColor: value.lineColor,
         units: value.units,
         decimals: value.decimals,
@@ -200,7 +219,8 @@ export class TimeSeriesChartThresholdRowComponent implements ControlValueAccesso
     } else {
       const ctx: any = {
         thresholdSettings: deepClone(this.modelValue),
-        widgetConfig: this.widgetConfig
+        widgetConfig: this.widgetConfig,
+        yAxisIds: this.yAxisIds
       };
       const thresholdSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
         this.viewContainerRef, TimeSeriesChartThresholdSettingsPanelComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], true, null,
@@ -213,6 +233,7 @@ export class TimeSeriesChartThresholdRowComponent implements ControlValueAccesso
         this.modelValue = {...this.modelValue, ...thresholdSettings};
         this.thresholdFormGroup.patchValue(
           {
+            yAxisId: this.modelValue.yAxisId,
             units: this.modelValue.units,
             decimals: this.modelValue.decimals,
             lineColor: this.modelValue.lineColor
@@ -248,6 +269,7 @@ export class TimeSeriesChartThresholdRowComponent implements ControlValueAccesso
     this.modelValue.type = value.type;
     this.modelValue.value = value.value;
     this.modelValue.entityAlias = value.entityAlias;
+    this.modelValue.yAxisId = value.yAxisId;
     this.modelValue.lineColor = value.lineColor;
     this.modelValue.units = value.units;
     this.modelValue.decimals = value.decimals;

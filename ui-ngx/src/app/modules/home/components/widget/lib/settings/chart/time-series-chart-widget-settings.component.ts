@@ -16,6 +16,7 @@
 
 import { Component, Injector } from '@angular/core';
 import {
+  DataKey,
   Datasource,
   legendPositions,
   legendPositionTranslationMap,
@@ -32,7 +33,11 @@ import {
   timeSeriesChartWidgetDefaultSettings,
   TimeSeriesChartWidgetSettings
 } from '@home/components/widget/lib/chart/time-series-chart-widget.models';
-import { TimeSeriesChartType } from '@home/components/widget/lib/chart/time-series-chart.models';
+import {
+  TimeSeriesChartKeySettings,
+  TimeSeriesChartType, TimeSeriesChartYAxes,
+  TimeSeriesChartYAxisId
+} from '@home/components/widget/lib/chart/time-series-chart.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 
 @Component({
@@ -49,6 +54,11 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
     } else {
       return null;
     }
+  }
+
+  public get yAxisIds(): TimeSeriesChartYAxisId[] {
+    const yAxes: TimeSeriesChartYAxes = this.timeSeriesChartWidgetSettingsForm.get('yAxes').value;
+    return Object.keys(yAxes);
   }
 
   TimeSeriesChartType = TimeSeriesChartType;
@@ -73,6 +83,15 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
     super(store);
   }
 
+  public yAxisRemoved(yAxisId: TimeSeriesChartYAxisId): void {
+    if (this.widgetConfig.config.datasources && this.widgetConfig.config.datasources.length > 1) {
+      for (let i = 1; i < this.widgetConfig.config.datasources.length; i++) {
+        const datasource = this.widgetConfig.config.datasources[i];
+        this.removeYaxisId(datasource.dataKeys, yAxisId);
+      }
+    }
+  }
+
   protected settingsForm(): UntypedFormGroup {
     return this.timeSeriesChartWidgetSettingsForm;
   }
@@ -91,12 +110,12 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
   protected onSettingsSet(settings: WidgetSettings) {
     this.timeSeriesChartWidgetSettingsForm = this.fb.group({
 
+      yAxes: [settings.yAxes, []],
       thresholds: [settings.thresholds, []],
 
       dataZoom: [settings.dataZoom, []],
       stack: [settings.stack, []],
 
-      yAxis: [settings.yAxis, []],
       xAxis: [settings.xAxis, []],
 
       noAggregationBarWidthSettings: [settings.noAggregationBarWidthSettings, []],
@@ -171,6 +190,20 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
       this.timeSeriesChartWidgetSettingsForm.get('tooltipBackgroundColor').disable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipBackgroundBlur').disable();
     }
+  }
+
+  private removeYaxisId(series: DataKey[], yAxisId: TimeSeriesChartYAxisId): boolean {
+    let changed = false;
+    if (series) {
+      series.forEach(key => {
+        const keySettings = ((key.settings || {}) as TimeSeriesChartKeySettings);
+        if (keySettings.yAxisId === yAxisId) {
+          keySettings.yAxisId = 'default';
+          changed = true;
+        }
+      });
+    }
+    return changed;
   }
 
   private _tooltipValuePreviewFn(): string {
