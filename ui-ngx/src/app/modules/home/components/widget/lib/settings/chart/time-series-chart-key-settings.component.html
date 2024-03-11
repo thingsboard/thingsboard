@@ -30,6 +30,18 @@
     </mat-slide-toggle>
   </div>
   <div class="tb-form-panel">
+    <div class="tb-form-row space-between column-xs">
+      <div translate>widgets.time-series-chart.axis.y-axis</div>
+      <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="yAxisId">
+          <mat-option *ngFor="let yAxis of yAxisIds" [value]="yAxis">
+            {{ yAxis }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </div>
+  <div class="tb-form-panel">
     <div *ngIf="chartType === TimeSeriesChartType.default; else chartTypeTitle" fxLayout="row" fxLayoutAlign="space-between center">
       <div class="tb-form-panel-title" translate>widgets.time-series-chart.series.series-type</div>
       <tb-toggle-select formControlName="type">

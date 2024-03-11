@@ -13,57 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 @import '../../../../../../../../../scss/constants';
 
-.tb-form-table-row.tb-time-series-threshold-row {
-  @media #{$mat-lt-md} {
-    align-items: flex-start;
+.tb-form-table-row.tb-axis-row {
+
+  .tb-axis-id-field {
+    color: rgba(0, 0, 0, 0.76);
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: 0.2px;
+    width: 60px;
+    min-width: 60px;
   }
-  .tb-threshold-source-field {
-    flex: 1;
+
+  .tb-label-field {
+    flex: 1 1 60%;
     min-width: 100px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    @media #{$mat-gt-sm} {
-      flex-direction: row;
-      align-items: center;
-      gap: 12px;
-    }
+  }
+
+  .tb-position-field {
+    flex: 1;
+    min-width: 60px;
     @media #{$mat-gt-md} {
-      min-width: 200px;
+      flex: 1 1 40%;
     }
   }
 
-  .tb-threshold-type-field {
-    flex: 1;
-  }
-
-  .tb-entity-alias-input {
-    flex: 1;
-  }
-
-  .tb-threshold-key-value-field {
-    flex: 1;
-    min-width: 100px;
-    .tb-inline-field {
-      width: 100%;
-    }
-    @media #{$mat-gt-md} {
-      min-width: 150px;
-    }
-  }
-
-  .tb-y-axis-field {
-    width: 100px;
-    min-width: 100px;
-    .mat-mdc-form-field {
-      width: 100%;
-    }
-  }
-
-  .tb-color-field, .tb-units-field, .tb-decimals-field {
+  .tb-units-field, .tb-decimals-field, .tb-min-field, .tb-max-field {
     display: flex;
     flex-direction: row;
     place-content: center;
@@ -75,27 +52,44 @@
     min-width: 80px;
   }
 
-  .tb-color-field {
-    width: 40px;
-    min-width: 40px;
-  }
-
   .tb-decimals-field {
     width: 60px;
     min-width: 60px;
   }
 
-  .tb-y-axis-field {
-    @media #{$mat-xs} {
-      display: none;
+  .tb-min-field, .tb-max-field {
+    width: 80px;
+    min-width: 80px;
+  }
+
+  .tb-show-field {
+    width: 40px;
+    min-width: 40px;
+  }
+
+  .tb-label-field {
+    display: none;
+    @media #{$mat-gt-md} {
+      display: block;
     }
   }
 
-  .tb-units-field, .tb-color-field, .tb-decimals-field {
+  .tb-units-field, .tb-decimals-field {
     display: none;
     @media #{$mat-gt-md} {
       display: flex;
     }
   }
 
+  .tb-min-field, .tb-max-field {
+    display: none;
+    @media #{$mat-gt-xs} {
+      display: flex;
+    }
+  }
+
+  .tb-remove-button {
+    width: 40px;
+    min-width: 40px;
+  }
 }

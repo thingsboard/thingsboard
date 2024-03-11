@@ -33,6 +33,11 @@
       }
     }
 
+    &.tb-y-axis-header {
+      width: 100px;
+      min-width: 100px;
+    }
+
     &.tb-units-header {
       width: 80px;
       min-width: 80px;
@@ -51,6 +56,12 @@
     &.tb-actions-header {
       width: 80px;
       min-width: 80px;
+    }
+
+    &.tb-y-axis-header {
+      @media #{$mat-xs} {
+        display: none;
+      }
     }
 
     &.tb-units-header, &.tb-color-header, &.tb-decimals-header {

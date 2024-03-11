@@ -25,9 +25,10 @@ import {
   TimeSeriesChartKeySettings,
   TimeSeriesChartSeriesType,
   timeSeriesChartSeriesTypes,
-  timeSeriesChartSeriesTypeTranslations, TimeSeriesChartType, timeSeriesChartTypeTranslations
+  timeSeriesChartSeriesTypeTranslations, TimeSeriesChartType, timeSeriesChartTypeTranslations, TimeSeriesChartYAxisId
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
+import { TimeSeriesChartWidgetSettings } from '@home/components/widget/lib/chart/time-series-chart-widget.models';
 
 @Component({
   selector: 'tb-time-series-chart-key-settings',
@@ -50,6 +51,8 @@ export class TimeSeriesChartKeySettingsComponent extends WidgetSettingsComponent
 
   chartType = TimeSeriesChartType.default;
 
+  yAxisIds: TimeSeriesChartYAxisId[];
+
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder) {
     super(store);
@@ -64,6 +67,8 @@ export class TimeSeriesChartKeySettingsComponent extends WidgetSettingsComponent
     if (isDefinedAndNotNull(params.chartType)) {
       this.chartType = params.chartType;
     }
+    const widgetSettings = (widgetConfig.config?.settings || {}) as TimeSeriesChartWidgetSettings;
+    this.yAxisIds = widgetSettings.yAxes ? Object.keys(widgetSettings.yAxes) : ['default'];
   }
 
   protected defaultSettings(): WidgetSettings {
@@ -73,7 +78,12 @@ export class TimeSeriesChartKeySettingsComponent extends WidgetSettingsComponent
 
   protected onSettingsSet(settings: WidgetSettings) {
     const seriesSettings = settings as TimeSeriesChartKeySettings;
+    let yAxisId = seriesSettings.yAxisId;
+    if (!this.yAxisIds.includes(yAxisId)) {
+      yAxisId = 'default';
+    }
     this.timeSeriesChartKeySettingsForm = this.fb.group({
+      yAxisId: [yAxisId, []],
       showInLegend: [seriesSettings.showInLegend, []],
       dataHiddenByDefault: [seriesSettings.dataHiddenByDefault, []],
       type: [seriesSettings.type, []],

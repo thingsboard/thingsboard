@@ -57,6 +57,7 @@ import {
   TimeSeriesChartSeriesType,
   TimeSeriesChartSettings
 } from '@home/components/widget/lib/chart/time-series-chart.models';
+import { DeepPartial } from '@shared/models/common';
 
 const layoutHeight = 56;
 const valueRelativeWidth = 0.35;
@@ -162,17 +163,19 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
   }
 
   public ngAfterViewInit() {
-    const settings: TimeSeriesChartSettings = {
+    const settings: DeepPartial<TimeSeriesChartSettings> = {
       dataZoom: false,
       xAxis: {
         show: false
       },
-      yAxis: {
-        show: false
+      yAxes: {
+        default: {
+          show: false,
+        }
       },
       tooltipDateInterval: false,
       tooltipDateFormat: simpleDateFormat('dd MMM yyyy HH:mm:ss')
-    } as TimeSeriesChartSettings;
+    };
 
     this.lineChart = new TbTimeSeriesChart(this.ctx, settings, this.chartElement.nativeElement, this.renderer, false);
 

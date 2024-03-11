@@ -25,7 +25,15 @@ import {
 import { ComponentStyle, Font, simpleDateFormat, textStyle } from '@shared/models/widget-settings.models';
 import { XAXisOption, YAXisOption } from 'echarts/types/dist/shared';
 import { CustomSeriesOption, LineSeriesOption } from 'echarts/charts';
-import { formatValue, isDefinedAndNotNull, isUndefined, isUndefinedOrNull, parseFunction } from '@core/utils';
+import {
+  formatValue,
+  isDefinedAndNotNull,
+  isNumeric,
+  isUndefined,
+  isUndefinedOrNull,
+  mergeDeep,
+  parseFunction
+} from '@core/utils';
 import { LinearGradientObject } from 'zrender/lib/graphic/LinearGradient';
 import tinycolor from 'tinycolor2';
 import Axis2D from 'echarts/types/src/coord/cartesian/Axis2D';
@@ -289,12 +297,81 @@ export interface TimeSeriesChartAxisSettings {
   splitLinesColor: string;
 }
 
+export type TimeSeriesChartYAxisId = 'default' | string;
+
 export interface TimeSeriesChartYAxisSettings extends TimeSeriesChartAxisSettings {
+  id?: TimeSeriesChartYAxisId;
+  order?: number;
+  units?: string;
+  decimals?: number;
   min?: number | string;
   max?: number | string;
   intervalCalculator?: string;
   ticksFormatter?: string;
 }
+
+export const timeSeriesChartYAxisValid = (axis: TimeSeriesChartYAxisSettings): boolean =>
+  !(!axis.id || isUndefinedOrNull(axis.order));
+
+export const timeSeriesChartYAxisValidator = (control: AbstractControl): ValidationErrors | null => {
+  const axis: TimeSeriesChartYAxisSettings = control.value;
+  if (!timeSeriesChartYAxisValid(axis)) {
+    return {
+      axis: true
+    };
+  }
+  return null;
+};
+
+export const getNextTimeSeriesYAxisId = (axes: TimeSeriesChartYAxisSettings[]): TimeSeriesChartYAxisId => {
+  let id = 0;
+  for (const axis of axes) {
+    const existingId = axis.id;
+    if (existingId.startsWith('axis')) {
+      const idSuffix = existingId.substring('axis'.length);
+      if (isNumeric(idSuffix)) {
+        id = Math.max(id, Number(idSuffix));
+      }
+    }
+  }
+  return 'axis' + (id+1);
+};
+
+export const defaultTimeSeriesChartYAxisSettings: TimeSeriesChartYAxisSettings = {
+  units: null,
+  decimals: 0,
+  show: true,
+    label: '',
+    labelFont: {
+    family: 'Roboto',
+      size: 12,
+      sizeUnit: 'px',
+      style: 'normal',
+      weight: '600',
+      lineHeight: '1'
+  },
+  labelColor: timeSeriesChartColorScheme['axis.label'].light,
+    position: AxisPosition.left,
+    showTickLabels: true,
+    tickLabelFont: {
+    family: 'Roboto',
+      size: 12,
+      sizeUnit: 'px',
+      style: 'normal',
+      weight: '400',
+      lineHeight: '1'
+  },
+  tickLabelColor: timeSeriesChartColorScheme['axis.tickLabel'].light,
+    ticksFormatter: null,
+    showTicks: true,
+    ticksColor: timeSeriesChartColorScheme['axis.ticks'].light,
+    showLine: true,
+    lineColor: timeSeriesChartColorScheme['axis.line'].light,
+    showSplitLines: true,
+    splitLinesColor: timeSeriesChartColorScheme['axis.splitLine'].light
+};
+
+export type TimeSeriesChartYAxes = {[id: TimeSeriesChartYAxisId]: TimeSeriesChartYAxisSettings};
 
 export interface TimeSeriesChartThreshold {
   type: TimeSeriesChartThresholdType;
@@ -304,6 +381,7 @@ export interface TimeSeriesChartThreshold {
   entityAlias?: string;
   entityKey?: string;
   entityKeyType?: DataKeyType.attribute | DataKeyType.timeseries;
+  yAxisId: TimeSeriesChartYAxisId;
   units?: string;
   decimals?: number;
   lineColor: string;
@@ -320,7 +398,7 @@ export interface TimeSeriesChartThreshold {
 }
 
 export const timeSeriesChartThresholdValid = (threshold: TimeSeriesChartThreshold): boolean => {
-  if (!threshold.type) {
+  if (!threshold.type || !threshold.yAxisId) {
     return false;
   }
   switch (threshold.type) {
@@ -355,7 +433,8 @@ export const timeSeriesChartThresholdValidator = (control: AbstractControl): Val
 
 export const timeSeriesChartThresholdDefaultSettings: TimeSeriesChartThreshold = {
   type: TimeSeriesChartThresholdType.constant,
-  units: '',
+  yAxisId: 'default',
+  units: null,
   decimals: 0,
   lineColor: timeSeriesChartColorScheme['threshold.line'].light,
   lineType: TimeSeriesChartLineType.solid,
@@ -404,13 +483,61 @@ export interface TimeSeriesChartNoAggregationBarWidthSettings {
   barWidth?: TimeSeriesChartBarWidth;
 }
 
+export enum TimeSeriesChartAnimationEasing {
+  linear = 'linear',
+  quadraticIn = 'quadraticIn',
+  quadraticOut = 'quadraticOut',
+  quadraticInOut = 'quadraticInOut',
+  cubicIn = 'cubicIn',
+  cubicOut = 'cubicOut',
+  cubicInOut = 'cubicInOut',
+  quarticIn = 'quarticIn',
+  quarticOut = 'quarticOut',
+  quarticInOut = 'quarticInOut',
+  quinticIn = 'quinticIn',
+  quinticOut = 'quinticOut',
+  quinticInOut = 'quinticInOut',
+  sinusoidalIn = 'sinusoidalIn',
+  sinusoidalOut = 'sinusoidalOut',
+  sinusoidalInOut = 'sinusoidalInOut',
+  exponentialIn = 'exponentialIn',
+  exponentialOut = 'exponentialOut',
+  exponentialInOut = 'exponentialInOut',
+  circularIn = 'circularIn',
+  circularOut = 'circularOut',
+  circularInOut = 'circularInOut',
+  elasticIn = 'elasticIn',
+  elasticOut = 'elasticOut',
+  elasticInOut = 'elasticInOut',
+  backIn = 'backIn',
+  backOut = 'backOut',
+  backInOut = 'backInOut',
+  bounceIn = 'bounceIn',
+  bounceOut = 'bounceOut',
+  bounceInOut = 'bounceInOut'
+}
+
+export const timeSeriesChartAnimationEasings = Object.keys(TimeSeriesChartAnimationEasing) as TimeSeriesChartAnimationEasing[];
+
+export interface TimeSeriesChartAnimationSettings {
+  animation: boolean;
+  animationThreshold: number;
+  animationDuration: number;
+  animationEasing: TimeSeriesChartAnimationEasing;
+  animationDelay: number;
+  animationDurationUpdate: number;
+  animationEasingUpdate: TimeSeriesChartAnimationEasing;
+  animationDelayUpdate: number;
+}
+
 export interface TimeSeriesChartSettings extends EChartsTooltipWidgetSettings {
   thresholds: TimeSeriesChartThreshold[];
   darkMode: boolean;
   dataZoom: boolean;
   stack: boolean;
-  yAxis: TimeSeriesChartYAxisSettings;
+  yAxes: TimeSeriesChartYAxes;
   xAxis: TimeSeriesChartAxisSettings;
+  animation: TimeSeriesChartAnimationSettings;
   noAggregationBarWidthSettings: TimeSeriesChartNoAggregationBarWidthSettings;
 }
 
@@ -419,36 +546,10 @@ export const timeSeriesChartDefaultSettings: TimeSeriesChartSettings = {
   darkMode: false,
   dataZoom: true,
   stack: false,
-  yAxis: {
-    show: true,
-    label: '',
-    labelFont: {
-      family: 'Roboto',
-      size: 12,
-      sizeUnit: 'px',
-      style: 'normal',
-      weight: '600',
-      lineHeight: '1'
-    },
-    labelColor: timeSeriesChartColorScheme['axis.label'].light,
-    position: AxisPosition.left,
-    showTickLabels: true,
-    tickLabelFont: {
-      family: 'Roboto',
-      size: 12,
-      sizeUnit: 'px',
-      style: 'normal',
-      weight: '400',
-      lineHeight: '1'
-    },
-    tickLabelColor: timeSeriesChartColorScheme['axis.tickLabel'].light,
-    ticksFormatter: null,
-    showTicks: true,
-    ticksColor: timeSeriesChartColorScheme['axis.ticks'].light,
-    showLine: true,
-    lineColor: timeSeriesChartColorScheme['axis.line'].light,
-    showSplitLines: true,
-    splitLinesColor: timeSeriesChartColorScheme['axis.splitLine'].light
+  yAxes: {
+    default: mergeDeep({} as TimeSeriesChartYAxisSettings,
+                       defaultTimeSeriesChartYAxisSettings,
+                       { id: 'default', order: 0 } as TimeSeriesChartYAxisSettings)
   },
   xAxis: {
     show: true,
@@ -479,6 +580,16 @@ export const timeSeriesChartDefaultSettings: TimeSeriesChartSettings = {
     lineColor: timeSeriesChartColorScheme['axis.line'].light,
     showSplitLines: true,
     splitLinesColor: timeSeriesChartColorScheme['axis.splitLine'].light
+  },
+  animation: {
+    animation: true,
+    animationThreshold: 2000,
+    animationDuration: 1000,
+    animationEasing: TimeSeriesChartAnimationEasing.cubicOut,
+    animationDelay: 0,
+    animationDurationUpdate: 300,
+    animationEasingUpdate: TimeSeriesChartAnimationEasing.cubicOut,
+    animationDelayUpdate: 0
   },
   noAggregationBarWidthSettings: {
     strategy: TimeSeriesChartNoAggregationBarWidthStrategy.group,
@@ -558,6 +669,7 @@ export interface BarSeriesSettings {
 }
 
 export interface TimeSeriesChartKeySettings {
+  yAxisId: TimeSeriesChartYAxisId;
   showInLegend: boolean;
   dataHiddenByDefault: boolean;
   type: TimeSeriesChartSeriesType;
@@ -566,6 +678,7 @@ export interface TimeSeriesChartKeySettings {
 }
 
 export const timeSeriesChartKeyDefaultSettings: TimeSeriesChartKeySettings = {
+  yAxisId: 'default',
   showInLegend: true,
   dataHiddenByDefault: false,
   type: TimeSeriesChartSeriesType.line,
@@ -626,6 +739,7 @@ export const timeSeriesChartKeyDefaultSettings: TimeSeriesChartKeySettings = {
 };
 
 export interface TimeSeriesChartDataItem extends EChartsSeriesItem {
+  yAxisId: TimeSeriesChartYAxisId;
   yAxisIndex: number;
   option?: LineSeriesOption | CustomSeriesOption;
   barRenderContext?: BarRenderContext;
@@ -635,6 +749,7 @@ type TimeSeriesChartThresholdValue = number | string | (number | string)[];
 
 export interface TimeSeriesChartThresholdItem {
   id: string;
+  yAxisId: TimeSeriesChartYAxisId;
   yAxisIndex: number;
   latestDataKey?: DataKey;
   units?: string;
@@ -646,14 +761,16 @@ export interface TimeSeriesChartThresholdItem {
 
 export interface TimeSeriesChartYAxis {
   id: string;
-  units: string;
+  decimals: number;
+  settings: TimeSeriesChartYAxisSettings;
   option: YAXisOption & ValueAxisBaseOption;
   intervalCalculator?: (axis: Axis2D) => number;
   ticksFormatter?: (value: any) => string;
 }
 
-export const createTimeSeriesYAxis = (axisId: string, units: string,
-                                      decimals: number, settings: TimeSeriesChartYAxisSettings,
+export const createTimeSeriesYAxis = (units: string,
+                                      decimals: number,
+                                      settings: TimeSeriesChartYAxisSettings,
                                       darkMode: boolean): TimeSeriesChartYAxis => {
   const yAxisTickLabelStyle = createChartTextStyle(settings.tickLabelFont,
     settings.tickLabelColor, darkMode, 'axis.tickLabel');
@@ -664,13 +781,14 @@ export const createTimeSeriesYAxis = (axisId: string, units: string,
     ticksFormatter = parseFunction(settings.ticksFormatter, ['value']);
   }
   const yAxis: TimeSeriesChartYAxis = {
-    id: axisId,
-    units,
+    id: settings.id,
+    decimals,
+    settings,
     option: {
       show: settings.show,
       type: 'value',
       position: settings.position,
-      id: axisId,
+      id: settings.id,
       offset: 0,
       alignTicks: true,
       scale: true,
@@ -843,13 +961,11 @@ const generateChartThresholds = (thresholdItems: TimeSeriesChartThresholdItem[],
           id: item.id,
           dataGroupId: item.id,
           yAxisIndex: item.yAxisIndex,
-          animation: true,
           data: [],
           tooltip: {
             show: false
           },
           markLine: {
-            animation: true,
             lineStyle: {
               width: item.settings.lineWidth,
               color: prepareChartThemeColor(item.settings.lineColor, darkMode, 'threshold.line'),
@@ -956,16 +1072,19 @@ const generateChartSeries = (dataItems: TimeSeriesChartDataItem[],
 };
 
 export const updateDarkMode = (options: EChartsOption, settings: TimeSeriesChartSettings,
+                               yAxisList: TimeSeriesChartYAxis[],
                                dataItems: TimeSeriesChartDataItem[], thresholdDataItems: TimeSeriesChartThresholdItem[],
                                darkMode: boolean): EChartsOption => {
   options.darkMode = darkMode;
   if (Array.isArray(options.yAxis)) {
-    for (const yAxis of options.yAxis) {
-      yAxis.nameTextStyle.color = prepareChartThemeColor(settings.yAxis.labelColor, darkMode, 'axis.label');
-      yAxis.axisLabel.color = prepareChartThemeColor(settings.yAxis.tickLabelColor, darkMode, 'axis.tickLabel');
-      yAxis.axisLine.lineStyle.color = prepareChartThemeColor(settings.yAxis.lineColor, darkMode, 'axis.line');
-      yAxis.axisTick.lineStyle.color = prepareChartThemeColor(settings.yAxis.ticksColor, darkMode, 'axis.ticks');
-      yAxis.splitLine.lineStyle.color = prepareChartThemeColor(settings.yAxis.splitLinesColor, darkMode, 'axis.splitLine');
+    for (let i = 0; i < options.yAxis.length; i++) {
+      const yAxis = options.yAxis[i];
+      const yAxisSettings = yAxisList[i].settings;
+      yAxis.nameTextStyle.color = prepareChartThemeColor(yAxisSettings.labelColor, darkMode, 'axis.label');
+      yAxis.axisLabel.color = prepareChartThemeColor(yAxisSettings.tickLabelColor, darkMode, 'axis.tickLabel');
+      yAxis.axisLine.lineStyle.color = prepareChartThemeColor(yAxisSettings.lineColor, darkMode, 'axis.line');
+      yAxis.axisTick.lineStyle.color = prepareChartThemeColor(yAxisSettings.ticksColor, darkMode, 'axis.ticks');
+      yAxis.splitLine.lineStyle.color = prepareChartThemeColor(yAxisSettings.splitLinesColor, darkMode, 'axis.splitLine');
     }
   }
   if (Array.isArray(options.xAxis)) {
@@ -1032,7 +1151,6 @@ const createTimeSeriesChartSeries = (item: TimeSeriesChartDataItem,
       emphasis: {
         focus: 'series'
       },
-      animation: true,
       dimensions: [
         {name: 'intervalStart', type: 'number'},
         {name: 'intervalEnd', type: 'number'}

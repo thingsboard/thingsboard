@@ -54,10 +54,12 @@ import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
 import { TbTimeSeriesChart } from '@home/components/widget/lib/chart/time-series-chart';
 import {
+  TimeSeriesChartAxisSettings,
   TimeSeriesChartKeySettings,
   TimeSeriesChartSeriesType,
-  TimeSeriesChartSettings
+  TimeSeriesChartSettings, TimeSeriesChartYAxisSettings
 } from '@home/components/widget/lib/chart/time-series-chart.models';
+import { DeepPartial } from '@shared/models/common';
 
 const valuesLayoutHeight = 66;
 const valuesLayoutVerticalPadding = 16;
@@ -172,25 +174,27 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
 
   ngAfterViewInit(): void {
     if (this.showChart && this.ctx.datasources?.length) {
-      const settings: TimeSeriesChartSettings = {
+      const settings: DeepPartial<TimeSeriesChartSettings> = {
           dataZoom: false,
           xAxis: {
             show: false
           },
-          yAxis: {
-            show: true,
-            showLine: false,
-            showTicks: false,
-            showTickLabels: false,
-            showSplitLines: true,
-            min: 'dataMin',
-            max: 'dataMax',
-            intervalCalculator:
-              'var scale = axis.scale; return !scale.isBlank() ? ((scale.getExtent()[1] - scale.getExtent()[0]) / 2) : undefined;'
+          yAxes: {
+            default: {
+              show: true,
+              showLine: false,
+              showTicks: false,
+              showTickLabels: false,
+              showSplitLines: true,
+              min: 'dataMin',
+              max: 'dataMax',
+              intervalCalculator:
+                'var scale = axis.scale; return !scale.isBlank() ? ((scale.getExtent()[1] - scale.getExtent()[0]) / 2) : undefined;'
+            }
           },
           tooltipDateInterval: false,
           tooltipDateFormat: simpleDateFormat('dd MMM yyyy HH:mm:ss')
-      } as TimeSeriesChartSettings;
+      };
 
       this.lineChart = new TbTimeSeriesChart(this.ctx, settings, this.chartElement.nativeElement, this.renderer, true);
 

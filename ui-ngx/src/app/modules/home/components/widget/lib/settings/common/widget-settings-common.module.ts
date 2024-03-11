@@ -109,6 +109,18 @@ import {
 import {
   TimeSeriesNoAggregationBarWidthSettingsComponent
 } from '@home/components/widget/lib/settings/common/chart/time-series-no-aggregation-bar-width-settings.component';
+import {
+  TimeSeriesChartYAxesPanelComponent
+} from '@home/components/widget/lib/settings/common/chart/time-series-chart-y-axes-panel.component';
+import {
+  TimeSeriesChartYAxisRowComponent
+} from '@home/components/widget/lib/settings/common/chart/time-series-chart-y-axis-row.component';
+import {
+  TimeSeriesChartYAxisSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/chart/time-series-chart-y-axis-settings-panel.component';
+import {
+  TimeSeriesChartAnimationSettingsComponent
+} from '@home/components/widget/lib/settings/common/chart/time-series-chart-animation-settings.component';
 
 @NgModule({
   declarations: [
@@ -150,6 +162,10 @@ import {
     TimeSeriesChartThresholdRowComponent,
     TimeSeriesChartThresholdSettingsPanelComponent,
     TimeSeriesNoAggregationBarWidthSettingsComponent,
+    TimeSeriesChartYAxesPanelComponent,
+    TimeSeriesChartYAxisRowComponent,
+    TimeSeriesChartYAxisSettingsPanelComponent,
+    TimeSeriesChartAnimationSettingsComponent,
     DataKeyInputComponent,
     EntityAliasInputComponent
   ],
@@ -197,6 +213,10 @@ import {
     TimeSeriesChartThresholdRowComponent,
     TimeSeriesChartThresholdSettingsPanelComponent,
     TimeSeriesNoAggregationBarWidthSettingsComponent,
+    TimeSeriesChartYAxesPanelComponent,
+    TimeSeriesChartYAxisRowComponent,
+    TimeSeriesChartYAxisSettingsPanelComponent,
+    TimeSeriesChartAnimationSettingsComponent,
     DataKeyInputComponent,
     EntityAliasInputComponent
   ],

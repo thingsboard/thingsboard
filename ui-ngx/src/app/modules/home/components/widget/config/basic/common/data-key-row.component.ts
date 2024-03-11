@@ -19,9 +19,9 @@ import {
   Component,
   EventEmitter,
   forwardRef,
-  Input,
+  Input, OnChanges,
   OnInit,
-  Output,
+  Output, SimpleChanges,
   ViewEncapsulation
 } from '@angular/core';
 import {
@@ -60,7 +60,7 @@ import {
   TimeSeriesChartSeriesType,
   timeSeriesChartSeriesTypeIcons,
   timeSeriesChartSeriesTypes,
-  timeSeriesChartSeriesTypeTranslations
+  timeSeriesChartSeriesTypeTranslations, TimeSeriesChartYAxisId
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 
 export const dataKeyValid = (key: DataKey): boolean => !!key && !!key.type && !!key.name;
@@ -88,7 +88,7 @@ export const dataKeyRowValidator = (control: AbstractControl): ValidationErrors 
   ],
   encapsulation: ViewEncapsulation.None
 })
-export class DataKeyRowComponent implements ControlValueAccessor, OnInit {
+export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChanges {
 
   timeSeriesChartSeriesTypes = timeSeriesChartSeriesTypes;
   timeSeriesChartSeriesTypeTranslations = timeSeriesChartSeriesTypeTranslations;
@@ -140,7 +140,14 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit {
 
   @Input()
   @coerceBoolean()
+  timeSeriesChart = false;
+
+  @Input()
+  @coerceBoolean()
   showTimeSeriesType = false;
+
+  @Input()
+  yAxisIds: TimeSeriesChartYAxisId[];
 
   @Input()
   @coerceBoolean()
@@ -237,12 +244,27 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit {
     if (this.hasAdditionalLatestDataKeys) {
       this.keyRowFormGroup.addControl('latest', this.fb.control(false));
     }
-    if (this.showTimeSeriesType) {
+    if (this.timeSeriesChart) {
+      this.keyRowFormGroup.addControl('yAxis', this.fb.control(null));
       this.keyRowFormGroup.addControl('timeSeriesType', this.fb.control(null));
     }
     merge(this.keyFormControl.valueChanges, this.keyRowFormGroup.valueChanges).subscribe(
       () => this.updateModel()
     );
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    for (const propName of Object.keys(changes)) {
+      const change = changes[propName];
+      if (!change.firstChange && change.currentValue !== change.previousValue) {
+        if (this.timeSeriesChart && ['yAxisIds'].includes(propName)) {
+          if (this.modelValue?.settings?.yAxisId &&
+            !this.yAxisIds.includes(this.modelValue.settings.yAxisId)) {
+            this.keyRowFormGroup.patchValue({yAxis: 'default'}, {emitEvent: true});
+          }
+        }
+      }
+    }
   }
 
   registerOnChange(fn: any): void {
@@ -278,10 +300,12 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit {
         latest: (value as any)?.latest
       }, {emitEvent: false});
     }
-    if (this.showTimeSeriesType) {
+    if (this.timeSeriesChart) {
       const settings = value?.settings as TimeSeriesChartKeySettings;
+      const yAxis = settings?.yAxisId || 'default';
       const timeSeriesType = settings?.type || TimeSeriesChartSeriesType.line;
       this.keyRowFormGroup.patchValue({
+        yAxis,
         timeSeriesType
       }, {emitEvent: false});
     }
@@ -319,7 +343,8 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit {
         this.keyRowFormGroup.get('color').patchValue(this.modelValue.color, {emitEvent: false});
         this.keyRowFormGroup.get('units').patchValue(this.modelValue.units, {emitEvent: false});
         this.keyRowFormGroup.get('decimals').patchValue(this.modelValue.decimals, {emitEvent: false});
-        if (this.showTimeSeriesType) {
+        if (this.timeSeriesChart) {
+          this.keyRowFormGroup.get('yAxis').patchValue(this.modelValue.settings?.yAxisId, {emitEvent: false});
           this.keyRowFormGroup.get('timeSeriesType').patchValue(this.modelValue.settings?.type, {emitEvent: false});
         }
         this.keyFormControl.patchValue(deepClone(this.modelValue), {emitEvent: false});
@@ -335,7 +360,8 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit {
     if (!this.keyRowFormGroup.get('label').value) {
       this.keyRowFormGroup.get('label').patchValue(key.label, {emitEvent: false});
     }
-    if (this.showTimeSeriesType) {
+    if (this.timeSeriesChart) {
+      this.keyRowFormGroup.get('yAxis').patchValue(key.settings?.yAxisId, {emitEvent: false});
       this.keyRowFormGroup.get('timeSeriesType').patchValue(key.settings?.type, {emitEvent: false});
     }
     return key;
@@ -346,8 +372,10 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit {
     if (this.modelValue !== null) {
       const value: DataKey = this.keyRowFormGroup.value;
       this.modelValue = {...this.modelValue, ...value};
-      if (this.showTimeSeriesType) {
+      if (this.timeSeriesChart) {
+        this.modelValue.settings.yAxisId = (this.modelValue as any).yAxis;
         this.modelValue.settings.type = (this.modelValue as any).timeSeriesType;
+        delete (this.modelValue as any).yAxis;
         delete (this.modelValue as any).timeSeriesType;
       }
     }

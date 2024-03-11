@@ -6612,6 +6612,7 @@
             "stack-mode": "Stack mode",
             "stack-mode-hint": "Stacks series on the chart. The series with the same unit would be put on top of each other.",
             "axes": "Axes",
+            "y-axes": "Y axes",
             "line-type": "Line type",
             "line-type-solid": "Solid",
             "line-type-dashed": "Dashed",
@@ -6673,6 +6674,9 @@
               "axes": "Axes",
               "x-axis": "X axis",
               "y-axis": "Y axis",
+              "y-axis-settings": "Y axis settings",
+              "remove-y-axis": "Remove Y axis",
+              "id": "Id",
               "label": "Label",
               "position": "Position",
               "position-left": "Left",
@@ -6689,7 +6693,21 @@
               "scale": "Scale",
               "scale-min": "min",
               "scale-max": "max",
-              "scale-auto": "Auto"
+              "scale-auto": "Auto",
+              "min": "Min",
+              "max": "Max",
+              "show": "Show",
+              "add-y-axis": "Add Y axis"
+            },
+            "animation": {
+              "animation": "Animation",
+              "animation-threshold": "Animation threshold",
+              "animation-duration": "Animation duration",
+              "animation-easing": "Animation easing",
+              "animation-delay": "Animation delay",
+              "update-animation-duration": "Update animation duration",
+              "update-animation-easing": "Update animation easing",
+              "update-animation-delay": "Update animation delay"
             },
             "series": {
               "legend-settings": "Legend settings",

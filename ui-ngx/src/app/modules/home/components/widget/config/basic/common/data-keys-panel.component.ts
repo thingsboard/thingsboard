@@ -44,6 +44,7 @@ import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
 import { DataKeysCallbacks, DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { TimeSeriesChartYAxisId } from '@home/components/widget/lib/chart/time-series-chart.models';
 
 @Component({
   selector: 'tb-data-keys-panel',
@@ -121,7 +122,14 @@ export class DataKeysPanelComponent implements ControlValueAccessor, OnInit, OnC
 
   @Input()
   @coerceBoolean()
+  timeSeriesChart = false;
+
+  @Input()
+  @coerceBoolean()
   showTimeSeriesType = false;
+
+  @Input()
+  yAxisIds: TimeSeriesChartYAxisId[];
 
   dataKeyType: DataKeyType;
 

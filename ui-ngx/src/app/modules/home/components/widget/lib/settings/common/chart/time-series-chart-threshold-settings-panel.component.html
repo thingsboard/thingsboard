@@ -18,6 +18,16 @@
 <div class="tb-threshold-settings-panel" [formGroup]="thresholdSettingsFormGroup">
   <div class="tb-threshold-settings-title">{{ 'widgets.time-series-chart.threshold.threshold-settings' | translate }}</div>
   <div class="tb-threshold-settings-panel-content">
+    <div class="tb-form-row space-between column-xs">
+      <div translate>widgets.time-series-chart.axis.y-axis</div>
+      <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="yAxisId">
+          <mat-option *ngFor="let yAxis of yAxisIds" [value]="yAxis">
+            {{ yAxis }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
     <div class="tb-form-row space-between">
       <div translate>widget-config.units-short</div>
       <tb-unit-input
