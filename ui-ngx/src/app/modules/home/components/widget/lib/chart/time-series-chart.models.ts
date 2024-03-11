@@ -884,7 +884,16 @@ export const createTimeSeriesXAxisOption = (settings: TimeSeriesChartAxisSetting
       fontWeight: xAxisTickLabelStyle.fontWeight,
       fontFamily: xAxisTickLabelStyle.fontFamily,
       fontSize: xAxisTickLabelStyle.fontSize,
-      hideOverlap: true
+      hideOverlap: true,
+      /* formatter: {
+        year: '{yyyy}',
+        month: '{MMM}',
+        day: '{d}',
+        hour: '{HH}:{mm}',
+        minute: '{HH}:{mm}',
+        second: '{HH}:{mm}:{ss}',
+        millisecond: '{hh}:{mm}:{ss} {SSS}'
+      } */
     },
     axisLine: {
       show: settings.showLine,
