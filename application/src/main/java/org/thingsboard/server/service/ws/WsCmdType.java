@@ -18,6 +18,8 @@ package org.thingsboard.server.service.ws;
 public enum WsCmdType {
     AUTH,
 
+    RPC,
+
     ATTRIBUTES,
     TIMESERIES,
     TIMESERIES_HISTORY,
