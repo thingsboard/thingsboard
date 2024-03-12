@@ -275,10 +275,9 @@ public class EntityViewControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testAssignAndUnAssignedEntityViewToCustomer() throws Exception {
+    public void testAssignAndUnassignEntityViewToCustomer() throws Exception {
         EntityView view = getNewSavedEntityView("Test entity view");
         Customer savedCustomer = doPost("/api/customer", getNewCustomer("My customer"), Customer.class);
-        view.setCustomerId(savedCustomer.getId());
 
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -304,17 +303,17 @@ public class EntityViewControllerTest extends AbstractControllerTest {
                 ActionType.ASSIGNED_TO_CUSTOMER, ActionType.UPDATED,
                 foundView.getId().getId().toString(), foundView.getCustomerId().getId().toString(), savedCustomer.getTitle());
 
-        EntityView unAssignedView = doDelete("/api/customer/entityView/" + savedView.getId().getId().toString(), EntityView.class);
-        assertEquals(ModelConstants.NULL_UUID, unAssignedView.getCustomerId().getId());
+        EntityView unassignedView = doDelete("/api/customer/entityView/" + savedView.getId().getId().toString(), EntityView.class);
+        assertEquals(ModelConstants.NULL_UUID, unassignedView.getCustomerId().getId());
 
         foundView = doGet("/api/entityView/" + savedView.getId().getId().toString(), EntityView.class);
         assertEquals(ModelConstants.NULL_UUID, foundView.getCustomerId().getId());
 
         testBroadcastEntityStateChangeEventNever(foundView.getId());
-        testNotifyAssignUnassignEntityAllOneTime(unAssignedView, savedView.getId(), savedView.getId(),
-                tenantId, savedView.getCustomerId(), tenantAdminUserId, TENANT_ADMIN_EMAIL,
+        testNotifyAssignUnassignEntityAllOneTime(unassignedView, unassignedView.getId(), unassignedView.getId(),
+                tenantId, savedCustomer.getId(), tenantAdminUserId, TENANT_ADMIN_EMAIL,
                 ActionType.UNASSIGNED_FROM_CUSTOMER, ActionType.UPDATED,
-                assignedView.getId().getId().toString(), savedView.getCustomerId().getId().toString(), savedCustomer.getTitle());
+                assignedView.getId().getId().toString(), savedCustomer.getId().getId().toString(), savedCustomer.getTitle());
     }
 
     @Test
