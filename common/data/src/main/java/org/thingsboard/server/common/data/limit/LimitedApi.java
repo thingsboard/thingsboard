@@ -33,6 +33,8 @@ public enum LimitedApi {
     CASSANDRA_QUERIES(DefaultTenantProfileConfiguration::getCassandraQueryTenantRateLimitsConfiguration, "Cassandra queries", true),
     EDGE_EVENTS(DefaultTenantProfileConfiguration::getEdgeEventRateLimits, "Edge events", true),
     EDGE_EVENTS_PER_EDGE(DefaultTenantProfileConfiguration::getEdgeEventRateLimitsPerEdge, "Edge events per edge", false),
+    EDGE_UPLINK_MESSAGES(DefaultTenantProfileConfiguration::getEdgeUplinkMessagesRateLimits, "Edge uplink messages", true),
+    EDGE_UPLINK_MESSAGES_PER_EDGE(DefaultTenantProfileConfiguration::getEdgeUplinkMessagesRateLimitsPerEdge, "Edge uplink messages per edge", false),
     PASSWORD_RESET(false, true),
     TWO_FA_VERIFICATION_CODE_SEND(false, true),
     TWO_FA_VERIFICATION_CODE_CHECK(false, true),

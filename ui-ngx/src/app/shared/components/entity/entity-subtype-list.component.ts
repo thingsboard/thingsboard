@@ -262,6 +262,15 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
       this.clear('');
     }
   }
+
+  addOnBlur(event: FocusEvent) {
+    if (!event.relatedTarget) {
+      return;
+    }
+    const value = this.entitySubtypeInput.nativeElement.value;
+    this.chipAdd({value} as MatChipInputEvent);
+  }
+
   remove(entitySubtype: string) {
     const index = this.entitySubtypeList.indexOf(entitySubtype);
     if (index >= 0) {

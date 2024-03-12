@@ -23,8 +23,8 @@ import {
   telemetryTypeTranslationsShort
 } from '@shared/models/telemetry/telemetry.models';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { BehaviorSubject, forkJoin, Observable, Observer, of, throwError } from 'rxjs';
-import { catchError, delay, map, share, take } from 'rxjs/operators';
+import { BehaviorSubject, forkJoin, Observable, Observer, of, Subscription, throwError } from 'rxjs';
+import { catchError, delay, map, share, take, tap } from 'rxjs/operators';
 import { UtilsService } from '@core/services/utils.service';
 import { AfterViewInit, ChangeDetectorRef, Directive, Input, OnDestroy, OnInit, TemplateRef } from '@angular/core';
 import {
@@ -62,8 +62,6 @@ export abstract class BasicActionWidgetComponent implements OnInit, OnDestroy, A
 
   loading$ = this.loadingSubject.asObservable().pipe(share());
 
-  error = '';
-
   protected constructor(protected cd: ChangeDetectorRef) {
   }
 
@@ -99,8 +97,7 @@ export abstract class BasicActionWidgetComponent implements OnInit, OnDestroy, A
   }
 
   public clearError() {
-    this.error = '';
-    this.cd.markForCheck();
+    this.ctx.hideToast(this.ctx.toastTargetId);
   }
 
   protected createValueGetter<V>(getValueSettings: GetValueSettings<V>,
@@ -113,7 +110,8 @@ export abstract class BasicActionWidgetComponent implements OnInit, OnDestroy, A
         }
       },
       error: (err: any) => {
-        this.onError(err);
+        const message = parseError(this.ctx, err);
+        this.onError(message);
         if (valueObserver?.error) {
           valueObserver.error(err);
         }
@@ -132,8 +130,7 @@ export abstract class BasicActionWidgetComponent implements OnInit, OnDestroy, A
   }
 
   private onError(error: string) {
-    this.error = error;
-    this.cd.markForCheck();
+    this.ctx.showErrorToast(error, 'bottom', 'center', this.ctx.toastTargetId, true);
   }
 
   protected updateValue<V>(valueSetter: ValueSetter<V>,
@@ -189,8 +186,14 @@ export class DataToValueConverter<V> {
       case DataToValueType.FUNCTION:
         result = data;
         try {
-          result = this.dataToValueFunction(!!data ? JSON.parse(data) : data);
-        } catch (e) {}
+          let input = data;
+          if (!!data) {
+            try {
+              input = JSON.parse(data);
+            } catch (_e) {}
+          }
+          result = this.dataToValueFunction(input);
+        } catch (_e) {}
         break;
       case DataToValueType.NONE:
         result = data;
@@ -236,11 +239,15 @@ export abstract class ValueGetter<V> extends ValueAction {
         return new AttributeValueGetter<V>(ctx, settings, valueType, valueObserver);
       case GetValueAction.GET_TIME_SERIES:
         return new TimeSeriesValueGetter<V>(ctx, settings, valueType, valueObserver);
+      case GetValueAction.GET_DASHBOARD_STATE:
+        return new DashboardStateGetter<V>(ctx, settings, valueType, valueObserver);
     }
   }
 
   private readonly isSimulated: boolean;
   private readonly dataConverter: DataToValueConverter<V>;
+
+  private getValueSubscription: Subscription;
 
   protected constructor(protected ctx: WidgetContext,
                         protected settings: GetValueSettings<V>,
@@ -266,7 +273,10 @@ export abstract class ValueGetter<V> extends ValueAction {
         throw this.handleError(err);
       })
     );
-    valueObservable.subscribe({
+    if (this.getValueSubscription) {
+      this.getValueSubscription.unsubscribe();
+    }
+    this.getValueSubscription = valueObservable.subscribe({
       next: (value) => {
         this.valueObserver.next(value);
       },
@@ -280,6 +290,9 @@ export abstract class ValueGetter<V> extends ValueAction {
   }
 
   destroy() {
+    if (this.getValueSubscription) {
+      this.getValueSubscription.unsubscribe();
+    }
     super.destroy();
   }
 
@@ -295,6 +308,8 @@ export class ValueToDataConverter<V> {
 
   constructor(protected settings: ValueToDataSettings) {
     switch (settings.type) {
+      case ValueToDataType.VALUE:
+        break;
       case ValueToDataType.CONSTANT:
         this.constantValue = this.settings.constantValue;
         break;
@@ -312,6 +327,8 @@ export class ValueToDataConverter<V> {
 
   valueToData(value: V): any {
     switch (this.settings.type) {
+      case ValueToDataType.VALUE:
+        return value;
       case ValueToDataType.CONSTANT:
         return this.constantValue;
       case ValueToDataType.FUNCTION:
@@ -500,6 +517,19 @@ export class TimeSeriesValueGetter<V> extends TelemetryValueGetter<V, TelemetryV
 
   protected getTelemetryValueSettings(): TelemetryValueSettings {
     return this.settings.getTimeSeries;
+  }
+}
+
+export class DashboardStateGetter<V> extends ValueGetter<V> {
+  constructor(protected ctx: WidgetContext,
+              protected settings: GetValueSettings<V>,
+              protected valueType: ValueType,
+              protected valueObserver: Partial<Observer<V>>) {
+    super(ctx, settings, valueType, valueObserver);
+  }
+
+  protected doGetValue(): Observable<string> {
+    return this.ctx.stateController.dashboardCtrl.dashboardCtx.stateId;
   }
 }
 

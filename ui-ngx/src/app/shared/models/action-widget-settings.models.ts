@@ -21,7 +21,8 @@ export enum GetValueAction {
   DO_NOTHING = 'DO_NOTHING',
   EXECUTE_RPC = 'EXECUTE_RPC',
   GET_ATTRIBUTE = 'GET_ATTRIBUTE',
-  GET_TIME_SERIES = 'GET_TIME_SERIES'
+  GET_TIME_SERIES = 'GET_TIME_SERIES',
+  GET_DASHBOARD_STATE = 'GET_DASHBOARD_STATE'
 }
 
 export const getValueActions = Object.keys(GetValueAction) as GetValueAction[];
@@ -39,7 +40,8 @@ export const getValueActionTranslations = new Map<GetValueAction, string>(
     [GetValueAction.DO_NOTHING, 'widgets.value-action.do-nothing'],
     [GetValueAction.EXECUTE_RPC, 'widgets.value-action.execute-rpc'],
     [GetValueAction.GET_ATTRIBUTE, 'widgets.value-action.get-attribute'],
-    [GetValueAction.GET_TIME_SERIES, 'widgets.value-action.get-time-series']
+    [GetValueAction.GET_TIME_SERIES, 'widgets.value-action.get-time-series'],
+    [GetValueAction.GET_DASHBOARD_STATE, 'widgets.value-action.get-dashboard-state']
   ]
 );
 
@@ -111,6 +113,7 @@ export const setValueActionTranslations = new Map<SetValueAction, string>(
 );
 
 export enum ValueToDataType {
+  VALUE = 'VALUE',
   CONSTANT = 'CONSTANT',
   FUNCTION = 'FUNCTION',
   NONE = 'NONE'

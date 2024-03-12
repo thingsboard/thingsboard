@@ -108,6 +108,8 @@ public class EdgeEventSourcingListener {
     private EdgeEventActionType getEdgeEventActionTypeForEntityEvent(Object entity) {
         if (entity instanceof AlarmComment) {
             return EdgeEventActionType.DELETED_COMMENT;
+        } else if (entity instanceof Alarm) {
+            return EdgeEventActionType.ALARM_DELETE;
         }
         return EdgeEventActionType.DELETED;
     }
