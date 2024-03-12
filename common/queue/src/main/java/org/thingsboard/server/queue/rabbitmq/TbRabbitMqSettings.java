@@ -47,6 +47,8 @@ public class TbRabbitMqSettings {
     private int connectionTimeout;
     @Value("${queue.rabbitmq.handshake_timeout:}")
     private int handshakeTimeout;
+    @Value("${queue.rabbitmq.max_poll_messages:1}")
+    private int maxPollMessages;
 
     private ConnectionFactory connectionFactory;
 
