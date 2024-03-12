@@ -37,11 +37,11 @@ import {
 import { LinearGradientObject } from 'zrender/lib/graphic/LinearGradient';
 import tinycolor from 'tinycolor2';
 import Axis2D from 'echarts/types/src/coord/cartesian/Axis2D';
-import { Interval } from '@shared/models/time/time.models';
 import { ValueAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
 import { SeriesLabelOption } from 'echarts/types/src/util/types';
 import {
   BarRenderContext,
+  BarRenderSharedContext,
   BarVisualSettings,
   renderTimeSeriesBar
 } from '@home/components/widget/lib/chart/time-series-chart-bar.models';
@@ -884,7 +884,16 @@ export const createTimeSeriesXAxisOption = (settings: TimeSeriesChartAxisSetting
       fontWeight: xAxisTickLabelStyle.fontWeight,
       fontFamily: xAxisTickLabelStyle.fontFamily,
       fontSize: xAxisTickLabelStyle.fontSize,
-      hideOverlap: true
+      hideOverlap: true,
+      /* formatter: {
+        year: '{yyyy}',
+        month: '{MMM}',
+        day: '{d}',
+        hour: '{HH}:{mm}',
+        minute: '{HH}:{mm}',
+        second: '{HH}:{mm}:{ss}',
+        millisecond: '{hh}:{mm}:{ss} {SSS}'
+      } */
     },
     axisLine: {
       show: settings.showLine,
@@ -906,13 +915,12 @@ export const createTimeSeriesXAxisOption = (settings: TimeSeriesChartAxisSetting
 
 export const generateChartData = (dataItems: TimeSeriesChartDataItem[],
                                   thresholdItems: TimeSeriesChartThresholdItem[],
-                                  timeInterval: Interval,
                                   stack: boolean,
                                   noAggregation: boolean,
-                                  noAggregationBarWidthSettings: TimeSeriesChartNoAggregationBarWidthSettings,
+                                  barRenderSharedContext: BarRenderSharedContext,
                                   darkMode: boolean): Array<LineSeriesOption | CustomSeriesOption> => {
-  let series = generateChartSeries(dataItems, timeInterval,
-    stack, noAggregation, noAggregationBarWidthSettings, darkMode);
+  let series = generateChartSeries(dataItems,
+    stack, noAggregation, barRenderSharedContext, darkMode);
   if (thresholdItems.length) {
     const thresholds = generateChartThresholds(thresholdItems, darkMode);
     series = series.concat(thresholds);
@@ -1021,10 +1029,9 @@ const createThresholdData = (val: string | number, item: TimeSeriesChartThreshol
   ];
 
 const generateChartSeries = (dataItems: TimeSeriesChartDataItem[],
-                             timeInterval: Interval,
                              stack: boolean,
                              noAggregation: boolean,
-                             noAggregationBarWidthSettings: TimeSeriesChartNoAggregationBarWidthSettings,
+                             barRenderSharedContext: BarRenderSharedContext,
                              darkMode: boolean): Array<LineSeriesOption | CustomSeriesOption> => {
   const series: Array<LineSeriesOption | CustomSeriesOption> = [];
   const enabledDataItems = dataItems.filter(d => d.enabled);
@@ -1044,21 +1051,11 @@ const generateChartSeries = (dataItems: TimeSeriesChartDataItem[],
     if (item.dataKey.settings.type === TimeSeriesChartSeriesType.bar) {
       if (!item.barRenderContext) {
         item.barRenderContext = {noAggregation,
-          noAggregationBarWidthStrategy: noAggregationBarWidthSettings.strategy};
-        const targetWidth = noAggregationBarWidthSettings.strategy === TimeSeriesChartNoAggregationBarWidthStrategy.group ?
-          noAggregationBarWidthSettings.groupWidth : noAggregationBarWidthSettings.barWidth;
-        if (targetWidth.relative) {
-          item.barRenderContext.noAggregationWidthRelative = true;
-          item.barRenderContext.noAggregationWidth = targetWidth.relativeWidth;
-        } else {
-          item.barRenderContext.noAggregationWidthRelative = false;
-          item.barRenderContext.noAggregationWidth = targetWidth.absoluteWidth;
-        }
+          shared: barRenderSharedContext};
       }
       item.barRenderContext.noAggregation = noAggregation;
       item.barRenderContext.barsCount = barsCount;
       item.barRenderContext.barIndex = stack ? barGroups.indexOf(item.yAxisIndex) : barDataItems.indexOf(item);
-      item.barRenderContext.timeInterval = timeInterval;
       if (stack) {
         const stackItems = enabledDataItems.filter(d => d.yAxisIndex === item.yAxisIndex);
         item.barRenderContext.currentStackItems = stackItems;

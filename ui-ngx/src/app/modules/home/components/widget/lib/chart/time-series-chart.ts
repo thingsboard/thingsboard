@@ -19,21 +19,26 @@ import {
   AxisPosition,
   calculateThresholdsOffset,
   createTimeSeriesXAxisOption,
-  createTimeSeriesYAxis, defaultTimeSeriesChartYAxisSettings,
+  createTimeSeriesYAxis,
+  defaultTimeSeriesChartYAxisSettings,
   generateChartData,
   parseThresholdData,
   SeriesLabelPosition,
   TimeSeriesChartDataItem,
   timeSeriesChartDefaultSettings,
   timeSeriesChartKeyDefaultSettings,
-  TimeSeriesChartKeySettings,
+  TimeSeriesChartKeySettings, TimeSeriesChartNoAggregationBarWidthStrategy,
   TimeSeriesChartSeriesType,
   TimeSeriesChartSettings,
-  TimeSeriesChartShape, TimeSeriesChartThreshold, timeSeriesChartThresholdDefaultSettings,
+  TimeSeriesChartShape,
+  TimeSeriesChartThreshold,
+  timeSeriesChartThresholdDefaultSettings,
   TimeSeriesChartThresholdItem,
   TimeSeriesChartThresholdType,
   TimeSeriesChartType,
-  TimeSeriesChartYAxis, TimeSeriesChartYAxisId, TimeSeriesChartYAxisSettings,
+  TimeSeriesChartYAxis,
+  TimeSeriesChartYAxisId,
+  TimeSeriesChartYAxisSettings,
   updateDarkMode
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { ResizeObserver } from '@juggle/resize-observer';
@@ -52,7 +57,7 @@ import {
   toNamedData
 } from '@home/components/widget/lib/chart/echarts-widget.models';
 import { DateFormatProcessor } from '@shared/models/widget-settings.models';
-import { isDefinedAndNotNull, mergeDeep } from '@core/utils';
+import { isDefinedAndNotNull, isEqual, mergeDeep } from '@core/utils';
 import { DataKey, Datasource, DatasourceType, widgetType } from '@shared/models/widget.models';
 import * as echarts from 'echarts/core';
 import { CallbackDataParams } from 'echarts/types/dist/shared';
@@ -64,6 +69,7 @@ import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetSubscriptionOptions } from '@core/api/widget-api.models';
 import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 import { DeepPartial } from '@shared/models/common';
+import { BarRenderSharedContext } from '@home/components/widget/lib/chart/time-series-chart-bar.models';
 
 export class TbTimeSeriesChart {
 
@@ -119,6 +125,8 @@ export class TbTimeSeriesChart {
 
   private highlightedDataKey: DataKey;
 
+  private barRenderSharedContext: BarRenderSharedContext;
+
   yMin$ = this.yMinSubject.asObservable();
   yMax$ = this.yMaxSubject.asObservable();
 
@@ -156,7 +164,10 @@ export class TbTimeSeriesChart {
   public update(): void {
     for (const item of this.dataItems) {
       const datasourceData = this.ctx.data ? this.ctx.data.find(d => d.dataKey === item.dataKey) : null;
-      item.data = datasourceData?.data ? toNamedData(datasourceData.data) : [];
+      if (!isEqual(item.dataSet, datasourceData?.data)) {
+        item.dataSet = datasourceData?.data;
+        item.data = datasourceData?.data ? toNamedData(datasourceData.data) : [];
+      }
     }
     this.onResize();
     if (this.timeSeriesChart) {
@@ -168,6 +179,7 @@ export class TbTimeSeriesChart {
       } else {
         this.timeSeriesChartOptions.tooltip[0].axisPointer.type = 'shadow';
       }
+      this.barRenderSharedContext.timeInterval = this.ctx.timeWindow.interval;
       this.updateSeriesData(true);
       if (this.highlightedDataKey) {
         this.keyEnter(this.highlightedDataKey);
@@ -277,6 +289,15 @@ export class TbTimeSeriesChart {
   }
 
   private setupData(): void {
+    const noAggregationBarWidthSettings = this.settings.noAggregationBarWidthSettings;
+    const targetBarWidth = noAggregationBarWidthSettings.strategy === TimeSeriesChartNoAggregationBarWidthStrategy.group ?
+      noAggregationBarWidthSettings.groupWidth : noAggregationBarWidthSettings.barWidth;
+    this.barRenderSharedContext = {
+      timeInterval: this.ctx.timeWindow?.interval,
+      noAggregationBarWidthStrategy: noAggregationBarWidthSettings.strategy,
+      noAggregationWidthRelative: targetBarWidth.relative,
+      noAggregationWidth: targetBarWidth.relative ? targetBarWidth.relativeWidth : targetBarWidth.absoluteWidth
+    };
     if (this.ctx.datasources.length) {
       for (const datasource of this.ctx.datasources) {
         const dataKeys = datasource.dataKeys;
@@ -458,7 +479,7 @@ export class TbTimeSeriesChart {
       tooltip: [{
         trigger: this.settings.tooltipTrigger === EChartsTooltipTrigger.axis ? 'axis' : 'item',
         confine: true,
-        appendToBody: true,
+        appendTo: 'body',
         axisPointer: {
           type: this.noAggregation ? 'line' : 'shadow'
         },
@@ -533,10 +554,9 @@ export class TbTimeSeriesChart {
 
   private updateSeries(): Array<LineSeriesOption | CustomSeriesOption> {
     return generateChartData(this.dataItems, this.thresholdItems,
-      this.ctx.timeWindow.interval,
       this.settings.stack,
       this.noAggregation,
-      this.settings.noAggregationBarWidthSettings, this.darkMode);
+      this.barRenderSharedContext, this.darkMode);
   }
 
   private updateAxes() {
@@ -721,10 +741,32 @@ export class TbTimeSeriesChart {
         const width = this.timeSeriesChart.getWidth();
         const height = this.timeSeriesChart.getHeight();
         if (width !== shapeWidth || height !== shapeHeight) {
+          let barItems: TimeSeriesChartDataItem[];
+          if (this.animationEnabled()) {
+            barItems =
+              this.dataItems.filter(d => d.enabled && d.data.length &&
+                d.dataKey.settings.type === TimeSeriesChartSeriesType.bar);
+            this.updateBarsAnimation(barItems, false);
+          }
           this.timeSeriesChart.resize();
+          if (this.animationEnabled()) {
+            this.updateBarsAnimation(barItems, true);
+          }
         }
       }
     }
   }
 
+  private animationEnabled(): boolean {
+    return this.settings.animation.animation;
+  }
+
+  private updateBarsAnimation(barItems: TimeSeriesChartDataItem[], animation: boolean) {
+    if (barItems.length) {
+      barItems.forEach(item => {
+        item.option.animation = animation;
+      });
+      this.timeSeriesChart.setOption(this.timeSeriesChartOptions);
+    }
+  }
 }

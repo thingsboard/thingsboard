@@ -5216,6 +5216,7 @@
         "card-buttons": "Card buttons",
         "show-card-buttons": "Show card buttons",
         "card-border-radius": "Card border radius",
+        "card-padding": "Card padding",
         "card-appearance": "Card appearance",
         "color": "Color",
         "tooltip": "Tooltip",

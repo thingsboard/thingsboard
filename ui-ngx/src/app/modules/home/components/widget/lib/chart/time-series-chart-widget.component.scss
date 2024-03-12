@@ -24,7 +24,9 @@ $maxLegendHeight: 35%;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 20px 24px 24px 24px;
+  &.overlay {
+    padding: 20px 24px 24px 24px;
+  }
   > div:not(.tb-time-series-chart-overlay) {
     z-index: 1;
   }
@@ -100,22 +102,6 @@ $maxLegendHeight: 35%;
         &.vertical {
           width: 100%;
           table-layout: auto;
-        }
-
-        thead th, tbody th {
-          position: sticky;
-          z-index: 1;
-          backdrop-filter: blur(5000px);
-        }
-        thead th {
-          top: 0;
-          &:first-child {
-            left: 0;
-            z-index: 2;
-          }
-        }
-        tbody th {
-          left: 0;
         }
         th, td {
           &:not(:last-child) {

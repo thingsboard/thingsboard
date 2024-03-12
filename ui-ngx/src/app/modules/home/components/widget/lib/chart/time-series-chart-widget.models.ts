@@ -25,6 +25,7 @@ export interface TimeSeriesChartWidgetSettings extends TimeSeriesChartSettings {
   legendLabelColor: string;
   legendConfig: LegendConfig;
   background: BackgroundSettings;
+  padding: string;
 }
 
 export const timeSeriesChartWidgetDefaultSettings: TimeSeriesChartWidgetSettings =
@@ -48,5 +49,6 @@ export const timeSeriesChartWidgetDefaultSettings: TimeSeriesChartWidgetSettings
         color: 'rgba(255,255,255,0.72)',
         blur: 3
       }
-    }
+    },
+    padding: '12px'
   } as TimeSeriesChartWidgetSettings);

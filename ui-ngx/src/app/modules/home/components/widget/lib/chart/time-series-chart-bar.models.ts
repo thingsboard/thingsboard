@@ -33,14 +33,18 @@ export interface BarVisualSettings {
   borderRadius: number;
 }
 
+export interface BarRenderSharedContext {
+  timeInterval: Interval;
+  noAggregationBarWidthStrategy: TimeSeriesChartNoAggregationBarWidthStrategy;
+  noAggregationWidthRelative: boolean;
+  noAggregationWidth: number;
+}
+
 export interface BarRenderContext {
+  shared: BarRenderSharedContext;
   barsCount?: number;
   barIndex?: number;
-  noAggregation: boolean;
-  noAggregationBarWidthStrategy: TimeSeriesChartNoAggregationBarWidthStrategy;
-  noAggregationWidthRelative?: boolean;
-  noAggregationWidth?: number;
-  timeInterval?: Interval;
+  noAggregation?: boolean;
   visualSettings?: BarVisualSettings;
   labelOption?: SeriesLabelOption;
   barStackIndex?: number;
@@ -56,20 +60,20 @@ export const renderTimeSeriesBar = (params: CustomSeriesRenderItemParams, api: C
   const ts = start ? start : time;
 
   const separateBar = renderCtx.noAggregation &&
-    renderCtx.noAggregationBarWidthStrategy === TimeSeriesChartNoAggregationBarWidthStrategy.separate;
+    renderCtx.shared.noAggregationBarWidthStrategy === TimeSeriesChartNoAggregationBarWidthStrategy.separate;
 
   if (renderCtx.noAggregation) {
-    if (renderCtx.noAggregationWidthRelative) {
+    if (renderCtx.shared.noAggregationWidthRelative) {
       const scaleWidth = api.getWidth() / api.size([1,0])[0];
-      interval = scaleWidth * (renderCtx.noAggregationWidth / 100);
+      interval = scaleWidth * (renderCtx.shared.noAggregationWidth / 100);
     } else {
-      interval = renderCtx.noAggregationWidth;
+      interval = renderCtx.shared.noAggregationWidth;
     }
     start = time - interval / 2;
     end = time + interval / 2;
   }
   if (!start || !end || !interval) {
-    interval = IntervalMath.numberValue(renderCtx.timeInterval);
+    interval = IntervalMath.numberValue(renderCtx.shared.timeInterval);
     start = time - interval / 2;
   }
 
@@ -147,7 +151,6 @@ export const renderTimeSeriesBar = (params: CustomSeriesRenderItemParams, api: C
   } else {
     borderRadius = [renderCtx.visualSettings.borderRadius, renderCtx.visualSettings.borderRadius, 0, 0];
   }
-
   return rectShape && {
     type: 'rect',
     id: time + '',

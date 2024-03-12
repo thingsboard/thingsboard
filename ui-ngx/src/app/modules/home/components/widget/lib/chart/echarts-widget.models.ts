@@ -153,6 +153,7 @@ export type EChartsSeriesItem = {
   id: string;
   dataKey: DataKey;
   data: NamedDataSet;
+  dataSet?: DataSet;
   enabled: boolean;
   units?: string;
   decimals?: number;
