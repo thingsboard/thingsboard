@@ -16,6 +16,7 @@
 :host {
   .mat-mdc-dialog-content {
     display: flex;
+    width: 780px;
     flex-direction: column;
     gap: 16px;
     .tb-embed-image-text {

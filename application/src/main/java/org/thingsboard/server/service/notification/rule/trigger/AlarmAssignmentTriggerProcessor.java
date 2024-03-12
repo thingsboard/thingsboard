@@ -65,6 +65,7 @@ public class AlarmAssignmentTriggerProcessor implements NotificationRuleTriggerP
                 .alarmSeverity(alarmInfo.getSeverity())
                 .alarmStatus(alarmInfo.getStatus())
                 .alarmCustomerId(alarmInfo.getCustomerId())
+                .dashboardId(alarmInfo.getDashboardId())
                 .build();
     }
 

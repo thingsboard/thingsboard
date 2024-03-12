@@ -35,11 +35,10 @@ import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 @Getter
-public class NotificationsSubscription extends TbSubscription<NotificationsSubscriptionUpdate> {
+public class NotificationsSubscription extends AbstractNotificationSubscription<NotificationsSubscriptionUpdate> {
 
     private final Map<UUID, Notification> latestUnreadNotifications = new HashMap<>();
     private final int limit;
-    private final AtomicInteger totalUnreadCounter = new AtomicInteger();
 
     @Builder
     public NotificationsSubscription(String serviceId, String sessionId, int subscriptionId, TenantId tenantId, EntityId entityId,

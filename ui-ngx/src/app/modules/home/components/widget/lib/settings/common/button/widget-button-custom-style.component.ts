@@ -64,6 +64,9 @@ export class WidgetButtonCustomStyleComponent implements OnInit, OnChanges, Cont
   borderRadius: string;
 
   @Input()
+  autoScale: boolean;
+
+  @Input()
   state: WidgetButtonState;
 
   widgetButtonState = WidgetButtonState;
@@ -124,6 +127,7 @@ export class WidgetButtonCustomStyleComponent implements OnInit, OnChanges, Cont
       const ctx: any = {
         appearance: this.appearance,
         borderRadius: this.borderRadius,
+        autoScale: this.autoScale,
         state: this.state,
         customStyle: this.modelValue
       };
