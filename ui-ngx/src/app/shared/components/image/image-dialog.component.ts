@@ -66,7 +66,7 @@ export class ImageDialogComponent extends
     this.image = data.image;
     this.readonly = data.readonly;
     this.imagePreviewData = {
-      url: this.image.public ? this.image.publicLink : this.image.link
+      url: this.image.link
     };
   }
 
@@ -155,8 +155,6 @@ export class ImageDialogComponent extends
         let url;
         if (result.base64) {
           url = result.base64;
-        } else if (this.image.public) {
-          url = `${this.image.publicLink}?ts=${new Date().getTime()}`;
         } else {
           url = this.image.link;
         }

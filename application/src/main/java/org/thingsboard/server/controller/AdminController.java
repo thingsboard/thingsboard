@@ -32,8 +32,6 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -52,13 +50,12 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.FeaturesInfo;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.FeaturesInfo;
-import org.thingsboard.server.common.data.FeaturesInfo;
 import org.thingsboard.server.common.data.SystemInfo;
 import org.thingsboard.server.common.data.UpdateMessage;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -74,8 +71,8 @@ import org.thingsboard.server.common.data.sync.vc.VcUtils;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.security.auth.oauth2.CookieUtils;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
+import org.thingsboard.server.service.security.auth.oauth2.CookieUtils;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -93,7 +90,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
-import static org.thingsboard.server.controller.ControllerConstants.*;
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
 
@@ -113,9 +109,7 @@ public class AdminController extends BaseController {
     private final SmsService smsService;
     private final AdminSettingsService adminSettingsService;
     private final SystemSecurityService systemSecurityService;
-    @Lazy
     private final JwtSettingsService jwtSettingsService;
-    @Lazy
     private final JwtTokenFactory tokenFactory;
     private final EntitiesVersionControlService versionControlService;
     private final TbAutoCommitSettingsService autoCommitSettingsService;

@@ -34,8 +34,9 @@ import {
 } from '@shared/models/notification.models';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { isDefinedAndNotNull } from '@core/utils';
+import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'tb-template-configuration',
@@ -96,7 +97,8 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
   private propagateChange = (v: any) => { };
   private readonly destroy$ = new Subject<void>();
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder,
+              private translate: TranslateService) {
     this.templateConfigurationForm = this.buildForm();
     this.templateConfigurationForm.valueChanges.pipe(
       takeUntil(this.destroy$)
@@ -110,8 +112,16 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
     this.destroy$.complete();
   }
 
-  writeValue(value: any) {
-    this.templateConfigurationForm.patchValue(value, {emitEvent: false});
+  writeValue(value: Partial<DeliveryMethodsTemplates>) {
+    const settings = deepClone(value);
+    if (isDefinedAndNotNull(settings)) {
+      for (const method of Object.values(NotificationDeliveryMethod)) {
+        if (isDefinedAndNotNull(settings[method]?.enabled)) {
+          delete settings[method].enabled;
+        }
+      }
+    }
+    this.templateConfigurationForm.patchValue(settings, {emitEvent: false});
   }
 
   registerOnChange(fn: any): void {
@@ -137,6 +147,16 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
     };
   }
 
+  get hotificationTapActionHint(): string {
+    switch (this.notificationType) {
+      case NotificationType.ALARM:
+      case NotificationType.ALARM_ASSIGNMENT:
+      case NotificationType.ALARM_COMMENT:
+        return this.translate.instant('notification.notification-tap-action-hint');
+    }
+    return '';
+  }
+
   private updateDisabledForms(){
     Object.values(NotificationDeliveryMethod).forEach((method) => {
       const form = this.templateConfigurationForm.get(method);
@@ -146,6 +166,9 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
         form.enable({emitEvent: false});
          switch (method) {
            case NotificationDeliveryMethod.WEB:
+             form.get('additionalConfig.icon.enabled').updateValueAndValidity({onlySelf: true});
+             break;
+           case NotificationDeliveryMethod.MOBILE_APP:
              form.get('additionalConfig.icon.enabled').updateValueAndValidity({onlySelf: true});
              break;
          }
@@ -213,8 +236,24 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
           subject: ['', [Validators.required, Validators.maxLength(50)]],
           body: ['', [Validators.required, Validators.maxLength(150)]],
           additionalConfig: this.fb.group({
+            icon: this.fb.group({
+              enabled: [false],
+              icon: [{value: 'notifications', disabled: true}, Validators.required],
+              color: [{value: '#757575', disabled: true}]
+            }),
             onClick: [null]
           })
+        });
+        deliveryMethodForm.get('additionalConfig.icon.enabled').valueChanges.pipe(
+          takeUntil(this.destroy$)
+        ).subscribe((value) => {
+          if (value) {
+            deliveryMethodForm.get('additionalConfig.icon.icon').enable({emitEvent: false});
+            deliveryMethodForm.get('additionalConfig.icon.color').enable({emitEvent: false});
+          } else {
+            deliveryMethodForm.get('additionalConfig.icon.icon').disable({emitEvent: false});
+            deliveryMethodForm.get('additionalConfig.icon.color').disable({emitEvent: false});
+          }
         });
         break;
       case NotificationDeliveryMethod.MICROSOFT_TEAMS:

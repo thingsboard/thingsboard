@@ -288,6 +288,7 @@
     <div *ngIf="displayAdvancedAppearance" style="height: 100%;" [formGroup]="advancedSettings">
       <tb-widget-settings
         [aliasController]="aliasController"
+        [dataKeyCallbacks]="widgetConfigCallbacks"
         [dashboard]="dashboard"
         [widget]="widget"
         [widgetConfig]="modelValue"

@@ -52,6 +52,9 @@ export class NotificationActionButtonConfigurationComponent implements ControlVa
   @Input()
   actionTitle: string;
 
+  @Input()
+  sliderHint: string;
+
   private hideButtonTextValue = false;
 
   get hideButtonText(): boolean {

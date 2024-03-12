@@ -37,7 +37,9 @@ export enum RateLimitsType {
   TENANT_NOTIFICATION_REQUEST_RATE_LIMIT = 'TENANT_NOTIFICATION_REQUEST_RATE_LIMIT',
   TENANT_NOTIFICATION_REQUESTS_PER_RULE_RATE_LIMIT = 'TENANT_NOTIFICATION_REQUESTS_PER_RULE_RATE_LIMIT',
   EDGE_EVENTS_RATE_LIMIT = 'EDGE_EVENTS_RATE_LIMIT',
-  EDGE_EVENTS_PER_EDGE_RATE_LIMIT = 'EDGE_EVENTS_PER_EDGE_RATE_LIMIT'
+  EDGE_EVENTS_PER_EDGE_RATE_LIMIT = 'EDGE_EVENTS_PER_EDGE_RATE_LIMIT',
+  EDGE_UPLINK_MESSAGES_RATE_LIMIT = 'EDGE_UPLINK_MESSAGES_RATE_LIMIT',
+  EDGE_UPLINK_MESSAGES_PER_EDGE_RATE_LIMIT = 'EDGE_UPLINK_MESSAGES_PER_EDGE_RATE_LIMIT'
 }
 
 export const rateLimitsLabelTranslationMap = new Map<RateLimitsType, string>(
@@ -58,6 +60,8 @@ export const rateLimitsLabelTranslationMap = new Map<RateLimitsType, string>(
     [RateLimitsType.TENANT_NOTIFICATION_REQUESTS_PER_RULE_RATE_LIMIT, 'tenant-profile.tenant-notification-requests-per-rule-rate-limit'],
     [RateLimitsType.EDGE_EVENTS_RATE_LIMIT, 'tenant-profile.rate-limits.edge-events-rate-limit'],
     [RateLimitsType.EDGE_EVENTS_PER_EDGE_RATE_LIMIT, 'tenant-profile.rate-limits.edge-events-per-edge-rate-limit'],
+    [RateLimitsType.EDGE_UPLINK_MESSAGES_RATE_LIMIT, 'tenant-profile.rate-limits.edge-uplink-messages-rate-limit'],
+    [RateLimitsType.EDGE_UPLINK_MESSAGES_PER_EDGE_RATE_LIMIT, 'tenant-profile.rate-limits.edge-uplink-messages-per-edge-rate-limit'],
   ]
 );
 
@@ -79,6 +83,8 @@ export const rateLimitsDialogTitleTranslationMap = new Map<RateLimitsType, strin
     [RateLimitsType.TENANT_NOTIFICATION_REQUESTS_PER_RULE_RATE_LIMIT, 'tenant-profile.rate-limits.edit-tenant-notification-requests-per-rule-rate-limit-title'],
     [RateLimitsType.EDGE_EVENTS_RATE_LIMIT, 'tenant-profile.rate-limits.edit-edge-events-rate-limit'],
     [RateLimitsType.EDGE_EVENTS_PER_EDGE_RATE_LIMIT, 'tenant-profile.rate-limits.edit-edge-events-per-edge-rate-limit'],
+    [RateLimitsType.EDGE_UPLINK_MESSAGES_RATE_LIMIT, 'tenant-profile.rate-limits.edit-edge-uplink-messages-rate-limit'],
+    [RateLimitsType.EDGE_UPLINK_MESSAGES_PER_EDGE_RATE_LIMIT, 'tenant-profile.rate-limits.edit-edge-uplink-messages-per-edge-rate-limit'],
   ]
 );
 

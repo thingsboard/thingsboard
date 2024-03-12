@@ -43,16 +43,23 @@ import {
   getDataKey,
   getLatestSingleTsValue,
   overlayStyle,
+  simpleDateFormat,
   textStyle
 } from '@shared/models/widget-settings.models';
-import { TbFlot } from '@home/components/widget/lib/flot-widget';
-import { TbFlotKeySettings, TbFlotSettings } from '@home/components/widget/lib/flot-widget.models';
 import { DataKey } from '@shared/models/widget.models';
 import { formatNumberValue, formatValue, isDefined, isDefinedAndNotNull, isNumeric } from '@core/utils';
 import { map } from 'rxjs/operators';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
+import { TbTimeSeriesChart } from '@home/components/widget/lib/chart/time-series-chart';
+import {
+  TimeSeriesChartAxisSettings,
+  TimeSeriesChartKeySettings,
+  TimeSeriesChartSeriesType,
+  TimeSeriesChartSettings, TimeSeriesChartYAxisSettings
+} from '@home/components/widget/lib/chart/time-series-chart.models';
+import { DeepPartial } from '@shared/models/common';
 
 const valuesLayoutHeight = 66;
 const valuesLayoutVerticalPadding = 16;
@@ -101,8 +108,8 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
 
-  private flot: TbFlot;
-  private flotDataKey: DataKey;
+  private lineChart: TbTimeSeriesChart;
+  private lineChartDataKey: DataKey;
 
   private lastUpdateTs: number;
 
@@ -141,12 +148,18 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
     this.showChart = this.settings.showChart;
     if (this.showChart) {
       if (this.ctx.defaultSubscription.firstDatasource?.dataKeys?.length) {
-        this.flotDataKey = this.ctx.defaultSubscription.firstDatasource?.dataKeys[0];
-        this.flotDataKey.settings = {
-          fillLines: false,
-          showLines: true,
-          lineWidth: 2
-        } as TbFlotKeySettings;
+        this.lineChartDataKey = this.ctx.defaultSubscription.firstDatasource?.dataKeys[0];
+        this.lineChartDataKey.settings = {
+          type: TimeSeriesChartSeriesType.line,
+          lineSettings: {
+            showLine: true,
+            step: false,
+            smooth: false,
+            lineWidth: 2,
+            showPoints: false,
+            showPointLabel: false
+          }
+        } as TimeSeriesChartKeySettings;
       }
     }
 
@@ -161,33 +174,36 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
 
   ngAfterViewInit(): void {
     if (this.showChart && this.ctx.datasources?.length) {
-      const settings = {
-        shadowSize: 0,
-        enableSelection: false,
-        smoothLines: false,
-        grid: {
-          tickColor: 'rgba(0,0,0,0.12)',
-          horizontalLines: true,
-          verticalLines: false,
-          outlineWidth: 0,
-          minBorderMargin: 0,
-          margin: 0
-        },
-        yaxis: {
-          showLabels: false,
-          tickGenerator: 'return [(axis.max + axis.min) / 2];'
-        },
-        xaxis: {
-          showLabels: false
-        }
-      } as TbFlotSettings;
-      this.flot = new TbFlot(this.ctx, 'line', $(this.chartElement.nativeElement), settings);
-      this.tickMin$ = this.flot.yMin$.pipe(
-        map((value) => formatValue(value, (this.flotDataKey?.decimals || this.ctx.decimals))
+      const settings: DeepPartial<TimeSeriesChartSettings> = {
+          dataZoom: false,
+          xAxis: {
+            show: false
+          },
+          yAxes: {
+            default: {
+              show: true,
+              showLine: false,
+              showTicks: false,
+              showTickLabels: false,
+              showSplitLines: true,
+              min: 'dataMin',
+              max: 'dataMax',
+              intervalCalculator:
+                'var scale = axis.scale; return !scale.isBlank() ? ((scale.getExtent()[1] - scale.getExtent()[0]) / 2) : undefined;'
+            }
+          },
+          tooltipDateInterval: false,
+          tooltipDateFormat: simpleDateFormat('dd MMM yyyy HH:mm:ss')
+      };
+
+      this.lineChart = new TbTimeSeriesChart(this.ctx, settings, this.chartElement.nativeElement, this.renderer, true);
+
+      this.tickMin$ =this.lineChart.yMin$.pipe(
+        map((value) => formatValue(value, (this.lineChartDataKey?.decimals || this.ctx.decimals))
       ));
-      this.tickMax$ = this.flot.yMax$.pipe(
-        map((value) => formatValue(value, (this.flotDataKey?.decimals || this.ctx.decimals))
-        ));
+      this.tickMax$ = this.lineChart.yMax$.pipe(
+        map((value) => formatValue(value, (this.lineChartDataKey?.decimals || this.ctx.decimals))
+      ));
     }
     if (this.settings.autoScale && this.showValues) {
       this.renderer.setStyle(this.valueCardValueContainer.nativeElement, 'height', valuesLayoutHeight + 'px');
@@ -221,7 +237,7 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
     }
 
     if (this.showChart) {
-      this.flot.update();
+      this.lineChart.update();
     }
 
     this.updateLastUpdateTs(ts);
@@ -256,20 +272,14 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
   }
 
   public onResize() {
-    if (this.showChart) {
-      this.flot.resize();
-    }
   }
 
   public onEditModeChanged() {
-    if (this.showChart) {
-      this.flot.checkMouseEvents();
-    }
   }
 
   public onDestroy() {
     if (this.showChart) {
-      this.flot.destroy();
+      this.lineChart.destroy();
     }
   }
 

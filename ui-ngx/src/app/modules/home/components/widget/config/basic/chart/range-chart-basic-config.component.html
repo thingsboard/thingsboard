@@ -179,6 +179,13 @@
             </tb-color-input>
           </div>
         </div>
+        <div class="tb-form-row">
+          <mat-slide-toggle class="mat-slide" formControlName="tooltipDateInterval">
+            <div tb-hint-tooltip-icon="{{'tooltip.show-date-time-interval-hint' | translate}}">
+              {{ 'tooltip.show-date-time-interval' | translate }}
+            </div>
+          </mat-slide-toggle>
+        </div>
         <div class="tb-form-row space-between">
           <div>{{ 'tooltip.background-color' | translate }}</div>
           <tb-color-input asBoxInput

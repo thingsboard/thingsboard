@@ -120,10 +120,25 @@
             }}
           </mat-error>
         </mat-form-field>
-        <div formGroupName="additionalConfig">
+        <div formGroupName="additionalConfig" class="tb-form-panel no-padding no-border">
+          <div class="tb-form-row space-between" formGroupName="icon">
+            <mat-slide-toggle formControlName="enabled" class="mat-slide">
+              {{ 'icon.icon' | translate }}
+            </mat-slide-toggle>
+            <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+              <tb-material-icon-select asBoxInput
+                                       [color]="templateConfigurationForm.get('MOBILE_APP.additionalConfig.icon.color').value"
+                                       formControlName="icon">
+              </tb-material-icon-select>
+              <tb-color-input asBoxInput
+                              formControlName="color">
+              </tb-color-input>
+            </div>
+          </div>
           <tb-notification-action-button-configuration
             formControlName="onClick"
             hideButtonText
+            [sliderHint]="hotificationTapActionHint"
             actionTitle="{{ 'notification.notification-tap-action' | translate }}">
           </tb-notification-action-button-configuration>
         </div>
