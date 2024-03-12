@@ -102,10 +102,15 @@ $maxLegendHeight: 35%;
         &.vertical {
           width: 100%;
           table-layout: auto;
+          tbody {
+            th {
+              width: 95%;
+            }
+          }
         }
         th, td {
           &:not(:last-child) {
-            padding-right: 8px;
+            padding-right: 16px;
           }
         }
         thead tr, tbody tr:not(:last-child) {
