@@ -194,3 +194,16 @@ index cf8d6bc..9b30ec1 100644
        }
        dataZoomModel && (snapshot[dataZoomModel.id] = {
          dataZoomId: dataZoomModel.id,
+diff --git a/node_modules/echarts/lib/component/tooltip/TooltipView.js b/node_modules/echarts/lib/component/tooltip/TooltipView.js
+index b8a9b95..8e4cb2f 100644
+--- a/node_modules/echarts/lib/component/tooltip/TooltipView.js
++++ b/node_modules/echarts/lib/component/tooltip/TooltipView.js
+@@ -360,7 +360,7 @@ var TooltipView = /** @class */function (_super) {
+       each(itemCoordSys.dataByAxis, function (axisItem) {
+         var axisModel = ecModel.getComponent(axisItem.axisDim + 'Axis', axisItem.axisIndex);
+         var axisValue = axisItem.value;
+-        if (!axisModel || axisValue == null) {
++        if (!axisModel || !axisModel.axis || axisValue == null) {
+           return;
+         }
+         var axisValueLabel = axisPointerViewHelper.getValueLabel(axisValue, axisModel.axis, ecModel, axisItem.seriesDataIndices, axisItem.valueLabelOpt);
