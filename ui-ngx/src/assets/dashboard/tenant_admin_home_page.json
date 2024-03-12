@@ -758,13 +758,14 @@
                 "color": "rgba(255,255,255,0.72)",
                 "blur": 3
               }
-            }
+            },
+            "padding": "0"
           },
           "title": "Time series chart",
           "dropShadow": false,
           "enableFullscreen": false,
           "titleStyle": null,
-          "configMode": "advanced",
+          "configMode": "basic",
           "actions": {},
           "showTitleIcon": false,
           "titleIcon": "thermostat",
@@ -782,7 +783,7 @@
           "titleColor": "rgba(0, 0, 0, 0.87)",
           "titleTooltip": "",
           "widgetStyle": {},
-          "widgetCss": ".tb-widget-container > .tb-widget {\n    border: none !important;\n    border-radius: 0 !important;\n    box-shadow: none !important;\n}\n\n.tb-time-series-chart-panel {\n    padding: 0;\n}\n\n.tb-time-series-chart-panel div.tb-widget-title {\n    padding-top: 5px;\n    padding-left: 5px;\n}",
+          "widgetCss": ".tb-widget-container > .tb-widget {\n    border: none !important;\n    border-radius: 0 !important;\n    box-shadow: none !important;\n}\n\n.tb-time-series-chart-panel div.tb-widget-title {\n    padding-top: 5px;\n    padding-left: 5px;\n}",
           "pageSize": 1024,
           "units": "",
           "decimals": null,
@@ -932,42 +933,47 @@
           "color": "rgba(0, 0, 0, 0.87)",
           "padding": "0px",
           "settings": {
+            "yAxes": {
+              "default": {
+                "units": null,
+                "decimals": 0,
+                "show": true,
+                "label": "",
+                "labelFont": {
+                  "family": "Roboto",
+                  "size": 12,
+                  "sizeUnit": "px",
+                  "style": "normal",
+                  "weight": "600",
+                  "lineHeight": "1"
+                },
+                "labelColor": "rgba(0, 0, 0, 0.54)",
+                "position": "left",
+                "showTickLabels": true,
+                "tickLabelFont": {
+                  "family": "Roboto",
+                  "size": 12,
+                  "sizeUnit": "px",
+                  "style": "normal",
+                  "weight": "400",
+                  "lineHeight": "1"
+                },
+                "tickLabelColor": "rgba(0, 0, 0, 0.54)",
+                "ticksFormatter": null,
+                "showTicks": false,
+                "ticksColor": "rgba(0, 0, 0, 0.54)",
+                "showLine": false,
+                "lineColor": "rgba(0, 0, 0, 0.54)",
+                "showSplitLines": false,
+                "splitLinesColor": "rgba(0, 0, 0, 0.12)",
+                "id": "default",
+                "order": 0,
+                "min": 0
+              }
+            },
             "thresholds": [],
             "dataZoom": false,
             "stack": false,
-            "yAxis": {
-              "show": true,
-              "label": "",
-              "labelFont": {
-                "family": "Roboto",
-                "size": 12,
-                "sizeUnit": "px",
-                "style": "normal",
-                "weight": "600",
-                "lineHeight": "1"
-              },
-              "labelColor": "rgba(0, 0, 0, 0.54)",
-              "position": "left",
-              "showTickLabels": true,
-              "tickLabelFont": {
-                "family": "Roboto",
-                "size": 12,
-                "sizeUnit": "px",
-                "style": "normal",
-                "weight": "400",
-                "lineHeight": "1"
-              },
-              "tickLabelColor": "rgba(0, 0, 0, 0.54)",
-              "ticksFormatter": "",
-              "showTicks": false,
-              "ticksColor": "rgba(0, 0, 0, 0.54)",
-              "showLine": false,
-              "lineColor": "rgba(0, 0, 0, 0.54)",
-              "showSplitLines": false,
-              "splitLinesColor": "rgba(0, 0, 0, 0.12)",
-              "min": 0,
-              "max": null
-            },
             "xAxis": {
               "show": true,
               "label": "",
@@ -1060,53 +1066,6 @@
             "tooltipDateInterval": false,
             "tooltipBackgroundColor": "rgba(255, 255, 255, 0.76)",
             "tooltipBackgroundBlur": 4,
-            "background": {
-              "type": "color",
-              "color": "#fff",
-              "overlay": {
-                "enabled": false,
-                "color": "rgba(255,255,255,0.72)",
-                "blur": 3
-              }
-            },
-            "yAxes": {
-              "default": {
-                "units": null,
-                "decimals": 0,
-                "show": true,
-                "label": "",
-                "labelFont": {
-                  "family": "Roboto",
-                  "size": 12,
-                  "sizeUnit": "px",
-                  "style": "normal",
-                  "weight": "600",
-                  "lineHeight": "1"
-                },
-                "labelColor": "rgba(0, 0, 0, 0.54)",
-                "position": "left",
-                "showTickLabels": true,
-                "tickLabelFont": {
-                  "family": "Roboto",
-                  "size": 12,
-                  "sizeUnit": "px",
-                  "style": "normal",
-                  "weight": "400",
-                  "lineHeight": "1"
-                },
-                "tickLabelColor": "rgba(0, 0, 0, 0.54)",
-                "ticksFormatter": null,
-                "showTicks": false,
-                "ticksColor": "rgba(0, 0, 0, 0.54)",
-                "showLine": false,
-                "lineColor": "rgba(0, 0, 0, 0.54)",
-                "showSplitLines": false,
-                "splitLinesColor": "rgba(0, 0, 0, 0.12)",
-                "id": "default",
-                "order": 0,
-                "min": 0
-              }
-            },
             "animation": {
               "animation": true,
               "animationThreshold": 2000,
@@ -1116,7 +1075,17 @@
               "animationDurationUpdate": 300,
               "animationEasingUpdate": "cubicOut",
               "animationDelayUpdate": 0
-            }
+            },
+            "background": {
+              "type": "color",
+              "color": "#fff",
+              "overlay": {
+                "enabled": false,
+                "color": "rgba(255,255,255,0.72)",
+                "blur": 3
+              }
+            },
+            "padding": "0"
           },
           "title": "Time series chart",
           "dropShadow": false,
@@ -1140,7 +1109,7 @@
           "titleColor": "rgba(0, 0, 0, 0.87)",
           "titleTooltip": "",
           "widgetStyle": {},
-          "widgetCss": ".tb-widget-container > .tb-widget {\n    border: none !important;\n    border-radius: 0 !important;\n    box-shadow: none !important;\n}\n\n.tb-time-series-chart-panel {\n    padding: 0;\n}\n\n.tb-time-series-chart-panel div.tb-widget-title {\n    padding-top: 5px;\n    padding-left: 5px;\n}",
+          "widgetCss": ".tb-widget-container > .tb-widget {\n    border: none !important;\n    border-radius: 0 !important;\n    box-shadow: none !important;\n}\n\n.tb-time-series-chart-panel div.tb-widget-title {\n    padding-top: 5px;\n    padding-left: 5px;\n}",
           "pageSize": 1024,
           "units": "",
           "decimals": null,

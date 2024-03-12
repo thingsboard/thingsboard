@@ -318,7 +318,7 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
       tooltip: {
         trigger: 'axis',
         confine: true,
-        appendToBody: true,
+        appendTo: 'body',
         axisPointer: {
           type: 'shadow'
         },
