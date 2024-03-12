@@ -7482,7 +7482,7 @@
                                             "stepType": "start",
                                             "smooth": false,
                                             "lineType": "solid",
-                                            "lineWidth": 3,
+                                            "lineWidth": 2.5,
                                             "showPoints": false,
                                             "showPointLabel": false,
                                             "pointLabelPosition": "top",
@@ -7496,7 +7496,7 @@
                                             },
                                             "pointLabelColor": "rgba(0, 0, 0, 0.76)",
                                             "pointShape": "circle",
-                                            "pointSize": 14,
+                                            "pointSize": 12,
                                             "fillAreaSettings": {
                                                 "type": "none",
                                                 "opacity": 0.4,
@@ -7555,7 +7555,7 @@
                                             "stepType": "start",
                                             "smooth": false,
                                             "lineType": "solid",
-                                            "lineWidth": 3,
+                                            "lineWidth": 2.5,
                                             "showPoints": false,
                                             "showPointLabel": false,
                                             "pointLabelPosition": "top",
@@ -7569,7 +7569,7 @@
                                             },
                                             "pointLabelColor": "rgba(0, 0, 0, 0.76)",
                                             "pointShape": "circle",
-                                            "pointSize": 14,
+                                            "pointSize": 12,
                                             "fillAreaSettings": {
                                                 "type": "none",
                                                 "opacity": 0.4,
@@ -7628,7 +7628,7 @@
                                             "stepType": "start",
                                             "smooth": false,
                                             "lineType": "solid",
-                                            "lineWidth": 3,
+                                            "lineWidth": 2.5,
                                             "showPoints": false,
                                             "showPointLabel": false,
                                             "pointLabelPosition": "top",
@@ -7642,7 +7642,7 @@
                                             },
                                             "pointLabelColor": "rgba(0, 0, 0, 0.76)",
                                             "pointShape": "circle",
-                                            "pointSize": 14,
+                                            "pointSize": 12,
                                             "fillAreaSettings": {
                                                 "type": "none",
                                                 "opacity": 0.4,
@@ -7864,7 +7864,8 @@
                                 "color": "rgba(255,255,255,0.72)",
                                 "blur": 3
                             }
-                        }
+                        },
+                        "padding": "12px"
                     },
                     "title": "{i18n:api-usage.queue-stats}",
                     "dropShadow": true,
@@ -7944,7 +7945,7 @@
                                             "stepType": "start",
                                             "smooth": false,
                                             "lineType": "solid",
-                                            "lineWidth": 3,
+                                            "lineWidth": 2.5,
                                             "showPoints": false,
                                             "showPointLabel": false,
                                             "pointLabelPosition": "top",
@@ -7958,7 +7959,7 @@
                                             },
                                             "pointLabelColor": "rgba(0, 0, 0, 0.76)",
                                             "pointShape": "circle",
-                                            "pointSize": 14,
+                                            "pointSize": 12,
                                             "fillAreaSettings": {
                                                 "type": "none",
                                                 "opacity": 0.4,
@@ -8017,7 +8018,7 @@
                                             "stepType": "start",
                                             "smooth": false,
                                             "lineType": "solid",
-                                            "lineWidth": 1,
+                                            "lineWidth": 2.5,
                                             "showPoints": false,
                                             "showPointLabel": false,
                                             "pointLabelPosition": "top",
@@ -8031,7 +8032,7 @@
                                             },
                                             "pointLabelColor": "rgba(0, 0, 0, 0.76)",
                                             "pointShape": "circle",
-                                            "pointSize": 14,
+                                            "pointSize": 12,
                                             "fillAreaSettings": {
                                                 "type": "none",
                                                 "opacity": 0.4,
@@ -8253,7 +8254,8 @@
                                 "color": "rgba(255,255,255,0.72)",
                                 "blur": 3
                             }
-                        }
+                        },
+                        "padding": "12px"
                     },
                     "title": "{i18n:api-usage.processing-failures-and-timeouts}",
                     "dropShadow": true,
@@ -8716,7 +8718,7 @@
             "dashboardLogoUrl": null,
             "hideToolbar": false,
             "showUpdateDashboardImage": false,
-            "dashboardCss": ".tb-time-series-chart-panel {\n    padding: 13px;\n}\n\n.tb-time-series-chart-content {\n  gap: 0;   \n}\n\n.card .bars-row {\n    flex: 1;\n    display: flex;\n    flex-direction: row;\n}\n\n.card .bar-column {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n}\n\n\n.card {\n   width: 100%;\n   height: 100%;\n   box-sizing: border-box;\n   display: flex;\n   flex-direction: column;\n}\n\n.card > img {\n    height: 0;\n}\n\n.card .content {\n   flex: 1;    \n   padding: 13px 13px 0;\n   display: flex;\n   box-sizing: border-box;\n}\n\n.card .content .column {\n   display: flex;\n   flex-direction: column;    \n   justify-content: space-around;\n   flex: 1;\n}\n\n.card .content .title-row {\n    display: flex;\n    flex-direction: row;\n    padding-bottom: 10px;\n}\n\n.card .title {\n    flex: 1;\n    font-size: 20px;\n    font-weight: 400;\n    color: #666666;\n}\n\n.card .state {\n    text-transform: uppercase;\n    font-size: 20px;\n    font-weight: bold;\n}\n\n.card.enabled .state {\n    color: #00B260;\n}\n\n.card.warning .state {\n    color: #FFAD6F;\n}\n\n.card.disabled .state {\n    color: #F73243;\n}\n\n.card .bar-container {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    justify-content: center;\n}\n\n.card .bar {\n    flex: 1;\n    max-height: 30px;\n    margin-top: 3.5px;\n    margin-bottom: 4px;\n    background-color: #F0F0F0;\n    border: 1px solid #DADCDB;\n    border-radius: 2px;\n    box-shadow: inset 0 1px 3px rgba(0, 0, 0, .2);\n}\n\n.card.enabled .bar {\n    border-color: #00B260;\n    background-color: #F0FBF7;\n}\n\n.card.warning .bar {\n    border-color: #FFAD6F;\n    background-color: #FFFAF6;\n}\n\n.card.disabled .bar {\n    border-color: #F73243;\n    background-color: #FFF0F0;\n}\n\n.card .bar .bar-fill {\n    background-color: #F0F0F0;\n    border-radius: 2px;\n    height: 100%;\n    width: 0%;\n}\n\n.card.enabled .bar-fill {\n    background-color: #00C46C;\n}\n\n.card.warning .bar-fill {\n    background-color: #FFD099;\n}\n\n.card.disabled .bar-fill {\n    background-color: #FF9494;\n}\n\n.card .bar-labels {\n    height: 20px;\n    font-size: 16px;\n    color: #666;\n    display: flex;\n    flex-direction: row;\n}\n\n\n.card .mat-mdc-button-base {\n    text-transform: uppercase;\n    white-space: nowrap;\n    overflow: hidden;\n    text-overflow: ellipsis;\n}\n\n.card .mdc-button__label {\n    pointer-events: none;\n}\n\n.action-row {\n    display: flex;\n    flex-direction: row;\n    justify-content: flex-end;\n    padding: 8px 0;\n}\n\n.card .unit {\n     color: #666666;\n}\n\n@media screen and (min-width: 960px) and (max-width: 1279px) {\n  .card .title {\n      font-size: 12px;\n  }\n  .card .state {\n      font-size: 12px;\n  }\n  .card .unit {\n      font-size: 8px;\n  }\n  .card .bar-labels {\n      font-size: 8px;\n  }\n  .card .mat-mdc-button-base {\n      font-size: 8px;\n  }\n  .card .action-row {\n      padding: 0;\n  }\n}\n\n@media screen and (min-width: 1280px) and (max-width: 1599px) {\n  .card .title {\n      font-size: 14px;\n  }\n  .card .state {\n      font-size: 14px;\n  }\n  .card .unit {\n      font-size: 10px;\n  }\n  .card .bar-labels {\n      font-size: 10px;\n  }\n  .card .mat-mdc-button-base {\n      font-size: 10px;\n  }\n  .card .action-row {\n      padding: 0;\n  }\n}\n\n@media screen and (min-width: 1600px) and (max-width: 1919px) {\n  .card .title {\n      font-size: 16px;\n  }\n  .card .state {\n      font-size: 16px;\n  }\n  .card .unit {\n      font-size: 12px;\n  }\n  .card .bar-labels {\n      font-size: 12px;\n  }\n  .card .mat-mdc-button-base {\n      font-size: 12px;\n  }\n  .card .action-row {\n      padding: 0;\n  }\n}    "
+            "dashboardCss": ".card .bars-row {\n    flex: 1;\n    display: flex;\n    flex-direction: row;\n}\n\n.card .bar-column {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n}\n\n\n.card {\n   width: 100%;\n   height: 100%;\n   box-sizing: border-box;\n   display: flex;\n   flex-direction: column;\n}\n\n.card > img {\n    height: 0;\n}\n\n.card .content {\n   flex: 1;    \n   padding: 12px 12px 0;\n   display: flex;\n   box-sizing: border-box;\n}\n\n.card .content .column {\n   display: flex;\n   flex-direction: column;    \n   justify-content: space-around;\n   flex: 1;\n}\n\n.card .content .title-row {\n    display: flex;\n    flex-direction: row;\n    padding-bottom: 10px;\n}\n\n.card .title {\n    flex: 1;\n    font-size: 20px;\n    font-weight: 400;\n    color: #666666;\n}\n\n.card .state {\n    text-transform: uppercase;\n    font-size: 20px;\n    font-weight: bold;\n}\n\n.card.enabled .state {\n    color: #00B260;\n}\n\n.card.warning .state {\n    color: #FFAD6F;\n}\n\n.card.disabled .state {\n    color: #F73243;\n}\n\n.card .bar-container {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    justify-content: center;\n}\n\n.card .bar {\n    flex: 1;\n    max-height: 30px;\n    margin-top: 3.5px;\n    margin-bottom: 4px;\n    background-color: #F0F0F0;\n    border: 1px solid #DADCDB;\n    border-radius: 2px;\n    box-shadow: inset 0 1px 3px rgba(0, 0, 0, .2);\n}\n\n.card.enabled .bar {\n    border-color: #00B260;\n    background-color: #F0FBF7;\n}\n\n.card.warning .bar {\n    border-color: #FFAD6F;\n    background-color: #FFFAF6;\n}\n\n.card.disabled .bar {\n    border-color: #F73243;\n    background-color: #FFF0F0;\n}\n\n.card .bar .bar-fill {\n    background-color: #F0F0F0;\n    border-radius: 2px;\n    height: 100%;\n    width: 0%;\n}\n\n.card.enabled .bar-fill {\n    background-color: #00C46C;\n}\n\n.card.warning .bar-fill {\n    background-color: #FFD099;\n}\n\n.card.disabled .bar-fill {\n    background-color: #FF9494;\n}\n\n.card .bar-labels {\n    height: 20px;\n    font-size: 16px;\n    color: #666;\n    display: flex;\n    flex-direction: row;\n}\n\n\n.card .mat-mdc-button-base {\n    text-transform: uppercase;\n    white-space: nowrap;\n    overflow: hidden;\n    text-overflow: ellipsis;\n}\n\n.card .mdc-button__label {\n    pointer-events: none;\n}\n\n.action-row {\n    display: flex;\n    flex-direction: row;\n    justify-content: flex-end;\n    padding: 8px 0;\n}\n\n.card .unit {\n     color: #666666;\n}\n\n@media screen and (min-width: 960px) and (max-width: 1279px) {\n  .card .title {\n      font-size: 12px;\n  }\n  .card .state {\n      font-size: 12px;\n  }\n  .card .unit {\n      font-size: 8px;\n  }\n  .card .bar-labels {\n      font-size: 8px;\n  }\n  .card .mat-mdc-button-base {\n      font-size: 8px;\n  }\n  .card .action-row {\n      padding: 0;\n  }\n}\n\n@media screen and (min-width: 1280px) and (max-width: 1599px) {\n  .card .title {\n      font-size: 14px;\n  }\n  .card .state {\n      font-size: 14px;\n  }\n  .card .unit {\n      font-size: 10px;\n  }\n  .card .bar-labels {\n      font-size: 10px;\n  }\n  .card .mat-mdc-button-base {\n      font-size: 10px;\n  }\n  .card .action-row {\n      padding: 0;\n  }\n}\n\n@media screen and (min-width: 1600px) and (max-width: 1919px) {\n  .card .title {\n      font-size: 16px;\n  }\n  .card .state {\n      font-size: 16px;\n  }\n  .card .unit {\n      font-size: 12px;\n  }\n  .card .bar-labels {\n      font-size: 12px;\n  }\n  .card .mat-mdc-button-base {\n      font-size: 12px;\n  }\n  .card .action-row {\n      padding: 0;\n  }\n}    "
         }
     },
     "name": "Api Usage"
