@@ -30,6 +30,7 @@ import { StatesControllerService } from './states/states-controller.service';
 export interface DashboardSettingsDialogData {
   settings?: DashboardSettings;
   gridSettings?: GridSettings;
+  isRightLayout?: boolean;
 }
 
 @Component({
@@ -43,6 +44,7 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
 
   settings: DashboardSettings;
   gridSettings: GridSettings;
+  isRightLayout = false;
 
   settingsFormGroup: FormGroup;
   gridSettingsFormGroup: FormGroup;
@@ -69,6 +71,7 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
 
     this.settings = this.data.settings;
     this.gridSettings = this.data.gridSettings;
+    this.isRightLayout = this.data.isRightLayout;
 
     if (this.settings) {
       const showTitle = isUndefined(this.settings.showTitle) ? true : this.settings.showTitle;
@@ -165,6 +168,10 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
         mobileRowHeight: [{ value: isUndefined(this.gridSettings.mobileRowHeight) ? 70 : this.gridSettings.mobileRowHeight,
           disabled: mobileAutoFillHeight}, [Validators.required, Validators.min(5), Validators.max(200)]]
       });
+      if (this.isRightLayout) {
+        const mobileDisplayLayoutFirst = isUndefined(this.gridSettings.mobileDisplayLayoutFirst) ? false : this.gridSettings.mobileDisplayLayoutFirst;
+        this.gridSettingsFormGroup.addControl('mobileDisplayLayoutFirst', this.fb.control(mobileDisplayLayoutFirst, []));
+      }
       this.gridSettingsFormGroup.get('mobileAutoFillHeight').valueChanges.subscribe(
         (mobileAutoFillHeightValue: boolean) => {
           if (mobileAutoFillHeightValue) {
