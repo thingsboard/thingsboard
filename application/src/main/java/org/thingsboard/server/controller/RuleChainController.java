@@ -45,7 +45,6 @@ import org.thingsboard.server.actors.tenant.DebugTbRateLimits;
 import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -340,18 +339,8 @@ public class RuleChainController extends BaseController {
         RuleNodeId ruleNodeId = new RuleNodeId(toUUID(strRuleNodeId));
         checkRuleNode(ruleNodeId, Operation.READ);
         TenantId tenantId = getCurrentUser().getTenantId();
-        List<EventInfo> events = eventService.findLatestEvents(tenantId, ruleNodeId, EventType.DEBUG_RULE_NODE, 2);
-        JsonNode result = null;
-        if (events != null) {
-            for (EventInfo event : events) {
-                JsonNode body = event.getBody();
-                if (body.has("type") && body.get("type").asText().equals("IN")) {
-                    result = body;
-                    break;
-                }
-            }
-        }
-        return result;
+        EventInfo eventInfo = eventService.findLatestDebugRuleNodeInEvent(tenantId, ruleNodeId);
+        return eventInfo.getBody();
     }
 
     @ApiOperation(value = "Is TBEL script executor enabled",

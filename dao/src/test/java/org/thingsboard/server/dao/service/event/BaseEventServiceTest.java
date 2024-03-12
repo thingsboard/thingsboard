@@ -132,11 +132,38 @@ public abstract class BaseEventServiceTest extends AbstractServiceTest {
         eventService.cleanupEvents(timeBeforeStartTime - 1, timeAfterEndTime + 1, true);
     }
 
+    @Test
+    public void findLatestDebugRuleNodeInEvent() {
+        CustomerId customerId = new CustomerId(Uuids.timeBased());
+        TenantId tenantId = TenantId.fromUUID(Uuids.timeBased());
+
+        Event event1 = saveDebugEvent(customerId, tenantId);
+        Event event2 = saveDebugEvent(customerId, tenantId);
+
+        EventInfo event = eventService.findLatestDebugRuleNodeInEvent(tenantId, customerId);
+
+        Assert.assertNotNull(event);
+        Assert.assertEquals(event2.getUuidId(), event.getUuidId());
+
+        eventService.cleanupEvents(timeBeforeStartTime - 1, timeAfterEndTime + 1, true);
+    }
+
     private Event saveEventWithProvidedTime(long time, EntityId entityId, TenantId tenantId) throws Exception {
         RuleNodeDebugEvent event = generateEvent(tenantId, entityId);
         event.setId(new EventId(Uuids.timeBased()));
         event.setCreatedTime(time);
         eventService.saveAsync(event).get();
+        return event;
+    }
+
+    private Event saveDebugEvent(EntityId entityId, TenantId tenantId) {
+        Event event = RuleNodeDebugEvent.builder()
+                .tenantId(tenantId)
+                .entityId(entityId.getId())
+                .serviceId("server A")
+                .eventType("IN")
+                .build();
+        eventService.saveAsync(event);
         return event;
     }
 }
