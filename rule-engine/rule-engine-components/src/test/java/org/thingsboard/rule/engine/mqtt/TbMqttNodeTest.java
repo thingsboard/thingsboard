@@ -15,22 +15,16 @@
  */
 package org.thingsboard.rule.engine.mqtt;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
 import org.thingsboard.rule.engine.api.TbNode;
 
 import java.util.stream.Stream;
 
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 
 @ExtendWith(MockitoExtension.class)
@@ -41,19 +35,6 @@ class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
     @BeforeEach
     public void setUp() throws Exception {
         node = mock(TbMqttNode.class);
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = { "false", "\"", "\"\"", "\"This is a string with double quotes\"", "Path: /home/developer/test.txt",
-            "First line\nSecond line\n\nFourth line", "Before\rAfter", "Tab\tSeparated\tValues", "Test\bbackspace", "[]",
-            "[1, 2, 3]", "{\"key\": \"value\"}", "{\n\"temperature\": 25.5,\n\"humidity\": 50.2\n\"}", "Expression: (a + b) * c",
-            "世界", "Україна", "\u1F1FA\u1F1E6", "🇺🇦"})
-    public void testParseJsonStringToPlainText(String original) {
-        Mockito.when(node.parseJsonStringToPlainText(anyString())).thenCallRealMethod();
-
-        String serialized = JacksonUtil.toString(original);
-        Assertions.assertNotNull(serialized);
-        Assertions.assertEquals(original, node.parseJsonStringToPlainText(serialized));
     }
 
     private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {

@@ -160,21 +160,9 @@ public class TbMqttNode extends TbAbstractExternalNode {
 
     private String getData(TbMsg tbMsg, boolean parseToPlainText) {
         if (parseToPlainText) {
-            return parseJsonStringToPlainText(tbMsg.getData());
+            return JacksonUtil.toPlainText(tbMsg.getData());
         }
         return tbMsg.getData();
-    }
-
-    protected String parseJsonStringToPlainText(String data) {
-        if (data.startsWith("\"") && data.endsWith("\"") && data.length() >= 2) {
-            final String dataBefore = data;
-            try {
-                data = JacksonUtil.fromString(data, String.class);
-            } catch (Exception ignored) {}
-            log.trace("Trimming double quotes. Before trim: [{}], after trim: [{}]", dataBefore, data);
-        }
-
-        return data;
     }
 
     @Override
