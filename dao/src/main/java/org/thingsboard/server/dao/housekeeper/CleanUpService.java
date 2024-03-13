@@ -58,7 +58,7 @@ public class CleanUpService {
     }
 
     public void cleanUpRelatedData(TenantId tenantId, EntityId entityId) {
-        log.trace("[{}][{}][{}] Cleaning up related data", tenantId, entityId.getEntityType(), entityId.getId());
+        log.debug("[{}][{}][{}] Cleaning up related data", tenantId, entityId.getEntityType(), entityId.getId());
         // todo: skipped entities list
         relationService.deleteEntityRelations(tenantId, entityId);
         housekeeperService.ifPresent(housekeeperService -> {

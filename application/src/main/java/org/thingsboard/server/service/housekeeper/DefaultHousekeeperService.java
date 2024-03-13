@@ -17,6 +17,7 @@ package org.thingsboard.server.service.housekeeper;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
@@ -53,6 +54,7 @@ import java.util.stream.Collectors;
 @TbCoreComponent
 @Service
 @Slf4j
+@ConditionalOnProperty(name = "queue.core.housekeeper.enabled", havingValue = "true", matchIfMissing = true)
 public class DefaultHousekeeperService implements HousekeeperService {
 
     private final Map<HousekeeperTaskType, HousekeeperTaskProcessor<?>> taskProcessors;
@@ -136,9 +138,7 @@ public class DefaultHousekeeperService implements HousekeeperService {
         }
 
         if (log.isDebugEnabled()) {
-            log.debug("[{}] {} task {}", task.getTenantId(),
-                    msg.getTask().getErrorsCount() == 0 ? "Processing" : "Reprocessing",
-                    msg.getTask().getValue());
+            log.debug("[{}] {} task {}", task.getTenantId(), isNew(msg.getTask()) ? "Processing" : "Reprocessing", msg.getTask().getValue());
         }
         try {
             Future<Object> future = executor.submit(() -> {
@@ -146,7 +146,9 @@ public class DefaultHousekeeperService implements HousekeeperService {
                 return null;
             });
             future.get(taskProcessingTimeout, TimeUnit.MILLISECONDS);
+
             statsService.reportProcessed(task.getTaskType(), msg);
+            log.debug("[{}] Successfully {} task {}", task.getTenantId(), isNew(msg.getTask()) ? "processed" : "reprocessed", msg.getTask().getValue());
         } catch (InterruptedException e) {
             throw e;
         } catch (Throwable e) {
@@ -160,6 +162,7 @@ public class DefaultHousekeeperService implements HousekeeperService {
                     task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(),
                     task.getTaskType(), msg.getTask().getAttempt(), task, error);
             reprocessingService.submitForReprocessing(msg, error);
+
             statsService.reportFailure(task.getTaskType(), msg);
             notificationRuleProcessor.process(TaskProcessingFailureTrigger.builder()
                     .task(task)
@@ -185,12 +188,19 @@ public class DefaultHousekeeperService implements HousekeeperService {
                 .build()), null);
     }
 
+    private boolean isNew(HousekeeperTaskProto task) {
+        return task.getErrorsCount() == 0;
+    }
+
     @PreDestroy
-    private void stop() {
-        log.info("Stopped Housekeeper service");
+    private void stop() throws Exception {
         stopped = true;
         consumer.unsubscribe();
-        consumerExecutor.shutdownNow();
+        consumerExecutor.shutdown();
+        if (!consumerExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+            consumerExecutor.shutdownNow();
+        }
+        log.info("Stopped Housekeeper service");
     }
 
 }

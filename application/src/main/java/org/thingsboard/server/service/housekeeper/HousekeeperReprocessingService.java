@@ -18,6 +18,7 @@ package org.thingsboard.server.service.housekeeper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -27,6 +28,7 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos.HousekeeperTaskProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperServiceMsg;
+import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
@@ -47,16 +49,18 @@ import java.util.concurrent.TimeUnit;
 @TbCoreComponent
 @Service
 @Slf4j
+@ConditionalOnProperty(name = "queue.core.housekeeper.enabled", havingValue = "true", matchIfMissing = true)
 public class HousekeeperReprocessingService {
 
     private final DefaultHousekeeperService housekeeperService;
     private final PartitionService partitionService;
     private final TbCoreQueueFactory queueFactory;
-    private final TbQueueProducerProvider producerProvider;
+    private final TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> producer;
+    private final TopicPartitionInfo submitTpi;
 
-    @Value("${queue.core.housekeeper.reprocessing-start-delay-sec:15}") //  fixme: to 5 minutes
+    @Value("${queue.core.housekeeper.reprocessing-start-delay-sec:300}")
     private int startDelay;
-    @Value("${queue.core.housekeeper.task-reprocessing-delay-sec:30}") // fixme: to 30 minutes or 1 hour
+    @Value("${queue.core.housekeeper.task-reprocessing-delay-sec:3600}")
     private int reprocessingDelay;
     @Value("${queue.core.housekeeper.max-reprocessing-attempts:10}")
     private int maxReprocessingAttempts;
@@ -74,7 +78,8 @@ public class HousekeeperReprocessingService {
         this.housekeeperService = housekeeperService;
         this.partitionService = partitionService;
         this.queueFactory = queueFactory;
-        this.producerProvider = producerProvider;
+        this.producer = producerProvider.getHousekeeperReprocessingMsgProducer();
+        this.submitTpi = TopicPartitionInfo.builder().topic(producer.getDefaultTopic()).build();
     }
 
     @PostConstruct
@@ -101,7 +106,13 @@ public class HousekeeperReprocessingService {
             while (!stopped) {
                 try {
                     List<TbProtoQueueMsg<ToHousekeeperServiceMsg>> msgs = consumer.poll(pollInterval);
-                    if (msgs.isEmpty() || msgs.stream().anyMatch(msg -> msg.getValue().getTask().getTs() >= startTs)) { // msg batch size should be 1. otherwise some tasks won't be reprocessed immediately
+                    if (msgs.isEmpty() || msgs.stream().anyMatch(msg -> msg.getValue().getTask().getTs() >= startTs)) {
+                        // it's not time yet to process the message
+                        if (!consumer.isCommitSupported()) {
+                            for (TbProtoQueueMsg<ToHousekeeperServiceMsg> msg : msgs) {
+                                producer.send(submitTpi, new TbProtoQueueMsg<>(msg.getKey(), msg.getValue()), null);
+                            }
+                        }
                         break;
                     }
 
@@ -114,7 +125,6 @@ public class HousekeeperReprocessingService {
                         } catch (Throwable e) {
                             log.error("Unexpected error during message reprocessing [{}]", msg, e);
                             submitForReprocessing(msg.getValue(), e);
-                            // fixme: msgs are duplicated
                         }
                     }
                     consumer.commit();
@@ -150,16 +160,18 @@ public class HousekeeperReprocessingService {
                 .build();
 
         log.trace("Submitting for reprocessing: {}", msg);
-        var producer = producerProvider.getHousekeeperReprocessingMsgProducer();
-        TopicPartitionInfo tpi = TopicPartitionInfo.builder().topic(producer.getDefaultTopic()).build();
-        producer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), null); // reprocessing topic has single partition, so we don't care about the msg key
+        producer.send(submitTpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), null); // reprocessing topic has single partition, so we don't care about the msg key
     }
 
     @PreDestroy
-    private void stop() {
+    private void stop() throws Exception {
         stopped = true;
         scheduler.shutdownNow();
-        consumerExecutor.shutdownNow();
+        consumerExecutor.shutdown();
+        if (!consumerExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
+            consumerExecutor.shutdownNow();
+        }
+        log.info("Stopped Housekeeper reprocessing service");
     }
 
 }
