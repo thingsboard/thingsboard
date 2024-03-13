@@ -340,7 +340,7 @@ public class RuleChainController extends BaseController {
         checkRuleNode(ruleNodeId, Operation.READ);
         TenantId tenantId = getCurrentUser().getTenantId();
         EventInfo eventInfo = eventService.findLatestDebugRuleNodeInEvent(tenantId, ruleNodeId);
-        return eventInfo.getBody();
+        return eventInfo == null ? null : eventInfo.getBody();
     }
 
     @ApiOperation(value = "Is TBEL script executor enabled",
