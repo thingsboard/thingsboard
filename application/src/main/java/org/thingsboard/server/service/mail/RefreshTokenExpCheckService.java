@@ -54,7 +54,8 @@ public class RefreshTokenExpCheckService {
         AdminSettings settings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
         if (settings != null && settings.getJsonValue().has("enableOauth2") && settings.getJsonValue().get("enableOauth2").asBoolean()) {
             JsonNode jsonValue = settings.getJsonValue();
-            if (OFFICE_365.name().equals(jsonValue.get("providerId").asText()) && jsonValue.has("refreshTokenExpires")) {
+            if (OFFICE_365.name().equals(jsonValue.get("providerId").asText()) && jsonValue.has("refreshToken")
+                    && jsonValue.has("refreshTokenExpires")) {
                 long expiresIn = jsonValue.get("refreshTokenExpires").longValue();
                 if ((expiresIn - System.currentTimeMillis()) < 604800000L) { //less than 7 days
                     log.info("Trying to refresh refresh token.");
