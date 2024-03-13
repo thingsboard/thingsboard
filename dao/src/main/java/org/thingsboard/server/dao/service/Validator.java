@@ -28,6 +28,7 @@ import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 public class Validator {
@@ -152,6 +153,19 @@ public class Validator {
     }
 
     /**
+     * This method validate <code>UUIDBased</code> id. If id is null than throw
+     * <code>IncorrectParameterException</code> exception
+     *
+     * @param id                   the id
+     * @param errorMessageSupplier the error message for exception supplier
+     */
+    static void validateId(UUIDBased id, Supplier<String> errorMessageSupplier) {
+        if (id == null || id.getId() == null) {
+            throw new IncorrectParameterException(errorMessageSupplier.get());
+        }
+    }
+
+    /**
      * This method validate list of <code>UUIDBased</code> ids. If at least one of the ids is null than throw
      * <code>IncorrectParameterException</code> exception
      *
@@ -179,8 +193,9 @@ public class Validator {
         if (ids == null || ids.isEmpty()) {
             throw new IncorrectParameterException(errorMessageFunction.apply(ids));
         } else {
+            Supplier<String> errorMessageSupplier = () -> errorMessageFunction.apply(ids);
             for (UUIDBased id : ids) {
-                validateId(id, errorMessageFunction.apply(ids));
+                validateId(id, errorMessageSupplier);
             }
         }
     }
