@@ -21,6 +21,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
@@ -36,6 +37,7 @@ import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.event.LifecycleEvent;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -81,6 +83,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -90,7 +93,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "transport.http.enabled=true",
         "queue.core.housekeeper.reprocessing-start-delay-sec=1",
         "queue.core.housekeeper.task-reprocessing-delay-sec=2",
-        "queue.core.housekeeper.poll-interval-ms=1000"
+        "queue.core.housekeeper.poll-interval-ms=1000",
+        "queue.core.housekeeper.max-reprocessing-attempts=5"
 })
 public class HousekeeperServiceTest extends AbstractControllerTest {
 
@@ -170,7 +174,8 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
                 .severity(AlarmSeverity.MAJOR)
                 .build();
         alarm = doPost("/api/alarm", alarm, Alarm.class);
-        alarm = doPost("/api/alarm/" + alarm.getId() + "/assign/" + userId, "", Alarm.class);
+        AlarmId alarmId = alarm.getId();
+        alarm = doPost("/api/alarm/" + alarmId + "/assign/" + userId, "", Alarm.class);
         assertThat(alarm.getAssigneeId()).isEqualTo(userId);
         assertThat(alarmService.findAlarmIdsByAssigneeId(tenantId, userId, new PageLink(100)).getData()).isNotEmpty();
 
@@ -178,8 +183,8 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
 
         await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
             verifyNoRelatedData(userId);
+            assertThat(alarmService.findAlarmById(tenantId, alarmId).getAssigneeId()).isNull();
         });
-        assertThat(alarmService.findAlarmById(tenantId, alarm.getId()).getAssigneeId()).isNull();
     }
 
     @Test
@@ -228,15 +233,12 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
 
         int attempts = 3;
         await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
-            verify(housekeeperService).processTask(argThat(verifyTaskSubmission(device.getId(), HousekeeperTaskType.DELETE_TELEMETRY,
-                    task -> task.getErrorsCount() == 0)));
-
+            verifyTaskProcessing(device.getId(), HousekeeperTaskType.DELETE_TELEMETRY, 0);
             for (int i = 1; i <= attempts; i++) {
                 int attempt = i;
-                verify(housekeeperReprocessingService).submitForReprocessing(argThat(verifyTaskSubmission(device.getId(), HousekeeperTaskType.DELETE_TELEMETRY,
+                verify(housekeeperReprocessingService).submitForReprocessing(argThat(getTaskMatcher(device.getId(), HousekeeperTaskType.DELETE_TELEMETRY,
                         task -> task.getErrorsCount() > 0 && task.getAttempt() == attempt)), argThat(e -> e.getMessage().equals(error.getMessage())));
-                verify(housekeeperService).processTask(argThat(verifyTaskSubmission(device.getId(), HousekeeperTaskType.DELETE_TELEMETRY,
-                        task -> task.getErrorsCount() > 0 && task.getAttempt() == attempt)));
+                verifyTaskProcessing(device.getId(), HousekeeperTaskType.DELETE_TELEMETRY, attempt);
             }
         });
 
@@ -247,11 +249,43 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         });
     }
 
-    private ArgumentMatcher<ToHousekeeperServiceMsg> verifyTaskSubmission(EntityId entityId, HousekeeperTaskType taskType,
-                                                                          Predicate<HousekeeperTaskProto> additionalCheck) {
+    @Test
+    public void whenReprocessingAttemptsExceeded_thenReprocessOnNextStartUp() throws Exception {
+        TimeoutException error = new TimeoutException("Test timeout");
+        doThrow(error).when(telemetryDeletionTaskProcessor).process(any());
+
+        Device device = createDevice("woeifjiowejf", "woeifjiowejf");
+        createRelatedData(device.getId());
+
+        doDelete("/api/device/" + device.getId()).andExpect(status().isOk());
+
+        int maxAttempts = 5;
+        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
+            for (int i = 1; i <= maxAttempts; i++) {
+                verifyTaskProcessing(device.getId(), HousekeeperTaskType.DELETE_TELEMETRY, i);
+            }
+        });
+
+        Mockito.clearInvocations(housekeeperService);
+        doCallRealMethod().when(telemetryDeletionTaskProcessor).process(any());
+        TimeUnit.SECONDS.sleep(2);
+        verify(housekeeperService, never()).processTask(argThat(getTaskMatcher(device.getId(), HousekeeperTaskType.DELETE_TELEMETRY, null)));
+
+        housekeeperReprocessingService.cycle.set(0); // imitating start-up
+        await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
+            verifyTaskProcessing(device.getId(), HousekeeperTaskType.DELETE_TELEMETRY, 6);
+        });
+    }
+
+    private void verifyTaskProcessing(EntityId entityId, HousekeeperTaskType taskType, int expectedAttempt) throws Exception {
+        verify(housekeeperService).processTask(argThat(getTaskMatcher(entityId, taskType, task -> task.getAttempt() == expectedAttempt)));
+    }
+
+    private ArgumentMatcher<ToHousekeeperServiceMsg> getTaskMatcher(EntityId entityId, HousekeeperTaskType taskType,
+                                                                    Predicate<HousekeeperTaskProto> additionalCheck) {
         return msg -> {
             HousekeeperTask task = JacksonUtil.fromString(msg.getTask().getValue(), HousekeeperTask.class);
-            return task.getEntityId().equals(entityId) && task.getTaskType() == taskType && additionalCheck.test(msg.getTask());
+            return task.getEntityId().equals(entityId) && task.getTaskType() == taskType && (additionalCheck == null || additionalCheck.test(msg.getTask()));
         };
     }
 

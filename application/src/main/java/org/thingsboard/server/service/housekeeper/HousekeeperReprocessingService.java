@@ -45,6 +45,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @TbCoreComponent
 @Service
@@ -70,6 +71,7 @@ public class HousekeeperReprocessingService {
     private final ExecutorService consumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("housekeeper-reprocessing-consumer"));
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("housekeeper-reprocessing-scheduler"));
 
+    protected AtomicInteger cycle = new AtomicInteger();
     private boolean stopped;
 
     public HousekeeperReprocessingService(@Lazy DefaultHousekeeperService housekeeperService,
@@ -86,6 +88,7 @@ public class HousekeeperReprocessingService {
     private void init() {
         scheduler.scheduleWithFixedDelay(() -> {
             try {
+                cycle.incrementAndGet();
                 startReprocessing();
             } catch (Throwable e) {
                 log.error("Unexpected error during reprocessing", e);
@@ -109,8 +112,9 @@ public class HousekeeperReprocessingService {
                     if (msgs.isEmpty() || msgs.stream().anyMatch(msg -> msg.getValue().getTask().getTs() >= startTs)) {
                         // it's not time yet to process the message
                         if (!consumer.isCommitSupported()) {
+                            // resubmitting consumed messages if committing is not supported (for in-memory queue)
                             for (TbProtoQueueMsg<ToHousekeeperServiceMsg> msg : msgs) {
-                                producer.send(submitTpi, new TbProtoQueueMsg<>(msg.getKey(), msg.getValue()), null);
+                                submit(msg.getKey(), msg.getValue());
                             }
                         }
                         break;
@@ -119,7 +123,7 @@ public class HousekeeperReprocessingService {
                     for (TbProtoQueueMsg<ToHousekeeperServiceMsg> msg : msgs) {
                         log.trace("Reprocessing task: {}", msg);
                         try {
-                            housekeeperService.processTask(msg.getValue());
+                            reprocessTask(msg.getValue());
                         } catch (InterruptedException e) {
                             return;
                         } catch (Throwable e) {
@@ -144,7 +148,26 @@ public class HousekeeperReprocessingService {
         });
     }
 
-    // todo: dead letter queue if attempts count exceeds the configured maximum
+    private void reprocessTask(ToHousekeeperServiceMsg msg) throws Exception {
+        int attempt = msg.getTask().getAttempt();
+        if (attempt > maxReprocessingAttempts) {
+            if (cycle.get() == 1) { // only reprocessing tasks with exceeded failures on first cycle (after start-up)
+                log.info("Trying to reprocess task with {} failed attempts: {}", attempt, msg);
+            } else {
+                // resubmitting msg to be processed on the next service start
+                msg = msg.toBuilder()
+                        .setTask(msg.getTask().toBuilder()
+                                .setTs(getReprocessingTs())
+                                .build())
+                        .build();
+                submit(UUID.randomUUID(), msg);
+                return;
+            }
+        }
+
+        housekeeperService.processTask(msg);
+    }
+
     public void submitForReprocessing(ToHousekeeperServiceMsg msg, Throwable error) {
         HousekeeperTaskProto task = msg.getTask();
 
@@ -155,12 +178,24 @@ public class HousekeeperReprocessingService {
                 .setTask(task.toBuilder()
                         .setAttempt(attempt)
                         .clearErrors().addAllErrors(errors)
-                        .setTs(System.currentTimeMillis() + TimeUnit.SECONDS.toMillis((long) (reprocessingDelay * 0.8)))
+                        .setTs(getReprocessingTs())
                         .build())
                 .build();
 
         log.trace("Submitting for reprocessing: {}", msg);
-        producer.send(submitTpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), null); // reprocessing topic has single partition, so we don't care about the msg key
+        submit(UUID.randomUUID(), msg); // reprocessing topic has single partition, so we don't care about the msg key
+
+        if (task.getAttempt() >= maxReprocessingAttempts) {
+            log.warn("Failed to process task in {} attempts: {}", task.getAttempt(), msg);
+        }
+    }
+
+    private void submit(UUID key, ToHousekeeperServiceMsg msg) {
+        producer.send(submitTpi, new TbProtoQueueMsg<>(key, msg), null);
+    }
+
+    private long getReprocessingTs() {
+        return System.currentTimeMillis() + TimeUnit.SECONDS.toMillis((long) (reprocessingDelay * 0.8)); // *0.8 so that msgs submitted just after finishing reprocessing are processed on the next cycle
     }
 
     @PreDestroy
