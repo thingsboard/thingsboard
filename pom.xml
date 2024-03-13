@@ -130,6 +130,7 @@
         <jakarta.validation-api.version>3.0.2</jakarta.validation-api.version>
         <antisamy.version>1.7.3</antisamy.version>
         <snmp4j.version>2.8.5</snmp4j.version>
+        <bytebuddy.version>1.14.11</bytebuddy.version>
         <!--         TEST SCOPE         -->
         <awaitility.version>4.2.0</awaitility.version>
         <dbunit.version>2.7.2</dbunit.version>
@@ -140,7 +141,6 @@
         <spring-test-dbunit.version>1.3.0</spring-test-dbunit.version> <!-- 2016 -->
         <takari-cpsuite.version>1.2.7</takari-cpsuite.version> <!-- 2015 -->
         <jeasy.version>5.0.0</jeasy.version>
-        <bytebuddy.version>1.14.12</bytebuddy.version>
         <!--      BLACKBOX TEST SCOPE     -->
         <testng.version>7.6.1</testng.version>
         <assertj.version>3.23.1</assertj.version>
@@ -661,7 +661,7 @@
                 <plugin>
                     <groupId>org.thingsboard</groupId>
                     <artifactId>gradle-maven-plugin</artifactId>
-                    <version>1.0.12</version>
+                    <version>1.0.14</version>
                 </plugin>
                 <plugin>
                     <groupId>com.github.eirslett</groupId>
@@ -2023,18 +2023,6 @@
                 </exclusions>
             </dependency>
             <dependency>
-                <groupId>net.bytebuddy</groupId>
-                <artifactId>byte-buddy</artifactId>
-                <version>${bytebuddy.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>net.bytebuddy</groupId>
-                <artifactId>byte-buddy-agent</artifactId>
-                <version>${bytebuddy.version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
                 <groupId>org.zeroturnaround</groupId>
                 <artifactId>zt-exec</artifactId>
                 <version>${zeroturnaround.version}</version>
@@ -2082,6 +2070,16 @@
                 <groupId>org.eclipse.jgit</groupId>
                 <artifactId>org.eclipse.jgit.ssh.apache</artifactId>
                 <version>${jgit.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy</artifactId>
+                <version>${bytebuddy.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy-agent</artifactId>
+                <version>${bytebuddy.version}</version>
             </dependency>
             <dependency>
                 <groupId>net.objecthunter</groupId>

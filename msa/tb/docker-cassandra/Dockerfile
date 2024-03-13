@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM thingsboard/openjdk17:bookworm-slim
+FROM thingsboard/openjdk21:bookworm-slim
 
 ENV PG_MAJOR=15
 
