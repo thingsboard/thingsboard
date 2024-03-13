@@ -39,7 +39,7 @@ import {
   TimeSeriesChartYAxis,
   TimeSeriesChartYAxisId,
   TimeSeriesChartYAxisSettings,
-  updateDarkMode
+  updateDarkMode, updateYAxisIntervals
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { ResizeObserver } from '@juggle/resize-observer';
 import {
@@ -51,12 +51,11 @@ import {
   echartsTooltipFormatter,
   EChartsTooltipTrigger,
   getAxisExtent,
-  getYAxis,
   measureXAxisNameHeight,
   measureYAxisNameWidth,
   toNamedData
 } from '@home/components/widget/lib/chart/echarts-widget.models';
-import { DateFormatProcessor } from '@shared/models/widget-settings.models';
+import { autoDateFormat, DateFormatProcessor } from '@shared/models/widget-settings.models';
 import { isDefinedAndNotNull, isEqual, mergeDeep } from '@core/utils';
 import { DataKey, Datasource, DatasourceType, widgetType } from '@shared/models/widget.models';
 import * as echarts from 'echarts/core';
@@ -485,7 +484,8 @@ export class TbTimeSeriesChart {
         },
         formatter: (params: CallbackDataParams[]) =>
           this.settings.showTooltip ? echartsTooltipFormatter(this.renderer, this.tooltipDateFormat,
-            this.settings, params, 0, '', -1, this.dataItems) : undefined,
+            this.settings, params, 0, '', -1, this.dataItems,
+            this.noAggregation ? null : this.ctx.timeWindow.interval) : undefined,
         padding: [8, 12],
         backgroundColor: this.settings.tooltipBackgroundColor,
         borderWidth: 0,
@@ -499,7 +499,7 @@ export class TbTimeSeriesChart {
       }],
       xAxis: [
         createTimeSeriesXAxisOption(this.settings.xAxis, this.ctx.defaultSubscription.timeWindow.minTime,
-          this.ctx.defaultSubscription.timeWindow.maxTime, this.darkMode)
+          this.ctx.defaultSubscription.timeWindow.maxTime, this.ctx.date, this.darkMode)
       ],
       yAxis: this.yAxisList.map(axis => axis.option),
       dataZoom: [
@@ -611,7 +611,7 @@ export class TbTimeSeriesChart {
       this.timeSeriesChartOptions.yAxis = this.yAxisList.map(axis => axis.option);
       this.timeSeriesChart.setOption(this.timeSeriesChartOptions, {replaceMerge: ['yAxis', 'xAxis', 'grid'], lazyUpdate: true});
     }
-    changed = this.calculateYAxisInterval(this.yAxisList);
+    changed = this.updateYAxesIntervals(this.yAxisList);
     if (changed) {
       this.timeSeriesChartOptions.yAxis = this.yAxisList.map(axis => axis.option);
       this.timeSeriesChart.setOption(this.timeSeriesChartOptions, {replaceMerge: ['yAxis'], lazyUpdate: true});
@@ -696,25 +696,11 @@ export class TbTimeSeriesChart {
     return !axisDataItems.length;
   }
 
-  private calculateYAxisInterval(axisList: TimeSeriesChartYAxis[]): boolean {
+  private updateYAxesIntervals(axisList: TimeSeriesChartYAxis[]): boolean {
     let changed = false;
     for (const yAxis of axisList) {
-      const minInterval = this.yAxisEmpty(yAxis) ? undefined : (1 / Math.pow(10, yAxis.decimals));
-      if (yAxis.option.minInterval !== minInterval) {
-        yAxis.option.minInterval = minInterval;
+      if (updateYAxisIntervals(this.timeSeriesChart, yAxis, this.yAxisEmpty(yAxis))) {
         changed = true;
-      }
-      if (yAxis.intervalCalculator) {
-        const axis = getYAxis(this.timeSeriesChart, yAxis.id);
-        if (axis) {
-          try {
-            const interval = yAxis.intervalCalculator(axis);
-            if ((yAxis.option as any).interval !== interval) {
-              (yAxis.option as any).interval = interval;
-              changed = true;
-            }
-          } catch (_e) {}
-        }
       }
     }
     return changed;

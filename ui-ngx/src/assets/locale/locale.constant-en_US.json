@@ -1025,7 +1025,16 @@
         "last-update-n-ago-text": "Last update {{ agoText }}",
         "custom-date": "Custom date",
         "format": "Format",
-        "preview": "Preview"
+        "preview": "Preview",
+        "auto": "Auto",
+        "time-granularity-formats": "Time granularity formats",
+        "unit-year": "Years",
+        "unit-month": "Months",
+        "unit-day": "Days",
+        "unit-hour": "Hours",
+        "unit-minute": "Minutes",
+        "unit-second": "Seconds",
+        "unit-millisecond": "Milliseconds"
     },
     "datetime": {
         "date-from": "Date from",
@@ -6691,6 +6700,10 @@
               "show-split-lines": "Show split lines",
               "show-split-lines-x-axis-hint": "If enabled, the vertical lines on the chart will be shown.",
               "show-split-lines-y-axis-hint": "If enabled, the horizontal lines on the chart will be shown.",
+              "ticks-interval": "Ticks interval",
+              "ticks-interval-hint": "Compulsively set segmentation interval for axis.",
+              "split-number": "Split number",
+              "split-number-hint": "Number of segments that the axis is split into.",
               "scale": "Scale",
               "scale-min": "min",
               "scale-max": "max",
