@@ -26,7 +26,7 @@ import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 
-public interface TbTransportQueueFactory extends TbUsageStatsClientQueueFactory {
+public interface TbTransportQueueFactory extends TbUsageStatsClientQueueFactory, HousekeeperClientQueueFactory {
 
     TbQueueRequestTemplate<TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> createTransportApiRequestTemplate();
 

@@ -17,8 +17,6 @@ package org.thingsboard.server.dao.housekeeper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.EntityType;
@@ -26,23 +24,17 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.entity.EntityDaoService;
-import org.thingsboard.server.dao.entity.EntityServiceRegistry;
+import org.thingsboard.server.common.msg.housekeeper.HousekeeperClient;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.relation.RelationService;
-
-import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class CleanUpService {
 
-    private final Optional<HousekeeperService> housekeeperService;
+    private final HousekeeperClient housekeeperClient;
     private final RelationService relationService;
-    @Autowired
-    @Lazy
-    private EntityServiceRegistry entityServiceRegistry;
 
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEntityDeletionEvent(DeleteEntityEvent<?> event) {
@@ -51,9 +43,7 @@ public class CleanUpService {
         log.trace("[{}][{}][{}] Handling entity deletion event", tenantId, entityId.getEntityType(), entityId.getId());
         cleanUpRelatedData(tenantId, entityId);
         if (entityId.getEntityType() == EntityType.USER) {
-            housekeeperService.ifPresent(housekeeperService -> {
-                housekeeperService.submitTask(HousekeeperTask.unassignAlarms((User) event.getEntity()));
-            });
+            housekeeperClient.submitTask(HousekeeperTask.unassignAlarms((User) event.getEntity()));
         }
     }
 
@@ -61,25 +51,16 @@ public class CleanUpService {
         log.debug("[{}][{}][{}] Cleaning up related data", tenantId, entityId.getEntityType(), entityId.getId());
         // todo: skipped entities list
         relationService.deleteEntityRelations(tenantId, entityId);
-        housekeeperService.ifPresent(housekeeperService -> {
-            housekeeperService.submitTask(HousekeeperTask.deleteAttributes(tenantId, entityId));
-            housekeeperService.submitTask(HousekeeperTask.deleteTelemetry(tenantId, entityId));
-            housekeeperService.submitTask(HousekeeperTask.deleteEvents(tenantId, entityId));
-            housekeeperService.submitTask(HousekeeperTask.deleteEntityAlarms(tenantId, entityId));
-        });
+        housekeeperClient.submitTask(HousekeeperTask.deleteAttributes(tenantId, entityId));
+        housekeeperClient.submitTask(HousekeeperTask.deleteTelemetry(tenantId, entityId));
+        housekeeperClient.submitTask(HousekeeperTask.deleteEvents(tenantId, entityId));
+        housekeeperClient.submitTask(HousekeeperTask.deleteEntityAlarms(tenantId, entityId));
     }
 
     public void removeTenantEntities(TenantId tenantId, EntityType... entityTypes) {
-        housekeeperService.ifPresentOrElse(housekeeperService -> {
-            for (EntityType entityType : entityTypes) {
-                housekeeperService.submitTask(HousekeeperTask.deleteEntities(tenantId, entityType));
-            }
-        }, () -> {
-            for (EntityType entityType : entityTypes) {
-                EntityDaoService entityService = entityServiceRegistry.getServiceByEntityType(entityType);
-                entityService.deleteByTenantId(tenantId);
-            }
-        });
+        for (EntityType entityType : entityTypes) {
+            housekeeperClient.submitTask(HousekeeperTask.deleteEntities(tenantId, entityType));
+        }
     }
 
 }

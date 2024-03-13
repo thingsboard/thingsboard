@@ -56,6 +56,7 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.common.msg.housekeeper.HousekeeperClient;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -99,7 +100,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class HousekeeperServiceTest extends AbstractControllerTest {
 
     @SpyBean
-    private DefaultHousekeeperService housekeeperService;
+    private HousekeeperService housekeeperService;
+    @SpyBean
+    private HousekeeperClient housekeeperClient;
     @SpyBean
     private HousekeeperReprocessingService housekeeperReprocessingService;
     @Autowired
@@ -300,7 +303,7 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
     private void verifyNoRelatedData(EntityId entityId) throws Exception {
         List<HousekeeperTaskType> expectedTaskTypes = List.of(HousekeeperTaskType.DELETE_TELEMETRY, HousekeeperTaskType.DELETE_ATTRIBUTES, HousekeeperTaskType.DELETE_EVENTS, HousekeeperTaskType.DELETE_ENTITY_ALARMS);
         for (HousekeeperTaskType taskType : expectedTaskTypes) {
-            verify(housekeeperService).submitTask(argThat(task -> task.getTaskType() == taskType && task.getEntityId().equals(entityId)));
+            verify(housekeeperClient).submitTask(argThat(task -> task.getTaskType() == taskType && task.getEntityId().equals(entityId)));
         }
 
         assertThat(getLatestTelemetry(entityId)).isNull();

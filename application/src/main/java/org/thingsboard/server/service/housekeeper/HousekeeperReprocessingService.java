@@ -32,7 +32,6 @@ import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
-import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import javax.annotation.PostConstruct;
@@ -53,11 +52,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 @ConditionalOnProperty(name = "queue.core.housekeeper.enabled", havingValue = "true", matchIfMissing = true)
 public class HousekeeperReprocessingService {
 
-    private final DefaultHousekeeperService housekeeperService;
+    private final HousekeeperService housekeeperService;
     private final PartitionService partitionService;
     private final TbCoreQueueFactory queueFactory;
-    private final TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> producer;
-    private final TopicPartitionInfo submitTpi;
+    private TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> producer;
+    private TopicPartitionInfo submitTpi;
 
     @Value("${queue.core.housekeeper.reprocessing-start-delay-sec:300}")
     private int startDelay;
@@ -74,18 +73,19 @@ public class HousekeeperReprocessingService {
     protected AtomicInteger cycle = new AtomicInteger();
     private boolean stopped;
 
-    public HousekeeperReprocessingService(@Lazy DefaultHousekeeperService housekeeperService,
-                                          PartitionService partitionService, TbCoreQueueFactory queueFactory,
-                                          TbQueueProducerProvider producerProvider) {
+    public HousekeeperReprocessingService(@Lazy HousekeeperService housekeeperService,
+                                          PartitionService partitionService,
+                                          TbCoreQueueFactory queueFactory) {
         this.housekeeperService = housekeeperService;
         this.partitionService = partitionService;
         this.queueFactory = queueFactory;
-        this.producer = producerProvider.getHousekeeperReprocessingMsgProducer();
-        this.submitTpi = TopicPartitionInfo.builder().topic(producer.getDefaultTopic()).build();
     }
 
     @PostConstruct
     private void init() {
+        producer = queueFactory.createHousekeeperReprocessingMsgProducer();
+        submitTpi = TopicPartitionInfo.builder().topic(producer.getDefaultTopic()).build();
+
         scheduler.scheduleWithFixedDelay(() -> {
             try {
                 cycle.incrementAndGet();

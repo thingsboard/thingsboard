@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.housekeeper;
+package org.thingsboard.server.queue.provider;
 
-import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
+import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperServiceMsg;
+import org.thingsboard.server.queue.TbQueueProducer;
+import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 
-public interface HousekeeperService {
+public interface HousekeeperClientQueueFactory {
 
-    void submitTask(HousekeeperTask task);
+    TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> createHousekeeperMsgProducer();
 
 }
