@@ -43,6 +43,7 @@ public class WidgetMsgConstructorV1 extends BaseWidgetMsgConstructor {
 
     @Override
     public WidgetsBundleUpdateMsg constructWidgetsBundleUpdateMsg(UpdateMsgType msgType, WidgetsBundle widgetsBundle, List<String> widgets) {
+        widgetsBundle = JacksonUtil.clone(widgetsBundle);
         imageService.inlineImageForEdge(widgetsBundle);
         WidgetsBundleUpdateMsg.Builder builder = WidgetsBundleUpdateMsg.newBuilder()
                 .setMsgType(msgType)
@@ -68,6 +69,7 @@ public class WidgetMsgConstructorV1 extends BaseWidgetMsgConstructor {
 
     @Override
     public WidgetTypeUpdateMsg constructWidgetTypeUpdateMsg(UpdateMsgType msgType, WidgetTypeDetails widgetTypeDetails, EdgeVersion edgeVersion) {
+        widgetTypeDetails = JacksonUtil.clone(widgetTypeDetails);
         imageService.inlineImagesForEdge(widgetTypeDetails);
         WidgetTypeUpdateMsg.Builder builder = WidgetTypeUpdateMsg.newBuilder()
                 .setMsgType(msgType)
@@ -109,4 +111,5 @@ public class WidgetMsgConstructorV1 extends BaseWidgetMsgConstructor {
         }
         return builder.build();
     }
+
 }
