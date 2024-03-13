@@ -110,10 +110,10 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
         return DaoUtil.toPageData(
                 deviceRepository.findDeviceInfosByFilter(
                         filter.getTenantId().getId(),
-                        DaoUtil.getStringId(filter.getCustomerId()),
-                        DaoUtil.getStringId(filter.getEdgeId()),
+                        DaoUtil.getId(filter.getCustomerId()),
+                        DaoUtil.getId(filter.getEdgeId()),
                         filter.getType(),
-                        DaoUtil.getStringId(filter.getDeviceProfileId()),
+                        DaoUtil.getId(filter.getDeviceProfileId()),
                         filter.getActive() != null,
                         Boolean.TRUE.equals(filter.getActive()),
                         pageLink.getTextSearch(),

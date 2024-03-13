@@ -16,7 +16,7 @@
 import org.apache.tools.ant.filters.ReplaceTokens
 
 plugins {
-    id "nebula.ospackage" version "8.6.3"
+    id "com.netflix.nebula.ospackage" version "11.8.1"
 }
 
 buildDir = projectBuildDir
@@ -92,7 +92,7 @@ buildRpm {
     archiveVersion = projectVersion.replace('-', '')
     archiveFileName = "${pkgName}.rpm"
 
-    requires("java-17")
+    requires("java-21")
 
     from("${buildDir}/conf") {
         include "${pkgName}.conf"
@@ -131,7 +131,7 @@ buildDeb {
 
     archiveFileName = "${pkgName}.deb"
 
-    requires("openjdk-17-jre").or("java17-runtime").or("oracle-java17-installer").or("openjdk-17-jre-headless")
+    requires("openjdk-21-jre").or("java21-runtime").or("oracle-java21-installer").or("openjdk-21-jre-headless")
 
     from("${buildDir}/conf") {
         include "${pkgName}.conf"

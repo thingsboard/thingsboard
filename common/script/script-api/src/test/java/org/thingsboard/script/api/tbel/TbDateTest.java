@@ -211,7 +211,7 @@ class TbDateTest {
                 .put("timeZone", "America/New_York")
                 .put("dateStyle", "full")
                 .toString()));
-        Assert.assertEquals("середа, 6 вересня 2023 р.", d.toLocaleDateString("uk-UA", JacksonUtil.newObjectNode()
+        Assert.assertEquals("середа, 6 вересня 2023 р.", d.toLocaleDateString("uk-UA", JacksonUtil.newObjectNode()
                 .put("timeZone", "Europe/Kiev")
                 .put("dateStyle", "full")
                 .toString()));
@@ -246,12 +246,12 @@ class TbDateTest {
         Assert.assertNotNull(d.toLocaleTimeString());
         Assert.assertNotNull(d.toLocaleTimeString("en-US"));
 
-        Assert.assertEquals("9:04:05 PM", d.toLocaleTimeString("en-US", "America/New_York"));
+        Assert.assertEquals("9:04:05 PM", d.toLocaleTimeString("en-US", "America/New_York"));
         Assert.assertEquals("오후 9:04:05", d.toLocaleTimeString("ko-KR",  "America/New_York"));
         Assert.assertEquals("04:04:05",  d.toLocaleTimeString( "uk-UA", "Europe/Kiev"));
         Assert.assertEquals("9:04:05 م",  d.toLocaleTimeString( "ar-EG", "America/New_York"));
 
-        Assert.assertEquals("9:04:05 PM Eastern Daylight Time", d.toLocaleTimeString("en-US", JacksonUtil.newObjectNode()
+        Assert.assertEquals("9:04:05 PM Eastern Daylight Time", d.toLocaleTimeString("en-US", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
                 .put("timeStyle", "full")
                 .toString()));
@@ -294,14 +294,14 @@ class TbDateTest {
         Assert.assertNotNull(d.toLocaleString());
         Assert.assertNotNull(d.toLocaleString("en-US"));
 
-        Assert.assertEquals("9/5/23, 9:04:05 PM", d.toLocaleString("en-US", "America/New_York"));
+        Assert.assertEquals("9/5/23, 9:04:05 PM", d.toLocaleString("en-US", "America/New_York"));
         Assert.assertEquals("23. 9. 5. 오후 9:04:05", d.toLocaleString("ko-KR",  "America/New_York"));
         Assert.assertEquals("06.09.23, 04:04:05",  d.toLocaleString( "uk-UA", "Europe/Kiev"));
         String expected_ver = Runtime.version().feature() == 11 ? "5\u200F/9\u200F/2023 9:04:05 م" :
-                                                                  "5\u200F/9\u200F/2023, 9:04:05 م";
+                                                                  "5\u200F/9\u200F/2023، 9:04:05 م";
         Assert.assertEquals(expected_ver,  d.toLocaleString( "ar-EG", "America/New_York"));
 
-        Assert.assertEquals("Tuesday, September 5, 2023 at 9:04:05 PM Eastern Daylight Time", d.toLocaleString("en-US", JacksonUtil.newObjectNode()
+        Assert.assertEquals("Tuesday, September 5, 2023, 9:04:05 PM Eastern Daylight Time", d.toLocaleString("en-US", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
                 .put("dateStyle", "full")
                 .put("timeStyle", "full")
@@ -311,14 +311,14 @@ class TbDateTest {
                 .put("dateStyle", "full")
                 .put("timeStyle", "full")
                 .toString()));
-        Assert.assertEquals("середа, 6 вересня 2023 р. о 04:04:05 за східноєвропейським літнім часом", d.toLocaleString("uk-UA", JacksonUtil.newObjectNode()
+        Assert.assertEquals("середа, 6 вересня 2023 р., 04:04:05 за східноєвропейським літнім часом", d.toLocaleString("uk-UA", JacksonUtil.newObjectNode()
                 .put("timeZone", "Europe/Kiev")
                 .put("dateStyle", "full")
                 .put("timeStyle", "full")
                 .toString()));
 
         expected_ver = Runtime.version().feature() == 11 ? "الثلاثاء، 5 سبتمبر 2023 9:04:05 م التوقيت الصيفي الشرقي لأمريكا الشمالية" :
-                                                           "الثلاثاء، 5 سبتمبر 2023 في 9:04:05 م التوقيت الصيفي الشرقي لأمريكا الشمالية";
+                                                           "الثلاثاء، 5 سبتمبر 2023، 9:04:05 م التوقيت الصيفي الشرقي لأمريكا الشمالية";
         Assert.assertEquals(expected_ver, d.toLocaleString("ar-EG", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
                 .put("dateStyle", "full")
@@ -827,16 +827,16 @@ class TbDateTest {
     @Test
     public void toStringAsJs() {
         TbDate d1 = new TbDate(1975, 12, 31, 23,15,30, 567,"-04:00");
-        Assert.assertEquals("четвер, 1 січня 1976 р. о 06:15:30 за східноєвропейським стандартним часом", d1.toString("uk-UA", "Europe/Kyiv"));
-        Assert.assertEquals("Thursday, January 1, 1976 at 6:15:30 AM Eastern European Standard Time", d1.toString("en-US", "Europe/Kyiv"));
+        Assert.assertEquals("четвер, 1 січня 1976 р., 06:15:30 за східноєвропейським стандартним часом", d1.toString("uk-UA", "Europe/Kyiv"));
+        Assert.assertEquals("Thursday, January 1, 1976, 6:15:30 AM Eastern European Standard Time", d1.toString("en-US", "Europe/Kyiv"));
         Assert.assertEquals("1976 Jan 1, Thu 06:15:30 Eastern European Time", d1.toString("UTC", "Europe/Kyiv"));
-        Assert.assertEquals("Wednesday, December 31, 1975 at 10:15:30 PM Eastern Standard Time", d1.toString("en-US", "America/New_York"));
+        Assert.assertEquals("Wednesday, December 31, 1975, 10:15:30 PM Eastern Standard Time", d1.toString("en-US", "America/New_York"));
         Assert.assertEquals("1975 Dec 31, Wed 22:15:30 Eastern Standard Time", d1.toString("GMT", "America/New_York"));
         Assert.assertEquals("1975 Dec 31, Wed 22:15:30 Eastern Standard Time", d1.toString("UTC", "America/New_York"));
 
         Assert.assertEquals(d1.toUTCString("UTC"), d1.toUTCString());
-        Assert.assertEquals("четвер, 1 січня 1976 р., 03:15:30", d1.toUTCString("uk-UA"));
-        Assert.assertEquals("Thursday, January 1, 1976, 3:15:30 AM", d1.toUTCString("en-US"));
+        Assert.assertEquals("четвер, 1 січня 1976 р., 03:15:30", d1.toUTCString("uk-UA"));
+        Assert.assertEquals("Thursday, January 1, 1976, 3:15:30 AM", d1.toUTCString("en-US"));
 
         Assert.assertEquals("1976-01-01T03:15:30.567Z", d1.toJSON());
         Assert.assertEquals("1976-01-01T03:15:30.567Z", d1.toISOString());
@@ -844,21 +844,21 @@ class TbDateTest {
         Assert.assertEquals("1976-01-01 06:15:30", d1.toLocaleString("UTC", "Europe/Kyiv"));
         Assert.assertEquals("01.01.76, 06:15:30", d1.toLocaleString("uk-UA", "Europe/Kyiv"));
         Assert.assertEquals("1975-12-31 22:15:30", d1.toLocaleString("UTC", "America/New_York"));
-        Assert.assertEquals("12/31/75, 10:15:30 PM", d1.toLocaleString("en-US", "America/New_York"));
+        Assert.assertEquals("12/31/75, 10:15:30 PM", d1.toLocaleString("en-US", "America/New_York"));
 
         Assert.assertEquals("1976 Jan 1, Thu", d1.toDateString("UTC", "Europe/Kyiv"));
-        Assert.assertEquals("четвер, 1 січня 1976 р.", d1.toDateString("uk-UA", "Europe/Kyiv"));
+        Assert.assertEquals("четвер, 1 січня 1976 р.", d1.toDateString("uk-UA", "Europe/Kyiv"));
         Assert.assertEquals("1975 Dec 31, Wed", d1.toDateString("UTC", "America/New_York"));
         Assert.assertEquals("Wednesday, December 31, 1975", d1.toDateString("en-US", "America/New_York"));
 
         Assert.assertEquals("06:15:30", d1.toLocaleTimeString("uk-UA", "Europe/Kyiv"));
         Assert.assertEquals("06:15:30", d1.toLocaleTimeString("UTC", "Europe/Kyiv"));
-        Assert.assertEquals("10:15:30 PM", d1.toLocaleTimeString("en-US", "America/New_York"));
+        Assert.assertEquals("10:15:30 PM", d1.toLocaleTimeString("en-US", "America/New_York"));
         Assert.assertEquals("22:15:30", d1.toLocaleTimeString("UTC", "America/New_York"));
 
         Assert.assertEquals("06:15:30 за східноєвропейським стандартним часом", d1.toTimeString("uk-UA", "Europe/Kyiv"));
         Assert.assertEquals("06:15:30 Eastern European Time", d1.toTimeString("UTC", "Europe/Kyiv"));
-        Assert.assertEquals("10:15:30 PM Eastern Standard Time", d1.toTimeString("en-US", "America/New_York"));
+        Assert.assertEquals("10:15:30 PM Eastern Standard Time", d1.toTimeString("en-US", "America/New_York"));
         Assert.assertEquals("22:15:30 Eastern Standard Time", d1.toTimeString("UTC", "America/New_York"));
     }
 
