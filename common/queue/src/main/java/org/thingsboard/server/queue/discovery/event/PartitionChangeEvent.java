@@ -23,7 +23,9 @@ import org.thingsboard.server.queue.discovery.QueueKey;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @ToString(callSuper = true)
 public class PartitionChangeEvent extends TbApplicationEvent {
@@ -44,6 +46,16 @@ public class PartitionChangeEvent extends TbApplicationEvent {
     // only for service types that have single QueueKey
     public Set<TopicPartitionInfo> getPartitions() {
         return partitionsMap.values().stream().findAny().orElse(Collections.emptySet());
+    }
+
+    // used only for PartitionChangeMsg
+    public Set<Integer> getPartitionIds() {
+        return partitionsMap.values().stream()
+                .flatMap(Set::stream)
+                .map(TopicPartitionInfo::getPartition)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toSet());
     }
 
 }

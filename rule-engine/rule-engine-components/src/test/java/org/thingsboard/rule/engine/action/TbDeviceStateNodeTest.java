@@ -46,6 +46,7 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
 
+import java.util.Collections;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -166,7 +167,7 @@ public class TbDeviceStateNodeTest {
         given(ctxMock.isLocalEntity(eq(nonLocalDeviceId2))).willReturn(false);
 
         // WHEN
-        node.onPartitionChangeMsg(ctxMock, new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE));
+        node.onPartitionChangeMsg(ctxMock, new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE, Collections.emptySet()));
 
         // THEN
         assertThat(rateLimits)

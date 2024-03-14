@@ -137,16 +137,16 @@ public class TbMsgDeduplicationNodeTest extends TbAbstractCacheBasedRuleNodeTest
 
         verify(tpi, times(2)).isMyPartition();
         verify(tpi, times(2)).getPartition();
-        verify(node, times(1)).onMsg(eq(ctx), any());
-        verify(ctx, times(1)).tellSelf(any(), anyLong());
+        verify(node).onMsg(eq(ctx), any());
+        verify(ctx).tellSelf(any(), anyLong());
         verify(ctx, times(2)).getTopicPartitionInfo(eq(deviceId));
-        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
-        verify(ruleNodeCacheService, times(1)).getEntityIds(getEntityIdsCacheKey());
-        verify(ruleNodeCacheService, times(1)).getTbMsgs(eq(deviceId), eq(0));
+        verify(ctx).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+        verify(ruleNodeCacheService).getEntityIds(getEntityIdsCacheKey());
+        verify(ruleNodeCacheService).getTbMsgs(eq(deviceId), eq(0));
 
         successCaptor.getValue().run();
 
-        verify(ruleNodeCacheService, times(1)).removeTbMsgList(eq(deviceId), eq(0), eq(Collections.singletonList(msgFromCache)));
+        verify(ruleNodeCacheService).removeTbMsgList(eq(deviceId), eq(0), eq(Collections.singletonList(msgFromCache)));
 
         TbMsg actualMsg = newMsgCaptor.getValue();
         Assertions.assertNotEquals(msgFromCache.getId(), actualMsg.getId());
@@ -205,10 +205,9 @@ public class TbMsgDeduplicationNodeTest extends TbAbstractCacheBasedRuleNodeTest
         when(tpi.isMyPartition()).thenReturn(true);
         when(tpi.getPartition()).thenReturn(Optional.of(0));
 
-        Set<TopicPartitionInfo> topicPartitionInfoSet = new HashSet<>();
-        topicPartitionInfoSet.add(tpi);
-//        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE, topicPartitionInfoSet);
-        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE);
+        Set<Integer> topicPartitionIds = new HashSet<>();
+        tpi.getPartition().ifPresent(topicPartitionIds::add);
+        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE, topicPartitionIds);
 
         node.onPartitionChangeMsg(ctx, partitionChangeMsg);
         awaitTellSelfLatch.await();
@@ -219,16 +218,16 @@ public class TbMsgDeduplicationNodeTest extends TbAbstractCacheBasedRuleNodeTest
 
         verify(tpi, times(3)).isMyPartition();
         verify(tpi, times(3)).getPartition();
-        verify(node, times(1)).onMsg(eq(ctx), any());
-        verify(ctx, times(1)).tellSelf(any(), anyLong());
+        verify(node).onMsg(eq(ctx), any());
+        verify(ctx).tellSelf(any(), anyLong());
         verify(ctx, times(3)).getTopicPartitionInfo(eq(deviceId));
-        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+        verify(ctx).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
         verify(ruleNodeCacheService, times(2)).getEntityIds(getEntityIdsCacheKey());
-        verify(ruleNodeCacheService, times(1)).getTbMsgs(eq(deviceId), eq(0));
+        verify(ruleNodeCacheService).getTbMsgs(eq(deviceId), eq(0));
 
         successCaptor.getValue().run();
 
-        verify(ruleNodeCacheService, times(1)).removeTbMsgList(eq(deviceId), eq(0), eq(Collections.singletonList(msgFromCache)));
+        verify(ruleNodeCacheService).removeTbMsgList(eq(deviceId), eq(0), eq(Collections.singletonList(msgFromCache)));
 
         TbMsg actualMsg = newMsgCaptor.getValue();
         Assertions.assertNotEquals(msgFromCache.getId(), actualMsg.getId());
@@ -279,16 +278,16 @@ public class TbMsgDeduplicationNodeTest extends TbAbstractCacheBasedRuleNodeTest
 
         verify(node, times(msgCount + wantedNumberOfTellSelfInvocation + 1)).onMsg(eq(ctx), any());
         verify(ctx, times(msgCount)).ack(any());
-        verify(ctx, times(1)).tellFailure(eq(msgToReject), any());
-        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
-        verify(ruleNodeCacheService, times(1)).getEntityIds(anyString());
-        verify(ruleNodeCacheService, times(1)).add(eq(getEntityIdsCacheKey()), eq(deviceId));
+        verify(ctx).tellFailure(eq(msgToReject), any());
+        verify(ctx).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+        verify(ruleNodeCacheService).getEntityIds(anyString());
+        verify(ruleNodeCacheService).add(eq(getEntityIdsCacheKey()), eq(deviceId));
         verify(ruleNodeCacheService, times(msgCount)).add(eq(deviceId), any(), any(TbMsg.class));
 
         for (Runnable valueCaptor : successCaptor.getAllValues()) {
             valueCaptor.run();
         }
-        verify(ruleNodeCacheService, times(1)).removeTbMsgList(eq(deviceId), any(), anyList());
+        verify(ruleNodeCacheService).removeTbMsgList(eq(deviceId), any(), anyList());
         verify(ctx, never()).schedule(any(), anyLong(), any());
 
         // verify that newMsg is called but content of messages is the same as in the first message.
@@ -302,8 +301,8 @@ public class TbMsgDeduplicationNodeTest extends TbAbstractCacheBasedRuleNodeTest
         Assertions.assertEquals(msgWithExpectedContent.getType(), actualMsg.getType());
 
         node.destroy(ctx, ComponentLifecycleEvent.DELETED);
-        verify(ruleNodeCacheService, times(1)).evictTbMsgs(any(), any());
-        verify(ruleNodeCacheService, times(1)).evict(eq(getEntityIdsCacheKey()));
+        verify(ruleNodeCacheService).evictTbMsgs(any(), any());
+        verify(ruleNodeCacheService).evict(eq(getEntityIdsCacheKey()));
     }
 
     @Test
@@ -347,16 +346,16 @@ public class TbMsgDeduplicationNodeTest extends TbAbstractCacheBasedRuleNodeTest
 
         verify(node, times(msgCount + wantedNumberOfTellSelfInvocation + 1)).onMsg(eq(ctx), any());
         verify(ctx, times(msgCount)).ack(any());
-        verify(ctx, times(1)).tellFailure(eq(msgToReject), any());
-        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
-        verify(ruleNodeCacheService, times(1)).getEntityIds(anyString());
-        verify(ruleNodeCacheService, times(1)).add(eq(getEntityIdsCacheKey()), eq(deviceId));
+        verify(ctx).tellFailure(eq(msgToReject), any());
+        verify(ctx).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+        verify(ruleNodeCacheService).getEntityIds(anyString());
+        verify(ruleNodeCacheService).add(eq(getEntityIdsCacheKey()), eq(deviceId));
         verify(ruleNodeCacheService, times(msgCount)).add(eq(deviceId), any(), any(TbMsg.class));
 
         for (Runnable valueCaptor : successCaptor.getAllValues()) {
             valueCaptor.run();
         }
-        verify(ruleNodeCacheService, times(1)).removeTbMsgList(eq(deviceId), any(), anyList());
+        verify(ruleNodeCacheService).removeTbMsgList(eq(deviceId), any(), anyList());
         verify(ctx, never()).schedule(any(), anyLong(), any());
 
         // verify that newMsg is called but content of messages is the same as in the last msg.
@@ -369,8 +368,8 @@ public class TbMsgDeduplicationNodeTest extends TbAbstractCacheBasedRuleNodeTest
         Assertions.assertEquals(msgWithLatestTs.getType(), actualMsg.getType());
 
         node.destroy(ctx, ComponentLifecycleEvent.DELETED);
-        verify(ruleNodeCacheService, times(1)).evictTbMsgs(any(), any());
-        verify(ruleNodeCacheService, times(1)).evict(eq(getEntityIdsCacheKey()));
+        verify(ruleNodeCacheService).evictTbMsgs(any(), any());
+        verify(ruleNodeCacheService).evict(eq(getEntityIdsCacheKey()));
     }
 
     @Test
@@ -410,15 +409,15 @@ public class TbMsgDeduplicationNodeTest extends TbAbstractCacheBasedRuleNodeTest
 
         verify(node, times(msgCount + wantedNumberOfTellSelfInvocation)).onMsg(eq(ctx), any());
         verify(ctx, times(msgCount)).ack(any());
-        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
-        verify(ruleNodeCacheService, times(1)).getEntityIds(anyString());
-        verify(ruleNodeCacheService, times(1)).add(eq(getEntityIdsCacheKey()), eq(deviceId));
+        verify(ctx).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+        verify(ruleNodeCacheService).getEntityIds(anyString());
+        verify(ruleNodeCacheService).add(eq(getEntityIdsCacheKey()), eq(deviceId));
         verify(ruleNodeCacheService, times(msgCount)).add(eq(deviceId), any(), any(TbMsg.class));
 
         for (Runnable valueCaptor : successCaptor.getAllValues()) {
             valueCaptor.run();
         }
-        verify(ruleNodeCacheService, times(1)).removeTbMsgList(eq(deviceId), any(), anyList());
+        verify(ruleNodeCacheService).removeTbMsgList(eq(deviceId), any(), anyList());
         verify(ctx, never()).schedule(any(), anyLong(), any());
 
         Assertions.assertEquals(1, newMsgCaptor.getAllValues().size());
@@ -429,8 +428,8 @@ public class TbMsgDeduplicationNodeTest extends TbAbstractCacheBasedRuleNodeTest
         Assertions.assertEquals(ctx.getQueueName(), outMessage.getQueueName());
 
         node.destroy(ctx, ComponentLifecycleEvent.DELETED);
-        verify(ruleNodeCacheService, times(1)).evictTbMsgs(any(), any());
-        verify(ruleNodeCacheService, times(1)).evict(eq(getEntityIdsCacheKey()));
+        verify(ruleNodeCacheService).evictTbMsgs(any(), any());
+        verify(ruleNodeCacheService).evict(eq(getEntityIdsCacheKey()));
     }
 
     @Test
@@ -477,8 +476,8 @@ public class TbMsgDeduplicationNodeTest extends TbAbstractCacheBasedRuleNodeTest
         verify(node, times(msgCount + wantedNumberOfTellSelfInvocation)).onMsg(eq(ctx), any());
         verify(ctx, times(msgCount)).ack(any());
         verify(ctx, times(2)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
-        verify(ruleNodeCacheService, times(1)).getEntityIds(anyString());
-        verify(ruleNodeCacheService, times(1)).add(eq(getEntityIdsCacheKey()), eq(deviceId));
+        verify(ruleNodeCacheService).getEntityIds(anyString());
+        verify(ruleNodeCacheService).add(eq(getEntityIdsCacheKey()), eq(deviceId));
         verify(ruleNodeCacheService, times(msgCount)).add(eq(deviceId), any(), any(TbMsg.class));
 
         for (Runnable valueCaptor : successCaptor.getAllValues()) {
@@ -504,8 +503,8 @@ public class TbMsgDeduplicationNodeTest extends TbAbstractCacheBasedRuleNodeTest
         Assertions.assertEquals(ctx.getQueueName(), secondOutMsg.getQueueName());
 
         node.destroy(ctx, ComponentLifecycleEvent.DELETED);
-        verify(ruleNodeCacheService, times(1)).evictTbMsgs(any(), any());
-        verify(ruleNodeCacheService, times(1)).evict(eq(getEntityIdsCacheKey()));
+        verify(ruleNodeCacheService).evictTbMsgs(any(), any());
+        verify(ruleNodeCacheService).evict(eq(getEntityIdsCacheKey()));
     }
 
     @Test
@@ -552,8 +551,8 @@ public class TbMsgDeduplicationNodeTest extends TbAbstractCacheBasedRuleNodeTest
         verify(node, times(msgCount + wantedNumberOfTellSelfInvocation)).onMsg(eq(ctx), any());
         verify(ctx, times(msgCount)).ack(any());
         verify(ctx, times(2)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
-        verify(ruleNodeCacheService, times(1)).getEntityIds(anyString());
-        verify(ruleNodeCacheService, times(1)).add(eq(getEntityIdsCacheKey()), eq(deviceId));
+        verify(ruleNodeCacheService).getEntityIds(anyString());
+        verify(ruleNodeCacheService).add(eq(getEntityIdsCacheKey()), eq(deviceId));
         verify(ruleNodeCacheService, times(msgCount)).add(eq(deviceId), any(), any(TbMsg.class));
 
         for (Runnable valueCaptor : successCaptor.getAllValues()) {
@@ -585,8 +584,8 @@ public class TbMsgDeduplicationNodeTest extends TbAbstractCacheBasedRuleNodeTest
         Assertions.assertEquals(msgWithLatestTsInSecondPack.getType(), actualMsg.getType());
 
         node.destroy(ctx, ComponentLifecycleEvent.DELETED);
-        verify(ruleNodeCacheService, times(1)).evictTbMsgs(any(), any());
-        verify(ruleNodeCacheService, times(1)).evict(eq(getEntityIdsCacheKey()));
+        verify(ruleNodeCacheService).evictTbMsgs(any(), any());
+        verify(ruleNodeCacheService).evict(eq(getEntityIdsCacheKey()));
     }
 
     private void invokeTellSelf(int maxNumberOfInvocation) {

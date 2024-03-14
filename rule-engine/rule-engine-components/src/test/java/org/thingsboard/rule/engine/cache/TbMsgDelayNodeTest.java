@@ -132,10 +132,10 @@ public class TbMsgDelayNodeTest extends TbAbstractCacheBasedRuleNodeTest<TbMsgDe
         verify(node, times(successMsgCount * 2 + 1)).onMsg(eq(ctx), any());
         verify(ctx, times(successMsgCount * 2 + 1)).getTopicPartitionInfo(any());
         verify(ctx, times(successMsgCount)).ack(any());
-        verify(ctx, times(1)).tellFailure(eq(msgToReject), any());
+        verify(ctx).tellFailure(eq(msgToReject), any());
         verify(ctx, times(successMsgCount)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
-        verify(ruleNodeCacheService, times(1)).getEntityIds(anyString());
-        verify(ruleNodeCacheService, times(1)).add(eq(getEntityIdsCacheKey()), eq(deviceId));
+        verify(ruleNodeCacheService).getEntityIds(anyString());
+        verify(ruleNodeCacheService).add(eq(getEntityIdsCacheKey()), eq(deviceId));
         verify(ruleNodeCacheService, times(successMsgCount)).add(eq(deviceId), any(), any(TbMsg.class));
 
         for (Runnable valueCaptor : successCaptor.getAllValues()) {
@@ -156,8 +156,8 @@ public class TbMsgDelayNodeTest extends TbAbstractCacheBasedRuleNodeTest<TbMsgDe
         }
 
         node.destroy(ctx, ComponentLifecycleEvent.DELETED);
-        verify(ruleNodeCacheService, times(1)).evictTbMsgs(any(), any());
-        verify(ruleNodeCacheService, times(1)).evict(eq(getEntityIdsCacheKey()));
+        verify(ruleNodeCacheService).evictTbMsgs(any(), any());
+        verify(ruleNodeCacheService).evict(eq(getEntityIdsCacheKey()));
 
     }
 
@@ -188,13 +188,13 @@ public class TbMsgDelayNodeTest extends TbAbstractCacheBasedRuleNodeTest<TbMsgDe
         ArgumentCaptor<Runnable> successCaptor = ArgumentCaptor.forClass(Runnable.class);
         ArgumentCaptor<Consumer<Throwable>> failureCaptor = ArgumentCaptor.forClass(Consumer.class);
 
-        verify(tpi, times(1)).isMyPartition();
-        verify(tpi, times(1)).getPartition();
-        verify(ctx, times(1)).getTopicPartitionInfo(eq(deviceId));
-        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
-        verify(ruleNodeCacheService, times(1)).getEntityIds(getEntityIdsCacheKey());
-        verify(ruleNodeCacheService, times(1)).getTbMsgs(eq(deviceId), eq(0));
-        verify(ruleNodeCacheService, times(1)).removeTbMsgList(eq(deviceId), eq(0), eq(Collections.singletonList(msgFromCache)));
+        verify(tpi).isMyPartition();
+        verify(tpi).getPartition();
+        verify(ctx).getTopicPartitionInfo(eq(deviceId));
+        verify(ctx).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+        verify(ruleNodeCacheService).getEntityIds(getEntityIdsCacheKey());
+        verify(ruleNodeCacheService).getTbMsgs(eq(deviceId), eq(0));
+        verify(ruleNodeCacheService).removeTbMsgList(eq(deviceId), eq(0), eq(Collections.singletonList(msgFromCache)));
 
         successCaptor.getValue().run();
 
@@ -238,13 +238,13 @@ public class TbMsgDelayNodeTest extends TbAbstractCacheBasedRuleNodeTest<TbMsgDe
 
         verify(tpi, times(2)).isMyPartition();
         verify(tpi, times(2)).getPartition();
-        verify(node, times(1)).onMsg(eq(ctx), any());
-        verify(ctx, times(1)).tellSelf(any(), anyLong());
+        verify(node).onMsg(eq(ctx), any());
+        verify(ctx).tellSelf(any(), anyLong());
         verify(ctx, times(2)).getTopicPartitionInfo(eq(deviceId));
-        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
-        verify(ruleNodeCacheService, times(1)).getEntityIds(getEntityIdsCacheKey());
-        verify(ruleNodeCacheService, times(1)).getTbMsgs(eq(deviceId), eq(0));
-        verify(ruleNodeCacheService, times(1)).removeTbMsgList(eq(deviceId), eq(0), eq(Collections.singletonList(msgFromCache)));
+        verify(ctx).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+        verify(ruleNodeCacheService).getEntityIds(getEntityIdsCacheKey());
+        verify(ruleNodeCacheService).getTbMsgs(eq(deviceId), eq(0));
+        verify(ruleNodeCacheService).removeTbMsgList(eq(deviceId), eq(0), eq(Collections.singletonList(msgFromCache)));
 
         successCaptor.getValue().run();
 
@@ -301,10 +301,9 @@ public class TbMsgDelayNodeTest extends TbAbstractCacheBasedRuleNodeTest<TbMsgDe
         when(ruleNodeCacheService.getEntityIds(eq(getEntityIdsCacheKey()))).thenReturn(Collections.singleton(deviceId));
         when(ruleNodeCacheService.getTbMsgs(eq(deviceId), eq(0))).thenReturn(Collections.singleton(msgFromCache));
 
-        Set<TopicPartitionInfo> topicPartitionInfoSet = new HashSet<>();
-        topicPartitionInfoSet.add(tpi);
-//        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE, topicPartitionInfoSet);
-        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE);
+        Set<Integer> topicPartitionIds = new HashSet<>();
+        tpi.getPartition().ifPresent(topicPartitionIds::add);
+        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE, topicPartitionIds);
 
         node.onPartitionChangeMsg(ctx, partitionChangeMsg);
 
@@ -312,13 +311,13 @@ public class TbMsgDelayNodeTest extends TbAbstractCacheBasedRuleNodeTest<TbMsgDe
         ArgumentCaptor<Runnable> successCaptor = ArgumentCaptor.forClass(Runnable.class);
         ArgumentCaptor<Consumer<Throwable>> failureCaptor = ArgumentCaptor.forClass(Consumer.class);
 
-        verify(tpi, times(1)).isMyPartition();
+        verify(tpi).isMyPartition();
         verify(tpi, times(2)).getPartition();
-        verify(ctx, times(1)).getTopicPartitionInfo(eq(deviceId));
-        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
-        verify(ruleNodeCacheService, times(1)).getEntityIds(getEntityIdsCacheKey());
-        verify(ruleNodeCacheService, times(1)).getTbMsgs(eq(deviceId), eq(0));
-        verify(ruleNodeCacheService, times(1)).removeTbMsgList(eq(deviceId), eq(0), eq(Collections.singletonList(msgFromCache)));
+        verify(ctx).getTopicPartitionInfo(eq(deviceId));
+        verify(ctx).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+        verify(ruleNodeCacheService).getEntityIds(getEntityIdsCacheKey());
+        verify(ruleNodeCacheService).getTbMsgs(eq(deviceId), eq(0));
+        verify(ruleNodeCacheService).removeTbMsgList(eq(deviceId), eq(0), eq(Collections.singletonList(msgFromCache)));
 
         successCaptor.getValue().run();
 
@@ -353,10 +352,9 @@ public class TbMsgDelayNodeTest extends TbAbstractCacheBasedRuleNodeTest<TbMsgDe
         when(ruleNodeCacheService.getEntityIds(eq(getEntityIdsCacheKey()))).thenReturn(Collections.singleton(deviceId));
         when(ruleNodeCacheService.getTbMsgs(eq(deviceId), eq(0))).thenReturn(Collections.singleton(msgFromCache));
 
-        Set<TopicPartitionInfo> topicPartitionInfoSet = new HashSet<>();
-        topicPartitionInfoSet.add(tpi);
-//        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE, topicPartitionInfoSet);
-        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE);
+        Set<Integer> topicPartitionIds = new HashSet<>();
+        tpi.getPartition().ifPresent(topicPartitionIds::add);
+        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE, topicPartitionIds);
 
         node.onPartitionChangeMsg(ctx, partitionChangeMsg);
         awaitTellSelfLatch.await();
@@ -367,13 +365,13 @@ public class TbMsgDelayNodeTest extends TbAbstractCacheBasedRuleNodeTest<TbMsgDe
 
         verify(tpi, times(2)).isMyPartition();
         verify(tpi, times(3)).getPartition();
-        verify(node, times(1)).onMsg(eq(ctx), any());
-        verify(ctx, times(1)).tellSelf(any(), anyLong());
+        verify(node).onMsg(eq(ctx), any());
+        verify(ctx).tellSelf(any(), anyLong());
         verify(ctx, times(2)).getTopicPartitionInfo(eq(deviceId));
-        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
-        verify(ruleNodeCacheService, times(1)).getEntityIds(getEntityIdsCacheKey());
-        verify(ruleNodeCacheService, times(1)).getTbMsgs(eq(deviceId), eq(0));
-        verify(ruleNodeCacheService, times(1)).removeTbMsgList(eq(deviceId), eq(0), eq(Collections.singletonList(msgFromCache)));
+        verify(ctx).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+        verify(ruleNodeCacheService).getEntityIds(getEntityIdsCacheKey());
+        verify(ruleNodeCacheService).getTbMsgs(eq(deviceId), eq(0));
+        verify(ruleNodeCacheService).removeTbMsgList(eq(deviceId), eq(0), eq(Collections.singletonList(msgFromCache)));
 
         successCaptor.getValue().run();
 

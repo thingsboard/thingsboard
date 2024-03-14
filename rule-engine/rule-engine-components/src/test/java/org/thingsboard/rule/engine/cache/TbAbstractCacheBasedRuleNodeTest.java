@@ -110,9 +110,9 @@ public abstract class TbAbstractCacheBasedRuleNodeTest<N extends TbAbstractCache
         TbMsg msgToProcess = createMsg(deviceId, System.currentTimeMillis());
         node.onMsg(ctx, msgToProcess);
 
-        verify(tpi, times(1)).isMyPartition();
+        verify(tpi).isMyPartition();
         verify(tpi, never()).getPartition();
-        verify(ctx, times(1)).getTopicPartitionInfo(eq(deviceId));
+        verify(ctx).getTopicPartitionInfo(eq(deviceId));
 
         node.destroy();
     }
@@ -128,10 +128,10 @@ public abstract class TbAbstractCacheBasedRuleNodeTest<N extends TbAbstractCache
 
         node.init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
-        verify(tpi, times(1)).isMyPartition();
+        verify(tpi).isMyPartition();
         verify(tpi, never()).getPartition();
-        verify(ctx, times(1)).getTopicPartitionInfo(eq(deviceId));
-        verify(ruleNodeCacheService, times(1)).getEntityIds(getEntityIdsCacheKey());
+        verify(ctx).getTopicPartitionInfo(eq(deviceId));
+        verify(ruleNodeCacheService).getEntityIds(getEntityIdsCacheKey());
 
         node.destroy();
     }
@@ -149,11 +149,11 @@ public abstract class TbAbstractCacheBasedRuleNodeTest<N extends TbAbstractCache
 
         node.init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
-        verify(tpi, times(1)).isMyPartition();
-        verify(tpi, times(1)).getPartition();
-        verify(ruleNodeCacheService, times(1)).getEntityIds(getEntityIdsCacheKey());
-        verify(ruleNodeCacheService, times(1)).getTbMsgs(eq(deviceId), eq(0));
-        verify(ctx, times(1)).getTopicPartitionInfo(eq(deviceId));
+        verify(tpi).isMyPartition();
+        verify(tpi).getPartition();
+        verify(ruleNodeCacheService).getEntityIds(getEntityIdsCacheKey());
+        verify(ruleNodeCacheService).getTbMsgs(eq(deviceId), eq(0));
+        verify(ctx).getTopicPartitionInfo(eq(deviceId));
         verify(ctx, never()).enqueueForTellNext(any(), anyString(), any(), any());
         verify(ctx, never()).tellSelf(any(), anyLong());
 
@@ -171,10 +171,9 @@ public abstract class TbAbstractCacheBasedRuleNodeTest<N extends TbAbstractCache
         when(ruleNodeCacheService.getEntityIds(eq(getEntityIdsCacheKey()))).thenReturn(Collections.singleton(deviceId));
         when(ruleNodeCacheService.getTbMsgs(eq(deviceId), eq(0))).thenReturn(Collections.emptySet());
 
-        Set<TopicPartitionInfo> topicPartitionInfoSet = new HashSet<>();
-        topicPartitionInfoSet.add(tpi);
-        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE);
-//        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE, topicPartitionInfoSet);
+        Set<Integer> topicPartitionIds = new HashSet<>();
+        tpi.getPartition().ifPresent(topicPartitionIds::add);
+        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE, topicPartitionIds);
 
         // add partition to the partitions map ...
         node.init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
@@ -182,13 +181,13 @@ public abstract class TbAbstractCacheBasedRuleNodeTest<N extends TbAbstractCache
         // check that partition is present and cache check is skipped!
         node.onPartitionChangeMsg(ctx, partitionChangeMsg);
 
-        verify(tpi, times(1)).isMyPartition();
+        verify(tpi).isMyPartition();
         verify(tpi, times(2)).getPartition();
-        verify(ctx, times(1)).getTopicPartitionInfo(eq(deviceId));
+        verify(ctx).getTopicPartitionInfo(eq(deviceId));
         verify(ctx, never()).enqueueForTellNext(any(), anyString(), any(), any());
         verify(ctx, never()).tellSelf(any(), anyLong());
-        verify(ruleNodeCacheService, times(1)).getEntityIds(getEntityIdsCacheKey());
-        verify(ruleNodeCacheService, times(1)).getTbMsgs(eq(deviceId), eq(0));
+        verify(ruleNodeCacheService).getEntityIds(getEntityIdsCacheKey());
+        verify(ruleNodeCacheService).getTbMsgs(eq(deviceId), eq(0));
 
         node.destroy();
     }
@@ -203,14 +202,13 @@ public abstract class TbAbstractCacheBasedRuleNodeTest<N extends TbAbstractCache
         when(ctx.getTopicPartitionInfo(deviceId)).thenReturn(tpi);
         when(ruleNodeCacheService.getEntityIds(eq(getEntityIdsCacheKey()))).thenReturn(Collections.emptySet());
 
-        Set<TopicPartitionInfo> topicPartitionInfoSet = new HashSet<>();
-        topicPartitionInfoSet.add(tpi);
-//        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE, topicPartitionInfoSet);
-        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE);
+        Set<Integer> topicPartitionIds = new HashSet<>();
+        tpi.getPartition().ifPresent(topicPartitionIds::add);
+        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE, topicPartitionIds);
 
         node.onPartitionChangeMsg(ctx, partitionChangeMsg);
 
-        verify(ruleNodeCacheService, times(1)).getEntityIds(getEntityIdsCacheKey());
+        verify(ruleNodeCacheService).getEntityIds(getEntityIdsCacheKey());
         verify(ctx, never()).getTopicPartitionInfo(eq(deviceId));
 
         node.destroy();
@@ -227,20 +225,19 @@ public abstract class TbAbstractCacheBasedRuleNodeTest<N extends TbAbstractCache
         when(ruleNodeCacheService.getEntityIds(eq(getEntityIdsCacheKey()))).thenReturn(Collections.singleton(deviceId));
         when(ruleNodeCacheService.getTbMsgs(eq(deviceId), eq(0))).thenReturn(Collections.emptySet());
 
-        Set<TopicPartitionInfo> topicPartitionInfoSet = new HashSet<>();
-        topicPartitionInfoSet.add(tpi);
-//        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE, topicPartitionInfoSet);
-        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE);
+        Set<Integer> topicPartitionIds = new HashSet<>();
+        tpi.getPartition().ifPresent(topicPartitionIds::add);
+        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE, topicPartitionIds);
 
         node.onPartitionChangeMsg(ctx, partitionChangeMsg);
 
-        verify(tpi, times(1)).isMyPartition();
+        verify(tpi).isMyPartition();
         verify(tpi, times(2)).getPartition();
-        verify(ctx, times(1)).getTopicPartitionInfo(eq(deviceId));
+        verify(ctx).getTopicPartitionInfo(eq(deviceId));
         verify(ctx, never()).enqueueForTellNext(any(), anyString(), any(), any());
         verify(ctx, never()).tellSelf(any(), anyLong());
-        verify(ruleNodeCacheService, times(1)).getEntityIds(getEntityIdsCacheKey());
-        verify(ruleNodeCacheService, times(1)).getTbMsgs(eq(deviceId), eq(0));
+        verify(ruleNodeCacheService).getEntityIds(getEntityIdsCacheKey());
+        verify(ruleNodeCacheService).getTbMsgs(eq(deviceId), eq(0));
 
         node.destroy();
     }

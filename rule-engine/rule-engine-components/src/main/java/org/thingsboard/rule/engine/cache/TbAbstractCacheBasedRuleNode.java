@@ -32,17 +32,14 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 @Slf4j
 public abstract class TbAbstractCacheBasedRuleNode<C, K> implements TbNode {
 
     protected static final int DEFAULT_PARTITION = -999999;
-    protected static final String EMPTY_DATA = "";
 
     protected C config;
 
@@ -88,28 +85,24 @@ public abstract class TbAbstractCacheBasedRuleNode<C, K> implements TbNode {
         Set<Map.Entry<Integer, Set<EntityId>>> currentPartitions = partitionsEntityIdsMap.entrySet();
         RuleNodeId ruleNodeId = ctx.getSelfId();
         log.trace("[{}] On partition change msg: {}, current partitions: {}", ruleNodeId, msg, currentPartitions);
-//        Set<Integer> newPartitions = msg.getPartitions().stream()
-//                .map(TopicPartitionInfo::getPartition)
-//                .filter(Optional::isPresent)
-//                .map(Optional::get)
-//                .collect(Collectors.toSet());
-//        currentPartitions.removeIf(entry -> {
-//            Integer partition = entry.getKey();
-//            boolean remove = !newPartitions.contains(partition);
-//            if (remove) {
-//                log.trace("[{}] Removed old partition: [{}] from the partitions map!", ruleNodeId, partition);
-//                Set<EntityId> entityIds = entry.getValue();
-//                entityIdValuesMap.keySet().removeAll(entityIds);
-//                if (log.isTraceEnabled()) {
-//                    entityIds.forEach(entityId -> log.trace("[{}] Removed non-local entity: [{}] from the entityId values map!", ruleNodeId, entityId));
-//                }
-//            }
-//            return remove;
-//        });
-//        boolean checkCache = newPartitions.stream().anyMatch(newPartition -> !partitionsEntityIdsMap.containsKey(newPartition));
-//        if (checkCache) {
-//            getValuesFromCacheAndSchedule(ctx);
-//        }
+        Set<Integer> newPartitions = msg.getPartitions();
+        currentPartitions.removeIf(entry -> {
+            Integer partition = entry.getKey();
+            boolean remove = !newPartitions.contains(partition);
+            if (remove) {
+                log.trace("[{}] Removed old partition: [{}] from the partitions map!", ruleNodeId, partition);
+                Set<EntityId> entityIds = entry.getValue();
+                entityIdValuesMap.keySet().removeAll(entityIds);
+                if (log.isTraceEnabled()) {
+                    entityIds.forEach(entityId -> log.trace("[{}] Removed non-local entity: [{}] from the entityId values map!", ruleNodeId, entityId));
+                }
+            }
+            return remove;
+        });
+        boolean checkCache = newPartitions.stream().anyMatch(newPartition -> !partitionsEntityIdsMap.containsKey(newPartition));
+        if (checkCache) {
+            getValuesFromCacheAndSchedule(ctx);
+        }
     }
 
     protected void getCacheIfPresentAndExecute(TbContext ctx, Consumer<RuleNodeCacheService> cacheOperation) {

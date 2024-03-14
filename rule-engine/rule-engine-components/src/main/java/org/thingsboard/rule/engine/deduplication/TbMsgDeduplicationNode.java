@@ -222,7 +222,7 @@ public class TbMsgDeduplicationNode extends TbAbstractCacheBasedRuleNode<TbMsgDe
     }
 
     private void scheduleTickMsg(TbContext ctx, EntityId deduplicationId, long delayMs) {
-        ctx.tellSelf(ctx.newMsg(null, getTickMsgType(), deduplicationId, TbMsgMetaData.EMPTY, EMPTY_DATA), delayMs);
+        ctx.tellSelf(ctx.newMsg(null, getTickMsgType(), deduplicationId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING), delayMs);
     }
 
     private Optional<TbPair<Long, Long>> findValidPack(List<TbMsg> msgs, long deduplicationTimeoutMs) {
