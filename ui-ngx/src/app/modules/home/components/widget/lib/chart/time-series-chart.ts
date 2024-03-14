@@ -27,7 +27,8 @@ import {
   TimeSeriesChartDataItem,
   timeSeriesChartDefaultSettings,
   timeSeriesChartKeyDefaultSettings,
-  TimeSeriesChartKeySettings, TimeSeriesChartNoAggregationBarWidthStrategy,
+  TimeSeriesChartKeySettings,
+  TimeSeriesChartNoAggregationBarWidthStrategy,
   TimeSeriesChartSeriesType,
   TimeSeriesChartSettings,
   TimeSeriesChartShape,
@@ -39,7 +40,7 @@ import {
   TimeSeriesChartYAxis,
   TimeSeriesChartYAxisId,
   TimeSeriesChartYAxisSettings,
-  updateDarkMode, updateYAxisIntervals
+  updateDarkMode
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { ResizeObserver } from '@juggle/resize-observer';
 import {
@@ -611,11 +612,6 @@ export class TbTimeSeriesChart {
       this.timeSeriesChartOptions.yAxis = this.yAxisList.map(axis => axis.option);
       this.timeSeriesChart.setOption(this.timeSeriesChartOptions, {replaceMerge: ['yAxis', 'xAxis', 'grid'], lazyUpdate: true});
     }
-    changed = this.updateYAxesIntervals(this.yAxisList);
-    if (changed) {
-      this.timeSeriesChartOptions.yAxis = this.yAxisList.map(axis => axis.option);
-      this.timeSeriesChart.setOption(this.timeSeriesChartOptions, {replaceMerge: ['yAxis'], lazyUpdate: true});
-    }
     if (this.yAxisList.length) {
       const extent = getAxisExtent(this.timeSeriesChart, this.yAxisList[0].id);
       const min = extent[0];
@@ -680,9 +676,6 @@ export class TbTimeSeriesChart {
         yAxis.option.scale = scaleYAxis;
         changed = true;
       }
-      if (updateYAxisIntervals(this.timeSeriesChart, yAxis, this.yAxisEmpty(yAxis))) {
-        changed = true;
-      }
     }
     return changed;
   }
@@ -691,22 +684,6 @@ export class TbTimeSeriesChart {
     const axisBarDataItems = this.dataItems.filter(d => d.yAxisId === yAxis.id && d.enabled &&
       d.data.length && d.dataKey.settings.type === TimeSeriesChartSeriesType.bar);
     return !axisBarDataItems.length;
-  }
-
-  private yAxisEmpty(yAxis: TimeSeriesChartYAxis): boolean {
-    const axisDataItems = this.dataItems.filter(d => d.yAxisId === yAxis.id && d.enabled &&
-      d.data.length);
-    return !axisDataItems.length;
-  }
-
-  private updateYAxesIntervals(axisList: TimeSeriesChartYAxis[]): boolean {
-    let changed = false;
-    for (const yAxis of axisList) {
-      if (updateYAxisIntervals(this.timeSeriesChart, yAxis, this.yAxisEmpty(yAxis))) {
-        changed = true;
-      }
-    }
-    return changed;
   }
 
   private minTopOffset(): number {

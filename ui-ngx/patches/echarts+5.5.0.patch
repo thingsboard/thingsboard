@@ -207,3 +207,144 @@ index b8a9b95..8e4cb2f 100644
            return;
          }
          var axisValueLabel = axisPointerViewHelper.getValueLabel(axisValue, axisModel.axis, ecModel, axisItem.seriesDataIndices, axisItem.valueLabelOpt);
+diff --git a/node_modules/echarts/lib/coord/axisHelper.js b/node_modules/echarts/lib/coord/axisHelper.js
+index a76c66b..be22cb0 100644
+--- a/node_modules/echarts/lib/coord/axisHelper.js
++++ b/node_modules/echarts/lib/coord/axisHelper.js
+@@ -187,7 +187,9 @@ export function createScaleByModel(model, axisType) {
+         });
+       default:
+         // case 'value'/'interval', 'log', or others.
+-        return new (Scale.getClass(axisType) || IntervalScale)();
++        return new (Scale.getClass(axisType) || IntervalScale)({
++          ticksGenerator: model.get('ticksGenerator')
++        });
+     }
+   }
+ }
+diff --git a/node_modules/echarts/lib/coord/cartesian/Grid.js b/node_modules/echarts/lib/coord/cartesian/Grid.js
+index 5b18f02..4960e67 100644
+--- a/node_modules/echarts/lib/coord/cartesian/Grid.js
++++ b/node_modules/echarts/lib/coord/cartesian/Grid.js
+@@ -91,11 +91,11 @@ var Grid = /** @class */function () {
+         var scale = axis.scale;
+         if (
+         // Only value and log axis without interval support alignTicks.
+-        isIntervalOrLogScale(scale) && model.get('alignTicks') && model.get('interval') == null) {
++        isIntervalOrLogScale(scale) && model.get('alignTicks') && model.get('interval') == null && model.get('ticksGenerator') == null) {
+           axisNeedsAlign.push(axis);
+         } else {
+           niceScaleExtent(scale, model);
+-          if (isIntervalOrLogScale(scale)) {
++          if (isIntervalOrLogScale(scale) && !scale.isBlank()) {
+             // Can only align to interval or log axis.
+             alignTo = axis;
+           }
+@@ -105,10 +105,15 @@ var Grid = /** @class */function () {
+       // All axes has set alignTicks. Pick the first one.
+       // PENDING. Should we find the axis that both set interval, min, max and align to this one?
+       if (axisNeedsAlign.length) {
+-        if (!alignTo) {
+-          alignTo = axisNeedsAlign.pop();
+-          niceScaleExtent(alignTo.scale, alignTo.model);
++        while (!alignTo && axisNeedsAlign.length) {
++          var axis = axisNeedsAlign.pop();
++          niceScaleExtent(axis.scale, axis.model);
++          if (!axis.scale.isBlank()) {
++            alignTo = axis;
++          }
+         }
++      }
++      if (axisNeedsAlign.length && alignTo) {
+         each(axisNeedsAlign, function (axis) {
+           alignScaleTicks(axis.scale, axis.model, alignTo.scale);
+         });
+diff --git a/node_modules/echarts/lib/scale/Interval.js b/node_modules/echarts/lib/scale/Interval.js
+index 1094662..8f4e07a 100644
+--- a/node_modules/echarts/lib/scale/Interval.js
++++ b/node_modules/echarts/lib/scale/Interval.js
+@@ -46,12 +46,17 @@ import * as numberUtil from '../util/number.js';
+ import * as formatUtil from '../util/format.js';
+ import Scale from './Scale.js';
+ import * as helper from './helper.js';
++import { isFunction } from 'zrender/lib/core/util.js';
+ var roundNumber = numberUtil.round;
+ var IntervalScale = /** @class */function (_super) {
+   __extends(IntervalScale, _super);
+-  function IntervalScale() {
+-    var _this = _super !== null && _super.apply(this, arguments) || this;
++  function IntervalScale(setting) {
++    var _this = _super.call(this, setting) || this;
+     _this.type = 'interval';
++    var ticksGenerator = _this.getSetting('ticksGenerator');
++    if (isFunction(ticksGenerator)) {
++      _this._ticksGenerator = ticksGenerator;
++    }
+     // Step is calculated in adjustExtent.
+     _this._interval = 0;
+     _this._intervalPrecision = 2;
+@@ -104,7 +109,17 @@ var IntervalScale = /** @class */function (_super) {
+     var extent = this._extent;
+     var niceTickExtent = this._niceExtent;
+     var intervalPrecision = this._intervalPrecision;
+-    var ticks = [];
++    var ticksGenerator = this._ticksGenerator;
++    var ticks;
++    if (ticksGenerator) {
++      try {
++        ticks = ticksGenerator(extent, interval, niceTickExtent, intervalPrecision);
++        if (ticks) {
++          return ticks;
++        }
++      } catch (_e) {}
++    }
++    ticks = [];
+     // If interval is 0, return [];
+     if (!interval) {
+       return ticks;
+diff --git a/node_modules/echarts/types/dist/shared.d.ts b/node_modules/echarts/types/dist/shared.d.ts
+index ca74097..98f8b18 100644
+--- a/node_modules/echarts/types/dist/shared.d.ts
++++ b/node_modules/echarts/types/dist/shared.d.ts
+@@ -2422,6 +2422,9 @@ interface AxisBaseOptionCommon extends ComponentOption, AnimationOptionMixin {
+         max: number;
+     }) => ScaleDataValue);
+ }
++
++declare type NumericAxisTicksGenerator = (extent?: number[], interval?: number, niceTickExtent?: number[], intervalPrecision?: number) => {value: number}[];
++
+ interface NumericAxisBaseOptionCommon extends AxisBaseOptionCommon {
+     boundaryGap?: [number | string, number | string];
+     /**
+@@ -2447,6 +2450,8 @@ interface NumericAxisBaseOptionCommon extends AxisBaseOptionCommon {
+      * Will be ignored if interval is set.
+      */
+     alignTicks?: boolean;
++
++    ticksGenerator?: NumericAxisTicksGenerator;
+ }
+ interface CategoryAxisBaseOption extends AxisBaseOptionCommon {
+     type?: 'category';
+diff --git a/node_modules/echarts/types/src/coord/axisCommonTypes.d.ts b/node_modules/echarts/types/src/coord/axisCommonTypes.d.ts
+index c5c2792..d524b70 100644
+--- a/node_modules/echarts/types/src/coord/axisCommonTypes.d.ts
++++ b/node_modules/echarts/types/src/coord/axisCommonTypes.d.ts
+@@ -56,6 +56,9 @@ export interface AxisBaseOptionCommon extends ComponentOption, AnimationOptionMi
+         max: number;
+     }) => ScaleDataValue);
+ }
++
++export declare type NumericAxisTicksGenerator = (extent?: number[], interval?: number, niceTickExtent?: number[], intervalPrecision?: number) => {value: number}[];
++
+ export interface NumericAxisBaseOptionCommon extends AxisBaseOptionCommon {
+     boundaryGap?: [number | string, number | string];
+     /**
+@@ -81,6 +84,8 @@ export interface NumericAxisBaseOptionCommon extends AxisBaseOptionCommon {
+      * Will be ignored if interval is set.
+      */
+     alignTicks?: boolean;
++    
++    ticksGenerator?: NumericAxisTicksGenerator;
+ }
+ export interface CategoryAxisBaseOption extends AxisBaseOptionCommon {
+     type?: 'category';

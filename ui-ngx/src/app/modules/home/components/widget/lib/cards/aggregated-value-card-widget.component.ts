@@ -44,7 +44,6 @@ import {
   getDataKey,
   getLatestSingleTsValue,
   overlayStyle,
-  simpleDateFormat,
   textStyle
 } from '@shared/models/widget-settings.models';
 import { DataKey } from '@shared/models/widget.models';
@@ -55,10 +54,9 @@ import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
 import { TbTimeSeriesChart } from '@home/components/widget/lib/chart/time-series-chart';
 import {
-  TimeSeriesChartAxisSettings,
   TimeSeriesChartKeySettings,
   TimeSeriesChartSeriesType,
-  TimeSeriesChartSettings, TimeSeriesChartYAxisSettings
+  TimeSeriesChartSettings
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { DeepPartial } from '@shared/models/common';
 
@@ -189,8 +187,7 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
               showSplitLines: true,
               min: 'dataMin',
               max: 'dataMax',
-              intervalCalculator:
-                'var scale = axis.scale; return !scale.isBlank() ? ((scale.getExtent()[1] - scale.getExtent()[0]) / 2) : undefined;'
+              ticksGenerator: (extent?: number[]) => (extent ? [{ value: (extent[0] + extent[1]) / 2}] : [])
             }
           },
           tooltipDateInterval: false,
