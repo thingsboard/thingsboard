@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,12 +92,14 @@ public class TbLogNode implements TbNode {
     boolean isStandard(TbLogNodeConfiguration conf) {
         Objects.requireNonNull(conf, "node config is null");
         final TbLogNodeConfiguration defaultConfig = new TbLogNodeConfiguration().defaultConfiguration();
-        switch (conf.getScriptLang()) {
-            case JS: return defaultConfig.getJsScript().equals(conf.getJsScript());
-            case TBEL: return defaultConfig.getTbelScript().equals(conf.getTbelScript());
-            default:
-                log.warn("No rule to define isStandard script for script language [{}], assuming that is non-standard", conf.getScriptLang());
-                return false;
+
+        if (conf.getScriptLang() == null || conf.getScriptLang().equals(ScriptLanguage.JS)) {
+            return defaultConfig.getJsScript().equals(conf.getJsScript());
+        } else if (conf.getScriptLang().equals(ScriptLanguage.TBEL)) {
+            return defaultConfig.getTbelScript().equals(conf.getTbelScript());
+        } else {
+            log.warn("No rule to define isStandard script for script language [{}], assuming that is non-standard", conf.getScriptLang());
+            return false;
         }
     }
 

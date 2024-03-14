@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,11 +89,14 @@ public abstract class AbstractPartitionBasedService<T extends EntityId> extends 
      */
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
-        if (getServiceType().equals(partitionChangeEvent.getServiceType())) {
-            log.debug("onTbApplicationEvent, processing event: {}", partitionChangeEvent);
-            subscribeQueue.add(partitionChangeEvent.getPartitions());
-            scheduledExecutor.submit(this::pollInitStateFromDB);
-        }
+        log.debug("onTbApplicationEvent, processing event: {}", partitionChangeEvent);
+        subscribeQueue.add(partitionChangeEvent.getPartitions());
+        scheduledExecutor.submit(this::pollInitStateFromDB);
+    }
+
+    @Override
+    protected boolean filterTbApplicationEvent(PartitionChangeEvent event) {
+        return getServiceType().equals(event.getServiceType());
     }
 
     protected void pollInitStateFromDB() {

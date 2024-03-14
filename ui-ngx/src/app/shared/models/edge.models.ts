@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -22,8 +22,9 @@ import { EntitySearchQuery } from '@shared/models/relation.models';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { BaseEventBody } from '@shared/models/event.models';
 import { EventId } from '@shared/models/id/event-id';
+import { HasTenantId } from '@shared/models/entity.models';
 
-export interface Edge extends BaseData<EdgeId> {
+export interface Edge extends BaseData<EdgeId>, HasTenantId {
   tenantId?: TenantId;
   customerId?: CustomerId;
   name: string;
@@ -59,9 +60,12 @@ export enum EdgeEventType {
   CUSTOMER = 'CUSTOMER',
   RELATION = 'RELATION',
   TENANT = 'TENANT',
+  TENANT_PROFILE = 'TENANT_PROFILE',
   WIDGETS_BUNDLE = 'WIDGETS_BUNDLE',
   WIDGET_TYPE = 'WIDGET_TYPE',
-  ADMIN_SETTINGS = 'ADMIN_SETTINGS'
+  ADMIN_SETTINGS = 'ADMIN_SETTINGS',
+  OTA_PACKAGE = 'OTA_PACKAGE',
+  QUEUE = 'QUEUE'
 }
 
 export enum EdgeEventActionType {
@@ -80,6 +84,8 @@ export enum EdgeEventActionType {
   RPC_CALL = 'RPC_CALL',
   ALARM_ACK = 'ALARM_ACK',
   ALARM_CLEAR = 'ALARM_CLEAR',
+  ALARM_ASSIGNED = 'ALARM_ASSIGNED',
+  ALARM_UNASSIGNED = 'ALARM_UNASSIGNED',
   ASSIGNED_TO_EDGE = 'ASSIGNED_TO_EDGE',
   UNASSIGNED_FROM_EDGE = 'UNASSIGNED_FROM_EDGE',
   CREDENTIALS_REQUEST = 'CREDENTIALS_REQUEST',
@@ -107,9 +113,12 @@ export const edgeEventTypeTranslations = new Map<EdgeEventType, string>(
     [EdgeEventType.CUSTOMER, 'edge-event.type-customer'],
     [EdgeEventType.RELATION, 'edge-event.type-relation'],
     [EdgeEventType.TENANT, 'edge-event.type-tenant'],
+    [EdgeEventType.TENANT_PROFILE, 'edge-event.type-tenant-profile'],
     [EdgeEventType.WIDGETS_BUNDLE, 'edge-event.type-widgets-bundle'],
     [EdgeEventType.WIDGET_TYPE, 'edge-event.type-widgets-type'],
-    [EdgeEventType.ADMIN_SETTINGS, 'edge-event.type-admin-settings']
+    [EdgeEventType.ADMIN_SETTINGS, 'edge-event.type-admin-settings'],
+    [EdgeEventType.OTA_PACKAGE, 'edge-event.type-ota-package'],
+    [EdgeEventType.QUEUE, 'edge-event.type-queue']
   ]
 );
 
@@ -130,6 +139,8 @@ export const edgeEventActionTypeTranslations = new Map<EdgeEventActionType, stri
     [EdgeEventActionType.RPC_CALL, 'edge-event.action-type-rpc-call'],
     [EdgeEventActionType.ALARM_ACK, 'edge-event.action-type-alarm-ack'],
     [EdgeEventActionType.ALARM_CLEAR, 'edge-event.action-type-alarm-clear'],
+    [EdgeEventActionType.ALARM_ASSIGNED, 'edge-event.action-type-alarm-assigned'],
+    [EdgeEventActionType.ALARM_UNASSIGNED, 'edge-event.action-type-alarm-unassigned'],
     [EdgeEventActionType.ASSIGNED_TO_EDGE, 'edge-event.action-type-assigned-to-edge'],
     [EdgeEventActionType.UNASSIGNED_FROM_EDGE, 'edge-event.action-type-unassigned-from-edge'],
     [EdgeEventActionType.CREDENTIALS_REQUEST, 'edge-event.action-type-credentials-request'],
@@ -168,6 +179,26 @@ export interface EdgeEvent extends BaseData<EventId> {
   body: string;
 }
 
-export interface EdgeInstallInstructions {
-  dockerInstallInstructions: string;
+export interface EdgeInstructions {
+  instructions: string;
 }
+
+export enum EdgeInstructionsMethod {
+  ubuntu,
+  centos,
+  docker
+}
+
+export const edgeVersionAttributeKey = 'edgeVersion';
+
+export enum EdgeConnectionEvent {
+  CONNECTED= 'CONNECTED',
+  DISCONNECTED = 'DISCONNECTED'
+}
+
+export const EdgeConnectionEventTranslationMap = new Map<EdgeConnectionEvent, string>(
+  [
+    [EdgeConnectionEvent.CONNECTED, 'edge.connected'],
+    [EdgeConnectionEvent.DISCONNECTED, 'edge.disconnected']
+  ]
+);

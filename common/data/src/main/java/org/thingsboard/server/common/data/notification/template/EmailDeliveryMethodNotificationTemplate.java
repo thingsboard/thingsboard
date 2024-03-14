@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,12 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.validation.Length;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 import javax.validation.constraints.NotEmpty;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -30,8 +32,15 @@ import javax.validation.constraints.NotEmpty;
 @ToString(callSuper = true)
 public class EmailDeliveryMethodNotificationTemplate extends DeliveryMethodNotificationTemplate implements HasSubject {
 
+    @NoXss(fieldName = "email subject")
+    @Length(fieldName = "email subject", max = 250, message = "cannot be longer than 250 chars")
     @NotEmpty
     private String subject;
+
+    private final List<TemplatableValue> templatableValues = List.of(
+            TemplatableValue.of(this::getBody, this::setBody),
+            TemplatableValue.of(this::getSubject, this::setSubject)
+    );
 
     public EmailDeliveryMethodNotificationTemplate(EmailDeliveryMethodNotificationTemplate other) {
         super(other);
@@ -46,11 +55,6 @@ public class EmailDeliveryMethodNotificationTemplate extends DeliveryMethodNotif
     @Override
     public EmailDeliveryMethodNotificationTemplate copy() {
         return new EmailDeliveryMethodNotificationTemplate(this);
-    }
-
-    @Override
-    public boolean containsAny(String... params) {
-        return super.containsAny(params) || StringUtils.containsAny(subject, params);
     }
 
 }

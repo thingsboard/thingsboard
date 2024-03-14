@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,23 +14,26 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
+import { Component, Inject, OnInit, SkipSelf, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormGroupDirective, NgForm } from '@angular/forms';
+import { FormGroupDirective, NgForm, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
-import { Widget, widgetTypesData } from '@shared/models/widget.models';
+import { Widget, WidgetConfigMode, widgetTypesData } from '@shared/models/widget.models';
 import { Dashboard } from '@app/shared/models/dashboard.models';
-import { IAliasController } from '@core/api/widget-api.models';
+import { IAliasController, IStateController } from '@core/api/widget-api.models';
 import { WidgetConfigComponentData, WidgetInfo } from '@home/models/widget-component.models';
-import { isDefined, isString } from '@core/utils';
+import { isDefined, isDefinedAndNotNull, isString } from '@core/utils';
+import { TranslateService } from '@ngx-translate/core';
+import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 
 export interface AddWidgetDialogData {
   dashboard: Dashboard;
   aliasController: IAliasController;
+  stateController: IStateController;
   widget: Widget;
   widgetInfo: WidgetInfo;
 }
@@ -38,22 +41,45 @@ export interface AddWidgetDialogData {
 @Component({
   selector: 'tb-add-widget-dialog',
   templateUrl: './add-widget-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: AddWidgetDialogComponent}],
-  styleUrls: []
+  providers: [/*{provide: ErrorStateMatcher, useExisting: AddWidgetDialogComponent}*/],
+  styleUrls: ['./add-widget-dialog.component.scss'],
+  encapsulation: ViewEncapsulation.None
 })
 export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogComponent, Widget>
   implements OnInit, ErrorStateMatcher {
+
+  @ViewChild('widgetConfigComponent')
+  widgetConfigComponent: WidgetConfigComponent;
 
   widgetFormGroup: UntypedFormGroup;
 
   dashboard: Dashboard;
   aliasController: IAliasController;
+  stateController: IStateController;
   widget: Widget;
+
+  widgetConfig: WidgetConfigComponentData;
+
+  previewMode = false;
+
+  hideHeader = false;
+
+  private readonly initialWidgetConfigMode: WidgetConfigMode;
+
+  get widgetConfigMode(): WidgetConfigMode {
+    return this.widgetConfigComponent?.widgetConfigMode || this.initialWidgetConfigMode;
+  }
+
+  set widgetConfigMode(widgetConfigMode: WidgetConfigMode) {
+    this.widgetConfigComponent.setWidgetConfigMode(widgetConfigMode);
+    this.hideHeader = this.widgetConfigComponent?.widgetConfigMode === WidgetConfigMode.basic;
+  }
 
   submitted = false;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
+              public translate: TranslateService,
               @Inject(MAT_DIALOG_DATA) public data: AddWidgetDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<AddWidgetDialogComponent, Widget>,
@@ -62,6 +88,7 @@ export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogCom
 
     this.dashboard = this.data.dashboard;
     this.aliasController = this.data.aliasController;
+    this.stateController = this.data.stateController;
     this.widget = this.data.widget;
 
     const widgetInfo = this.data.widgetInfo;
@@ -91,7 +118,8 @@ export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogCom
       latestDataKeySettingsSchema = isString(rawLatestDataKeySettingsSchema) ?
         JSON.parse(rawLatestDataKeySettingsSchema) : rawLatestDataKeySettingsSchema;
     }
-    const widgetConfig: WidgetConfigComponentData = {
+    this.widgetConfig = {
+      widgetName: widgetInfo.widgetName,
       config: this.widget.config,
       layout: {},
       widgetType: this.widget.type,
@@ -103,16 +131,24 @@ export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogCom
       latestDataKeySettingsSchema,
       settingsDirective: widgetInfo.settingsDirective,
       dataKeySettingsDirective: widgetInfo.dataKeySettingsDirective,
-      latestDataKeySettingsDirective: widgetInfo.latestDataKeySettingsDirective
+      latestDataKeySettingsDirective: widgetInfo.latestDataKeySettingsDirective,
+      hasBasicMode: isDefinedAndNotNull(widgetInfo.hasBasicMode) ? widgetInfo.hasBasicMode : false,
+      basicModeDirective: widgetInfo.basicModeDirective
     };
+    if (this.widgetConfig.hasBasicMode && this.widgetConfig.config?.configMode === WidgetConfigMode.basic) {
+      this.hideHeader = true;
+      this.initialWidgetConfigMode = WidgetConfigMode.basic;
+    } else {
+      this.initialWidgetConfigMode = WidgetConfigMode.advanced;
+    }
 
     this.widgetFormGroup = this.fb.group({
-        widgetConfig: [widgetConfig, []]
+        widgetConfig: [this.widgetConfig, []]
       }
     );
   }
 
-  ngOnInit(): void {
+  ngOnInit() {
   }
 
   isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {

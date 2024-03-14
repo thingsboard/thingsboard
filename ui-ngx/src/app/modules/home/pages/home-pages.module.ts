@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ import { AlarmModule } from '@home/pages/alarm/alarm.module';
 import { EntitiesModule } from '@home/pages/entities/entities.module';
 import { FeaturesModule } from '@home/pages/features/features.module';
 import { NotificationModule } from '@home/pages/notification/notification.module';
+import { AccountModule } from '@home/pages/account/account.module';
 
 @NgModule({
   exports: [
@@ -70,7 +71,8 @@ import { NotificationModule } from '@home/pages/notification/notification.module
     ApiUsageModule,
     OtaUpdateModule,
     UserModule,
-    VcModule
+    VcModule,
+    AccountModule
   ]
 })
 export class HomePagesModule { }

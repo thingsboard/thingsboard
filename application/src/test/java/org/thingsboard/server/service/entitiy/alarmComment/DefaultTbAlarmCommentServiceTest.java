@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,8 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentType;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.dao.alarm.AlarmCommentService;
@@ -46,7 +46,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -83,7 +82,7 @@ public class DefaultTbAlarmCommentServiceTest {
         when(alarmCommentService.createOrUpdateAlarmComment(Mockito.any(), eq(alarmComment))).thenReturn(alarmComment);
         service.saveAlarmComment(alarm, alarmComment, new User());
 
-        verify(notificationEntityService, times(1)).notifyAlarmComment(any(), any(), any(), any());
+        verify(notificationEntityService, times(1)).logEntityAction(any(), any(), any(), any(), eq(ActionType.ADDED_COMMENT), any(), any());
     }
 
     @Test
@@ -97,7 +96,7 @@ public class DefaultTbAlarmCommentServiceTest {
         when(alarmCommentService.saveAlarmComment(Mockito.any(), eq(alarmComment))).thenReturn(alarmComment);
         service.deleteAlarmComment(new Alarm(alarmId), alarmComment, new User());
 
-        verify(notificationEntityService, times(1)).notifyAlarmComment(any(), any(), any(), any());
+        verify(notificationEntityService, times(1)).logEntityAction(any(), any(), any(), any(), eq(ActionType.DELETED_COMMENT), any(), any());
     }
 
     @Test

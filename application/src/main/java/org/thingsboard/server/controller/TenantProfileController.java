@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -40,7 +39,6 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.tenant.profile.TbTenantProfileService;
-import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
@@ -135,6 +133,7 @@ public class TenantProfileController extends BaseController {
                     "      \"maxRuleChains\": 0,\n" +
                     "      \"maxResourcesInBytes\": 0,\n" +
                     "      \"maxOtaPackagesInBytes\": 0,\n" +
+                    "      \"maxResourceSize\": 0,\n" +
                     "      \"transportTenantMsgRateLimit\": \"1000:1,20000:60\",\n" +
                     "      \"transportTenantTelemetryMsgRateLimit\": \"1000:1,20000:60\",\n" +
                     "      \"transportTenantTelemetryDataPointsRateLimit\": \"1000:1,20000:60\",\n" +
@@ -153,6 +152,8 @@ public class TenantProfileController extends BaseController {
                     "      \"defaultStorageTtlDays\": 0,\n" +
                     "      \"alarmsTtlDays\": 0,\n" +
                     "      \"rpcTtlDays\": 0,\n" +
+                    "      \"queueStatsTtlDays\": 0,\n" +
+                    "      \"ruleEngineExceptionsTtlDays\": 0,\n" +
                     "      \"warnThreshold\": 0\n" +
                     "    }\n" +
                     "  },\n" +

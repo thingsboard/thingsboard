@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,38 +15,33 @@
  */
 package org.thingsboard.server.service.notification.rule.trigger;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.notification.info.NewPlatformVersionNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
-import org.thingsboard.server.common.data.notification.rule.trigger.NewPlatformVersionNotificationRuleTriggerConfig;
-import org.thingsboard.server.common.msg.notification.trigger.NewPlatformVersionTrigger;
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
-import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.NewPlatformVersionNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
+import org.thingsboard.server.common.data.notification.rule.trigger.NewPlatformVersionTrigger;
 
 @Service
 @RequiredArgsConstructor
 public class NewPlatformVersionTriggerProcessor implements NotificationRuleTriggerProcessor<NewPlatformVersionTrigger, NewPlatformVersionNotificationRuleTriggerConfig> {
 
-    private final PartitionService partitionService;
-
     @Override
     public boolean matchesFilter(NewPlatformVersionTrigger trigger, NewPlatformVersionNotificationRuleTriggerConfig triggerConfig) {
-         // todo: don't send repetitive notification after platform restart?
-        if (!partitionService.resolve(ServiceType.TB_CORE, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID).isMyPartition()) {
-            return false;
-        }
-        return trigger.getMessage().isUpdateAvailable();
+        return trigger.getUpdateInfo().isUpdateAvailable();
     }
 
     @Override
     public RuleOriginatedNotificationInfo constructNotificationInfo(NewPlatformVersionTrigger trigger) {
+        UpdateMessage updateInfo = trigger.getUpdateInfo();
         return NewPlatformVersionNotificationInfo.builder()
-                .message(JacksonUtil.convertValue(trigger.getMessage(), new TypeReference<>() {}))
+                .latestVersion(updateInfo.getLatestVersion())
+                .latestVersionReleaseNotesUrl(updateInfo.getLatestVersionReleaseNotesUrl())
+                .upgradeInstructionsUrl(updateInfo.getUpgradeInstructionsUrl())
+                .currentVersion(updateInfo.getCurrentVersion())
+                .currentVersionReleaseNotesUrl(updateInfo.getCurrentVersionReleaseNotesUrl())
                 .build();
     }
 

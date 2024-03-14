@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.thingsboard.server.common.data.id.IdBased;
@@ -30,8 +29,6 @@ import org.thingsboard.server.common.data.notification.template.NotificationTemp
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.notification.NotificationRuleService;
-import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.List;
@@ -43,16 +40,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DaoSqlTest
 public class NotificationTemplateApiTest extends AbstractNotificationApiTest {
 
-    @Autowired
-    private NotificationTemplateService templateService;
-    @Autowired
-    private NotificationRuleService notificationRuleService;
-
     @Before
     public void beforeEach() throws Exception {
         loginTenantAdmin();
-        notificationRuleService.deleteNotificationRulesByTenantId(tenantId);
-        templateService.deleteNotificationTemplatesByTenantId(tenantId);
     }
 
     @Test

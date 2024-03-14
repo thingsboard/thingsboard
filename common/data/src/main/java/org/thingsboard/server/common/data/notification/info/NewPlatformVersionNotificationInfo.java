@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.UpdateMessage;
 
 import java.util.Map;
 
@@ -31,11 +30,22 @@ import static org.thingsboard.server.common.data.util.CollectionsUtil.mapOf;
 @Builder
 public class NewPlatformVersionNotificationInfo implements RuleOriginatedNotificationInfo {
 
-    private Map<String, String> message;
+    private String latestVersion;
+    private String latestVersionReleaseNotesUrl;
+    private String upgradeInstructionsUrl;
+
+    private String currentVersion;
+    private String currentVersionReleaseNotesUrl;
 
     @Override
     public Map<String, String> getTemplateData() {
-        return message;
+        return mapOf(
+                "latestVersion", latestVersion,
+                "latestVersionReleaseNotesUrl", latestVersionReleaseNotesUrl,
+                "upgradeInstructionsUrl", upgradeInstructionsUrl,
+                "currentVersion", currentVersion,
+                "currentVersionReleaseNotesUrl", currentVersionReleaseNotesUrl
+        );
     }
 
 }

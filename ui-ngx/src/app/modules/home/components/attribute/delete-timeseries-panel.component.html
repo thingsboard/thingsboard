@@ -1,0 +1,67 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-toolbar>
+  <h2>{{ "attribute.delete-timeseries.delete-strategy" | translate }}</h2>
+  <span fxFlex></span>
+  <button mat-icon-button
+          type="button"
+          (click)="cancel()">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+<form [formGroup]="deleteTimeseriesFormGroup" class="mat-content mat-padding tb-form-settings">
+  <mat-form-field class="mat-block" subscriptSizing="dynamic">
+    <mat-label translate>attribute.delete-timeseries.strategy</mat-label>
+    <mat-select formControlName="strategy">
+      <mat-option *ngFor="let strategy of strategiesTranslationsMap.keys()" [value]="strategy">
+        {{ strategiesTranslationsMap.get(strategy) | translate }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+  <div *ngIf="isPeriodStrategy()" class="tb-select-interval">
+    <mat-form-field class="mat-block" subscriptSizing="dynamic">
+      <mat-label translate>attribute.delete-timeseries.start-time</mat-label>
+      <mat-datetimepicker-toggle [for]="startDateTimePicker" matPrefix></mat-datetimepicker-toggle>
+      <mat-datetimepicker #startDateTimePicker type="datetime" openOnFocus="true"></mat-datetimepicker>
+      <input required matInput formControlName="startDateTime" [matDatetimepicker]="startDateTimePicker">
+    </mat-form-field>
+    <mat-form-field class="mat-block" subscriptSizing="dynamic">
+      <mat-label translate>attribute.delete-timeseries.ends-on</mat-label>
+      <mat-datetimepicker-toggle [for]="endDatePicker" matPrefix></mat-datetimepicker-toggle>
+      <mat-datetimepicker #endDatePicker type="datetime" openOnFocus="true"></mat-datetimepicker>
+      <input required matInput formControlName="endDateTime" [matDatetimepicker]="endDatePicker">
+    </mat-form-field>
+  </div>
+  <mat-slide-toggle class="tb-slide-toggle" formControlName="rewriteLatest" *ngIf="isPeriodStrategy() || isDeleteLatestStrategy()">
+    {{ "attribute.delete-timeseries.rewrite-latest-value" | translate }}
+  </mat-slide-toggle>
+</form>
+<div fxLayout="row" class="tb-panel-actions">
+  <span fxFlex></span>
+  <button mat-button color="primary"
+          type="button"
+          (click)="cancel()" cdkFocusInitial>
+    {{ 'action.cancel' | translate }}
+  </button>
+  <button mat-button mat-raised-button color="primary"
+          type="button"
+          (click)="delete()"
+          [disabled]="deleteTimeseriesFormGroup.invalid">
+    {{ 'action.apply' | translate }}
+  </button>
+</div>

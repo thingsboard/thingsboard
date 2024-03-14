@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.math.TbMathArgument;
-import org.thingsboard.rule.engine.math.TbMathArgumentType;
-import org.thingsboard.rule.engine.math.TbMathArgumentValue;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.util.Optional;
@@ -34,7 +31,7 @@ public class TbMathArgumentValueTest {
     public void test_fromMessageBody_then_defaultValue() {
         TbMathArgument tbMathArgument = new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "TestKey");
         tbMathArgument.setDefaultValue(5.0);
-        TbMathArgumentValue result = TbMathArgumentValue.fromMessageBody(tbMathArgument, Optional.ofNullable(JacksonUtil.newObjectNode()));
+        TbMathArgumentValue result = TbMathArgumentValue.fromMessageBody(tbMathArgument, tbMathArgument.getKey(), Optional.ofNullable(JacksonUtil.newObjectNode()));
         Assert.assertEquals(5.0, result.getValue(), 0d);
     }
 
@@ -42,7 +39,7 @@ public class TbMathArgumentValueTest {
     public void test_fromMessageBody_then_emptyBody() {
         TbMathArgument tbMathArgument = new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "TestKey");
         Throwable thrown = assertThrows(RuntimeException.class, () -> {
-            TbMathArgumentValue result = TbMathArgumentValue.fromMessageBody(tbMathArgument, Optional.empty());
+            TbMathArgumentValue result = TbMathArgumentValue.fromMessageBody(tbMathArgument, tbMathArgument.getKey(), Optional.empty());
         });
         Assert.assertNotNull(thrown.getMessage());
     }
@@ -50,7 +47,7 @@ public class TbMathArgumentValueTest {
     @Test
     public void test_fromMessageBody_then_noKey() {
         TbMathArgument tbMathArgument = new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "TestKey");
-        Throwable thrown = assertThrows(RuntimeException.class, () -> TbMathArgumentValue.fromMessageBody(tbMathArgument, Optional.ofNullable(JacksonUtil.newObjectNode())));
+        Throwable thrown = assertThrows(RuntimeException.class, () -> TbMathArgumentValue.fromMessageBody(tbMathArgument, tbMathArgument.getKey(), Optional.ofNullable(JacksonUtil.newObjectNode())));
         Assert.assertNotNull(thrown.getMessage());
     }
 
@@ -61,12 +58,12 @@ public class TbMathArgumentValueTest {
         msgData.putNull("TestKey");
 
         //null value
-        Throwable thrown = assertThrows(RuntimeException.class, () -> TbMathArgumentValue.fromMessageBody(tbMathArgument, Optional.of(msgData)));
+        Throwable thrown = assertThrows(RuntimeException.class, () -> TbMathArgumentValue.fromMessageBody(tbMathArgument, tbMathArgument.getKey(), Optional.of(msgData)));
         Assert.assertNotNull(thrown.getMessage());
 
         //empty value
         msgData.put("TestKey", "");
-        thrown = assertThrows(RuntimeException.class, () -> TbMathArgumentValue.fromMessageBody(tbMathArgument, Optional.of(msgData)));
+        thrown = assertThrows(RuntimeException.class, () -> TbMathArgumentValue.fromMessageBody(tbMathArgument, tbMathArgument.getKey(), Optional.of(msgData)));
         Assert.assertNotNull(thrown.getMessage());
     }
 
@@ -77,26 +74,26 @@ public class TbMathArgumentValueTest {
         msgData.put("TestKey", "Test");
 
         //string value
-        Throwable thrown = assertThrows(RuntimeException.class, () -> TbMathArgumentValue.fromMessageBody(tbMathArgument, Optional.of(msgData)));
+        Throwable thrown = assertThrows(RuntimeException.class, () -> TbMathArgumentValue.fromMessageBody(tbMathArgument, tbMathArgument.getKey(), Optional.of(msgData)));
         Assert.assertNotNull(thrown.getMessage());
 
         //object value
         msgData.set("TestKey", JacksonUtil.newObjectNode());
-        thrown = assertThrows(RuntimeException.class, () -> TbMathArgumentValue.fromMessageBody(tbMathArgument, Optional.of(msgData)));
+        thrown = assertThrows(RuntimeException.class, () -> TbMathArgumentValue.fromMessageBody(tbMathArgument, tbMathArgument.getKey(), Optional.of(msgData)));
         Assert.assertNotNull(thrown.getMessage());
     }
 
     @Test
     public void test_fromMessageMetadata_then_noKey() {
         TbMathArgument tbMathArgument = new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "TestKey");
-        Throwable thrown = assertThrows(RuntimeException.class, () -> TbMathArgumentValue.fromMessageMetadata(tbMathArgument, new TbMsgMetaData()));
+        Throwable thrown = assertThrows(RuntimeException.class, () -> TbMathArgumentValue.fromMessageMetadata(tbMathArgument, tbMathArgument.getKey(), new TbMsgMetaData()));
         Assert.assertNotNull(thrown.getMessage());
     }
 
     @Test
     public void test_fromMessageMetadata_then_valueEmpty() {
         TbMathArgument tbMathArgument = new TbMathArgument(TbMathArgumentType.MESSAGE_BODY, "TestKey");
-        Throwable thrown = assertThrows(RuntimeException.class, () -> TbMathArgumentValue.fromMessageMetadata(tbMathArgument, null));
+        Throwable thrown = assertThrows(RuntimeException.class, () -> TbMathArgumentValue.fromMessageMetadata(tbMathArgument, tbMathArgument.getKey(), null));
         Assert.assertNotNull(thrown.getMessage());
     }
 

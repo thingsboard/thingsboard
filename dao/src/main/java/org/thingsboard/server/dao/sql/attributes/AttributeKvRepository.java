@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,5 +59,11 @@ public interface AttributeKvRepository extends JpaRepository<AttributeKvEntity, 
     @Query(value = "SELECT DISTINCT attribute_key FROM attribute_kv WHERE entity_type = :entityType " +
             "AND entity_id in :entityIds ORDER BY attribute_key", nativeQuery = true)
     List<String> findAllKeysByEntityIds(@Param("entityType") String entityType, @Param("entityIds") List<UUID> entityIds);
+
+    @Query(value = "SELECT DISTINCT attribute_key FROM attribute_kv WHERE entity_type = :entityType " +
+            "AND entity_id in :entityIds AND attribute_type = :attributeType ORDER BY attribute_key", nativeQuery = true)
+    List<String> findAllKeysByEntityIdsAndAttributeType(@Param("entityType") String entityType,
+                                                        @Param("entityIds") List<UUID> entityIds,
+                                                        @Param("attributeType") String attributeType);
 }
 

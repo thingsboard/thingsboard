@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -66,6 +66,9 @@ import {
   ApiUsageStateValue,
   ApiUsageStateValueTranslationMap
 } from '@shared/models/api-usage.models';
+import { LimitedApi, LimitedApiTranslationMap } from '@shared/models/limited-api.models';
+import { StringItemsOption } from '@shared/components/string-items-list.component';
+import { EdgeConnectionEvent, EdgeConnectionEventTranslationMap } from '@shared/models/edge.models';
 
 export interface RuleNotificationDialogData {
   rule?: NotificationRule;
@@ -94,6 +97,10 @@ export class RuleNotificationDialogComponent extends
   ruleEngineEventsTemplateForm: FormGroup;
   entitiesLimitTemplateForm: FormGroup;
   apiUsageLimitTemplateForm: FormGroup;
+  newPlatformVersionTemplateForm: FormGroup;
+  rateLimitsTemplateForm: FormGroup;
+  edgeCommunicationFailureTemplateForm: FormGroup;
+  edgeConnectionTemplateForm: FormGroup;
 
   triggerType = TriggerType;
   triggerTypes: TriggerType[];
@@ -127,6 +134,11 @@ export class RuleNotificationDialogComponent extends
 
   apiFeatures: ApiFeature[] = Object.values(ApiFeature);
   apiFeatureTranslationMap = ApiFeatureTranslationMap;
+
+  edgeConnectionEvents: EdgeConnectionEvent[] = Object.values(EdgeConnectionEvent);
+  edgeConnectionEventTranslationMap = EdgeConnectionEventTranslationMap;
+
+  limitedApis: StringItemsOption[];
 
   entityType = EntityType;
   isAdd = true;
@@ -170,11 +182,17 @@ export class RuleNotificationDialogComponent extends
       this.isAdd = data.isAdd;
     }
 
+    this.limitedApis = Object.values(LimitedApi).map(value => ({
+      name: this.translate.instant(LimitedApiTranslationMap.get(value)),
+      value
+    }));
+
     this.stepperOrientation = this.breakpointObserver.observe(MediaBreakpoints['gt-xs'])
       .pipe(map(({matches}) => matches ? 'horizontal' : 'vertical'));
 
     this.ruleNotificationForm = this.fb.group({
       name: [null, Validators.required],
+      enabled: [true, Validators.required],
       templateId: [null, Validators.required],
       triggerType: [this.isSysAdmin() ? TriggerType.ENTITIES_LIMIT : TriggerType.ALARM, Validators.required],
       recipientsConfig: this.fb.group({
@@ -207,6 +225,19 @@ export class RuleNotificationDialogComponent extends
       } else {
         this.alarmTemplateForm.get('triggerConfig.clearRule').disable({emitEvent: false});
       }
+    });
+
+    this.edgeConnectionTemplateForm = this.fb.group({
+      triggerConfig: this.fb.group({
+        edges: [null],
+        notifyOn: [null]
+      })
+    });
+
+    this.edgeCommunicationFailureTemplateForm = this.fb.group({
+      triggerConfig: this.fb.group({
+        edges: [null]
+      })
     });
 
     this.alarmTemplateForm = this.fb.group({
@@ -294,6 +325,18 @@ export class RuleNotificationDialogComponent extends
       })
     });
 
+    this.newPlatformVersionTemplateForm = this.fb.group({
+      triggerConfig: this.fb.group({
+
+      })
+    });
+
+    this.rateLimitsTemplateForm = this.fb.group({
+      triggerConfig: this.fb.group({
+        apis: []
+      })
+    });
+
     this.triggerTypeFormsMap = new Map<TriggerType, FormGroup>([
       [TriggerType.ALARM, this.alarmTemplateForm],
       [TriggerType.ALARM_COMMENT, this.alarmCommentTemplateForm],
@@ -302,7 +345,11 @@ export class RuleNotificationDialogComponent extends
       [TriggerType.ALARM_ASSIGNMENT, this.alarmAssignmentTemplateForm],
       [TriggerType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT, this.ruleEngineEventsTemplateForm],
       [TriggerType.ENTITIES_LIMIT, this.entitiesLimitTemplateForm],
-      [TriggerType.API_USAGE_LIMIT, this.apiUsageLimitTemplateForm]
+      [TriggerType.API_USAGE_LIMIT, this.apiUsageLimitTemplateForm],
+      [TriggerType.NEW_PLATFORM_VERSION, this.newPlatformVersionTemplateForm],
+      [TriggerType.RATE_LIMITS, this.rateLimitsTemplateForm],
+      [TriggerType.EDGE_COMMUNICATION_FAILURE, this.edgeCommunicationFailureTemplateForm],
+      [TriggerType.EDGE_CONNECTION, this.edgeConnectionTemplateForm]
     ]);
 
     if (data.isAdd || data.isCopy) {
@@ -336,6 +383,9 @@ export class RuleNotificationDialogComponent extends
 
   changeStep($event: StepperSelectionEvent) {
     this.selectedIndex = $event.selectedIndex;
+    if ($event.previouslySelectedIndex > $event.selectedIndex) {
+      $event.previouslySelectedStep.interacted = false;
+    }
   }
 
   backStep() {
@@ -434,10 +484,17 @@ export class RuleNotificationDialogComponent extends
   }
 
   private allowTriggerTypes(): TriggerType[] {
+    const sysAdminAllowTriggerTypes = new Set([
+      TriggerType.ENTITIES_LIMIT,
+      TriggerType.API_USAGE_LIMIT,
+      TriggerType.NEW_PLATFORM_VERSION,
+      TriggerType.RATE_LIMITS
+    ]);
+
     if (this.isSysAdmin()) {
-      return [TriggerType.ENTITIES_LIMIT, TriggerType.API_USAGE_LIMIT];
+      return Array.from(sysAdminAllowTriggerTypes);
     }
-    return Object.values(TriggerType).filter(type => type !== TriggerType.ENTITIES_LIMIT && type !== TriggerType.API_USAGE_LIMIT);
+    return Object.values(TriggerType).filter(type => !sysAdminAllowTriggerTypes.has(type));
   }
 
   get allowEntityTypeForEntityAction(): EntityType[] {

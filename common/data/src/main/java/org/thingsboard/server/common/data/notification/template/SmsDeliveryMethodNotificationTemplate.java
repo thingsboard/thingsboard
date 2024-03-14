@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,10 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.validation.Length;
+import org.thingsboard.server.common.data.validation.NoXss;
+
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -27,8 +31,19 @@ import org.thingsboard.server.common.data.notification.NotificationDeliveryMetho
 @ToString(callSuper = true)
 public class SmsDeliveryMethodNotificationTemplate extends DeliveryMethodNotificationTemplate {
 
+    private final List<TemplatableValue> templatableValues = List.of(
+            TemplatableValue.of(this::getBody, this::setBody)
+    );
+
     public SmsDeliveryMethodNotificationTemplate(SmsDeliveryMethodNotificationTemplate other) {
         super(other);
+    }
+
+    @NoXss(fieldName = "SMS message")
+    @Length(fieldName = "SMS message", max = 320, message = "cannot be longer than 320 chars")
+    @Override
+    public String getBody() {
+        return super.getBody();
     }
 
     @Override

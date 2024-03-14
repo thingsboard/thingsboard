@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,7 +98,7 @@ public class CreateAssetProfileImportTest extends AbstractDriverBaseTest {
 
         Assert.assertNotNull(profilesPage.importingFile(EMPTY_IMPORT_MESSAGE));
         Assert.assertTrue(profilesPage.importingFile(EMPTY_IMPORT_MESSAGE).isDisplayed());
-        Assert.assertTrue(profilesPage.entityIsNotPresent(IMPORT_ASSET_PROFILE_NAME));
+        Assert.assertTrue(profilesPage.assertEntityIsNotPresent(IMPORT_ASSET_PROFILE_NAME));
     }
 
     @Epic("Asset profiles smoke")

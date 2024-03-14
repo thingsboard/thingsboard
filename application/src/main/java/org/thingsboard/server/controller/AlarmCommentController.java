@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ public class AlarmCommentController extends BaseController {
                                          @PathVariable(ALARM_ID) String strAlarmId, @ApiParam(value = "A JSON value representing the comment.") @RequestBody AlarmComment alarmComment) throws ThingsboardException {
         checkParameter(ALARM_ID, strAlarmId);
         AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
-        Alarm alarm = checkAlarmId(alarmId, Operation.WRITE);
+        Alarm alarm = checkAlarmInfoId(alarmId, Operation.WRITE);
         alarmComment.setAlarmId(alarmId);
         return tbAlarmCommentService.saveAlarmComment(alarm, alarmComment, getCurrentUser());
     }

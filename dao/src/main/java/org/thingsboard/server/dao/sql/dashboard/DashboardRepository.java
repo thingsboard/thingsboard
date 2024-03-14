@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,5 +39,11 @@ public interface DashboardRepository extends JpaRepository<DashboardEntity, UUID
 
     @Query("SELECT externalId FROM DashboardEntity WHERE id = :id")
     UUID getExternalIdById(@Param("id") UUID id);
+
+    @Query("SELECT d.id FROM DashboardEntity d WHERE d.tenantId = :tenantId")
+    Page<UUID> findIdsByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
+
+    @Query("SELECT d.id FROM DashboardEntity d")
+    Page<UUID> findAllIds(Pageable pageable);
 
 }

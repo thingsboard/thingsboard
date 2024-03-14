@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.notification.info.ApiUsageLimitNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
-import org.thingsboard.server.common.data.notification.rule.trigger.ApiUsageLimitNotificationRuleTriggerConfig;
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
-import org.thingsboard.server.common.msg.notification.trigger.ApiUsageLimitTrigger;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.ApiUsageLimitNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
+import org.thingsboard.server.common.data.notification.rule.trigger.ApiUsageLimitTrigger;
 import org.thingsboard.server.dao.tenant.TenantService;
 
-import static org.apache.commons.collections.CollectionUtils.isEmpty;
+import static org.thingsboard.server.common.data.util.CollectionsUtil.emptyOrContains;
 
 @Service
 @RequiredArgsConstructor
@@ -34,8 +34,8 @@ public class ApiUsageLimitTriggerProcessor implements NotificationRuleTriggerPro
 
     @Override
     public boolean matchesFilter(ApiUsageLimitTrigger trigger, ApiUsageLimitNotificationRuleTriggerConfig triggerConfig) {
-        return (isEmpty(triggerConfig.getApiFeatures()) || triggerConfig.getApiFeatures().contains(trigger.getState().getApiFeature())) &&
-                (isEmpty(triggerConfig.getNotifyOn()) || triggerConfig.getNotifyOn().contains(trigger.getStatus()));
+        return emptyOrContains(triggerConfig.getApiFeatures(), trigger.getState().getApiFeature()) &&
+                emptyOrContains(triggerConfig.getNotifyOn(), trigger.getStatus());
     }
 
     @Override

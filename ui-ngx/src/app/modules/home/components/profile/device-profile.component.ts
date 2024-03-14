@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -104,7 +104,9 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     const deviceProvisionConfiguration: DeviceProvisionConfiguration = {
       type: entity?.provisionType ? entity.provisionType : DeviceProvisionType.DISABLED,
       provisionDeviceKey: entity?.provisionDeviceKey,
-      provisionDeviceSecret: entity?.profileData?.provisionConfiguration?.provisionDeviceSecret
+      provisionDeviceSecret: entity?.profileData?.provisionConfiguration?.provisionDeviceSecret,
+      certificateRegExPattern: entity?.profileData?.provisionConfiguration?.certificateRegExPattern,
+      allowCreateNewDevicesByX509Certificate: entity?.profileData?.provisionConfiguration?.allowCreateNewDevicesByX509Certificate
     };
     const form = this.fb.group(
       {
@@ -185,7 +187,9 @@ export class DeviceProfileComponent extends EntityComponent<DeviceProfile> {
     const deviceProvisionConfiguration: DeviceProvisionConfiguration = {
       type: entity?.provisionType ? entity.provisionType : DeviceProvisionType.DISABLED,
       provisionDeviceKey: entity?.provisionDeviceKey,
-      provisionDeviceSecret: entity?.profileData?.provisionConfiguration?.provisionDeviceSecret
+      provisionDeviceSecret: entity?.profileData?.provisionConfiguration?.provisionDeviceSecret,
+      certificateRegExPattern: entity?.profileData?.provisionConfiguration?.certificateRegExPattern,
+      allowCreateNewDevicesByX509Certificate: entity?.profileData?.provisionConfiguration?.allowCreateNewDevicesByX509Certificate
     };
     this.entityForm.patchValue({name: entity.name});
     this.entityForm.patchValue({type: entity.type}, {emitEvent: false});

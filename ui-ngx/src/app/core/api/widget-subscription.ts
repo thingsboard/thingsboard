@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -34,6 +34,9 @@ import {
   LegendData,
   LegendKey,
   LegendKeyData,
+  TargetDevice,
+  TargetDeviceType,
+  targetDeviceValid,
   widgetType
 } from '@app/shared/models/widget.models';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -52,7 +55,7 @@ import {
 } from '@app/shared/models/time/time.models';
 import { forkJoin, Observable, of, ReplaySubject, Subject, throwError, timer } from 'rxjs';
 import { CancelAnimationFrame } from '@core/services/raf.service';
-import { EntityType } from '@shared/models/entity-type.models';
+import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import {
   createLabelFromPattern,
   deepClone,
@@ -64,7 +67,7 @@ import {
   parseHttpErrorMessage
 } from '@core/utils';
 import { EntityId } from '@app/shared/models/id/entity-id';
-import * as moment_ from 'moment';
+import moment_ from 'moment';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { EntityDataListener } from '@core/api/entity-data.service';
 import {
@@ -81,6 +84,7 @@ import { distinct, filter, map, switchMap, takeUntil } from 'rxjs/operators';
 import { AlarmDataListener } from '@core/api/alarm-data.service';
 import { RpcStatus } from '@shared/models/rpc.models';
 import { EventEmitter } from '@angular/core';
+import { NOT_SUPPORTED } from '@shared/models/telemetry/telemetry.models';
 
 const moment = moment_;
 
@@ -160,6 +164,16 @@ export class WidgetSubscription implements IWidgetSubscription {
   warnOnPageDataOverflow: boolean;
   ignoreDataUpdateOnIntervalTick: boolean;
 
+  get firstDatasource(): Datasource {
+    if (this.type === widgetType.alarm) {
+      return this.alarmSource;
+    } else if (this.datasources?.length) {
+      return this.datasources[0];
+    } else {
+      return null;
+    }
+  }
+
   datasourcePages: PageData<Datasource>[];
   dataPages: PageData<Array<DatasourceData>>[];
   entityDataListeners: Array<EntityDataListener>;
@@ -189,22 +203,21 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   loadingData: boolean;
 
-  targetDeviceAliasIds?: Array<string>;
-  targetDeviceIds?: Array<string>;
-
   executingRpcRequest: boolean;
   rpcEnabled: boolean;
+  rpcDisabledReason: string;
   rpcErrorText: string;
-  rpcRejection: HttpErrorResponse;
+  rpcRejection: HttpErrorResponse | Error;
 
   init$: Observable<IWidgetSubscription>;
 
   cafs: {[cafId: string]: CancelAnimationFrame} = {};
   hasResolvedData = false;
 
-  targetDeviceAliasId: string;
+  targetEntityId?: EntityId;
+  targetEntityName?: string;
+  targetDevice: TargetDevice;
   targetDeviceId: string;
-  targetDeviceName: string;
   executingSubjects: Array<Subject<void>>;
 
   subscribed = false;
@@ -231,11 +244,22 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.callbacks.onRpcFailed = this.callbacks.onRpcFailed || (() => {});
       this.callbacks.onRpcErrorCleared = this.callbacks.onRpcErrorCleared || (() => {});
 
-      this.targetDeviceAliasIds = options.targetDeviceAliasIds;
-      this.targetDeviceIds = options.targetDeviceIds;
-
-      this.targetDeviceAliasId = null;
-      this.targetDeviceId = null;
+      this.targetDevice = options.targetDevice;
+      if (!targetDeviceValid(this.targetDevice)) {
+        if (options.targetDeviceAliasIds && options.targetDeviceAliasIds.length) {
+          this.targetDevice = {
+            type: TargetDeviceType.entity,
+            entityAliasId: options.targetDeviceAliasIds[0]
+          };
+        } else if (options.targetDeviceIds && options.targetDeviceIds.length) {
+          this.targetDevice = {
+            type: TargetDeviceType.device,
+            entityAliasId: options.targetDeviceIds[0]
+          };
+        }
+      }
+      this.targetEntityId = null;
+      this.targetEntityName = null;
 
       this.rpcRejection = null;
       this.rpcErrorText = null;
@@ -269,13 +293,15 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.subscriptionTimewindow = null;
       this.loadingData = false;
       this.displayLegend = false;
-      this.initAlarmSubscription().subscribe(() => {
-        subscriptionSubject.next(this);
-        subscriptionSubject.complete();
-      },
-      () => {
-        subscriptionSubject.error(null);
-      });
+      this.initAlarmSubscription().subscribe({
+        next:() => {
+          subscriptionSubject.next(this);
+          subscriptionSubject.complete();
+        },
+        error: () => {
+          subscriptionSubject.error(null);
+        }}
+      );
     } else {
       this.callbacks.onDataUpdated = this.callbacks.onDataUpdated || (() => {});
       this.callbacks.onLatestDataUpdated = this.callbacks.onLatestDataUpdated || (() => {});
@@ -288,7 +314,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.callbacks.legendDataUpdated = this.callbacks.legendDataUpdated || (() => {});
       this.callbacks.timeWindowUpdated = this.callbacks.timeWindowUpdated || (() => {});
 
-      this.configuredDatasources = this.ctx.utils.validateDatasources(options.datasources);
+      this.configuredDatasources = this.ctx.dashboardUtils.validateAndUpdateDatasources(options.datasources);
       this.datasourcesOptional = options.datasourcesOptional;
       this.entityDataListeners = [];
       this.hasDataPageLink = options.hasDataPageLink;
@@ -350,62 +376,60 @@ export class WidgetSubscription implements IWidgetSubscription {
           this.legendConfig.showAvg === true ||
           this.legendConfig.showTotal === true ||
           this.legendConfig.showLatest === true);
-      this.initDataSubscription().subscribe(() => {
+      this.initDataSubscription().subscribe({
+        next:() => {
           subscriptionSubject.next(this);
           subscriptionSubject.complete();
         },
-        (err) => {
-          subscriptionSubject.error(err);
-        });
+        error: () => {
+          subscriptionSubject.error(null);
+        }}
+      );
     }
  }
 
   private initRpc(): Observable<any> {
     const initRpcSubject = new ReplaySubject<void>();
-    if (this.targetDeviceAliasIds && this.targetDeviceAliasIds.length > 0) {
-      this.targetDeviceAliasId = this.targetDeviceAliasIds[0];
-      this.ctx.aliasController.resolveSingleEntityInfo(this.targetDeviceAliasId).subscribe(
-        (entityInfo) => {
-          if (entityInfo && entityInfo.entityType === EntityType.DEVICE) {
-            this.targetDeviceId = entityInfo.id;
-            this.targetDeviceName = entityInfo.name;
-            if (this.targetDeviceId) {
-              this.rpcEnabled = true;
-            } else {
-              this.rpcEnabled = this.ctx.utils.widgetEditMode;
-            }
-            this.hasResolvedData = this.rpcEnabled;
-            this.callbacks.rpcStateChanged(this);
-            initRpcSubject.next();
-            initRpcSubject.complete();
-          } else {
-            this.rpcEnabled = false;
-            this.callbacks.rpcStateChanged(this);
-            initRpcSubject.next();
-            initRpcSubject.complete();
-          }
-        },
-        () => {
-          this.rpcEnabled = false;
-          this.callbacks.rpcStateChanged(this);
-          initRpcSubject.next();
-          initRpcSubject.complete();
+    this.ctx.aliasController.resolveSingleEntityInfoForTargetDevice(this.targetDevice).subscribe({
+      next: (entityInfo) => {
+        if (entityInfo?.id) {
+          this.targetEntityId = {
+            id: entityInfo.id,
+            entityType: entityInfo.entityType
+          };
+          this.targetEntityName = entityInfo.name;
         }
-      );
-    } else {
-      if (this.targetDeviceIds && this.targetDeviceIds.length > 0) {
-        this.targetDeviceId = this.targetDeviceIds[0];
+        if (entityInfo?.entityType === EntityType.DEVICE) {
+          this.targetDeviceId = entityInfo.id;
+        }
+        if (this.targetDeviceId) {
+          this.rpcEnabled = true;
+        } else {
+          this.rpcEnabled = this.ctx.utils.widgetEditMode;
+          if (!this.rpcEnabled) {
+            if (this.targetEntityId) {
+              const entityType =
+                this.ctx.translate.instant(entityTypeTranslations.get(this.targetEntityId.entityType).type);
+              this.rpcDisabledReason =
+                this.ctx.translate.instant('rpc.error.invalid-target-entity', {entityType});
+            } else {
+              this.rpcDisabledReason = this.ctx.translate.instant('rpc.error.target-device-is-not-set');
+            }
+          }
+        }
+        this.hasResolvedData = true;
+        this.callbacks.rpcStateChanged(this);
+        initRpcSubject.next();
+        initRpcSubject.complete();
+      },
+      error: () => {
+        this.rpcEnabled = false;
+        this.rpcDisabledReason = this.ctx.translate.instant('rpc.error.failed-to-resolve-target-device');
+        this.callbacks.rpcStateChanged(this);
+        initRpcSubject.next();
+        initRpcSubject.complete();
       }
-      if (this.targetDeviceId) {
-        this.rpcEnabled = true;
-      } else {
-        this.rpcEnabled = this.ctx.utils.widgetEditMode;
-      }
-      this.hasResolvedData = true;
-      this.callbacks.rpcStateChanged(this);
-      initRpcSubject.next();
-      initRpcSubject.complete();
-    }
+    });
     return initRpcSubject.asObservable();
   }
 
@@ -419,17 +443,19 @@ export class WidgetSubscription implements IWidgetSubscription {
         initAlarmSubscriptionSubject.complete();
       } else {
         this.ctx.aliasController.resolveAlarmSource(this.alarmSource).subscribe(
-          (alarmSource) => {
-            this.alarmSource = alarmSource;
-            if (alarmSource) {
-              this.hasResolvedData = true;
+          {
+            next: (alarmSource) => {
+              this.alarmSource = alarmSource;
+              if (alarmSource) {
+                this.hasResolvedData = true;
+              }
+              this.configureAlarmsData();
+              initAlarmSubscriptionSubject.next();
+              initAlarmSubscriptionSubject.complete();
+            },
+            error: (err) => {
+              initAlarmSubscriptionSubject.error(err);
             }
-            this.configureAlarmsData();
-            initAlarmSubscriptionSubject.next();
-            initAlarmSubscriptionSubject.complete();
-          },
-          (err) => {
-            initAlarmSubscriptionSubject.error(err);
           }
         );
       }
@@ -456,18 +482,20 @@ export class WidgetSubscription implements IWidgetSubscription {
         );
       } else {
         this.ctx.aliasController.resolveDatasources(this.configuredDatasources, this.singleEntity, this.pageSize).subscribe(
-          (datasources) => {
-            this.configuredDatasources = datasources;
-            this.prepareDataSubscriptions().subscribe(
-              () => {
-                initDataSubscriptionSubject.next();
-                initDataSubscriptionSubject.complete();
-              }
-            );
-          },
-          (err) => {
-            this.notifyDataLoaded();
-            initDataSubscriptionSubject.error(err);
+          {
+            next: (datasources) => {
+              this.configuredDatasources = datasources;
+              this.prepareDataSubscriptions().subscribe(
+                () => {
+                  initDataSubscriptionSubject.next();
+                  initDataSubscriptionSubject.complete();
+                }
+              );
+            },
+            error: (err) => {
+              this.notifyDataLoaded();
+              initDataSubscriptionSubject.error(err);
+            }
           }
         );
       }
@@ -562,12 +590,10 @@ export class WidgetSubscription implements IWidgetSubscription {
     let entityLabel: string;
     let entityDescription: string;
     if (this.type === widgetType.rpc) {
-      if (this.targetDeviceId) {
-        entityId = {
-          entityType: EntityType.DEVICE,
-          id: this.targetDeviceId
-        };
-        entityName = this.targetDeviceName;
+      if (this.targetEntityId) {
+        entityId = this.targetEntityId;
+        entityName = this.targetEntityName;
+        entityLabel = this.targetEntityName;
       }
     } else if (this.type === widgetType.alarm) {
       if (this.alarmSource && this.alarmSource.entityType && this.alarmSource.entityId) {
@@ -795,9 +821,11 @@ export class WidgetSubscription implements IWidgetSubscription {
               persistent?: boolean, persistentPollingInterval?: number, retries?: number,
               additionalInfo?: any, requestUUID?: string): Observable<any> {
     if (!this.rpcEnabled) {
-      return throwError(new Error('Rpc disabled!'));
+      this.rpcErrorText = this.rpcDisabledReason;
+      this.rpcRejection = new Error(this.rpcErrorText);
+      return throwError(() => this.rpcRejection);
     } else {
-      if (this.rpcRejection && this.rpcRejection.status !== 504) {
+      if (this.rpcRejection && (!(this.rpcRejection as any).status || (this.rpcRejection as HttpErrorResponse).status !== 504)) {
         this.rpcRejection = null;
         this.rpcErrorText = null;
         this.callbacks.onRpcErrorCleared(this);
@@ -834,15 +862,17 @@ export class WidgetSubscription implements IWidgetSubscription {
           this.ctx.deviceService.sendTwoWayRpcCommand(this.targetDeviceId, requestBody)).pipe(
             switchMap((response) => {
               if (persistent && persistentPollingInterval > 0) {
-                return timer(persistentPollingInterval / 2, persistentPollingInterval).pipe(
+                const pollingInterval = Math.max(persistentPollingInterval, 1000);
+                const initialTimeout = timeout ? Math.min(timeout + 1000, pollingInterval) : pollingInterval;
+                return timer(initialTimeout, pollingInterval).pipe(
                   switchMap(() => this.ctx.deviceService.getPersistedRpc(response.rpcId, true)),
                   filter(persistentRespons =>
                     persistentRespons.status !== RpcStatus.DELIVERED && persistentRespons.status !== RpcStatus.QUEUED),
                   switchMap(persistentResponse => {
-                    if (persistentResponse.status === RpcStatus.TIMEOUT) {
-                      return throwError({status: 504});
+                    if ([RpcStatus.TIMEOUT, RpcStatus.EXPIRED].includes(persistentResponse.status)) {
+                      return throwError(() => ({status: 504}));
                     } else if (persistentResponse.status === RpcStatus.FAILED) {
-                      return throwError({status: 502, statusText: persistentResponse.response.error});
+                      return throwError(() => ({status: 502, statusText: persistentResponse.response.error}));
                     } else {
                       return of(persistentResponse.response);
                     }
@@ -853,40 +883,43 @@ export class WidgetSubscription implements IWidgetSubscription {
               return of(response);
             })
         )
-        .subscribe((responseBody) => {
-          this.rpcRejection = null;
-          this.rpcErrorText = null;
-          const index = this.executingSubjects.indexOf(rpcSubject);
-          if (index >= 0) {
-            this.executingSubjects.splice( index, 1 );
-          }
-          this.executingRpcRequest = this.executingSubjects.length > 0;
-          this.callbacks.onRpcSuccess(this);
-          rpcSubject.next(responseBody);
-          rpcSubject.complete();
-        },
-        (rejection: HttpErrorResponse) => {
-          const index = this.executingSubjects.indexOf(rpcSubject);
-          if (index >= 0) {
-            this.executingSubjects.splice( index, 1 );
-          }
-          this.executingRpcRequest = this.executingSubjects.length > 0;
-          this.callbacks.rpcStateChanged(this);
-          if (!this.executingRpcRequest || rejection.status === 504) {
-            this.rpcRejection = rejection;
-            if (rejection.status === 504) {
-              this.rpcErrorText = 'Request Timeout.';
-            } else {
-              this.rpcErrorText =  'Error : ' + rejection.status + ' - ' + rejection.statusText;
-              const error = parseHttpErrorMessage(rejection, this.ctx.translate);
-              if (error) {
-                this.rpcErrorText += '</br>';
-                this.rpcErrorText += error.message;
-              }
+        .subscribe({
+          next: (responseBody) => {
+            this.rpcRejection = null;
+            this.rpcErrorText = null;
+            const index = this.executingSubjects.indexOf(rpcSubject);
+            if (index >= 0) {
+              this.executingSubjects.splice( index, 1 );
             }
-            this.callbacks.onRpcFailed(this);
+            this.executingRpcRequest = this.executingSubjects.length > 0;
+            this.callbacks.onRpcSuccess(this);
+            rpcSubject.next(responseBody);
+            rpcSubject.complete();
+          },
+          error: (rejection: HttpErrorResponse) => {
+            const index = this.executingSubjects.indexOf(rpcSubject);
+            if (index >= 0) {
+              this.executingSubjects.splice( index, 1 );
+            }
+            this.executingRpcRequest = this.executingSubjects.length > 0;
+            this.callbacks.rpcStateChanged(this);
+            if (!this.executingRpcRequest || rejection.status === 504) {
+              this.rpcRejection = rejection;
+              if (rejection.status === 504) {
+                this.rpcErrorText = this.ctx.translate.instant('rpc.error.request-timeout');
+              } else {
+                this.rpcErrorText =  this.ctx.translate.instant('rpc.error.rpc-http-error',
+                  {status: rejection.status, statusText: rejection.statusText});
+                const error = parseHttpErrorMessage(rejection, this.ctx.translate);
+                if (error) {
+                  this.rpcErrorText += '</br>';
+                  this.rpcErrorText += error.message;
+                }
+              }
+              this.callbacks.onRpcFailed(this);
+            }
+            rpcSubject.error(rejection);
           }
-          rpcSubject.error(rejection);
         });
       }
       return rpcSubject.asObservable();
@@ -929,7 +962,7 @@ export class WidgetSubscription implements IWidgetSubscription {
   subscribeAllForPaginatedData(pageLink: EntityDataPageLink,
                                keyFilters: KeyFilter[]): Observable<any> {
     const observables: Observable<any>[] = [];
-    this.configuredDatasources.forEach((datasource, datasourceIndex) => {
+    this.configuredDatasources.forEach((_datasource, datasourceIndex) => {
       observables.push(this.subscribeForPaginatedData(datasourceIndex, pageLink, keyFilters));
     });
     if (observables.length) {
@@ -1080,7 +1113,8 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   private checkRpcTarget(aliasIds: Array<string>): boolean {
-    return aliasIds.indexOf(this.targetDeviceAliasId) > -1;
+    return this.targetDevice?.type === TargetDeviceType.entity &&
+          aliasIds.indexOf(this.targetDevice.entityAliasId) > -1;
   }
 
   private checkAlarmSource(aliasIds: Array<string>): boolean {
@@ -1109,16 +1143,18 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.updateAlarmDataSubscription();
     } else {
       this.ctx.aliasController.resolveAlarmSource(this.alarmSource).subscribe(
-        (alarmSource) => {
-          this.alarmSource = alarmSource;
-          if (alarmSource) {
-            this.hasResolvedData = true;
+        {
+          next: (alarmSource) => {
+            this.alarmSource = alarmSource;
+            if (alarmSource) {
+              this.hasResolvedData = true;
+            }
+            this.configureAlarmsData();
+            this.updateAlarmDataSubscription();
+          },
+          error: () => {
+            this.notifyDataLoaded();
           }
-          this.configureAlarmsData();
-          this.updateAlarmDataSubscription();
-        },
-        () => {
-          this.notifyDataLoaded();
         }
       );
     }
@@ -1173,7 +1209,7 @@ export class WidgetSubscription implements IWidgetSubscription {
   }
 
   private updateDataSubscriptions() {
-    this.configuredDatasources = this.ctx.utils.validateDatasources(this.options.datasources);
+    this.configuredDatasources = this.ctx.dashboardUtils.validateAndUpdateDatasources(this.options.datasources);
     if (!this.ctx.aliasController) {
       this.configuredDatasources = deepClone(this.configuredDatasources);
       this.hasResolvedData = true;
@@ -1184,16 +1220,18 @@ export class WidgetSubscription implements IWidgetSubscription {
       );
     } else {
       this.ctx.aliasController.resolveDatasources(this.configuredDatasources, this.singleEntity, this.pageSize).subscribe(
-        (datasources) => {
-          this.configuredDatasources = datasources;
-          this.prepareDataSubscriptions().subscribe(
-            () => {
-              this.updatePaginatedDataSubscriptions();
-            }
-          );
-        },
-        () => {
-          this.notifyDataLoaded();
+        {
+          next: (datasources) => {
+            this.configuredDatasources = datasources;
+            this.prepareDataSubscriptions().subscribe(
+              () => {
+                this.updatePaginatedDataSubscriptions();
+              }
+            );
+          },
+          error: () => {
+            this.notifyDataLoaded();
+          }
         }
       );
     }
@@ -1242,14 +1280,19 @@ export class WidgetSubscription implements IWidgetSubscription {
   private updateTimewindow() {
     this.timeWindow.interval = this.subscriptionTimewindow.aggregation.interval || 1000;
     this.timeWindow.timezone = this.subscriptionTimewindow.timezone;
+    this.timeWindow.tsOffset = this.subscriptionTimewindow.tsOffset;
     if (this.subscriptionTimewindow.realtimeWindowMs) {
       if (this.subscriptionTimewindow.quickInterval) {
         const startEndTime = calculateIntervalStartEndTime(this.subscriptionTimewindow.quickInterval, this.subscriptionTimewindow.timezone);
         this.timeWindow.maxTime = startEndTime[1] + this.subscriptionTimewindow.tsOffset;
         this.timeWindow.minTime = startEndTime[0] + this.subscriptionTimewindow.tsOffset;
       } else {
-        this.timeWindow.maxTime = moment().valueOf() + this.subscriptionTimewindow.tsOffset + this.timeWindow.stDiff;
-        this.timeWindow.minTime = this.timeWindow.maxTime - this.subscriptionTimewindow.realtimeWindowMs;
+        const now = moment().valueOf() + this.subscriptionTimewindow.tsOffset + this.timeWindow.stDiff;
+        if (!this.timeWindow.maxTime || Math.abs(now - this.timeWindow.maxTime) > 500) {
+          this.timeWindow.maxTime = now;
+          this.timeWindow.maxTime -= this.timeWindow.maxTime % 1000;
+          this.timeWindow.minTime = this.timeWindow.maxTime - this.subscriptionTimewindow.realtimeWindowMs;
+        }
       }
     } else if (this.subscriptionTimewindow.fixedWindow) {
       this.timeWindow.maxTime = this.subscriptionTimewindow.fixedWindow.endTimeMs + this.subscriptionTimewindow.tsOffset;
@@ -1304,7 +1347,7 @@ export class WidgetSubscription implements IWidgetSubscription {
 
   private dataLoaded(pageData: PageData<EntityData>,
                      data: Array<Array<DataSetHolder>>,
-                     datasourceIndex: number, pageLink: EntityDataPageLink, isUpdate: boolean) {
+                     datasourceIndex: number, _pageLink: EntityDataPageLink, isUpdate: boolean) {
     const datasource = this.configuredDatasources[datasourceIndex];
     datasource.dataReceived = true;
     const datasources = pageData.data.map((entityData, index) =>
@@ -1389,7 +1432,7 @@ export class WidgetSubscription implements IWidgetSubscription {
             });
             if (datasource.latestDataKeys && datasource.latestDataKeys.length) {
               this.hasLatestData = true;
-              datasource.latestDataKeys.forEach((dataKey, currentLatestDataKeyIndex) => {
+              datasource.latestDataKeys.forEach((_dataKey, currentLatestDataKeyIndex) => {
                 const currentDataKeyIndex = datasource.dataKeys.length + currentLatestDataKeyIndex;
                 const datasourceData = datasourceDataPage.data[currentDatasourceIndex][currentDataKeyIndex];
                 this.latestData.push(datasourceData);
@@ -1526,12 +1569,12 @@ export class WidgetSubscription implements IWidgetSubscription {
     }
     if (this.type === widgetType.latest) {
       const prevData = currentData.data;
-      if (!data.data.length) {
+      if (!data.data.length && !prevData.length) {
         update = false;
       } else if (prevData && prevData[0] && prevData[0].length > 1 && data.data.length > 0) {
         const prevTs = prevData[0][0];
         const prevValue = prevData[0][1];
-        if (prevTs === data.data[0][0] && prevValue === data.data[0][1]) {
+        if (prevTs === data.data[0][0] && prevValue === data.data[0][1] && data.data[0][1] !== NOT_SUPPORTED) {
           update = false;
         }
       }
@@ -1549,6 +1592,8 @@ export class WidgetSubscription implements IWidgetSubscription {
       }
       this.notifyDataLoaded();
       this.onDataUpdated(detectChanges);
+    } else if (this.loadingData) {
+      this.notifyDataLoaded();
     }
   }
 
@@ -1592,7 +1637,7 @@ export class WidgetSubscription implements IWidgetSubscription {
     this.onDataUpdated();
   }
 
-  private alarmsUpdated(updated: Array<AlarmData>, alarms: PageData<AlarmData>) {
+  private alarmsUpdated(_updated: Array<AlarmData>, alarms: PageData<AlarmData>) {
     this.alarmsLoaded(alarms, 0, 0);
   }
 
@@ -1623,15 +1668,17 @@ export class WidgetSubscription implements IWidgetSubscription {
     const loadSubject = new ReplaySubject<void>(1);
     if (this.ctx.getServerTimeDiff && this.timeWindow) {
       this.ctx.getServerTimeDiff().subscribe(
-        (stDiff) => {
-          this.timeWindow.stDiff = stDiff;
-          loadSubject.next();
-          loadSubject.complete();
-        },
-        () => {
-          this.timeWindow.stDiff = 0;
-          loadSubject.next();
-          loadSubject.complete();
+        {
+          next: (stDiff) => {
+            this.timeWindow.stDiff = stDiff;
+            loadSubject.next();
+            loadSubject.complete();
+          },
+          error: () => {
+            this.timeWindow.stDiff = 0;
+            loadSubject.next();
+            loadSubject.complete();
+          }
         }
       );
     } else {

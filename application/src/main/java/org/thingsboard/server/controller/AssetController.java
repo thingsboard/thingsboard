@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -153,7 +153,7 @@ public class AssetController extends BaseController {
         checkParameter(ASSET_ID, strAssetId);
         AssetId assetId = new AssetId(toUUID(strAssetId));
         Asset asset = checkAssetId(assetId, Operation.DELETE);
-        tbAssetService.delete(asset, getCurrentUser()).get();
+        tbAssetService.delete(asset, getCurrentUser());
     }
 
     @ApiOperation(value = "Assign asset to customer (assignAssetToCustomer)",
@@ -397,10 +397,12 @@ public class AssetController extends BaseController {
     }
 
     @ApiOperation(value = "Get Asset Types (getAssetTypes)",
-            notes = "Returns a set of unique asset types based on assets that are either owned by the tenant or assigned to the customer which user is performing the request.", produces = MediaType.APPLICATION_JSON_VALUE)
+            notes = "Deprecated. See 'getAssetProfileNames' API from Asset Profile Controller instead." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
+            produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/asset/types", method = RequestMethod.GET)
     @ResponseBody
+    @Deprecated(since = "3.6.2")
     public List<EntitySubtype> getAssetTypes() throws ThingsboardException, ExecutionException, InterruptedException {
         SecurityUser user = getCurrentUser();
         TenantId tenantId = user.getTenantId();

@@ -1,0 +1,53 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div mat-dialog-content style="padding: 16px 16px 8px" class="tb-form-panel no-border">
+  <div class="tb-no-data-text">{{ 'gateway.docker-label' | translate }}</div>
+  <div class="tb-form-panel stroked">
+    <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
+    <div class="tb-form-row no-border no-padding space-between">
+      <div class="tb-no-data-text tb-commands-hint" translate>gateway.install-docker-compose</div>
+      <a mat-stroked-button color="primary" href="https://docs.docker.com/compose/install/" target="_blank">
+        <mat-icon>description</mat-icon>
+        {{ 'common.documentation' | translate }}
+      </a>
+    </div>
+  </div>
+
+  <div class="tb-form-panel stroked">
+    <div class="tb-form-panel-title" translate>gateway.download-configuration-file</div>
+    <div class="tb-form-row no-border no-padding space-between">
+      <div class="tb-no-data-text tb-commands-hint" translate>gateway.download-docker-compose</div>
+      <button mat-stroked-button color="primary" (click)="download($event)">
+        <mat-icon>download</mat-icon>
+        {{ 'action.download' | translate }}
+      </button>
+    </div>
+  </div>
+
+  <div class="tb-form-panel stroked">
+    <div class="tb-form-panel-title" translate>gateway.launch-gateway</div>
+    <div class="tb-no-data-text tb-commands-hint" translate>gateway.launch-docker-compose</div>
+    <tb-markdown usePlainMarkdown containerClass="start-code"
+                 data="
+          ```bash
+          docker compose up
+          {:copy-code}
+          ```
+      "></tb-markdown>
+  </div>
+</div>

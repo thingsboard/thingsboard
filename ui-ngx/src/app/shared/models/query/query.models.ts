@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -22,11 +22,21 @@ import { EntityInfo } from '@shared/models/entity.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { DataKey, Datasource, DatasourceType } from '@shared/models/widget.models';
 import { PageData } from '@shared/models/page/page-data';
-import { isDefined, isEqual } from '@core/utils';
+import {
+  isArraysEqualIgnoreUndefined,
+  isDefined,
+  isDefinedAndNotNull,
+  isEmpty,
+  isEqual,
+  isEqualIgnoreUndefined,
+  isUndefinedOrNull
+} from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { AlarmInfo, AlarmSearchStatus, AlarmSeverity } from '../alarm.models';
 import { Filter } from '@material-ui/icons';
 import { DatePipe } from '@angular/common';
+import { UserId } from '../id/user-id';
+import { Direction } from '@shared/models/page/sort-order';
 
 export enum EntityKeyType {
   ATTRIBUTE = 'ATTRIBUTE',
@@ -45,7 +55,10 @@ export const entityKeyTypeTranslationMap = new Map<EntityKeyType, string>(
     [EntityKeyType.ATTRIBUTE, 'filter.key-type.attribute'],
     [EntityKeyType.TIME_SERIES, 'filter.key-type.timeseries'],
     [EntityKeyType.ENTITY_FIELD, 'filter.key-type.entity-field'],
-    [EntityKeyType.CONSTANT, 'filter.key-type.constant']
+    [EntityKeyType.CONSTANT, 'filter.key-type.constant'],
+    [EntityKeyType.CLIENT_ATTRIBUTE, 'filter.key-type.client-attribute'],
+    [EntityKeyType.SERVER_ATTRIBUTE, 'filter.key-type.server-attribute'],
+    [EntityKeyType.SHARED_ATTRIBUTE, 'filter.key-type.shared-attribute']
   ]
 );
 
@@ -687,11 +700,6 @@ export interface EntityFilter extends EntityFilters {
   type?: AliasFilterType;
 }
 
-export enum Direction {
-  ASC = 'ASC',
-  DESC = 'DESC'
-}
-
 export interface EntityDataSortOrder {
   key: EntityKey;
   direction: Direction;
@@ -705,7 +713,7 @@ export interface EntityDataPageLink {
   dynamic?: boolean;
 }
 
-export interface AlarmDataPageLink extends EntityDataPageLink {
+export interface AlarmFilter {
   startTs?: number;
   endTs?: number;
   timeWindow?: number;
@@ -713,7 +721,46 @@ export interface AlarmDataPageLink extends EntityDataPageLink {
   statusList?: Array<AlarmSearchStatus>;
   severityList?: Array<AlarmSeverity>;
   searchPropagatedAlarms?: boolean;
+  assigneeId?: UserId;
 }
+
+export interface AlarmFilterConfig extends AlarmFilter {
+  assignedToCurrentUser?: boolean;
+}
+
+export const alarmFilterConfigEquals = (filter1?: AlarmFilterConfig, filter2?: AlarmFilterConfig): boolean => {
+  if (filter1 === filter2) {
+    return true;
+  }
+  if ((isUndefinedOrNull(filter1) || isEmpty(filter1)) && (isUndefinedOrNull(filter2) || isEmpty(filter2))) {
+    return true;
+  } else if (isDefinedAndNotNull(filter1) && isDefinedAndNotNull(filter2)) {
+    if (!isArraysEqualIgnoreUndefined(filter1.typeList, filter2.typeList)) {
+      return false;
+    }
+    if (!isArraysEqualIgnoreUndefined(filter1.statusList, filter2.statusList)) {
+      return false;
+    }
+    if (!isArraysEqualIgnoreUndefined(filter1.severityList, filter2.severityList)) {
+      return false;
+    }
+    if (!isEqualIgnoreUndefined(filter1.assigneeId, filter2.assigneeId)) {
+      return false;
+    }
+    if (!isEqualIgnoreUndefined(filter1.searchPropagatedAlarms, filter2.searchPropagatedAlarms)) {
+      return false;
+    }
+    if (!isEqualIgnoreUndefined(filter1.assignedToCurrentUser, filter2.assignedToCurrentUser)) {
+      return false;
+    }
+    return true;
+  }
+  return false;
+};
+
+export type AlarmCountQuery = EntityCountQuery & AlarmFilter;
+
+export type AlarmDataPageLink = EntityDataPageLink & AlarmFilter;
 
 export function entityDataPageLinkSortDirection(pageLink: EntityDataPageLink): SortDirection {
   if (pageLink.sortOrder) {
@@ -738,6 +785,14 @@ export function createDefaultEntityDataPageLink(pageSize: number): EntityDataPag
 }
 
 export const singleEntityDataPageLink: EntityDataPageLink = createDefaultEntityDataPageLink(1);
+
+export const singleEntityFilterFromDeviceId = (deviceId: string): EntityFilter => ({
+  type: AliasFilterType.singleEntity,
+  singleEntity: {
+    entityType: EntityType.DEVICE,
+    id: deviceId
+  }
+});
 
 export interface EntityCountQuery {
   entityFilter: EntityFilter;
@@ -843,7 +898,8 @@ export function updateDatasourceFromEntityInfo(datasource: Datasource, entity: E
   };
   datasource.entityId = entity.id;
   datasource.entityType = entity.entityType;
-  if (datasource.type === DatasourceType.entity || datasource.type === DatasourceType.entityCount) {
+  if (datasource.type === DatasourceType.entity || datasource.type === DatasourceType.entityCount
+    || datasource.type === DatasourceType.alarmCount) {
     if (datasource.type === DatasourceType.entity) {
       datasource.entityName = entity.name;
       datasource.entityLabel = entity.label;

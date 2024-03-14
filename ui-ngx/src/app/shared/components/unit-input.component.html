@@ -1,0 +1,47 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-form-field fxFlex appearance="outline" class="tb-inline-field tb-suffix-show-on-hover" subscriptSizing="dynamic" style="width: 100%;">
+  <input matInput #unitInput [formControl]="unitsFormControl"
+         placeholder="{{ 'widget-config.set' | translate }}"
+         (focusin)="onFocus()"
+         [matAutocomplete]="unitsAutocomplete">
+  <button *ngIf="unitsFormControl.value && !disabled && unitsFormControl.valid"
+          type="button"
+          class="tb-icon-24"
+          matSuffix mat-icon-button aria-label="Clear"
+          (click)="clear()">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+  <mat-icon matSuffix
+            matTooltipPosition="above"
+            matTooltipClass="tb-error-tooltip"
+            [matTooltip]="'widget-config.units-required' | translate"
+            *ngIf="unitsFormControl.hasError('required')" class="material-icons tb-suffix-show-always tb-error">
+    warning
+  </mat-icon>
+  <mat-autocomplete
+    #unitsAutocomplete="matAutocomplete"
+    class="tb-autocomplete tb-unit-input-autocomplete"
+    panelWidth="fit-content"
+    [displayWith]="displayUnitFn">
+    <mat-option *ngFor="let unit of filteredUnits | async" [value]="unit">
+      <span class="tb-unit-name" fxFlex [innerHTML]="unit.name | highlight:searchText:true:'ig'"></span>
+      <span class="tb-unit-symbol" [innerHTML]="unit.symbol | highlight:searchText:true:'ig'"></span>
+    </mat-option>
+  </mat-autocomplete>
+</mat-form-field>

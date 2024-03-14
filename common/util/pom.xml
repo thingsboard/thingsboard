@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>3.5.0-SNAPSHOT</version>
+        <version>3.6.3-SNAPSHOT</version>
         <artifactId>common</artifactId>
     </parent>
     <groupId>org.thingsboard.common</groupId>
@@ -36,6 +36,14 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk15on</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk15on</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-core</artifactId>
@@ -89,8 +97,12 @@
             <artifactId>data</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.github.dblock</groupId>
+            <groupId>com.github.oshi</groupId>
             <artifactId>oshi-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
     </dependencies>
 

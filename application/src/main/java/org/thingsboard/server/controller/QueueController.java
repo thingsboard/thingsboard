@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ public class QueueController extends BaseController {
                                                         @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         checkParameter("serviceType", serviceType);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        ServiceType type = ServiceType.valueOf(serviceType);
+        ServiceType type = ServiceType.of(serviceType);
         switch (type) {
             case TB_RULE_ENGINE:
                 return queueService.findQueuesByTenantId(getTenantId(), pageLink);
@@ -126,7 +126,6 @@ public class QueueController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/queues", params = {"serviceType"}, method = RequestMethod.POST)
     @ResponseBody
-
     public Queue saveQueue(@ApiParam(value = "A JSON value representing the queue.")
                            @RequestBody Queue queue,
                            @ApiParam(value = QUEUE_SERVICE_TYPE_DESCRIPTION, allowableValues = QUEUE_SERVICE_TYPE_ALLOWABLE_VALUES, required = true)
@@ -136,7 +135,7 @@ public class QueueController extends BaseController {
 
         checkEntity(queue.getId(), queue, Resource.QUEUE);
 
-        ServiceType type = ServiceType.valueOf(serviceType);
+        ServiceType type = ServiceType.of(serviceType);
         switch (type) {
             case TB_RULE_ENGINE:
                 queue.setTenantId(getTenantId());

@@ -1,0 +1,39 @@
+{
+  "fqn": "gateway_widgets.gateway_logs",
+  "name": "Gateway logs",
+  "deprecated": false,
+  "image": "data:image/png;base64,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",
+  "description": "Allows to monitor and analyze the gateway logs.",
+  "descriptor": {
+    "type": "timeseries",
+    "sizeX": 7.5,
+    "sizeY": 3,
+    "resources": [],
+    "templateHtml": "<tb-gateway-logs [ctx]=\"ctx\">\n    \n</tb-gateway-logs>",
+    "templateCss": "#container {\n    overflow: auto;\n}\n\n.tbDatasource-container {\n    margin: 5px;\n    padding: 8px;\n}\n\n.tbDatasource-title {\n    font-size: 1.200rem;\n    font-weight: 500;\n    padding-bottom: 10px;\n}\n\n.tbDatasource-table {\n    width: 100%;\n    box-shadow: 0 0 10px #ccc;\n    border-collapse: collapse;\n    white-space: nowrap;\n    font-size: 1.000rem;\n    color: #757575;\n}\n\n.tbDatasource-table td {\n    position: relative;\n    border-top: 1px solid rgba(0, 0, 0, 0.12);\n    border-bottom: 1px solid rgba(0, 0, 0, 0.12);\n    padding: 0px 18px;\n    box-sizing: border-box;\n}",
+    "controllerScript": "self.onInit = function() {\n};\n\nself.typeParameters  = function() {\n    return {\n        dataKeysOptional: true,\n        singleEntity: true\n    };\n}",
+    "settingsSchema": "{}",
+    "dataKeySettingsSchema": "{}\n",
+    "settingsDirective": "tb-gateway-logs-settings",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"entityAliasId\":null,\"filterId\":null,\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Random\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.15479322438769105,\"funcBody\":\"var value = prevValue + Math.random() * 100 - 50;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < -1000) {\\n\\tvalue = -1000;\\n} else if (value > 1000) {\\n\\tvalue = 1000;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"hideInterval\":false,\"hideLastInterval\":false,\"hideQuickInterval\":false,\"hideAggregation\":false,\"hideAggInterval\":false,\"hideTimezone\":false,\"selectedTab\":0,\"realtime\":{\"realtimeType\":0,\"timewindowMs\":86400000,\"quickInterval\":\"CURRENT_DAY\",\"interval\":300000},\"aggregation\":{\"type\":\"AVG\",\"limit\":25000}},\"showTitle\":false,\"backgroundColor\":\"#fff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"8px\",\"settings\":{},\"title\":\"Gateway logs\",\"showTitleIcon\":false,\"dropShadow\":false,\"enableFullscreen\":true,\"widgetStyle\":{},\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showLegend\":false,\"useDashboardTimewindow\":false,\"displayTimewindow\":true}"
+  },
+  "tags": [
+    "router",
+    "bridge",
+    "hub",
+    "access point",
+    "relay",
+    "opc ua",
+    "opc-ua",
+    "modbus",
+    "bacnet",
+    "odbc",
+    "ftp",
+    "snmp",
+    "mqtt",
+    "xmpp",
+    "ocpp",
+    "ble",
+    "bluetooth"
+  ]
+}

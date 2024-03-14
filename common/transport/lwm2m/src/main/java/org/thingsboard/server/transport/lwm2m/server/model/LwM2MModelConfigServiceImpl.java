@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ import java.util.stream.Collectors;
 public class LwM2MModelConfigServiceImpl implements LwM2MModelConfigService {
 
     @Autowired
-    private TbLwM2MModelConfigStore modelStore;
+    TbLwM2MModelConfigStore modelStore;
 
     @Autowired
     @Lazy
@@ -67,14 +67,14 @@ public class LwM2MModelConfigServiceImpl implements LwM2MModelConfigService {
     @Autowired
     private LwM2MTelemetryLogService logService;
 
-    private ConcurrentMap<String, LwM2MModelConfig> currentModelConfigs;
+    ConcurrentMap<String, LwM2MModelConfig> currentModelConfigs;
 
     @AfterStartUp(order = AfterStartUp.BEFORE_TRANSPORT_SERVICE)
-    private void init() {
+    public void init() {
         List<LwM2MModelConfig> models = modelStore.getAll();
         log.debug("Fetched model configs: {}", models);
         currentModelConfigs = models.stream()
-                .collect(Collectors.toConcurrentMap(LwM2MModelConfig::getEndpoint, m -> m));
+                .collect(Collectors.toConcurrentMap(LwM2MModelConfig::getEndpoint, m -> m, (existing, replacement) -> existing));
     }
 
     @Override

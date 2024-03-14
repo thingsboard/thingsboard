@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import { AppState } from '@app/core/core.state';
 import { Subject } from 'rxjs';
 import { NonConfirmedNotificationEscalation } from '@shared/models/notification.models';
 import { takeUntil } from 'rxjs/operators';
-import { coerceBoolean } from '@shared/decorators/coerce-boolean';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-escalations-component',

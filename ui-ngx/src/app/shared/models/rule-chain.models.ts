@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,9 +19,10 @@ import { TenantId } from '@shared/models/id/tenant-id';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { RuleNodeId } from '@shared/models/id/rule-node-id';
 import { RuleNode, RuleNodeComponentDescriptor, RuleNodeType } from '@shared/models/rule-node.models';
-import { ComponentType } from '@shared/models/component-descriptor.models';
+import { ComponentClusteringMode, ComponentType } from '@shared/models/component-descriptor.models';
+import { HasTenantId } from '@shared/models/entity.models';
 
-export interface RuleChain extends BaseData<RuleChainId>, ExportableEntity<RuleChainId> {
+export interface RuleChain extends BaseData<RuleChainId>, HasTenantId, ExportableEntity<RuleChainId> {
   tenantId: TenantId;
   name: string;
   firstRuleNodeId: RuleNodeId;
@@ -64,6 +65,8 @@ export const ruleNodeTypeComponentTypes: ComponentType[] =
 export const unknownNodeComponent: RuleNodeComponentDescriptor = {
   type: RuleNodeType.UNKNOWN,
   name: 'unknown',
+  clusteringMode: ComponentClusteringMode.ENABLED,
+  configurationVersion: 0,
   clazz: 'tb.internal.Unknown',
   configurationDescriptor: {
     nodeDefinition: {
@@ -80,6 +83,8 @@ export const unknownNodeComponent: RuleNodeComponentDescriptor = {
 
 export const inputNodeComponent: RuleNodeComponentDescriptor = {
   type: RuleNodeType.INPUT,
+  configurationVersion: 0,
+  clusteringMode: ComponentClusteringMode.ENABLED,
   name: 'Input',
   clazz: 'tb.internal.Input'
 };

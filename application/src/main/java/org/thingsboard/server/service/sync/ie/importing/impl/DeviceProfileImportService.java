@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -50,6 +49,7 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
     @Override
     protected DeviceProfile prepare(EntitiesImportCtx ctx, DeviceProfile deviceProfile, DeviceProfile old, EntityExportData<DeviceProfile> exportData, IdProvider idProvider) {
         deviceProfile.setDefaultRuleChainId(idProvider.getInternalId(deviceProfile.getDefaultRuleChainId()));
+        deviceProfile.setDefaultEdgeRuleChainId(idProvider.getInternalId(deviceProfile.getDefaultEdgeRuleChainId()));
         deviceProfile.setDefaultDashboardId(idProvider.getInternalId(deviceProfile.getDefaultDashboardId()));
         deviceProfile.setFirmwareId(getOldEntityField(old, DeviceProfile::getFirmwareId));
         deviceProfile.setSoftwareId(getOldEntityField(old, DeviceProfile::getSoftwareId));
@@ -69,8 +69,8 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
         otaPackageStateService.update(savedDeviceProfile,
                 oldDeviceProfile != null && !Objects.equals(oldDeviceProfile.getFirmwareId(), savedDeviceProfile.getFirmwareId()),
                 oldDeviceProfile != null && !Objects.equals(oldDeviceProfile.getSoftwareId(), savedDeviceProfile.getSoftwareId()));
-        entityNotificationService.notifyCreateOrUpdateOrDelete(savedDeviceProfile.getTenantId(), null,
-                savedDeviceProfile.getId(), savedDeviceProfile, user, oldDeviceProfile == null ? ActionType.ADDED : ActionType.UPDATED, true, null);
+        entityNotificationService.logEntityAction(savedDeviceProfile.getTenantId(), savedDeviceProfile.getId(), savedDeviceProfile,
+                null, oldDeviceProfile == null ? ActionType.ADDED : ActionType.UPDATED, user);
     }
 
     @Override

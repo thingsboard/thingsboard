@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.cache.TbAbstractCacheBasedRuleNode;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -39,7 +40,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
+import static org.thingsboard.server.common.data.msg.TbNodeConnectionType.SUCCESS;
 
 @Slf4j
 @RuleNode(
@@ -59,11 +60,10 @@ import static org.thingsboard.rule.engine.api.TbRelationTypes.SUCCESS;
 )
 public class TbMsgDelayNode extends TbAbstractCacheBasedRuleNode<TbMsgDelayNodeConfiguration, Map<UUID, TbMsg>> {
 
-    private static final String TB_MSG_DELAY_NODE_MSG = "TbMsgDelayNodeMsg";
     private static final String DELAYED_ORIGINATOR_IDS_CACHE_KEY = "delayed_originator_ids";
 
     @Override
-    protected TbMsgDelayNodeConfiguration loadRuleNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
+    protected TbMsgDelayNodeConfiguration loadRuleNodeConfiguration(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         return TbNodeUtils.convert(configuration, TbMsgDelayNodeConfiguration.class);
     }
 
@@ -76,7 +76,7 @@ public class TbMsgDelayNode extends TbAbstractCacheBasedRuleNode<TbMsgDelayNodeC
         }
         Map<UUID, TbMsg> originatorPendingMsgsMap = entityIdValuesMap.computeIfAbsent(id, k -> new HashMap<>());
         pendingMsgs.forEach(pendingMsg -> {
-            long delayMsgScheduledTs = getDelayTimeout(ctx, pendingMsg);
+            long delayMsgScheduledTs = getDelayMsgScheduledTs(ctx, pendingMsg);
             if (currentTs >= delayMsgScheduledTs) {
                 processEnqueue(ctx, pendingMsg, partition);
             } else {
@@ -110,38 +110,38 @@ public class TbMsgDelayNode extends TbAbstractCacheBasedRuleNode<TbMsgDelayNodeC
         TopicPartitionInfo tpi = ctx.getTopicPartitionInfo(id);
         if (!tpi.isMyPartition()) {
             log.trace("[{}][{}][{}] Ignore msg from entity that doesn't belong to local partition!", ctx.getSelfId(), tpi.getFullTopicName(), id);
-        } else {
-            Integer partition = tpi.getPartition().orElse(DEFAULT_PARTITION);
-            Set<EntityId> entityIds = partitionsEntityIdsMap.computeIfAbsent(partition, k -> new HashSet<>());
-            boolean entityIdAdded = entityIds.add(id);
-            Map<UUID, TbMsg> originatorPendingMsgsMap = entityIdValuesMap.computeIfAbsent(id, k -> new HashMap<>());
-            if (originatorPendingMsgsMap.size() >= config.getMaxPendingMsgs()) {
-                log.trace("[{}] Max limit of pending messages reached for originator id: [{}]", ctx.getSelfId(), id);
-                ctx.tellFailure(msg, new RuntimeException("[" + ctx.getSelfId() + "] Max limit of pending messages reached for originator id: [" + id + "]"));
-            } else {
-                long delay = getDelay(msg);
-                UUID msgId = msg.getId();
-                TbMsgMetaData metaDataCopy = msg.getMetaData().copy();
-                metaDataCopy.putValue(ctx.getSelfId().getId().toString(), String.valueOf(System.currentTimeMillis() + delay));
-                TbMsg transformedMsg = TbMsg.transformMsg(msg, metaDataCopy);
-                TbMsg added = originatorPendingMsgsMap.put(msgId, transformedMsg);
-                getCacheIfPresentAndExecute(ctx, cache -> {
-                    if (entityIdAdded) {
-                        cache.add(getEntityIdsCacheKey(), id);
-                    }
-                    if (added == null) {
-                        cache.add(id, partition, transformedMsg);
-                    }
-                });
-                ctx.ack(msg);
-                scheduleTickMsg(ctx, delay, id, msgId);
-            }
+            return;
         }
+        Integer partition = tpi.getPartition().orElse(DEFAULT_PARTITION);
+        Set<EntityId> entityIds = partitionsEntityIdsMap.computeIfAbsent(partition, k -> new HashSet<>());
+        boolean entityIdAdded = entityIds.add(id);
+        Map<UUID, TbMsg> originatorPendingMsgsMap = entityIdValuesMap.computeIfAbsent(id, k -> new HashMap<>());
+        if (originatorPendingMsgsMap.size() >= config.getMaxPendingMsgs()) {
+            log.trace("[{}] Max limit of pending messages reached for originator id: [{}]", ctx.getSelfId(), id);
+            ctx.tellFailure(msg, new RuntimeException("[" + ctx.getSelfId() + "] Max limit of pending messages reached for originator id: [" + id + "]"));
+            return;
+        }
+        long delay = getDelay(msg);
+        UUID msgId = msg.getId();
+        TbMsgMetaData metaDataCopy = msg.getMetaData().copy();
+        metaDataCopy.putValue(ctx.getSelfId().getId().toString(), String.valueOf(System.currentTimeMillis() + delay));
+        TbMsg transformedMsg = TbMsg.transformMsgMetadata(msg, metaDataCopy);
+        TbMsg added = originatorPendingMsgsMap.put(msgId, transformedMsg);
+        getCacheIfPresentAndExecute(ctx, cache -> {
+            if (entityIdAdded) {
+                cache.add(getEntityIdsCacheKey(), id);
+            }
+            if (added == null) {
+                cache.add(id, partition, transformedMsg);
+            }
+        });
+        ctx.ack(msg);
+        scheduleTickMsg(ctx, delay, id, msgId);
     }
 
     @Override
-    protected String getTickMsgType() {
-        return TB_MSG_DELAY_NODE_MSG;
+    protected TbMsgType getTickMsgType() {
+        return TbMsgType.DELAY_TIMEOUT_SELF_MSG;
     }
 
     @Override
@@ -149,7 +149,7 @@ public class TbMsgDelayNode extends TbAbstractCacheBasedRuleNode<TbMsgDelayNodeC
         return DELAYED_ORIGINATOR_IDS_CACHE_KEY;
     }
 
-    private long getDelayTimeout(TbContext ctx, TbMsg msg) {
+    private long getDelayMsgScheduledTs(TbContext ctx, TbMsg msg) {
         String delayMsgTimeoutStr = msg.getMetaData().getData().get(ctx.getSelfId().getId().toString());
         if (StringUtils.isNotEmpty(delayMsgTimeoutStr)) {
             try {
@@ -167,7 +167,7 @@ public class TbMsgDelayNode extends TbAbstractCacheBasedRuleNode<TbMsgDelayNodeC
         ctx.enqueueForTellNext(
                 TbMsg.newMsg(
                         pendingMsg.getQueueName(),
-                        pendingMsg.getType(),
+                        pendingMsg.getInternalType(),
                         pendingMsg.getOriginator(),
                         pendingMsg.getCustomerId(),
                         metaData,
@@ -180,7 +180,7 @@ public class TbMsgDelayNode extends TbAbstractCacheBasedRuleNode<TbMsgDelayNodeC
 
     private void scheduleTickMsg(TbContext ctx, long delay, EntityId originator, UUID msgId) {
         log.trace("[{}] Schedule delay tick msg for entity: [{}], msgId: [{}], delay: [{}]", ctx.getSelfId(), originator, msgId, delay);
-        TbMsg tickMsg = ctx.newMsg(null, getTickMsgType(), originator, EMPTY_META_DATA, msgId.toString());
+        TbMsg tickMsg = ctx.newMsg(null, getTickMsgType(), originator, TbMsgMetaData.EMPTY, msgId.toString());
         ctx.tellSelf(tickMsg, delay);
     }
 

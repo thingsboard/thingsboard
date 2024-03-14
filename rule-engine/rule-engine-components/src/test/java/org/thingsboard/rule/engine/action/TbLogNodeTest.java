@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -49,7 +50,7 @@ public class TbLogNodeTest {
         TbLogNode node = new TbLogNode();
         String data = "{\"key\": \"value\"}";
         TbMsgMetaData metaData = new TbMsgMetaData(Map.of("mdKey1", "mdValue1", "mdKey2", "23"));
-        TbMsg msg = TbMsg.newMsg("POST_TELEMETRY", TenantId.SYS_TENANT_ID, metaData, data);
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, TenantId.SYS_TENANT_ID, metaData, data);
 
         String logMessage = node.toLogMessage(msg);
         log.info(logMessage);
@@ -65,7 +66,7 @@ public class TbLogNodeTest {
     void givenEmptyDataMsg_whenToLog_thenReturnString() {
         TbLogNode node = new TbLogNode();
         TbMsgMetaData metaData = new TbMsgMetaData(Collections.emptyMap());
-        TbMsg msg = TbMsg.newMsg("POST_TELEMETRY", TenantId.SYS_TENANT_ID, metaData, "");
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, TenantId.SYS_TENANT_ID, metaData, "");
 
         String logMessage = node.toLogMessage(msg);
         log.info(logMessage);
@@ -81,7 +82,7 @@ public class TbLogNodeTest {
     void givenNullDataMsg_whenToLog_thenReturnString() {
         TbLogNode node = new TbLogNode();
         TbMsgMetaData metaData = new TbMsgMetaData(Collections.emptyMap());
-        TbMsg msg = TbMsg.newMsg("POST_TELEMETRY", TenantId.SYS_TENANT_ID, metaData, null);
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, TenantId.SYS_TENANT_ID, metaData, null);
 
         String logMessage = node.toLogMessage(msg);
         log.info(logMessage);
@@ -108,6 +109,19 @@ public class TbLogNodeTest {
         verify(node, never()).createScriptEngine(any(), any());
         verify(ctx, never()).createScriptEngine(any(), anyString());
 
+    }
+
+    @Test
+    void backwardCompatibility_whenScriptLangIsNull() throws TbNodeException {
+        TbLogNodeConfiguration config = new TbLogNodeConfiguration().defaultConfiguration();
+        TbLogNode node = spy(new TbLogNode());
+        TbNodeConfiguration tbNodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        TbContext ctx = mock(TbContext.class);
+        node.init(ctx, tbNodeConfiguration);
+
+        assertThat(node.isStandard(config)).as("Script is standard for language JS").isTrue();
+        verify(node, never()).createScriptEngine(any(), any());
+        verify(ctx, never()).createScriptEngine(any(), anyString());
     }
 
     @Test

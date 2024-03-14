@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import {
   DigitalGaugeSettings,
   FixedLevelColors
 } from '@home/components/widget/lib/digital-gauge.models';
-import * as tinycolor_ from 'tinycolor2';
+import tinycolor from 'tinycolor2';
 import { isDefined, isDefinedAndNotNull } from '@core/utils';
 import { prepareFontSettings } from '@home/components/widget/lib/settings.models';
 import { CanvasDigitalGauge, CanvasDigitalGaugeOptions } from '@home/components/widget/lib/canvas-digital-gauge';
@@ -40,8 +40,6 @@ import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { EMPTY, Observable } from 'rxjs';
 import GenericOptions = CanvasGauges.GenericOptions;
-
-const tinycolor = tinycolor_;
 
 // @dynamic
 export class TbCanvasDigitalGauge {

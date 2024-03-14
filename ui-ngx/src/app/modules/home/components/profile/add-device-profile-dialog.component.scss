@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,12 +40,10 @@
     padding: 0 !important;
 
     .mat-stepper-horizontal {
-      display: flex;
-      height: 100%;
       overflow: hidden;
 
       .mat-horizontal-stepper-wrapper {
-        flex: 1 1 100%;
+        max-height: 100%;
       }
 
       .mat-horizontal-content-container {

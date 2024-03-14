@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,18 +29,18 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.rule.engine.deduplication.DeduplicationStrategy;
 import org.thingsboard.rule.engine.deduplication.TbMsgDeduplicationNode;
 import org.thingsboard.rule.engine.deduplication.TbMsgDeduplicationNodeConfiguration;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -73,7 +73,6 @@ import static org.mockito.Mockito.when;
 @Slf4j
 public class TbMsgDeduplicationNodeTest extends TbAbstractCacheBasedRuleNodeTest<TbMsgDeduplicationNode, TbMsgDeduplicationNodeConfiguration> {
 
-    private static final String TB_MSG_DEDUPLICATION_TIMEOUT_MSG = "TbMsgDeduplicationNodeMsg";
     private static final String DEDUPLICATION_IDS_CACHE_KEY = "deduplication_ids";
     private static final String TEST_THREAD_FACTORY = "deduplication-node-test";
     private static final int deduplicationInterval = 1;
@@ -84,8 +83,8 @@ public class TbMsgDeduplicationNodeTest extends TbAbstractCacheBasedRuleNodeTest
     }
 
     @Override
-    protected String getTickMsgType() {
-        return TB_MSG_DEDUPLICATION_TIMEOUT_MSG;
+    protected TbMsgType getTickMsgType() {
+        return TbMsgType.DEDUPLICATION_TIMEOUT_SELF_MSG;
     }
 
     @Override
@@ -141,7 +140,7 @@ public class TbMsgDeduplicationNodeTest extends TbAbstractCacheBasedRuleNodeTest
         verify(node, times(1)).onMsg(eq(ctx), any());
         verify(ctx, times(1)).tellSelf(any(), anyLong());
         verify(ctx, times(2)).getTopicPartitionInfo(eq(deviceId));
-        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbRelationTypes.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
         verify(ruleNodeCacheService, times(1)).getEntityIds(getEntityIdsCacheKey());
         verify(ruleNodeCacheService, times(1)).getTbMsgs(eq(deviceId), eq(0));
 
@@ -208,7 +207,8 @@ public class TbMsgDeduplicationNodeTest extends TbAbstractCacheBasedRuleNodeTest
 
         Set<TopicPartitionInfo> topicPartitionInfoSet = new HashSet<>();
         topicPartitionInfoSet.add(tpi);
-        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE, topicPartitionInfoSet);
+//        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE, topicPartitionInfoSet);
+        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE);
 
         node.onPartitionChangeMsg(ctx, partitionChangeMsg);
         awaitTellSelfLatch.await();
@@ -222,7 +222,7 @@ public class TbMsgDeduplicationNodeTest extends TbAbstractCacheBasedRuleNodeTest
         verify(node, times(1)).onMsg(eq(ctx), any());
         verify(ctx, times(1)).tellSelf(any(), anyLong());
         verify(ctx, times(3)).getTopicPartitionInfo(eq(deviceId));
-        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbRelationTypes.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
         verify(ruleNodeCacheService, times(2)).getEntityIds(getEntityIdsCacheKey());
         verify(ruleNodeCacheService, times(1)).getTbMsgs(eq(deviceId), eq(0));
 
@@ -280,7 +280,7 @@ public class TbMsgDeduplicationNodeTest extends TbAbstractCacheBasedRuleNodeTest
         verify(node, times(msgCount + wantedNumberOfTellSelfInvocation + 1)).onMsg(eq(ctx), any());
         verify(ctx, times(msgCount)).ack(any());
         verify(ctx, times(1)).tellFailure(eq(msgToReject), any());
-        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbRelationTypes.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
         verify(ruleNodeCacheService, times(1)).getEntityIds(anyString());
         verify(ruleNodeCacheService, times(1)).add(eq(getEntityIdsCacheKey()), eq(deviceId));
         verify(ruleNodeCacheService, times(msgCount)).add(eq(deviceId), any(), any(TbMsg.class));
@@ -348,7 +348,7 @@ public class TbMsgDeduplicationNodeTest extends TbAbstractCacheBasedRuleNodeTest
         verify(node, times(msgCount + wantedNumberOfTellSelfInvocation + 1)).onMsg(eq(ctx), any());
         verify(ctx, times(msgCount)).ack(any());
         verify(ctx, times(1)).tellFailure(eq(msgToReject), any());
-        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbRelationTypes.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
         verify(ruleNodeCacheService, times(1)).getEntityIds(anyString());
         verify(ruleNodeCacheService, times(1)).add(eq(getEntityIdsCacheKey()), eq(deviceId));
         verify(ruleNodeCacheService, times(msgCount)).add(eq(deviceId), any(), any(TbMsg.class));
@@ -380,6 +380,7 @@ public class TbMsgDeduplicationNodeTest extends TbAbstractCacheBasedRuleNodeTest
         when(tpi.getPartition()).thenReturn(Optional.of(0));
         when(tpi.isMyPartition()).thenReturn(true);
         when(ctx.getTopicPartitionInfo(any())).thenReturn(tpi);
+        when(ctx.getQueueName()).thenReturn(DataConstants.HP_QUEUE_NAME);
         when(ruleNodeCacheService.getEntityIds(getEntityIdsCacheKey())).thenReturn(Collections.emptySet());
         when(ruleNodeCacheService.getTbMsgs(any(), any())).thenReturn(Collections.emptySet());
 
@@ -390,8 +391,7 @@ public class TbMsgDeduplicationNodeTest extends TbAbstractCacheBasedRuleNodeTest
 
         config.setInterval(deduplicationInterval);
         config.setStrategy(DeduplicationStrategy.ALL);
-        config.setOutMsgType(SessionMsgType.POST_ATTRIBUTES_REQUEST.name());
-        config.setQueueName(DataConstants.HP_QUEUE_NAME);
+        config.setOutMsgType(TbMsgType.POST_ATTRIBUTES_REQUEST.name());
         node.init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
@@ -410,7 +410,7 @@ public class TbMsgDeduplicationNodeTest extends TbAbstractCacheBasedRuleNodeTest
 
         verify(node, times(msgCount + wantedNumberOfTellSelfInvocation)).onMsg(eq(ctx), any());
         verify(ctx, times(msgCount)).ack(any());
-        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbRelationTypes.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+        verify(ctx, times(1)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
         verify(ruleNodeCacheService, times(1)).getEntityIds(anyString());
         verify(ruleNodeCacheService, times(1)).add(eq(getEntityIdsCacheKey()), eq(deviceId));
         verify(ruleNodeCacheService, times(msgCount)).add(eq(deviceId), any(), any(TbMsg.class));
@@ -426,7 +426,7 @@ public class TbMsgDeduplicationNodeTest extends TbAbstractCacheBasedRuleNodeTest
         Assertions.assertEquals(getMergedData(inputMsgs), outMessage.getData());
         Assertions.assertEquals(deviceId, outMessage.getOriginator());
         Assertions.assertEquals(config.getOutMsgType(), outMessage.getType());
-        Assertions.assertEquals(config.getQueueName(), outMessage.getQueueName());
+        Assertions.assertEquals(ctx.getQueueName(), outMessage.getQueueName());
 
         node.destroy(ctx, ComponentLifecycleEvent.DELETED);
         verify(ruleNodeCacheService, times(1)).evictTbMsgs(any(), any());
@@ -440,6 +440,7 @@ public class TbMsgDeduplicationNodeTest extends TbAbstractCacheBasedRuleNodeTest
         when(tpi.getPartition()).thenReturn(Optional.of(0));
         when(tpi.isMyPartition()).thenReturn(true);
         when(ctx.getTopicPartitionInfo(any())).thenReturn(tpi);
+        when(ctx.getQueueName()).thenReturn(DataConstants.HP_QUEUE_NAME);
         when(ruleNodeCacheService.getEntityIds(getEntityIdsCacheKey())).thenReturn(Collections.emptySet());
         when(ruleNodeCacheService.getTbMsgs(any(), any())).thenReturn(Collections.emptySet());
 
@@ -450,8 +451,7 @@ public class TbMsgDeduplicationNodeTest extends TbAbstractCacheBasedRuleNodeTest
 
         config.setInterval(deduplicationInterval);
         config.setStrategy(DeduplicationStrategy.ALL);
-        config.setOutMsgType(SessionMsgType.POST_ATTRIBUTES_REQUEST.name());
-        config.setQueueName(DataConstants.HP_QUEUE_NAME);
+        config.setOutMsgType(TbMsgType.POST_ATTRIBUTES_REQUEST.name());
         node.init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
@@ -476,7 +476,7 @@ public class TbMsgDeduplicationNodeTest extends TbAbstractCacheBasedRuleNodeTest
 
         verify(node, times(msgCount + wantedNumberOfTellSelfInvocation)).onMsg(eq(ctx), any());
         verify(ctx, times(msgCount)).ack(any());
-        verify(ctx, times(2)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbRelationTypes.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+        verify(ctx, times(2)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
         verify(ruleNodeCacheService, times(1)).getEntityIds(anyString());
         verify(ruleNodeCacheService, times(1)).add(eq(getEntityIdsCacheKey()), eq(deviceId));
         verify(ruleNodeCacheService, times(msgCount)).add(eq(deviceId), any(), any(TbMsg.class));
@@ -495,13 +495,13 @@ public class TbMsgDeduplicationNodeTest extends TbAbstractCacheBasedRuleNodeTest
         Assertions.assertEquals(getMergedData(firstMsgPack), firstOutMsg.getData());
         Assertions.assertEquals(deviceId, firstOutMsg.getOriginator());
         Assertions.assertEquals(config.getOutMsgType(), firstOutMsg.getType());
-        Assertions.assertEquals(config.getQueueName(), firstOutMsg.getQueueName());
+        Assertions.assertEquals(ctx.getQueueName(), firstOutMsg.getQueueName());
 
         TbMsg secondOutMsg = resultMsgs.get(1);
         Assertions.assertEquals(getMergedData(secondMsgPack), secondOutMsg.getData());
         Assertions.assertEquals(deviceId, secondOutMsg.getOriginator());
         Assertions.assertEquals(config.getOutMsgType(), secondOutMsg.getType());
-        Assertions.assertEquals(config.getQueueName(), secondOutMsg.getQueueName());
+        Assertions.assertEquals(ctx.getQueueName(), secondOutMsg.getQueueName());
 
         node.destroy(ctx, ComponentLifecycleEvent.DELETED);
         verify(ruleNodeCacheService, times(1)).evictTbMsgs(any(), any());
@@ -551,7 +551,7 @@ public class TbMsgDeduplicationNodeTest extends TbAbstractCacheBasedRuleNodeTest
 
         verify(node, times(msgCount + wantedNumberOfTellSelfInvocation)).onMsg(eq(ctx), any());
         verify(ctx, times(msgCount)).ack(any());
-        verify(ctx, times(2)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbRelationTypes.SUCCESS), successCaptor.capture(), failureCaptor.capture());
+        verify(ctx, times(2)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS), successCaptor.capture(), failureCaptor.capture());
         verify(ruleNodeCacheService, times(1)).getEntityIds(anyString());
         verify(ruleNodeCacheService, times(1)).add(eq(getEntityIdsCacheKey()), eq(deviceId));
         verify(ruleNodeCacheService, times(msgCount)).add(eq(deviceId), any(), any(TbMsg.class));

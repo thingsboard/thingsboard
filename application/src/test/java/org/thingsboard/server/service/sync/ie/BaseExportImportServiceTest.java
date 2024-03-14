@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.debug.TbMsgGeneratorNode;
 import org.thingsboard.rule.engine.debug.TbMsgGeneratorNodeConfiguration;
+import org.thingsboard.rule.engine.metadata.TbGetAttributesNode;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -51,6 +52,7 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -60,11 +62,11 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.common.data.util.ThrowingRunnable;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
 import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
 import org.thingsboard.server.common.data.sync.ie.EntityImportSettings;
+import org.thingsboard.server.common.data.util.ThrowingRunnable;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -86,6 +88,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.UUID;
+import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -328,20 +331,21 @@ public abstract class BaseExportImportServiceTest extends AbstractControllerTest
         TbMsgGeneratorNodeConfiguration configuration1 = new TbMsgGeneratorNodeConfiguration();
         configuration1.setOriginatorType(originatorId.getEntityType());
         configuration1.setOriginatorId(originatorId.getId().toString());
-        ruleNode1.setConfiguration(mapper.valueToTree(configuration1));
+        ruleNode1.setConfiguration(JacksonUtil.valueToTree(configuration1));
 
         RuleNode ruleNode2 = new RuleNode();
         ruleNode2.setName("Simple Rule Node 2");
         ruleNode2.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
+        ruleNode2.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
         ruleNode2.setDebugMode(true);
         TbGetAttributesNodeConfiguration configuration2 = new TbGetAttributesNodeConfiguration();
         configuration2.setServerAttributeNames(Collections.singletonList("serverAttributeKey2"));
-        ruleNode2.setConfiguration(mapper.valueToTree(configuration2));
+        ruleNode2.setConfiguration(JacksonUtil.valueToTree(configuration2));
 
         metaData.setNodes(Arrays.asList(ruleNode1, ruleNode2));
         metaData.setFirstNodeIndex(0);
-        metaData.addConnectionInfo(0, 1, "Success");
-        ruleChainService.saveRuleChainMetaData(tenantId, metaData);
+        metaData.addConnectionInfo(0, 1, TbNodeConnectionType.SUCCESS);
+        ruleChainService.saveRuleChainMetaData(tenantId, metaData, Function.identity());
 
         return ruleChainService.findRuleChainById(tenantId, ruleChain.getId());
     }
@@ -361,23 +365,25 @@ public abstract class BaseExportImportServiceTest extends AbstractControllerTest
         RuleNode ruleNode1 = new RuleNode();
         ruleNode1.setName("Simple Rule Node 1");
         ruleNode1.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
+        ruleNode1.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
         ruleNode1.setDebugMode(true);
         TbGetAttributesNodeConfiguration configuration1 = new TbGetAttributesNodeConfiguration();
         configuration1.setServerAttributeNames(Collections.singletonList("serverAttributeKey1"));
-        ruleNode1.setConfiguration(mapper.valueToTree(configuration1));
+        ruleNode1.setConfiguration(JacksonUtil.valueToTree(configuration1));
 
         RuleNode ruleNode2 = new RuleNode();
         ruleNode2.setName("Simple Rule Node 2");
         ruleNode2.setType(org.thingsboard.rule.engine.metadata.TbGetAttributesNode.class.getName());
+        ruleNode2.setConfigurationVersion(TbGetAttributesNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
         ruleNode2.setDebugMode(true);
         TbGetAttributesNodeConfiguration configuration2 = new TbGetAttributesNodeConfiguration();
         configuration2.setServerAttributeNames(Collections.singletonList("serverAttributeKey2"));
-        ruleNode2.setConfiguration(mapper.valueToTree(configuration2));
+        ruleNode2.setConfiguration(JacksonUtil.valueToTree(configuration2));
 
         metaData.setNodes(Arrays.asList(ruleNode1, ruleNode2));
         metaData.setFirstNodeIndex(0);
-        metaData.addConnectionInfo(0, 1, "Success");
-        ruleChainService.saveRuleChainMetaData(tenantId, metaData);
+        metaData.addConnectionInfo(0, 1, TbNodeConnectionType.SUCCESS);
+        ruleChainService.saveRuleChainMetaData(tenantId, metaData, Function.identity());
 
         return ruleChainService.findRuleChainById(tenantId, ruleChain.getId());
     }

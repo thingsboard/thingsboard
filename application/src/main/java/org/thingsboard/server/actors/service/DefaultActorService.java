@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
-import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -33,6 +31,7 @@ import org.thingsboard.server.actors.app.AppActor;
 import org.thingsboard.server.actors.app.AppInitMsg;
 import org.thingsboard.server.actors.stats.StatsActor;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
+import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.util.AfterStartUp;
@@ -76,7 +75,7 @@ public class DefaultActorService extends TbApplicationEventListener<PartitionCha
     @Value("${actors.system.device_dispatcher_pool_size:4}")
     private int deviceDispatcherSize;
 
-    @Value("${actors.system.rule_dispatcher_pool_size:4}")
+    @Value("${actors.system.rule_dispatcher_pool_size:8}")
     private int ruleDispatcherSize;
 
     @PostConstruct
@@ -123,7 +122,12 @@ public class DefaultActorService extends TbApplicationEventListener<PartitionCha
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
         log.info("Received partition change event.");
-        this.appActor.tellWithHighPriority(new PartitionChangeMsg(event.getQueueKey().getType(), event.getPartitions()));
+        appActor.tellWithHighPriority(new PartitionChangeMsg(event.getServiceType()));
+    }
+
+    @Override
+    protected boolean filterTbApplicationEvent(PartitionChangeEvent event) {
+        return event.getServiceType() == ServiceType.TB_RULE_ENGINE || event.getServiceType() == ServiceType.TB_CORE;
     }
 
     @PreDestroy

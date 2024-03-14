@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,13 +33,13 @@ public class ThingsboardErrorResponse {
     // Error code
     private final ThingsboardErrorCode errorCode;
 
-    private final Date timestamp;
+    private final long timestamp;
 
     protected ThingsboardErrorResponse(final String message, final ThingsboardErrorCode errorCode, HttpStatus status) {
         this.message = message;
         this.errorCode = errorCode;
         this.status = status;
-        this.timestamp = new java.util.Date();
+        this.timestamp = System.currentTimeMillis();
     }
 
     public static ThingsboardErrorResponse of(final String message, final ThingsboardErrorCode errorCode, HttpStatus status) {
@@ -75,7 +75,7 @@ public class ThingsboardErrorResponse {
     }
 
     @ApiModelProperty(position = 4, value = "Timestamp", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
-    public Date getTimestamp() {
+    public long getTimestamp() {
         return timestamp;
     }
 }

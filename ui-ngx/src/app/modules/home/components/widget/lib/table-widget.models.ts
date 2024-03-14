@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,14 +18,13 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { DataKey, FormattedData, WidgetActionDescriptor, WidgetConfig } from '@shared/models/widget.models';
 import { getDescendantProp, isDefined, isNotEmptyStr } from '@core/utils';
 import { AlarmDataInfo, alarmFields } from '@shared/models/alarm.models';
-import * as tinycolor_ from 'tinycolor2';
-import { Direction, EntityDataSortOrder, EntityKey } from '@shared/models/query/query.models';
+import tinycolor from 'tinycolor2';
+import { Direction } from '@shared/models/page/sort-order';
+import { EntityDataSortOrder, EntityKey } from '@shared/models/query/query.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-
-const tinycolor = tinycolor_;
 
 type ColumnVisibilityOptions = 'visible' | 'hidden' | 'hidden-mobile';
 
@@ -33,7 +32,9 @@ type ColumnSelectionOptions = 'enabled' | 'disabled';
 
 export interface TableWidgetSettings {
   enableSearch: boolean;
+  enableSelectColumnDisplay: boolean;
   enableStickyAction: boolean;
+  showCellActionsMenu: boolean;
   enableStickyHeader: boolean;
   displayPagination: boolean;
   defaultPageSize: number;
@@ -452,7 +453,7 @@ export function constructTableCssString(widgetConfig: WidgetConfig): string {
     '.mat-mdc-table .mat-mdc-row .mat-mdc-cell.mat-mdc-table-sticky, .mat-mdc-table .mat-mdc-header-cell.mat-mdc-table-sticky {\n' +
     'background-color: ' + origBackgroundColor + ';\n' +
     '}\n' +
-    '.mat-mdc-table .mat-mdc-cell {\n' +
+    '.mat-mdc-table .mat-mdc-row {\n' +
     'color: ' + mdDark + ';\n' +
     'background-color: rgba(0, 0, 0, 0);\n' +
     '}\n' +

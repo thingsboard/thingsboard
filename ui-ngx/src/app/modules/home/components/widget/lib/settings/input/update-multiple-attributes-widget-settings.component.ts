@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -49,7 +49,9 @@ export class UpdateMultipleAttributesWidgetSettingsComponent extends WidgetSetti
       showGroupTitle: false,
       groupTitle: '',
       fieldsAlignment: 'row',
-      fieldsInRow: 2
+      fieldsInRow: 2,
+      rowGap: 5,
+      columnGap: 10
     };
   }
 
@@ -77,6 +79,11 @@ export class UpdateMultipleAttributesWidgetSettingsComponent extends WidgetSetti
 
       fieldsAlignment: [settings.fieldsAlignment, []],
       fieldsInRow: [settings.fieldsInRow, [Validators.min(1)]],
+
+      // Layout gap
+
+      rowGap: [settings.rowGap, [Validators.min(0)]],
+      columnGap: [settings.columnGap, [Validators.min(0)]]
     });
   }
 
@@ -105,13 +112,16 @@ export class UpdateMultipleAttributesWidgetSettingsComponent extends WidgetSetti
     }
     if (fieldsAlignment === 'row') {
       this.updateMultipleAttributesWidgetSettingsForm.get('fieldsInRow').enable();
+      this.updateMultipleAttributesWidgetSettingsForm.get('columnGap').enable();
     } else {
       this.updateMultipleAttributesWidgetSettingsForm.get('fieldsInRow').disable();
+      this.updateMultipleAttributesWidgetSettingsForm.get('columnGap').disable();
     }
     this.updateMultipleAttributesWidgetSettingsForm.get('updateAllValues').updateValueAndValidity({emitEvent});
     this.updateMultipleAttributesWidgetSettingsForm.get('saveButtonLabel').updateValueAndValidity({emitEvent});
     this.updateMultipleAttributesWidgetSettingsForm.get('resetButtonLabel').updateValueAndValidity({emitEvent});
     this.updateMultipleAttributesWidgetSettingsForm.get('groupTitle').updateValueAndValidity({emitEvent});
     this.updateMultipleAttributesWidgetSettingsForm.get('fieldsInRow').updateValueAndValidity({emitEvent});
+    this.updateMultipleAttributesWidgetSettingsForm.get('columnGap').updateValueAndValidity({emitEvent});
   }
 }

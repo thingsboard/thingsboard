@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,16 +15,24 @@
 ///
 
 import { PageComponent } from '@shared/components/page.component';
-import { Component, ElementRef, Inject, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
-import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  Inject,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  ViewEncapsulation
+} from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { WidgetService } from '@core/http/widget.service';
-import { detailsToWidgetInfo, toWidgetInfo, WidgetInfo } from '@home/models/widget-component.models';
+import { detailsToWidgetInfo, WidgetInfo } from '@home/models/widget-component.models';
 import {
+  TargetDeviceType,
   Widget,
   WidgetConfig,
-  WidgetType,
   widgetType,
   WidgetTypeDetails,
   widgetTypesData
@@ -51,13 +59,13 @@ import {
   SaveWidgetTypeAsDialogComponent,
   SaveWidgetTypeAsDialogResult
 } from '@home/pages/widget/save-widget-type-as-dialog.component';
-import { forkJoin, from, Subscription } from 'rxjs';
+import { forkJoin, mergeMap, of, Subscription } from 'rxjs';
 import { ResizeObserver } from '@juggle/resize-observer';
-import Timeout = NodeJS.Timeout;
 import { widgetEditorCompleter } from '@home/pages/widget/widget-editor.models';
 import { Observable } from 'rxjs/internal/Observable';
 import { map, tap } from 'rxjs/operators';
 import { beautifyCss, beautifyHtml, beautifyJs } from '@shared/models/beautify.models';
+import Timeout = NodeJS.Timeout;
 
 // @dynamic
 @Component({
@@ -117,12 +125,23 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
 
   isReadOnly: boolean;
 
-  widgetsBundle: WidgetsBundle;
   widgetTypeDetails: WidgetTypeDetails;
   widget: WidgetInfo;
   origWidget: WidgetInfo;
 
-  isDirty = false;
+  private isEditModeWidget = false;
+  private _isDirty = false;
+
+  get isDirty(): boolean {
+    return this._isDirty || this.isEditModeWidget;
+  }
+
+  set isDirty(value: boolean) {
+    if (!value) {
+      this.isEditModeWidget = false;
+    }
+    this._isDirty = value;
+  }
 
   fullscreen = false;
   htmlFullscreen = false;
@@ -157,6 +176,8 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
 
   hotKeys: Hotkey[] = [];
 
+  updateBreadcrumbs = new EventEmitter();
+
   private rxSubscriptions = new Array<Subscription>();
 
   constructor(protected store: Store<AppState>,
@@ -181,14 +202,13 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   }
 
   private init(data: any) {
-    this.widgetsBundle = data.widgetsBundle;
+    this.widgetTypeDetails = data.widgetEditorData.widgetTypeDetails;
+    this.widget = data.widgetEditorData.widget;
     if (this.authUser.authority === Authority.TENANT_ADMIN) {
-      this.isReadOnly = !this.widgetsBundle || this.widgetsBundle.tenantId.id === NULL_UUID;
+      this.isReadOnly = this.widgetTypeDetails && this.widgetTypeDetails.tenantId.id === NULL_UUID;
     } else {
       this.isReadOnly = this.authUser.authority !== Authority.SYS_ADMIN;
     }
-    this.widgetTypeDetails = data.widgetEditorData.widgetTypeDetails;
-    this.widget = data.widgetEditorData.widget;
     if (this.widgetTypeDetails) {
       const config = JSON.parse(this.widget.defaultConfig);
       this.widget.defaultConfig = JSON.stringify(config);
@@ -449,6 +469,10 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
           break;
         case 'widgetEditUpdated':
           this.onWidgetEditUpdated(message.data);
+          this.onWidgetEditModeToggled(false);
+          break;
+        case 'widgetEditModeToggle':
+          this.onWidgetEditModeToggled(message.data);
           break;
       }
     }
@@ -485,13 +509,14 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     this.isDirty = true;
   }
 
+  private onWidgetEditModeToggled(mode: boolean) {
+    this.isEditModeWidget = mode;
+  }
+
   private onWidgetException(details: ExceptionData) {
     if (!this.gotError) {
       this.gotError = true;
       let errorInfo = 'Error:';
-      if (details.name) {
-        errorInfo += ' ' + details.name + ':';
-      }
       if (details.message) {
         errorInfo += ' ' + details.message;
       }
@@ -545,17 +570,32 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   private commitSaveWidget() {
     const id = (this.widgetTypeDetails && this.widgetTypeDetails.id) ? this.widgetTypeDetails.id : undefined;
     const createdTime = (this.widgetTypeDetails && this.widgetTypeDetails.createdTime) ? this.widgetTypeDetails.createdTime : undefined;
-    this.widgetService.saveWidgetTypeDetails(this.widget, id, this.widgetsBundle.alias, createdTime).subscribe(
-      (widgetTypeDetails) => {
-        this.setWidgetTypeDetails(widgetTypeDetails);
+    this.widgetService.saveWidgetTypeDetails(this.widget, id, createdTime).pipe(
+      mergeMap((widgetTypeDetails) => {
+        const widgetsBundleId = this.route.snapshot.params.widgetsBundleId as string;
+        if (widgetsBundleId && !id) {
+          return this.widgetService.addWidgetFqnToWidgetBundle(widgetsBundleId, widgetTypeDetails.fqn).pipe(
+            map(() => widgetTypeDetails)
+          );
+        }
+        return of(widgetTypeDetails);
+      })
+    ).subscribe({
+      next: (widgetTypeDetails) => {
         this.saveWidgetPending = false;
+        if (!this.widgetTypeDetails?.id) {
+          this.isDirty = false;
+          this.router.navigate(['..', widgetTypeDetails.id.id], {relativeTo: this.route});
+        } else {
+          this.setWidgetTypeDetails(widgetTypeDetails);
+        }
         this.store.dispatch(new ActionNotificationShow(
           {message: this.translate.instant('widget.widget-saved'), type: 'success', duration: 500}));
       },
-      () => {
+      error: () => {
         this.saveWidgetPending = false;
       }
-    );
+    });
   }
 
   private commitSaveWidgetAs() {
@@ -567,18 +607,38 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
       (saveWidgetAsData) => {
         if (saveWidgetAsData) {
           this.widget.widgetName = saveWidgetAsData.widgetName;
-          this.widget.alias = undefined;
+          this.widget.fullFqn = undefined;
           const config = JSON.parse(this.widget.defaultConfig);
           config.title = this.widget.widgetName;
           this.widget.defaultConfig = JSON.stringify(config);
           this.isDirty = false;
-          this.widgetService.saveWidgetTypeDetails(this.widget, undefined, saveWidgetAsData.bundleAlias, undefined).subscribe(
-            (widgetTypeDetails) => {
-              this.router.navigateByUrl(`/widgets-bundles/${saveWidgetAsData.bundleId}/widgetTypes/${widgetTypeDetails.id.id}`);
-            }
-          );
+          this.widgetService.saveWidgetTypeDetails(this.widget, undefined, undefined).pipe(
+            mergeMap((widget) => {
+              if (saveWidgetAsData.widgetBundleId) {
+                return this.widgetService.addWidgetFqnToWidgetBundle(saveWidgetAsData.widgetBundleId, widget.fqn).pipe(
+                  map(() => widget)
+                );
+              }
+              return of(widget);
+            })
+          ).subscribe(
+            {
+              next: (widgetTypeDetails) => {
+                this.saveWidgetAsPending = false;
+                if (saveWidgetAsData.widgetBundleId) {
+                  this.router.navigate(['resources', 'widgets-library', 'widgets-bundles',
+                    saveWidgetAsData.widgetBundleId, widgetTypeDetails.id.id]);
+                } else {
+                  this.router.navigate(['resources', 'widgets-library', 'widget-types', widgetTypeDetails.id.id]);
+                }
+              },
+              error: () => {
+                this.saveWidgetAsPending = false;
+              }
+            });
+        } else {
+          this.saveWidgetAsPending = false;
         }
-        this.saveWidgetAsPending = false;
       }
     );
   }
@@ -590,6 +650,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     this.widget.defaultConfig = JSON.stringify(config);
     this.origWidget = deepClone(this.widget);
     this.isDirty = false;
+    this.updateBreadcrumbs.emit();
   }
 
   applyWidgetScript(): void {
@@ -597,7 +658,9 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     this.gotError = false;
     this.iframeWidgetEditModeInited = false;
     const config: WidgetConfig = JSON.parse(this.widget.defaultConfig);
-    config.title = this.widget.widgetName;
+    if (!config.title) {
+      config.title = this.widget.widgetName;
+    }
     this.widget.defaultConfig = JSON.stringify(config);
     this.iframe.attr('data-widget', JSON.stringify(this.widget));
     // @ts-ignore
@@ -627,7 +690,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
   }
 
   undoDisabled(): boolean {
-    return !this.isDirty
+    return !this._isDirty
     || !this.iframeWidgetEditModeInited
     || this.saveWidgetPending
     || this.saveWidgetAsPending;
@@ -635,7 +698,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
 
   saveDisabled(): boolean {
     return this.isReadOnly
-      || !this.isDirty
+      || !this._isDirty
       || !this.iframeWidgetEditModeInited
       || this.saveWidgetPending
       || this.saveWidgetAsPending;
@@ -733,12 +796,12 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     this.isDirty = true;
   }
 
-  widetTypeChanged() {
+  widgetTypeChanged() {
     const config: WidgetConfig = JSON.parse(this.widget.defaultConfig);
     if (this.widget.type !== widgetType.rpc &&
         this.widget.type !== widgetType.alarm) {
-      if (config.targetDeviceAliases) {
-        delete config.targetDeviceAliases;
+      if (config.targetDevice) {
+        delete config.targetDevice;
       }
       if (config.alarmSource) {
         delete config.alarmSource;
@@ -763,15 +826,17 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
       if (config.timewindow) {
         delete config.timewindow;
       }
-      if (!config.targetDeviceAliases) {
-        config.targetDeviceAliases = [];
+      if (!config.targetDevice) {
+        config.targetDevice = {
+          type: TargetDeviceType.device
+        };
       }
     } else { // alarm
       if (config.datasources) {
         delete config.datasources;
       }
-      if (config.targetDeviceAliases) {
-        delete config.targetDeviceAliases;
+      if (config.targetDevice) {
+        delete config.targetDevice;
       }
       if (!config.alarmSource) {
         config.alarmSource = {};
@@ -786,5 +851,12 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
     }
     this.widget.defaultConfig = JSON.stringify(config);
     this.isDirty = true;
+  }
+
+  get confirmOnExitMessage(): string {
+    if (this.isEditModeWidget && !this._isDirty) {
+      return this.translate.instant('widget.confirm-to-exit-editor-html');
+    }
+    return '';
   }
 }

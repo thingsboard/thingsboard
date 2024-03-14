@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -169,7 +169,7 @@ export class JsInvokeMessageProcessor {
             this.logger.info('[%s] Executing script body: [%s]', scriptId, invokeRequest.scriptBody);
         }
         if (this.executedScriptsCounter % memoryUsageTraceFrequency == 0) {
-            this.logger.info('Current memory usage: [%s]', process.memoryUsage());
+            this.logger.info('Current memory usage: %s', JSON.stringify(process.memoryUsage()));
         }
 
         this.getOrCompileScript(scriptId, invokeRequest.scriptBody).then(

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,17 @@ import com.amazonaws.services.sqs.AmazonSQS;
 import com.amazonaws.services.sqs.AmazonSQSClientBuilder;
 import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.GetQueueUrlResult;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.ExecutorProvider;
+import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.queue.TbQueueAdmin;
+import org.thingsboard.server.queue.util.PropertyUtils;
 
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -37,6 +44,8 @@ public class TbAwsSqsAdmin implements TbQueueAdmin {
     private final Map<String, String> attributes;
     private final AmazonSQS sqsClient;
     private final Map<String, String> queues;
+    @Getter
+    private final ExecutorService producerExecutor;
 
     public TbAwsSqsAdmin(TbAwsSqsSettings sqsSettings, Map<String, String> attributes) {
         this.attributes = attributes;
@@ -48,6 +57,7 @@ public class TbAwsSqsAdmin implements TbQueueAdmin {
             AWSCredentials awsCredentials = new BasicAWSCredentials(sqsSettings.getAccessKeyId(), sqsSettings.getSecretAccessKey());
             credentialsProvider = new AWSStaticCredentialsProvider(awsCredentials);
         }
+        producerExecutor = ThingsBoardExecutors.newWorkStealingPool(sqsSettings.getThreadPoolSize(), "aws-sqs-queue-executor");
 
         sqsClient = AmazonSQSClientBuilder.standard()
                 .withCredentials(credentialsProvider)
@@ -63,11 +73,12 @@ public class TbAwsSqsAdmin implements TbQueueAdmin {
     }
 
     @Override
-    public void createTopicIfNotExists(String topic) {
+    public void createTopicIfNotExists(String topic, String properties) {
         String queueName = convertTopicToQueueName(topic);
         if (queues.containsKey(queueName)) {
             return;
         }
+        Map<String, String> attributes = PropertyUtils.getProps(this.attributes, properties, TbAwsSqsQueueAttributes::toConfigs);
         final CreateQueueRequest createQueueRequest = new CreateQueueRequest(queueName).withAttributes(attributes);
         String queueUrl = sqsClient.createQueue(createQueueRequest).getQueueUrl();
         queues.put(getQueueNameFromUrl(queueUrl), queueUrl);
@@ -101,6 +112,9 @@ public class TbAwsSqsAdmin implements TbQueueAdmin {
     public void destroy() {
         if (sqsClient != null) {
             sqsClient.shutdown();
+        }
+        if (producerExecutor != null) {
+            producerExecutor.shutdownNow();
         }
     }
 }

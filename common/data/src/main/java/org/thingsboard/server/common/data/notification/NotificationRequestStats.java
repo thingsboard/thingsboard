@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,14 +31,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class NotificationRequestStats {
 
     private final Map<NotificationDeliveryMethod, AtomicInteger> sent;
+    @JsonIgnore
+    private final AtomicInteger totalSent;
     private final Map<NotificationDeliveryMethod, Map<String, String>> errors;
+    @JsonIgnore
+    private final AtomicInteger totalErrors;
     private String error;
     @JsonIgnore
     private final Map<NotificationDeliveryMethod, Set<Object>> processedRecipients;
 
     public NotificationRequestStats() {
         this.sent = new ConcurrentHashMap<>();
+        this.totalSent = new AtomicInteger();
         this.errors = new ConcurrentHashMap<>();
+        this.totalErrors = new AtomicInteger();
         this.processedRecipients = new ConcurrentHashMap<>();
     }
 
@@ -47,14 +53,16 @@ public class NotificationRequestStats {
                                     @JsonProperty("errors") Map<NotificationDeliveryMethod, Map<String, String>> errors,
                                     @JsonProperty("error") String error) {
         this.sent = sent;
+        this.totalSent = null;
         this.errors = errors;
+        this.totalErrors = null;
         this.error = error;
         this.processedRecipients = Collections.emptyMap();
     }
 
     public void reportSent(NotificationDeliveryMethod deliveryMethod, NotificationRecipient recipient) {
         sent.computeIfAbsent(deliveryMethod, k -> new AtomicInteger()).incrementAndGet();
-        processedRecipients.computeIfAbsent(deliveryMethod, k -> ConcurrentHashMap.newKeySet()).add(recipient.getId());
+        totalSent.incrementAndGet();
     }
 
     public void reportError(NotificationDeliveryMethod deliveryMethod, Throwable error, NotificationRecipient recipient) {
@@ -62,7 +70,15 @@ public class NotificationRequestStats {
             return;
         }
         String errorMessage = error.getMessage();
+        if (errorMessage == null) {
+            errorMessage = error.getClass().getSimpleName();
+        }
         errors.computeIfAbsent(deliveryMethod, k -> new ConcurrentHashMap<>()).put(recipient.getTitle(), errorMessage);
+        totalErrors.incrementAndGet();
+    }
+
+    public void reportProcessed(NotificationDeliveryMethod deliveryMethod, Object recipientId) {
+        processedRecipients.computeIfAbsent(deliveryMethod, k -> ConcurrentHashMap.newKeySet()).add(recipientId);
     }
 
     public boolean contains(NotificationDeliveryMethod deliveryMethod, Object recipientId) {

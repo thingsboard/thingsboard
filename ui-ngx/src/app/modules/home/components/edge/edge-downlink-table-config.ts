@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -107,9 +107,15 @@ export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePa
     this.columns.push(
       new DateEntityTableColumn<EdgeEvent>('createdTime', 'event.event-time', this.datePipe, '120px'),
       new EntityTableColumn<EdgeEvent>('type', 'event.type', '25%',
-        entity => this.translate.instant(edgeEventTypeTranslations.get(entity.type)), entity => ({}), false),
+        entity => {
+          let key = edgeEventTypeTranslations.get(entity.type);
+          return key ? this.translate.instant(key) : entity.type;
+        }, entity => ({}), false),
       new EntityTableColumn<EdgeEvent>('action', 'edge.event-action', '25%',
-        entity => this.translate.instant(edgeEventActionTypeTranslations.get(entity.action)), entity => ({}), false),
+        entity => {
+          let key = edgeEventActionTypeTranslations.get(entity.action);
+          return key ? this.translate.instant(key) : entity.action;
+        }, entity => ({}), false),
       new EntityTableColumn<EdgeEvent>('entityId', 'edge.entity-id', '40%',
         (entity) => entity.entityId ? entity.entityId : '', () => ({}), false),
       new EntityTableColumn<EdgeEvent>('status', 'event.status', '10%',
@@ -131,7 +137,7 @@ export class EdgeDownlinkTableConfig extends EntityTableConfig<EdgeEvent, TimePa
               );
             }
         },
-        '40px'),
+        '48px'),
     );
     if (updateTableColumns) {
       this.getTable().columnsUpdated(true);

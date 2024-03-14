@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.UserId;
 
@@ -54,15 +56,18 @@ public class AlarmAssignmentNotificationInfo implements RuleOriginatedNotificati
     private AlarmSeverity alarmSeverity;
     private AlarmStatus alarmStatus;
     private CustomerId alarmCustomerId;
+    private DashboardId dashboardId;
 
     @Override
     public Map<String, String> getTemplateData() {
         return mapOf(
                 "action", action,
+                "assigneeTitle", User.getTitle(assigneeEmail, assigneeFirstName, assigneeLastName),
                 "assigneeFirstName", assigneeFirstName,
                 "assigneeLastName", assigneeLastName,
                 "assigneeEmail", assigneeEmail,
                 "assigneeId", assigneeId != null ? assigneeId.toString() : null,
+                "userTitle", User.getTitle(userEmail, userFirstName, userLastName),
                 "userEmail", userEmail,
                 "userFirstName", userFirstName,
                 "userLastName", userLastName,
@@ -89,6 +94,11 @@ public class AlarmAssignmentNotificationInfo implements RuleOriginatedNotificati
     @Override
     public EntityId getStateEntityId() {
         return alarmOriginator;
+    }
+
+    @Override
+    public DashboardId getDashboardId() {
+        return dashboardId;
     }
 
 }

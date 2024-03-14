@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.entitiy.alarm;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.alarm.AlarmAssignee;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentType;
@@ -32,12 +34,15 @@ import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -62,10 +67,6 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
             if (!result.isSuccessful()) {
                 throw new ThingsboardException(ThingsboardErrorCode.ITEM_NOT_FOUND);
             }
-            actionType = result.isCreated() ? ActionType.ADDED : ActionType.UPDATED;
-            if (result.isModified()) {
-                notificationEntityService.notifyCreateOrUpdateAlarm(result.getAlarm(), actionType, user);
-            }
             AlarmInfo resultAlarm = result.getAlarm();
             if (alarm.isAcknowledged() && !resultAlarm.isAcknowledged()) {
                 resultAlarm = ack(resultAlarm, alarm.getAckTs(), user);
@@ -79,6 +80,10 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
                 resultAlarm = assign(resultAlarm, newAssignee, alarm.getAssignTs(), user);
             } else if (newAssignee == null && curAssignee != null) {
                 resultAlarm = unassign(alarm, alarm.getAssignTs(), user);
+            }
+            if (result.isModified()) {
+                notificationEntityService.logEntityAction(tenantId, alarm.getOriginator(), resultAlarm,
+                        resultAlarm.getCustomerId(), actionType, user);
             }
             return new Alarm(resultAlarm);
         } catch (Exception e) {
@@ -98,25 +103,16 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         if (!result.isSuccessful()) {
             throw new ThingsboardException(ThingsboardErrorCode.ITEM_NOT_FOUND);
         }
+        AlarmInfo alarmInfo = result.getAlarm();
         if (result.isModified()) {
-            AlarmComment alarmComment = AlarmComment.builder()
-                    .alarmId(alarm.getId())
-                    .type(AlarmCommentType.SYSTEM)
-                    .comment(JacksonUtil.newObjectNode().put("text", String.format("Alarm was acknowledged by user %s",
-                                    (user.getFirstName() == null || user.getLastName() == null) ? user.getName() : user.getFirstName() + " " + user.getLastName()))
-                            .put("userId", user.getId().toString())
-                            .put("subtype", "ACK"))
-                    .build();
-            try {
-                alarmCommentService.saveAlarmComment(alarm, alarmComment, user);
-            } catch (ThingsboardException e) {
-                log.error("Failed to save alarm comment", e);
-            }
-            notificationEntityService.notifyCreateOrUpdateAlarm(result.getAlarm(), ActionType.ALARM_ACK, user);
+            String systemComment = String.format("Alarm was acknowledged by user %s", user.getTitle());
+            addSystemAlarmComment(alarmInfo, user, "ACK", systemComment);
+            notificationEntityService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarmInfo,
+                    alarmInfo.getCustomerId(), ActionType.ALARM_ACK, user);
         } else {
             throw new ThingsboardException("Alarm was already acknowledged!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
-        return result.getAlarm();
+        return alarmInfo;
     }
 
     @Override
@@ -130,25 +126,16 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         if (!result.isSuccessful()) {
             throw new ThingsboardException(ThingsboardErrorCode.ITEM_NOT_FOUND);
         }
+        AlarmInfo alarmInfo = result.getAlarm();
         if (result.isCleared()) {
-            AlarmComment alarmComment = AlarmComment.builder()
-                    .alarmId(alarm.getId())
-                    .type(AlarmCommentType.SYSTEM)
-                    .comment(JacksonUtil.newObjectNode().put("text", String.format("Alarm was cleared by user %s",
-                                    (user.getFirstName() == null || user.getLastName() == null) ? user.getName() : user.getFirstName() + " " + user.getLastName()))
-                            .put("userId", user.getId().toString())
-                            .put("subtype", "CLEAR"))
-                    .build();
-            try {
-                alarmCommentService.saveAlarmComment(alarm, alarmComment, user);
-            } catch (ThingsboardException e) {
-                log.error("Failed to save alarm comment", e);
-            }
-            notificationEntityService.notifyCreateOrUpdateAlarm(result.getAlarm(), ActionType.ALARM_CLEAR, user);
+            String systemComment = String.format("Alarm was cleared by user %s", user.getTitle());
+            addSystemAlarmComment(alarmInfo, user, "CLEAR", systemComment);
+            notificationEntityService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarmInfo,
+                    alarmInfo.getCustomerId(), ActionType.ALARM_CLEAR, user);
         } else {
             throw new ThingsboardException("Alarm was already cleared!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
-        return result.getAlarm();
+        return alarmInfo;
     }
 
     @Override
@@ -160,22 +147,10 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         AlarmInfo alarmInfo = result.getAlarm();
         if (result.isModified()) {
             AlarmAssignee assignee = alarmInfo.getAssignee();
-            AlarmComment alarmComment = AlarmComment.builder()
-                    .alarmId(alarm.getId())
-                    .type(AlarmCommentType.SYSTEM)
-                    .comment(JacksonUtil.newObjectNode().put("text", String.format("Alarm was assigned by user %s to user %s",
-                                    (user.getFirstName() == null || user.getLastName() == null) ? user.getName() : user.getFirstName() + " " + user.getLastName(),
-                                    (assignee.getFirstName() == null || assignee.getLastName() == null) ? assignee.getEmail() : assignee.getFirstName() + " " + assignee.getLastName()))
-                            .put("userId", user.getId().toString())
-                            .put("assigneeId", assignee.getId().toString())
-                            .put("subtype", "ASSIGN"))
-                    .build();
-            try {
-                alarmCommentService.saveAlarmComment(alarm, alarmComment, user);
-            } catch (ThingsboardException e) {
-                log.error("Failed to save alarm comment", e);
-            }
-            notificationEntityService.notifyCreateOrUpdateAlarm(result.getAlarm(), ActionType.ALARM_ASSIGN, user);
+            String systemComment = String.format("Alarm was assigned by user %s to user %s", user.getTitle(), assignee.getTitle());
+            addSystemAlarmComment(alarmInfo, user, "ASSIGN", systemComment, assignee.getId());
+            notificationEntityService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarmInfo,
+                    alarmInfo.getCustomerId(), ActionType.ALARM_ASSIGNED, user);
         } else {
             throw new ThingsboardException("Alarm was already assigned to this user!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
@@ -190,20 +165,10 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         }
         AlarmInfo alarmInfo = result.getAlarm();
         if (result.isModified()) {
-            AlarmComment alarmComment = AlarmComment.builder()
-                    .alarmId(alarm.getId())
-                    .type(AlarmCommentType.SYSTEM)
-                    .comment(JacksonUtil.newObjectNode().put("text", String.format("Alarm was unassigned by user %s",
-                                    (user.getFirstName() == null || user.getLastName() == null) ? user.getName() : user.getFirstName() + " " + user.getLastName()))
-                            .put("userId", user.getId().toString())
-                            .put("subtype", "ASSIGN"))
-                    .build();
-            try {
-                alarmCommentService.saveAlarmComment(alarm, alarmComment, user);
-            } catch (ThingsboardException e) {
-                log.error("Failed to save alarm comment", e);
-            }
-            notificationEntityService.notifyCreateOrUpdateAlarm(result.getAlarm(), ActionType.ALARM_UNASSIGN, user);
+            String systemComment = String.format("Alarm was unassigned by user %s", user.getTitle());
+            addSystemAlarmComment(alarmInfo, user, "ASSIGN", systemComment);
+            notificationEntityService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarmInfo,
+                    alarmInfo.getCustomerId(), ActionType.ALARM_UNASSIGNED, user);
         } else {
             throw new ThingsboardException("Alarm was already unassigned!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
@@ -211,15 +176,73 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     }
 
     @Override
+    public List<AlarmId> unassignDeletedUserAlarms(TenantId tenantId, User user, long unassignTs) {
+        List<AlarmId> totalAlarmIds = new ArrayList<>();
+        PageLink pageLink = new PageLink(100, 0, null, new SortOrder("id", SortOrder.Direction.ASC));
+        while (true) {
+            PageData<AlarmId> pageData = alarmService.findAlarmIdsByAssigneeId(user.getTenantId(), user.getId(), pageLink);
+            List<AlarmId> alarmIds = pageData.getData();
+            if (alarmIds.isEmpty()) {
+                break;
+            }
+            processAlarmsUnassignment(tenantId, user, alarmIds, unassignTs);
+            totalAlarmIds.addAll(alarmIds);
+            pageLink = pageLink.nextPageLink();
+        }
+        return totalAlarmIds;
+    }
+
+    @Override
     public Boolean delete(Alarm alarm, User user) {
         TenantId tenantId = alarm.getTenantId();
-        List<EdgeId> relatedEdgeIds = edgeService.findAllRelatedEdgeIds(tenantId, alarm.getOriginator());
-        notificationEntityService.notifyDeleteAlarm(tenantId, alarm, alarm.getOriginator(), alarm.getCustomerId(),
-                relatedEdgeIds, user, JacksonUtil.toString(alarm));
+        notificationEntityService.logEntityAction(tenantId, alarm.getOriginator(), alarm, alarm.getCustomerId(),
+                ActionType.ALARM_DELETE, user);
         return alarmSubscriptionService.deleteAlarm(tenantId, alarm.getId());
     }
 
     private static long getOrDefault(long ts) {
         return ts > 0 ? ts : System.currentTimeMillis();
+    }
+
+    private void processAlarmsUnassignment(TenantId tenantId, User user, List<AlarmId> alarmIds, long unassignTs) {
+        for (AlarmId alarmId : alarmIds) {
+            log.trace("[{}] Unassigning alarm {} userId {}", tenantId, alarmId, user.getId());
+            AlarmApiCallResult result = alarmSubscriptionService.unassignAlarm(user.getTenantId(), alarmId, unassignTs);
+            if (!result.isSuccessful()) {
+                log.error("[{}] Cannot unassign alarm {} userId {}", tenantId, alarmId, user.getId());
+                continue;
+            }
+            if (result.isModified()) {
+                String comment = String.format("Alarm was unassigned because user %s - was deleted", user.getTitle());
+                addSystemAlarmComment(result.getAlarm(), null, "ASSIGN", comment);
+                notificationEntityService.logEntityAction(result.getAlarm().getTenantId(), result.getAlarm().getOriginator(), result.getAlarm(), result.getAlarm().getCustomerId(), ActionType.ALARM_UNASSIGNED, null);
+            }
+        }
+    }
+
+    private void addSystemAlarmComment(Alarm alarm, User user, String subType, String commentText) {
+        addSystemAlarmComment(alarm, user, subType, commentText, null);
+    }
+
+    private void addSystemAlarmComment(Alarm alarm, User user, String subType, String commentText, UserId assigneeId) {
+        ObjectNode commentNode = JacksonUtil.newObjectNode();
+        commentNode.put("text", commentText)
+                .put("subtype", subType);
+        if (user != null) {
+            commentNode.put("userId", user.getId().getId().toString());
+        }
+        if (assigneeId != null) {
+            commentNode.put("assigneeId", assigneeId.getId().toString());
+        }
+        AlarmComment alarmComment = AlarmComment.builder()
+                .alarmId(alarm.getId())
+                .type(AlarmCommentType.SYSTEM)
+                .comment(commentNode)
+                .build();
+        try {
+            alarmCommentService.saveAlarmComment(alarm, alarmComment, user);
+        } catch (ThingsboardException e) {
+            log.error("Failed to save alarm comment", e);
+        }
     }
 }

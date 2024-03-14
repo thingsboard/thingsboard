@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,13 @@ package org.thingsboard.server.dao.alarm;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
+import org.thingsboard.server.common.data.alarm.AlarmQueryV2;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
@@ -66,17 +68,25 @@ public interface AlarmDao extends Dao<Alarm> {
 
     PageData<AlarmInfo> findCustomerAlarms(TenantId tenantId, CustomerId customerId, AlarmQuery query);
 
+    PageData<AlarmInfo> findAlarmsV2(TenantId tenantId, AlarmQueryV2 query);
+
+    PageData<AlarmInfo> findCustomerAlarmsV2(TenantId tenantId, CustomerId customerId, AlarmQueryV2 query);
+
     PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, AlarmDataQuery query, Collection<EntityId> orderedEntityIds);
 
     Set<AlarmSeverity> findAlarmSeverities(TenantId tenantId, EntityId entityId, AlarmStatusFilter asf, String assigneeId);
 
     PageData<AlarmId> findAlarmsIdsByEndTsBeforeAndTenantId(Long time, TenantId tenantId, PageLink pageLink);
 
+    PageData<AlarmId> findAlarmIdsByAssigneeId(TenantId tenantId, UUID userId, PageLink pageLink);
+
     void createEntityAlarmRecord(EntityAlarm entityAlarm);
 
     List<EntityAlarm> findEntityAlarmRecords(TenantId tenantId, AlarmId id);
 
     void deleteEntityAlarmRecords(TenantId tenantId, EntityId entityId);
+
+    void deleteEntityAlarmRecordsByTenantId(TenantId tenantId);
 
     AlarmApiCallResult createOrUpdateActiveAlarm(AlarmCreateOrUpdateActiveRequest request, boolean alarmCreationEnabled);
 
@@ -92,4 +102,7 @@ public interface AlarmDao extends Dao<Alarm> {
 
     long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, AlarmCountQuery query);
 
+    PageData<EntitySubtype> findTenantAlarmTypes(UUID tenantId, PageLink pageLink);
+
+    boolean removeAlarmTypesIfNoAlarmsPresent(UUID tenantId, Set<String> types);
 }

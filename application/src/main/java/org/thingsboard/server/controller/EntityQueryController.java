@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -43,6 +44,8 @@ import org.thingsboard.server.service.query.EntityQueryService;
 import org.thingsboard.server.service.security.permission.Operation;
 
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_DATA_QUERY_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.ATTRIBUTES_SCOPE_ALLOWED_VALUES;
+import static org.thingsboard.server.controller.ControllerConstants.ATTRIBUTES_SCOPE_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_COUNT_QUERY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_DATA_QUERY_DESCRIPTION;
 
@@ -119,14 +122,16 @@ public class EntityQueryController extends BaseController {
             @ApiParam(value = "Include all unique time-series keys to the result.")
             @RequestParam("timeseries") boolean isTimeseries,
             @ApiParam(value = "Include all unique attribute keys to the result.")
-            @RequestParam("attributes") boolean isAttributes) throws ThingsboardException {
+            @RequestParam("attributes") boolean isAttributes,
+            @ApiParam(value = ATTRIBUTES_SCOPE_DESCRIPTION, allowableValues = ATTRIBUTES_SCOPE_ALLOWED_VALUES)
+            @RequestParam(value = "scope", required = false) String scope) throws ThingsboardException {
         TenantId tenantId = getTenantId();
         checkNotNull(query);
         EntityDataPageLink pageLink = query.getPageLink();
         if (pageLink.getPageSize() > MAX_PAGE_SIZE) {
             pageLink.setPageSize(MAX_PAGE_SIZE);
         }
-        return entityQueryService.getKeysByQuery(getCurrentUser(), tenantId, query, isTimeseries, isAttributes);
+        return entityQueryService.getKeysByQuery(getCurrentUser(), tenantId, query, isTimeseries, isAttributes, scope);
     }
 
 }

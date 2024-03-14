@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@ import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
+import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestCallback;
 import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestClient;
-import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -332,7 +332,7 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         doPostAsync("/api/plugins/telemetry/" + savedDevice.getId() + "/SHARED_SCOPE", payload, String.class, status().isOk());
         callback.getSubscribeLatch().await(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         assertEquals(payload.getBytes(), callback.getPayloadBytes());
-        assertEquals(MqttQoS.AT_MOST_ONCE.value(), callback.getQoS());
+        assertEquals(MqttQoS.AT_MOST_ONCE.value(), callback.getMessageArrivedQoS());
     }
 
 }

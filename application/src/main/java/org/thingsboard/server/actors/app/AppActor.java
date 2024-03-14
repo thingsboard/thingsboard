@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.server.actors.app;
 
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.actors.ProcessFailureStrategy;
 import org.thingsboard.server.actors.TbActor;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.TbActorException;
@@ -46,6 +47,7 @@ import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 @Slf4j
@@ -73,17 +75,21 @@ public class AppActor extends ContextAwareActor {
     @Override
     protected boolean doProcess(TbActorMsg msg) {
         if (!ruleChainsInitialized) {
-            initTenantActors();
-            ruleChainsInitialized = true;
-            if (msg.getMsgType() != MsgType.APP_INIT_MSG && msg.getMsgType() != MsgType.PARTITION_CHANGE_MSG) {
-                log.warn("Rule Chains initialized by unexpected message: {}", msg);
+            if (MsgType.APP_INIT_MSG.equals(msg.getMsgType())) {
+                initTenantActors();
+                ruleChainsInitialized = true;
+            } else {
+                if (!msg.getMsgType().isIgnoreOnStart()) {
+                    log.warn("Attempt to initialize Rule Chains by unexpected message: {}", msg);
+                }
+                return true;
             }
         }
         switch (msg.getMsgType()) {
             case APP_INIT_MSG:
                 break;
             case PARTITION_CHANGE_MSG:
-                ctx.broadcastToChildren(msg);
+                ctx.broadcastToChildren(msg, true);
                 break;
             case COMPONENT_LIFE_CYCLE_MSG:
                 onComponentLifecycleMsg((ComponentLifecycleMsg) msg);
@@ -125,8 +131,11 @@ public class AppActor extends ContextAwareActor {
                 PageDataIterable<Tenant> tenantIterator = new PageDataIterable<>(tenantService::findTenants, ENTITY_PACK_LIMIT);
                 for (Tenant tenant : tenantIterator) {
                     log.debug("[{}] Creating tenant actor", tenant.getId());
-                    getOrCreateTenantActor(tenant.getId());
-                    log.debug("[{}] Tenant actor created.", tenant.getId());
+                    getOrCreateTenantActor(tenant.getId()).ifPresentOrElse(tenantActor -> {
+                        log.debug("[{}] Tenant actor created.", tenant.getId());
+                    }, () -> {
+                        log.debug("[{}] Skipped actor creation", tenant.getId());
+                    });
                 }
             }
             log.info("Main system actor started.");
@@ -139,11 +148,9 @@ public class AppActor extends ContextAwareActor {
         if (TenantId.SYS_TENANT_ID.equals(msg.getTenantId())) {
             msg.getMsg().getCallback().onFailure(new RuleEngineException("Message has system tenant id!"));
         } else {
-            if (!deletedTenants.contains(msg.getTenantId())) {
-                getOrCreateTenantActor(msg.getTenantId()).tell(msg);
-            } else {
-                msg.getMsg().getCallback().onSuccess();
-            }
+            getOrCreateTenantActor(msg.getTenantId()).ifPresentOrElse(actor -> {
+                actor.tell(msg);
+            }, () -> msg.getMsg().getCallback().onSuccess());
         }
     }
 
@@ -160,12 +167,13 @@ public class AppActor extends ContextAwareActor {
                     log.info("[{}] Handling tenant deleted notification: {}", msg.getTenantId(), msg);
                     deletedTenants.add(tenantId);
                     ctx.stop(new TbEntityActorId(tenantId));
-                } else {
-                    target = getOrCreateTenantActor(msg.getTenantId());
+                    return;
                 }
-            } else {
-                target = getOrCreateTenantActor(msg.getTenantId());
             }
+            target = getOrCreateTenantActor(msg.getTenantId()).orElseGet(() -> {
+                log.debug("Ignoring component lifecycle msg for tenant {} because it is not managed by this service", msg.getTenantId());
+                return null;
+            });
         }
         if (target != null) {
             target.tellWithHighPriority(msg);
@@ -175,24 +183,27 @@ public class AppActor extends ContextAwareActor {
     }
 
     private void onToDeviceActorMsg(TenantAwareMsg msg, boolean priority) {
-        if (!deletedTenants.contains(msg.getTenantId())) {
-            TbActorRef tenantActor = getOrCreateTenantActor(msg.getTenantId());
+        getOrCreateTenantActor(msg.getTenantId()).ifPresentOrElse(tenantActor -> {
             if (priority) {
                 tenantActor.tellWithHighPriority(msg);
             } else {
                 tenantActor.tell(msg);
             }
-        } else {
+        }, () -> {
             if (msg instanceof TransportToDeviceActorMsgWrapper) {
                 ((TransportToDeviceActorMsgWrapper) msg).getCallback().onSuccess();
             }
-        }
+        });
     }
 
-    private TbActorRef getOrCreateTenantActor(TenantId tenantId) {
-        return ctx.getOrCreateChildActor(new TbEntityActorId(tenantId),
+    private Optional<TbActorRef> getOrCreateTenantActor(TenantId tenantId) {
+        if (deletedTenants.contains(tenantId)) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(ctx.getOrCreateChildActor(new TbEntityActorId(tenantId),
                 () -> DefaultActorService.TENANT_DISPATCHER_NAME,
-                () -> new TenantActor.ActorCreator(systemContext, tenantId));
+                () -> new TenantActor.ActorCreator(systemContext, tenantId),
+                () -> true));
     }
 
     private void onToEdgeSessionMsg(EdgeSessionMsg msg) {
@@ -200,13 +211,19 @@ public class AppActor extends ContextAwareActor {
         if (ModelConstants.SYSTEM_TENANT.equals(msg.getTenantId())) {
             log.warn("Message has system tenant id: {}", msg);
         } else {
-            target = getOrCreateTenantActor(msg.getTenantId());
+            target = getOrCreateTenantActor(msg.getTenantId()).orElse(null);
         }
         if (target != null) {
             target.tellWithHighPriority(msg);
         } else {
             log.debug("[{}] Invalid edge session msg: {}", msg.getTenantId(), msg);
         }
+    }
+
+    @Override
+    public ProcessFailureStrategy onProcessFailure(TbActorMsg msg, Throwable t) {
+        log.error("Failed to process msg: {}", msg, t);
+        return doProcessFailure(t);
     }
 
     public static class ActorCreator extends ContextBasedCreator {

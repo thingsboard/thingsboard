@@ -1,0 +1,37 @@
+{
+  "fqn": "illuminance_progress_bar",
+  "name": "Illuminance progress bar",
+  "deprecated": false,
+  "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAAn1BMVEXg4ODf39/g4OAAAADg4ODf39/////YGDjg4OAhISH29vbj4+NYWFiQkJDx8fE9PT2srKzIyMjdNVF0dHS6urriUmkvLy/64ubv7+/wqLT1xc2enp798fOGhobsjJyXl5faJkX309qpqanpfY+CgoLnboLumqjfQ13aJkTV1dVKSkrCwsLzt8Hc3Nx+fn6xsbHx2d3wqbTkYHZmZmbgRF3eeSPoAAAABnRSTlPvIL8Ar7DvmsykAAAEHklEQVR42uzYXWsaQRTGcW3Ckxxm58zIbKchUySltlRv8/2/W8/oipYQt5ALn8j5w67zohc/dBfZxd3yy+Lxs3e/vFssF0/49Kkx7hU30JP9rHATLW4F8ugQshzClkPYcghbDmHLIWw5hC2HsOUQthzC1gXImBVBBmCQgPcqDRxdgAyymoVsZQeOPgjBiuXx3v9CxmiYVdz2YyybgP0JGjMQm8aSYYVWYke3pu2woq2/zwqxtIBT14IUmyBKtiPVKrX0UzjsS01JZAOMte5ERiDVVEUKEJLYVutbYsMzCQHkVW2WFBtpE8SWQ63ATgJWfSX1rSpA2Q+qajJE7thjBJAI5Ol0hABIAktDkDRNOkuMh1x0lAKgJpzHCwmDWBOkf6xv74tyCKeYIUlWinOIHu/OTV5zD6euBhmBzQykG/QcglTV/EPYXzlQnHUlSJOUY52BVIl59w+kyS5HSX1ScksEFzuKSJ37RrZJpCTREwSGl8FetYgNrnD7fZsGzBf03SW1wdv8369D2HMIWw5hyyFsOYQth7DlELYcwpZD2HIIWw5hyyFsOYQth7DlELYcwpZD2HIIWw5hawby4/n5G459txlYuwj5/fJgfZ0o6z57WYOzS5D1w6E/e8mvafYTlF2A/GW/DlYchKEoDO/OARddXAhBCUEpSVy4mJa+/7NNHK0MjEQKQ3tL89PS2lW+xkS1JDu4M2kAtOTNwgqp8/QqQCYyAHA9RwBX0gLotE5JAdKSLXKGBNAzYa6nQGMFyP3PFwrgSIO5REJjBQiE4wR40gP2DjErJA5QVQlihex7MmAHIi1UVYI4z7nx8u6QGxnaKGTch0wDMGjxlHctD8AJR7cLifl30bIZFyCGtMhFsv27a2UIzNmLg47KELfOTASWy+L8mTaI7fVc5guQK5dhBnICwnLUkWGDQEYtE3KwRmS51xL3I5ABnZB2g3gxWpZICYLAtQm5M5c87hDLi1VzbpUgaIU5s47VC8k+YoNIANSs9sMnxMH9PrLQ2qc8s79PFaKtCtFWhWirQrRVIdqqEG19AMQaPr301Rz1OCTxBZnmsIchfElN7lR6PQ4xfEEpj/W/Z8QmPj2zrJHT/N7/0nzwrvVmVYi2KuS7vbtncRiGATDstHcvxSUH4TwIihBkCybJ//9390HmQtrBaqoXvOvBg0Z5KyDeugOpvRUal+sIiJnJNtB+iKhgM03LuiowVgZj1iyL7IdMNyjNv0QUUCEv1BXGYT9kGN1Avv9fKQHxAlGBhfogRJbMbaJpG8RmJmM20Ot+CEV7o20b5Kr2J1j7vvAAhJzxkmwDvfdmf60C4q2AeCsg3gqItwLirYB4KyDeCoi3AuKtgHjrQJDEIbqk0wFOT8PXZ+qSl+s0TyS/jHP3cXn10qk7/wALYyfOKq+pZAAAAABJRU5ErkJggg==",
+  "description": "Displays illuminance reading as a horizontal progress bar. Allows to configure value range, bar colors, and other settings.",
+  "descriptor": {
+    "type": "latest",
+    "sizeX": 3,
+    "sizeY": 2,
+    "resources": [],
+    "templateHtml": "<tb-progress-bar-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-progress-bar-widget>",
+    "templateCss": "",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.progressBarWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.progressBarWidget.onDataUpdated();\n};\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        previewWidth: '280px',\n        previewHeight: '180px',\n        embedTitlePanel: true,\n        defaultDataKeysFunction: function() {\n            return [{ name: 'illuminance', label: 'Illuminance', type: 'timeseries' }];\n        }\n    };\n};\n\n\nself.onDestroy = function() {\n};\n",
+    "settingsSchema": "",
+    "dataKeySettingsSchema": "",
+    "settingsDirective": "tb-progress-bar-widget-settings",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-progress-bar-basic-config",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Illuminance\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.2392660816082064,\"funcBody\":\"var value = prevValue + Math.random() * 7;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 100) {\\n\\tvalue = 0;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}],\"alarmFilterConfig\":{\"statusList\":[\"ACTIVE\"]}}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":true,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"layout\":\"default\",\"autoScale\":true,\"showValue\":true,\"valueFont\":{\"family\":\"Roboto\",\"size\":24,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\",\"lineHeight\":\"32px\"},\"valueColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"rangeList\":[{\"from\":null,\"to\":1,\"color\":\"rgba(0, 0, 0, 0.76)\"},{\"from\":1,\"to\":5,\"color\":\"#FFA600\"},{\"from\":5,\"to\":20,\"color\":\"#F36900\"},{\"from\":20,\"to\":50,\"color\":\"#F04022\"},{\"from\":50,\"to\":null,\"color\":\"#D81838\"}],\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"tickMin\":0,\"tickMax\":100,\"showTicks\":true,\"ticksFont\":{\"family\":\"Roboto\",\"size\":11,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"400\",\"lineHeight\":\"16px\"},\"ticksColor\":\"rgba(0,0,0,0.54)\",\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}},\"barColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\",\"rangeList\":[{\"from\":null,\"to\":1,\"color\":\"rgba(0, 0, 0, 0.76)\"},{\"from\":1,\"to\":5,\"color\":\"#FFA600\"},{\"from\":5,\"to\":20,\"color\":\"#F36900\"},{\"from\":20,\"to\":50,\"color\":\"#F04022\"},{\"from\":50,\"to\":null,\"color\":\"#D81838\"}]},\"barBackground\":\"rgba(0, 0, 0, 0.04)\"},\"title\":\"Illuminance\",\"dropShadow\":true,\"enableFullscreen\":false,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"units\":\"lx\",\"decimals\":0,\"useDashboardTimewindow\":true,\"showLegend\":false,\"widgetStyle\":{},\"actions\":{},\"configMode\":\"basic\",\"displayTimewindow\":true,\"margin\":\"0px\",\"borderRadius\":\"0px\",\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showTitleIcon\":false,\"titleTooltip\":\"\",\"titleFont\":{\"size\":16,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\",\"lineHeight\":\"24px\"},\"titleIcon\":\"mdi:lightbulb-on\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"iconSize\":\"18px\",\"timewindowStyle\":{\"showIcon\":true,\"iconSize\":\"14px\",\"icon\":\"query_builder\",\"iconPosition\":\"left\",\"font\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1\"},\"color\":null},\"titleColor\":\"rgba(0, 0, 0, 0.87)\"}"
+  },
+  "externalId": null,
+  "tags": [
+    "progress",
+    "weather",
+    "environment",
+    "brightness",
+    "luminance",
+    "luminosity",
+    "light",
+    "light level",
+    "light intensity",
+    "lux",
+    "candela",
+    "foot-candle"
+  ]
+}

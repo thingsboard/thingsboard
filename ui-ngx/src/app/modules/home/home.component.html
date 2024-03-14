@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@
         <div [fxShow]="displaySearchMode()" fxFlex fxLayout="row" class="tb-dark">
           <mat-form-field fxFlex class="tb-appearance-transparent">
             <input #searchInput matInput
-                   [(ngModel)]="searchText"
+                   [formControl]="textSearch"
                    placeholder="{{ 'common.enter-search' | translate }}"/>
           </mat-form-field>
         </div>

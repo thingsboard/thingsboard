@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.thingsboard.server.msa.connectivity;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -25,9 +26,11 @@ import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.awaitility.Awaitility;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+import org.thingsboard.common.util.AbstractListeningExecutor;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.mqtt.MqttClient;
 import org.thingsboard.mqtt.MqttClientConfig;
@@ -74,8 +77,18 @@ import static org.thingsboard.server.msa.prototypes.DevicePrototypes.defaultDevi
 public class MqttClientTest extends AbstractContainerTest {
 
     private Device device;
+    AbstractListeningExecutor handlerExecutor;
+
     @BeforeMethod
     public void setUp() throws Exception {
+        this.handlerExecutor = new AbstractListeningExecutor() {
+            @Override
+            protected int getThreadPollSize() {
+                return 4;
+            }
+        };
+        handlerExecutor.init();
+
         testRestClient.login("tenant@thingsboard.org", "tenant");
         device = testRestClient.postDevice("", defaultDevicePrototype("http_"));
     }
@@ -83,6 +96,9 @@ public class MqttClientTest extends AbstractContainerTest {
     @AfterMethod
     public void tearDown() {
         testRestClient.deleteDeviceIfExists(device.getId());
+        if (handlerExecutor != null) {
+            handlerExecutor.destroy();
+        }
     }
     @Test
     public void telemetryUpload() throws Exception {
@@ -322,8 +338,12 @@ public class MqttClientTest extends AbstractContainerTest {
         MqttClient mqttClient = getMqttClient(deviceCredentials, listener);
 
         testRestClient.deleteDeviceIfExists(device.getId());
-        TimeUnit.SECONDS.sleep(3 * timeoutMultiplier);
-        assertThat(mqttClient.isConnected()).isFalse();
+
+        Awaitility
+                .await()
+                .alias("Check device connection.")
+                .atMost(10, TimeUnit.SECONDS)
+                .until(() -> !mqttClient.isConnected());
     }
 
     @Test
@@ -461,11 +481,16 @@ public class MqttClientTest extends AbstractContainerTest {
         return getMqttClient(deviceCredentials.getCredentialsId(), listener);
     }
 
+    private String getOwnerId() {
+        return "Tenant[" + device.getTenantId().getId() + "]MqttClientTestDevice[" + device.getId().getId() + "]";
+    }
+
     private MqttClient getMqttClient(String username, MqttMessageListener listener) throws InterruptedException, ExecutionException {
         MqttClientConfig clientConfig = new MqttClientConfig();
+        clientConfig.setOwnerId(getOwnerId());
         clientConfig.setClientId("MQTT client from test");
         clientConfig.setUsername(username);
-        MqttClient mqttClient = MqttClient.create(clientConfig, listener);
+        MqttClient mqttClient = MqttClient.create(clientConfig, listener, handlerExecutor);
         mqttClient.connect("localhost", 1883).get();
         return mqttClient;
     }
@@ -479,9 +504,10 @@ public class MqttClientTest extends AbstractContainerTest {
         }
 
         @Override
-        public void onMessage(String topic, ByteBuf message) {
+        public ListenableFuture<Void> onMessage(String topic, ByteBuf message) {
             log.info("MQTT message [{}], topic [{}]", message.toString(StandardCharsets.UTF_8), topic);
             events.add(new MqttEvent(topic, message.toString(StandardCharsets.UTF_8)));
+            return Futures.immediateVoidFuture();
         }
     }
 

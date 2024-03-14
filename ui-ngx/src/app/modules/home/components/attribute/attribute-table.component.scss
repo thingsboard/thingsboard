@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@
         overflow: auto;
         .mat-mdc-table {
           table-layout: fixed;
+          min-width: 450px;
         }
       }
 
@@ -64,6 +65,22 @@
         margin-left: auto;
         overflow: hidden;
         text-overflow: ellipsis;
+      }
+
+      .ellipsis {
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .attribute-copy {
+        visibility: hidden;
+        transition: visibility 0.1s;
+      }
+
+      .attribute:hover {
+        .attribute-copy {
+          visibility: visible;
+        }
       }
     }
   }
@@ -87,7 +104,7 @@
   }
   mat-cell.tb-value-cell {
     cursor: pointer;
-    mat-icon {
+    .mat-icon {
       height: 24px;
       width: 24px;
       font-size: 24px;

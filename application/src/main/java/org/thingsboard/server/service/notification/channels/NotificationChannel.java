@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.notification.channels;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.targets.NotificationRecipient;
@@ -24,9 +23,9 @@ import org.thingsboard.server.service.notification.NotificationProcessingContext
 
 public interface NotificationChannel<R extends NotificationRecipient, T extends DeliveryMethodNotificationTemplate> {
 
-    ListenableFuture<Void> sendNotification(R recipient, T processedTemplate, NotificationProcessingContext ctx);
+    void sendNotification(R recipient, T processedTemplate, NotificationProcessingContext ctx) throws Exception;
 
-    boolean check(TenantId tenantId);
+    void check(TenantId tenantId) throws Exception;
 
     NotificationDeliveryMethod getDeliveryMethod();
 

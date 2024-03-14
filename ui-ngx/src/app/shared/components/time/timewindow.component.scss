@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,51 @@
  * limitations under the License.
  */
 :host {
-  min-width: 52px;
+  min-width: 48px;
   margin: 8px 0;
+  max-width: 100%;
+  &.no-margin {
+    margin: 0;
+  }
+  .mdc-button {
+    max-width: 100%;
+  }
   section.tb-timewindow {
-    min-height: 32px;
-    padding: 0 6px;
+    padding: 0 8px;
+    &.no-padding {
+      padding: 0;
+    }
+    line-height: 32px;
+    pointer-events: all;
+    cursor: pointer;
+    display: flex;
+    flex-direction: row;
+    place-content: center flex-start;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
 
-    span {
+    .tb-timewindow-label {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      pointer-events: all;
-      cursor: pointer;
     }
 
     .timezone-abbr {
       font-weight: 500;
+    }
+  }
+}
+
+:host ::ng-deep {
+  .mdc-button {
+    .mat-icon {
+      min-width: 24px;
+    }
+    .mdc-button__label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
   }
 }

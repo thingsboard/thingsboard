@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import javax.annotation.PreDestroy;
 import java.security.cert.X509Certificate;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CONNECTION_ID_LENGTH;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CURVES_ONLY;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RETRANSMISSION_TIMEOUT;
@@ -139,6 +140,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
         dtlsConfig.set(DTLS_RECOMMENDED_CURVES_ONLY, config.isRecommendedSupportedGroups());
         dtlsConfig.set(DTLS_RECOMMENDED_CIPHER_SUITES_ONLY, config.isRecommendedCiphers());
         dtlsConfig.set(DTLS_RETRANSMISSION_TIMEOUT, config.getDtlsRetransmissionTimeout(), MILLISECONDS);
+        dtlsConfig.set(DTLS_CONNECTION_ID_LENGTH, config.getDtlsConnectionIdLength());
         dtlsConfig.set(DTLS_ROLE, SERVER_ONLY);
 
         /*  Create credentials */

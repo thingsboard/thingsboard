@@ -1,0 +1,34 @@
+{
+  "fqn": "control_widgets.persistent_table",
+  "name": "Persistent RPC table",
+  "deprecated": false,
+  "image": "data:image/png;base64,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",
+  "description": "Displays Persistent RPC requests based on entity alias and optional filter with the ability of pagination. It also allows to resend or delete selected RPC requests.",
+  "descriptor": {
+    "type": "rpc",
+    "sizeX": 7.5,
+    "sizeY": 4,
+    "resources": [],
+    "templateHtml": "<tb-persistent-table-widget [ctx]='ctx'></tb-persistent-table-widget>",
+    "templateCss": "",
+    "controllerScript": "self.onInit = function() {\n}\n\nself.onResize = function() {\n}\n\nself.onDestroy = function() {\n}\n",
+    "settingsSchema": "",
+    "dataKeySettingsSchema": "{}\n",
+    "settingsDirective": "tb-persistent-table-widget-settings",
+    "defaultConfig": "{\"showTitle\":true,\"backgroundColor\":\"#fff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"8px\",\"settings\":{\"enableStickyAction\":true,\"enableFilter\":true,\"displayPagination\":true,\"defaultPageSize\":10,\"enableStickyHeader\":true,\"displayColumns\":[\"rpcId\",\"messageType\",\"status\",\"method\",\"createdTime\",\"expirationTime\"],\"displayDetails\":true,\"defaultSortOrder\":\"-createdTime\",\"allowSendRequest\":true,\"allowDelete\":true},\"title\":\"Persistent RPC table\",\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400,\"padding\":\"5px 10px\"}}"
+  },
+  "externalId": null,
+  "tags": [
+    "command",
+    "downlink",
+    "device configuration",
+    "device control",
+    "invocation",
+    "remote method",
+    "remote function",
+    "interface",
+    "subroutine call",
+    "inter-process communication",
+    "server request"
+  ]
+}

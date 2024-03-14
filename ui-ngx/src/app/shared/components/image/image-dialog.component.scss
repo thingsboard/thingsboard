@@ -1,0 +1,96 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import '../../../../scss/constants';
+
+:host {
+  .tb-image-dialog {
+    @media #{$mat-gt-xs} {
+      width: 50vh;
+    }
+    .mat-mdc-dialog-content {
+      max-height: 100%;
+    }
+    fieldset {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+  }
+  .tb-image-container {
+    height: 100%;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+
+    .tb-image-content {
+      height: 100%;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      .tb-image-preview-container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        border: 1px solid rgba(0, 0, 0, 0.12);
+        border-radius: 4px;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1;
+        .tb-image-preview-spacer {
+          @media #{$mat-gt-xs} {
+            margin-top: 100%;
+          }
+        }
+        .tb-image-preview {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+        }
+      }
+      .tb-image-preview-details {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: rgba(0, 0, 0, 0.38);
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 20px;
+        .mat-divider.mat-divider-vertical {
+          height: 20px;
+        }
+      }
+      .tb-image-actions {
+        display: flex;
+        align-items: center;
+        align-self: stretch;
+        justify-content: space-between;
+        gap: 8px;
+        color: rgba(0,0,0,0.54);
+      }
+    }
+  }
+}

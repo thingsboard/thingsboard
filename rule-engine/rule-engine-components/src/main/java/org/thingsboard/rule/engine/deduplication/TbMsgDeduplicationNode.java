@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.deduplication;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
@@ -24,10 +25,11 @@ import org.thingsboard.rule.engine.api.RuleNodeCacheService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.cache.TbAbstractCacheBasedRuleNode;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -43,15 +45,20 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static org.thingsboard.server.common.data.DataConstants.QUEUE_NAME;
+
 @RuleNode(
         type = ComponentType.TRANSFORMATION,
         name = "deduplication",
         configClazz = TbMsgDeduplicationNodeConfiguration.class,
-        nodeDescription = "Deduplicate messages for a configurable period based on a specified deduplication strategy.",
-        nodeDetails = "Rule node allows you to select one of the following strategy to deduplicate messages: <br></br>" +
-                "<b>FIRST</b> - return first message that arrived during deduplication period.<br></br>" +
-                "<b>LAST</b> - return last message that arrived during deduplication period.<br></br>" +
-                "<b>ALL</b> - return all messages as a single JSON array message. Where each element represents object with <b>msg</b> and <b>metadata</b> inner properties.<br></br>" +
+        version = 1,
+        hasQueueName = true,
+        nodeDescription = "Deduplicate messages within the same originator entity for a configurable period " +
+                "based on a specified deduplication strategy.",
+        nodeDetails = "Deduplication strategies: <ul><li><strong>FIRST</strong> - return first message that arrived during deduplication period.</li>" +
+                "<li><strong>LAST</strong> - return last message that arrived during deduplication period.</li>" +
+                "<li><strong>ALL</strong> - return all messages as a single JSON array message. " +
+                "Where each element represents object with <strong><i>msg</i></strong> and <strong><i>metadata</i></strong> inner properties.</li></ul>" +
                 "<b>Important note:</b> If the incoming message is processed in the queue with a sequential processing strategy configured, " +
                 "the message acknowledgment that used in the rule node logic will trigger the next message to be processed by the queue.",
         icon = "content_copy",
@@ -61,16 +68,17 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class TbMsgDeduplicationNode extends TbAbstractCacheBasedRuleNode<TbMsgDeduplicationNodeConfiguration, DeduplicationData> {
 
-    private static final String TB_MSG_DEDUPLICATION_TIMEOUT_MSG = "TbMsgDeduplicationNodeMsg";
     private static final String DEDUPLICATION_IDS_CACHE_KEY = "deduplication_ids";
     private static final int TB_MSG_DEDUPLICATION_RETRY_DELAY = 10;
 
     private long deduplicationInterval;
+    private String queueName;
 
     @Override
-    protected TbMsgDeduplicationNodeConfiguration loadRuleNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
+    protected TbMsgDeduplicationNodeConfiguration loadRuleNodeConfiguration(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         TbMsgDeduplicationNodeConfiguration config = TbNodeUtils.convert(configuration, TbMsgDeduplicationNodeConfiguration.class);
         this.deduplicationInterval = TimeUnit.SECONDS.toMillis(config.getInterval());
+        this.queueName = ctx.getQueueName();
         return config;
     }
 
@@ -91,27 +99,27 @@ public class TbMsgDeduplicationNode extends TbAbstractCacheBasedRuleNode<TbMsgDe
         TopicPartitionInfo tpi = ctx.getTopicPartitionInfo(id);
         if (!tpi.isMyPartition()) {
             log.trace("[{}][{}][{}] Ignore msg from entity that doesn't belong to local partition!", ctx.getSelfId(), tpi.getFullTopicName(), id);
-        } else {
-            Integer partition = tpi.getPartition().orElse(DEFAULT_PARTITION);
-            Set<EntityId> entityIds = partitionsEntityIdsMap.computeIfAbsent(partition, k -> new HashSet<>());
-            boolean entityIdAdded = entityIds.add(id);
-            DeduplicationData deduplicationMsgs = entityIdValuesMap.computeIfAbsent(id, k -> new DeduplicationData());
-            if (deduplicationMsgs.size() >= config.getMaxPendingMsgs()) {
-                log.trace("[{}] Max limit of pending messages reached for deduplication id: [{}]", ctx.getSelfId(), id);
-                ctx.tellFailure(msg, new RuntimeException("[" + ctx.getSelfId() + "] Max limit of pending messages reached for deduplication id: [" + id + "]"));
-            } else {
-                log.trace("[{}][{}] Adding msg: [{}][{}] to the pending msgs map ...", ctx.getSelfId(), id, msg.getId(), msg.getMetaDataTs());
-                deduplicationMsgs.add(msg);
-                getCacheIfPresentAndExecute(ctx, cache -> {
-                    if (entityIdAdded) {
-                        cache.add(getEntityIdsCacheKey(), id);
-                    }
-                    cache.add(id, partition, msg);
-                });
-                ctx.ack(msg);
-                scheduleTickMsg(ctx, id, deduplicationMsgs);
-            }
+            return;
         }
+        Integer partition = tpi.getPartition().orElse(DEFAULT_PARTITION);
+        Set<EntityId> entityIds = partitionsEntityIdsMap.computeIfAbsent(partition, k -> new HashSet<>());
+        boolean entityIdAdded = entityIds.add(id);
+        DeduplicationData deduplicationMsgs = entityIdValuesMap.computeIfAbsent(id, k -> new DeduplicationData());
+        if (deduplicationMsgs.size() >= config.getMaxPendingMsgs()) {
+            log.trace("[{}] Max limit of pending messages reached for deduplication id: [{}]", ctx.getSelfId(), id);
+            ctx.tellFailure(msg, new RuntimeException("[" + ctx.getSelfId() + "] Max limit of pending messages reached for deduplication id: [" + id + "]"));
+            return;
+        }
+        log.trace("[{}][{}] Adding msg: [{}][{}] to the pending msgs map ...", ctx.getSelfId(), id, msg.getId(), msg.getMetaDataTs());
+        deduplicationMsgs.add(msg);
+        getCacheIfPresentAndExecute(ctx, cache -> {
+            if (entityIdAdded) {
+                cache.add(getEntityIdsCacheKey(), id);
+            }
+            cache.add(id, partition, msg);
+        });
+        ctx.ack(msg);
+        scheduleTickMsg(ctx, id, deduplicationMsgs);
     }
 
     @Override
@@ -149,7 +157,7 @@ public class TbMsgDeduplicationNode extends TbAbstractCacheBasedRuleNode<TbMsgDe
                         }
                     }
                     deduplicationResults.add(new TbPair<>(TbMsg.newMsg(
-                            config.getQueueName(),
+                            queueName,
                             config.getOutMsgType(),
                             deduplicationId,
                             getMetadata(packBounds.getFirst()),
@@ -171,15 +179,14 @@ public class TbMsgDeduplicationNode extends TbAbstractCacheBasedRuleNode<TbMsgDe
                         }
                     }
                     if (resultMsg != null) {
-                        TbMsg newMsg = TbMsg.newMsg(
-                                resultMsg.getQueueName(),
+                        deduplicationResults.add(new TbPair<>(TbMsg.newMsg(
+                                queueName != null ? queueName : resultMsg.getQueueName(),
                                 resultMsg.getType(),
                                 resultMsg.getOriginator(),
                                 resultMsg.getCustomerId(),
                                 resultMsg.getMetaData(),
                                 resultMsg.getData()
-                        );
-                        deduplicationResults.add(new TbPair<>(newMsg, pack));
+                        ), pack));
                     }
                 }
                 packBoundsOpt = findValidPack(msgList, deduplicationTimeoutMs);
@@ -193,8 +200,8 @@ public class TbMsgDeduplicationNode extends TbAbstractCacheBasedRuleNode<TbMsgDe
     }
 
     @Override
-    protected String getTickMsgType() {
-        return TB_MSG_DEDUPLICATION_TIMEOUT_MSG;
+    protected TbMsgType getTickMsgType() {
+        return TbMsgType.DEDUPLICATION_TIMEOUT_SELF_MSG;
     }
 
     @Override
@@ -215,7 +222,7 @@ public class TbMsgDeduplicationNode extends TbAbstractCacheBasedRuleNode<TbMsgDe
     }
 
     private void scheduleTickMsg(TbContext ctx, EntityId deduplicationId, long delayMs) {
-        ctx.tellSelf(ctx.newMsg(null, getTickMsgType(), deduplicationId, EMPTY_META_DATA, EMPTY_DATA), delayMs);
+        ctx.tellSelf(ctx.newMsg(null, getTickMsgType(), deduplicationId, TbMsgMetaData.EMPTY, EMPTY_DATA), delayMs);
     }
 
     private Optional<TbPair<Long, Long>> findValidPack(List<TbMsg> msgs, long deduplicationTimeoutMs) {
@@ -237,7 +244,7 @@ public class TbMsgDeduplicationNode extends TbAbstractCacheBasedRuleNode<TbMsgDe
             log.trace("[{}][{}] Removing deduplication messages pack due to max enqueue retry attempts exhausted!", ctx.getSelfId(), outMsg.getOriginator());
             getCacheIfPresentAndExecute(ctx, cache -> cache.removeTbMsgList(outMsg.getOriginator(), partition, msgsToRemoveFromCache));
         } else {
-            ctx.enqueueForTellNext(outMsg, TbRelationTypes.SUCCESS,
+            ctx.enqueueForTellNext(outMsg, TbNodeConnectionType.SUCCESS,
                     () -> {
                         log.trace("[{}][{}][{}] Successfully enqueue deduplication result message!", ctx.getSelfId(), outMsg.getOriginator(), retryAttempt);
                         getCacheIfPresentAndExecute(ctx, cache -> cache.removeTbMsgList(outMsg.getOriginator(), partition, msgsToRemoveFromCache));
@@ -250,7 +257,7 @@ public class TbMsgDeduplicationNode extends TbAbstractCacheBasedRuleNode<TbMsgDe
     }
 
     private String getMergedData(List<TbMsg> msgs) {
-        ArrayNode mergedData = JacksonUtil.OBJECT_MAPPER.createArrayNode();
+        ArrayNode mergedData = JacksonUtil.newArrayNode();
         msgs.forEach(msg -> {
             ObjectNode msgNode = JacksonUtil.newObjectNode();
             msgNode.set("msg", JacksonUtil.toJsonNode(msg.getData()));
@@ -264,6 +271,22 @@ public class TbMsgDeduplicationNode extends TbAbstractCacheBasedRuleNode<TbMsgDe
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("ts", String.valueOf(packStartTs));
         return metaData;
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0:
+                if (oldConfiguration.has(QUEUE_NAME)) {
+                    hasChanges = true;
+                    ((ObjectNode) oldConfiguration).remove(QUEUE_NAME);
+                }
+                break;
+            default:
+                break;
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
     }
 
 }

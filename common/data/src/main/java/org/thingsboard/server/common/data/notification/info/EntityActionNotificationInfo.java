@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ public class EntityActionNotificationInfo implements RuleOriginatedNotificationI
     private CustomerId entityCustomerId;
 
     private UUID userId;
+    private String userTitle;
     private String userEmail;
     private String userFirstName;
     private String userLastName;
@@ -52,6 +53,7 @@ public class EntityActionNotificationInfo implements RuleOriginatedNotificationI
                 "entityName", entityName,
                 "actionType", actionType.name().toLowerCase(),
                 "userId", userId.toString(),
+                "userTitle", userTitle,
                 "userEmail", userEmail,
                 "userFirstName", userFirstName,
                 "userLastName", userLastName

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,10 @@ public enum BulkImportColumnType {
     LWM2M_SERVER_SECURITY_MODE("securityMode", LwM2MSecurityMode.NO_SEC.name()),
     LWM2M_SERVER_CLIENT_PUBLIC_KEY_OR_ID("clientPublicKeyOrId"),
     LWM2M_SERVER_CLIENT_SECRET_KEY("clientSecretKey"),
+    SNMP_HOST,
+    SNMP_PORT,
+    SNMP_VERSION,
+    SNMP_COMMUNITY_STRING,
     IS_GATEWAY,
     DESCRIPTION,
     ROUTING_KEY,

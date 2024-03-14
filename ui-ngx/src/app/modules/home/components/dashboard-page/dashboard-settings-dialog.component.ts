@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,14 +19,12 @@ import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
-import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DashboardSettings, GridSettings, StateControllerId } from '@app/shared/models/dashboard.models';
 import { isDefined, isUndefined } from '@core/utils';
-import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { StatesControllerService } from './states/states-controller.service';
 
 export interface DashboardSettingsDialogData {
@@ -46,21 +44,23 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
   settings: DashboardSettings;
   gridSettings: GridSettings;
 
-  settingsFormGroup: UntypedFormGroup;
-  gridSettingsFormGroup: UntypedFormGroup;
+  settingsFormGroup: FormGroup;
+  gridSettingsFormGroup: FormGroup;
 
   stateControllerIds: string[];
 
   submitted = false;
+
+  private stateControllerTranslationMap = new Map<string, string>([
+    ['default', 'dashboard.state-controller-default'],
+  ]);
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: DashboardSettingsDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<DashboardSettingsDialogComponent, DashboardSettingsDialogData>,
-              private fb: UntypedFormBuilder,
-              private utils: UtilsService,
-              private dashboardUtils: DashboardUtilsService,
+              private fb: FormBuilder,
               private translate: TranslateService,
               private statesControllerService: StatesControllerService) {
     super(store, router, dialogRef);
@@ -156,6 +156,7 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
         columns: [this.gridSettings.columns || 24, [Validators.required, Validators.min(10), Validators.max(1000)]],
         margin: [isDefined(this.gridSettings.margin) ? this.gridSettings.margin : 10,
           [Validators.required, Validators.min(0), Validators.max(50)]],
+        outerMargin: [isUndefined(this.gridSettings.outerMargin) ? true : this.gridSettings.outerMargin, []],
         autoFillHeight: [isUndefined(this.gridSettings.autoFillHeight) ? false : this.gridSettings.autoFillHeight, []],
         backgroundColor: [this.gridSettings.backgroundColor || 'rgba(0,0,0,0)', []],
         backgroundImageUrl: [this.gridSettings.backgroundImageUrl, []],
@@ -181,7 +182,7 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
   ngOnInit(): void {
   }
 
-  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
     const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
     const customErrorState = !!(control && control.invalid && this.submitted);
     return originalErrorState || customErrorState;
@@ -202,5 +203,12 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
       gridSettings = {...this.gridSettings, ...this.gridSettingsFormGroup.getRawValue()};
     }
     this.dialogRef.close({settings, gridSettings});
+  }
+
+  getStatesControllerTranslation(stateControllerId: string): string {
+    if (this.stateControllerTranslationMap.has(stateControllerId)) {
+      return this.translate.instant(this.stateControllerTranslationMap.get(stateControllerId));
+    }
+    return stateControllerId;
   }
 }

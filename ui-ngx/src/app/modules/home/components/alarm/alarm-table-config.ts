@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 import {
   CellActionDescriptorType,
   DateEntityTableColumn,
+  EntityLinkTableColumn,
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
@@ -26,16 +27,17 @@ import { DatePipe } from '@angular/common';
 import { Direction } from '@shared/models/page/sort-order';
 import { MatDialog } from '@angular/material/dialog';
 import { TimePageLink } from '@shared/models/page/page-link';
-import { Observable } from 'rxjs';
+import { forkJoin, Observable } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import {
   AlarmInfo,
-  AlarmQuery,
+  AlarmQueryV2,
   AlarmSearchStatus,
   alarmSeverityColors,
   alarmSeverityTranslations,
   AlarmsMode,
+  AlarmStatus,
   alarmStatusTranslations
 } from '@app/shared/models/alarm.models';
 import { AlarmService } from '@app/core/http/alarm.service';
@@ -45,7 +47,7 @@ import {
   AlarmDetailsDialogComponent,
   AlarmDetailsDialogData
 } from '@home/components/alarm/alarm-details-dialog.component';
-import { DAY, historyInterval } from '@shared/models/time/time.models';
+import { forAllTimeInterval } from '@shared/models/time/time.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
@@ -58,23 +60,26 @@ import {
   AlarmAssigneePanelData
 } from '@home/components/alarm/alarm-assignee-panel.component';
 import { ComponentPortal } from '@angular/cdk/portal';
-import { isDefinedAndNotNull } from '@core/utils';
+import { getEntityDetailsPageURL, isDefinedAndNotNull } from '@core/utils';
 import { UtilsService } from '@core/services/utils.service';
+import { AlarmFilterConfig } from '@shared/models/query/query.models';
+import { EntityService } from '@core/http/entity.service';
 
 export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink> {
 
   private authUser = getCurrentAuthUser(this.store);
 
-  searchStatus: AlarmSearchStatus;
+  alarmFilterConfig: AlarmFilterConfig;
 
   constructor(private alarmService: AlarmService,
+              private entityService: EntityService,
               private dialogService: DialogService,
               private translate: TranslateService,
               private datePipe: DatePipe,
               private dialog: MatDialog,
               private alarmsMode: AlarmsMode = AlarmsMode.ALL,
               public entityId: EntityId = null,
-              private defaultSearchStatus: AlarmSearchStatus = AlarmSearchStatus.ANY,
+              private defaultAlarmFilterConfig: AlarmFilterConfig = {statusList: [AlarmSearchStatus.ACTIVE]},
               private store: Store<AppState>,
               private viewContainerRef: ViewContainerRef,
               private overlay: Overlay,
@@ -82,13 +87,14 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
               private utilsService: UtilsService,
               pageMode = false) {
     super();
-    this.loadDataOnInit = false;
+    this.loadDataOnInit = pageMode;
     this.tableTitle = '';
     this.useTimePageLink = true;
+    this.forAllTimeEnabled = true;
     this.pageMode = pageMode;
-    this.defaultTimewindowInterval = historyInterval(DAY * 30);
+    this.defaultTimewindowInterval = forAllTimeInterval();
     this.detailsPanelEnabled = false;
-    this.selectionEnabled = false;
+    this.selectionEnabled = true;
     this.searchEnabled = true;
     this.addEnabled = false;
     this.entitiesDeleteEnabled = false;
@@ -97,7 +103,7 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
     this.entityTranslations = entityTypeTranslations.get(EntityType.ALARM);
     this.entityResources = {
     } as EntityTypeResource<AlarmInfo>;
-    this.searchStatus = defaultSearchStatus;
+    this.alarmFilterConfig = defaultAlarmFilterConfig;
 
     this.headerComponent = AlarmTableHeaderComponent;
 
@@ -108,10 +114,12 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
     this.columns.push(
       new DateEntityTableColumn<AlarmInfo>('createdTime', 'alarm.created-time', this.datePipe, '150px'));
     this.columns.push(
-      new EntityTableColumn<AlarmInfo>('originatorName', 'alarm.originator', '25%',
-        (entity) => entity.originatorName, entity => ({}), false));
+      new EntityLinkTableColumn<AlarmInfo>('originatorName', 'alarm.originator', '25%',
+        (entity) => entity.originatorName,
+        (entity) => getEntityDetailsPageURL(entity.originator.id, entity.originator.entityType as EntityType)));
     this.columns.push(
-      new EntityTableColumn<AlarmInfo>('type', 'alarm.type', '25%'));
+      new EntityTableColumn<AlarmInfo>('type', 'alarm.type', '25%',
+          entity => this.utilsService.customTranslation(entity.type, entity.type)));
     this.columns.push(
       new EntityTableColumn<AlarmInfo>('severity', 'alarm.severity', '25%',
         (entity) => this.translate.instant(alarmSeverityTranslations.get(entity.severity)),
@@ -120,18 +128,11 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
           color: alarmSeverityColors.get(entity.severity)
         })));
     this.columns.push(
-      new EntityTableColumn<AlarmInfo>('assignee', 'alarm.assignee', '200px',
+      new EntityTableColumn<AlarmInfo>('assignee', 'alarm.assignee', '240px',
         (entity) => {
           return this.getAssigneeTemplate(entity)
         },
-        (entity) => {
-          return {
-            display: 'flex',
-            justifyContent: 'start',
-            alignItems: 'center',
-            height: 'inherit'
-          }
-        },
+        () => ({}),
         false,
         () => ({}),
         (entity) => undefined,
@@ -156,15 +157,37 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
         onAction: ($event, entity) => this.showAlarmDetails(entity)
       }
     );
+
+    this.groupActionDescriptors.push(
+      {
+        name: this.translate.instant('alarm.acknowledge'),
+        icon: 'done',
+        isEnabled: true,
+        onAction: ($event, entities) => this.ackAlarms($event, entities)
+      },
+      {
+        name: this.translate.instant('alarm.clear'),
+        icon: 'clear',
+        isEnabled: true,
+        onAction: ($event, entities) => this.clearAlarms($event, entities)
+      },
+      {
+        name: this.translate.instant('alarm.delete'),
+        icon: 'delete',
+        isEnabled: true,
+        onAction: ($event, entities) => this.deleteAlarms($event, entities)
+      }
+    )
   }
 
   fetchAlarms(pageLink: TimePageLink): Observable<PageData<AlarmInfo>> {
-    const query = new AlarmQuery(this.entityId, pageLink, this.searchStatus, null, true, null);
+    const alarmFilter = this.entityService.resolveAlarmFilter(this.alarmFilterConfig, false);
+    const query = new AlarmQueryV2(this.entityId, pageLink, alarmFilter);
     switch (this.alarmsMode) {
       case AlarmsMode.ALL:
-        return this.alarmService.getAllAlarms(query);
+        return this.alarmService.getAllAlarmsV2(query);
       case AlarmsMode.ENTITY:
-        return this.alarmService.getAlarms(query);
+        return this.alarmService.getAlarmsV2(query);
     }
   }
 
@@ -203,8 +226,10 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
           <span class="user-display-name">${this.getUserDisplayName(entity)}</span>
         </span>`
         :
-        `<mat-icon class="material-icons unassigned-icon">account_circle</mat-icon>
-        <span>${this.translate.instant('alarm.unassigned')}</span>`
+        `<span class="unassigned-container">
+          <mat-icon class="material-icons unassigned-icon">account_circle</mat-icon>
+          <span>${this.translate.instant('alarm.unassigned')}</span>
+        </span>`
       }
       </span>`
   }
@@ -288,6 +313,101 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
     componentRef.onDestroy(() => {
       if (componentRef.instance.reassigned) {
         this.updateData()
+      }
+    });
+  }
+
+  ackAlarms($event: Event, alarms: Array<AlarmInfo>) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const unacknowledgedAlarms = alarms.filter(alarm => !alarm.acknowledged);
+    let title = '';
+    let content = '';
+    if (!unacknowledgedAlarms.length) {
+      title = this.translate.instant('alarm.selected-alarms', {count: alarms.length});
+      content = this.translate.instant('alarm.selected-alarms-are-acknowledged');
+      this.dialogService.alert(
+        title,
+        content).subscribe();
+    } else {
+      title = this.translate.instant('alarm.aknowledge-alarms-title', {count: unacknowledgedAlarms.length});
+      content = this.translate.instant('alarm.aknowledge-alarms-text', {count: unacknowledgedAlarms.length});
+      this.dialogService.confirm(
+        title,
+        content,
+        this.translate.instant('action.no'),
+        this.translate.instant('action.yes')
+      ).subscribe((res) => {
+        if (res) {
+          const tasks: Observable<AlarmInfo>[] = [];
+          for (const alarm of unacknowledgedAlarms) {
+            tasks.push(this.alarmService.ackAlarm(alarm.id.id));
+          }
+          forkJoin(tasks).subscribe(() => {
+            this.updateData();
+          });
+        }
+      });
+    }
+  }
+
+  clearAlarms($event: Event, alarms: Array<AlarmInfo>) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const activeAlarms = alarms.filter(alarm => !alarm.cleared);
+    let title = '';
+    let content = '';
+    if (!activeAlarms.length) {
+      title = this.translate.instant('alarm.selected-alarms', {count: alarms.length});
+      content = this.translate.instant('alarm.selected-alarms-are-cleared');
+      this.dialogService.alert(
+        title,
+        content
+        ).subscribe();
+    } else {
+      title = this.translate.instant('alarm.clear-alarms-title', {count: activeAlarms.length});
+      content = this.translate.instant('alarm.clear-alarms-text', {count: activeAlarms.length});
+      this.dialogService.confirm(
+        title,
+        content,
+        this.translate.instant('action.no'),
+        this.translate.instant('action.yes')
+      ).subscribe((res) => {
+        if (res) {
+          const tasks: Observable<AlarmInfo>[] = [];
+          for (const alarm of activeAlarms) {
+            tasks.push(this.alarmService.clearAlarm(alarm.id.id));
+          }
+          forkJoin(tasks).subscribe(() => {
+            this.updateData();
+          });
+        }
+      });
+    }
+  }
+
+  deleteAlarms($event: Event, alarms: Array<AlarmInfo>) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const title = this.translate.instant('alarm.delete-alarms-title', {count: alarms.length});
+    const content = this.translate.instant('alarm.delete-alarms-text', {count: alarms.length});
+    this.dialogService.confirm(
+      title,
+      content,
+      this.translate.instant('action.no'),
+      this.translate.instant('action.yes')
+    ).subscribe((res) => {
+      if (res) {
+        const tasks: Observable<boolean>[] = [];
+        for (const alarm of alarms) {
+          tasks.push(this.alarmService.deleteAlarm(alarm.id.id));
+        }
+        forkJoin(tasks).subscribe(() => {
+          this.updateData();
+        });
       }
     });
   }

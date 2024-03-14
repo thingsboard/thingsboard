@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,12 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.validation.Length;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 import javax.validation.constraints.NotEmpty;
+import java.util.List;
 import java.util.Optional;
 
 @Data
@@ -35,9 +37,18 @@ import java.util.Optional;
 @ToString(callSuper = true)
 public class WebDeliveryMethodNotificationTemplate extends DeliveryMethodNotificationTemplate implements HasSubject {
 
+    @NoXss(fieldName = "web notification subject")
+    @Length(fieldName = "web notification subject", max = 150, message = "cannot be longer than 150 chars")
     @NotEmpty
     private String subject;
     private JsonNode additionalConfig;
+
+    private final List<TemplatableValue> templatableValues = List.of(
+            TemplatableValue.of(this::getBody, this::setBody),
+            TemplatableValue.of(this::getSubject, this::setSubject),
+            TemplatableValue.of(this::getButtonText, this::setButtonText),
+            TemplatableValue.of(this::getButtonLink, this::setButtonLink)
+    );
 
     public WebDeliveryMethodNotificationTemplate(WebDeliveryMethodNotificationTemplate other) {
         super(other);
@@ -45,6 +56,14 @@ public class WebDeliveryMethodNotificationTemplate extends DeliveryMethodNotific
         this.additionalConfig = other.additionalConfig != null ? other.additionalConfig.deepCopy() : null;
     }
 
+    @Length(fieldName = "web notification message", max = 250, message = "cannot be longer than 250 chars")
+    @Override
+    public String getBody() {
+        return super.getBody();
+    }
+
+    @NoXss(fieldName = "web notification button text")
+    @Length(fieldName = "web notification button text", max = 50, message = "cannot be longer than 50 chars")
     @JsonIgnore
     public String getButtonText() {
         return getButtonConfigProperty("text");
@@ -57,6 +76,8 @@ public class WebDeliveryMethodNotificationTemplate extends DeliveryMethodNotific
         });
     }
 
+    @NoXss(fieldName = "web notification button link")
+    @Length(fieldName = "web notification button link", max = 300, message = "cannot be longer than 300 chars")
     @JsonIgnore
     public String getButtonLink() {
         return getButtonConfigProperty("link");
@@ -90,12 +111,6 @@ public class WebDeliveryMethodNotificationTemplate extends DeliveryMethodNotific
     @Override
     public WebDeliveryMethodNotificationTemplate copy() {
         return new WebDeliveryMethodNotificationTemplate(this);
-    }
-
-    @Override
-    public boolean containsAny(String... params) {
-        return super.containsAny(params) || StringUtils.containsAny(subject, params)
-                || StringUtils.containsAny(getButtonText(), params) || StringUtils.containsAny(getButtonLink(), params);
     }
 
 }

@@ -1,0 +1,253 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-form-panel no-padding no-border" [formGroup]="widgetActionFormGroup">
+  <div class="tb-form-row">
+    <div translate>widget-config.action</div>
+    <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+      <mat-select required formControlName="type" placeholder="{{ 'widget-config.set' | translate }}">
+        <mat-option *ngFor="let actionType of widgetActionTypes" [value]="actionType">
+          {{ widgetActionTypeTranslations.get(widgetActionType[actionType]) | translate }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+  <ng-container [formGroup]="actionTypeFormGroup" [ngSwitch]="widgetActionFormGroup.get('type').value">
+    <ng-template [ngSwitchCase]="widgetActionType.openDashboard">
+      <div class="tb-form-row">
+        <div class="fixed-title-width">{{ 'widget-action.target-dashboard' | translate }}*</div>
+        <tb-dashboard-autocomplete fxFlex
+            formControlName="targetDashboardId"
+            required
+            requiredText="widget-action.target-dashboard-required"
+            placeholder="{{ 'widget-action.select-target-dashboard' | translate }}"
+            inlineField
+            [selectFirstDashboard]="true"
+        ></tb-dashboard-autocomplete>
+      </div>
+    </ng-template>
+    <ng-template [ngSwitchCase]="widgetActionFormGroup.get('type').value === widgetActionType.openDashboardState ||
+                                     widgetActionFormGroup.get('type').value === widgetActionType.updateDashboardState ||
+                                     widgetActionFormGroup.get('type').value === widgetActionType.openDashboard ?
+                                     widgetActionFormGroup.get('type').value : ''">
+      <div class="tb-form-row">
+        <div class="fixed-title-width">
+          <span>{{ 'widget-action.target-dashboard-state' | translate }}</span>
+          <span *ngIf="widgetActionFormGroup.get('type').value === widgetActionType.openDashboardState">*</span>
+        </div>
+        <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic"
+                        [class.tb-suffix-absolute]="!actionTypeFormGroup.get('targetDashboardStateId').value">
+          <input matInput type="text" placeholder="{{ 'widget-action.target-dashboard-state' | translate }}"
+                 #dashboardStateInput
+                 formControlName="targetDashboardStateId"
+                 [required]="widgetActionFormGroup.get('type').value === widgetActionType.openDashboardState"
+                 (focusin)="onDashboardStateInputFocus()"
+                 [matAutocomplete]="targetDashboardStateAutocomplete">
+          <button *ngIf="actionTypeFormGroup.get('targetDashboardStateId').value"
+                  type="button"
+                  matSuffix mat-icon-button aria-label="Clear"
+                  (click)="clearTargetDashboardState()">
+            <mat-icon class="material-icons">close</mat-icon>
+          </button>
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="'widget-action.target-dashboard-state-required' | translate"
+                    *ngIf="actionTypeFormGroup.get('targetDashboardStateId').hasError('required')
+                            && actionTypeFormGroup.get('targetDashboardStateId').touched"
+                    class="tb-error">
+            warning
+          </mat-icon>
+          <mat-autocomplete
+              class="tb-autocomplete"
+              #targetDashboardStateAutocomplete="matAutocomplete">
+            <mat-option *ngFor="let state of filteredDashboardStates | async" [value]="state">
+              <span [innerHTML]="state | highlight:targetDashboardStateSearchText"></span>
+            </mat-option>
+          </mat-autocomplete>
+        </mat-form-field>
+      </div>
+    </ng-template>
+    <ng-template [ngSwitchCase]="widgetActionType.openURL">
+      <div class="tb-form-row">
+        <div class="tb-required">{{ 'widget-action.URL' | translate }}</div>
+        <mat-form-field fxFlex style="margin-left: 9px" appearance="outline" subscriptSizing="dynamic">
+          <input matInput placeholder="{{ 'widget-config.set' | translate }}" formControlName="url">
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="'widget-action.url-required' | translate"
+                    *ngIf="actionTypeFormGroup.get('url').invalid && actionTypeFormGroup.get('url').touched"
+                    class="tb-error">
+            warning
+          </mat-icon>
+        </mat-form-field>
+      </div>
+    </ng-template>
+    <ng-template [ngSwitchCase]="widgetActionFormGroup.get('type').value === widgetActionType.openDashboardState ||
+                                 widgetActionFormGroup.get('type').value === widgetActionType.updateDashboardState ?
+                                 widgetActionFormGroup.get('type').value : ''">
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide" formControlName="openRightLayout">
+          {{ 'widget-action.open-right-layout' | translate }}
+        </mat-slide-toggle>
+      </div>
+    </ng-template>
+    <ng-template [ngSwitchCase]="widgetActionFormGroup.get('type').value === widgetActionType.openDashboard ||
+                                 widgetActionFormGroup.get('type').value === widgetActionType.openURL ?
+                                 widgetActionFormGroup.get('type').value : ''">
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide" formControlName="openNewBrowserTab">
+          {{ 'widget-action.open-new-browser-tab' | translate }}
+        </mat-slide-toggle>
+      </div>
+    </ng-template>
+    <ng-template [ngSwitchCase]="widgetActionFormGroup.get('type').value === widgetActionType.openDashboardState ||
+                                 widgetActionFormGroup.get('type').value === widgetActionType.updateDashboardState ||
+                                 widgetActionFormGroup.get('type').value === widgetActionType.openDashboard ?
+                                 widgetActionFormGroup.get('type').value : ''">
+      <div class="tb-form-row" *ngIf="widgetType !== WidgetType.static">
+        <mat-slide-toggle class="mat-slide" formControlName="setEntityId">
+          {{ 'widget-action.set-entity-from-widget' | translate }}
+        </mat-slide-toggle>
+      </div>
+      <div class="tb-form-row" *ngIf="actionTypeFormGroup.get('setEntityId').value">
+        <div class="fixed-title-width">{{ 'alias.state-entity-parameter-name' | translate }}</div>
+        <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+          <input matInput
+                 placeholder="{{ 'alias.default-entity-parameter-name' | translate }}"
+                 formControlName="stateEntityParamName">
+        </mat-form-field>
+      </div>
+    </ng-template>
+    <ng-template [ngSwitchCase]="widgetActionFormGroup.get('type').value === widgetActionType.openDashboardState ?
+                                 widgetActionFormGroup.get('type').value : ''">
+      <div class="tb-form-row">
+        <div class="fixed-title-width">{{ 'widget-action.state-display-type' | translate }}</div>
+        <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="stateDisplayType">
+            <mat-option *ngFor="let displayType of allStateDisplayTypes" [value]="displayType">
+              {{ stateDisplayTypeName(displayType) }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <ng-container [formGroup]="stateDisplayTypeFormGroup" [ngSwitch]="actionTypeFormGroup.get('stateDisplayType').value">
+        <ng-template [ngSwitchCase]="'separateDialog'">
+          <div class="tb-form-row">
+            <div class="fixed-title-width">{{ 'widget-action.dialog-title' | translate }}</div>
+            <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+              <input matInput placeholder="{{ 'widget-config.set' | translate }}" formControlName="dialogTitle">
+            </mat-form-field>
+          </div>
+          <div class="tb-form-row">
+            <mat-slide-toggle class="mat-slide" formControlName="dialogHideDashboardToolbar">
+              {{ 'widget-action.dialog-hide-dashboard-toolbar' | translate }}
+            </mat-slide-toggle>
+          </div>
+          <div class="tb-form-row space-between">
+            <div>{{ 'widget-action.dialog-width' | translate }}</div>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-suffix-absolute number">
+              <input type="number" min="1" max="100" step="1" matInput formControlName="dialogWidth">
+              <mat-icon matSuffix
+                        matTooltipPosition="above"
+                        matTooltipClass="tb-error-tooltip"
+                        [matTooltip]="'widget-action.dialog-size-range-error' | translate"
+                        *ngIf="stateDisplayTypeFormGroup.get('dialogWidth').invalid && stateDisplayTypeFormGroup.get('dialogWidth').touched"
+                        class="tb-error">
+                warning
+              </mat-icon>
+            </mat-form-field>
+          </div>
+          <div class="tb-form-row space-between">
+            <div>{{ 'widget-action.dialog-height' | translate }}</div>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-suffix-absolute number">
+              <input type="number" min="1" max="100" step="1" matInput formControlName="dialogHeight">
+              <mat-icon matSuffix
+                        matTooltipPosition="above"
+                        matTooltipClass="tb-error-tooltip"
+                        [matTooltip]="'widget-action.dialog-size-range-error' | translate"
+                        *ngIf="stateDisplayTypeFormGroup.get('dialogHeight').invalid && stateDisplayTypeFormGroup.get('dialogHeight').touched"
+                        class="tb-error">
+                warning
+              </mat-icon>
+            </mat-form-field>
+          </div>
+        </ng-template>
+        <ng-template [ngSwitchCase]="'popover'">
+          <div class="tb-form-row">
+            <div class="fixed-title-width">{{ 'widget-action.popover-preferred-placement' | translate }}</div>
+            <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+              <mat-select formControlName="popoverPreferredPlacement">
+                <mat-option *ngFor="let placement of allPopoverPlacements" [value]="placement">
+                  {{ popoverPlacementName(placement) }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="tb-form-row">
+            <mat-slide-toggle class="mat-slide" formControlName="popoverHideOnClickOutside">
+              {{ 'widget-action.popover-hide-on-click-outside' | translate }}
+            </mat-slide-toggle>
+          </div>
+          <div class="tb-form-row">
+            <mat-slide-toggle class="mat-slide" formControlName="popoverHideDashboardToolbar">
+              {{ 'widget-action.popover-hide-dashboard-toolbar' | translate }}
+            </mat-slide-toggle>
+          </div>
+          <div class="tb-form-row space-between">
+            <div>{{ 'widget-action.popover-width' | translate }}</div>
+            <tb-css-size-input formControlName="popoverWidth">
+            </tb-css-size-input>
+          </div>
+          <div class="tb-form-row space-between">
+            <div>{{ 'widget-action.popover-height' | translate }}</div>
+            <tb-css-size-input formControlName="popoverHeight">
+            </tb-css-size-input>
+          </div>
+          <tb-json-object-edit
+              [editorStyle]="{minHeight: '100px'}"
+              label="{{ 'widget-action.popover-style' | translate }}"
+              formControlName="popoverStyle"
+          ></tb-json-object-edit>
+        </ng-template>
+        <ng-template [ngSwitchCase]="'normal'">
+        </ng-template>
+      </ng-container>
+    </ng-template>
+    <ng-template [ngSwitchCase]="widgetActionType.custom">
+      <tb-js-func
+          formControlName="customFunction"
+          functionTitle="{{ 'widget-action.custom-action-function' | translate }}"
+          [functionArgs]="['$event', 'widgetContext', 'entityId', 'entityName', 'additionalParams', 'entityLabel']"
+          [globalVariables]="functionScopeVariables"
+          [validationArgs]="[]"
+          [editorCompleter]="customActionEditorCompleter"
+          helpId="widget/action/custom_action_fn"
+      ></tb-js-func>
+    </ng-template>
+    <ng-template [ngSwitchCase]="widgetActionType.customPretty">
+      <tb-custom-action-pretty-editor
+          formControlName="customAction">
+      </tb-custom-action-pretty-editor>
+    </ng-template>
+    <ng-template [ngSwitchCase]="widgetActionType.mobileAction">
+      <tb-mobile-action-editor formControlName="mobileAction">
+      </tb-mobile-action-editor>
+    </ng-template>
+  </ng-container>
+</div>

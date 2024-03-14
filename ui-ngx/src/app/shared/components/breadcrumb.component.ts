@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -117,7 +117,6 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
           ignoreTranslate = false;
         }
         const icon = breadcrumbConfig.icon || 'home';
-        const isMdiIcon = icon.startsWith('mdi:');
         const link = [ route.pathFromRoot.map(v => v.url.map(segment => segment.toString()).join('/')).join('/') ];
         const breadcrumb = {
           id: guid(),
@@ -125,7 +124,6 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
           labelFunction,
           ignoreTranslate,
           icon,
-          isMdiIcon,
           link,
           queryParams: null
         };

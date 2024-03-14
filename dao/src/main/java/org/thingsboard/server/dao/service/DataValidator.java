@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,14 +17,17 @@ package org.thingsboard.server.dao.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.TenantEntityWithDataDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.exception.EntitiesLimitException;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 
 import java.util.HashSet;
@@ -82,6 +85,18 @@ public abstract class DataValidator<D extends BaseData<?>> {
         return null;
     }
 
+    public void validateDelete(TenantId tenantId, EntityId entityId) {
+    }
+
+    public void validateString(String exceptionPrefix, String name) {
+        if (StringUtils.isEmpty(name) || name.trim().length() == 0) {
+            throw new DataValidationException(exceptionPrefix + " should be specified!");
+        }
+        if (StringUtils.contains0x00(name)) {
+            throw new DataValidationException(exceptionPrefix + " should not contain 0x00 symbol!");
+        }
+    }
+
     protected boolean isSameData(D existentData, D actualData) {
         return actualData.getId() != null && existentData.getId().equals(actualData.getId());
     }
@@ -104,7 +119,7 @@ public abstract class DataValidator<D extends BaseData<?>> {
     protected void validateNumberOfEntitiesPerTenant(TenantId tenantId,
                                                      EntityType entityType) {
         if (!apiLimitService.checkEntitiesLimit(tenantId, entityType)) {
-            throw new DataValidationException(entityType.getNormalName() + "s limit reached");
+            throw new EntitiesLimitException(tenantId, entityType);
         }
     }
 
@@ -115,8 +130,7 @@ public abstract class DataValidator<D extends BaseData<?>> {
                                                    EntityType entityType) {
         if (maxSumDataSize > 0) {
             if (dataDao.sumDataSizeByTenantId(tenantId) + currentDataSize > maxSumDataSize) {
-                throw new DataValidationException(String.format("Failed to create the %s, files size limit is exhausted %d bytes!",
-                        entityType.name().toLowerCase().replaceAll("_", " "), maxSumDataSize));
+                throw new DataValidationException(String.format("%ss total size exceeds the maximum of " + FileUtils.byteCountToDisplaySize(maxSumDataSize), entityType.getNormalName()));
             }
         }
     }
@@ -147,8 +161,8 @@ public abstract class DataValidator<D extends BaseData<?>> {
         validateQueueNameOrTopic(topic, TOPIC);
     }
 
-    private static void validateQueueNameOrTopic(String value, String fieldName) {
-        if (StringUtils.isEmpty(value)) {
+    static void validateQueueNameOrTopic(String value, String fieldName) {
+        if (StringUtils.isEmpty(value) || value.trim().length() == 0) {
             throw new DataValidationException(String.format("Queue %s should be specified!", fieldName));
         }
         if (!QUEUE_PATTERN.matcher(value).matches()) {

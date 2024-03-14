@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,9 +110,12 @@ public class SqlPartitioningRepository {
 
         String tablePartition = table + "_" + partitionTs;
         String detachPsqlStmtStr = "ALTER TABLE " + table + " DETACH PARTITION " + tablePartition;
-        if (getCurrentServerVersion() >= PSQL_VERSION_14) {
-            detachPsqlStmtStr += " CONCURRENTLY";
-        }
+
+        // hotfix of ERROR: partition "integration_debug_event_1678323600000" already pending detach in partitioned table "public.integration_debug_event"
+        // https://github.com/thingsboard/thingsboard/issues/8271
+        // if (getCurrentServerVersion() >= PSQL_VERSION_14) {
+        //    detachPsqlStmtStr += " CONCURRENTLY";
+        // }
 
         String dropStmtStr = "DROP TABLE " + tablePartition;
         try {
@@ -137,7 +140,7 @@ public class SqlPartitioningRepository {
             try {
                 partitions.add(Long.parseLong(partitionTsStr));
             } catch (NumberFormatException nfe) {
-                log.warn("Failed to parse table name: {}", partitionTableName);
+                log.debug("Failed to parse table name: {}", partitionTableName);
             }
         }
         return partitions;

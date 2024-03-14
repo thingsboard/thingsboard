@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,8 @@ import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportTenantProfileCache;
 import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
 import org.thingsboard.server.common.transport.profile.TenantProfileUpdateResult;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbTransportComponent;
 
 import java.util.Collections;
@@ -82,6 +82,7 @@ public class DefaultTransportTenantProfileCache implements TransportTenantProfil
         if (profileOpt.isPresent()) {
             TenantProfile newProfile = profileOpt.get();
             log.trace("[{}] put: {}", newProfile.getId(), newProfile);
+            profiles.put(newProfile.getId(), newProfile);
             Set<TenantId> affectedTenants = tenantProfileIds.get(newProfile.getId());
             return new TenantProfileUpdateResult(newProfile, affectedTenants != null ? affectedTenants : Collections.emptySet());
         } else {

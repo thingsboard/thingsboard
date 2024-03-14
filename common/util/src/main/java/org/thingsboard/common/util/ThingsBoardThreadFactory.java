@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Copy of Executors.DefaultThreadFactory but with ability to set name of the pool
  */
 public class ThingsBoardThreadFactory implements ThreadFactory {
+    public static final String THREAD_TOPIC_SEPARATOR = " | ";
     private static final AtomicInteger poolNumber = new AtomicInteger(1);
     private final ThreadGroup group;
     private final AtomicInteger threadNumber = new AtomicInteger(1);
@@ -39,6 +40,17 @@ public class ThingsBoardThreadFactory implements ThreadFactory {
                 poolNumber.getAndIncrement() +
                 "-thread-";
     }
+
+    public static void updateCurrentThreadName(String threadSuffix) {
+        String name = Thread.currentThread().getName();
+        int spliteratorIndex = name.indexOf(THREAD_TOPIC_SEPARATOR);
+        if (spliteratorIndex > 0) {
+            name = name.substring(0, spliteratorIndex);
+        }
+        name = name + THREAD_TOPIC_SEPARATOR + threadSuffix;
+        Thread.currentThread().setName(name);
+    }
+
 
     @Override
     public Thread newThread(Runnable r) {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,6 +119,7 @@ public class CustomerPageHelper extends CustomerPageElements {
 
     public void createCustomersUser() {
         plusBtn().click();
+        addUserEmailField().click();
         addUserEmailField().sendKeys(getRandomNumber() + "@gmail.com");
         addBtnC().click();
         activateWindowOkBtn().click();
@@ -145,6 +146,14 @@ public class CustomerPageHelper extends CustomerPageElements {
         submitAssignedBtn().click();
     }
 
+    public void assignedDashboard(String dashboardName) {
+        plusBtn().click();
+        assignedField().click();
+        entityFromList(dashboardName).click();
+        assignedField().sendKeys(Keys.ESCAPE);
+        submitAssignedBtn().click();
+    }
+
     public boolean customerIsNotPresent(String title) {
         return elementsIsNotPresent(getEntity(title));
     }
@@ -160,5 +169,21 @@ public class CustomerPageHelper extends CustomerPageElements {
     public void enterPhoneNumber(String number) {
         phoneNumberEntityView().sendKeys(number);
         phoneNumberEntityView().sendKeys(Keys.TAB);
+    }
+
+    public void openCustomerAlarms(String customerName) {
+        if (!customerDetailsView().isDisplayed()) {
+            customer(customerName).click();
+        }
+        customerDetailsAlarmsBtn().click();
+    }
+
+    public void disableHideHomeDashboardToolbar() {
+        hideHomeDashboardToolbarCheckbox().click();
+        waitUntilAttributeToBe("//mat-checkbox[@formcontrolname='homeDashboardHideToolbar']//input", "class", "mdc-checkbox__native-control");
+    }
+
+    public void waitUntilDashboardFieldToBeNotEmpty() {
+        waitUntilAttributeToBeNotEmpty(editMenuDashboardField(), "value");
     }
 }

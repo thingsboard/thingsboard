@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,15 +15,15 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="colorFormGroup">
+<mat-form-field *ngIf="!asBoxInput; else boxInput" [formGroup]="colorFormGroup">
   <mat-label *ngIf="icon || label">
     <mat-icon *ngIf="icon">{{icon}}</mat-icon>
     <span *ngIf="label">{{label}}</span>
   </mat-label>
-  <div matPrefix class="tb-color-preview" (click)="!disabled && showColorPicker()">
+  <div matPrefix class="tb-color-preview" (click)="!disabled && showColorPicker($event)">
     <div class="tb-color-result" [ngStyle]="{background: colorFormGroup.get('color').value}"></div>
   </div>
-  <input matInput formControlName="color" (keydown)="$event.preventDefault();" (click)="openOnInput && showColorPicker()" [required]="required">
+  <input matInput formControlName="color" (keydown)="$event.preventDefault();" (click)="openOnInput && showColorPicker($event)" [required]="required">
   <button *ngIf="colorClearButton && !disabled"
           type="button"
           matSuffix mat-icon-button aria-label="Clear"
@@ -34,3 +34,15 @@
     {{ requiredText }}
   </mat-error>
 </mat-form-field>
+<ng-template #boxInput>
+  <button type="button"
+          mat-stroked-button
+          class="tb-box-button"
+          [disabled]="disabled"
+          #matButton
+          (click)="openColorPickerPopup($event, matButton._elementRef)">
+    <div class="tb-color-preview no-margin box" [ngClass]="{'disabled': disabled}">
+      <div class="tb-color-result" [style]="!disabled ? {background: colorFormGroup.get('color').value} : {}"></div>
+    </div>
+  </button>
+</ng-template>

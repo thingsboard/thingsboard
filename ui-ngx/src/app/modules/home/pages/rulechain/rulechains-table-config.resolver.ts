@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ import { RuleChainService } from '@core/http/rule-chain.service';
 import { RuleChainComponent } from '@modules/home/pages/rulechain/rulechain.component';
 import { DialogService } from '@core/services/dialog.service';
 import { RuleChainTabsComponent } from '@home/pages/rulechain/rulechain-tabs.component';
-import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { ImportExportService } from '@shared/import-export/import-export.service';
 import { ItemBufferService } from '@core/services/item-buffer.service';
 import { EdgeService } from '@core/http/edge.service';
 import { forkJoin, Observable } from 'rxjs';
@@ -142,14 +142,10 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
       );
     } else if (ruleChainScope === 'edges') {
       columns.push(
-        new EntityTableColumn<RuleChain>('root', 'rulechain.edge-template-root', '70px',
-          entity => {
-            return checkBoxCell(entity.root);
-          }),
-        new EntityTableColumn<RuleChain>('assignToEdge', 'rulechain.assign-to-edge', '70px',
-          entity => {
-            return checkBoxCell(this.isAutoAssignToEdgeRuleChain(entity));
-          })
+        new EntityTableColumn<RuleChain>('root', 'rulechain.edge-template-root', '100px',
+          entity => checkBoxCell(entity.root)),
+        new EntityTableColumn<RuleChain>('assignToEdge', 'rulechain.assign-to-edge', '100px',
+          entity => checkBoxCell(this.isAutoAssignToEdgeRuleChain(entity)), () => ({}), false)
       );
     }
     return columns;
@@ -176,10 +172,10 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     if (ruleChainScope === 'edge') {
       actions.push(
         {
-          name: this.translate.instant('rulechain.assign-new-rulechain'),
+          name: this.translate.instant('rulechain.assign-to-edge'),
           icon: 'add',
           isEnabled: () => true,
-          onAction: ($event) => this.addRuleChainsToEdge($event)
+          onAction: ($event) => this.assignRuleChainsToEdge($event)
         }
       );
     }
@@ -202,7 +198,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     } else if (ruleChainScope === 'edges') {
       return this.translate.instant('edge.rulechain-templates');
     } else if (ruleChainScope === 'edge') {
-      return this.config.tableTitle = edge.name + ': ' + this.translate.instant('edge.rulechains');
+      return this.config.tableTitle = edge.name + ': ' + this.translate.instant('rulechain.rulechains');
     }
   }
 
@@ -446,7 +442,7 @@ export class RuleChainsTableConfigResolver implements Resolve<EntityTableConfig<
     );
   }
 
-  addRuleChainsToEdge($event: Event) {
+  assignRuleChainsToEdge($event: Event) {
     if ($event) {
       $event.stopPropagation();
     }

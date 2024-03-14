@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,7 +33,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -61,16 +61,16 @@ import java.util.stream.Collectors;
 import static org.thingsboard.server.controller.ControllerConstants.BRANCH_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_TYPE_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.ENTITY_VERSION_TEXT_SEARCH_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_END;
 import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_START;
 import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
-import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.ENTITY_VERSION_TEXT_SEARCH_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_ALLOWABLE_VALUES;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.VC_REQUEST_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.VERSION_ID_PARAM_DESCRIPTION;
@@ -84,6 +84,8 @@ public class EntitiesVersionControlController extends BaseController {
 
     private final EntitiesVersionControlService versionControlService;
 
+    @Value("${queue.vc.request-timeout:180000}")
+    private int vcRequestTimeout;
 
     @ApiOperation(value = "Save entities version (saveEntitiesVersion)", notes = "" +
             "Creates a new version of entities (or a single entity) by request.\n" +
@@ -514,6 +516,11 @@ public class EntitiesVersionControlController extends BaseController {
                     .map(b -> new BranchInfo(b.getName(), false)).collect(Collectors.toList()));
             return infos;
         }, MoreExecutors.directExecutor()));
+    }
+
+    @Override
+    protected <T> DeferredResult<T> wrapFuture(ListenableFuture<T> future) {
+        return wrapFuture(future, vcRequestTimeout);
     }
 
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ import { MatStepperModule } from '@angular/material/stepper';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { MAT_TOOLTIP_DEFAULT_OPTIONS, MatTooltipModule } from '@angular/material/tooltip';
 import { MatListModule } from '@angular/material/list';
 import { DatetimeAdapter, MatDatetimepickerModule, MatNativeDatetimeModule } from '@mat-datetimepicker/core';
 import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
@@ -63,7 +63,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ShareModule as ShareButtonsModule } from 'ngx-sharebuttons';
 import { HotkeyModule } from 'angular2-hotkeys';
-import { ColorPickerModule } from 'ngx-color-picker';
+import { ColorPickerModule } from '@iplab/ngx-color-picker';
 import { NgxHmCarouselModule } from 'ngx-hm-carousel';
 import { EditorModule, TINYMCE_SCRIPT_SRC } from '@tinymce/tinymce-angular';
 import { UserMenuComponent } from '@shared/components/user-menu.component';
@@ -123,6 +123,7 @@ import { JsFuncComponent } from '@shared/components/js-func.component';
 import { JsonFormComponent } from '@shared/components/json-form/json-form.component';
 import { ConfirmDialogComponent } from '@shared/components/dialog/confirm-dialog.component';
 import { AlertDialogComponent } from '@shared/components/dialog/alert-dialog.component';
+import { ErrorAlertDialogComponent } from '@shared/components/dialog/error-alert-dialog.component';
 import { TodoDialogComponent } from '@shared/components/dialog/todo-dialog.component';
 import { MaterialIconsDialogComponent } from '@shared/components/dialog/material-icons-dialog.component';
 import { MaterialIconSelectComponent } from '@shared/components/material-icon-select.component';
@@ -176,6 +177,47 @@ import { NotificationComponent } from '@shared/components/notification/notificat
 import { TemplateAutocompleteComponent } from '@shared/components/notification/template-autocomplete.component';
 import { SlackConversationAutocompleteComponent } from '@shared/components/slack-conversation-autocomplete.component';
 import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
+import {
+  TbBreakPointsProvider,
+  MdLgLayoutDirective,
+  MdLgLayoutAlignDirective,
+  MdLgLayoutGapDirective,
+  MdLgShowHideDirective,
+  GtMdLgLayoutDirective,
+  GtMdLgLayoutAlignDirective,
+  GtMdLgLayoutGapDirective,
+  GtMdLgShowHideDirective
+} from '@shared/layout/layout.directives';
+import { ColorPickerComponent } from '@shared/components/color-picker/color-picker.component';
+import { ResourceAutocompleteComponent } from '@shared/components/resource/resource-autocomplete.component';
+import { ShortNumberPipe } from '@shared/pipe/short-number.pipe';
+import { ToggleHeaderComponent, ToggleOption } from '@shared/components/toggle-header.component';
+import { RuleChainSelectComponent } from '@shared/components/rule-chain/rule-chain-select.component';
+import { ToggleSelectComponent } from '@shared/components/toggle-select.component';
+import { UnitInputComponent } from '@shared/components/unit-input.component';
+import { MaterialIconsComponent } from '@shared/components/material-icons.component';
+import { ColorPickerPanelComponent } from '@shared/components/color-picker/color-picker-panel.component';
+import { TbIconComponent } from '@shared/components/icon.component';
+import { HintTooltipIconComponent } from '@shared/components/hint-tooltip-icon.component';
+import { StringAutocompleteComponent } from '@shared/components/string-autocomplete.component';
+import { ImagePipe } from '@shared/pipe/image.pipe';
+import { ImportExportService } from '@shared/import-export/import-export.service';
+import { ImportDialogComponent } from '@shared/import-export/import-dialog.component';
+import { ImportDialogCsvComponent } from '@shared/import-export/import-dialog-csv.component';
+import { ExportWidgetsBundleDialogComponent } from '@shared/import-export/export-widgets-bundle-dialog.component';
+import { TableColumnsAssignmentComponent } from '@shared/import-export/table-columns-assignment.component';
+import { ScrollGridComponent } from '@shared/components/grid/scroll-grid.component';
+import { ImageGalleryComponent } from '@shared/components/image/image-gallery.component';
+import { UploadImageDialogComponent } from '@shared/components/image/upload-image-dialog.component';
+import { ImageDialogComponent } from '@shared/components/image/image-dialog.component';
+import { ImageReferencesComponent } from '@shared/components/image/image-references.component';
+import { ImagesInUseDialogComponent } from '@shared/components/image/images-in-use-dialog.component';
+import { GalleryImageInputComponent } from '@shared/components/image/gallery-image-input.component';
+import { MultipleGalleryImageInputComponent } from '@shared/components/image/multiple-gallery-image-input.component';
+import { EmbedImageDialogComponent } from '@shared/components/image/embed-image-dialog.component';
+import { ImageGalleryDialogComponent } from '@shared/components/image/image-gallery-dialog.component';
+import { RuleChainSelectPanelComponent } from '@shared/components/rule-chain/rule-chain-select-panel.component';
+import { WidgetButtonComponent } from '@shared/components/button/widget-button.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -192,7 +234,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     FileSizePipe,
     DateAgoPipe,
     SafePipe,
-    DateAgoPipe,
+    ShortNumberPipe,
+    ImagePipe,
     {
       provide: FlowInjectionToken,
       useValue: Flow
@@ -210,6 +253,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     { provide: SHARED_MODULE_TOKEN, useValue: SharedModule },
     { provide: MatPaginatorIntl, useClass: CustomPaginatorIntl },
     TbPopoverService,
+    ImportExportService,
     {
       provide: MAT_SELECT_CONFIG,
       useValue: {
@@ -222,7 +266,14 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
       useValue: {
         hideSingleSelectionIndicator: true
       }
-    }
+    },
+    {
+      provide: MAT_TOOLTIP_DEFAULT_OPTIONS,
+      useValue: {
+        disableTooltipInteractivity: true
+      }
+    },
+    TbBreakPointsProvider
   ],
   declarations: [
     FooterComponent,
@@ -285,6 +336,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     WidgetsBundleSelectComponent,
     ConfirmDialogComponent,
     AlertDialogComponent,
+    ErrorAlertDialogComponent,
     TodoDialogComponent,
     ColorPickerDialogComponent,
     MaterialIconsDialogComponent,
@@ -308,7 +360,9 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TbJsonPipe,
     FileSizePipe,
     DateAgoPipe,
+    ImagePipe,
     SafePipe,
+    ShortNumberPipe,
     SelectableColumnsPipe,
     KeyboardShortcutPipe,
     TbJsonToStringDirective,
@@ -327,7 +381,42 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     NotificationComponent,
     TemplateAutocompleteComponent,
     SlackConversationAutocompleteComponent,
-    DateAgoPipe
+    MdLgLayoutDirective,
+    MdLgLayoutAlignDirective,
+    MdLgLayoutGapDirective,
+    MdLgShowHideDirective,
+    GtMdLgLayoutDirective,
+    GtMdLgLayoutAlignDirective,
+    GtMdLgLayoutGapDirective,
+    GtMdLgShowHideDirective,
+    ColorPickerComponent,
+    ColorPickerPanelComponent,
+    ResourceAutocompleteComponent,
+    ToggleHeaderComponent,
+    ToggleOption,
+    ToggleSelectComponent,
+    UnitInputComponent,
+    StringAutocompleteComponent,
+    MaterialIconsComponent,
+    RuleChainSelectComponent,
+    RuleChainSelectPanelComponent,
+    TbIconComponent,
+    HintTooltipIconComponent,
+    ImportDialogComponent,
+    ImportDialogCsvComponent,
+    ExportWidgetsBundleDialogComponent,
+    TableColumnsAssignmentComponent,
+    ScrollGridComponent,
+    ImageGalleryComponent,
+    UploadImageDialogComponent,
+    ImageDialogComponent,
+    ImageReferencesComponent,
+    ImagesInUseDialogComponent,
+    GalleryImageInputComponent,
+    MultipleGalleryImageInputComponent,
+    EmbedImageDialogComponent,
+    ImageGalleryDialogComponent,
+    WidgetButtonComponent
   ],
   imports: [
     CommonModule,
@@ -444,6 +533,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     HtmlComponent,
     FabTriggerDirective,
     FabActionsDirective,
+    TbJsonToStringDirective,
     FabToolbarComponent,
     WidgetsBundleSelectComponent,
     ValueInputComponent,
@@ -498,6 +588,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     MarkdownModule,
     ConfirmDialogComponent,
     AlertDialogComponent,
+    ErrorAlertDialogComponent,
     TodoDialogComponent,
     ColorPickerDialogComponent,
     MaterialIconsDialogComponent,
@@ -522,7 +613,9 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     KeyboardShortcutPipe,
     FileSizePipe,
     DateAgoPipe,
+    ImagePipe,
     SafePipe,
+    ShortNumberPipe,
     SelectableColumnsPipe,
     RouterModule,
     TranslateModule,
@@ -541,7 +634,42 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     NotificationComponent,
     TemplateAutocompleteComponent,
     SlackConversationAutocompleteComponent,
-    DateAgoPipe
+    MdLgLayoutDirective,
+    MdLgLayoutAlignDirective,
+    MdLgLayoutGapDirective,
+    MdLgShowHideDirective,
+    GtMdLgLayoutDirective,
+    GtMdLgLayoutAlignDirective,
+    GtMdLgLayoutGapDirective,
+    GtMdLgShowHideDirective,
+    ColorPickerComponent,
+    ColorPickerPanelComponent,
+    ResourceAutocompleteComponent,
+    ToggleHeaderComponent,
+    ToggleOption,
+    ToggleSelectComponent,
+    UnitInputComponent,
+    StringAutocompleteComponent,
+    MaterialIconsComponent,
+    RuleChainSelectComponent,
+    RuleChainSelectPanelComponent,
+    TbIconComponent,
+    HintTooltipIconComponent,
+    ImportDialogComponent,
+    ImportDialogCsvComponent,
+    ExportWidgetsBundleDialogComponent,
+    TableColumnsAssignmentComponent,
+    ScrollGridComponent,
+    ImageGalleryComponent,
+    UploadImageDialogComponent,
+    ImageDialogComponent,
+    ImageReferencesComponent,
+    ImagesInUseDialogComponent,
+    GalleryImageInputComponent,
+    MultipleGalleryImageInputComponent,
+    EmbedImageDialogComponent,
+    ImageGalleryDialogComponent,
+    WidgetButtonComponent
   ]
 })
 export class SharedModule { }

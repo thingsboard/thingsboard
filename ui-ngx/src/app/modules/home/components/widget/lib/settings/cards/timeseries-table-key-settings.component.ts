@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -43,7 +43,9 @@ export class TimeseriesTableKeySettingsComponent extends WidgetSettingsComponent
       useCellStyleFunction: false,
       cellStyleFunction: '',
       useCellContentFunction: false,
-      cellContentFunction: ''
+      cellContentFunction: '',
+      defaultColumnVisibility: 'visible',
+      columnSelectionToDisplay: 'enabled'
     };
   }
 
@@ -53,6 +55,8 @@ export class TimeseriesTableKeySettingsComponent extends WidgetSettingsComponent
       cellStyleFunction: [settings.cellStyleFunction, [Validators.required]],
       useCellContentFunction: [settings.useCellContentFunction, []],
       cellContentFunction: [settings.cellContentFunction, [Validators.required]],
+      defaultColumnVisibility: [settings.defaultColumnVisibility, []],
+      columnSelectionToDisplay: [settings.columnSelectionToDisplay, []],
     });
   }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,8 +38,8 @@ import org.thingsboard.server.common.data.query.SimpleKeyFilterPredicate;
 import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.entity.EntityService;
-import org.thingsboard.server.service.ws.WebSocketSessionRef;
 import org.thingsboard.server.service.ws.WebSocketService;
+import org.thingsboard.server.service.ws.WebSocketSessionRef;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.CmdUpdate;
 import org.thingsboard.server.service.ws.telemetry.sub.TelemetrySubscriptionUpdate;
 
@@ -78,11 +78,14 @@ public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
     @Setter
     protected volatile ScheduledFuture<?> refreshTask;
     protected volatile boolean stopped;
+    @Getter
+    protected long createdTime;
 
     public TbAbstractSubCtx(String serviceId, WebSocketService wsService,
                             EntityService entityService, TbLocalSubscriptionService localSubscriptionService,
                             AttributesService attributesService, SubscriptionServiceStatistics stats,
                             WebSocketSessionRef sessionRef, int cmdId) {
+        this.createdTime = System.currentTimeMillis();
         this.serviceId = serviceId;
         this.wsService = wsService;
         this.entityService = entityService;
@@ -142,6 +145,7 @@ public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
                         .tenantId(sessionRef.getSecurityCtx().getTenantId())
                         .entityId(entityId)
                         .updateProcessor((subscription, subscriptionUpdate) -> dynamicValueSubUpdate(subscription.getSessionId(), subscriptionUpdate, dynamicValueKeySubMap))
+                        .queryTs(createdTime)
                         .allKeys(false)
                         .keyStates(keyStates)
                         .scope(TbAttributeSubscriptionScope.SERVER_SCOPE)
@@ -332,7 +336,7 @@ public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
     public void sendWsMsg(CmdUpdate update) {
         wsLock.lock();
         try {
-            wsService.sendWsMsg(sessionRef.getSessionId(), update);
+            wsService.sendUpdate(sessionRef.getSessionId(), update);
         } finally {
             wsLock.unlock();
         }

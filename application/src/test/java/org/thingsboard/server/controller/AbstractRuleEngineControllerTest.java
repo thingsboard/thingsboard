@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,18 +19,19 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.dao.rule.RuleChainService;
 
-import java.io.IOException;
 import java.util.function.Predicate;
 
 /**
@@ -75,14 +76,14 @@ public abstract class AbstractRuleEngineControllerTest extends AbstractControlle
     protected JsonNode getMetadata(EventInfo outEvent) {
         String metaDataStr = outEvent.getBody().get("metadata").asText();
         try {
-            return mapper.readTree(metaDataStr);
-        } catch (IOException e) {
+            return JacksonUtil.toJsonNode(metaDataStr);
+        } catch (IllegalArgumentException e) {
             throw new RuntimeException(e);
         }
     }
 
-    protected Predicate<EventInfo> filterByCustomEvent() {
-        return event -> event.getBody().get("msgType").textValue().equals("CUSTOM");
+    protected Predicate<EventInfo> filterByPostTelemetryEventType() {
+        return event -> event.getBody().get("msgType").textValue().equals(TbMsgType.POST_TELEMETRY_REQUEST.name());
     }
 
 }

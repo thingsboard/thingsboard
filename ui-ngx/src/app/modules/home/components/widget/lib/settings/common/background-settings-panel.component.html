@@ -1,0 +1,86 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-background-settings-panel" [formGroup]="backgroundSettingsFormGroup">
+  <div class="tb-background-settings-title" translate>widgets.background.background-settings</div>
+  <div class="tb-background-settings-panel-content">
+    <div class="tb-form-panel tb-background-form-panel">
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
+        <div class="tb-form-panel-title" translate>widgets.background.background</div>
+        <tb-toggle-select formControlName="type" fxFlex selectMediaBreakpoint="xs">
+          <tb-toggle-option *ngFor="let type of backgroundTypes"
+                            [value]="type">
+            {{ backgroundTypeTranslationsMap.get(type) | translate }}
+          </tb-toggle-option>
+        </tb-toggle-select>
+      </div>
+      <tb-gallery-image-input [fxShow]="backgroundSettingsFormGroup.get('type').value === backgroundType.image"
+                              formControlName="imageUrl"></tb-gallery-image-input>
+      <div [fxShow]="backgroundSettingsFormGroup.get('type').value === backgroundType.color"
+           class="tb-form-row space-between tb-background-color-field">
+        <div translate>widgets.color.color</div>
+        <tb-color-input asBoxInput
+                        formControlName="color">
+        </tb-color-input>
+      </div>
+    </div>
+    <div class="tb-form-panel" formGroupName="overlay">
+      <div class="tb-form-panel-title" translate>widgets.background.overlay</div>
+      <mat-slide-toggle class="mat-slide" formControlName="enabled">
+        {{ 'widgets.background.enable-overlay' | translate }}
+      </mat-slide-toggle>
+      <div class="tb-form-row space-between">
+        <div translate>widgets.color.color</div>
+        <tb-color-input asBoxInput
+                        formControlName="color">
+        </tb-color-input>
+      </div>
+      <div class="tb-form-row space-between">
+        <div translate>widgets.background.blur</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="blur" type="number" min="0" step="1"
+                 placeholder="{{ 'widget-config.set' | translate }}">
+          <div matSuffix>px</div>
+        </mat-form-field>
+      </div>
+    </div>
+    <div class="tb-background-settings-preview">
+      <div class="tb-background-settings-preview-title" translate>
+        widgets.background.preview
+      </div>
+      <div class="tb-background-settings-preview-box mat-elevation-z4" [style]="backgroundStyle$ | async">
+        <div class="tb-background-settings-preview-overlay" [style]="overlayStyle">
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="tb-background-settings-panel-buttons">
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button
+            color="primary"
+            type="button"
+            (click)="applyColorSettings()"
+            [disabled]="backgroundSettingsFormGroup.invalid || !backgroundSettingsFormGroup.dirty">
+      {{ 'action.apply' | translate }}
+    </button>
+  </div>
+</div>

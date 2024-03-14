@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,12 +29,12 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -70,7 +70,7 @@ public abstract class TbAbstractCacheBasedRuleNodeTest<N extends TbAbstractCache
 
     protected abstract ThingsBoardThreadFactory getThreadFactory();
 
-    protected abstract String getTickMsgType();
+    protected abstract TbMsgType getTickMsgType();
 
     protected abstract String getEntityIdsCacheKey();
 
@@ -91,7 +91,7 @@ public abstract class TbAbstractCacheBasedRuleNodeTest<N extends TbAbstractCache
         when(ctx.getRuleNodeCacheService()).thenReturn(Optional.of(ruleNodeCacheService));
 
         doAnswer((Answer<TbMsg>) invocationOnMock -> {
-            String type = (String) (invocationOnMock.getArguments())[1];
+            TbMsgType type = (TbMsgType) (invocationOnMock.getArguments())[1];
             EntityId originator = (EntityId) (invocationOnMock.getArguments())[2];
             TbMsgMetaData metaData = (TbMsgMetaData) (invocationOnMock.getArguments())[3];
             String data = (String) (invocationOnMock.getArguments())[4];
@@ -173,7 +173,8 @@ public abstract class TbAbstractCacheBasedRuleNodeTest<N extends TbAbstractCache
 
         Set<TopicPartitionInfo> topicPartitionInfoSet = new HashSet<>();
         topicPartitionInfoSet.add(tpi);
-        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE, topicPartitionInfoSet);
+        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE);
+//        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE, topicPartitionInfoSet);
 
         // add partition to the partitions map ...
         node.init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
@@ -204,7 +205,8 @@ public abstract class TbAbstractCacheBasedRuleNodeTest<N extends TbAbstractCache
 
         Set<TopicPartitionInfo> topicPartitionInfoSet = new HashSet<>();
         topicPartitionInfoSet.add(tpi);
-        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE, topicPartitionInfoSet);
+//        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE, topicPartitionInfoSet);
+        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE);
 
         node.onPartitionChangeMsg(ctx, partitionChangeMsg);
 
@@ -227,7 +229,8 @@ public abstract class TbAbstractCacheBasedRuleNodeTest<N extends TbAbstractCache
 
         Set<TopicPartitionInfo> topicPartitionInfoSet = new HashSet<>();
         topicPartitionInfoSet.add(tpi);
-        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE, topicPartitionInfoSet);
+//        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE, topicPartitionInfoSet);
+        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE);
 
         node.onPartitionChangeMsg(ctx, partitionChangeMsg);
 
@@ -249,7 +252,7 @@ public abstract class TbAbstractCacheBasedRuleNodeTest<N extends TbAbstractCache
         metaData.putValue("ts", String.valueOf(ts));
         return TbMsg.newMsg(
                 DataConstants.MAIN_QUEUE_NAME,
-                SessionMsgType.POST_TELEMETRY_REQUEST.name(),
+                TbMsgType.POST_TELEMETRY_REQUEST,
                 deviceId,
                 metaData,
                 JacksonUtil.toString(dataNode));
@@ -261,7 +264,7 @@ public abstract class TbAbstractCacheBasedRuleNodeTest<N extends TbAbstractCache
         TbMsgMetaData metaData = new TbMsgMetaData();
         return TbMsg.newMsg(
                 DataConstants.MAIN_QUEUE_NAME,
-                SessionMsgType.POST_TELEMETRY_REQUEST.name(),
+                TbMsgType.POST_TELEMETRY_REQUEST,
                 deviceId,
                 metaData,
                 JacksonUtil.toString(dataNode));

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -32,12 +33,14 @@ import java.util.stream.IntStream;
 public class ThingsBoardDbInstaller {
 
     final static boolean IS_REDIS_CLUSTER = Boolean.parseBoolean(System.getProperty("blackBoxTests.redisCluster"));
+    final static boolean IS_REDIS_SENTINEL = Boolean.parseBoolean(System.getProperty("blackBoxTests.redisSentinel"));
     final static boolean IS_HYBRID_MODE = Boolean.parseBoolean(System.getProperty("blackBoxTests.hybridMode"));
     private final static String POSTGRES_DATA_VOLUME = "tb-postgres-test-data-volume";
 
     private final static String CASSANDRA_DATA_VOLUME = "tb-cassandra-test-data-volume";
     private final static String REDIS_DATA_VOLUME = "tb-redis-data-volume";
     private final static String REDIS_CLUSTER_DATA_VOLUME = "tb-redis-cluster-data-volume";
+    private final static String REDIS_SENTINEL_DATA_VOLUME = "tb-redis-sentinel-data-volume";
     private final static String TB_LOG_VOLUME = "tb-log-test-volume";
     private final static String TB_COAP_TRANSPORT_LOG_VOLUME = "tb-coap-transport-log-test-volume";
     private final static String TB_LWM2M_TRANSPORT_LOG_VOLUME = "tb-lwm2m-transport-log-test-volume";
@@ -54,6 +57,7 @@ public class ThingsBoardDbInstaller {
 
     private final String redisDataVolume;
     private final String redisClusterDataVolume;
+    private final String redisSentinelDataVolume;
     private final String tbLogVolume;
     private final String tbCoapTransportLogVolume;
     private final String tbLwm2mTransportLogVolume;
@@ -65,20 +69,17 @@ public class ThingsBoardDbInstaller {
 
     public ThingsBoardDbInstaller() {
         log.info("System property of blackBoxTests.redisCluster is {}", IS_REDIS_CLUSTER);
+        log.info("System property of blackBoxTests.redisCluster is {}", IS_REDIS_SENTINEL);
         log.info("System property of blackBoxTests.hybridMode is {}", IS_HYBRID_MODE);
         List<File> composeFiles = new ArrayList<>(Arrays.asList(
                 new File("./../../docker/docker-compose.yml"),
                 new File("./../../docker/docker-compose.volumes.yml"),
                 IS_HYBRID_MODE
-                       ? new File("./../../docker/docker-compose.hybrid.yml")
-                       : new File("./../../docker/docker-compose.postgres.yml"),
+                        ? new File("./../../docker/docker-compose.hybrid.yml")
+                        : new File("./../../docker/docker-compose.postgres.yml"),
                 new File("./../../docker/docker-compose.postgres.volumes.yml"),
-                IS_REDIS_CLUSTER
-                        ? new File("./../../docker/docker-compose.redis-cluster.yml")
-                        : new File("./../../docker/docker-compose.redis.yml"),
-                IS_REDIS_CLUSTER
-                        ? new File("./../../docker/docker-compose.redis-cluster.volumes.yml")
-                        : new File("./../../docker/docker-compose.redis.volumes.yml")
+                resolveRedisComposeFile(),
+                resolveRedisComposeVolumesFile()
         ));
         if (IS_HYBRID_MODE) {
             composeFiles.add(new File("./../../docker/docker-compose.cassandra.volumes.yml"));
@@ -94,6 +95,7 @@ public class ThingsBoardDbInstaller {
         cassandraDataVolume = project + "_" + CASSANDRA_DATA_VOLUME;
         redisDataVolume = project + "_" + REDIS_DATA_VOLUME;
         redisClusterDataVolume = project + "_" + REDIS_CLUSTER_DATA_VOLUME;
+        redisSentinelDataVolume = project + "_" + REDIS_SENTINEL_DATA_VOLUME;
         tbLogVolume = project + "_" + TB_LOG_VOLUME;
         tbCoapTransportLogVolume = project + "_" + TB_COAP_TRANSPORT_LOG_VOLUME;
         tbLwm2mTransportLogVolume = project + "_" + TB_LWM2M_TRANSPORT_LOG_VOLUME;
@@ -121,17 +123,41 @@ public class ThingsBoardDbInstaller {
             for (int i = 0; i < 6; i++) {
                 env.put("REDIS_CLUSTER_DATA_VOLUME_" + i, redisClusterDataVolume + '-' + i);
             }
+        } else if (IS_REDIS_SENTINEL) {
+            env.put("REDIS_SENTINEL_DATA_VOLUME_MASTER", redisSentinelDataVolume + "-" + "master");
+            env.put("REDIS_SENTINEL_DATA_VOLUME_SLAVE", redisSentinelDataVolume + "-" + "slave");
+            env.put("REDIS_SENTINEL_DATA_VOLUME_SENTINEL", redisSentinelDataVolume + "-" + "sentinel");
         } else {
             env.put("REDIS_DATA_VOLUME", redisDataVolume);
         }
         dockerCompose.withEnv(env);
     }
 
+    private static File resolveRedisComposeVolumesFile() {
+        if (IS_REDIS_CLUSTER) {
+            return new File("./../../docker/docker-compose.redis-cluster.volumes.yml");
+        }
+        if (IS_REDIS_SENTINEL) {
+            return new File("./../../docker/docker-compose.redis-sentinel.volumes.yml");
+        }
+        return new File("./../../docker/docker-compose.redis.volumes.yml");
+    }
+
+    private static File resolveRedisComposeFile() {
+        if (IS_REDIS_CLUSTER) {
+            return new File("./../../docker/docker-compose.redis-cluster.yml");
+        }
+        if (IS_REDIS_SENTINEL) {
+            return new File("./../../docker/docker-compose.redis-sentinel.yml");
+        }
+        return new File("./../../docker/docker-compose.redis.yml");
+    }
+
     public Map<String, String> getEnv() {
         return env;
     }
 
-    public void createVolumes()  {
+    public void createVolumes() {
         try {
 
             dockerCompose.withCommand("volume create " + postgresDataVolume);
@@ -163,18 +189,30 @@ public class ThingsBoardDbInstaller {
             dockerCompose.withCommand("volume create " + tbVcExecutorLogVolume);
             dockerCompose.invokeDocker();
 
-            String additionalServices = "";
+            StringBuilder additionalServices = new StringBuilder();
             if (IS_HYBRID_MODE) {
-                additionalServices += " cassandra";
+                additionalServices.append(" cassandra");
             }
             if (IS_REDIS_CLUSTER) {
                 for (int i = 0; i < 6; i++) {
-                    additionalServices = additionalServices + " redis-node-" + i;
+                    additionalServices.append(" redis-node-").append(i);
                     dockerCompose.withCommand("volume create " + redisClusterDataVolume + '-' + i);
                     dockerCompose.invokeDocker();
                 }
+            } else if (IS_REDIS_SENTINEL) {
+                additionalServices.append(" redis-master");
+                dockerCompose.withCommand("volume create " + redisSentinelDataVolume + "-" + "master");
+                dockerCompose.invokeDocker();
+
+                additionalServices.append(" redis-slave");
+                dockerCompose.withCommand("volume create " + redisSentinelDataVolume + '-' + "slave");
+                dockerCompose.invokeDocker();
+
+                additionalServices.append(" redis-sentinel");
+                dockerCompose.withCommand("volume create " + redisSentinelDataVolume + '-' + "sentinel");
+                dockerCompose.invokeDocker();
             } else {
-                additionalServices += " redis";
+                additionalServices.append(" redis");
                 dockerCompose.withCommand("volume create " + redisDataVolume);
                 dockerCompose.invokeDocker();
             }
@@ -189,7 +227,8 @@ public class ThingsBoardDbInstaller {
             try {
                 dockerCompose.withCommand("down -v");
                 dockerCompose.invokeCompose();
-            } catch (Exception e) {}
+            } catch (Exception ignored) {
+            }
         }
     }
 
@@ -202,13 +241,35 @@ public class ThingsBoardDbInstaller {
         copyLogs(tbSnmpTransportLogVolume, "./target/tb-snmp-transport-logs/");
         copyLogs(tbVcExecutorLogVolume, "./target/tb-vc-executor-logs/");
 
-        dockerCompose.withCommand("volume rm -f " + postgresDataVolume + " " + tbLogVolume +
-                " " + tbCoapTransportLogVolume + " " + tbLwm2mTransportLogVolume + " " + tbHttpTransportLogVolume +
-                " " + tbMqttTransportLogVolume + " " + tbSnmpTransportLogVolume + " " + tbVcExecutorLogVolume +
-                (IS_REDIS_CLUSTER
-                        ? IntStream.range(0, 6).mapToObj(i -> " " + redisClusterDataVolume + '-' + i).collect(Collectors.joining())
-                        : redisDataVolume));
-        dockerCompose.invokeDocker();
+        StringJoiner rmVolumesCommand = new StringJoiner(" ")
+                .add("volume rm -f")
+                .add(postgresDataVolume)
+                .add(tbLogVolume)
+                .add(tbCoapTransportLogVolume)
+                .add(tbLwm2mTransportLogVolume)
+                .add(tbHttpTransportLogVolume)
+                .add(tbMqttTransportLogVolume)
+                .add(tbSnmpTransportLogVolume)
+                .add(tbVcExecutorLogVolume)
+                .add(resolveRedisComposeVolumeLog());
+
+        if (IS_HYBRID_MODE) {
+            rmVolumesCommand.add(cassandraDataVolume);
+        }
+
+        dockerCompose.withCommand(rmVolumesCommand.toString());
+    }
+
+    private String resolveRedisComposeVolumeLog() {
+        if (IS_REDIS_CLUSTER) {
+            return IntStream.range(0, 6).mapToObj(i -> " " + redisClusterDataVolume + "-" + i).collect(Collectors.joining());
+        }
+        if (IS_REDIS_SENTINEL) {
+            return redisSentinelDataVolume + "-" + "master " + " " +
+                    redisSentinelDataVolume + "-" + "slave" + " " +
+                    redisSentinelDataVolume + " " + "sentinel";
+        }
+        return redisDataVolume;
     }
 
     private void copyLogs(String volumeName, String targetDir) {
@@ -220,7 +281,7 @@ public class ThingsBoardDbInstaller {
         dockerCompose.withCommand("run -d --rm --name " + logsContainerName + " -v " + volumeName + ":/root alpine tail -f /dev/null");
         dockerCompose.invokeDocker();
 
-        dockerCompose.withCommand("cp " + logsContainerName + ":/root/. "+tbLogsDir.getAbsolutePath());
+        dockerCompose.withCommand("cp " + logsContainerName + ":/root/. " + tbLogsDir.getAbsolutePath());
         dockerCompose.invokeDocker();
 
         dockerCompose.withCommand("rm -f " + logsContainerName);

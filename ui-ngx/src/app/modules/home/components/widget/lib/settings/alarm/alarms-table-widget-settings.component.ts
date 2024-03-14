@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -47,11 +47,13 @@ export class AlarmsTableWidgetSettingsComponent extends WidgetSettingsComponent 
       enableFilter: true,
       enableStickyHeader: true,
       enableStickyAction: true,
+      showCellActionsMenu: true,
       reserveSpaceForHiddenAction: 'true',
       displayDetails: true,
       allowAcknowledgment: true,
       allowClear: true,
       allowAssign: true,
+      displayActivity: true,
       displayPagination: true,
       defaultPageSize: 10,
       defaultSortOrder: '-createdTime',
@@ -69,6 +71,7 @@ export class AlarmsTableWidgetSettingsComponent extends WidgetSettingsComponent 
       enableFilter: [settings.enableFilter, []],
       enableStickyHeader: [settings.enableStickyHeader, []],
       enableStickyAction: [settings.enableStickyAction, []],
+      showCellActionsMenu: [settings.showCellActionsMenu, []],
       reserveSpaceForHiddenAction: [settings.reserveSpaceForHiddenAction, []],
       displayDetails: [settings.displayDetails, []],
       allowAcknowledgment: [settings.allowAcknowledgment, []],

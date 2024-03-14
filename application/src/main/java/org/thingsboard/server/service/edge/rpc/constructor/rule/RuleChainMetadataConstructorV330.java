@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.edge.rpc.constructor.rule;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNode;
@@ -37,7 +36,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class RuleChainMetadataConstructorV330 extends AbstractRuleChainMetadataConstructor {
+public class RuleChainMetadataConstructorV330 extends BaseRuleChainMetadataConstructor {
 
     private static final String RULE_CHAIN_INPUT_NODE = TbRuleChainInputNode.class.getName();
     private static final String TB_RULE_CHAIN_OUTPUT_NODE = TbRuleChainOutputNode.class.getName();
@@ -45,7 +44,9 @@ public class RuleChainMetadataConstructorV330 extends AbstractRuleChainMetadataC
     @Override
     protected void constructRuleChainMetadataUpdatedMsg(TenantId tenantId,
                                                         RuleChainMetadataUpdateMsg.Builder builder,
-                                                        RuleChainMetaData ruleChainMetaData) throws JsonProcessingException {
+                                                        RuleChainMetaData ruleChainMetaData) {
+        builder.setRuleChainIdMSB(ruleChainMetaData.getRuleChainId().getId().getMostSignificantBits())
+                .setRuleChainIdLSB(ruleChainMetaData.getRuleChainId().getId().getLeastSignificantBits());
         List<RuleNode> supportedNodes = filterNodes(ruleChainMetaData.getNodes());
 
         NavigableSet<Integer> removedNodeIndexes = getRemovedNodeIndexes(ruleChainMetaData.getNodes(), ruleChainMetaData.getConnections());

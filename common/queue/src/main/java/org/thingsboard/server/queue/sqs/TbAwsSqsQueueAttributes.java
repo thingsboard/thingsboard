@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,6 +76,12 @@ public class TbAwsSqsQueueAttributes {
 
     private Map<String, String> getConfigs(String properties) {
         Map<String, String> configs = new HashMap<>(defaultAttributes);
+       configs.putAll(toConfigs(properties));
+        return configs;
+    }
+
+    public static Map<String, String> toConfigs(String properties) {
+        Map<String, String> configs = new HashMap<>();
         if (StringUtils.isNotEmpty(properties)) {
             for (String property : properties.split(";")) {
                 int delimiterPosition = property.indexOf(":");
@@ -88,7 +94,7 @@ public class TbAwsSqsQueueAttributes {
         return configs;
     }
 
-    private void validateAttributeName(String key) {
+    private static void validateAttributeName(String key) {
         QueueAttributeName.fromValue(key);
     }
 }

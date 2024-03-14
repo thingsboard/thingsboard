@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentType;
-import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -35,6 +34,7 @@ import org.thingsboard.server.dao.alarm.AlarmCommentDao;
 import org.thingsboard.server.dao.alarm.AlarmDao;
 
 import java.util.UUID;
+
 import static org.junit.Assert.assertEquals;
 
 @Slf4j
@@ -85,6 +85,6 @@ public class JpaAlarmCommentDaoTest extends AbstractJpaDaoTest {
         alarmComment.setUserId(new UserId(userId));
         alarmComment.setType(type);
         alarmComment.setComment(JacksonUtil.newObjectNode().put("text", RandomStringUtils.randomAlphanumeric(10)));
-        alarmCommentDao.createAlarmComment(TenantId.fromUUID(UUID.randomUUID()), alarmComment);
+        alarmCommentDao.save(TenantId.fromUUID(UUID.randomUUID()), alarmComment);
     }
 }

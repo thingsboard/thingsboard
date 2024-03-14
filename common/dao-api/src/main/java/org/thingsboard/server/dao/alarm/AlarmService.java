@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,13 @@ package org.thingsboard.server.dao.alarm;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmQuery;
+import org.thingsboard.server.common.data.alarm.AlarmQueryV2;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
@@ -32,12 +34,14 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.Collection;
+import java.util.Set;
 
 
 public interface AlarmService extends EntityDaoService {
@@ -73,26 +77,9 @@ public interface AlarmService extends EntityDaoService {
 
     AlarmApiCallResult delAlarm(TenantId tenantId, AlarmId alarmId);
 
-    /*
-     *  Legacy API, before 3.5.
-     */
-    @Deprecated(since = "3.5.0", forRemoval = true)
-    AlarmOperationResult createOrUpdateAlarm(Alarm alarm);
+    AlarmApiCallResult delAlarm(TenantId tenantId, AlarmId alarmId, boolean checkAndDeleteAlarmType);
 
-    @Deprecated(since = "3.5.0", forRemoval = true)
-    AlarmOperationResult createOrUpdateAlarm(Alarm alarm, boolean alarmCreationEnabled);
-
-    @Deprecated(since = "3.5.0", forRemoval = true)
-    ListenableFuture<AlarmOperationResult> ackAlarm(TenantId tenantId, AlarmId alarmId, long ackTs);
-
-    @Deprecated(since = "3.5.0", forRemoval = true)
-    ListenableFuture<AlarmOperationResult> clearAlarm(TenantId tenantId, AlarmId alarmId, JsonNode details, long clearTs);
-
-    @Deprecated(since = "3.5.0", forRemoval = true)
-    AlarmOperationResult deleteAlarm(TenantId tenantId, AlarmId alarmId);
-
-    @Deprecated(since = "3.5.0", forRemoval = true)
-    ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
+    void delAlarmTypes(TenantId tenantId, Set<String> types);
 
     // Other API
     Alarm findAlarmById(TenantId tenantId, AlarmId alarmId);
@@ -101,9 +88,13 @@ public interface AlarmService extends EntityDaoService {
 
     AlarmInfo findAlarmInfoById(TenantId tenantId, AlarmId alarmId);
 
-    ListenableFuture<PageData<AlarmInfo>> findAlarms(TenantId tenantId, AlarmQuery query);
+    PageData<AlarmInfo> findAlarms(TenantId tenantId, AlarmQuery query);
 
-    ListenableFuture<PageData<AlarmInfo>> findCustomerAlarms(TenantId tenantId, CustomerId customerId, AlarmQuery query);
+    PageData<AlarmInfo> findCustomerAlarms(TenantId tenantId, CustomerId customerId, AlarmQuery query);
+
+    PageData<AlarmInfo> findAlarmsV2(TenantId tenantId, AlarmQueryV2 query);
+
+    PageData<AlarmInfo> findCustomerAlarmsV2(TenantId tenantId, CustomerId customerId, AlarmQueryV2 query);
 
     AlarmSeverity findHighestAlarmSeverity(TenantId tenantId, EntityId entityId, AlarmSearchStatus alarmSearchStatus,
                                            AlarmStatus alarmStatus, String assigneeId);
@@ -113,7 +104,13 @@ public interface AlarmService extends EntityDaoService {
     PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId,
                                                         AlarmDataQuery query, Collection<EntityId> orderedEntityIds);
 
+    PageData<AlarmId> findAlarmIdsByAssigneeId(TenantId tenantId, UserId userId, PageLink pageLink);
+
     void deleteEntityAlarmRelations(TenantId tenantId, EntityId entityId);
 
+    void deleteEntityAlarmRecordsByTenantId(TenantId tenantId);
+
     long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, AlarmCountQuery query);
+
+    PageData<EntitySubtype> findAlarmTypesByTenantId(TenantId tenantId, PageLink pageLink);
 }

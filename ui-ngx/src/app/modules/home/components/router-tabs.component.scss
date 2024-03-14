@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,11 @@
       line-height: 40px;
       min-width: 200px;
       border-bottom: none;
-      mat-icon {
+      .mat-icon {
         margin-right: 8px;
         margin-left: 0;
       }
       span {
-        overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
       }

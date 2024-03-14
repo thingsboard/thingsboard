@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 import {
   NotificationDeliveryMethod,
-  NotificationDeliveryMethodTranslateMap,
   NotificationRequest,
   NotificationRequestPreview,
   NotificationTarget,
@@ -25,9 +24,8 @@ import {
 import { Component, Inject, OnDestroy, ViewChild } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NotificationService } from '@core/http/notification.service';
 import { deepTrim, guid, isDefinedAndNotNull } from '@core/utils';
 import { Observable } from 'rxjs';
@@ -44,6 +42,11 @@ import {
 } from '@home/pages/notification/recipient/recipient-notification-dialog.component';
 import { MatButton } from '@angular/material/button';
 import { TemplateConfiguration } from '@home/pages/notification/template/template-configuration';
+import { Authority } from '@shared/models/authority.enum';
+import { AuthUser } from '@shared/models/user.model';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { TranslateService } from '@ngx-translate/core';
+import { Router } from '@angular/router';
 
 export interface RequestNotificationDialogData {
   request?: NotificationRequest;
@@ -60,7 +63,6 @@ export class SentNotificationDialogComponent extends
 
   @ViewChild('createNotification', {static: true}) createNotification: MatStepper;
   stepperOrientation: Observable<StepperOrientation>;
-  stepperLabelPosition: Observable<'bottom' | 'end'>;
 
   isAdd = true;
   entityType = EntityType;
@@ -68,13 +70,16 @@ export class SentNotificationDialogComponent extends
 
   notificationRequestForm: FormGroup;
 
-  notificationDeliveryMethods = Object.keys(NotificationDeliveryMethod) as NotificationDeliveryMethod[];
-  notificationDeliveryMethodTranslateMap = NotificationDeliveryMethodTranslateMap;
-
   selectedIndex = 0;
   preview: NotificationRequestPreview = null;
 
   dialogTitle = 'notification.notify-again';
+
+  showRefresh = false;
+
+  private authUser: AuthUser = getCurrentAuthUser(this.store);
+
+  private allowNotificationDeliveryMethods: Array<NotificationDeliveryMethod>;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -83,14 +88,18 @@ export class SentNotificationDialogComponent extends
               private breakpointObserver: BreakpointObserver,
               protected fb: FormBuilder,
               private notificationService: NotificationService,
-              private dialog: MatDialog) {
+              private dialog: MatDialog,
+              private translate: TranslateService) {
     super(store, router, dialogRef, fb);
+
+    this.notificationDeliveryMethods.forEach(method => {
+      if (method !== NotificationDeliveryMethod.WEB) {
+        this.templateNotificationForm.get('configuration.deliveryMethodsTemplates').get(method).disable({emitEvent: false});
+      }
+    });
 
     this.stepperOrientation = this.breakpointObserver.observe(MediaBreakpoints['gt-sm'])
       .pipe(map(({matches}) => matches ? 'horizontal' : 'vertical'));
-
-    this.stepperLabelPosition = this.breakpointObserver.observe(MediaBreakpoints['gt-md'])
-      .pipe(map(({matches}) => matches ? 'end' : 'bottom'));
 
     this.notificationRequestForm = this.fb.group({
       useTemplate: [false],
@@ -115,6 +124,7 @@ export class SentNotificationDialogComponent extends
       } else {
         this.notificationRequestForm.get('templateId').disable({emitEvent: false});
         this.notificationRequestForm.get('template').enable({emitEvent: false});
+        this.updateDeliveryMethodsDisableState();
       }
     });
 
@@ -137,17 +147,18 @@ export class SentNotificationDialogComponent extends
       this.notificationRequestForm.reset({}, {emitEvent: false});
       this.notificationRequestForm.patchValue(this.data.request, {emitEvent: false});
       this.notificationRequestForm.get('template.name').setValue(guid());
+      this.notificationRequestForm.get('template.notificationType').setValue(NotificationType.GENERAL);
       let useTemplate = true;
       if (isDefinedAndNotNull(this.data.request.template)) {
         useTemplate = false;
-        // eslint-disable-next-line guard-for-in
-        for (const method in this.data.request.template.configuration.deliveryMethodsTemplates) {
-          this.deliveryMethodFormsMap.get(NotificationDeliveryMethod[method])
-            .patchValue(this.data.request.template.configuration.deliveryMethodsTemplates[method]);
-        }
+        this.notificationTemplateConfigurationForm.patchValue({
+          deliveryMethodsTemplates: this.data.request.template.configuration.deliveryMethodsTemplates
+        }, {emitEvent: false});
       }
       this.notificationRequestForm.get('useTemplate').setValue(useTemplate, {onlySelf : true});
+      this.deliveryConfiguration = this.templateNotificationForm.get('configuration.deliveryMethodsTemplates').value;
     }
+    this.refreshAllowDeliveryMethod();
   }
 
   ngOnDestroy() {
@@ -167,6 +178,9 @@ export class SentNotificationDialogComponent extends
 
   changeStep($event: StepperSelectionEvent) {
     this.selectedIndex = $event.selectedIndex;
+    if ($event.previouslySelectedIndex > $event.selectedIndex) {
+      $event.previouslySelectedStep.interacted = false;
+    }
     if (this.selectedIndex === this.maxStepperIndex) {
       this.getPreview();
     }
@@ -240,6 +254,14 @@ export class SentNotificationDialogComponent extends
     });
   }
 
+  private isSysAdmin(): boolean {
+    return this.authUser.authority === Authority.SYS_ADMIN;
+  }
+
+  private isTenantAdmin(): boolean {
+    return this.authUser.authority === Authority.TENANT_ADMIN;
+  }
+
   minDate(): Date {
     return new Date(getCurrentTime(this.notificationRequestForm.get('additionalConfig.timezone').value).format('lll'));
   }
@@ -271,5 +293,69 @@ export class SentNotificationDialogComponent extends
           this.notificationRequestForm.get('targets').patchValue(formValue);
         }
       });
+  }
+
+  getDeliveryMethodsTemplatesControl(deliveryMethod: NotificationDeliveryMethod): AbstractControl {
+    return this.templateNotificationForm.get('configuration.deliveryMethodsTemplates').get(deliveryMethod).get('enabled');
+  }
+
+  getDeliveryMethodsTooltip(deliveryMethod: NotificationDeliveryMethod): string {
+    if (this.allowConfigureDeliveryMethod(deliveryMethod)) {
+      return this.translate.instant('notification.delivery-method-not-configure-click');
+    }
+    return this.translate.instant('notification.delivery-method-not-configure-contact');
+  }
+
+  allowConfigureDeliveryMethod(deliveryMethod: NotificationDeliveryMethod): boolean {
+    const tenantAllowConfigureDeliveryMethod = new Set([
+      NotificationDeliveryMethod.SLACK
+    ]);
+    if (deliveryMethod === NotificationDeliveryMethod.WEB) {
+      return false;
+    }
+    if(this.isSysAdmin()) {
+      return true;
+    } else if (this.isTenantAdmin()) {
+      return tenantAllowConfigureDeliveryMethod.has(deliveryMethod);
+    }
+    return false;
+  }
+
+  isInteractDeliveryMethod(deliveryMethod: NotificationDeliveryMethod) {
+    return this.getDeliveryMethodsTemplatesControl(deliveryMethod).disabled && this.allowConfigureDeliveryMethod(deliveryMethod);
+  }
+
+  configurationPage(deliveryMethod: NotificationDeliveryMethod) {
+    switch (deliveryMethod) {
+      case NotificationDeliveryMethod.EMAIL:
+        return '/settings/outgoing-mail';
+      case NotificationDeliveryMethod.SMS:
+      case NotificationDeliveryMethod.SLACK:
+      case NotificationDeliveryMethod.MOBILE_APP:
+        return '/settings/notifications';
+    }
+  }
+
+  refreshAllowDeliveryMethod() {
+    this.notificationService.getAvailableDeliveryMethods({ignoreLoading: true}).subscribe(allowMethods => {
+      this.allowNotificationDeliveryMethods = allowMethods;
+      if (!this.notificationRequestForm.get('useTemplate').value) {
+        this.updateDeliveryMethodsDisableState();
+        this.showRefresh = (this.notificationDeliveryMethods.length !== allowMethods.length);
+      }
+    });
+  }
+
+  private updateDeliveryMethodsDisableState() {
+    if (this.allowNotificationDeliveryMethods) {
+      this.notificationDeliveryMethods.forEach(method => {
+        if (this.allowNotificationDeliveryMethods.includes(method)) {
+          this.getDeliveryMethodsTemplatesControl(method).enable({emitEvent: true});
+        } else {
+          this.getDeliveryMethodsTemplatesControl(method).disable({emitEvent: true});
+          this.getDeliveryMethodsTemplatesControl(method).setValue(false, {emitEvent: true}); //used for notify again
+        }
+      });
+    }
   }
 }

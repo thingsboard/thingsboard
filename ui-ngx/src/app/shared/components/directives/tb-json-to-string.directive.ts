@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,19 +17,23 @@
 import { Directive, ElementRef, forwardRef, HostListener, Renderer2, SkipSelf } from '@angular/core';
 import {
   ControlValueAccessor,
-  UntypedFormControl,
   FormGroupDirective,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   NgForm,
+  UntypedFormControl,
   ValidationErrors,
   Validator
 } from '@angular/forms';
 import { ErrorStateMatcher } from '@angular/material/core';
-import { isObject } from "@core/utils";
+import { isObject } from '@core/utils';
 
 @Directive({
   selector: '[tb-json-to-string]',
+  // eslint-disable-next-line @angular-eslint/no-host-metadata-property
+  host: {
+    '(blur)': 'onTouched()'
+  },
   providers: [{
     provide: NG_VALUE_ACCESSOR,
     useExisting: forwardRef(() => TbJsonToStringDirective),
@@ -48,18 +52,26 @@ import { isObject } from "@core/utils";
 
 export class TbJsonToStringDirective implements ControlValueAccessor, Validator, ErrorStateMatcher {
   private propagateChange = null;
+  public onTouched = () => {};
   private parseError: boolean;
   private data: any;
 
   @HostListener('input', ['$event.target.value']) input(newValue: any): void {
     try {
-      this.data = JSON.parse(newValue);
-      if (isObject(this.data)) {
-        this.parseError = false;
+      if (newValue) {
+        this.data = JSON.parse(newValue);
+        if (isObject(this.data)) {
+          this.parseError = false;
+        } else {
+          this.data = null;
+          this.parseError = true;
+        }
       } else {
-        this.parseError = true;
+        this.data = null;
+        this.parseError = false;
       }
     } catch (e) {
+      this.data = null;
       this.parseError = true;
     }
 
@@ -73,9 +85,7 @@ export class TbJsonToStringDirective implements ControlValueAccessor, Validator,
   }
 
   isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
-    const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
-    const customErrorState = !!(control && control.invalid && this.parseError);
-    return originalErrorState || customErrorState;
+    return !!(control && control.invalid && !Array.isArray(control.value) && control.touched);
   }
 
   validate(c: UntypedFormControl): ValidationErrors {
@@ -87,11 +97,9 @@ export class TbJsonToStringDirective implements ControlValueAccessor, Validator,
   }
 
   writeValue(obj: any): void {
-    if (obj) {
-      this.data = obj;
-      this.parseError = false;
-      this.render.setProperty(this.element.nativeElement, 'value', JSON.stringify(obj));
-    }
+    this.data = obj;
+    this.parseError = false;
+    this.render.setProperty(this.element.nativeElement, 'value', obj ? JSON.stringify(obj) : '');
   }
 
   registerOnChange(fn: any): void {
@@ -99,5 +107,6 @@ export class TbJsonToStringDirective implements ControlValueAccessor, Validator,
   }
 
   registerOnTouched(fn: any): void {
+    this.onTouched = fn;
   }
 }

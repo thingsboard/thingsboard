@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
-import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
 
 import java.util.Collection;
 import java.util.List;
@@ -41,6 +41,8 @@ public interface TimeseriesService {
     ListenableFuture<Optional<TsKvEntry>> findLatest(TenantId tenantId, EntityId entityId, String keys);
 
     ListenableFuture<List<TsKvEntry>> findLatest(TenantId tenantId, EntityId entityId, Collection<String> keys);
+
+    List<TsKvEntry> findLatestSync(TenantId tenantId, EntityId entityId, Collection<String> keys);
 
     ListenableFuture<List<TsKvEntry>> findAllLatest(TenantId tenantId, EntityId entityId);
 

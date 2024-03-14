@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2023 The Thingsboard Authors
+# Copyright © 2016-2024 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 FROM thingsboard/openjdk11:bullseye-slim
 
-ENV PG_MAJOR=12
+ENV PG_MAJOR=15
 
 ENV DATA_FOLDER=/data
 
@@ -47,7 +47,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends wget nmap procps gnupg2 \
     && echo "deb http://apt.postgresql.org/pub/repos/apt/ $(. /etc/os-release && echo -n $VERSION_CODENAME)-pgdg main" | tee --append /etc/apt/sources.list.d/pgdg.list > /dev/null \
     && wget -q https://www.postgresql.org/media/keys/ACCC4CF8.asc -O- | apt-key add - \
-    && echo 'deb http://downloads.apache.org/cassandra/debian 40x main' | tee --append /etc/apt/sources.list.d/cassandra.list > /dev/null \
+    && echo "deb https://debian.cassandra.apache.org 40x main" | tee -a /etc/apt/sources.list.d/cassandra.sources.list > /dev/null \
     && wget -q https://downloads.apache.org/cassandra/KEYS -O- | apt-key add - \
     && apt-get update \
     && apt-get install -y --no-install-recommends cassandra cassandra-tools postgresql-${PG_MAJOR} \

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,18 +23,21 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Data;
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.slack.SlackNotificationTargetConfig;
+import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
         @Type(value = PlatformUsersNotificationTargetConfig.class, name = "PLATFORM_USERS"),
-        @Type(value = SlackNotificationTargetConfig.class, name = "SLACK")
+        @Type(value = SlackNotificationTargetConfig.class, name = "SLACK"),
+        @Type(value = MicrosoftTeamsNotificationTargetConfig.class, name = "MICROSOFT_TEAMS")
 })
 @Data
 public abstract class NotificationTargetConfig {
 
     @NoXss
+    @Length(max = 500, message = "cannot be longer than 500 chars")
     private String description;
 
     @JsonIgnore

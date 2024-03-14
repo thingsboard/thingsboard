@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,18 +17,20 @@ package org.thingsboard.rule.engine.metadata;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class TbFetchDeviceCredentialsNodeConfiguration implements NodeConfiguration<TbFetchDeviceCredentialsNodeConfiguration> {
-
-    private boolean fetchToMetadata;
+public class TbFetchDeviceCredentialsNodeConfiguration extends TbAbstractFetchToNodeConfiguration implements NodeConfiguration<TbFetchDeviceCredentialsNodeConfiguration> {
 
     @Override
     public TbFetchDeviceCredentialsNodeConfiguration defaultConfiguration() {
-        TbFetchDeviceCredentialsNodeConfiguration configuration = new TbFetchDeviceCredentialsNodeConfiguration();
-        configuration.setFetchToMetadata(true);
+        var configuration = new TbFetchDeviceCredentialsNodeConfiguration();
+        configuration.setFetchTo(TbMsgSource.METADATA);
         return configuration;
     }
+
 }

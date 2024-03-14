@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import { IAliasController } from '@core/api/widget-api.models';
 @Component({
   selector: 'tb-tick-value',
   templateUrl: './tick-value.component.html',
-  styleUrls: ['./tick-value.component.scss', './../widget-settings.scss'],
+  styleUrls: ['./tick-value.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

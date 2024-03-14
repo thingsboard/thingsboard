@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,17 +20,23 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
+import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
-import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
-import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.dao.alarm.AlarmDao;
+import org.thingsboard.server.dao.tenant.TenantDao;
+import org.thingsboard.server.dao.tenant.TenantProfileDao;
 
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -54,6 +60,11 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
     @Autowired
     private AlarmDao alarmDao;
 
+    @Autowired
+    protected TenantProfileDao tenantProfileDao;
+
+    @Autowired
+    protected TenantDao tenantDao;
 
     @Test
     public void testFindLatestByOriginatorAndType() throws ExecutionException, InterruptedException, TimeoutException {
@@ -88,7 +99,8 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void createOrUpdateActiveAlarm() {
-        TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
+        Tenant tenant = createTenant();
+        TenantId tenantId = tenant.getId();
         DeviceId deviceId = new DeviceId(UUID.randomUUID());
 
         AlarmCreateOrUpdateActiveRequest request = AlarmCreateOrUpdateActiveRequest.builder()
@@ -156,6 +168,9 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         assertTrue(result.isModified());
         assertNotNull(result.getAlarm());
         assertNotEquals(newAlarmId, result.getAlarm().getUuidId());
+
+        tenantDao.removeById(TenantId.SYS_TENANT_ID, tenant.getUuidId());
+        tenantProfileDao.removeById(TenantId.SYS_TENANT_ID, tenant.getTenantProfileId().getId());
     }
 
     @Test
@@ -202,7 +217,34 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
     @Test
     public void testClearAlarmProcedure() {
         UUID tenantId = UUID.randomUUID();
-        ;
+        UUID originator1Id = UUID.fromString("d4b68f41-3e96-11e7-a884-898080180d6b");
+        UUID alarm1Id = UUID.fromString("d4b68f43-3e96-11e7-a884-898080180d6b");
+        Alarm alarm = saveAlarm(alarm1Id, tenantId, originator1Id, "TEST_ALARM");
+        long clearTs = System.currentTimeMillis();
+        var details = JacksonUtil.newObjectNode().put("test", 123);
+        AlarmApiCallResult result = alarmDao.clearAlarm(alarm.getTenantId(), alarm.getId(), clearTs, details);
+        AlarmInfo afterSave = alarmDao.findAlarmInfoById(alarm.getTenantId(), alarm.getUuidId());
+        assertNotNull(result);
+        assertTrue(result.isSuccessful());
+        assertTrue(result.isCleared());
+        assertNotNull(result.getAlarm());
+        assertEquals(afterSave, result.getAlarm());
+        assertEquals(clearTs, result.getAlarm().getClearTs());
+        assertTrue(result.getAlarm().isCleared());
+        assertEquals(details, result.getAlarm().getDetails());
+        result = alarmDao.clearAlarm(alarm.getTenantId(), alarm.getId(), clearTs + 1, JacksonUtil.newObjectNode());
+        assertNotNull(result);
+        assertNotNull(result.getAlarm());
+        assertEquals(afterSave, result.getAlarm());
+        assertTrue(result.isSuccessful());
+        assertFalse(result.isCleared());
+        assertEquals(clearTs, result.getAlarm().getClearTs());
+        assertTrue(result.getAlarm().isCleared());
+    }
+
+    @Test
+    public void testClearAlarmWithoutDetailsProcedure() {
+        UUID tenantId = UUID.randomUUID();
         UUID originator1Id = UUID.fromString("d4b68f41-3e96-11e7-a884-898080180d6b");
         UUID alarm1Id = UUID.fromString("d4b68f43-3e96-11e7-a884-898080180d6b");
         Alarm alarm = saveAlarm(alarm1Id, tenantId, originator1Id, "TEST_ALARM");
@@ -216,6 +258,7 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         assertEquals(afterSave, result.getAlarm());
         assertEquals(clearTs, result.getAlarm().getClearTs());
         assertTrue(result.getAlarm().isCleared());
+        assertEquals(alarm.getDetails(), result.getAlarm().getDetails());
         result = alarmDao.clearAlarm(alarm.getTenantId(), alarm.getId(), clearTs + 1, JacksonUtil.newObjectNode());
         assertNotNull(result);
         assertNotNull(result.getAlarm());
@@ -299,6 +342,25 @@ public class JpaAlarmDaoTest extends AbstractJpaDaoTest {
         alarm.setCleared(false);
         alarm.setDetails(JacksonUtil.newObjectNode().put("a", UUID.randomUUID().toString()).set("b", JacksonUtil.newObjectNode().put("a", "[}/.`1321421!@@$$(%&&$")));
         return alarmDao.save(TenantId.fromUUID(tenantId), alarm);
+    }
+
+    private Tenant createTenant() {
+        TenantProfile tenantProfile = new TenantProfile();
+        tenantProfile.setName("My tenant profile " + UUID.randomUUID());
+        TenantProfileData profileData = new TenantProfileData();
+        profileData.setConfiguration(new DefaultTenantProfileConfiguration());
+        tenantProfile.setProfileData(profileData);
+        var savedTenantProfile = tenantProfileDao.save(TenantId.SYS_TENANT_ID, tenantProfile);
+        assertNotNull(savedTenantProfile);
+
+        Tenant tenant = new Tenant();
+        tenant.setTitle("My tenant " + UUID.randomUUID());
+        tenant.setTenantProfileId(savedTenantProfile.getId());
+        Tenant savedTenant = tenantDao.save(TenantId.SYS_TENANT_ID, tenant);
+
+        assertNotNull(savedTenant);
+
+        return savedTenant;
     }
 
 }

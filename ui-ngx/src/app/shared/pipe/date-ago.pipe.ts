@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -37,18 +37,25 @@ export class DateAgoPipe implements PipeTransform {
 
   }
 
-  transform(value: number): string {
+  transform(value: string| number | Date, args?: any): string {
     if (value) {
+      const applyAgo = !!args?.applyAgo;
+      const short = !!args?.short;
+      const textPart = !!args?.textPart;
       const ms = Math.floor((+new Date() - +new Date(value)));
       if (ms < 29 * SECOND) { // less than 30 seconds ago will show as 'Just now'
-        return this.translate.instant('timewindow.just-now');
+        return this.translate.instant(textPart ? 'timewindow.just-now-lower' : 'timewindow.just-now');
       }
       let counter;
-      // tslint:disable-next-line:forin
+      // eslint-disable-next-line guard-for-in
       for (const i in intervals) {
         counter = Math.floor(ms / intervals[i]);
         if (counter > 0) {
-          return this.translate.instant(`timewindow.${i}`, {[i]: counter});
+          let res = this.translate.instant(`timewindow.${i+(short ? '-short' : '')}`, {[i]: counter});
+          if (applyAgo) {
+            res += ' ' + this.translate.instant('timewindow.ago');
+          }
+          return res;
         }
       }
     }

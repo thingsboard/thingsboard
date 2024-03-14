@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -560,17 +560,14 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         List<String> keys = cmd.getKeys();
         List<ReadTsKvQuery> finalTsKvQueryList;
         List<ReadTsKvQuery> tsKvQueryList = keys.stream().map(key -> {
-            var query = new BaseReadTsKvQuery(
-                    key, cmd.getStartTs(), cmd.getEndTs(), cmd.getInterval(), getLimit(cmd.getLimit()), cmd.getAgg()
-            );
+            var query = new BaseReadTsKvQuery(key, cmd.getStartTs(), cmd.getEndTs(), cmd.toAggregationParams(), getLimit(cmd.getLimit()));
             queriesKeys.put(query.getId(), query.getKey());
             return query;
         }).collect(Collectors.toList());
         if (cmd.isFetchLatestPreviousPoint()) {
             finalTsKvQueryList = new ArrayList<>(tsKvQueryList);
             finalTsKvQueryList.addAll(keys.stream().map(key -> {
-                        var query = new BaseReadTsKvQuery(
-                                key, cmd.getStartTs() - TimeUnit.DAYS.toMillis(365), cmd.getStartTs(), cmd.getInterval(), 1, cmd.getAgg());
+                        var query = new BaseReadTsKvQuery(key, cmd.getStartTs() - TimeUnit.DAYS.toMillis(365), cmd.getStartTs(), cmd.toAggregationParams(), 1);
                         queriesKeys.put(query.getId(), query.getKey());
                         return query;
                     }
@@ -641,7 +638,7 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
 
     private void handleLatestCmd(TbEntityDataSubCtx ctx, LatestValueCmd latestCmd) {
         log.trace("[{}][{}] Going to process latest command: {}", ctx.getSessionId(), ctx.getCmdId(), latestCmd);
-        //Fetch the latest values for telemetry keys (in case they are not copied from NoSQL to SQL DB in hybrid mode.
+        //Fetch the latest values for telemetry keys in case they are not copied from NoSQL to SQL DB in hybrid mode.
         if (!tsInSqlDB) {
             log.trace("[{}][{}] Going to fetch missing latest values: {}", ctx.getSessionId(), ctx.getCmdId(), latestCmd);
             List<String> allTsKeys = latestCmd.getKeys().stream()

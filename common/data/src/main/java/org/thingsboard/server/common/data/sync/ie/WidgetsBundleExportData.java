@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,12 @@
 package org.thingsboard.server.common.data.sync.ie;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.widget.BaseWidgetType;
-import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 
-import java.util.Comparator;
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -30,13 +29,16 @@ import java.util.List;
 public class WidgetsBundleExportData extends EntityExportData<WidgetsBundle> {
 
     @JsonProperty(index = 3)
-    private List<WidgetTypeDetails> widgets;
+    private List<ObjectNode> widgets;
 
-    @Override
-    public EntityExportData<WidgetsBundle> sort() {
-        super.sort();
-        widgets.sort(Comparator.comparing(BaseWidgetType::getAlias));
-        return this;
+    @JsonProperty(index = 4)
+    private List<String> fqns;
+
+    public void addFqn(String fqn) {
+        if (fqns == null) {
+            fqns = new ArrayList<>();
+        }
+        fqns.add(fqn);
     }
 
 }

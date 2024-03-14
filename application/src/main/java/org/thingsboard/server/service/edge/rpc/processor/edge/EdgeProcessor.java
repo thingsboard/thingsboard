@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +41,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-@Component
 @Slf4j
+@Component
 @TbCoreComponent
 public class EdgeProcessor extends BaseEdgeProcessor {
 
@@ -72,9 +72,9 @@ public class EdgeProcessor extends BaseEdgeProcessor {
             EdgeId edgeId = new EdgeId(new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB()));
             switch (actionType) {
                 case ASSIGNED_TO_CUSTOMER:
-                    CustomerId customerId = JacksonUtil.OBJECT_MAPPER.readValue(edgeNotificationMsg.getBody(), CustomerId.class);
+                    CustomerId customerId = JacksonUtil.fromString(edgeNotificationMsg.getBody(), CustomerId.class);
                     Edge edge = edgeService.findEdgeById(tenantId, edgeId);
-                    if (edge == null || customerId.isNullUid()) {
+                    if (customerId != null && (edge == null || customerId.isNullUid())) {
                         return Futures.immediateFuture(null);
                     }
                     List<ListenableFuture<Void>> futures = new ArrayList<>();
@@ -85,7 +85,7 @@ public class EdgeProcessor extends BaseEdgeProcessor {
                     do {
                         pageData = userService.findCustomerUsers(tenantId, customerId, pageLink);
                         if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
-                            log.trace("[{}] [{}] user(s) are going to be added to edge.", edge.getId(), pageData.getData().size());
+                            log.trace("[{}][{}][{}] user(s) are going to be added to edge.", tenantId, edge.getId(), pageData.getData().size());
                             for (User user : pageData.getData()) {
                                 futures.add(saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.USER, EdgeEventActionType.ADDED, user.getId(), null));
                             }
@@ -96,9 +96,9 @@ public class EdgeProcessor extends BaseEdgeProcessor {
                     } while (pageData != null && pageData.hasNext());
                     return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
                 case UNASSIGNED_FROM_CUSTOMER:
-                    CustomerId customerIdToDelete = JacksonUtil.OBJECT_MAPPER.readValue(edgeNotificationMsg.getBody(), CustomerId.class);
+                    CustomerId customerIdToDelete = JacksonUtil.fromString(edgeNotificationMsg.getBody(), CustomerId.class);
                     edge = edgeService.findEdgeById(tenantId, edgeId);
-                    if (edge == null || customerIdToDelete.isNullUid()) {
+                    if (customerIdToDelete != null && (edge == null || customerIdToDelete.isNullUid())) {
                         return Futures.immediateFuture(null);
                     }
                     return Futures.transformAsync(saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.EDGE, EdgeEventActionType.UNASSIGNED_FROM_CUSTOMER, edgeId, null),
@@ -108,7 +108,7 @@ public class EdgeProcessor extends BaseEdgeProcessor {
                     return Futures.immediateFuture(null);
             }
         } catch (Exception e) {
-            log.error("Exception during processing edge event", e);
+            log.error("[{}] Exception during processing edge event", tenantId, e);
             return Futures.immediateFailedFuture(e);
         }
     }

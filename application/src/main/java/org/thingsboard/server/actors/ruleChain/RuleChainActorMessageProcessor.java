@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.thingsboard.server.actors.ruleChain;
 
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.rule.engine.api.TbRelationTypes;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.TbActorRef;
@@ -29,6 +28,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -167,13 +167,15 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
     @Override
     public void onPartitionChangeMsg(PartitionChangeMsg msg) {
+        log.debug("[{}][{}] onPartitionChangeMsg: [{}]", tenantId, entityId, msg);
         nodeActors.values().stream().map(RuleNodeCtx::getSelfActor).forEach(actorRef -> actorRef.tellWithHighPriority(msg));
     }
 
     private TbActorRef createRuleNodeActor(TbActorCtx ctx, RuleNode ruleNode) {
         return ctx.getOrCreateChildActor(new TbEntityActorId(ruleNode.getId()),
                 () -> DefaultActorService.RULE_DISPATCHER_NAME,
-                () -> new RuleNodeActor.ActorCreator(systemContext, tenantId, entityId, ruleChainName, ruleNode.getId()));
+                () -> new RuleNodeActor.ActorCreator(systemContext, tenantId, entityId, ruleChainName, ruleNode.getId()),
+                () -> true);
     }
 
     private void initRoutes(RuleChain ruleChain, List<RuleNode> ruleNodeList) {
@@ -238,7 +240,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         } catch (RuleNodeException rne) {
             msg.getCallback().onFailure(rne);
         } catch (Exception e) {
-            msg.getCallback().onFailure(new RuleEngineException(e.getMessage()));
+            msg.getCallback().onFailure(new RuleEngineException(e.getMessage(), e));
         }
     }
 
@@ -313,7 +315,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
             int relationsCount = relationsByTypes.size();
             if (relationsCount == 0) {
                 log.trace("[{}][{}][{}] No outbound relations to process", tenantId, entityId, msg.getId());
-                if (relationTypes.contains(TbRelationTypes.FAILURE)) {
+                if (relationTypes.contains(TbNodeConnectionType.FAILURE)) {
                     RuleNodeCtx ruleNodeCtx = nodeActors.get(originatorNodeId);
                     if (ruleNodeCtx != null) {
                         msg.getCallback().onFailure(new RuleNodeException(failureMessage, ruleChainName, ruleNodeCtx.getSelf()));
@@ -341,7 +343,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
             msg.getCallback().onFailure(rne);
         } catch (Exception e) {
             log.warn("[" + tenantId + "]" + "[" + entityId + "]" + "[" + msg.getId() + "]" + " onTellNext failure", e);
-            msg.getCallback().onFailure(new RuleEngineException("onTellNext - " + e.getMessage()));
+            msg.getCallback().onFailure(new RuleEngineException("onTellNext - " + e.getMessage(), e));
         }
     }
 

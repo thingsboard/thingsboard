@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -22,13 +22,17 @@
          (focusin)="onFocus()"
          [matAutocomplete]="userAutocomplete">
   <mat-icon matSuffix>search</mat-icon>
-  <mat-autocomplete class="tb-assignee-autocomplete"
+  <mat-autocomplete class="tb-assignee-autocomplete tb-autocomplete"
                     #userAutocomplete="matAutocomplete"
                     [displayWith]="displayUserFn"
                     (optionSelected)="selected($event)">
-    <mat-option [fxHide]="!assigneeId" [value]="null">
+    <mat-option *ngIf="displayAssigneeNotSet" [value]="assigneeOptions.noAssignee">
       <mat-icon class="unassigned-icon">account_circle</mat-icon>
-      <span translate>alarm.unassigned</span>
+      <span>{{ assigneeNotSetText | translate }}</span>
+    </mat-option>
+    <mat-option *ngIf="displayAssignedToCurrentUser" [value]="assigneeOptions.currentUser">
+      <mat-icon class="unassigned-icon">account_circle</mat-icon>
+      <span>{{ assignedToCurrentUserText | translate }}</span>
     </mat-option>
     <mat-option *ngFor="let user of filteredUsers | async" [value]="user"
                 [fxHide]="assigneeId === user.id.id">
@@ -41,10 +45,12 @@
         <span [innerHTML]="user.email | highlight:searchText"></span>
       </div>
     </mat-option>
-    <mat-option *ngIf="!(filteredUsers | async)?.length" [value]="null">
-      <span style="white-space: normal">
-          {{ translate.get('user.no-users-matching', {entity: searchText}) | async }}
-      </span>
+    <mat-option *ngIf="!(filteredUsers | async)?.length" [value]="null" class="tb-not-found">
+      <div class="tb-not-found-content" (click)="$event.stopPropagation()">
+        <span style="white-space: normal">
+            {{ translate.get('user.no-users-matching', {entity: searchText}) | async }}
+        </span>
+      </div>
     </mat-option>
   </mat-autocomplete>
 </mat-form-field>

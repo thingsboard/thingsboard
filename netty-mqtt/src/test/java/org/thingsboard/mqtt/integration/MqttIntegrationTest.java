@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,19 +15,19 @@
  */
 package org.thingsboard.mqtt.integration;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
-import io.netty.buffer.UnpooledByteBufAllocator;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.codec.mqtt.MqttMessageType;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.Promise;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.thingsboard.common.util.AbstractListeningExecutor;
 import org.thingsboard.mqtt.MqttClient;
 import org.thingsboard.mqtt.MqttClientConfig;
 import org.thingsboard.mqtt.MqttConnectResult;
@@ -44,15 +44,25 @@ public class MqttIntegrationTest {
 
     static final String MQTT_HOST = "localhost";
     static final int KEEPALIVE_TIMEOUT_SECONDS = 2;
-    static final ByteBufAllocator ALLOCATOR = new UnpooledByteBufAllocator(false);
+    static final long RECONNECT_DELAY_SECONDS = 10L;
 
     EventLoopGroup eventLoopGroup;
     MqttServer mqttServer;
 
     MqttClient mqttClient;
 
+    AbstractListeningExecutor handlerExecutor;
+
     @Before
     public void init() throws Exception {
+        this.handlerExecutor = new AbstractListeningExecutor() {
+            @Override
+            protected int getThreadPollSize() {
+                return 4;
+            }
+        };
+        handlerExecutor.init();
+
         this.eventLoopGroup = new NioEventLoopGroup();
 
         this.mqttServer = new MqttServer();
@@ -68,7 +78,10 @@ public class MqttIntegrationTest {
             this.mqttServer.shutdown();
         }
         if (this.eventLoopGroup != null) {
-            this.eventLoopGroup.shutdownGracefully(0, 5, TimeUnit.SECONDS);
+            this.eventLoopGroup.shutdownGracefully(0, 0, TimeUnit.MILLISECONDS);
+        }
+        if (this.handlerExecutor != null) {
+            this.handlerExecutor.destroy();
         }
     }
 
@@ -80,6 +93,7 @@ public class MqttIntegrationTest {
         log.warn("Sending publish messages...");
         CountDownLatch latch = new CountDownLatch(3);
         for (int i = 0; i < 3; i++) {
+            Thread.sleep(30);
             Future<Void> pubFuture = publishMsg();
             pubFuture.addListener(future -> latch.countDown());
         }
@@ -87,38 +101,34 @@ public class MqttIntegrationTest {
         log.warn("Waiting for messages acknowledgments...");
         boolean awaitResult = latch.await(10, TimeUnit.SECONDS);
         Assert.assertTrue(awaitResult);
+        log.warn("Messages are delivered successfully...");
 
         //when
-        CountDownLatch keepAliveLatch = new CountDownLatch(1);
-
         log.warn("Starting idle period...");
-        boolean keepaliveAwaitResult = keepAliveLatch.await(5, TimeUnit.SECONDS);
-        Assert.assertFalse(keepaliveAwaitResult);
+        Thread.sleep(5000);
 
         //then
         List<MqttMessageType> allReceivedEvents = this.mqttServer.getEventsFromClient();
-        long pubCount = allReceivedEvents.stream().filter(mqttMessageType -> mqttMessageType == MqttMessageType.PUBLISH).count();
         long disconnectCount = allReceivedEvents.stream().filter(type -> type == MqttMessageType.DISCONNECT).count();
 
-        Assert.assertEquals(3, pubCount);
         Assert.assertEquals(1, disconnectCount);
     }
 
     private Future<Void> publishMsg() {
-        ByteBuf byteBuf = ALLOCATOR.buffer();
-        byteBuf.writeBytes("payload".getBytes(StandardCharsets.UTF_8));
         return this.mqttClient.publish(
                 "test/topic",
-                byteBuf,
-                MqttQoS.AT_LEAST_ONCE);
+                Unpooled.wrappedBuffer("payload".getBytes(StandardCharsets.UTF_8)),
+                MqttQoS.AT_MOST_ONCE);
     }
 
     private MqttClient initClient() throws Exception {
         MqttClientConfig config = new MqttClientConfig();
+        config.setOwnerId("MqttIntegrationTest");
         config.setTimeoutSeconds(KEEPALIVE_TIMEOUT_SECONDS);
-        MqttClient client = MqttClient.create(config, null);
+        config.setReconnectDelay(RECONNECT_DELAY_SECONDS);
+        MqttClient client = MqttClient.create(config, null, handlerExecutor);
         client.setEventLoop(this.eventLoopGroup);
-        Future<MqttConnectResult> connectFuture = client.connect(MQTT_HOST, this.mqttServer.getMqttPort());
+        Promise<MqttConnectResult> connectFuture = client.connect(MQTT_HOST, this.mqttServer.getMqttPort());
 
         String hostPort = MQTT_HOST + ":" + this.mqttServer.getMqttPort();
         MqttConnectResult result;

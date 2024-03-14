@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,27 +17,28 @@ package org.thingsboard.rule.engine.telemetry;
 
 import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
-import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
 
 @Slf4j
 @RuleNode(
@@ -81,13 +82,13 @@ public class TbMsgTimeseriesNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        if (!msg.getType().equals(SessionMsgType.POST_TELEMETRY_REQUEST.name())) {
+        if (!msg.isTypeOf(POST_TELEMETRY_REQUEST)) {
             ctx.tellFailure(msg, new IllegalArgumentException("Unsupported msg type: " + msg.getType()));
             return;
         }
         long ts = computeTs(msg, config.isUseServerTs());
         String src = msg.getData();
-        Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToTelemetry(new JsonParser().parse(src), ts);
+        Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToTelemetry(JsonParser.parseString(src), ts);
         if (tsKvMap.isEmpty()) {
             ctx.tellFailure(msg, new IllegalArgumentException("Msg body is empty: " + src));
             return;

@@ -1,0 +1,62 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+.tb-getting-started-completed-dialog {
+  .mat-mdc-dialog-container .mdc-dialog__surface {
+    border-radius: 8px;
+    background-image: url(/assets/home/greetings_bg.svg);
+    background-repeat: no-repeat;
+  }
+
+  .tb-getting-started-completed-dialog-container {
+    width: 500px;
+    height: 290px;
+  }
+
+  .tb-done-container {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  .tb-done-icon {
+    width: 62px;
+    height: 62px;
+    line-height: 56px;
+    font-size: 36px;
+    text-align: center;
+    border-radius: 50%;
+    border: 2px solid #305680;
+    background: #FFFFFF;
+  }
+
+  .tb-done-welcome-title {
+    font-weight: 600;
+    font-size: 20px;
+    line-height: 24px;
+    letter-spacing: 0.1px;
+    color: rgba(0, 0, 0, 0.87);
+    padding-bottom: 8px;
+  }
+
+  .tb-done-welcome-text {
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 24px;
+    letter-spacing: 0.15px;
+    color: rgba(0, 0, 0, 0.54);
+  }
+}

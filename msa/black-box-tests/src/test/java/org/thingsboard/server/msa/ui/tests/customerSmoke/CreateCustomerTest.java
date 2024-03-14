@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -195,5 +195,25 @@ public class CreateCustomerTest extends AbstractDriverBaseTest {
         customerPage.goToHelpPage();
 
         Assert.assertTrue(urlContains(urlPath), "URL contains " + urlPath);
+    }
+
+    @Epic("Customers smoke tests")
+    @Feature("Create customer")
+    @Test(groups = "smoke")
+    @Description("Go to customer documentation page")
+    public void createCustomerAddAndRemovePhoneNumber() {
+        String customerName = ENTITY_NAME;
+        String number = "12015550123";
+
+        sideBarMenuView.customerBtn().click();
+        customerPage.plusBtn().click();
+        customerPage.addCustomerViewEnterName(customerName);
+        customerPage.enterText(customerPage.phoneNumberAddEntityView(), number);
+        customerPage.clearInputField(customerPage.phoneNumberAddEntityView());
+        customerPage.addBtnC().click();
+        this.customerName = customerName;
+        customerPage.entity(customerName).click();
+
+        Assert.assertTrue(customerPage.phoneNumberEntityView().getAttribute("value").isEmpty(), "Phone field is empty");
     }
 }

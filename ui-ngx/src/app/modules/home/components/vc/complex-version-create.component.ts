@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -120,32 +120,34 @@ export class ComplexVersionCreateComponent extends PageComponent implements OnIn
       this.popoverComponent.updatePosition();
     }
 
-    this.versionCreateResultSubscription = this.versionCreateResult$.subscribe((result) => {
-      let message: string;
-      if (!result.error) {
-        if (result.done && !result.added && !result.modified && !result.removed) {
-          message = this.translate.instant('version-control.nothing-to-commit');
+    this.versionCreateResultSubscription = this.versionCreateResult$.subscribe({
+      next: (result) => {
+        let message: string;
+        if (!result.error) {
+          if (result.done && !result.added && !result.modified && !result.removed) {
+            message = this.translate.instant('version-control.nothing-to-commit');
+          } else {
+            message = this.translate.instant('version-control.version-create-result',
+              {added: result.added, modified: result.modified, removed: result.removed});
+          }
         } else {
-          message = this.translate.instant('version-control.version-create-result',
-            {added: result.added, modified: result.modified, removed: result.removed});
-        }
-      } else {
           message = result.error;
-      }
-      this.resultMessage = this.sanitizer.bypassSecurityTrustHtml(message);
-      this.versionCreateResult = result;
-      this.versionCreateBranch = request.branch;
-      this.cd.detectChanges();
-      if (this.popoverComponent) {
-        this.popoverComponent.updatePosition();
-      }
-    },
-    (error) => {
-      this.hasError = true;
-      this.resultMessage = this.sanitizer.bypassSecurityTrustHtml(parseHttpErrorMessage(error, this.translate).message);
-      this.cd.detectChanges();
-      if (this.popoverComponent) {
-        this.popoverComponent.updatePosition();
+        }
+        this.resultMessage = this.sanitizer.bypassSecurityTrustHtml(message);
+        this.versionCreateResult = result;
+        this.versionCreateBranch = request.branch;
+        this.cd.detectChanges();
+        if (this.popoverComponent) {
+          this.popoverComponent.updatePosition();
+        }
+      },
+      error: (error) => {
+        this.hasError = true;
+        this.resultMessage = this.sanitizer.bypassSecurityTrustHtml(parseHttpErrorMessage(error, this.translate).message);
+        this.cd.detectChanges();
+        if (this.popoverComponent) {
+          this.popoverComponent.updatePosition();
+        }
       }
     });
   }

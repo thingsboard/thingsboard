@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -56,7 +56,8 @@
               <mat-icon matPrefix>lock</mat-icon>
             </mat-form-field>
             <div fxLayoutAlign="end center" class="forgot-password">
-              <button class="tb-reset-password" mat-button type="button" routerLink="/login/resetPasswordRequest">{{ 'login.forgot-password' | translate }}
+              <button class="tb-reset-password" mat-button type="button" routerLink="/login/resetPasswordRequest">
+                {{ (passwordViolation ? 'login.reset-password' : 'login.forgot-password') | translate }}
               </button>
             </div>
             <div fxLayout="column" class="tb-action-button">

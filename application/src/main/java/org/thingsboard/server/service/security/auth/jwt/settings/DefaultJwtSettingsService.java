@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.notification.targets.platform.SystemAdministratorsFilter;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.security.model.JwtSettings;
+import org.thingsboard.server.dao.notification.DefaultNotifications;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 
 import java.nio.charset.StandardCharsets;
@@ -39,10 +41,9 @@ import java.util.Optional;
 @Slf4j
 public class DefaultJwtSettingsService implements JwtSettingsService {
 
-    @Lazy
     private final AdminSettingsService adminSettingsService;
-    @Lazy
     private final Optional<TbClusterService> tbClusterService;
+    private final Optional<NotificationCenter> notificationCenter;
     private final JwtSettingsValidator jwtSettingsValidator;
 
     @Value("${security.jwt.tokenExpirationTime:9000}")
@@ -103,11 +104,13 @@ public class DefaultJwtSettingsService implements JwtSettingsService {
 
     @Override
     public JwtSettings reloadJwtSettings() {
+        log.trace("Executing reloadJwtSettings");
         return getJwtSettings(true);
     }
 
     @Override
     public JwtSettings getJwtSettings() {
+        log.trace("Executing getJwtSettings");
         return getJwtSettings(false);
     }
 
@@ -124,6 +127,9 @@ public class DefaultJwtSettingsService implements JwtSettingsService {
                         log.warn("WARNING: The platform is configured to use default JWT Signing Key. " +
                                 "This is a security issue that needs to be resolved. Please change the JWT Signing Key using the Web UI. " +
                                 "Navigate to \"System settings -> Security settings\" while logged in as a System Administrator.");
+                        notificationCenter.ifPresent(notificationCenter -> {
+                            notificationCenter.sendGeneralWebNotification(TenantId.SYS_TENANT_ID, new SystemAdministratorsFilter(), DefaultNotifications.jwtSigningKeyIssue.toTemplate());
+                        });
                     }
                     this.jwtSettings = result;
                 }

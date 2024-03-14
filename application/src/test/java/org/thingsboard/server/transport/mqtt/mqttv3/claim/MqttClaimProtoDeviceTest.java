@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ import org.junit.Test;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
-import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestClient;
 import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
+import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestClient;
 
 @Slf4j
 @DaoSqlTest

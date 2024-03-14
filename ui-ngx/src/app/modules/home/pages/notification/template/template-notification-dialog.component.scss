@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,71 +16,66 @@
 @import "../../../../../../scss/constants";
 @import "../../../../../../theme";
 
-:host-context(.tb-fullscreen-dialog .mat-mdc-dialog-container) {
-  width: 800px;
+:host {
+  width: 780px;
   height: 100%;
   max-width: 100%;
   max-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: min-content 4px minmax(auto, 1fr) min-content min-content;
+}
+
+:host-context(.tb-fullscreen-dialog .mat-mdc-dialog-container) {
+  .mat-mdc-dialog-content {
+    grid-row: 3;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 0;
+    color: rgba(0, 0, 0, 0.87);
+  }
+
+  .tb-dialog-actions {
+    grid-row: 5;
+    display: flex;
+  }
+
+  .mat-divider {
+    grid-row: 4;
+  }
 
   .tb-title {
     font-size: 16px;
     line-height: 24px;
+
+    &.tb-required::after {
+      font-size: initial;
+      content: "*";
+    }
+
+    &.tb-error {
+      color: var(--mdc-theme-error, #f44336);
+
+      &.tb-required::after {
+        color: var(--mdc-theme-error, #f44336);
+      }
+    }
   }
 
   .tb-hint {
     padding: 0 0 8px;
   }
 
-  .tb-hint-available-params {
-    border-radius: 6px;
-    background-color: rgba(48, 86, 128, 0.04);
-    margin-bottom: 8px;
-    padding: 8px 16px;
-
-    .content {
-      vertical-align: middle;
-    }
-  }
-
-  .delivery-method-container {
-    padding-bottom: 8px;
-
-    &.even {
-      padding-right: 8px;
-    }
-
-    .delivery-method {
-      padding: 16px 12px;
-      border: 1px solid rgba(0, 0, 0, 0.1);
-      border-radius: 6px;
-      width: 100%;
-      height: 100%;
-    }
-  }
-
-  .additional-config-group {
-    padding: 16px 16px 4px;
-    margin-bottom: 12px;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: 6px;
-    width: 100%;
-    height: 100%;
-
-    .toggle {
-      margin-bottom: 12px;
-    }
+  .delivery-methods-container {
+    margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, auto));
+    gap: 8px;
   }
 }
 
 :host ::ng-deep {
   .mat-mdc-dialog-content {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    padding: 0 !important;
-
     .mat-stepper-horizontal {
       display: flex;
       height: 100%;
@@ -88,6 +83,7 @@
 
       .mat-horizontal-stepper-wrapper {
         flex: 1 1 100%;
+        width: 100%;
       }
 
       .mat-horizontal-content-container {

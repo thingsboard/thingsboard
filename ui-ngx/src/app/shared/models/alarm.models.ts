@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import { CustomerId } from '@shared/models/id/customer-id';
 import { TableCellButtonActionDescriptor } from '@home/components/widget/lib/table-widget.models';
 import { AlarmCommentId } from '@shared/models/id/alarm-comment-id';
 import { UserId } from '@shared/models/id/user-id';
+import { AlarmFilter } from '@shared/models/query/query.models';
+import { HasTenantId } from '@shared/models/entity.models';
 
 export enum AlarmsMode {
   ALL,
@@ -93,7 +95,7 @@ export const alarmSeverityColors = new Map<AlarmSeverity, string>(
   ]
 );
 
-export interface Alarm extends BaseData<AlarmId> {
+export interface Alarm extends BaseData<AlarmId>, HasTenantId {
   tenantId: TenantId;
   customerId: CustomerId;
   assigneeId: UserId;
@@ -101,6 +103,8 @@ export interface Alarm extends BaseData<AlarmId> {
   originator: EntityId;
   severity: AlarmSeverity;
   status: AlarmStatus;
+  acknowledged: boolean;
+  cleared: boolean;
   startTs: number;
   endTs: number;
   ackTs: number;
@@ -144,6 +148,11 @@ export interface AlarmAssignee {
   email: string;
 }
 
+export enum AlarmAssigneeOption {
+  noAssignee = 'noAssignee',
+  currentUser = 'currentUser'
+}
+
 export interface AlarmDataInfo extends AlarmInfo {
   actionCellButtons?: TableCellButtonActionDescriptor[];
   hasActions?: boolean;
@@ -175,6 +184,8 @@ export const simulatedAlarm: AlarmInfo = {
   type: 'TEMPERATURE',
   severity: AlarmSeverity.MAJOR,
   status: AlarmStatus.ACTIVE_UNACK,
+  acknowledged: false,
+  cleared: false,
   details: {
     message: 'Temperature is high!'
   },
@@ -292,6 +303,45 @@ export class AlarmQuery {
     }
     if (typeof this.fetchOriginator !== 'undefined' && this.fetchOriginator !== null) {
       query += `&fetchOriginator=${this.fetchOriginator}`;
+    }
+    if (typeof this.assigneeId !== 'undefined' && this.assigneeId !== null) {
+      query += `&assigneeId=${this.assigneeId.id}`;
+    }
+    return query;
+  }
+
+}
+
+export class AlarmQueryV2 {
+
+  affectedEntityId: EntityId;
+  pageLink: TimePageLink;
+  typeList: string[];
+  statusList: AlarmSearchStatus[];
+  severityList: AlarmSeverity[];
+  assigneeId?: UserId;
+
+  constructor(entityId: EntityId, pageLink: TimePageLink,
+              alarmFilter: AlarmFilter) {
+    this.affectedEntityId = entityId;
+    this.pageLink = pageLink;
+    this.typeList = alarmFilter.typeList;
+    this.statusList = alarmFilter.statusList;
+    this.severityList = alarmFilter.severityList;
+    this.assigneeId = alarmFilter.assigneeId;
+  }
+
+  public toQuery(): string {
+    let query = this.affectedEntityId ? `/${this.affectedEntityId.entityType}/${this.affectedEntityId.id}` : '';
+    query += this.pageLink.toQuery();
+    if (this.typeList && this.typeList.length) {
+      query += `&typeList=${this.typeList.map(type => encodeURIComponent(type)).join(',')}`;
+    }
+    if (this.statusList && this.statusList.length) {
+      query += `&statusList=${this.statusList.join(',')}`;
+    }
+    if (this.severityList && this.severityList.length) {
+      query += `&severityList=${this.severityList.join(',')}`;
     }
     if (typeof this.assigneeId !== 'undefined' && this.assigneeId !== null) {
       query += `&assigneeId=${this.assigneeId.id}`;

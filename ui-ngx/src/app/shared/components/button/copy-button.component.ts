@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import { ClipboardService } from 'ngx-clipboard';
 import { TooltipPosition } from '@angular/material/tooltip';
 import { TranslateService } from '@ngx-translate/core';
 import { ThemePalette } from '@angular/material/core';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-copy-button',
@@ -35,8 +36,10 @@ export class CopyButtonComponent {
   copyText: string;
 
   @Input()
+  @coerceBoolean()
   disabled = false;
 
+  // @deprecated need to use icon input
   @Input()
   mdiIcon: string;
 
@@ -54,6 +57,10 @@ export class CopyButtonComponent {
 
   @Input()
   color: ThemePalette;
+
+  @Input()
+  @coerceBoolean()
+  miniButton = true;
 
   @Output()
   successCopied = new EventEmitter<string>();

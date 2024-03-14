@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,30 +27,32 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.notification.info.NotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerConfig;
-import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTriggerType;
+import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTrigger;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
-import org.thingsboard.server.common.msg.notification.trigger.NotificationRuleTrigger;
-import org.thingsboard.server.common.msg.notification.trigger.RuleEngineMsgTrigger;
-import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
-import org.thingsboard.server.dao.notification.NotificationRequestService;
-import org.thingsboard.server.dao.notification.NotificationRuleService;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
+import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
+import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.dao.notification.NotificationRequestService;
+import org.thingsboard.server.cache.limits.RateLimitService;
+import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.notification.NotificationDeduplicationService;
 import org.thingsboard.server.service.executors.NotificationExecutorService;
+import org.thingsboard.server.service.notification.rule.cache.NotificationRulesCache;
 import org.thingsboard.server.service.notification.rule.trigger.NotificationRuleTriggerProcessor;
-import org.thingsboard.server.service.notification.rule.trigger.RuleEngineMsgNotificationRuleTriggerProcessor;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -60,8 +62,11 @@ import java.util.stream.Collectors;
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class DefaultNotificationRuleProcessor implements NotificationRuleProcessor {
 
-    private final NotificationRuleService notificationRuleService;
+    private final NotificationRulesCache notificationRulesCache;
     private final NotificationRequestService notificationRequestService;
+    private final NotificationDeduplicationService deduplicationService;
+    private final PartitionService partitionService;
+    private final RateLimitService rateLimitService;
     @Autowired @Lazy
     private NotificationCenter notificationCenter;
     private final NotificationExecutorService notificationExecutor;
@@ -71,19 +76,29 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
     @Override
     public void process(NotificationRuleTrigger trigger) {
         NotificationRuleTriggerType triggerType = trigger.getType();
-        if (triggerType == null) return;
         TenantId tenantId = triggerType.isTenantLevel() ? trigger.getTenantId() : TenantId.SYS_TENANT_ID;
-
-        List<NotificationRule> rules = notificationRuleService.findNotificationRulesByTenantIdAndTriggerType(tenantId, triggerType);
-        for (NotificationRule rule : rules) {
-            notificationExecutor.submit(() -> {
-                try {
-                    processNotificationRule(rule, trigger);
-                } catch (Throwable e) {
-                    log.error("Failed to process notification rule {} for trigger type {} with trigger object {}", rule.getId(), rule.getTriggerType(), trigger, e);
+        notificationExecutor.submit(() -> {
+            try {
+                List<NotificationRule> enabledRules = notificationRulesCache.getEnabled(tenantId, triggerType);
+                if (enabledRules.isEmpty()) {
+                    return;
                 }
-            });
-        }
+                if (trigger.deduplicate()) {
+                    enabledRules = new ArrayList<>(enabledRules);
+                    enabledRules.removeIf(rule -> deduplicationService.alreadyProcessed(trigger, rule));
+                }
+                final List<NotificationRule> rules = enabledRules;
+                for (NotificationRule rule : rules) {
+                    try {
+                        processNotificationRule(rule, trigger);
+                    } catch (Throwable e) {
+                        log.error("Failed to process notification rule {} for trigger type {} with trigger object {}", rule.getId(), rule.getTriggerType(), trigger, e);
+                    }
+                }
+            } catch (Throwable e) {
+                log.error("Failed to process notification rules for trigger: {}", trigger, e);
+            }
+        });
     }
 
     private void processNotificationRule(NotificationRule rule, NotificationRuleTrigger trigger) {
@@ -112,6 +127,11 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
         }
 
         if (matchesFilter(trigger, triggerConfig)) {
+            if (!rateLimitService.checkRateLimit(LimitedApi.NOTIFICATION_REQUESTS_PER_RULE, rule.getTenantId(), rule.getId())) {
+                log.debug("[{}] Rate limit for notification requests per rule was exceeded (rule '{}')", rule.getTenantId(), rule.getName());
+                return;
+            }
+
             NotificationInfo notificationInfo = constructNotificationInfo(trigger, triggerConfig);
             rule.getRecipientsConfig().getTargetsTable().forEach((delay, targets) -> {
                 submitNotificationRequest(targets, rule, trigger.getOriginatorEntityId(), notificationInfo, delay);
@@ -138,14 +158,13 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
                 .ruleId(rule.getId())
                 .originatorEntityId(originatorEntityId)
                 .build();
-        notificationExecutor.submit(() -> {
-            try {
-                log.debug("Submitting notification request for rule '{}' with delay of {} sec to targets {}", rule.getName(), delayInSec, targets);
-                notificationCenter.processNotificationRequest(rule.getTenantId(), notificationRequest, null);
-            } catch (Exception e) {
-                log.error("Failed to process notification request for tenant {} for rule {}", rule.getTenantId(), rule.getId(), e);
-            }
-        });
+
+        try {
+            log.debug("Submitting notification request for rule '{}' with delay of {} sec to targets {}", rule.getName(), delayInSec, targets);
+            notificationCenter.processNotificationRequest(rule.getTenantId(), notificationRequest, null);
+        } catch (Exception e) {
+            log.error("Failed to process notification request for tenant {} for rule {}", rule.getTenantId(), rule.getId(), e);
+        }
     }
 
     private boolean matchesFilter(NotificationRuleTrigger trigger, NotificationRuleTriggerConfig triggerConfig) {
@@ -169,27 +188,21 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
 
         TenantId tenantId = componentLifecycleMsg.getTenantId();
         NotificationRuleId notificationRuleId = (NotificationRuleId) componentLifecycleMsg.getEntityId();
-        notificationExecutor.submit(() -> {
-            List<NotificationRequestId> scheduledForRule = notificationRequestService.findNotificationRequestsIdsByStatusAndRuleId(tenantId, NotificationRequestStatus.SCHEDULED, notificationRuleId);
-            for (NotificationRequestId notificationRequestId : scheduledForRule) {
-                notificationCenter.deleteNotificationRequest(tenantId, notificationRequestId);
-            }
-        });
+        if (partitionService.isMyPartition(ServiceType.TB_CORE, tenantId, notificationRuleId)) {
+            notificationExecutor.submit(() -> {
+                List<NotificationRequestId> scheduledForRule = notificationRequestService.findNotificationRequestsIdsByStatusAndRuleId(tenantId, NotificationRequestStatus.SCHEDULED, notificationRuleId);
+                for (NotificationRequestId notificationRequestId : scheduledForRule) {
+                    notificationCenter.deleteNotificationRequest(tenantId, notificationRequestId);
+                }
+            });
+        }
     }
 
     @Autowired
     public void setTriggerProcessors(Collection<NotificationRuleTriggerProcessor> processors) {
-        Map<String, NotificationRuleTriggerType> ruleEngineMsgTypeToTriggerType = new HashMap<>();
         processors.forEach(processor -> {
             triggerProcessors.put(processor.getTriggerType(), processor);
-            if (processor instanceof RuleEngineMsgNotificationRuleTriggerProcessor) {
-                Set<String> supportedMsgTypes = ((RuleEngineMsgNotificationRuleTriggerProcessor<?>) processor).getSupportedMsgTypes();
-                supportedMsgTypes.forEach(supportedMsgType -> {
-                    ruleEngineMsgTypeToTriggerType.put(supportedMsgType, processor.getTriggerType());
-                });
-            }
         });
-        RuleEngineMsgTrigger.msgTypeToTriggerType = ruleEngineMsgTypeToTriggerType;
     }
 
 }

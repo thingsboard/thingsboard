@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ import { AttributeScope, DataKeyType } from '@shared/models/telemetry/telemetry.
 import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-utils';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { AliasInfo, StateParams, SubscriptionInfo } from '@core/api/widget-api.models';
-import { DataKey, Datasource, DatasourceType, KeyInfo } from '@app/shared/models/widget.models';
+import { DataKey, Datasource, DatasourceType, DeprecatedFilter, KeyInfo } from '@app/shared/models/widget.models';
 import { UtilsService } from '@core/services/utils.service';
 import {
   AliasFilterType,
@@ -66,6 +66,8 @@ import { AttributeService } from '@core/http/attribute.service';
 import {
   AlarmData,
   AlarmDataQuery,
+  AlarmFilter,
+  AlarmFilterConfig,
   createDefaultEntityDataPageLink,
   EntityData,
   EntityDataQuery,
@@ -91,6 +93,9 @@ import { AssetProfileService } from '@core/http/asset-profile.service';
 import { NotificationService } from '@core/http/notification.service';
 import { TenantProfileService } from '@core/http/tenant-profile.service';
 import { NotificationType } from '@shared/models/notification.models';
+import { UserId } from '@shared/models/id/user-id';
+import { AlarmService } from '@core/http/alarm.service';
+import { ResourceService } from '@core/http/resource.service';
 
 @Injectable({
   providedIn: 'root'
@@ -118,7 +123,9 @@ export class EntityService {
     private assetProfileService: AssetProfileService,
     private utils: UtilsService,
     private queueService: QueueService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private alarmService: AlarmService,
+    private resourceService: ResourceService
   ) { }
 
   private getEntityObservable(entityType: EntityType, entityId: string,
@@ -154,7 +161,7 @@ export class EntityService {
         observable = this.ruleChainService.getRuleChain(entityId, config);
         break;
       case EntityType.ALARM:
-        console.error('Get Alarm Entity is not implemented!');
+        observable = this.alarmService.getAlarm(entityId, config);
         break;
       case EntityType.OTA_PACKAGE:
         observable = this.otaPackageService.getOtaPackageInfo(entityId, config);
@@ -415,11 +422,27 @@ export class EntityService {
         break;
       case EntityType.WIDGETS_BUNDLE:
         pageLink.sortOrder.property = 'title';
-        entitiesObservable = this.widgetService.getWidgetBundles(pageLink, config);
+        entitiesObservable = this.widgetService.getWidgetBundles(pageLink, false, true, config);
+        break;
+      case EntityType.WIDGET_TYPE:
+        pageLink.sortOrder.property = 'name';
+        entitiesObservable = this.widgetService.getWidgetTypes(pageLink, true, false, DeprecatedFilter.ALL, null, config);
         break;
       case EntityType.NOTIFICATION_TARGET:
         pageLink.sortOrder.property = 'name';
         entitiesObservable = this.notificationService.getNotificationTargets(pageLink, subType as NotificationType, config);
+        break;
+      case EntityType.NOTIFICATION_TEMPLATE:
+        pageLink.sortOrder.property = 'name';
+        entitiesObservable = this.notificationService.getNotificationTemplates(pageLink, subType as NotificationType, config);
+        break;
+      case EntityType.NOTIFICATION_RULE:
+        pageLink.sortOrder.property = 'name';
+        entitiesObservable = this.notificationService.getNotificationRules(pageLink, config);
+        break;
+      case EntityType.TB_RESOURCE:
+        pageLink.sortOrder.property = 'title';
+        entitiesObservable = this.resourceService.getTenantResources(pageLink, config);
         break;
     }
     return entitiesObservable;
@@ -478,9 +501,13 @@ export class EntityService {
   }
 
   public findEntityKeysByQuery(query: EntityDataQuery, attributes = true, timeseries = true,
-                               config?: RequestConfig): Observable<EntitiesKeysByQuery> {
+                               scope?: AttributeScope, config?: RequestConfig): Observable<EntitiesKeysByQuery> {
+    let url = `/api/entitiesQuery/find/keys?attributes=${attributes}&timeseries=${timeseries}`;
+    if (scope) {
+      url += `&scope=${scope}`;
+    }
     return this.http.post<EntitiesKeysByQuery>(
-      `/api/entitiesQuery/find/keys?attributes=${attributes}&timeseries=${timeseries}`,
+      url,
       query, defaultHttpOptionsFromConfig(config));
   }
 
@@ -807,7 +834,15 @@ export class EntityService {
     );
   }
 
-  public getEntityKeysByEntityFilter(filter: EntityFilter, types: DataKeyType[], config?: RequestConfig): Observable<Array<DataKey>> {
+  public getEntityKeysByEntityFilter(filter: EntityFilter, types: DataKeyType[],
+                                     entityTypes?: EntityType[],
+                                     config?: RequestConfig): Observable<Array<DataKey>> {
+    return this.getEntityKeysByEntityFilterAndScope(filter, types, entityTypes, null, config);
+  }
+
+  public getEntityKeysByEntityFilterAndScope(filter: EntityFilter, types: DataKeyType[],
+                                             entityTypes?: EntityType[], scope?: AttributeScope,
+                                             config?: RequestConfig): Observable<Array<DataKey>> {
     if (!types.length) {
       return of([]);
     }
@@ -818,12 +853,12 @@ export class EntityService {
         pageLink: createDefaultEntityDataPageLink(100),
       };
       entitiesKeysByQuery$ = this.findEntityKeysByQuery(dataQuery, types.includes(DataKeyType.attribute),
-        types.includes(DataKeyType.timeseries), config);
+        types.includes(DataKeyType.timeseries), scope, config);
     } else {
       entitiesKeysByQuery$ = of({
         attribute: [],
         timeseries: [],
-        entityTypes: [],
+        entityTypes: entityTypes || [],
       });
     }
     return entitiesKeysByQuery$.pipe(
@@ -1008,6 +1043,24 @@ export class EntityService {
       }),
       catchError(err => of(false))
     );
+  }
+
+  public resolveAlarmFilter(alarmFilterConfig?: AlarmFilterConfig, searchPropagatedByDefault = true): AlarmFilter {
+    const alarmFilter: AlarmFilter = {};
+    if (alarmFilterConfig) {
+      alarmFilter.typeList = alarmFilterConfig.typeList;
+      alarmFilter.severityList = alarmFilterConfig.severityList;
+      alarmFilter.statusList = alarmFilterConfig.statusList;
+      alarmFilter.searchPropagatedAlarms = isDefined(alarmFilterConfig.searchPropagatedAlarms) ?
+        alarmFilterConfig.searchPropagatedAlarms : searchPropagatedByDefault;
+      if (alarmFilterConfig.assignedToCurrentUser) {
+        const authUser = getCurrentAuthUser(this.store);
+        alarmFilter.assigneeId = new UserId(authUser.userId);
+      } else {
+        alarmFilter.assigneeId = alarmFilterConfig.assigneeId;
+      }
+    }
+    return alarmFilter;
   }
 
   public saveEntityParameters(entityType: EntityType, entityData: ImportEntityData, update: boolean,
@@ -1321,7 +1374,8 @@ export class EntityService {
         dataKeys: []
       };
       this.prepareEntityFilterFromSubscriptionInfo(datasource, subscriptionInfo);
-    } else if (subscriptionInfo.type === DatasourceType.function || subscriptionInfo.type === DatasourceType.entityCount) {
+    } else if (subscriptionInfo.type === DatasourceType.function || subscriptionInfo.type === DatasourceType.entityCount ||
+      subscriptionInfo.type === DatasourceType.alarmCount) {
       datasource = {
         type: subscriptionInfo.type,
         name: subscriptionInfo.name || subscriptionInfo.type,
@@ -1341,7 +1395,7 @@ export class EntityService {
       if (subscriptionInfo.alarmFields) {
         this.createDatasourceKeys(subscriptionInfo.alarmFields, DataKeyType.alarm, datasource);
       }
-      if (subscriptionInfo.type === DatasourceType.entityCount) {
+      if (subscriptionInfo.type === DatasourceType.entityCount || subscriptionInfo.type === DatasourceType.alarmCount) {
         const dataKey = this.utils.createKey({ name: 'count'}, DataKeyType.count);
         datasource.dataKeys.push(dataKey);
       }
@@ -1475,5 +1529,32 @@ export class EntityService {
         break;
     }
     return entityObservable;
+  }
+
+  public getEntitySubtypesObservable(entityType: EntityType): Observable<Array<string>> {
+    let observable: Observable<Array<string>>;
+    switch (entityType) {
+      case EntityType.ASSET:
+        observable = this.assetProfileService.getAssetProfileNames(false, {ignoreLoading: true}).pipe(
+          map(subTypes => subTypes.map(subType => subType.name))
+        );
+        break;
+      case EntityType.DEVICE:
+        observable = this.deviceProfileService.getDeviceProfileNames(false,{ignoreLoading: true}).pipe(
+          map(subTypes => subTypes.map(subType => subType.name))
+        );
+        break;
+      case EntityType.EDGE:
+        observable = this.edgeService.getEdgeTypes({ignoreLoading: true}).pipe(
+          map(subTypes => subTypes.map(subType => subType.type))
+        );
+        break;
+      case EntityType.ENTITY_VIEW:
+        observable = this.entityViewService.getEntityViewTypes({ignoreLoading: true}).pipe(
+          map(subTypes => subTypes.map(subType => subType.type))
+        );
+        break;
+    }
+    return observable;
   }
 }

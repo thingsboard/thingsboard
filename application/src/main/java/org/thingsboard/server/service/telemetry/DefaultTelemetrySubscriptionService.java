@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,10 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
@@ -41,11 +41,10 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
 import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.dao.util.KvUtils;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
 import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
@@ -79,6 +78,9 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     private final TbApiUsageStateService apiUsageStateService;
 
     private ExecutorService tsCallBackExecutor;
+
+    @Value("${sql.ts.value_no_xss_validation:false}")
+    private boolean valueNoXssValidation;
 
     public DefaultTelemetrySubscriptionService(AttributesService attrService,
                                                TimeseriesService tsService,
@@ -137,6 +139,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
         checkInternalEntity(entityId);
         boolean sysTenant = TenantId.SYS_TENANT_ID.equals(tenantId) || tenantId == null;
         if (sysTenant || apiUsageStateService.getApiUsageState(tenantId).isDbStorageEnabled()) {
+            KvUtils.validate(ts, valueNoXssValidation);
             if (saveLatest) {
                 saveAndNotifyInternal(tenantId, entityId, ts, ttl, getCallback(tenantId, customerId, sysTenant, callback));
             } else {
@@ -172,20 +175,21 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     @Override
     public void saveAndNotifyInternal(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, long ttl, FutureCallback<Integer> callback) {
         ListenableFuture<Integer> saveFuture = tsService.save(tenantId, entityId, ts, ttl);
-        addCallbacks(tenantId, entityId, ts, callback, saveFuture);
+        addMainCallback(saveFuture, callback);
+        addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, ts));
+        addEntityViewCallback(tenantId, entityId, ts);
     }
 
     private void saveWithoutLatestAndNotifyInternal(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, long ttl, FutureCallback<Integer> callback) {
         ListenableFuture<Integer> saveFuture = tsService.saveWithoutLatest(tenantId, entityId, ts, ttl);
-        addCallbacks(tenantId, entityId, ts, callback, saveFuture);
-    }
-
-    private void addCallbacks(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, FutureCallback<Integer> callback, ListenableFuture<Integer> saveFuture) {
         addMainCallback(saveFuture, callback);
         addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, ts));
+    }
+
+    private void addEntityViewCallback(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts) {
         if (EntityType.DEVICE.equals(entityId.getEntityType()) || EntityType.ASSET.equals(entityId.getEntityType())) {
             Futures.addCallback(this.tbEntityViewService.findEntityViewsByTenantIdAndEntityIdAsync(tenantId, entityId),
-                    new FutureCallback<List<EntityView>>() {
+                    new FutureCallback<>() {
                         @Override
                         public void onSuccess(@Nullable List<EntityView> result) {
                             if (result != null && !result.isEmpty()) {
@@ -209,7 +213,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                                         }
                                     }
                                     if (!entityViewLatest.isEmpty()) {
-                                        saveLatestAndNotify(tenantId, entityView.getId(), entityViewLatest, new FutureCallback<Void>() {
+                                        saveLatestAndNotify(tenantId, entityView.getId(), entityViewLatest, new FutureCallback<>() {
                                             @Override
                                             public void onSuccess(@Nullable Void tmp) {
                                             }
@@ -416,6 +420,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     }
 
     private <S> void addVoidCallback(ListenableFuture<S> saveFuture, final FutureCallback<Void> callback) {
+        if (callback == null) return;
         Futures.addCallback(saveFuture, new FutureCallback<S>() {
             @Override
             public void onSuccess(@Nullable S result) {

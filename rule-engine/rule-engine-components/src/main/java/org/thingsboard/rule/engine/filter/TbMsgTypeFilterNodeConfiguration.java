@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,13 @@ package org.thingsboard.rule.engine.filter;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+
+import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
+import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
+import static org.thingsboard.server.common.data.msg.TbMsgType.TO_SERVER_RPC_REQUEST;
 
 /**
  * Created by ashvayka on 19.01.18.
@@ -33,11 +35,11 @@ public class TbMsgTypeFilterNodeConfiguration implements NodeConfiguration<TbMsg
 
     @Override
     public TbMsgTypeFilterNodeConfiguration defaultConfiguration() {
-        TbMsgTypeFilterNodeConfiguration configuration = new TbMsgTypeFilterNodeConfiguration();
+        var configuration = new TbMsgTypeFilterNodeConfiguration();
         configuration.setMessageTypes(Arrays.asList(
-                SessionMsgType.POST_ATTRIBUTES_REQUEST.name(),
-                SessionMsgType.POST_TELEMETRY_REQUEST.name(),
-                SessionMsgType.TO_SERVER_RPC_REQUEST.name()));
+                POST_ATTRIBUTES_REQUEST.name(),
+                POST_TELEMETRY_REQUEST.name(),
+                TO_SERVER_RPC_REQUEST.name()));
         return configuration;
     }
 }

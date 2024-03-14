@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,9 @@ import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.transport.adaptor.AdaptorException;
-import org.thingsboard.server.common.transport.adaptor.JsonConverter;
-import org.thingsboard.server.common.transport.adaptor.ProtoConverter;
+import org.thingsboard.server.common.adaptor.AdaptorException;
+import org.thingsboard.server.common.adaptor.JsonConverter;
+import org.thingsboard.server.common.adaptor.ProtoConverter;
 import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -54,9 +54,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState.ONLINE;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.DBIRTH;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.NBIRTH;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState.ONLINE;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.createMetric;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.fromSparkplugBMetricToKeyValueProto;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.validatedValueByTypeMetric;
@@ -173,7 +173,7 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
                                 public void onSuccess(@Nullable MqttDeviceAwareSessionContext deviceCtx) {
                                     TransportProtos.PostAttributeMsg kvListProto = attributesMsg.getMsg();
                                     try {
-                                        TransportProtos.PostAttributeMsg postAttributeMsg = ProtoConverter.validatePostAttributeMsg(kvListProto.toByteArray());
+                                        TransportProtos.PostAttributeMsg postAttributeMsg = ProtoConverter.validatePostAttributeMsg(kvListProto);
                                         processPostAttributesMsg(deviceCtx, postAttributeMsg, deviceName, msgId);
                                     } catch (Throwable e) {
                                         log.warn("[{}][{}] Failed to process device attributes command: {}", gateway.getDeviceId(), deviceName, kvListProto, e);
@@ -221,7 +221,7 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
 
     private ListenableFuture<SparkplugDeviceSessionContext> onDeviceConnectProto(SparkplugTopic topic) throws ThingsboardException {
         try {
-            String deviceType = this.gateway.getDeviceType() + "-node";
+            String deviceType = this.gateway.getDeviceType() + " device";
             return onDeviceConnect(topic.getNodeDeviceName(), deviceType);
         } catch (RuntimeException e) {
             log.error("Failed Sparkplug Device connect proto!", e);
@@ -233,7 +233,7 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
         try {
             List<TransportProtos.PostTelemetryMsg> msgs = new ArrayList<>();
             for (SparkplugBProto.Payload.Metric protoMetric : sparkplugBProto.getMetricsList()) {
-                if (attributesMetricNames == null || !attributesMetricNames.contains(protoMetric.getName())) {
+                if (attributesMetricNames == null || !matches(attributesMetricNames, protoMetric)) {
                     long ts = protoMetric.getTimestamp();
                     String key = "bdSeq".equals(protoMetric.getName()) ?
                             topicTypeName + " " + protoMetric.getName() : protoMetric.getName();
@@ -264,7 +264,7 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
         try {
             List<TransportApiProtos.AttributesMsg> msgs = new ArrayList<>();
             for (SparkplugBProto.Payload.Metric protoMetric : sparkplugBProto.getMetricsList()) {
-                if (attributesMetricNames.contains(protoMetric.getName())) {
+                if (matches(attributesMetricNames, protoMetric)) {
                     TransportApiProtos.AttributesMsg.Builder deviceAttributesMsgBuilder = TransportApiProtos.AttributesMsg.newBuilder();
                     Optional<TransportProtos.PostAttributeMsg> msgOpt = getPostAttributeMsg(protoMetric);
                     if (msgOpt.isPresent()) {
@@ -281,11 +281,24 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
         }
     }
 
+    private boolean matches(Set<String> attributesMetricNames, SparkplugBProto.Payload.Metric protoMetric) {
+        String metricName = protoMetric.getName();
+        for (String attributeMetricFilter : attributesMetricNames) {
+            if (metricName.equals(attributeMetricFilter) ||
+                    (attributeMetricFilter.endsWith("*") && metricName.startsWith(
+                            attributeMetricFilter.substring(0, attributeMetricFilter.length() - 1)))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private Optional<TransportProtos.PostAttributeMsg> getPostAttributeMsg(SparkplugBProto.Payload.Metric protoMetric) throws ThingsboardException {
         Optional<TransportProtos.KeyValueProto> keyValueProtoOpt = fromSparkplugBMetricToKeyValueProto(protoMetric.getName(), protoMetric);
         if (keyValueProtoOpt.isPresent()) {
             TransportProtos.PostAttributeMsg.Builder builder = TransportProtos.PostAttributeMsg.newBuilder();
             builder.addKv(keyValueProtoOpt.get());
+            builder.setShared(true);
             return Optional.of(builder.build());
         }
         return Optional.empty();

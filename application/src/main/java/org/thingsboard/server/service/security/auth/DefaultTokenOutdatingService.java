@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.security.auth;
 
 import io.jsonwebtoken.Claims;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -24,7 +23,6 @@ import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.event.UserAuthDataChangedEvent;
-import org.thingsboard.server.common.data.security.model.JwtToken;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 
 import java.util.Optional;
@@ -50,7 +48,7 @@ public class DefaultTokenOutdatingService implements TokenOutdatingService {
     }
 
     @Override
-    public boolean isOutdated(JwtToken token, UserId userId) {
+    public boolean isOutdated(String token, UserId userId) {
         Claims claims = tokenFactory.parseTokenClaims(token).getBody();
         long issueTime = claims.getIssuedAt().getTime();
         String sessionId = claims.get("sessionId", String.class);

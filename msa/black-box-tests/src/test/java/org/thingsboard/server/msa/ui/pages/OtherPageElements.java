@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public class OtherPageElements extends AbstractBasePage {
     private static final String ENTITY_COUNT = "//div[@class='mat-paginator-range-label']";
     private static final String WARNING_DELETE_POPUP_YES = "//tb-confirm-dialog//button[2]";
     private static final String WARNING_DELETE_POPUP_TITLE = "//tb-confirm-dialog/h2";
-    private static final String REFRESH_BTN = "//mat-icon[contains(text(),'refresh')]/..";
+    private static final String REFRESH_BTN = "//mat-icon[contains(text(),'refresh')]/parent::button";
     private static final String HELP_BTN = "//mat-icon[contains(text(),'help')]/ancestor::button";
     private static final String CHECKBOX = "//mat-row//span[contains(text(),'%s')]/../..//mat-checkbox";
     private static final String CHECKBOXES = "//tbody//mat-checkbox";
