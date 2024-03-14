@@ -27,9 +27,9 @@ import org.thingsboard.server.cache.rule.RuleNodeCache;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
 
 import java.util.Collections;
 import java.util.List;
@@ -46,9 +46,7 @@ import static org.mockito.Mockito.when;
 
 class DefaultTbRuleNodeCacheServiceTest {
 
-    private static final TbMsgMetaData EMPTY_METADATA = new TbMsgMetaData();
-    private static final String EMPTY_DATA = "{}";
-    
+
     private static final RandomDataGenerator randomPartitionGenerator = new RandomDataGenerator();
 
     private static RuleNodeId ruleNodeId;
@@ -69,7 +67,7 @@ class DefaultTbRuleNodeCacheServiceTest {
         byte[] cacheKey = toRuleNodeCacheKey(ruleNodeId, key);
         byte[] cacheValue = value.getBytes();
         ruleNodeCacheService.add(key, value);
-        verify(cache, times(1)).add(eq(cacheKey), eq(cacheValue));
+        verify(cache).add(eq(cacheKey), eq(cacheValue));
     }
 
     @Test
@@ -79,24 +77,23 @@ class DefaultTbRuleNodeCacheServiceTest {
         byte[] cacheKey = toRuleNodeCacheKey(ruleNodeId, key);
         byte[] cacheValue = SerializationUtils.serialize(entityId);
         ruleNodeCacheService.add(key, entityId);
-        verify(cache, times(1)).add(eq(cacheKey), eq(cacheValue));
+        verify(cache).add(eq(cacheKey), eq(cacheValue));
     }
 
     @Test
     void test_givenTbMsg_whenAdd_thenVerifyCacheCallMethodArguments() {
-        String msgType = SessionMsgType.POST_TELEMETRY_REQUEST.name();
         EntityId originator = new DeviceId(UUID.randomUUID());
         TbMsg msg = TbMsg.newMsg(
-                msgType,
+                TbMsgType.POST_TELEMETRY_REQUEST,
                 originator,
-                EMPTY_METADATA,
-                EMPTY_DATA
+                TbMsgMetaData.EMPTY,
+                TbMsg.EMPTY_STRING
         );
         int partition = randomPartitionGenerator.nextInt(0, 10);
         byte[] cacheKey = toRuleNodeCacheKey(ruleNodeId, partition, originator);
         byte[] cacheValue = TbMsg.toByteArray(msg);
         ruleNodeCacheService.add(originator, partition, msg);
-        verify(cache, times(1)).add(eq(cacheKey), eq(cacheValue));
+        verify(cache).add(eq(cacheKey), eq(cacheValue));
     }
 
     @Test
@@ -107,7 +104,7 @@ class DefaultTbRuleNodeCacheServiceTest {
         byte[] cacheKey = toRuleNodeCacheKey(ruleNodeId, key);
         byte[][] cacheValues = stringListToBytes(stringList);
         ruleNodeCacheService.removeStringList(key, stringList);
-        verify(cache, times(1)).remove(eq(cacheKey), eq(cacheValues));
+        verify(cache).remove(eq(cacheKey), eq(cacheValues));
     }
 
     @Test
@@ -118,25 +115,24 @@ class DefaultTbRuleNodeCacheServiceTest {
         byte[] cacheKey = toRuleNodeCacheKey(ruleNodeId, key);
         byte[][] cacheValues = entityIdListToBytes(entityIdList);
         ruleNodeCacheService.removeEntityIdList(key, entityIdList);
-        verify(cache, times(1)).remove(eq(cacheKey), eq(cacheValues));
+        verify(cache).remove(eq(cacheKey), eq(cacheValues));
     }
 
     @Test
     void test_givenTbMsgs_whenRemoveTbMsgList_thenVerifyCacheCallMethodArguments() {
-        String msgType = SessionMsgType.POST_TELEMETRY_REQUEST.name();
         EntityId originator = new DeviceId(UUID.randomUUID());
         TbMsg msg = TbMsg.newMsg(
-                msgType,
+                TbMsgType.POST_TELEMETRY_REQUEST,
                 originator,
-                EMPTY_METADATA,
-                EMPTY_DATA
+                TbMsgMetaData.EMPTY,
+                TbMsg.EMPTY_STRING
         );
         List<TbMsg> tbMsgList = Collections.singletonList(msg);
         int partition = randomPartitionGenerator.nextInt(0, 10);
         byte[] cacheKey = toRuleNodeCacheKey(ruleNodeId, partition, originator);
         byte[][] cacheValues = tbMsgListToBytes(tbMsgList);
         ruleNodeCacheService.removeTbMsgList(originator, partition, tbMsgList);
-        verify(cache, times(1)).remove(eq(cacheKey), eq(cacheValues));
+        verify(cache).remove(eq(cacheKey), eq(cacheValues));
     }
 
     @Test
@@ -150,7 +146,7 @@ class DefaultTbRuleNodeCacheServiceTest {
         when(cache.get(eq(cacheKey))).thenReturn(cacheValuesInBytes);
         Set<String> actualSet = ruleNodeCacheService.getStrings(key);
 
-        verify(cache, times(1)).get(eq(cacheKey));
+        verify(cache).get(eq(cacheKey));
         Assertions.assertEquals(expectedSet, actualSet);
     }
 
@@ -171,13 +167,12 @@ class DefaultTbRuleNodeCacheServiceTest {
 
     @Test
     void test_whenGetTbMsgs_thenVerifyCacheCallMethodArgumentsAndResult() {
-        String msgType = SessionMsgType.POST_TELEMETRY_REQUEST.name();
         EntityId originator = new DeviceId(UUID.randomUUID());
         TbMsg msg = TbMsg.newMsg(
-                msgType,
+                TbMsgType.POST_TELEMETRY_REQUEST,
                 originator,
-                EMPTY_METADATA,
-                EMPTY_DATA
+                TbMsgMetaData.EMPTY,
+                TbMsg.EMPTY_STRING
         );
         ByteString expectedTbMsgByteString = TbMsg.toByteString(msg);
         Set<byte[]> cacheValuesInBytes = Collections.singleton(TbMsg.toByteArray(msg));
@@ -199,7 +194,7 @@ class DefaultTbRuleNodeCacheServiceTest {
         String key = RandomStringUtils.randomAlphabetic(5);
         byte[] cacheKey = toRuleNodeCacheKey(ruleNodeId, key);
         ruleNodeCacheService.evict(key);
-        verify(cache, times(1)).evict(eq(cacheKey));
+        verify(cache).evict(eq(cacheKey));
     }
 
     @Test
@@ -208,7 +203,7 @@ class DefaultTbRuleNodeCacheServiceTest {
         int partition = randomPartitionGenerator.nextInt(0, 10);
         byte[] cacheKey = toRuleNodeCacheKey(ruleNodeId, partition, key);
         ruleNodeCacheService.evictTbMsgs(key, partition);
-        verify(cache, times(1)).evict(eq(cacheKey));
+        verify(cache).evict(eq(cacheKey));
     }
 
     private byte[][] stringListToBytes(List<String> values) {

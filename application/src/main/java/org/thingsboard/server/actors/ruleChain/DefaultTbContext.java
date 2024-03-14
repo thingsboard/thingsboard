@@ -105,10 +105,8 @@ import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.queue.TbQueueCallback;
-import org.thingsboard.server.queue.TbQueueMsgMetadata;
-import org.thingsboard.server.service.executors.PubSubRuleNodeExecutorProvider;
 import org.thingsboard.server.queue.common.SimpleTbQueueCallback;
+import org.thingsboard.server.service.executors.PubSubRuleNodeExecutorProvider;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 import org.thingsboard.server.service.script.RuleNodeTbelScriptEngine;
 
@@ -133,14 +131,14 @@ class DefaultTbContext implements TbContext {
     private final ActorSystemContext mainCtx;
     private final String ruleChainName;
     private final RuleNodeCtx nodeCtx;
-    private final Optional<RuleNodeCacheService> ruleNodeCacheService;
+    private final RuleNodeCacheService ruleNodeCacheService;
 
     public DefaultTbContext(ActorSystemContext mainCtx, String ruleChainName, RuleNodeCtx nodeCtx) {
         this.mainCtx = mainCtx;
         this.ruleChainName = ruleChainName;
         this.nodeCtx = nodeCtx;
-        this.ruleNodeCacheService = mainCtx.getRuleNodeCache() == null ?
-                Optional.empty() : Optional.of(new DefaultTbRuleNodeCacheService(getSelfId(), mainCtx.getRuleNodeCache()));
+        this.ruleNodeCacheService = mainCtx.getRuleNodeCache() != null ?
+                new DefaultTbRuleNodeCacheService(getSelfId(), mainCtx.getRuleNodeCache()) : null;
     }
 
     @Override
@@ -169,7 +167,6 @@ class DefaultTbContext implements TbContext {
     @Override
     public void tellSelf(TbMsg msg, long delayMs) {
         //TODO: fix all nodes that use this method to use ruleNodeCacheService for message persistence.
-        // See the example in the TbAbstractCacheBasedRuleNode.
         mainCtx.scheduleMsgWithDelay(nodeCtx.getSelfActor(), new RuleNodeToSelfMsg(this, msg), delayMs);
     }
 
@@ -346,10 +343,9 @@ class DefaultTbContext implements TbContext {
         return mainCtx.resolve(ServiceType.TB_RULE_ENGINE, getQueueName(), getTenantId(), entityId).isMyPartition();
     }
 
-    // TODO: add getQueueName() to this place as well.
     @Override
     public TopicPartitionInfo getTopicPartitionInfo(EntityId entityId) {
-        return mainCtx.resolve(ServiceType.TB_RULE_ENGINE, getTenantId(), entityId);
+        return mainCtx.resolve(ServiceType.TB_RULE_ENGINE, getQueueName(), getTenantId(), entityId);
     }
 
     @Override
@@ -898,7 +894,7 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public Optional<RuleNodeCacheService> getRuleNodeCacheService() {
-        return ruleNodeCacheService;
+        return Optional.ofNullable(ruleNodeCacheService);
     }
 
     @Override

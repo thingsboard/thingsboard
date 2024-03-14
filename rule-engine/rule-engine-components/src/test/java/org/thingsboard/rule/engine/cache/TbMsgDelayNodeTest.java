@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.cache;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -25,11 +26,17 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.stubbing.Answer;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.rule.engine.api.RuleNodeCacheService;
+import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.delay.TbMsgDelayNode;
 import org.thingsboard.rule.engine.delay.TbMsgDelayNodeConfiguration;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
@@ -48,6 +55,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -58,40 +67,58 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @Slf4j
-public class TbMsgDelayNodeTest extends TbAbstractCacheBasedRuleNodeTest<TbMsgDelayNode, TbMsgDelayNodeConfiguration> {
+public class TbMsgDelayNodeTest {
 
-    private static final String DELAYED_ORIGINATOR_IDS_CACHE_KEY = "delayed_originator_ids";
-    private static final String TEST_THREAD_FACTORY = "delay-node-test";
-    private static final int delayPeriod = 1;
+    private final int delayPeriod = 1;
 
-    @Override
-    protected ThingsBoardThreadFactory getThreadFactory() {
-        return ThingsBoardThreadFactory.forName(TEST_THREAD_FACTORY);
-    }
+    private CountDownLatch awaitTellSelfLatch;
+    private ScheduledExecutorService executorService;
 
-    @Override
-    protected TbMsgType getTickMsgType() {
-        return TbMsgType.DELAY_TIMEOUT_SELF_MSG;
-    }
+    private TbContext ctx;
+    private RuleNodeCacheService ruleNodeCacheService;
 
-    @Override
-    protected String getEntityIdsCacheKey() {
-        return DELAYED_ORIGINATOR_IDS_CACHE_KEY;
-    }
+    private TbMsgDelayNode node;
+    private TbMsgDelayNodeConfiguration config;
 
     @BeforeEach
     protected void init() throws TbNodeException {
-        doInit();
+        executorService = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("delay-node-test"));
+
+        ctx = mock(TbContext.class);
+        ruleNodeCacheService = mock(RuleNodeCacheService.class);
+
+        TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
+        RuleNodeId ruleNodeId = new RuleNodeId(UUID.randomUUID());
+
+        when(ctx.getSelfId()).thenReturn(ruleNodeId);
+        when(ctx.getTenantId()).thenReturn(tenantId);
+        when(ctx.getRuleNodeCacheService()).thenReturn(Optional.of(ruleNodeCacheService));
+
+        doAnswer((Answer<TbMsg>) invocationOnMock -> {
+            TbMsgType type = (TbMsgType) (invocationOnMock.getArguments())[1];
+            EntityId originator = (EntityId) (invocationOnMock.getArguments())[2];
+            TbMsgMetaData metaData = (TbMsgMetaData) (invocationOnMock.getArguments())[3];
+            String data = (String) (invocationOnMock.getArguments())[4];
+            return TbMsg.newMsg(type, originator, metaData.copy(), data);
+        }).when(ctx).newMsg(isNull(), eq(TbMsgType.DELAY_TIMEOUT_SELF_MSG), nullable(EntityId.class), any(TbMsgMetaData.class), any(String.class));
         node = spy(new TbMsgDelayNode());
         config = new TbMsgDelayNodeConfiguration().defaultConfiguration();
+    }
+
+    @AfterEach
+    public void destroy() {
+        executorService.shutdown();
     }
 
     @Test
@@ -163,7 +190,21 @@ public class TbMsgDelayNodeTest extends TbAbstractCacheBasedRuleNodeTest<TbMsgDe
 
     @Test
     public void given1MsgFromNonLocalEntity_whenOnMsg_thenVerifyEntityIgnored() throws TbNodeException, ExecutionException, InterruptedException {
-        test_given1MsgFromNonLocalEntity_whenOnMsg_thenVerifyMsgIgnored();
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+
+        TopicPartitionInfo tpi = mock(TopicPartitionInfo.class);
+
+        when(tpi.isMyPartition()).thenReturn(false);
+        when(ctx.getTopicPartitionInfo(deviceId)).thenReturn(tpi);
+
+        TbMsg msgToProcess = createMsg(deviceId, System.currentTimeMillis());
+        node.onMsg(ctx, msgToProcess);
+
+        verify(tpi).isMyPartition();
+        verify(tpi, never()).getPartition();
+        verify(ctx).getTopicPartitionInfo(eq(deviceId));
+
+        node.destroy();
     }
 
     @Test
@@ -262,27 +303,132 @@ public class TbMsgDelayNodeTest extends TbAbstractCacheBasedRuleNodeTest<TbMsgDe
 
     @Test
     public void givenNonLocalEntity_whenInit_thenVerifyEntityIgnored() throws TbNodeException {
-        test_givenNonLocalEntity_whenInit_thenVerifyEntityIgnored();
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+
+        TopicPartitionInfo tpi = mock(TopicPartitionInfo.class);
+
+        when(tpi.isMyPartition()).thenReturn(false);
+        when(ctx.getTopicPartitionInfo(deviceId)).thenReturn(tpi);
+        when(ruleNodeCacheService.getEntityIds(getEntityIdsCacheKey())).thenReturn(Collections.singleton(deviceId));
+
+        node.init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+
+        verify(tpi).isMyPartition();
+        verify(tpi, never()).getPartition();
+        verify(ctx).getTopicPartitionInfo(eq(deviceId));
+        verify(ruleNodeCacheService).getEntityIds(getEntityIdsCacheKey());
+
+        node.destroy();
     }
 
     @Test
     public void givenLocalEntityWithNoValuesInCache_whenInit_thenVerifyDoNothing() throws TbNodeException {
-        test_givenLocalEntityWithNoValuesInCache_whenInit_thenVerifyDoNothing();
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+
+        TopicPartitionInfo tpi = mock(TopicPartitionInfo.class);
+
+        when(tpi.isMyPartition()).thenReturn(true);
+        when(tpi.getPartition()).thenReturn(Optional.of(0));
+        when(ctx.getTopicPartitionInfo(deviceId)).thenReturn(tpi);
+        when(ruleNodeCacheService.getEntityIds(getEntityIdsCacheKey())).thenReturn(Collections.singleton(deviceId));
+        when(ruleNodeCacheService.getTbMsgs(eq(deviceId), eq(0))).thenReturn(Collections.emptySet());
+
+        node.init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+
+        verify(tpi).isMyPartition();
+        verify(tpi).getPartition();
+        verify(ruleNodeCacheService).getEntityIds(getEntityIdsCacheKey());
+        verify(ruleNodeCacheService).getTbMsgs(eq(deviceId), eq(0));
+        verify(ctx).getTopicPartitionInfo(eq(deviceId));
+        verify(ctx, never()).enqueueForTellNext(any(), anyString(), any(), any());
+        verify(ctx, never()).tellSelf(any(), anyLong());
+
+        node.destroy();
     }
 
     @Test
     public void givenPartitionThatAlreadyExists_whenOnPartitionChange_thenVerifyCheckCacheSkipped() throws TbNodeException {
-        test_givenPartitionThatAlreadyExists_whenOnPartitionChange_thenVerifyCheckCacheSkipped();
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+
+        TopicPartitionInfo tpi = mock(TopicPartitionInfo.class);
+
+        when(tpi.isMyPartition()).thenReturn(true);
+        when(tpi.getPartition()).thenReturn(Optional.of(0));
+        when(ctx.getTopicPartitionInfo(deviceId)).thenReturn(tpi);
+        when(ruleNodeCacheService.getEntityIds(eq(getEntityIdsCacheKey()))).thenReturn(Collections.singleton(deviceId));
+        when(ruleNodeCacheService.getTbMsgs(eq(deviceId), eq(0))).thenReturn(Collections.emptySet());
+
+        Set<Integer> topicPartitionIds = new HashSet<>();
+        tpi.getPartition().ifPresent(topicPartitionIds::add);
+        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE, topicPartitionIds);
+
+        // add partition to the partitions map ...
+        node.init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+
+        // check that partition is present and cache check is skipped!
+        node.onPartitionChangeMsg(ctx, partitionChangeMsg);
+
+        verify(tpi).isMyPartition();
+        verify(tpi, times(2)).getPartition();
+        verify(ctx).getTopicPartitionInfo(eq(deviceId));
+        verify(ctx, never()).enqueueForTellNext(any(), anyString(), any(), any());
+        verify(ctx, never()).tellSelf(any(), anyLong());
+        verify(ruleNodeCacheService).getEntityIds(getEntityIdsCacheKey());
+        verify(ruleNodeCacheService).getTbMsgs(eq(deviceId), eq(0));
+
+        node.destroy();
     }
 
     @Test
     public void givenNoEntitiesInCache_whenOnPartitionChange_thenVerifyDoNothing() {
-        test_givenNoEntitiesInCache_whenOnPartitionChange_thenVerifyDoNothing();
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+
+        TopicPartitionInfo tpi = mock(TopicPartitionInfo.class);
+
+        when(tpi.isMyPartition()).thenReturn(true);
+        when(tpi.getPartition()).thenReturn(Optional.of(0));
+        when(ctx.getTopicPartitionInfo(deviceId)).thenReturn(tpi);
+        when(ruleNodeCacheService.getEntityIds(eq(getEntityIdsCacheKey()))).thenReturn(Collections.emptySet());
+
+        Set<Integer> topicPartitionIds = new HashSet<>();
+        tpi.getPartition().ifPresent(topicPartitionIds::add);
+        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE, topicPartitionIds);
+
+        node.onPartitionChangeMsg(ctx, partitionChangeMsg);
+
+        verify(ruleNodeCacheService).getEntityIds(getEntityIdsCacheKey());
+        verify(ctx, never()).getTopicPartitionInfo(eq(deviceId));
+
+        node.destroy();
     }
 
     @Test
     public void givenLocalEntityWithNoValuesInCache_whenOnPartitionChange_thenVerifyDoNothing() {
-        test_givenLocalEntityWithNoValuesInCache_whenOnPartitionChange_thenVerifyDoNothing();
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+
+        TopicPartitionInfo tpi = mock(TopicPartitionInfo.class);
+
+        when(tpi.isMyPartition()).thenReturn(true);
+        when(tpi.getPartition()).thenReturn(Optional.of(0));
+        when(ctx.getTopicPartitionInfo(deviceId)).thenReturn(tpi);
+        when(ruleNodeCacheService.getEntityIds(eq(getEntityIdsCacheKey()))).thenReturn(Collections.singleton(deviceId));
+        when(ruleNodeCacheService.getTbMsgs(eq(deviceId), eq(0))).thenReturn(Collections.emptySet());
+
+        Set<Integer> topicPartitionIds = new HashSet<>();
+        tpi.getPartition().ifPresent(topicPartitionIds::add);
+        PartitionChangeMsg partitionChangeMsg = new PartitionChangeMsg(ServiceType.TB_RULE_ENGINE, topicPartitionIds);
+
+        node.onPartitionChangeMsg(ctx, partitionChangeMsg);
+
+        verify(tpi).isMyPartition();
+        verify(tpi, times(2)).getPartition();
+        verify(ctx).getTopicPartitionInfo(eq(deviceId));
+        verify(ctx, never()).enqueueForTellNext(any(), anyString(), any(), any());
+        verify(ctx, never()).tellSelf(any(), anyLong());
+        verify(ruleNodeCacheService).getEntityIds(getEntityIdsCacheKey());
+        verify(ruleNodeCacheService).getTbMsgs(eq(deviceId), eq(0));
+
+        node.destroy();
     }
 
     @Test
@@ -387,11 +533,6 @@ public class TbMsgDelayNodeTest extends TbAbstractCacheBasedRuleNodeTest<TbMsgDe
         node.destroy();
     }
 
-    @AfterEach
-    public void destroy() {
-        executorService.shutdown();
-    }
-
     private void invokeTellSelf(int maxNumberOfInvocation) {
         AtomicLong scheduleTimeout = new AtomicLong(delayPeriod);
         AtomicInteger scheduleCount = new AtomicInteger(0);
@@ -418,6 +559,35 @@ public class TbMsgDelayNodeTest extends TbAbstractCacheBasedRuleNodeTest<TbMsgDe
             inputMsgs.add(createMsg(deviceId));
         }
         return inputMsgs;
+    }
+
+    private TbMsg createMsg(DeviceId deviceId, long ts) {
+        ObjectNode dataNode = JacksonUtil.newObjectNode();
+        dataNode.put("deviceId", deviceId.getId().toString());
+        TbMsgMetaData metaData = new TbMsgMetaData();
+        metaData.putValue("ts", String.valueOf(ts));
+        return TbMsg.newMsg(
+                DataConstants.MAIN_QUEUE_NAME,
+                TbMsgType.POST_TELEMETRY_REQUEST,
+                deviceId,
+                metaData,
+                JacksonUtil.toString(dataNode));
+    }
+
+    private TbMsg createMsg(DeviceId deviceId) {
+        ObjectNode dataNode = JacksonUtil.newObjectNode();
+        dataNode.put("deviceId", deviceId.getId().toString());
+        TbMsgMetaData metaData = new TbMsgMetaData();
+        return TbMsg.newMsg(
+                DataConstants.MAIN_QUEUE_NAME,
+                TbMsgType.POST_TELEMETRY_REQUEST,
+                deviceId,
+                metaData,
+                JacksonUtil.toString(dataNode));
+    }
+
+    private String getEntityIdsCacheKey() {
+        return "delayed_originator_ids";
     }
 
 }

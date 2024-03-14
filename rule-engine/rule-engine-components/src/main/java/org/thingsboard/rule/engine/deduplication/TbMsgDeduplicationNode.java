@@ -23,27 +23,34 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.RuleNodeCacheService;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.rule.engine.cache.TbAbstractCacheBasedRuleNode;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import static org.thingsboard.server.common.data.DataConstants.QUEUE_NAME;
 
@@ -66,24 +73,110 @@ import static org.thingsboard.server.common.data.DataConstants.QUEUE_NAME;
         configDirective = "tbActionNodeMsgDeduplicationConfig"
 )
 @Slf4j
-public class TbMsgDeduplicationNode extends TbAbstractCacheBasedRuleNode<TbMsgDeduplicationNodeConfiguration, DeduplicationData> {
+public class TbMsgDeduplicationNode implements TbNode {
 
+    private static final int DEFAULT_PARTITION = -999999;
     private static final String DEDUPLICATION_IDS_CACHE_KEY = "deduplication_ids";
     private static final int TB_MSG_DEDUPLICATION_RETRY_DELAY = 10;
 
     private long deduplicationInterval;
     private String queueName;
 
-    @Override
-    protected TbMsgDeduplicationNodeConfiguration loadRuleNodeConfiguration(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        TbMsgDeduplicationNodeConfiguration config = TbNodeUtils.convert(configuration, TbMsgDeduplicationNodeConfiguration.class);
-        this.deduplicationInterval = TimeUnit.SECONDS.toMillis(config.getInterval());
-        this.queueName = ctx.getQueueName();
-        return config;
+
+    private TbMsgDeduplicationNodeConfiguration config;
+
+    private final Map<Integer, Set<EntityId>> partitionsEntityIdsMap;
+    private final Map<EntityId, DeduplicationData> entityIdValuesMap;
+
+    public TbMsgDeduplicationNode() {
+        partitionsEntityIdsMap = new HashMap<>();
+        entityIdValuesMap = new HashMap<>();
     }
 
     @Override
-    protected void getValuesFromCacheAndSchedule(TbContext ctx, RuleNodeCacheService cache, Integer partition, EntityId id) {
+    public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
+        this.config = TbNodeUtils.convert(configuration, TbMsgDeduplicationNodeConfiguration.class);
+        this.deduplicationInterval = TimeUnit.SECONDS.toMillis(config.getInterval());
+        this.queueName = ctx.getQueueName();
+        getValuesFromCacheAndSchedule(ctx);
+    }
+
+    @Override
+    public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
+        if (msg.isTypeOf(getTickMsgType())) {
+            processOnTickMsg(ctx, msg);
+        } else {
+            processOnRegularMsg(ctx, msg);
+        }
+    }
+
+    @Override
+    public void destroy(TbContext ctx, ComponentLifecycleEvent reason) {
+        if (ComponentLifecycleEvent.DELETED.equals(reason)) {
+            if (!partitionsEntityIdsMap.isEmpty()) {
+                partitionsEntityIdsMap.forEach((partition, entityIds) ->
+                        entityIds.forEach(id ->
+                                getCacheIfPresentAndExecute(ctx, cache -> cache.evictTbMsgs(id, partition))));
+            }
+            getCacheIfPresentAndExecute(ctx, cache -> cache.evict(getEntityIdsCacheKey()));
+        }
+        partitionsEntityIdsMap.clear();
+        entityIdValuesMap.clear();
+    }
+
+    @Override
+    public void onPartitionChangeMsg(TbContext ctx, PartitionChangeMsg msg) {
+        Set<Map.Entry<Integer, Set<EntityId>>> currentPartitions = partitionsEntityIdsMap.entrySet();
+        RuleNodeId ruleNodeId = ctx.getSelfId();
+        log.trace("[{}] On partition change msg: {}, current partitions: {}", ruleNodeId, msg, currentPartitions);
+        Set<Integer> newPartitions = msg.getPartitions();
+        currentPartitions.removeIf(entry -> {
+            Integer partition = entry.getKey();
+            boolean remove = !newPartitions.contains(partition);
+            if (remove) {
+                log.trace("[{}] Removed old partition: [{}] from the partitions map!", ruleNodeId, partition);
+                Set<EntityId> entityIds = entry.getValue();
+                entityIdValuesMap.keySet().removeAll(entityIds);
+                if (log.isTraceEnabled()) {
+                    entityIds.forEach(entityId -> log.trace("[{}] Removed non-local entity: [{}] from the entityId values map!", ruleNodeId, entityId));
+                }
+            }
+            return remove;
+        });
+        boolean checkCache = newPartitions.stream().anyMatch(newPartition -> !partitionsEntityIdsMap.containsKey(newPartition));
+        if (checkCache) {
+            getValuesFromCacheAndSchedule(ctx);
+        }
+    }
+
+    private void getValuesFromCacheAndSchedule(TbContext ctx) {
+        log.trace("[{}] Going to fetch values from cache ...", ctx.getSelfId());
+        getCacheIfPresentAndExecute(ctx, cache -> {
+            Set<EntityId> entityIds = cache.getEntityIds(getEntityIdsCacheKey());
+            if (entityIds.isEmpty()) {
+                return;
+            }
+            entityIds.forEach(id -> {
+                TopicPartitionInfo tpi = ctx.getTopicPartitionInfo(id);
+                if (!tpi.isMyPartition()) {
+                    log.trace("[{}][{}][{}] Ignore entity that doesn't belong to my partition!", ctx.getSelfId(), tpi.getFullTopicName(), id);
+                } else {
+                    Integer partition = tpi.getPartition().orElse(DEFAULT_PARTITION);
+                    Set<EntityId> partitionEntityIds = partitionsEntityIdsMap.computeIfAbsent(partition, k -> new HashSet<>());
+                    boolean added = partitionEntityIds.add(id);
+                    if (added) {
+                        getValuesFromCacheAndSchedule(ctx, cache, partition, id);
+                    }
+                }
+            });
+        });
+    }
+
+    private void getCacheIfPresentAndExecute(TbContext ctx, Consumer<RuleNodeCacheService> cacheOperation) {
+        ctx.getRuleNodeCacheService().ifPresent(cacheOperation);
+    }
+
+    private void getValuesFromCacheAndSchedule(TbContext ctx, RuleNodeCacheService cache, Integer partition, EntityId id) {
         Set<TbMsg> tbMsgs = cache.getTbMsgs(id, partition);
         DeduplicationData deduplicationData = entityIdValuesMap.computeIfAbsent(id, k -> new DeduplicationData());
         if (deduplicationData.isEmpty() && tbMsgs.isEmpty()) {
@@ -93,8 +186,7 @@ public class TbMsgDeduplicationNode extends TbAbstractCacheBasedRuleNode<TbMsgDe
         scheduleTickMsg(ctx, id, deduplicationData, 0);
     }
 
-    @Override
-    protected void processOnRegularMsg(TbContext ctx, TbMsg msg) {
+    private void processOnRegularMsg(TbContext ctx, TbMsg msg) {
         EntityId id = msg.getOriginator();
         TopicPartitionInfo tpi = ctx.getTopicPartitionInfo(id);
         if (!tpi.isMyPartition()) {
@@ -122,8 +214,7 @@ public class TbMsgDeduplicationNode extends TbAbstractCacheBasedRuleNode<TbMsgDe
         scheduleTickMsg(ctx, id, deduplicationMsgs);
     }
 
-    @Override
-    protected void processOnTickMsg(TbContext ctx, TbMsg msg) {
+    private void processOnTickMsg(TbContext ctx, TbMsg msg) {
         EntityId deduplicationId = msg.getOriginator();
         TopicPartitionInfo tpi = ctx.getTopicPartitionInfo(deduplicationId);
         if (!tpi.isMyPartition()) {
@@ -199,13 +290,11 @@ public class TbMsgDeduplicationNode extends TbAbstractCacheBasedRuleNode<TbMsgDe
         }
     }
 
-    @Override
-    protected TbMsgType getTickMsgType() {
+    private TbMsgType getTickMsgType() {
         return TbMsgType.DEDUPLICATION_TIMEOUT_SELF_MSG;
     }
 
-    @Override
-    protected String getEntityIdsCacheKey() {
+    private String getEntityIdsCacheKey() {
         return DEDUPLICATION_IDS_CACHE_KEY;
     }
 
