@@ -50,6 +50,7 @@ import org.thingsboard.server.common.data.query.EntityTypeFilter;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
+import org.thingsboard.server.common.data.query.StringFilterPredicate;
 import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -591,6 +592,109 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         ResultActions result = doPost("/api/entitiesQuery/find", query).andExpect(status().isBadRequest());
         assertThat(getErrorMessage(result)).contains("Invalid").contains("sort property");
+    }
+
+    @Test
+    public void testFindDevicesByOwnerNameAndOwnerType() throws Exception {
+        loginTenantAdmin();
+        int numOfDevices = 3;
+
+        for (int i = 0; i < numOfDevices; i++) {
+            Device device = new Device();
+            String name = "Device" + i;
+            device.setName(name);
+            device.setType("default");
+
+            Device savedDevice = doPost("/api/device?accessToken=" + name, device, Device.class);
+            JsonNode content = JacksonUtil.toJsonNode("{\"alarmActiveTime\": 1" + i + "}");
+            doPost("/api/plugins/telemetry/" + EntityType.DEVICE.name() + "/" + savedDevice.getUuidId() + "/SERVER_SCOPE", content)
+                    .andExpect(status().isOk());
+        }
+
+        DeviceTypeFilter filter = new DeviceTypeFilter();
+        filter.setDeviceTypes(List.of("default"));
+        filter.setDeviceNameFilter("");
+
+        KeyFilter activeAlarmTimeFilter = getServerAttributeNumericGreaterThanKeyFilter("alarmActiveTime", 5);
+        KeyFilter tenantOwnerNameFilter = getEntityFieldStringEqualToKeyFilter("ownerName", TEST_TENANT_NAME);
+        KeyFilter wrongOwnerNameFilter = getEntityFieldStringEqualToKeyFilter("ownerName", "wrongName");
+        KeyFilter tenantOwnerTypeFilter =  getEntityFieldStringEqualToKeyFilter("ownerType", "TENANT");
+        KeyFilter customerOwnerTypeFilter = getEntityFieldStringEqualToKeyFilter("ownerType", "CUSTOMER");
+
+        EntityDataSortOrder sortOrder = new EntityDataSortOrder(
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime"), EntityDataSortOrder.Direction.ASC
+        );
+        EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
+        List<EntityKey> entityFields = List.of(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"), new EntityKey(EntityKeyType.ENTITY_FIELD, "ownerName"),
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "ownerType"));
+        List<EntityKey> latestValues = Collections.singletonList(new EntityKey(EntityKeyType.ATTRIBUTE, "alarmActiveTime"));
+
+        // all devices with ownerName = TEST TENANT
+        EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, latestValues, List.of(activeAlarmTimeFilter, tenantOwnerNameFilter));
+        checkEntitiesByQuery(query, numOfDevices, TEST_TENANT_NAME, "TENANT");
+
+        // all devices with wrong ownerName
+        EntityDataQuery wrongTenantNameQuery = new EntityDataQuery(filter, pageLink, entityFields, latestValues, List.of(activeAlarmTimeFilter, wrongOwnerNameFilter));
+        checkEntitiesByQuery(wrongTenantNameQuery, 0, null, null);
+
+        // all devices with owner type = TENANT
+        EntityDataQuery tenantEntitiesQuery = new EntityDataQuery(filter, pageLink, entityFields, latestValues, List.of(activeAlarmTimeFilter, tenantOwnerTypeFilter));
+        checkEntitiesByQuery(tenantEntitiesQuery, numOfDevices, TEST_TENANT_NAME, "TENANT");
+
+        // all devices with owner type = CUSTOMER
+        EntityDataQuery customerEntitiesQuery = new EntityDataQuery(filter, pageLink, entityFields, latestValues, List.of(activeAlarmTimeFilter, customerOwnerTypeFilter));
+        checkEntitiesByQuery(customerEntitiesQuery, 0, null, null);
+    }
+
+    private void checkEntitiesByQuery(EntityDataQuery query, int expectedNumOfDevices, String expectedOwnerName, String expectedOwnerType) throws Exception {
+        Awaitility.await()
+                .alias("data by query")
+                .atMost(30, TimeUnit.SECONDS)
+                .until(() -> {
+                    var data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {});
+                    var loadedEntities = new ArrayList<>(data.getData());
+                    return loadedEntities.size() == expectedNumOfDevices;
+                });
+         if (expectedNumOfDevices == 0) {
+             return;
+         }
+        var data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {});
+        var loadedEntities = new ArrayList<>(data.getData());
+
+        Assert.assertEquals(expectedNumOfDevices, loadedEntities.size());
+
+        for (int i = 0; i < expectedNumOfDevices; i++) {
+            var entity = loadedEntities.get(i);
+            String name = entity.getLatest().get(EntityKeyType.ENTITY_FIELD).getOrDefault("name", new TsValue(0, "Invalid")).getValue();
+            String ownerName = entity.getLatest().get(EntityKeyType.ENTITY_FIELD).getOrDefault("ownerName", new TsValue(0, "Invalid")).getValue();
+            String ownerType = entity.getLatest().get(EntityKeyType.ENTITY_FIELD).getOrDefault("ownerType", new TsValue(0, "Invalid")).getValue();
+            String alarmActiveTime = entity.getLatest().get(EntityKeyType.ATTRIBUTE).getOrDefault("alarmActiveTime", new TsValue(0, "-1")).getValue();
+
+            Assert.assertEquals("Device" + i, name);
+            Assert.assertEquals( expectedOwnerName, ownerName);
+            Assert.assertEquals( expectedOwnerType, ownerType);
+            Assert.assertEquals("1" + i, alarmActiveTime);
+        }
+    }
+
+    private KeyFilter getEntityFieldStringEqualToKeyFilter(String keyName, String value) {
+        KeyFilter tenantOwnerNameFilter = new KeyFilter();
+        tenantOwnerNameFilter.setKey(new EntityKey(EntityKeyType.ENTITY_FIELD, keyName));
+        StringFilterPredicate ownerNamePredicate = new StringFilterPredicate();
+        ownerNamePredicate.setValue(FilterPredicateValue.fromString(value));
+        ownerNamePredicate.setOperation(StringFilterPredicate.StringOperation.EQUAL);
+        tenantOwnerNameFilter.setPredicate(ownerNamePredicate);
+        return tenantOwnerNameFilter;
+    }
+
+    private KeyFilter getServerAttributeNumericGreaterThanKeyFilter(String attribute, int value) {
+        KeyFilter numericFilter = new KeyFilter();
+        numericFilter.setKey(new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, attribute));
+        NumericFilterPredicate predicate = new NumericFilterPredicate();
+        predicate.setValue(FilterPredicateValue.fromDouble(value));
+        predicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
+        numericFilter.setPredicate(predicate);
+        return numericFilter;
     }
 
 }
