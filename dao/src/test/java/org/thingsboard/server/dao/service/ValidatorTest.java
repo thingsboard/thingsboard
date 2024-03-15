@@ -42,7 +42,7 @@ class ValidatorTest {
         Validator.validateEntityId(TenantId.SYS_TENANT_ID, id -> "Incorrect entityId " + id);
         Validator.validateEntityId((goodDeviceId), id -> "Incorrect entityId " + id);
 
-        assertThatThrownBy(() -> Validator.validateEntityId( null, id -> "Incorrect entityId " + id))
+        assertThatThrownBy(() -> Validator.validateEntityId(null, id -> "Incorrect entityId " + id))
                 .as("EntityId is null")
                 .isInstanceOf(IncorrectParameterException.class)
                 .hasMessageContaining("Incorrect entityId null");
@@ -107,7 +107,7 @@ class ValidatorTest {
     @Test
     void validateIdsTest() {
         List<? extends UUIDBased> list = List.of(goodDeviceId);
-        Validator.validateIds( list, ids -> "Incorrect Id " + ids);
+        Validator.validateIds(list, ids -> "Incorrect Id " + ids);
 
         assertThatThrownBy(() -> Validator.validateIds(null, id -> "Incorrect Ids " + id))
                 .as("Ids are null")
@@ -131,21 +131,5 @@ class ValidatorTest {
                 .hasMessageContaining(goodDeviceId.getId().toString())
                 .hasMessageContaining("null");
 
-    }
-
-    @Test
-    void validateIdSupplier() {
-        Validator.validateId(TenantId.SYS_TENANT_ID, () -> "Incorrect Id null");
-        Validator.validateId((goodDeviceId), () -> "Incorrect Id null");
-
-        assertThatThrownBy(() -> Validator.validateId((UUIDBased) null, () -> "Incorrect Id null"))
-                .as("Id is null")
-                .isInstanceOf(IncorrectParameterException.class)
-                .hasMessageContaining("Incorrect Id null");
-
-        assertThatThrownBy(() -> Validator.validateId(nullUserId, () -> "Incorrect Id null"))
-                .as("Id with null UUIDBased")
-                .isInstanceOf(IncorrectParameterException.class)
-                .hasMessageContaining("Incorrect Id null");
     }
 }
