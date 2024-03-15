@@ -615,7 +615,7 @@ export const timeSeriesChartDefaultSettings: TimeSeriesChartSettings = {
   animation: {
     animation: true,
     animationThreshold: 2000,
-    animationDuration: 1000,
+    animationDuration: 500,
     animationEasing: TimeSeriesChartAnimationEasing.cubicOut,
     animationDelay: 0,
     animationDurationUpdate: 300,
@@ -1023,7 +1023,7 @@ const generateChartThresholds = (thresholdItems: TimeSeriesChartThresholdItem[],
       let seriesOption = item.option;
       if (!item.option) {
         const thresholdLabelStyle = createChartTextStyle(item.settings.labelFont,
-          item.settings.labelColor, darkMode, 'threshold.label');
+          item.settings.labelColor, false, 'threshold.label');
         seriesOption = {
           type: 'line',
           id: item.id,
@@ -1036,7 +1036,7 @@ const generateChartThresholds = (thresholdItems: TimeSeriesChartThresholdItem[],
             },
             lineStyle: {
               width: item.settings.lineWidth,
-              color: prepareChartThemeColor(item.settings.lineColor, darkMode, 'threshold.line'),
+              color: prepareChartThemeColor(item.settings.lineColor, false, 'threshold.line'),
               type: item.settings.lineType
             },
             label: {
@@ -1175,17 +1175,6 @@ export const updateDarkMode = (options: EChartsOption, settings: TimeSeriesChart
       }
     }
   }
-  for (const item of thresholdDataItems) {
-    if (Array.isArray(options.series)) {
-      const series = options.series.find(s => s.id === item.id);
-      if (series) {
-        series.markLine.lineStyle.color = prepareChartThemeColor(item.settings.lineColor, darkMode, 'threshold.line');
-        if (series.markLine?.label?.show) {
-          series.markLine.label.color = prepareChartThemeColor(item.settings.labelColor, darkMode, 'threshold.label');
-        }
-      }
-    }
-  }
   return options;
 };
 
@@ -1209,12 +1198,14 @@ const createTimeSeriesChartSeries = (item: TimeSeriesChartDataItem,
         focus: 'series'
       },
       dimensions: [
-        {name: 'intervalStart', type: 'number'},
-        {name: 'intervalEnd', type: 'number'}
+        {name: 'x', type: 'time', stack},
+        {name: 'y', type: 'float'},
+        {name: 'intervalStart', type: 'time'},
+        {name: 'intervalEnd', type: 'time'}
       ],
       encode: {
-        intervalStart: 2,
-        intervalEnd: 3
+        x: [0, 2, 3],
+        y: [1]
       }
     };
     item.option = seriesOption;
@@ -1226,6 +1217,9 @@ const createTimeSeriesChartSeries = (item: TimeSeriesChartDataItem,
         lineSettings.pointLabelFont, lineSettings.pointLabelColor, lineSettings.pointLabelPosition, darkMode);
       lineSeriesOption.step = lineSettings.step ? lineSettings.stepType : false;
       lineSeriesOption.smooth = lineSettings.smooth;
+      if (lineSettings.smooth) {
+        lineSeriesOption.smoothMonotone = 'x';
+      }
       lineSeriesOption.lineStyle = {
         width: lineSettings.showLine ? lineSettings.lineWidth : 0,
         type: lineSettings.lineType

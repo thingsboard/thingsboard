@@ -340,6 +340,9 @@ export const echartsTooltipFormatter = (renderer: Renderer2,
     return null;
   }
   const firstParam = Array.isArray(params) ? params[0] : params;
+  if (!firstParam.value) {
+    return null;
+  }
   const tooltipElement: HTMLElement = renderer.createElement('div');
   renderer.setStyle(tooltipElement, 'display', 'flex');
   renderer.setStyle(tooltipElement, 'flex-direction', 'column');

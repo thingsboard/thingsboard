@@ -1,5 +1,5 @@
 diff --git a/node_modules/echarts/lib/component/dataZoom/DataZoomModel.js b/node_modules/echarts/lib/component/dataZoom/DataZoomModel.js
-index d6c05f3..d09baed 100644
+index d6c05f3..aafb0b8 100644
 --- a/node_modules/echarts/lib/component/dataZoom/DataZoomModel.js
 +++ b/node_modules/echarts/lib/component/dataZoom/DataZoomModel.js
 @@ -362,7 +362,10 @@ var DataZoomModel = /** @class */function (_super) {
@@ -28,7 +28,7 @@ index d6c05f3..d09baed 100644
          }
        }
 diff --git a/node_modules/echarts/lib/component/dataZoom/InsideZoomView.js b/node_modules/echarts/lib/component/dataZoom/InsideZoomView.js
-index 06469b2..ccfbfa6 100644
+index 06469b2..cf0b2ea 100644
 --- a/node_modules/echarts/lib/component/dataZoom/InsideZoomView.js
 +++ b/node_modules/echarts/lib/component/dataZoom/InsideZoomView.js
 @@ -96,11 +96,14 @@ var getRangeHandlers = {
@@ -52,7 +52,7 @@ index 06469b2..ccfbfa6 100644
    },
    pan: makeMover(function (range, axisModel, coordSysInfo, coordSysMainType, controller, e) {
 diff --git a/node_modules/echarts/lib/component/dataZoom/SliderZoomView.js b/node_modules/echarts/lib/component/dataZoom/SliderZoomView.js
-index 98912e0..2e809af 100644
+index 98912e0..0cda6be 100644
 --- a/node_modules/echarts/lib/component/dataZoom/SliderZoomView.js
 +++ b/node_modules/echarts/lib/component/dataZoom/SliderZoomView.js
 @@ -64,7 +64,7 @@ var DEFAULT_MOVE_HANDLE_SIZE = 7;
@@ -147,7 +147,7 @@ index 98912e0..2e809af 100644
    SliderZoomView.prototype._updateView = function (nonRealtime) {
      var displaybles = this._displayables;
 diff --git a/node_modules/echarts/lib/component/dataZoom/dataZoomProcessor.js b/node_modules/echarts/lib/component/dataZoom/dataZoomProcessor.js
-index ce98fed..361b138 100644
+index ce98fed..e154118 100644
 --- a/node_modules/echarts/lib/component/dataZoom/dataZoomProcessor.js
 +++ b/node_modules/echarts/lib/component/dataZoom/dataZoomProcessor.js
 @@ -90,7 +90,10 @@ var dataZoomProcessor = {
@@ -175,7 +175,7 @@ index ce98fed..361b138 100644
      });
      ecModel.eachComponent('dataZoom', function (dataZoomModel) {
 diff --git a/node_modules/echarts/lib/component/toolbox/feature/DataZoom.js b/node_modules/echarts/lib/component/toolbox/feature/DataZoom.js
-index cf8d6bc..9b30ec1 100644
+index cf8d6bc..f9b9f90 100644
 --- a/node_modules/echarts/lib/component/toolbox/feature/DataZoom.js
 +++ b/node_modules/echarts/lib/component/toolbox/feature/DataZoom.js
 @@ -109,9 +109,12 @@ var DataZoomFeature = /** @class */function (_super) {
@@ -195,7 +195,7 @@ index cf8d6bc..9b30ec1 100644
        dataZoomModel && (snapshot[dataZoomModel.id] = {
          dataZoomId: dataZoomModel.id,
 diff --git a/node_modules/echarts/lib/component/tooltip/TooltipView.js b/node_modules/echarts/lib/component/tooltip/TooltipView.js
-index b8a9b95..8e4cb2f 100644
+index b8a9b95..11e49c0 100644
 --- a/node_modules/echarts/lib/component/tooltip/TooltipView.js
 +++ b/node_modules/echarts/lib/component/tooltip/TooltipView.js
 @@ -360,7 +360,7 @@ var TooltipView = /** @class */function (_super) {
@@ -208,7 +208,7 @@ index b8a9b95..8e4cb2f 100644
          }
          var axisValueLabel = axisPointerViewHelper.getValueLabel(axisValue, axisModel.axis, ecModel, axisItem.seriesDataIndices, axisItem.valueLabelOpt);
 diff --git a/node_modules/echarts/lib/coord/axisHelper.js b/node_modules/echarts/lib/coord/axisHelper.js
-index a76c66b..be22cb0 100644
+index a76c66b..e5b7ee5 100644
 --- a/node_modules/echarts/lib/coord/axisHelper.js
 +++ b/node_modules/echarts/lib/coord/axisHelper.js
 @@ -187,7 +187,9 @@ export function createScaleByModel(model, axisType) {
@@ -223,7 +223,7 @@ index a76c66b..be22cb0 100644
    }
  }
 diff --git a/node_modules/echarts/lib/coord/cartesian/Grid.js b/node_modules/echarts/lib/coord/cartesian/Grid.js
-index 5b18f02..4960e67 100644
+index 5b18f02..39a57f8 100644
 --- a/node_modules/echarts/lib/coord/cartesian/Grid.js
 +++ b/node_modules/echarts/lib/coord/cartesian/Grid.js
 @@ -91,11 +91,11 @@ var Grid = /** @class */function () {
@@ -259,8 +259,76 @@ index 5b18f02..4960e67 100644
          each(axisNeedsAlign, function (axis) {
            alignScaleTicks(axis.scale, axis.model, alignTo.scale);
          });
+diff --git a/node_modules/echarts/lib/data/SeriesData.js b/node_modules/echarts/lib/data/SeriesData.js
+index 98d5ce8..1c293a6 100644
+--- a/node_modules/echarts/lib/data/SeriesData.js
++++ b/node_modules/echarts/lib/data/SeriesData.js
+@@ -900,13 +900,16 @@ var SeriesData = /** @class */function () {
+         var dimInfo = data._dimInfos[dim];
+         // Currently, only dimensions that has ordinalMeta can create inverted indices.
+         var ordinalMeta = dimInfo.ordinalMeta;
++        var stack = dimInfo.stack;
+         var store = data._store;
+-        if (ordinalMeta) {
+-          invertedIndices = invertedIndicesMap[dim] = new CtorInt32Array(ordinalMeta.categories.length);
+-          // The default value of TypedArray is 0. To avoid miss
+-          // mapping to 0, we should set it as INDEX_NOT_FOUND.
+-          for (var i = 0; i < invertedIndices.length; i++) {
+-            invertedIndices[i] = INDEX_NOT_FOUND;
++        if (ordinalMeta || stack) {
++          invertedIndices = invertedIndicesMap[dim] = stack ? new Array(store.count()) : new CtorInt32Array(ordinalMeta.categories.length);
++          if (ordinalMeta) {
++            // The default value of TypedArray is 0. To avoid miss
++            // mapping to 0, we should set it as INDEX_NOT_FOUND.
++            for (var i = 0; i < invertedIndices.length; i++) {
++              invertedIndices[i] = INDEX_NOT_FOUND;
++            }
+           }
+           for (var i = 0; i < store.count(); i++) {
+             // Only support the case that all values are distinct.
+diff --git a/node_modules/echarts/lib/data/Source.js b/node_modules/echarts/lib/data/Source.js
+index 7dda49b..2dd2b98 100644
+--- a/node_modules/echarts/lib/data/Source.js
++++ b/node_modules/echarts/lib/data/Source.js
+@@ -252,7 +252,8 @@ function normalizeDimensionsOption(dimensionsDefine) {
+     var item = {
+       name: rawItem.name,
+       displayName: rawItem.displayName,
+-      type: rawItem.type
++      type: rawItem.type,
++      stack: rawItem.stack
+     };
+     // User can set null in dimensions.
+     // We don't auto specify name, otherwise a given name may
+diff --git a/node_modules/echarts/lib/data/helper/createDimensions.js b/node_modules/echarts/lib/data/helper/createDimensions.js
+index 00d7eb7..dd514b1 100644
+--- a/node_modules/echarts/lib/data/helper/createDimensions.js
++++ b/node_modules/echarts/lib/data/helper/createDimensions.js
+@@ -110,6 +110,9 @@ source, opt) {
+       }
+       dimDefItem.type != null && (resultItem.type = dimDefItem.type);
+       dimDefItem.displayName != null && (resultItem.displayName = dimDefItem.displayName);
++      if (dimDefItem.stack) {
++        resultItem.stack = true;
++      }
+       var newIdx = resultList.length;
+       indicesMap[dimIdx] = newIdx;
+       resultItem.storeDimIndex = dimIdx;
+diff --git a/node_modules/echarts/lib/data/helper/dataStackHelper.js b/node_modules/echarts/lib/data/helper/dataStackHelper.js
+index c25de1b..ea8300d 100644
+--- a/node_modules/echarts/lib/data/helper/dataStackHelper.js
++++ b/node_modules/echarts/lib/data/helper/dataStackHelper.js
+@@ -91,7 +91,7 @@ export function enableDataStack(seriesModel, dimensionsInput, opt) {
+     }
+     if (mayStack && !dimensionInfo.isExtraCoord) {
+       // Find the first ordinal dimension as the stackedByDimInfo.
+-      if (!byIndex && !stackedByDimInfo && dimensionInfo.ordinalMeta) {
++      if (!byIndex && !stackedByDimInfo && (dimensionInfo.ordinalMeta || dimensionInfo.stack)) {
+         stackedByDimInfo = dimensionInfo;
+       }
+       // Find the first stackable dimension as the stackedDimInfo.
 diff --git a/node_modules/echarts/lib/scale/Interval.js b/node_modules/echarts/lib/scale/Interval.js
-index 1094662..8f4e07a 100644
+index 1094662..363c0a5 100644
 --- a/node_modules/echarts/lib/scale/Interval.js
 +++ b/node_modules/echarts/lib/scale/Interval.js
 @@ -46,12 +46,17 @@ import * as numberUtil from '../util/number.js';
@@ -303,7 +371,7 @@ index 1094662..8f4e07a 100644
      if (!interval) {
        return ticks;
 diff --git a/node_modules/echarts/types/dist/shared.d.ts b/node_modules/echarts/types/dist/shared.d.ts
-index ca74097..98f8b18 100644
+index ca74097..ef41ce2 100644
 --- a/node_modules/echarts/types/dist/shared.d.ts
 +++ b/node_modules/echarts/types/dist/shared.d.ts
 @@ -2422,6 +2422,9 @@ interface AxisBaseOptionCommon extends ComponentOption, AnimationOptionMixin {
@@ -325,6 +393,14 @@ index ca74097..98f8b18 100644
  }
  interface CategoryAxisBaseOption extends AxisBaseOptionCommon {
      type?: 'category';
+@@ -6412,6 +6417,7 @@ declare type DimensionDefinition = {
+     type?: DataStoreDimensionType;
+     name?: DimensionName;
+     displayName?: string;
++    stack?: boolean;
+ };
+ declare type DimensionDefinitionLoose = DimensionDefinition['name'] | DimensionDefinition;
+ declare const SOURCE_FORMAT_ORIGINAL: "original";
 diff --git a/node_modules/echarts/types/src/coord/axisCommonTypes.d.ts b/node_modules/echarts/types/src/coord/axisCommonTypes.d.ts
 index c5c2792..d524b70 100644
 --- a/node_modules/echarts/types/src/coord/axisCommonTypes.d.ts
