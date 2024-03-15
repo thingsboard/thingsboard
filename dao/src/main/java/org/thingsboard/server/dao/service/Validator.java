@@ -193,9 +193,8 @@ public class Validator {
         if (ids == null || ids.isEmpty()) {
             throw new IncorrectParameterException(errorMessageFunction.apply(ids));
         } else {
-            Supplier<String> errorMessageSupplier = () -> errorMessageFunction.apply(ids);
             for (UUIDBased id : ids) {
-                validateId(id, errorMessageSupplier);
+                validateId(id, errorMessageFunction.apply(ids));
             }
         }
     }
@@ -245,18 +244,4 @@ public class Validator {
             throw new IncorrectParameterException(errorMessage);
         }
     }
-
-    /**
-     * This method validate list of <code>UUIDBased</code> ids. If at least one of the ids is null than throw
-     * <code>IncorrectParameterException</code> exception
-     *
-     * @param reference            the list of ids
-     * @param errorMessageFunction the error message for exception that applies reference
-     */
-    public static void checkNotNull(Object reference, Function<Object, String> errorMessageFunction) {
-        if (reference == null) {
-            throw new IncorrectParameterException(errorMessageFunction.apply(reference));
-        }
-    }
-
 }
