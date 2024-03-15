@@ -4915,7 +4915,9 @@
         "device-credentials-conflict": "Failed to load the device with external id <b>{{entityId}}</b><br/>due to the same credentials are already present in the database for another device.<br/>Please consider disabling the <b>load credentials</b> setting in the restore form.",
         "missing-referenced-entity": "Failed to load the <b>{{sourceEntityTypeName}}</b> with external id <b>{{sourceEntityId}}</b><br/>because it references missing <b>{{targetEntityTypeName}}</b> with id <b>{{targetEntityId}}</b>.",
         "runtime-failed": "<b>Failed:</b> {{message}}",
-        "auto-commit-settings-read-only-hint": "Auto-commit feature doesn't work with enabled read-only option in Repository settings."
+        "auto-commit-settings-read-only-hint": "Auto-commit feature doesn't work with enabled read-only option in Repository settings.",
+        "rollback-on-error": "Rollback on error",
+        "rollback-on-error-hint": "If you have a large amount of entities to restore, consider disabling this option to increase performance.<br><b>Note</b>, if an error occurs over the course of version loading, already persisted entities (with relations, attributes, etc.) will stay as is"
     },
     "widget": {
         "widget-library": "Widgets library",
