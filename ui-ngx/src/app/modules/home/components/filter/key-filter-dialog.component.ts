@@ -142,7 +142,7 @@ export class KeyFilterDialogComponent extends
             );
           }
         }
-        if (valueType === EntityKeyValueType.BOOLEAN && this.isConstantKeyType && this.data.telemetryKeysOnly) {
+        if (this.data.telemetryKeysOnly && this.isConstantKeyType && valueType === EntityKeyValueType.BOOLEAN) {
           this.keyFilterFormGroup.get('value').clearValidators();
           this.keyFilterFormGroup.get('value').setValue(isBoolean(value) ? value : false);
           this.keyFilterFormGroup.get('value').updateValueAndValidity();
