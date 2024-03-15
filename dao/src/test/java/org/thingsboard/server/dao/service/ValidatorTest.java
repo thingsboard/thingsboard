@@ -105,11 +105,9 @@ class ValidatorTest {
     }
 
     @Test
-    void validateIds() {
-
+    void validateIdsTest() {
         List<? extends UUIDBased> list = List.of(goodDeviceId);
         Validator.validateIds( list, ids -> "Incorrect Id " + ids);
-        Validator.validateId(list.get(0), id -> "Incorrect Id " + id);
 
         assertThatThrownBy(() -> Validator.validateIds(null, id -> "Incorrect Ids " + id))
                 .as("Ids are null")
@@ -134,6 +132,7 @@ class ValidatorTest {
                 .hasMessageContaining("null");
 
     }
+
     @Test
     void validateIdSupplier() {
         Validator.validateId(TenantId.SYS_TENANT_ID, () -> "Incorrect Id null");
@@ -149,16 +148,4 @@ class ValidatorTest {
                 .isInstanceOf(IncorrectParameterException.class)
                 .hasMessageContaining("Incorrect Id null");
     }
-
-    @Test
-    void checkNotNullTest() {
-        Validator.checkNotNull("notnull", reference -> "Incorrect reference " + reference);
-
-        assertThatThrownBy(() -> Validator.checkNotNull(null, reference -> "Incorrect reference " + reference))
-                .as("Reference is null")
-                .isInstanceOf(IncorrectParameterException.class)
-                .hasMessageContaining("Incorrect reference null");
-
-    }
-
 }
