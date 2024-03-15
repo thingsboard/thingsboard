@@ -79,6 +79,7 @@ export class ComplexVersionLoadComponent extends PageComponent implements OnInit
   ngOnInit(): void {
     this.loadVersionFormGroup = this.fb.group({
       entityTypes: [createDefaultEntityTypesVersionLoad(), []],
+      rollbackOnError: [false]
     });
   }
 
