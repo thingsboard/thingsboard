@@ -18,6 +18,8 @@ package org.thingsboard.server.dao.tenant;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -38,9 +40,9 @@ import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
-import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
+import org.thingsboard.server.dao.service.validator.TenantDataValidator;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.dao.user.UserService;
@@ -58,16 +60,28 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
     private static final String DEFAULT_TENANT_REGION = "Global";
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
 
-    private final TenantDao tenantDao;
-    private final TenantProfileService tenantProfileService;
-    private final UserService userService;
-    private final AssetProfileService assetProfileService;
-    private final DeviceProfileService deviceProfileService;
-    private final ApiUsageStateService apiUsageStateService;
-    private final AdminSettingsService adminSettingsService;
-    private final NotificationSettingsService notificationSettingsService;
-    private final DataValidator<Tenant> tenantValidator;
-    private final TbTransactionalCache<TenantId, Boolean> existsTenantCache;
+    @Autowired
+    private TenantDao tenantDao;
+    @Autowired
+    private TenantProfileService tenantProfileService;
+    @Autowired
+    @Lazy
+    private UserService userService;
+    @Autowired
+    private AssetProfileService assetProfileService;
+    @Autowired
+    private DeviceProfileService deviceProfileService;
+    @Lazy
+    @Autowired
+    private ApiUsageStateService apiUsageStateService;
+    @Autowired
+    private AdminSettingsService adminSettingsService;
+    @Autowired
+    private NotificationSettingsService notificationSettingsService;
+    @Autowired
+    private TenantDataValidator tenantValidator;
+    @Autowired
+    protected TbTransactionalCache<TenantId, Boolean> existsTenantCache;
 
     @TransactionalEventListener(classes = TenantEvictEvent.class)
     @Override

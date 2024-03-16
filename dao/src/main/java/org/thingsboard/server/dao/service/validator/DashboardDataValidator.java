@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.service.validator;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.EntityType;
@@ -29,7 +28,6 @@ import org.thingsboard.server.dao.tenant.TenantService;
 public class DashboardDataValidator extends DataValidator<Dashboard> {
 
     @Autowired
-    @Lazy
     private TenantService tenantService;
 
     @Override

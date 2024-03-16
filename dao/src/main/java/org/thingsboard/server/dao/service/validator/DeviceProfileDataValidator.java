@@ -86,7 +86,6 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
     @Autowired
     private DeviceDao deviceDao;
     @Autowired
-    @Lazy
     private TenantService tenantService;
     @Lazy
     @Autowired
