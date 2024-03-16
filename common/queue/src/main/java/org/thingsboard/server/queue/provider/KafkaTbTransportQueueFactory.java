@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
@@ -176,8 +177,8 @@ public class KafkaTbTransportQueueFactory implements TbTransportQueueFactory {
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToHousekeeperServiceMsg>> createHousekeeperMsgProducer() {
-        return TbKafkaProducerTemplate.<TbProtoQueueMsg<TransportProtos.ToHousekeeperServiceMsg>>builder()
+    public TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> createHousekeeperMsgProducer() {
+        return TbKafkaProducerTemplate.<TbProtoQueueMsg<ToHousekeeperServiceMsg>>builder()
                 .settings(kafkaSettings)
                 .clientId("tb-transport-housekeeper-producer-" + serviceInfoProvider.getServiceId())
                 .defaultTopic(topicService.buildTopicName(coreSettings.getHousekeeperTopic()))

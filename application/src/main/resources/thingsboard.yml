@@ -1401,13 +1401,15 @@ queue:
     #        - key: max.poll.records
     #          value: "${TB_QUEUE_KAFKA_SQ_MAX_POLL_RECORDS:1024}"
       tb_housekeeper:
-        # Amount of records to be returned in a single poll. For Housekeeper tasks topic, we should consume messages (tasks) one by one
+        # Consumer properties for Housekeeper tasks topic
         - key: max.poll.records
-          value: "1"
+          # Amount of records to be returned in a single poll. For Housekeeper tasks topic, we should consume messages (tasks) one by one
+          value: "${TB_QUEUE_KAFKA_HOUSEKEEPER_MAX_POLL_RECORDS:1}"
       tb_housekeeper.reprocessing:
-        # Amount of records to be returned in a single poll. For Housekeeper reprocessing topic, we should consume messages (tasks) one by one
+        # Consumer properties for Housekeeper reprocessing topic
         - key: max.poll.records
-          value: "1"
+          # Amount of records to be returned in a single poll. For Housekeeper reprocessing topic, we should consume messages (tasks) one by one
+          value: "${TB_QUEUE_KAFKA_HOUSEKEEPER_REPROCESSING_MAX_POLL_RECORDS:1}"
     other-inline: "${TB_QUEUE_KAFKA_OTHER_PROPERTIES:}" # In this section you can specify custom parameters (semicolon separated) for Kafka consumer/producer/admin # Example "metrics.recording.level:INFO;metrics.sample.window.ms:30000"
     other: # DEPRECATED. In this section, you can specify custom parameters for Kafka consumer/producer and expose the env variables to configure outside
     #  - key: "request.timeout.ms" # refer to https://docs.confluent.io/platform/current/installation/configuration/producer-configs.html#producerconfigs_request.timeout.ms

@@ -18,6 +18,8 @@ package org.thingsboard.server.dao.housekeeper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
@@ -36,14 +38,20 @@ public class CleanUpService {
     private final HousekeeperClient housekeeperClient;
     private final RelationService relationService;
 
-    @TransactionalEventListener(fallbackExecution = true)
+    @TransactionalEventListener(fallbackExecution = true) // after transaction commit
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void handleEntityDeletionEvent(DeleteEntityEvent<?> event) {
         TenantId tenantId = event.getTenantId();
         EntityId entityId = event.getEntityId();
-        log.trace("[{}][{}][{}] Handling entity deletion event", tenantId, entityId.getEntityType(), entityId.getId());
-        cleanUpRelatedData(tenantId, entityId);
-        if (entityId.getEntityType() == EntityType.USER) {
-            housekeeperClient.submitTask(HousekeeperTask.unassignAlarms((User) event.getEntity()));
+        EntityType entityType = entityId.getEntityType();
+        try {
+            log.trace("[{}][{}][{}] Handling entity deletion event", tenantId, entityType, entityId.getId());
+            cleanUpRelatedData(tenantId, entityId);
+            if (entityType == EntityType.USER) {
+                housekeeperClient.submitTask(HousekeeperTask.unassignAlarms((User) event.getEntity()));
+            }
+        } catch (Throwable e) {
+            log.error("[{}][{}][{}] Failed to handle entity deletion event", tenantId, entityType, entityId.getId(), e);
         }
     }
 
