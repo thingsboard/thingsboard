@@ -16,27 +16,35 @@
 package org.thingsboard.server.service.housekeeper.processor;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.dao.alarm.AlarmService;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
+import org.thingsboard.server.dao.alarm.AlarmService;
 
 @Component
 @RequiredArgsConstructor
-public class EntityAlarmsDeletionTaskProcessor implements HousekeeperTaskProcessor<HousekeeperTask> {
+@Slf4j
+public class AlarmsDeletionTaskProcessor implements HousekeeperTaskProcessor<HousekeeperTask> {
 
     private final AlarmService alarmService;
 
     @Override
     public void process(HousekeeperTask task) throws Exception {
-        alarmService.deleteEntityAlarmRecords(task.getTenantId(), task.getEntityId());
-        // fixme: do we need to remove alarms by originator ???
-        // fixme: why alarm comments are not deleted ??
+        EntityType entityType = task.getEntityId().getEntityType();
+        if (entityType == EntityType.DEVICE || entityType == EntityType.ASSET) {
+            int count = alarmService.deleteAlarmsByEntityId(task.getTenantId(), task.getEntityId());
+            log.debug("[{}][{}][{}] Deleted {} alarms", task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(), count);
+        } else {
+            int count = alarmService.deleteEntityAlarmRecords(task.getTenantId(), task.getEntityId());
+            log.debug("[{}][{}][{}] Deleted {} entity alarms", task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(), count);
+        }
     }
 
     @Override
     public HousekeeperTaskType getTaskType() {
-        return HousekeeperTaskType.DELETE_ENTITY_ALARMS;
+        return HousekeeperTaskType.DELETE_ALARMS;
     }
 
 }

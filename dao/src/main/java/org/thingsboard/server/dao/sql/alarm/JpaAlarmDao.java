@@ -309,8 +309,13 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
-    public void deleteEntityAlarmRecords(TenantId tenantId, EntityId entityId) {
-        entityAlarmRepository.deleteByEntityId(entityId.getId());
+    public List<EntityAlarm> findEntityAlarmRecordsByEntityId(TenantId tenantId, EntityId entityId) {
+        return DaoUtil.convertDataList(entityAlarmRepository.findAllByEntityId(entityId.getId()));
+    }
+
+    @Override
+    public int deleteEntityAlarmRecords(TenantId tenantId, EntityId entityId) {
+        return entityAlarmRepository.deleteByEntityId(entityId.getId());
     }
 
     @Override

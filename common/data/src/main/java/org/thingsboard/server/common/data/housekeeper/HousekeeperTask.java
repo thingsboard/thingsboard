@@ -69,8 +69,8 @@ public class HousekeeperTask implements Serializable {
         return new AlarmsUnassignHousekeeperTask(user);
     }
 
-    public static HousekeeperTask deleteEntityAlarms(TenantId tenantId, EntityId entityId) {
-        return new HousekeeperTask(tenantId, entityId, HousekeeperTaskType.DELETE_ENTITY_ALARMS);
+    public static HousekeeperTask deleteAlarms(TenantId tenantId, EntityId entityId) {
+        return new HousekeeperTask(tenantId, entityId, HousekeeperTaskType.DELETE_ALARMS);
     }
 
     public static HousekeeperTask deleteEntities(TenantId tenantId, EntityType entityType) {

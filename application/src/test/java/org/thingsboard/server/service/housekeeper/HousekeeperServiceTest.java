@@ -32,12 +32,17 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.alarm.EntityAlarm;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.event.LifecycleEvent;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
 import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -52,15 +57,19 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.housekeeper.HousekeeperClient;
 import org.thingsboard.server.controller.AbstractControllerTest;
+import org.thingsboard.server.dao.alarm.AlarmDao;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.event.EventService;
+import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -115,6 +124,10 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
     private RuleChainService ruleChainService;
     @Autowired
     private AlarmService alarmService;
+    @Autowired
+    private AlarmDao alarmDao;
+    @Autowired
+    private RelationService relationService;
     @SpyBean
     private TelemetryDeletionTaskProcessor telemetryDeletionTaskProcessor;
 
@@ -200,6 +213,11 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         Device device = createDevice("oi324rujoi", "oi324rujoi");
         createRelatedData(device.getId());
 
+        Asset asset = createAsset();
+        createRelatedData(asset.getId());
+        createRelation(device.getId(), asset.getId());
+        createAlarm(device.getId(), asset.getId());
+
         RuleChainMetaData ruleChainMetaData = createRuleChain();
         RuleChainId ruleChainId = ruleChainMetaData.getRuleChainId();
         RuleNodeId ruleNode1Id = ruleChainMetaData.getNodes().get(0).getId();
@@ -216,6 +234,7 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
 
         await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
             verifyNoRelatedData(device.getId());
+            verifyNoRelatedData(asset.getId());
             verifyNoRelatedData(ruleNode1Id);
             verifyNoRelatedData(ruleNode2Id);
             verifyNoRelatedData(ruleChainId);
@@ -301,7 +320,7 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
     }
 
     private void verifyNoRelatedData(EntityId entityId) throws Exception {
-        List<HousekeeperTaskType> expectedTaskTypes = List.of(HousekeeperTaskType.DELETE_TELEMETRY, HousekeeperTaskType.DELETE_ATTRIBUTES, HousekeeperTaskType.DELETE_EVENTS, HousekeeperTaskType.DELETE_ENTITY_ALARMS);
+        List<HousekeeperTaskType> expectedTaskTypes = List.of(HousekeeperTaskType.DELETE_TELEMETRY, HousekeeperTaskType.DELETE_ATTRIBUTES, HousekeeperTaskType.DELETE_EVENTS, HousekeeperTaskType.DELETE_ALARMS);
         for (HousekeeperTaskType taskType : expectedTaskTypes) {
             verify(housekeeperClient).submitTask(argThat(task -> task.getTaskType() == taskType && task.getEntityId().equals(entityId)));
         }
@@ -312,6 +331,11 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
             assertThat(getAttribute(entityId, scope, scope + ATTRIBUTE_KEY)).isNull();
         }
         assertThat(getEvents(entityId)).isEmpty();
+        assertThat(alarmDao.findEntityAlarmRecordsByEntityId(tenantId, entityId)).isEmpty();
+        assertThat(alarmService.findAlarms(tenantId, AlarmQuery.builder().pageLink(new TimePageLink(100)).build()).getData())
+                .filteredOn(alarm -> alarm.getOriginator().equals(entityId)).isEmpty();
+        assertThat(relationService.findByTo(tenantId, entityId, RelationTypeGroup.COMMON)).isEmpty();
+        assertThat(relationService.findByFrom(tenantId, entityId, RelationTypeGroup.COMMON)).isEmpty();
     }
 
     private void createAttribute(EntityId entityId, String scope, String key) throws Exception {
@@ -336,6 +360,27 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
 
     }
 
+    private void createRelation(DeviceId to, AssetId from) {
+        EntityRelation relation = new EntityRelation(from, to, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON);
+        relationService.saveRelation(tenantId, relation);
+    }
+
+    private void createAlarm(DeviceId deviceId, EntityId propagatedEntityId) {
+        Alarm alarm = doPost("/api/alarm", Alarm.builder()
+                .tenantId(tenantId)
+                .originator(deviceId)
+                .severity(AlarmSeverity.CRITICAL)
+                .type("test alarm for " + deviceId)
+                .propagate(true)
+                .build(), Alarm.class);
+
+        List<EntityAlarm> entityAlarms = alarmDao.findEntityAlarmRecords(tenantId, alarm.getId());
+        assertThat(entityAlarms).anyMatch(entityAlarm -> entityAlarm.getEntityId().equals(deviceId) && entityAlarm.getAlarmType().equals(alarm.getType()));
+        assertThat(entityAlarms).anyMatch(entityAlarm -> entityAlarm.getEntityId().equals(propagatedEntityId) && entityAlarm.getAlarmType().equals(alarm.getType()));
+        assertThat(alarmService.findAlarms(tenantId, AlarmQuery.builder().pageLink(new TimePageLink(100)).build()).getData())
+                .filteredOn(a -> a.getOriginator().equals(deviceId)).isNotEmpty();
+    }
+
     private TsKvEntry getLatestTelemetry(EntityId entityId) throws Exception {
         return timeseriesService.findLatest(tenantId, entityId, HousekeeperServiceTest.TELEMETRY_KEY).get().orElse(null);
     }
@@ -353,6 +398,13 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
                 .stream().filter(event -> Optional.ofNullable(event.getBody()).map(body -> body.get("event"))
                         .map(JsonNode::asText).orElse("").equals("test"))
                 .collect(Collectors.toList());
+    }
+
+    private Asset createAsset() {
+        Asset asset = new Asset();
+        asset.setName("test");
+        asset.setType("test");
+        return doPost("/api/asset", asset, Asset.class);
     }
 
     private RuleChainMetaData createRuleChain() {

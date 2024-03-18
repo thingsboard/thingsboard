@@ -130,7 +130,7 @@ public class HousekeeperService {
         }
 
         if (log.isDebugEnabled()) {
-            log.debug("[{}] {} task {}", task.getTenantId(), isNew(msg.getTask()) ? "Processing" : "Reprocessing", msg.getTask().getValue());
+            log.debug("[{}] {} {}", task.getTenantId(), isNew(msg.getTask()) ? "Processing" : "Reprocessing", task.getDescription());
         }
         try {
             Future<Object> future = executor.submit(() -> {
@@ -140,7 +140,6 @@ public class HousekeeperService {
             future.get(taskProcessingTimeout, TimeUnit.MILLISECONDS);
 
             statsService.ifPresent(statsService -> statsService.reportProcessed(task.getTaskType(), msg));
-            log.debug("[{}] Successfully {} task {}", task.getTenantId(), isNew(msg.getTask()) ? "processed" : "reprocessed", msg.getTask().getValue());
         } catch (InterruptedException e) {
             throw e;
         } catch (Throwable e) {

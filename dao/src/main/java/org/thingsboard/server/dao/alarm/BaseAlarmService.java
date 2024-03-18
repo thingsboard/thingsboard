@@ -51,6 +51,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
@@ -183,16 +184,23 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
     @Override
     @Transactional
     public AlarmApiCallResult delAlarm(TenantId tenantId, AlarmId alarmId, boolean checkAndDeleteAlarmType) {
-        log.debug("Deleting Alarm Id: {}", alarmId);
         AlarmInfo alarm = alarmDao.findAlarmInfoById(tenantId, alarmId.getId());
+        return deleteAlarm(tenantId, alarm, checkAndDeleteAlarmType);
+    }
+
+    private AlarmApiCallResult deleteAlarm(TenantId tenantId, AlarmInfo alarm, boolean deleteAlarmTypes) {
         if (alarm == null) {
             return AlarmApiCallResult.builder().successful(false).build();
         } else {
+            log.debug("[{}][{}] Executing deleteAlarm [{}]", tenantId, alarm.getOriginator(), alarm.getId());
             var propagationIds = getPropagationEntityIdsList(alarm);
             alarmDao.removeById(tenantId, alarm.getUuidId());
-            eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId)
-                    .entityId(alarmId).entity(alarm).build());
-            if (checkAndDeleteAlarmType) {
+            eventPublisher.publishEvent(DeleteEntityEvent.builder()
+                    .tenantId(tenantId)
+                    .entityId(alarm.getId())
+                    .entity(alarm)
+                    .build());
+            if (deleteAlarmTypes) {
                 delAlarmTypes(tenantId, Collections.singleton(alarm.getType()));
             }
             return AlarmApiCallResult.builder().alarm(alarm).deleted(true).successful(true).propagatedEntitiesList(propagationIds).build();
@@ -205,6 +213,24 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
         if (!types.isEmpty() && alarmDao.removeAlarmTypesIfNoAlarmsPresent(tenantId.getId(), types)) {
             publishEvictEvent(new AlarmTypesCacheEvictEvent(tenantId));
         }
+    }
+
+    @Override
+    public int deleteAlarmsByEntityId(TenantId tenantId, EntityId entityId) {
+        PageLink pageLink = new PageLink(256);
+        PageData<AlarmInfo> alarms;
+        int count = 0;
+        do {
+            alarms = findAlarms(tenantId, AlarmQuery.builder()
+                    .affectedEntityId(entityId)
+                    .pageLink(new TimePageLink(pageLink, null, null))
+                    .build());
+            for (AlarmInfo alarm : alarms.getData()) {
+                deleteAlarm(tenantId, alarm, true);
+                count++;
+            }
+        } while (alarms.hasNext());
+        return count;
     }
 
     private List<EntityId> createEntityAlarmRecords(Alarm alarm) throws ExecutionException, InterruptedException {
@@ -322,9 +348,9 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
     }
 
     @Override
-    public void deleteEntityAlarmRecords(TenantId tenantId, EntityId entityId) {
+    public int deleteEntityAlarmRecords(TenantId tenantId, EntityId entityId) {
         log.trace("Executing deleteEntityAlarms [{}]", entityId);
-        alarmDao.deleteEntityAlarmRecords(tenantId, entityId);
+        return alarmDao.deleteEntityAlarmRecords(tenantId, entityId);
     }
 
     @Override

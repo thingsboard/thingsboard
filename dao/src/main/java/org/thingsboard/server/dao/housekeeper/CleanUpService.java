@@ -62,7 +62,7 @@ public class CleanUpService {
         housekeeperClient.submitTask(HousekeeperTask.deleteAttributes(tenantId, entityId));
         housekeeperClient.submitTask(HousekeeperTask.deleteTelemetry(tenantId, entityId));
         housekeeperClient.submitTask(HousekeeperTask.deleteEvents(tenantId, entityId));
-        housekeeperClient.submitTask(HousekeeperTask.deleteEntityAlarms(tenantId, entityId));
+        housekeeperClient.submitTask(HousekeeperTask.deleteAlarms(tenantId, entityId));
     }
 
     public void removeTenantEntities(TenantId tenantId, EntityType... entityTypes) {
