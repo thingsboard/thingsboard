@@ -66,6 +66,7 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
     if (isDefinedAndNotNull(value)) {
       this.templateConfigurationForm.patchValue(value, {emitEvent: false});
       this.updateDisabledForms();
+      this.updateExpandedForm();
       this.templateConfigurationForm.updateValueAndValidity();
     }
   }
@@ -96,6 +97,7 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
 
   private propagateChange = (v: any) => { };
   private readonly destroy$ = new Subject<void>();
+  private expendedBlocks: NotificationDeliveryMethod[];
 
   constructor(private fb: FormBuilder,
               private translate: TranslateService) {
@@ -122,6 +124,7 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
       }
     }
     this.templateConfigurationForm.patchValue(settings, {emitEvent: false});
+    this.updateExpandedForm();
   }
 
   registerOnChange(fn: any): void {
@@ -147,7 +150,7 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
     };
   }
 
-  get hotificationTapActionHint(): string {
+  get notificationTapActionHint(): string {
     switch (this.notificationType) {
       case NotificationType.ALARM:
       case NotificationType.ALARM_ASSIGNMENT:
@@ -155,6 +158,19 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
         return this.translate.instant('notification.notification-tap-action-hint');
     }
     return '';
+  }
+
+  expandedForm(name: NotificationDeliveryMethod): boolean {
+    return this.expendedBlocks.includes(name);
+  }
+
+  private updateExpandedForm() {
+    this.expendedBlocks = [];
+    Object.keys(this.templateConfigurationForm.controls).forEach((name: NotificationDeliveryMethod) => {
+      if (this.templateConfigurationForm.get(name).invalid) {
+        this.expendedBlocks.push(name);
+      }
+    });
   }
 
   private updateDisabledForms(){
