@@ -46,6 +46,7 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.jwt.JwtAuthenticationProvider;
+import org.thingsboard.server.service.security.exception.JwtExpiredTokenException;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.subscription.SubscriptionErrorCode;
@@ -232,6 +233,9 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
         } catch (InvalidParameterException e) {
             log.warn("[{}] Failed to start session", session.getId(), e);
             session.close(CloseStatus.BAD_DATA.withReason(e.getMessage()));
+        } catch (JwtExpiredTokenException e) {
+            log.trace("[{}] Failed to start session", session.getId(), e);
+            session.close(CloseStatus.SERVER_ERROR.withReason(e.getMessage()));
         } catch (Exception e) {
             log.warn("[{}] Failed to start session", session.getId(), e);
             session.close(CloseStatus.SERVER_ERROR.withReason(e.getMessage()));
