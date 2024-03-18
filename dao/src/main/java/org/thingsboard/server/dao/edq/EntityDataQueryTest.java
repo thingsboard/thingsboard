@@ -8,7 +8,12 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -24,12 +29,16 @@ public class EntityDataQueryTest {
     private static final Comparator<SortPair> SORT_ASC = Comparator.comparing(SortPair::getKey);
     private static final Comparator<SortPair> SORT_DESC = Comparator.comparing(SortPair::getKey).reversed();
 
-    public static void main(String[] args) {
+    private static final ExecutorService executor = Executors.newFixedThreadPool(2);
+
+    public static void main(String[] args) throws InterruptedException {
         InMemoryRepository repository = new InMemoryRepository();
-        long startTs = System.currentTimeMillis();
+        long start = System.currentTimeMillis();
         long ts = System.currentTimeMillis() - DEVICE_COUNT;
+        List<DeviceId> deviceIds = new ArrayList<>();
         for (int i = 0; i < DEVICE_COUNT; i++) {
             DeviceId deviceId = new DeviceId(UUID.randomUUID());
+            deviceIds.add(deviceId);
             Device device = new Device();
             device.setId(deviceId);
             device.setCreatedTime(ts + i);
@@ -42,25 +51,45 @@ public class EntityDataQueryTest {
                 repository.add(deviceId, j, random);
             }
         }
-        log.error("Repository created in {}", System.currentTimeMillis() - startTs);
+        log.error("Repository created in {}", System.currentTimeMillis() - start);
 
+        var task1 = executor.submit(() -> {
+            while (true) {
+                //            test("DeviceName filter, sort by attribute desc", repository, 10, d -> d.getDevice().getName().startsWith("Device 9"), ATTR_COMPARATOR.reversed());
+                test2("DeviceName filter, sort by attribute desc", repository, 10, d -> d.getDevice().getName().startsWith("Device 4"), d -> d.getAttrs().get(10), SORT_DESC);
 
-        for (int i = 0; i < 1; i++) {
-            test("DeviceName filter, sort by attribute desc", repository, 10, d -> d.getDevice().getName().startsWith("Device 9"), ATTR_COMPARATOR.reversed());
-            test2("DeviceName filter, sort by attribute desc", repository, 10, d -> d.getDevice().getName().startsWith("Device 8"), d -> d.getAttrs().get(10), SORT_DESC);
+                //            test("DeviceType filter, no sort", repository, 3, d -> d.getDevice().getType().equals("Device Type 10"), null);
+                test2("DeviceType filter, no sort", repository, 3, d -> d.getDevice().getType().equals("Device Type 10"), null, null);
 
-            test("DeviceType filter, no sort", repository, 3, d -> d.getDevice().getType().equals("Device Type 10"), null);
-            test2("DeviceType filter, no sort", repository, 3, d -> d.getDevice().getType().equals("Device Type 10"), null, null);
+                //            test("Attribute filter, no sort", repository, 3, d -> d.getAttrs().get(10).contains("1"), null);
+                test2("Attribute filter, no sort", repository, 3, d -> d.getAttrs().get(9).contains("2"), null, null);
 
-            test("Attribute filter, no sort", repository, 3, d -> d.getAttrs().get(10).contains("1"), null);
-            test2("Attribute filter, no sort", repository, 3, d -> d.getAttrs().get(9).contains("2"), null, null);
+                //            test("No filter, sort by attribute", repository, 3, null, ATTR_COMPARATOR);
+                test2("No filter, sort by attribute", repository, 3, null, d -> d.getAttrs().get(10), SORT_ASC);
 
-            test("No filter, sort by attribute", repository, 3, null, ATTR_COMPARATOR);
-            test2("No filter, sort by attribute", repository, 3, null, d -> d.getAttrs().get(10), SORT_ASC);
+                //            test("Attribute filter, createdTime", repository, 3, d -> d.getAttrs().get(10).contains("1"), CREATED_TIME_COMPARATOR);
+                test("No filter, sort by createdTime", repository, 3, null, CREATED_TIME_COMPARATOR);
+            }
+        });
 
-            test("Attribute filter, createdTime", repository, 3, d -> d.getAttrs().get(10).contains("1"), CREATED_TIME_COMPARATOR);
-            test("No filter, sort by createdTime", repository, 3, null, CREATED_TIME_COMPARATOR);
-        }
+        var task2 = executor.submit(() -> {
+            Random random = new Random();
+            while (true) {
+                long startTs = System.currentTimeMillis();
+                for (int i = 0; i < 1000000; i++) {
+                    var deviceId = deviceIds.get(random.nextInt(DEVICE_COUNT));
+                    repository.add(deviceId, random.nextInt(ATTR_COUNT), StringUtils.randomAlphanumeric(5));
+                }
+                long duration = System.currentTimeMillis() - startTs;
+                log.error("Updates took {}", duration);
+                if (duration < 1000) {
+                    Thread.sleep(1000 - duration);
+                }
+            }
+        });
+
+        executor.awaitTermination(1, TimeUnit.MINUTES);
+
     }
 
     private static void test(String testName, InMemoryRepository repository, int pages, Predicate<DeviceRepoData> predicate, Comparator<DeviceRepoData> comparator) {
