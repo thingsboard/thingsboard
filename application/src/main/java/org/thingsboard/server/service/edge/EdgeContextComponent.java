@@ -206,19 +206,19 @@ public class EdgeContextComponent {
     private AdminSettingsEdgeProcessor adminSettingsProcessor;
 
     @Autowired
-    private OtaPackageEdgeProcessor otaPackageEdgeProcessor;
+    private OtaPackageEdgeProcessor otaPackageProcessor;
 
     @Autowired
-    private QueueEdgeProcessor queueEdgeProcessor;
+    private QueueEdgeProcessor queueProcessor;
 
     @Autowired
-    private TenantEdgeProcessor tenantEdgeProcessor;
+    private TenantEdgeProcessor tenantProcessor;
 
     @Autowired
-    private TenantProfileEdgeProcessor tenantProfileEdgeProcessor;
+    private TenantProfileEdgeProcessor tenantProfileProcessor;
 
     @Autowired
-    private ResourceEdgeProcessor resourceEdgeProcessor;
+    private ResourceEdgeProcessor resourceProcessor;
 
     @Autowired
     private EdgeMsgConstructor edgeMsgConstructor;

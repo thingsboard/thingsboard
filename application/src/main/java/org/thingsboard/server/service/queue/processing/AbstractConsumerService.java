@@ -94,6 +94,10 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
         this.jwtSettingsService = jwtSettingsService;
     }
 
+    public AbstractConsumerService(ActorSystemContext actorContext, TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer) {
+        this(actorContext, null, null, null, null, null, null, null, nfConsumer, null);
+    }
+
     public void init(String nfConsumerThreadName) {
         this.notificationsConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName(nfConsumerThreadName));
     }

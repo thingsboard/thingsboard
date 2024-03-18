@@ -32,6 +32,7 @@ public class TopicService {
 
     private Map<String, TopicPartitionInfo> tbCoreNotificationTopics = new HashMap<>();
     private Map<String, TopicPartitionInfo> tbRuleEngineNotificationTopics = new HashMap<>();
+    private Map<String, TopicPartitionInfo> tbEdgeNotificationTopics = new HashMap<>();
 
     /**
      * Each Service should start a consumer for messages that target individual service instance based on serviceId.
@@ -53,8 +54,20 @@ public class TopicService {
         }
     }
 
+    public TopicPartitionInfo getEdgeNotificationsTopic(ServiceType serviceType, String serviceId) {
+        if (serviceType == ServiceType.TB_CORE) {
+            return tbEdgeNotificationTopics.computeIfAbsent(serviceId,
+                    id -> buildEdgeNotificationsTopicPartitionInfo(serviceId));
+        }
+        return buildEdgeNotificationsTopicPartitionInfo(serviceId);
+    }
+
     private TopicPartitionInfo buildNotificationsTopicPartitionInfo(ServiceType serviceType, String serviceId) {
         return buildTopicPartitionInfo(serviceType.name().toLowerCase() + ".notifications." + serviceId, null, null, false);
+    }
+
+    private TopicPartitionInfo buildEdgeNotificationsTopicPartitionInfo(String serviceId) {
+        return buildTopicPartitionInfo("edge.notifications." + serviceId, null, null, false);
     }
 
     public TopicPartitionInfo buildTopicPartitionInfo(String topic, TenantId tenantId, Integer partition, boolean myPartition) {
@@ -64,4 +77,5 @@ public class TopicService {
     public String buildTopicName(String topic) {
         return prefix.isBlank() ? topic : prefix + "." + topic;
     }
+
 }

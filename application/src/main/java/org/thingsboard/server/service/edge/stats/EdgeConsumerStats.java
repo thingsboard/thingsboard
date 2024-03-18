@@ -19,8 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.stats.StatsCounter;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.stats.StatsType;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeNotificationMsg;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,9 +35,9 @@ public class EdgeConsumerStats {
 
     private final StatsCounter totalCounter;
     private final StatsCounter edgeNotificationsCounter;
-    private final StatsCounter toCoreNfEdgeEventUpdateCounter;
-    private final StatsCounter toCoreNfEdgeSyncRequestCounter;
-    private final StatsCounter toCoreNfEdgeSyncResponseCounter;
+    private final StatsCounter edgeEventUpdateCounter;
+    private final StatsCounter edgeSyncRequestCounter;
+    private final StatsCounter edgeSyncResponseCounter;
 
     private final List<StatsCounter> counters = new ArrayList<>(2);
 
@@ -46,9 +46,9 @@ public class EdgeConsumerStats {
 
         this.totalCounter = register(statsFactory.createStatsCounter(statsKey, TOTAL_MSGS));
         this.edgeNotificationsCounter = register(statsFactory.createStatsCounter(statsKey, EDGE_NOTIFICATIONS));
-        this.toCoreNfEdgeEventUpdateCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_EDGE_EVENT_UPDATE));
-        this.toCoreNfEdgeSyncRequestCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_EDGE_SYNC_REQUEST));
-        this.toCoreNfEdgeSyncResponseCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_EDGE_SYNC_RESPONSE));
+        this.edgeEventUpdateCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_EDGE_EVENT_UPDATE));
+        this.edgeSyncRequestCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_EDGE_SYNC_REQUEST));
+        this.edgeSyncResponseCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_EDGE_SYNC_RESPONSE));
     }
 
     private StatsCounter register(StatsCounter counter) {
@@ -56,14 +56,18 @@ public class EdgeConsumerStats {
         return counter;
     }
 
-    public void log(ToEdgeMsg msg) {
+    public void log(ToEdgeNotificationMsg msg) {
         totalCounter.increment();
-        if (msg.hasEdgeNotificationMsg()) {
-            edgeNotificationsCounter.increment();
+        if (msg.hasEdgeEventUpdate()) {
+            edgeEventUpdateCounter.increment();
+        } else if (msg.hasToEdgeSyncRequest()) {
+            edgeSyncRequestCounter.increment();
+        } else if (msg.hasFromEdgeSyncResponse()) {
+            edgeSyncResponseCounter.increment();
         }
     }
 
-    public void log(TransportProtos.EdgeNotificationMsgProto msg) {
+    public void log(ToEdgeMsg msg) {
         totalCounter.increment();
         edgeNotificationsCounter.increment();
     }

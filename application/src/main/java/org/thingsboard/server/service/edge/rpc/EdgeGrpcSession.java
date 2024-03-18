@@ -695,15 +695,15 @@ public final class EdgeGrpcSession implements Closeable {
             case ADMIN_SETTINGS:
                 return ctx.getAdminSettingsProcessor().convertAdminSettingsEventToDownlink(edgeEvent, this.edgeVersion);
             case OTA_PACKAGE:
-                return ctx.getOtaPackageEdgeProcessor().convertOtaPackageEventToDownlink(edgeEvent, this.edgeVersion);
+                return ctx.getOtaPackageProcessor().convertOtaPackageEventToDownlink(edgeEvent, this.edgeVersion);
             case TB_RESOURCE:
-                return ctx.getResourceEdgeProcessor().convertResourceEventToDownlink(edgeEvent, this.edgeVersion);
+                return ctx.getResourceProcessor().convertResourceEventToDownlink(edgeEvent, this.edgeVersion);
             case QUEUE:
-                return ctx.getQueueEdgeProcessor().convertQueueEventToDownlink(edgeEvent, this.edgeVersion);
+                return ctx.getQueueProcessor().convertQueueEventToDownlink(edgeEvent, this.edgeVersion);
             case TENANT:
-                return ctx.getTenantEdgeProcessor().convertTenantEventToDownlink(edgeEvent, this.edgeVersion);
+                return ctx.getTenantProcessor().convertTenantEventToDownlink(edgeEvent, this.edgeVersion);
             case TENANT_PROFILE:
-                return ctx.getTenantProfileEdgeProcessor().convertTenantProfileEventToDownlink(edgeEvent, this.edgeVersion);
+                return ctx.getTenantProfileProcessor().convertTenantProfileEventToDownlink(edgeEvent, this.edgeVersion);
             default:
                 log.warn("[{}] Unsupported edge event type [{}]", this.tenantId, edgeEvent);
                 return null;

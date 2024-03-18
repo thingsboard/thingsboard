@@ -1326,9 +1326,12 @@ message ToCoreNotificationMsg {
 /* Messages to Edge queue that are handled by ThingsBoard Core Service */
 message ToEdgeMsg {
   EdgeNotificationMsgProto edgeNotificationMsg = 1;
-  EdgeEventUpdateMsgProto edgeEventUpdate = 2;
-  ToEdgeSyncRequestMsgProto toEdgeSyncRequest = 3;
-  FromEdgeSyncResponseMsgProto fromEdgeSyncResponse = 4;
+}
+
+message ToEdgeNotificationMsg {
+  EdgeEventUpdateMsgProto edgeEventUpdate = 1;
+  ToEdgeSyncRequestMsgProto toEdgeSyncRequest = 2;
+  FromEdgeSyncResponseMsgProto fromEdgeSyncResponse = 3;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */
