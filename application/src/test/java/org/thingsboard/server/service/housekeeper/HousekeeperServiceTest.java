@@ -99,7 +99,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @DaoSqlTest
 @TestPropertySource(properties = {
-        "queue.core.housekeeper.enabled=true",
         "transport.http.enabled=true",
         "queue.core.housekeeper.reprocessing-start-delay-sec=1",
         "queue.core.housekeeper.task-reprocessing-delay-sec=2",

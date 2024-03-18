@@ -100,6 +100,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -273,7 +275,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
         Tenant tenant = new Tenant();
         tenant.setTitle(TEST_TENANT_NAME);
-        Tenant savedTenant = doPost("/api/tenant", tenant, Tenant.class);
+        Tenant savedTenant = createTenant(tenant);
         Assert.assertNotNull(savedTenant);
         tenantId = savedTenant.getId();
         tenantProfileId = savedTenant.getTenantProfileId();
@@ -367,6 +369,8 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
                 throw new RuntimeException(e);
             }
         }
+        Awaitility.await("tenant cleanup finish").atMost(30, TimeUnit.SECONDS)
+                .until(() -> tsService.findLatest(TenantId.SYS_TENANT_ID, tenantId, "test").get().isEmpty());
     }
 
     private List<Tenant> getAllTenants() throws Exception {
@@ -419,7 +423,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         loginSysAdmin();
         Tenant tenant = new Tenant();
         tenant.setTitle(TEST_DIFFERENT_TENANT_NAME);
-        savedDifferentTenant = doPost("/api/tenant", tenant, Tenant.class);
+        savedDifferentTenant = createTenant(tenant);
         differentTenantId = savedDifferentTenant.getId();
         Assert.assertNotNull(savedDifferentTenant);
         User differentTenantAdmin = new User();
@@ -427,6 +431,12 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         differentTenantAdmin.setTenantId(savedDifferentTenant.getId());
         differentTenantAdmin.setEmail(DIFFERENT_TENANT_ADMIN_EMAIL);
         savedDifferentTenantUser = createUserAndLogin(differentTenantAdmin, DIFFERENT_TENANT_ADMIN_PASSWORD);
+    }
+
+    protected Tenant createTenant(Tenant tenant) throws Exception {
+        tenant = doPost("/api/tenant", tenant, Tenant.class);
+        tsService.save(TenantId.SYS_TENANT_ID, tenant.getId(), new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry("test", "test"))).get(); // creating marker ts to later know when Housekeeper finishes tenant cleanup
+        return tenant;
     }
 
     protected void loginDifferentCustomer() throws Exception {
