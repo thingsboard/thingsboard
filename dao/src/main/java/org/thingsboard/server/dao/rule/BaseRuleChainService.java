@@ -178,7 +178,6 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         List<RuleNodeUpdateResult> updatedRuleNodes = new ArrayList<>();
         List<RuleNode> existingRuleNodes = getRuleChainNodes(tenantId, ruleChainMetaData.getRuleChainId());
         for (RuleNode existingNode : existingRuleNodes) {
-            cleanUpService.cleanUpRelatedData(tenantId, existingNode.getId()); // fixme: for sure?
             Integer index = ruleNodeIndexMap.get(existingNode.getId());
             RuleNode newRuleNode = null;
             if (index != null) {

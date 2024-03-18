@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.tenant;
 
 import com.google.common.util.concurrent.ListenableFuture;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -54,7 +53,6 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service("TenantDaoService")
 @Slf4j
-@RequiredArgsConstructor
 public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Tenant, TenantEvictEvent> implements TenantService {
 
     private static final String DEFAULT_TENANT_REGION = "Global";
@@ -153,7 +151,6 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         notificationSettingsService.deleteNotificationSettings(tenantId);
         tenantDao.removeById(tenantId, tenantId.getId());
 
-        // fixme: we should publish to housekeeper when a transaction is committed (or better after msg was broadcasted): move this to cleanup-service
         cleanUpService.removeTenantEntities(tenantId, // don't forget to implement deleteByTenantId from EntityDaoService when adding entity type to this list
                 EntityType.ENTITY_VIEW, EntityType.WIDGETS_BUNDLE, EntityType.WIDGET_TYPE,
                 EntityType.ASSET, EntityType.ASSET_PROFILE, EntityType.DEVICE, EntityType.DEVICE_PROFILE,

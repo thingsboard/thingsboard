@@ -28,6 +28,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNode;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
+import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EventInfo;
@@ -48,7 +49,6 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
@@ -68,11 +68,13 @@ import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.alarm.AlarmDao;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.entity.EntityServiceRegistry;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
+import org.thingsboard.server.dao.usagerecord.ApiUsageStateDao;
 import org.thingsboard.server.gen.transport.TransportProtos.HousekeeperTaskProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperServiceMsg;
 import org.thingsboard.server.service.housekeeper.processor.TelemetryDeletionTaskProcessor;
@@ -127,6 +129,10 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
     private AlarmDao alarmDao;
     @Autowired
     private RelationService relationService;
+    @Autowired
+    private ApiUsageStateDao apiUsageStateDao;
+    @Autowired
+    private EntityServiceRegistry entityServiceRegistry;
     @SpyBean
     private TelemetryDeletionTaskProcessor telemetryDeletionTaskProcessor;
 
@@ -208,6 +214,9 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         tenantId = differentTenantId;
 
         createRelatedData(tenantId);
+        createDifferentTenantCustomer();
+        createRelatedData(differentTenantCustomerId);
+        loginDifferentTenant();
 
         Device device = createDevice("oi324rujoi", "oi324rujoi");
         createRelatedData(device.getId());
@@ -228,6 +237,8 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         UserId userId = savedDifferentTenantUser.getId();
         createRelatedData(userId);
 
+        ApiUsageState tenantApiUsageState = apiUsageStateDao.findApiUsageStateByEntityId(differentTenantId);
+
         loginSysAdmin();
         deleteDifferentTenant();
 
@@ -238,6 +249,8 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
             verifyNoRelatedData(ruleNode2Id);
             verifyNoRelatedData(ruleChainId);
             verifyNoRelatedData(userId);
+            verifyNoRelatedData(differentTenantCustomerId);
+            verifyNoRelatedData(tenantApiUsageState.getId());
             verifyNoRelatedData(tenantId);
         });
     }
@@ -323,11 +336,12 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         for (HousekeeperTaskType taskType : expectedTaskTypes) {
             verify(housekeeperClient).submitTask(argThat(task -> task.getTaskType() == taskType && task.getEntityId().equals(entityId)));
         }
+        assertThat(entityServiceRegistry.getServiceByEntityType(entityId.getEntityType()).findEntity(tenantId, entityId)).isEmpty();
 
         assertThat(getLatestTelemetry(entityId)).isNull();
         assertThat(getTimeseriesHistory(entityId)).isEmpty();
         for (String scope : List.of(DataConstants.SERVER_SCOPE, DataConstants.SHARED_SCOPE, DataConstants.CLIENT_SCOPE)) {
-            assertThat(getAttribute(entityId, scope, scope + ATTRIBUTE_KEY)).isNull();
+            assertThat(attributesService.findAll(tenantId, entityId, scope).get()).isEmpty();
         }
         assertThat(getEvents(entityId)).isEmpty();
         assertThat(alarmDao.findEntityAlarmRecordsByEntityId(tenantId, entityId)).isEmpty();
@@ -386,10 +400,6 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
 
     private List<TsKvEntry> getTimeseriesHistory(EntityId entityId) throws Exception {
         return timeseriesService.findAll(tenantId, entityId, List.of(new BaseReadTsKvQuery(HousekeeperServiceTest.TELEMETRY_KEY, 0, System.currentTimeMillis(), 10, "DESC"))).get();
-    }
-
-    private AttributeKvEntry getAttribute(EntityId entityId, String scope, String key) throws Exception {
-        return attributesService.find(tenantId, entityId, scope, key).get().orElse(null);
     }
 
     private List<EventInfo> getEvents(EntityId entityId) {

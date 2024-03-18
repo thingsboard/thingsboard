@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.usagerecord;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.ApiFeature;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.ApiUsageState;
@@ -35,6 +36,7 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileConfiguration;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantProfileDao;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -68,18 +70,16 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
         this.apiUsageStateValidator = apiUsageStateValidator;
     }
 
-    @Override
-    public void deleteApiUsageStateByTenantId(TenantId tenantId) {
-        log.trace("Executing deleteUsageRecordsByTenantId [{}]", tenantId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        apiUsageStateDao.deleteApiUsageStateByTenantId(tenantId);
-    }
-
+    @Transactional
     @Override
     public void deleteApiUsageStateByEntityId(EntityId entityId) {
         log.trace("Executing deleteApiUsageStateByEntityId [{}]", entityId);
         validateId(entityId.getId(), "Invalid entity id");
-        apiUsageStateDao.deleteApiUsageStateByEntityId(entityId);
+        ApiUsageState apiUsageState = findApiUsageStateByEntityId(entityId);
+        if (apiUsageState != null) {
+            apiUsageStateDao.removeById(apiUsageState.getTenantId(), apiUsageState.getUuidId());
+            eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(apiUsageState.getTenantId()).entityId(apiUsageState.getId()).build());
+        }
     }
 
     @Override
@@ -172,9 +172,10 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
         return Optional.ofNullable(findApiUsageStateById(tenantId, new ApiUsageStateId(entityId.getId())));
     }
 
+    @Transactional
     @Override
     public void deleteByTenantId(TenantId tenantId) {
-        deleteApiUsageStateByTenantId(tenantId);
+        deleteApiUsageStateByEntityId(tenantId);
     }
 
     @Override
