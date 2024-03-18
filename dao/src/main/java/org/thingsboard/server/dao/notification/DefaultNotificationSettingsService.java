@@ -222,7 +222,7 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
         } else {
             var requiredNotificationTypes = List.of(NotificationType.EDGE_CONNECTION, NotificationType.EDGE_COMMUNICATION_FAILURE);
             var existingNotificationTypes = notificationTemplateService.findNotificationTemplatesByTenantIdAndNotificationTypes(
-                            tenantId, requiredNotificationTypes, new PageLink(1))
+                            tenantId, requiredNotificationTypes, new PageLink(2))
                     .getData()
                     .stream()
                     .map(NotificationTemplate::getNotificationType)
