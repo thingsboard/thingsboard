@@ -30,6 +30,9 @@ import org.thingsboard.server.common.msg.housekeeper.HousekeeperClient;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.relation.RelationService;
 
+import java.util.EnumSet;
+import java.util.Set;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -37,6 +40,12 @@ public class CleanUpService {
 
     private final HousekeeperClient housekeeperClient;
     private final RelationService relationService;
+
+    private final Set<EntityType> skippedEntities = EnumSet.of(
+            EntityType.ALARM, EntityType.QUEUE, EntityType.TB_RESOURCE, EntityType.OTA_PACKAGE,
+            EntityType.NOTIFICATION_REQUEST, EntityType.NOTIFICATION_TEMPLATE,
+            EntityType.NOTIFICATION_TARGET, EntityType.NOTIFICATION_RULE
+    );
 
     @TransactionalEventListener(fallbackExecution = true) // after transaction commit
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
@@ -46,7 +55,9 @@ public class CleanUpService {
         EntityType entityType = entityId.getEntityType();
         try {
             log.trace("[{}][{}][{}] Handling entity deletion event", tenantId, entityType, entityId.getId());
-            cleanUpRelatedData(tenantId, entityId);
+            if (!skippedEntities.contains(entityType)) {
+                cleanUpRelatedData(tenantId, entityId);
+            }
             if (entityType == EntityType.USER) {
                 housekeeperClient.submitTask(HousekeeperTask.unassignAlarms((User) event.getEntity()));
             }
@@ -57,7 +68,6 @@ public class CleanUpService {
 
     public void cleanUpRelatedData(TenantId tenantId, EntityId entityId) {
         log.debug("[{}][{}][{}] Cleaning up related data", tenantId, entityId.getEntityType(), entityId.getId());
-        // todo: skipped entities list
         relationService.deleteEntityRelations(tenantId, entityId);
         housekeeperClient.submitTask(HousekeeperTask.deleteAttributes(tenantId, entityId));
         housekeeperClient.submitTask(HousekeeperTask.deleteTelemetry(tenantId, entityId));
