@@ -30,8 +30,12 @@ import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.rule.engine.api.notification.FirebaseService;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmComment;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
@@ -49,6 +53,7 @@ import org.thingsboard.server.common.data.notification.NotificationRequestStats;
 import org.thingsboard.server.common.data.notification.NotificationRequestStatus;
 import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.notification.info.EntityActionNotificationInfo;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.AlarmCommentNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.settings.MobileAppNotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.settings.NotificationSettings;
 import org.thingsboard.server.common.data.notification.settings.SlackNotificationDeliveryMethodConfig;
@@ -769,6 +774,55 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         verify(firebaseService).sendMessage(eq(tenantId), eq("testCredentials"),
                 eq("customerFcmToken"), eq("Title"), eq("Message"), anyMap());
         verifyNoMoreInteractions(firebaseService);
+    }
+
+    @Test
+    public void testMobileAppNotifications_ruleBased() throws Exception {
+        loginSysAdmin();
+        MobileAppNotificationDeliveryMethodConfig config = new MobileAppNotificationDeliveryMethodConfig();
+        config.setFirebaseServiceAccountCredentials("testCredentials");
+        saveNotificationSettings(config);
+
+        loginTenantAdmin();
+        mobileToken = "tenantFcmToken";
+        doPost("/api/user/mobile/session", new MobileSessionInfo()).andExpect(status().isOk());
+
+        createNotificationRule(AlarmCommentNotificationRuleTriggerConfig.builder().onlyUserComments(true).build(),
+                DefaultNotifications.alarmComment.getSubject(), DefaultNotifications.alarmComment.getText(),
+                List.of(createNotificationTarget(tenantAdminUserId).getId()), NotificationDeliveryMethod.MOBILE_APP);
+
+        Device device = createDevice("test", "test");
+        UUID alarmDashboardId = UUID.randomUUID();
+        Alarm alarm = Alarm.builder()
+                .type("test")
+                .tenantId(tenantId)
+                .originator(device.getId())
+                .severity(AlarmSeverity.MAJOR)
+                .details(JacksonUtil.newObjectNode()
+                        .put("dashboardId", alarmDashboardId.toString()))
+                .build();
+        alarm = doPost("/api/alarm", alarm, Alarm.class);
+
+        AlarmComment comment = new AlarmComment();
+        comment.setComment(JacksonUtil.newObjectNode()
+                .put("text", "text"));
+        doPost("/api/alarm/" + alarm.getId() + "/comment", comment, AlarmComment.class);
+
+        ArgumentCaptor<Map<String, String>> msgCaptor = ArgumentCaptor.forClass(Map.class);
+        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
+            verify(firebaseService).sendMessage(eq(tenantId), eq("testCredentials"),
+                    eq("tenantFcmToken"), eq("Comment on 'test' alarm"),
+                    eq(TENANT_ADMIN_EMAIL + " added comment: text"),
+                    msgCaptor.capture());
+        });
+        Map<String, String> firebaseMessageData = msgCaptor.getValue();
+        assertThat(firebaseMessageData.keySet()).doesNotContainNull().doesNotContain("");
+        assertThat(firebaseMessageData.values()).doesNotContainNull();
+        assertThat(firebaseMessageData.get("info.userEmail")).isEqualTo(TENANT_ADMIN_EMAIL);
+        assertThat(firebaseMessageData.get("info.alarmType")).isEqualTo("test");
+        assertThat(firebaseMessageData.get("onClick.enabled")).isEqualTo("true");
+        assertThat(firebaseMessageData.get("onClick.linkType")).isEqualTo("DASHBOARD");
+        assertThat(firebaseMessageData.get("onClick.dashboardId")).isEqualTo(alarmDashboardId.toString());
     }
 
     @Test

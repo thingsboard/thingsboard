@@ -146,7 +146,7 @@ public class LwM2MClientSerDes {
         if (multiInstances) {
             Map<Integer, Object> instances = new HashMap<>();
             o.get("instances").asObject().forEach(entry -> {
-                instances.put(Integer.valueOf(entry.getName()), parseValue(type, entry.getValue()));
+                instances.put(Integer.valueOf(entry.getName()), parseValue(type, entry.getValue().asObject().get("value")));
             });
             return LwM2mMultipleResource.newResource(id, instances, type);
         } else {
