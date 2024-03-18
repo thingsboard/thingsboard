@@ -387,7 +387,7 @@ export class DoughnutWidgetComponent implements OnInit, OnDestroy, AfterViewInit
       tooltip: {
         trigger: this.settings.showTooltip ? 'item' : 'none',
         confine: false,
-        appendToBody: true
+        appendTo: 'body',
       },
       series: [
         {

@@ -75,6 +75,7 @@ export const barChartWithLabelsDefaultSettings: BarChartWithLabelsWidgetSettings
   },
   tooltipValueColor: 'rgba(0, 0, 0, 0.76)',
   tooltipShowDate: true,
+  tooltipDateInterval: true,
   tooltipDateFormat: customDateFormat('MMMM y'),
   tooltipDateFont: {
     family: 'Roboto',
