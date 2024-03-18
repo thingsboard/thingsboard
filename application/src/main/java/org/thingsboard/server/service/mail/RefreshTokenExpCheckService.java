@@ -56,22 +56,33 @@ public class RefreshTokenExpCheckService {
             JsonNode jsonValue = settings.getJsonValue();
             if (OFFICE_365.name().equals(jsonValue.get("providerId").asText()) && jsonValue.has("refreshToken")
                     && jsonValue.has("refreshTokenExpires")) {
-                long expiresIn = jsonValue.get("refreshTokenExpires").longValue();
-                if ((expiresIn - System.currentTimeMillis()) < 604800000L) { //less than 7 days
-                    log.info("Trying to refresh refresh token.");
+                try {
+                    long expiresIn = jsonValue.get("refreshTokenExpires").longValue();
+                    long tokenLifeDuration = expiresIn - System.currentTimeMillis();
+                    if (tokenLifeDuration < 0) {
+                        ((ObjectNode) jsonValue).put("tokenGenerated", false);
+                        ((ObjectNode) jsonValue).remove("refreshToken");
+                        ((ObjectNode) jsonValue).remove("refreshTokenExpires");
 
-                    String clientId = jsonValue.get("clientId").asText();
-                    String clientSecret = jsonValue.get("clientSecret").asText();
-                    String refreshToken = jsonValue.get("refreshToken").asText();
-                    String tokenUri = jsonValue.get("tokenUri").asText();
+                        adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, settings);
+                    } else if (tokenLifeDuration < 604800000L) { //less than 7 days
+                        log.info("Trying to refresh refresh token.");
 
-                    TokenResponse tokenResponse = new RefreshTokenRequest(new NetHttpTransport(), new GsonFactory(),
-                            new GenericUrl(tokenUri), refreshToken)
-                            .setClientAuthentication(new ClientParametersAuthentication(clientId, clientSecret))
-                            .execute();
-                    ((ObjectNode) jsonValue).put("refreshToken", tokenResponse.getRefreshToken());
-                    ((ObjectNode) jsonValue).put("refreshTokenExpires", Instant.now().plus(Duration.ofDays(AZURE_DEFAULT_REFRESH_TOKEN_LIFETIME_IN_DAYS)).toEpochMilli());
-                    adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, settings);
+                        String clientId = jsonValue.get("clientId").asText();
+                        String clientSecret = jsonValue.get("clientSecret").asText();
+                        String refreshToken = jsonValue.get("refreshToken").asText();
+                        String tokenUri = jsonValue.get("tokenUri").asText();
+
+                        TokenResponse tokenResponse = new RefreshTokenRequest(new NetHttpTransport(), new GsonFactory(),
+                                new GenericUrl(tokenUri), refreshToken)
+                                .setClientAuthentication(new ClientParametersAuthentication(clientId, clientSecret))
+                                .execute();
+                        ((ObjectNode) jsonValue).put("refreshToken", tokenResponse.getRefreshToken());
+                        ((ObjectNode) jsonValue).put("refreshTokenExpires", Instant.now().plus(Duration.ofDays(AZURE_DEFAULT_REFRESH_TOKEN_LIFETIME_IN_DAYS)).toEpochMilli());
+                        adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, settings);
+                    }
+                } catch (Exception e) {
+                    log.error("Error occurred while checking token", e);
                 }
             }
         }
