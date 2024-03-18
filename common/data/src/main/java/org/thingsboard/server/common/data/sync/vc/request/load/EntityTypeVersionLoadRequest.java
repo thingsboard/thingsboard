@@ -26,6 +26,7 @@ import java.util.Map;
 public class EntityTypeVersionLoadRequest extends VersionLoadRequest {
 
     private Map<EntityType, EntityTypeVersionLoadConfig> entityTypes;
+    private boolean rollbackOnError;
 
     @Override
     public VersionLoadRequestType getType() {

@@ -101,7 +101,11 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
         ctx.putInternalId(exportData.getExternalId(), importResult.getSavedEntity().getId());
 
         ctx.addReferenceCallback(exportData.getExternalId(), importResult.getSaveReferencesCallback());
-        ctx.addEventCallback(importResult.getSendEventsCallback());
+        if (ctx.isRollbackOnError()) {
+            ctx.addEventCallback(importResult.getSendEventsCallback());
+        } else {
+            importResult.getSendEventsCallback().run();
+        }
         return importResult;
     }
 
