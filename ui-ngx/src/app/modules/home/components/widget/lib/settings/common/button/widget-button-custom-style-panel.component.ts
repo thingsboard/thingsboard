@@ -62,6 +62,9 @@ export class WidgetButtonCustomStylePanelComponent extends PageComponent impleme
   borderRadius: string;
 
   @Input()
+  autoScale: boolean;
+
+  @Input()
   state: WidgetButtonState;
 
   @Input()

@@ -84,6 +84,8 @@ import { ActionButtonWidgetComponent } from '@home/components/widget/lib/button/
 import { CommandButtonWidgetComponent } from '@home/components/widget/lib/button/command-button-widget.component';
 import { PowerButtonWidgetComponent } from '@home/components/widget/lib/rpc/power-button-widget.component';
 import { SliderWidgetComponent } from '@home/components/widget/lib/rpc/slider-widget.component';
+import { ToggleButtonWidgetComponent } from '@home/components/widget/lib/button/toggle-button-widget.component';
+import { TimeSeriesChartWidgetComponent } from '@home/components/widget/lib/chart/time-series-chart-widget.component';
 
 @NgModule({
   declarations:
@@ -134,7 +136,9 @@ import { SliderWidgetComponent } from '@home/components/widget/lib/rpc/slider-wi
       ActionButtonWidgetComponent,
       CommandButtonWidgetComponent,
       PowerButtonWidgetComponent,
-      SliderWidgetComponent
+      SliderWidgetComponent,
+      ToggleButtonWidgetComponent,
+      TimeSeriesChartWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -189,7 +193,9 @@ import { SliderWidgetComponent } from '@home/components/widget/lib/rpc/slider-wi
         ActionButtonWidgetComponent,
         CommandButtonWidgetComponent,
         PowerButtonWidgetComponent,
-        SliderWidgetComponent
+        SliderWidgetComponent,
+        ToggleButtonWidgetComponent,
+        TimeSeriesChartWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }

@@ -90,7 +90,7 @@
                             <goal>yarn</goal>
                         </goals>
                         <configuration>
-                            <arguments>install</arguments>
+                            <arguments>install --non-interactive --network-concurrency 4 --network-timeout 100000 --mutex network</arguments>
                         </configuration>
                     </execution>
                     <execution>

@@ -61,9 +61,8 @@ import {
   deepClone,
   flatFormattedData,
   formattedDataFormDatasourceData,
-  isDefined,
   isDefinedAndNotNull,
-  isEqual,
+  isEqual, isUndefined,
   parseHttpErrorMessage
 } from '@core/utils';
 import { EntityId } from '@app/shared/models/id/entity-id';
@@ -355,7 +354,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       }
 
       this.units = options.units || '';
-      this.decimals = isDefined(options.decimals) ? options.decimals : 2;
+      this.decimals = isDefinedAndNotNull(options.decimals) ? options.decimals : 2;
 
       this.loadingData = false;
 
@@ -1491,7 +1490,8 @@ export class WidgetSubscription implements IWidgetSubscription {
     let datasourceDataArray: Array<DatasourceData> = [];
     datasourceDataArray = datasourceDataArray.concat(datasource.dataKeys.map((dataKey, keyIndex) => {
       dataKey.hidden = !!dataKey.settings.hideDataByDefault;
-      dataKey.inLegend = !dataKey.settings.removeFromLegend;
+      dataKey.inLegend = dataKey.settings.showInLegend ||
+        (isUndefined(dataKey.settings.showInLegend) && !dataKey.settings.removeFromLegend);
       dataKey.label = this.ctx.utils.customTranslation(dataKey.label, dataKey.label);
       const datasourceData: DatasourceData = {
         datasource,
