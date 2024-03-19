@@ -110,21 +110,21 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     @Override
     public Dashboard findDashboardById(TenantId tenantId, DashboardId dashboardId) {
         log.trace("Executing findDashboardById [{}]", dashboardId);
-        Validator.validateId(dashboardId, INCORRECT_DASHBOARD_ID + dashboardId);
+        Validator.validateId(dashboardId, id -> INCORRECT_DASHBOARD_ID + id);
         return dashboardDao.findById(tenantId, dashboardId.getId());
     }
 
     @Override
     public ListenableFuture<Dashboard> findDashboardByIdAsync(TenantId tenantId, DashboardId dashboardId) {
         log.trace("Executing findDashboardByIdAsync [{}]", dashboardId);
-        validateId(dashboardId, INCORRECT_DASHBOARD_ID + dashboardId);
+        validateId(dashboardId, id -> INCORRECT_DASHBOARD_ID + id);
         return dashboardDao.findByIdAsync(tenantId, dashboardId.getId());
     }
 
     @Override
     public DashboardInfo findDashboardInfoById(TenantId tenantId, DashboardId dashboardId) {
         log.trace("Executing findDashboardInfoById [{}]", dashboardId);
-        Validator.validateId(dashboardId, INCORRECT_DASHBOARD_ID + dashboardId);
+        Validator.validateId(dashboardId, id -> INCORRECT_DASHBOARD_ID + id);
         return dashboardInfoDao.findById(tenantId, dashboardId.getId());
     }
 
@@ -137,7 +137,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     @Override
     public ListenableFuture<DashboardInfo> findDashboardInfoByIdAsync(TenantId tenantId, DashboardId dashboardId) {
         log.trace("Executing findDashboardInfoByIdAsync [{}]", dashboardId);
-        validateId(dashboardId, INCORRECT_DASHBOARD_ID + dashboardId);
+        validateId(dashboardId, id -> INCORRECT_DASHBOARD_ID + id);
         return dashboardInfoDao.findByIdAsync(tenantId, dashboardId.getId());
     }
 
@@ -229,7 +229,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     @Transactional
     public void deleteDashboard(TenantId tenantId, DashboardId dashboardId) {
         log.trace("Executing deleteDashboard [{}]", dashboardId);
-        Validator.validateId(dashboardId, INCORRECT_DASHBOARD_ID + dashboardId);
+        Validator.validateId(dashboardId, id -> INCORRECT_DASHBOARD_ID + id);
         deleteEntityRelations(tenantId, dashboardId);
         try {
             dashboardDao.removeById(tenantId, dashboardId.getId());
@@ -249,7 +249,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     @Override
     public PageData<DashboardInfo> findDashboardsByTenantId(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findDashboardsByTenantId, tenantId [{}], pageLink [{}]", tenantId, pageLink);
-        Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         Validator.validatePageLink(pageLink);
         return dashboardInfoDao.findDashboardsByTenantId(tenantId.getId(), pageLink);
     }
@@ -257,7 +257,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     @Override
     public PageData<DashboardInfo> findMobileDashboardsByTenantId(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findMobileDashboardsByTenantId, tenantId [{}], pageLink [{}]", tenantId, pageLink);
-        Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         Validator.validatePageLink(pageLink);
         return dashboardInfoDao.findMobileDashboardsByTenantId(tenantId.getId(), pageLink);
     }
@@ -265,15 +265,15 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     @Override
     public void deleteDashboardsByTenantId(TenantId tenantId) {
         log.trace("Executing deleteDashboardsByTenantId, tenantId [{}]", tenantId);
-        Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         tenantDashboardsRemover.removeEntities(tenantId, tenantId);
     }
 
     @Override
     public PageData<DashboardInfo> findDashboardsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink) {
         log.trace("Executing findDashboardsByTenantIdAndCustomerId, tenantId [{}], customerId [{}], pageLink [{}]", tenantId, customerId, pageLink);
-        Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        Validator.validateId(customerId, "Incorrect customerId " + customerId);
+        Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        Validator.validateId(customerId, id -> "Incorrect customerId " + id);
         Validator.validatePageLink(pageLink);
         return dashboardInfoDao.findDashboardsByTenantIdAndCustomerId(tenantId.getId(), customerId.getId(), pageLink);
     }
@@ -281,8 +281,8 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     @Override
     public PageData<DashboardInfo> findMobileDashboardsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink) {
         log.trace("Executing findMobileDashboardsByTenantIdAndCustomerId, tenantId [{}], customerId [{}], pageLink [{}]", tenantId, customerId, pageLink);
-        Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        Validator.validateId(customerId, "Incorrect customerId " + customerId);
+        Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        Validator.validateId(customerId, id -> "Incorrect customerId " + id);
         Validator.validatePageLink(pageLink);
         return dashboardInfoDao.findMobileDashboardsByTenantIdAndCustomerId(tenantId.getId(), customerId.getId(), pageLink);
     }
@@ -290,7 +290,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     @Override
     public void unassignCustomerDashboards(TenantId tenantId, CustomerId customerId) {
         log.trace("Executing unassignCustomerDashboards, customerId [{}]", customerId);
-        Validator.validateId(customerId, "Incorrect customerId " + customerId);
+        Validator.validateId(customerId, id -> "Incorrect customerId " + id);
         Customer customer = customerDao.findById(tenantId, customerId.getId());
         if (customer == null) {
             throw new DataValidationException("Can't unassign dashboards from non-existent customer!");
@@ -301,7 +301,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     @Override
     public void updateCustomerDashboards(TenantId tenantId, CustomerId customerId) {
         log.trace("Executing updateCustomerDashboards, customerId [{}]", customerId);
-        Validator.validateId(customerId, "Incorrect customerId " + customerId);
+        Validator.validateId(customerId, id -> "Incorrect customerId " + id);
         Customer customer = customerDao.findById(tenantId, customerId.getId());
         if (customer == null) {
             throw new DataValidationException("Can't update dashboards for non-existent customer!");
@@ -351,8 +351,8 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     @Override
     public PageData<DashboardInfo> findDashboardsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, PageLink pageLink) {
         log.trace("Executing findDashboardsByTenantIdAndEdgeId, tenantId [{}], edgeId [{}], pageLink [{}]", tenantId, edgeId, pageLink);
-        Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        Validator.validateId(edgeId, INCORRECT_EDGE_ID + edgeId);
+        Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        Validator.validateId(edgeId, id -> INCORRECT_EDGE_ID + id);
         Validator.validatePageLink(pageLink);
         return dashboardInfoDao.findDashboardsByTenantIdAndEdgeId(tenantId.getId(), edgeId.getId(), pageLink);
     }
