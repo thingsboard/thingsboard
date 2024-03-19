@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -70,6 +70,8 @@
             formControlName="targets"
             subType="{{ ruleNotificationForm.get('triggerType').value }}"
             entityType="{{ entityType.NOTIFICATION_TARGET }}"
+            labelText="{{ 'notification.recipients' | translate }}"
+            requiredText="{{ 'notification.recipients-required' | translate }}"
             placeholderText="{{ 'notification.recipient' | translate }}">
             <button #createTargetButton
                     mat-button color="primary" matSuffix
@@ -395,6 +397,68 @@
                 {{ 'notification.only-rule-node-lifecycle-failures' | translate }}
               </mat-slide-toggle>
             </section>
+          </fieldset>
+        </section>
+      </form>
+      <form [formGroup]="ruleNotificationForm">
+        <section formGroupName="additionalConfig">
+          <mat-form-field class="mat-block">
+            <mat-label translate>notification.description</mat-label>
+            <input matInput formControlName="description">
+          </mat-form-field>
+        </section>
+      </form>
+    </mat-step>
+
+    <mat-step [stepControl]="edgeConnectionTemplateForm"
+              *ngIf="ruleNotificationForm.get('triggerType').value === triggerType.EDGE_CONNECTION">
+      <ng-template matStepLabel>{{ 'notification.edge-trigger-settings' | translate }}</ng-template>
+      <form [formGroup]="edgeConnectionTemplateForm">
+        <section formGroupName="triggerConfig">
+          <fieldset class="fields-group tb-margin-before-field">
+            <legend translate>notification.filter</legend>
+            <tb-entity-list
+              formControlName="edges"
+              subscriptSizing="dynamic"
+              labelText="{{'edge.edge-instances' | translate}}"
+              placeholderText="{{ 'edge.edge-instances' | translate }}"
+              hint="{{ 'notification.edge-list-rule-hint' | translate }}"
+              [entityType]="entityType.EDGE">
+            </tb-entity-list>
+            <mat-form-field fxFlex class="mat-block" floatLabel="always">
+              <mat-label translate>notification.notify-on</mat-label>
+              <mat-select formControlName="notifyOn" multiple
+                          placeholder="{{ !edgeConnectionTemplateForm.get('triggerConfig.notifyOn').value?.length ? ('event.all-events' | translate) : '' }}">
+                <mat-option *ngFor="let edgeEvent of edgeConnectionEvents" [value]="edgeEvent">
+                  {{ edgeConnectionEventTranslationMap.get(edgeEvent) | translate }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </fieldset>
+        </section>
+      </form>
+      <form [formGroup]="ruleNotificationForm">
+        <section formGroupName="additionalConfig">
+          <mat-form-field class="mat-block">
+            <mat-label translate>notification.description</mat-label>
+            <input matInput formControlName="description">
+          </mat-form-field>
+        </section>
+      </form>
+    </mat-step>
+
+    <mat-step [stepControl]="edgeCommunicationFailureTemplateForm"
+              *ngIf="ruleNotificationForm.get('triggerType').value === triggerType.EDGE_COMMUNICATION_FAILURE">
+      <ng-template matStepLabel>{{ 'notification.edge-trigger-settings' | translate }}</ng-template>
+      <form [formGroup]="edgeCommunicationFailureTemplateForm">
+        <section formGroupName="triggerConfig">
+          <fieldset class="fields-group tb-margin-before-field">
+            <legend translate>notification.filter</legend>
+            <tb-entity-list labelText="{{'edge.edge-instances' | translate}}"
+                            hint="{{ 'notification.edge-list-rule-hint' | translate }}"
+                            [entityType]="entityType.EDGE"
+                            formControlName="edges">
+            </tb-entity-list>
           </fieldset>
         </section>
       </form>

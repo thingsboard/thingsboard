@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@
                         (click)="entitiesTableConfig.addActionDescriptors[0].onAction($event)"
                         matTooltip="{{ entitiesTableConfig.addActionDescriptors[0].name }}"
                         matTooltipPosition="above">
-                  <mat-icon>{{entitiesTableConfig.addActionDescriptors[0].icon}}</mat-icon>
+                  <tb-icon>{{entitiesTableConfig.addActionDescriptors[0].icon}}</tb-icon>
                 </button>
                 <ng-template #addActionsMenu>
                   <button mat-icon-button [disabled]="isLoading$ | async"
@@ -74,7 +74,7 @@
                             [disabled]="isLoading$ | async"
                             [fxShow]="actionDescriptor.isEnabled()"
                             (click)="actionDescriptor.onAction($event)">
-                      <mat-icon>{{actionDescriptor.icon}}</mat-icon>
+                      <tb-icon matMenuItemIcon>{{actionDescriptor.icon}}</tb-icon>
                       <span>{{ actionDescriptor.name }}</span>
                     </button>
                   </mat-menu>
@@ -132,7 +132,7 @@
                     matTooltip="{{ actionDescriptor.name }}"
                     matTooltipPosition="above"
                     (click)="actionDescriptor.onAction($event, dataSource.selection.selected)">
-              <mat-icon>{{actionDescriptor.icon}}</mat-icon>
+              <tb-icon>{{actionDescriptor.icon}}</tb-icon>
             </button>
           </div>
         </mat-toolbar>
@@ -165,7 +165,12 @@
                         [matTooltip]="cellTooltip(entity, column, row)"
                         matTooltipPosition="above"
                         [ngStyle]="cellStyle(entity, column, row)">
-                <span [innerHTML]="cellContent(entity, column, row)"></span>
+                <ng-container *ngIf="column.type == 'link' && column.entityURL(entity) as detailsPageURL; else defaultContent">
+                  <a [routerLink]="detailsPageURL" [innerHTML]="cellContent(entity, column, row)" (click)="$event.stopPropagation();"></a>
+                </ng-container>
+                <ng-template #defaultContent>
+                  <span [innerHTML]="cellContent(entity, column, row)"></span>
+                </ng-template>
                 <ng-template [ngIf]="column.actionCell">
                   <ng-container [ngSwitch]="column.actionCell.type">
                     <ng-template [ngSwitchCase]="cellActionType.COPY_BUTTON">
@@ -176,7 +181,7 @@
                         tooltipText="{{ column.actionCell.nameFunction ? column.actionCell.nameFunction(entity) : column.actionCell.name }}"
                         tooltipPosition="above"
                         [icon]="column.actionCell.icon"
-                        [mdiIcon]="column.actionCell.mdiIcon" [style]="column.actionCell.style">
+                        [style]="column.actionCell.style">
                       </tb-copy-button>
                     </ng-template>
                     <ng-template ngSwitchDefault>
@@ -185,9 +190,9 @@
                               matTooltip="{{ column.actionCell.nameFunction ? column.actionCell.nameFunction(entity) : column.actionCell.name }}"
                               matTooltipPosition="above"
                               (click)="column.actionCell.onAction($event, entity)">
-                        <mat-icon [svgIcon]="column.actionCell.mdiIcon" [ngStyle]="column.actionCell.style">
+                        <tb-icon [ngStyle]="column.actionCell.style">
                           {{column.actionCell.icon}}
-                        </mat-icon>
+                        </tb-icon>
                       </button>
                     </ng-template>
                   </ng-container>
@@ -203,8 +208,9 @@
                         matTooltip="{{ column.actionDescriptor.nameFunction ? column.actionDescriptor.nameFunction(entity) : column.actionDescriptor.name }}"
                         matTooltipPosition="above"
                         (click)="column.actionDescriptor.onAction($event, entity)">
-                  <mat-icon [svgIcon]="column.actionDescriptor.mdiIcon" [ngStyle]="column.actionDescriptor.style">
-                    {{column.actionDescriptor.icon}}</mat-icon>
+                  <tb-icon [ngStyle]="column.actionDescriptor.style">
+                    {{column.actionDescriptor.icon}}
+                  </tb-icon>
                 </button>
               </mat-cell>
             </ng-container>
@@ -223,9 +229,9 @@
                           matTooltip="{{ actionDescriptor.nameFunction ? actionDescriptor.nameFunction(entity) : actionDescriptor.name }}"
                           matTooltipPosition="above"
                           (click)="actionDescriptor.onAction($event, entity)">
-                    <mat-icon svgIcon="{{ actionDescriptor.mdiIconFunction ? actionDescriptor.mdiIconFunction(entity) : actionDescriptor.mdiIcon }}"
-                              [ngStyle]="actionDescriptor.style">
-                      {{actionDescriptor.icon}}</mat-icon>
+                    <tb-icon [ngStyle]="actionDescriptor.style">
+                      {{actionDescriptor.iconFunction ?  actionDescriptor.iconFunction(entity) : actionDescriptor.icon}}
+                    </tb-icon>
                   </button>
                 </div>
                 <div fxHide [fxShow.lt-lg]="cellActionDescriptors.length !== 1" *ngIf="cellActionDescriptors.length">
@@ -239,9 +245,9 @@
                             [disabled]="isLoading$ | async"
                             [fxShow]="actionDescriptor.isEnabled(entity)"
                             (click)="actionDescriptor.onAction($event, entity)">
-                      <mat-icon svgIcon="{{ actionDescriptor.mdiIconFunction ? actionDescriptor.mdiIconFunction(entity) : actionDescriptor.mdiIcon }}"
-                                [ngStyle]="actionDescriptor.style">
-                        {{actionDescriptor.icon}}</mat-icon>
+                      <tb-icon matMenuItemIcon [ngStyle]="actionDescriptor.style">
+                        {{actionDescriptor.iconFunction ?  actionDescriptor.iconFunction(entity) : actionDescriptor.icon}}
+                      </tb-icon>
                       <span>{{ actionDescriptor.nameFunction ? actionDescriptor.nameFunction(entity) : actionDescriptor.name }}</span>
                     </button>
                   </mat-menu>

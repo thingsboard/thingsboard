@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,17 @@
  */
 package org.thingsboard.server.controller.plugin;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.RemovalCause;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.BeanCreationNotAllowedException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.PongMessage;
@@ -28,6 +33,7 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.adapter.NativeWebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -37,51 +43,62 @@ import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.config.WebSocketConfiguration;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
-import org.thingsboard.server.dao.util.limits.RateLimitService;
+import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.auth.jwt.JwtAuthenticationProvider;
+import org.thingsboard.server.service.security.exception.JwtExpiredTokenException;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
+import org.thingsboard.server.service.subscription.SubscriptionErrorCode;
+import org.thingsboard.server.service.ws.AuthCmd;
 import org.thingsboard.server.service.ws.SessionEvent;
 import org.thingsboard.server.service.ws.WebSocketMsgEndpoint;
 import org.thingsboard.server.service.ws.WebSocketService;
 import org.thingsboard.server.service.ws.WebSocketSessionRef;
 import org.thingsboard.server.service.ws.WebSocketSessionType;
+import org.thingsboard.server.service.ws.WsCommandsWrapper;
+import org.thingsboard.server.service.ws.notification.cmd.NotificationCmdsWrapper;
+import org.thingsboard.server.service.ws.telemetry.cmd.TelemetryCmdsWrapper;
 
+import javax.annotation.PostConstruct;
 import javax.websocket.RemoteEndpoint;
 import javax.websocket.SendHandler;
 import javax.websocket.SendResult;
 import javax.websocket.Session;
 import java.io.IOException;
-import java.net.URI;
 import java.security.InvalidParameterException;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static org.thingsboard.server.service.ws.DefaultWebSocketService.NUMBER_OF_PING_ATTEMPTS;
 
 @Service
 @TbCoreComponent
 @Slf4j
+@RequiredArgsConstructor
 public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocketMsgEndpoint {
 
     private final ConcurrentMap<String, SessionMetaData> internalSessionMap = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, String> externalSessionMap = new ConcurrentHashMap<>();
 
-
     @Autowired @Lazy
     private WebSocketService webSocketService;
-
     @Autowired
     private TbTenantProfileCache tenantProfileCache;
-
     @Autowired
     private RateLimitService rateLimitService;
+    @Autowired
+    private JwtAuthenticationProvider authenticationProvider;
 
     @Value("${server.ws.send_timeout:5000}")
     private long sendTimeout;
@@ -89,6 +106,8 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
     private long pingTimeout;
     @Value("${server.ws.max_queue_messages_per_session:1000}")
     private int wsMaxQueueMessagesPerSession;
+    @Value("${server.ws.auth_timeout_ms:10000}")
+    private int authTimeoutMs;
 
     private final ConcurrentMap<String, WebSocketSessionRef> blacklistedSessions = new ConcurrentHashMap<>();
 
@@ -97,28 +116,97 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
     private final ConcurrentMap<UserId, Set<String>> regularUserSessionsMap = new ConcurrentHashMap<>();
     private final ConcurrentMap<UserId, Set<String>> publicUserSessionsMap = new ConcurrentHashMap<>();
 
+    private Cache<String, SessionMetaData> pendingSessions;
+
+    @PostConstruct
+    private void init() {
+        pendingSessions = Caffeine.newBuilder()
+                .expireAfterWrite(authTimeoutMs, TimeUnit.MILLISECONDS)
+                .<String, SessionMetaData>removalListener((sessionId, sessionMd, removalCause) -> {
+                    if (removalCause == RemovalCause.EXPIRED && sessionMd != null) {
+                        try {
+                            close(sessionMd.sessionRef, CloseStatus.POLICY_VIOLATION);
+                        } catch (IOException e) {
+                            log.warn("IO error", e);
+                        }
+                    }
+                })
+                .build();
+    }
+
     @Override
     public void handleTextMessage(WebSocketSession session, TextMessage message) {
         try {
-            SessionMetaData sessionMd = internalSessionMap.get(session.getId());
-            if (sessionMd != null) {
-                log.trace("[{}][{}] Processing {}", sessionMd.sessionRef.getSecurityCtx().getTenantId(), session.getId(), message.getPayload());
-                webSocketService.handleWebSocketMsg(sessionMd.sessionRef, message.getPayload());
-            } else {
+            SessionMetaData sessionMd = getSessionMd(session.getId());
+            if (sessionMd == null) {
                 log.trace("[{}] Failed to find session", session.getId());
                 session.close(CloseStatus.SERVER_ERROR.withReason("Session not found!"));
+                return;
             }
+            sessionMd.onMsg(message.getPayload());
         } catch (IOException e) {
             log.warn("IO error", e);
+        }
+    }
+
+    void processMsg(SessionMetaData sessionMd, String msg) throws IOException {
+        WebSocketSessionRef sessionRef = sessionMd.sessionRef;
+        WsCommandsWrapper cmdsWrapper;
+        try {
+            switch (sessionRef.getSessionType()) {
+                case GENERAL:
+                    cmdsWrapper = JacksonUtil.fromString(msg, WsCommandsWrapper.class);
+                    break;
+                case TELEMETRY:
+                    cmdsWrapper = JacksonUtil.fromString(msg, TelemetryCmdsWrapper.class).toCommonCmdsWrapper();
+                    break;
+                case NOTIFICATIONS:
+                    cmdsWrapper = JacksonUtil.fromString(msg, NotificationCmdsWrapper.class).toCommonCmdsWrapper();
+                    break;
+                default:
+                    return;
+            }
+        } catch (Exception e) {
+            log.debug("{} Failed to decode subscription cmd: {}", sessionRef, e.getMessage(), e);
+            if (sessionRef.getSecurityCtx() != null) {
+                webSocketService.sendError(sessionRef, 1, SubscriptionErrorCode.BAD_REQUEST, "Failed to parse the payload");
+            } else {
+                close(sessionRef, CloseStatus.BAD_DATA.withReason(e.getMessage()));
+            }
+            return;
+        }
+
+        if (sessionRef.getSecurityCtx() != null) {
+            log.trace("{} Processing {}", sessionRef, msg);
+            webSocketService.handleCommands(sessionRef, cmdsWrapper);
+        } else {
+            AuthCmd authCmd = cmdsWrapper.getAuthCmd();
+            if (authCmd == null) {
+                close(sessionRef, CloseStatus.POLICY_VIOLATION.withReason("Auth cmd is missing"));
+                return;
+            }
+            log.trace("{} Authenticating session", sessionRef);
+            SecurityUser securityCtx;
+            try {
+                securityCtx = authenticationProvider.authenticate(authCmd.getToken());
+            } catch (Exception e) {
+                close(sessionRef, CloseStatus.BAD_DATA.withReason(e.getMessage()));
+                return;
+            }
+            sessionRef.setSecurityCtx(securityCtx);
+            pendingSessions.invalidate(sessionMd.session.getId());
+            establishSession(sessionMd.session, sessionRef, sessionMd);
+
+            webSocketService.handleCommands(sessionRef, cmdsWrapper);
         }
     }
 
     @Override
     protected void handlePongMessage(WebSocketSession session, PongMessage message) throws Exception {
         try {
-            SessionMetaData sessionMd = internalSessionMap.get(session.getId());
+            SessionMetaData sessionMd = getSessionMd(session.getId());
             if (sessionMd != null) {
-                log.trace("[{}][{}] Processing pong response {}", sessionMd.sessionRef.getSecurityCtx().getTenantId(), session.getId(), message.getPayload());
+                log.trace("{} Processing pong response {}", sessionMd.sessionRef, message.getPayload());
                 sessionMd.processPongMessage(System.currentTimeMillis());
             } else {
                 log.trace("[{}] Failed to find session", session.getId());
@@ -139,36 +227,51 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                     nativeSession.getAsyncRemote().setSendTimeout(sendTimeout);
                 }
             }
-            String internalSessionId = session.getId();
             WebSocketSessionRef sessionRef = toRef(session);
-            String externalSessionId = sessionRef.getSessionId();
-
-            if (!checkLimits(session, sessionRef)) {
-                return;
-            }
-            var tenantProfileConfiguration = getTenantProfileConfiguration(sessionRef);
-            int wsTenantProfileQueueLimit = tenantProfileConfiguration != null ?
-                    tenantProfileConfiguration.getWsMsgQueueLimitPerSession() : wsMaxQueueMessagesPerSession;
-            internalSessionMap.put(internalSessionId, new SessionMetaData(session, sessionRef,
-                    (wsTenantProfileQueueLimit > 0 && wsTenantProfileQueueLimit < wsMaxQueueMessagesPerSession) ?
-                            wsTenantProfileQueueLimit : wsMaxQueueMessagesPerSession));
-
-            externalSessionMap.put(externalSessionId, internalSessionId);
-            processInWebSocketService(sessionRef, SessionEvent.onEstablished());
-            log.info("[{}][{}][{}] Session is opened from address: {}", sessionRef.getSecurityCtx().getTenantId(), externalSessionId, session.getId(), session.getRemoteAddress());
+            log.debug("[{}][{}] Session opened from address: {}", sessionRef.getSessionId(), session.getId(), session.getRemoteAddress());
+            establishSession(session, sessionRef, null);
         } catch (InvalidParameterException e) {
             log.warn("[{}] Failed to start session", session.getId(), e);
             session.close(CloseStatus.BAD_DATA.withReason(e.getMessage()));
+        } catch (JwtExpiredTokenException e) {
+            log.trace("[{}] Failed to start session", session.getId(), e);
+            session.close(CloseStatus.SERVER_ERROR.withReason(e.getMessage()));
         } catch (Exception e) {
             log.warn("[{}] Failed to start session", session.getId(), e);
             session.close(CloseStatus.SERVER_ERROR.withReason(e.getMessage()));
         }
     }
 
+    private void establishSession(WebSocketSession session, WebSocketSessionRef sessionRef, SessionMetaData sessionMd) throws IOException {
+        if (sessionRef.getSecurityCtx() != null) {
+            if (!checkLimits(session, sessionRef)) {
+                return;
+            }
+            int maxMsgQueueSize = Optional.ofNullable(getTenantProfileConfiguration(sessionRef))
+                    .map(DefaultTenantProfileConfiguration::getWsMsgQueueLimitPerSession)
+                    .filter(profileLimit -> profileLimit > 0 && profileLimit < wsMaxQueueMessagesPerSession)
+                    .orElse(wsMaxQueueMessagesPerSession);
+            if (sessionMd == null) {
+                sessionMd = new SessionMetaData(session, sessionRef);
+            }
+            sessionMd.setMaxMsgQueueSize(maxMsgQueueSize);
+
+            internalSessionMap.put(session.getId(), sessionMd);
+            externalSessionMap.put(sessionRef.getSessionId(), session.getId());
+            processInWebSocketService(sessionRef, SessionEvent.onEstablished());
+            log.info("[{}][{}][{}][{}] Session established from address: {}", sessionRef.getSecurityCtx().getTenantId(),
+                    sessionRef.getSecurityCtx().getId(), sessionRef.getSessionId(), session.getId(), session.getRemoteAddress());
+        } else {
+            sessionMd = new SessionMetaData(session, sessionRef);
+            pendingSessions.put(session.getId(), sessionMd);
+            externalSessionMap.put(sessionRef.getSessionId(), session.getId());
+        }
+    }
+
     @Override
     public void handleTransportError(WebSocketSession session, Throwable tError) throws Exception {
         super.handleTransportError(session, tError);
-        SessionMetaData sessionMd = internalSessionMap.get(session.getId());
+        SessionMetaData sessionMd = getSessionMd(session.getId());
         if (sessionMd != null) {
             processInWebSocketService(sessionMd.sessionRef, SessionEvent.onError(tError));
         } else {
@@ -181,44 +284,63 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
     public void afterConnectionClosed(WebSocketSession session, CloseStatus closeStatus) throws Exception {
         super.afterConnectionClosed(session, closeStatus);
         SessionMetaData sessionMd = internalSessionMap.remove(session.getId());
+        if (sessionMd == null) {
+            sessionMd = pendingSessions.asMap().remove(session.getId());
+        }
         if (sessionMd != null) {
-            cleanupLimits(session, sessionMd.sessionRef);
             externalSessionMap.remove(sessionMd.sessionRef.getSessionId());
-            processInWebSocketService(sessionMd.sessionRef, SessionEvent.onClosed());
-            log.info("[{}][{}][{}] Session is closed", sessionMd.sessionRef.getSecurityCtx().getTenantId(), sessionMd.sessionRef.getSessionId(), session.getId());
+            if (sessionMd.sessionRef.getSecurityCtx() != null) {
+                cleanupLimits(session, sessionMd.sessionRef);
+                processInWebSocketService(sessionMd.sessionRef, SessionEvent.onClosed());
+            }
+            log.info("{} Session is closed", sessionMd.sessionRef);
         } else {
             log.info("[{}] Session is closed", session.getId());
         }
     }
 
     private void processInWebSocketService(WebSocketSessionRef sessionRef, SessionEvent event) {
+        if (sessionRef.getSecurityCtx() == null) {
+            return;
+        }
         try {
-            webSocketService.handleWebSocketSessionEvent(sessionRef, event);
+            webSocketService.handleSessionEvent(sessionRef, event);
         } catch (BeanCreationNotAllowedException e) {
-            log.warn("[{}] Failed to close session due to possible shutdown state", sessionRef.getSessionId());
+            log.warn("{} Failed to close session due to possible shutdown state", sessionRef);
         }
     }
 
-    private WebSocketSessionRef toRef(WebSocketSession session) throws IOException {
-        URI sessionUri = session.getUri();
-        String path = sessionUri.getPath();
-        path = path.substring(WebSocketConfiguration.WS_PLUGIN_PREFIX.length());
-        if (path.length() == 0) {
-            throw new IllegalArgumentException("URL should contain plugin token!");
+    private WebSocketSessionRef toRef(WebSocketSession session) {
+        String path = session.getUri().getPath();
+        WebSocketSessionType sessionType;
+        if (path.equals(WebSocketConfiguration.WS_API_ENDPOINT)) {
+            sessionType = WebSocketSessionType.GENERAL;
+        } else {
+            String type = StringUtils.substringAfter(path, WebSocketConfiguration.WS_PLUGINS_ENDPOINT);
+            sessionType = WebSocketSessionType.forName(type)
+                    .orElseThrow(() -> new InvalidParameterException("Unknown session type"));
         }
-        String[] pathElements = path.split("/");
-        String serviceToken = pathElements[0];
-        WebSocketSessionType sessionType = WebSocketSessionType.forName(serviceToken)
-                .orElseThrow(() -> new InvalidParameterException("Can't find plugin with specified token!"));
 
-        SecurityUser currentUser = (SecurityUser) ((Authentication) session.getPrincipal()).getPrincipal();
+        SecurityUser securityCtx = null;
+        String token = StringUtils.substringAfter(session.getUri().getQuery(), "token=");
+        if (StringUtils.isNotEmpty(token)) {
+            securityCtx = authenticationProvider.authenticate(token);
+        }
         return WebSocketSessionRef.builder()
                 .sessionId(UUID.randomUUID().toString())
-                .securityCtx(currentUser)
+                .securityCtx(securityCtx)
                 .localAddress(session.getLocalAddress())
                 .remoteAddress(session.getRemoteAddress())
                 .sessionType(sessionType)
                 .build();
+    }
+
+    private SessionMetaData getSessionMd(String internalSessionId) {
+        SessionMetaData sessionMd = internalSessionMap.get(internalSessionId);
+        if (sessionMd == null) {
+            sessionMd = pendingSessions.getIfPresent(internalSessionId);
+        }
+        return sessionMd;
     }
 
     class SessionMetaData implements SendHandler {
@@ -227,17 +349,22 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
         private final WebSocketSessionRef sessionRef;
 
         final AtomicBoolean isSending = new AtomicBoolean(false);
-        private final Queue<TbWebSocketMsg<?>> msgQueue;
+        private final Queue<TbWebSocketMsg<?>> outboundMsgQueue = new ConcurrentLinkedQueue<>();
+        private final AtomicInteger outboundMsgQueueSize = new AtomicInteger();
+        @Setter
+        private int maxMsgQueueSize = wsMaxQueueMessagesPerSession;
+
+        private final Queue<String> inboundMsgQueue = new ConcurrentLinkedQueue<>();
+        private final Lock inboundMsgQueueProcessorLock = new ReentrantLock();
 
         private volatile long lastActivityTime;
 
-        SessionMetaData(WebSocketSession session, WebSocketSessionRef sessionRef, int maxMsgQueuePerSession) {
+        SessionMetaData(WebSocketSession session, WebSocketSessionRef sessionRef) {
             super();
             this.session = session;
             Session nativeSession = ((NativeWebSocketSession) session).getNativeSession(Session.class);
             this.asyncRemote = nativeSession.getAsyncRemote();
             this.sessionRef = sessionRef;
-            this.msgQueue = new LinkedBlockingQueue<>(maxMsgQueuePerSession);
             this.lastActivityTime = System.currentTimeMillis();
         }
 
@@ -245,13 +372,13 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
             try {
                 long timeSinceLastActivity = currentTime - lastActivityTime;
                 if (timeSinceLastActivity >= pingTimeout) {
-                    log.warn("[{}] Closing session due to ping timeout", session.getId());
+                    log.warn("{} Closing session due to ping timeout", sessionRef);
                     closeSession(CloseStatus.SESSION_NOT_RELIABLE);
                 } else if (timeSinceLastActivity >= pingTimeout / NUMBER_OF_PING_ATTEMPTS) {
                     sendMsg(TbWebSocketPingMsg.INSTANCE);
                 }
             } catch (Exception e) {
-                log.trace("[{}] Failed to send ping msg", session.getId(), e);
+                log.trace("{} Failed to send ping msg", sessionRef, e);
                 closeSession(CloseStatus.SESSION_NOT_RELIABLE);
             }
         }
@@ -260,9 +387,9 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
             try {
                 close(this.sessionRef, reason);
             } catch (IOException ioe) {
-                log.trace("[{}] Session transport error", session.getId(), ioe);
+                log.trace("{} Session transport error", sessionRef, ioe);
             } finally {
-                msgQueue.clear();
+                outboundMsgQueue.clear();
             }
         }
 
@@ -275,19 +402,14 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
         }
 
         void sendMsg(TbWebSocketMsg<?> msg) {
-            try {
-                msgQueue.add(msg);
-            } catch (RuntimeException e) {
-                if (log.isTraceEnabled()) {
-                    log.trace("[{}][{}] Session closed due to queue error", sessionRef.getSecurityCtx().getTenantId(), session.getId(), e);
-                } else {
-                    log.info("[{}][{}] Session closed due to queue error", sessionRef.getSecurityCtx().getTenantId(), session.getId());
-                }
+            if (outboundMsgQueueSize.get() < maxMsgQueueSize) {
+                outboundMsgQueue.add(msg);
+                outboundMsgQueueSize.incrementAndGet();
+                processNextMsg();
+            } else {
+                log.info("{} Session closed due to updates queue size exceeded", sessionRef);
                 closeSession(CloseStatus.POLICY_VIOLATION.withReason("Max pending updates limit reached!"));
-                return;
             }
-
-            processNextMsg();
         }
 
         private void sendMsgInternal(TbWebSocketMsg<?> msg) {
@@ -303,7 +425,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                     processNextMsg();
                 }
             } catch (Exception e) {
-                log.trace("[{}] Failed to send msg", session.getId(), e);
+                log.trace("{} Failed to send msg", sessionRef, e);
                 closeSession(CloseStatus.SESSION_NOT_RELIABLE);
             }
         }
@@ -311,7 +433,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
         @Override
         public void onResult(SendResult result) {
             if (!result.isOK()) {
-                log.trace("[{}] Failed to send msg", session.getId(), result.getException());
+                log.trace("{} Failed to send msg", sessionRef, result.getException());
                 closeSession(CloseStatus.SESSION_NOT_RELIABLE);
                 return;
             }
@@ -321,22 +443,45 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
         }
 
         private void processNextMsg() {
-            if (msgQueue.isEmpty() || !isSending.compareAndSet(false, true)) {
+            if (outboundMsgQueue.isEmpty() || !isSending.compareAndSet(false, true)) {
                 return;
             }
-            TbWebSocketMsg<?> msg = msgQueue.poll();
+            TbWebSocketMsg<?> msg = outboundMsgQueue.poll();
             if (msg != null) {
+                outboundMsgQueueSize.decrementAndGet();
                 sendMsgInternal(msg);
             } else {
                 isSending.set(false);
+            }
+        }
+
+        public void onMsg(String msg) throws IOException {
+            inboundMsgQueue.add(msg);
+            tryProcessInboundMsgs();
+        }
+
+        void tryProcessInboundMsgs() throws IOException {
+            while (!inboundMsgQueue.isEmpty()) {
+                if (inboundMsgQueueProcessorLock.tryLock()) {
+                    try {
+                        String msg;
+                        while ((msg = inboundMsgQueue.poll()) != null) {
+                            processMsg(this, msg);
+                        }
+                    } finally {
+                        inboundMsgQueueProcessorLock.unlock();
+                    }
+                } else {
+                    return;
+                }
             }
         }
     }
 
     @Override
     public void send(WebSocketSessionRef sessionRef, int subscriptionId, String msg) throws IOException {
+        log.debug("{} Sending {}", sessionRef, msg);
         String externalId = sessionRef.getSessionId();
-        log.debug("[{}] Processing {}", externalId, msg);
         String internalId = externalSessionMap.get(externalId);
         if (internalId != null) {
             SessionMetaData sessionMd = internalSessionMap.get(internalId);
@@ -344,13 +489,12 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                 TenantId tenantId = sessionRef.getSecurityCtx().getTenantId();
                 if (!rateLimitService.checkRateLimit(LimitedApi.WS_UPDATES_PER_SESSION, tenantId, (Object) sessionRef.getSessionId())) {
                     if (blacklistedSessions.putIfAbsent(externalId, sessionRef) == null) {
-                        log.info("[{}][{}][{}] Failed to process session update. Max session updates limit reached"
-                                , tenantId, sessionRef.getSecurityCtx().getId(), externalId);
+                        log.info("{} Failed to process session update. Max session updates limit reached", sessionRef);
                         sessionMd.sendMsg("{\"subscriptionId\":" + subscriptionId + ", \"errorCode\":" + ThingsboardErrorCode.TOO_MANY_UPDATES.getErrorCode() + ", \"errorMsg\":\"Too many updates!\"}");
                     }
                     return;
                 } else {
-                    log.debug("[{}][{}][{}] Session is no longer blacklisted.", tenantId, sessionRef.getSecurityCtx().getId(), externalId);
+                    log.debug("{} Session is no longer blacklisted.", sessionRef);
                     blacklistedSessions.remove(externalId);
                 }
                 sessionMd.sendMsg(msg);
@@ -381,10 +525,10 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
     @Override
     public void close(WebSocketSessionRef sessionRef, CloseStatus reason) throws IOException {
         String externalId = sessionRef.getSessionId();
-        log.debug("[{}] Processing close request", externalId);
+        log.debug("{} Processing close request", sessionRef.toString());
         String internalId = externalSessionMap.get(externalId);
         if (internalId != null) {
-            SessionMetaData sessionMd = internalSessionMap.get(internalId);
+            SessionMetaData sessionMd = getSessionMd(internalId);
             if (sessionMd != null) {
                 sessionMd.session.close(reason);
             } else {
@@ -395,7 +539,7 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
         }
     }
 
-    private boolean checkLimits(WebSocketSession session, WebSocketSessionRef sessionRef) throws Exception {
+    private boolean checkLimits(WebSocketSession session, WebSocketSessionRef sessionRef) throws IOException {
         var tenantProfileConfiguration = getTenantProfileConfiguration(sessionRef);
         if (tenantProfileConfiguration == null) {
             return true;
@@ -411,10 +555,9 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                 }
             }
             if (!limitAllowed) {
-                    log.info("[{}][{}][{}] Failed to start session. Max tenant sessions limit reached"
-                            , sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), sessionId);
-                    session.close(CloseStatus.POLICY_VIOLATION.withReason("Max tenant sessions limit reached!"));
-                    return false;
+                log.info("{} Failed to start session. Max tenant sessions limit reached", sessionRef.toString());
+                session.close(CloseStatus.POLICY_VIOLATION.withReason("Max tenant sessions limit reached!"));
+                return false;
             }
         }
 
@@ -428,10 +571,9 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                     }
                 }
                 if (!limitAllowed) {
-                        log.info("[{}][{}][{}] Failed to start session. Max customer sessions limit reached"
-                                , sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), sessionId);
-                        session.close(CloseStatus.POLICY_VIOLATION.withReason("Max customer sessions limit reached"));
-                        return false;
+                    log.info("{} Failed to start session. Max customer sessions limit reached", sessionRef.toString());
+                    session.close(CloseStatus.POLICY_VIOLATION.withReason("Max customer sessions limit reached"));
+                    return false;
                 }
             }
             if (tenantProfileConfiguration.getMaxWsSessionsPerRegularUser() > 0
@@ -444,10 +586,9 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                     }
                 }
                 if (!limitAllowed) {
-                        log.info("[{}][{}][{}] Failed to start session. Max regular user sessions limit reached"
-                                , sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), sessionId);
-                        session.close(CloseStatus.POLICY_VIOLATION.withReason("Max regular user sessions limit reached"));
-                        return false;
+                    log.info("{} Failed to start session. Max regular user sessions limit reached", sessionRef.toString());
+                    session.close(CloseStatus.POLICY_VIOLATION.withReason("Max regular user sessions limit reached"));
+                    return false;
                 }
             }
             if (tenantProfileConfiguration.getMaxWsSessionsPerPublicUser() > 0
@@ -460,10 +601,9 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                     }
                 }
                 if (!limitAllowed) {
-                        log.info("[{}][{}][{}] Failed to start session. Max public user sessions limit reached"
-                                , sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), sessionId);
-                        session.close(CloseStatus.POLICY_VIOLATION.withReason("Max public user sessions limit reached"));
-                        return false;
+                    log.info("{} Failed to start session. Max public user sessions limit reached", sessionRef.toString());
+                    session.close(CloseStatus.POLICY_VIOLATION.withReason("Max public user sessions limit reached"));
+                    return false;
                 }
             }
         }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.server.common.data.mail.MailOauth2Provider.OFFICE_365;
 
@@ -46,7 +47,9 @@ public class RefreshTokenExpCheckService {
     public static final int AZURE_DEFAULT_REFRESH_TOKEN_LIFETIME_IN_DAYS = 90;
     private final AdminSettingsService adminSettingsService;
 
-    @Scheduled(initialDelayString = "#{T(org.apache.commons.lang3.RandomUtils).nextLong(0, ${mail.oauth2.refreshTokenCheckingInterval})}", fixedDelayString = "${mail.oauth2.refreshTokenCheckingInterval}")
+    @Scheduled(initialDelayString = "#{T(org.apache.commons.lang3.RandomUtils).nextLong(0, ${mail.oauth2.refreshTokenCheckingInterval})}",
+            fixedDelayString = "${mail.oauth2.refreshTokenCheckingInterval}",
+            timeUnit = TimeUnit.SECONDS)
     public void check() throws IOException {
         AdminSettings settings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
         if (settings != null && settings.getJsonValue().has("enableOauth2") && settings.getJsonValue().get("enableOauth2").asBoolean()) {
@@ -65,8 +68,8 @@ public class RefreshTokenExpCheckService {
                             new GenericUrl(tokenUri), refreshToken)
                             .setClientAuthentication(new ClientParametersAuthentication(clientId, clientSecret))
                             .execute();
-                    ((ObjectNode)jsonValue).put("refreshToken", tokenResponse.getRefreshToken());
-                    ((ObjectNode)jsonValue).put("refreshTokenExpires", Instant.now().plus(Duration.ofDays(AZURE_DEFAULT_REFRESH_TOKEN_LIFETIME_IN_DAYS)).toEpochMilli());
+                    ((ObjectNode) jsonValue).put("refreshToken", tokenResponse.getRefreshToken());
+                    ((ObjectNode) jsonValue).put("refreshTokenExpires", Instant.now().plus(Duration.ofDays(AZURE_DEFAULT_REFRESH_TOKEN_LIFETIME_IN_DAYS)).toEpochMilli());
                     adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, settings);
                 }
             }

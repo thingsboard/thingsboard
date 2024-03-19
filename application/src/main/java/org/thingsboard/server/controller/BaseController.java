@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,13 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Getter;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -31,6 +30,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 import org.springframework.web.context.request.async.DeferredResult;
+import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -124,6 +124,7 @@ import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rpc.RpcService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.ConstraintValidator;
@@ -145,7 +146,6 @@ import org.thingsboard.server.service.entitiy.user.TbUserSettingsService;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
-import org.thingsboard.server.service.resource.TbResourceService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.AccessControlService;
 import org.thingsboard.server.service.security.permission.Operation;
@@ -272,7 +272,7 @@ public abstract class BaseController {
     protected PartitionService partitionService;
 
     @Autowired
-    protected TbResourceService resourceService;
+    protected ResourceService resourceService;
 
     @Autowired
     protected OtaPackageService otaPackageService;
@@ -375,9 +375,14 @@ public abstract class BaseController {
             return new ThingsboardException("Unable to send mail: " + exception.getMessage(), ThingsboardErrorCode.GENERAL);
         } else if (exception instanceof AsyncRequestTimeoutException) {
             return new ThingsboardException("Request timeout", ThingsboardErrorCode.GENERAL);
-        } else {
-            return new ThingsboardException(exception.getMessage(), exception, ThingsboardErrorCode.GENERAL);
+        } else if (exception instanceof DataAccessException) {
+            String errorType = exception.getClass().getSimpleName();
+            if (!logControllerErrorStackTrace) { // not to log the error twice
+                log.warn("Database error: {} - {}", errorType, ExceptionUtils.getRootCauseMessage(exception));
+            }
+            return new ThingsboardException("Database error", ThingsboardErrorCode.GENERAL);
         }
+        return new ThingsboardException(exception.getMessage(), exception, ThingsboardErrorCode.GENERAL);
     }
 
     /**
@@ -587,7 +592,7 @@ public abstract class BaseController {
                     checkWidgetTypeId(new WidgetTypeId(entityId.getId()), operation);
                     return;
                 case TB_RESOURCE:
-                    checkResourceId(new TbResourceId(entityId.getId()), operation);
+                    checkResourceInfoId(new TbResourceId(entityId.getId()), operation);
                     return;
                 case OTA_PACKAGE:
                     checkOtaPackageId(new OtaPackageId(entityId.getId()), operation);
@@ -833,18 +838,14 @@ public abstract class BaseController {
     }
 
     protected <T> DeferredResult<T> wrapFuture(ListenableFuture<T> future) {
-        final DeferredResult<T> deferredResult = new DeferredResult<>();
-        Futures.addCallback(future, new FutureCallback<>() {
-            @Override
-            public void onSuccess(T result) {
-                deferredResult.setResult(result);
-            }
+        DeferredResult<T> deferredResult = new DeferredResult<>(); // Timeout of spring.mvc.async.request-timeout is used
+        DonAsynchron.withCallback(future, deferredResult::setResult, deferredResult::setErrorResult);
+        return deferredResult;
+    }
 
-            @Override
-            public void onFailure(Throwable t) {
-                deferredResult.setErrorResult(t);
-            }
-        }, MoreExecutors.directExecutor());
+    protected <T> DeferredResult<T> wrapFuture(ListenableFuture<T> future, long timeoutMs) {
+        DeferredResult<T> deferredResult = new DeferredResult<>(timeoutMs);
+        DonAsynchron.withCallback(future, deferredResult::setResult, deferredResult::setErrorResult);
         return deferredResult;
     }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,10 @@
  */
 package org.thingsboard.server.service.rule;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.api.TbNode;
-import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNode;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
 import org.thingsboard.rule.engine.flow.TbRuleChainOutputNode;
@@ -44,13 +41,13 @@ import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleChainUpdateResult;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.rule.RuleNodeUpdateResult;
-import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.install.InstallScripts;
+import org.thingsboard.server.utils.TbNodeUpgradeUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -402,31 +399,21 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
             var ruleNodeClass = componentDiscoveryService.getRuleNodeInfo(ruleNodeType)
                     .orElseThrow(() -> new RuntimeException("Rule node " + ruleNodeType + " is not supported!"));
             if (ruleNodeClass.isVersioned()) {
-                TbNode tbVersionedNode = (TbNode) ruleNodeClass.getClazz().getDeclaredConstructor().newInstance();
                 int fromVersion = node.getConfigurationVersion();
                 int toVersion = ruleNodeClass.getCurrentVersion();
                 if (fromVersion < toVersion) {
                     log.debug("Going to upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",
                             ruleNodeId, ruleNodeType, fromVersion, toVersion);
-                    try {
-                        TbPair<Boolean, JsonNode> upgradeResult = tbVersionedNode.upgrade(fromVersion, node.getConfiguration());
-                        if (upgradeResult.getFirst()) {
-                            node.setConfiguration(upgradeResult.getSecond());
-                        }
-                        node.setConfigurationVersion(toVersion);
-                        log.debug("Successfully upgrade rule node with id: {} type: {}, rule chain id: {} fromVersion: {} toVersion: {}",
-                                ruleNodeId, ruleNodeType, ruleChainId, fromVersion, toVersion);
-                    } catch (TbNodeException e) {
-                        log.warn("Failed to upgrade rule node with id: {} type: {} rule chain id: {} fromVersion: {} toVersion: {} due to: ",
-                                ruleNodeId, ruleNodeType, ruleChainId, fromVersion, toVersion, e);
-                    }
+                    TbNodeUpgradeUtils.upgradeConfigurationAndVersion(node, ruleNodeClass);
+                    log.debug("Successfully upgrade rule node with id: {} type: {}, rule chain id: {} fromVersion: {} toVersion: {}",
+                            ruleNodeId, ruleNodeType, ruleChainId, fromVersion, toVersion);
                 } else {
                     log.debug("Rule node with id: {} type: {} ruleChainId: {} already set to latest version!",
                             ruleNodeId, ruleChainId, ruleNodeType);
                 }
             }
         } catch (Exception e) {
-            log.error("Failed to update the rule node with id: {} type: {}, rule chain id: {}",
+            log.error("Failed to upgrade rule node with id: {} type: {}, rule chain id: {}",
                     ruleNodeId, ruleNodeType, ruleChainId, e);
         }
         return node;

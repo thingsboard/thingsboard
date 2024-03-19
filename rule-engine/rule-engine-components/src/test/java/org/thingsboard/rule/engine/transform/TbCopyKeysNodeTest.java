@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,19 @@
 package org.thingsboard.rule.engine.transform;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -35,13 +40,13 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 public class TbCopyKeysNodeTest {
@@ -59,7 +64,7 @@ public class TbCopyKeysNodeTest {
         ctx = mock(TbContext.class);
         config = new TbCopyKeysNodeConfiguration().defaultConfiguration();
         config.setKeys(Set.of("TestKey_1", "TestKey_2", "TestKey_3", "(\\w*)Data(\\w*)"));
-        config.setFromMetadata(true);
+        config.setCopyFrom(TbMsgSource.METADATA);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node = spy(new TbCopyKeysNode());
         node.init(ctx, nodeConfiguration);
@@ -74,7 +79,7 @@ public class TbCopyKeysNodeTest {
     void givenDefaultConfig_whenVerify_thenOK() {
         TbCopyKeysNodeConfiguration defaultConfig = new TbCopyKeysNodeConfiguration().defaultConfiguration();
         assertThat(defaultConfig.getKeys()).isEqualTo(Collections.emptySet());
-        assertThat(defaultConfig.isFromMetadata()).isEqualTo(false);
+        assertThat(defaultConfig.getCopyFrom()).isEqualTo(TbMsgSource.DATA);
     }
 
     @Test
@@ -82,7 +87,7 @@ public class TbCopyKeysNodeTest {
         node.onMsg(ctx, getTbMsg(deviceId, TbMsg.EMPTY_JSON_OBJECT));
 
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx, times(1)).tellSuccess(newMsgCaptor.capture());
+        verify(ctx).tellSuccess(newMsgCaptor.capture());
         verify(ctx, never()).tellFailure(any(), any());
 
         TbMsg newMsg = newMsgCaptor.getValue();
@@ -95,23 +100,30 @@ public class TbCopyKeysNodeTest {
 
     @Test
     void givenMsgFromMsg_whenOnMsg_thenVerifyOutput() throws Exception {
-        config.setFromMetadata(false);
+        config.setCopyFrom(TbMsgSource.DATA);
+        config.setKeys(Set.of(".*Key$"));
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
 
-        String data = "{\"DigitData\":22.5,\"TempDataValue\":10.5}";
+        String data = "{\"nullKey\":null,\"stringKey\":\"value1\",\"booleanKey\":true,\"doubleKey\":42.0,\"longKey\":73," +
+                "\"jsonKey\":{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}}";
         node.onMsg(ctx, getTbMsg(deviceId, data));
 
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx, times(1)).tellSuccess(newMsgCaptor.capture());
+        verify(ctx).tellSuccess(newMsgCaptor.capture());
         verify(ctx, never()).tellFailure(any(), any());
 
         TbMsg newMsg = newMsgCaptor.getValue();
         assertThat(newMsg).isNotNull();
 
         Map<String, String> metaDataMap = newMsg.getMetaData().getData();
-        assertThat(metaDataMap.containsKey("DigitData")).isEqualTo(true);
-        assertThat(metaDataMap.containsKey("TempDataValue")).isEqualTo(true);
+        assertThat(metaDataMap.get("nullKey")).isEqualTo("null");
+        assertThat(metaDataMap.get("stringKey")).isEqualTo("value1");
+        assertThat(metaDataMap.get("booleanKey")).isEqualTo("true");
+        assertThat(metaDataMap.get("doubleKey")).isEqualTo("42.0");
+        assertThat(metaDataMap.get("longKey")).isEqualTo("73");
+        assertThat(metaDataMap.get("jsonKey"))
+                .isEqualTo("{\"someNumber\":42,\"someArray\":[1,2,3],\"someNestedObject\":{\"key\":\"value\"}}");
     }
 
     @Test
@@ -125,7 +137,7 @@ public class TbCopyKeysNodeTest {
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx, times(1)).tellSuccess(newMsgCaptor.capture());
+        verify(ctx).tellSuccess(newMsgCaptor.capture());
         verify(ctx, never()).tellFailure(any(), any());
 
         TbMsg newMsg = newMsgCaptor.getValue();
@@ -140,13 +152,41 @@ public class TbCopyKeysNodeTest {
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx, times(1)).tellSuccess(newMsgCaptor.capture());
+        verify(ctx).tellSuccess(newMsgCaptor.capture());
         verify(ctx, never()).tellFailure(any(), any());
 
         TbMsg newMsg = newMsgCaptor.getValue();
         assertThat(newMsg).isNotNull();
 
         assertThat(newMsg).isSameAs(msg);
+    }
+
+    private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyUpgradeResultAndConfig() {
+        return Stream.of(
+                Arguments.of(0, "{\"fromMetadata\":false,\"keys\":[\"temperature\"]}", true, "{\"copyFrom\":\"DATA\",\"keys\":[\"temperature\"]}"),
+                Arguments.of(0, "{\"fromMetadata\":true,\"keys\":[\"temperature\"]}", true, "{\"copyFrom\":\"METADATA\",\"keys\":[\"temperature\"]}"),
+                Arguments.of(1, "{\"fromMetadata\":\"METADATA\",\"keys\":[\"temperature\"]}", true, "{\"copyFrom\":\"METADATA\",\"keys\":[\"temperature\"]}"),
+                Arguments.of(1, "{\"fromMetadata\":\"DATA\",\"keys\":[\"temperature\"]}", true, "{\"copyFrom\":\"DATA\",\"keys\":[\"temperature\"]}"),
+                Arguments.of(1, "{\"copyFrom\":\"METADATA\",\"keys\":[\"temperature\"]}", false, "{\"copyFrom\":\"METADATA\",\"keys\":[\"temperature\"]}"),
+                Arguments.of(1, "{\"copyFrom\":\"DATA\",\"keys\":[\"temperature\"]}", false, "{\"copyFrom\":\"DATA\",\"keys\":[\"temperature\"]}")
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void givenFromVersionAndConfig_whenUpgrade_thenVerifyUpgradeResultAndConfig(int givenVersion, String givenConfigStr,
+                                                                                boolean hasChanges, String expectedConfigStr) throws Exception {
+        // GIVEN
+        JsonNode givenConfig = JacksonUtil.toJsonNode(givenConfigStr);
+        JsonNode expectedConfig = JacksonUtil.toJsonNode(expectedConfigStr);
+
+        // WHEN
+        var upgradeResult = node.upgrade(givenVersion, givenConfig);
+
+        // THEN
+        assertThat(upgradeResult.getFirst()).isEqualTo(hasChanges);
+        ObjectNode upgradedConfig = (ObjectNode) upgradeResult.getSecond();
+        assertThat(upgradedConfig).isEqualTo(expectedConfig);
     }
 
     private TbMsg getTbMsg(EntityId entityId, String data) {

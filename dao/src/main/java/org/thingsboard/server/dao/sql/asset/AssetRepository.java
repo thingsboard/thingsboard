@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -166,9 +166,6 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
                                                                                  @Param("assetProfileId") UUID assetProfileId,
                                                                                  @Param("textSearch") String textSearch,
                                                                                  Pageable pageable);
-
-    @Query("SELECT DISTINCT a.type FROM AssetEntity a WHERE a.tenantId = :tenantId")
-    List<String> findTenantAssetTypes(@Param("tenantId") UUID tenantId);
 
     Long countByAssetProfileId(UUID assetProfileId);
 

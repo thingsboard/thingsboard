@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -558,7 +558,7 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
     );
   }
 
-  openInstructions($event, edge: EdgeInfo, afterAdd = false) {
+  openInstructions($event: Event, edge: EdgeInfo, afterAdd = false, upgradeAvailable = false) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -568,7 +568,8 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         edge,
-        afterAdd
+        afterAdd,
+        upgradeAvailable
       }
     }).afterClosed().subscribe(() => {
         if (afterAdd) {
@@ -610,8 +611,11 @@ export class EdgesTableConfigResolver implements Resolve<EntityTableConfig<EdgeI
       case 'syncEdge':
         this.syncEdge(action.event, action.entity);
         return true;
-      case 'openInstructions':
+      case 'openInstallInstructions':
         this.openInstructions(action.event, action.entity);
+        return true;
+      case 'openUpgradeInstructions':
+        this.openInstructions(action.event, action.entity, false, true);
         return true;
     }
   }

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -42,14 +42,14 @@
                               style="height: 56px; margin-bottom: 22px;"
                               formControlName="alarmFilterConfig"></tb-alarm-filter-config>
       <tb-entity-autocomplete *ngIf="datasourceFormGroup.get('type').value === datasourceType.device"
-                              required
+                              [required]="!datasourcesOptional"
                               [entityType]="entityType.DEVICE"
                               formControlName="deviceId">
       </tb-entity-autocomplete>
       <tb-entity-alias-select
         *ngIf="datasourceFormGroup.get('type').value !== datasourceType.device && datasourceFormGroup.get('type').value !== datasourceType.alarmCount"
         [showLabel]="true"
-        [tbRequired]="true"
+        [tbRequired]="!datasourcesOptional"
         [aliasController]="aliasController"
         formControlName="entityAliasId"
         [callbacks]="entityAliasSelectCallbacks">
@@ -72,6 +72,7 @@
                   [aliasController]="aliasController"
                   [datakeySettingsSchema]="dataKeySettingsSchema"
                   [dataKeySettingsDirective]="dataKeySettingsDirective"
+                  [datakeySettingsFunction]="dataKeySettingsFunction"
                   [dashboard]="dashboard"
                   [widget]="widget"
                   [callbacks]="dataKeysCallbacks"
@@ -82,10 +83,12 @@
     <tb-data-keys *ngIf="hasAdditionalLatestDataKeys" class="tb-data-keys" fxFlex
                   [widgetType]="widgetTypes.latest"
                   [datasourceType]="datasourceFormGroup.get('type').value"
+                  latestDataKeys
                   [optDataKeys]="true"
                   [aliasController]="aliasController"
                   [datakeySettingsSchema]="latestDataKeySettingsSchema"
                   [dataKeySettingsDirective]="latestDataKeySettingsDirective"
+                  [datakeySettingsFunction]="dataKeySettingsFunction"
                   [dashboard]="dashboard"
                   [widget]="widget"
                   [callbacks]="dataKeysCallbacks"

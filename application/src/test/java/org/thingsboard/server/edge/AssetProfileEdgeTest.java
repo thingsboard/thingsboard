@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,13 @@
  */
 package org.thingsboard.server.edge;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.protobuf.AbstractMessage;
-import com.google.protobuf.ByteString;
 import org.junit.Assert;
 import org.junit.Test;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -30,7 +30,6 @@ import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UplinkResponseMsg;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -52,12 +51,12 @@ public class AssetProfileEdgeTest extends AbstractEdgeTest {
         AbstractMessage latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof AssetProfileUpdateMsg);
         AssetProfileUpdateMsg assetProfileUpdateMsg = (AssetProfileUpdateMsg) latestMessage;
+        AssetProfile assetProfileMsg = JacksonUtil.fromString(assetProfileUpdateMsg.getEntity(), AssetProfile.class, true);
+        Assert.assertNotNull(assetProfileMsg);
+        Assert.assertEquals(assetProfile, assetProfileMsg);
+        Assert.assertEquals("Building", assetProfileMsg.getName());
+        Assert.assertEquals(buildingsRuleChainId, assetProfileMsg.getDefaultEdgeRuleChainId());
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, assetProfileUpdateMsg.getMsgType());
-        Assert.assertEquals(assetProfile.getUuidId().getMostSignificantBits(), assetProfileUpdateMsg.getIdMSB());
-        Assert.assertEquals(assetProfile.getUuidId().getLeastSignificantBits(), assetProfileUpdateMsg.getIdLSB());
-        Assert.assertEquals("Building", assetProfileUpdateMsg.getName());
-        Assert.assertEquals(buildingsRuleChainId.getId().getMostSignificantBits(), assetProfileUpdateMsg.getDefaultRuleChainIdMSB());
-        Assert.assertEquals(buildingsRuleChainId.getId().getLeastSignificantBits(), assetProfileUpdateMsg.getDefaultRuleChainIdLSB());
 
         // update asset profile
         assetProfile.setImage("IMAGE");
@@ -67,8 +66,10 @@ public class AssetProfileEdgeTest extends AbstractEdgeTest {
         latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof AssetProfileUpdateMsg);
         assetProfileUpdateMsg = (AssetProfileUpdateMsg) latestMessage;
+        assetProfileMsg = JacksonUtil.fromString(assetProfileUpdateMsg.getEntity(), AssetProfile.class, true);
+        Assert.assertNotNull(assetProfileMsg);
+        Assert.assertEquals("IMAGE", assetProfileMsg.getImage());
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, assetProfileUpdateMsg.getMsgType());
-        Assert.assertEquals(ByteString.copyFrom("IMAGE".getBytes(StandardCharsets.UTF_8)), assetProfileUpdateMsg.getImage());
 
         // delete profile
         edgeImitator.expectMessageAmount(1);
@@ -90,18 +91,15 @@ public class AssetProfileEdgeTest extends AbstractEdgeTest {
         RuleChainId edgeRuleChainId = createEdgeRuleChainAndAssignToEdge("Asset Profile Rule Chain");
         DashboardId dashboardId = createDashboardAndAssignToEdge("Asset Profile Dashboard");
 
-        UUID uuid = Uuids.timeBased();
+        AssetProfile assetProfileOnEdge = buildAssetProfileForUplinkMsg("Asset Profile On Edge");
+        assetProfileOnEdge.setDefaultRuleChainId(edgeRuleChainId);
+        assetProfileOnEdge.setDefaultDashboardId(dashboardId);
 
         UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
         AssetProfileUpdateMsg.Builder assetProfileUpdateMsgBuilder = AssetProfileUpdateMsg.newBuilder();
-        assetProfileUpdateMsgBuilder.setIdMSB(uuid.getMostSignificantBits());
-        assetProfileUpdateMsgBuilder.setIdLSB(uuid.getLeastSignificantBits());
-        assetProfileUpdateMsgBuilder.setName("Asset Profile On Edge");
-        assetProfileUpdateMsgBuilder.setDefault(false);
-        assetProfileUpdateMsgBuilder.setDefaultRuleChainIdMSB(edgeRuleChainId.getId().getMostSignificantBits());
-        assetProfileUpdateMsgBuilder.setDefaultRuleChainIdLSB(edgeRuleChainId.getId().getLeastSignificantBits());
-        assetProfileUpdateMsgBuilder.setDefaultDashboardIdMSB(dashboardId.getId().getMostSignificantBits());
-        assetProfileUpdateMsgBuilder.setDefaultDashboardIdLSB(dashboardId.getId().getLeastSignificantBits());
+        assetProfileUpdateMsgBuilder.setIdMSB(assetProfileOnEdge.getUuidId().getMostSignificantBits());
+        assetProfileUpdateMsgBuilder.setIdLSB(assetProfileOnEdge.getUuidId().getLeastSignificantBits());
+        assetProfileUpdateMsgBuilder.setEntity(JacksonUtil.toString(assetProfileOnEdge));
         assetProfileUpdateMsgBuilder.setMsgType(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE);
         testAutoGeneratedCodeByProtobuf(assetProfileUpdateMsgBuilder);
         uplinkMsgBuilder.addAssetProfileUpdateMsg(assetProfileUpdateMsgBuilder.build());
@@ -116,7 +114,7 @@ public class AssetProfileEdgeTest extends AbstractEdgeTest {
         UplinkResponseMsg latestResponseMsg = edgeImitator.getLatestResponseMsg();
         Assert.assertTrue(latestResponseMsg.getSuccess());
 
-        AssetProfile assetProfile = doGet("/api/assetProfile/" + uuid, AssetProfile.class);
+        AssetProfile assetProfile = doGet("/api/assetProfile/" + assetProfileOnEdge.getUuidId(), AssetProfile.class);
         Assert.assertNotNull(assetProfile);
         Assert.assertEquals("Asset Profile On Edge", assetProfile.getName());
         Assert.assertEquals(dashboardId, assetProfile.getDefaultDashboardId());
@@ -149,13 +147,11 @@ public class AssetProfileEdgeTest extends AbstractEdgeTest {
         assetProfileOnCloud = doPost("/api/assetProfile", assetProfileOnCloud, AssetProfile.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
 
-        UUID uuid = Uuids.timeBased();
+        AssetProfile assetProfileOnEdge = buildAssetProfileForUplinkMsg(assetProfileOnCloudName);
 
         UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
         AssetProfileUpdateMsg.Builder assetProfileUpdateMsgBuilder = AssetProfileUpdateMsg.newBuilder();
-        assetProfileUpdateMsgBuilder.setIdMSB(uuid.getMostSignificantBits());
-        assetProfileUpdateMsgBuilder.setIdLSB(uuid.getLeastSignificantBits());
-        assetProfileUpdateMsgBuilder.setName(assetProfileOnCloudName);
+        assetProfileUpdateMsgBuilder.setEntity(JacksonUtil.toString(assetProfileOnEdge));
         assetProfileUpdateMsgBuilder.setMsgType(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE);
         uplinkMsgBuilder.addAssetProfileUpdateMsg(assetProfileUpdateMsgBuilder.build());
 
@@ -172,12 +168,23 @@ public class AssetProfileEdgeTest extends AbstractEdgeTest {
         Optional<AssetProfileUpdateMsg> assetProfileUpdateMsgOpt = edgeImitator.findMessageByType(AssetProfileUpdateMsg.class);
         Assert.assertTrue(assetProfileUpdateMsgOpt.isPresent());
         AssetProfileUpdateMsg latestAssetProfileUpdateMsg = assetProfileUpdateMsgOpt.get();
-        Assert.assertNotEquals(assetProfileOnCloudName, latestAssetProfileUpdateMsg.getName());
+        AssetProfile assetProfileMsg = JacksonUtil.fromString(latestAssetProfileUpdateMsg.getEntity(), AssetProfile.class, true);
+        Assert.assertNotNull(assetProfileMsg);
+        Assert.assertNotEquals(assetProfileOnCloudName, assetProfileMsg.getName());
 
-        Assert.assertNotEquals(assetProfileOnCloud.getUuidId(), uuid);
+        Assert.assertNotEquals(assetProfileOnCloud.getUuidId(), assetProfileOnEdge.getUuidId());
 
-        AssetProfile assetProfile = doGet("/api/assetProfile/" + uuid, AssetProfile.class);
+        AssetProfile assetProfile = doGet("/api/assetProfile/" + assetProfileMsg.getUuidId(), AssetProfile.class);
         Assert.assertNotNull(assetProfile);
         Assert.assertNotEquals(assetProfileOnCloudName, assetProfile.getName());
+    }
+
+    private AssetProfile buildAssetProfileForUplinkMsg(String name) {
+        AssetProfile assetProfile = new AssetProfile();
+        assetProfile.setId(new AssetProfileId(UUID.randomUUID()));
+        assetProfile.setTenantId(tenantId);
+        assetProfile.setName(name);
+        assetProfile.setDefault(false);
+        return assetProfile;
     }
 }

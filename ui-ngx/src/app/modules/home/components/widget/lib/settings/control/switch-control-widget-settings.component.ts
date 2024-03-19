@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ///
 
 import { Component } from '@angular/core';
-import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
+import { TargetDevice, WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -36,12 +36,8 @@ export class SwitchControlWidgetSettingsComponent extends WidgetSettingsComponen
     super(store);
   }
 
-  get targetDeviceAliasId(): string {
-    const aliasIds = this.widget?.config?.targetDeviceAliasIds;
-    if (aliasIds && aliasIds.length) {
-      return aliasIds[0];
-    }
-    return null;
+  get targetDevice(): TargetDevice {
+    return this.widgetConfig?.config?.targetDevice;
   }
 
   protected settingsForm(): UntypedFormGroup {

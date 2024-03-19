@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -22,7 +22,11 @@
          formControlName="ruleChainId"
          (focusin)="onFocus()"
          [required]="required"
-         [matAutocomplete]="ruleChainAutocomplete">
+         [matAutocomplete]="ruleChainAutocomplete"
+         [fxShow]="!disabled || !selectRuleChainFormGroup.get('ruleChainId').value">
+  <a *ngIf="selectRuleChainFormGroup.get('ruleChainId').value && disabled" aria-label="Open device profile" [routerLink]=ruleChainURL>
+    {{ displayRuleChainFn(selectRuleChainFormGroup.get('ruleChainId').value) }}
+  </a>
   <button *ngIf="selectRuleChainFormGroup.get('ruleChainId').value && !disabled"
           type="button"
           matSuffix mat-icon-button aria-label="Clear"

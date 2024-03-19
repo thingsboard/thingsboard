@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,6 +113,16 @@ public class DefaultExportableEntitiesService implements ExportableEntitiesServi
         ExportableEntityDao<I, E> dao = getExportableEntityDao(entityType);
         if (dao != null) {
             return dao.findByTenantId(tenantId.getId(), pageLink);
+        } else {
+            return new PageData<>();
+        }
+    }
+
+    @Override
+    public <I extends EntityId> PageData<I> findEntitiesIdsByTenantId(TenantId tenantId, EntityType entityType, PageLink pageLink) {
+        ExportableEntityDao<I, ?> dao = getExportableEntityDao(entityType);
+        if (dao != null) {
+            return dao.findIdsByTenantId(tenantId.getId(), pageLink);
         } else {
             return new PageData<>();
         }

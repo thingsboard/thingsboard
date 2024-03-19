@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,6 +110,7 @@ public class JpaWidgetTypeDaoTest extends AbstractJpaDaoTest {
         widgetType.setName("WIDGET_TYPE_" + number);
         widgetType.setDescription("WIDGET_TYPE_DESCRIPTION" + number);
         widgetType.setFqn("FQN_" + number);
+        widgetType.setImage("/image/system/logo.png");
         var descriptor = JacksonUtil.newObjectNode();
         descriptor.put("type", number % 2 == 0 ? "latest" : "static");
         widgetType.setDescriptor(descriptor);
@@ -124,6 +125,7 @@ public class JpaWidgetTypeDaoTest extends AbstractJpaDaoTest {
         widgetType.setName("WIDGET_TYPE_" + number);
         widgetType.setDescription("WIDGET_TYPE_DESCRIPTION" + number);
         widgetType.setFqn("FQN_" + number);
+        widgetType.setImage("/image/tenant/logo.png");
         var descriptor = JacksonUtil.newObjectNode();
         descriptor.put("type", number % 2 == 0 ? "latest" : "static");
         widgetType.setDescriptor(descriptor);
@@ -331,5 +333,26 @@ public class JpaWidgetTypeDaoTest extends AbstractJpaDaoTest {
         assertNotNull(result);
         WidgetType widgetType = widgetTypeDao.findByTenantIdAndFqn(TenantId.SYS_TENANT_ID.getId(), "FQN_0");
         assertEquals(result.getId(), widgetType.getId());
+    }
+
+    @Test
+    public void testFindByTenantAndImageLink() {
+        var result = widgetTypeDao.findByImageLink("/image/system/logo.png", 5);
+        assertEquals(3, result.size());
+        result = widgetTypeDao.findByImageLink("/image/system/logo2.png", 5);
+        assertEquals(0, result.size());
+    }
+
+    @Test
+    public void testFindByImageLink() {
+        TenantId tenantId = new TenantId(UUID.randomUUID());
+        WidgetTypeDetails details = createAndSaveWidgetType(tenantId, 0, new String[]{"a"});
+        details.setDescriptor(JacksonUtil.newObjectNode().put("bg", "/image/tenant/widget.png"));
+        widgetTypeDao.save(tenantId, details);
+        var result = widgetTypeDao.findByTenantAndImageLink(tenantId, "/image/tenant/widget.png", 3);
+        assertEquals(1, result.size());
+        result = widgetTypeDao.findByTenantAndImageLink(tenantId, "/image/tenant/widget2.png", 3);
+        assertEquals(0, result.size());
+        widgetTypeDao.removeById(tenantId, details.getUuidId());
     }
 }

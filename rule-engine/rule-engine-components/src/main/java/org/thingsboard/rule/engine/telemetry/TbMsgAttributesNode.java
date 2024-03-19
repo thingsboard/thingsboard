@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,13 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.transport.adaptor.JsonConverter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,7 +43,9 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.common.data.DataConstants.*;
+import static org.thingsboard.server.common.data.DataConstants.CLIENT_SCOPE;
+import static org.thingsboard.server.common.data.DataConstants.NOTIFY_DEVICE_METADATA_KEY;
+import static org.thingsboard.server.common.data.DataConstants.SCOPE;
 import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
 
 @Slf4j
@@ -51,7 +53,7 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_R
         type = ComponentType.ACTION,
         name = "save attributes",
         configClazz = TbMsgAttributesNodeConfiguration.class,
-        version = 1,
+        version = 2,
         nodeDescription = "Saves attributes data",
         nodeDetails = "Saves entity attributes based on configurable scope parameter. Expects messages with 'POST_ATTRIBUTES_REQUEST' message type. " +
                       "If upsert(update/insert) operation is completed successfully rule node will send the incoming message via <b>Success</b> chain, otherwise, <b>Failure</b> chain is used. " +
@@ -64,15 +66,15 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_R
 )
 public class TbMsgAttributesNode implements TbNode {
 
+    static final String NOTIFY_DEVICE_KEY = "notifyDevice";
+    static final String SEND_ATTRIBUTES_UPDATED_NOTIFICATION_KEY = "sendAttributesUpdatedNotification";
     static final String UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY = "updateAttributesOnlyOnValueChange";
+
     private TbMsgAttributesNodeConfiguration config;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgAttributesNodeConfiguration.class);
-        if (config.getNotifyDevice() == null) {
-            config.setNotifyDevice(true);
-        }
     }
 
     @Override
@@ -117,7 +119,7 @@ public class TbMsgAttributesNode implements TbNode {
                 msg.getOriginator(),
                 scope,
                 attributes,
-                checkNotifyDevice(msg.getMetaData().getValue(NOTIFY_DEVICE_METADATA_KEY)),
+                config.isNotifyDevice() || checkNotifyDeviceMdValue(msg.getMetaData().getValue(NOTIFY_DEVICE_METADATA_KEY)),
                 sendAttributesUpdateNotification ?
                         new AttributesUpdateNodeCallback(ctx, msg, scope, attributes) :
                         new TelemetryNodeCallback(ctx, msg)
@@ -146,8 +148,9 @@ public class TbMsgAttributesNode implements TbNode {
         return config.isSendAttributesUpdatedNotification() && !CLIENT_SCOPE.equals(scope);
     }
 
-    private boolean checkNotifyDevice(String notifyDeviceMdValue) {
-        return config.getNotifyDevice() || StringUtils.isEmpty(notifyDeviceMdValue) || Boolean.parseBoolean(notifyDeviceMdValue);
+    private boolean checkNotifyDeviceMdValue(String notifyDeviceMdValue) {
+        // Check for empty string for backward-compatibility. A while ago node always notified devices.
+        return StringUtils.isEmpty(notifyDeviceMdValue) || Boolean.parseBoolean(notifyDeviceMdValue);
     }
 
     private String getScope(String mdScopeValue) {
@@ -166,11 +169,34 @@ public class TbMsgAttributesNode implements TbNode {
                     hasChanges = true;
                     ((ObjectNode) oldConfiguration).put(UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY, false);
                 }
+            case 1:
+                // update notifyDevice. set true if null or property doesn't exist for backward-compatibility.
+                hasChanges = fixEscapedBooleanConfigParameter(oldConfiguration, NOTIFY_DEVICE_KEY, hasChanges, true);
+                // update sendAttributesUpdatedNotification.
+                hasChanges = fixEscapedBooleanConfigParameter(oldConfiguration, SEND_ATTRIBUTES_UPDATED_NOTIFICATION_KEY, hasChanges, false);
+                // update updateAttributesOnlyOnValueChange.
+                hasChanges = fixEscapedBooleanConfigParameter(oldConfiguration, UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY, hasChanges, true);
                 break;
             default:
                 break;
         }
         return new TbPair<>(hasChanges, oldConfiguration);
+    }
+
+    private boolean fixEscapedBooleanConfigParameter(JsonNode oldConfiguration, String boolKey, boolean hasChanges, boolean valueIfNull) {
+        if (oldConfiguration.hasNonNull(boolKey)) {
+            var value = oldConfiguration.get(boolKey);
+            if (value.isTextual()) {
+                hasChanges = true;
+                ((ObjectNode) oldConfiguration)
+                        .put(boolKey, value.asBoolean(valueIfNull));
+            }
+        } else {
+            hasChanges = true;
+            ((ObjectNode) oldConfiguration)
+                    .put(boolKey, valueIfNull);
+        }
+        return hasChanges;
     }
 
 }

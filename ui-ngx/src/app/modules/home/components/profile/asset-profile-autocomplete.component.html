@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -25,8 +25,9 @@
          (keydown)="assetProfileEnter($event)"
          (keypress)="assetProfileEnter($event)"
          [matAutocomplete]="assetProfileAutocomplete"
-         [fxShow]="!showDetailsPageLink || !disabled || !selectAssetProfileFormGroup.get('assetProfile').value">
-  <a *ngIf="showDetailsPageLink && selectAssetProfileFormGroup.get('assetProfile').value && disabled" aria-label="Open asset profile" [routerLink]=assetProfileURL>
+         [fxShow]="!showDetailsPageLink || !useAssetProfileLink || !disabled || !selectAssetProfileFormGroup.get('assetProfile').value">
+  <a *ngIf="showDetailsPageLink && useAssetProfileLink && selectAssetProfileFormGroup.get('assetProfile').value && disabled"
+     aria-label="Open asset profile" [routerLink]=assetProfileURL>
     {{ displayAssetProfileFn(selectAssetProfileFormGroup.get('assetProfile').value) }}
   </a>
   <button *ngIf="selectAssetProfileFormGroup.get('assetProfile').value && !disabled"

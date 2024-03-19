@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,10 +43,16 @@ import java.util.NoSuchElementException;
         type = ComponentType.TRANSFORMATION,
         name = "change originator",
         configClazz = TbChangeOriginatorNodeConfiguration.class,
-        nodeDescription = "Change Message Originator To Tenant/Customer/Related Entity/Alarm Originator",
-        nodeDetails = "Related Entity found using configured relation direction and Relation Type. " +
-                "If multiple Related Entities are found, only first Entity is used as new Originator, other entities are discarded.<br/>" +
-                "Alarm Originator found only in case original Originator is <code>Alarm</code> entity.",
+        nodeDescription = "Change message originator to Tenant/Customer/Related Entity/Alarm Originator/Entity by name pattern.",
+        nodeDetails = "Configuration: <ul><li><strong>Customer</strong> - use customer of incoming message originator as new originator. " +
+                "Only for assigned to customer originators with one of the following type: 'User', 'Asset', 'Device'.</li>" +
+                "<li><strong>Tenant</strong> - use current tenant as new originator.</li>" +
+                "<li><strong>Related Entity</strong> - use related entity as new originator. Lookup based on configured relation query. " +
+                "If multiple related entities are found, only first entity is used as new originator, other entities are discarded.</li>" +
+                "<li><strong>Alarm Originator</strong> - use alarm originator as new originator. Only if incoming message originator is alarm entity.</li>" +
+                "<li><strong>Entity by name pattern</strong> - specify entity type and name pattern of new originator. Following entity types are supported: " +
+                "'Device', 'Asset', 'Entity View', 'Edge' or 'User'.</li></ul>" +
+                "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbTransformationNodeChangeOriginatorConfig",
         icon = "find_replace"

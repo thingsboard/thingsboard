@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,12 +151,12 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
 
     @Override
     public ListenableFuture<Optional<TsKvEntry>> findLatestOpt(TenantId tenantId, EntityId entityId, String key) {
-        return Futures.immediateFuture(Optional.ofNullable(doFindLatest(entityId, key)));
+        return service.submit(() -> Optional.ofNullable(doFindLatest(entityId, key)));
     }
 
     @Override
     public ListenableFuture<TsKvEntry> findLatest(TenantId tenantId, EntityId entityId, String key) {
-        return Futures.immediateFuture(getLatestTsKvEntry(entityId, key));
+        return service.submit(() -> getLatestTsKvEntry(entityId, key));
     }
 
     @Override
@@ -221,36 +221,29 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
     }
 
     protected ListenableFuture<TsKvLatestRemovingResult> getRemoveLatestFuture(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
-        TsKvEntry latest = doFindLatest(entityId, query.getKey());
-
-        if (latest == null) {
-            return Futures.immediateFuture(new TsKvLatestRemovingResult(query.getKey(), false));
-        }
-
-        long ts = latest.getTs();
-        ListenableFuture<Boolean> removedLatestFuture;
-        if (ts >= query.getStartTs() && ts < query.getEndTs()) {
-            TsKvLatestEntity latestEntity = new TsKvLatestEntity();
-            latestEntity.setEntityId(entityId.getId());
-            latestEntity.setKey(getOrSaveKeyId(query.getKey()));
-            removedLatestFuture = service.submit(() -> {
+        ListenableFuture<TsKvEntry> latestFuture = service.submit(() -> doFindLatest(entityId, query.getKey()));
+        return Futures.transformAsync(latestFuture, latest -> {
+            if (latest == null) {
+                return Futures.immediateFuture(new TsKvLatestRemovingResult(query.getKey(), false));
+            }
+            boolean isRemoved = false;
+            long ts = latest.getTs();
+            if (ts >= query.getStartTs() && ts < query.getEndTs()) {
+                TsKvLatestEntity latestEntity = new TsKvLatestEntity();
+                latestEntity.setEntityId(entityId.getId());
+                latestEntity.setKey(getOrSaveKeyId(query.getKey()));
                 tsKvLatestRepository.delete(latestEntity);
-                return true;
-            });
-        } else {
-            removedLatestFuture = Futures.immediateFuture(false);
-        }
-
-        return Futures.transformAsync(removedLatestFuture, isRemoved -> {
-            if (isRemoved && query.getRewriteLatestIfDeleted()) {
-                return getNewLatestEntryFuture(tenantId, entityId, query);
+                isRemoved = true;
+                if (query.getRewriteLatestIfDeleted()) {
+                    return getNewLatestEntryFuture(tenantId, entityId, query);
+                }
             }
             return Futures.immediateFuture(new TsKvLatestRemovingResult(query.getKey(), isRemoved));
         }, MoreExecutors.directExecutor());
     }
 
     protected ListenableFuture<List<TsKvEntry>> getFindAllLatestFuture(EntityId entityId) {
-        return Futures.immediateFuture(
+        return service.submit(() ->
                 DaoUtil.convertDataList(Lists.newArrayList(
                         searchTsKvLatestRepository.findAllByEntityId(entityId.getId()))));
     }

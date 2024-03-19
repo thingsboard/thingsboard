@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import {
   constantColor,
   Font
 } from '@shared/models/widget-settings.models';
+import { LegendPosition } from '@shared/models/widget.models';
 
 export enum DoughnutLayout {
   default = 'default',
@@ -50,22 +51,6 @@ export const horizontalDoughnutLayoutImages = new Map<DoughnutLayout, string>(
   ]
 );
 
-export enum DoughnutLegendPosition {
-  top = 'top',
-  bottom = 'bottom',
-  left = 'left',
-  right = 'right'
-}
-
-export const doughnutLegendPositionTranslations = new Map<DoughnutLegendPosition, string>(
-  [
-    [DoughnutLegendPosition.top, 'widgets.doughnut.legend-position-top'],
-    [DoughnutLegendPosition.bottom, 'widgets.doughnut.legend-position-bottom'],
-    [DoughnutLegendPosition.left, 'widgets.doughnut.legend-position-left'],
-    [DoughnutLegendPosition.right, 'widgets.doughnut.legend-position-right']
-  ]
-);
-
 export enum DoughnutTooltipValueType {
   absolute = 'absolute',
   percentage = 'percentage'
@@ -83,10 +68,12 @@ export const doughnutTooltipValueTypeTranslations = new Map<DoughnutTooltipValue
 export interface DoughnutWidgetSettings {
   layout: DoughnutLayout;
   autoScale: boolean;
+  clockwise: boolean;
+  sortSeries: boolean;
   totalValueFont: Font;
   totalValueColor: ColorSettings;
   showLegend: boolean;
-  legendPosition: DoughnutLegendPosition;
+  legendPosition: LegendPosition;
   legendLabelFont: Font;
   legendLabelColor: string;
   legendValueFont: Font;
@@ -104,6 +91,8 @@ export interface DoughnutWidgetSettings {
 export const doughnutDefaultSettings = (horizontal: boolean): DoughnutWidgetSettings => ({
   layout: DoughnutLayout.default,
   autoScale: true,
+  clockwise: false,
+  sortSeries: false,
   totalValueFont: {
     family: 'Roboto',
     size: 24,
@@ -114,7 +103,7 @@ export const doughnutDefaultSettings = (horizontal: boolean): DoughnutWidgetSett
   },
   totalValueColor: constantColor('rgba(0, 0, 0, 0.87)'),
   showLegend: true,
-  legendPosition: horizontal ? DoughnutLegendPosition.right : DoughnutLegendPosition.bottom,
+  legendPosition: horizontal ? LegendPosition.right : LegendPosition.bottom,
   legendLabelFont: {
     family: 'Roboto',
     size: 12,

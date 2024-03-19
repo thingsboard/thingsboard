@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.server.cache;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.support.NullValue;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -27,6 +28,7 @@ import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.types.Expiration;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.thingsboard.server.common.data.FstStatsService;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.util.JedisClusterCRC16;
@@ -43,6 +45,9 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
 
     private static final byte[] BINARY_NULL_VALUE = RedisSerializer.java().serialize(NullValue.INSTANCE);
     static final JedisPool MOCK_POOL = new JedisPool(); //non-null pool required for JedisConnection to trigger closing jedis connection
+
+    @Autowired
+    private FstStatsService fstStatsService;
 
     @Getter
     private final String cacheName;
@@ -79,7 +84,12 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
             } else if (Arrays.equals(rawValue, BINARY_NULL_VALUE)) {
                 return SimpleTbCacheValueWrapper.empty();
             } else {
+                long startTime = System.nanoTime();
                 V value = valueSerializer.deserialize(key, rawValue);
+                if (value != null) {
+                    fstStatsService.recordDecodeTime(value.getClass(), startTime);
+                    fstStatsService.incrementDecode(value.getClass());
+                }
                 return SimpleTbCacheValueWrapper.wrap(value);
             }
         }
@@ -190,7 +200,11 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
             return BINARY_NULL_VALUE;
         } else {
             try {
-                return valueSerializer.serialize(value);
+                long startTime = System.nanoTime();
+                var bytes = valueSerializer.serialize(value);
+                fstStatsService.recordEncodeTime(value.getClass(), startTime);
+                fstStatsService.incrementEncode(value.getClass());
+                return bytes;
             } catch (Exception e) {
                 log.warn("Failed to serialize the cache value: {}", value, e);
                 throw new RuntimeException(e);

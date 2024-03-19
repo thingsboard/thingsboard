@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,11 +14,8 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { DeviceService } from '@core/http/device.service';
-import { helpBaseUrl } from '@shared/models/constants';
-import { getOS } from '@core/utils';
-import { PublishLaunchCommand } from '@shared/models/device.models';
 
 @Component({
   selector: 'tb-gateway-command',
@@ -26,47 +23,20 @@ import { PublishLaunchCommand } from '@shared/models/device.models';
   styleUrls: ['./device-gateway-command.component.scss']
 })
 
-export class DeviceGatewayCommandComponent implements OnInit {
-
-  @Input()
-  token: string;
+export class DeviceGatewayCommandComponent {
 
   @Input()
   deviceId: string;
 
-  commands: PublishLaunchCommand;
-
-  helpLink: string = helpBaseUrl + '/docs/iot-gateway/install/docker-installation/';
-
-  tabIndex = 0;
-
-  constructor(private cd: ChangeDetectorRef,
-              private deviceService: DeviceService) {
+  constructor(private deviceService: DeviceService) {
   }
 
-
-  ngOnInit(): void {
-    if (this.deviceId) {
-      this.deviceService.getDevicePublishLaunchCommands(this.deviceId).subscribe(commands => {
-        this.commands = commands;
-        this.cd.detectChanges();
-      });
+  download($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
     }
-    const currentOS = getOS();
-    switch (currentOS) {
-      case 'linux':
-      case 'android':
-        this.tabIndex = 1;
-        break;
-      case 'macos':
-      case 'ios':
-        this.tabIndex = 2;
-        break;
-      case 'windows':
-        this.tabIndex = 0;
-        break;
-      default:
-        this.tabIndex = 1;
+    if (this.deviceId) {
+      this.deviceService.downloadGatewayDockerComposeFile(this.deviceId).subscribe(() => {});
     }
   }
 }

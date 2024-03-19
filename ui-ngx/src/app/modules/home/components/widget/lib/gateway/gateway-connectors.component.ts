@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -139,6 +139,21 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       this.cd.detectChanges();
     });
 
+    this.connectorForm.get('type').valueChanges.subscribe(type=> {
+      if(type && !this.initialConnector) {
+        this.attributeService.getEntityAttributes(this.device, AttributeScope.CLIENT_SCOPE,
+          [`${type.toUpperCase()}_DEFAULT_CONFIG`], {ignoreErrors: true}).subscribe(defaultConfig=>{
+          if (defaultConfig && defaultConfig.length) {
+            this.connectorForm.get('configurationJson').setValue(
+              isString(defaultConfig[0].value) ?
+                JSON.parse(defaultConfig[0].value) :
+                defaultConfig[0].value);
+            this.cd.detectChanges();
+          }
+        })
+      }
+    });
+
     this.dataSource.sort = this.sort;
     this.dataSource.sortingDataAccessor = (data: AttributeData, sortHeaderId: string) => {
       if (sortHeaderId === 'syncStatus') {
@@ -210,7 +225,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       value
     }];
     const attributesToDelete = [];
-    const scope = (this.initialConnector && this.activeConnectors.includes(this.initialConnector.name))
+    const scope = (!this.initialConnector || this.activeConnectors.includes(this.initialConnector.name))
                   ? AttributeScope.SHARED_SCOPE
                   : AttributeScope.SERVER_SCOPE;
     let updateActiveConnectors = false;
@@ -307,6 +322,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   }
 
   private clearOutConnectorForm(): void {
+    this.initialConnector = null;
     this.connectorForm.setValue({
       name: '',
       type: 'mqtt',
@@ -316,7 +332,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       configuration: '',
       configurationJson: {}
     });
-    this.initialConnector = null;
     this.connectorForm.markAsPristine();
   }
 
@@ -351,7 +366,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
         type: 'success',
         duration: 1000,
         verticalPosition: 'top',
-        horizontalPosition: 'right',
+        horizontalPosition: 'left',
         target: 'dashboardRoot',
         forceDismiss: true
       }));
@@ -366,6 +381,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     if ($event) {
       $event.stopPropagation();
     }
+    this.initialConnector = attribute.value;
     const title = `Delete connector ${attribute.key}?`;
     const content = `All connector data will be deleted.`;
     this.dialogService.confirm(title, content, 'Cancel', 'Delete').subscribe(result => {

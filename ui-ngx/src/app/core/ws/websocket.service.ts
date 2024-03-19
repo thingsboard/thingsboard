@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,8 +21,13 @@ import { AuthService } from '@core/auth/auth.service';
 import { NgZone } from '@angular/core';
 import { selectIsAuthenticated } from '@core/auth/auth.selectors';
 import { webSocket, WebSocketSubject } from 'rxjs/webSocket';
-import { WebsocketNotificationMsg } from '@shared/models/websocket/notification-ws.models';
-import { CmdUpdateMsg } from '@shared/models/telemetry/telemetry.models';
+import {
+  AuthWsCmd,
+  CmdUpdateMsg,
+  NotificationSubscriber,
+  TelemetrySubscriber,
+  WebsocketDataMsg
+} from '@shared/models/telemetry/telemetry.models';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import Timeout = NodeJS.Timeout;
 
@@ -42,13 +47,13 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
 
   lastCmdId = 0;
   subscribersCount = 0;
-  subscribersMap = new Map<number, T>();
+  subscribersMap = new Map<number, TelemetrySubscriber | NotificationSubscriber>();
 
-  reconnectSubscribers = new Set<T>();
+  reconnectSubscribers = new Set<WsSubscriber>();
 
-  notificationUri: string;
+  wsUri: string;
 
-  dataStream: WebSocketSubject<CmdWrapper | CmdUpdateMsg>;
+  dataStream: WebSocketSubject<CmdWrapper | CmdUpdateMsg | AuthWsCmd>;
 
   errorName = 'WebSocket Error';
 
@@ -69,23 +74,23 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
       if (!port) {
         port = '443';
       }
-      this.notificationUri = 'wss:';
+      this.wsUri = 'wss:';
     } else {
       if (!port) {
         port = '80';
       }
-      this.notificationUri = 'ws:';
+      this.wsUri = 'ws:';
     }
-    this.notificationUri += `//${this.window.location.hostname}:${port}/${apiEndpoint}`;
+    this.wsUri += `//${this.window.location.hostname}:${port}/${apiEndpoint}`;
   }
 
-  abstract subscribe(subscriber: T);
+  abstract subscribe(subscriber: WsSubscriber);
 
   abstract update(subscriber: T);
 
   abstract unsubscribe(subscriber: T);
 
-  abstract processOnMessage(message: any);
+  abstract processOnMessage(message: WebsocketDataMsg);
 
   protected nextCmdId(): number {
     this.lastCmdId++;
@@ -158,13 +163,13 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
   }
 
   private openSocket(token: string) {
-    const uri = `${this.notificationUri}?token=${token}`;
-    this.dataStream = webSocket(
+    const uri = `${this.wsUri}`;
+    this.dataStream = webSocket<CmdUpdateMsg>(
       {
         url: uri,
         openObserver: {
           next: () => {
-            this.onOpen();
+            this.onOpen(token);
           }
         },
         closeObserver: {
@@ -176,9 +181,9 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
     );
 
     this.dataStream.subscribe({
-      next: (message) => {
+      next: (message: CmdUpdateMsg) => {
         this.ngZone.runOutsideAngular(() => {
-          this.onMessage(message as WebsocketNotificationMsg);
+          this.onMessage(message);
         });
       },
       error: (error) => {
@@ -187,9 +192,10 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
     });
   }
 
-  private onOpen() {
+  private onOpen(token: string) {
     this.isOpening = false;
     this.isOpened = true;
+    this.cmdWrapper.setAuth(token);
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
@@ -208,11 +214,11 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
     }
   }
 
-  private onMessage(message: WebsocketNotificationMsg) {
+  private onMessage(message: CmdUpdateMsg) {
     if (message.errorCode) {
       this.showWsError(message.errorCode, message.errorMsg);
     } else {
-      this.processOnMessage(message);
+      this.processOnMessage(message as WebsocketDataMsg);
     }
     this.checkToClose();
   }
@@ -259,5 +265,4 @@ export abstract class WebsocketService<T extends WsSubscriber> implements WsServ
         message, type: 'error'
       }));
   }
-
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Throwables;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
@@ -32,12 +33,20 @@ import java.util.concurrent.ThreadLocalRandom;
 public final class EdgeUtils {
 
     private static final EnumMap<EntityType, EdgeEventType> entityTypeEdgeEventTypeEnumMap;
+    private static final EnumMap<ActionType, EdgeEventActionType> actionTypeEdgeEventActionTypeEnumMap;
 
     static {
         entityTypeEdgeEventTypeEnumMap = new EnumMap<>(EntityType.class);
         for (EdgeEventType edgeEventType : EdgeEventType.values()) {
             if (edgeEventType.getEntityType() != null) {
                 entityTypeEdgeEventTypeEnumMap.put(edgeEventType.getEntityType(), edgeEventType);
+            }
+        }
+
+        actionTypeEdgeEventActionTypeEnumMap = new EnumMap<>(ActionType.class);
+        for (EdgeEventActionType edgeEventActionType : EdgeEventActionType.values()) {
+            if (edgeEventActionType.getActionType() != null) {
+                actionTypeEdgeEventActionTypeEnumMap.put(edgeEventActionType.getActionType(), edgeEventActionType);
             }
         }
     }
@@ -52,6 +61,10 @@ public final class EdgeUtils {
 
     public static EdgeEventType getEdgeEventTypeByEntityType(EntityType entityType) {
         return entityTypeEdgeEventTypeEnumMap.get(entityType);
+    }
+
+    public static EdgeEventActionType getEdgeEventActionTypeByActionType(ActionType actionType) {
+        return actionTypeEdgeEventActionTypeEnumMap.get(actionType);
     }
 
     public static EdgeEvent constructEdgeEvent(TenantId tenantId,

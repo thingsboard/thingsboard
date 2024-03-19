@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import org.thingsboard.server.common.data.exception.TenantNotFoundException;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
@@ -185,7 +186,12 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     @Getter
     private int initFetchPackSize;
 
+    @Value("${state.telemetryTtl:0}")
+    @Getter
+    private int telemetryTtl;
+
     private ListeningExecutorService deviceStateExecutor;
+    private ListeningExecutorService deviceStateCallbackExecutor;
 
     final ConcurrentMap<DeviceId, DeviceStateData> deviceStates = new ConcurrentHashMap<>();
 
@@ -194,6 +200,8 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         super.init();
         deviceStateExecutor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(
                 Math.max(4, Runtime.getRuntime().availableProcessors()), "device-state"));
+        deviceStateCallbackExecutor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(
+                Math.max(4, Runtime.getRuntime().availableProcessors()), "device-state-callback"));
         scheduledExecutor.scheduleWithFixedDelay(this::checkStates, new Random().nextInt(defaultStateCheckIntervalInSec), defaultStateCheckIntervalInSec, TimeUnit.SECONDS);
         scheduledExecutor.scheduleWithFixedDelay(this::reportActivityStats, defaultActivityStatsIntervalInSec, defaultActivityStatsIntervalInSec, TimeUnit.SECONDS);
     }
@@ -203,6 +211,9 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         super.stop();
         if (deviceStateExecutor != null) {
             deviceStateExecutor.shutdownNow();
+        }
+        if (deviceStateCallbackExecutor != null) {
+            deviceStateCallbackExecutor.shutdownNow();
         }
     }
 
@@ -217,25 +228,35 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
     }
 
     @Override
-    public void onDeviceConnect(TenantId tenantId, DeviceId deviceId) {
-        if (cleanDeviceStateIfBelongsExternalPartition(tenantId, deviceId)) {
+    public void onDeviceConnect(TenantId tenantId, DeviceId deviceId, long lastConnectTime) {
+        if (cleanDeviceStateIfBelongsToExternalPartition(tenantId, deviceId)) {
             return;
         }
-        log.trace("on Device Connect [{}]", deviceId.getId());
+        if (lastConnectTime < 0) {
+            log.trace("[{}][{}] On device connect: received negative last connect ts [{}]. Skipping this event.",
+                    tenantId.getId(), deviceId.getId(), lastConnectTime);
+            return;
+        }
         DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
-        long ts = getCurrentTimeMillis();
-        stateData.getState().setLastConnectTime(ts);
-        save(deviceId, LAST_CONNECT_TIME, ts);
+        long currentLastConnectTime = stateData.getState().getLastConnectTime();
+        if (lastConnectTime <= currentLastConnectTime) {
+            log.trace("[{}][{}] On device connect: received outdated last connect ts [{}]. Skipping this event. Current last connect ts [{}].",
+                    tenantId.getId(), deviceId.getId(), lastConnectTime, currentLastConnectTime);
+            return;
+        }
+        log.trace("[{}][{}] On device connect: processing connect event with ts [{}].", tenantId.getId(), deviceId.getId(), lastConnectTime);
+        stateData.getState().setLastConnectTime(lastConnectTime);
+        save(deviceId, LAST_CONNECT_TIME, lastConnectTime);
         pushRuleEngineMessage(stateData, TbMsgType.CONNECT_EVENT);
         checkAndUpdateState(deviceId, stateData);
     }
 
     @Override
     public void onDeviceActivity(TenantId tenantId, DeviceId deviceId, long lastReportedActivity) {
-        if (cleanDeviceStateIfBelongsExternalPartition(tenantId, deviceId)) {
+        if (cleanDeviceStateIfBelongsToExternalPartition(tenantId, deviceId)) {
             return;
         }
-        log.trace("on Device Activity [{}], lastReportedActivity [{}]", deviceId.getId(), lastReportedActivity);
+        log.trace("[{}] on Device Activity [{}], lastReportedActivity [{}]", tenantId.getId(), deviceId.getId(), lastReportedActivity);
         final DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
         if (lastReportedActivity > 0 && lastReportedActivity > stateData.getState().getLastActivityTime()) {
             updateActivityState(deviceId, stateData, lastReportedActivity);
@@ -257,35 +278,73 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                 onDeviceActivityStatusChange(deviceId, true, stateData);
             }
         } else {
-            log.debug("updateActivityState - fetched state IN NULL for device {}, lastReportedActivity {}", deviceId, lastReportedActivity);
+            log.debug("updateActivityState - fetched state IS NULL for device {}, lastReportedActivity {}", deviceId, lastReportedActivity);
             cleanupEntity(deviceId);
         }
     }
 
     @Override
-    public void onDeviceDisconnect(TenantId tenantId, DeviceId deviceId) {
-        if (cleanDeviceStateIfBelongsExternalPartition(tenantId, deviceId)) {
+    public void onDeviceDisconnect(TenantId tenantId, DeviceId deviceId, long lastDisconnectTime) {
+        if (cleanDeviceStateIfBelongsToExternalPartition(tenantId, deviceId)) {
+            return;
+        }
+        if (lastDisconnectTime < 0) {
+            log.trace("[{}][{}] On device disconnect: received negative last disconnect ts [{}]. Skipping this event.",
+                    tenantId.getId(), deviceId.getId(), lastDisconnectTime);
             return;
         }
         DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
-        long ts = getCurrentTimeMillis();
-        stateData.getState().setLastDisconnectTime(ts);
-        save(deviceId, LAST_DISCONNECT_TIME, ts);
+        long currentLastDisconnectTime = stateData.getState().getLastDisconnectTime();
+        if (lastDisconnectTime <= currentLastDisconnectTime) {
+            log.trace("[{}][{}] On device disconnect: received outdated last disconnect ts [{}]. Skipping this event. Current last disconnect ts [{}].",
+                    tenantId.getId(), deviceId.getId(), lastDisconnectTime, currentLastDisconnectTime);
+            return;
+        }
+        log.trace("[{}][{}] On device disconnect: processing disconnect event with ts [{}].", tenantId.getId(), deviceId.getId(), lastDisconnectTime);
+        stateData.getState().setLastDisconnectTime(lastDisconnectTime);
+        save(deviceId, LAST_DISCONNECT_TIME, lastDisconnectTime);
         pushRuleEngineMessage(stateData, TbMsgType.DISCONNECT_EVENT);
     }
 
     @Override
     public void onDeviceInactivityTimeoutUpdate(TenantId tenantId, DeviceId deviceId, long inactivityTimeout) {
-        if (cleanDeviceStateIfBelongsExternalPartition(tenantId, deviceId)) {
+        if (cleanDeviceStateIfBelongsToExternalPartition(tenantId, deviceId)) {
             return;
         }
         if (inactivityTimeout <= 0L) {
             inactivityTimeout = defaultInactivityTimeoutMs;
         }
-        log.trace("on Device Activity Timeout Update device id {} inactivityTimeout {}", deviceId, inactivityTimeout);
+        log.trace("[{}] on Device Activity Timeout Update device id {} inactivityTimeout {}", tenantId.getId(), deviceId.getId(), inactivityTimeout);
         DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
         stateData.getState().setInactivityTimeout(inactivityTimeout);
         checkAndUpdateState(deviceId, stateData);
+    }
+
+    @Override
+    public void onDeviceInactivity(TenantId tenantId, DeviceId deviceId, long lastInactivityTime) {
+        if (cleanDeviceStateIfBelongsToExternalPartition(tenantId, deviceId)) {
+            return;
+        }
+        if (lastInactivityTime < 0) {
+            log.trace("[{}][{}] On device inactivity: received negative last inactivity ts [{}]. Skipping this event.",
+                    tenantId.getId(), deviceId.getId(), lastInactivityTime);
+            return;
+        }
+        DeviceStateData stateData = getOrFetchDeviceStateData(deviceId);
+        long currentLastInactivityAlarmTime = stateData.getState().getLastInactivityAlarmTime();
+        if (lastInactivityTime <= currentLastInactivityAlarmTime) {
+            log.trace("[{}][{}] On device inactivity: received last inactivity ts [{}] is less than current last inactivity ts [{}]. Skipping this event.",
+                    tenantId.getId(), deviceId.getId(), lastInactivityTime, currentLastInactivityAlarmTime);
+            return;
+        }
+        long currentLastActivityTime = stateData.getState().getLastActivityTime();
+        if (lastInactivityTime <= currentLastActivityTime) {
+            log.trace("[{}][{}] On device inactivity: received last inactivity ts [{}] is less or equal to current last activity ts [{}]. Skipping this event.",
+                    tenantId.getId(), deviceId.getId(), lastInactivityTime, currentLastActivityTime);
+            return;
+        }
+        log.trace("[{}][{}] On device inactivity: processing inactivity event with ts [{}].", tenantId.getId(), deviceId.getId(), lastInactivityTime);
+        reportInactivity(lastInactivityTime, deviceId, stateData);
     }
 
     @Override
@@ -319,7 +378,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                                 log.warn("Failed to register device to the state service", t);
                                 callback.onFailure(t);
                             }
-                        }, deviceStateExecutor);
+                        }, deviceStateCallbackExecutor);
                     } else if (proto.getUpdated()) {
                         DeviceStateData stateData = getOrFetchDeviceStateData(device.getId());
                         TbMsgMetaData md = new TbMsgMetaData();
@@ -493,10 +552,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                     && (state.getLastInactivityAlarmTime() == 0L || state.getLastInactivityAlarmTime() <= state.getLastActivityTime())
                     && stateData.getDeviceCreationTime() + state.getInactivityTimeout() <= ts) {
                 if (partitionService.resolve(ServiceType.TB_CORE, stateData.getTenantId(), deviceId).isMyPartition()) {
-                    state.setActive(false);
-                    state.setLastInactivityAlarmTime(ts);
-                    onDeviceActivityStatusChange(deviceId, false, stateData);
-                    save(deviceId, INACTIVITY_ALARM_TIME, ts);
+                    reportInactivity(ts, deviceId, stateData);
                 } else {
                     cleanupEntity(deviceId);
                 }
@@ -507,32 +563,34 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         }
     }
 
+    private void reportInactivity(long ts, DeviceId deviceId, DeviceStateData stateData) {
+        DeviceState state = stateData.getState();
+        state.setActive(false);
+        state.setLastInactivityAlarmTime(ts);
+        save(deviceId, INACTIVITY_ALARM_TIME, ts);
+        onDeviceActivityStatusChange(deviceId, false, stateData);
+    }
+
     boolean isActive(long ts, DeviceState state) {
         return ts < state.getLastActivityTime() + state.getInactivityTimeout();
     }
 
     @Nonnull
     DeviceStateData getOrFetchDeviceStateData(DeviceId deviceId) {
-        DeviceStateData deviceStateData = deviceStates.get(deviceId);
-        if (deviceStateData != null) {
-            return deviceStateData;
-        }
-        return fetchDeviceStateDataUsingEntityDataQuery(deviceId);
+        return deviceStates.computeIfAbsent(deviceId, this::fetchDeviceStateDataUsingSeparateRequests);
     }
 
-    DeviceStateData fetchDeviceStateDataUsingEntityDataQuery(final DeviceId deviceId) {
+    DeviceStateData fetchDeviceStateDataUsingSeparateRequests(final DeviceId deviceId) {
         final Device device = deviceService.findDeviceById(TenantId.SYS_TENANT_ID, deviceId);
         if (device == null) {
             log.warn("[{}] Failed to fetch device by Id!", deviceId);
-            throw new RuntimeException("Failed to fetch device by Id " + deviceId);
+            throw new RuntimeException("Failed to fetch device by id [" + deviceId + "]!");
         }
         try {
-            DeviceStateData deviceStateData = fetchDeviceState(device).get();
-            deviceStates.putIfAbsent(deviceId, deviceStateData);
-            return deviceStateData;
+            return fetchDeviceState(device).get();
         } catch (InterruptedException | ExecutionException e) {
             log.warn("[{}] Failed to fetch device state!", deviceId, e);
-            throw new RuntimeException(e);
+            throw new RuntimeException("Failed to fetch device state for device [" + deviceId + "]");
         }
     }
 
@@ -549,7 +607,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                 .build());
     }
 
-    private boolean cleanDeviceStateIfBelongsExternalPartition(TenantId tenantId, final DeviceId deviceId) {
+    boolean cleanDeviceStateIfBelongsToExternalPartition(TenantId tenantId, final DeviceId deviceId) {
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, deviceId);
         boolean cleanup = !partitionedEntities.containsKey(tpi);
         if (cleanup) {
@@ -583,10 +641,10 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         ListenableFuture<DeviceStateData> future;
         if (persistToTelemetry) {
             ListenableFuture<List<TsKvEntry>> tsData = tsService.findLatest(TenantId.SYS_TENANT_ID, device.getId(), PERSISTENT_ATTRIBUTES);
-            future = Futures.transform(tsData, extractDeviceStateData(device), deviceStateExecutor);
+            future = Futures.transform(tsData, extractDeviceStateData(device), MoreExecutors.directExecutor());
         } else {
             ListenableFuture<List<AttributeKvEntry>> attrData = attributesService.find(TenantId.SYS_TENANT_ID, device.getId(), SERVER_SCOPE, PERSISTENT_ATTRIBUTES);
-            future = Futures.transform(attrData, extractDeviceStateData(device), deviceStateExecutor);
+            future = Futures.transform(attrData, extractDeviceStateData(device), MoreExecutors.directExecutor());
         }
         return transformInactivityTimeout(future);
     }
@@ -604,8 +662,8 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                     }
                 });
                 return deviceStateData;
-            }, deviceStateExecutor);
-        }, deviceStateExecutor);
+            }, MoreExecutors.directExecutor());
+        }, deviceStateCallbackExecutor);
     }
 
     private <T extends KvEntry> Function<List<T>, DeviceStateData> extractDeviceStateData(Device device) {
@@ -617,7 +675,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                     long lastActivityTime = getEntryValue(data, LAST_ACTIVITY_TIME, 0L);
                     long inactivityAlarmTime = getEntryValue(data, INACTIVITY_ALARM_TIME, 0L);
                     long inactivityTimeout = getEntryValue(data, INACTIVITY_TIMEOUT, defaultInactivityTimeoutMs);
-                    //Actual active state by wall-clock will updated outside this method. This method is only for fetch persistent state
+                    // Actual active state by wall-clock will be updated outside this method. This method is only for fetching persistent state
                     final boolean active = getEntryValue(data, ACTIVITY_STATE, false);
                     DeviceState deviceState = DeviceState.builder()
                             .active(active)
@@ -642,7 +700,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                     return deviceStateData;
                 } catch (Exception e) {
                     log.warn("[{}] Failed to fetch device state data", device.getId(), e);
-                    throw new RuntimeException(e);
+                    throw new RuntimeException("Failed to fetch device state data for device [" + device.getId() + "]", e);
                 }
             }
         };
@@ -666,8 +724,13 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
             }
             return success ? result : result.stream().filter(Objects::nonNull).collect(Collectors.toList());
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
-            log.warn("Failed to initialized device state futures for ids: {} due to:", deviceIds, e);
-            throw new RuntimeException(e);
+            String deviceIdsStr = deviceIds.stream()
+                    .map(DeviceIdInfo::getDeviceId)
+                    .map(UUIDBased::getId)
+                    .map(UUID::toString)
+                    .collect(Collectors.joining(", "));
+            log.warn("Failed to initialized device state futures for ids [{}] due to:", deviceIdsStr, e);
+            throw new RuntimeException("Failed to initialized device state futures for ids [" + deviceIdsStr + "]!", e);
         }
     }
 
@@ -697,7 +760,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                     deviceIdInfo.getDeviceId(), inactivityTimeout);
             inactivityTimeout = getEntryValue(ed, EntityKeyType.SERVER_ATTRIBUTE, INACTIVITY_TIMEOUT, defaultInactivityTimeoutMs);
         }
-        //Actual active state by wall-clock will updated outside this method. This method is only for fetch persistent state
+        // Actual active state by wall-clock will be updated outside this method. This method is only for fetching persistent state
         final boolean active = getEntryValue(ed, getKeyType(), ACTIVITY_STATE, false);
         DeviceState deviceState = DeviceState.builder()
                 .active(active)
@@ -753,7 +816,6 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
         return defaultValue;
     }
 
-
     private long getEntryValue(List<? extends KvEntry> kvEntries, String attributeName, long defaultValue) {
         if (kvEntries != null) {
             for (KvEntry entry : kvEntries) {
@@ -803,7 +865,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
             tsSubService.saveAndNotifyInternal(
                     TenantId.SYS_TENANT_ID, deviceId,
                     Collections.singletonList(new BasicTsKvEntry(getCurrentTimeMillis(), new LongDataEntry(key, value))),
-                    new TelemetrySaveCallback<>(deviceId, key, value));
+                    telemetryTtl, new TelemetrySaveCallback<>(deviceId, key, value));
         } else {
             tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, deviceId, SERVER_SCOPE, key, value, new TelemetrySaveCallback<>(deviceId, key, value));
         }
@@ -814,7 +876,7 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
             tsSubService.saveAndNotifyInternal(
                     TenantId.SYS_TENANT_ID, deviceId,
                     Collections.singletonList(new BasicTsKvEntry(getCurrentTimeMillis(), new BooleanDataEntry(key, value))),
-                    new TelemetrySaveCallback<>(deviceId, key, value));
+                    telemetryTtl, new TelemetrySaveCallback<>(deviceId, key, value));
         } else {
             tsSubService.saveAttrAndNotify(TenantId.SYS_TENANT_ID, deviceId, SERVER_SCOPE, key, value, new TelemetrySaveCallback<>(deviceId, key, value));
         }

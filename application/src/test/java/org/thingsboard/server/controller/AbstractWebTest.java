@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpStatus;
 import org.awaitility.Awaitility;
 import org.hamcrest.Matcher;
 import org.hibernate.exception.ConstraintViolationException;
@@ -177,6 +178,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
      * and {@link org.springframework.mock.web.MockAsyncContext#getTimeout()}
      */
     private static final long DEFAULT_TIMEOUT = -1L;
+    private static final int CLEANUP_TENANT_RETRIES_COUNT = 3;
 
     protected MediaType contentType = MediaType.APPLICATION_JSON;
 
@@ -187,6 +189,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected String token;
     protected String refreshToken;
+    protected String mobileToken;
     protected String username;
 
     protected TenantId tenantId;
@@ -330,10 +333,8 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         log.debug("Executing web test teardown");
 
         loginSysAdmin();
-        doDelete("/api/tenant/" + tenantId.getId().toString())
-                .andExpect(status().isOk());
+        deleteTenant(tenantId);
         deleteDifferentTenant();
-
         verifyNoTenantsLeft();
 
         tenantProfileService.deleteTenantProfiles(TenantId.SYS_TENANT_ID);
@@ -341,7 +342,34 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         log.info("Executed web test teardown");
     }
 
-    void verifyNoTenantsLeft() throws Exception {
+    private void verifyNoTenantsLeft() throws Exception {
+        List<Tenant> loadedTenants = getAllTenants();
+        if (!loadedTenants.isEmpty()) {
+            loadedTenants.forEach(tenant -> deleteTenant(tenant.getId()));
+            loadedTenants = getAllTenants();
+        }
+        assertThat(loadedTenants).as("All tenants expected to be deleted, but some tenants left in the database").isEmpty();
+    }
+
+    private void deleteTenant(TenantId tenantId) {
+        int status = 0;
+        int retries = 0;
+        while (status != HttpStatus.SC_OK && retries < CLEANUP_TENANT_RETRIES_COUNT) {
+            retries++;
+            try {
+                status = doDelete("/api/tenant/" + tenantId.getId().toString())
+                        .andReturn().getResponse().getStatus();
+                if (status != HttpStatus.SC_OK) {
+                    log.warn("Tenant deletion failed, tenantId: {}", tenantId.getId().toString());
+                    Thread.sleep(1000L);
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    private List<Tenant> getAllTenants() throws Exception {
         List<Tenant> loadedTenants = new ArrayList<>();
         PageLink pageLink = new PageLink(10);
         PageData<Tenant> pageData;
@@ -353,8 +381,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
                 pageLink = pageLink.nextPageLink();
             }
         } while (pageData.hasNext());
-
-        assertThat(loadedTenants).as("All tenants expected to be deleted, but some tenants left in the database").isEmpty();
+        return loadedTenants;
     }
 
     protected void loginSysAdmin() throws Exception {
@@ -465,8 +492,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected void deleteDifferentTenant() throws Exception {
         if (savedDifferentTenant != null) {
             loginSysAdmin();
-            doDelete("/api/tenant/" + savedDifferentTenant.getId().getId().toString())
-                    .andExpect(status().isOk());
+            deleteTenant(savedDifferentTenant.getId());
             savedDifferentTenant = null;
         }
     }
@@ -547,6 +573,9 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected void setJwtToken(MockHttpServletRequestBuilder request) {
         if (this.token != null) {
             request.header(ThingsboardSecurityConfiguration.JWT_TOKEN_HEADER_PARAM, "Bearer " + this.token);
+        }
+        if (this.mobileToken != null) {
+            request.header(UserController.MOBILE_TOKEN_HEADER, this.mobileToken);
         }
     }
 
@@ -777,7 +806,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return readResponse(doPostAsync(urlTemplate, content, DEFAULT_TIMEOUT, params).andExpect(resultMatcher), responseClass);
     }
 
-    protected <T> T doPut(String urlTemplate, T content, Class<T> responseClass, String... params) {
+    protected <T> T doPut(String urlTemplate, Object content, Class<T> responseClass, String... params) {
         try {
             return readResponse(doPut(urlTemplate, content, params).andExpect(status().isOk()), responseClass);
         } catch (Exception e) {

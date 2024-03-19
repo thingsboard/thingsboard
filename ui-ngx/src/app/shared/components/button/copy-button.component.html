@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@
         [matTooltip]="matTooltipText"
         [matTooltipPosition]="matTooltipPosition"
         (click)="copy($event)">
-  <mat-icon [svgIcon]="mdiIcon" [ngStyle]="style" *ngIf="!copied; else copiedTemplate">
-    {{ icon }}
-  </mat-icon>
+  <tb-icon [ngStyle]="style" *ngIf="!copied; else copiedTemplate">
+    {{  icon || mdiIcon }}
+  </tb-icon>
   <ng-template #copiedTemplate>
     <mat-icon [ngStyle]="style" class="copied">done</mat-icon>
   </ng-template>

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { DataKey, DatasourceType, JsonSettingsSchema, Widget, widgetType } from '@shared/models/widget.models';
 import { IAliasController } from '@core/api/widget-api.models';
-import { DataKeysCallbacks } from './data-keys.component.models';
+import { DataKeysCallbacks, DataKeySettingsFunction } from './data-keys.component.models';
 import { alarmFields } from '@shared/models/alarm.models';
 import { UtilsService } from '@core/services/utils.service';
 import { ErrorStateMatcher } from '@angular/material/core';
@@ -141,6 +141,10 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
 
   @Input()
   @coerceBoolean()
+  latestDataKeys = false;
+
+  @Input()
+  @coerceBoolean()
   simpleDataKeysLabel = false;
 
   @Input()
@@ -148,6 +152,9 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
 
   @Input()
   datakeySettingsSchema: JsonSettingsSchema;
+
+  @Input()
+  datakeySettingsFunction: DataKeySettingsFunction;
 
   @Input()
   dataKeySettingsDirective: string;
@@ -361,7 +368,8 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
     if (this.widgetType === widgetType.alarm) {
       this.keys = this.utils.getDefaultAlarmDataKeys();
     } else if (this.isCountDatasource) {
-      this.keys = [this.callbacks.generateDataKey('count', DataKeyType.count, this.datakeySettingsSchema)];
+      this.keys = [this.callbacks.generateDataKey('count', DataKeyType.count, this.datakeySettingsSchema,
+        this.latestDataKeys, this.datakeySettingsFunction)];
     } else {
       this.keys = [];
     }
@@ -447,7 +455,8 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
   }
 
   private addFromChipValue(chip: DataKey) {
-    const key = this.callbacks.generateDataKey(chip.name, chip.type, this.datakeySettingsSchema);
+    const key = this.callbacks.generateDataKey(chip.name, chip.type, this.datakeySettingsSchema, this.latestDataKeys,
+      this.datakeySettingsFunction);
     this.addKey(key);
   }
 
@@ -521,7 +530,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
       this.popoverService.hidePopover(trigger);
     } else {
       const colorPickerPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, ColorPickerPanelComponent, 'left', true, null,
+        this.viewContainerRef, ColorPickerPanelComponent, ['leftTopOnly', 'leftOnly', 'leftBottomOnly'], true, null,
         {
           color: key.color
         },

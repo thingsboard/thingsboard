@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import { DeviceCredentialsId } from '@shared/models/id/device-credentials-id';
 import { EntitySearchQuery } from '@shared/models/relation.models';
 import { DeviceProfileId } from '@shared/models/id/device-profile-id';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
-import { EntityInfoData } from '@shared/models/entity.models';
+import { EntityInfoData, HasTenantId } from '@shared/models/entity.models';
 import { FilterPredicateValue, KeyFilter } from '@shared/models/query/query.models';
 import { TimeUnit } from '@shared/models/time/time.models';
 import * as _moment from 'moment';
@@ -584,7 +584,7 @@ export interface DeviceProfileData {
   provisionConfiguration?: DeviceProvisionConfiguration;
 }
 
-export interface DeviceProfile extends BaseData<DeviceProfileId>, ExportableEntity<DeviceProfileId> {
+export interface DeviceProfile extends BaseData<DeviceProfileId>, HasTenantId, ExportableEntity<DeviceProfileId> {
   tenantId?: TenantId;
   name: string;
   description?: string;
@@ -603,7 +603,7 @@ export interface DeviceProfile extends BaseData<DeviceProfileId>, ExportableEnti
   defaultEdgeRuleChainId?: RuleChainId;
 }
 
-export interface DeviceProfileInfo extends EntityInfoData {
+export interface DeviceProfileInfo extends EntityInfoData, HasTenantId {
   tenantId?: TenantId;
   type: DeviceProfileType;
   transportType: DeviceTransportType;
@@ -711,7 +711,7 @@ export interface DeviceData {
   transportConfiguration: DeviceTransportConfiguration;
 }
 
-export interface Device extends BaseData<DeviceId>, ExportableEntity<DeviceId> {
+export interface Device extends BaseData<DeviceId>, HasTenantId, ExportableEntity<DeviceId> {
   tenantId?: TenantId;
   customerId?: CustomerId;
   name: string;
@@ -863,13 +863,6 @@ export interface PublishTelemetryCommand {
   };
   lwm2m?: string;
   snmp?: string;
-}
-
-export interface PublishLaunchCommand {
-  mqtt: {
-    linux: string;
-    windows: string;
-  };
 }
 
 export const dayOfWeekTranslations = new Array<string>(

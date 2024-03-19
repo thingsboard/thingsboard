@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -22,9 +22,9 @@ import { AppState } from '@core/core.state';
 import { Notification, NotificationRequest } from '@shared/models/notification.models';
 import { NotificationWebsocketService } from '@core/ws/notification-websocket.service';
 import { BehaviorSubject, Observable, ReplaySubject, Subscription } from 'rxjs';
-import { map, share, tap } from 'rxjs/operators';
+import { map, share, skip, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
-import { NotificationSubscriber } from '@shared/models/websocket/notification-ws.models';
+import { NotificationSubscriber } from '@shared/models/telemetry/telemetry.models';
 
 @Component({
   selector: 'tb-show-notification-popover',
@@ -71,7 +71,9 @@ export class ShowNotificationPopoverComponent extends PageComponent implements O
       }),
       tap(() => setTimeout(() => this.cd.markForCheck()))
     );
-    this.notificationCountSubscriber = this.notificationSubscriber.notificationCount$.subscribe(value => this.counter.next(value));
+    this.notificationCountSubscriber = this.notificationSubscriber.notificationCount$.pipe(
+      skip(1),
+    ).subscribe(value => this.counter.next(value));
     this.notificationSubscriber.subscribe();
   }
 

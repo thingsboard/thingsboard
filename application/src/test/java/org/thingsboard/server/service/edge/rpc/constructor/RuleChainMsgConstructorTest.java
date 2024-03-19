@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.edge.rpc.constructor;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -24,11 +23,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
@@ -37,6 +36,7 @@ import org.thingsboard.server.gen.edge.v1.RuleChainConnectionInfoProto;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleNodeProto;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
+import org.thingsboard.server.service.edge.rpc.constructor.rule.RuleChainMsgConstructorV1;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,23 +49,23 @@ public class RuleChainMsgConstructorTest {
 
     private static final String RPC_CONNECTION_TYPE = "RPC";
 
-    private RuleChainMsgConstructor constructor;
+    private RuleChainMsgConstructorV1 ruleChainMsgConstructorV1;
 
     private TenantId tenantId;
 
     @Before
     public void setup() {
-        constructor = new RuleChainMsgConstructor();
+        ruleChainMsgConstructorV1 = new RuleChainMsgConstructorV1();
         tenantId = new TenantId(UUID.randomUUID());
     }
 
     @Test
-    public void testConstructRuleChainMetadataUpdatedMsg_V_3_4_0() throws JsonProcessingException {
+    public void testConstructRuleChainMetadataUpdatedMsg_V_3_4_0() {
         RuleChainId ruleChainId = new RuleChainId(UUID.randomUUID());
         RuleChainMetaData ruleChainMetaData = createRuleChainMetaData(
                 ruleChainId, 3, createRuleNodes(ruleChainId), createConnections());
         RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg =
-                constructor.constructRuleChainMetadataUpdatedMsg(
+                ruleChainMsgConstructorV1.constructRuleChainMetadataUpdatedMsg(
                         tenantId,
                         UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE,
                         ruleChainMetaData,
@@ -79,12 +79,12 @@ public class RuleChainMsgConstructorTest {
     }
 
     @Test
-    public void testConstructRuleChainMetadataUpdatedMsg_V_3_3_3() throws JsonProcessingException {
+    public void testConstructRuleChainMetadataUpdatedMsg_V_3_3_3() {
         RuleChainId ruleChainId = new RuleChainId(UUID.randomUUID());
         RuleChainMetaData ruleChainMetaData = createRuleChainMetaData(
                 ruleChainId, 3, createRuleNodes(ruleChainId), createConnections());
         RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg =
-                constructor.constructRuleChainMetadataUpdatedMsg(
+                ruleChainMsgConstructorV1.constructRuleChainMetadataUpdatedMsg(
                         tenantId,
                         UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE,
                         ruleChainMetaData,
@@ -119,11 +119,11 @@ public class RuleChainMsgConstructorTest {
     }
 
     @Test
-    public void testConstructRuleChainMetadataUpdatedMsg_V_3_3_0() throws JsonProcessingException {
+    public void testConstructRuleChainMetadataUpdatedMsg_V_3_3_0() {
         RuleChainId ruleChainId = new RuleChainId(UUID.randomUUID());
         RuleChainMetaData ruleChainMetaData = createRuleChainMetaData(ruleChainId, 3, createRuleNodes(ruleChainId), createConnections());
         RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg =
-                constructor.constructRuleChainMetadataUpdatedMsg(
+                ruleChainMsgConstructorV1.constructRuleChainMetadataUpdatedMsg(
                         tenantId,
                         UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE,
                         ruleChainMetaData,
@@ -160,12 +160,12 @@ public class RuleChainMsgConstructorTest {
     }
 
     @Test
-    public void testConstructRuleChainMetadataUpdatedMsg_V_3_3_0_inDifferentOrder() throws JsonProcessingException {
+    public void testConstructRuleChainMetadataUpdatedMsg_V_3_3_0_inDifferentOrder() {
         // same rule chain metadata, but different order of rule nodes
         RuleChainId ruleChainId = new RuleChainId(UUID.randomUUID());
         RuleChainMetaData ruleChainMetaData1 = createRuleChainMetaData(ruleChainId, 8, createRuleNodesInDifferentOrder(ruleChainId), createConnectionsInDifferentOrder());
         RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg =
-                constructor.constructRuleChainMetadataUpdatedMsg(
+                ruleChainMsgConstructorV1.constructRuleChainMetadataUpdatedMsg(
                         tenantId,
                         UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, 
                         ruleChainMetaData1, 
@@ -253,7 +253,7 @@ public class RuleChainMsgConstructorTest {
         return result;
     }
 
-    private List<RuleNode> createRuleNodes(RuleChainId ruleChainId) throws JsonProcessingException {
+    private List<RuleNode> createRuleNodes(RuleChainId ruleChainId) {
         List<RuleNode> result = new ArrayList<>();
         result.add(getOutputNode(ruleChainId));
         result.add(getAcknowledgeNode(ruleChainId));
@@ -300,7 +300,7 @@ public class RuleChainMsgConstructorTest {
         return result;
     }
 
-    private List<RuleNode> createRuleNodesInDifferentOrder(RuleChainId ruleChainId) throws JsonProcessingException {
+    private List<RuleNode> createRuleNodesInDifferentOrder(RuleChainId ruleChainId) {
         List<RuleNode> result = new ArrayList<>();
         result.add(getPushToAnalyticsNode(ruleChainId));
         result.add(getPushToCloudNode(ruleChainId));
@@ -318,99 +318,99 @@ public class RuleChainMsgConstructorTest {
     }
 
 
-    private RuleNode getOutputNode(RuleChainId ruleChainId) throws JsonProcessingException {
+    private RuleNode getOutputNode(RuleChainId ruleChainId) {
         return createRuleNode(ruleChainId,
                 "org.thingsboard.rule.engine.flow.TbRuleChainOutputNode",
                 "Output node",
-                JacksonUtil.OBJECT_MAPPER.readTree("{\"version\":0}"),
-                JacksonUtil.OBJECT_MAPPER.readTree("{\"description\":\"\",\"layoutX\":178,\"layoutY\":592}"));
+                JacksonUtil.toJsonNode("{\"version\":0}"),
+                JacksonUtil.toJsonNode("{\"description\":\"\",\"layoutX\":178,\"layoutY\":592}"));
     }
 
-    private RuleNode getCheckpointNode(RuleChainId ruleChainId) throws JsonProcessingException {
+    private RuleNode getCheckpointNode(RuleChainId ruleChainId) {
         return createRuleNode(ruleChainId,
                 "org.thingsboard.rule.engine.flow.TbCheckpointNode",
                 "Checkpoint node",
-                JacksonUtil.OBJECT_MAPPER.readTree("{\"queueName\":\"HighPriority\"}"),
-                JacksonUtil.OBJECT_MAPPER.readTree("{\"description\":\"\",\"layoutX\":178,\"layoutY\":647}"));
+                JacksonUtil.toJsonNode("{\"queueName\":\"HighPriority\"}"),
+                JacksonUtil.toJsonNode("{\"description\":\"\",\"layoutX\":178,\"layoutY\":647}"));
     }
 
-    private RuleNode getSaveTimeSeriesNode(RuleChainId ruleChainId) throws JsonProcessingException {
+    private RuleNode getSaveTimeSeriesNode(RuleChainId ruleChainId) {
         return createRuleNode(ruleChainId,
                 "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
                 "Save Timeseries",
-                JacksonUtil.OBJECT_MAPPER.readTree("{\"defaultTTL\":0}"),
-                JacksonUtil.OBJECT_MAPPER.readTree("{\"layoutX\":823,\"layoutY\":157}"));
+                JacksonUtil.toJsonNode("{\"defaultTTL\":0}"),
+                JacksonUtil.toJsonNode("{\"layoutX\":823,\"layoutY\":157}"));
     }
 
-    private RuleNode getMessageTypeSwitchNode(RuleChainId ruleChainId) throws JsonProcessingException {
+    private RuleNode getMessageTypeSwitchNode(RuleChainId ruleChainId) {
         return createRuleNode(ruleChainId,
                 "org.thingsboard.rule.engine.filter.TbMsgTypeSwitchNode",
                 "Message Type Switch",
-                JacksonUtil.OBJECT_MAPPER.readTree("{\"version\":0}"),
-                JacksonUtil.OBJECT_MAPPER.readTree("{\"layoutX\":347,\"layoutY\":149}"));
+                JacksonUtil.toJsonNode("{\"version\":0}"),
+                JacksonUtil.toJsonNode("{\"layoutX\":347,\"layoutY\":149}"));
     }
 
-    private RuleNode getLogOtherNode(RuleChainId ruleChainId) throws JsonProcessingException {
+    private RuleNode getLogOtherNode(RuleChainId ruleChainId) {
         return createRuleNode(ruleChainId,
                 "org.thingsboard.rule.engine.action.TbLogNode",
                 "Log Other",
-                JacksonUtil.OBJECT_MAPPER.readTree("{\"jsScript\":\"return '\\\\nIncoming message:\\\\n' + JSON.stringify(msg) + '\\\\nIncoming metadata:\\\\n' + JSON.stringify(metadata);\"}"),
-                JacksonUtil.OBJECT_MAPPER.readTree("{\"layoutX\":824,\"layoutY\":378}"));
+                JacksonUtil.toJsonNode("{\"jsScript\":\"return '\\\\nIncoming message:\\\\n' + JSON.stringify(msg) + '\\\\nIncoming metadata:\\\\n' + JSON.stringify(metadata);\"}"),
+                JacksonUtil.toJsonNode("{\"layoutX\":824,\"layoutY\":378}"));
     }
 
-    private RuleNode getPushToCloudNode(RuleChainId ruleChainId) throws JsonProcessingException {
+    private RuleNode getPushToCloudNode(RuleChainId ruleChainId) {
         return createRuleNode(ruleChainId,
                 "org.thingsboard.rule.engine.edge.TbMsgPushToCloudNode",
                 "Push to cloud",
-                JacksonUtil.OBJECT_MAPPER.readTree("{\"scope\":\"SERVER_SCOPE\"}"),
-                JacksonUtil.OBJECT_MAPPER.readTree("{\"layoutX\":1129,\"layoutY\":52}"));
+                JacksonUtil.toJsonNode("{\"scope\":\"SERVER_SCOPE\"}"),
+                JacksonUtil.toJsonNode("{\"layoutX\":1129,\"layoutY\":52}"));
     }
 
-    private RuleNode getAcknowledgeNode(RuleChainId ruleChainId) throws JsonProcessingException {
+    private RuleNode getAcknowledgeNode(RuleChainId ruleChainId) {
         return createRuleNode(ruleChainId,
                 "org.thingsboard.rule.engine.flow.TbAckNode",
                 "Acknowledge node",
-                JacksonUtil.OBJECT_MAPPER.readTree("{\"version\":0}"),
-                JacksonUtil.OBJECT_MAPPER.readTree("{\"description\":\"\",\"layoutX\":177,\"layoutY\":703}"));
+                JacksonUtil.toJsonNode("{\"version\":0}"),
+                JacksonUtil.toJsonNode("{\"description\":\"\",\"layoutX\":177,\"layoutY\":703}"));
     }
 
-    private RuleNode getDeviceProfileNode(RuleChainId ruleChainId) throws JsonProcessingException {
+    private RuleNode getDeviceProfileNode(RuleChainId ruleChainId) {
         return createRuleNode(ruleChainId,
                 "org.thingsboard.rule.engine.profile.TbDeviceProfileNode",
                 "Device Profile Node",
-                JacksonUtil.OBJECT_MAPPER.readTree("{\"persistAlarmRulesState\":false,\"fetchAlarmRulesStateOnStart\":false}"),
-                JacksonUtil.OBJECT_MAPPER.readTree("{\"description\":\"Process incoming messages from devices with the alarm rules defined in the device profile. Dispatch all incoming messages with \\\"Success\\\" relation type.\",\"layoutX\":187,\"layoutY\":468}"));
+                JacksonUtil.toJsonNode("{\"persistAlarmRulesState\":false,\"fetchAlarmRulesStateOnStart\":false}"),
+                JacksonUtil.toJsonNode("{\"description\":\"Process incoming messages from devices with the alarm rules defined in the device profile. Dispatch all incoming messages with \\\"Success\\\" relation type.\",\"layoutX\":187,\"layoutY\":468}"));
     }
 
-    private RuleNode getSaveClientAttributesNode(RuleChainId ruleChainId) throws JsonProcessingException {
+    private RuleNode getSaveClientAttributesNode(RuleChainId ruleChainId) {
         return createRuleNode(ruleChainId,
                 "org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode",
                 "Save Client Attributes",
-                JacksonUtil.OBJECT_MAPPER.readTree("{\"scope\":\"CLIENT_SCOPE\"}"),
-                JacksonUtil.OBJECT_MAPPER.readTree("{\"layoutX\":824,\"layoutY\":52}"));
+                JacksonUtil.toJsonNode("{\"scope\":\"CLIENT_SCOPE\"}"),
+                JacksonUtil.toJsonNode("{\"layoutX\":824,\"layoutY\":52}"));
     }
 
-    private RuleNode getLogRpcFromDeviceNode(RuleChainId ruleChainId) throws JsonProcessingException {
+    private RuleNode getLogRpcFromDeviceNode(RuleChainId ruleChainId) {
         return createRuleNode(ruleChainId,
                 "org.thingsboard.rule.engine.action.TbLogNode",
                 "Log RPC from Device",
-                JacksonUtil.OBJECT_MAPPER.readTree("{\"jsScript\":\"return '\\\\nIncoming message:\\\\n' + JSON.stringify(msg) + '\\\\nIncoming metadata:\\\\n' + JSON.stringify(metadata);\"}"),
-                JacksonUtil.OBJECT_MAPPER.readTree("{\"layoutX\":825,\"layoutY\":266}"));
+                JacksonUtil.toJsonNode("{\"jsScript\":\"return '\\\\nIncoming message:\\\\n' + JSON.stringify(msg) + '\\\\nIncoming metadata:\\\\n' + JSON.stringify(metadata);\"}"),
+                JacksonUtil.toJsonNode("{\"layoutX\":825,\"layoutY\":266}"));
     }
 
-    private RuleNode getRpcCallRequestNode(RuleChainId ruleChainId) throws JsonProcessingException {
+    private RuleNode getRpcCallRequestNode(RuleChainId ruleChainId) {
         return createRuleNode(ruleChainId,
                 "org.thingsboard.rule.engine.rpc.TbSendRPCRequestNode",
                 "RPC Call Request",
-                JacksonUtil.OBJECT_MAPPER.readTree("{\"timeoutInSeconds\":60}"),
-                JacksonUtil.OBJECT_MAPPER.readTree("{\"layoutX\":824,\"layoutY\":466}"));
+                JacksonUtil.toJsonNode("{\"timeoutInSeconds\":60}"),
+                JacksonUtil.toJsonNode("{\"layoutX\":824,\"layoutY\":466}"));
     }
 
-    private RuleNode getPushToAnalyticsNode(RuleChainId ruleChainId) throws JsonProcessingException {
+    private RuleNode getPushToAnalyticsNode(RuleChainId ruleChainId) {
         return createRuleNode(ruleChainId,
                 "org.thingsboard.rule.engine.flow.TbRuleChainInputNode",
                 "Push to Analytics",
-                JacksonUtil.OBJECT_MAPPER.readTree("{\"ruleChainId\":\"af588000-6c7c-11ec-bafd-c9a47a5c8d99\"}"),
-                JacksonUtil.OBJECT_MAPPER.readTree("{\"description\":\"\",\"layoutX\":477,\"layoutY\":560}"));
+                JacksonUtil.toJsonNode("{\"ruleChainId\":\"af588000-6c7c-11ec-bafd-c9a47a5c8d99\"}"),
+                JacksonUtil.toJsonNode("{\"description\":\"\",\"layoutX\":477,\"layoutY\":560}"));
     }
 }

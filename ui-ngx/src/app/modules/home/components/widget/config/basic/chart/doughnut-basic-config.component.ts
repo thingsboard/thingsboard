@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import {
   Datasource,
   datasourcesHasAggregation,
   datasourcesHasOnlyComparisonAggregation,
+  legendPositions,
+  legendPositionTranslationMap,
   WidgetConfig
 } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
@@ -40,8 +42,6 @@ import {
   doughnutLayoutImages,
   doughnutLayouts,
   doughnutLayoutTranslations,
-  DoughnutLegendPosition,
-  doughnutLegendPositionTranslations,
   DoughnutTooltipValueType,
   doughnutTooltipValueTypes,
   doughnutTooltipValueTypeTranslations,
@@ -83,9 +83,9 @@ export class DoughnutBasicConfigComponent extends BasicWidgetConfigComponent {
 
   doughnutLayoutImageMap: Map<DoughnutLayout, string>;
 
-  doughnutLegendPositions: DoughnutLegendPosition[];
+  legendPositions = legendPositions;
 
-  doughnutLegendPositionTranslationMap = doughnutLegendPositionTranslations;
+  legendPositionTranslationMap = legendPositionTranslationMap;
 
   doughnutTooltipValueTypes = doughnutTooltipValueTypes;
 
@@ -116,8 +116,6 @@ export class DoughnutBasicConfigComponent extends BasicWidgetConfigComponent {
     const params = widgetConfig.typeParameters as any;
     this.horizontal = isDefinedAndNotNull(params.horizontal) ? params.horizontal : false;
     this.doughnutLayoutImageMap = this.horizontal ? horizontalDoughnutLayoutImages : doughnutLayoutImages;
-    this.doughnutLegendPositions = this.horizontal ? [DoughnutLegendPosition.left, DoughnutLegendPosition.right] :
-      [DoughnutLegendPosition.top, DoughnutLegendPosition.bottom];
     super.setupConfig(widgetConfig);
   }
 
@@ -136,6 +134,8 @@ export class DoughnutBasicConfigComponent extends BasicWidgetConfigComponent {
 
       layout: [settings.layout, []],
       autoScale: [settings.autoScale, []],
+      clockwise: [settings.clockwise, []],
+      sortSeries: [settings.sortSeries, []],
 
       showTitle: [configData.config.showTitle, []],
       title: [configData.config.title, []],
@@ -193,6 +193,8 @@ export class DoughnutBasicConfigComponent extends BasicWidgetConfigComponent {
 
     this.widgetConfig.config.settings.layout = config.layout;
     this.widgetConfig.config.settings.autoScale = config.autoScale;
+    this.widgetConfig.config.settings.clockwise = config.clockwise;
+    this.widgetConfig.config.settings.sortSeries = config.sortSeries;
 
     this.widgetConfig.config.settings.totalValueFont = config.totalValueFont;
     this.widgetConfig.config.settings.totalValueColor = config.totalValueColor;

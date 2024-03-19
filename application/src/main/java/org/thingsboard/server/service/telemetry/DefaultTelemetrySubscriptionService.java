@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -175,20 +175,21 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
     @Override
     public void saveAndNotifyInternal(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, long ttl, FutureCallback<Integer> callback) {
         ListenableFuture<Integer> saveFuture = tsService.save(tenantId, entityId, ts, ttl);
-        addCallbacks(tenantId, entityId, ts, callback, saveFuture);
+        addMainCallback(saveFuture, callback);
+        addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, ts));
+        addEntityViewCallback(tenantId, entityId, ts);
     }
 
     private void saveWithoutLatestAndNotifyInternal(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, long ttl, FutureCallback<Integer> callback) {
         ListenableFuture<Integer> saveFuture = tsService.saveWithoutLatest(tenantId, entityId, ts, ttl);
-        addCallbacks(tenantId, entityId, ts, callback, saveFuture);
-    }
-
-    private void addCallbacks(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, FutureCallback<Integer> callback, ListenableFuture<Integer> saveFuture) {
         addMainCallback(saveFuture, callback);
         addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, ts));
+    }
+
+    private void addEntityViewCallback(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts) {
         if (EntityType.DEVICE.equals(entityId.getEntityType()) || EntityType.ASSET.equals(entityId.getEntityType())) {
             Futures.addCallback(this.tbEntityViewService.findEntityViewsByTenantIdAndEntityIdAsync(tenantId, entityId),
-                    new FutureCallback<List<EntityView>>() {
+                    new FutureCallback<>() {
                         @Override
                         public void onSuccess(@Nullable List<EntityView> result) {
                             if (result != null && !result.isEmpty()) {
@@ -212,7 +213,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
                                         }
                                     }
                                     if (!entityViewLatest.isEmpty()) {
-                                        saveLatestAndNotify(tenantId, entityView.getId(), entityViewLatest, new FutureCallback<Void>() {
+                                        saveLatestAndNotify(tenantId, entityView.getId(), entityViewLatest, new FutureCallback<>() {
                                             @Override
                                             public void onSuccess(@Nullable Void tmp) {
                                             }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,6 @@ import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
-import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
@@ -84,11 +83,9 @@ import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
-import org.thingsboard.server.common.data.widget.DeprecatedFilter;
-import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
-import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.device.DeviceConnectivityConfiguration;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -172,6 +169,9 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     @Autowired
     private TimeseriesService tsService;
+
+    @Autowired
+    private DeviceConnectivityConfiguration connectivityConfiguration;
 
     @Value("${state.persistToTelemetry:false}")
     @Getter
@@ -264,7 +264,6 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         ObjectNode node = JacksonUtil.newObjectNode();
         node.put("baseUrl", "http://localhost:8080");
         node.put("prohibitDifferentUrl", false);
-        node.set("connectivity", createDeviceConnectivityConfiguration());
         generalSettings.setJsonValue(node);
         adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, generalSettings);
 
@@ -289,59 +288,13 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         AdminSettings connectivitySettings = new AdminSettings();
         connectivitySettings.setTenantId(TenantId.SYS_TENANT_ID);
         connectivitySettings.setKey("connectivity");
-        connectivitySettings.setJsonValue(createDeviceConnectivityConfiguration());
+        connectivitySettings.setJsonValue(JacksonUtil.valueToTree(connectivityConfiguration.getConnectivity()));
         adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, connectivitySettings);
-    }
-
-    private ObjectNode createDeviceConnectivityConfiguration() {
-        ObjectNode config = JacksonUtil.newObjectNode();
-
-        ObjectNode http = JacksonUtil.newObjectNode();
-        http.put("enabled", true);
-        http.put("host", "");
-        http.put("port", 8080);
-        config.set("http", http);
-
-        ObjectNode https = JacksonUtil.newObjectNode();
-        https.put("enabled", false);
-        https.put("host", "");
-        https.put("port", 443);
-        config.set("https", https);
-
-        ObjectNode mqtt = JacksonUtil.newObjectNode();
-        mqtt.put("enabled", true);
-        mqtt.put("host", "");
-        mqtt.put("port", 1883);
-        config.set("mqtt", mqtt);
-
-        ObjectNode mqtts = JacksonUtil.newObjectNode();
-        mqtts.put("enabled", false);
-        mqtts.put("host", "");
-        mqtts.put("port", 8883);
-        config.set("mqtts", mqtts);
-
-        ObjectNode coap = JacksonUtil.newObjectNode();
-        coap.put("enabled", true);
-        coap.put("host", "");
-        coap.put("port", 5683);
-        config.set("coap", coap);
-
-        ObjectNode coaps = JacksonUtil.newObjectNode();
-        coaps.put("enabled", false);
-        coaps.put("host", "");
-        coaps.put("port", 5684);
-        config.set("coaps", coaps);
-        return config;
     }
 
     @Override
     public void createRandomJwtSettings() throws Exception {
         jwtSettingsService.createRandomJwtSettings();
-    }
-
-    @Override
-    public void saveLegacyYmlSettings() throws Exception {
-        jwtSettingsService.saveLegacyYmlSettings();
     }
 
     @Override
@@ -534,57 +487,11 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
                         new BaseAttributeKvEntry(System.currentTimeMillis(), new LongDataEntry("humidityAlarmThreshold", (long) 30))));
 
         installScripts.loadDashboards(demoTenant.getId(), null);
-    }
-
-    @Override
-    public void deleteSystemWidgetBundle(String bundleAlias) throws Exception {
-        WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(TenantId.SYS_TENANT_ID, bundleAlias);
-        if (widgetsBundle != null) {
-            PageData<WidgetTypeInfo> widgetTypes;
-            var pageLink = new PageLink(1024);
-            do {
-                widgetTypes = widgetTypeService.findWidgetTypesInfosByWidgetsBundleId(TenantId.SYS_TENANT_ID, widgetsBundle.getId(), false, DeprecatedFilter.ALL, null, pageLink);
-                for (var widgetType : widgetTypes.getData()) {
-                    widgetTypeService.deleteWidgetType(TenantId.SYS_TENANT_ID, widgetType.getId());
-                }
-                pageLink.nextPageLink();
-            } while (widgetTypes.hasNext());
-            widgetsBundleService.deleteWidgetsBundle(TenantId.SYS_TENANT_ID, widgetsBundle.getId());
-        }
+        installScripts.createDefaultTenantDashboards(demoTenant.getId(), null);
     }
 
     @Override
     public void loadSystemWidgets() throws Exception {
-        installScripts.loadSystemWidgets();
-    }
-
-    @Override
-    public void updateSystemWidgets() throws Exception {
-        this.deleteSystemWidgetBundle("charts");
-        this.deleteSystemWidgetBundle("cards");
-        this.deleteSystemWidgetBundle("maps");
-        this.deleteSystemWidgetBundle("analogue_gauges");
-        this.deleteSystemWidgetBundle("digital_gauges");
-        this.deleteSystemWidgetBundle("gpio_widgets");
-        this.deleteSystemWidgetBundle("alarm_widgets");
-        this.deleteSystemWidgetBundle("control_widgets");
-        this.deleteSystemWidgetBundle("maps_v2");
-        this.deleteSystemWidgetBundle("gateway_widgets");
-        this.deleteSystemWidgetBundle("input_widgets");
-        this.deleteSystemWidgetBundle("date");
-        this.deleteSystemWidgetBundle("entity_admin_widgets");
-        this.deleteSystemWidgetBundle("navigation_widgets");
-        this.deleteSystemWidgetBundle("edge_widgets");
-        this.deleteSystemWidgetBundle("home_page_widgets");
-        this.deleteSystemWidgetBundle("entity_widgets");
-        this.deleteSystemWidgetBundle("html_widgets");
-        this.deleteSystemWidgetBundle("tables");
-        this.deleteSystemWidgetBundle("count_widgets");
-        this.deleteSystemWidgetBundle("status_indicators");
-        this.deleteSystemWidgetBundle("outdoor_environment");
-        this.deleteSystemWidgetBundle("indoor_environment");
-        this.deleteSystemWidgetBundle("air_quality");
-        this.deleteSystemWidgetBundle("liquid_level_tanks");
         installScripts.loadSystemWidgets();
     }
 
@@ -784,7 +691,23 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     }
 
     @Override
+    @SneakyThrows
     public void updateDefaultNotificationConfigs() {
+        PageDataIterable<TenantId> tenants = new PageDataIterable<>(tenantService::findTenantsIds, 500);
+        ExecutorService executor = Executors.newFixedThreadPool(Math.max(Runtime.getRuntime().availableProcessors(), 4));
+        log.info("Updating default edge failure notification configs for all tenants");
+        AtomicInteger count = new AtomicInteger();
+        for (TenantId tenantId : tenants) {
+            executor.submit(() -> {
+                notificationSettingsService.updateDefaultNotificationConfigs(tenantId);
+                int n = count.incrementAndGet();
+                if (n % 500 == 0) {
+                    log.info("{} tenants processed", n);
+                }
+            });
+        }
+        executor.shutdown();
+        executor.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
         notificationSettingsService.updateDefaultNotificationConfigs(TenantId.SYS_TENANT_ID);
     }
 

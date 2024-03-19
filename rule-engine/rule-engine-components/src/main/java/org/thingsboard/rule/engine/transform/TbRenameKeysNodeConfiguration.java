@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,20 +17,21 @@ package org.thingsboard.rule.engine.transform;
 
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 
 import java.util.Map;
 
 @Data
 public class TbRenameKeysNodeConfiguration implements NodeConfiguration<TbRenameKeysNodeConfiguration> {
 
-    private boolean fromMetadata;
+    private TbMsgSource renameIn;
     private Map<String, String> renameKeysMapping;
 
     @Override
     public TbRenameKeysNodeConfiguration defaultConfiguration() {
         TbRenameKeysNodeConfiguration configuration = new TbRenameKeysNodeConfiguration();
-        configuration.setRenameKeysMapping(Map.of("temp", "temperature"));
-        configuration.setFromMetadata(false);
+        configuration.setRenameKeysMapping(Map.of("temperatureCelsius", "temperature"));
+        configuration.setRenameIn(TbMsgSource.DATA);
         return configuration;
     }
 

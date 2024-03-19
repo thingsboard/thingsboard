@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import org.eclipse.leshan.core.util.NamedThreadFactory;
 import org.eclipse.leshan.core.util.Validate;
 import org.eclipse.leshan.server.californium.registration.CaliforniumRegistrationStore;
 import org.eclipse.leshan.server.redis.RedisRegistrationStore;
-import org.eclipse.leshan.server.redis.serialization.IdentitySerDes;
 import org.eclipse.leshan.server.redis.serialization.ObservationSerDes;
 import org.eclipse.leshan.server.redis.serialization.RegistrationSerDes;
 import org.eclipse.leshan.server.registration.Deregistration;
@@ -45,6 +44,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.integration.redis.util.RedisLockRegistry;
+import org.thingsboard.server.transport.lwm2m.server.store.util.LwM2MIdentitySerDes;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -110,12 +110,18 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
 
     public TbLwM2mRedisRegistrationStore(RedisConnectionFactory connectionFactory, ScheduledExecutorService schedExecutor, long cleanPeriodInSec,
                                          long lifetimeGracePeriodInSec, int cleanLimit) {
+        this(connectionFactory, schedExecutor, cleanPeriodInSec, lifetimeGracePeriodInSec, cleanLimit,
+                new RedisLockRegistry(connectionFactory, "Registration"));
+    }
+
+    public TbLwM2mRedisRegistrationStore(RedisConnectionFactory connectionFactory, ScheduledExecutorService schedExecutor, long cleanPeriodInSec,
+                                         long lifetimeGracePeriodInSec, int cleanLimit, RedisLockRegistry lockRegistry) {
         this.connectionFactory = connectionFactory;
         this.schedExecutor = schedExecutor;
         this.cleanPeriod = cleanPeriodInSec;
         this.cleanLimit = cleanLimit;
         this.gracePeriod = lifetimeGracePeriodInSec;
-        this.redisLock = new RedisLockRegistry(connectionFactory, "Registration");
+        this.redisLock = lockRegistry;
     }
 
     /* *************** Redis Key utility function **************** */
@@ -173,7 +179,7 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
                     if (!oldRegistration.getSocketAddress().equals(registration.getSocketAddress())) {
                         removeAddrIndex(connection, oldRegistration);
                     }
-                    if (!oldRegistration.getIdentity().equals(registration.getIdentity())) {
+                    if (registrationsHaveDifferentIdentities(oldRegistration, registration)) {
                         removeIdentityIndex(connection, oldRegistration);
                     }
                     // remove old observation
@@ -231,7 +237,7 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
                 if (!r.getSocketAddress().equals(updatedRegistration.getSocketAddress())) {
                     removeAddrIndex(connection, r);
                 }
-                if (!r.getIdentity().equals(updatedRegistration.getIdentity())) {
+                if (registrationsHaveDifferentIdentities(r, updatedRegistration)) {
                     removeIdentityIndex(connection, r);
                 }
 
@@ -402,6 +408,12 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
         connection.zRem(EXP_EP, registration.getEndpoint().getBytes(UTF_8));
     }
 
+    private boolean registrationsHaveDifferentIdentities(Registration first, Registration second){
+        var first_identity_string = LwM2MIdentitySerDes.serialize(first.getIdentity()).toString();
+        var second_identity_string = LwM2MIdentitySerDes.serialize(second.getIdentity()).toString();
+        return !first_identity_string.equals(second_identity_string);
+    }
+
     private byte[] toRegIdKey(String registrationId) {
         return toKey(REG_EP_REGID_IDX, registrationId);
     }
@@ -411,7 +423,7 @@ public class TbLwM2mRedisRegistrationStore implements CaliforniumRegistrationSto
     }
 
     private byte[] toRegIdentityKey(Identity identity) {
-        return toKey(REG_EP_IDENTITY, IdentitySerDes.serialize(identity).toString());
+        return toKey(REG_EP_IDENTITY, LwM2MIdentitySerDes.serialize(identity).toString());
     }
 
     private byte[] toEndpointKey(String endpoint) {

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -36,18 +36,21 @@ import {
   GroupInfo,
   JsonSchema,
   JsonSettingsSchema,
+  TargetDevice,
+  TargetDeviceType, targetDeviceValid,
   Widget,
   WidgetConfigMode,
   widgetType
 } from '@shared/models/widget.models';
 import {
+  AsyncValidator,
   ControlValueAccessor,
-  NG_VALIDATORS,
+  NG_ASYNC_VALIDATORS,
   NG_VALUE_ACCESSOR,
   UntypedFormBuilder,
   UntypedFormControl,
   UntypedFormGroup,
-  Validator,
+  ValidationErrors,
   Validators
 } from '@angular/forms';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
@@ -59,7 +62,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType } from '@shared/models/entity-type.models';
-import { Observable, of, Subscription } from 'rxjs';
+import { Observable, of, Subject, Subscription } from 'rxjs';
 import {
   IBasicWidgetConfigComponent,
   WidgetConfigCallbacks
@@ -68,7 +71,7 @@ import {
   EntityAliasDialogComponent,
   EntityAliasDialogData
 } from '@home/components/alias/entity-alias-dialog.component';
-import { catchError, mergeMap, tap } from 'rxjs/operators';
+import { catchError, map, mergeMap, tap } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
 import { EntityService } from '@core/http/entity.service';
 import { JsonFormComponentData } from '@shared/components/json-form/json-form-component.models';
@@ -81,6 +84,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { basicWidgetConfigComponentsMap } from '@home/components/widget/config/basic/basic-widget-config.module';
 import { TimewindowConfigData } from '@home/components/widget/config/timewindow-config-panel.component';
 import Timeout = NodeJS.Timeout;
+import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 
 const emptySettingsSchema: JsonSchema = {
   type: 'object',
@@ -102,13 +106,13 @@ const defaultSettingsForm = [
       multi: true
     },
     {
-      provide: NG_VALIDATORS,
+      provide: NG_ASYNC_VALIDATORS,
       useExisting: forwardRef(() => WidgetConfigComponent),
       multi: true,
     }
   ]
 })
-export class WidgetConfigComponent extends PageComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
+export class WidgetConfigComponent extends PageComponent implements OnInit, OnDestroy, ControlValueAccessor, AsyncValidator {
 
   @ViewChild('basicModeContainer', {read: ViewContainerRef, static: false}) basicModeContainer: ViewContainerRef;
 
@@ -181,6 +185,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   private createBasicModeComponentTimeout: Timeout;
   private basicModeComponentRef: ComponentRef<IBasicWidgetConfigComponent>;
   private basicModeComponent: IBasicWidgetConfigComponent;
+  private basicModeComponent$: Subject<IBasicWidgetConfigComponent> = null;
   private basicModeComponentChangeSubscription: Subscription;
 
   private dataSettingsChangesSubscription: Subscription;
@@ -366,9 +371,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
         this.widgetType !== widgetType.static) {
         this.dataSettings.addControl('datasources', this.fb.control(null));
       } else if (this.widgetType === widgetType.rpc) {
-        this.targetDeviceSettings.addControl('targetDeviceAliasId',
-          this.fb.control(null,
-            this.widgetEditMode ? [] : [Validators.required]));
+        this.targetDeviceSettings.addControl('targetDevice',
+          this.fb.control(null, []));
       } else if (this.widgetType === widgetType.alarm) {
         this.dataSettings.addControl('alarmSource', this.fb.control(null));
       }
@@ -437,6 +441,11 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
           this.propagateChange(this.modelValue);
           this.cd.markForCheck();
         });
+        if (this.basicModeComponent$) {
+          this.basicModeComponent$.next(this.basicModeComponent);
+          this.basicModeComponent$.complete();
+          this.basicModeComponent$ = null;
+        }
         this.cd.markForCheck();
       }, 0);
     }
@@ -527,20 +536,9 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
           this.dataSettings.patchValue({ datasources: config.datasources},
             {emitEvent: false});
         } else if (this.widgetType === widgetType.rpc) {
-          let targetDeviceAliasId: string;
-          if (config.targetDeviceAliasIds && config.targetDeviceAliasIds.length > 0) {
-            const aliasId = config.targetDeviceAliasIds[0];
-            const entityAliases = this.aliasController.getEntityAliases();
-            if (entityAliases[aliasId]) {
-              targetDeviceAliasId = entityAliases[aliasId].id;
-            } else {
-              targetDeviceAliasId = null;
-            }
-          } else {
-            targetDeviceAliasId = null;
-          }
+          const targetDevice: TargetDevice = config.targetDevice;
           this.targetDeviceSettings.patchValue({
-            targetDeviceAliasId
+            targetDevice
           }, {emitEvent: false});
         } else if (this.widgetType === widgetType.alarm) {
           this.dataSettings.patchValue(
@@ -643,12 +641,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   private updateTargetDeviceSettings() {
     if (this.modelValue) {
       if (this.modelValue.config) {
-        const targetDeviceAliasId: string = this.targetDeviceSettings.get('targetDeviceAliasId').value;
-        if (targetDeviceAliasId) {
-          this.modelValue.config.targetDeviceAliasIds = [targetDeviceAliasId];
-        } else {
-          this.modelValue.config.targetDeviceAliasIds = [];
-        }
+        this.modelValue.config.targetDevice = this.targetDeviceSettings.get('targetDevice').value;
       }
       this.propagateChange(this.modelValue);
     }
@@ -742,7 +735,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     }
   }
 
-  public generateDataKey(chip: any, type: DataKeyType, datakeySettingsSchema: JsonSettingsSchema): DataKey {
+  public generateDataKey(chip: any, type: DataKeyType, datakeySettingsSchema: JsonSettingsSchema,
+                         isLatestDataKey: boolean, dataKeySettingsFunction: DataKeySettingsFunction): DataKey {
     if (isObject(chip)) {
       (chip as DataKey)._hash = Math.random();
       return chip;
@@ -775,6 +769,11 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       }
       if (datakeySettingsSchema && isDefined(datakeySettingsSchema.schema)) {
         result.settings = this.utils.generateObjectFromJsonSchema(datakeySettingsSchema.schema);
+      } else if (dataKeySettingsFunction) {
+        const settings = dataKeySettingsFunction(result, isLatestDataKey);
+        if (settings) {
+          result.settings = settings;
+        }
       }
       return result;
     }
@@ -876,45 +875,70 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     return stateId => stateId.toLowerCase().indexOf(lowercaseQuery) === 0;
   }
 
-  public validate(c: UntypedFormControl) {
-    if (this.basicModeComponent) {
-      if (!this.basicModeComponent.validateConfig()) {
+  public validate(c: UntypedFormControl): Observable<ValidationErrors | null> {
+    const basicComponentMode = this.hasBasicModeDirective && this.widgetConfigMode === WidgetConfigMode.basic;
+    let comp$: Observable<IBasicWidgetConfigComponent>;
+    if (basicComponentMode) {
+      if (this.basicModeComponent) {
+        comp$ = of(this.basicModeComponent);
+      } else {
+        if (this.useDefinedBasicModeDirective) {
+          this.basicModeComponent$ = new Subject();
+          comp$ = this.basicModeComponent$;
+        } else {
+          comp$ = of(null);
+        }
+      }
+    } else {
+      comp$ = of(null);
+    }
+    return comp$.pipe(
+      map((comp) => this.doValidate(basicComponentMode, comp))
+    );
+  }
+
+  private doValidate(basicComponentMode: boolean, basicModeComponent?: IBasicWidgetConfigComponent): ValidationErrors | null {
+    if (basicComponentMode) {
+      if (!basicModeComponent || !basicModeComponent.validateConfig()) {
         return {
           basicWidgetConfig: {
             valid: false
           }
         };
       }
-    } else if (!this.dataSettings.valid) {
-      return {
-        dataSettings: {
-          valid: false
-        }
-      };
-    } else if (!this.widgetSettings.valid) {
-      return {
-        widgetSettings: {
-          valid: false
-        }
-      };
-    } else if (!this.layoutSettings.valid) {
-      return {
-        widgetSettings: {
-          valid: false
-        }
-      };
-    } else if (!this.advancedSettings.valid || (this.displayAdvancedAppearance && !this.modelValue.config.settings)) {
-      return {
-        advancedSettings: {
-          valid: false
-        }
-      };
-    } else if (this.modelValue) {
+    } else {
+      if (!this.dataSettings.valid) {
+        return {
+          dataSettings: {
+            valid: false
+          }
+        };
+      } else if (!this.widgetSettings.valid) {
+        return {
+          widgetSettings: {
+            valid: false
+          }
+        };
+      } else if (!this.layoutSettings.valid) {
+        return {
+          widgetSettings: {
+            valid: false
+          }
+        };
+      } else if (!this.advancedSettings.valid) {
+        return {
+          advancedSettings: {
+            valid: false
+          }
+        };
+      }
+    }
+    if (this.modelValue) {
       const config = this.modelValue.config;
       if (this.widgetType === widgetType.rpc && this.modelValue.isDataEnabled) {
-        if (!this.widgetEditMode && (!config.targetDeviceAliasIds || !config.targetDeviceAliasIds.length)) {
+        if (!this.widgetEditMode && !targetDeviceValid(config.targetDevice)) {
           return {
-            targetDeviceAliasIds: {
+            targetDevice: {
               valid: false
             }
           };
@@ -923,4 +947,5 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     }
     return null;
   }
+
 }

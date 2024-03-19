@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -22,8 +22,9 @@ import { EntitySearchQuery } from '@shared/models/relation.models';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { BaseEventBody } from '@shared/models/event.models';
 import { EventId } from '@shared/models/id/event-id';
+import { HasTenantId } from '@shared/models/entity.models';
 
-export interface Edge extends BaseData<EdgeId> {
+export interface Edge extends BaseData<EdgeId>, HasTenantId {
   tenantId?: TenantId;
   customerId?: CustomerId;
   name: string;
@@ -178,8 +179,8 @@ export interface EdgeEvent extends BaseData<EventId> {
   body: string;
 }
 
-export interface EdgeInstallInstructions {
-  installInstructions: string;
+export interface EdgeInstructions {
+  instructions: string;
 }
 
 export enum EdgeInstructionsMethod {
@@ -187,3 +188,17 @@ export enum EdgeInstructionsMethod {
   centos,
   docker
 }
+
+export const edgeVersionAttributeKey = 'edgeVersion';
+
+export enum EdgeConnectionEvent {
+  CONNECTED= 'CONNECTED',
+  DISCONNECTED = 'DISCONNECTED'
+}
+
+export const EdgeConnectionEventTranslationMap = new Map<EdgeConnectionEvent, string>(
+  [
+    [EdgeConnectionEvent.CONNECTED, 'edge.connected'],
+    [EdgeConnectionEvent.DISCONNECTED, 'edge.disconnected']
+  ]
+);

@@ -3646,8 +3646,7 @@
         "assign-rulechains": "Assignar cadenes de regles",
         "delete-rulechains": "Eliminar cadenes de regles",
         "unassign-rulechain": "Anul·lar assignació de cadena de regles",
-        "unassign-rulechains-from-edge-action-title": "Anul·lar assignació {count, plural, =1 {1 cadena de regles} other {# cadenes de regles} } des vores",
-        "assign-new-rulechain": "Assignar nova cadena de regles"
+        "unassign-rulechains-from-edge-action-title": "Anul·lar assignació {count, plural, =1 {1 cadena de regles} other {# cadenes de regles} } des vores"
     },
     "rulenode": {
         "details": "Detalls",
@@ -4585,8 +4584,8 @@
         "popover-placement-leftBottom": "Esquerra inferior",
         "popover-hide-on-click-outside": "Amaga la finestra emergent al clic exterior",
         "popover-hide-dashboard-toolbar": "Amaga la barra d'eines del tauler a la finestra emergent",
-        "popover-width": "Amplada emergent en unitats del navegador (p. ex. 100 píxels, 25 vw)",
-        "popover-height": "Alçada emergent en unitats del navegador (p. ex. 100px, 25vh)",
+        "popover-width": "Amplada emergent",
+        "popover-height": "Alçada emergent",
         "popover-style": "Estil popover",
         "open-new-browser-tab": "Obrir en una nova pestanya",
         "mobile": {
@@ -4682,7 +4681,7 @@
         "action-source-required": "Cal origen de acció.",
         "action-name": "Nom",
         "action-name-required": "Cal nom de acció.",
-        "action-name-not-unique": "Existe una acció amb el mateix nom.<br/>El nom d'acció ha de ser únic dins de la mateixa font d'acció (origen).",
+        "action-name-not-unique": "Existe una acció amb el mateix nom.\nEl nom d'acció ha de ser únic dins de la mateixa font d'acció (origen).",
         "action-icon": "Icona",
         "show-hide-action-using-function": "Mostra/amaga l'acció mitjançant la funció",
         "action-type": "Tipus",
@@ -5692,7 +5691,6 @@
             "show-empty-space-hidden-action": "Mostrar espai buit en lloc de cel·la oculta",
             "dont-reserve-space-hidden-action": "No reserveu espai per als botons en cel·la oculta",
             "display-timestamp": "Mostra columna timestamp",
-            "display-milliseconds": "Mostrar mil·lisegons",
             "display-pagination": "Mostrar pàgines",
             "default-page-size": "Mida de pàgina per defecte",
             "use-entity-label-tab-name": "Usar etiqueta important al nom de la taula",

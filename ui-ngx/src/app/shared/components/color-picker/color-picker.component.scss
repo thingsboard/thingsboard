@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,11 @@
   display: flex;
   flex-direction: column;
   gap: 32px;
+  overflow: auto;
 
   .saturation-component {
     height: 238px;
+    min-height: 80px;
     border-radius: 8px;
   }
 
@@ -89,7 +91,7 @@
 
   indicator-component {
     svg {
-      vertical-align: -70% !important;
+      vertical-align: -100% !important;
     }
   }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ import org.thingsboard.server.dao.service.ConstraintValidator;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 
-import java.util.stream.Collectors;
+import java.util.List;
 
 @Service
 @TbCoreComponent
@@ -66,10 +66,7 @@ public class NotificationTargetImportService extends BaseEntityImportService<Not
                     break;
                 case USER_LIST:
                     UserListFilter userListFilter = (UserListFilter) usersFilter;
-                    userListFilter.setUsersIds(userListFilter.getUsersIds().stream()
-                            .map(UserId::new).map(idProvider::getInternalId)
-                            .map(UUIDBased::getId).collect(Collectors.toList())
-                    );
+                    userListFilter.setUsersIds(List.of(ctx.getUser().getUuidId())); // user entities are not supported by VC; replacing with current user id
                     break;
                 case TENANT_ADMINISTRATORS:
                     if (CollectionUtils.isNotEmpty(((TenantAdministratorsFilter) usersFilter).getTenantsIds()) ||

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,12 @@ $previewSize: 78px !default;
   .tb-container {
     margin-top: 0;
     padding: 0 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
     label.tb-title {
       display: block;
-      padding-bottom: 8px;
+      padding-bottom: 0px;
     }
   }
 
@@ -70,6 +73,30 @@ $previewSize: 78px !default;
     max-width: $previewSize - 2px;
     height: auto;
     max-height: $previewSize  - 2px;
+  }
+
+  .tb-image-info-container {
+    display: flex;
+    gap: 12px;
+    font-size: 13px;
+    font-style: normal;
+    line-height: 16px;
+    letter-spacing: normal;
+  }
+
+  .tb-image-file-name {
+    width: 136px;
+    color: rgba(0, 0, 0, 0.54);
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tb-image-file-hint {
+    color: rgba(0, 0, 0, 0.38);
+    font-weight: 400;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .file-input {

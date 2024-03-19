@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -146,7 +146,7 @@ public class LwM2MClientSerDes {
         if (multiInstances) {
             Map<Integer, Object> instances = new HashMap<>();
             o.get("instances").asObject().forEach(entry -> {
-                instances.put(Integer.valueOf(entry.getName()), parseValue(type, entry.getValue()));
+                instances.put(Integer.valueOf(entry.getName()), parseValue(type, entry.getValue().asObject().get("value")));
             });
             return LwM2mMultipleResource.newResource(id, instances, type);
         } else {

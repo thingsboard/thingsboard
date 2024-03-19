@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package org.thingsboard.rest.client;
 import com.auth0.jwt.JWT;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Strings;
+import org.apache.commons.io.IOUtils;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -29,6 +31,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.support.HttpRequestWrapper;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
@@ -52,11 +55,13 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.EventInfo;
+import org.thingsboard.server.common.data.ImageExportData;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.SystemInfo;
+import org.thingsboard.server.common.data.TbImageDeleteResult;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
@@ -84,7 +89,7 @@ import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
-import org.thingsboard.server.common.data.edge.EdgeInstallInstructions;
+import org.thingsboard.server.common.data.edge.EdgeInstructions;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
@@ -160,12 +165,14 @@ import org.thingsboard.server.common.data.sync.vc.VersionLoadResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.common.data.sync.vc.request.create.VersionCreateRequest;
 import org.thingsboard.server.common.data.sync.vc.request.load.VersionLoadRequest;
+import org.thingsboard.server.common.data.widget.DeprecatedFilter;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 
 import java.io.Closeable;
+import java.io.IOException;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
@@ -505,7 +512,7 @@ public class RestClient implements Closeable {
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<List<EntitySubtype>>() {
-        }).getBody();
+                }).getBody();
     }
 
     public AlarmComment saveAlarmComment(AlarmId alarmId, AlarmComment alarmComment) {
@@ -518,12 +525,11 @@ public class RestClient implements Closeable {
     }
 
     public PageData<AlarmCommentInfo> getAlarmComments(AlarmId alarmId, PageLink pageLink) {
-        String urlSecondPart = "/api/alarm/{alarmId}/comment";
         Map<String, String> params = new HashMap<>();
         params.put("alarmId", alarmId.getId().toString());
-
+        addPageLinkToParam(params, pageLink);
         return restTemplate.exchange(
-                baseURL + urlSecondPart + "&" + getUrlParams(pageLink),
+                baseURL + "/api/alarm/{alarmId}/comment?" + getUrlParams(pageLink),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<AlarmCommentInfo>>() {
@@ -703,6 +709,7 @@ public class RestClient implements Closeable {
                 }).getBody();
     }
 
+    @Deprecated(since = "3.6.2")
     public List<EntitySubtype> getAssetTypes() {
         return restTemplate.exchange(URI.create(
                         baseURL + "/api/asset/types"),
@@ -710,6 +717,15 @@ public class RestClient implements Closeable {
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<List<EntitySubtype>>() {
                 }).getBody();
+    }
+
+    public List<EntitySubtype> getAssetProfileNames(boolean activeOnly) {
+        return restTemplate.exchange(
+                baseURL + "/api/assetProfile/names?activeOnly={activeOnly}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<EntitySubtype>>() {
+                }, activeOnly).getBody();
     }
 
     public BulkImportResult<Asset> processAssetsBulkImport(BulkImportRequest request) {
@@ -1394,6 +1410,7 @@ public class RestClient implements Closeable {
                 }).getBody();
     }
 
+    @Deprecated(since = "3.6.2")
     public List<EntitySubtype> getDeviceTypes() {
         return restTemplate.exchange(
                 baseURL + "/api/device/types",
@@ -1401,6 +1418,15 @@ public class RestClient implements Closeable {
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<List<EntitySubtype>>() {
                 }).getBody();
+    }
+
+    public List<EntitySubtype> getDeviceProfileNames(boolean activeOnly) {
+        return restTemplate.exchange(
+                baseURL + "/api/deviceProfile/names?activeOnly={activeOnly}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<EntitySubtype>>() {
+                }, activeOnly).getBody();
     }
 
     public JsonNode claimDevice(String deviceName, ClaimRequest claimRequest) {
@@ -2693,15 +2719,33 @@ public class RestClient implements Closeable {
         return restTemplate.postForEntity(baseURL + "/api/widgetsBundle", widgetsBundle, WidgetsBundle.class).getBody();
     }
 
+    public void updateWidgetsBundleWidgetTypes(WidgetsBundleId widgetsBundleId, List<WidgetTypeId> widgetTypeIds) {
+        var httpEntity = new HttpEntity<>(widgetTypeIds.stream()
+                .map(widgetTypeId -> widgetTypeId.getId().toString())
+                .collect(Collectors.toList()));
+        restTemplate.exchange(baseURL + "/api/widgetsBundle/{widgetsBundleId}/widgetTypes",
+                HttpMethod.POST, httpEntity, Void.class, widgetsBundleId.getId());
+    }
+
+    public void updateWidgetsBundleWidgetFqns(WidgetsBundleId widgetsBundleId, List<String> widgetTypeFqns) {
+        restTemplate.exchange(baseURL + "/api/widgetsBundle/{widgetsBundleId}/widgetTypeFqns",
+                HttpMethod.POST, new HttpEntity<>(widgetTypeFqns), Void.class, widgetsBundleId.getId());
+    }
+
     public void deleteWidgetsBundle(WidgetsBundleId widgetsBundleId) {
         restTemplate.delete(baseURL + "/api/widgetsBundle/{widgetsBundleId}", widgetsBundleId.getId());
     }
 
     public PageData<WidgetsBundle> getWidgetsBundles(PageLink pageLink) {
+        return getWidgetsBundles(pageLink, null, null);
+    }
+
+    public PageData<WidgetsBundle> getWidgetsBundles(PageLink pageLink, Boolean tenantOnly, Boolean fullSearch) {
         Map<String, String> params = new HashMap<>();
         addPageLinkToParam(params, pageLink);
+        addTenantOnlyAndFullSearchToParams(tenantOnly, fullSearch, params);
         return restTemplate.exchange(
-                baseURL + "/api/widgetsBundles?" + getUrlParams(pageLink),
+                baseURL + "/api/widgetsBundles?" + getUrlParams(pageLink) + getTenantOnlyAndFullSearchUrlParams(tenantOnly, fullSearch),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<WidgetsBundle>>() {
@@ -2731,14 +2775,54 @@ public class RestClient implements Closeable {
         }
     }
 
+    public Optional<WidgetTypeInfo> getWidgetTypeInfoById(WidgetTypeId widgetTypeId) {
+        try {
+            ResponseEntity<WidgetTypeInfo> widgetTypeInfo =
+                    restTemplate.getForEntity(baseURL + "/api/widgetTypeInfo/{widgetTypeId}", WidgetTypeInfo.class, widgetTypeId.getId());
+            return Optional.ofNullable(widgetTypeInfo.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            }
+            throw exception;
+        }
+    }
+
     public WidgetTypeDetails saveWidgetType(WidgetTypeDetails widgetTypeDetails) {
-        return restTemplate.postForEntity(baseURL + "/api/widgetType", widgetTypeDetails, WidgetTypeDetails.class).getBody();
+        return saveWidgetType(widgetTypeDetails, null);
+    }
+
+    public WidgetTypeDetails saveWidgetType(WidgetTypeDetails widgetTypeDetails, Boolean updateExistingByFqn) {
+        if (updateExistingByFqn == null) {
+            return restTemplate.postForEntity(baseURL + "/api/widgetType", widgetTypeDetails, WidgetTypeDetails.class).getBody();
+        }
+        return restTemplate.postForEntity(baseURL + "/api/widgetType?updateExistingByFqn={updateExistingByFqn}", widgetTypeDetails, WidgetTypeDetails.class, updateExistingByFqn).getBody();
     }
 
     public void deleteWidgetType(WidgetTypeId widgetTypeId) {
         restTemplate.delete(baseURL + "/api/widgetType/{widgetTypeId}", widgetTypeId.getId());
     }
 
+    public PageData<WidgetTypeInfo> getWidgetTypes(PageLink pageLink) {
+        return getWidgetTypes(pageLink, null, null, null, null);
+    }
+
+    public PageData<WidgetTypeInfo> getWidgetTypes(PageLink pageLink, Boolean tenantOnly, Boolean fullSearch,
+                                                   DeprecatedFilter deprecatedFilter, List<String> widgetTypeList) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+        addWidgetInfoFiltersToParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList, params);
+        return restTemplate.exchange(
+                baseURL + "/api/widgetTypes?" + getUrlParams(pageLink) +
+                        getWidgetTypeInfoPageRequestUrlParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList),
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<WidgetTypeInfo>>() {
+                },
+                params).getBody();
+    }
+
+    @Deprecated // current name in the controller: getBundleWidgetTypesByBundleAlias
     public List<WidgetType> getBundleWidgetTypes(boolean isSystem, String bundleAlias) {
         return restTemplate.exchange(
                 baseURL + "/api/widgetTypes?isSystem={isSystem}&bundleAlias={bundleAlias}",
@@ -2750,6 +2834,17 @@ public class RestClient implements Closeable {
                 bundleAlias).getBody();
     }
 
+    public List<WidgetType> getBundleWidgetTypes(WidgetsBundleId widgetsBundleId) {
+        return restTemplate.exchange(
+                baseURL + "/api/widgetTypes?widgetsBundleId={widgetsBundleId}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<WidgetType>>() {
+                },
+                widgetsBundleId.getId()).getBody();
+    }
+
+    @Deprecated // current name in the controller: getBundleWidgetTypesDetailsByBundleAlias
     public List<WidgetTypeDetails> getBundleWidgetTypesDetails(boolean isSystem, String bundleAlias) {
         return restTemplate.exchange(
                 baseURL + "/api/widgetTypesDetails?isSystem={isSystem}&bundleAlias={bundleAlias}",
@@ -2761,6 +2856,28 @@ public class RestClient implements Closeable {
                 bundleAlias).getBody();
     }
 
+    public List<WidgetTypeDetails> getBundleWidgetTypesDetails(WidgetsBundleId widgetsBundleId, boolean inlineImages) {
+        return restTemplate.exchange(
+                baseURL + "/api/widgetTypesDetails?widgetsBundleId={widgetsBundleId}&inlineImages={inlineImages}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<WidgetTypeDetails>>() {
+                },
+                widgetsBundleId.getId(),
+                inlineImages).getBody();
+    }
+
+    public List<String> getBundleWidgetTypeFqns(WidgetsBundleId widgetsBundleId) {
+        return restTemplate.exchange(
+                baseURL + "/api/widgetTypeFqns?widgetsBundleId={widgetsBundleId}",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<String>>() {
+                },
+                widgetsBundleId.getId()).getBody();
+    }
+
+    @Deprecated // current name in the controller: getBundleWidgetTypesInfosByBundleAlias
     public List<WidgetTypeInfo> getBundleWidgetTypesInfos(boolean isSystem, String bundleAlias) {
         return restTemplate.exchange(
                 baseURL + "/api/widgetTypesInfos?isSystem={isSystem}&bundleAlias={bundleAlias}",
@@ -2772,6 +2889,28 @@ public class RestClient implements Closeable {
                 bundleAlias).getBody();
     }
 
+    public PageData<WidgetTypeInfo> getBundleWidgetTypesInfos(WidgetsBundleId widgetsBundleId, PageLink pageLink) {
+        return getBundleWidgetTypesInfos(widgetsBundleId, pageLink, null, null, null, null);
+    }
+
+    public PageData<WidgetTypeInfo> getBundleWidgetTypesInfos(WidgetsBundleId widgetsBundleId, PageLink pageLink,
+                                                              Boolean tenantOnly, Boolean fullSearch,
+                                                              DeprecatedFilter deprecatedFilter, List<String> widgetTypeList) {
+        Map<String, String> params = new HashMap<>();
+        params.put("widgetsBundleId", widgetsBundleId.getId().toString());
+        addPageLinkToParam(params, pageLink);
+        addWidgetInfoFiltersToParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList, params);
+        return restTemplate.exchange(
+                baseURL + "/api/widgetTypesInfos?widgetsBundleId={widgetsBundleId}&" + getUrlParams(pageLink) +
+                        getWidgetTypeInfoPageRequestUrlParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList),
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<WidgetTypeInfo>>() {
+                },
+                params).getBody();
+    }
+
+    @Deprecated // current name in the controller: getWidgetTypeByBundleAliasAndTypeAlias
     public Optional<WidgetType> getWidgetType(boolean isSystem, String bundleAlias, String alias) {
         try {
             ResponseEntity<WidgetType> widgetType =
@@ -2788,6 +2927,22 @@ public class RestClient implements Closeable {
             } else {
                 throw exception;
             }
+        }
+    }
+
+    public Optional<WidgetType> getWidgetType(String fqn) {
+        try {
+            ResponseEntity<WidgetType> widgetType =
+                    restTemplate.getForEntity(
+                            baseURL + "/api/widgetType?fqn={fqn}",
+                            WidgetType.class,
+                            fqn);
+            return Optional.ofNullable(widgetType.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            }
+            throw exception;
         }
     }
 
@@ -3241,10 +3396,16 @@ public class RestClient implements Closeable {
                 }).getBody();
     }
 
-    public Optional<EdgeInstallInstructions> getEdgeDockerInstallInstructions(EdgeId edgeId) {
-        ResponseEntity<EdgeInstallInstructions> edgeInstallInstructionsResult =
-                restTemplate.getForEntity(baseURL + "/api/edge/instructions/{edgeId}", EdgeInstallInstructions.class, edgeId.getId());
+    public Optional<EdgeInstructions> getEdgeInstallInstructions(EdgeId edgeId, String method) {
+        ResponseEntity<EdgeInstructions> edgeInstallInstructionsResult =
+                restTemplate.getForEntity(baseURL + "/api/edge/instructions/install/{edgeId}/{method}", EdgeInstructions.class, edgeId.getId(), method);
         return Optional.ofNullable(edgeInstallInstructionsResult.getBody());
+    }
+
+    public Optional<EdgeInstructions> getEdgeUpgradeInstructions(String edgeVersion, String method) {
+        ResponseEntity<EdgeInstructions> edgeUpgradeInstructionsResult =
+                restTemplate.getForEntity(baseURL + "/api/edge/instructions/upgrade/{edgeVersion}/{method}", EdgeInstructions.class, edgeVersion, method);
+        return Optional.ofNullable(edgeUpgradeInstructionsResult.getBody());
     }
 
     public UUID saveEntitiesVersion(VersionCreateRequest request) {
@@ -3434,6 +3595,97 @@ public class RestClient implements Closeable {
         restTemplate.delete("/api/resource/{resourceId}", resourceId.getId().toString());
     }
 
+    public TbResourceInfo getImageInfo(String type, String key) {
+        return restTemplate.getForObject(baseURL + "/api/images/{type}/{key}/info", TbResourceInfo.class, Map.of(
+                "type", type,
+                "key", key
+        ));
+    }
+
+    public PageData<TbResourceInfo> getImages(PageLink pageLink, boolean includeSystemImages) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+        params.put("includeSystemImages", String.valueOf(includeSystemImages));
+        return restTemplate.exchange(baseURL + "/api/images?includeSystemImages={includeSystemImages}&" + getUrlParams(pageLink),
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<TbResourceInfo>>() {},
+                params
+        ).getBody();
+    }
+
+    public TbResourceInfo uploadImage(String fileName, byte[] data, String contentType, String title) {
+        HttpEntity<MultiValueMap<String, Object>> request = createMultipartRequest(fileName, data, contentType, Map.of(
+                "title", Strings.nullToEmpty(title)
+        ));
+        return restTemplate.postForObject(baseURL + "/api/image", request, TbResourceInfo.class);
+    }
+
+    public TbResourceInfo updateImage(String type, String key, String fileName, byte[] data, String contentType) {
+        HttpEntity<MultiValueMap<String, Object>> request = createMultipartRequest(fileName, data, contentType, Map.of());
+        return restTemplate.exchange(baseURL + "/api/images/{type}/{key}", HttpMethod.PUT, request, TbResourceInfo.class, Map.of(
+                "type", type,
+                "key", key
+        )).getBody();
+    }
+
+    public TbResourceInfo updateImageInfo(String type, String key, TbResourceInfo request) {
+        return restTemplate.exchange(baseURL + "/api/images/{type}/{key}/info", HttpMethod.PUT, new HttpEntity<>(request), TbResourceInfo.class, Map.of(
+                "type", type,
+                "key", key
+        )).getBody();
+    }
+
+    public void updateImagePublicStatus(String type, String key, boolean isPublic) {
+        restTemplate.put(baseURL + "/api/images/{type}/{key}/public/{isPublic}", null, Map.of(
+                "type", type,
+                "key", key,
+                "isPublic", isPublic
+        ));
+    }
+
+    public byte[] downloadImage(String type, String key) throws IOException {
+        Resource image = restTemplate.exchange(baseURL + "/api/images/{type}/{key}", HttpMethod.GET, null, Resource.class, Map.of(
+                "type", type,
+                "key", key
+        )).getBody();
+        return IOUtils.toByteArray(image.getInputStream());
+    }
+
+    public byte[] downloadImagePreview(String type, String key) throws IOException {
+        Resource image = restTemplate.exchange(baseURL + "/api/images/{type}/{key}/preview", HttpMethod.GET, null, Resource.class, Map.of(
+                "type", type,
+                "key", key
+        )).getBody();
+        return IOUtils.toByteArray(image.getInputStream());
+    }
+
+    public byte[] downloadPublicImage(String publicResourceKey) throws IOException {
+        Resource image = restTemplate.exchange(baseURL + "/api/images/public/{publicResourceKey}", HttpMethod.GET, null, Resource.class, Map.of(
+                "publicResourceKey", publicResourceKey
+        )).getBody();
+        return IOUtils.toByteArray(image.getInputStream());
+    }
+
+    public ImageExportData exportImage(String type, String key) {
+        return restTemplate.getForObject(baseURL + "/api/images/{type}/{key}/export", ImageExportData.class, Map.of(
+                "type", type,
+                "key", key
+        ));
+    }
+
+    public TbResourceInfo importImage(ImageExportData exportData) {
+        return restTemplate.exchange(baseURL + "/api/image/import", HttpMethod.PUT, new HttpEntity<>(exportData), TbResourceInfo.class).getBody();
+    }
+
+    public TbImageDeleteResult deleteImage(String type, String key, boolean force) {
+        return restTemplate.exchange(baseURL + "/api/images/{type}/{key}?force={force}", HttpMethod.DELETE, null, TbImageDeleteResult.class, Map.of(
+                "type", type,
+                "key", key,
+                "force", force
+        )).getBody();
+    }
+
     public ResponseEntity<Resource> downloadOtaPackage(OtaPackageId otaPackageId) {
         Map<String, String> params = new HashMap<>();
         params.put("otaPackageId", otaPackageId.getId().toString());
@@ -3483,16 +3735,7 @@ public class RestClient implements Closeable {
     }
 
     public OtaPackageInfo saveOtaPackageData(OtaPackageId otaPackageId, String checkSum, ChecksumAlgorithm checksumAlgorithm, String fileName, byte[] fileBytes) throws Exception {
-        HttpHeaders header = new HttpHeaders();
-        header.setContentType(MediaType.MULTIPART_FORM_DATA);
-
-        MultiValueMap<String, String> fileMap = new LinkedMultiValueMap<>();
-        fileMap.add(HttpHeaders.CONTENT_DISPOSITION, "form-data; name=file; filename=" + fileName);
-        HttpEntity<ByteArrayResource> fileEntity = new HttpEntity<>(new ByteArrayResource(fileBytes), fileMap);
-
-        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        body.add("file", fileEntity);
-        HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, header);
+        HttpEntity<MultiValueMap<String, Object>> requestEntity = createMultipartRequest(fileName, fileBytes, null, Collections.emptyMap());
 
         Map<String, String> params = new HashMap<>();
         params.put("otaPackageId", otaPackageId.getId().toString());
@@ -3619,6 +3862,30 @@ public class RestClient implements Closeable {
         return urlParams;
     }
 
+    private String getWidgetTypeInfoPageRequestUrlParams(Boolean tenantOnly, Boolean fullSearch,
+                                                         DeprecatedFilter deprecatedFilter,
+                                                         List<String> widgetTypeList) {
+        String urlParams = getTenantOnlyAndFullSearchUrlParams(tenantOnly, fullSearch);
+        if (deprecatedFilter != null) {
+            urlParams += "&deprecatedFilter={deprecatedFilter}";
+        }
+        if (!CollectionUtils.isEmpty(widgetTypeList)) {
+            urlParams += "&widgetTypeList={widgetTypeList}";
+        }
+        return urlParams;
+    }
+
+    private String getTenantOnlyAndFullSearchUrlParams(Boolean tenantOnly, Boolean fullSearch) {
+        String urlParams = "";
+        if (tenantOnly != null) {
+            urlParams = "&tenantOnly={tenantOnly}";
+        }
+        if (fullSearch != null) {
+            urlParams += "&fullSearch={fullSearch}";
+        }
+        return urlParams;
+    }
+
     private void addTimePageLinkToParam(Map<String, String> params, TimePageLink pageLink) {
         this.addPageLinkToParam(params, pageLink);
         if (pageLink.getStartTime() != null) {
@@ -3641,6 +3908,26 @@ public class RestClient implements Closeable {
         }
     }
 
+    private void addWidgetInfoFiltersToParams(Boolean tenantOnly, Boolean fullSearch, DeprecatedFilter deprecatedFilter,
+                                              List<String> widgetTypeList, Map<String, String> params) {
+        addTenantOnlyAndFullSearchToParams(tenantOnly, fullSearch, params);
+        if (deprecatedFilter != null) {
+            params.put("deprecatedFilter", deprecatedFilter.name());
+        }
+        if (!CollectionUtils.isEmpty(widgetTypeList)) {
+            params.put("widgetTypeList", listToString(widgetTypeList));
+        }
+    }
+
+    private void addTenantOnlyAndFullSearchToParams(Boolean tenantOnly, Boolean fullSearch, Map<String, String> params) {
+        if (tenantOnly != null) {
+            params.put("tenantOnly", tenantOnly.toString());
+        }
+        if (fullSearch != null) {
+            params.put("fullSearch", fullSearch.toString());
+        }
+    }
+
     private String listToString(List<String> list) {
         return String.join(",", list);
     }
@@ -3651,6 +3938,23 @@ public class RestClient implements Closeable {
 
     private String listEnumToString(List<? extends Enum> list) {
         return listToString(list.stream().map(Enum::name).collect(Collectors.toList()));
+    }
+
+    private HttpEntity<MultiValueMap<String, Object>> createMultipartRequest(String fileName, byte[] fileData, String fileContentType, Map<String, Object> otherParts) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+        MultiValueMap<String, String> fileMap = new LinkedMultiValueMap<>();
+        fileMap.add(HttpHeaders.CONTENT_DISPOSITION, "form-data; name=file; filename=" + fileName);
+        if (fileContentType != null) {
+            fileMap.add(HttpHeaders.CONTENT_TYPE, fileContentType);
+        }
+        HttpEntity<ByteArrayResource> fileEntity = new HttpEntity<>(new ByteArrayResource(fileData), fileMap);
+
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.setAll(otherParts);
+        body.add("file", fileEntity);
+        return new HttpEntity<>(body, headers);
     }
 
     @Override

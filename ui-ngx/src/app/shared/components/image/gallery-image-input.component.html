@@ -1,0 +1,94 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-container">
+  <label class="tb-title" *ngIf="label" [class]="{'tb-error': !disabled && (required && linkType === ImageLinkType.none), 'tb-required': !disabled && required}">{{label}}</label>
+  <div class="tb-image-select-container" [class]="{disabled: disabled && (linkType === ImageLinkType.none || linkType === ImageLinkType.base64)}">
+    <div class="tb-image-container">
+      <img *ngIf="linkType !== ImageLinkType.none && imageUrl; else noImage" class="tb-image-preview" [src]="imageUrl | image: {preview: true} | async">
+    </div>
+    <div *ngIf="linkType !== ImageLinkType.none && (linkType !== ImageLinkType.base64 || !disabled)" class="tb-image-info-container">
+      <div *ngIf="linkType === ImageLinkType.base64" class="tb-base64-image-container">
+      </div>
+      <div *ngIf="linkType === ImageLinkType.resource" class="tb-resource-image-container" [class]="{loading: loadingImageResource}">
+        <ng-container *ngIf="!loadingImageResource; else loading">
+          <div class="tb-resource-image-name">
+            {{ imageResource.title }}
+          </div>
+          <div class="tb-resource-image-details">
+            <div>{{ imageResource.descriptor.width }}x{{ imageResource.descriptor.height }}</div>
+            <mat-divider vertical></mat-divider>
+            <div>{{ imageResource.descriptor.size | fileSize }}</div>
+          </div>
+        </ng-container>
+      </div>
+      <div *ngIf="linkType === ImageLinkType.external" class="tb-external-image-container">
+        <div class="tb-external-link-label">
+          {{ 'image.image-link' | translate }}
+        </div>
+        <div class="tb-external-link-input-container">
+          <mat-form-field class="tb-inline-field" appearance="outline" subscriptSizing="dynamic">
+            <input matInput [formControl]="externalLinkControl" placeholder="{{ 'widget-config.set' | translate }}">
+          </mat-form-field>
+          <button *ngIf="!disabled"
+                  class="tb-image-clear-btn"
+                  type="button"
+                  mat-icon-button
+                  matTooltip="{{ 'image.clear-image' | translate }}"
+                  matTooltipPosition="above"
+                  (click)="clearImage()">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+      </div>
+      <button *ngIf="!disabled && linkType !== ImageLinkType.external"
+              class="tb-image-clear-btn"
+              type="button"
+              mat-icon-button
+              matTooltip="{{ 'image.clear-image' | translate }}"
+              matTooltipPosition="above"
+              (click)="clearImage()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    <div *ngIf="linkType === ImageLinkType.none && !disabled" class="tb-image-select-buttons-container">
+      <button mat-stroked-button
+              type="button"
+              color="primary"
+              class="tb-image-select-button"
+              (click)="openGallery($event)">
+        <tb-icon matButtonIcon>filter</tb-icon>
+        <span translate>image.browse-from-gallery</span>
+      </button>
+      <button mat-stroked-button
+              type="button"
+              color="primary"
+              class="tb-image-select-button"
+              (click)="setLink($event)">
+        <tb-icon matButtonIcon>link</tb-icon>
+        <span translate>image.set-link</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<ng-template #noImage>
+  <div class="tb-no-image">{{ (disabled ? 'image.no-image' : 'image.no-image-selected') | translate }}</div>
+</ng-template>
+<ng-template #loading>
+  <mat-spinner [diameter]="80" strokeWidth="4"></mat-spinner>
+</ng-template>

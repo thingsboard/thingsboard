@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,12 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
@@ -45,7 +50,9 @@ import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.dao.service.validator.DeviceCredentialsDataValidator;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 
 import java.nio.ByteBuffer;
@@ -54,6 +61,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
@@ -72,6 +80,10 @@ public class DeviceServiceTest extends AbstractServiceTest {
     OtaPackageService otaPackageService;
     @Autowired
     TenantProfileService tenantProfileService;
+    @Autowired
+    private PlatformTransactionManager platformTransactionManager;
+    @SpyBean
+    private DeviceCredentialsDataValidator validator;
 
     private IdComparator<Device> idComparator = new IdComparator<>();
     private TenantId anotherTenantId;
@@ -120,6 +132,49 @@ public class DeviceServiceTest extends AbstractServiceTest {
         Assertions.assertThrows(DataValidationException.class, () -> {
             this.saveDevice(tenantId, "My second device that out of maxDeviceCount limit");
         });
+    }
+
+    @Test
+    public void testSaveDevicesWithTheSameAccessToken() {
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setName(StringUtils.randomAlphabetic(10));
+        device.setType("default");
+        String accessToken = StringUtils.generateSafeToken(10);
+        Device savedDevice = deviceService.saveDeviceWithAccessToken(device, accessToken);
+
+        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, savedDevice.getId());
+        Assert.assertEquals(accessToken, deviceCredentials.getCredentialsId());
+
+        Device duplicatedDevice = new Device();
+        duplicatedDevice.setTenantId(tenantId);
+        duplicatedDevice.setName(StringUtils.randomAlphabetic(10));
+        duplicatedDevice.setType("default");
+        assertThatThrownBy(() -> deviceService.saveDeviceWithAccessToken(duplicatedDevice, accessToken))
+                .isInstanceOf(DeviceCredentialsValidationException.class)
+                .hasMessageContaining("Device credentials are already assigned to another device!");
+
+        Device deviceByName = deviceService.findDeviceByTenantIdAndName(tenantId, duplicatedDevice.getName());
+        Assertions.assertNull(deviceByName);
+    }
+
+    @Test
+    public void testShouldRollbackValidatedDeviceIfDeviceCredentialsValidationFailed() {
+        Mockito.reset(validator);
+        Mockito.doThrow(new DataValidationException("mock message"))
+                .when(validator).validate(any(), any());
+
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setName(StringUtils.randomAlphabetic(10));
+        device.setType("default");
+
+        assertThatThrownBy(() -> deviceService.saveDevice(device))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessageContaining("mock message");
+
+        Device deviceByName = deviceService.findDeviceByTenantIdAndName(tenantId, device.getName());
+        Assertions.assertNull(deviceByName);
     }
 
     @Test
@@ -303,6 +358,28 @@ public class DeviceServiceTest extends AbstractServiceTest {
         Assertions.assertThrows(DataValidationException.class, () -> {
             deviceService.saveDevice(device);
         });
+    }
+
+    @Test
+    public void testShouldNotPutInCacheRolledbackDeviceProfile() {
+        DeviceProfile deviceProfile = createDeviceProfile(tenantId, "New device Profile" + StringUtils.randomAlphabetic(5));
+
+
+        Device device = new Device();
+        device.setType(deviceProfile.getName());
+        device.setTenantId(tenantId);
+        device.setName("My device"+ StringUtils.randomAlphabetic(5));
+
+        DefaultTransactionDefinition def = new DefaultTransactionDefinition();
+        TransactionStatus status = platformTransactionManager.getTransaction(def);
+        try {
+            deviceProfileService.saveDeviceProfile(deviceProfile);
+            deviceService.saveDevice(device);
+        } finally {
+            platformTransactionManager.rollback(status);
+        }
+        DeviceProfile deviceProfileByName = deviceProfileService.findDeviceProfileByName(tenantId, deviceProfile.getName());
+        Assert.assertNull(deviceProfileByName);
     }
 
     @Test

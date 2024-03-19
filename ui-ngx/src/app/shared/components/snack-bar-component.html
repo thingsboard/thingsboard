@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,15 +15,30 @@
     limitations under the License.
 
 -->
-<div fxLayout="row" fxLayoutAlign="start center" class="tb-toast"
+<div fxLayout="row" fxLayoutAlign="start center"
      [@showHideAnimation]="{value: animationState, params: animationParams}"
      (@showHideAnimation.done)="onHideFinished($event)"
      [ngClass]="{
-          'error-toast': notification.type === 'error',
-          'warn-toast': notification.type === 'warn',
-          'success-toast': notification.type === 'success',
-          'info-toast': notification.type === 'info'
+        'tb-toast': !notification.modern,
+        'tb-modern-toast': notification.modern,
+        'error-toast': notification.type === 'error',
+        'warn-toast': notification.type === 'warn',
+        'success-toast': notification.type === 'success',
+        'info-toast': notification.type === 'info'
      }">
-  <div class="toast-text" [innerHTML]="notification.message"></div>
-  <button #actionButton type="button" mat-button (click)="action($event)">{{ 'action.close' | translate }}</button>
+  <ng-container *ngIf="!notification.modern; else modern">
+    <div class="toast-text" [innerHTML]="notification.message | safe: 'html'"></div>
+    <button #actionButton type="button" mat-button (click)="action($event)">{{ 'action.close' | translate }}</button>
+  </ng-container>
+  <ng-template #modern>
+    <div class="tb-modern-toast-panel" [ngClass]="{
+        'error-toast': notification.type === 'error',
+        'warn-toast': notification.type === 'warn',
+        'success-toast': notification.type === 'success',
+        'info-toast': notification.type === 'info'
+     }">
+      <div class="toast-text" [innerHTML]="notification.message | safe: 'html'"></div>
+      <button #actionButton class="tb-mat-20" mat-icon-button (click)="action($event)"><mat-icon>close</mat-icon></button>
+    </div>
+  </ng-template>
 </div>

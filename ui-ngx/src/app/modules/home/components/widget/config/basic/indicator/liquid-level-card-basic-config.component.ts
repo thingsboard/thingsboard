@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -194,7 +194,9 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
       volumeSource: [settings.volumeSource, []],
       volumeConstant: [settings.volumeConstant, [Validators.required, Validators.min(0.1)]],
       volumeAttributeName: [settings.volumeAttributeName, [Validators.required]],
+      volumeUnitsSource: [settings.volumeUnitsSource, []],
       volumeUnits: [settings.volumeUnits, [Validators.required]],
+      volumeUnitsAttributeName: [settings.volumeUnitsAttributeName, [Validators.required]],
       volumeFont: [settings.volumeFont, []],
       volumeColor: [settings.volumeColor, []],
       units: [settings.units, [Validators.required]],
@@ -260,6 +262,8 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
     this.widgetConfig.config.settings.volumeSource = config.volumeSource;
     this.widgetConfig.config.settings.volumeConstant = config.volumeConstant;
     this.widgetConfig.config.settings.volumeAttributeName = config.volumeAttributeName;
+    this.widgetConfig.config.settings.volumeUnitsSource = config.volumeUnitsSource;
+    this.widgetConfig.config.settings.volumeUnitsAttributeName = config.volumeUnitsAttributeName;
     this.widgetConfig.config.settings.volumeUnits = config.volumeUnits;
     this.widgetConfig.config.settings.volumeFont = config.volumeFont;
     this.widgetConfig.config.settings.volumeColor = config.volumeColor;
@@ -294,7 +298,7 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
   protected validatorTriggers(): string[] {
     return [
       'showTooltip', 'showTooltipLevel', 'tankSelectionType', 'datasourceUnits', 'showTitleIcon', 'volumeSource',
-      'showTooltipDate', 'layout', 'showTitle', 'widgetUnitsSource'
+      'showTooltipDate', 'layout', 'showTitle', 'widgetUnitsSource', 'volumeUnitsSource'
     ];
   }
 

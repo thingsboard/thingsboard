@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.script.api.tbel;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import org.mvel2.ConversionException;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
@@ -25,7 +26,6 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -35,7 +35,6 @@ import java.time.format.DateTimeParseException;
 import java.time.format.FormatStyle;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAccessor;
-import java.util.Arrays;
 import java.util.Locale;
 import java.util.function.BiFunction;
 
@@ -57,36 +56,53 @@ public class TbDate implements Serializable, Cloneable {
         this.instant = parseInstant(s);
     }
 
-    public TbDate(String s, String pattern, Locale locale) {
-        instant =  parseInstant(s, pattern, locale, zoneIdUTC);
+    public TbDate(String s, String pattern) {
+        this.instant = parseInstant(s, Locale.getDefault().toLanguageTag(), pattern);
     }
-    public TbDate(String s, String pattern, Locale locale, String zoneIdStr) {
-        ZoneId zoneId = ZoneId.of(zoneIdStr);
-        instant =  parseInstant(s, pattern, locale, zoneId);
+
+    public TbDate(String s, String pattern, String locale) {
+        this.instant = parseInstant(s, locale, pattern);
     }
-    public TbDate(String s, String pattern, Locale locale, ZoneId zoneId) {
-        instant =  parseInstant(s, pattern, locale, zoneId);
+
+    public TbDate(String s, String pattern, String locale, String zoneId) {
+       this.instant = parseInstant(s, pattern, locale, zoneId);
     }
 
     public TbDate(long dateMilliSecond) {
         instant = Instant.ofEpochMilli(dateMilliSecond);
     }
 
-    public TbDate(int year, int month, int date, String... tz) {
+    public TbDate(int year, int month, int date) {
+        this(year, month, date, 0, 0, 0, 0, null);
+    }
+
+    public TbDate(int year, int month, int date, String tz) {
         this(year, month, date, 0, 0, 0, 0, tz);
     }
 
-    public TbDate(int year, int month, int date, int hrs, int min, String... tz) {
+    public TbDate(int year, int month, int date, int hrs, int min) {
+        this(year, month, date, hrs, min, 0, 0, null);
+    }
+
+    public TbDate(int year, int month, int date, int hrs, int min, String tz) {
         this(year, month, date, hrs, min, 0, 0, tz);
     }
 
-    public TbDate(int year, int month, int date, int hrs, int min, int second, String... tz) {
+    public TbDate(int year, int month, int date, int hrs, int min, int second) {
+        this(year, month, date, hrs, min, second, 0, null);
+    }
+
+    public TbDate(int year, int month, int date, int hrs, int min, int second, String tz) {
         this(year, month, date, hrs, min, second, 0, tz);
     }
 
-    public TbDate(int year, int month, int date, int hrs, int min, int second, int secondMilli, String... tz) {
-        ZoneId zoneId = tz.length > 0 ? ZoneId.of(Arrays.stream(tz).findFirst().get()) : ZoneId.systemDefault();
-        instant = parseInstant(year, month, date, hrs, min, second,  secondMilli, zoneId);
+    public TbDate(int year, int month, int date, int hrs, int min, int second, int milliSecond) {
+        this(year, month, date, hrs, min, second, milliSecond, null);
+    }
+
+    public TbDate(int year, int month, int date, int hrs, int min, int second, int milliSecond, String tz) {
+        ZoneId zoneId = tz != null && tz.length() > 0 ? ZoneId.of(tz) : ZoneId.systemDefault();
+        instant = parseInstant(year, month, date, hrs, min, second,  milliSecond, zoneId);
     }
 
     public Instant getInstant() {
@@ -141,6 +157,7 @@ public class TbDate implements Serializable, Cloneable {
         return toLocaleString(localeStr, zoneIdUTC.getId(), (locale, options) -> DateTimeFormatter.ofLocalizedDateTime(FormatStyle.FULL, FormatStyle.MEDIUM).withLocale(locale));
     }
 
+    @JsonValue
     public String toString() {
         return toString(Locale.getDefault().getLanguage());
     }
@@ -486,18 +503,25 @@ public class TbDate implements Serializable, Cloneable {
     }
 
     private static Instant parseInstant(String s) {
-        try{
-            if (s.length() > 0 && Character.isDigit(s.charAt(0))) {
-                // assuming UTC instant  "2007-12-03T10:15:30.00Z"
-                return OffsetDateTime.parse(s).toInstant();
+        boolean isIsoFormat = s.length() > 0 && Character.isDigit(s.charAt(0));
+        if (isIsoFormat) {
+            return getInstant_ISO_OFFSET_DATE_TIME(s);
+        } else {
+            return getInstant_RFC_1123(s);
+        }
+    }
+
+    private static Instant parseInstant(String s, String localeStr, String pattern) {
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern, Locale.forLanguageTag(localeStr));
+            return Instant.from(formatter.parse(s));
+        } catch (Exception ex) {
+            try {
+                return parseInstant(s, pattern, localeStr, ZoneId.systemDefault().getId());
+            } catch (final DateTimeParseException e) {
+                final ConversionException exception = new ConversionException("Cannot parse value [" + s + "] as instant", ex);
+                throw exception;
             }
-            else {
-                // assuming RFC-1123 value "Tue, 3 Jun 2008 11:05:30 GMT-02:00"
-                return Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(s));
-            }
-        } catch (final DateTimeParseException ex) {
-            final ConversionException exception = new ConversionException("Cannot parse value [" + s + "] as instant", ex);
-            throw exception;
         }
     }
 
@@ -506,10 +530,55 @@ public class TbDate implements Serializable, Cloneable {
         ZonedDateTime zonedDateTime = ZonedDateTime.of(year, month, date, hrs, min, second, secondMilli*1000000, zoneId);
         return zonedDateTime.toInstant();
     }
-    private static Instant parseInstant(String s, String pattern, Locale locale, ZoneId zoneId) {
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(pattern, locale);
+    private static Instant parseInstant(String s, String pattern, String localeStr, String zoneIdStr) {
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(pattern, Locale.forLanguageTag(localeStr));
         LocalDateTime localDateTime = LocalDateTime.parse(s, dateTimeFormatter);
-        ZonedDateTime zonedDateTime = localDateTime.atZone(zoneId);
+        ZonedDateTime zonedDateTime = localDateTime.atZone(ZoneId.of(zoneIdStr));
         return zonedDateTime.toInstant();
+    }
+
+    private static Instant getInstant_ISO_OFFSET_DATE_TIME(String s) {
+        // assuming  "2007-12-03T10:15:30.00Z"  UTC instant
+        // assuming  "2007-12-03T10:15:30.00"  ZoneId.systemDefault() instant
+        // assuming  "2007-12-03T10:15:30.00-04:00"  TZ instant
+        // assuming  "2007-12-03T10:15:30.00+04:00"  TZ instant
+        DateTimeFormatter formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME;
+        try {
+            return Instant.from(formatter.parse(s));
+        } catch (DateTimeParseException ex) {
+            try {
+                long timeMS = parse(s);
+                if (timeMS != -1) {
+                    return Instant.ofEpochMilli(timeMS);
+                } else {
+                    throw new ConversionException("Cannot parse value [" + s + "] as instant");
+                }
+            } catch (final DateTimeParseException e) {
+                throw new ConversionException("Cannot parse value [" + s + "] as instant");
+            }
+        }
+    }
+    private static Instant getInstant_RFC_1123(String s) {
+            // assuming RFC-1123 value "Tue, 3 Jun 2008 11:05:30 GMT"
+            // assuming RFC-1123 value "Tue, 3 Jun 2008 11:05:30 GMT-02:00"
+            // assuming RFC-1123 value "Tue, 3 Jun 2008 11:05:30 -0200"
+        DateTimeFormatter formatter = DateTimeFormatter.RFC_1123_DATE_TIME;
+        try {
+            return Instant.from(formatter.parse(s));
+        } catch (DateTimeParseException ex) {
+            try {
+                return getInstantWithLocalZoneOffsetId_RFC_1123(s);
+            } catch (final DateTimeParseException e) {
+                throw new ConversionException("Cannot parse value [" + s + "] as instant");
+            }
+        }
+    }
+    private static Instant getInstantWithLocalZoneOffsetId_RFC_1123(String value) {
+        String s = value.trim() + " GMT";
+        Instant instant = Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(s));
+        ZoneId systemZone = ZoneId.systemDefault(); // my timezone
+        String id =  systemZone.getRules().getOffset(instant).getId();
+        value =  value.trim() + " " + id.replaceAll(":", "");
+        return Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(value));
     }
 }

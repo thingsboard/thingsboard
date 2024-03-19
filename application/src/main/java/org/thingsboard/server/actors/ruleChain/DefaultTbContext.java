@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,14 @@ import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.RuleEngineApiUsageStateService;
 import org.thingsboard.rule.engine.api.RuleEngineAssetProfileCache;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
+import org.thingsboard.rule.engine.api.RuleEngineDeviceStateManager;
 import org.thingsboard.rule.engine.api.RuleEngineRpcService;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.slack.SlackService;
+import org.thingsboard.rule.engine.api.notification.SlackService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.rule.engine.util.TenantIdLoader;
 import org.thingsboard.server.actors.ActorSystemContext;
@@ -76,6 +77,7 @@ import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -84,7 +86,9 @@ import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
+import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 import org.thingsboard.server.dao.nosql.TbResultSetFuture;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
@@ -104,6 +108,8 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
+import org.thingsboard.server.service.executors.PubSubRuleNodeExecutorProvider;
+import org.thingsboard.server.queue.common.SimpleTbQueueCallback;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 import org.thingsboard.server.service.script.RuleNodeTbelScriptEngine;
 
@@ -184,7 +190,7 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public void enqueue(TbMsg tbMsg, Runnable onSuccess, Consumer<Throwable> onFailure) {
-        TopicPartitionInfo tpi = mainCtx.resolve(ServiceType.TB_RULE_ENGINE, getTenantId(), tbMsg.getOriginator());
+        TopicPartitionInfo tpi = mainCtx.resolve(ServiceType.TB_RULE_ENGINE, getQueueName(), getTenantId(), tbMsg.getOriginator());
         enqueue(tpi, tbMsg, onFailure, onSuccess);
     }
 
@@ -209,7 +215,19 @@ class DefaultTbContext implements TbContext {
         if (nodeCtx.getSelf().isDebugMode()) {
             mainCtx.persistDebugOutput(nodeCtx.getTenantId(), nodeCtx.getSelf().getId(), tbMsg, "To Root Rule Chain");
         }
-        mainCtx.getClusterService().pushMsgToRuleEngine(tpi, tbMsg.getId(), msg, new SimpleTbQueueCallback(onSuccess, onFailure));
+        mainCtx.getClusterService().pushMsgToRuleEngine(tpi, tbMsg.getId(), msg, new SimpleTbQueueCallback(
+                metadata -> {
+                    if (onSuccess != null) {
+                        onSuccess.run();
+                    }
+                },
+                t -> {
+                    if (onFailure != null) {
+                        onFailure.accept(t);
+                    } else {
+                        log.debug("[{}] Failed to put item into queue!", nodeCtx.getTenantId().getId(), t);
+                    }
+                }));
     }
 
     @Override
@@ -295,7 +313,19 @@ class DefaultTbContext implements TbContext {
             relationTypes.forEach(relationType ->
                     mainCtx.persistDebugOutput(nodeCtx.getTenantId(), nodeCtx.getSelf().getId(), tbMsg, relationType, null, failureMessage));
         }
-        mainCtx.getClusterService().pushMsgToRuleEngine(tpi, tbMsg.getId(), msg.build(), new SimpleTbQueueCallback(onSuccess, onFailure));
+        mainCtx.getClusterService().pushMsgToRuleEngine(tpi, tbMsg.getId(), msg.build(), new SimpleTbQueueCallback(
+                metadata -> {
+                    if (onSuccess != null) {
+                        onSuccess.run();
+                    }
+                },
+                t -> {
+                    if (onFailure != null) {
+                        onFailure.accept(t);
+                    } else {
+                        log.debug("[{}] Failed to put item into queue!", nodeCtx.getTenantId().getId(), t);
+                    }
+                }));
     }
 
     @Override
@@ -309,7 +339,7 @@ class DefaultTbContext implements TbContext {
 
     @Override
     public boolean isLocalEntity(EntityId entityId) {
-        return mainCtx.resolve(ServiceType.TB_RULE_ENGINE, getTenantId(), entityId).isMyPartition();
+        return mainCtx.resolve(ServiceType.TB_RULE_ENGINE, getQueueName(), getTenantId(), entityId).isMyPartition();
     }
 
     private void scheduleMsgWithDelay(TbActorMsg msg, long delayInMs, TbActorRef target) {
@@ -509,6 +539,11 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    public String getQueueName() {
+        return getSelf().getQueueName();
+    }
+
+    @Override
     public TenantId getTenantId() {
         return nodeCtx.getTenantId();
     }
@@ -536,6 +571,11 @@ class DefaultTbContext implements TbContext {
     @Override
     public ListeningExecutor getNotificationExecutor() {
         return mainCtx.getNotificationExecutor();
+    }
+
+    @Override
+    public PubSubRuleNodeExecutorProvider getPubSubRuleNodeExecutorProvider() {
+        return mainCtx.getPubSubRuleNodeExecutorProvider();
     }
 
     @Override
@@ -642,6 +682,16 @@ class DefaultTbContext implements TbContext {
     @Override
     public DeviceCredentialsService getDeviceCredentialsService() {
         return mainCtx.getDeviceCredentialsService();
+    }
+
+    @Override
+    public RuleEngineDeviceStateManager getDeviceStateManager() {
+        return mainCtx.getDeviceStateManager();
+    }
+
+    @Override
+    public String getDeviceStateNodeRateLimitConfig() {
+        return mainCtx.getDeviceStateNodeRateLimitConfig();
     }
 
     @Override
@@ -890,6 +940,21 @@ class DefaultTbContext implements TbContext {
         return mainCtx.getApiUsageStateService();
     }
 
+    @Override
+    public EntityService getEntityService() {
+        return mainCtx.getEntityService();
+    }
+
+    @Override
+    public EventService getEventService() {
+        return mainCtx.getEventService();
+    }
+
+    @Override
+    public AuditLogService getAuditLogService() {
+        return mainCtx.getAuditLogService();
+    }
+
     private TbMsgMetaData getActionMetaData(RuleNodeId ruleNodeId) {
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("ruleNodeId", ruleNodeId.toString());
@@ -923,29 +988,4 @@ class DefaultTbContext implements TbContext {
         return failureMessage;
     }
 
-    private class SimpleTbQueueCallback implements TbQueueCallback {
-        private final Runnable onSuccess;
-        private final Consumer<Throwable> onFailure;
-
-        public SimpleTbQueueCallback(Runnable onSuccess, Consumer<Throwable> onFailure) {
-            this.onSuccess = onSuccess;
-            this.onFailure = onFailure;
-        }
-
-        @Override
-        public void onSuccess(TbQueueMsgMetadata metadata) {
-            if (onSuccess != null) {
-                onSuccess.run();
-            }
-        }
-
-        @Override
-        public void onFailure(Throwable t) {
-            if (onFailure != null) {
-                onFailure.accept(t);
-            } else {
-                log.debug("[{}] Failed to put item into queue", nodeCtx.getTenantId(), t);
-            }
-        }
-    }
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,21 +14,23 @@
 /// limitations under the License.
 ///
 
-import { Component, Injector } from '@angular/core';
-import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
+import { Component } from '@angular/core';
+import {
+  legendPositions,
+  legendPositionTranslationMap,
+  WidgetSettings,
+  WidgetSettingsComponent
+} from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { formatValue, isDefinedAndNotNull } from '@core/utils';
-import { getDataKey } from '@shared/models/widget-settings.models';
 import {
   doughnutDefaultSettings,
   DoughnutLayout,
   doughnutLayoutImages,
   doughnutLayouts,
   doughnutLayoutTranslations,
-  DoughnutLegendPosition,
-  doughnutLegendPositionTranslations,
   DoughnutTooltipValueType,
   doughnutTooltipValueTypes,
   doughnutTooltipValueTypeTranslations,
@@ -56,9 +58,9 @@ export class DoughnutWidgetSettingsComponent extends WidgetSettingsComponent {
 
   doughnutLayoutImageMap: Map<DoughnutLayout, string>;
 
-  doughnutLegendPositions: DoughnutLegendPosition[];
+  legendPositions = legendPositions;
 
-  doughnutLegendPositionTranslationMap = doughnutLegendPositionTranslations;
+  legendPositionTranslationMap = legendPositionTranslationMap;
 
   doughnutTooltipValueTypes = doughnutTooltipValueTypes;
 
@@ -71,7 +73,6 @@ export class DoughnutWidgetSettingsComponent extends WidgetSettingsComponent {
   tooltipValuePreviewFn = this._tooltipValuePreviewFn.bind(this);
 
   constructor(protected store: Store<AppState>,
-              private $injector: Injector,
               private fb: UntypedFormBuilder) {
     super(store);
   }
@@ -84,8 +85,6 @@ export class DoughnutWidgetSettingsComponent extends WidgetSettingsComponent {
     const params = widgetConfig.typeParameters as any;
     this.horizontal  = isDefinedAndNotNull(params.horizontal) ? params.horizontal : false;
     this.doughnutLayoutImageMap = this.horizontal ? horizontalDoughnutLayoutImages : doughnutLayoutImages;
-    this.doughnutLegendPositions = this.horizontal ? [DoughnutLegendPosition.left, DoughnutLegendPosition.right] :
-      [DoughnutLegendPosition.top, DoughnutLegendPosition.bottom];
   }
 
   protected defaultSettings(): WidgetSettings {
@@ -96,6 +95,8 @@ export class DoughnutWidgetSettingsComponent extends WidgetSettingsComponent {
     this.doughnutWidgetSettingsForm = this.fb.group({
       layout: [settings.layout, []],
       autoScale: [settings.autoScale, []],
+      clockwise: [settings.clockwise, []],
+      sortSeries: [settings.sortSeries, []],
 
       totalValueFont: [settings.totalValueFont, []],
       totalValueColor: [settings.totalValueColor, []],
@@ -164,23 +165,6 @@ export class DoughnutWidgetSettingsComponent extends WidgetSettingsComponent {
     } else {
       this.doughnutWidgetSettingsForm.get('totalValueFont').disable();
       this.doughnutWidgetSettingsForm.get('totalValueColor').disable();
-    }
-  }
-
-  private _centerValuePreviewFn(): string {
-    const centerValueDataKey = getDataKey(this.widgetConfig.config.datasources, 1);
-    if (centerValueDataKey) {
-      let units: string = this.widgetConfig.config.units;
-      let decimals: number = this.widgetConfig.config.decimals;
-      if (isDefinedAndNotNull(centerValueDataKey?.decimals)) {
-        decimals = centerValueDataKey.decimals;
-      }
-      if (centerValueDataKey?.units) {
-        units = centerValueDataKey.units;
-      }
-      return formatValue(25, decimals, units, true);
-    } else {
-      return '225°';
     }
   }
 
