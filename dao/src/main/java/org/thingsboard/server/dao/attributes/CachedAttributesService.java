@@ -119,15 +119,15 @@ public class CachedAttributesService implements AttributesService {
         validate(entityId, scope);
         Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey);
 
-        AttributeCacheKey attributeCacheKey = new AttributeCacheKey(scope, entityId, attributeKey);
-        TbCacheValueWrapper<AttributeKvEntry> cachedAttributeValue = cache.get(attributeCacheKey);
-        if (cachedAttributeValue != null) {
-            hitCounter.increment();
-            AttributeKvEntry cachedAttributeKvEntry = cachedAttributeValue.get();
-            return Futures.immediateFuture(Optional.ofNullable(cachedAttributeKvEntry));
-        } else {
-            missCounter.increment();
-            return cacheExecutor.submit(() -> {
+        return cacheExecutor.submit(() -> {
+            AttributeCacheKey attributeCacheKey = new AttributeCacheKey(scope, entityId, attributeKey);
+            TbCacheValueWrapper<AttributeKvEntry> cachedAttributeValue = cache.get(attributeCacheKey);
+            if (cachedAttributeValue != null) {
+                hitCounter.increment();
+                AttributeKvEntry cachedAttributeKvEntry = cachedAttributeValue.get();
+                return Optional.ofNullable(cachedAttributeKvEntry);
+            } else {
+                missCounter.increment();
                 var cacheTransaction = cache.newTransactionForKey(attributeCacheKey);
                 try {
                     Optional<AttributeKvEntry> result = attributesDao.find(tenantId, entityId, scope, attributeKey);
@@ -139,8 +139,8 @@ public class CachedAttributesService implements AttributesService {
                     log.debug("Could not find attribute from cache: [{}] [{}] [{}]", entityId, scope, attributeKey, e);
                     throw e;
                 }
-            });
-        }
+            }
+        });
     }
 
     @Override
@@ -223,7 +223,8 @@ public class CachedAttributesService implements AttributesService {
     @Override
     public ListenableFuture<List<AttributeKvEntry>> findAll(TenantId tenantId, EntityId entityId, AttributeScope scope) {
         validate(entityId, scope);
-        return Futures.immediateFuture(attributesDao.findAll(tenantId, entityId, scope));
+        // We can`t watch on cache because the keys are unknown.
+        return jpaExecutorService.submit(() -> attributesDao.findAll(tenantId, entityId, scope));
     }
 
     @Override

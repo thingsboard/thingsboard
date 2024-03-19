@@ -24,6 +24,8 @@ import jakarta.persistence.IdClass;
 import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.dialect.PostgreSQLJsonPGObjectJsonbType;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.settings.UserSettings;
 import org.thingsboard.server.common.data.settings.UserSettingsCompositeKey;
@@ -48,7 +50,8 @@ public class UserSettingsEntity implements ToData<UserSettings> {
     @Column(name = ModelConstants.USER_SETTINGS_TYPE_PROPERTY)
     private String type;
     @Convert(converter = JsonConverter.class)
-    @Column(name = ModelConstants.USER_SETTINGS_SETTINGS)
+    @JdbcType(PostgreSQLJsonPGObjectJsonbType.class)
+    @Column(name = ModelConstants.USER_SETTINGS_SETTINGS, columnDefinition = "jsonb")
     private JsonNode settings;
 
     public UserSettingsEntity(UserSettings userSettings) {

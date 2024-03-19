@@ -154,6 +154,7 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
                             .constructAlarmUpdatedMsg(msgType, alarm, findOriginatorEntityName(tenantId, alarm));
                 }
                 break;
+            case ALARM_DELETE:
             case DELETED:
                 Alarm deletedAlarm = JacksonUtil.convertValue(body, Alarm.class);
                 if (deletedAlarm != null) {

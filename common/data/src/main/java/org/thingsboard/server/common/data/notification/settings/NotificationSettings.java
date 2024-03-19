@@ -28,7 +28,6 @@ public class NotificationSettings implements Serializable {
 
     @NotNull
     @Valid
-    // location on the screen, shown notifications count, timings of displaying
     private Map<NotificationDeliveryMethod, NotificationDeliveryMethodConfig> deliveryMethodsConfigs;
 
 }

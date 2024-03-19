@@ -14,24 +14,23 @@
 /// limitations under the License.
 ///
 
+import { AggKey, IndexedSubscriptionData, } from '@app/shared/models/telemetry/telemetry.models';
 import {
-  AggKey,
-  IndexedSubscriptionData,
-} from '@app/shared/models/telemetry/telemetry.models';
-import {
-  AggregationType, calculateAggIntervalWithSubscriptionTimeWindow,
+  AggregationType,
+  calculateAggIntervalWithSubscriptionTimeWindow,
   calculateIntervalComparisonEndTime,
   calculateIntervalEndTime,
   calculateIntervalStartEndTime,
   getCurrentTime,
-  getTime, IntervalMath,
+  getTime,
+  IntervalMath,
   SubscriptionTimewindow
 } from '@shared/models/time/time.models';
 import { UtilsService } from '@core/services/utils.service';
 import { deepClone, isDefinedAndNotNull, isNumber, isNumeric } from '@core/utils';
-import Timeout = NodeJS.Timeout;
 import { DataEntry, DataSet, IndexedData } from '@shared/models/widget.models';
 import BTree from 'sorted-btree';
+import Timeout = NodeJS.Timeout;
 
 export declare type onAggregatedData = (data: IndexedData, detectChanges: boolean) => void;
 
@@ -318,7 +317,9 @@ export class DataAggregator {
           this.startTs += tickTs;
           this.endTs += tickTs;
         }
-        this.updateLastInterval();
+        if (this.subsTw.aggregation.type !== AggregationType.NONE) {
+          this.updateLastInterval();
+        }
         this.data = this.updateData();
         this.elapsed = this.elapsed - delta * this.aggregationTimeout;
       }

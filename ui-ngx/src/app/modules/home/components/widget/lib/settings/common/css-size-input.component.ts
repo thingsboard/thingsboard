@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, forwardRef, HostBinding, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALIDATORS,
@@ -48,6 +48,16 @@ import { isDefinedAndNotNull } from '@core/utils';
 })
 export class CssSizeInputComponent implements OnInit, ControlValueAccessor, Validator {
 
+  @HostBinding('style.width')
+  get hostWidth(): string {
+    return this.flex ? '100%' : null;
+  }
+
+  @HostBinding('style.flex')
+  get hostFlex(): string {
+    return this.flex ? '1' : null;
+  }
+
   @Input()
   disabled: boolean;
 
@@ -61,6 +71,10 @@ export class CssSizeInputComponent implements OnInit, ControlValueAccessor, Vali
   @Input()
   @coerceBoolean()
   allowEmptyUnit = false;
+
+  @Input()
+  @coerceBoolean()
+  flex = false;
 
   cssSizeFormGroup: UntypedFormGroup;
 

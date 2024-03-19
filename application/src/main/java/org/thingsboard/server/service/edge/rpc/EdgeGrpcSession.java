@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.common.data.notification.rule.trigger.EdgeCommunicationFailureTrigger;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -110,6 +111,7 @@ public final class EdgeGrpcSession implements Closeable {
 
     private static final String QUEUE_START_TS_ATTR_KEY = "queueStartTs";
     private static final String QUEUE_START_SEQ_ID_ATTR_KEY = "queueStartSeqId";
+    private static final String RATE_LIMIT_REACHED = "Rate limit reached";
 
     private final UUID sessionId;
     private final BiConsumer<EdgeId, EdgeGrpcSession> sessionOpenListener;
@@ -265,36 +267,51 @@ public final class EdgeGrpcSession implements Closeable {
     }
 
     private void onUplinkMsg(UplinkMsg uplinkMsg) {
+        if (isRateLimitViolated(uplinkMsg)) {
+            return;
+        }
         ListenableFuture<List<Void>> future = processUplinkMsg(uplinkMsg);
         Futures.addCallback(future, new FutureCallback<>() {
             @Override
             public void onSuccess(@Nullable List<Void> result) {
-                UplinkResponseMsg uplinkResponseMsg = UplinkResponseMsg.newBuilder()
-                        .setUplinkMsgId(uplinkMsg.getUplinkMsgId())
-                        .setSuccess(true).build();
-                sendDownlinkMsg(ResponseMsg.newBuilder()
-                        .setUplinkResponseMsg(uplinkResponseMsg)
-                        .build());
+                sendResponseMessage(uplinkMsg.getUplinkMsgId(), true, null);
             }
 
             @Override
             public void onFailure(Throwable t) {
                 String errorMsg = EdgeUtils.createErrorMsgFromRootCauseAndStackTrace(t);
-                UplinkResponseMsg uplinkResponseMsg = UplinkResponseMsg.newBuilder()
-                        .setUplinkMsgId(uplinkMsg.getUplinkMsgId())
-                        .setSuccess(false).setErrorMsg(errorMsg).build();
-                sendDownlinkMsg(ResponseMsg.newBuilder()
-                        .setUplinkResponseMsg(uplinkResponseMsg)
-                        .build());
+                sendResponseMessage(uplinkMsg.getUplinkMsgId(), false, errorMsg);
             }
         }, ctx.getGrpcCallbackExecutorService());
+    }
+
+    private boolean isRateLimitViolated(UplinkMsg uplinkMsg) {
+        if (!ctx.getRateLimitService().checkRateLimit(LimitedApi.EDGE_UPLINK_MESSAGES, tenantId) ||
+                !ctx.getRateLimitService().checkRateLimit(LimitedApi.EDGE_UPLINK_MESSAGES_PER_EDGE, tenantId, edge.getId())) {
+            String errorMsg = String.format("Failed to process uplink message. %s", RATE_LIMIT_REACHED);
+            sendResponseMessage(uplinkMsg.getUplinkMsgId(), false, errorMsg);
+            return true;
+        }
+        return false;
+    }
+
+    private void sendResponseMessage(int uplinkMsgId, boolean success, String errorMsg) {
+        UplinkResponseMsg.Builder responseBuilder = UplinkResponseMsg.newBuilder()
+                .setUplinkMsgId(uplinkMsgId)
+                .setSuccess(success);
+        if (errorMsg != null) {
+            responseBuilder.setErrorMsg(errorMsg);
+        }
+        sendDownlinkMsg(ResponseMsg.newBuilder()
+                .setUplinkResponseMsg(responseBuilder.build())
+                .build());
     }
 
     private void onDownlinkResponse(DownlinkResponseMsg msg) {
         try {
             if (msg.getSuccess()) {
                 sessionState.getPendingMsgsMap().remove(msg.getDownlinkMsgId());
-                log.debug("[{}][{}] Msg has been processed successfully!Msg Id: [{}], Msg: {}", this.tenantId, edge.getRoutingKey(), msg.getDownlinkMsgId(), msg);
+                log.debug("[{}][{}] Msg has been processed successfully! Msg Id: [{}], Msg: {}", this.tenantId, edge.getRoutingKey(), msg.getDownlinkMsgId(), msg);
             } else {
                 log.error("[{}][{}] Msg processing failed! Msg Id: [{}], Error msg: {}", this.tenantId, edge.getRoutingKey(), msg.getDownlinkMsgId(), msg.getErrorMsg());
             }
@@ -541,6 +558,7 @@ public final class EdgeGrpcSession implements Closeable {
                     case UNASSIGNED_FROM_EDGE:
                     case ALARM_ACK:
                     case ALARM_CLEAR:
+                    case ALARM_DELETE:
                     case CREDENTIALS_UPDATED:
                     case RELATION_ADD_OR_UPDATE:
                     case RELATION_DELETED:
@@ -696,11 +714,6 @@ public final class EdgeGrpcSession implements Closeable {
     private ListenableFuture<List<Void>> processUplinkMsg(UplinkMsg uplinkMsg) {
         List<ListenableFuture<Void>> result = new ArrayList<>();
         try {
-            if (uplinkMsg.getEntityDataCount() > 0) {
-                for (EntityDataProto entityData : uplinkMsg.getEntityDataList()) {
-                    result.addAll(ctx.getTelemetryProcessor().processTelemetryMsg(edge.getTenantId(), entityData));
-                }
-            }
             if (uplinkMsg.getDeviceProfileUpdateMsgCount() > 0) {
                 for (DeviceProfileUpdateMsg deviceProfileUpdateMsg : uplinkMsg.getDeviceProfileUpdateMsgList()) {
                     result.add(((DeviceProfileProcessor) ctx.getDeviceProfileEdgeProcessorFactory().getProcessorByEdgeVersion(this.edgeVersion))
@@ -731,6 +744,17 @@ public final class EdgeGrpcSession implements Closeable {
                             .processAssetMsgFromEdge(edge.getTenantId(), edge, assetUpdateMsg));
                 }
             }
+            if (uplinkMsg.getEntityViewUpdateMsgCount() > 0) {
+                for (EntityViewUpdateMsg entityViewUpdateMsg : uplinkMsg.getEntityViewUpdateMsgList()) {
+                    result.add(((EntityViewProcessor) ctx.getEntityViewProcessorFactory().getProcessorByEdgeVersion(this.edgeVersion))
+                            .processEntityViewMsgFromEdge(edge.getTenantId(), edge, entityViewUpdateMsg));
+                }
+            }
+            if (uplinkMsg.getEntityDataCount() > 0) {
+                for (EntityDataProto entityData : uplinkMsg.getEntityDataList()) {
+                    result.addAll(ctx.getTelemetryProcessor().processTelemetryMsg(edge.getTenantId(), entityData));
+                }
+            }
             if (uplinkMsg.getAlarmUpdateMsgCount() > 0) {
                 for (AlarmUpdateMsg alarmUpdateMsg : uplinkMsg.getAlarmUpdateMsgList()) {
                     result.add(((AlarmProcessor) ctx.getAlarmEdgeProcessorFactory().getProcessorByEdgeVersion(this.edgeVersion))
@@ -741,12 +765,6 @@ public final class EdgeGrpcSession implements Closeable {
                 for (AlarmCommentUpdateMsg alarmCommentUpdateMsg : uplinkMsg.getAlarmCommentUpdateMsgList()) {
                     result.add(((AlarmProcessor) ctx.getAlarmEdgeProcessorFactory().getProcessorByEdgeVersion(this.edgeVersion))
                             .processAlarmCommentMsgFromEdge(edge.getTenantId(), edge.getId(), alarmCommentUpdateMsg));
-                }
-            }
-            if (uplinkMsg.getEntityViewUpdateMsgCount() > 0) {
-                for (EntityViewUpdateMsg entityViewUpdateMsg : uplinkMsg.getEntityViewUpdateMsgList()) {
-                    result.add(((EntityViewProcessor) ctx.getEntityViewProcessorFactory().getProcessorByEdgeVersion(this.edgeVersion))
-                            .processEntityViewMsgFromEdge(edge.getTenantId(), edge, entityViewUpdateMsg));
                 }
             }
             if (uplinkMsg.getRelationUpdateMsgCount() > 0) {
@@ -763,7 +781,8 @@ public final class EdgeGrpcSession implements Closeable {
             }
             if (uplinkMsg.getResourceUpdateMsgCount() > 0) {
                 for (ResourceUpdateMsg resourceUpdateMsg : uplinkMsg.getResourceUpdateMsgList()) {
-                    result.add(((ResourceProcessor) ctx.getResourceEdgeProcessorFactory().getProcessorByEdgeVersion(this.edgeVersion)).processResourceMsgFromEdge(edge.getTenantId(), edge, resourceUpdateMsg));
+                    result.add(((ResourceProcessor) ctx.getResourceEdgeProcessorFactory().getProcessorByEdgeVersion(this.edgeVersion))
+                            .processResourceMsgFromEdge(edge.getTenantId(), edge, resourceUpdateMsg));
                 }
             }
             if (uplinkMsg.getRuleChainMetadataRequestMsgCount() > 0) {

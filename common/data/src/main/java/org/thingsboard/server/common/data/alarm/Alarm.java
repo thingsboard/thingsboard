@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.alarm;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -29,6 +30,7 @@ import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -36,6 +38,8 @@ import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Created by ashvayka on 11.05.17.
@@ -157,6 +161,12 @@ public class Alarm extends BaseData<AlarmId> implements HasName, HasTenantId, Ha
         } else {
             return acknowledged ? AlarmStatus.ACTIVE_ACK : AlarmStatus.ACTIVE_UNACK;
         }
+    }
+
+    @JsonIgnore
+    public DashboardId getDashboardId() {
+        return Optional.ofNullable(getDetails()).map(details -> details.get("dashboardId"))
+                .filter(JsonNode::isTextual).map(id -> new DashboardId(UUID.fromString(id.asText()))).orElse(null);
     }
 
 }

@@ -112,9 +112,7 @@ public class AdminController extends BaseController {
     private final SmsService smsService;
     private final AdminSettingsService adminSettingsService;
     private final SystemSecurityService systemSecurityService;
-    @Lazy
     private final JwtSettingsService jwtSettingsService;
-    @Lazy
     private final JwtTokenFactory tokenFactory;
     private final EntitiesVersionControlService versionControlService;
     private final TbAutoCommitSettingsService autoCommitSettingsService;
