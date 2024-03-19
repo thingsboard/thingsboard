@@ -112,14 +112,15 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
-    public void findLatestDebugRuleNodeInEvent() {
+    public void findLatestDebugRuleNodeInEvent() throws Exception {
 
         UUID entityId = Uuids.timeBased();
 
-        RuleNodeDebugEventEntity event = getDebugEventEntity(Uuids.timeBased(), tenantId, entityId);
-        eventDao.saveAsync(event.toData());
-        RuleNodeDebugEventEntity event2 = getDebugEventEntity(Uuids.timeBased(), tenantId, entityId);
-        eventDao.saveAsync(event2.toData());
+        RuleNodeDebugEventEntity event = getDebugInEventEntity(Uuids.timeBased(), tenantId, entityId);
+        eventDao.saveAsync(event.toData()).get(1, TimeUnit.MINUTES);
+        Thread.sleep(2);
+        RuleNodeDebugEventEntity event2 = getDebugInEventEntity(Uuids.timeBased(), tenantId, entityId);
+        eventDao.saveAsync(event2.toData()).get(1, TimeUnit.MINUTES);
 
         RuleNodeDebugEventEntity foundEvent = ruleNodeDebugEventRepository.findLatestDebugRuleNodeInEvent(tenantId, entityId).get();
         assertNotNull("Events expected to be not null", foundEvent);
@@ -139,7 +140,7 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
         return event.build();
     }
 
-    private RuleNodeDebugEventEntity getDebugEventEntity(UUID eventId, UUID tenantId, UUID entityId) {
+    private RuleNodeDebugEventEntity getDebugInEventEntity(UUID eventId, UUID tenantId, UUID entityId) {
         RuleNodeDebugEventEntity event = new RuleNodeDebugEventEntity();
         event.setId(eventId);
         event.setEventType("IN");

@@ -133,12 +133,12 @@ public abstract class BaseEventServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void findLatestDebugRuleNodeInEvent() {
+    public void findLatestDebugRuleNodeInEvent() throws Exception {
         CustomerId customerId = new CustomerId(Uuids.timeBased());
         TenantId tenantId = TenantId.fromUUID(Uuids.timeBased());
 
-        Event event1 = saveDebugEvent(customerId, tenantId);
-        Event event2 = saveDebugEvent(customerId, tenantId);
+        Event event1 = saveEventWithProvidedTimeAndEventType(eventTime, "IN", customerId, tenantId);
+        Event event2 = saveEventWithProvidedTimeAndEventType(eventTime + 1, "IN", customerId, tenantId);
 
         EventInfo event = eventService.findLatestDebugRuleNodeInEvent(tenantId, customerId);
 
@@ -149,21 +149,14 @@ public abstract class BaseEventServiceTest extends AbstractServiceTest {
     }
 
     private Event saveEventWithProvidedTime(long time, EntityId entityId, TenantId tenantId) throws Exception {
-        RuleNodeDebugEvent event = generateEvent(tenantId, entityId);
+        return saveEventWithProvidedTimeAndEventType(time, null, entityId, tenantId);
+    }
+
+    private Event saveEventWithProvidedTimeAndEventType(long time, String eventType, EntityId entityId, TenantId tenantId) throws Exception {
+        RuleNodeDebugEvent event = generateEvent(tenantId, entityId, eventType);
         event.setId(new EventId(Uuids.timeBased()));
         event.setCreatedTime(time);
         eventService.saveAsync(event).get();
-        return event;
-    }
-
-    private Event saveDebugEvent(EntityId entityId, TenantId tenantId) {
-        Event event = RuleNodeDebugEvent.builder()
-                .tenantId(tenantId)
-                .entityId(entityId.getId())
-                .serviceId("server A")
-                .eventType("IN")
-                .build();
-        eventService.saveAsync(event);
         return event;
     }
 }
