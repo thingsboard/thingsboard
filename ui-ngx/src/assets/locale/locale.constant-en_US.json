@@ -2259,7 +2259,9 @@
         "address2": "Address 2",
         "zip": "Zip",
         "phone": "Phone",
-        "label": "Label"
+        "label": "Label",
+        "owner-name": "Owner name",
+        "owner-type": "Owner type"
     },
     "entity-view": {
         "entity-view": "Entity view",

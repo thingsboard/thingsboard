@@ -765,6 +765,8 @@ export class EntityService {
         entityFieldKeys.push(entityFields.firstName.keyName);
         entityFieldKeys.push(entityFields.lastName.keyName);
         entityFieldKeys.push(entityFields.phone.keyName);
+        entityFieldKeys.push(entityFields.ownerName.keyName);
+        entityFieldKeys.push(entityFields.ownerType.keyName);
         break;
       case EntityType.TENANT:
       case EntityType.CUSTOMER:
@@ -781,6 +783,8 @@ export class EntityService {
       case EntityType.ENTITY_VIEW:
         entityFieldKeys.push(entityFields.name.keyName);
         entityFieldKeys.push(entityFields.type.keyName);
+        entityFieldKeys.push(entityFields.ownerName.keyName);
+        entityFieldKeys.push(entityFields.ownerType.keyName);
         break;
       case EntityType.DEVICE:
       case EntityType.EDGE:
@@ -788,9 +792,13 @@ export class EntityService {
         entityFieldKeys.push(entityFields.name.keyName);
         entityFieldKeys.push(entityFields.type.keyName);
         entityFieldKeys.push(entityFields.label.keyName);
+        entityFieldKeys.push(entityFields.ownerName.keyName);
+        entityFieldKeys.push(entityFields.ownerType.keyName);
         break;
       case EntityType.DASHBOARD:
         entityFieldKeys.push(entityFields.title.keyName);
+        entityFieldKeys.push(entityFields.ownerName.keyName);
+        entityFieldKeys.push(entityFields.ownerType.keyName);
         break;
       case EntityType.API_USAGE_STATE:
         entityFieldKeys.push(entityFields.name.keyName);
