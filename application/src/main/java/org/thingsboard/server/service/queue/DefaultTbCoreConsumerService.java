@@ -126,6 +126,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     private long pollInterval;
     @Value("${queue.core.pack-processing-timeout}")
     private long packProcessingTimeout;
+    @Value("${queue.core.consumer-per-partition-enabled:true}")
+    private boolean consumerPerPartitionEnabled;
     @Value("${queue.core.stats.enabled:false}")
     private boolean statsEnabled;
 
@@ -199,7 +201,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
 
         this.mainConsumer = QueueConsumerManager.<TbProtoQueueMsg<ToCoreMsg>, CoreQueueConfig>builder()
                 .queueKey(new QueueKey(ServiceType.TB_CORE))
-                .config(CoreQueueConfig.of(true, (int) pollInterval))
+                .config(CoreQueueConfig.of(consumerPerPartitionEnabled, (int) pollInterval))
                 .msgPackProcessor(this::processMsgs)
                 .consumerCreator(config -> queueFactory.createToCoreMsgConsumer())
                 .consumerExecutor(consumersExecutor)
@@ -764,6 +766,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
 
     @Override
     protected void stopConsumers() {
+        super.stopConsumers();
         mainConsumer.stop();
         mainConsumer.awaitStop();
         usageStatsConsumer.stop();

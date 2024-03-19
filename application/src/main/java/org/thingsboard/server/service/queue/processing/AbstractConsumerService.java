@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.queue.processing;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -112,7 +111,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     }
 
     @AfterStartUp(order = AfterStartUp.REGULAR_SERVICE)
-    public void onApplicationEvent(ApplicationReadyEvent event) {
+    public void afterStartUp() {
         startConsumers();
     }
 
