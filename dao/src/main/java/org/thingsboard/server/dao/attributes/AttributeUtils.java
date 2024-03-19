@@ -29,7 +29,7 @@ public class AttributeUtils {
     @Deprecated(since = "3.7.0")
     public static void validate(EntityId id, String scope) {
         Validator.validateId(id.getId(), "Incorrect id " + id);
-        Validator.validateString(scope, "Incorrect scope " + scope);
+        Validator.validateString(scope, sc -> "Incorrect scope " + sc);
     }
 
     public static void validate(EntityId id, AttributeScope scope) {

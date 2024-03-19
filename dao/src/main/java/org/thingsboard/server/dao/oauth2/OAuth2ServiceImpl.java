@@ -86,7 +86,7 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
         } catch (IllegalArgumentException e){
             throw new IncorrectParameterException(INCORRECT_DOMAIN_SCHEME);
         }
-        validateString(domainName, INCORRECT_DOMAIN_NAME + domainName);
+        validateString(domainName, dn -> INCORRECT_DOMAIN_NAME + dn);
         return oauth2RegistrationDao.findEnabledByDomainSchemesDomainNameAndPkgNameAndPlatformType(
                 Arrays.asList(domainScheme, SchemeType.MIXED), domainName, pkgName, platformType)
                 .stream()

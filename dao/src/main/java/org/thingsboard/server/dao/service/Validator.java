@@ -153,19 +153,6 @@ public class Validator {
     }
 
     /**
-     * This method validate <code>UUIDBased</code> id. If id is null than throw
-     * <code>IncorrectParameterException</code> exception
-     *
-     * @param id                   the id
-     * @param errorMessageSupplier the error message for exception supplier
-     */
-    static void validateId(UUIDBased id, Supplier<String> errorMessageSupplier) {
-        if (id == null || id.getId() == null) {
-            throw new IncorrectParameterException(errorMessageSupplier.get());
-        }
-    }
-
-    /**
      * This method validate list of <code>UUIDBased</code> ids. If at least one of the ids is null than throw
      * <code>IncorrectParameterException</code> exception
      *
