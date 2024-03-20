@@ -418,8 +418,9 @@ public class EntityKeyMapping {
                 mapping.setAlias(String.format("alias%s", index));
                 mapping.setKeyFilters(filters.get(filterField));
                 mapping.setLatest(!filterField.getType().equals(EntityKeyType.ENTITY_FIELD));
-                mapping.setSelection(false);
                 mapping.setEntityKey(filterField);
+                mapping.setEntityKeyColumn(entityType, entityFilterType);
+                mapping.setSelection(mapping.getEntityKeyColumn() == null);
                 mappings.add(mapping);
                 index += 1;
             }
@@ -437,6 +438,9 @@ public class EntityKeyMapping {
     }
 
     public static List<EntityKeyMapping> prepareEntityCountKeyMapping(EntityCountQuery query) {
+        EntityType entityType = resolveEntityType(query.getEntityFilter());
+        EntityFilterType entityFilterType = query.getEntityFilter().getType();
+
         Map<EntityKey, List<KeyFilter>> filters =
                 query.getKeyFilters() != null ?
                         query.getKeyFilters().stream().collect(Collectors.groupingBy(KeyFilter::getKey)) : Collections.emptyMap();
@@ -449,8 +453,9 @@ public class EntityKeyMapping {
                 mapping.setAlias(String.format("alias%s", index));
                 mapping.setKeyFilters(filters.get(filterField));
                 mapping.setLatest(!filterField.getType().equals(EntityKeyType.ENTITY_FIELD));
-                mapping.setSelection(false);
                 mapping.setEntityKey(filterField);
+                mapping.setEntityKeyColumn(entityType, entityFilterType);
+                mapping.setSelection(mapping.getEntityKeyColumn() == null);
                 mappings.add(mapping);
                 index += 1;
             }

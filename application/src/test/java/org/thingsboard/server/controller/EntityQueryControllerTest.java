@@ -595,6 +595,55 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testFindDevicesCountByOwnerNameAndOwnerType() throws Exception {
+        loginTenantAdmin();
+        int numOfDevices = 8;
+
+        for (int i = 0; i < numOfDevices; i++) {
+            Device device = new Device();
+            String name = "Device" + i;
+            device.setName(name);
+            device.setType("default");
+
+            Device savedDevice = doPost("/api/device?accessToken=" + name, device, Device.class);
+            JsonNode content = JacksonUtil.toJsonNode("{\"alarmActiveTime\": 1" + i + "}");
+            doPost("/api/plugins/telemetry/" + EntityType.DEVICE.name() + "/" + savedDevice.getUuidId() + "/SERVER_SCOPE", content)
+                    .andExpect(status().isOk());
+        }
+
+        DeviceTypeFilter filter = new DeviceTypeFilter();
+        filter.setDeviceTypes(List.of("default"));
+        filter.setDeviceNameFilter("");
+
+        KeyFilter activeAlarmTimeFilter = getServerAttributeNumericGreaterThanKeyFilter("alarmActiveTime", 5);
+        KeyFilter activeAlarmTimeToLongFilter = getServerAttributeNumericGreaterThanKeyFilter("alarmActiveTime", 30);
+        KeyFilter tenantOwnerNameFilter = getEntityFieldStringEqualToKeyFilter("ownerName", TEST_TENANT_NAME);
+        KeyFilter wrongOwnerNameFilter = getEntityFieldStringEqualToKeyFilter("ownerName", "wrongName");
+        KeyFilter tenantOwnerTypeFilter =  getEntityFieldStringEqualToKeyFilter("ownerType", "TENANT");
+        KeyFilter customerOwnerTypeFilter = getEntityFieldStringEqualToKeyFilter("ownerType", "CUSTOMER");
+
+        // all devices with ownerName = TEST TENANT
+        EntityCountQuery query = new EntityCountQuery(filter,  List.of(activeAlarmTimeFilter, tenantOwnerNameFilter));
+        checkEntitiesCount(query, numOfDevices);
+
+        // all devices with ownerName = TEST TENANT
+        EntityCountQuery activeAlarmTimeToLongQuery = new EntityCountQuery(filter,  List.of(activeAlarmTimeToLongFilter, tenantOwnerNameFilter));
+        checkEntitiesCount(activeAlarmTimeToLongQuery, 0);
+
+        // all devices with wrong ownerName
+        EntityCountQuery wrongTenantNameQuery = new EntityCountQuery(filter, List.of(activeAlarmTimeFilter, wrongOwnerNameFilter));
+        checkEntitiesCount(wrongTenantNameQuery, 0);
+
+        // all devices with owner type = TENANT
+        EntityCountQuery tenantEntitiesQuery = new EntityCountQuery(filter, List.of(activeAlarmTimeFilter, tenantOwnerTypeFilter));
+        checkEntitiesCount(tenantEntitiesQuery, numOfDevices);
+
+        // all devices with owner type = CUSTOMER
+        EntityCountQuery customerEntitiesQuery = new EntityCountQuery(filter, List.of(activeAlarmTimeFilter, customerOwnerTypeFilter));
+        checkEntitiesCount(customerEntitiesQuery, 0);
+    }
+
+    @Test
     public void testFindDevicesByOwnerNameAndOwnerType() throws Exception {
         loginTenantAdmin();
         int numOfDevices = 3;
@@ -675,6 +724,11 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
             Assert.assertEquals( expectedOwnerType, ownerType);
             Assert.assertEquals("1" + i, alarmActiveTime);
         }
+    }
+
+    private void checkEntitiesCount(EntityCountQuery query, int expectedNumOfDevices) {
+        var count = doPost("/api/entitiesQuery/count", query, Integer.class);
+        assertThat(count).isEqualTo(expectedNumOfDevices);
     }
 
     private KeyFilter getEntityFieldStringEqualToKeyFilter(String keyName, String value) {
