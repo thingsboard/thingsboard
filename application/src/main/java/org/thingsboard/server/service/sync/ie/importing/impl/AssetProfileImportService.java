@@ -56,10 +56,8 @@ public class AssetProfileImportService extends BaseEntityImportService<AssetProf
     }
 
     @Override
-    protected void onEntitySaved(User user, AssetProfile savedAssetProfile, AssetProfile oldAssetProfile) throws ThingsboardException {
-        clusterService.broadcastEntityStateChangeEvent(user.getTenantId(), savedAssetProfile.getId(),
-                oldAssetProfile == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
-        entityNotificationService.logEntityAction(savedAssetProfile.getTenantId(), savedAssetProfile.getId(),
+    protected void onEntitySaved(User user, AssetProfile savedAssetProfile, AssetProfile oldAssetProfile) {
+        logEntityActionService.logEntityAction(savedAssetProfile.getTenantId(), savedAssetProfile.getId(),
                 savedAssetProfile, null, oldAssetProfile == null ? ActionType.ADDED : ActionType.UPDATED, user);
     }
 

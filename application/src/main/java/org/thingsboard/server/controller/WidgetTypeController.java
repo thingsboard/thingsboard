@@ -15,9 +15,10 @@
  */
 package org.thingsboard.server.controller;
 
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,6 +43,7 @@ import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -59,13 +61,11 @@ import static org.thingsboard.server.controller.ControllerConstants.INLINE_IMAGE
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
 import static org.thingsboard.server.controller.ControllerConstants.WIDGET_TYPE_ID_PARAM_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.WIDGET_TYPE_SORT_PROPERTY_ALLOWABLE_VALUES;
 import static org.thingsboard.server.controller.ControllerConstants.WIDGET_TYPE_TEXT_SEARCH_DESCRIPTION;
 
 @RestController
@@ -83,11 +83,9 @@ public class WidgetTypeController extends AutoCommitController {
     private static final String WIDGET_TYPE_INFO_DESCRIPTION = "Widget Type Info is a lightweight object that represents Widget Type but does not contain the heavyweight widget descriptor JSON";
     private static final String TENANT_ONLY_PARAM_DESCRIPTION = "Optional boolean parameter indicating whether only tenant widget types should be returned";
     private static final String FULL_SEARCH_PARAM_DESCRIPTION = "Optional boolean parameter indicating whether search widgets by description not only by name";
-    private static final String DEPRECATED_FILTER_ALLOWABLE_VALUES = "ALL, ACTUAL, DEPRECATED";
     private static final String DEPRECATED_FILTER_PARAM_DESCRIPTION = "Optional string parameter indicating whether to include deprecated widgets";
     private static final String UPDATE_EXISTING_BY_FQN_PARAM_DESCRIPTION = "Optional boolean parameter indicating whether to update existing widget type by FQN if present instead of creating new one";
     private static final String WIDGET_TYPE_ARRAY_DESCRIPTION = "A list of string values separated by comma ',' representing one of the widget type value";
-    private static final String WIDGET_TYPE_ALLOWABLE_VALUES = "timeseries, latest, control, alarm, static";
 
     @ApiOperation(value = "Get Widget Type Details (getWidgetTypeById)",
             notes = "Get the Widget Type Details based on the provided Widget Type Id. " + WIDGET_TYPE_DETAILS_DESCRIPTION + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
@@ -95,9 +93,9 @@ public class WidgetTypeController extends AutoCommitController {
     @RequestMapping(value = "/widgetType/{widgetTypeId}", method = RequestMethod.GET)
     @ResponseBody
     public WidgetTypeDetails getWidgetTypeById(
-            @ApiParam(value = WIDGET_TYPE_ID_PARAM_DESCRIPTION, required = true)
+            @Parameter(description = WIDGET_TYPE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable("widgetTypeId") String strWidgetTypeId,
-            @ApiParam(value = INLINE_IMAGES_DESCRIPTION)
+            @Parameter(description = INLINE_IMAGES_DESCRIPTION)
             @RequestParam(value = INLINE_IMAGES, required = false) boolean inlineImages) throws ThingsboardException {
         checkParameter("widgetTypeId", strWidgetTypeId);
         WidgetTypeId widgetTypeId = new WidgetTypeId(toUUID(strWidgetTypeId));
@@ -114,7 +112,7 @@ public class WidgetTypeController extends AutoCommitController {
     @RequestMapping(value = "/widgetTypeInfo/{widgetTypeId}", method = RequestMethod.GET)
     @ResponseBody
     public WidgetTypeInfo getWidgetTypeInfoById(
-            @ApiParam(value = WIDGET_TYPE_ID_PARAM_DESCRIPTION, required = true)
+            @Parameter(description = WIDGET_TYPE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable("widgetTypeId") String strWidgetTypeId) throws ThingsboardException {
         checkParameter("widgetTypeId", strWidgetTypeId);
         WidgetTypeId widgetTypeId = new WidgetTypeId(toUUID(strWidgetTypeId));
@@ -135,9 +133,9 @@ public class WidgetTypeController extends AutoCommitController {
     @RequestMapping(value = "/widgetType", method = RequestMethod.POST)
     @ResponseBody
     public WidgetTypeDetails saveWidgetType(
-            @ApiParam(value = "A JSON value representing the Widget Type Details.", required = true)
+            @Parameter(description = "A JSON value representing the Widget Type Details.", required = true)
             @RequestBody WidgetTypeDetails widgetTypeDetails,
-            @ApiParam(value = UPDATE_EXISTING_BY_FQN_PARAM_DESCRIPTION)
+            @Parameter(description = UPDATE_EXISTING_BY_FQN_PARAM_DESCRIPTION)
             @RequestParam(required = false) Boolean updateExistingByFqn) throws Exception {
         var currentUser = getCurrentUser();
         if (Authority.SYS_ADMIN.equals(currentUser.getAuthority())) {
@@ -156,7 +154,7 @@ public class WidgetTypeController extends AutoCommitController {
     @RequestMapping(value = "/widgetType/{widgetTypeId}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteWidgetType(
-            @ApiParam(value = WIDGET_TYPE_ID_PARAM_DESCRIPTION, required = true)
+            @Parameter(description = WIDGET_TYPE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable("widgetTypeId") String strWidgetTypeId) throws Exception {
         checkParameter("widgetTypeId", strWidgetTypeId);
         WidgetTypeId widgetTypeId = new WidgetTypeId(toUUID(strWidgetTypeId));
@@ -171,23 +169,23 @@ public class WidgetTypeController extends AutoCommitController {
     @RequestMapping(value = "/widgetTypes", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<WidgetTypeInfo> getWidgetTypes(
-            @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
-            @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
             @RequestParam int page,
-            @ApiParam(value = WIDGET_TYPE_TEXT_SEARCH_DESCRIPTION)
+            @Parameter(description = WIDGET_TYPE_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
-            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = WIDGET_TYPE_SORT_PROPERTY_ALLOWABLE_VALUES)
+            @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "name", "deprecated", "tenantId"}))
             @RequestParam(required = false) String sortProperty,
-            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
+            @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC, DESC"}))
             @RequestParam(required = false) String sortOrder,
-            @ApiParam(value = TENANT_ONLY_PARAM_DESCRIPTION)
+            @Parameter(description = TENANT_ONLY_PARAM_DESCRIPTION)
             @RequestParam(required = false) Boolean tenantOnly,
-            @ApiParam(value = FULL_SEARCH_PARAM_DESCRIPTION)
+            @Parameter(description = FULL_SEARCH_PARAM_DESCRIPTION)
             @RequestParam(required = false) Boolean fullSearch,
-            @ApiParam(value = DEPRECATED_FILTER_PARAM_DESCRIPTION, allowableValues = DEPRECATED_FILTER_ALLOWABLE_VALUES)
+            @Parameter(description = DEPRECATED_FILTER_PARAM_DESCRIPTION, schema = @Schema(allowableValues = {"ALL", "ACTUAL", "DEPRECATED"}))
             @RequestParam(required = false) String deprecatedFilter,
-            @ApiParam(value = WIDGET_TYPE_ARRAY_DESCRIPTION, allowableValues = WIDGET_TYPE_ALLOWABLE_VALUES)
+            @Parameter(description = WIDGET_TYPE_ARRAY_DESCRIPTION, schema = @Schema(allowableValues = {"timeseries", "latest", "control", "alarm", "static"}))
             @RequestParam(required = false) String[] widgetTypeList) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         List<String> widgetTypes = widgetTypeList != null ? Arrays.asList(widgetTypeList) : Collections.emptyList();
@@ -211,9 +209,9 @@ public class WidgetTypeController extends AutoCommitController {
     @ResponseBody
     @Deprecated
     public List<WidgetType> getBundleWidgetTypesByBundleAlias(
-            @ApiParam(value = "System or Tenant", required = true)
+            @Parameter(description = "System or Tenant", required = true)
             @RequestParam boolean isSystem,
-            @ApiParam(value = "Widget Bundle alias", required = true)
+            @Parameter(description = "Widget Bundle alias", required = true)
             @RequestParam String bundleAlias) throws ThingsboardException {
         TenantId tenantId;
         if (isSystem) {
@@ -231,7 +229,7 @@ public class WidgetTypeController extends AutoCommitController {
     @RequestMapping(value = "/widgetTypes", params = {"widgetsBundleId"}, method = RequestMethod.GET)
     @ResponseBody
     public List<WidgetType> getBundleWidgetTypes(
-            @ApiParam(value = "Widget Bundle Id", required = true)
+            @Parameter(description = "Widget Bundle Id", required = true)
             @RequestParam("widgetsBundleId") String strWidgetsBundleId) throws ThingsboardException {
         WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
         return checkNotNull(widgetTypeService.findWidgetTypesByWidgetsBundleId(getTenantId(), widgetsBundleId));
@@ -244,9 +242,9 @@ public class WidgetTypeController extends AutoCommitController {
     @ResponseBody
     @Deprecated
     public List<WidgetTypeDetails> getBundleWidgetTypesDetailsByBundleAlias(
-            @ApiParam(value = "System or Tenant", required = true)
+            @Parameter(description = "System or Tenant", required = true)
             @RequestParam boolean isSystem,
-            @ApiParam(value = "Widget Bundle alias", required = true)
+            @Parameter(description = "Widget Bundle alias", required = true)
             @RequestParam String bundleAlias) throws ThingsboardException {
         TenantId tenantId;
         if (isSystem) {
@@ -264,9 +262,9 @@ public class WidgetTypeController extends AutoCommitController {
     @RequestMapping(value = "/widgetTypesDetails", params = {"widgetsBundleId"}, method = RequestMethod.GET)
     @ResponseBody
     public List<WidgetTypeDetails> getBundleWidgetTypesDetails(
-            @ApiParam(value = "Widget Bundle Id", required = true)
+            @Parameter(description = "Widget Bundle Id", required = true)
             @RequestParam("widgetsBundleId") String strWidgetsBundleId,
-            @ApiParam(value = INLINE_IMAGES_DESCRIPTION)
+            @Parameter(description = INLINE_IMAGES_DESCRIPTION)
             @RequestParam(value = INLINE_IMAGES, required = false) boolean inlineImages
     ) throws ThingsboardException {
         WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
@@ -283,7 +281,7 @@ public class WidgetTypeController extends AutoCommitController {
     @RequestMapping(value = "/widgetTypeFqns", params = {"widgetsBundleId"}, method = RequestMethod.GET)
     @ResponseBody
     public List<String> getBundleWidgetTypeFqns(
-            @ApiParam(value = "Widget Bundle Id", required = true)
+            @Parameter(description = "Widget Bundle Id", required = true)
             @RequestParam("widgetsBundleId") String strWidgetsBundleId) throws ThingsboardException {
         WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
         return checkNotNull(widgetTypeService.findWidgetFqnsByWidgetsBundleId(getTenantId(), widgetsBundleId));
@@ -296,9 +294,9 @@ public class WidgetTypeController extends AutoCommitController {
     @ResponseBody
     @Deprecated
     public List<WidgetTypeInfo> getBundleWidgetTypesInfosByBundleAlias(
-            @ApiParam(value = "System or Tenant", required = true)
+            @Parameter(description = "System or Tenant", required = true)
             @RequestParam boolean isSystem,
-            @ApiParam(value = "Widget Bundle alias", required = true)
+            @Parameter(description = "Widget Bundle alias", required = true)
             @RequestParam String bundleAlias) throws ThingsboardException {
         TenantId tenantId;
         if (isSystem) {
@@ -317,23 +315,23 @@ public class WidgetTypeController extends AutoCommitController {
     @RequestMapping(value = "/widgetTypesInfos", params = {"widgetsBundleId", "pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<WidgetTypeInfo> getBundleWidgetTypesInfos(
-            @ApiParam(value = "Widget Bundle Id", required = true)
+            @Parameter(description = "Widget Bundle Id", required = true)
             @RequestParam("widgetsBundleId") String strWidgetsBundleId,
-            @ApiParam(value = PAGE_SIZE_DESCRIPTION, required = true)
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
-            @ApiParam(value = PAGE_NUMBER_DESCRIPTION, required = true)
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
             @RequestParam int page,
-            @ApiParam(value = WIDGET_TYPE_TEXT_SEARCH_DESCRIPTION)
+            @Parameter(description = WIDGET_TYPE_TEXT_SEARCH_DESCRIPTION)
             @RequestParam(required = false) String textSearch,
-            @ApiParam(value = SORT_PROPERTY_DESCRIPTION, allowableValues = WIDGET_TYPE_SORT_PROPERTY_ALLOWABLE_VALUES)
+            @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "name", "deprecated", "tenantId"}))
             @RequestParam(required = false) String sortProperty,
-            @ApiParam(value = SORT_ORDER_DESCRIPTION, allowableValues = SORT_ORDER_ALLOWABLE_VALUES)
+            @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
             @RequestParam(required = false) String sortOrder,
-            @ApiParam(value = FULL_SEARCH_PARAM_DESCRIPTION)
+            @Parameter(description = FULL_SEARCH_PARAM_DESCRIPTION)
             @RequestParam(required = false) Boolean fullSearch,
-            @ApiParam(value = DEPRECATED_FILTER_PARAM_DESCRIPTION, allowableValues = DEPRECATED_FILTER_ALLOWABLE_VALUES)
+            @Parameter(description = DEPRECATED_FILTER_PARAM_DESCRIPTION, schema = @Schema(allowableValues = {"ALL", "ACTUAL", "DEPRECATED"}))
             @RequestParam(required = false) String deprecatedFilter,
-            @ApiParam(value = WIDGET_TYPE_ARRAY_DESCRIPTION, allowableValues = WIDGET_TYPE_ALLOWABLE_VALUES)
+            @Parameter(description = WIDGET_TYPE_ARRAY_DESCRIPTION, schema = @Schema(allowableValues = {"timeseries", "latest", "control", "alarm", "static"}))
             @RequestParam(required = false) String[] widgetTypeList) throws ThingsboardException {
         WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
@@ -350,11 +348,11 @@ public class WidgetTypeController extends AutoCommitController {
     @ResponseBody
     @Deprecated
     public WidgetType getWidgetTypeByBundleAliasAndTypeAlias(
-            @ApiParam(value = "System or Tenant", required = true)
+            @Parameter(description = "System or Tenant", required = true)
             @RequestParam boolean isSystem,
-            @ApiParam(value = "Widget Bundle alias", required = true)
+            @Parameter(description = "Widget Bundle alias", required = true)
             @RequestParam String bundleAlias,
-            @ApiParam(value = "Widget Type alias", required = true)
+            @Parameter(description = "Widget Type alias", required = true)
             @RequestParam String alias) throws ThingsboardException {
         TenantId tenantId;
         if (isSystem) {
@@ -374,7 +372,7 @@ public class WidgetTypeController extends AutoCommitController {
     @RequestMapping(value = "/widgetType", params = {"fqn"}, method = RequestMethod.GET)
     @ResponseBody
     public WidgetType getWidgetType(
-            @ApiParam(value = "Widget Type fqn", required = true)
+            @Parameter(description = "Widget Type fqn", required = true)
             @RequestParam String fqn) throws ThingsboardException {
         String[] parts = fqn.split("\\.");
         String scopeQualifier = parts.length > 0 ? parts[0] : null;

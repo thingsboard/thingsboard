@@ -15,14 +15,13 @@
  */
 package org.thingsboard.server.exception;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.http.HttpStatus;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 
 import java.util.Date;
 
-@ApiModel
+@Schema
 public class ThingsboardErrorResponse {
     // HTTP Response Status Code
     private final HttpStatus status;
@@ -46,17 +45,17 @@ public class ThingsboardErrorResponse {
         return new ThingsboardErrorResponse(message, errorCode, status);
     }
 
-    @ApiModelProperty(position = 1, value = "HTTP Response Status Code", example = "401", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "HTTP Response Status Code", example = "401", accessMode = Schema.AccessMode.READ_ONLY)
     public Integer getStatus() {
         return status.value();
     }
 
-    @ApiModelProperty(position = 2, value = "Error message", example = "Authentication failed", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Error message", example = "Authentication failed", accessMode = Schema.AccessMode.READ_ONLY)
     public String getMessage() {
         return message;
     }
 
-    @ApiModelProperty(position = 3, value = "Platform error code:" +
+    @Schema(description = "Platform error code:" +
             "\n* `2` - General error (HTTP: 500 - Internal Server Error)" +
             "\n\n* `10` - Authentication failed (HTTP: 401 - Unauthorized)" +
             "\n\n* `11` - JWT token expired (HTTP: 401 - Unauthorized)" +
@@ -68,13 +67,13 @@ public class ThingsboardErrorResponse {
             "\n\n* `33` - Too many requests (HTTP: 429 - Too Many Requests)" +
             "\n\n* `34` - Too many updates (Too many updates over Websocket session)" +
             "\n\n* `40` - Subscription violation (HTTP: 403 - Forbidden)",
-            example = "10", dataType = "integer",
-            accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+            example = "10", type = "integer",
+            accessMode = Schema.AccessMode.READ_ONLY)
     public ThingsboardErrorCode getErrorCode() {
         return errorCode;
     }
 
-    @ApiModelProperty(position = 4, value = "Timestamp", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Timestamp", accessMode = Schema.AccessMode.READ_ONLY)
     public Date getTimestamp() {
         return timestamp;
     }

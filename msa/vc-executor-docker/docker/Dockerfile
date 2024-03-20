@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM thingsboard/openjdk11:bullseye-slim
+FROM thingsboard/openjdk17:bookworm-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \

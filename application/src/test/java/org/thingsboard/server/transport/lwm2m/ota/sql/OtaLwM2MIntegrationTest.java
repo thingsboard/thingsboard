@@ -51,46 +51,6 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfil
 @Slf4j
 public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
 
-    protected final String OBSERVE_ATTRIBUTES_WITH_PARAMS_OTA =
-
-            "    {\n" +
-                    "    \"keyName\": {\n" +
-                    "      \"/5_1.0/0/3\": \"state\",\n" +
-                    "      \"/5_1.0/0/5\": \"updateResult\",\n" +
-                    "      \"/5_1.0/0/6\": \"pkgname\",\n" +
-                    "      \"/5_1.0/0/7\": \"pkgversion\",\n" +
-                    "      \"/5_1.0/0/9\": \"firmwareUpdateDeliveryMethod\",\n" +
-                    "      \"/9_1.0/0/0\": \"pkgname\",\n" +
-                    "      \"/9_1.0/0/1\": \"pkgversion\",\n" +
-                    "      \"/9_1.0/0/7\": \"updateState\",\n" +
-                    "      \"/9_1.0/0/9\": \"updateResult\"\n" +
-                    "    },\n" +
-                    "    \"observe\": [\n" +
-                    "      \"/5_1.0/0/3\",\n" +
-                    "      \"/5_1.0/0/5\",\n" +
-                    "      \"/5_1.0/0/6\",\n" +
-                    "      \"/5_1.0/0/7\",\n" +
-                    "      \"/5_1.0/0/9\",\n" +
-                    "      \"/9_1.0/0/0\",\n" +
-                    "      \"/9_1.0/0/1\",\n" +
-                    "      \"/9_1.0/0/7\",\n" +
-                    "      \"/9_1.0/0/9\"\n" +
-                    "    ],\n" +
-                    "    \"attribute\": [],\n" +
-                    "    \"telemetry\": [\n" +
-                    "      \"/5_1.0/0/3\",\n" +
-                    "      \"/5_1.0/0/5\",\n" +
-                    "      \"/5_1.0/0/6\",\n" +
-                    "      \"/5_1.0/0/7\",\n" +
-                    "      \"/5_1.0/0/9\",\n" +
-                    "      \"/9_1.0/0/0\",\n" +
-                    "      \"/9_1.0/0/1\",\n" +
-                    "      \"/9_1.0/0/7\",\n" +
-                    "      \"/9_1.0/0/9\"\n" +
-                    "    ],\n" +
-                    "    \"attributeLwm2m\": {}\n" +
-                    "  }";
-
     private List<OtaPackageUpdateStatus> expectedStatuses;
 
     @Test
@@ -99,8 +59,8 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
         createDeviceProfile(transportConfiguration);
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(this.CLIENT_ENDPOINT_WITHOUT_FW_INFO));
         final Device device = createDevice(deviceCredentials, this.CLIENT_ENDPOINT_WITHOUT_FW_INFO);
-        createNewClient(SECURITY_NO_SEC, COAP_CONFIG, false, this.CLIENT_ENDPOINT_WITHOUT_FW_INFO, false, null);
-        awaitObserveReadAll(0, false, device.getId().getId().toString());
+        createNewClient(SECURITY_NO_SEC,  null, false, this.CLIENT_ENDPOINT_WITHOUT_FW_INFO);
+        awaitObserveReadAll(0, device.getId().getId().toString());
 
         device.setFirmwareId(createFirmware().getId());
         final Device savedDevice = doPost("/api/device", device, Device.class);
@@ -124,8 +84,8 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
         createDeviceProfile(transportConfiguration);
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(this.CLIENT_ENDPOINT_OTA5));
         final Device device = createDevice(deviceCredentials, this.CLIENT_ENDPOINT_OTA5);
-        createNewClient(SECURITY_NO_SEC, COAP_CONFIG, false, this.CLIENT_ENDPOINT_OTA5, false, null);
-        awaitObserveReadAll(9, false, device.getId().getId().toString());
+        createNewClient(SECURITY_NO_SEC, null, false, this.CLIENT_ENDPOINT_OTA5);
+        awaitObserveReadAll(9, device.getId().getId().toString());
 
         device.setFirmwareId(createFirmware().getId());
         final Device savedDevice = doPost("/api/device", device, Device.class);
@@ -154,8 +114,8 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
         createDeviceProfile(transportConfiguration);
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(this.CLIENT_ENDPOINT_OTA9));
         final Device device = createDevice(deviceCredentials, this.CLIENT_ENDPOINT_OTA9);
-        createNewClient(SECURITY_NO_SEC, COAP_CONFIG, false, this.CLIENT_ENDPOINT_OTA9, false, null);
-        awaitObserveReadAll(9, false, device.getId().getId().toString());
+        createNewClient(SECURITY_NO_SEC, null, false, this.CLIENT_ENDPOINT_OTA9);
+        awaitObserveReadAll(9, device.getId().getId().toString());
 
         device.setSoftwareId(createSoftware().getId());
         final Device savedDevice = doPost("/api/device", device, Device.class); //sync call
