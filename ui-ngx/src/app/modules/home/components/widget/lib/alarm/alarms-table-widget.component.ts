@@ -322,7 +322,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   }
 
   public onEditModeChanged() {
-    if (this.enableSelection && this.alarmsDatasource.selection.hasValue()) {
+    if (this.textSearchMode || this.enableSelection && this.alarmsDatasource.selection.hasValue()) {
       this.ctx.hideTitlePanel = !this.ctx.isEdit;
       this.ctx.detectChanges(true);
     }
@@ -494,7 +494,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.alarmsDatasource = new AlarmsDatasource(this.subscription, latestDataKeys, this.ngZone, this.ctx, actionCellDescriptors);
     if (this.enableSelection) {
       this.alarmsDatasource.selectionModeChanged$.subscribe((selectionMode) => {
-        const hideTitlePanel = selectionMode || this.textSearchMode;
+        const hideTitlePanel = selectionMode || this.textSearchMode && !this.ctx.isEdit;
         if (this.ctx.hideTitlePanel !== hideTitlePanel) {
           this.ctx.hideTitlePanel = hideTitlePanel;
           this.ctx.detectChanges(true);
