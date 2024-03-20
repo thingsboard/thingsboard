@@ -15,8 +15,7 @@
  */
 package org.thingsboard.server.common.data.edge;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Setter;
 import lombok.ToString;
@@ -31,7 +30,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
-@ApiModel
+@Schema
 @EqualsAndHashCode(callSuper = true)
 @ToString
 @Setter
@@ -89,7 +88,7 @@ public class Edge extends BaseDataWithAdditionalInfo<EdgeId> implements HasLabel
         this.secret = edge.getSecret();
     }
 
-    @ApiModelProperty(position = 1, value = "JSON object with the Edge Id. " +
+    @Schema(description = "JSON object with the Edge Id. " +
             "Specify this field to update the Edge. " +
             "Referencing non-existing Edge Id will cause error. " +
             "Omit this field to create new Edge." )
@@ -98,51 +97,51 @@ public class Edge extends BaseDataWithAdditionalInfo<EdgeId> implements HasLabel
         return super.getId();
     }
 
-    @ApiModelProperty(position = 2, value = "Timestamp of the edge creation, in milliseconds", example = "1609459200000", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Timestamp of the edge creation, in milliseconds", example = "1609459200000", accessMode = Schema.AccessMode.READ_ONLY)
     @Override
     public long getCreatedTime() {
         return super.getCreatedTime();
     }
 
-    @ApiModelProperty(position = 3, value = "JSON object with Tenant Id. Use 'assignDeviceToTenant' to change the Tenant Id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "JSON object with Tenant Id. Use 'assignDeviceToTenant' to change the Tenant Id.", accessMode = Schema.AccessMode.READ_ONLY)
     @Override
     public TenantId getTenantId() {
         return this.tenantId;
     }
 
-    @ApiModelProperty(position = 4, value = "JSON object with Customer Id. Use 'assignEdgeToCustomer' to change the Customer Id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "JSON object with Customer Id. Use 'assignEdgeToCustomer' to change the Customer Id.", accessMode = Schema.AccessMode.READ_ONLY)
     @Override
     public CustomerId getCustomerId() {
         return this.customerId;
     }
 
-    @ApiModelProperty(position = 5, value = "JSON object with Root Rule Chain Id. Use 'setEdgeRootRuleChain' to change the Root Rule Chain Id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "JSON object with Root Rule Chain Id. Use 'setEdgeRootRuleChain' to change the Root Rule Chain Id.", accessMode = Schema.AccessMode.READ_ONLY)
     public RuleChainId getRootRuleChainId() {
         return this.rootRuleChainId;
     }
 
-    @ApiModelProperty(position = 6, required = true, value = "Unique Edge Name in scope of Tenant", example = "Silo_A_Edge")
+    @Schema(required = true, description = "Unique Edge Name in scope of Tenant", example = "Silo_A_Edge")
     @Override
     public String getName() {
         return this.name;
     }
 
-    @ApiModelProperty(position = 7, required = true, value = "Edge type", example = "Silos")
+    @Schema(required = true, description = "Edge type", example = "Silos")
     public String getType() {
         return this.type;
     }
 
-    @ApiModelProperty(position = 8, value = "Label that may be used in widgets", example = "Silo Edge on far field")
+    @Schema(description = "Label that may be used in widgets", example = "Silo Edge on far field")
     public String getLabel() {
         return this.label;
     }
 
-    @ApiModelProperty(position = 9, required = true, value = "Edge routing key ('username') to authorize on cloud")
+    @Schema(required = true, description = "Edge routing key ('username') to authorize on cloud")
     public String getRoutingKey() {
         return this.routingKey;
     }
 
-    @ApiModelProperty(position = 10, required = true, value = "Edge secret ('password') to authorize on cloud")
+    @Schema(required = true, description = "Edge secret ('password') to authorize on cloud")
     public String getSecret() {
         return this.secret;
     }

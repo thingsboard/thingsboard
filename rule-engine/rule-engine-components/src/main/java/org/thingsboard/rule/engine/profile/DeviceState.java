@@ -21,6 +21,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.profile.state.PersistedAlarmState;
 import org.thingsboard.rule.engine.profile.state.PersistedDeviceState;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -382,9 +383,9 @@ class DeviceState {
             }
         }
         if (!attributeKeys.isEmpty()) {
-            addToSnapshot(result, ctx.getAttributesService().find(ctx.getTenantId(), originator, DataConstants.CLIENT_SCOPE, attributeKeys).get());
-            addToSnapshot(result, ctx.getAttributesService().find(ctx.getTenantId(), originator, DataConstants.SHARED_SCOPE, attributeKeys).get());
-            addToSnapshot(result, ctx.getAttributesService().find(ctx.getTenantId(), originator, DataConstants.SERVER_SCOPE, attributeKeys).get());
+            addToSnapshot(result, ctx.getAttributesService().find(ctx.getTenantId(), originator, AttributeScope.CLIENT_SCOPE, attributeKeys).get());
+            addToSnapshot(result, ctx.getAttributesService().find(ctx.getTenantId(), originator, AttributeScope.SHARED_SCOPE, attributeKeys).get());
+            addToSnapshot(result, ctx.getAttributesService().find(ctx.getTenantId(), originator, AttributeScope.SERVER_SCOPE, attributeKeys).get());
         }
     }
 

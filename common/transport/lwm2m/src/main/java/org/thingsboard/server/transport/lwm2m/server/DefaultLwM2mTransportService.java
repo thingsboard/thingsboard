@@ -15,16 +15,22 @@
  */
 package org.thingsboard.server.transport.lwm2m.server;
 
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.elements.config.Configuration;
 import org.eclipse.californium.scandium.config.DtlsConfig;
-import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.californium.scandium.dtls.cipher.CipherSuite;
+import org.eclipse.leshan.core.endpoint.Protocol;
 import org.eclipse.leshan.core.node.codec.DefaultLwM2mDecoder;
 import org.eclipse.leshan.core.node.codec.DefaultLwM2mEncoder;
-import org.eclipse.leshan.server.californium.LeshanServer;
-import org.eclipse.leshan.server.californium.LeshanServerBuilder;
-import org.eclipse.leshan.server.californium.registration.CaliforniumRegistrationStore;
+import org.eclipse.leshan.server.LeshanServer;
+import org.eclipse.leshan.server.LeshanServerBuilder;
+import org.eclipse.leshan.server.californium.LwM2mPskStore;
+import org.eclipse.leshan.server.californium.endpoint.CaliforniumServerEndpointsProvider;
+import org.eclipse.leshan.server.californium.endpoint.coap.CoapServerProtocolProvider;
+import org.eclipse.leshan.server.californium.endpoint.coaps.CoapsServerProtocolProvider;
+import org.eclipse.leshan.server.registration.RegistrationStore;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.cache.ota.OtaPackageDataCache;
@@ -37,14 +43,11 @@ import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MAuthorizer;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MDtlsCertificateVerifier;
 import org.thingsboard.server.transport.lwm2m.server.store.TbSecurityStore;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
-import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
-import javax.annotation.PreDestroy;
+import java.net.InetSocketAddress;
 import java.security.cert.X509Certificate;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CONNECTION_ID_LENGTH;
-import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CURVES_ONLY;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RETRANSMISSION_TIMEOUT;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_ROLE;
@@ -55,6 +58,7 @@ import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_W
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CCM_8;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MNetworkConfig.getCoapConfig;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FIRMWARE_UPDATE_COAP_RESOURCE;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.setDtlsConnectorConfigCidLength;
 
 @Slf4j
 @Component
@@ -70,7 +74,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
     private final LwM2MTransportServerConfig config;
     private final OtaPackageDataCache otaPackageDataCache;
     private final LwM2mUplinkMsgHandler handler;
-    private final CaliforniumRegistrationStore registrationStore;
+    private final RegistrationStore registrationStore;
     private final TbSecurityStore securityStore;
     private final TbLwM2MDtlsCertificateVerifier certificateVerifier;
     private final TbLwM2MAuthorizer authorizer;
@@ -88,8 +92,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
          * nameFile = "BC68JAR01A09_TO_BC68JAR01A10.bin"
          * "coap://host:port/{path}/{token}/{nameFile}"
          */
-        LwM2mTransportCoapResource otaCoapResource = new LwM2mTransportCoapResource(otaPackageDataCache, FIRMWARE_UPDATE_COAP_RESOURCE);
-        this.server.coap().getServer().add(otaCoapResource);
+        new LwM2mTransportCoapResource(otaPackageDataCache, FIRMWARE_UPDATE_COAP_RESOURCE);
         this.context.setServer(server);
         this.startLhServer();
     }
@@ -118,55 +121,90 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
 
     private LeshanServer getLhServer() {
         LeshanServerBuilder builder = new LeshanServerBuilder();
-        builder.setLocalAddress(config.getHost(), config.getPort());
-        builder.setLocalSecureAddress(config.getSecureHost(), config.getSecurePort());
-        builder.setDecoder(new DefaultLwM2mDecoder());
-        /* Use a magic converter to support bad type send by the UI. */
-        builder.setEncoder(new DefaultLwM2mEncoder(LwM2mValueConverterImpl.getInstance()));
-
-        /* Create CoAP Config */
-        builder.setCoapConfig(getCoapConfig(config.getPort(), config.getSecurePort(), config));
 
         /* Define model provider (Create Models )*/
         builder.setObjectModelProvider(modelProvider);
+
 
         /* Set securityStore with new registrationStore */
         builder.setSecurityStore(securityStore);
         builder.setRegistrationStore(registrationStore);
 
+
+        // Create Californium Endpoints Provider:
+        // ------------------
+        // Create Server Endpoints Provider
+        CaliforniumServerEndpointsProvider.Builder endpointsBuilder = new CaliforniumServerEndpointsProvider.Builder(
+                // Add coap Protocol support
+                new CoapServerProtocolProvider(),
+
+                // Add coaps/dtls protocol support
+                new CoapsServerProtocolProvider(c -> {
+                    if (this.config.getSslCredentials() != null) {
+                        c.setAdvancedCertificateVerifier(certificateVerifier);
+                        c.setAsList(DtlsConfig.DTLS_CIPHER_SUITES, RPK_OR_X509_CIPHER_SUITES);
+                    } else {
+                        log.info("Unable to load X509 files for LWM2MServer");
+                        LwM2mPskStore lwM2mPskStore = new LwM2mPskStore(securityStore, registrationStore);
+                        c.setAdvancedPskStore(lwM2mPskStore);
+                        c.setAsList(DtlsConfig.DTLS_CIPHER_SUITES, PSK_CIPHER_SUITES);
+                    }
+                }));
+
+        // Create Californium Configuration
+        Configuration serverCoapConfig = endpointsBuilder.createDefaultConfiguration();
+        getCoapConfig(serverCoapConfig, config.getPort(), config.getSecurePort(), config);
+
+        // Set some DTLS stuff
+
+        serverCoapConfig.setTransient(DTLS_RECOMMENDED_CURVES_ONLY);
+        serverCoapConfig.set(DTLS_RECOMMENDED_CURVES_ONLY, config.isRecommendedSupportedGroups());
+
+        serverCoapConfig.setTransient(DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY);
+        serverCoapConfig.set(DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY, config.isRecommendedCiphers());
+
+        serverCoapConfig.set(DTLS_RETRANSMISSION_TIMEOUT, config.getDtlsRetransmissionTimeout(), MILLISECONDS);
+        serverCoapConfig.set(DTLS_ROLE, SERVER_ONLY);
+        serverCoapConfig.setTransient(DtlsConfig.DTLS_CONNECTION_ID_LENGTH);
+
+        if (config.getDtlsCidLength() != null) {
+            setDtlsConnectorConfigCidLength( serverCoapConfig, config.getDtlsCidLength());
+        }
+
         /* Create DTLS Config */
-        DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder(getCoapConfig(config.getPort(), config.getSecurePort(), config));
+        this.setServerWithCredentials(builder);
+        // Set Californium Configuration
+        endpointsBuilder.setConfiguration(serverCoapConfig);
 
-        dtlsConfig.set(DTLS_RECOMMENDED_CURVES_ONLY, config.isRecommendedSupportedGroups());
-        dtlsConfig.set(DTLS_RECOMMENDED_CIPHER_SUITES_ONLY, config.isRecommendedCiphers());
-        dtlsConfig.set(DTLS_RETRANSMISSION_TIMEOUT, config.getDtlsRetransmissionTimeout(), MILLISECONDS);
-        dtlsConfig.set(DTLS_CONNECTION_ID_LENGTH, config.getDtlsConnectionIdLength());
-        dtlsConfig.set(DTLS_ROLE, SERVER_ONLY);
 
-        /*  Create credentials */
-        this.setServerWithCredentials(builder, dtlsConfig);
+        // Create CoAP endpoint
+        InetSocketAddress coapAddr = new InetSocketAddress(config.getHost(), config.getPort());
+        endpointsBuilder.addEndpoint(coapAddr, Protocol.COAP);
 
-        /* Set DTLS Config */
-        builder.setDtlsConfig(dtlsConfig);
+        // Create CoAP over DTLS endpoint
+        InetSocketAddress coapsAddr = new InetSocketAddress(config.getSecureHost(), config.getSecurePort());
+        endpointsBuilder.addEndpoint(coapsAddr, Protocol.COAPS);
 
-        /* Create LWM2M server */
+
+        builder.setDecoder(new DefaultLwM2mDecoder(true));
+        builder.setEncoder(new DefaultLwM2mEncoder(true));
+
+        // Create LWM2M server
+        builder.setEndpointsProviders(endpointsBuilder.build());
         return builder.build();
     }
 
-    private void setServerWithCredentials(LeshanServerBuilder builder, DtlsConnectorConfig.Builder dtlsConfig) {
+    private void setServerWithCredentials(LeshanServerBuilder builder) {
+//    private void setServerWithCredentials(LeshanServerBuilder builder) {
         if (this.config.getSslCredentials() != null) {
             SslCredentials sslCredentials = this.config.getSslCredentials();
             builder.setPublicKey(sslCredentials.getPublicKey());
             builder.setPrivateKey(sslCredentials.getPrivateKey());
             builder.setCertificateChain(sslCredentials.getCertificateChain());
-            dtlsConfig.setAdvancedCertificateVerifier(certificateVerifier);
             builder.setAuthorizer(authorizer);
-            dtlsConfig.setAsList(DtlsConfig.DTLS_CIPHER_SUITES, RPK_OR_X509_CIPHER_SUITES);
         } else {
             /* by default trust all */
             builder.setTrustedCertificates(new X509Certificate[0]);
-            log.info("Unable to load X509 files for LWM2MServer");
-            dtlsConfig.setAsList(DtlsConfig.DTLS_CIPHER_SUITES, PSK_CIPHER_SUITES);
         }
     }
 

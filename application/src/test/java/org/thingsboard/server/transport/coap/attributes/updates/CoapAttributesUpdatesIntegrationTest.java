@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.server.resources.Resource;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.coapserver.DefaultCoapServerService;
@@ -59,11 +60,15 @@ public class CoapAttributesUpdatesIntegrationTest extends AbstractCoapAttributes
         processAfterTest();
     }
 
+
+
+    @Ignore // Uncomment when Californium 3.11 is released with https://github.com/eclipse-californium/californium/pull/2215
     @Test
     public void testSubscribeToAttributesUpdatesFromTheServer() throws Exception {
         processJsonTestSubscribeToAttributesUpdates(false);
     }
 
+    @Ignore // Uncomment when Californium 3.11 is released with https://github.com/eclipse-californium/californium/pull/2215
     @Test
     public void testSubscribeToAttributesUpdatesFromTheServerWithEmptyCurrentStateNotification() throws Exception {
         processJsonTestSubscribeToAttributesUpdates(true);

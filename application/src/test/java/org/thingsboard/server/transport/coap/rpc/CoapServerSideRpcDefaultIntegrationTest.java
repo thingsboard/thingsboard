@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.security.AccessValidator;
@@ -82,11 +83,13 @@ public class CoapServerSideRpcDefaultIntegrationTest extends AbstractCoapServerS
         Assert.assertEquals(AccessValidator.DEVICE_WITH_REQUESTED_ID_NOT_FOUND, result);
     }
 
+    @Ignore // Uncomment when Californium 3.11 is released with https://github.com/eclipse-californium/californium/pull/2215
     @Test
     public void testServerCoapOneWayRpc() throws Exception {
         processOneWayRpcTest(false);
     }
 
+    @Ignore // Uncomment when Californium 3.11 is released with https://github.com/eclipse-californium/californium/pull/2215
     @Test
     public void testServerCoapTwoWayRpc() throws Exception {
         processTwoWayRpcTest("{\"value1\":\"A\",\"value2\":\"B\"}", false);
