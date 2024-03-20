@@ -1,0 +1,3 @@
+# Blocked subnets and IPs. Use CIDR or IP by one per line
+5.136.0.0/13
+217.199.254.1
