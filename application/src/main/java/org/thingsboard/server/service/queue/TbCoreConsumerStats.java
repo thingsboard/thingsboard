@@ -109,10 +109,9 @@ public class TbCoreConsumerStats {
         this.toCoreNfSubscriptionServiceCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_SUBSCRIPTION_SERVICE));
         this.toCoreNfSubscriptionManagerCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_SUBSCRIPTION_MANAGER));
         this.toCoreNfVersionControlResponseCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_VC_RESPONSE));
-
     }
 
-    private StatsCounter register(StatsCounter counter){
+    private StatsCounter register(StatsCounter counter) {
         counters.add(counter);
         return counter;
     }
@@ -213,4 +212,5 @@ public class TbCoreConsumerStats {
     public void reset() {
         counters.forEach(StatsCounter::clear);
     }
+
 }

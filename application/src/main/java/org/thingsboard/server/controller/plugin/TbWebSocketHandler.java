@@ -18,6 +18,10 @@ package org.thingsboard.server.controller.plugin;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.RemovalCause;
+import jakarta.websocket.RemoteEndpoint;
+import jakarta.websocket.SendHandler;
+import jakarta.websocket.SendResult;
+import jakarta.websocket.Session;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -61,10 +65,6 @@ import org.thingsboard.server.service.ws.notification.cmd.NotificationCmdsWrappe
 import org.thingsboard.server.service.ws.telemetry.cmd.TelemetryCmdsWrapper;
 
 import javax.annotation.PostConstruct;
-import javax.websocket.RemoteEndpoint;
-import javax.websocket.SendHandler;
-import javax.websocket.SendResult;
-import javax.websocket.Session;
 import java.io.IOException;
 import java.security.InvalidParameterException;
 import java.util.Optional;

@@ -18,8 +18,8 @@ package org.thingsboard.server.common.data.notification.targets;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
