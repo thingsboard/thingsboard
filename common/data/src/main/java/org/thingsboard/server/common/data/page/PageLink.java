@@ -66,12 +66,17 @@ public class PageLink {
         return new PageLink(this.pageSize, this.page+1, this.textSearch, this.sortOrder);
     }
 
-    public Sort toSort(SortOrder sortOrder, Map<String,String> columnMap) {
-        return toSort(new ArrayList<>(List.of(sortOrder)), columnMap);
+    public Sort toSort(SortOrder sortOrder, Map<String,String> columnMap, boolean addDefaultSorting) {
+        if (sortOrder == null) {
+            return DEFAULT_SORT;
+        } else {
+            return toSort(List.of(sortOrder), columnMap, addDefaultSorting);
+        }
     }
 
-    public Sort toSort(List<SortOrder> sortOrders, Map<String,String> columnMap) {
-        if (!isDefaultSortOrderAvailable(sortOrders)) {
+    public Sort toSort(List<SortOrder> sortOrders, Map<String,String> columnMap, boolean addDefaultSorting) {
+        if (addDefaultSorting && !isDefaultSortOrderAvailable(sortOrders)) {
+            sortOrders = new ArrayList<>(sortOrders);
             sortOrders.add(new SortOrder(DEFAULT_SORT_PROPERTY, SortOrder.Direction.ASC));
         }
         return Sort.by(sortOrders.stream().map(s -> toSortOrder(s, columnMap)).collect(Collectors.toList()));
@@ -82,7 +87,7 @@ public class PageLink {
         if (columnMap.containsKey(property)) {
             property = columnMap.get(property);
         }
-        return new Sort.Order(Sort.Direction.fromString(sortOrder.getDirection().name()), property, Sort.NullHandling.NULLS_LAST);
+        return new Sort.Order(Sort.Direction.fromString(sortOrder.getDirection().name()), property);
     }
 
     public boolean isDefaultSortOrderAvailable(List<SortOrder> sortOrders) {

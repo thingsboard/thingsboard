@@ -16,12 +16,12 @@
 package org.thingsboard.server.dao.sql.widget;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -164,15 +164,16 @@ public class JpaWidgetTypeDaoTest extends AbstractJpaDaoTest {
 
     @Test
     public void testFindSystemWidgetTypesForSameName() throws InterruptedException {
-        List<WidgetTypeDetails> widgetTypeList = new ArrayList<>();
+        List<WidgetTypeDetails> sameNameList = new ArrayList<>();
 
         for (int i = 0; i < 20; i++) {
             Thread.sleep(2);
             var widgetType = saveWidgetType(TenantId.SYS_TENANT_ID, "widgetName");
+            sameNameList.add(widgetType);
             widgetTypeList.add(widgetType);
         }
-        widgetTypeList.sort(Comparator.comparing(BaseWidgetType::getName).thenComparing((BaseWidgetType baseWidgetType) -> baseWidgetType.getId().getId()));
-        List<WidgetTypeInfo> expected = widgetTypeList.stream().map(WidgetTypeInfo::new).collect(Collectors.toList());
+        sameNameList.sort(Comparator.comparing(BaseWidgetType::getName).thenComparing((BaseWidgetType baseWidgetType) -> baseWidgetType.getId().getId()));
+        List<WidgetTypeInfo> expected = sameNameList.stream().map(WidgetTypeInfo::new).collect(Collectors.toList());
 
         PageData<WidgetTypeInfo> widgetTypesFirstPage = widgetTypeDao.findSystemWidgetTypes(TenantId.SYS_TENANT_ID, true, DeprecatedFilter.ALL, Collections.singletonList("static"),
                 new PageLink(10, 0, null, new SortOrder("name")));
@@ -180,7 +181,7 @@ public class JpaWidgetTypeDaoTest extends AbstractJpaDaoTest {
         assertThat(widgetTypesFirstPage.getData()).containsExactlyElementsOf(expected.subList(0, 10));
 
         PageData<WidgetTypeInfo> widgetTypesSecondPage = widgetTypeDao.findSystemWidgetTypes(TenantId.SYS_TENANT_ID, true, DeprecatedFilter.ALL, Collections.singletonList("static"),
-                new PageLink(10, 0, null, new SortOrder("name")));
+                new PageLink(10, 1, null, new SortOrder("name")));
         assertEquals(10, widgetTypesSecondPage.getData().size());
         assertThat(widgetTypesSecondPage.getData()).containsExactlyElementsOf(expected.subList(10, 20));
     }
@@ -384,6 +385,7 @@ public class JpaWidgetTypeDaoTest extends AbstractJpaDaoTest {
     private WidgetTypeDetails saveWidgetType(TenantId tenantId, String name) {
         WidgetTypeDetails widgetType = new WidgetTypeDetails();
         widgetType.setTenantId(tenantId);
+        widgetType.setDescription("WIDGET_TYPE_DESCRIPTION" + StringUtils.randomAlphabetic(7));
         widgetType.setName(name);
         var descriptor = JacksonUtil.newObjectNode();
         descriptor.put("type","static");
