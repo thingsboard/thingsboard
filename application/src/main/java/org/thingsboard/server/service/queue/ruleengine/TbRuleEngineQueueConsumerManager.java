@@ -37,7 +37,7 @@ import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.service.queue.TbMsgPackCallback;
 import org.thingsboard.server.service.queue.TbMsgPackProcessingContext;
 import org.thingsboard.server.service.queue.TbRuleEngineConsumerStats;
-import org.thingsboard.server.service.queue.consumer.QueueConsumerManager;
+import org.thingsboard.server.service.queue.consumer.MainQueueConsumerManager;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingDecision;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingResult;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingStrategy;
@@ -55,7 +55,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class TbRuleEngineQueueConsumerManager extends QueueConsumerManager<TbProtoQueueMsg<ToRuleEngineMsg>, Queue> {
+public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<TbProtoQueueMsg<ToRuleEngineMsg>, Queue> {
 
     public static final String SUCCESSFUL_STATUS = "successful";
     public static final String FAILED_STATUS = "failed";

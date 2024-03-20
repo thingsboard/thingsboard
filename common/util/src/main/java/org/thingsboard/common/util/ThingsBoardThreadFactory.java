@@ -53,7 +53,7 @@ public class ThingsBoardThreadFactory implements ThreadFactory {
 
     public static void addThreadNamePrefix(String prefix) {
         String name = Thread.currentThread().getName();
-        name = prefix + name;
+        name = prefix + "-" + name;
         Thread.currentThread().setName(name);
     }
 

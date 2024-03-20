@@ -90,8 +90,8 @@ import org.thingsboard.server.service.notification.NotificationSchedulerService;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
-import org.thingsboard.server.service.queue.consumer.BasicQueueConsumerManager;
-import org.thingsboard.server.service.queue.consumer.QueueConsumerManager;
+import org.thingsboard.server.queue.common.consumer.QueueConsumerManager;
+import org.thingsboard.server.service.queue.consumer.MainQueueConsumerManager;
 import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
 import org.thingsboard.server.service.queue.processing.IdMsgPair;
 import org.thingsboard.server.service.resource.TbImageService;
@@ -151,9 +151,9 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     private final TbImageService imageService;
     private final TbCoreConsumerStats stats;
 
-    private QueueConsumerManager<TbProtoQueueMsg<ToCoreMsg>, CoreQueueConfig> mainConsumer;
-    private BasicQueueConsumerManager<TbProtoQueueMsg<ToUsageStatsServiceMsg>> usageStatsConsumer;
-    private BasicQueueConsumerManager<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>> firmwareStatesConsumer;
+    private MainQueueConsumerManager<TbProtoQueueMsg<ToCoreMsg>, CoreQueueConfig> mainConsumer;
+    private QueueConsumerManager<TbProtoQueueMsg<ToUsageStatsServiceMsg>> usageStatsConsumer;
+    private QueueConsumerManager<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>> firmwareStatesConsumer;
 
     private volatile ListeningExecutorService deviceActivityEventsExecutor;
 
@@ -199,7 +199,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         super.init("tb-core");
         this.deviceActivityEventsExecutor = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tb-core-device-activity-events-executor")));
 
-        this.mainConsumer = QueueConsumerManager.<TbProtoQueueMsg<ToCoreMsg>, CoreQueueConfig>builder()
+        this.mainConsumer = MainQueueConsumerManager.<TbProtoQueueMsg<ToCoreMsg>, CoreQueueConfig>builder()
                 .queueKey(new QueueKey(ServiceType.TB_CORE))
                 .config(CoreQueueConfig.of(consumerPerPartition, (int) pollInterval))
                 .msgPackProcessor(this::processMsgs)
@@ -208,19 +208,19 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                 .scheduler(scheduler)
                 .taskExecutor(mgmtExecutor)
                 .build();
-        this.usageStatsConsumer = BasicQueueConsumerManager.<TbProtoQueueMsg<ToUsageStatsServiceMsg>>builder()
+        this.usageStatsConsumer = QueueConsumerManager.<TbProtoQueueMsg<ToUsageStatsServiceMsg>>builder()
                 .key("usage-stats")
                 .name("TB Usage Stats")
-                .pollInterval(pollInterval)
                 .msgPackProcessor(this::processUsageStatsMsg)
+                .pollInterval(pollInterval)
                 .consumerCreator(queueFactory::createToUsageStatsServiceMsgConsumer)
                 .consumerExecutor(consumersExecutor)
                 .build();
-        this.firmwareStatesConsumer = BasicQueueConsumerManager.<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>>builder()
+        this.firmwareStatesConsumer = QueueConsumerManager.<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>>builder()
                 .key("firmware")
                 .name("TB Ota Package States")
-                .pollInterval(pollInterval)
                 .msgPackProcessor(this::processFirmwareMsgs)
+                .pollInterval(pollInterval)
                 .consumerCreator(queueFactory::createToOtaPackageStateServiceMsgConsumer)
                 .consumerExecutor(consumersExecutor)
                 .build();

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.queue.consumer;
+package org.thingsboard.server.queue.common.consumer;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -29,12 +29,12 @@ import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
 
 @Slf4j
-public class BasicQueueConsumerManager<M extends TbQueueMsg> {
+public class QueueConsumerManager<M extends TbQueueMsg> {
 
     private final String key;
     private final String name;
-    private final long pollInterval;
     private final MsgPackProcessor<M> msgPackProcessor;
+    private final long pollInterval;
     private final ExecutorService consumerExecutor;
 
     @Getter
@@ -42,11 +42,9 @@ public class BasicQueueConsumerManager<M extends TbQueueMsg> {
     private volatile boolean stopped;
 
     @Builder
-    public BasicQueueConsumerManager(String key, String name,
-                                     long pollInterval,
-                                     MsgPackProcessor<M> msgPackProcessor,
-                                     Supplier<TbQueueConsumer<M>> consumerCreator,
-                                     ExecutorService consumerExecutor) {
+    public QueueConsumerManager(String key, String name, MsgPackProcessor<M> msgPackProcessor,
+                                long pollInterval, Supplier<TbQueueConsumer<M>> consumerCreator,
+                                ExecutorService consumerExecutor) {
         this.key = key;
         this.name = name;
         this.pollInterval = pollInterval;

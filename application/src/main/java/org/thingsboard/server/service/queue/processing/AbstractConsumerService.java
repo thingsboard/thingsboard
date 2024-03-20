@@ -46,7 +46,7 @@ import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.TbPackCallback;
 import org.thingsboard.server.service.queue.TbPackProcessingContext;
-import org.thingsboard.server.service.queue.consumer.BasicQueueConsumerManager;
+import org.thingsboard.server.queue.common.consumer.QueueConsumerManager;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 
 import java.util.List;
@@ -73,7 +73,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     protected final ApplicationEventPublisher eventPublisher;
     protected final JwtSettingsService jwtSettingsService;
 
-    protected BasicQueueConsumerManager<TbProtoQueueMsg<N>> nfConsumer;
+    protected QueueConsumerManager<TbProtoQueueMsg<N>> nfConsumer;
 
     protected ExecutorService consumersExecutor;
     protected ExecutorService mgmtExecutor;
@@ -84,11 +84,11 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
         this.mgmtExecutor = ThingsBoardExecutors.newWorkStealingPool(getMgmtThreadPoolSize(), prefix + "-mgmt");
         this.scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName(prefix + "-consumer-scheduler"));
 
-        this.nfConsumer = BasicQueueConsumerManager.<TbProtoQueueMsg<N>>builder()
+        this.nfConsumer = QueueConsumerManager.<TbProtoQueueMsg<N>>builder()
                 .key("notifications")
                 .name("TB Notifications")
-                .pollInterval(getNotificationPollDuration())
                 .msgPackProcessor(this::processNotifications)
+                .pollInterval(getNotificationPollDuration())
                 .consumerCreator(this::createNotificationsConsumer)
                 .consumerExecutor(consumersExecutor)
                 .build();

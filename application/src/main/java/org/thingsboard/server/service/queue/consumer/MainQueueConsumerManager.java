@@ -45,7 +45,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class QueueConsumerManager<M extends TbQueueMsg, C extends QueueConfig> {
+public class MainQueueConsumerManager<M extends TbQueueMsg, C extends QueueConfig> {
 
     protected final QueueKey queueKey;
     @Getter
@@ -65,13 +65,12 @@ public class QueueConsumerManager<M extends TbQueueMsg, C extends QueueConfig> {
     protected volatile boolean stopped;
 
     @Builder
-    public QueueConsumerManager(QueueKey queueKey,
-                                C config,
-                                MsgPackProcessor<M, C> msgPackProcessor,
-                                Function<C, TbQueueConsumer<M>> consumerCreator,
-                                ExecutorService consumerExecutor,
-                                ScheduledExecutorService scheduler,
-                                ExecutorService taskExecutor) {
+    public MainQueueConsumerManager(QueueKey queueKey, C config,
+                                    MsgPackProcessor<M, C> msgPackProcessor,
+                                    Function<C, TbQueueConsumer<M>> consumerCreator,
+                                    ExecutorService consumerExecutor,
+                                    ScheduledExecutorService scheduler,
+                                    ExecutorService taskExecutor) {
         this.queueKey = queueKey;
         this.config = config;
         this.msgPackProcessor = msgPackProcessor;
