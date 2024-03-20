@@ -102,7 +102,7 @@ public class AuditLogServiceImpl implements AuditLogService {
     public PageData<AuditLog> findAuditLogsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId, List<ActionType> actionTypes, TimePageLink pageLink) {
         log.trace("Executing findAuditLogsByTenantIdAndEntityId [{}], [{}], [{}]", tenantId, entityId, pageLink);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
-        validateEntityId(entityId, id -> INCORRECT_TENANT_ID + id);
+        validateEntityId(entityId, id -> "Incorrect entityId" + id);
         return auditLogDao.findAuditLogsByTenantIdAndEntityId(tenantId.getId(), entityId, actionTypes, pageLink);
     }
 
