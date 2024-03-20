@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.queue.processing;
 
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -48,7 +49,6 @@ import org.thingsboard.server.service.queue.TbPackProcessingContext;
 import org.thingsboard.server.service.queue.consumer.BasicQueueConsumerManager;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 
-import jakarta.annotation.PreDestroy;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;

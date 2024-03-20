@@ -72,6 +72,7 @@ public class BasicQueueConsumerManager<M extends TbQueueMsg> {
             } catch (Throwable e) {
                 log.error("Failure in consumer loop", e);
             }
+            log.info("[{}] Consumer stopped", name);
         });
     }
 
@@ -94,7 +95,6 @@ public class BasicQueueConsumerManager<M extends TbQueueMsg> {
                 }
             }
         }
-        log.info("{} Consumer stopped", name);
     }
 
     public void stop() {

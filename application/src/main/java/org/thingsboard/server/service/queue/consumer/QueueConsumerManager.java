@@ -176,8 +176,9 @@ public class QueueConsumerManager<M extends TbQueueMsg, C extends QueueConfig> {
                 doUpdate(partitions); // even if partitions number was changed, there can be no partition change event
             }
         } else {
+            log.trace("[{}] Silently applied new config, because consumer-per-partition not changed", queueKey);
             // do nothing, because partitions change (if they changed) will be handled on PartitionChangeEvent,
-            // and changes to pollInterval/packProcessingTimeout/submitStrategy/processingStrategy will be picked up by consumer on the fly,
+            // and changes to other config values will be picked up by consumer on the fly,
             // and queue topic and name are immutable
         }
     }
@@ -196,6 +197,7 @@ public class QueueConsumerManager<M extends TbQueueMsg, C extends QueueConfig> {
             } catch (Throwable e) {
                 log.error("Failure in consumer loop", e);
             }
+            log.info("[{}] Consumer stopped", consumerTask.getKey());
         });
         consumerTask.setTask(consumerLoop);
     }
@@ -222,7 +224,6 @@ public class QueueConsumerManager<M extends TbQueueMsg, C extends QueueConfig> {
         if (consumer.isStopped()) {
             consumer.unsubscribe();
         }
-        log.info("{} Consumer stopped", queueKey);
     }
 
     protected void processMsgs(List<M> msgs, TbQueueConsumer<M> consumer, C config) throws Exception {
@@ -236,6 +237,7 @@ public class QueueConsumerManager<M extends TbQueueMsg, C extends QueueConfig> {
     }
 
     public void awaitStop() {
+        log.debug("[{}] Waiting for consumers to stop", queueKey);
         consumerWrapper.getConsumers().forEach(TbQueueConsumerTask::awaitCompletion);
         log.debug("[{}] Unsubscribed and stopped consumers", queueKey);
     }
@@ -272,7 +274,7 @@ public class QueueConsumerManager<M extends TbQueueMsg, C extends QueueConfig> {
             removedPartitions.forEach((tpi) -> consumers.remove(tpi).awaitCompletion());
 
             addedPartitions.forEach((tpi) -> {
-                String key = queueKey + "-" + tpi.getPartition().orElse(-999999);
+                String key = queueKey + "-" + tpi.getPartition().orElse(-1);
                 TbQueueConsumerTask<M> consumer = new TbQueueConsumerTask<>(key, consumerCreator.apply(config));
                 consumers.put(tpi, consumer);
                 consumer.subscribe(Set.of(tpi));

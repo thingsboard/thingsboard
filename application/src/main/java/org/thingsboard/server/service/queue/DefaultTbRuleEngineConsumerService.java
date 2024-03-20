@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.queue;
 
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
@@ -43,9 +44,6 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
-import org.thingsboard.server.queue.provider.TbRuleEngineQueueFactory;
-import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
@@ -56,7 +54,6 @@ import org.thingsboard.server.service.queue.ruleengine.TbRuleEngineQueueConsumer
 import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 
-import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;

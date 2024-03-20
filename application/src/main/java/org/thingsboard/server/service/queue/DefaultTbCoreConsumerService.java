@@ -127,8 +127,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     private long pollInterval;
     @Value("${queue.core.pack-processing-timeout}")
     private long packProcessingTimeout;
-    @Value("${queue.core.consumer-per-partition-enabled:true}")
-    private boolean consumerPerPartitionEnabled;
+    @Value("${queue.core.consumer-per-partition:true}")
+    private boolean consumerPerPartition;
     @Value("${queue.core.stats.enabled:false}")
     private boolean statsEnabled;
 
@@ -201,7 +201,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
 
         this.mainConsumer = QueueConsumerManager.<TbProtoQueueMsg<ToCoreMsg>, CoreQueueConfig>builder()
                 .queueKey(new QueueKey(ServiceType.TB_CORE))
-                .config(CoreQueueConfig.of(consumerPerPartitionEnabled, (int) pollInterval))
+                .config(CoreQueueConfig.of(consumerPerPartition, (int) pollInterval))
                 .msgPackProcessor(this::processMsgs)
                 .consumerCreator(config -> queueFactory.createToCoreMsgConsumer())
                 .consumerExecutor(consumersExecutor)
@@ -325,7 +325,9 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                 ToCoreMsg lastSubmitMsg = pendingMsgHolder.getToCoreMsg();
                 log.info("Timeout to process message: {}", lastSubmitMsg);
             }
-            ctx.getAckMap().forEach((id, msg) -> log.debug("[{}] Timeout to process message: {}", id, msg.getValue()));
+            if (log.isDebugEnabled()) {
+                ctx.getAckMap().forEach((id, msg) -> log.debug("[{}] Timeout to process message: {}", id, msg.getValue()));
+            }
             ctx.getFailedMap().forEach((id, msg) -> log.warn("[{}] Failed to process message: {}", id, msg.getValue()));
         }
         consumer.commit();
@@ -452,6 +454,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                     }
                     timeToSleep += maxProcessingTimeoutPerRecord;
                 }
+            } catch (InterruptedException e) {
+                return;
             } catch (Throwable e) {
                 log.warn("Failed to process firmware update msg: {}", msg, e);
             }
