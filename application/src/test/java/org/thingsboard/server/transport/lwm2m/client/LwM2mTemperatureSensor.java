@@ -17,8 +17,9 @@ package org.thingsboard.server.transport.lwm2m.client;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.client.resource.BaseInstanceEnabler;
-import org.eclipse.leshan.client.servers.ServerIdentity;
+import org.eclipse.leshan.client.servers.LwM2mServer;
 import org.eclipse.leshan.core.model.ObjectModel;
+import org.eclipse.leshan.core.request.argument.Arguments;
 import org.eclipse.leshan.core.response.ExecuteResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
 
@@ -56,7 +57,7 @@ public class LwM2mTemperatureSensor extends BaseInstanceEnabler implements Destr
     }
 
     @Override
-    public synchronized ReadResponse read(ServerIdentity identity, int resourceId) {
+    public synchronized ReadResponse read(LwM2mServer identity, int resourceId) {
         log.info("Read on Temperature resource /[{}]/[{}]/[{}]", getModel().id, getId(), resourceId);
         switch (resourceId) {
             case 5601:
@@ -73,14 +74,14 @@ public class LwM2mTemperatureSensor extends BaseInstanceEnabler implements Destr
     }
 
     @Override
-    public synchronized ExecuteResponse execute(ServerIdentity identity, int resourceId, String params) {
+    public synchronized ExecuteResponse execute(LwM2mServer identity, int resourceId, Arguments arguments) {
         log.info("Execute on Temperature resource /[{}]/[{}]/[{}]", getModel().id, getId(), resourceId);
         switch (resourceId) {
             case 5605:
                 resetMinMaxMeasuredValues();
                 return ExecuteResponse.success();
             default:
-                return super.execute(identity, resourceId, params);
+                return super.execute(identity, resourceId, arguments);
         }
     }
 

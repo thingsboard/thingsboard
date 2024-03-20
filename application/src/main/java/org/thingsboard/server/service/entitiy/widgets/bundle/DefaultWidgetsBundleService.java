@@ -46,11 +46,11 @@ public class DefaultWidgetsBundleService extends AbstractTbEntityService impleme
         try {
             WidgetsBundle savedWidgetsBundle = checkNotNull(widgetsBundleService.saveWidgetsBundle(widgetsBundle));
             autoCommit(user, savedWidgetsBundle.getId());
-            notificationEntityService.logEntityAction(tenantId, savedWidgetsBundle.getId(), savedWidgetsBundle,
+            logEntityActionService.logEntityAction(tenantId, savedWidgetsBundle.getId(), savedWidgetsBundle,
                     null, actionType, user);
             return savedWidgetsBundle;
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.WIDGETS_BUNDLE), widgetsBundle, actionType, user, e);
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.WIDGETS_BUNDLE), widgetsBundle, actionType, user, e);
             throw e;
         }
     }
@@ -61,9 +61,9 @@ public class DefaultWidgetsBundleService extends AbstractTbEntityService impleme
         TenantId tenantId = widgetsBundle.getTenantId();
         try {
             widgetsBundleService.deleteWidgetsBundle(widgetsBundle.getTenantId(), widgetsBundle.getId());
-            notificationEntityService.logEntityAction(tenantId, widgetsBundle.getId(), widgetsBundle, null, actionType, user);
+            logEntityActionService.logEntityAction(tenantId, widgetsBundle.getId(), widgetsBundle, null, actionType, user);
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.WIDGETS_BUNDLE), actionType, user, e, widgetsBundle.getId());
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.WIDGETS_BUNDLE), actionType, user, e, widgetsBundle.getId());
             throw e;
         }
     }

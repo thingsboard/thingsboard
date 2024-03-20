@@ -131,16 +131,12 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     }
 
     @Override
-    public Asset saveAsset(Asset asset, boolean doValidate) {
-        return doSaveAsset(asset, doValidate);
+    public Asset saveAsset(Asset asset) {
+        return saveAsset(asset, true);
     }
 
     @Override
-    public Asset saveAsset(Asset asset) {
-        return doSaveAsset(asset, true);
-    }
-
-    private Asset doSaveAsset(Asset asset, boolean doValidate) {
+    public Asset saveAsset(Asset asset, boolean doValidate) {
         log.trace("Executing saveAsset [{}]", asset);
         Asset oldAsset = null;
         if (doValidate) {

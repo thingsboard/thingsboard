@@ -92,7 +92,7 @@ buildRpm {
     archiveVersion = projectVersion.replace('-', '')
     archiveFileName = "${pkgName}.rpm"
 
-    requires("java-11")
+    requires("java-17")
 
     from("${buildDir}/conf") {
         include "${pkgName}.conf"
@@ -131,7 +131,7 @@ buildDeb {
 
     archiveFileName = "${pkgName}.deb"
 
-    requires("openjdk-11-jre").or("java11-runtime").or("oracle-java11-installer").or("openjdk-11-jre-headless")
+    requires("openjdk-17-jre").or("java17-runtime").or("oracle-java17-installer").or("openjdk-17-jre-headless")
 
     from("${buildDir}/conf") {
         include "${pkgName}.conf"

@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>3.6.3-SNAPSHOT</version>
+        <version>3.7.0-SNAPSHOT</version>
         <artifactId>thingsboard</artifactId>
     </parent>
     <artifactId>common</artifactId>
@@ -35,6 +35,7 @@
     </properties>
     <modules>
         <module>data</module>
+        <module>proto</module>
         <module>util</module>
         <module>message</module>
         <module>actor</module>
@@ -48,7 +49,6 @@
         <module>edge-api</module>
         <module>version-control</module>
         <module>script</module>
-        <module>proto</module>
     </modules>
 
 </project>

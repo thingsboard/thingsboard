@@ -24,7 +24,7 @@ import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKClientCred
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.transport.lwm2m.security.AbstractSecurityLwM2MIntegrationTest;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import java.nio.charset.StandardCharsets;
 
 import static org.eclipse.leshan.client.object.Security.psk;
@@ -55,13 +55,13 @@ public class PskLwm2mIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
         Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(PSK, NONE));
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, null, null, PSK, false);
         this.basicTestConnection(security,
+                null,
                 deviceCredentials,
-                COAP_CONFIG,
                 clientEndpoint,
                 transportConfiguration,
                 "await on client state (Psk_Lwm2m)",
                 expectedStatusesRegistrationLwm2mSuccess,
-                false,
+                true,
                 ON_REGISTRATION_SUCCESS,
                 true);
     }
@@ -100,15 +100,14 @@ public class PskLwm2mIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
                 Hex.decodeHex(keyPsk.toCharArray()));
         Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(PSK, BOTH));
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, null, null, PSK, false);
-        this.basicTestConnection(securityBs,
+        this.basicTestConnection(null, securityBs,
                 deviceCredentials,
-                COAP_CONFIG_BS,
                 clientEndpoint,
                 transportConfiguration,
                 "await on client state (PskBS two section)",
                 expectedStatusesRegistrationBsSuccess,
-                true,
+                false,
                 ON_REGISTRATION_SUCCESS,
-                true);
+                false);
     }
 }
