@@ -727,9 +727,14 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
     }
 
     private void checkEntitiesCount(EntityCountQuery query, int expectedNumOfDevices) {
-        var count = doPost("/api/entitiesQuery/count", query, Integer.class);
-        assertThat(count).isEqualTo(expectedNumOfDevices);
-    }
+        Awaitility.await()
+                .alias("count by query")
+                .atMost(30, TimeUnit.SECONDS)
+                .until(() -> {
+                    var count = doPost("/api/entitiesQuery/count", query, Integer.class);
+                    return count == expectedNumOfDevices;
+                });
+   }
 
     private KeyFilter getEntityFieldStringEqualToKeyFilter(String keyName, String value) {
         KeyFilter tenantOwnerNameFilter = new KeyFilter();
