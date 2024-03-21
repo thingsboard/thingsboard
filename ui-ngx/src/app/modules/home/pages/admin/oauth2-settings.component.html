@@ -29,13 +29,15 @@
     <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
     <mat-card-content style="padding-top: 16px;">
       <form [formGroup]="oauth2SettingsForm" (ngSubmit)="save()">
-        <fieldset class="fields-group tb-margin" [disabled]="isLoading$ | async">
-          <mat-checkbox formControlName="enabled">
-            {{ 'admin.oauth2.enable' | translate }}
-          </mat-checkbox>
-          <mat-checkbox formControlName="edgeEnabled">
-            {{ 'admin.oauth2.edge-enable' | translate }}
-          </mat-checkbox>
+        <fieldset class="fields-group" [disabled]="isLoading$ | async">
+          <div class="tb-form-row no-border column-xs">
+            <mat-chip-listbox formControlName="enabled">
+              <mat-chip-option [value]="true">{{ 'admin.oauth2.enable' | translate }}</mat-chip-option>
+            </mat-chip-listbox>
+            <mat-chip-listbox formControlName="edgeEnabled">
+              <mat-chip-option [value]="true">{{ 'admin.oauth2.edge-enable' | translate }}</mat-chip-option>
+            </mat-chip-listbox>
+          </div>
           <section *ngIf="oauth2SettingsForm.get('enabled').value" style="margin-top: 1em;">
             <ng-container formArrayName="oauth2ParamsInfos">
               <div class="container">
