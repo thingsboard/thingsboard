@@ -41,7 +41,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.edge.EdgeService;
-import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
+import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
@@ -68,7 +68,7 @@ public class DefaultTbAlarmServiceTest {
     @MockBean
     protected DbCallbackExecutorService dbExecutor;
     @MockBean
-    protected TbNotificationEntityService notificationEntityService;
+    protected TbLogEntityActionService logEntityActionService;
     @MockBean
     protected EdgeService edgeService;
     @MockBean
@@ -96,7 +96,7 @@ public class DefaultTbAlarmServiceTest {
                 .build());
         service.save(alarm, new User());
 
-        verify(notificationEntityService, times(1)).logEntityAction(any(), any(), any(), any(), eq(ActionType.ADDED), any());
+        verify(logEntityActionService, times(1)).logEntityAction(any(), any(), any(), any(), eq(ActionType.ADDED), any());
         verify(alarmSubscriptionService, times(1)).createAlarm(any());
     }
 
@@ -108,7 +108,7 @@ public class DefaultTbAlarmServiceTest {
         service.ack(alarm, new User(new UserId(UUID.randomUUID())));
 
         verify(alarmCommentService, times(1)).saveAlarmComment(any(), any(), any());
-        verify(notificationEntityService, times(1)).logEntityAction(any(), any(), any(), any(), eq(ActionType.ALARM_ACK), any());
+        verify(logEntityActionService, times(1)).logEntityAction(any(), any(), any(), any(), eq(ActionType.ALARM_ACK), any());
         verify(alarmSubscriptionService, times(1)).acknowledgeAlarm(any(), any(), anyLong());
     }
 
@@ -121,7 +121,7 @@ public class DefaultTbAlarmServiceTest {
         service.clear(alarm, new User(new UserId(UUID.randomUUID())));
 
         verify(alarmCommentService, times(1)).saveAlarmComment(any(), any(), any());
-        verify(notificationEntityService, times(1)).logEntityAction(any(), any(), any(), any(), eq(ActionType.ALARM_CLEAR), any());
+        verify(logEntityActionService, times(1)).logEntityAction(any(), any(), any(), any(), eq(ActionType.ALARM_CLEAR), any());
         verify(alarmSubscriptionService, times(1)).clearAlarm(any(), any(), anyLong(), any());
     }
 
@@ -129,7 +129,7 @@ public class DefaultTbAlarmServiceTest {
     public void testDelete() {
         service.delete(new Alarm(), new User());
 
-        verify(notificationEntityService, times(1)).logEntityAction(any(), any(), any(), any(), eq(ActionType.ALARM_DELETE), any());
+        verify(logEntityActionService, times(1)).logEntityAction(any(), any(), any(), any(), eq(ActionType.ALARM_DELETE), any());
         verify(alarmSubscriptionService, times(1)).deleteAlarm(any(), any());
     }
 

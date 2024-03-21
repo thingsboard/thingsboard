@@ -17,8 +17,7 @@ package org.thingsboard.server.common.data.settings;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.validation.Length;
@@ -29,21 +28,21 @@ import java.io.Serializable;
 import static org.thingsboard.server.common.data.BaseDataWithAdditionalInfo.getJson;
 import static org.thingsboard.server.common.data.BaseDataWithAdditionalInfo.setJson;
 
-@ApiModel
+@Schema
 @Data
 public class UserSettings implements Serializable {
 
     private static final long serialVersionUID = 2628320657987010348L;
 
-    @ApiModelProperty(position = 1, value = "JSON object with User id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "JSON object with User id.", accessMode = Schema.AccessMode.READ_ONLY)
     private UserId userId;
 
-    @ApiModelProperty(position = 2, value = "Type of the settings.")
+    @Schema(description = "Type of the settings.")
     @NoXss
     @Length(fieldName = "type", max = 50)
     private UserSettingsType type;
 
-    @ApiModelProperty(position = 3, value = "JSON object with user settings.", dataType = "com.fasterxml.jackson.databind.JsonNode")
+    @Schema(description = "JSON object with user settings.",implementation = com.fasterxml.jackson.databind.JsonNode.class)
     @NoXss
     @Length(fieldName = "settings", max = 100000)
     private transient JsonNode settings;

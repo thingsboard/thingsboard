@@ -16,37 +16,13 @@
 @import '../../../../../../../../scss/constants';
 
 .tb-data-key-row {
-  .mat-mdc-form-field.tb-inline-field.tb-key-field {
-    .mat-mdc-text-field-wrapper:not(.mdc-text-field--outlined) {
-      padding-left: 8px;
-      padding-right: 0;
-      .mat-mdc-form-field-infix {
-        padding-top: 0;
-        padding-bottom: 6px;
-        .mdc-evolution-chip-set .mdc-evolution-chip {
-          margin: 0;
-        }
-        input.mat-mdc-chip-input {
-          height: 32px;
-          margin-left: 0;
-        }
-      }
-    }
-    .mat-mdc-chip.mat-mdc-standard-chip.tb-datakey-chip {
-      .tb-attribute-chip {
-        .tb-chip-labels {
-          background: transparent;
-        }
-      }
-    }
-  }
 
   .tb-source-field {
     width: 108px;
     min-width: 108px;
   }
 
-  .tb-key-field {
+  .tb-data-key-input {
     flex: 1;
     min-width: 150px;
     @media #{$mat-gt-sm} {
@@ -59,7 +35,7 @@
     min-width: 100px;
   }
 
-  .tb-color-field, .tb-units-field, .tb-decimals-field {
+  .tb-color-field, .tb-units-field, .tb-decimals-field, .tb-time-series-type-field {
     display: flex;
     flex-direction: row;
     place-content: center;
@@ -81,10 +57,41 @@
     min-width: 60px;
   }
 
+  .tb-y-axis-field {
+    width: 100px;
+    min-width: 100px;
+    .mat-mdc-form-field {
+      width: 100%;
+    }
+  }
+
+  .tb-time-series-type-field {
+    width: 60px;
+    min-width: 60px;
+    .mat-icon {
+      color: rgba(0,0,0,0.76);
+    }
+  }
+
   .tb-label-field, .tb-units-field, .tb-color-field, .tb-decimals-field {
     display: none;
     @media #{$mat-gt-sm} {
-      display: block;
+      display: flex;
+    }
+  }
+
+  .tb-y-axis-field {
+    @media #{$mat-md} {
+      display: none;
+    }
+  }
+
+  .tb-time-series-type-field {
+    @media #{$mat-xs} {
+      display: none;
+    }
+    @media #{$mat-md} {
+      display: none;
     }
   }
 
@@ -110,6 +117,14 @@
         width: auto;
         max-width: 140px;
       }
+    }
+  }
+}
+
+.tb-time-series-type-field {
+  .mat-mdc-option:not(.mdc-list-item--selected) {
+    .mat-icon {
+      color: rgba(0,0,0,0.54);
     }
   }
 }

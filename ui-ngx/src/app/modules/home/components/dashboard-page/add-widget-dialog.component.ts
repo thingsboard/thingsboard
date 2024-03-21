@@ -29,6 +29,7 @@ import { WidgetConfigComponentData, WidgetInfo } from '@home/models/widget-compo
 import { isDefined, isDefinedAndNotNull, isString } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
+import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 
 export interface AddWidgetDialogData {
   dashboard: Dashboard;
@@ -97,6 +98,7 @@ export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogCom
     const rawDataKeySettingsSchema = widgetInfo.typeDataKeySettingsSchema || widgetInfo.dataKeySettingsSchema;
     const rawLatestDataKeySettingsSchema = widgetInfo.typeLatestDataKeySettingsSchema || widgetInfo.latestDataKeySettingsSchema;
     const typeParameters = widgetInfo.typeParameters;
+    const dataKeySettingsFunction: DataKeySettingsFunction = typeParameters?.dataKeySettingsFunction;
     const actionSources = widgetInfo.actionSources;
     const isDataEnabled = isDefined(widgetInfo.typeParameters) ? !widgetInfo.typeParameters.useCustomDatasources : true;
     let settingsSchema;
@@ -129,6 +131,7 @@ export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogCom
       settingsSchema,
       dataKeySettingsSchema,
       latestDataKeySettingsSchema,
+      dataKeySettingsFunction,
       settingsDirective: widgetInfo.settingsDirective,
       dataKeySettingsDirective: widgetInfo.dataKeySettingsDirective,
       latestDataKeySettingsDirective: widgetInfo.latestDataKeySettingsDirective,

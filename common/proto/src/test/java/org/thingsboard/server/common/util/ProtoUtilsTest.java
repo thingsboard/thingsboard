@@ -15,9 +15,25 @@
  */
 package org.thingsboard.server.common.util;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import org.jeasy.random.EasyRandom;
+import org.jeasy.random.EasyRandomParameters;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
+import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
+import org.thingsboard.server.common.data.device.data.DeviceConfiguration;
+import org.thingsboard.server.common.data.device.data.DeviceTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -34,6 +50,9 @@ import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
+import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileConfiguration;
 import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
 import org.thingsboard.server.common.msg.edge.FromEdgeSyncResponse;
 import org.thingsboard.server.common.msg.edge.ToEdgeSyncRequest;
@@ -62,6 +81,19 @@ class ProtoUtilsTest {
     DeviceId deviceId = new DeviceId(UUID.fromString("ceebb9e5-4239-437c-a507-dc5f71f1232d"));
     EdgeId edgeId = new EdgeId(UUID.fromString("364be452-2183-459b-af93-1ddb325feac1"));
     UUID id = UUID.fromString("31a07d85-6ed5-46f8-83c0-6715cb0a8782");
+    static EasyRandom easyRandom;
+
+    @BeforeAll
+    static void init() {
+        EasyRandomParameters parameters = new EasyRandomParameters()
+                .randomize(DeviceConfiguration.class, DefaultDeviceConfiguration::new)
+                .randomize(DeviceTransportConfiguration.class, DefaultDeviceTransportConfiguration::new)
+                .randomize(JsonNode.class, JacksonUtil::newObjectNode)
+                .randomize(DeviceProfileData.class, DeviceProfileData::new)
+                .randomize(TenantProfileConfiguration.class, DefaultTenantProfileConfiguration::new)
+                .randomize(EntityId.class, () -> new DeviceId(UUID.randomUUID()));
+        easyRandom = new EasyRandom(parameters);
+    }
 
     @Test
     void protoComponentLifecycleSerialization() {
@@ -179,4 +211,54 @@ class ProtoUtilsTest {
         Assertions.assertNotNull(serializedMsg);
         assertThat(ProtoUtils.fromProto(serializedMsg)).as("deserialized").isEqualTo(msg);
     }
+
+    private static final String description = "Failed to deserialize %s, because found some new fields which absent in %sProto!!!";
+
+    @Test
+    void protoSerializationDeserializationEntities() {
+        Device expectedDevice = easyRandom.nextObject(Device.class);
+        TransportProtos.DeviceProto deviceProto = ProtoUtils.toProto(expectedDevice);
+        Device actualDevice = ProtoUtils.fromProto(deviceProto);
+        assertEqualDeserializedEntity(expectedDevice, actualDevice, "Device");
+
+        DeviceCredentials expectedCredentials = easyRandom.nextObject(DeviceCredentials.class);
+        TransportProtos.DeviceCredentialsProto credentialsProto = ProtoUtils.toProto(expectedCredentials);
+        DeviceCredentials actualCredentials = ProtoUtils.fromProto(credentialsProto);
+        assertEqualDeserializedEntity(expectedCredentials, actualCredentials, "DeviceCredentials");
+
+        DeviceProfile expectedDeviceProfile = easyRandom.nextObject(DeviceProfile.class);
+        TransportProtos.DeviceProfileProto deviceProfileProto = ProtoUtils.toProto(expectedDeviceProfile);
+        DeviceProfile actualDeviceProfile = ProtoUtils.fromProto(deviceProfileProto);
+        assertEqualDeserializedEntity(expectedDeviceProfile, actualDeviceProfile, "DeviceProfile");
+
+        Tenant expectedTenant = easyRandom.nextObject(Tenant.class);
+        TransportProtos.TenantProto tenantProto = ProtoUtils.toProto(expectedTenant);
+        Tenant actualTenant = ProtoUtils.fromProto(tenantProto);
+        assertEqualDeserializedEntity(expectedTenant, actualTenant, "Tenant");
+
+        TenantProfile expectedTenantProfile = easyRandom.nextObject(TenantProfile.class);
+        TransportProtos.TenantProfileProto tenantProfileProto = ProtoUtils.toProto(expectedTenantProfile);
+        TenantProfile actualTenantProfile = ProtoUtils.fromProto(tenantProfileProto);
+        assertEqualDeserializedEntity(expectedTenantProfile, actualTenantProfile, "TenantProfile");
+
+        TbResource expectedResource = easyRandom.nextObject(TbResource.class);
+        TransportProtos.TbResourceProto resourceProto = ProtoUtils.toProto(expectedResource);
+        TbResource actualResource = ProtoUtils.fromProto(resourceProto);
+        assertEqualDeserializedEntity(expectedResource, actualResource, "TbResource");
+
+        ApiUsageState expectedState = easyRandom.nextObject(ApiUsageState.class);
+        TransportProtos.ApiUsageStateProto stateProto = ProtoUtils.toProto(expectedState);
+        ApiUsageState actualState = ProtoUtils.fromProto(stateProto);
+        assertEqualDeserializedEntity(expectedState, actualState, "ApiUsageState");
+
+        RepositorySettings expectedSettings = easyRandom.nextObject(RepositorySettings.class);
+        TransportProtos.RepositorySettingsProto settingsProto = ProtoUtils.toProto(expectedSettings);
+        RepositorySettings actualSettings = ProtoUtils.fromProto(settingsProto);
+        assertEqualDeserializedEntity(expectedSettings, actualSettings, "RepositorySettings");
+    }
+
+    private void assertEqualDeserializedEntity(Object expected, Object actual, String entityName) {
+        assertThat(actual).as(String.format(description, entityName, entityName)).isEqualTo(expected);
+    }
+
 }

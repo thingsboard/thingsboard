@@ -71,6 +71,7 @@ export const rangeChartDefaultSettings: RangeChartWidgetSettings = {
   },
   tooltipValueColor: 'rgba(0, 0, 0, 0.76)',
   tooltipShowDate: true,
+  tooltipDateInterval: true,
   tooltipDateFormat: simpleDateFormat('dd MMM yyyy HH:mm'),
   tooltipDateFont: {
     family: 'Roboto',
