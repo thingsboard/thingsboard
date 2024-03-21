@@ -395,6 +395,28 @@ message GetOrCreateDeviceFromGatewayResponseMsg {
   TransportApiRequestErrorCode error = 3;
 }
 
+enum PayloadType {
+  JSON = 0;
+  PROTOBUF = 1;
+}
+
+message DeviceTransportSettingsRequestMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+}
+
+message DeviceTransportSettingsMsg {
+  bool updated = 1;
+  PayloadType payloadType = 2;
+  string telemetryMsgRateLimits = 3;
+  string regularMsgRateLimits = 4;
+  string telemetryDataPointsRateLimit = 5;
+  int64 maxPayloadSize = 6;
+  int64 maxSessionsPerDevice = 7;
+}
+
 enum TransportApiRequestErrorCode {
   UNKNOWN_TRANSPORT_API_ERROR  = 0;
   ENTITY_LIMIT = 1;
@@ -761,6 +783,7 @@ message TransportToDeviceActorMsg {
   ToDeviceRpcResponseStatusMsg rpcResponseStatusMsg = 10;
   SendPendingRPCMsg sendPendingRPC = 11;
   UplinkNotificationMsg uplinkNotificationMsg = 12;
+  DeviceTransportSettingsRequestMsg deviceTransportSettingsRequest = 13;
 }
 
 message TransportToRuleEngineMsg {
@@ -1415,6 +1438,7 @@ message TransportApiRequestMsg {
   GetDeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 13;
   GetAllQueueRoutingInfoRequestMsg getAllQueueRoutingInfoRequestMsg = 14;
   ValidateOrCreateDeviceX509CertRequestMsg validateOrCreateX509CertRequestMsg = 15;
+  DeviceTransportSettingsRequestMsg deviceTransportSettingsRequestMsg = 16;
 }
 
 /* Response from ThingsBoard Core Service to Transport Service */
@@ -1430,6 +1454,7 @@ message TransportApiResponseMsg {
   GetDeviceResponseMsg deviceResponseMsg = 9;
   GetDeviceCredentialsResponseMsg deviceCredentialsResponseMsg = 10;
   repeated GetQueueRoutingInfoResponseMsg getQueueRoutingInfoResponseMsgs = 11;
+  DeviceTransportSettingsMsg deviceTransportSettingsMsg = 12;
 }
 
 /* Messages that are handled by ThingsBoard Core Service */
@@ -1501,6 +1526,7 @@ message ToTransportMsg {
   UplinkNotificationMsg uplinkNotificationMsg = 14;
   repeated QueueUpdateMsg queueUpdateMsgs = 15;
   repeated QueueDeleteMsg queueDeleteMsgs = 16;
+  DeviceTransportSettingsMsg deviceTransportSettingsMsg = 17;
 }
 
 message UsageStatsKVProto{

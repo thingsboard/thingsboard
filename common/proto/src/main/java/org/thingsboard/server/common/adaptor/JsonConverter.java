@@ -467,6 +467,17 @@ public class JsonConverter {
         return result;
     }
 
+    public static JsonObject toJson(TransportProtos.DeviceTransportSettingsMsg payload) {
+        JsonObject result = new JsonObject();
+        result.addProperty("payloadType", payload.getPayloadType().name());
+        result.addProperty("regularMsgRateLimit", payload.getRegularMsgRateLimits());
+        result.addProperty("telemetryMsgRateLimit", payload.getTelemetryMsgRateLimits());
+        result.addProperty("telemetryDataPointsRateLimit", payload.getTelemetryDataPointsRateLimit());
+        result.addProperty("maxPayloadSize", payload.getMaxPayloadSize());
+        result.addProperty("maxSessionsPerDevice", payload.getMaxSessionsPerDevice());
+        return result;
+    }
+
     public static JsonElement toErrorJson(String errorMsg) {
         JsonObject error = new JsonObject();
         error.addProperty("error", errorMsg);

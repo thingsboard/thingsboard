@@ -174,6 +174,15 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
     }
 
     @Override
+    public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.DeviceTransportSettingsMsg settingsMsg) {
+        String topic = MqttTopics.DEVICE_SERVICE_SETTINGS_RESPONSE_TOPIC;
+        if (settingsMsg.getUpdated()) {
+            topic = MqttTopics.DEVICE_SERVICE_SETTINGS_TOPIC;
+        }
+        return Optional.of(createMqttPublishMsg(ctx, topic, settingsMsg.toByteArray()));
+    }
+
+    @Override
     public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, byte[] firmwareChunk, String requestId, int chunk, OtaPackageType firmwareType) throws AdaptorException {
         return Optional.of(createMqttPublishMsg(ctx, String.format(DEVICE_SOFTWARE_FIRMWARE_RESPONSES_TOPIC_FORMAT, firmwareType.getKeyPrefix(), requestId, chunk), firmwareChunk));
     }

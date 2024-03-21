@@ -468,6 +468,9 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         if (msg.hasUplinkNotificationMsg()) {
             processUplinkNotificationMsg(sessionInfo, msg.getUplinkNotificationMsg());
         }
+        if (msg.hasDeviceTransportSettingsRequest()) {
+            processDeviceTransportSettingsRequest(sessionInfo, msg.getDeviceTransportSettingsRequest());
+        }
         callback.onSuccess();
     }
 
@@ -851,6 +854,18 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
             dumpSessions();
 
         }
+    }
+
+    private void processDeviceTransportSettingsRequest(SessionInfoProto sessionInfo, TransportProtos.DeviceTransportSettingsRequestMsg deviceTransportSettingsRequest) {
+        UUID sessionId = getSessionId(sessionInfo);
+        ToTransportMsg msg = ToTransportMsg.newBuilder()
+                .setSessionIdMSB(sessionId.getMostSignificantBits())
+                .setSessionIdLSB(sessionId.getLeastSignificantBits())
+                .setDeviceTransportSettingsMsg(TransportProtos.DeviceTransportSettingsMsg.newBuilder()
+                        .setMaxSessionsPerDevice(systemContext.getMaxConcurrentSessionsPerDevice())
+                        .build())
+                .build();
+        systemContext.getTbCoreToTransportService().process(sessionInfo.getNodeId(), msg);
     }
 
     private void notifyTransportAboutClosedSessionMaxSessionsLimit(UUID sessionId, SessionInfoMetaData sessionMd) {

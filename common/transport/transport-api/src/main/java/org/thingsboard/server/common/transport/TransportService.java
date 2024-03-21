@@ -141,6 +141,8 @@ public interface TransportService {
 
     void process(SessionInfoProto sessionInfoProto, GetOtaPackageRequestMsg msg, TransportServiceCallback<GetOtaPackageResponseMsg> callback);
 
+    void process(SessionInfoProto sessionInfo, TransportProtos.DeviceTransportSettingsRequestMsg msg, TransportServiceCallback<Void> callback);
+
     SessionMetaData registerAsyncSession(SessionInfoProto sessionInfo, SessionMsgListener listener);
 
     SessionMetaData registerSyncSession(SessionInfoProto sessionInfo, SessionMsgListener listener, long timeout);

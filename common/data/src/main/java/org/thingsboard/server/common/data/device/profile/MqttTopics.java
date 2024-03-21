@@ -30,6 +30,8 @@ public class MqttTopics {
     private static final String CLAIM = "/claim";
     private static final String SUB_TOPIC = "+";
     private static final String PROVISION = "/provision";
+    private static final String SERVICE = "/service";
+    private static final String SETTINGS = "/settings";
     private static final String FIRMWARE = "/fw";
     private static final String SOFTWARE = "/sw";
     private static final String CHUNK = "/chunk/";
@@ -65,6 +67,11 @@ public class MqttTopics {
     public static final String DEVICE_ATTRIBUTES_TOPIC = BASE_DEVICE_API_TOPIC + ATTRIBUTES;
     public static final String DEVICE_PROVISION_REQUEST_TOPIC = PROVISION + REQUEST;
     public static final String DEVICE_PROVISION_RESPONSE_TOPIC = PROVISION + RESPONSE;
+
+    public static final String DEVICE_SERVICE_TOPIC = BASE_DEVICE_API_TOPIC + SERVICE;
+    public static final String DEVICE_SERVICE_SETTINGS_TOPIC = DEVICE_SERVICE_TOPIC + SETTINGS;
+    public static final String DEVICE_SERVICE_SETTINGS_REQUEST_TOPIC = DEVICE_SERVICE_SETTINGS_TOPIC + REQUEST;
+    public static final String DEVICE_SERVICE_SETTINGS_RESPONSE_TOPIC = DEVICE_SERVICE_SETTINGS_TOPIC + RESPONSE;
     // v1 gateway topics
     public static final String BASE_GATEWAY_API_TOPIC = "v1/gateway";
     public static final String GATEWAY_CONNECT_TOPIC = BASE_GATEWAY_API_TOPIC + CONNECT;

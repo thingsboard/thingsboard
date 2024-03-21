@@ -95,8 +95,13 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
             mergeLimits(tenantId, tenantRateLimitPrototype, perTenantLimits::get, perTenantLimits::put);
             getTenantDevices(tenantId).forEach(deviceId -> {
                 mergeLimits(deviceId, deviceRateLimitPrototype, perDeviceLimits::get, perDeviceLimits::put);
+                notifyDevice(tenantId, deviceId);
             });
         }
+    }
+
+    private void notifyDevice(TenantId tenantId, DeviceId deviceId) {
+        throw new RuntimeException("Not implemented");
     }
 
     @Override
@@ -256,7 +261,8 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
         });
     }
 
-    private EntityTransportRateLimits getDeviceRateLimits(TenantId tenantId, DeviceId deviceId) {
+    @Override
+    public EntityTransportRateLimits getDeviceRateLimits(TenantId tenantId, DeviceId deviceId) {
         return perDeviceLimits.computeIfAbsent(deviceId, k -> {
             EntityTransportRateLimits limits = createRateLimits(tenantProfileCache.get(tenantId), false);
             getTenantDevices(tenantId).add(deviceId);

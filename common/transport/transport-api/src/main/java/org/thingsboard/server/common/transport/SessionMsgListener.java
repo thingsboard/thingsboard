@@ -18,6 +18,7 @@ package org.thingsboard.server.common.transport;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.transport.limits.EntityTransportRateLimits;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
@@ -59,4 +60,6 @@ public interface SessionMsgListener {
     default void onResourceUpdate(TransportProtos.ResourceUpdateMsg resourceUpdateMsgOpt) {}
 
     default void onResourceDelete(TransportProtos.ResourceDeleteMsg resourceUpdateMsgOpt) {}
+
+    default void onDeviceTransportSettings(UUID sessionId, TransportProtos.DeviceTransportSettingsMsg settingsMsg, EntityTransportRateLimits deviceRateLimits) {}
 }
