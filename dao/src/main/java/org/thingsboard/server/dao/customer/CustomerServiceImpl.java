@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cache.customer.CustomerCacheEvictEvent;
 import org.thingsboard.server.cache.customer.CustomerCacheKey;
@@ -52,6 +53,7 @@ import org.thingsboard.server.dao.user.UserService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentMap;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -64,6 +66,8 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String PUBLIC_CUSTOMER_ADDITIONAL_INFO_STR = "{ \"isPublic\": true }";
     public static final JsonNode PUBLIC_CUSTOMER_ADDITIONAL_INFO_JSON = JacksonUtil.toJsonNode(PUBLIC_CUSTOMER_ADDITIONAL_INFO_STR);
+
+    private final ConcurrentMap<TenantId, Object> publicCustomerCreationLocks = new ConcurrentReferenceHashMap<>();
 
     @Autowired
     private CustomerDao customerDao;
@@ -185,10 +189,11 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
     public Customer findOrCreatePublicCustomer(TenantId tenantId) {
         log.trace("Executing findOrCreatePublicCustomer, tenantId [{}]", tenantId);
         Validator.validateId(tenantId, INCORRECT_CUSTOMER_ID + tenantId);
-        Optional<Customer> publicCustomerOpt = findCustomerByTenantIdAndTitle(tenantId, PUBLIC_CUSTOMER_TITLE);
-        if (publicCustomerOpt.isPresent()) {
-            return publicCustomerOpt.get();
-        } else {
+        synchronized (publicCustomerCreationLocks.computeIfAbsent(tenantId, k -> new Object())) {
+            Optional<Customer> publicCustomerOpt = customerDao.findPublicCustomer(tenantId.getId());
+            if (publicCustomerOpt.isPresent()) {
+                return publicCustomerOpt.get();
+            }
             var publicCustomer = new Customer();
             publicCustomer.setTenantId(tenantId);
             publicCustomer.setTitle(PUBLIC_CUSTOMER_TITLE);

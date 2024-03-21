@@ -64,15 +64,12 @@ public class JpaCustomerDao extends JpaAbstractDao<CustomerEntity, Customer> imp
 
     @Override
     public Optional<Customer> findCustomersByTenantIdAndTitle(UUID tenantId, String title) {
-        Customer customer = DaoUtil.getData(customerRepository.findByTenantIdAndTitle(tenantId, title));
-        return Optional.ofNullable(customer);
+        return Optional.ofNullable(DaoUtil.getData(customerRepository.findByTenantIdAndTitle(tenantId, title)));
     }
 
     @Override
-    public PageData<Customer> findCustomersWithTheSameTitle(PageLink pageLink) {
-        return DaoUtil.toPageData(
-                customerRepository.findCustomersWithTheSameTitle(DaoUtil.toPageable(pageLink))
-        );
+    public Optional<Customer> findPublicCustomer(UUID tenantId) {
+        return Optional.ofNullable(DaoUtil.getData(customerRepository.findPublicCustomerByTenantId(tenantId)));
     }
 
     @Override

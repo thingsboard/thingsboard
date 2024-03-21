@@ -58,7 +58,6 @@ public interface CustomerDao extends Dao<Customer>, TenantEntityDao, ExportableE
      */
     Optional<Customer> findCustomersByTenantIdAndTitle(UUID tenantId, String title);
 
-    @Deprecated(since = "3.6.4", forRemoval = true)
-    PageData<Customer> findCustomersWithTheSameTitle(PageLink pageLink);
+    Optional<Customer> findPublicCustomer(UUID tenantId);
 
 }

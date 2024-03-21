@@ -26,22 +26,13 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
-import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
-import org.thingsboard.server.dao.asset.AssetService;
-import org.thingsboard.server.dao.customer.CustomerDao;
-import org.thingsboard.server.dao.customer.CustomerService;
-import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceConnectivityConfiguration;
-import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.edge.EdgeService;
-import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
@@ -51,7 +42,6 @@ import org.thingsboard.server.utils.TbNodeUpgradeUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 @Service
@@ -64,27 +54,6 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
     @Autowired
     private RuleChainService ruleChainService;
-
-    @Autowired
-    private CustomerDao customerDao;
-
-    @Autowired
-    private CustomerService customerService;
-
-    @Autowired
-    private AssetService assetService;
-
-    @Autowired
-    private DeviceService deviceService;
-
-    @Autowired
-    private EntityViewService entityViewService;
-
-    @Autowired
-    private EdgeService edgeService;
-
-    @Autowired
-    private DashboardService dashboardService;
 
     @Autowired
     private ComponentDiscoveryService componentDiscoveryService;
@@ -105,140 +74,9 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 log.info("Updating data from version 3.6.0 to 3.6.1 ...");
                 migrateDeviceConnectivity();
                 break;
-            case "3.6.3":
-                log.info("Updating data from version 3.6.3 to 3.6.4 ...");
-                updateCustomersWithTheSameTitle();
-                break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
         }
-    }
-
-    private void updateCustomersWithTheSameTitle() {
-        var customers = new ArrayList<Customer>();
-        new PageDataIterable<>(pageLink ->
-                customerDao.findCustomersWithTheSameTitle(pageLink), DEFAULT_PAGE_SIZE
-        ).forEach(customers::add);
-        if (customers.isEmpty()) {
-            return;
-        }
-        var prevCustomer = customers.get(0);
-        for (int i = 1; i < customers.size(); i++) {
-            var currentCustomer = customers.get(i);
-            if (!currentCustomer.getTitle().equals(prevCustomer.getTitle())) {
-                prevCustomer = currentCustomer;
-                continue;
-            }
-            var tenantId = currentCustomer.getTenantId();
-            if (!tenantId.equals(prevCustomer.getTenantId())) {
-                prevCustomer = currentCustomer;
-                continue;
-            }
-            if (!currentCustomer.isPublic()) {
-                reSaveCustomerWithNewTitle(currentCustomer);
-                continue;
-            }
-            var prevCustomerId = prevCustomer.getId();
-            var currentCustomerId = currentCustomer.getId();
-            reassignPublicAssets(tenantId, currentCustomerId, prevCustomerId);
-            reassignPublicDevices(tenantId, currentCustomerId, prevCustomerId);
-            reassignPublicEntityViews(tenantId, currentCustomerId, prevCustomerId);
-            reassignPublicEdges(tenantId, currentCustomerId, prevCustomerId);
-            reassignPublicDashboards(tenantId, currentCustomerId, prevCustomerId);
-            try {
-                customerService.deleteCustomer(tenantId, currentCustomerId);
-            } catch (Exception e) {
-                log.error("[{}] Failed to remove public customer with id: {}",
-                        currentCustomer.getTenantId(), currentCustomerId, e);
-            }
-        }
-    }
-
-    private void reSaveCustomerWithNewTitle(Customer currentCustomer) {
-        String currentTitle = currentCustomer.getTitle();
-        String newTitle = currentTitle + "_" + UUID.randomUUID();
-        currentCustomer.setTitle(newTitle);
-        try {
-            customerService.saveCustomer(currentCustomer);
-        } catch (Exception e) {
-            log.error("[{}] Failed to update customer with id: {} and title: {}, oldTitle: {}",
-                    currentCustomer.getTenantId(), currentCustomer.getId(), newTitle, currentTitle, e);
-        }
-    }
-
-    private void reassignPublicAssets(TenantId tenantId, CustomerId customerIdToUnnasignFrom, CustomerId customerIdToAssignTo) {
-        new PageDataIterable<>(pageLink ->
-                assetService.findAssetsByTenantIdAndCustomerId(tenantId, customerIdToUnnasignFrom, pageLink), DEFAULT_PAGE_SIZE
-        ).forEach(asset -> {
-            var assetId = asset.getId();
-            try {
-                assetService.unassignAssetFromCustomer(tenantId, assetId);
-                assetService.assignAssetToCustomer(tenantId, assetId, customerIdToAssignTo);
-            } catch (Exception e) {
-                log.error("[{}] Failed to reassign asset with id: {} from customer with id: {} to customer with id: {}",
-                        tenantId, assetId, customerIdToUnnasignFrom, customerIdToAssignTo, e);
-            }
-        });
-    }
-
-    private void reassignPublicDevices(TenantId tenantId, CustomerId customerIdToUnnasignFrom, CustomerId customerIdToAssignTo) {
-        new PageDataIterable<>(pageLink ->
-                deviceService.findDevicesByTenantIdAndCustomerId(tenantId, customerIdToUnnasignFrom, pageLink), DEFAULT_PAGE_SIZE
-        ).forEach(device -> {
-            var deviceId = device.getId();
-            try {
-                deviceService.unassignDeviceFromCustomer(tenantId, deviceId);
-                deviceService.assignDeviceToCustomer(tenantId, deviceId, customerIdToAssignTo);
-            } catch (Exception e) {
-                log.error("[{}] Failed to reassign device with id: {} from customer with id: {} to customer with id: {}",
-                        tenantId, deviceId, customerIdToUnnasignFrom, customerIdToAssignTo, e);
-            }
-        });
-    }
-
-    private void reassignPublicEntityViews(TenantId tenantId, CustomerId customerIdToUnnasignFrom, CustomerId customerIdToAssignTo) {
-        new PageDataIterable<>(pageLink ->
-                entityViewService.findEntityViewsByTenantIdAndCustomerId(tenantId, customerIdToUnnasignFrom, pageLink), DEFAULT_PAGE_SIZE
-        ).forEach(entityView -> {
-            var entityViewId = entityView.getId();
-            try {
-                entityViewService.unassignEntityViewFromCustomer(tenantId, entityViewId);
-                entityViewService.assignEntityViewToCustomer(tenantId, entityViewId, customerIdToAssignTo);
-            } catch (Exception e) {
-                log.error("[{}] Failed to reassign entityView with id: {} from customer with id: {} to customer with id: {}",
-                        tenantId, entityViewId, customerIdToUnnasignFrom, customerIdToAssignTo, e);
-            }
-        });
-    }
-
-    private void reassignPublicEdges(TenantId tenantId, CustomerId customerIdToUnnasignFrom, CustomerId customerIdToAssignTo) {
-        new PageDataIterable<>(pageLink ->
-                edgeService.findEdgesByTenantIdAndCustomerId(tenantId, customerIdToUnnasignFrom, pageLink), DEFAULT_PAGE_SIZE
-        ).forEach(edge -> {
-            var edgeId = edge.getId();
-            try {
-                edgeService.unassignEdgeFromCustomer(tenantId, edgeId);
-                edgeService.assignEdgeToCustomer(tenantId, edgeId, customerIdToAssignTo);
-            } catch (Exception e) {
-                log.error("[{}] Failed to reassign edge with id: {} from customer with id: {} to customer with id: {}",
-                        tenantId, edgeId, customerIdToUnnasignFrom, customerIdToAssignTo, e);
-            }
-        });
-    }
-
-    private void reassignPublicDashboards(TenantId tenantId, CustomerId customerIdToUnnasignFrom, CustomerId customerIdToAssignTo) {
-        new PageDataIterable<>(pageLink ->
-                dashboardService.findDashboardsByTenantIdAndCustomerId(tenantId, customerIdToUnnasignFrom, pageLink), DEFAULT_PAGE_SIZE
-        ).forEach(dashboardInfo -> {
-            var dashboardId = dashboardInfo.getId();
-            try {
-                dashboardService.unassignDashboardFromCustomer(tenantId, dashboardId, customerIdToUnnasignFrom);
-                dashboardService.assignDashboardToCustomer(tenantId, dashboardId, customerIdToAssignTo);
-            } catch (Exception e) {
-                log.error("[{}] Failed to reassign dashboard with id: {} from customer with id: {} to customer with id: {}",
-                        tenantId, dashboardId, customerIdToUnnasignFrom, customerIdToAssignTo, e);
-            }
-        });
     }
 
     private void migrateDeviceConnectivity() {

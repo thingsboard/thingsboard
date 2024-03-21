@@ -38,17 +38,14 @@ public interface CustomerRepository extends JpaRepository<CustomerEntity, UUID>,
 
     CustomerEntity findByTenantIdAndTitle(UUID tenantId, String title);
 
+    @Query(value = "SELECT c FROM CustomerEntity c WHERE c.tenant_id = :tenantId " +
+            "AND c.is_public = true ORDER BY id ASC LIMIT 1", nativeQuery = true)
+    CustomerEntity findPublicCustomerByTenantId(UUID tenantId);
+
+
     Long countByTenantId(UUID tenantId);
 
     @Query("SELECT externalId FROM CustomerEntity WHERE id = :id")
     UUID getExternalIdById(@Param("id") UUID id);
-
-    @Deprecated(since = "3.6.4", forRemoval = true)
-    @Query(value = "SELECT c.* FROM customer c " +
-            "INNER JOIN (SELECT tenant_id, title FROM customer GROUP BY tenant_id, title HAVING COUNT(title) > 1) dc " +
-            "ON c.tenant_id = dc.tenant_id AND c.title = dc.title " +
-            "ORDER BY c.tenant_id, c.title, c.created_time",
-            nativeQuery = true)
-    Page<CustomerEntity> findCustomersWithTheSameTitle(Pageable pageable);
 
 }
