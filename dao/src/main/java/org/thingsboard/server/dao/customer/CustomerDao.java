@@ -64,6 +64,6 @@ public interface CustomerDao extends Dao<Customer>, TenantEntityDao, ExportableE
      * @param tenantId the tenantId
      * @return the optional public customer object
      */
-    Optional<Customer> findPublicCustomer(UUID tenantId);
+    Optional<Customer> findPublicCustomerByTenantId(UUID tenantId);
 
 }

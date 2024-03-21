@@ -190,7 +190,7 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
         log.trace("Executing findOrCreatePublicCustomer, tenantId [{}]", tenantId);
         Validator.validateId(tenantId, INCORRECT_CUSTOMER_ID + tenantId);
         synchronized (publicCustomerCreationLocks.computeIfAbsent(tenantId, k -> new Object())) {
-            Optional<Customer> publicCustomerOpt = customerDao.findPublicCustomer(tenantId.getId());
+            Optional<Customer> publicCustomerOpt = customerDao.findPublicCustomerByTenantId(tenantId.getId());
             if (publicCustomerOpt.isPresent()) {
                 return publicCustomerOpt.get();
             }

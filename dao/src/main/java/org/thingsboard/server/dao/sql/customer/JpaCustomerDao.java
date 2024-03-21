@@ -67,7 +67,7 @@ public class JpaCustomerDao extends JpaAbstractDao<CustomerEntity, Customer> imp
     }
 
     @Override
-    public Optional<Customer> findPublicCustomer(UUID tenantId) {
+    public Optional<Customer> findPublicCustomerByTenantId(UUID tenantId) {
         return Optional.ofNullable(DaoUtil.getData(customerRepository.findPublicCustomerByTenantId(tenantId)));
     }
 

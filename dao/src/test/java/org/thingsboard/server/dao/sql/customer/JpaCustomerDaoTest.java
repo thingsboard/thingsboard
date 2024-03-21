@@ -78,12 +78,12 @@ public class JpaCustomerDaoTest extends AbstractJpaDaoTest {
     public void testFindPublicCustomerByTenantId() {
         UUID tenantId = Uuids.timeBased();
 
-        Optional<Customer> customerOpt = customerDao.findPublicCustomer(tenantId);
+        Optional<Customer> customerOpt = customerDao.findPublicCustomerByTenantId(tenantId);
         assertTrue(customerOpt.isEmpty());
 
         String publicCustomerTitle = StringUtils.randomAlphanumeric(10);
         createPublicCustomer(tenantId, publicCustomerTitle);
-        customerOpt = customerDao.findPublicCustomer(tenantId);
+        customerOpt = customerDao.findPublicCustomerByTenantId(tenantId);
         assertTrue(customerOpt.isPresent());
         Customer customer = customerOpt.get();
         assertTrue(customer.isPublic());
