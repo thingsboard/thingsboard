@@ -149,7 +149,9 @@
       <div class="property-row" [formGroup]="gatewaySettingsGroup">
         <ng-container *ngFor="let propertyName of gatewayRawSettings">
           <div class="property-name">
-            <span>{{ propertyName | titlecase }}</span>
+            <div tb-hint-tooltip-icon="{{ 'admin.version-setting-hint' | translate }}">
+              <span>{{ propertyName | titlecase }}</span>
+            </div>
           </div>
           <div class="property-value">
             <ng-container *ngIf="propertyName === 'version'
