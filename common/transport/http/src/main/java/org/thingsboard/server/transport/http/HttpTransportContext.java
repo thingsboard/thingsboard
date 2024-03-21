@@ -20,17 +20,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.ProtocolHandler;
 import org.apache.coyote.http11.Http11NioProtocol;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.web.embedded.tomcat.TomcatConnectorCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportContext;
 
+import java.net.InetSocketAddress;
+
 /**
  * Created by ashvayka on 04.10.18.
  */
 @Slf4j
-@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.http.enabled}'=='true')")
+@TbHttpTransportComponent
 @Component
 public class HttpTransportContext extends TransportContext {
 
@@ -51,5 +52,17 @@ public class HttpTransportContext extends TransportContext {
                 connector.setAsyncTimeout(maxRequestTimeout);
             }
         };
+    }
+
+    public boolean checkAddress(InetSocketAddress address) {
+        return rateLimitService.checkAddress(address);
+    }
+
+    public void onAuthSuccess(InetSocketAddress address) {
+        rateLimitService.onAuthSuccess(address);
+    }
+
+    public void onAuthFailure(InetSocketAddress address) {
+        rateLimitService.onAuthFailure(address);
     }
 }
