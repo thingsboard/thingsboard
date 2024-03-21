@@ -117,7 +117,7 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
         log.trace("Executing findCustomerByTenantIdAndTitle [{}] [{}]", tenantId, title);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         return Optional.ofNullable(cache.getAndPutInTransaction(new CustomerCacheKey(tenantId, title),
-                () -> customerDao.findCustomersByTenantIdAndTitle(tenantId.getId(), title)
+                () -> customerDao.findCustomerByTenantIdAndTitle(tenantId.getId(), title)
                         .orElse(null), true));
     }
 

@@ -30,7 +30,6 @@ import org.thingsboard.server.dao.model.sql.CustomerEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -63,7 +62,7 @@ public class JpaCustomerDao extends JpaAbstractDao<CustomerEntity, Customer> imp
     }
 
     @Override
-    public Optional<Customer> findCustomersByTenantIdAndTitle(UUID tenantId, String title) {
+    public Optional<Customer> findCustomerByTenantIdAndTitle(UUID tenantId, String title) {
         return Optional.ofNullable(DaoUtil.getData(customerRepository.findByTenantIdAndTitle(tenantId, title)));
     }
 
@@ -84,7 +83,7 @@ public class JpaCustomerDao extends JpaAbstractDao<CustomerEntity, Customer> imp
 
     @Override
     public Customer findByTenantIdAndName(UUID tenantId, String name) {
-        return findCustomersByTenantIdAndTitle(tenantId, name).orElse(null);
+        return findCustomerByTenantIdAndTitle(tenantId, name).orElse(null);
     }
 
     @Override
