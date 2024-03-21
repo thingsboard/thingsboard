@@ -81,8 +81,7 @@ public class TenantMsgConstructorV1 implements TenantMsgConstructor {
     public TenantProfileUpdateMsg constructTenantProfileUpdateMsg(UpdateMsgType msgType, TenantProfile tenantProfile, EdgeVersion edgeVersion) {
         tenantProfile = JacksonUtil.clone(tenantProfile);
         // clear all config
-        DefaultTenantProfileConfiguration configuration =
-                (DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration();
+        var configuration = tenantProfile.getDefaultProfileConfiguration();
         configuration.setRpcTtlDays(0);
         configuration.setMaxJSExecutions(0);
         configuration.setMaxREExecutions(0);
