@@ -231,4 +231,9 @@ gridster.fit {
 .version-control-button {
   background-color: #000e4a !important;
 }
+
+/* Custom */
+.plotly-notifier {
+  display: none;
+}
 /*# sourceMappingURL=app.css.map */

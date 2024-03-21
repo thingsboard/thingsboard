@@ -187,7 +187,7 @@ ui:
   # Dashboard parameters
   dashboard:
     # Maximum allowed datapoints fetched by widgets
-    max_datapoints_limit: "${DASHBOARD_MAX_DATAPOINTS_LIMIT:50000}"
+    max_datapoints_limit: "${DASHBOARD_MAX_DATAPOINTS_LIMIT:1000000}"
   # Help parameters
   help:
     # Base URL for UI help assets
