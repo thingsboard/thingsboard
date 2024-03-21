@@ -173,7 +173,7 @@ public class DefaultTbAlarmServiceTest {
         User user = new User();
         user.setEmail("testEmail@gmail.com");
         user.setId(new UserId(UUID.randomUUID()));
-        service.unassignDeletedUserAlarms(new TenantId(UUID.randomUUID()), user, System.currentTimeMillis());
+        service.unassignDeletedUserAlarms(new TenantId(UUID.randomUUID()), user.getId(), user.getTitle(), System.currentTimeMillis());
 
         ObjectNode commentNode = JacksonUtil.newObjectNode();
         commentNode.put("subtype", "ASSIGN");

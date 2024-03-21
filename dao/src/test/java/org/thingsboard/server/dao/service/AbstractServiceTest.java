@@ -42,6 +42,8 @@ import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTra
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.event.RuleNodeDebugEvent;
+import org.thingsboard.server.common.data.housekeeper.EntitiesDeletionHousekeeperTask;
+import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
@@ -51,6 +53,9 @@ import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.dao.audit.AuditLogLevelFilter;
 import org.thingsboard.server.dao.audit.AuditLogLevelMask;
 import org.thingsboard.server.dao.audit.AuditLogLevelProperties;
+import org.thingsboard.server.dao.entity.EntityDaoService;
+import org.thingsboard.server.dao.entity.EntityServiceRegistry;
+import org.thingsboard.server.common.msg.housekeeper.HousekeeperClient;
 import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.io.IOException;
@@ -76,6 +81,9 @@ public abstract class AbstractServiceTest {
 
     @Autowired
     protected TenantService tenantService;
+
+    @Autowired
+    protected EntityServiceRegistry entityServiceRegistry;
 
     protected TenantId tenantId;
 
@@ -124,6 +132,16 @@ public abstract class AbstractServiceTest {
         var props = new AuditLogLevelProperties();
         props.setMask(mask);
         return new AuditLogLevelFilter(props);
+    }
+
+    @Bean
+    public HousekeeperClient housekeeperClient() {
+        return task -> {
+            if (task.getTaskType() == HousekeeperTaskType.DELETE_ENTITIES) {
+                EntityDaoService entityService = entityServiceRegistry.getServiceByEntityType(((EntitiesDeletionHousekeeperTask) task).getEntityType());
+                entityService.deleteByTenantId(task.getTenantId());
+            }
+        };
     }
 
     protected DeviceProfile createDeviceProfile(TenantId tenantId, String name) {

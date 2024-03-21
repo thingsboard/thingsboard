@@ -147,9 +147,6 @@ public class DefaultExportableEntitiesService implements ExportableEntitiesServi
     public <I extends EntityId> void removeById(TenantId tenantId, I id) {
         EntityType entityType = id.getEntityType();
         EntityDaoService entityService = entityServiceRegistry.getServiceByEntityType(entityType);
-        if (entityService == null) {
-            throw new IllegalArgumentException("Unsupported entity type " + entityType);
-        }
         entityService.deleteEntity(tenantId, id);
     }
 

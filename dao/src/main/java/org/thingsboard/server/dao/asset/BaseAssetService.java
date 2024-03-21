@@ -205,14 +205,11 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
         }
 
         Asset asset = assetDao.findById(tenantId, assetId.getId());
-        alarmService.deleteEntityAlarmRelations(tenantId, assetId);
         deleteAsset(tenantId, asset);
     }
 
     private void deleteAsset(TenantId tenantId, Asset asset) {
         log.trace("Executing deleteAsset [{}]", asset.getId());
-        relationService.deleteEntityRelations(tenantId, asset.getId());
-
         assetDao.removeById(tenantId, asset.getUuidId());
 
         publishEvictEvent(new AssetCacheEvictEvent(asset.getTenantId(), asset.getName(), null));
@@ -276,6 +273,11 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
         log.trace("Executing deleteAssetsByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         tenantAssetsRemover.removeEntities(tenantId, tenantId);
+    }
+
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteAssetsByTenantId(tenantId);
     }
 
     @Override

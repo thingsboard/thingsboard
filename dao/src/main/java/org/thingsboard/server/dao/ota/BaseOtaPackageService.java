@@ -230,6 +230,11 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
         tenantOtaPackageRemover.removeEntities(tenantId, tenantId);
     }
 
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteOtaPackagesByTenantId(tenantId);
+    }
+
     private PaginatedRemover<TenantId, OtaPackageInfo> tenantOtaPackageRemover =
             new PaginatedRemover<>() {
 

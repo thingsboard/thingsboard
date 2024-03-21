@@ -262,7 +262,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         validateId(userId, INCORRECT_USER_ID + userId);
         userCredentialsDao.removeByUserId(tenantId, userId);
         userAuthSettingsDao.removeByUserId(userId);
-        deleteEntityRelations(tenantId, userId);
+        userSettingsDao.removeByUserId(tenantId, userId);
 
         userDao.removeById(tenantId, userId.getId());
         eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(userId));
@@ -319,6 +319,12 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         log.trace("Executing deleteTenantAdmins, tenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         tenantAdminsRemover.removeEntities(tenantId, tenantId);
+    }
+
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        log.trace("Executing deleteByTenantId, tenantId [{}]", tenantId);
+        usersRemover.removeEntities(tenantId, tenantId);
     }
 
     @Override
@@ -505,6 +511,18 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         @Override
         protected void removeEntity(TenantId tenantId, User entity) {
             deleteUser(tenantId, entity);
+        }
+    };
+
+    private final PaginatedRemover<TenantId, User> usersRemover = new PaginatedRemover<>() {
+        @Override
+        protected PageData<User> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+            return findUsersByTenantId(tenantId, pageLink);
+        }
+
+        @Override
+        protected void removeEntity(TenantId tenantId, User user) {
+            deleteUser(tenantId, user);
         }
     };
 

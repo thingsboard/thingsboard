@@ -41,7 +41,7 @@ public interface TbAlarmService {
 
     AlarmInfo unassign(Alarm alarm, long unassignTs, User user) throws ThingsboardException;
 
-    List<AlarmId> unassignDeletedUserAlarms(TenantId tenantId, User user, long unassignTs);
+    List<AlarmId> unassignDeletedUserAlarms(TenantId tenantId, UserId userId, String userTitle, long unassignTs);
 
     Boolean delete(Alarm alarm, User user);
 }

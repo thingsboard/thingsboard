@@ -176,16 +176,16 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public List<AlarmId> unassignDeletedUserAlarms(TenantId tenantId, User user, long unassignTs) {
+    public List<AlarmId> unassignDeletedUserAlarms(TenantId tenantId, UserId userId, String userTitle, long unassignTs) {
         List<AlarmId> totalAlarmIds = new ArrayList<>();
         PageLink pageLink = new PageLink(100, 0, null, new SortOrder("id", SortOrder.Direction.ASC));
         while (true) {
-            PageData<AlarmId> pageData = alarmService.findAlarmIdsByAssigneeId(user.getTenantId(), user.getId(), pageLink);
+            PageData<AlarmId> pageData = alarmService.findAlarmIdsByAssigneeId(tenantId, userId, pageLink);
             List<AlarmId> alarmIds = pageData.getData();
             if (alarmIds.isEmpty()) {
                 break;
             }
-            processAlarmsUnassignment(tenantId, user, alarmIds, unassignTs);
+            processAlarmsUnassignment(tenantId, userId, userTitle, alarmIds, unassignTs);
             totalAlarmIds.addAll(alarmIds);
             pageLink = pageLink.nextPageLink();
         }
@@ -204,16 +204,16 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         return ts > 0 ? ts : System.currentTimeMillis();
     }
 
-    private void processAlarmsUnassignment(TenantId tenantId, User user, List<AlarmId> alarmIds, long unassignTs) {
+    private void processAlarmsUnassignment(TenantId tenantId, UserId userId, String userTitle, List<AlarmId> alarmIds, long unassignTs) {
         for (AlarmId alarmId : alarmIds) {
-            log.trace("[{}] Unassigning alarm {} userId {}", tenantId, alarmId, user.getId());
-            AlarmApiCallResult result = alarmSubscriptionService.unassignAlarm(user.getTenantId(), alarmId, unassignTs);
+            log.trace("[{}] Unassigning alarm {} userId {}", tenantId, alarmId, userId);
+            AlarmApiCallResult result = alarmSubscriptionService.unassignAlarm(tenantId, alarmId, unassignTs);
             if (!result.isSuccessful()) {
-                log.error("[{}] Cannot unassign alarm {} userId {}", tenantId, alarmId, user.getId());
+                log.error("[{}] Cannot unassign alarm {} userId {}", tenantId, alarmId, userId);
                 continue;
             }
             if (result.isModified()) {
-                String comment = String.format("Alarm was unassigned because user %s - was deleted", user.getTitle());
+                String comment = String.format("Alarm was unassigned because user %s - was deleted", userTitle);
                 addSystemAlarmComment(result.getAlarm(), null, "ASSIGN", comment);
                 logEntityActionService.logEntityAction(result.getAlarm().getTenantId(), result.getAlarm().getOriginator(), result.getAlarm(), result.getAlarm().getCustomerId(), ActionType.ALARM_UNASSIGNED, null);
             }

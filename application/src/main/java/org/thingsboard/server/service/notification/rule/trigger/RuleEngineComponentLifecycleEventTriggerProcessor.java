@@ -47,7 +47,7 @@ public class RuleEngineComponentLifecycleEventTriggerProcessor implements Notifi
                 return false;
             }
         }
-        if (!partitionService.resolve(ServiceType.TB_RULE_ENGINE, trigger.getTenantId(), trigger.getComponentId()).isMyPartition()) {
+        if (!partitionService.isMyPartition(ServiceType.TB_RULE_ENGINE, trigger.getTenantId(), trigger.getComponentId())) {
             return false;
         }
 

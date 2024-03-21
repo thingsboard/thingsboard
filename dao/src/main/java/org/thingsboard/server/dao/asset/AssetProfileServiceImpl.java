@@ -190,7 +190,6 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
     private void removeAssetProfile(TenantId tenantId, AssetProfile assetProfile) {
         AssetProfileId assetProfileId = assetProfile.getId();
         try {
-            deleteEntityRelations(tenantId, assetProfileId);
             assetProfileDao.removeById(tenantId, assetProfileId.getId());
             publishEvictEvent(new AssetProfileEvictEvent(assetProfile.getTenantId(), assetProfile.getName(),
                     null, assetProfile.getId(), assetProfile.isDefault()));
@@ -301,6 +300,11 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
         log.trace("Executing deleteAssetProfilesByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         tenantAssetProfilesRemover.removeEntities(tenantId, tenantId);
+    }
+
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteAssetProfilesByTenantId(tenantId);
     }
 
     @Override

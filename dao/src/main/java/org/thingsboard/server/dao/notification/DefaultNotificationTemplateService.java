@@ -70,6 +70,11 @@ public class DefaultNotificationTemplateService extends AbstractEntityService im
     }
 
     @Override
+    public int countNotificationTemplatesByTenantIdAndNotificationTypes(TenantId tenantId, List<NotificationType> notificationTypes) {
+        return notificationTemplateDao.countByTenantIdAndNotificationTypes(tenantId, notificationTypes);
+    }
+
+    @Override
     public void deleteNotificationTemplateById(TenantId tenantId, NotificationTemplateId id) {
         if (notificationRequestDao.existsByTenantIdAndStatusAndTemplateId(tenantId, NotificationRequestStatus.SCHEDULED, id)) {
             throw new IllegalArgumentException("Notification template is referenced by scheduled notification request");
@@ -87,6 +92,11 @@ public class DefaultNotificationTemplateService extends AbstractEntityService im
     @Override
     public void deleteNotificationTemplatesByTenantId(TenantId tenantId) {
         notificationTemplateDao.removeByTenantId(tenantId);
+    }
+
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteNotificationTemplatesByTenantId(tenantId);
     }
 
     @Override

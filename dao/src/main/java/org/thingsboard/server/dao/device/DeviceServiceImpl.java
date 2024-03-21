@@ -327,15 +327,12 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         }
 
         Device device = deviceDao.findById(tenantId, deviceId.getId());
-        alarmService.deleteEntityAlarmRelations(tenantId, deviceId);
         deleteDevice(tenantId, device);
     }
 
     private void deleteDevice(TenantId tenantId, Device device) {
         log.trace("Executing deleteDevice [{}]", device.getId());
         deviceCredentialsService.deleteDeviceCredentialsByDeviceId(tenantId, device.getId());
-        relationService.deleteEntityRelations(tenantId, device.getId());
-
         deviceDao.removeById(tenantId, device.getUuidId());
 
         DeviceCacheEvictEvent deviceCacheEvictEvent = new DeviceCacheEvictEvent(device.getTenantId(), device.getId(), device.getName(), null);
@@ -430,6 +427,12 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         log.trace("Executing deleteDevicesByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         tenantDevicesRemover.removeEntities(tenantId, tenantId);
+    }
+
+    @Transactional
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteDevicesByTenantId(tenantId);
     }
 
     @Override

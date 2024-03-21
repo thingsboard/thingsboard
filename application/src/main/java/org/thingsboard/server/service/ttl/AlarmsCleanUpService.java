@@ -56,7 +56,6 @@ public class AlarmsCleanUpService {
     private final TenantService tenantService;
     private final AlarmDao alarmDao;
     private final AlarmService alarmService;
-    private final RelationService relationService;
     private final EntityActionService entityActionService;
     private final PartitionService partitionService;
     private final TbTenantProfileCache tenantProfileCache;

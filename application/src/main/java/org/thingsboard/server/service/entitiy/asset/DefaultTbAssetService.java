@@ -75,7 +75,6 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
         TenantId tenantId = asset.getTenantId();
         AssetId assetId = asset.getId();
         try {
-            removeAlarmsByEntityId(tenantId, assetId);
             assetService.deleteAsset(tenantId, assetId);
             logEntityActionService.logEntityAction(tenantId, assetId, asset, asset.getCustomerId(), actionType, user, assetId.toString());
         } catch (Exception e) {

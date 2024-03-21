@@ -19,12 +19,16 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.StringUtils;
 
-import jakarta.annotation.PostConstruct;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -62,10 +66,24 @@ public class DefaultStatsFactory implements StatsFactory {
 
     @Override
     public StatsCounter createStatsCounter(String key, String statsName) {
+        return createStatsCounter(key, statsName, Collections.emptyMap());
+    }
+
+    @Override
+    public StatsCounter createStatsCounter(String key, String statsName, Map<String, String> tags) {
+        String[] tagsArr = new String[]{STATS_NAME_TAG, statsName};
+        if (!tags.isEmpty()) {
+            List<String> tagsList = new ArrayList<>(List.of(tagsArr));
+            tags.forEach((name, value) -> {
+                tagsList.add(name);
+                tagsList.add(value);
+            });
+            tagsArr = tagsList.toArray(String[]::new);
+        }
         return new StatsCounter(
                 new AtomicInteger(0),
                 metricsEnabled ?
-                        meterRegistry.counter(key, STATS_NAME_TAG, statsName)
+                        meterRegistry.counter(key, tagsArr)
                         : STUB_COUNTER,
                 statsName
         );
