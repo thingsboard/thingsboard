@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.coap.rpc;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.CoapDeviceType;
 import org.thingsboard.server.common.data.TransportPayloadType;
@@ -44,11 +45,13 @@ public class CoapServerSideRpcProtoIntegrationTest extends AbstractCoapServerSid
         processAfterTest();
     }
 
+    @Ignore // Uncomment when Californium 3.11 is released with https://github.com/eclipse-californium/californium/pull/2215
     @Test
     public void testServerCoapOneWayRpc() throws Exception {
         processOneWayRpcTest(true);
     }
 
+    @Ignore // Uncomment when Californium 3.11 is released with https://github.com/eclipse-californium/californium/pull/2215
     @Test
     public void testServerCoapTwoWayRpc() throws Exception {
         processTwoWayRpcTest("{\"payload\":\"{\\\"value1\\\":\\\"A\\\",\\\"value2\\\":\\\"B\\\"}\"}", true);

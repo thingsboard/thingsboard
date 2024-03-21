@@ -94,7 +94,7 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
         try {
             savedTenantProfile = tenantProfileDao.save(tenantId, tenantProfile);
             publishEvictEvent(new TenantProfileEvictEvent(savedTenantProfile.getId(), savedTenantProfile.isDefault()));
-            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId)
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entity(savedTenantProfile)
                     .entityId(savedTenantProfile.getId()).created(tenantProfile.getId() == null).build());
         } catch (Exception t) {
             handleEvictEvent(new TenantProfileEvictEvent(null, tenantProfile.isDefault()));
@@ -116,10 +116,11 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
         if (tenantProfile != null && tenantProfile.isDefault()) {
             throw new DataValidationException("Deletion of Default Tenant Profile is prohibited!");
         }
-        this.removeTenantProfile(tenantId, tenantProfileId, false);
+        this.removeTenantProfile(tenantId, tenantProfile, false);
     }
 
-    private void removeTenantProfile(TenantId tenantId, TenantProfileId tenantProfileId, boolean isDefault) {
+    private void removeTenantProfile(TenantId tenantId, TenantProfile tenantProfile, boolean isDefault) {
+        TenantProfileId tenantProfileId = tenantProfile.getId();
         try {
             tenantProfileDao.removeById(tenantId, tenantProfileId.getId());
         } catch (Exception t) {
@@ -132,7 +133,7 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
         }
         deleteEntityRelations(tenantId, tenantProfileId);
         publishEvictEvent(new TenantProfileEvictEvent(tenantProfileId, isDefault));
-        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(tenantProfileId).build());
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entity(tenantProfile).entityId(tenantProfileId).build());
     }
 
     @Override
@@ -239,7 +240,7 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
 
                 @Override
                 protected void removeEntity(TenantId tenantId, TenantProfile entity) {
-                    removeTenantProfile(tenantId, entity.getId(), entity.isDefault());
+                    removeTenantProfile(tenantId, entity, entity.isDefault());
                 }
             };
 

@@ -415,9 +415,6 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
             var clientProfile = getProfile(client.getProfileId());
             profileSettings = clientProfile.getClientLwM2mSettings();
             powerMode = profileSettings.getPowerMode();
-            if (powerMode == null) {
-                powerMode = PowerMode.DRX;
-            }
         }
         if (powerMode == null || PowerMode.DRX.equals(powerMode) || otaUpdateService.isOtaDownloading(client)) {
             return true;
@@ -464,9 +461,6 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
             var clientProfile = getProfile(client.getProfileId());
             profileSettings = clientProfile.getClientLwM2mSettings();
             powerMode = profileSettings.getPowerMode();
-            if (powerMode == null) {
-                powerMode = PowerMode.DRX;
-            }
         }
         if (powerMode == null || PowerMode.DRX.equals(powerMode)) {
             client.updateLastUplinkTime();

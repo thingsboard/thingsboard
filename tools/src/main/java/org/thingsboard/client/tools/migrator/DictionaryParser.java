@@ -40,7 +40,7 @@ public class DictionaryParser {
     }
 
     private boolean isBlockStarted(String line) {
-        return line.startsWith("COPY public.ts_kv_dictionary (");
+        return line.startsWith("COPY public.key_dictionary (");
     }
 
     private void parseDictionaryDump(LineIterator iterator) throws IOException {

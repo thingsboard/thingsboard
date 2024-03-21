@@ -58,16 +58,24 @@ public class LwM2MConfigurationChecker extends ConfigurationChecker {
         for (Map.Entry<Integer, BootstrapConfig.ServerConfig> e : config.servers.entrySet()) {
             BootstrapConfig.ServerConfig srvCfg = e.getValue();
 
-            // shortId checks
-            if (srvCfg.shortId == 0) {
-                throw new InvalidConfigurationException("short ID must not be 0");
-            }
-
             // look for security entry
             BootstrapConfig.ServerSecurity security = getSecurityEntry(config, srvCfg.shortId);
-
             if (security == null) {
                 throw new InvalidConfigurationException("no security entry for server instance: " + e.getKey());
+            }
+            // BS Server
+            if (security.bootstrapServer && srvCfg.shortId != 0) {
+                throw new InvalidConfigurationException("short ID must be 0");
+            }
+
+            // LwM2M Server
+            /**
+             * This identifier uniquely identifies each LwM2M Server configured for the LwM2M Client.
+             * This Resource MUST be set when the Bootstrap-Server Resource has false value.
+             * Specific ID:0 and ID:65535 values MUST NOT be used for identifying the LwM2M Server (Section 6.3 of the LwM2M version 1.0 specification).
+             */
+            if (!security.bootstrapServer && (srvCfg.shortId < 1 && srvCfg.shortId > 65534 )) {
+                throw new InvalidConfigurationException("Specific ID:0 and ID:65535 values MUST NOT be used for identifying the LwM2M Server");
             }
         }
     }

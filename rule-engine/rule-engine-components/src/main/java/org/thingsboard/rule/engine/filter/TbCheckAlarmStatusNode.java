@@ -31,7 +31,7 @@ import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 @Slf4j
 @RuleNode(

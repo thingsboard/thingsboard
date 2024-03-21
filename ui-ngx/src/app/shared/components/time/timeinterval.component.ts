@@ -97,8 +97,11 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
 
   private modelValue: Interval;
   private rendered = false;
+  private propagateChangeValue: any;
 
-  private propagateChange: (value: any) => void = () => {};
+  private propagateChange = (value: any) => {
+    this.propagateChangeValue = value;
+  };
 
   constructor(private timeService: TimeService) {
   }
@@ -109,8 +112,8 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
 
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
-    if (isDefined(this.modelValue) && this.rendered) {
-      this.propagateChange(this.modelValue);
+    if (isDefined(this.propagateChangeValue)) {
+      this.propagateChange(this.propagateChangeValue);
     }
   }
 

@@ -70,7 +70,7 @@ A LwM2M Server MUST support block-wise transfer. Other protocols, such as HTTP/H
 		<ObjectID>5</ObjectID>
 		<ObjectURN>urn:oma:lwm2m:oma:5</ObjectURN>
 		<LWM2MVersion>1.0</LWM2MVersion>
-		<ObjectVersion>1.0</ObjectVersion>
+		<ObjectVersion>1.2</ObjectVersion>
 		<MultipleInstances>Single</MultipleInstances>
 		<Mandatory>Optional</Mandatory>
 		<Resources>

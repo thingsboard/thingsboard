@@ -17,8 +17,6 @@ package org.thingsboard.server.common.data.util;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.LwM2m;
-import org.eclipse.leshan.core.model.DDFFileValidator;
-import org.eclipse.leshan.core.model.DefaultDDFFileValidator;
 import org.eclipse.leshan.core.model.InvalidDDFFileException;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
@@ -41,7 +39,7 @@ import java.util.Map;
 
 @Slf4j
 public class TbDDFFileParser {
-    private static final DDFFileValidator ddfFileValidator = new DefaultDDFFileValidator();
+    private static final TbDefaultDDFFileValidator ddfFileValidator = new TbDefaultDDFFileValidator();
 
     public List<ObjectModel> parse(InputStream inputStream, String streamName)
             throws InvalidDDFFileException, IOException {

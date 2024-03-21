@@ -18,8 +18,8 @@ package org.thingsboard.server.dao.sql;
 import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 
 @SqlDao
 public abstract class JpaPartitionedAbstractDao<E extends BaseEntity<D>, D> extends JpaAbstractDao<E, D> {

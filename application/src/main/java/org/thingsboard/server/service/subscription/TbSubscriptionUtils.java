@@ -231,7 +231,6 @@ public class TbSubscriptionUtils {
         return ToCoreMsg.newBuilder().setToSubscriptionMgrMsg(msgBuilder.build()).build();
     }
 
-
     private static TsKvProto.Builder toKeyValueProto(long ts, KvEntry attr) {
         KeyValueProto.Builder dataBuilder = KeyValueProto.newBuilder();
         dataBuilder.setKey(attr.getKey());

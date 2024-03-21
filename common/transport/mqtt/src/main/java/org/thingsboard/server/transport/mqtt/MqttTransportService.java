@@ -31,8 +31,8 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.TbTransportService;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.net.InetSocketAddress;
 
 /**

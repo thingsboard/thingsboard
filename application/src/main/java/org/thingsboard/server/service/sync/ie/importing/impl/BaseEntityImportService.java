@@ -50,7 +50,7 @@ import org.thingsboard.server.common.data.sync.ie.EntityImportResult;
 import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.service.action.EntityActionService;
-import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
+import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
 import org.thingsboard.server.service.sync.ie.exporting.ExportableEntitiesService;
 import org.thingsboard.server.service.sync.ie.importing.EntityImportService;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
@@ -85,7 +85,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
     @Autowired
     protected TbClusterService clusterService;
     @Autowired
-    protected TbNotificationEntityService entityNotificationService;
+    protected TbLogEntityActionService logEntityActionService;
 
     @Override
     public EntityImportResult<E> importEntity(EntitiesImportCtx ctx, D exportData) throws ThingsboardException {
@@ -212,7 +212,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                         importResult.setUpdatedRelatedEntities(true);
                         relationService.deleteRelation(ctx.getTenantId(), existingRelation.getFrom(), existingRelation.getTo(), existingRelation.getType(), existingRelation.getTypeGroup());
                         importResult.addSendEventsCallback(() -> {
-                            entityNotificationService.logEntityRelationAction(tenantId, null,
+                            logEntityActionService.logEntityRelationAction(tenantId, null,
                                     existingRelation, ctx.getUser(), ActionType.RELATION_DELETED, null, existingRelation);
                         });
                     } else if (Objects.equal(relation.getAdditionalInfo(), existingRelation.getAdditionalInfo())) {
@@ -267,7 +267,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
     }
 
     protected void onEntitySaved(User user, E savedEntity, E oldEntity) throws ThingsboardException {
-        entityNotificationService.logEntityAction(user.getTenantId(), savedEntity.getId(), savedEntity, null,
+        logEntityActionService.logEntityAction(user.getTenantId(), savedEntity.getId(), savedEntity, null,
                 oldEntity == null ? ActionType.ADDED : ActionType.UPDATED, user);
     }
 

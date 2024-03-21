@@ -218,15 +218,15 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
         Mockito.reset(tbClusterService, auditLogService);
     }
 
-    protected void testNotifyEntityBroadcastEntityStateChangeEventOneTimeMsgToEdgeServiceNever(HasName entity, EntityId entityId, EntityId originatorId,
-                                                                                               TenantId tenantId, CustomerId customerId, UserId userId, String userName,
-                                                                                               ActionType actionType, Object... additionalInfo) {
+    protected void testNotifyEntityBroadcastEntityStateChangeEventManyTimeMsgToEdgeServiceNever(HasName entity, EntityId entityId, EntityId originatorId,
+                                                                                                TenantId tenantId, CustomerId customerId, UserId userId, String userName,
+                                                                                                ActionType actionType, int cntTimeBroadcast, Object... additionalInfo) {
         int cntTime = 1;
         testNotificationMsgToEdgeServiceNeverWithActionType(entityId, actionType);
         testLogEntityAction(entity, originatorId, tenantId, customerId, userId, userName, actionType, cntTime, additionalInfo);
         ArgumentMatcher<EntityId> matcherOriginatorId = argument -> argument.equals(originatorId);
         testPushMsgToRuleEngineTime(matcherOriginatorId, tenantId, entity, cntTime);
-        testBroadcastEntityStateChangeEventTime(entityId, tenantId, cntTime);
+        testBroadcastEntityStateChangeEventTime(entityId, tenantId, cntTimeBroadcast);
         Mockito.reset(tbClusterService, auditLogService);
     }
 
@@ -248,7 +248,7 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
         testLogEntityActionAdditionalInfoAny(matcherEntityClassEquals, matcherOriginatorId, tenantId, matcherCustomerId, matcherUserId, userName, actionType, cntTime,
                 cntAdditionalInfo);
         testPushMsgToRuleEngineTime(matcherOriginatorId, tenantId, entity, cntTimeRuleEngine);
-        testBroadcastEntityStateChangeEventTime(entityId, tenantId, cntTime);
+        testBroadcastEntityStateChangeEventTime(entityId, tenantId, cntTime * 2);
     }
 
     protected void testNotifyEntityMsgToEdgePushMsgToCoreOneTime(HasName entity, EntityId entityId, EntityId originatorId,
