@@ -102,7 +102,8 @@
             "gateway-settings": "Gateway settings",
             "property": "Property",
             "value": "Value",
-            "version": "Version"
+            "version": "Version",
+            "version-hint": "This parameter sets the version of the gateway docker image in a compose file created through the ThingsBoard IoT Gateways dashboard."
         },
         "home-settings": "Home Settings",
         "home": "Home",
