@@ -17,7 +17,7 @@ package org.thingsboard.server.common.data.query;
 
 import lombok.Data;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 @Data
 public class StringFilterPredicate implements SimpleKeyFilterPredicate<String> {

@@ -94,6 +94,17 @@ redis:
   db: "${REDIS_DB:0}"
   # db password
   password: "${REDIS_PASSWORD:}"
+  ssl:
+    # Enable/disable secure connection
+    enabled: "${TB_REDIS_SSL_ENABLED:false}"
+    # Server SSL credentials (only PEM format is supported)
+    credentials:
+      # Path redis server (CA) certificate
+      cert_file: "${TB_REDIS_SSL_PEM_CERT:}"
+      # Path to user certificate file. This is optional for the client and can be used for two-way authentication for the client
+      user_cert_file: "${TB_REDIS_SSL_PEM_KEY:}"
+      # Path to user private key file. This is optional for the client and only needed if ‘user_cert_file’ is configured.
+      user_key_file: "${TB_REDIS_SSL_PEM_KEY_PASSWORD:}"
   # pool config
   pool_config:
     # Maximum number of connections that can be allocated by the connection pool
@@ -155,8 +166,16 @@ transport:
     dtls:
       # RFC7925_RETRANSMISSION_TIMEOUT_IN_MILLISECONDS = 9000
       retransmission_timeout: "${LWM2M_DTLS_RETRANSMISSION_TIMEOUT_MS:9000}"
-      # "" disables connection id support, 0 enables support but not for incoming traffic, any value greater than 0 set the connection id size in bytes
-      connection_id_length: "${LWM2M_DTLS_CONNECTION_ID_LENGTH:6}"
+      # CoAP DTLS connection ID length for LWM2M. RFC 9146, Connection Identifier for DTLS 1.2
+      # Default: off
+      # Control usage of DTLS connection ID length (CID).
+      # - 'off' to deactivate it.
+      # - 'on' to activate Connection ID support (same as CID 0 or more 0).
+      # - A positive value defines generated CID size in bytes.
+      # - A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic).
+      # - A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used
+      # - A value that are > 4: MultiNodeConnectionIdGenerator is used
+      connection_id_length: "${LWM2M_DTLS_CONNECTION_ID_LENGTH:}"
     server:
       # LwM2M Server ID
       id: "${LWM2M_SERVER_ID:123}"

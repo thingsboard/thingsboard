@@ -15,13 +15,15 @@
     limitations under the License.
 
 -->
-<div class="tb-form-panel">
+<div class="tb-form-panel tb-data-keys-panel">
   <div class="tb-form-panel-title">{{ panelTitle }}</div>
   <div class="tb-form-table">
     <div class="tb-form-table-header no-padding-right">
       <div *ngIf="hasAdditionalLatestDataKeys" class="tb-form-table-header-cell tb-source-header" translate>datakey.source</div>
       <div class="tb-form-table-header-cell tb-key-header" translate>datakey.key</div>
       <div class="tb-form-table-header-cell tb-label-header" translate>datakey.label</div>
+      <div *ngIf="timeSeriesChart && showTimeSeriesType" class="tb-form-table-header-cell tb-time-series-type-header" translate>widgets.time-series-chart.series.type</div>
+      <div *ngIf="timeSeriesChart" class="tb-form-table-header-cell tb-y-axis-header" translate>widgets.time-series-chart.axis.y-axis</div>
       <div *ngIf="!hideDataKeyColor" class="tb-form-table-header-cell tb-color-header" translate>datakey.color</div>
       <div *ngIf="!hideUnits" class="tb-form-table-header-cell tb-units-header" translate>widget-config.units-short</div>
       <div *ngIf="!hideDecimals" class="tb-form-table-header-cell tb-decimals-header" translate>widget-config.decimals-short</div>
@@ -43,6 +45,9 @@
                          [hasAdditionalLatestDataKeys]="hasAdditionalLatestDataKeys"
                          [hideDataKeyColor]="hideDataKeyColor"
                          [hideDecimals]="hideDecimals"
+                         [timeSeriesChart]="timeSeriesChart"
+                         [showTimeSeriesType]="showTimeSeriesType"
+                         [yAxisIds]="yAxisIds"
                          [hideUnits]="hideUnits"
                          [hideDataKeyDecimals]="hideDataKeyDecimals"
                          [hideDataKeyUnits]="hideDataKeyUnits"

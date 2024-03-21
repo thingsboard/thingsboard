@@ -15,8 +15,8 @@
  */
 package org.thingsboard.server.controller;
 
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChainType;
+import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.HashSet;
@@ -54,7 +55,7 @@ public class ComponentDescriptorController extends BaseController {
     @RequestMapping(value = "/component/{componentDescriptorClazz:.+}", method = RequestMethod.GET)
     @ResponseBody
     public ComponentDescriptor getComponentDescriptorByClazz(
-            @ApiParam(value = "Component Descriptor class name", required = true)
+            @Parameter(description = "Component Descriptor class name", required = true)
             @PathVariable("componentDescriptorClazz") String strComponentDescriptorClazz) throws ThingsboardException {
         checkParameter("strComponentDescriptorClazz", strComponentDescriptorClazz);
         return checkComponentDescriptorByClazz(strComponentDescriptorClazz);
@@ -67,9 +68,9 @@ public class ComponentDescriptorController extends BaseController {
     @RequestMapping(value = "/components/{componentType}", method = RequestMethod.GET)
     @ResponseBody
     public List<ComponentDescriptor> getComponentDescriptorsByType(
-            @ApiParam(value = "Type of the Rule Node", allowableValues = "ENRICHMENT,FILTER,TRANSFORMATION,ACTION,EXTERNAL", required = true)
+            @Parameter(description = "Type of the Rule Node", schema = @Schema(allowableValues = "ENRICHMENT,FILTER,TRANSFORMATION,ACTION,EXTERNAL", required = true))
             @PathVariable("componentType") String strComponentType,
-            @ApiParam(value = "Type of the Rule Chain", allowableValues = "CORE,EDGE")
+            @Parameter(description = "Type of the Rule Chain", schema = @Schema(allowableValues = "CORE,EDGE"))
             @RequestParam(value = "ruleChainType", required = false) String strRuleChainType) throws ThingsboardException {
         checkParameter("componentType", strComponentType);
         return checkComponentDescriptorsByType(ComponentType.valueOf(strComponentType), getRuleChainType(strRuleChainType));
@@ -82,9 +83,9 @@ public class ComponentDescriptorController extends BaseController {
     @RequestMapping(value = "/components", params = {"componentTypes"}, method = RequestMethod.GET)
     @ResponseBody
     public List<ComponentDescriptor> getComponentDescriptorsByTypes(
-            @ApiParam(value = "List of types of the Rule Nodes, (ENRICHMENT, FILTER, TRANSFORMATION, ACTION or EXTERNAL)", required = true)
+            @Parameter(description = "List of types of the Rule Nodes, (ENRICHMENT, FILTER, TRANSFORMATION, ACTION or EXTERNAL)", required = true)
             @RequestParam("componentTypes") String[] strComponentTypes,
-            @ApiParam(value = "Type of the Rule Chain", allowableValues = "CORE,EDGE")
+            @Parameter(description = "Type of the Rule Chain", schema = @Schema(allowableValues = "CORE,EDGE"))
             @RequestParam(value = "ruleChainType", required = false) String strRuleChainType) throws ThingsboardException {
         checkArrayParameter("componentTypes", strComponentTypes);
         Set<ComponentType> componentTypes = new HashSet<>();

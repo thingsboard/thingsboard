@@ -43,7 +43,7 @@ export class ToggleSelectComponent extends _ToggleBase implements ControlValueAc
   disabled: boolean;
 
   @Input()
-  selectMediaBreakpoint;
+  selectMediaBreakpoint: string;
 
   @Input()
   appearance: ToggleHeaderAppearance = 'stroked';
