@@ -21,7 +21,6 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.TenantProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.TenantUpdateMsg;
@@ -81,6 +80,7 @@ public class TenantMsgConstructorV1 implements TenantMsgConstructor {
     public TenantProfileUpdateMsg constructTenantProfileUpdateMsg(UpdateMsgType msgType, TenantProfile tenantProfile, EdgeVersion edgeVersion) {
         tenantProfile = JacksonUtil.clone(tenantProfile);
         // clear all config
+        var tenantProfileData = tenantProfile.getProfileData();
         var configuration = tenantProfile.getDefaultProfileConfiguration();
         configuration.setRpcTtlDays(0);
         configuration.setMaxJSExecutions(0);
@@ -93,7 +93,8 @@ public class TenantMsgConstructorV1 implements TenantMsgConstructor {
         configuration.setMaxTransportDataPoints(0);
         configuration.setRuleEngineExceptionsTtlDays(0);
         configuration.setMaxRuleNodeExecutionsPerMessage(0);
-        tenantProfile.getProfileData().setConfiguration(configuration);
+        tenantProfileData.setConfiguration(configuration);
+        tenantProfile.setProfileData(tenantProfileData);
 
         ByteString profileData = EdgeVersionUtils.isEdgeVersionOlderThan(edgeVersion, EdgeVersion.V_3_6_2) ?
                 ByteString.empty() : ByteString.copyFrom(dataDecodingEncodingService.encode(tenantProfile.getProfileData()));
