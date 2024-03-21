@@ -35,8 +35,8 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.attributes.AttributesDao;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.dictionary.KeyDictionaryDao;
+import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.sql.AttributeKvCompositeKey;
 import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
@@ -209,10 +209,10 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     @Transactional
     @Override
     public List<Pair<AttributeScope, String>> removeAllByEntityId(TenantId tenantId, EntityId entityId) {
-        return jdbcTemplate.queryForList("DELETE FROM attribute_kv WHERE entity_type = ? and entity_id = ? " +
-                        "RETURNING attribute_type, attribute_key", entityId.getEntityType().name(), entityId.getId()).stream()
-                .map(row -> Pair.of(row.get(ModelConstants.ATTRIBUTE_TYPE_COLUMN),
-                        (String) row.get(ModelConstants.ATTRIBUTE_KEY_COLUMN)))
+        return jdbcTemplate.queryForList("DELETE FROM attribute_kv WHERE entity_id = ? " +
+                        "RETURNING attribute_type, attribute_key", entityId.getId()).stream()
+                .map(row -> Pair.of(AttributeScope.valueOf((Integer) row.get(ModelConstants.ATTRIBUTE_TYPE_COLUMN)),
+                        keyDictionaryDao.getKey((Integer) row.get(ModelConstants.ATTRIBUTE_KEY_COLUMN))))
                 .collect(Collectors.toList());
     }
 

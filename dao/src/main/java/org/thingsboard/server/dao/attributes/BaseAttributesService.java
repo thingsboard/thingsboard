@@ -164,7 +164,7 @@ public class BaseAttributesService implements AttributesService {
 
     @Override
     public int removeAllByEntityId(TenantId tenantId, EntityId entityId) {
-        List<Pair<String, String>> deleted = attributesDao.removeAllByEntityId(tenantId, entityId);
+        List<Pair<AttributeScope, String>> deleted = attributesDao.removeAllByEntityId(tenantId, entityId);
         return deleted.size();
     }
 

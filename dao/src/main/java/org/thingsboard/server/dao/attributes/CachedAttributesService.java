@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,7 +41,6 @@ import org.thingsboard.server.dao.cache.CacheExecutorService;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
 
-import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -308,11 +308,13 @@ public class CachedAttributesService implements AttributesService {
 
     @Override
     public int removeAllByEntityId(TenantId tenantId, EntityId entityId) {
-        List<Pair<String, String>> result = attributesDao.removeAllByEntityId(tenantId, entityId);
+        List<Pair<AttributeScope, String>> result = attributesDao.removeAllByEntityId(tenantId, entityId);
         result.forEach(deleted -> {
-            String scope = deleted.getKey();
+            AttributeScope scope = deleted.getKey();
             String key = deleted.getValue();
-            cache.evict(new AttributeCacheKey(scope, entityId, key));
+            if (scope != null && key != null) {
+                cache.evict(new AttributeCacheKey(scope, entityId, key));
+            }
         });
         return result.size();
     }
