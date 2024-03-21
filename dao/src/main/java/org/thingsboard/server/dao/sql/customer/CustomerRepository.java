@@ -39,7 +39,7 @@ public interface CustomerRepository extends JpaRepository<CustomerEntity, UUID>,
     CustomerEntity findByTenantIdAndTitle(UUID tenantId, String title);
 
     @Query(value = "SELECT * FROM customer c WHERE c.tenant_id = :tenantId " +
-            "AND c.is_public = true ORDER BY c.id ASC LIMIT 1", nativeQuery = true)
+            "AND c.is_public IS TRUE ORDER BY c.id ASC LIMIT 1", nativeQuery = true)
     CustomerEntity findPublicCustomerByTenantId(@Param("tenantId") UUID tenantId);
 
 
