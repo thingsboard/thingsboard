@@ -1116,8 +1116,13 @@ export const endIntervalDate = (current: moment_.Moment, interval: IntervalType)
 };
 
 export const calculateAggIntervalWithSubscriptionTimeWindow
-  = (subsTw: SubscriptionTimewindow, endTs: number, timestamp: number): [number, number] =>
-  calculateInterval(subsTw.startTs, endTs, subsTw.aggregation.interval, subsTw.tsOffset, subsTw.timezone, timestamp);
+  = (subsTw: SubscriptionTimewindow, endTs: number, timestamp: number): [number, number] => {
+  if (subsTw.aggregation.type === AggregationType.NONE) {
+    return [timestamp, timestamp];
+  } else {
+    return calculateInterval(subsTw.startTs, endTs, subsTw.aggregation.interval, subsTw.tsOffset, subsTw.timezone, timestamp);
+  }
+};
 
 export const calculateAggIntervalWithWidgetTimeWindow
   = (widgetTimeWindow: WidgetTimewindow, timestamp: number): [number, number] =>

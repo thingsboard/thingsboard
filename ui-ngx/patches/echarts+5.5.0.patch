@@ -1,0 +1,426 @@
+diff --git a/node_modules/echarts/lib/component/dataZoom/DataZoomModel.js b/node_modules/echarts/lib/component/dataZoom/DataZoomModel.js
+index d6c05f3..aafb0b8 100644
+--- a/node_modules/echarts/lib/component/dataZoom/DataZoomModel.js
++++ b/node_modules/echarts/lib/component/dataZoom/DataZoomModel.js
+@@ -362,7 +362,10 @@ var DataZoomModel = /** @class */function (_super) {
+         return axisProxy.getDataValueWindow();
+       }
+     } else {
+-      return this.getAxisProxy(axisDim, axisIndex).getDataValueWindow();
++      var axisProxy = this.getAxisProxy(axisDim, axisIndex);
++      if (axisProxy) {
++        return axisProxy.getDataValueWindow();
++      }
+     }
+   };
+   /**
+@@ -381,10 +384,10 @@ var DataZoomModel = /** @class */function (_super) {
+       var axisInfo = this._targetAxisInfoMap.get(axisDim);
+       for (var j = 0; j < axisInfo.indexList.length; j++) {
+         var proxy = this.getAxisProxy(axisDim, axisInfo.indexList[j]);
+-        if (proxy.hostedBy(this)) {
++        if (proxy && proxy.hostedBy(this)) {
+           return proxy;
+         }
+-        if (!firstProxy) {
++        if (proxy && !firstProxy) {
+           firstProxy = proxy;
+         }
+       }
+diff --git a/node_modules/echarts/lib/component/dataZoom/InsideZoomView.js b/node_modules/echarts/lib/component/dataZoom/InsideZoomView.js
+index 06469b2..cf0b2ea 100644
+--- a/node_modules/echarts/lib/component/dataZoom/InsideZoomView.js
++++ b/node_modules/echarts/lib/component/dataZoom/InsideZoomView.js
+@@ -96,11 +96,14 @@ var getRangeHandlers = {
+     range[0] = (range[0] - percentPoint) * scale + percentPoint;
+     range[1] = (range[1] - percentPoint) * scale + percentPoint;
+     // Restrict range.
+-    var minMaxSpan = this.dataZoomModel.findRepresentativeAxisProxy().getMinMaxSpan();
+-    sliderMove(0, range, [0, 100], 0, minMaxSpan.minSpan, minMaxSpan.maxSpan);
+-    this.range = range;
+-    if (lastRange[0] !== range[0] || lastRange[1] !== range[1]) {
+-      return range;
++    var proxy = this.dataZoomModel.findRepresentativeAxisProxy();
++    if (proxy) {
++      var minMaxSpan = proxy.getMinMaxSpan();
++      sliderMove(0, range, [0, 100], 0, minMaxSpan.minSpan, minMaxSpan.maxSpan);
++      this.range = range;
++      if (lastRange[0] !== range[0] || lastRange[1] !== range[1]) {
++        return range;
++      }
+     }
+   },
+   pan: makeMover(function (range, axisModel, coordSysInfo, coordSysMainType, controller, e) {
+diff --git a/node_modules/echarts/lib/component/dataZoom/SliderZoomView.js b/node_modules/echarts/lib/component/dataZoom/SliderZoomView.js
+index 98912e0..0cda6be 100644
+--- a/node_modules/echarts/lib/component/dataZoom/SliderZoomView.js
++++ b/node_modules/echarts/lib/component/dataZoom/SliderZoomView.js
+@@ -64,7 +64,7 @@ var DEFAULT_MOVE_HANDLE_SIZE = 7;
+ var HORIZONTAL = 'horizontal';
+ var VERTICAL = 'vertical';
+ var LABEL_GAP = 5;
+-var SHOW_DATA_SHADOW_SERIES_TYPE = ['line', 'bar', 'candlestick', 'scatter'];
++var SHOW_DATA_SHADOW_SERIES_TYPE = ['line', 'bar', 'candlestick', 'scatter', 'custom'];
+ var REALTIME_ANIMATION_CONFIG = {
+   easing: 'cubicOut',
+   duration: 100,
+@@ -359,30 +359,33 @@ var SliderZoomView = /** @class */function (_super) {
+     var result;
+     var ecModel = this.ecModel;
+     dataZoomModel.eachTargetAxis(function (axisDim, axisIndex) {
+-      var seriesModels = dataZoomModel.getAxisProxy(axisDim, axisIndex).getTargetSeriesModels();
+-      each(seriesModels, function (seriesModel) {
+-        if (result) {
+-          return;
+-        }
+-        if (showDataShadow !== true && indexOf(SHOW_DATA_SHADOW_SERIES_TYPE, seriesModel.get('type')) < 0) {
+-          return;
+-        }
+-        var thisAxis = ecModel.getComponent(getAxisMainType(axisDim), axisIndex).axis;
+-        var otherDim = getOtherDim(axisDim);
+-        var otherAxisInverse;
+-        var coordSys = seriesModel.coordinateSystem;
+-        if (otherDim != null && coordSys.getOtherAxis) {
+-          otherAxisInverse = coordSys.getOtherAxis(thisAxis).inverse;
+-        }
+-        otherDim = seriesModel.getData().mapDimension(otherDim);
+-        result = {
+-          thisAxis: thisAxis,
+-          series: seriesModel,
+-          thisDim: axisDim,
+-          otherDim: otherDim,
+-          otherAxisInverse: otherAxisInverse
+-        };
+-      }, this);
++      var axisProxy = dataZoomModel.getAxisProxy(axisDim, axisIndex);
++      if (axisProxy) {
++        var seriesModels = axisProxy.getTargetSeriesModels();
++        each(seriesModels, function (seriesModel) {
++          if (result) {
++            return;
++          }
++          if (showDataShadow !== true && indexOf(SHOW_DATA_SHADOW_SERIES_TYPE, seriesModel.get('type')) < 0) {
++            return;
++          }
++          var thisAxis = ecModel.getComponent(getAxisMainType(axisDim), axisIndex).axis;
++          var otherDim = getOtherDim(axisDim);
++          var otherAxisInverse;
++          var coordSys = seriesModel.coordinateSystem;
++          if (otherDim != null && coordSys.getOtherAxis) {
++            otherAxisInverse = coordSys.getOtherAxis(thisAxis).inverse;
++          }
++          otherDim = seriesModel.getData().mapDimension(otherDim);
++          result = {
++            thisAxis: thisAxis,
++            series: seriesModel,
++            thisDim: axisDim,
++            otherDim: otherDim,
++            otherAxisInverse: otherAxisInverse
++          };
++        }, this);
++      }
+     }, this);
+     return result;
+   };
+@@ -530,12 +533,17 @@ var SliderZoomView = /** @class */function (_super) {
+     var dataZoomModel = this.dataZoomModel;
+     var handleEnds = this._handleEnds;
+     var viewExtend = this._getViewExtent();
+-    var minMaxSpan = dataZoomModel.findRepresentativeAxisProxy().getMinMaxSpan();
+-    var percentExtent = [0, 100];
+-    sliderMove(delta, handleEnds, viewExtend, dataZoomModel.get('zoomLock') ? 'all' : handleIndex, minMaxSpan.minSpan != null ? linearMap(minMaxSpan.minSpan, percentExtent, viewExtend, true) : null, minMaxSpan.maxSpan != null ? linearMap(minMaxSpan.maxSpan, percentExtent, viewExtend, true) : null);
+-    var lastRange = this._range;
+-    var range = this._range = asc([linearMap(handleEnds[0], viewExtend, percentExtent, true), linearMap(handleEnds[1], viewExtend, percentExtent, true)]);
+-    return !lastRange || lastRange[0] !== range[0] || lastRange[1] !== range[1];
++    var proxy = dataZoomModel.findRepresentativeAxisProxy();
++    if (proxy) {
++      var minMaxSpan = proxy.getMinMaxSpan();
++      var percentExtent = [0, 100];
++      sliderMove(delta, handleEnds, viewExtend, dataZoomModel.get('zoomLock') ? 'all' : handleIndex, minMaxSpan.minSpan != null ? linearMap(minMaxSpan.minSpan, percentExtent, viewExtend, true) : null, minMaxSpan.maxSpan != null ? linearMap(minMaxSpan.maxSpan, percentExtent, viewExtend, true) : null);
++      var lastRange = this._range;
++      var range = this._range = asc([linearMap(handleEnds[0], viewExtend, percentExtent, true), linearMap(handleEnds[1], viewExtend, percentExtent, true)]);
++      return !lastRange || lastRange[0] !== range[0] || lastRange[1] !== range[1];
++    } else {
++      return false;
++    }
+   };
+   SliderZoomView.prototype._updateView = function (nonRealtime) {
+     var displaybles = this._displayables;
+diff --git a/node_modules/echarts/lib/component/dataZoom/dataZoomProcessor.js b/node_modules/echarts/lib/component/dataZoom/dataZoomProcessor.js
+index ce98fed..e154118 100644
+--- a/node_modules/echarts/lib/component/dataZoom/dataZoomProcessor.js
++++ b/node_modules/echarts/lib/component/dataZoom/dataZoomProcessor.js
+@@ -90,7 +90,10 @@ var dataZoomProcessor = {
+       // init stage and not after action dispatch handler, because
+       // reset should be called after seriesData.restoreData.
+       dataZoomModel.eachTargetAxis(function (axisDim, axisIndex) {
+-        dataZoomModel.getAxisProxy(axisDim, axisIndex).reset(dataZoomModel);
++        var axisProxy = dataZoomModel.getAxisProxy(axisDim, axisIndex);
++        if (axisProxy) {
++          axisProxy.reset(dataZoomModel);
++        }
+       });
+       // Caution: data zoom filtering is order sensitive when using
+       // percent range and no min/max/scale set on axis.
+@@ -107,7 +110,10 @@ var dataZoomProcessor = {
+       // So we should filter x-axis after reset x-axis immediately,
+       // and then reset y-axis and filter y-axis.
+       dataZoomModel.eachTargetAxis(function (axisDim, axisIndex) {
+-        dataZoomModel.getAxisProxy(axisDim, axisIndex).filterData(dataZoomModel, api);
++        var axisProxy = dataZoomModel.getAxisProxy(axisDim, axisIndex);
++        if (axisProxy) {
++          axisProxy.filterData(dataZoomModel, api);
++        }
+       });
+     });
+     ecModel.eachComponent('dataZoom', function (dataZoomModel) {
+diff --git a/node_modules/echarts/lib/component/toolbox/feature/DataZoom.js b/node_modules/echarts/lib/component/toolbox/feature/DataZoom.js
+index cf8d6bc..f9b9f90 100644
+--- a/node_modules/echarts/lib/component/toolbox/feature/DataZoom.js
++++ b/node_modules/echarts/lib/component/toolbox/feature/DataZoom.js
+@@ -109,9 +109,12 @@ var DataZoomFeature = /** @class */function (_super) {
+       var axisModel = axis.model;
+       var dataZoomModel = findDataZoom(dimName, axisModel, ecModel);
+       // Restrict range.
+-      var minMaxSpan = dataZoomModel.findRepresentativeAxisProxy(axisModel).getMinMaxSpan();
+-      if (minMaxSpan.minValueSpan != null || minMaxSpan.maxValueSpan != null) {
+-        minMax = sliderMove(0, minMax.slice(), axis.scale.getExtent(), 0, minMaxSpan.minValueSpan, minMaxSpan.maxValueSpan);
++      var proxy = dataZoomModel.findRepresentativeAxisProxy(axisModel);
++      if (proxy) {
++        var minMaxSpan = proxy.getMinMaxSpan();
++        if (minMaxSpan.minValueSpan != null || minMaxSpan.maxValueSpan != null) {
++          minMax = sliderMove(0, minMax.slice(), axis.scale.getExtent(), 0, minMaxSpan.minValueSpan, minMaxSpan.maxValueSpan);
++        }
+       }
+       dataZoomModel && (snapshot[dataZoomModel.id] = {
+         dataZoomId: dataZoomModel.id,
+diff --git a/node_modules/echarts/lib/component/tooltip/TooltipView.js b/node_modules/echarts/lib/component/tooltip/TooltipView.js
+index b8a9b95..11e49c0 100644
+--- a/node_modules/echarts/lib/component/tooltip/TooltipView.js
++++ b/node_modules/echarts/lib/component/tooltip/TooltipView.js
+@@ -360,7 +360,7 @@ var TooltipView = /** @class */function (_super) {
+       each(itemCoordSys.dataByAxis, function (axisItem) {
+         var axisModel = ecModel.getComponent(axisItem.axisDim + 'Axis', axisItem.axisIndex);
+         var axisValue = axisItem.value;
+-        if (!axisModel || axisValue == null) {
++        if (!axisModel || !axisModel.axis || axisValue == null) {
+           return;
+         }
+         var axisValueLabel = axisPointerViewHelper.getValueLabel(axisValue, axisModel.axis, ecModel, axisItem.seriesDataIndices, axisItem.valueLabelOpt);
+diff --git a/node_modules/echarts/lib/coord/axisHelper.js b/node_modules/echarts/lib/coord/axisHelper.js
+index a76c66b..e5b7ee5 100644
+--- a/node_modules/echarts/lib/coord/axisHelper.js
++++ b/node_modules/echarts/lib/coord/axisHelper.js
+@@ -187,7 +187,9 @@ export function createScaleByModel(model, axisType) {
+         });
+       default:
+         // case 'value'/'interval', 'log', or others.
+-        return new (Scale.getClass(axisType) || IntervalScale)();
++        return new (Scale.getClass(axisType) || IntervalScale)({
++          ticksGenerator: model.get('ticksGenerator')
++        });
+     }
+   }
+ }
+diff --git a/node_modules/echarts/lib/coord/cartesian/Grid.js b/node_modules/echarts/lib/coord/cartesian/Grid.js
+index 5b18f02..39a57f8 100644
+--- a/node_modules/echarts/lib/coord/cartesian/Grid.js
++++ b/node_modules/echarts/lib/coord/cartesian/Grid.js
+@@ -91,11 +91,11 @@ var Grid = /** @class */function () {
+         var scale = axis.scale;
+         if (
+         // Only value and log axis without interval support alignTicks.
+-        isIntervalOrLogScale(scale) && model.get('alignTicks') && model.get('interval') == null) {
++        isIntervalOrLogScale(scale) && model.get('alignTicks') && model.get('interval') == null && model.get('ticksGenerator') == null) {
+           axisNeedsAlign.push(axis);
+         } else {
+           niceScaleExtent(scale, model);
+-          if (isIntervalOrLogScale(scale)) {
++          if (isIntervalOrLogScale(scale) && !scale.isBlank()) {
+             // Can only align to interval or log axis.
+             alignTo = axis;
+           }
+@@ -105,10 +105,15 @@ var Grid = /** @class */function () {
+       // All axes has set alignTicks. Pick the first one.
+       // PENDING. Should we find the axis that both set interval, min, max and align to this one?
+       if (axisNeedsAlign.length) {
+-        if (!alignTo) {
+-          alignTo = axisNeedsAlign.pop();
+-          niceScaleExtent(alignTo.scale, alignTo.model);
++        while (!alignTo && axisNeedsAlign.length) {
++          var axis = axisNeedsAlign.pop();
++          niceScaleExtent(axis.scale, axis.model);
++          if (!axis.scale.isBlank()) {
++            alignTo = axis;
++          }
+         }
++      }
++      if (axisNeedsAlign.length && alignTo) {
+         each(axisNeedsAlign, function (axis) {
+           alignScaleTicks(axis.scale, axis.model, alignTo.scale);
+         });
+diff --git a/node_modules/echarts/lib/data/SeriesData.js b/node_modules/echarts/lib/data/SeriesData.js
+index 98d5ce8..1c293a6 100644
+--- a/node_modules/echarts/lib/data/SeriesData.js
++++ b/node_modules/echarts/lib/data/SeriesData.js
+@@ -900,13 +900,16 @@ var SeriesData = /** @class */function () {
+         var dimInfo = data._dimInfos[dim];
+         // Currently, only dimensions that has ordinalMeta can create inverted indices.
+         var ordinalMeta = dimInfo.ordinalMeta;
++        var stack = dimInfo.stack;
+         var store = data._store;
+-        if (ordinalMeta) {
+-          invertedIndices = invertedIndicesMap[dim] = new CtorInt32Array(ordinalMeta.categories.length);
+-          // The default value of TypedArray is 0. To avoid miss
+-          // mapping to 0, we should set it as INDEX_NOT_FOUND.
+-          for (var i = 0; i < invertedIndices.length; i++) {
+-            invertedIndices[i] = INDEX_NOT_FOUND;
++        if (ordinalMeta || stack) {
++          invertedIndices = invertedIndicesMap[dim] = stack ? new Array(store.count()) : new CtorInt32Array(ordinalMeta.categories.length);
++          if (ordinalMeta) {
++            // The default value of TypedArray is 0. To avoid miss
++            // mapping to 0, we should set it as INDEX_NOT_FOUND.
++            for (var i = 0; i < invertedIndices.length; i++) {
++              invertedIndices[i] = INDEX_NOT_FOUND;
++            }
+           }
+           for (var i = 0; i < store.count(); i++) {
+             // Only support the case that all values are distinct.
+diff --git a/node_modules/echarts/lib/data/Source.js b/node_modules/echarts/lib/data/Source.js
+index 7dda49b..2dd2b98 100644
+--- a/node_modules/echarts/lib/data/Source.js
++++ b/node_modules/echarts/lib/data/Source.js
+@@ -252,7 +252,8 @@ function normalizeDimensionsOption(dimensionsDefine) {
+     var item = {
+       name: rawItem.name,
+       displayName: rawItem.displayName,
+-      type: rawItem.type
++      type: rawItem.type,
++      stack: rawItem.stack
+     };
+     // User can set null in dimensions.
+     // We don't auto specify name, otherwise a given name may
+diff --git a/node_modules/echarts/lib/data/helper/createDimensions.js b/node_modules/echarts/lib/data/helper/createDimensions.js
+index 00d7eb7..dd514b1 100644
+--- a/node_modules/echarts/lib/data/helper/createDimensions.js
++++ b/node_modules/echarts/lib/data/helper/createDimensions.js
+@@ -110,6 +110,9 @@ source, opt) {
+       }
+       dimDefItem.type != null && (resultItem.type = dimDefItem.type);
+       dimDefItem.displayName != null && (resultItem.displayName = dimDefItem.displayName);
++      if (dimDefItem.stack) {
++        resultItem.stack = true;
++      }
+       var newIdx = resultList.length;
+       indicesMap[dimIdx] = newIdx;
+       resultItem.storeDimIndex = dimIdx;
+diff --git a/node_modules/echarts/lib/data/helper/dataStackHelper.js b/node_modules/echarts/lib/data/helper/dataStackHelper.js
+index c25de1b..ea8300d 100644
+--- a/node_modules/echarts/lib/data/helper/dataStackHelper.js
++++ b/node_modules/echarts/lib/data/helper/dataStackHelper.js
+@@ -91,7 +91,7 @@ export function enableDataStack(seriesModel, dimensionsInput, opt) {
+     }
+     if (mayStack && !dimensionInfo.isExtraCoord) {
+       // Find the first ordinal dimension as the stackedByDimInfo.
+-      if (!byIndex && !stackedByDimInfo && dimensionInfo.ordinalMeta) {
++      if (!byIndex && !stackedByDimInfo && (dimensionInfo.ordinalMeta || dimensionInfo.stack)) {
+         stackedByDimInfo = dimensionInfo;
+       }
+       // Find the first stackable dimension as the stackedDimInfo.
+diff --git a/node_modules/echarts/lib/scale/Interval.js b/node_modules/echarts/lib/scale/Interval.js
+index 1094662..363c0a5 100644
+--- a/node_modules/echarts/lib/scale/Interval.js
++++ b/node_modules/echarts/lib/scale/Interval.js
+@@ -46,12 +46,17 @@ import * as numberUtil from '../util/number.js';
+ import * as formatUtil from '../util/format.js';
+ import Scale from './Scale.js';
+ import * as helper from './helper.js';
++import { isFunction } from 'zrender/lib/core/util.js';
+ var roundNumber = numberUtil.round;
+ var IntervalScale = /** @class */function (_super) {
+   __extends(IntervalScale, _super);
+-  function IntervalScale() {
+-    var _this = _super !== null && _super.apply(this, arguments) || this;
++  function IntervalScale(setting) {
++    var _this = _super.call(this, setting) || this;
+     _this.type = 'interval';
++    var ticksGenerator = _this.getSetting('ticksGenerator');
++    if (isFunction(ticksGenerator)) {
++      _this._ticksGenerator = ticksGenerator;
++    }
+     // Step is calculated in adjustExtent.
+     _this._interval = 0;
+     _this._intervalPrecision = 2;
+@@ -104,7 +109,17 @@ var IntervalScale = /** @class */function (_super) {
+     var extent = this._extent;
+     var niceTickExtent = this._niceExtent;
+     var intervalPrecision = this._intervalPrecision;
+-    var ticks = [];
++    var ticksGenerator = this._ticksGenerator;
++    var ticks;
++    if (ticksGenerator) {
++      try {
++        ticks = ticksGenerator(extent, interval, niceTickExtent, intervalPrecision);
++        if (ticks) {
++          return ticks;
++        }
++      } catch (_e) {}
++    }
++    ticks = [];
+     // If interval is 0, return [];
+     if (!interval) {
+       return ticks;
+diff --git a/node_modules/echarts/types/dist/shared.d.ts b/node_modules/echarts/types/dist/shared.d.ts
+index ca74097..ef41ce2 100644
+--- a/node_modules/echarts/types/dist/shared.d.ts
++++ b/node_modules/echarts/types/dist/shared.d.ts
+@@ -2422,6 +2422,9 @@ interface AxisBaseOptionCommon extends ComponentOption, AnimationOptionMixin {
+         max: number;
+     }) => ScaleDataValue);
+ }
++
++declare type NumericAxisTicksGenerator = (extent?: number[], interval?: number, niceTickExtent?: number[], intervalPrecision?: number) => {value: number}[];
++
+ interface NumericAxisBaseOptionCommon extends AxisBaseOptionCommon {
+     boundaryGap?: [number | string, number | string];
+     /**
+@@ -2447,6 +2450,8 @@ interface NumericAxisBaseOptionCommon extends AxisBaseOptionCommon {
+      * Will be ignored if interval is set.
+      */
+     alignTicks?: boolean;
++
++    ticksGenerator?: NumericAxisTicksGenerator;
+ }
+ interface CategoryAxisBaseOption extends AxisBaseOptionCommon {
+     type?: 'category';
+@@ -6412,6 +6417,7 @@ declare type DimensionDefinition = {
+     type?: DataStoreDimensionType;
+     name?: DimensionName;
+     displayName?: string;
++    stack?: boolean;
+ };
+ declare type DimensionDefinitionLoose = DimensionDefinition['name'] | DimensionDefinition;
+ declare const SOURCE_FORMAT_ORIGINAL: "original";
+diff --git a/node_modules/echarts/types/src/coord/axisCommonTypes.d.ts b/node_modules/echarts/types/src/coord/axisCommonTypes.d.ts
+index c5c2792..d524b70 100644
+--- a/node_modules/echarts/types/src/coord/axisCommonTypes.d.ts
++++ b/node_modules/echarts/types/src/coord/axisCommonTypes.d.ts
+@@ -56,6 +56,9 @@ export interface AxisBaseOptionCommon extends ComponentOption, AnimationOptionMi
+         max: number;
+     }) => ScaleDataValue);
+ }
++
++export declare type NumericAxisTicksGenerator = (extent?: number[], interval?: number, niceTickExtent?: number[], intervalPrecision?: number) => {value: number}[];
++
+ export interface NumericAxisBaseOptionCommon extends AxisBaseOptionCommon {
+     boundaryGap?: [number | string, number | string];
+     /**
+@@ -81,6 +84,8 @@ export interface NumericAxisBaseOptionCommon extends AxisBaseOptionCommon {
+      * Will be ignored if interval is set.
+      */
+     alignTicks?: boolean;
++    
++    ticksGenerator?: NumericAxisTicksGenerator;
+ }
+ export interface CategoryAxisBaseOption extends AxisBaseOptionCommon {
+     type?: 'category';

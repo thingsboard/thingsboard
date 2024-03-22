@@ -47,10 +47,6 @@ import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
 import org.thingsboard.server.common.data.device.credentials.ProvisionDeviceCredentialsData;
-import org.thingsboard.server.common.data.device.data.CoapDeviceTransportConfiguration;
-import org.thingsboard.server.common.data.device.data.Lwm2mDeviceTransportConfiguration;
-import org.thingsboard.server.common.data.device.data.PowerMode;
-import org.thingsboard.server.common.data.device.data.PowerSavingConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProvisionDeviceProfileCredentials;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -70,6 +66,7 @@ import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceProvisionService;
@@ -85,7 +82,6 @@ import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.gen.transport.TransportProtos.DeviceInfoProto;
 import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceCredentialsRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetEntityProfileRequestMsg;
@@ -103,12 +99,10 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceLwM2MC
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509CertRequestMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
-import org.thingsboard.server.service.resource.TbResourceService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -144,7 +138,6 @@ public class DefaultTransportApiService implements TransportApiService {
     private final DeviceCredentialsService deviceCredentialsService;
     private final DbCallbackExecutorService dbCallbackExecutorService;
     private final TbClusterService tbClusterService;
-    private final DataDecodingEncodingService dataDecodingEncodingService;
     private final DeviceProvisionService deviceProvisionService;
     private final ResourceService resourceService;
     private final OtaPackageService otaPackageService;
@@ -358,9 +351,7 @@ public class DefaultTransportApiService implements TransportApiService {
                 ObjectNode additionalInfo = JacksonUtil.newObjectNode();
                 additionalInfo.put(DataConstants.LAST_CONNECTED_GATEWAY, gatewayId.toString());
                 device.setAdditionalInfo(additionalInfo);
-                Device savedDevice = deviceService.saveDevice(device);
-                tbClusterService.onDeviceUpdated(savedDevice, null);
-                device = savedDevice;
+                device = deviceService.saveDevice(device);
 
                 relationService.saveRelation(TenantId.SYS_TENANT_ID, new EntityRelation(gateway.getId(), device.getId(), "Created"));
 
@@ -385,15 +376,14 @@ public class DefaultTransportApiService implements TransportApiService {
                                 || !gatewayId.toString().equals(deviceAdditionalInfo.get(DataConstants.LAST_CONNECTED_GATEWAY).asText()))) {
                     ObjectNode newDeviceAdditionalInfo = (ObjectNode) deviceAdditionalInfo;
                     newDeviceAdditionalInfo.put(DataConstants.LAST_CONNECTED_GATEWAY, gatewayId.toString());
-                    Device savedDevice = deviceService.saveDevice(device);
-                    tbClusterService.onDeviceUpdated(savedDevice, device);
+                    deviceService.saveDevice(device);
                 }
             }
             GetOrCreateDeviceFromGatewayResponseMsg.Builder builder = GetOrCreateDeviceFromGatewayResponseMsg.newBuilder()
-                    .setDeviceInfo(getDeviceInfoProto(device));
+                    .setDeviceInfo(ProtoUtils.toDeviceInfoProto(device));
             DeviceProfile deviceProfile = deviceProfileCache.get(device.getTenantId(), device.getDeviceProfileId());
             if (deviceProfile != null) {
-                builder.setProfileBody(ByteString.copyFrom(dataDecodingEncodingService.encode(deviceProfile)));
+                builder.setDeviceProfile(ProtoUtils.toProto(deviceProfile));
             } else {
                 log.warn("[{}] Failed to find device profile [{}] for device. ", device.getId(), device.getDeviceProfileId());
             }
@@ -416,7 +406,7 @@ public class DefaultTransportApiService implements TransportApiService {
     }
 
     private ListenableFuture<TransportApiResponseMsg> handle(ProvisionDeviceRequestMsg requestMsg) {
-        ListenableFuture<ProvisionResponse> provisionResponseFuture = null;
+        ListenableFuture<ProvisionResponse> provisionResponseFuture;
         try {
             provisionResponseFuture = Futures.immediateFuture(deviceProvisionService.provisionDevice(
                     new ProvisionRequest(
@@ -470,13 +460,13 @@ public class DefaultTransportApiService implements TransportApiService {
         if (entityType.equals(EntityType.DEVICE_PROFILE)) {
             DeviceProfileId deviceProfileId = new DeviceProfileId(entityUuid);
             DeviceProfile deviceProfile = deviceProfileCache.find(deviceProfileId);
-            builder.setData(ByteString.copyFrom(dataDecodingEncodingService.encode(deviceProfile)));
+            builder.setDeviceProfile(ProtoUtils.toProto(deviceProfile));
         } else if (entityType.equals(EntityType.TENANT)) {
             TenantId tenantId = TenantId.fromUUID(entityUuid);
             TenantProfile tenantProfile = tenantProfileCache.get(tenantId);
             ApiUsageState state = apiUsageStateService.getApiUsageState(tenantId);
-            builder.setData(ByteString.copyFrom(dataDecodingEncodingService.encode(tenantProfile)));
-            builder.setApiState(ByteString.copyFrom(dataDecodingEncodingService.encode(state)));
+            builder.setTenantProfile(ProtoUtils.toProto(tenantProfile));
+            builder.setApiState(ProtoUtils.toProto(state));
         } else {
             throw new RuntimeException("Invalid entity profile request: " + entityType);
         }
@@ -495,7 +485,7 @@ public class DefaultTransportApiService implements TransportApiService {
                             .setDeviceProfileIdMSB(deviceProfileId.getMostSignificantBits())
                             .setDeviceProfileIdLSB(deviceProfileId.getLeastSignificantBits())
                             .setDeviceTransportConfiguration(ByteString.copyFrom(
-                                    dataDecodingEncodingService.encode(device.getDeviceData().getTransportConfiguration())
+                                    JacksonUtil.writeValueAsBytes(device.getDeviceData().getTransportConfiguration())
                             )))
                     .build();
         } else {
@@ -511,10 +501,9 @@ public class DefaultTransportApiService implements TransportApiService {
 
         return Futures.immediateFuture(TransportApiResponseMsg.newBuilder()
                 .setDeviceCredentialsResponseMsg(TransportProtos.GetDeviceCredentialsResponseMsg.newBuilder()
-                        .setDeviceCredentialsData(ByteString.copyFrom(dataDecodingEncodingService.encode(deviceCredentials))))
+                        .setDeviceCredentialsData(ProtoUtils.toProto(deviceCredentials)))
                 .build());
     }
-
 
     private ListenableFuture<TransportApiResponseMsg> handle(GetResourceRequestMsg requestMsg) {
         TenantId tenantId = TenantId.fromUUID(new UUID(requestMsg.getTenantIdMSB(), requestMsg.getTenantIdLSB()));
@@ -528,7 +517,7 @@ public class DefaultTransportApiService implements TransportApiService {
         }
 
         if (resource != null) {
-            builder.setResource(ByteString.copyFrom(dataDecodingEncodingService.encode(resource)));
+            builder.setResource(ProtoUtils.toProto(resource));
         }
 
         return Futures.immediateFuture(TransportApiResponseMsg.newBuilder().setResourceResponseMsg(builder).build());
@@ -558,10 +547,10 @@ public class DefaultTransportApiService implements TransportApiService {
         }
         try {
             ValidateDeviceCredentialsResponseMsg.Builder builder = ValidateDeviceCredentialsResponseMsg.newBuilder();
-            builder.setDeviceInfo(getDeviceInfoProto(device));
+            builder.setDeviceInfo(ProtoUtils.toDeviceInfoProto(device));
             DeviceProfile deviceProfile = deviceProfileCache.get(device.getTenantId(), device.getDeviceProfileId());
             if (deviceProfile != null) {
-                builder.setProfileBody(ByteString.copyFrom(dataDecodingEncodingService.encode(deviceProfile)));
+                builder.setDeviceProfile(ProtoUtils.toProto(deviceProfile));
             } else {
                 log.warn("[{}] Failed to find device profile [{}] for device. ", device.getId(), device.getDeviceProfileId());
             }
@@ -574,45 +563,6 @@ public class DefaultTransportApiService implements TransportApiService {
             log.warn("[{}] Failed to lookup device by id", credentials.getDeviceId(), e);
             return getEmptyTransportApiResponse();
         }
-    }
-
-    private DeviceInfoProto getDeviceInfoProto(Device device) throws JsonProcessingException {
-        DeviceInfoProto.Builder builder = DeviceInfoProto.newBuilder()
-                .setTenantIdMSB(device.getTenantId().getId().getMostSignificantBits())
-                .setTenantIdLSB(device.getTenantId().getId().getLeastSignificantBits())
-                .setCustomerIdMSB(Optional.ofNullable(device.getCustomerId()).map(customerId -> customerId.getId().getMostSignificantBits()).orElse(0L))
-                .setCustomerIdLSB(Optional.ofNullable(device.getCustomerId()).map(customerId -> customerId.getId().getLeastSignificantBits()).orElse(0L))
-                .setDeviceIdMSB(device.getId().getId().getMostSignificantBits())
-                .setDeviceIdLSB(device.getId().getId().getLeastSignificantBits())
-                .setDeviceName(device.getName())
-                .setDeviceType(device.getType())
-                .setDeviceProfileIdMSB(device.getDeviceProfileId().getId().getMostSignificantBits())
-                .setDeviceProfileIdLSB(device.getDeviceProfileId().getId().getLeastSignificantBits())
-                .setAdditionalInfo(JacksonUtil.toString(device.getAdditionalInfo()));
-
-        PowerSavingConfiguration psmConfiguration = null;
-        switch (device.getDeviceData().getTransportConfiguration().getType()) {
-            case LWM2M:
-                psmConfiguration = (Lwm2mDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration();
-                break;
-            case COAP:
-                psmConfiguration = (CoapDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration();
-                break;
-        }
-
-        if (psmConfiguration != null) {
-            PowerMode powerMode = psmConfiguration.getPowerMode();
-            if (powerMode != null) {
-                builder.setPowerMode(powerMode.name());
-                if (powerMode.equals(PowerMode.PSM)) {
-                    builder.setPsmActivityTimer(checkLong(psmConfiguration.getPsmActivityTimer()));
-                } else if (powerMode.equals(PowerMode.E_DRX)) {
-                    builder.setEdrxCycle(checkLong(psmConfiguration.getEdrxCycle()));
-                    builder.setPagingTransmissionWindow(checkLong(psmConfiguration.getPagingTransmissionWindow()));
-                }
-            }
-        }
-        return builder.build();
     }
 
     private ListenableFuture<TransportApiResponseMsg> getEmptyTransportApiResponseFuture() {
@@ -696,11 +646,10 @@ public class DefaultTransportApiService implements TransportApiService {
                 device.setName(deviceName);
                 device.setType("LwM2M");
                 device = deviceService.saveDevice(device);
-                tbClusterService.onDeviceUpdated(device, null);
             }
             TransportProtos.LwM2MRegistrationResponseMsg registrationResponseMsg =
                     TransportProtos.LwM2MRegistrationResponseMsg.newBuilder()
-                            .setDeviceInfo(getDeviceInfoProto(device)).build();
+                            .setDeviceInfo(ProtoUtils.toDeviceInfoProto(device)).build();
             TransportProtos.LwM2MResponseMsg responseMsg = TransportProtos.LwM2MResponseMsg.newBuilder().setRegistrationMsg(registrationResponseMsg).build();
             return Futures.immediateFuture(TransportApiResponseMsg.newBuilder().setLwM2MResponseMsg(responseMsg).build());
         } catch (JsonProcessingException e) {
@@ -727,11 +676,6 @@ public class DefaultTransportApiService implements TransportApiService {
                                 .setQueueTopic(queue.getTopic())
                                 .setPartitions(queue.getPartitions())
                                 .build()).collect(Collectors.toList())).build());
-    }
-
-
-    private Long checkLong(Long l) {
-        return l != null ? l : 0;
     }
 
     private ProvisionRequest createProvisionRequest(String certificateValue) {

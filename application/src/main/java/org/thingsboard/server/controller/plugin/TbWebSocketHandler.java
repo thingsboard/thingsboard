@@ -18,6 +18,10 @@ package org.thingsboard.server.controller.plugin;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.RemovalCause;
+import jakarta.websocket.RemoteEndpoint;
+import jakarta.websocket.SendHandler;
+import jakarta.websocket.SendResult;
+import jakarta.websocket.Session;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +50,7 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.jwt.JwtAuthenticationProvider;
+import org.thingsboard.server.service.security.exception.JwtExpiredTokenException;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.subscription.SubscriptionErrorCode;
@@ -60,10 +65,6 @@ import org.thingsboard.server.service.ws.notification.cmd.NotificationCmdsWrappe
 import org.thingsboard.server.service.ws.telemetry.cmd.TelemetryCmdsWrapper;
 
 import javax.annotation.PostConstruct;
-import javax.websocket.RemoteEndpoint;
-import javax.websocket.SendHandler;
-import javax.websocket.SendResult;
-import javax.websocket.Session;
 import java.io.IOException;
 import java.security.InvalidParameterException;
 import java.util.Optional;
@@ -232,6 +233,9 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
         } catch (InvalidParameterException e) {
             log.warn("[{}] Failed to start session", session.getId(), e);
             session.close(CloseStatus.BAD_DATA.withReason(e.getMessage()));
+        } catch (JwtExpiredTokenException e) {
+            log.trace("[{}] Failed to start session", session.getId(), e);
+            session.close(CloseStatus.SERVER_ERROR.withReason(e.getMessage()));
         } catch (Exception e) {
             log.warn("[{}] Failed to start session", session.getId(), e);
             session.close(CloseStatus.SERVER_ERROR.withReason(e.getMessage()));

@@ -31,7 +31,7 @@ import org.springframework.web.socket.CloseStatus;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -80,9 +80,9 @@ import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.UnsubscribeCmd;
 import org.thingsboard.server.service.ws.telemetry.sub.TelemetrySubscriptionUpdate;
 
-import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -868,7 +868,7 @@ public class DefaultWebSocketService implements WebSocketService {
             @Override
             public void onSuccess(@Nullable ValidationResult result) {
                 List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>();
-                for (String scope : DataConstants.allScopes()) {
+                for (AttributeScope scope : AttributeScope.values()) {
                     futures.add(attributesService.find(tenantId, entityId, scope, keys));
                 }
 
@@ -887,7 +887,7 @@ public class DefaultWebSocketService implements WebSocketService {
         return new FutureCallback<ValidationResult>() {
             @Override
             public void onSuccess(@Nullable ValidationResult result) {
-                Futures.addCallback(attributesService.find(tenantId, entityId, scope, keys), callback, MoreExecutors.directExecutor());
+                Futures.addCallback(attributesService.find(tenantId, entityId, AttributeScope.valueOf(scope), keys), callback, MoreExecutors.directExecutor());
             }
 
             @Override
@@ -902,7 +902,7 @@ public class DefaultWebSocketService implements WebSocketService {
             @Override
             public void onSuccess(@Nullable ValidationResult result) {
                 List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>();
-                for (String scope : DataConstants.allScopes()) {
+                for (AttributeScope scope : AttributeScope.values()) {
                     futures.add(attributesService.findAll(tenantId, entityId, scope));
                 }
 
@@ -921,7 +921,7 @@ public class DefaultWebSocketService implements WebSocketService {
         return new FutureCallback<ValidationResult>() {
             @Override
             public void onSuccess(@Nullable ValidationResult result) {
-                Futures.addCallback(attributesService.findAll(tenantId, entityId, scope), callback, MoreExecutors.directExecutor());
+                Futures.addCallback(attributesService.findAll(tenantId, entityId, AttributeScope.valueOf(scope)), callback, MoreExecutors.directExecutor());
             }
 
             @Override

@@ -118,10 +118,9 @@ public class TbCoreConsumerStats {
         this.toCoreNfSubscriptionServiceCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_SUBSCRIPTION_SERVICE));
         this.toCoreNfSubscriptionManagerCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_SUBSCRIPTION_MANAGER));
         this.toCoreNfVersionControlResponseCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_VC_RESPONSE));
-
     }
 
-    private StatsCounter register(StatsCounter counter){
+    private StatsCounter register(StatsCounter counter) {
         counters.add(counter);
         return counter;
     }
@@ -194,19 +193,11 @@ public class TbCoreConsumerStats {
             toCoreNfDeviceRpcResponseCounter.increment();
         } else if (msg.hasComponentLifecycle()) {
             toCoreNfComponentLifecycleCounter.increment();
-        } else if (!msg.getComponentLifecycleMsg().isEmpty()) {
-            toCoreNfComponentLifecycleCounter.increment();
         } else if (msg.hasEdgeEventUpdate()) {
-            toCoreNfEdgeEventUpdateCounter.increment();
-        } else if (!msg.getEdgeEventUpdateMsg().isEmpty()) {
             toCoreNfEdgeEventUpdateCounter.increment();
         } else if (msg.hasToEdgeSyncRequest()) {
             toCoreNfEdgeSyncRequestCounter.increment();
-        } else if (!msg.getToEdgeSyncRequestMsg().isEmpty()) {
-            toCoreNfEdgeSyncRequestCounter.increment();
         } else if (msg.hasFromEdgeSyncResponse()) {
-            toCoreNfEdgeSyncResponseCounter.increment();
-        } else if (!msg.getFromEdgeSyncResponseMsg().isEmpty()) {
             toCoreNfEdgeSyncResponseCounter.increment();
         } else if (msg.getQueueUpdateMsgsCount() > 0) {
             toCoreNfQueueUpdateCounter.increment();
