@@ -444,7 +444,7 @@ class InnerShadowCircle {
       add.x('-50%').y('-50%').width('200%').height('200%');
       let effect: Effect = add.componentTransfer(components => {
         components.funcA({ type: 'table', tableValues: '1 0' });
-      }).in(add.$fill);
+      });
       effect = effect.gaussianBlur(this.blur, this.blur).attr({stdDeviation: this.blur});
       this.blurEffect = effect;
       effect = effect.offset(this.dx, this.dy);
@@ -454,7 +454,7 @@ class InnerShadowCircle {
       effect = effect.composite(this.offsetEffect, 'in');
       effect.composite(add.$sourceAlpha, 'in');
       add.merge(m => {
-        m.mergeNode(add.$fill);
+        m.mergeNode();
         m.mergeNode();
       });
     });
@@ -538,14 +538,14 @@ class DefaultPowerButtonShape extends PowerButtonShape {
     this.pressedTimeline.finish();
     const pressedScale = 0.75;
     powerButtonAnimation(this.centerGroup).transform({scale: pressedScale});
-    powerButtonAnimation(this.onLabelShape).transform({scale: pressedScale});
+    powerButtonAnimation(this.onLabelShape).transform({scale: pressedScale, origin: {x: cx, y: cy}});
     this.pressedShadow.animate(6, 0.6);
   }
 
   protected onPressEnd() {
     this.pressedTimeline.finish();
     powerButtonAnimation(this.centerGroup).transform({scale: 1});
-    powerButtonAnimation(this.onLabelShape).transform({scale: 1});
+    powerButtonAnimation(this.onLabelShape).transform({scale: 1, origin: {x: cx, y: cy}});
     this.pressedShadow.animateRestore();
   }
 
@@ -602,14 +602,14 @@ class SimplifiedPowerButtonShape extends PowerButtonShape {
     this.pressedTimeline.finish();
     const pressedScale = 0.75;
     powerButtonAnimation(this.centerGroup).transform({scale: pressedScale});
-    powerButtonAnimation(this.onLabelShape).transform({scale: pressedScale});
+    powerButtonAnimation(this.onLabelShape).transform({scale: pressedScale, origin: {x: cx, y: cy}});
     this.pressedShadow.animate(6, 0.6);
   }
 
   protected onPressEnd() {
     this.pressedTimeline.finish();
     powerButtonAnimation(this.centerGroup).transform({scale: 1});
-    powerButtonAnimation(this.onLabelShape).transform({scale: 1});
+    powerButtonAnimation(this.onLabelShape).transform({scale: 1, origin: {x: cx, y: cy}});
     this.pressedShadow.animateRestore();
   }
 }
@@ -674,7 +674,7 @@ class OutlinedPowerButtonShape extends PowerButtonShape {
     const pressedScale = 0.75;
     powerButtonAnimation(this.centerGroup).transform({scale: pressedScale});
     powerButtonAnimation(this.onCenterGroup).transform({scale: 0.98});
-    powerButtonAnimation(this.onLabelShape).transform({scale: pressedScale / 0.98});
+    powerButtonAnimation(this.onLabelShape).transform({scale: pressedScale / 0.98, origin: {x: cx, y: cy}});
     this.pressedShadow.animate(6, 0.6);
   }
 
@@ -682,7 +682,7 @@ class OutlinedPowerButtonShape extends PowerButtonShape {
     this.pressedTimeline.finish();
     powerButtonAnimation(this.centerGroup).transform({scale: 1});
     powerButtonAnimation(this.onCenterGroup).transform({scale: 1});
-    powerButtonAnimation(this.onLabelShape).transform({scale: 1});
+    powerButtonAnimation(this.onLabelShape).transform({scale: 1, origin: {x: cx, y: cy}});
     this.pressedShadow.animateRestore();
   }
 }
@@ -774,14 +774,14 @@ class DefaultVolumePowerButtonShape extends PowerButtonShape {
     this.innerShadow.show();
     const pressedScale = 0.75;
     powerButtonAnimation(this.centerGroup).transform({scale: pressedScale});
-    powerButtonAnimation(this.onLabelShape).transform({scale: pressedScale});
+    powerButtonAnimation(this.onLabelShape).transform({scale: pressedScale, origin: {x: cx, y: cy}});
     this.innerShadow.animate(6, 0.6);
   }
 
   protected onPressEnd() {
     this.pressedTimeline.finish();
     powerButtonAnimation(this.centerGroup).transform({scale: 1});
-    powerButtonAnimation(this.onLabelShape).transform({scale: 1});
+    powerButtonAnimation(this.onLabelShape).transform({scale: 1, origin: {x: cx, y: cy}});
     this.innerShadow.animateRestore().after(() => {
       if (this.disabled) {
         this.innerShadow.hide();
@@ -849,14 +849,14 @@ class SimplifiedVolumePowerButtonShape extends PowerButtonShape {
       this.backgroundShape.removeClass('tb-shadow');
     }
     powerButtonAnimation(this.centerGroup).transform({scale: pressedScale});
-    powerButtonAnimation(this.onCenterGroup).transform({scale: pressedScale});
+    powerButtonAnimation(this.onCenterGroup).transform({scale: pressedScale, origin: {x: cx, y: cy}});
     this.pressedShadow.animate(8, 0.4);
   }
 
   protected onPressEnd() {
     this.pressedTimeline.finish();
     powerButtonAnimation(this.centerGroup).transform({scale: 1});
-    powerButtonAnimation(this.onCenterGroup).transform({scale: 1});
+    powerButtonAnimation(this.onCenterGroup).transform({scale: 1, origin: {x: cx, y: cy}});
     this.pressedShadow.animateRestore().after(() => {
       if (!this.value) {
         this.backgroundShape.addClass('tb-shadow');
@@ -938,7 +938,7 @@ class OutlinedVolumePowerButtonShape extends PowerButtonShape {
     const pressedScale = 0.75;
     powerButtonAnimation(this.centerGroup).transform({scale: pressedScale});
     powerButtonAnimation(this.onCenterGroup).transform({scale: 0.98});
-    powerButtonAnimation(this.onLabelShape).transform({scale: pressedScale / 0.98});
+    powerButtonAnimation(this.onLabelShape).transform({scale: pressedScale / 0.98, origin: {x: cx, y: cy}});
     this.pressedShadow.animate(6, 0.6);
   }
 
@@ -946,7 +946,7 @@ class OutlinedVolumePowerButtonShape extends PowerButtonShape {
     this.pressedTimeline.finish();
     powerButtonAnimation(this.centerGroup).transform({scale: 1});
     powerButtonAnimation(this.onCenterGroup).transform({scale: 1});
-    powerButtonAnimation(this.onLabelShape).transform({scale: 1});
+    powerButtonAnimation(this.onLabelShape).transform({scale: 1, origin: {x: cx, y: cy}});
     this.pressedShadow.animateRestore();
   }
 
