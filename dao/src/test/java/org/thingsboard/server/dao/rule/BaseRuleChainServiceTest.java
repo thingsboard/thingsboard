@@ -15,9 +15,8 @@
  */
 package org.thingsboard.server.dao.rule;
 
-import org.junit.Assert;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
-import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -28,9 +27,6 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.UUID;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
-
 @DaoSqlTest
 public class BaseRuleChainServiceTest extends AbstractServiceTest {
 
@@ -39,18 +35,17 @@ public class BaseRuleChainServiceTest extends AbstractServiceTest {
 
     @Test
     public void givenRuleChain_whenSave_thenReturnsSavedRuleChain() {
-        RuleChain ruleChain = getRuleChain(ruleChainWithoutId);
-        ruleChain.setTenantId(tenantId);
-        RuleChain savedRuleChain = ruleChainService.saveRuleChain(ruleChain);
+        RuleChain newRuleChain = getRuleChain(this.ruleChain);
+        newRuleChain.setTenantId(tenantId);
+        RuleChain savedRuleChain = ruleChainService.saveRuleChain(newRuleChain);
 
-        Assert.assertNotNull(savedRuleChain);
-        Assert.assertNotNull(savedRuleChain.getId());
-        Assert.assertTrue(savedRuleChain.getCreatedTime() > 0);
-        Assert.assertEquals(ruleChain.getTenantId(), savedRuleChain.getTenantId());
-
+        Assertions.assertThat(savedRuleChain).isNotNull();
+        Assertions.assertThat(savedRuleChain.getId()).isNotNull();
+        Assertions.assertThat(savedRuleChain.getCreatedTime() > 0).isTrue();
+        Assertions.assertThat(newRuleChain.getTenantId()).isEqualTo(savedRuleChain.getTenantId());
 
         RuleChain foundRuleChain = ruleChainService.findRuleChainById(tenantId, savedRuleChain.getId());
-        Assertions.assertEquals(foundRuleChain.getName(), savedRuleChain.getName());
+        Assertions.assertThat(savedRuleChain.getName()).isEqualTo(foundRuleChain.getName());
 
         ruleChainService.deleteRuleChainsByTenantId(tenantId);
     }
@@ -59,19 +54,20 @@ public class BaseRuleChainServiceTest extends AbstractServiceTest {
     public void givenRuleChainWithExistingExternalId_whenSave_thenThrowsException() {
         RuleChainId externalRuleChainId = new RuleChainId(UUID.fromString("2675d180-e1e5-11ee-9f06-71b6c7dc2cbf"));
 
-        RuleChain ruleChain = getRuleChain(ruleChainWithoutId);
-        ruleChain.setTenantId(tenantId);
-        ruleChain.setExternalId(externalRuleChainId);
-        RuleChain savedRuleChain = ruleChainService.saveRuleChain(ruleChain);
+        RuleChain newRuleChain = getRuleChain(ruleChain);
+        newRuleChain.setTenantId(tenantId);
+        newRuleChain.setExternalId(externalRuleChainId);
+        RuleChain savedRuleChain = ruleChainService.saveRuleChain(newRuleChain);
 
-        RuleChain ruleChainForSave = getRuleChain(ruleChainWithExternalId);
+        RuleChain ruleChainForSave = getRuleChain(ruleChain);
         ruleChainForSave.setTenantId(tenantId);
+        ruleChainForSave.setExternalId(externalRuleChainId);
 
-        String expectedMsg = "Rule Chain with such external id already exists!";
-
-        assertEquals(savedRuleChain.getExternalId(), ruleChainForSave.getExternalId());
-        Exception exception = assertThrows(DataValidationException.class, () -> ruleChainService.saveRuleChain(ruleChainForSave));
-        assertEquals(expectedMsg, exception.getMessage());
+        Assertions.assertThat(savedRuleChain.getExternalId()).isEqualTo(ruleChainForSave.getExternalId());
+        Assertions.assertThatExceptionOfType(DataValidationException.class).isThrownBy(() -> ruleChainService.saveRuleChain(ruleChainForSave));
+        Assertions.assertThatThrownBy(() -> ruleChainService.saveRuleChain(ruleChainForSave))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessage("Rule Chain with such external id already exists!");
 
         ruleChainService.deleteRuleChainsByTenantId(tenantId);
     }
@@ -80,7 +76,7 @@ public class BaseRuleChainServiceTest extends AbstractServiceTest {
         return JacksonUtil.fromString(ruleChainString, RuleChain.class);
     }
 
-    private final String ruleChainWithoutId = "{\n" +
+    private final String ruleChain = "{\n" +
             "  \"name\": \"Root Rule Chain\",\n" +
             "  \"type\": \"CORE\",\n" +
             "  \"firstRuleNodeId\": {\n" +
@@ -88,22 +84,6 @@ public class BaseRuleChainServiceTest extends AbstractServiceTest {
             "    \"id\": \"91ad0b00-e779-11ee-9cf0-15d8b6079fdb\"\n" +
             "  },\n" +
             "  \"debugMode\": false,\n" +
-            "  \"configuration\": null,\n" +
-            "  \"additionalInfo\": null\n" +
-            "}";
-
-    private final String ruleChainWithExternalId = "{\n" +
-            "  \"name\": \"Root Rule Chain\",\n" +
-            "  \"type\": \"CORE\",\n" +
-            "  \"firstRuleNodeId\": {\n" +
-            "    \"entityType\": \"RULE_NODE\",\n" +
-            "    \"id\": \"91ad0b00-e779-11ee-9cf0-15d8b6079fdb\"\n" +
-            "  },\n" +
-            "  \"debugMode\": false,\n" +
-            "  \"externalId\": {\n" +
-            "    \"entityType\": \"RULE_CHAIN\",\n" +
-            "    \"id\": \"2675d180-e1e5-11ee-9f06-71b6c7dc2cbf\"\n" +
-            "  },\n" +
             "  \"configuration\": null,\n" +
             "  \"additionalInfo\": null\n" +
             "}";
