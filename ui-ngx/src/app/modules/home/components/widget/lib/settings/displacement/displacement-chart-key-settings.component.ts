@@ -58,7 +58,7 @@ export const displacementDefaultSettings = (dataKeys: string[]) => {
     baseline: {
       baseline_date: null,
       baseline_time: null,
-      enterManually: false,
+      enterManually: true,
       baseline: dataKeys.map((key) => ({ key: key, value: null }))
     },
     position: dataKeys.map((key) => ({ key: key, depth: null })),
@@ -118,7 +118,7 @@ export class DisplacementChartKeySettingsComponent extends PageComponent impleme
       baseline: this.fb.group({
         baseline_date: [null, [Validators.required]],
         baseline_time: [null, [Validators.required]],
-        enterManually: [false, []],
+        enterManually: [true, []],
         baseline: this.fb.array(
           this.dataKeys().map((key) => this.fb.group({
             key: [key, [Validators.required]],
