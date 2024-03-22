@@ -19,7 +19,7 @@ import lombok.Data;
 import ua_parser.Client;
 import ua_parser.Parser;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.Serializable;
 
 @Data

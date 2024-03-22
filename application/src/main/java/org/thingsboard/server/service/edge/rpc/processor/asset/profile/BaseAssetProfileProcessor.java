@@ -66,7 +66,7 @@ public abstract class BaseAssetProfileProcessor extends BaseEdgeProcessor {
             if (created) {
                 assetProfile.setId(assetProfileId);
             }
-            assetProfileService.saveAssetProfile(assetProfile, false);
+            assetProfileService.saveAssetProfile(assetProfile, false, true);
         } catch (Exception e) {
             log.error("[{}] Failed to process asset profile update msg [{}]", tenantId, assetProfileUpdateMsg, e);
             throw e;

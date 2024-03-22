@@ -187,6 +187,12 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
     @Override
     @Transactional
     public Tenant saveTenant(Tenant tenant) {
+        return saveTenant(tenant, true);
+    }
+
+    @Override
+    @Transactional
+    public Tenant saveTenant(Tenant tenant, boolean publishSaveEvent) {
         log.trace("Executing saveTenant [{}]", tenant);
         tenant.setRegion(DEFAULT_TENANT_REGION);
         if (tenant.getTenantProfileId() == null) {
@@ -197,7 +203,10 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         boolean create = tenant.getId() == null;
         Tenant savedTenant = tenantDao.save(tenant.getId(), tenant);
         publishEvictEvent(new TenantEvictEvent(savedTenant.getId(), create));
-        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedTenant.getId()).entityId(savedTenant.getId()).created(create).build());
+        if (publishSaveEvent) {
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedTenant.getId())
+                    .entityId(savedTenant.getId()).entity(savedTenant).created(create).build());
+        }
         if (tenant.getId() == null) {
             deviceProfileService.createDefaultDeviceProfile(savedTenant.getId());
             assetProfileService.createDefaultAssetProfile(savedTenant.getId());
@@ -219,6 +228,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
     @Override
     public void deleteTenant(TenantId tenantId) {
         log.trace("Executing deleteTenant [{}]", tenantId);
+        Tenant tenant = findTenantById(tenantId);
         Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         entityViewService.deleteEntityViewsByTenantId(tenantId);
         widgetsBundleService.deleteWidgetsBundlesByTenantId(tenantId);
@@ -245,7 +255,8 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         adminSettingsService.deleteAdminSettingsByTenantId(tenantId);
         tenantDao.removeById(tenantId, tenantId.getId());
         publishEvictEvent(new TenantEvictEvent(tenantId, true));
-        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(tenantId).build());
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId)
+                .entity(tenant).entityId(tenantId).build());
         relationService.deleteEntityRelations(tenantId, tenantId);
         alarmService.deleteEntityAlarmRecordsByTenantId(tenantId);
     }

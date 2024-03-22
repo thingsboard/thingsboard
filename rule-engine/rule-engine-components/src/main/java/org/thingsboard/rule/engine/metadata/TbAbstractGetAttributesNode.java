@@ -29,6 +29,7 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.util.TbMsgSource;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
@@ -99,10 +100,10 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
     private void safePutAttributes(TbContext ctx, TbMsg msg, ObjectNode msgDataNode, T entityId) {
         Set<TbPair<String, List<String>>> failuresPairSet = ConcurrentHashMap.newKeySet();
         var getKvEntryPairFutures = Futures.allAsList(
-                getLatestTelemetry(ctx, entityId, TbNodeUtils.processPatterns(config.getLatestTsKeyNames(), msg), failuresPairSet),
-                getAttrAsync(ctx, entityId, CLIENT_SCOPE, TbNodeUtils.processPatterns(config.getClientAttributeNames(), msg), failuresPairSet),
-                getAttrAsync(ctx, entityId, SHARED_SCOPE, TbNodeUtils.processPatterns(config.getSharedAttributeNames(), msg), failuresPairSet),
-                getAttrAsync(ctx, entityId, SERVER_SCOPE, TbNodeUtils.processPatterns(config.getServerAttributeNames(), msg), failuresPairSet)
+                getAttrAsync(ctx, entityId, AttributeScope.CLIENT_SCOPE, TbNodeUtils.processPatterns(config.getClientAttributeNames(), msg), failuresPairSet),
+                getAttrAsync(ctx, entityId, AttributeScope.SHARED_SCOPE, TbNodeUtils.processPatterns(config.getSharedAttributeNames(), msg), failuresPairSet),
+                getAttrAsync(ctx, entityId, AttributeScope.SERVER_SCOPE, TbNodeUtils.processPatterns(config.getServerAttributeNames(), msg), failuresPairSet),
+                getLatestTelemetry(ctx, entityId, TbNodeUtils.processPatterns(config.getLatestTsKeyNames(), msg), failuresPairSet)
         );
         withCallback(getKvEntryPairFutures, futuresList -> {
             var msgMetaData = msg.getMetaData().copy();
@@ -127,7 +128,7 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
     private ListenableFuture<TbPair<String, List<AttributeKvEntry>>> getAttrAsync(
             TbContext ctx,
             EntityId entityId,
-            String scope,
+            AttributeScope scope,
             List<String> keys,
             Set<TbPair<String, List<String>>> failuresPairSet
     ) {
@@ -138,9 +139,9 @@ public abstract class TbAbstractGetAttributesNode<C extends TbGetAttributesNodeC
         return Futures.transform(attributeKvEntryListFuture, attributeKvEntryList -> {
             if (isTellFailureIfAbsent && attributeKvEntryList.size() != keys.size()) {
                 List<String> nonExistentKeys = getNonExistentKeys(attributeKvEntryList, keys);
-                failuresPairSet.add(new TbPair<>(scope, nonExistentKeys));
+                failuresPairSet.add(new TbPair<>(scope.name(), nonExistentKeys));
             }
-            return new TbPair<>(scope, attributeKvEntryList);
+            return new TbPair<>(scope.name(), attributeKvEntryList);
         }, ctx.getDbCallbackExecutor());
     }
 

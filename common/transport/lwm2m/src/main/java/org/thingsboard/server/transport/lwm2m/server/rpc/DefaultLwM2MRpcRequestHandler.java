@@ -23,7 +23,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mPath;
-import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
@@ -59,10 +58,16 @@ import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttrib
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteReplaceRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteResponseCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteUpdateRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MObserveCompositeCallback;
+import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MCancelObserveCompositeCallback;
+import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MCancelObserveCompositeRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MObserveCompositeRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MReadCompositeCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MReadCompositeRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MWriteResponseCompositeCallback;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
+import org.thingsboard.server.transport.lwm2m.server.rpc.composite.RpcCancelObserveCompositeCallback;
+import org.thingsboard.server.transport.lwm2m.server.rpc.composite.RpcObserveResponseCompositeCallback;
 import org.thingsboard.server.transport.lwm2m.server.rpc.composite.RpcReadCompositeRequest;
 import org.thingsboard.server.transport.lwm2m.server.rpc.composite.RpcReadResponseCompositeCallback;
 import org.thingsboard.server.transport.lwm2m.server.rpc.composite.RpcWriteCompositeRequest;
@@ -75,6 +80,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertMultiResourceValuesFromRpcBody;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertValueByTypeResource;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.fromVersionedIdToObjectId;
 
 @Slf4j
@@ -155,22 +161,22 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
                             throw new IllegalArgumentException("Unsupported operation: " + operationType.name());
                     }
                 } else if (operationType.isComposite()) {
-                    ContentFormat contentFormatComposite = this.getCompositeContentFormat(client);
-                    if (contentFormatComposite != null) {
                         switch (operationType) {
                             case READ_COMPOSITE:
-                                sendReadCompositeRequest(client, rpcRequest, contentFormatComposite);
+                                sendReadCompositeRequest(client, rpcRequest);
                                 break;
                             case WRITE_COMPOSITE:
-                                sendWriteCompositeRequest(client, rpcRequest, contentFormatComposite);
+                                sendWriteCompositeRequest(client, rpcRequest);
+                                break;
+                             case OBSERVE_COMPOSITE:
+                                 sendObserveCompositeRequest(client, rpcRequest);
+                                break;
+                             case OBSERVE_COMPOSITE_CANCEL:
+                                 sendCancelObserveCompositeRequest(client, rpcRequest);
                                 break;
                             default:
                                 throw new IllegalArgumentException("Unsupported operation: " + operationType.name());
                         }
-                    } else {
-                        this.sendErrorRpcResponse(sessionInfo, rpcRequest.getRequestId(),
-                                ResponseCode.INTERNAL_SERVER_ERROR, "This device does not support Composite Operation");
-                    }
                 } else {
                     switch (operationType) {
                         case OBSERVE_CANCEL_ALL:
@@ -202,12 +208,12 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         downlinkHandler.sendReadRequest(client, request, rpcCallback);
     }
 
-    private void sendReadCompositeRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, ContentFormat contentFormatComposite) {
+    private void sendReadCompositeRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg) {
         String[] versionedIds = getIdsFromParameters(client, requestMsg);
         TbLwM2MReadCompositeRequest request = TbLwM2MReadCompositeRequest.builder().versionedIds(versionedIds).timeout(clientContext.getRequestTimeout(client)).build();
         var mainCallback = new TbLwM2MReadCompositeCallback(uplinkHandler, logService, client, versionedIds);
         var rpcCallback = new RpcReadResponseCompositeCallback(transportService, client, requestMsg, mainCallback);
-        downlinkHandler.sendReadCompositeRequest(client, request, rpcCallback, contentFormatComposite);
+        downlinkHandler.sendReadCompositeRequest(client, request, rpcCallback);
     }
 
     private void sendObserveRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
@@ -243,7 +249,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
 
     private void sendWriteAttributesRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
         RpcWriteAttributesRequest requestBody = JacksonUtil.fromString(requestMsg.getParams(), RpcWriteAttributesRequest.class);
-        TbLwM2MWriteAttributesRequest request = TbLwM2MWriteAttributesRequest.builder().versionedId(versionedId)
+         TbLwM2MWriteAttributesRequest request = TbLwM2MWriteAttributesRequest.builder().versionedId(versionedId)
                 .attributes(requestBody.getAttributes())
                 .timeout(clientContext.getRequestTimeout(client)).build();
         var mainCallback = new TbLwM2MWriteAttributesCallback(logService, client, versionedId);
@@ -298,52 +304,87 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
      * nodes.put("/1/0/2", 100);
      * nodes.put("/5/0/1", "coap://localhost:5685");
      */
-    private void sendWriteCompositeRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, ContentFormat contentFormatComposite) {
+    private void sendWriteCompositeRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg) {
         RpcWriteCompositeRequest rpcWriteCompositeRequest = JacksonUtil.fromString(requestMsg.getParams(), RpcWriteCompositeRequest.class);
-        Map<String, Object> validNodes = validateNodes(client, rpcWriteCompositeRequest.getNodes());
+        Map<String, Object> validNodes = validateCompositesNodes(client, rpcWriteCompositeRequest.getNodes());
         if (validNodes.size() > 0) {
             rpcWriteCompositeRequest.setNodes(validNodes);
             var mainCallback = new TbLwM2MWriteResponseCompositeCallback(uplinkHandler, logService, client, null);
             var rpcCallback = new RpcEmptyResponseCallback<>(transportService, client, requestMsg, mainCallback);
-            downlinkHandler.sendWriteCompositeRequest(client, rpcWriteCompositeRequest, rpcCallback, contentFormatComposite);
+            downlinkHandler.sendWriteCompositeRequest(client, rpcWriteCompositeRequest, rpcCallback);
         } else {
             throw new IllegalArgumentException(String.format("nodes: %s is not validate value", rpcWriteCompositeRequest.getNodes().toString()));
         }
     }
 
-    private Map<String, Object> validateNodes(LwM2mClient client, Map<String, Object> nodes) {
+    private Map<String, Object> validateCompositesNodes(LwM2mClient client, Map<String, Object> nodes) {
         Map<String, Object> newNodes = new LinkedHashMap<>();
         nodes.forEach((key, value) -> {
-            String versionedId;
+            String versionedId = null;
+            LwM2mPath path = null;
             try {
-                LwM2mPath path = new LwM2mPath(fromVersionedIdToObjectId(key));
-                if (path.isResource() || path.isResourceInstance()) {
-                    versionedId = key;
-                }
-                else {
-                    throw new IllegalArgumentException(String.format("nodes: %s is not validate value. " +
-                            "The WriteComposite operation is only used for SingleResources or/and ResourceInstance.", nodes.toString()));
-                }
+                path = new LwM2mPath(fromVersionedIdToObjectId(key));
             } catch (Exception e) {
                 versionedId = clientContext.getObjectIdByKeyNameFromProfile(client, key);
             }
-            // validate value. Must be only primitive, not JsonObject or JsonArray
-            try {
-                JsonElement element = JsonUtils.parse(value.toString());
-                if (!element.isJsonNull() && !element.isJsonPrimitive()) {
+
+            if (versionedId == null) {
+                if (path.isResourceInstance()) {
+                    setValueToCompositeNodes(client, newNodes, nodes, key, value.toString());
+                } else if (path.isResource()) {
+                    validateResource(client, newNodes, nodes, key , value);
+                } else if (path.isObjectInstance() && value instanceof Map<?, ?>) {
+                    ((Map) value).forEach((k, v) -> {
+                        validateResource(client, newNodes, nodes, validateResourceId (key, k.toString(), nodes), v);
+                    });
+                } else {
                     throw new IllegalArgumentException(String.format("nodes: %s is not validate value. " +
-                            "The WriteComposite operation is only used for SingleResources or/and ResourceInstance.", nodes.toString()));
+                            "The WriteComposite operation is only used for SingleResources or/and ResourceInstance.", nodes));
                 }
-                else if (versionedId != null) {
-                    newNodes.put(fromVersionedIdToObjectId(versionedId), value);
-                }
-            } catch (JsonSyntaxException jse) {
-                if (versionedId != null) {
-                    newNodes.put(fromVersionedIdToObjectId(versionedId), value);
-                }
+            } else {
+                setValueToCompositeNodes(client, newNodes, nodes, versionedId, value.toString());
             }
         });
         return newNodes;
+    }
+
+    private void validateResource(LwM2mClient client, Map newNodes, Map nodes, String resourceId , Object value) {
+        if (value instanceof Map<?, ?>) {
+            ((Map<?, ?>) value).forEach((k, v) -> {
+                setValueToCompositeNodes(client, newNodes, nodes, validateResourceId (resourceId, k.toString(), nodes), v.toString());
+            });
+        } else {
+            setValueToCompositeNodes(client, newNodes, nodes, resourceId, value.toString());
+        }
+    }
+
+    private String validateResourceId (String key, String id, Map nodes) {
+        try {
+            Integer.parseInt(id);
+            return key + "/" + id;
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(String.format("nodes: %s is not validate value. " +
+                    "The WriteComposite operation is only used for SingleResources or/and ResourceInstance.", nodes.toString()));
+        }
+    }
+
+    private void setValueToCompositeNodes (LwM2mClient client, Map newNodes, Map nodes, String versionedId , String value) {
+        // validate value. Must be only primitive, not JsonObject or JsonArray
+        try {
+            JsonElement element = JsonUtils.parse(value);
+            if (!element.isJsonNull() && !element.isJsonPrimitive()) {
+                throw new IllegalArgumentException(String.format("nodes: %s is not validate value. " +
+                        "The WriteComposite operation is only used for SingleResources or/and ResourceInstance.", nodes.toString()));
+            }
+            // convert value from JsonPrimitive() to resource/ResourceInstance type
+            ResourceModel resourceModel = client.getResourceModel(versionedId, modelProvider);
+            Object newValue = convertValueByTypeResource(value, resourceModel.type,  versionedId);
+
+            // add new value after convert
+            newNodes.put(fromVersionedIdToObjectId(versionedId), newValue);
+        } catch (JsonSyntaxException jse) {
+            newNodes.put(fromVersionedIdToObjectId(versionedId), value);
+        }
     }
 
     private void sendCancelObserveRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
@@ -352,6 +393,25 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         var rpcCallback = new RpcCancelObserveCallback(transportService, client, requestMsg, mainCallback);
         downlinkHandler.sendCancelObserveRequest(client, downlink, rpcCallback);
     }
+
+
+    private void sendObserveCompositeRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg) {
+        String[] versionedIds = getIdsFromParameters(client, requestMsg);
+        TbLwM2MObserveCompositeRequest request = TbLwM2MObserveCompositeRequest.builder().versionedIds(versionedIds).timeout(clientContext.getRequestTimeout(client)).build();
+        var mainCallback = new TbLwM2MObserveCompositeCallback(uplinkHandler, logService, client, versionedIds);
+        var rpcCallback = new RpcObserveResponseCompositeCallback(transportService, client, requestMsg, mainCallback);
+        downlinkHandler.sendObserveCompositeRequest(client, request, rpcCallback);
+    }
+
+    private void sendCancelObserveCompositeRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg) {
+        String[] versionedIds = getIdsFromParameters(client, requestMsg);
+        TbLwM2MCancelObserveCompositeRequest request = TbLwM2MCancelObserveCompositeRequest.builder().versionedIds(versionedIds).timeout(clientContext.getRequestTimeout(client)).build();
+        var mainCallback = new TbLwM2MCancelObserveCompositeCallback(logService, client, versionedIds);
+        var rpcCallback = new RpcCancelObserveCompositeCallback(transportService, client, requestMsg, mainCallback);
+        downlinkHandler.sendCancelObserveCompositeRequest(client, request, rpcCallback);
+    }
+
+
 
     private void sendDeleteRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
         TbLwM2MDeleteRequest downlink = TbLwM2MDeleteRequest.builder().versionedId(versionedId).timeout(clientContext.getRequestTimeout(client)).build();
@@ -364,7 +424,7 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
         TbLwM2MCancelAllRequest downlink = TbLwM2MCancelAllRequest.builder().timeout(clientContext.getRequestTimeout(client)).build();
         var mainCallback = new TbLwM2MCancelAllObserveCallback(logService, client);
         var rpcCallback = new RpcCancelAllObserveCallback(transportService, client, requestMsg, mainCallback);
-        downlinkHandler.sendCancelAllRequest(client, downlink, rpcCallback);
+        downlinkHandler.sendCancelObserveAllRequest(client, downlink, rpcCallback);
     }
 
     private String getIdFromParameters(LwM2mClient client, LwM2MRpcRequestHeader header) {
@@ -411,17 +471,5 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
 
     public void onToServerRpcResponse(TransportProtos.ToServerRpcResponseMsg toServerResponse) {
         log.info("[{}] toServerRpcResponse", toServerResponse);
-    }
-
-    private ContentFormat getCompositeContentFormat(LwM2mClient client) {
-        if (client.getClientSupportContentFormats().contains(ContentFormat.SENML_JSON)) {
-            return ContentFormat.SENML_JSON;
-        }
-        else if (client.getClientSupportContentFormats().contains(ContentFormat.SENML_CBOR)) {
-            return ContentFormat.SENML_CBOR;
-        }
-        else {
-            return null;
-        }
     }
 }

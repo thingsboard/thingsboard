@@ -29,6 +29,8 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityDaoService;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 
 import java.util.List;
 import java.util.Map;
@@ -49,7 +51,10 @@ public class DefaultNotificationRuleService extends AbstractEntityService implem
             }
         }
         try {
-            return notificationRuleDao.saveAndFlush(tenantId, notificationRule);
+            NotificationRule savedRule = notificationRuleDao.saveAndFlush(tenantId, notificationRule);
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(savedRule.getId())
+                    .created(notificationRule.getId() == null).build());
+            return savedRule;
         } catch (Exception e) {
             checkConstraintViolation(e, Map.of(
                     "uq_notification_rule_name", "Notification rule with such name already exists"
@@ -86,6 +91,7 @@ public class DefaultNotificationRuleService extends AbstractEntityService implem
     @Override
     public void deleteNotificationRuleById(TenantId tenantId, NotificationRuleId id) {
         notificationRuleDao.removeById(tenantId, id.getId());
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(id).build());
     }
 
     @Override

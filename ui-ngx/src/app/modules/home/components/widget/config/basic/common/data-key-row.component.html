@@ -22,126 +22,46 @@
       <mat-option [value]="true">{{ 'datakey.latest' | translate }}</mat-option>
     </mat-select>
   </mat-form-field>
-  <mat-form-field class="tb-inline-field tb-key-field" subscriptSizing="dynamic">
-    <mat-chip-grid #chipList [formControl]="keysFormControl">
-      <mat-chip-row class="tb-datakey-chip" *ngIf="modelValue?.type"
-                    (removed)="removeKey()">
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="4px" class="tb-attribute-chip">
-          <div class="tb-chip-labels">
-            <div class="tb-chip-label tb-chip-text tb-chip-icon">
-              <ng-container *ngIf="isEntityDatasource">
-                <mat-icon class="tb-mat-18 tb-datakey-icon" *ngIf="modelValue.type === dataKeyTypes.alarm"
-                          matTooltip="{{'datakey.alarm' | translate }}"
-                          matTooltipPosition="above">notifications</mat-icon>
-                <mat-icon class="tb-mat-18 tb-datakey-icon" *ngIf="modelValue.type === dataKeyTypes.attribute"
-                          matTooltip="{{'datakey.attributes' | translate }}"
-                          matTooltipPosition="above" svgIcon="mdi:alpha-a-circle-outline"></mat-icon>
-                <mat-icon class="tb-mat-18 tb-datakey-icon" *ngIf="modelValue.type === dataKeyTypes.entityField"
-                          matTooltip="{{'datakey.entity-field' | translate }}"
-                          matTooltipPosition="above" svgIcon="mdi:alpha-e-circle-outline"></mat-icon>
-                <mat-icon class="tb-mat-18 tb-datakey-icon" *ngIf="modelValue.type === dataKeyTypes.timeseries"
-                          matTooltip="{{'datakey.timeseries' | translate }}"
-                          matTooltipPosition="above">timeline</mat-icon>
-              </ng-container>
-            </div>
-            <div class="tb-chip-label tb-chip-text">
-              <strong>
-                <ng-container *ngTemplateOutlet="keyName"></ng-container>
-              </strong>
-            </div>
-          </div>
-          <button type="button"
-                  (click)="editKey()" mat-icon-button class="tb-mat-24">
-            <mat-icon class="tb-mat-18">edit</mat-icon>
-          </button>
-          <button matChipRemove
-                  type="button"
-                  mat-icon-button class="tb-mat-24">
-            <mat-icon class="tb-mat-18">close</mat-icon>
-          </button>
-        </div>
-      </mat-chip-row>
-      <input matInput
-             type="text"
-             placeholder="{{ 'widget-config.set' | translate }}"
-             #keyInput
-             [formControl]="keyFormControl"
-             matAutocompleteOrigin
-             [fxHide]="!!modelValue?.type"
-             [readonly]="!!modelValue?.type"
-             #origin="matAutocompleteOrigin"
-             [matAutocompleteConnectedTo]="origin"
-             (focusin)="onKeyInputFocus()"
-             (drop)="$event.preventDefault();"
-             [matAutocomplete]="keyAutocomplete"
-             [matChipInputFor]="chipList"
-             [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-             (matChipInputTokenEnd)="addKey($event)"
-      />
-    </mat-chip-grid>
-    <mat-autocomplete #keyAutocomplete="matAutocomplete"
-                      class="tb-autocomplete"
-                      panelWidth="fit-content"
-                      [displayWith]="displayKeyFn">
-      <mat-option *ngFor="let key of filteredKeys | async" [value]="key">
-      <span style="white-space: nowrap;">
-        <ng-container *ngIf="isEntityDatasource">
-          <mat-icon class="tb-datakey-icon" *ngIf="key.type === dataKeyTypes.alarm"
-                    matTooltip="{{'datakey.alarm' | translate }}"
-                    matTooltipPosition="above">notifications</mat-icon>
-          <mat-icon class="tb-datakey-icon" *ngIf="key.type === dataKeyTypes.attribute"
-                    matTooltip="{{'datakey.attributes' | translate }}"
-                    matTooltipPosition="above" svgIcon="mdi:alpha-a-circle-outline"></mat-icon>
-          <mat-icon class="tb-datakey-icon" *ngIf="key.type === dataKeyTypes.entityField"
-                    matTooltip="{{'datakey.entity-field' | translate }}"
-                    matTooltipPosition="above" svgIcon="mdi:alpha-e-circle-outline"></mat-icon>
-          <mat-icon class="tb-datakey-icon" *ngIf="key.type === dataKeyTypes.timeseries"
-                    matTooltip="{{'datakey.timeseries' | translate }}"
-                    matTooltipPosition="above">timeline</mat-icon>
-        </ng-container>
-        <span [innerHTML]="key.name | highlight:keySearchText"></span>
-      </span>
-      </mat-option>
-      <mat-option *ngIf="!(filteredKeys | async)?.length" [value]="null" class="tb-not-found">
-        <div class="tb-not-found-content" (click)="$event.stopPropagation()">
-          <div *ngIf="!textIsNotEmpty(keySearchText); else searchNotEmpty">
-            <span translate>entity.no-keys-found</span>
-          </div>
-          <ng-template #searchNotEmpty>
-          <span>
-            {{ translate.get('entity.no-key-matching',
-            {key: truncate.transform(keySearchText, true, 6, &apos;...&apos;)}) | async }}
-          </span>
-            <span *ngIf="!isEntityDatasource; else createEntityKey">
-            <a translate (click)="createKey(keySearchText)">entity.create-new-key</a>
-          </span>
-            <ng-template #createEntityKey>
-              <span>{{'entity.create-new-key' | translate }}  </span>
-              <mat-icon class="tb-datakey-icon new-key" *ngIf="widgetType === widgetTypes.alarm"
-                        matTooltip="{{'datakey.alarm' | translate }}"
-                        matTooltipPosition="above"
-                        (click)="createKey(keySearchText, dataKeyTypes.alarm)">notifications</mat-icon>
-              <mat-icon class="tb-datakey-icon new-key" *ngIf="widgetType === widgetTypes.latest || widgetType === widgetTypes.alarm"
-                        matTooltip="{{'datakey.attributes' | translate }}"
-                        matTooltipPosition="above" svgIcon="mdi:alpha-a-circle-outline"
-                        (click)="createKey(keySearchText, dataKeyTypes.attribute)"></mat-icon>
-              <mat-icon class="tb-datakey-icon new-key" *ngIf="widgetType === widgetTypes.latest || widgetType === widgetTypes.alarm"
-                        matTooltip="{{'datakey.entity-field' | translate }}"
-                        matTooltipPosition="above" svgIcon="mdi:alpha-e-circle-outline"
-                        (click)="createKey(keySearchText, dataKeyTypes.entityField)"></mat-icon>
-              <mat-icon class="tb-datakey-icon new-key"
-                        matTooltip="{{'datakey.timeseries' | translate }}"
-                        matTooltipPosition="above"
-                        (click)="createKey(keySearchText, dataKeyTypes.timeseries)">timeline</mat-icon>
-            </ng-template>
-          </ng-template>
-        </div>
-      </mat-option>
-    </mat-autocomplete>
-  </mat-form-field>
+  <tb-data-key-input
+    [required]="required"
+    [widgetType]="widgetType"
+    [datasourceType]="datasourceType"
+    [entityAliasId]="entityAliasId"
+    [deviceId]="deviceId"
+    [dataKeyType]="dataKeyType"
+    [isLatestDataKeys]="isLatestDataKeys"
+    [callbacks]="callbacks"
+    [generateKey]="generateDataKey"
+    (keyEdit)="editKey()"
+    [formControl]="keyFormControl">
+  </tb-data-key-input>
   <mat-form-field *ngIf="!hideDataKeyLabel" class="tb-inline-field tb-label-field" appearance="outline" subscriptSizing="dynamic">
     <input matInput formControlName="label" placeholder="{{ 'widget-config.set' | translate }}">
   </mat-form-field>
+  <div *ngIf="timeSeriesChart && showTimeSeriesType" class="tb-time-series-type-field">
+    <mat-form-field *ngIf="displayUnitsOrDigits" class="tb-inline-field fixed-height" appearance="outline" subscriptSizing="dynamic">
+      <mat-select formControlName="timeSeriesType" panelClass="tb-time-series-type-field">
+        <mat-select-trigger>
+          <tb-icon *ngIf="keyRowFormGroup.get('timeSeriesType').value">
+            {{ timeSeriesChartSeriesTypeIcons.get(keyRowFormGroup.get('timeSeriesType').value) }}
+          </tb-icon>
+        </mat-select-trigger>
+        <mat-option *ngFor="let type of timeSeriesChartSeriesTypes" [value]="type" class="flex">
+          <tb-icon>{{ timeSeriesChartSeriesTypeIcons.get(type) }}</tb-icon>
+          <span>{{ timeSeriesChartSeriesTypeTranslations.get(type) | translate }}</span>
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+  <div *ngIf="timeSeriesChart" class="tb-y-axis-field">
+    <mat-form-field *ngIf="displayUnitsOrDigits" class="tb-inline-field fixed-height" appearance="outline" subscriptSizing="dynamic">
+      <mat-select formControlName="yAxis">
+        <mat-option *ngFor="let yAxis of yAxisIds" [value]="yAxis">
+          {{ yAxis }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
   <div *ngIf="!hideDataKeyColor" class="tb-color-field">
     <tb-color-input asBoxInput
                     formControlName="color">
@@ -178,19 +98,3 @@
     </button>
   </div>
 </div>
-<ng-template #keyName>
-  <ng-container *ngIf="dataKeyHasPostprocessing(); else keyName">
-    <span>f(</span><ng-container *ngTemplateOutlet="keyNameTemplate"></ng-container><span>)</span>
-  </ng-container>
-  <ng-template #keyName>
-    <ng-container *ngTemplateOutlet="keyNameTemplate"></ng-container>
-  </ng-template>
-</ng-template>
-<ng-template #keyNameTemplate>
-  <ng-container *ngIf="dataKeyHasAggregation(); else keyName;">
-    <span class="tb-agg-func">{{ modelValue?.aggregationType }}</span><span>({{ modelValue?.name }})</span>
-  </ng-container>
-  <ng-template #keyName>
-    <span>{{modelValue?.name}}</span>
-  </ng-template>
-</ng-template>

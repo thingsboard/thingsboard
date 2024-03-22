@@ -55,6 +55,7 @@ import { HOME_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
 import { widgetSettingsComponentsMap } from '@home/components/widget/lib/settings/widget-settings.module';
 import { basicWidgetConfigComponentsMap } from '@home/components/widget/config/basic/basic-widget-config.module';
 import { IBasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
+import { TbTimeSeriesChart } from '@home/components/widget/lib/chart/time-series-chart';
 
 @Injectable()
 export class WidgetComponentService {
@@ -146,6 +147,11 @@ export class WidgetComponentService {
       widgetModulesTasks.push(from(import('@home/components/widget/lib/flot-widget')).pipe(
         tap((mod) => {
           (window as any).TbFlot = mod.TbFlot;
+        }))
+      );
+      widgetModulesTasks.push(from(import('@home/components/widget/lib/chart/time-series-chart')).pipe(
+        tap((mod) => {
+          (window as any).TbTimeSeriesChart = mod.TbTimeSeriesChart;
         }))
       );
       widgetModulesTasks.push(from(import('@home/components/widget/lib/analogue-compass')).pipe(
@@ -576,6 +582,9 @@ export class WidgetComponentService {
       }
       if (!isFunction(result.typeParameters.defaultLatestDataKeysFunction)) {
         result.typeParameters.defaultLatestDataKeysFunction = null;
+      }
+      if (!isFunction(result.typeParameters.dataKeySettingsFunction)) {
+        result.typeParameters.dataKeySettingsFunction = null;
       }
       if (isUndefined(result.typeParameters.displayRpcMessageToast)) {
         result.typeParameters.displayRpcMessageToast = true;

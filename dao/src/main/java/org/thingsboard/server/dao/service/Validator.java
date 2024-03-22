@@ -27,6 +27,7 @@ import org.thingsboard.server.dao.exception.IncorrectParameterException;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
 public class Validator {
@@ -47,6 +48,19 @@ public class Validator {
     }
 
     /**
+     * This method validate <code>EntityId</code> entity id. If entity id is invalid than throw
+     * <code>IncorrectParameterException</code> exception
+     *
+     * @param entityId                  the entityId
+     * @param errorMessageFunction      the error message for exception that apply entityId
+     */
+    public static void validateEntityId(EntityId entityId, Function<EntityId, String> errorMessageFunction) {
+        if (entityId == null || entityId.getId() == null) {
+            throw new IncorrectParameterException(errorMessageFunction.apply(entityId));
+        }
+    }
+
+    /**
      * This method validate <code>String</code> string. If string is invalid than throw
      * <code>IncorrectParameterException</code> exception
      *
@@ -59,6 +73,18 @@ public class Validator {
         }
     }
 
+    /*
+     * This method validate <code>String</code> string. If string is invalid than throw
+     * <code>IncorrectParameterException</code> exception
+     *
+     * @param val                       the value
+     * @param errorMessageFunction      the error message function that apply value
+     */
+    public static void validateString(String val, Function<String, String> errorMessageFunction) {
+        if (val == null || val.isEmpty()) {
+            throw new IncorrectParameterException(errorMessageFunction.apply(val));
+        }
+    }
 
     /**
      * This method validate <code>long</code> value. If value isn't positive than throw
