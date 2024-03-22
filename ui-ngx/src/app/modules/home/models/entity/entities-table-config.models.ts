@@ -120,8 +120,9 @@ export class EntityLinkTableColumn<T extends BaseData<HasId>> extends BaseEntity
               public title: string,
               public width: string = '0px',
               public cellContentFunction: CellContentFunction<T> = (entity, property) => entity[property] ? entity[property] : '',
-              public entityURL: (entity) => string) {
-    super('link', key, title, width, false);
+              public entityURL: (entity) => string,
+              public sortable: boolean = true) {
+    super('link', key, title, width, sortable);
   }
 }
 

@@ -22,8 +22,8 @@ import io.netty.handler.ssl.SslContext;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import java.util.Random;
 
 @SuppressWarnings({"WeakerAccess", "unused"})

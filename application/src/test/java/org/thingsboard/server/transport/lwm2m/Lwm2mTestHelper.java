@@ -34,12 +34,15 @@ public class Lwm2mTestHelper {
     public static final int RESOURCE_ID_2 = 2;
     public static final int RESOURCE_ID_3 = 3;
     public static final int RESOURCE_ID_4 = 4;
+    public static final int RESOURCE_ID_5 = 5;
+    public static final int RESOURCE_ID_6 = 6;
     public static final int RESOURCE_ID_7 = 7;
     public static final int RESOURCE_ID_8 = 8;
     public static final int RESOURCE_ID_9 = 9;
     public static final int RESOURCE_ID_11 = 11;
     public static final int RESOURCE_ID_14 = 14;
     public static final int RESOURCE_ID_15 = 15;
+    public static final int RESOURCE_INSTANCE_ID_0 = 0;
     public static final int RESOURCE_INSTANCE_ID_2 = 2;
 
     public static final String RESOURCE_ID_NAME_3_9 = "batteryLevel";
@@ -50,7 +53,7 @@ public class Lwm2mTestHelper {
 
     public enum LwM2MClientState {
 
-        ON_INIT(1, "onInit"),
+        ON_INIT(0, "onInit"),
         ON_BOOTSTRAP_STARTED(1, "onBootstrapStarted"),
         ON_BOOTSTRAP_SUCCESS(2, "onBootstrapSuccess"),
         ON_BOOTSTRAP_FAILURE(3, "onBootstrapFailure"),
@@ -67,7 +70,9 @@ public class Lwm2mTestHelper {
         ON_DEREGISTRATION_SUCCESS(13, "onDeregistrationSuccess"),
         ON_DEREGISTRATION_FAILURE(14, "onDeregistrationFailure"),
         ON_DEREGISTRATION_TIMEOUT(15, "onDeregistrationTimeout"),
-        ON_EXPECTED_ERROR(16, "onUnexpectedError");
+        ON_EXPECTED_ERROR(16, "onUnexpectedError"),
+        ON_READ_CONNECTION_ID (17, "onReadConnection"),
+        ON_WRITE_CONNECTION_ID (18, "onWriteConnection");
 
         public int code;
         public String type;

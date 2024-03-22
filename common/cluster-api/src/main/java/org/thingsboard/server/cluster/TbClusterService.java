@@ -19,6 +19,7 @@ import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -67,7 +68,7 @@ public interface TbClusterService extends TbQueueClusterService {
 
     void broadcastEntityStateChangeEvent(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent state);
 
-    void onDeviceProfileChange(DeviceProfile deviceProfile, TbQueueCallback callback);
+    void onDeviceProfileChange(DeviceProfile deviceProfile, DeviceProfile oldDeviceProfile, TbQueueCallback callback);
 
     void onDeviceProfileDelete(DeviceProfile deviceProfile, TbQueueCallback callback);
 
@@ -87,9 +88,9 @@ public interface TbClusterService extends TbQueueClusterService {
 
     void onDeviceAssignedToTenant(TenantId oldTenantId, Device device);
 
-    void onResourceChange(TbResource resource, TbQueueCallback callback);
+    void onResourceChange(TbResourceInfo resource, TbQueueCallback callback);
 
-    void onResourceDeleted(TbResource resource, TbQueueCallback callback);
+    void onResourceDeleted(TbResourceInfo resource, TbQueueCallback callback);
 
     void onEdgeEventUpdate(TenantId tenantId, EdgeId edgeId);
 

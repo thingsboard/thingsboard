@@ -64,7 +64,7 @@ LEGAL DISCLAIMER
 		<ObjectID>3</ObjectID>
 		<ObjectURN>urn:oma:lwm2m:oma:3:1.0</ObjectURN>
 		<LWM2MVersion>1.1</LWM2MVersion>
-		<ObjectVersion>1.0</ObjectVersion>
+		<ObjectVersion>1.2</ObjectVersion>
 		<MultipleInstances>Single</MultipleInstances>
 		<Mandatory>Mandatory</Mandatory>
 		<Resources>

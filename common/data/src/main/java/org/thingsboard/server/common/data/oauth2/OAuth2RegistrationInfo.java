@@ -16,8 +16,7 @@
 package org.thingsboard.server.common.data.oauth2;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -33,34 +32,34 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@ApiModel
+@Schema
 public class OAuth2RegistrationInfo {
-    @ApiModelProperty(value = "Config for mapping OAuth2 log in response to platform entities", required = true)
+    @Schema(description = "Config for mapping OAuth2 log in response to platform entities", required = true)
     private OAuth2MapperConfig mapperConfig;
-    @ApiModelProperty(value = "OAuth2 client ID. Cannot be empty", required = true)
+    @Schema(description = "OAuth2 client ID. Cannot be empty", required = true)
     private String clientId;
-    @ApiModelProperty(value = "OAuth2 client secret. Cannot be empty", required = true)
+    @Schema(description = "OAuth2 client secret. Cannot be empty", required = true)
     private String clientSecret;
-    @ApiModelProperty(value = "Authorization URI of the OAuth2 provider. Cannot be empty", required = true)
+    @Schema(description = "Authorization URI of the OAuth2 provider. Cannot be empty", required = true)
     private String authorizationUri;
-    @ApiModelProperty(value = "Access token URI of the OAuth2 provider. Cannot be empty", required = true)
+    @Schema(description = "Access token URI of the OAuth2 provider. Cannot be empty", required = true)
     private String accessTokenUri;
-    @ApiModelProperty(value = "OAuth scopes that will be requested from OAuth2 platform. Cannot be empty", required = true)
+    @Schema(description = "OAuth scopes that will be requested from OAuth2 platform. Cannot be empty", required = true)
     private List<String> scope;
-    @ApiModelProperty(value = "User info URI of the OAuth2 provider")
+    @Schema(description = "User info URI of the OAuth2 provider")
     private String userInfoUri;
-    @ApiModelProperty(value = "Name of the username attribute in OAuth2 provider response. Cannot be empty")
+    @Schema(description = "Name of the username attribute in OAuth2 provider response. Cannot be empty")
     private String userNameAttributeName;
-    @ApiModelProperty(value = "JSON Web Key URI of the OAuth2 provider")
+    @Schema(description = "JSON Web Key URI of the OAuth2 provider")
     private String jwkSetUri;
-    @ApiModelProperty(value = "Client authentication method to use: 'BASIC' or 'POST'. Cannot be empty", required = true)
+    @Schema(description = "Client authentication method to use: 'BASIC' or 'POST'. Cannot be empty", required = true)
     private String clientAuthenticationMethod;
-    @ApiModelProperty(value = "OAuth2 provider label. Cannot be empty", required = true)
+    @Schema(description = "OAuth2 provider label. Cannot be empty", required = true)
     private String loginButtonLabel;
-    @ApiModelProperty(value = "Log in button icon for OAuth2 provider")
+    @Schema(description = "Log in button icon for OAuth2 provider")
     private String loginButtonIcon;
-    @ApiModelProperty(value = "List of platforms for which usage of the OAuth2 client is allowed (empty for all allowed)")
+    @Schema(description = "List of platforms for which usage of the OAuth2 client is allowed (empty for all allowed)")
     private List<PlatformType> platforms;
-    @ApiModelProperty(value = "Additional info of OAuth2 client (e.g. providerName)", required = true)
+    @Schema(description = "Additional info of OAuth2 client (e.g. providerName)", required = true)
     private JsonNode additionalInfo;
 }
