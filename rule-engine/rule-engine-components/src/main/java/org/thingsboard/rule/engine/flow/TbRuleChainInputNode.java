@@ -15,6 +15,8 @@
  */
 package org.thingsboard.rule.engine.flow;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -22,8 +24,13 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.UUID;
@@ -33,6 +40,7 @@ import java.util.UUID;
         type = ComponentType.FLOW,
         name = "rule chain",
         configClazz = TbRuleChainInputNodeConfiguration.class,
+        version = 1,
         nodeDescription = "transfers the message to another rule chain",
         nodeDetails = "Allows to nest the rule chain similar to single rule node. " +
                 "The incoming message is forwarded to the input node of the specified target rule chain. " +
@@ -48,17 +56,72 @@ public class TbRuleChainInputNode implements TbNode {
 
     private TbRuleChainInputNodeConfiguration config;
     private RuleChainId ruleChainId;
+    private boolean forwardMsgToRootRuleChain;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbRuleChainInputNodeConfiguration.class);
-        this.ruleChainId = new RuleChainId(UUID.fromString(config.getRuleChainId()));
+        this.forwardMsgToRootRuleChain = config.isForwardMsgToRootRuleChain();
+        if (forwardMsgToRootRuleChain) {
+            this.ruleChainId = getRootRuleChainId(ctx);
+            return;
+        }
+        UUID ruleChainUUID;
+        try {
+            ruleChainUUID = UUID.fromString(config.getRuleChainId());
+        } catch (Exception e) {
+            throw new TbNodeException("Failed to parse rule chain id: " + config.getRuleChainId(), true);
+        }
+        this.ruleChainId = new RuleChainId(ruleChainUUID);
         ctx.checkTenantEntity(ruleChainId);
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        ctx.input(msg, ruleChainId);
+        ctx.input(msg, getRuleChainId(ctx, msg));
     }
 
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0:
+                if (!oldConfiguration.has("forwardMsgToRootRuleChain")) {
+                    hasChanges = true;
+                    ((ObjectNode) oldConfiguration).put("forwardMsgToRootRuleChain", false);
+                }
+                break;
+            default:
+                break;
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
+    }
+
+    private RuleChainId getRuleChainId(TbContext ctx, TbMsg msg) {
+        if (!forwardMsgToRootRuleChain) {
+            return this.ruleChainId;
+        }
+        RuleChainId targetRuleChainId = null;
+        switch (msg.getOriginator().getEntityType()) {
+            case DEVICE:
+                targetRuleChainId = ctx.getDeviceProfileCache().get(ctx.getTenantId(), (DeviceId) msg.getOriginator()).getDefaultRuleChainId();
+                break;
+            case ASSET:
+                targetRuleChainId = ctx.getAssetProfileCache().get(ctx.getTenantId(), (AssetId) msg.getOriginator()).getDefaultRuleChainId();
+                break;
+        }
+        if (targetRuleChainId == null) {
+            targetRuleChainId = this.ruleChainId;
+        }
+        return targetRuleChainId;
+    }
+
+    private RuleChainId getRootRuleChainId(TbContext ctx) throws TbNodeException {
+        TenantId currentTenantId = ctx.getTenantId();
+        RuleChain rootTenantRuleChain = ctx.getRuleChainService().getRootTenantRuleChain(currentTenantId);
+        if (rootTenantRuleChain == null) {
+            throw new TbNodeException("Failed to find root rule chain for tenant with id: " + currentTenantId.getId(), true);
+        }
+        return rootTenantRuleChain.getId();
+    }
 }
