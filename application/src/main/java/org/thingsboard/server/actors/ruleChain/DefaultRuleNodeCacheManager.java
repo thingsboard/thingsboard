@@ -17,8 +17,8 @@ package org.thingsboard.server.actors.ruleChain;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.util.SerializationUtils;
-import org.thingsboard.rule.engine.api.RuleNodeCacheService;
-import org.thingsboard.server.cache.rule.RuleNodeCache;
+import org.thingsboard.rule.engine.api.RuleNodeCacheManager;
+import org.thingsboard.server.cache.RedisSetCacheProvider;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -29,10 +29,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
-public class DefaultTbRuleNodeCacheService implements RuleNodeCacheService {
+public class DefaultRuleNodeCacheManager implements RuleNodeCacheManager {
 
     private final RuleNodeId ruleNodeId;
-    private final RuleNodeCache cache;
+    private final RedisSetCacheProvider cache;
 
     @Override
     public void add(String key, String value) {

@@ -39,7 +39,7 @@ import org.thingsboard.script.api.js.JsInvokeService;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.actors.service.ActorService;
 import org.thingsboard.server.actors.tenant.DebugTbRateLimits;
-import org.thingsboard.server.cache.rule.RuleNodeCache;
+import org.thingsboard.server.cache.RedisSetCacheProvider;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.event.ErrorEvent;
 import org.thingsboard.server.common.data.event.LifecycleEvent;
@@ -255,7 +255,7 @@ public class ActorSystemContext {
 
     @Autowired(required = false)
     @Getter
-    private RuleNodeCache ruleNodeCache;
+    private RedisSetCacheProvider redisSetCacheProvider;
 
     @Autowired
     @Getter

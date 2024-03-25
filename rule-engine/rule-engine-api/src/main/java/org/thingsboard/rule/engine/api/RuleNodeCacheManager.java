@@ -21,7 +21,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import java.util.List;
 import java.util.Set;
 
-public interface RuleNodeCacheService {
+public interface RuleNodeCacheManager {
 
     void add(String key, String value);
 

@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.cache.rule;
+package org.thingsboard.server.cache;
 
 import java.util.Set;
 
-public interface RuleNodeCache {
+public interface RedisSetCacheProvider {
 
     void add(byte[] key, byte[] value);
 

@@ -31,7 +31,7 @@ import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceStateManager;
 import org.thingsboard.rule.engine.api.RuleEngineRpcService;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
-import org.thingsboard.rule.engine.api.RuleNodeCacheService;
+import org.thingsboard.rule.engine.api.RuleNodeCacheManager;
 import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -131,14 +131,14 @@ class DefaultTbContext implements TbContext {
     private final ActorSystemContext mainCtx;
     private final String ruleChainName;
     private final RuleNodeCtx nodeCtx;
-    private final RuleNodeCacheService ruleNodeCacheService;
+    private final RuleNodeCacheManager ruleNodeCacheManager;
 
     public DefaultTbContext(ActorSystemContext mainCtx, String ruleChainName, RuleNodeCtx nodeCtx) {
         this.mainCtx = mainCtx;
         this.ruleChainName = ruleChainName;
         this.nodeCtx = nodeCtx;
-        this.ruleNodeCacheService = mainCtx.getRuleNodeCache() != null ?
-                new DefaultTbRuleNodeCacheService(getSelfId(), mainCtx.getRuleNodeCache()) : null;
+        this.ruleNodeCacheManager = mainCtx.getRedisSetCacheProvider() != null ?
+                new DefaultRuleNodeCacheManager(getSelfId(), mainCtx.getRedisSetCacheProvider()) : null;
     }
 
     @Override
@@ -896,8 +896,8 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public Optional<RuleNodeCacheService> getRuleNodeCacheService() {
-        return Optional.ofNullable(ruleNodeCacheService);
+    public Optional<RuleNodeCacheManager> getRuleNodeCacheManager() {
+        return Optional.ofNullable(ruleNodeCacheManager);
     }
 
     @Override

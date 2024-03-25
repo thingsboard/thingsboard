@@ -391,7 +391,7 @@ public interface TbContext {
 
     void clearRuleNodeStates();
 
-    Optional<RuleNodeCacheService> getRuleNodeCacheService();
+    Optional<RuleNodeCacheManager> getRuleNodeCacheManager();
 
     void addTenantProfileListener(Consumer<TenantProfile> listener);
 

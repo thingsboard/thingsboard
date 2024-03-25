@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.cache.rule;
+package org.thingsboard.server.cache;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -29,7 +29,7 @@ import java.util.Set;
 @Service
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
 @RequiredArgsConstructor
-public class RedisRuleNodeCache implements RuleNodeCache {
+public class DefaultRedisSetCacheProvider implements RedisSetCacheProvider {
 
     private static final int SCAN_COUNT = 1000;
     private static final ScanOptions OPTIONS = ScanOptions.scanOptions().count(SCAN_COUNT).build();

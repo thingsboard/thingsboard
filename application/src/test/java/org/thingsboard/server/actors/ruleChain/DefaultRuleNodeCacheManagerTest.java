@@ -18,12 +18,12 @@ package org.thingsboard.server.actors.ruleChain;
 import com.google.protobuf.ByteString;
 import org.apache.commons.math3.random.RandomDataGenerator;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.util.SerializationUtils;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
-import org.thingsboard.rule.engine.api.RuleNodeCacheService;
-import org.thingsboard.server.cache.rule.RuleNodeCache;
+import org.thingsboard.rule.engine.api.RuleNodeCacheManager;
+import org.thingsboard.server.cache.RedisSetCacheProvider;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -43,20 +43,20 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class DefaultTbRuleNodeCacheServiceTest {
+class DefaultRuleNodeCacheManagerTest {
 
 
     private static final RandomDataGenerator randomPartitionGenerator = new RandomDataGenerator();
 
-    private static RuleNodeId ruleNodeId;
-    private static RuleNodeCache cache;
-    private static RuleNodeCacheService ruleNodeCacheService;
+    private RuleNodeId ruleNodeId;
+    private RedisSetCacheProvider cache;
+    private RuleNodeCacheManager ruleNodeCacheManager;
 
-    @BeforeAll
-    public static void beforeTest() {
+    @BeforeEach
+    public void beforeTest() {
         ruleNodeId = new RuleNodeId(UUID.randomUUID());
-        cache = mock(RuleNodeCache.class);
-        ruleNodeCacheService = spy(new DefaultTbRuleNodeCacheService(ruleNodeId, cache));
+        cache = mock(RedisSetCacheProvider.class);
+        ruleNodeCacheManager = spy(new DefaultRuleNodeCacheManager(ruleNodeId, cache));
     }
 
     @Test
@@ -65,7 +65,7 @@ class DefaultTbRuleNodeCacheServiceTest {
         String value = RandomStringUtils.randomAlphabetic(5);
         byte[] cacheKey = toRuleNodeCacheKey(ruleNodeId, key);
         byte[] cacheValue = value.getBytes();
-        ruleNodeCacheService.add(key, value);
+        ruleNodeCacheManager.add(key, value);
         verify(cache).add(eq(cacheKey), eq(cacheValue));
     }
 
@@ -75,7 +75,7 @@ class DefaultTbRuleNodeCacheServiceTest {
         EntityId entityId = new DeviceId(UUID.randomUUID());
         byte[] cacheKey = toRuleNodeCacheKey(ruleNodeId, key);
         byte[] cacheValue = SerializationUtils.serialize(entityId);
-        ruleNodeCacheService.add(key, entityId);
+        ruleNodeCacheManager.add(key, entityId);
         verify(cache).add(eq(cacheKey), eq(cacheValue));
     }
 
@@ -91,7 +91,7 @@ class DefaultTbRuleNodeCacheServiceTest {
         int partition = randomPartitionGenerator.nextInt(0, 10);
         byte[] cacheKey = toRuleNodeCacheKey(ruleNodeId, partition, originator);
         byte[] cacheValue = TbMsg.toByteArray(msg);
-        ruleNodeCacheService.add(originator, partition, msg);
+        ruleNodeCacheManager.add(originator, partition, msg);
         verify(cache).add(eq(cacheKey), eq(cacheValue));
     }
 
@@ -102,7 +102,7 @@ class DefaultTbRuleNodeCacheServiceTest {
         List<String> stringList = Collections.singletonList(value);
         byte[] cacheKey = toRuleNodeCacheKey(ruleNodeId, key);
         byte[][] cacheValues = stringListToBytes(stringList);
-        ruleNodeCacheService.removeStringList(key, stringList);
+        ruleNodeCacheManager.removeStringList(key, stringList);
         verify(cache).remove(eq(cacheKey), eq(cacheValues));
     }
 
@@ -113,7 +113,7 @@ class DefaultTbRuleNodeCacheServiceTest {
         List<EntityId> entityIdList = Collections.singletonList(entityId);
         byte[] cacheKey = toRuleNodeCacheKey(ruleNodeId, key);
         byte[][] cacheValues = entityIdListToBytes(entityIdList);
-        ruleNodeCacheService.removeEntityIdList(key, entityIdList);
+        ruleNodeCacheManager.removeEntityIdList(key, entityIdList);
         verify(cache).remove(eq(cacheKey), eq(cacheValues));
     }
 
@@ -130,7 +130,7 @@ class DefaultTbRuleNodeCacheServiceTest {
         int partition = randomPartitionGenerator.nextInt(0, 10);
         byte[] cacheKey = toRuleNodeCacheKey(ruleNodeId, partition, originator);
         byte[][] cacheValues = tbMsgListToBytes(tbMsgList);
-        ruleNodeCacheService.removeTbMsgList(originator, partition, tbMsgList);
+        ruleNodeCacheManager.removeTbMsgList(originator, partition, tbMsgList);
         verify(cache).remove(eq(cacheKey), eq(cacheValues));
     }
 
@@ -143,7 +143,7 @@ class DefaultTbRuleNodeCacheServiceTest {
         Set<String> expectedSet = Collections.singleton(value);
 
         when(cache.get(eq(cacheKey))).thenReturn(cacheValuesInBytes);
-        Set<String> actualSet = ruleNodeCacheService.getStrings(key);
+        Set<String> actualSet = ruleNodeCacheManager.getStrings(key);
 
         verify(cache).get(eq(cacheKey));
         Assertions.assertEquals(expectedSet, actualSet);
@@ -158,7 +158,7 @@ class DefaultTbRuleNodeCacheServiceTest {
         Set<EntityId> expectedSet = Collections.singleton(entityId);
 
         when(cache.get(eq(cacheKey))).thenReturn(cacheValuesInBytes);
-        Set<EntityId> actualSet = ruleNodeCacheService.getEntityIds(key);
+        Set<EntityId> actualSet = ruleNodeCacheManager.getEntityIds(key);
 
         verify(cache).get(eq(cacheKey));
         Assertions.assertEquals(expectedSet, actualSet);
@@ -179,7 +179,7 @@ class DefaultTbRuleNodeCacheServiceTest {
         byte[] cacheKey = toRuleNodeCacheKey(ruleNodeId, partition, originator);
 
         when(cache.get(eq(cacheKey))).thenReturn(cacheValuesInBytes);
-        Set<TbMsg> actualTbMsgSet = ruleNodeCacheService.getTbMsgs(originator, partition);
+        Set<TbMsg> actualTbMsgSet = ruleNodeCacheManager.getTbMsgs(originator, partition);
 
         verify(cache).get(eq(cacheKey));
         Optional<TbMsg> first = actualTbMsgSet.stream().findFirst();
@@ -192,7 +192,7 @@ class DefaultTbRuleNodeCacheServiceTest {
     void test_givenStringKey_whenEvict_thenVerifyCacheCallMethodArguments() {
         String key = RandomStringUtils.randomAlphabetic(5);
         byte[] cacheKey = toRuleNodeCacheKey(ruleNodeId, key);
-        ruleNodeCacheService.evict(key);
+        ruleNodeCacheManager.evict(key);
         verify(cache).evict(eq(cacheKey));
     }
 
@@ -201,7 +201,7 @@ class DefaultTbRuleNodeCacheServiceTest {
         EntityId key = new DeviceId(UUID.randomUUID());
         int partition = randomPartitionGenerator.nextInt(0, 10);
         byte[] cacheKey = toRuleNodeCacheKey(ruleNodeId, partition, key);
-        ruleNodeCacheService.evictTbMsgs(key, partition);
+        ruleNodeCacheManager.evictTbMsgs(key, partition);
         verify(cache).evict(eq(cacheKey));
     }
 
