@@ -27,8 +27,8 @@ import org.thingsboard.server.common.data.TbTransportService;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.transport.coap.efento.CoapEfentoTransportResource;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.net.UnknownHostException;
 
 @Service("CoapTransportService")

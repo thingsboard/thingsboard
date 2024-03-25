@@ -35,6 +35,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.server.common.data.mail.MailOauth2Provider.OFFICE_365;
 
@@ -46,28 +47,42 @@ public class RefreshTokenExpCheckService {
     public static final int AZURE_DEFAULT_REFRESH_TOKEN_LIFETIME_IN_DAYS = 90;
     private final AdminSettingsService adminSettingsService;
 
-    @Scheduled(initialDelayString = "#{T(org.apache.commons.lang3.RandomUtils).nextLong(0, ${mail.oauth2.refreshTokenCheckingInterval})}", fixedDelayString = "${mail.oauth2.refreshTokenCheckingInterval}")
+    @Scheduled(initialDelayString = "#{T(org.apache.commons.lang3.RandomUtils).nextLong(0, ${mail.oauth2.refreshTokenCheckingInterval})}",
+            fixedDelayString = "${mail.oauth2.refreshTokenCheckingInterval}",
+            timeUnit = TimeUnit.SECONDS)
     public void check() throws IOException {
         AdminSettings settings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
         if (settings != null && settings.getJsonValue().has("enableOauth2") && settings.getJsonValue().get("enableOauth2").asBoolean()) {
             JsonNode jsonValue = settings.getJsonValue();
-            if (OFFICE_365.name().equals(jsonValue.get("providerId").asText()) && jsonValue.has("refreshTokenExpires")) {
-                long expiresIn = jsonValue.get("refreshTokenExpires").longValue();
-                if ((expiresIn - System.currentTimeMillis()) < 604800000L) { //less than 7 days
-                    log.info("Trying to refresh refresh token.");
+            if (OFFICE_365.name().equals(jsonValue.get("providerId").asText()) && jsonValue.has("refreshToken")
+                    && jsonValue.has("refreshTokenExpires")) {
+                try {
+                    long expiresIn = jsonValue.get("refreshTokenExpires").longValue();
+                    long tokenLifeDuration = expiresIn - System.currentTimeMillis();
+                    if (tokenLifeDuration < 0) {
+                        ((ObjectNode) jsonValue).put("tokenGenerated", false);
+                        ((ObjectNode) jsonValue).remove("refreshToken");
+                        ((ObjectNode) jsonValue).remove("refreshTokenExpires");
 
-                    String clientId = jsonValue.get("clientId").asText();
-                    String clientSecret = jsonValue.get("clientSecret").asText();
-                    String refreshToken = jsonValue.get("refreshToken").asText();
-                    String tokenUri = jsonValue.get("tokenUri").asText();
+                        adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, settings);
+                    } else if (tokenLifeDuration < 604800000L) { //less than 7 days
+                        log.info("Trying to refresh refresh token.");
 
-                    TokenResponse tokenResponse = new RefreshTokenRequest(new NetHttpTransport(), new GsonFactory(),
-                            new GenericUrl(tokenUri), refreshToken)
-                            .setClientAuthentication(new ClientParametersAuthentication(clientId, clientSecret))
-                            .execute();
-                    ((ObjectNode)jsonValue).put("refreshToken", tokenResponse.getRefreshToken());
-                    ((ObjectNode)jsonValue).put("refreshTokenExpires", Instant.now().plus(Duration.ofDays(AZURE_DEFAULT_REFRESH_TOKEN_LIFETIME_IN_DAYS)).toEpochMilli());
-                    adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, settings);
+                        String clientId = jsonValue.get("clientId").asText();
+                        String clientSecret = jsonValue.get("clientSecret").asText();
+                        String refreshToken = jsonValue.get("refreshToken").asText();
+                        String tokenUri = jsonValue.get("tokenUri").asText();
+
+                        TokenResponse tokenResponse = new RefreshTokenRequest(new NetHttpTransport(), new GsonFactory(),
+                                new GenericUrl(tokenUri), refreshToken)
+                                .setClientAuthentication(new ClientParametersAuthentication(clientId, clientSecret))
+                                .execute();
+                        ((ObjectNode) jsonValue).put("refreshToken", tokenResponse.getRefreshToken());
+                        ((ObjectNode) jsonValue).put("refreshTokenExpires", Instant.now().plus(Duration.ofDays(AZURE_DEFAULT_REFRESH_TOKEN_LIFETIME_IN_DAYS)).toEpochMilli());
+                        adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, settings);
+                    }
+                } catch (Exception e) {
+                    log.error("Error occurred while checking token", e);
                 }
             }
         }

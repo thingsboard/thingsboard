@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.common.data.kv;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import java.util.Optional;
 
 /**

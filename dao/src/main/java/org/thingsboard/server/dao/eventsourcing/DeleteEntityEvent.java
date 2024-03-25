@@ -27,6 +27,7 @@ public class DeleteEntityEvent<T> {
     private final TenantId tenantId;
     private final EntityId entityId;
     private final T entity;
+    private final String body;
 
     @Builder.Default
     private final long ts = System.currentTimeMillis();

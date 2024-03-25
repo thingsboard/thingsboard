@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.device.credentials.lwm2m.RPKClientCred
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.transport.lwm2m.security.AbstractSecurityLwM2MIntegrationTest;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 
@@ -49,21 +49,20 @@ public class RpkLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
         RPKClientCredential clientCredentials = new RPKClientCredential();
         clientCredentials.setEndpoint(clientEndpoint);
         clientCredentials.setKey(Base64.encodeBase64String(certificate.getPublicKey().getEncoded()));
-        Security securityBs = rpk(SECURE_URI,
+        Security security = rpk(SECURE_URI,
                 shortServerId,
                 certificate.getPublicKey().getEncoded(),
                 privateKey.getEncoded(),
                 serverX509Cert.getPublicKey().getEncoded());
         Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(RPK, NONE));
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, privateKey, certificate, RPK, false);
-        this.basicTestConnection(securityBs,
+        this.basicTestConnection(security, null,
                 deviceCredentials,
-                COAP_CONFIG,
                 clientEndpoint,
                 transportConfiguration,
                 "await on client state (Rpk_Lwm2m)",
                 expectedStatusesRegistrationLwm2mSuccess,
-                false,
+                true,
                 ON_REGISTRATION_SUCCESS,
                 true);
     }
@@ -117,14 +116,13 @@ public class RpkLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
                 serverX509CertBs.getPublicKey().getEncoded());
         Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(RPK, BOTH));
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, clientPrivateKeyFromCertTrust, certificate, RPK, false);
-        this.basicTestConnection(securityBs,
+        this.basicTestConnection(null, securityBs,
                 deviceCredentials,
-                COAP_CONFIG_BS,
                 clientEndpoint,
                 transportConfiguration,
                 "await on client state (RpkBS two section)",
                 expectedStatusesRegistrationBsSuccess,
-                true,
+                false,
                 ON_REGISTRATION_SUCCESS,
                 true);
     }

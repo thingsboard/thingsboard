@@ -30,6 +30,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -137,7 +138,7 @@ class TbGpsGeofencingActionNodeTest extends AbstractRuleNodeUpgradeTest {
         node.onMsg(ctx, msg);
 
         // THEN
-        verify(ctx.getAttributesService(), never()).find(any(), any(), any(), anyString());
+        verify(ctx.getAttributesService(), never()).find(any(), any(), any(AttributeScope.class), anyString());
         verify(ctx, never()).tellFailure(any(), any(Throwable.class));
         verify(ctx, never()).enqueueForTellNext(any(), eq(expectedOutput), any(), any());
         verify(ctx, never()).ack(any());

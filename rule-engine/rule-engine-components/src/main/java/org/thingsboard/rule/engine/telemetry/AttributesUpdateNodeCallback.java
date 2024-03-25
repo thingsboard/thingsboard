@@ -19,7 +19,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.util.List;
 
 public class AttributesUpdateNodeCallback extends TelemetryNodeCallback {
