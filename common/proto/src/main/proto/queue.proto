@@ -133,9 +133,9 @@ message KeyValueProto {
 }
 
 enum AttributeScopeProto {
-    CLIENT_SCOPE = 0;
-    SERVER_SCOPE = 1;
-    SHARED_SCOPE = 2;
+  CLIENT_SCOPE = 0;
+  SERVER_SCOPE = 1;
+  SHARED_SCOPE = 2;
 }
 
 message AttributeKey {
@@ -395,7 +395,7 @@ message GetOrCreateDeviceFromGatewayResponseMsg {
 }
 
 enum TransportApiRequestErrorCode {
-  UNKNOWN_TRANSPORT_API_ERROR  = 0;
+  UNKNOWN_TRANSPORT_API_ERROR = 0;
   ENTITY_LIMIT = 1;
 }
 
@@ -1437,7 +1437,7 @@ message ToCoreMsg {
   DeviceStateServiceMsgProto deviceStateServiceMsg = 2;
   SubscriptionMgrMsgProto toSubscriptionMgrMsg = 3;
   bytes toDeviceActorNotificationMsg = 4 [deprecated = true];
-  EdgeNotificationMsgProto edgeNotificationMsg = 5;
+  EdgeNotificationMsgProto edgeNotificationMsg = 5 [deprecated = true];
   DeviceActivityProto deviceActivityMsg = 6;
   NotificationSchedulerServiceMsg notificationSchedulerServiceMsg = 7;
   LifecycleEventProto lifecycleEventMsg = 8;
@@ -1460,10 +1460,22 @@ message ToCoreNotificationMsg {
   NotificationRuleProcessorMsg notificationRuleProcessorMsg = 7;
   ComponentLifecycleMsgProto componentLifecycle = 8;
   CoreStartupMsg coreStartupMsg = 9;
-  EdgeEventUpdateMsgProto edgeEventUpdate = 10;
-  ToEdgeSyncRequestMsgProto toEdgeSyncRequest = 11;
-  FromEdgeSyncResponseMsgProto fromEdgeSyncResponse = 12;
+  EdgeEventUpdateMsgProto edgeEventUpdate = 10 [deprecated = true];
+  ToEdgeSyncRequestMsgProto toEdgeSyncRequest = 11 [deprecated = true];
+  FromEdgeSyncResponseMsgProto fromEdgeSyncResponse = 12 [deprecated = true];
   ResourceCacheInvalidateMsg resourceCacheInvalidateMsg = 13;
+}
+
+
+/* Messages to Edge queue that are handled by ThingsBoard Core Service */
+message ToEdgeMsg {
+  EdgeNotificationMsgProto edgeNotificationMsg = 1;
+}
+
+message ToEdgeNotificationMsg {
+  EdgeEventUpdateMsgProto edgeEventUpdate = 1;
+  ToEdgeSyncRequestMsgProto toEdgeSyncRequest = 2;
+  FromEdgeSyncResponseMsgProto fromEdgeSyncResponse = 3;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */

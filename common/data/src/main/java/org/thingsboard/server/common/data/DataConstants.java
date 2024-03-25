@@ -136,6 +136,7 @@ public class DataConstants {
     public static final String HP_QUEUE_TOPIC = "tb_rule_engine.hp";
     public static final String SQ_QUEUE_NAME = "SequentialByOriginator";
     public static final String SQ_QUEUE_TOPIC = "tb_rule_engine.sq";
+    public static final String EDGE_QUEUE_NAME = "Edge";
     public static final String QUEUE_NAME = "queueName";
 
 }

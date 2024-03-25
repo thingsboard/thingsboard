@@ -238,4 +238,5 @@ public class EdgeEventSourcingListener {
         }
         return isCreated ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED;
     }
+
 }

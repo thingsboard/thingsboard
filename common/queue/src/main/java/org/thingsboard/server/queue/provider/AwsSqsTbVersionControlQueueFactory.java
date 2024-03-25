@@ -42,7 +42,6 @@ public class AwsSqsTbVersionControlQueueFactory implements TbVersionControlQueue
     private final TbQueueVersionControlSettings vcSettings;
     private final TopicService topicService;
 
-
     private final TbQueueAdmin coreAdmin;
     private final TbQueueAdmin notificationAdmin;
     private final TbQueueAdmin vcAdmin;

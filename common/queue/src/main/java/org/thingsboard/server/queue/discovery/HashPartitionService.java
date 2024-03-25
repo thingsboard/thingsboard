@@ -50,6 +50,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.data.DataConstants.EDGE_QUEUE_NAME;
 import static org.thingsboard.server.common.data.DataConstants.MAIN_QUEUE_NAME;
 
 @Service
@@ -58,12 +59,16 @@ public class HashPartitionService implements PartitionService {
 
     @Value("${queue.core.topic}")
     private String coreTopic;
-    @Value("${queue.core.partitions:100}")
+    @Value("${queue.core.partitions:10}")
     private Integer corePartitions;
     @Value("${queue.vc.topic:tb_version_control}")
     private String vcTopic;
     @Value("${queue.vc.partitions:10}")
     private Integer vcPartitions;
+    @Value("${queue.edge.topic:tb_edge}")
+    private String edgeTopic;
+    @Value("${queue.edge.partitions:10}")
+    private Integer edgePartitions;
     @Value("${queue.partitions.hash_function_name:murmur3_128}")
     private String hashFunctionName;
 
@@ -112,6 +117,11 @@ public class HashPartitionService implements PartitionService {
         if (!isTransport(serviceInfoProvider.getServiceType())) {
             doInitRuleEnginePartitions();
         }
+
+        QueueKey edgeKey = new QueueKey(ServiceType.TB_CORE);
+        edgeKey.withQueueName(EDGE_QUEUE_NAME);
+        partitionSizesMap.put(edgeKey, edgePartitions);
+        partitionTopicsMap.put(edgeKey, edgeTopic);
     }
 
     @AfterStartUp(order = AfterStartUp.QUEUE_INFO_INITIALIZATION)

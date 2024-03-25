@@ -144,7 +144,7 @@ public class ProtoUtils {
         return new ToEdgeSyncRequest(
                 new UUID(proto.getRequestIdMSB(), proto.getRequestIdLSB()),
                 TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
-                new EdgeId(new UUID(proto.getEdgeIdMSB(), proto.getEdgeIdLSB()))
+                EdgeId.fromUUID(new UUID(proto.getEdgeIdMSB(), proto.getEdgeIdLSB()))
         );
     }
 
@@ -164,7 +164,7 @@ public class ProtoUtils {
         return new FromEdgeSyncResponse(
                 new UUID(proto.getResponseIdMSB(), proto.getResponseIdLSB()),
                 TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
-                new EdgeId(new UUID(proto.getEdgeIdMSB(), proto.getEdgeIdLSB())),
+                EdgeId.fromUUID(new UUID(proto.getEdgeIdMSB(), proto.getEdgeIdLSB())),
                 proto.getSuccess()
         );
     }
@@ -181,7 +181,7 @@ public class ProtoUtils {
     public static EdgeEventUpdateMsg fromProto(TransportProtos.EdgeEventUpdateMsgProto proto) {
         return new EdgeEventUpdateMsg(
                 TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
-                new EdgeId(new UUID(proto.getEdgeIdMSB(), proto.getEdgeIdLSB()))
+                EdgeId.fromUUID(new UUID(proto.getEdgeIdMSB(), proto.getEdgeIdLSB()))
         );
     }
 
@@ -203,7 +203,7 @@ public class ProtoUtils {
     private static DeviceEdgeUpdateMsg fromProto(TransportProtos.DeviceEdgeUpdateMsgProto proto) {
         EdgeId edgeId = null;
         if (proto.hasEdgeIdMSB() && proto.hasEdgeIdLSB()) {
-            edgeId = new EdgeId(new UUID(proto.getEdgeIdMSB(), proto.getEdgeIdLSB()));
+            edgeId = EdgeId.fromUUID(new UUID(proto.getEdgeIdMSB(), proto.getEdgeIdLSB()));
         }
         return new DeviceEdgeUpdateMsg(
                 TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
