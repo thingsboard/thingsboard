@@ -33,4 +33,45 @@
       }
     }
   }
+
+  .property-table-cotainer .tb-form-row div {
+    flex: 1;
+
+    mat-form-field.mat-mdc-form-field {
+      width: 100%;
+
+      input.mat-mdc-input-element {
+        font-size: 16px;
+      }
+    }
+  }
+
+  .property-table-cotainer {
+    margin-bottom: 16px;
+
+    .property-row {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      border-radius: 6px;
+
+      & > div {
+        flex: 1;
+        width: 100%;
+        padding: 16px;
+
+        &.property-name {
+          padding-top: 0;
+        }
+
+        &.property-header {
+          font-weight: 600;
+        }
+
+        & mat-form-field {
+          width: 100%;
+        }
+      }
+    }
+  }
 }

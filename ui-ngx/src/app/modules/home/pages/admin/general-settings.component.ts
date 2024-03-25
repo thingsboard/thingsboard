@@ -23,12 +23,16 @@ import {
   AdminSettings,
   DeviceConnectivityProtocol,
   DeviceConnectivitySettings,
+  GatewaySettings,
   GeneralSettings
 } from '@shared/models/settings.models';
 import { AdminService } from '@core/http/admin.service';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { ActionNotificationShow } from '@app/core/notification/notification.actions';
+import { isUndefined } from '@app/core/utils';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'tb-general-settings',
@@ -39,16 +43,21 @@ export class GeneralSettingsComponent extends PageComponent implements HasConfir
 
   generalSettings: FormGroup;
   deviceConnectivitySettingsForm: FormGroup;
+  gatewaySettingsGroup: FormGroup = this.fb.group({});
+  gatewayRawSettings: string[];
 
   protocol: DeviceConnectivityProtocol = 'http';
 
   private adminSettings: AdminSettings<GeneralSettings>;
   private deviceConnectivitySettings: AdminSettings<DeviceConnectivitySettings>;
+  gatewaySettings: AdminSettings<GatewaySettings>;
+  defaultVersion: string;
 
   private readonly destroy$ = new Subject<void>();
 
   constructor(protected store: Store<AppState>,
               private adminService: AdminService,
+              private translate: TranslateService,
               public fb: FormBuilder) {
     super(store);
     this.buildGeneralServerSettingsForm();
@@ -57,6 +66,15 @@ export class GeneralSettingsComponent extends PageComponent implements HasConfir
     this.buildDeviceConnectivitySettingsForm();
     this.adminService.getAdminSettings<DeviceConnectivitySettings>('connectivity')
       .subscribe(deviceConnectivitySettings => this.processDeviceConnectivitySettings(deviceConnectivitySettings));
+    this.adminService.getAdminSettings<GatewaySettings>('gateway')
+      .subscribe(gatewaySettings => {
+        if (isUndefined(gatewaySettings.jsonValue.availableVersions)
+              || isUndefined(gatewaySettings.jsonValue.availableVersions[0])
+              || !Array.isArray(gatewaySettings.jsonValue.availableVersions)) {
+          gatewaySettings.jsonValue.availableVersions = ["latest"];
+        };
+        this.processGatewaySettings(gatewaySettings);
+      });
   }
 
   ngOnDestroy() {
@@ -69,6 +87,14 @@ export class GeneralSettingsComponent extends PageComponent implements HasConfir
     this.generalSettings = this.fb.group({
       baseUrl: ['', [Validators.required]],
       prohibitDifferentUrl: ['',[]]
+    });
+  }
+
+  private buildGatewaySettingsForm(settingsPairs) {
+    this.gatewayRawSettings = [];
+    settingsPairs.forEach(item => {
+      this.gatewayRawSettings.push(item.property);
+      this.gatewaySettingsGroup.addControl(item.property, this.fb.control(item.value));
     });
   }
 
@@ -103,29 +129,6 @@ export class GeneralSettingsComponent extends PageComponent implements HasConfir
     return formGroup;
   }
 
-  save(): void {
-    this.adminSettings.jsonValue = {...this.adminSettings.jsonValue, ...this.generalSettings.value};
-    this.adminService.saveAdminSettings(this.adminSettings)
-      .subscribe(adminSettings => this.processGeneralSettings(adminSettings));
-  }
-
-  saveDeviceConnectivitySettings(): void {
-    this.deviceConnectivitySettings.jsonValue = {
-      ...this.deviceConnectivitySettings.jsonValue,
-      ...this.deviceConnectivitySettingsForm.getRawValue()
-    };
-    this.adminService.saveAdminSettings<DeviceConnectivitySettings>(this.deviceConnectivitySettings)
-      .subscribe(deviceConnectivitySettings => this.processDeviceConnectivitySettings(deviceConnectivitySettings));
-  }
-
-  discardGeneralSettings(): void {
-    this.generalSettings.reset(this.adminSettings.jsonValue);
-  }
-
-  discardDeviceConnectivitySettings(): void {
-    this.deviceConnectivitySettingsForm.reset(this.deviceConnectivitySettings.jsonValue);
-  }
-
   private processGeneralSettings(generalSettings: AdminSettings<GeneralSettings>): void {
     this.adminSettings = generalSettings;
     this.generalSettings.reset(this.adminSettings.jsonValue);
@@ -136,8 +139,93 @@ export class GeneralSettingsComponent extends PageComponent implements HasConfir
     this.deviceConnectivitySettingsForm.reset(this.deviceConnectivitySettings.jsonValue);
   }
 
+  private processGatewaySettings(gatewaySettings: AdminSettings<GatewaySettings>): void {
+    this.gatewaySettings = gatewaySettings;
+    this.defaultVersion = gatewaySettings.jsonValue.version;
+    const settingsPairs = [];
+
+    Object.entries(this.gatewaySettings.jsonValue).forEach(([property, value]) => {
+      if (property !== 'availableVersions') {
+        settingsPairs.push({
+          property,
+          value
+        });
+      }
+    })
+    this.buildGatewaySettingsForm(settingsPairs);
+  }
+
+  private showSaveMessage(isSuccess: boolean): void {
+    const message = isSuccess
+                    ? this.translate.instant('admin.settings-saved-successfully')
+                    : this.translate.instant('admin.settings-saving-error');
+    this.store.dispatch(new ActionNotificationShow({
+        message,
+        type: isSuccess ? 'success' : 'error',
+        duration: 1500
+      }));
+  }
+
+  save(): void {
+    this.adminSettings.jsonValue = {...this.adminSettings.jsonValue, ...this.generalSettings.value};
+    this.adminService.saveAdminSettings(this.adminSettings)
+      .subscribe(adminSettings => {
+        if (adminSettings && adminSettings.jsonValue) {
+          this.showSaveMessage(true);
+        } else {
+          this.showSaveMessage(false);
+        }
+        this.processGeneralSettings(adminSettings);
+      });
+  }
+
+  saveDeviceConnectivitySettings(): void {
+    this.deviceConnectivitySettings.jsonValue = {
+      ...this.deviceConnectivitySettings.jsonValue,
+      ...this.deviceConnectivitySettingsForm.getRawValue()
+    };
+    this.adminService.saveAdminSettings<DeviceConnectivitySettings>(this.deviceConnectivitySettings)
+      .subscribe(deviceConnectivitySettings => {
+        if (deviceConnectivitySettings && deviceConnectivitySettings.jsonValue) {
+          this.showSaveMessage(true);
+        } else {
+          this.showSaveMessage(false);
+        }
+        this.processDeviceConnectivitySettings(deviceConnectivitySettings);
+      });
+  }
+
+  saveGatewaySettings(): void {
+    const values = this.gatewaySettingsGroup.getRawValue();
+    this.gatewaySettings.jsonValue.version = values.version;
+    
+    this.adminService.saveAdminSettings<GatewaySettings>(this.gatewaySettings)
+      .subscribe(gatewaySettings => {
+        if (gatewaySettings && gatewaySettings.jsonValue) {
+          this.showSaveMessage(true);
+        } else {
+          this.showSaveMessage(false);
+        }
+        this.processGatewaySettings(gatewaySettings);
+        this.discardGatewaySettings();
+      });
+  }
+
+  discardGeneralSettings(): void {
+    this.generalSettings.reset(this.adminSettings.jsonValue);
+  }
+
+  discardGatewaySettings(): void {
+    this.gatewaySettingsGroup.reset();
+    this.gatewaySettingsGroup.get('version').setValue(this.defaultVersion);
+    this.processGatewaySettings(this.gatewaySettings);
+  }
+
+  discardDeviceConnectivitySettings(): void {
+    this.deviceConnectivitySettingsForm.reset(this.deviceConnectivitySettings.jsonValue);
+  }
+
   confirmForm(): FormGroup {
     return this.generalSettings.dirty ? this.generalSettings : this.deviceConnectivitySettingsForm;
   }
-
 }
