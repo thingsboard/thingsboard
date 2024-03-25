@@ -10,6 +10,9 @@
     <logger name="org.thingsboard.server.dao" level="WARN"/>
     <logger name="org.testcontainers" level="INFO" />
 
+    <!-- Log Hibernate SQL queries -->
+    <!-- <logger name="org.hibernate.SQL" level="DEBUG"/> -->
+
     <root level="WARN">
         <appender-ref ref="console"/>
     </root>

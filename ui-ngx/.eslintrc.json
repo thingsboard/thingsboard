@@ -51,7 +51,8 @@
                 "import/order": "off",
                 "@typescript-eslint/member-ordering": "off",
                 "no-underscore-dangle": "off",
-                "@typescript-eslint/naming-convention": "off"
+                "@typescript-eslint/naming-convention": "off",
+                "jsdoc/newline-after-description": 0
             }
         },
         {
