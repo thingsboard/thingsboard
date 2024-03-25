@@ -23,13 +23,6 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
-import org.thingsboard.server.common.data.kv.BooleanDataEntry;
-import org.thingsboard.server.common.data.kv.DoubleDataEntry;
-import org.thingsboard.server.common.data.kv.JsonDataEntry;
-import org.thingsboard.server.common.data.kv.KvEntry;
-import org.thingsboard.server.common.data.kv.LongDataEntry;
-import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -55,8 +48,9 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
 
-import static org.thingsboard.server.common.util.KvProtoUtil.fromKeyValueTypeProto;
-import static org.thingsboard.server.common.util.KvProtoUtil.toKeyValueTypeProto;
+import static org.thingsboard.server.common.util.KvProtoUtil.fromTsValueProtoList;
+import static org.thingsboard.server.common.util.KvProtoUtil.toTsKvProtoBuilder;
+import static org.thingsboard.server.common.util.KvProtoUtil.toTsValueProto;
 
 public class TbSubscriptionUtils {
 
@@ -330,50 +324,6 @@ public class TbSubscriptionUtils {
             result.setAttrUpdate(builder);
         }
         return ToCoreNotificationMsg.newBuilder().setToLocalSubscriptionServiceMsg(result).build();
-    }
-
-    public static TransportProtos.TsKvProto.Builder toTsKvProtoBuilder(long ts, KvEntry attr) {
-        TransportProtos.KeyValueProto.Builder dataBuilder = TransportProtos.KeyValueProto.newBuilder();
-        dataBuilder.setKey(attr.getKey());
-        dataBuilder.setType(toKeyValueTypeProto(attr.getDataType()));
-        switch (attr.getDataType()) {
-            case BOOLEAN -> attr.getBooleanValue().ifPresent(dataBuilder::setBoolV);
-            case LONG -> attr.getLongValue().ifPresent(dataBuilder::setLongV);
-            case DOUBLE -> attr.getDoubleValue().ifPresent(dataBuilder::setDoubleV);
-            case JSON -> attr.getJsonValue().ifPresent(dataBuilder::setJsonV);
-            case STRING -> attr.getStrValue().ifPresent(dataBuilder::setStringV);
-        }
-        return TransportProtos.TsKvProto.newBuilder().setTs(ts).setKv(dataBuilder);
-    }
-
-    public static TransportProtos.TsValueProto toTsValueProto(long ts, KvEntry attr) {
-        TransportProtos.TsValueProto.Builder dataBuilder = TransportProtos.TsValueProto.newBuilder();
-        dataBuilder.setTs(ts);
-        dataBuilder.setType(toKeyValueTypeProto(attr.getDataType()));
-        switch (attr.getDataType()) {
-            case BOOLEAN -> attr.getBooleanValue().ifPresent(dataBuilder::setBoolV);
-            case LONG -> attr.getLongValue().ifPresent(dataBuilder::setLongV);
-            case DOUBLE -> attr.getDoubleValue().ifPresent(dataBuilder::setDoubleV);
-            case JSON -> attr.getJsonValue().ifPresent(dataBuilder::setJsonV);
-            case STRING -> attr.getStrValue().ifPresent(dataBuilder::setStringV);
-        }
-        return dataBuilder.build();
-    }
-
-    private static List<TsKvEntry> fromTsValueProtoList(String key, List<TransportProtos.TsValueProto> dataList) {
-        List<TsKvEntry> result = new ArrayList<>(dataList.size());
-        dataList.forEach(proto -> result.add(new BasicTsKvEntry(proto.getTs(), fromTsKvProto(key, proto))));
-        return result;
-    }
-
-    private static KvEntry fromTsKvProto(String key, TransportProtos.TsValueProto proto) {
-        return switch (fromKeyValueTypeProto(proto.getType())) {
-            case BOOLEAN -> new BooleanDataEntry(key, proto.getBoolV());
-            case LONG -> new LongDataEntry(key, proto.getLongV());
-            case DOUBLE -> new DoubleDataEntry(key, proto.getDoubleV());
-            case STRING -> new StringDataEntry(key, proto.getStringV());
-            case JSON -> new JsonDataEntry(key, proto.getJsonV());
-        };
     }
 
 }

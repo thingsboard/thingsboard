@@ -114,6 +114,40 @@ public class KvProtoUtil {
         };
     }
 
+    public static TransportProtos.TsKvProto.Builder toTsKvProtoBuilder(long ts, KvEntry kvEntry) {
+        return TransportProtos.TsKvProto.newBuilder().setTs(ts).setKv(KvProtoUtil.toKeyValueTypeProto(kvEntry));
+    }
+
+    public static List<TsKvEntry> fromTsValueProtoList(String key, List<TransportProtos.TsValueProto> dataList) {
+        List<TsKvEntry> result = new ArrayList<>(dataList.size());
+        dataList.forEach(proto -> result.add(new BasicTsKvEntry(proto.getTs(), fromTsValueProto(key, proto))));
+        return result;
+    }
+
+    public static TransportProtos.TsValueProto toTsValueProto(long ts, KvEntry attr) {
+        TransportProtos.TsValueProto.Builder dataBuilder = TransportProtos.TsValueProto.newBuilder();
+        dataBuilder.setTs(ts);
+        dataBuilder.setType(toKeyValueTypeProto(attr.getDataType()));
+        switch (attr.getDataType()) {
+            case BOOLEAN -> attr.getBooleanValue().ifPresent(dataBuilder::setBoolV);
+            case LONG -> attr.getLongValue().ifPresent(dataBuilder::setLongV);
+            case DOUBLE -> attr.getDoubleValue().ifPresent(dataBuilder::setDoubleV);
+            case JSON -> attr.getJsonValue().ifPresent(dataBuilder::setJsonV);
+            case STRING -> attr.getStrValue().ifPresent(dataBuilder::setStringV);
+        }
+        return dataBuilder.build();
+    }
+
+    public static KvEntry fromTsValueProto(String key, TransportProtos.TsValueProto proto) {
+        return switch (fromKeyValueTypeProto(proto.getType())) {
+            case BOOLEAN -> new BooleanDataEntry(key, proto.getBoolV());
+            case LONG -> new LongDataEntry(key, proto.getLongV());
+            case DOUBLE -> new DoubleDataEntry(key, proto.getDoubleV());
+            case STRING -> new StringDataEntry(key, proto.getStringV());
+            case JSON -> new JsonDataEntry(key, proto.getJsonV());
+        };
+    }
+
     public static TransportProtos.KeyValueType toKeyValueTypeProto(DataType dataType) {
         return TransportProtos.KeyValueType.forNumber(dataType.getProtoNumber());
     }

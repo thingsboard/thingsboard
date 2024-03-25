@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.util;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -58,8 +57,8 @@ class KvProtoUtilTest {
         return kvEntryData().map(kvEntry -> new BasicTsKvEntry(TS, kvEntry));
     }
 
-    private static Stream<AttributeKvEntry> attributeKvEntryData() {
-        return kvEntryData().map(kvEntry -> new BaseAttributeKvEntry(TS, kvEntry));
+    private static Stream<List<BaseAttributeKvEntry>> attributeKvEntryData() {
+        return Stream.of(kvEntryData().map(kvEntry -> new BaseAttributeKvEntry(TS, kvEntry)).toList());
     }
 
     private static List<TsKvEntry> createTsKvEntryList(boolean withAggregation) {
@@ -75,23 +74,29 @@ class KvProtoUtilTest {
     @ParameterizedTest
     @EnumSource(DataType.class)
     void protoDataTypeSerialization(DataType dataType) {
-        assertThat(KvProtoUtil.fromKeyValueTypeProto(KvProtoUtil.toKeyValueTypeProto(dataType))).as(dataType.name()).isEqualTo(dataType);
+        assertThat(KvProtoUtil.fromKeyValueTypeProto(KvProtoUtil.toKeyValueTypeProto(dataType)))
+                .as(dataType.name()).isEqualTo(dataType);
     }
 
     @ParameterizedTest
     @MethodSource("kvEntryData")
     void protoKeyValueProtoSerialization(KvEntry kvEntry) {
         assertThat(KvProtoUtil.fromTsKvProto(KvProtoUtil.toKeyValueTypeProto(kvEntry)))
-                .as("deserialized")
-                .isEqualTo(kvEntry);
+                .as("deserialized").isEqualTo(kvEntry);
     }
 
     @ParameterizedTest
     @MethodSource("basicTsKvEntryData")
     void protoTsKvEntrySerialization(KvEntry kvEntry) {
         assertThat(KvProtoUtil.fromTsKvProto(KvProtoUtil.toTsKvProto(TS, kvEntry)))
-                .as("deserialized")
-                .isEqualTo(kvEntry);
+                .as("deserialized").isEqualTo(kvEntry);
+    }
+
+    @ParameterizedTest
+    @MethodSource("kvEntryData")
+    void protoTsValueSerialization(KvEntry kvEntry) {
+        assertThat(KvProtoUtil.fromTsValueProto(kvEntry.getKey(), KvProtoUtil.toTsValueProto(TS, kvEntry)))
+                .as("deserialized").isEqualTo(kvEntry);
     }
 
     @ParameterizedTest
@@ -99,16 +104,15 @@ class KvProtoUtilTest {
     void protoListTsKvEntrySerialization(boolean withAggregation) {
         List<TsKvEntry> tsKvEntries = createTsKvEntryList(withAggregation);
         assertThat(KvProtoUtil.fromTsKvProtoList(KvProtoUtil.toTsKvProtoList(tsKvEntries)))
-                .as("deserialized")
-                .isEqualTo(tsKvEntries);
+                .as("deserialized").isEqualTo(tsKvEntries);
     }
 
-    @Test
-    void protoListAttributeKvSerialization() {
-        List<AttributeKvEntry> protoList = attributeKvEntryData().toList();
-        assertThat(KvProtoUtil.toAttributeKvList(KvProtoUtil.attrToTsKvProtos(protoList)))
+    @ParameterizedTest
+    @MethodSource("attributeKvEntryData")
+    void protoListAttributeKvSerialization(List<AttributeKvEntry> attributeKvEntries) {
+        assertThat(KvProtoUtil.toAttributeKvList(KvProtoUtil.attrToTsKvProtos(attributeKvEntries)))
                 .as("deserialized")
-                .isEqualTo(protoList);
+                .isEqualTo(attributeKvEntries);
     }
 
 }
