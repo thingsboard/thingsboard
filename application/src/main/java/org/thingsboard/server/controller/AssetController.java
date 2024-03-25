@@ -139,7 +139,7 @@ public class AssetController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/asset", method = RequestMethod.POST)
     @ResponseBody
-    public Asset saveAsset(@Parameter(description = "A JSON value representing the asset.") @RequestBody Asset asset) throws Exception {
+    public Asset saveAsset(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the asset.") @RequestBody Asset asset) throws Exception {
         asset.setTenantId(getTenantId());
         checkEntity(asset.getId(), asset, Resource.ASSET);
         return tbAssetService.save(asset, getCurrentUser());

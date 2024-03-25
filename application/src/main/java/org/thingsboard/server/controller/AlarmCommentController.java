@@ -74,7 +74,7 @@ public class AlarmCommentController extends BaseController {
     @RequestMapping(value = "/alarm/{alarmId}/comment", method = RequestMethod.POST)
     @ResponseBody
     public AlarmComment saveAlarmComment(@Parameter(description = ALARM_ID_PARAM_DESCRIPTION)
-                                         @PathVariable(ALARM_ID) String strAlarmId, @Parameter(description = "A JSON value representing the comment.") @RequestBody AlarmComment alarmComment) throws ThingsboardException {
+                                         @PathVariable(ALARM_ID) String strAlarmId, @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the comment.") @RequestBody AlarmComment alarmComment) throws ThingsboardException {
         checkParameter(ALARM_ID, strAlarmId);
         AlarmId alarmId = new AlarmId(toUUID(strAlarmId));
         Alarm alarm = checkAlarmInfoId(alarmId, Operation.WRITE);

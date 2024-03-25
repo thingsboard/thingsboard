@@ -143,7 +143,7 @@ public class AlarmController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/alarm", method = RequestMethod.POST)
     @ResponseBody
-    public Alarm saveAlarm(@Parameter(description = "A JSON value representing the alarm.") @RequestBody Alarm alarm) throws ThingsboardException {
+    public Alarm saveAlarm(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the alarm.") @RequestBody Alarm alarm) throws ThingsboardException {
         alarm.setTenantId(getTenantId());
         checkNotNull(alarm.getOriginator());
         checkEntity(alarm.getId(), alarm, Resource.ALARM);

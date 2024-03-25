@@ -177,7 +177,7 @@ public class DeviceController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device", method = RequestMethod.POST)
     @ResponseBody
-    public Device saveDevice(@Parameter(description = "A JSON value representing the device.") @RequestBody Device device,
+    public Device saveDevice(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the device.") @RequestBody Device device,
                              @Parameter(description = "Optional value of the device credentials to be used during device creation. " +
                                      "If omitted, access token will be auto-generated.") @RequestParam(name = "accessToken", required = false) String accessToken) throws Exception {
         device.setTenantId(getCurrentUser().getTenantId());
