@@ -583,7 +583,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             subscriptionManagerService.onTimeSeriesUpdate(
                     toTenantId(tenantIdMSB, tenantIdLSB),
                     TbSubscriptionUtils.toEntityId(proto.getEntityType(), proto.getEntityIdMSB(), proto.getEntityIdLSB()),
-                    KvProtoUtil.fromProtoList(proto.getDataList()), callback);
+                    KvProtoUtil.fromTsKvProtoList(proto.getDataList()), callback);
         } else if (msg.hasAttrUpdate()) {
             TbAttributeUpdateProto proto = msg.getAttrUpdate();
             subscriptionManagerService.onAttributesUpdate(

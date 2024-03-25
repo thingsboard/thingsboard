@@ -26,7 +26,7 @@ public enum DataType {
     JSON(4);
 
     @Getter
-    private final int protoNumber; // Corresponds to EntityTypeProto
+    private final int protoNumber; // Corresponds to KeyValueType
 
     DataType(int protoNumber) {
         this.protoNumber = protoNumber;

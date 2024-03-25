@@ -604,7 +604,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
                 if (DataConstants.SHARED_SCOPE.equals(msg.getScope())) {
                     List<AttributeKvEntry> attributes = new ArrayList<>(msg.getValues());
                     if (attributes.size() > 0) {
-                        List<TsKvProto> sharedUpdated = msg.getValues().stream().map(t -> KvProtoUtil.toProto(t.getLastUpdateTs(), t))
+                        List<TsKvProto> sharedUpdated = msg.getValues().stream().map(t -> KvProtoUtil.toTsKvProto(t.getLastUpdateTs(), t))
                                 .collect(Collectors.toList());
                         if (!sharedUpdated.isEmpty()) {
                             notification.addAllSharedUpdated(sharedUpdated);

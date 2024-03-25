@@ -45,7 +45,7 @@ public class KvProtoUtil {
 
     public static List<AttributeKvEntry> toAttributeKvList(List<TransportProtos.TsKvProto> dataList) {
         List<AttributeKvEntry> result = new ArrayList<>(dataList.size());
-        dataList.forEach(proto -> result.add(new BaseAttributeKvEntry(fromProto(proto.getKv()), proto.getTs())));
+        dataList.forEach(proto -> result.add(new BaseAttributeKvEntry(fromTsKvProto(proto.getKv()), proto.getTs())));
         return result;
     }
 
@@ -56,44 +56,44 @@ public class KvProtoUtil {
         } else {
             clientAttributes = new ArrayList<>(result.size());
             for (AttributeKvEntry attrEntry : result) {
-                clientAttributes.add(toProto(attrEntry.getLastUpdateTs(), attrEntry));
+                clientAttributes.add(toTsKvProto(attrEntry.getLastUpdateTs(), attrEntry));
             }
         }
         return clientAttributes;
     }
 
-    public static List<TransportProtos.TsKvProto> toProtoList(List<TsKvEntry> result) {
+    public static List<TransportProtos.TsKvProto> toTsKvProtoList(List<TsKvEntry> result) {
         List<TransportProtos.TsKvProto> ts;
         if (result == null || result.isEmpty()) {
             ts = Collections.emptyList();
         } else {
             ts = new ArrayList<>(result.size());
             for (TsKvEntry attrEntry : result) {
-                ts.add(toProto(attrEntry.getTs(), attrEntry));
+                ts.add(toTsKvProto(attrEntry.getTs(), attrEntry));
             }
         }
         return ts;
     }
 
-    public static List<TsKvEntry> fromProtoList(List<TransportProtos.TsKvProto> dataList) {
+    public static List<TsKvEntry> fromTsKvProtoList(List<TransportProtos.TsKvProto> dataList) {
         List<TsKvEntry> result = new ArrayList<>(dataList.size());
-        dataList.forEach(proto -> result.add(new BasicTsKvEntry(proto.getTs(), fromProto(proto.getKv()))));
+        dataList.forEach(proto -> result.add(new BasicTsKvEntry(proto.getTs(), fromTsKvProto(proto.getKv()))));
         return result;
     }
 
-    public static TransportProtos.TsKvProto toProto(long ts, KvEntry kvEntry) {
+    public static TransportProtos.TsKvProto toTsKvProto(long ts, KvEntry kvEntry) {
         return TransportProtos.TsKvProto.newBuilder().setTs(ts)
-                .setKv(KvProtoUtil.toProto(kvEntry)).build();
+                .setKv(KvProtoUtil.toKeyValueTypeProto(kvEntry)).build();
     }
 
-    public static TsKvEntry fromProto(TransportProtos.TsKvProto proto) {
-        return new BasicTsKvEntry(proto.getTs(), fromProto(proto.getKv()));
+    public static TsKvEntry fromTsKvProto(TransportProtos.TsKvProto proto) {
+        return new BasicTsKvEntry(proto.getTs(), fromTsKvProto(proto.getKv()));
     }
 
-    public static TransportProtos.KeyValueProto toProto(KvEntry kvEntry) {
+    public static TransportProtos.KeyValueProto toKeyValueTypeProto(KvEntry kvEntry) {
         TransportProtos.KeyValueProto.Builder builder = TransportProtos.KeyValueProto.newBuilder();
         builder.setKey(kvEntry.getKey());
-        builder.setType(toProto(kvEntry.getDataType()));
+        builder.setType(toKeyValueTypeProto(kvEntry.getDataType()));
         switch (kvEntry.getDataType()) {
             case BOOLEAN -> kvEntry.getBooleanValue().ifPresent(builder::setBoolV);
             case LONG -> kvEntry.getLongValue().ifPresent(builder::setLongV);
@@ -104,8 +104,8 @@ public class KvProtoUtil {
         return builder.build();
     }
 
-    public static KvEntry fromProto(TransportProtos.KeyValueProto proto) {
-        return switch (fromProto(proto.getType())) {
+    public static KvEntry fromTsKvProto(TransportProtos.KeyValueProto proto) {
+        return switch (fromKeyValueTypeProto(proto.getType())) {
             case BOOLEAN -> new BooleanDataEntry(proto.getKey(), proto.getBoolV());
             case LONG -> new LongDataEntry(proto.getKey(), proto.getLongV());
             case DOUBLE -> new DoubleDataEntry(proto.getKey(), proto.getDoubleV());
@@ -114,11 +114,11 @@ public class KvProtoUtil {
         };
     }
 
-    public static TransportProtos.KeyValueType toProto(DataType dataType) {
+    public static TransportProtos.KeyValueType toKeyValueTypeProto(DataType dataType) {
         return TransportProtos.KeyValueType.forNumber(dataType.getProtoNumber());
     }
 
-    public static DataType fromProto(TransportProtos.KeyValueType keyValueType) {
+    public static DataType fromKeyValueTypeProto(TransportProtos.KeyValueType keyValueType) {
         return dataTypeByProtoNumber[keyValueType.getNumber()];
     }
 

@@ -75,13 +75,13 @@ class KvProtoUtilTest {
     @ParameterizedTest
     @EnumSource(DataType.class)
     void protoDataTypeSerialization(DataType dataType) {
-        assertThat(KvProtoUtil.fromProto(KvProtoUtil.toProto(dataType))).as(dataType.name()).isEqualTo(dataType);
+        assertThat(KvProtoUtil.fromKeyValueTypeProto(KvProtoUtil.toKeyValueTypeProto(dataType))).as(dataType.name()).isEqualTo(dataType);
     }
 
     @ParameterizedTest
     @MethodSource("kvEntryData")
     void protoKeyValueProtoSerialization(KvEntry kvEntry) {
-        assertThat(KvProtoUtil.fromProto(KvProtoUtil.toProto(kvEntry)))
+        assertThat(KvProtoUtil.fromTsKvProto(KvProtoUtil.toKeyValueTypeProto(kvEntry)))
                 .as("deserialized")
                 .isEqualTo(kvEntry);
     }
@@ -89,7 +89,7 @@ class KvProtoUtilTest {
     @ParameterizedTest
     @MethodSource("basicTsKvEntryData")
     void protoTsKvEntrySerialization(KvEntry kvEntry) {
-        assertThat(KvProtoUtil.fromProto(KvProtoUtil.toProto(TS, kvEntry)))
+        assertThat(KvProtoUtil.fromTsKvProto(KvProtoUtil.toTsKvProto(TS, kvEntry)))
                 .as("deserialized")
                 .isEqualTo(kvEntry);
     }
@@ -98,7 +98,7 @@ class KvProtoUtilTest {
     @ValueSource(booleans = {true, false})
     void protoListTsKvEntrySerialization(boolean withAggregation) {
         List<TsKvEntry> tsKvEntries = createTsKvEntryList(withAggregation);
-        assertThat(KvProtoUtil.fromProtoList(KvProtoUtil.toProtoList(tsKvEntries)))
+        assertThat(KvProtoUtil.fromTsKvProtoList(KvProtoUtil.toTsKvProtoList(tsKvEntries)))
                 .as("deserialized")
                 .isEqualTo(tsKvEntries);
     }
