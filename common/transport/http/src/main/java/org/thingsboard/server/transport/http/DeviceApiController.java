@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.http;
 
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -31,6 +32,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -434,7 +436,7 @@ public class DeviceApiController implements TbTransportService {
         return responseWriter;
     }
 
-    private static class DeviceAuthCallback implements TransportServiceCallback<ValidateDeviceCredentialsResponse> {
+    static class DeviceAuthCallback implements TransportServiceCallback<ValidateDeviceCredentialsResponse> {
         private final TransportContext transportContext;
         private final DeferredResult<ResponseEntity> responseWriter;
         private final Consumer<SessionInfoProto> onSuccess;
@@ -456,8 +458,14 @@ public class DeviceApiController implements TbTransportService {
 
         @Override
         public void onError(Throwable e) {
-            log.warn("Failed to process request", e);
-            responseWriter.setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
+            String body = null;
+            if (e instanceof HttpMessageNotReadableException || e instanceof JsonParseException) {
+                body = e.getMessage();
+                log.debug("Failed to process request: {}", body);
+            } else {
+                log.warn("Failed to process request", e);
+            }
+            responseWriter.setResult(new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR));
         }
     }
 
@@ -475,8 +483,14 @@ public class DeviceApiController implements TbTransportService {
 
         @Override
         public void onError(Throwable e) {
-            log.warn("Failed to process request", e);
-            responseWriter.setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
+            String body = null;
+            if (e instanceof HttpMessageNotReadableException || e instanceof JsonParseException) {
+                body = e.getMessage();
+                log.debug("Failed to process request: {}", body);
+            } else {
+                log.warn("Failed to process request", e);
+            }
+            responseWriter.setResult(new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR));
         }
     }
 
@@ -516,8 +530,14 @@ public class DeviceApiController implements TbTransportService {
 
         @Override
         public void onError(Throwable e) {
-            log.warn("Failed to process request", e);
-            responseWriter.setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
+            String body = null;
+            if (e instanceof HttpMessageNotReadableException || e instanceof JsonParseException) {
+                body = e.getMessage();
+                log.debug("Failed to process request: {}", body);
+            } else {
+                log.warn("Failed to process request", e);
+            }
+            responseWriter.setResult(new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR));
         }
     }
 
