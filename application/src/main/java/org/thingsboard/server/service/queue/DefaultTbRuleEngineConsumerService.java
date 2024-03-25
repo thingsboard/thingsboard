@@ -116,11 +116,18 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
         event.getPartitionsMap().forEach((queueKey, partitions) -> {
             if (partitionService.isManagedByCurrentService(queueKey.getTenantId())) {
                 var consumer = getConsumer(queueKey).orElseGet(() -> {
-                    String queueName = queueKey.isInternal() ? MAIN_QUEUE_NAME : queueKey.getQueueName();
-                    Queue config = queueService.findQueueByTenantIdAndName(queueKey.getTenantId(), queueName);
+                    Queue config = queueService.findQueueByTenantIdAndName(queueKey.getTenantId(), queueKey.getQueueName());
+                    if (config == null) {
+                        if (!partitions.isEmpty()) {
+                            log.error("[{}] Queue configuration is missing", queueKey, new RuntimeException("stacktrace"));
+                        }
+                        return null;
+                    }
                     return createConsumer(queueKey, config);
                 });
-                consumer.update(partitions);
+                if (consumer != null) {
+                    consumer.update(partitions);
+                }
             }
         });
         consumers.keySet().stream()
