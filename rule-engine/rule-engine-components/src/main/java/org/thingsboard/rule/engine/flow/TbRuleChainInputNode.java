@@ -56,13 +56,13 @@ public class TbRuleChainInputNode implements TbNode {
 
     private TbRuleChainInputNodeConfiguration config;
     private RuleChainId ruleChainId;
-    private boolean forwardMsgToRootRuleChain;
+    private boolean forwardMsgToDefaultRuleChain;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbRuleChainInputNodeConfiguration.class);
-        this.forwardMsgToRootRuleChain = config.isForwardMsgToRootRuleChain();
-        if (forwardMsgToRootRuleChain) {
+        this.forwardMsgToDefaultRuleChain = config.isForwardMsgToDefaultRuleChain();
+        if (forwardMsgToDefaultRuleChain) {
             this.ruleChainId = getRootRuleChainId(ctx);
             return;
         }
@@ -86,9 +86,9 @@ public class TbRuleChainInputNode implements TbNode {
         boolean hasChanges = false;
         switch (fromVersion) {
             case 0:
-                if (!oldConfiguration.has("forwardMsgToRootRuleChain")) {
+                if (!oldConfiguration.has("forwardMsgToDefaultRuleChain")) {
                     hasChanges = true;
-                    ((ObjectNode) oldConfiguration).put("forwardMsgToRootRuleChain", false);
+                    ((ObjectNode) oldConfiguration).put("forwardMsgToDefaultRuleChain", false);
                 }
                 break;
             default:
@@ -98,8 +98,8 @@ public class TbRuleChainInputNode implements TbNode {
     }
 
     private RuleChainId getRuleChainId(TbContext ctx, TbMsg msg) {
-        if (!forwardMsgToRootRuleChain) {
-            return this.ruleChainId;
+        if (!forwardMsgToDefaultRuleChain) {
+            return ruleChainId;
         }
         RuleChainId targetRuleChainId = null;
         switch (msg.getOriginator().getEntityType()) {
@@ -111,7 +111,7 @@ public class TbRuleChainInputNode implements TbNode {
                 break;
         }
         if (targetRuleChainId == null) {
-            targetRuleChainId = this.ruleChainId;
+            targetRuleChainId = ruleChainId;
         }
         return targetRuleChainId;
     }
