@@ -38,6 +38,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -156,6 +157,18 @@ class TbCheckAlarmStatusNodeTest {
         assertThat(newMsg).isSameAs(msg);
         Throwable value = throwableCaptor.getValue();
         assertThat(value).isInstanceOf(TbNodeException.class).hasMessage("No such alarm found.");
+    }
+
+    @Test
+    void givenUnparseableAlarm_whenOnMsg_then_Failure() {
+        String msgData = "{\"Number\":1113718,\"id\":8.1}";
+        TbMsg msg = getTbMsg(msgData);
+
+        assertThatThrownBy(() -> node.onMsg(ctx, msg))
+                .as("onMsg")
+                .isInstanceOf(TbNodeException.class)
+                .hasCauseInstanceOf(IllegalArgumentException.class)
+                .hasMessage("java.lang.IllegalArgumentException: The given string value cannot be transformed to Json object: {\"Number\":1113718,\"id\":8.1}");
     }
 
     private TbMsg getTbMsg(String msgData) {
