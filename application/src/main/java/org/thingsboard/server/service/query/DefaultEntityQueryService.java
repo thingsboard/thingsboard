@@ -31,6 +31,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.KvUtil;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -154,7 +155,7 @@ public class DefaultEntityQueryService implements EntityQueryService {
 
         try {
             Optional<AttributeKvEntry> valueOpt = attributesService.find(user.getTenantId(), entityId,
-                    TbAttributeSubscriptionScope.SERVER_SCOPE.name(), dynamicValue.getSourceAttribute()).get();
+                    AttributeScope.SERVER_SCOPE, dynamicValue.getSourceAttribute()).get();
 
             if (valueOpt.isPresent()) {
                 AttributeKvEntry entry = valueOpt.get();
@@ -253,7 +254,7 @@ public class DefaultEntityQueryService implements EntityQueryService {
         if (isAttributes) {
             Map<EntityType, List<EntityId>> typesMap = ids.stream().collect(Collectors.groupingBy(EntityId::getEntityType));
             List<ListenableFuture<List<String>>> futures = new ArrayList<>(typesMap.size());
-            typesMap.forEach((type, entityIds) -> futures.add(dbCallbackExecutor.submit(() -> attributesService.findAllKeysByEntityIds(tenantId, type, entityIds, attributesScope))));
+            typesMap.forEach((type, entityIds) -> futures.add(dbCallbackExecutor.submit(() -> attributesService.findAllKeysByEntityIds(tenantId, entityIds, attributesScope))));
             attributesKeysFuture = Futures.transform(Futures.allAsList(futures), lists -> {
                 if (CollectionUtils.isEmpty(lists)) {
                     return Collections.emptyList();

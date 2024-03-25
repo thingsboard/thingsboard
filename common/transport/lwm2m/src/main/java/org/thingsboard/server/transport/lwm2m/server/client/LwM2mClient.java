@@ -20,7 +20,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.link.LinkParamValue;
+import org.eclipse.leshan.core.LwM2m;
+import org.eclipse.leshan.core.link.attributes.Attribute;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mMultipleResource;
@@ -271,7 +272,7 @@ public class LwM2mClient {
 
     public ResourceModel getResourceModel(String pathIdVer, LwM2mModelProvider modelProvider) {
         LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer));
-        String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
+        String verSupportedObject = String.valueOf(registration.getSupportedObject().get(pathIds.getObjectId()));
         String verRez = getVerFromPathIdVerOrId(pathIdVer);
         return verRez != null && verRez.equals(verSupportedObject) ? modelProvider.getObjectModel(registration)
                 .getResourceModel(pathIds.getObjectId(), pathIds.getResourceId()) : null;
@@ -289,7 +290,7 @@ public class LwM2mClient {
     public ObjectModel getObjectModel(String pathIdVer, LwM2mModelProvider modelProvider) {
         try {
             LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer));
-            String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
+            String verSupportedObject = String.valueOf(registration.getSupportedObject().get(pathIds.getObjectId()));
             String verRez = getVerFromPathIdVerOrId(pathIdVer);
             return verRez != null && verRez.equals(verSupportedObject) ? modelProvider.getObjectModel(registration)
                     .getObjectModel(pathIds.getObjectId()) : null;
@@ -370,12 +371,12 @@ public class LwM2mClient {
 
     public String isValidObjectVersion(String path) {
         LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(path));
-        String verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
+        LwM2m.Version verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
         if (verSupportedObject == null) {
             return String.format("Specified object id %s absent in the list supported objects of the client or is security object!", pathIds.getObjectId());
         } else {
             String verRez = getVerFromPathIdVerOrId(path);
-            if (verRez == null || !verRez.equals(verSupportedObject)) {
+            if (verRez == null || !verRez.equals(verSupportedObject.toString())) {
                 return String.format("Specified resource id %s is not valid version! Must be version: %s", path, verSupportedObject);
             }
         }
@@ -432,16 +433,12 @@ public class LwM2mClient {
     private static Set<ContentFormat> clientSupportContentFormat(Registration registration) {
         Set<ContentFormat> contentFormats = new HashSet<>();
         contentFormats.add(ContentFormat.DEFAULT);
-        LinkParamValue ct = Arrays.stream(registration.getObjectLinks())
+        Attribute ct = Arrays.stream(registration.getObjectLinks())
                 .filter(link -> link.getUriReference().equals("/"))
                 .findFirst()
-                .map(link -> link.getLinkParams().get("ct")).orElse(null);
+                .map(link -> link.getAttributes().get("ct")).orElse(null);
         if (ct != null) {
-            Set<ContentFormat> codes = Stream.of(ct.getUnquoted().replaceAll("\"", "").split(" ", -1))
-                    .map(String::trim)
-                    .map(Integer::parseInt)
-                    .map(ContentFormat::fromCode)
-                    .collect(Collectors.toSet());
+            Set codes = Stream.of(ct.getValue()).collect(Collectors.toSet());
             contentFormats.addAll(codes);
         }
         return contentFormats;

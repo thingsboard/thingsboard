@@ -40,7 +40,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { EntityService } from '@core/http/entity.service';
-import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeysCallbacks, DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { Observable, of } from 'rxjs';
 import { map, mergeMap, publishReplay, refCount, tap } from 'rxjs/operators';
@@ -51,8 +51,10 @@ import { WidgetService } from '@core/http/widget.service';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { IAliasController } from '@core/api/widget-api.models';
 import { aggregationTranslations, AggregationType, ComparisonDuration } from '@shared/models/time/time.models';
-import { genNextLabel } from '@core/utils';
+import { genNextLabel, isDefinedAndNotNull } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { WidgetConfigComponentData } from '@home/models/widget-component.models';
+import { WidgetComponentService } from '@home/components/widget/widget-component.service';
 
 @Component({
   selector: 'tb-data-key-config',
@@ -155,6 +157,8 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
 
   modelValue: DataKey;
 
+  widgetConfig: WidgetConfigComponentData;
+
   private propagateChange = null;
 
   public dataKeyFormGroup: UntypedFormGroup;
@@ -180,12 +184,31 @@ export class DataKeyConfigComponent extends PageComponent implements OnInit, Con
               private dialog: MatDialog,
               private translate: TranslateService,
               private widgetService: WidgetService,
+              private widgetComponentService: WidgetComponentService,
               private fb: UntypedFormBuilder) {
     super(store);
     this.functionScopeVariables = this.widgetService.getWidgetScopeVariables();
   }
 
   ngOnInit(): void {
+
+    const widgetInfo = this.widgetComponentService.getInstantWidgetInfo(this.widget);
+    const typeParameters = widgetInfo.typeParameters;
+    const dataKeySettingsFunction: DataKeySettingsFunction = typeParameters?.dataKeySettingsFunction;
+
+    this.widgetConfig = {
+      widgetName: widgetInfo.widgetName,
+      config: this.widget.config,
+      widgetType: this.widget.type,
+      typeParameters,
+      dataKeySettingsFunction,
+      settingsDirective: widgetInfo.settingsDirective,
+      dataKeySettingsDirective: widgetInfo.dataKeySettingsDirective,
+      latestDataKeySettingsDirective: widgetInfo.latestDataKeySettingsDirective,
+      hasBasicMode: isDefinedAndNotNull(widgetInfo.hasBasicMode) ? widgetInfo.hasBasicMode : false,
+      basicModeDirective: widgetInfo.basicModeDirective
+    } as WidgetConfigComponentData;
+
     this.alarmKeys = [];
     for (const name of Object.keys(alarmFields)) {
       this.alarmKeys.push({

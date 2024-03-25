@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -84,7 +85,7 @@ public class TbGpsGeofencingActionNode extends AbstractGeofencingNode<TbGpsGeofe
         EntityGeofencingState entityState = entityStates.computeIfAbsent(msg.getOriginator(), key -> {
             try {
                 Optional<AttributeKvEntry> entry = ctx.getAttributesService()
-                        .find(ctx.getTenantId(), msg.getOriginator(), DataConstants.SERVER_SCOPE, ctx.getServiceId())
+                        .find(ctx.getTenantId(), msg.getOriginator(), AttributeScope.SERVER_SCOPE, ctx.getServiceId())
                         .get(1, TimeUnit.MINUTES);
                 if (entry.isPresent()) {
                     JsonObject element = parser.parse(entry.get().getValueAsString()).getAsJsonObject();
@@ -144,7 +145,7 @@ public class TbGpsGeofencingActionNode extends AbstractGeofencingNode<TbGpsGeofe
         object.addProperty("stayed", entityState.isStayed());
         AttributeKvEntry entry = new BaseAttributeKvEntry(new StringDataEntry(ctx.getServiceId(), gson.toJson(object)), System.currentTimeMillis());
         List<AttributeKvEntry> attributeKvEntryList = Collections.singletonList(entry);
-        ctx.getAttributesService().save(ctx.getTenantId(), entityId, DataConstants.SERVER_SCOPE, attributeKvEntryList);
+        ctx.getAttributesService().save(ctx.getTenantId(), entityId, AttributeScope.SERVER_SCOPE, attributeKvEntryList);
     }
 
     @Override

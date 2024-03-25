@@ -38,7 +38,7 @@ import org.thingsboard.server.service.edge.instructions.EdgeInstallInstructionsS
 import org.thingsboard.server.service.edge.instructions.EdgeUpgradeInstructionsService;
 import org.thingsboard.server.service.gateway_device.GatewayInfoManagementService;
 
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PreDestroy;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;

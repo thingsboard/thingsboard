@@ -1,0 +1,54 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-toolbar color="primary">
+  <h2 translate>gateway.rpc.save-template</h2>
+  <span fxFlex></span>
+  <button mat-icon-button
+          (click)="close()"
+          type="button">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
+<div mat-dialog-content style="width: 600px" class="mat-content" fxLayout="column">
+  <mat-form-field class="mat-block tb-value-type" style="flex-grow: 0">
+    <mat-label translate>gateway.rpc.template-name</mat-label>
+    <input matInput [formControl]="templateNameCtrl" required/>
+    <mat-error
+      *ngIf="templateNameCtrl.hasError('required')">
+      {{ 'gateway.rpc.template-name-required' | translate }}
+    </mat-error>
+  </mat-form-field>
+  <div class="mat-mdc-form-field-error"
+       style="margin-top: -15px; padding-left: 10px; font-size: 14px;"
+       *ngIf="validateDuplicateName(templateNameCtrl)">
+    {{ 'gateway.rpc.template-name-duplicate' | translate }}
+  </div>
+</div>
+<div mat-dialog-actions fxLayoutAlign="end center">
+  <button mat-button
+          type="button"
+          (click)="close()">
+    {{ 'action.cancel' | translate }}
+  </button>
+  <button mat-raised-button  color="primary"
+          type="button"
+          [disabled]="!templateNameCtrl.valid"
+          (click)="save()">
+    {{ 'action.save' | translate }}
+  </button>
+</div>

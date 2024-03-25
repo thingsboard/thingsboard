@@ -571,6 +571,14 @@
                           [type]="rateLimitsType.EDGE_EVENTS_PER_EDGE_RATE_LIMIT">
           </tb-rate-limits>
         </div>
+        <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+          <tb-rate-limits fxFlex="50" formControlName="edgeUplinkMessagesRateLimits"
+                          [type]="rateLimitsType.EDGE_UPLINK_MESSAGES_RATE_LIMIT">
+          </tb-rate-limits>
+          <tb-rate-limits fxFlex="50" formControlName="edgeUplinkMessagesRateLimitsPerEdge"
+                          [type]="rateLimitsType.EDGE_UPLINK_MESSAGES_PER_EDGE_RATE_LIMIT">
+          </tb-rate-limits>
+        </div>
       </ng-template>
     </mat-expansion-panel>
   </fieldset>

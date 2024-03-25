@@ -31,4 +31,5 @@ public enum NotificationType {
     RATE_LIMITS,
     EDGE_CONNECTION,
     EDGE_COMMUNICATION_FAILURE
+
 }

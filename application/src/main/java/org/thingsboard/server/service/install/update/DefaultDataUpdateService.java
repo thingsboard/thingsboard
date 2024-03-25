@@ -78,8 +78,8 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 log.info("Updating data from version 3.6.0 to 3.6.1 ...");
                 migrateDeviceConnectivity();
                 break;
-            case "3.6.2":
-                log.info("Updating data from version 3.6.2 to 3.6.3 ...");
+            case "3.6.3":
+                log.info("Updating data from version 3.6.3 to 3.7 ...");
                 migrateGatewayVersion();
                 break;
             default:
