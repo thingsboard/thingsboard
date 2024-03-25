@@ -73,8 +73,11 @@
           position: absolute;
           inset: 0;
           mask-repeat: no-repeat;
+          -webkit-mask-repeat: no-repeat;
           mask-size: cover;
+          -webkit-mask-size: cover;
           mask-position: center;
+          -webkit-mask-position: center;
         }
         .tb-battery-level-container {
           position: absolute;
@@ -95,6 +98,7 @@
         &.vertical {
           .tb-battery-level-shape {
             mask-image: url(/assets/widget/battery-level/battery-shape-vertical.svg);
+            -webkit-mask-image: url(/assets/widget/battery-level/battery-shape-vertical.svg);
           }
           .tb-battery-level-container {
             flex-direction: column-reverse;
@@ -122,6 +126,7 @@
         &.horizontal {
           .tb-battery-level-shape {
             mask-image: url(/assets/widget/battery-level/battery-shape-horizontal.svg);
+            -webkit-mask-image: url(/assets/widget/battery-level/battery-shape-horizontal.svg);
           }
           .tb-battery-level-container {
             inset: 6.25% 8.85% 6.25% 3.54%;
