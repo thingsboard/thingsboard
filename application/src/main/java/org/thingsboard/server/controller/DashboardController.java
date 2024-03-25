@@ -176,7 +176,7 @@ public class DashboardController extends BaseController {
     @RequestMapping(value = "/dashboard", method = RequestMethod.POST)
     @ResponseBody
     public Dashboard saveDashboard(
-            @Parameter(description = "A JSON value representing the dashboard.")
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the dashboard.")
             @RequestBody Dashboard dashboard) throws Exception {
         dashboard.setTenantId(getTenantId());
         checkEntity(dashboard.getId(), dashboard, Resource.DASHBOARD);
