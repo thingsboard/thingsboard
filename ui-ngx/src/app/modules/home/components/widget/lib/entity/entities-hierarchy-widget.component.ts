@@ -163,6 +163,13 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
     this.updateNodeData(this.subscription.data);
   }
 
+  public onEditModeChanged() {
+    if (this.textSearchMode) {
+      this.ctx.hideTitlePanel = !this.ctx.isEdit;
+      this.ctx.detectChanges(true);
+    }
+  }
+
   private initializeConfig() {
     this.ctx.widgetActions = [this.searchAction];
 
