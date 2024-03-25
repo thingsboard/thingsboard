@@ -13,23 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.kv;
+package org.thingsboard.server.utils;
 
-import lombok.Getter;
+import org.junit.Test;
+import org.thingsboard.server.common.data.kv.DataType;
+import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
-public enum DataType {
+import static org.assertj.core.api.Assertions.assertThat;
 
-    BOOLEAN(0),
-    LONG(1),
-    DOUBLE(2),
-    STRING(3),
-    JSON(4);
+public class TbSubscriptionUtilsTest {
 
-    @Getter
-    private final int protoNumber; // Corresponds to KeyValueType
-
-    DataType(int protoNumber) {
-        this.protoNumber = protoNumber;
+    @Test
+    public void protoDataTypeSerialization() {
+        for (DataType dataType : DataType.values()) {
+            assertThat(TbSubscriptionUtils.fromProto(TbSubscriptionUtils.toProto(dataType))).as(dataType.name()).isEqualTo(dataType);
+        }
     }
 
 }
