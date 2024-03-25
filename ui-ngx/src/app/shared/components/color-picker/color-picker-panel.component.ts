@@ -39,10 +39,17 @@ export class ColorPickerPanelComponent extends PageComponent implements OnInit {
   colorClearButton = false;
 
   @Input()
+  @coerceBoolean()
+  colorCancelButton = false;
+
+  @Input()
   popover: TbPopoverComponent<ColorPickerPanelComponent>;
 
   @Output()
   colorSelected = new EventEmitter<string>();
+
+  @Output()
+  colorCancelDialog = new EventEmitter();
 
   colorPickerControl: UntypedFormControl;
 
@@ -61,4 +68,11 @@ export class ColorPickerPanelComponent extends PageComponent implements OnInit {
   clearColor() {
     this.colorSelected.emit(null);
   }
-}
+
+  cancelColor() {
+    if (this.popover) {
+      this.popover.hide();
+    } else {
+      this.colorCancelDialog.emit();
+    }
+  }}

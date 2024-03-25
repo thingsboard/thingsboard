@@ -13,38 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import "../scss/constants";
 
 :host {
-  .tb-close-button {
-    position: absolute;
-    top: 6px;
-    right: 6px;
+  .hex-input-container {
+    display: flex;
+    gap: 8px;
   }
-  ::ng-deep {
-    .mat-mdc-dialog-content {
-      max-height: 100%;
-      overflow: hidden;
-      padding: 12px 4px 12px 12px !important;
-    }
-    .tb-color-picker-panel {
-      @media #{$mat-sm} {
-        width: 342px;
-        .color-input-container {
-          flex-direction: column !important;
-        }
-        .color-presets-component color-preset {
-          width: 48px;
-        }
-      }
+  .hex-input {
+    max-width: 190px;
+  }
+  .alpha-input {
+    min-width: 60px;
+    max-width: 60px;
+  }
 
-      @media #{$mat-xs} {
-        width: 100%;
-        .hex-input {
-          flex: 1;
-          max-width: 100% !important;
-        }
+  ::ng-deep {
+    .mdc-text-field--filled, .mat-mdc-form-field-focus-overlay {
+      &:before {
+        background-color: transparent !important;
       }
     }
+    .mat-mdc-form-field-icon-prefix, .mdc-line-ripple, .copy-button {
+      opacity: 0.4;
+    }
+    .alpha-input {
+      .mat-mdc-text-field-wrapper {
+        padding-left: 0;
+      }
+    }
+
   }
 }
+
+

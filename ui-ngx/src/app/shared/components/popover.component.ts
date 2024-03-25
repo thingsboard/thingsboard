@@ -340,7 +340,7 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
             <div class="tb-popover-inner" [ngStyle]="tbPopoverInnerStyle" role="tooltip">
               <div *ngIf="tbShowCloseButton" class="tb-popover-close-button" (click)="closeButtonClick($event)">×</div>
               <div style="width: 100%; height: 100%;">
-                <div class="tb-popover-inner-content"
+                <div class="tb-popover-inner-content"  [ngStyle]="tbPopoverInnerContentStyle"
                      [class.strict-position]="strictPosition">
                   <ng-container *ngIf="tbContent">
                     <ng-container *tbStringTemplateOutlet="tbContent; context: tbComponentContext">
@@ -378,6 +378,7 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
   tbOverlayClassName!: string;
   tbOverlayStyle: { [klass: string]: any } = {};
   tbPopoverInnerStyle: { [klass: string]: any } = {};
+  tbPopoverInnerContentStyle: { [klass: string]: any } = {};
   tbBackdrop = false;
   tbMouseEnterDelay?: number;
   tbMouseLeaveDelay?: number;
