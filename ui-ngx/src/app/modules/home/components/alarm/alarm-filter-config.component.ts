@@ -45,6 +45,7 @@ import { deepClone } from '@core/utils';
 import { EntityType } from '@shared/models/entity-type.models';
 import { fromEvent, Subscription } from 'rxjs';
 import { POSITION_MAP } from '@shared/models/overlay.models';
+import { UtilsService } from '@core/services/utils.service';
 
 export const ALARM_FILTER_CONFIG_DATA = new InjectionToken<any>('AlarmFilterConfigData');
 
@@ -127,7 +128,8 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
               private translate: TranslateService,
               private overlay: Overlay,
               private nativeElement: ElementRef,
-              private viewContainerRef: ViewContainerRef) {
+              private viewContainerRef: ViewContainerRef,
+              private utils: UtilsService) {
   }
 
   ngOnInit(): void {
@@ -298,7 +300,7 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
           this.translate.instant(alarmSeverityTranslations.get(s))).join(', '));
       }
       if (this.alarmFilterConfig?.typeList?.length) {
-        filterTextParts.push(this.alarmFilterConfig.typeList.join(', '));
+        filterTextParts.push(this.alarmFilterConfig.typeList.map((type) => this.customTranslate(type)).join(', '));
       }
       if (this.alarmFilterConfig?.assignedToCurrentUser) {
         filterTextParts.push(this.translate.instant('alarm.assigned-to-me'));
@@ -311,6 +313,10 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
         this.buttonDisplayValue = this.translate.instant('alarm.filter-title') + `: ${filterTextParts.join(', ')}`;
       }
     }
+  }
+
+  private customTranslate(entity: string) {
+    return this.utils.customTranslation(entity, entity);
   }
 
 }

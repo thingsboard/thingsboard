@@ -17,16 +17,16 @@ package org.thingsboard.server.common.data.alarm.rule.condition;
 
 import java.util.List;
 
-import static org.thingsboard.server.common.data.alarm.rule.condition.Operation.CONTAINS;
-import static org.thingsboard.server.common.data.alarm.rule.condition.Operation.ENDS_WITH;
-import static org.thingsboard.server.common.data.alarm.rule.condition.Operation.EQUAL;
-import static org.thingsboard.server.common.data.alarm.rule.condition.Operation.GREATER;
-import static org.thingsboard.server.common.data.alarm.rule.condition.Operation.GREATER_OR_EQUAL;
-import static org.thingsboard.server.common.data.alarm.rule.condition.Operation.LESS;
-import static org.thingsboard.server.common.data.alarm.rule.condition.Operation.LESS_OR_EQUAL;
-import static org.thingsboard.server.common.data.alarm.rule.condition.Operation.NOT_CONTAINS;
-import static org.thingsboard.server.common.data.alarm.rule.condition.Operation.NOT_EQUAL;
-import static org.thingsboard.server.common.data.alarm.rule.condition.Operation.STARTS_WITH;
+import static org.thingsboard.server.common.data.alarm.rule.condition.ArgumentOperation.CONTAINS;
+import static org.thingsboard.server.common.data.alarm.rule.condition.ArgumentOperation.ENDS_WITH;
+import static org.thingsboard.server.common.data.alarm.rule.condition.ArgumentOperation.EQUAL;
+import static org.thingsboard.server.common.data.alarm.rule.condition.ArgumentOperation.GREATER;
+import static org.thingsboard.server.common.data.alarm.rule.condition.ArgumentOperation.GREATER_OR_EQUAL;
+import static org.thingsboard.server.common.data.alarm.rule.condition.ArgumentOperation.LESS;
+import static org.thingsboard.server.common.data.alarm.rule.condition.ArgumentOperation.LESS_OR_EQUAL;
+import static org.thingsboard.server.common.data.alarm.rule.condition.ArgumentOperation.NOT_CONTAINS;
+import static org.thingsboard.server.common.data.alarm.rule.condition.ArgumentOperation.NOT_EQUAL;
+import static org.thingsboard.server.common.data.alarm.rule.condition.ArgumentOperation.STARTS_WITH;
 
 public enum ArgumentValueType {
     STRING(EQUAL, NOT_EQUAL, STARTS_WITH, ENDS_WITH, CONTAINS, NOT_CONTAINS),
@@ -34,13 +34,13 @@ public enum ArgumentValueType {
     DATE_TIME(EQUAL, NOT_EQUAL, GREATER, LESS, GREATER_OR_EQUAL, LESS_OR_EQUAL),
     BOOLEAN(EQUAL, NOT_EQUAL);
 
-    private final List<Operation> availableOperations;
+    private final List<ArgumentOperation> availableOperations;
 
-    ArgumentValueType(Operation... availableOperations) {
+    ArgumentValueType(ArgumentOperation... availableOperations) {
         this.availableOperations = List.of(availableOperations);
     }
 
-    public boolean isAvailable(Operation operation) {
+    public boolean isAvailable(ArgumentOperation operation) {
         return this.availableOperations.contains(operation);
     }
 }

@@ -37,7 +37,7 @@ import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfigur
 import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentValueType;
 import org.thingsboard.server.common.data.alarm.rule.condition.ConstantArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.FromMessageArgument;
-import org.thingsboard.server.common.data.alarm.rule.condition.Operation;
+import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentOperation;
 import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionFilter;
 import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionSpec;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleAllDevicesEntityFilter;
@@ -166,7 +166,7 @@ public class EntityStateTest {
         SimpleAlarmConditionFilter condition = new SimpleAlarmConditionFilter();
         condition.setLeftArgId("enabledKey");
         condition.setRightArgId("enabledConst");
-        condition.setOperation(Operation.EQUAL);
+        condition.setOperation(ArgumentOperation.EQUAL);
 
         AlarmRuleConfiguration alarmConfig = new AlarmRuleConfiguration();
         AlarmRuleCondition alarmRule = new AlarmRuleCondition();

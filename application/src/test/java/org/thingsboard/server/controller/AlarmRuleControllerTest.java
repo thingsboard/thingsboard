@@ -34,7 +34,7 @@ import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfigur
 import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentValueType;
 import org.thingsboard.server.common.data.alarm.rule.condition.ConstantArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.FromMessageArgument;
-import org.thingsboard.server.common.data.alarm.rule.condition.Operation;
+import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentOperation;
 import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionFilter;
 import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionSpec;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleSingleEntityFilter;
@@ -255,7 +255,7 @@ public class AlarmRuleControllerTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter alarmConditionFilter = new SimpleAlarmConditionFilter();
         alarmConditionFilter.setLeftArgId("boolKey");
         alarmConditionFilter.setRightArgId("boolConst");
-        alarmConditionFilter.setOperation(Operation.EQUAL);
+        alarmConditionFilter.setOperation(ArgumentOperation.EQUAL);
         alarmCondition.setConditionFilter(alarmConditionFilter);
 
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();

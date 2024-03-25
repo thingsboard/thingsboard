@@ -255,6 +255,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         notificationRuleService.deleteNotificationRulesByTenantId(tenantId);
         notificationTemplateService.deleteNotificationTemplatesByTenantId(tenantId);
         notificationTargetService.deleteNotificationTargetsByTenantId(tenantId);
+        notificationSettingsService.deleteNotificationSettings(tenantId);
         adminSettingsService.deleteAdminSettingsByTenantId(tenantId);
         alarmRuleService.deleteAlarmRulesByTenantId(tenantId);
         tenantDao.removeById(tenantId, tenantId.getId());

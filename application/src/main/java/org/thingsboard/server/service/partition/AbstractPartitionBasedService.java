@@ -93,11 +93,14 @@ public abstract class AbstractPartitionBasedService<T extends EntityId> extends 
      */
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
-        if (getServiceType().equals(partitionChangeEvent.getServiceType())) {
-            log.debug("onTbApplicationEvent, processing event: {}", partitionChangeEvent);
-            subscribeQueue.add(partitionChangeEvent.getPartitions());
-            scheduledExecutor.submit(this::pollInitStateFromDB);
-        }
+        log.debug("onTbApplicationEvent, processing event: {}", partitionChangeEvent);
+        subscribeQueue.add(partitionChangeEvent.getPartitions());
+        scheduledExecutor.submit(this::pollInitStateFromDB);
+    }
+
+    @Override
+    protected boolean filterTbApplicationEvent(PartitionChangeEvent event) {
+        return getServiceType().equals(event.getServiceType());
     }
 
     protected void pollInitStateFromDB() {

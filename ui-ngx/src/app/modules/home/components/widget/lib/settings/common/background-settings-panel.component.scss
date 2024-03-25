@@ -67,6 +67,14 @@
     left: 7.998px;
     right: 7.998px;
   }
+  .tb-background-settings-panel-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow: auto;
+    margin: -10px;
+    padding: 10px;
+  }
   .tb-background-settings-panel-buttons {
     height: 40px;
     display: flex;

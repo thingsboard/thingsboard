@@ -16,10 +16,20 @@
 :host {
   width: 100%;
   height: 100%;
-  overflow-x: auto;
+  overflow: auto;
   display: flex;
-  flex-direction: column;
-  padding: 0;
+  flex-direction: row;
+  padding: 0 5px;
+
+  & > * {
+    height: 100%;
+    overflow: auto;
+  }
+
+  & > tb-gateway-service-rpc-connector-templates:last-child {
+    margin-left: 10px;
+  }
+
 
   .command-form {
     flex-wrap: nowrap;
@@ -63,11 +73,11 @@
       flex: 1;
     }
   }
-}
 
-:host ::ng-deep {
-  .tb-json-content {
-    height: 100%;
+  .border {
+    padding: 16px;
+    box-shadow: 0 0 0 0 rgb(0 0 0 / 20%), 0 0 0 0 rgb(0 0 0 / 14%), 0 0 0 0 rgb(0 0 0 / 12%);
+    border: solid 1px #e0e0e0;
+    border-radius: 4px;
   }
 }
-

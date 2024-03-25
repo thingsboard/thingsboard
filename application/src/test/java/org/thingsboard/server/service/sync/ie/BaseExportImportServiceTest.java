@@ -46,7 +46,7 @@ import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfigur
 import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentValueType;
 import org.thingsboard.server.common.data.alarm.rule.condition.ConstantArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.FromMessageArgument;
-import org.thingsboard.server.common.data.alarm.rule.condition.Operation;
+import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentOperation;
 import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionFilter;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleDeviceTypeEntityFilter;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -271,7 +271,7 @@ public abstract class BaseExportImportServiceTest extends AbstractControllerTest
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
         highTempFilter.setLeftArgId("temperatureKey");
         highTempFilter.setRightArgId("highTemperatureConst");
-        highTempFilter.setOperation(Operation.GREATER);
+        highTempFilter.setOperation(ArgumentOperation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setConditionFilter(highTempFilter);
@@ -285,7 +285,7 @@ public abstract class BaseExportImportServiceTest extends AbstractControllerTest
         SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
         lowTempFilter.setLeftArgId("temperatureKey");
         lowTempFilter.setRightArgId("lowTemperatureConst");
-        lowTempFilter.setOperation(Operation.LESS);
+        lowTempFilter.setOperation(ArgumentOperation.LESS);
 
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();

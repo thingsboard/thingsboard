@@ -50,7 +50,7 @@ import org.thingsboard.server.common.data.alarm.rule.condition.CustomTimeSchedul
 import org.thingsboard.server.common.data.alarm.rule.condition.DurationAlarmConditionSpec;
 import org.thingsboard.server.common.data.alarm.rule.condition.FromMessageArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.NoUpdateAlarmConditionSpec;
-import org.thingsboard.server.common.data.alarm.rule.condition.Operation;
+import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentOperation;
 import org.thingsboard.server.common.data.alarm.rule.condition.RepeatingAlarmConditionSpec;
 import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionFilter;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleAllAssetsEntityFilter;
@@ -176,7 +176,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
         highTempFilter.setLeftArgId("temperatureKey");
         highTempFilter.setRightArgId("highTemperatureConst");
-        highTempFilter.setOperation(Operation.GREATER);
+        highTempFilter.setOperation(ArgumentOperation.GREATER);
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setConditionFilter(highTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
@@ -189,7 +189,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
         lowTempFilter.setLeftArgId("temperatureKey");
         lowTempFilter.setRightArgId("lowTemperatureConst");
-        lowTempFilter.setOperation(Operation.LESS);
+        lowTempFilter.setOperation(ArgumentOperation.LESS);
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
         alarmRuleConfiguration.setArguments(Map.of("temperatureKey", temperatureKey, "highTemperatureConst", highTemperatureConst, "lowTemperatureConst", lowTemperatureConst));
@@ -275,7 +275,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter tempFilter = new SimpleAlarmConditionFilter();
         tempFilter.setLeftArgId("temperatureKey");
         tempFilter.setRightArgId("temperatureConst");
-        tempFilter.setOperation(Operation.GREATER);
+        tempFilter.setOperation(ArgumentOperation.GREATER);
         AlarmCondition tempAlarmCondition = new AlarmCondition();
         tempAlarmCondition.setConditionFilter(tempFilter);
         AlarmRuleCondition tempAlarmRuleCondition = new AlarmRuleCondition();
@@ -286,7 +286,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
         highTempFilter.setLeftArgId("temperatureKey");
         highTempFilter.setRightArgId("highTemperatureConst");
-        highTempFilter.setOperation(Operation.GREATER);
+        highTempFilter.setOperation(ArgumentOperation.GREATER);
         AlarmCondition highTempAlarmCondition = new AlarmCondition();
         highTempAlarmCondition.setConditionFilter(highTempFilter);
         AlarmRuleCondition highTempAlarmRuleCondition = new AlarmRuleCondition();
@@ -349,7 +349,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter alarmEnabledFilter = new SimpleAlarmConditionFilter();
         alarmEnabledFilter.setLeftArgId("alarmEnabledConst");
         alarmEnabledFilter.setRightArgId("alarmEnabledKey");
-        alarmEnabledFilter.setOperation(Operation.EQUAL);
+        alarmEnabledFilter.setOperation(ArgumentOperation.EQUAL);
 
         var temperatureKey = new FromMessageArgument(AlarmConditionKeyType.TIME_SERIES, "temperature", NUMERIC);
         var temperatureConst = new ConstantArgument(NUMERIC, 20.0);
@@ -357,7 +357,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter temperatureFilter = new SimpleAlarmConditionFilter();
         temperatureFilter.setLeftArgId("temperatureKey");
         temperatureFilter.setRightArgId("temperatureConst");
-        temperatureFilter.setOperation(Operation.GREATER);
+        temperatureFilter.setOperation(ArgumentOperation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setConditionFilter(new ComplexAlarmConditionFilter(Arrays.asList(alarmEnabledFilter, temperatureFilter), ComplexAlarmConditionFilter.ComplexOperation.AND));
@@ -428,7 +428,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter alarmEnabledFilter = new SimpleAlarmConditionFilter();
         alarmEnabledFilter.setLeftArgId("alarmEnabledConst");
         alarmEnabledFilter.setRightArgId("alarmEnabledKey");
-        alarmEnabledFilter.setOperation(Operation.EQUAL);
+        alarmEnabledFilter.setOperation(ArgumentOperation.EQUAL);
 
         var temperatureKey = new FromMessageArgument(AlarmConditionKeyType.TIME_SERIES, "temperature", NUMERIC);
         var temperatureConst = new ConstantArgument(NUMERIC, 20.0);
@@ -436,7 +436,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter temperatureFilter = new SimpleAlarmConditionFilter();
         temperatureFilter.setLeftArgId("temperatureKey");
         temperatureFilter.setRightArgId("temperatureConst");
-        temperatureFilter.setOperation(Operation.GREATER);
+        temperatureFilter.setOperation(ArgumentOperation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setConditionFilter(new ComplexAlarmConditionFilter(Arrays.asList(alarmEnabledFilter, temperatureFilter), ComplexAlarmConditionFilter.ComplexOperation.AND));
@@ -510,7 +510,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
         highTempFilter.setLeftArgId("temperatureKey");
         highTempFilter.setRightArgId("highTemperatureConst");
-        highTempFilter.setOperation(Operation.GREATER);
+        highTempFilter.setOperation(ArgumentOperation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setConditionFilter(highTempFilter);
@@ -524,7 +524,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
         lowTempFilter.setLeftArgId("temperatureKey");
         lowTempFilter.setRightArgId("lowTemperatureConst");
-        lowTempFilter.setOperation(Operation.LESS);
+        lowTempFilter.setOperation(ArgumentOperation.LESS);
 
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
@@ -603,7 +603,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
         highTempFilter.setLeftArgId("temperatureKey");
         highTempFilter.setRightArgId("highTemperatureConst");
-        highTempFilter.setOperation(Operation.GREATER);
+        highTempFilter.setOperation(ArgumentOperation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setConditionFilter(highTempFilter);
@@ -617,7 +617,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
         lowTempFilter.setLeftArgId("temperatureKey");
         lowTempFilter.setRightArgId("lowTemperatureConst");
-        lowTempFilter.setOperation(Operation.LESS);
+        lowTempFilter.setOperation(ArgumentOperation.LESS);
 
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
@@ -696,7 +696,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
         highTempFilter.setLeftArgId("temperatureKey");
         highTempFilter.setRightArgId("highTemperatureConst");
-        highTempFilter.setOperation(Operation.GREATER);
+        highTempFilter.setOperation(ArgumentOperation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setConditionFilter(highTempFilter);
@@ -710,7 +710,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
         lowTempFilter.setLeftArgId("temperatureKey");
         lowTempFilter.setRightArgId("lowTemperatureConst");
-        lowTempFilter.setOperation(Operation.LESS);
+        lowTempFilter.setOperation(ArgumentOperation.LESS);
 
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
@@ -791,7 +791,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
         highTempFilter.setLeftArgId("temperatureKey");
         highTempFilter.setRightArgId("highTemperatureConst");
-        highTempFilter.setOperation(Operation.GREATER);
+        highTempFilter.setOperation(ArgumentOperation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setConditionFilter(highTempFilter);
@@ -805,7 +805,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
         lowTempFilter.setLeftArgId("temperatureKey");
         lowTempFilter.setRightArgId("lowTemperatureConst");
-        lowTempFilter.setOperation(Operation.LESS);
+        lowTempFilter.setOperation(ArgumentOperation.LESS);
 
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
@@ -887,7 +887,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
         highTempFilter.setLeftArgId("temperatureKey");
         highTempFilter.setRightArgId("highTemperatureConst");
-        highTempFilter.setOperation(Operation.GREATER);
+        highTempFilter.setOperation(ArgumentOperation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setConditionFilter(highTempFilter);
@@ -901,7 +901,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
         lowTempFilter.setLeftArgId("temperatureKey");
         lowTempFilter.setRightArgId("lowTemperatureConst");
-        lowTempFilter.setOperation(Operation.LESS);
+        lowTempFilter.setOperation(ArgumentOperation.LESS);
 
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
@@ -979,7 +979,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
         highTempFilter.setLeftArgId("temperatureKey");
         highTempFilter.setRightArgId("highTemperatureConst");
-        highTempFilter.setOperation(Operation.GREATER);
+        highTempFilter.setOperation(ArgumentOperation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setConditionFilter(highTempFilter);
@@ -993,7 +993,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
         lowTempFilter.setLeftArgId("temperatureKey");
         lowTempFilter.setRightArgId("lowTemperatureConst");
-        lowTempFilter.setOperation(Operation.LESS);
+        lowTempFilter.setOperation(ArgumentOperation.LESS);
 
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
@@ -1084,7 +1084,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
         highTempFilter.setLeftArgId("temperatureKey");
         highTempFilter.setRightArgId("highTemperatureConst");
-        highTempFilter.setOperation(Operation.GREATER);
+        highTempFilter.setOperation(ArgumentOperation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setConditionFilter(highTempFilter);
@@ -1098,7 +1098,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
         lowTempFilter.setLeftArgId("temperatureKey");
         lowTempFilter.setRightArgId("lowTemperatureConst");
-        lowTempFilter.setOperation(Operation.LESS);
+        lowTempFilter.setOperation(ArgumentOperation.LESS);
 
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
@@ -1181,7 +1181,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
         highTempFilter.setLeftArgId("temperatureKey");
         highTempFilter.setRightArgId("greaterAttributeKey");
-        highTempFilter.setOperation(Operation.GREATER);
+        highTempFilter.setOperation(ArgumentOperation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setConditionFilter(highTempFilter);
@@ -1251,7 +1251,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
         highTempFilter.setLeftArgId("temperatureKey");
         highTempFilter.setRightArgId("greaterAttributeKey");
-        highTempFilter.setOperation(Operation.GREATER);
+        highTempFilter.setOperation(ArgumentOperation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setConditionFilter(highTempFilter);
@@ -1345,7 +1345,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
         highTempFilter.setLeftArgId("temperatureKey");
         highTempFilter.setRightArgId("greaterAttributeKey");
-        highTempFilter.setOperation(Operation.GREATER);
+        highTempFilter.setOperation(ArgumentOperation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setConditionFilter(highTempFilter);
@@ -1436,7 +1436,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
         highTempFilter.setLeftArgId("temperatureKey");
         highTempFilter.setRightArgId("greaterAttributeKey");
-        highTempFilter.setOperation(Operation.GREATER);
+        highTempFilter.setOperation(ArgumentOperation.GREATER);
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setConditionFilter(highTempFilter);
 
@@ -1516,7 +1516,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
         highTempFilter.setLeftArgId("temperatureKey");
         highTempFilter.setRightArgId("greaterAttributeKey");
-        highTempFilter.setOperation(Operation.GREATER);
+        highTempFilter.setOperation(ArgumentOperation.GREATER);
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setConditionFilter(highTempFilter);
 
@@ -1600,7 +1600,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
         highTempFilter.setLeftArgId("temperatureKey");
         highTempFilter.setRightArgId("greaterAttributeKey");
-        highTempFilter.setOperation(Operation.GREATER);
+        highTempFilter.setOperation(ArgumentOperation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setConditionFilter(highTempFilter);
@@ -1692,7 +1692,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
         highTempFilter.setLeftArgId("temperatureKey");
         highTempFilter.setRightArgId("greaterAttributeKey");
-        highTempFilter.setOperation(Operation.GREATER);
+        highTempFilter.setOperation(ArgumentOperation.GREATER);
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setConditionFilter(highTempFilter);
 
@@ -1769,7 +1769,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
         highTempFilter.setLeftArgId("temperatureKey");
         highTempFilter.setRightArgId("temperatureConst");
-        highTempFilter.setOperation(Operation.GREATER);
+        highTempFilter.setOperation(ArgumentOperation.GREATER);
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setConditionFilter(highTempFilter);
 
@@ -1857,7 +1857,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
         highTempFilter.setLeftArgId("temperatureKey");
         highTempFilter.setRightArgId("temperatureConst");
-        highTempFilter.setOperation(Operation.GREATER);
+        highTempFilter.setOperation(ArgumentOperation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setConditionFilter(highTempFilter);
@@ -1932,7 +1932,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
         highTempFilter.setLeftArgId("temperatureKey");
         highTempFilter.setRightArgId("temperatureConst");
-        highTempFilter.setOperation(Operation.GREATER);
+        highTempFilter.setOperation(ArgumentOperation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setConditionFilter(highTempFilter);
@@ -2013,7 +2013,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
         lowTempFilter.setLeftArgId("temperatureKey");
         lowTempFilter.setRightArgId("lessAttributeKey");
-        lowTempFilter.setOperation(Operation.LESS);
+        lowTempFilter.setOperation(ArgumentOperation.LESS);
 
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setConditionFilter(lowTempFilter);
@@ -2079,7 +2079,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
         lowTempFilter.setLeftArgId("temperatureKey");
         lowTempFilter.setRightArgId("lessAttributeKey");
-        lowTempFilter.setOperation(Operation.LESS);
+        lowTempFilter.setOperation(ArgumentOperation.LESS);
 
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setConditionFilter(lowTempFilter);
@@ -2145,7 +2145,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
         lowTempFilter.setLeftArgId("temperatureKey");
         lowTempFilter.setRightArgId("tenantAttributeKey");
-        lowTempFilter.setOperation(Operation.GREATER);
+        lowTempFilter.setOperation(ArgumentOperation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setConditionFilter(lowTempFilter);
@@ -2215,7 +2215,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
         lowTempFilter.setLeftArgId("temperatureKey");
         lowTempFilter.setRightArgId("tenantAttributeKey");
-        lowTempFilter.setOperation(Operation.GREATER);
+        lowTempFilter.setOperation(ArgumentOperation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setConditionFilter(lowTempFilter);
@@ -2481,7 +2481,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
         highTempFilter.setLeftArgId("temperatureLeftKey");
         highTempFilter.setRightArgId("temperatureRightKey");
-        highTempFilter.setOperation(Operation.GREATER);
+        highTempFilter.setOperation(ArgumentOperation.GREATER);
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setConditionFilter(highTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
@@ -2494,7 +2494,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter lowTempFilter = new SimpleAlarmConditionFilter();
         lowTempFilter.setLeftArgId("temperatureLeftKey");
         lowTempFilter.setRightArgId("lowTemperatureConst");
-        lowTempFilter.setOperation(Operation.LESS);
+        lowTempFilter.setOperation(ArgumentOperation.LESS);
         AlarmRuleCondition clearRule = new AlarmRuleCondition();
         AlarmCondition clearCondition = new AlarmCondition();
         clearCondition.setConditionFilter(lowTempFilter);
@@ -2582,7 +2582,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
         highTempFilter.setLeftArgId("temperatureKey");
         highTempFilter.setRightArgId("highTemperatureConst");
-        highTempFilter.setOperation(Operation.GREATER);
+        highTempFilter.setOperation(ArgumentOperation.GREATER);
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setConditionFilter(highTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
@@ -2619,7 +2619,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter lowHumidityFilter = new SimpleAlarmConditionFilter();
         lowHumidityFilter.setLeftArgId("humidityKey");
         lowHumidityFilter.setRightArgId("lowHumidityConst");
-        lowHumidityFilter.setOperation(Operation.LESS);
+        lowHumidityFilter.setOperation(ArgumentOperation.LESS);
 
         alarmCondition.setConditionFilter(new ComplexAlarmConditionFilter(List.of(highTempFilter, lowHumidityFilter), ComplexAlarmConditionFilter.ComplexOperation.AND));
         alarmRule.setConfiguration(alarmRuleConfiguration);
@@ -2681,12 +2681,12 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
         highTempFilter.setLeftArgId("temperatureKey");
         highTempFilter.setRightArgId("highTemperatureConst");
-        highTempFilter.setOperation(Operation.GREATER);
+        highTempFilter.setOperation(ArgumentOperation.GREATER);
 
         SimpleAlarmConditionFilter lowHumidityFilter = new SimpleAlarmConditionFilter();
         lowHumidityFilter.setLeftArgId("humidityKey");
         lowHumidityFilter.setRightArgId("lowHumidityConst");
-        lowHumidityFilter.setOperation(Operation.LESS);
+        lowHumidityFilter.setOperation(ArgumentOperation.LESS);
 
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setConditionFilter(new ComplexAlarmConditionFilter(List.of(highTempFilter, lowHumidityFilter), ComplexAlarmConditionFilter.ComplexOperation.AND));
@@ -2768,7 +2768,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         SimpleAlarmConditionFilter highTempFilter = new SimpleAlarmConditionFilter();
         highTempFilter.setLeftArgId("temperatureKey");
         highTempFilter.setRightArgId("highTemperatureConst");
-        highTempFilter.setOperation(Operation.GREATER);
+        highTempFilter.setOperation(ArgumentOperation.GREATER);
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setConditionFilter(highTempFilter);
         AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();

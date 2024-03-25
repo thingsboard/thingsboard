@@ -47,6 +47,12 @@ import { GatewayConnectorComponent } from '@home/components/widget/lib/gateway/g
 import { GatewayLogsComponent } from '@home/components/widget/lib/gateway/gateway-logs.component';
 import { GatewayStatisticsComponent } from '@home/components/widget/lib/gateway/gateway-statistics.component';
 import { GatewayServiceRPCComponent } from '@home/components/widget/lib/gateway/gateway-service-rpc.component';
+import {
+  GatewayServiceRPCConnectorComponent
+} from '@home/components/widget/lib/gateway/gateway-service-rpc-connector.component';
+import {
+  GatewayServiceRPCConnectorTemplatesComponent
+} from '@home/components/widget/lib/gateway/gateway-service-rpc-connector-templates.component';
 import { DeviceGatewayCommandComponent } from '@home/components/widget/lib/gateway/device-gateway-command.component';
 import { GatewayConfigurationComponent } from '@home/components/widget/lib/gateway/gateway-configuration.component';
 import {
@@ -70,11 +76,16 @@ import { RangeChartWidgetComponent } from '@home/components/widget/lib/chart/ran
 import {
   BarChartWithLabelsWidgetComponent
 } from '@home/components/widget/lib/chart/bar-chart-with-labels-widget.component';
+import {
+  GatewayServiceRPCConnectorTemplateDialogComponent
+} from '@home/components/widget/lib/gateway/gateway-service-rpc-connector-template-dialog';
 import { SingleSwitchWidgetComponent } from '@home/components/widget/lib/rpc/single-switch-widget.component';
 import { ActionButtonWidgetComponent } from '@home/components/widget/lib/button/action-button-widget.component';
 import { CommandButtonWidgetComponent } from '@home/components/widget/lib/button/command-button-widget.component';
 import { PowerButtonWidgetComponent } from '@home/components/widget/lib/rpc/power-button-widget.component';
 import { SliderWidgetComponent } from '@home/components/widget/lib/rpc/slider-widget.component';
+import { ToggleButtonWidgetComponent } from '@home/components/widget/lib/button/toggle-button-widget.component';
+import { TimeSeriesChartWidgetComponent } from '@home/components/widget/lib/chart/time-series-chart-widget.component';
 
 @NgModule({
   declarations:
@@ -103,9 +114,12 @@ import { SliderWidgetComponent } from '@home/components/widget/lib/rpc/slider-wi
       GatewayLogsComponent,
       GatewayStatisticsComponent,
       GatewayServiceRPCComponent,
+      GatewayServiceRPCConnectorComponent,
+      GatewayServiceRPCConnectorTemplatesComponent,
       DeviceGatewayCommandComponent,
       GatewayConfigurationComponent,
       GatewayRemoteConfigurationDialogComponent,
+      GatewayServiceRPCConnectorTemplateDialogComponent,
       ValueCardWidgetComponent,
       AggregatedValueCardWidgetComponent,
       CountWidgetComponent,
@@ -122,7 +136,9 @@ import { SliderWidgetComponent } from '@home/components/widget/lib/rpc/slider-wi
       ActionButtonWidgetComponent,
       CommandButtonWidgetComponent,
       PowerButtonWidgetComponent,
-      SliderWidgetComponent
+      SliderWidgetComponent,
+      ToggleButtonWidgetComponent,
+      TimeSeriesChartWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -153,11 +169,14 @@ import { SliderWidgetComponent } from '@home/components/widget/lib/rpc/slider-wi
         FlotWidgetComponent,
         GatewayConnectorComponent,
         GatewayLogsComponent,
+        GatewayServiceRPCConnectorComponent,
+        GatewayServiceRPCConnectorTemplatesComponent,
         GatewayStatisticsComponent,
         GatewayServiceRPCComponent,
         DeviceGatewayCommandComponent,
         GatewayConfigurationComponent,
         GatewayRemoteConfigurationDialogComponent,
+        GatewayServiceRPCConnectorTemplateDialogComponent,
         ValueCardWidgetComponent,
         AggregatedValueCardWidgetComponent,
         CountWidgetComponent,
@@ -174,7 +193,9 @@ import { SliderWidgetComponent } from '@home/components/widget/lib/rpc/slider-wi
         ActionButtonWidgetComponent,
         CommandButtonWidgetComponent,
         PowerButtonWidgetComponent,
-        SliderWidgetComponent
+        SliderWidgetComponent,
+        ToggleButtonWidgetComponent,
+        TimeSeriesChartWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }

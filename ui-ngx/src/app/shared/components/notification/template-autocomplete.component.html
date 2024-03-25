@@ -51,7 +51,7 @@
       <span class="template-option-name" [innerHTML]="template.name | highlight:searchText"></span>
       <mat-chip-set>
         <mat-chip disabled *ngFor="let method of template.configuration.deliveryMethodsTemplates | keyvalue">
-          {{ notificationDeliveryMethodTranslateMap.get(method.key) | translate }}
+          {{ notificationDeliveryMethodInfoMap.get(method.key).name | translate }}
         </mat-chip>
       </mat-chip-set>
     </mat-option>

@@ -35,7 +35,7 @@ import org.thingsboard.server.common.data.alarm.rule.condition.ConstantArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.CustomTimeSchedule;
 import org.thingsboard.server.common.data.alarm.rule.condition.DurationAlarmConditionSpec;
 import org.thingsboard.server.common.data.alarm.rule.condition.FromMessageArgument;
-import org.thingsboard.server.common.data.alarm.rule.condition.Operation;
+import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentOperation;
 import org.thingsboard.server.common.data.alarm.rule.condition.RepeatingAlarmConditionSpec;
 import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionFilter;
 import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionSpec;
@@ -165,7 +165,7 @@ public class AlarmRuleMigrator {
     private static SimpleAlarmConditionFilter getSimpleConditionFilter(SimpleKeyFilterPredicate<?> simplePredicate, String leftArgId, ArgumentValueType valueType, Map<TbPair<String, Integer>, AlarmRuleArgument> arguments) {
         var simpleFilter = new SimpleAlarmConditionFilter();
         simpleFilter.setLeftArgId(leftArgId);
-        simpleFilter.setOperation(Operation.valueOf(simplePredicate.getOperationName()));
+        simpleFilter.setOperation(ArgumentOperation.valueOf(simplePredicate.getOperationName()));
 
         if (simplePredicate.getType() == FilterPredicateType.STRING) {
             simpleFilter.setIgnoreCase(((StringFilterPredicate) simplePredicate).isIgnoreCase());

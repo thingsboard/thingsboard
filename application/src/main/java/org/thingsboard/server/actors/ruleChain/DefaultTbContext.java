@@ -28,6 +28,7 @@ import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.RuleEngineApiUsageStateService;
 import org.thingsboard.rule.engine.api.RuleEngineAssetProfileCache;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
+import org.thingsboard.rule.engine.api.RuleEngineDeviceStateManager;
 import org.thingsboard.rule.engine.api.RuleEngineRpcService;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.ScriptEngine;
@@ -35,7 +36,7 @@ import org.thingsboard.rule.engine.api.SmsService;
 import org.thingsboard.rule.engine.api.TbAlarmRuleStateService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.slack.SlackService;
+import org.thingsboard.rule.engine.api.notification.SlackService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.rule.engine.util.TenantIdLoader;
 import org.thingsboard.server.actors.ActorSystemContext;
@@ -106,6 +107,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.service.executors.PubSubRuleNodeExecutorProvider;
+import org.thingsboard.server.queue.common.SimpleTbQueueCallback;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 import org.thingsboard.server.service.script.RuleNodeTbelScriptEngine;
 
@@ -211,7 +213,19 @@ class DefaultTbContext implements TbContext {
         if (nodeCtx.getSelf().isDebugMode()) {
             mainCtx.persistDebugOutput(nodeCtx.getTenantId(), nodeCtx.getSelf().getId(), tbMsg, "To Root Rule Chain");
         }
-        mainCtx.getClusterService().pushMsgToRuleEngine(tpi, tbMsg.getId(), msg, new SimpleTbQueueCallback(onSuccess, onFailure));
+        mainCtx.getClusterService().pushMsgToRuleEngine(tpi, tbMsg.getId(), msg, new SimpleTbQueueCallback(
+                metadata -> {
+                    if (onSuccess != null) {
+                        onSuccess.run();
+                    }
+                },
+                t -> {
+                    if (onFailure != null) {
+                        onFailure.accept(t);
+                    } else {
+                        log.debug("[{}] Failed to put item into queue!", nodeCtx.getTenantId().getId(), t);
+                    }
+                }));
     }
 
     @Override
@@ -297,7 +311,19 @@ class DefaultTbContext implements TbContext {
             relationTypes.forEach(relationType ->
                     mainCtx.persistDebugOutput(nodeCtx.getTenantId(), nodeCtx.getSelf().getId(), tbMsg, relationType, null, failureMessage));
         }
-        mainCtx.getClusterService().pushMsgToRuleEngine(tpi, tbMsg.getId(), msg.build(), new SimpleTbQueueCallback(onSuccess, onFailure));
+        mainCtx.getClusterService().pushMsgToRuleEngine(tpi, tbMsg.getId(), msg.build(), new SimpleTbQueueCallback(
+                metadata -> {
+                    if (onSuccess != null) {
+                        onSuccess.run();
+                    }
+                },
+                t -> {
+                    if (onFailure != null) {
+                        onFailure.accept(t);
+                    } else {
+                        log.debug("[{}] Failed to put item into queue!", nodeCtx.getTenantId().getId(), t);
+                    }
+                }));
     }
 
     @Override
@@ -652,6 +678,16 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
+    public RuleEngineDeviceStateManager getDeviceStateManager() {
+        return mainCtx.getDeviceStateManager();
+    }
+
+    @Override
+    public String getDeviceStateNodeRateLimitConfig() {
+        return mainCtx.getDeviceStateNodeRateLimitConfig();
+    }
+
+    @Override
     public TbClusterService getClusterService() {
         return mainCtx.getClusterService();
     }
@@ -914,29 +950,4 @@ class DefaultTbContext implements TbContext {
         return failureMessage;
     }
 
-    private class SimpleTbQueueCallback implements TbQueueCallback {
-        private final Runnable onSuccess;
-        private final Consumer<Throwable> onFailure;
-
-        public SimpleTbQueueCallback(Runnable onSuccess, Consumer<Throwable> onFailure) {
-            this.onSuccess = onSuccess;
-            this.onFailure = onFailure;
-        }
-
-        @Override
-        public void onSuccess(TbQueueMsgMetadata metadata) {
-            if (onSuccess != null) {
-                onSuccess.run();
-            }
-        }
-
-        @Override
-        public void onFailure(Throwable t) {
-            if (onFailure != null) {
-                onFailure.accept(t);
-            } else {
-                log.debug("[{}] Failed to put item into queue", nodeCtx.getTenantId(), t);
-            }
-        }
-    }
 }

@@ -55,7 +55,7 @@ import org.thingsboard.server.common.data.alarm.rule.condition.AttributeArgument
 import org.thingsboard.server.common.data.alarm.rule.condition.ComplexAlarmConditionFilter;
 import org.thingsboard.server.common.data.alarm.rule.condition.ConstantArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.FromMessageArgument;
-import org.thingsboard.server.common.data.alarm.rule.condition.Operation;
+import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentOperation;
 import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionFilter;
 import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionSpec;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleDeviceTypeEntityFilter;
@@ -394,7 +394,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         SimpleAlarmConditionFilter temperatureAlarmFlagAttributeFilter = new SimpleAlarmConditionFilter();
         temperatureAlarmFlagAttributeFilter.setRightArgId("temperatureAlarmFlagKey");
         temperatureAlarmFlagAttributeFilter.setLeftArgId("temperatureAlarmFlagConst");
-        temperatureAlarmFlagAttributeFilter.setOperation(Operation.EQUAL);
+        temperatureAlarmFlagAttributeFilter.setOperation(ArgumentOperation.EQUAL);
 
         var temperatureKey = new FromMessageArgument(TIME_SERIES, "temperature", NUMERIC);
         var temperatureAlarmThresholdKey = new AttributeArgument("temperatureAlarmThreshold", NUMERIC, CURRENT_ENTITY, 25.0, false);
@@ -402,7 +402,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         SimpleAlarmConditionFilter temperatureTimeseriesFilter = new SimpleAlarmConditionFilter();
         temperatureTimeseriesFilter.setLeftArgId("temperatureKey");
         temperatureTimeseriesFilter.setRightArgId("temperatureAlarmThresholdKey");
-        temperatureTimeseriesFilter.setOperation(Operation.GREATER);
+        temperatureTimeseriesFilter.setOperation(ArgumentOperation.GREATER);
 
         temperatureCondition.setConditionFilter(new ComplexAlarmConditionFilter(Arrays.asList(temperatureAlarmFlagAttributeFilter, temperatureTimeseriesFilter), ComplexAlarmConditionFilter.ComplexOperation.AND));
 
@@ -423,7 +423,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         SimpleAlarmConditionFilter clearTemperatureTimeseriesFilter = new SimpleAlarmConditionFilter();
         clearTemperatureTimeseriesFilter.setLeftArgId("temperatureKey");
         clearTemperatureTimeseriesFilter.setRightArgId("temperatureAlarmThresholdKey");
-        clearTemperatureTimeseriesFilter.setOperation(Operation.LESS_OR_EQUAL);
+        clearTemperatureTimeseriesFilter.setOperation(ArgumentOperation.LESS_OR_EQUAL);
 
         clearTemperatureCondition.setConditionFilter(clearTemperatureTimeseriesFilter);
         clearTemperatureRule.setAlarmCondition(clearTemperatureCondition);
@@ -454,7 +454,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         SimpleAlarmConditionFilter humidityAlarmFlagAttributeFilter = new SimpleAlarmConditionFilter();
         humidityAlarmFlagAttributeFilter.setLeftArgId("humidityAlarmFlagKey");
         humidityAlarmFlagAttributeFilter.setRightArgId("humidityAlarmFlagConst");
-        humidityAlarmFlagAttributeFilter.setOperation(Operation.EQUAL);
+        humidityAlarmFlagAttributeFilter.setOperation(ArgumentOperation.EQUAL);
 
         var humidityKey = new FromMessageArgument(TIME_SERIES, "humidity", NUMERIC);
         var humidityAlarmThresholdKey = new AttributeArgument("humidityAlarmThreshold", NUMERIC, CURRENT_ENTITY, 60.0, false);
@@ -462,7 +462,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         SimpleAlarmConditionFilter humidityTimeseriesFilter = new SimpleAlarmConditionFilter();
         humidityTimeseriesFilter.setLeftArgId("humidityKey");
         humidityTimeseriesFilter.setRightArgId("humidityAlarmThresholdKey");
-        humidityTimeseriesFilter.setOperation(Operation.LESS);
+        humidityTimeseriesFilter.setOperation(ArgumentOperation.LESS);
 
         humidityCondition.setConditionFilter(new ComplexAlarmConditionFilter(Arrays.asList(humidityAlarmFlagAttributeFilter, humidityTimeseriesFilter), ComplexAlarmConditionFilter.ComplexOperation.AND));
         humidityRule.setAlarmCondition(humidityCondition);
@@ -476,7 +476,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         SimpleAlarmConditionFilter clearHumidityTimeseriesFilter = new SimpleAlarmConditionFilter();
         clearHumidityTimeseriesFilter.setLeftArgId("humidityKey");
         clearHumidityTimeseriesFilter.setRightArgId("humidityAlarmThresholdKey");
-        clearHumidityTimeseriesFilter.setOperation(Operation.GREATER_OR_EQUAL);
+        clearHumidityTimeseriesFilter.setOperation(ArgumentOperation.GREATER_OR_EQUAL);
 
         clearHumidityCondition.setConditionFilter(clearHumidityTimeseriesFilter);
         clearHumidityRule.setAlarmCondition(clearHumidityCondition);

@@ -25,13 +25,10 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleInfo;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
-import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilter;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionKeyType;
-import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleCondition;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfiguration;
 import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentValueType;
@@ -39,7 +36,7 @@ import org.thingsboard.server.common.data.alarm.rule.condition.AttributeArgument
 import org.thingsboard.server.common.data.alarm.rule.condition.ComplexAlarmConditionFilter;
 import org.thingsboard.server.common.data.alarm.rule.condition.ConstantArgument;
 import org.thingsboard.server.common.data.alarm.rule.condition.FromMessageArgument;
-import org.thingsboard.server.common.data.alarm.rule.condition.Operation;
+import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentOperation;
 import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionFilter;
 import org.thingsboard.server.common.data.alarm.rule.condition.ValueSourceType;
 import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleDeviceTypeEntityFilter;
@@ -339,7 +336,7 @@ public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
         var configuration = alarmRule.getConfiguration();
         var complex = (ComplexAlarmConditionFilter) configuration.getCreateRules().get(CRITICAL).getAlarmCondition().getConditionFilter();
         var simple = (SimpleAlarmConditionFilter) complex.getConditions().get(0);
-        simple.setOperation(Operation.CONTAINS);
+        simple.setOperation(ArgumentOperation.CONTAINS);
 
         Assertions.assertThrows(
                 DataValidationException.class,
@@ -359,7 +356,7 @@ public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
         SimpleAlarmConditionFilter alarmEnabledFilter = new SimpleAlarmConditionFilter();
         alarmEnabledFilter.setLeftArgId("alarmEnabledConst");
         alarmEnabledFilter.setRightArgId("alarmEnabledKey");
-        alarmEnabledFilter.setOperation(Operation.EQUAL);
+        alarmEnabledFilter.setOperation(ArgumentOperation.EQUAL);
 
         var temperatureKey = new FromMessageArgument(AlarmConditionKeyType.TIME_SERIES, "temperature", ArgumentValueType.NUMERIC);
         var temperatureConst = new ConstantArgument(ArgumentValueType.NUMERIC, 20.0);
@@ -367,7 +364,7 @@ public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
         SimpleAlarmConditionFilter temperatureFilter = new SimpleAlarmConditionFilter();
         temperatureFilter.setLeftArgId("temperatureKey");
         temperatureFilter.setRightArgId("temperatureConst");
-        temperatureFilter.setOperation(Operation.GREATER);
+        temperatureFilter.setOperation(ArgumentOperation.GREATER);
 
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setConditionFilter(new ComplexAlarmConditionFilter(Arrays.asList(alarmEnabledFilter, temperatureFilter), ComplexAlarmConditionFilter.ComplexOperation.AND));

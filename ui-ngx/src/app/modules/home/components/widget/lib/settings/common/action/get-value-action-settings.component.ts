@@ -28,7 +28,7 @@ import {
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
-import { GetValueAction, GetValueSettings } from '@shared/models/action-widget-settings.models';
+import { DataToValueType, GetValueAction, GetValueSettings } from '@shared/models/action-widget-settings.models';
 import { TranslateService } from '@ngx-translate/core';
 import { ValueType } from '@shared/models/constants';
 import {
@@ -169,6 +169,18 @@ export class GetValueActionSettingsComponent implements OnInit, ControlValueAcce
         break;
       case GetValueAction.GET_TIME_SERIES:
         this.displayValue = this.translate.instant('widgets.value-action.get-time-series-text', {key: this.modelValue.getTimeSeries.key});
+        break;
+      case GetValueAction.GET_DASHBOARD_STATE:
+        if (this.valueType === ValueType.BOOLEAN) {
+          const state = this.modelValue.dataToValue?.compareToValue;
+          if (this.modelValue.dataToValue?.type === DataToValueType.FUNCTION) {
+            this.displayValue = this.translate.instant('widgets.value-action.when-dashboard-state-function-is-text', {state});
+          } else {
+            this.displayValue = this.translate.instant('widgets.value-action.when-dashboard-state-is-text', {state});
+          }
+        } else {
+          this.displayValue = this.translate.instant('widgets.value-action.get-dashboard-state-text');
+        }
         break;
     }
     this.cd.markForCheck();

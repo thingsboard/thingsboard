@@ -52,7 +52,18 @@
     }
     .tb-value-chart-card-chart {
       flex: 1;
+      min-width: 0;
       height: 100%;
+    }
+    &.auto-scale {
+      .tb-value-chart-card-value-container {
+        width: 35%;
+        display: flex;
+        justify-content: flex-start;
+      }
+      .tb-value-chart-card-chart {
+        width: 65%;
+      }
     }
   }
 }

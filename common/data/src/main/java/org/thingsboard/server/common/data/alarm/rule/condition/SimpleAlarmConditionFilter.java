@@ -34,7 +34,7 @@ public class SimpleAlarmConditionFilter implements AlarmConditionFilter, Seriali
     @NoXss
     private String rightArgId;
 
-    private Operation operation;
+    private ArgumentOperation operation;
 
     //Only for String
     private boolean ignoreCase;
