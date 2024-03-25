@@ -21,6 +21,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 @Getter
@@ -29,7 +30,8 @@ import java.io.Serializable;
 @Builder
 public class CustomerCacheKey implements Serializable {
 
-    private static final long serialVersionUID = 4196610233744512673L;
+    @Serial
+    private static final long serialVersionUID = 5706958428811356925L;
 
     private final TenantId tenantId;
     private final String title;
