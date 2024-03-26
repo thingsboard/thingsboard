@@ -139,8 +139,9 @@ export class TbTimeSeriesChart {
     this.settings = mergeDeep({} as TimeSeriesChartSettings,
       timeSeriesChartDefaultSettings,
       this.inputSettings as TimeSeriesChartSettings);
-    const dashboardPageElement = this.ctx.$containerParent.parents('.tb-dashboard-page');
-    this.darkMode = this.settings.darkMode || dashboardPageElement.hasClass('dark');
+    const $dashboardPageElement = this.ctx.$containerParent.parents('.tb-dashboard-page');
+    const dashboardPageElement = $dashboardPageElement.length ? $($dashboardPageElement[$dashboardPageElement.length-1]) : null;
+    this.darkMode = this.settings.darkMode || dashboardPageElement?.hasClass('dark');
     this.setupYAxes();
     this.setupData();
     this.setupThresholds();
@@ -154,15 +155,17 @@ export class TbTimeSeriesChart {
       });
       this.shapeResize$.observe(this.chartElement);
     }
-    this.darkModeObserver = new MutationObserver(mutations => {
-      for(let mutation of mutations) {
-        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-          const darkMode = dashboardPageElement.hasClass('dark');
-          this.setDarkMode(darkMode);
+    if (dashboardPageElement) {
+      this.darkModeObserver = new MutationObserver(mutations => {
+        for (const mutation of mutations) {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+            const darkMode = dashboardPageElement.hasClass('dark');
+            this.setDarkMode(darkMode);
+          }
         }
-      }
-    });
-    this.darkModeObserver.observe(dashboardPageElement[0], { attributes: true });
+      });
+      this.darkModeObserver.observe(dashboardPageElement[0], {attributes: true});
+    }
   }
 
   public update(): void {
@@ -269,7 +272,7 @@ export class TbTimeSeriesChart {
     }
     this.yMinSubject.complete();
     this.yMaxSubject.complete();
-    this.darkModeObserver.disconnect();
+    this.darkModeObserver?.disconnect();
   }
 
   public resize(): void {
