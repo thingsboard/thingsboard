@@ -80,9 +80,9 @@ public class TbCheckAlarmStatusNode implements TbNode {
             }, ctx.getDbCallbackExecutor());
         } catch (Exception e) {
             if (e instanceof IllegalArgumentException || e instanceof NullPointerException) {
-                log.debug("Failed to parse alarm: [{}] error [{}]", msg.getData(), e.getMessage());
+                log.debug("[{}][{}] Failed to parse alarm: [{}] error [{}]", ctx.getTenantId(), ctx.getRuleChainName(), msg.getData(), e.getMessage());
             } else {
-                log.error("Failed to parse alarm: [{}]", msg.getData(), e);
+                log.error("[{}][{}] Failed to parse alarm: [{}]", ctx.getTenantId(), ctx.getRuleChainName(), msg.getData(), e);
             }
             throw new TbNodeException(e);
         }
