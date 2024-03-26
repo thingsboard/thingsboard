@@ -230,7 +230,7 @@ public class TwoFactorAuthConfigController extends BaseController {
                     "- `issuerName` - issuer name that will be displayed in an authenticator app near a username. Must not be blank.\n\n" +
                     "For SMS 2FA provider:\n" +
                     "- `smsVerificationMessageTemplate` - verification message template.  Available template variables " +
-                    "are ${code} and ${userEmail}. It must not be blank and must contain verification code variable.\n" +
+                    "are $${code:{code}} and $${userEmail:{userEmail}}. It must not be blank and must contain verification code variable.\n" +
                     "- `verificationCodeLifetime` - verification code lifetime in seconds. Required to be positive.\n\n" +
                     "For EMAIL provider type:\n" +
                     "- `verificationCodeLifetime` - the same as for SMS." + NEW_LINE +
@@ -248,7 +248,7 @@ public class TwoFactorAuthConfigController extends BaseController {
                     "    {\n" +
                     "      \"providerType\": \"SMS\",\n" +
                     "      \"verificationCodeLifetime\": 60,\n" +
-                    "      \"smsVerificationMessageTemplate\": \"Here is your verification code: ${code}\"\n" +
+                    "      \"smsVerificationMessageTemplate\": \"Here is your verification code: $${code:{code}}\"\n" +
                     "    }\n" +
                     "  ],\n" +
                     "  \"minVerificationCodeSendPeriod\": 60,\n" +
