@@ -15,13 +15,13 @@
  */
 package org.thingsboard.server.service.script;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.TestPropertySource;
-import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.TbStopWatch;
 import org.thingsboard.script.api.ScriptType;
 import org.thingsboard.script.api.js.NashornJsInvokeService;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -32,6 +32,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
 
@@ -41,8 +42,9 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_RE
         "js.max_script_body_size=50",
         "js.max_total_args_size=50",
         "js.max_result_size=50",
-        "js.local.max_errors=2"
+        "js.local.max_errors=2",
 })
+@Slf4j
 class NashornJsInvokeServiceTest extends AbstractControllerTest {
 
     @Autowired
@@ -56,23 +58,26 @@ class NashornJsInvokeServiceTest extends AbstractControllerTest {
         int iterations = 1000;
         UUID scriptId = evalScript("return msg.temperature > 20");
         // warmup
-        ObjectNode msg = JacksonUtil.newObjectNode();
-        for (int i = 0; i < 100; i++) {
-            msg.put("temperature", i);
+        log.info("Warming up 1000 times...");
+        var warmupWatch = TbStopWatch.create();
+        for (int i = 0; i < 1000; i++) {
             boolean expected = i > 20;
-            boolean result = Boolean.valueOf(invokeScript(scriptId, JacksonUtil.toString(msg)));
+            boolean result = Boolean.parseBoolean(invokeScript(scriptId, "{\"temperature\":" + i + "}"));
             Assert.assertEquals(expected, result);
         }
-        long startTs = System.currentTimeMillis();
+        log.info("Warming up finished in {} ms", warmupWatch.stopAndGetTotalTimeMillis());
+        log.info("Starting performance test...");
+        var watch = TbStopWatch.create();
         for (int i = 0; i < iterations; i++) {
-            msg.put("temperature", i);
             boolean expected = i > 20;
-            boolean result = Boolean.valueOf(invokeScript(scriptId, JacksonUtil.toString(msg)));
+            boolean result = Boolean.parseBoolean(invokeScript(scriptId, "{\"temperature\":" + i + "}"));
+            log.debug("asserting result");
             Assert.assertEquals(expected, result);
         }
-        long duration = System.currentTimeMillis() - startTs;
-        System.out.println(iterations + " invocations took: " + duration + "ms");
-        Assert.assertTrue(duration < TimeUnit.MINUTES.toMillis(4));
+        long duration = watch.stopAndGetTotalTimeMillis();
+        log.info("Performance test with {} invocations took: {} ms", iterations, duration);
+        assertThat(duration).as("duration ms")
+                .isLessThan(TimeUnit.MINUTES.toMillis(1)); // effective exec time is about 500ms
     }
 
     @Test
