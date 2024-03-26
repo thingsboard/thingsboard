@@ -50,7 +50,7 @@ import {
   ECharts,
   echartsModule,
   EChartsOption,
-  echartsTooltipFormatter,
+  echartsTooltipFormatter, timeAxisBandWidthCalculator,
   toNamedData
 } from '@home/components/widget/lib/chart/echarts-widget.models';
 import { CallbackDataParams } from 'echarts/types/dist/shared';
@@ -356,7 +356,8 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
           onZero: false
         },
         min: this.ctx.defaultSubscription.timeWindow.minTime,
-        max: this.ctx.defaultSubscription.timeWindow.maxTime
+        max: this.ctx.defaultSubscription.timeWindow.maxTime,
+        bandWidthCalculator: timeAxisBandWidthCalculator
       },
       yAxis: {
         type: 'value',
