@@ -19,12 +19,14 @@ import com.datastax.oss.driver.api.core.uuid.Uuids;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.customer.CustomerDao;
+import org.thingsboard.server.dao.customer.CustomerServiceImpl;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -67,9 +69,25 @@ public class JpaCustomerDaoTest extends AbstractJpaDaoTest {
             createCustomer(tenantId, i);
         }
 
-        Optional<Customer> customerOpt = customerDao.findCustomersByTenantIdAndTitle(tenantId, "CUSTOMER_5");
+        Optional<Customer> customerOpt = customerDao.findCustomerByTenantIdAndTitle(tenantId, "CUSTOMER_5");
         assertTrue(customerOpt.isPresent());
         assertEquals("CUSTOMER_5", customerOpt.get().getTitle());
+    }
+
+    @Test
+    public void testFindPublicCustomerByTenantId() {
+        UUID tenantId = Uuids.timeBased();
+
+        Optional<Customer> customerOpt = customerDao.findPublicCustomerByTenantId(tenantId);
+        assertTrue(customerOpt.isEmpty());
+
+        String publicCustomerTitle = StringUtils.randomAlphanumeric(10);
+        createPublicCustomer(tenantId, publicCustomerTitle);
+        customerOpt = customerDao.findPublicCustomerByTenantId(tenantId);
+        assertTrue(customerOpt.isPresent());
+        Customer customer = customerOpt.get();
+        assertTrue(customer.isPublic());
+        assertEquals(publicCustomerTitle, customer.getTitle());
     }
 
     private void createCustomer(UUID tenantId, int index) {
@@ -77,6 +95,15 @@ public class JpaCustomerDaoTest extends AbstractJpaDaoTest {
         customer.setId(new CustomerId(Uuids.timeBased()));
         customer.setTenantId(TenantId.fromUUID(tenantId));
         customer.setTitle("CUSTOMER_" + index);
+        customerDao.save(TenantId.fromUUID(tenantId), customer);
+    }
+
+    private void createPublicCustomer(UUID tenantId, String publicCustomerTitle) {
+        Customer customer = new Customer();
+        customer.setId(new CustomerId(Uuids.timeBased()));
+        customer.setTenantId(TenantId.fromUUID(tenantId));
+        customer.setTitle(publicCustomerTitle);
+        customer.setAdditionalInfo(CustomerServiceImpl.PUBLIC_CUSTOMER_ADDITIONAL_INFO_JSON);
         customerDao.save(TenantId.fromUUID(tenantId), customer);
     }
 }

@@ -131,6 +131,9 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
     @Override
     public EntityView assignEntityViewToCustomer(TenantId tenantId, EntityViewId entityViewId, CustomerId customerId) {
         EntityView entityView = findEntityViewById(tenantId, entityViewId);
+        if (customerId.equals(entityView.getCustomerId())) {
+            return entityView;
+        }
         entityView.setCustomerId(customerId);
         return saveEntityView(entityView);
     }
@@ -138,6 +141,9 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
     @Override
     public EntityView unassignEntityViewFromCustomer(TenantId tenantId, EntityViewId entityViewId) {
         EntityView entityView = findEntityViewById(tenantId, entityViewId);
+        if (entityView.getCustomerId() == null) {
+            return entityView;
+        }
         entityView.setCustomerId(null);
         return saveEntityView(entityView);
     }

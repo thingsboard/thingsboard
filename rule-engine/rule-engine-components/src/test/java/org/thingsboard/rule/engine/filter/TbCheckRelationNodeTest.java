@@ -20,10 +20,13 @@ import com.google.common.util.concurrent.Futures;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.provider.Arguments;
 import org.mockito.ArgumentCaptor;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
 import org.thingsboard.rule.engine.TestDbCallbackExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -42,6 +45,7 @@ import org.thingsboard.server.dao.relation.RelationService;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -52,16 +56,17 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class TbCheckRelationNodeTest {
+class TbCheckRelationNodeTest extends AbstractRuleNodeUpgradeTest {
 
-    private static final TenantId TENANT_ID = new TenantId(UUID.randomUUID());
-    private static final DeviceId ORIGINATOR_ID = new DeviceId(UUID.randomUUID());
-    private static final TestDbCallbackExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
-    private static final TbMsg EMPTY_POST_ATTRIBUTES_MSG = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, ORIGINATOR_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+    private final TenantId TENANT_ID = new TenantId(UUID.randomUUID());
+    private final DeviceId ORIGINATOR_ID = new DeviceId(UUID.randomUUID());
+    private final TestDbCallbackExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
+    private final TbMsg EMPTY_POST_ATTRIBUTES_MSG = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, ORIGINATOR_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
 
     private TbCheckRelationNode node;
 
@@ -77,7 +82,7 @@ class TbCheckRelationNodeTest {
         when(ctx.getRelationService()).thenReturn(relationService);
         when(ctx.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
 
-        node = new TbCheckRelationNode();
+        node = spy(new TbCheckRelationNode());
     }
 
     @AfterEach
@@ -310,4 +315,24 @@ class TbCheckRelationNodeTest {
         assertEquals(config, JacksonUtil.treeToValue(upgrade.getSecond(), config.getClass()));
     }
 
+    // Rule nodes upgrade
+    private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
+        return Stream.of(
+                // version 0 config, FROM direction.
+                Arguments.of(0,
+                        "{\"checkForSingleEntity\":true,\"direction\":\"FROM\",\"entityType\":\"DEVICE\",\"entityId\":\"1943b1eb-2811-4373-846d-6ca2f527bf9e\",\"relationType\":\"Contains\"}",
+                        true,
+                        "{\"checkForSingleEntity\":true,\"direction\":\"TO\",\"entityType\":\"DEVICE\",\"entityId\":\"1943b1eb-2811-4373-846d-6ca2f527bf9e\",\"relationType\":\"Contains\"}"),
+                // version 0 config, TO direction.
+                Arguments.of(0,
+                        "{\"checkForSingleEntity\":true,\"direction\":\"TO\",\"entityType\":\"DEVICE\",\"entityId\":\"1943b1eb-2811-4373-846d-6ca2f527bf9e\",\"relationType\":\"Contains\"}",
+                        true,
+                        "{\"checkForSingleEntity\":true,\"direction\":\"FROM\",\"entityType\":\"DEVICE\",\"entityId\":\"1943b1eb-2811-4373-846d-6ca2f527bf9e\",\"relationType\":\"Contains\"}")
+        );
+    }
+
+    @Override
+    protected TbNode getTestNode() {
+        return node;
+    }
 }

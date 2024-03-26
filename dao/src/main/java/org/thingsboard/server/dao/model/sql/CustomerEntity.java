@@ -67,6 +67,9 @@ public final class CustomerEntity extends BaseSqlEntity<Customer> {
     @Column(name = ModelConstants.EMAIL_PROPERTY)
     private String email;
 
+    @Column(name = ModelConstants.CUSTOMER_IS_PUBLIC_PROPERTY)
+    private boolean isPublic;
+
     @Convert(converter = JsonConverter.class)
     @Column(name = ModelConstants.CUSTOMER_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
@@ -94,6 +97,7 @@ public final class CustomerEntity extends BaseSqlEntity<Customer> {
         this.phone = customer.getPhone();
         this.email = customer.getEmail();
         this.additionalInfo = customer.getAdditionalInfo();
+        this.isPublic = customer.isPublic();
         if (customer.getExternalId() != null) {
             this.externalId = customer.getExternalId().getId();
         }

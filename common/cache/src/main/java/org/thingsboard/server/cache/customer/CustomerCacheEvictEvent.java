@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.util;
+package org.thingsboard.server.cache.customer;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.EntityId;
+import lombok.RequiredArgsConstructor;
+import org.thingsboard.server.common.data.id.TenantId;
 
 @Data
-public class EntityContainer {
+@RequiredArgsConstructor
+public class CustomerCacheEvictEvent {
 
-    private EntityId entityId;
-    private EntityType entityType;
+    private final TenantId tenantId;
+    private final String newTitle;
+    private final String oldTitle;
 
 }

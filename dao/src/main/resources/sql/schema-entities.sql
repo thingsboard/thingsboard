@@ -144,6 +144,8 @@ CREATE TABLE IF NOT EXISTS customer (
     title varchar(255),
     zip varchar(255),
     external_id uuid,
+    is_public boolean,
+    CONSTRAINT customer_title_unq_key UNIQUE (tenant_id, title),
     CONSTRAINT customer_external_id_unq_key UNIQUE (tenant_id, external_id)
 );
 

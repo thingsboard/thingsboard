@@ -279,7 +279,7 @@ public class UserControllerTest extends AbstractControllerTest {
         user.setTenantId(tenantId);
         user.setEmail(TENANT_ADMIN_EMAIL);
 
-        String msgError = "User with email '" + TENANT_ADMIN_EMAIL + "'  already present in database";
+        String msgError = "User with email '" + TENANT_ADMIN_EMAIL + "' already present in database!";
         doPost("/api/user", user)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));

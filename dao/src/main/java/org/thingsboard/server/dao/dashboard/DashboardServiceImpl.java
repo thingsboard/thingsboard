@@ -171,8 +171,6 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         }
     }
 
-
-
     @Override
     public Dashboard assignDashboardToCustomer(TenantId tenantId, DashboardId dashboardId, CustomerId customerId) {
         Dashboard dashboard = findDashboardById(tenantId, dashboardId);
@@ -216,12 +214,10 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         }
     }
 
-    private Dashboard updateAssignedCustomer(TenantId tenantId, DashboardId dashboardId, Customer customer) {
+    private void updateAssignedCustomer(TenantId tenantId, DashboardId dashboardId, Customer customer) {
         Dashboard dashboard = findDashboardById(tenantId, dashboardId);
         if (dashboard.updateAssignedCustomer(customer)) {
-            return saveDashboard(dashboard);
-        } else {
-            return dashboard;
+            saveDashboard(dashboard);
         }
     }
 
