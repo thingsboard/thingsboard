@@ -28,4 +28,5 @@ public class OAuth2MsgConstructor {
     public OAuth2UpdateMsg constructOAuth2UpdateMsg(OAuth2Info oAuth2Info) {
         return OAuth2UpdateMsg.newBuilder().setEntity(JacksonUtil.toString(oAuth2Info)).build();
     }
+
 }

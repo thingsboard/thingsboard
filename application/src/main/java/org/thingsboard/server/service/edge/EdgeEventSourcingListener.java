@@ -160,9 +160,6 @@ public class EdgeEventSourcingListener {
     private boolean isValidSaveEntityEventForEdgeProcessing(SaveEntityEvent<?> event) {
         Object entity = event.getEntity();
         Object oldEntity = event.getOldEntity();
-        if (entity instanceof OAuth2Info oAuth2Info) {
-            return oAuth2Info.isEdgeEnabled();
-        }
         switch (event.getEntityId().getEntityType()) {
             case RULE_CHAIN:
                 if (entity instanceof RuleChain ruleChain) {

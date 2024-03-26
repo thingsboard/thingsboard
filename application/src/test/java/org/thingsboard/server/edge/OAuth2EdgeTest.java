@@ -46,12 +46,6 @@ public class OAuth2EdgeTest extends AbstractEdgeTest {
         edgeImitator.expectMessageAmount(1);
         OAuth2Info oAuth2Info = createDefaultOAuth2Info();
         oAuth2Info = doPost("/api/oauth2/config", oAuth2Info, OAuth2Info.class);
-        Assert.assertFalse(edgeImitator.waitForMessages(10));
-
-        // enable edge support
-        edgeImitator.expectMessageAmount(1);
-        oAuth2Info.setEdgeEnabled(true);
-        oAuth2Info = doPost("/api/oauth2/config", oAuth2Info, OAuth2Info.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
         AbstractMessage latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof OAuth2UpdateMsg);
@@ -59,16 +53,23 @@ public class OAuth2EdgeTest extends AbstractEdgeTest {
         OAuth2Info result = JacksonUtil.fromString(oAuth2UpdateMsg.getEntity(), OAuth2Info.class, true);
         Assert.assertEquals(oAuth2Info, result);
 
-        // disable oauth suppor
+        // disable oauth support
+        edgeImitator.expectMessageAmount(1);
         oAuth2Info.setEnabled(false);
         oAuth2Info.setEdgeEnabled(false);
         doPost("/api/oauth2/config", oAuth2Info, OAuth2Info.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        latestMessage = edgeImitator.getLatestMessage();
+        Assert.assertTrue(latestMessage instanceof OAuth2UpdateMsg);
+        oAuth2UpdateMsg = (OAuth2UpdateMsg) latestMessage;
+        result = JacksonUtil.fromString(oAuth2UpdateMsg.getEntity(), OAuth2Info.class, true);
+        Assert.assertEquals(oAuth2Info, result);
 
         loginTenantAdmin();
     }
 
     private OAuth2Info createDefaultOAuth2Info() {
-        return new OAuth2Info(true, false, Lists.newArrayList(
+        return new OAuth2Info(true, true, Lists.newArrayList(
                 OAuth2ParamsInfo.builder()
                         .domainInfos(Lists.newArrayList(
                                 OAuth2DomainInfo.builder().name("domain").scheme(SchemeType.MIXED).build()
