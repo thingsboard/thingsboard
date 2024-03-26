@@ -461,15 +461,15 @@ public class DeviceApiController implements TbTransportService {
             String body = null;
             if (e instanceof HttpMessageNotReadableException || e instanceof JsonParseException) {
                 body = e.getMessage();
-                log.debug("Failed to process request: {}", body);
+                log.debug("Failed to process request in DeviceAuthCallback: {}", body);
             } else {
-                log.warn("Failed to process request", e);
+                log.warn("Failed to process request in DeviceAuthCallback", e);
             }
             responseWriter.setResult(new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR));
         }
     }
 
-    private static class DeviceProvisionCallback implements TransportServiceCallback<ProvisionDeviceResponseMsg> {
+    static class DeviceProvisionCallback implements TransportServiceCallback<ProvisionDeviceResponseMsg> {
         private final DeferredResult<ResponseEntity> responseWriter;
 
         DeviceProvisionCallback(DeferredResult<ResponseEntity> responseWriter) {
@@ -486,9 +486,9 @@ public class DeviceApiController implements TbTransportService {
             String body = null;
             if (e instanceof HttpMessageNotReadableException || e instanceof JsonParseException) {
                 body = e.getMessage();
-                log.debug("Failed to process request: {}", body);
+                log.debug("Failed to process request in DeviceProvisionCallback: {}", body);
             } else {
-                log.warn("Failed to process request", e);
+                log.warn("Failed to process request in DeviceProvisionCallback", e);
             }
             responseWriter.setResult(new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR));
         }
@@ -533,9 +533,9 @@ public class DeviceApiController implements TbTransportService {
             String body = null;
             if (e instanceof HttpMessageNotReadableException || e instanceof JsonParseException) {
                 body = e.getMessage();
-                log.debug("Failed to process request: {}", body);
+                log.debug("Failed to process request in GetOtaPackageCallback: {}", body);
             } else {
-                log.warn("Failed to process request", e);
+                log.warn("Failed to process request in GetOtaPackageCallback", e);
             }
             responseWriter.setResult(new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR));
         }

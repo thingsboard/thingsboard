@@ -1,3 +1,18 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.thingsboard.server.transport.http;
 
 import com.google.gson.JsonParseException;
@@ -18,13 +33,13 @@ import static org.junit.jupiter.api.Assertions.*;
 class DeviceApiControllerTest {
 
     @Test
-    void callbackOnErrorTest() {
+    void DeviceAuthCallbackTest() {
         TransportContext transportContext = Mockito.mock(TransportContext.class);
         DeferredResult<ResponseEntity> responseWriter = Mockito.mock(DeferredResult.class);
         Consumer<TransportProtos.SessionInfoProto> onSuccess = x -> {};
         var callback = new DeviceApiController.DeviceAuthCallback(transportContext, responseWriter, onSuccess);
 
-        callback.onError(new HttpMessageNotReadableException("JSON incorect syntax"));
+        callback.onError(new HttpMessageNotReadableException("JSON incorrect syntax"));
 
         callback.onError(new JsonParseException("Json ; expected"));
 
@@ -32,4 +47,29 @@ class DeviceApiControllerTest {
 
         callback.onError(new RuntimeException("oops it is run time error"));
     }
+
+    @Test
+    void DeviceProvisionCallbackTest() {
+        DeferredResult<ResponseEntity> responseWriter = Mockito.mock(DeferredResult.class);
+        var callback = new DeviceApiController.DeviceProvisionCallback(responseWriter);
+
+        callback.onError(new HttpMessageNotReadableException("JSON incorrect syntax"));
+
+        callback.onError(new JsonParseException("Json ; expected"));
+
+        callback.onError(new IOException("not found"));
+
+        callback.onError(new RuntimeException("oops it is run time error"));
+    }
+
+//@Test
+//    void GetOtaPackageCallback() {
+//          DeferredResult<ResponseEntity> responseWriter = Mockito.mock(DeferredResult.class);
+//          String title = "Title";
+//          String version = "version";
+//          int chuckSize = 11;
+//          int chuck = 3;
+//
+//          var callback = new DeviceApiController.GetOtaPackageCallback(responseWriter, title, version, chuckSize, chuck);
+//    }
 }

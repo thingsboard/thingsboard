@@ -7,7 +7,9 @@
         </encoder>
     </appender>
 
-    <root level="TRACE">
+    logger name="org.thingsboard.server.transport.http.DeviceApiController" level="DEBUG" />
+
+    <root level="INFO">
         <appender-ref ref="console"/>
     </root>
 
