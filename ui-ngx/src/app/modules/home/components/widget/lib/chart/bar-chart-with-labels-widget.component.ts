@@ -54,7 +54,7 @@ import {
   echartsModule,
   EChartsOption,
   EChartsSeriesItem,
-  echartsTooltipFormatter,
+  echartsTooltipFormatter, timeAxisBandWidthCalculator,
   toNamedData
 } from '@home/components/widget/lib/chart/echarts-widget.models';
 import { AggregationType, IntervalMath } from '@shared/models/time/time.models';
@@ -424,7 +424,8 @@ export class BarChartWithLabelsWidgetComponent implements OnInit, OnDestroy, Aft
           onZero: false
         },
         min: this.ctx.defaultSubscription.timeWindow.minTime,
-        max: this.ctx.defaultSubscription.timeWindow.maxTime
+        max: this.ctx.defaultSubscription.timeWindow.maxTime,
+        bandWidthCalculator: timeAxisBandWidthCalculator
       },
       yAxis: {
         type: 'value',

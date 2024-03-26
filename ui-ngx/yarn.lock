@@ -5437,10 +5437,9 @@ ecc-jsbn@~0.1.1:
     jsbn "~0.1.0"
     safer-buffer "^2.1.0"
 
-echarts@^5.5.0:
-  version "5.5.0"
-  resolved "https://registry.yarnpkg.com/echarts/-/echarts-5.5.0.tgz#c13945a7f3acdd67c134d8a9ac67e917830113ac"
-  integrity sha512-rNYnNCzqDAPCr4m/fqyUFv7fD9qIsd50S6GDFgO1DxZhncCsNsG7IfUlAlvZe5oSEQxtsjnHiUuppzccry93Xw==
+"echarts@https://github.com/thingsboard/echarts/archive/5.5.0-TB.tar.gz":
+  version "5.5.0-TB"
+  resolved "https://github.com/thingsboard/echarts/archive/5.5.0-TB.tar.gz#d1017728576b3fd65532eb17e503d1349f7feaed"
   dependencies:
     tslib "2.3.0"
     zrender "5.5.0"
