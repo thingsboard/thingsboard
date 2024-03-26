@@ -66,7 +66,6 @@ public class DefaultFirebaseService implements FirebaseService {
         });
 
         Aps.Builder apsConfig = Aps.builder()
-                .setContentAvailable(true)
                 .setSound("default");
         if (badge != null) {
             apsConfig.setBadge(badge);
