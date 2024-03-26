@@ -139,7 +139,8 @@ export class TbTimeSeriesChart {
     this.settings = mergeDeep({} as TimeSeriesChartSettings,
       timeSeriesChartDefaultSettings,
       this.inputSettings as TimeSeriesChartSettings);
-    const dashboardPageElement = this.ctx.$containerParent.parents('.tb-dashboard-page');
+    const $dashboardPageElement = this.ctx.$containerParent.parents('.tb-dashboard-page');
+    const dashboardPageElement = $($dashboardPageElement[$dashboardPageElement.length-1]);
     this.darkMode = this.settings.darkMode || dashboardPageElement.hasClass('dark');
     this.setupYAxes();
     this.setupData();
