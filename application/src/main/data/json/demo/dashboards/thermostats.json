@@ -1147,7 +1147,8 @@
               "showLine": true,
               "lineColor": "rgba(0, 0, 0, 0.54)",
               "showSplitLines": true,
-              "splitLinesColor": "rgba(0, 0, 0, 0.12)"
+              "splitLinesColor": "rgba(0, 0, 0, 0.12)",
+              "ticksFormat": {}
             },
             "legendLabelFont": {
               "family": "Roboto",
@@ -1173,7 +1174,9 @@
             "tooltipDateFormat": {
               "format": "MMM dd yyyy HH:mm",
               "lastUpdateAgo": false,
-              "custom": false
+              "custom": false,
+              "auto": true,
+              "autoDateFormatSettings": {}
             },
             "tooltipDateFont": {
               "family": "Roboto",
@@ -1537,7 +1540,8 @@
               "showLine": true,
               "lineColor": "rgba(0, 0, 0, 0.54)",
               "showSplitLines": true,
-              "splitLinesColor": "rgba(0, 0, 0, 0.12)"
+              "splitLinesColor": "rgba(0, 0, 0, 0.12)",
+              "ticksFormat": {}
             },
             "legendLabelFont": {
               "family": "Roboto",
@@ -1561,9 +1565,11 @@
             "tooltipValueColor": "rgba(0, 0, 0, 0.76)",
             "tooltipShowDate": true,
             "tooltipDateFormat": {
-              "format": "MMM dd yyyy HH:mm",
+              "format": null,
               "lastUpdateAgo": false,
-              "custom": false
+              "custom": false,
+              "auto": true,
+              "autoDateFormatSettings": {}
             },
             "tooltipDateFont": {
               "family": "Roboto",
@@ -1712,19 +1718,25 @@
                 "sizeX": 11,
                 "sizeY": 11,
                 "row": 0,
-                "col": 0
+                "col": 0,
+                "mobileOrder": 1,
+                "mobileHeight": 5
               },
               "7943196b-eedb-d422-f9c3-b32d379ad172": {
                 "sizeX": 13,
                 "sizeY": 5,
                 "row": 0,
-                "col": 11
+                "col": 11,
+                "mobileOrder": 2,
+                "mobileHeight": 5
               },
               "3da9a9a1-0b9a-2e1f-0dcb-0ff34a695abb": {
                 "sizeX": 13,
                 "sizeY": 6,
                 "row": 5,
-                "col": 11
+                "col": 11,
+                "mobileOrder": 3,
+                "mobileHeight": 5
               }
             },
             "gridSettings": {
@@ -1778,25 +1790,33 @@
                 "sizeX": 6,
                 "sizeY": 6,
                 "row": 0,
-                "col": 0
+                "col": 0,
+                "mobileOrder": 3,
+                "mobileHeight": 5
               },
               "0a430429-9078-9ae6-2b67-e4a15a2bf8bf": {
                 "sizeX": 6,
                 "sizeY": 6,
                 "row": 6,
-                "col": 0
+                "col": 0,
+                "mobileOrder": 4,
+                "mobileHeight": 6
               },
               "eda8a397-0959-690c-405c-11e2c9b2bc7e": {
                 "sizeX": 18,
                 "sizeY": 6,
                 "row": 0,
-                "col": 6
+                "col": 6,
+                "mobileOrder": 1,
+                "mobileHeight": 6
               },
               "ac90f089-197f-b767-82c3-2668844265a2": {
                 "sizeX": 18,
                 "sizeY": 6,
                 "row": 6,
-                "col": 6
+                "col": 6,
+                "mobileOrder": 2,
+                "mobileHeight": 6
               }
             },
             "gridSettings": {

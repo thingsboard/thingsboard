@@ -15,10 +15,9 @@
  */
 package org.thingsboard.server.service.telemetry;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-@ApiModel
+@Schema
 public class AttributeData implements Comparable<AttributeData>{
 
     private final long lastUpdateTs;
@@ -32,17 +31,17 @@ public class AttributeData implements Comparable<AttributeData>{
         this.value = value;
     }
 
-    @ApiModelProperty(position = 1, value = "Timestamp last updated attribute, in milliseconds", example = "1609459200000", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Timestamp last updated attribute, in milliseconds", example = "1609459200000", accessMode = Schema.AccessMode.READ_ONLY)
     public long getLastUpdateTs() {
         return lastUpdateTs;
     }
 
-    @ApiModelProperty(position = 2, value = "String representing attribute key", example = "active", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "String representing attribute key", example = "active", accessMode = Schema.AccessMode.READ_ONLY)
     public String getKey() {
         return key;
     }
 
-    @ApiModelProperty(position = 3, value = "Object representing value of attribute key", example = "false", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Object representing value of attribute key", example = "false", accessMode = Schema.AccessMode.READ_ONLY)
     public Object getValue() {
         return value;
     }

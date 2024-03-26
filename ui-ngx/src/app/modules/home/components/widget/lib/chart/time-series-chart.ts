@@ -27,7 +27,8 @@ import {
   TimeSeriesChartDataItem,
   timeSeriesChartDefaultSettings,
   timeSeriesChartKeyDefaultSettings,
-  TimeSeriesChartKeySettings, TimeSeriesChartNoAggregationBarWidthStrategy,
+  TimeSeriesChartKeySettings,
+  TimeSeriesChartNoAggregationBarWidthStrategy,
   TimeSeriesChartSeriesType,
   TimeSeriesChartSettings,
   TimeSeriesChartShape,
@@ -51,7 +52,6 @@ import {
   echartsTooltipFormatter,
   EChartsTooltipTrigger,
   getAxisExtent,
-  getYAxis,
   measureXAxisNameHeight,
   measureYAxisNameWidth,
   toNamedData
@@ -74,7 +74,7 @@ import { BarRenderSharedContext } from '@home/components/widget/lib/chart/time-s
 export class TbTimeSeriesChart {
 
   public static dataKeySettings(type = TimeSeriesChartType.default): DataKeySettingsFunction {
-    return (key, isLatestDataKey) => {
+    return (_key, isLatestDataKey) => {
       if (!isLatestDataKey) {
         const settings = mergeDeep<TimeSeriesChartKeySettings>({} as TimeSeriesChartKeySettings,
           timeSeriesChartKeyDefaultSettings);
@@ -117,7 +117,7 @@ export class TbTimeSeriesChart {
 
   private darkMode = false;
 
-  private messageChannel = new BroadcastChannel('tbMessageChannel');
+  private darkModeObserver: MutationObserver;
 
   private topPointLabels = false;
 
@@ -139,7 +139,9 @@ export class TbTimeSeriesChart {
     this.settings = mergeDeep({} as TimeSeriesChartSettings,
       timeSeriesChartDefaultSettings,
       this.inputSettings as TimeSeriesChartSettings);
-    this.darkMode = this.settings.darkMode;
+    const $dashboardPageElement = this.ctx.$containerParent.parents('.tb-dashboard-page');
+    const dashboardPageElement = $dashboardPageElement.length ? $($dashboardPageElement[$dashboardPageElement.length-1]) : null;
+    this.darkMode = this.settings.darkMode || dashboardPageElement?.hasClass('dark');
     this.setupYAxes();
     this.setupData();
     this.setupThresholds();
@@ -153,12 +155,17 @@ export class TbTimeSeriesChart {
       });
       this.shapeResize$.observe(this.chartElement);
     }
-    this.messageChannel.addEventListener('message', (event) => {
-      if (event?.data?.type === 'tbDarkMode') {
-        const darkMode = !!event?.data?.darkMode;
-        this.setDarkMode(darkMode);
-      }
-    });
+    if (dashboardPageElement) {
+      this.darkModeObserver = new MutationObserver(mutations => {
+        for (const mutation of mutations) {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+            const darkMode = dashboardPageElement.hasClass('dark');
+            this.setDarkMode(darkMode);
+          }
+        }
+      });
+      this.darkModeObserver.observe(dashboardPageElement[0], {attributes: true});
+    }
   }
 
   public update(): void {
@@ -265,7 +272,7 @@ export class TbTimeSeriesChart {
     }
     this.yMinSubject.complete();
     this.yMaxSubject.complete();
-    this.messageChannel.close();
+    this.darkModeObserver?.disconnect();
   }
 
   public resize(): void {
@@ -485,7 +492,8 @@ export class TbTimeSeriesChart {
         },
         formatter: (params: CallbackDataParams[]) =>
           this.settings.showTooltip ? echartsTooltipFormatter(this.renderer, this.tooltipDateFormat,
-            this.settings, params, 0, '', -1, this.dataItems) : undefined,
+            this.settings, params, 0, '', -1, this.dataItems,
+            this.noAggregation ? null : this.ctx.timeWindow.interval) : undefined,
         padding: [8, 12],
         backgroundColor: this.settings.tooltipBackgroundColor,
         borderWidth: 0,
@@ -499,7 +507,7 @@ export class TbTimeSeriesChart {
       }],
       xAxis: [
         createTimeSeriesXAxisOption(this.settings.xAxis, this.ctx.defaultSubscription.timeWindow.minTime,
-          this.ctx.defaultSubscription.timeWindow.maxTime, this.darkMode)
+          this.ctx.defaultSubscription.timeWindow.maxTime, this.ctx.date, this.darkMode)
       ],
       yAxis: this.yAxisList.map(axis => axis.option),
       dataZoom: [
@@ -611,11 +619,6 @@ export class TbTimeSeriesChart {
       this.timeSeriesChartOptions.yAxis = this.yAxisList.map(axis => axis.option);
       this.timeSeriesChart.setOption(this.timeSeriesChartOptions, {replaceMerge: ['yAxis', 'xAxis', 'grid'], lazyUpdate: true});
     }
-    changed = this.calculateYAxisInterval(this.yAxisList);
-    if (changed) {
-      this.timeSeriesChartOptions.yAxis = this.yAxisList.map(axis => axis.option);
-      this.timeSeriesChart.setOption(this.timeSeriesChartOptions, {replaceMerge: ['yAxis'], lazyUpdate: true});
-    }
     if (this.yAxisList.length) {
       const extent = getAxisExtent(this.timeSeriesChart, this.yAxisList[0].id);
       const min = extent[0];
@@ -627,18 +630,6 @@ export class TbTimeSeriesChart {
         this.yMaxSubject.next(max);
       }
     }
-  }
-
-  private updateYAxisScale(axisList: TimeSeriesChartYAxis[]): boolean {
-    let changed = false;
-    for (const yAxis of axisList) {
-      const scaleYAxis = this.scaleYAxis(yAxis);
-      if (yAxis.option.scale !== scaleYAxis) {
-        yAxis.option.scale = scaleYAxis;
-        changed = true;
-      }
-    }
-    return changed;
   }
 
   private updateYAxisOffset(axisList: TimeSeriesChartYAxis[]): {offset: number; changed: boolean} {
@@ -684,40 +675,22 @@ export class TbTimeSeriesChart {
     return result;
   }
 
+  private updateYAxisScale(axisList: TimeSeriesChartYAxis[]): boolean {
+    let changed = false;
+    for (const yAxis of axisList) {
+      const scaleYAxis = this.scaleYAxis(yAxis);
+      if (yAxis.option.scale !== scaleYAxis) {
+        yAxis.option.scale = scaleYAxis;
+        changed = true;
+      }
+    }
+    return changed;
+  }
+
   private scaleYAxis(yAxis: TimeSeriesChartYAxis): boolean {
     const axisBarDataItems = this.dataItems.filter(d => d.yAxisId === yAxis.id && d.enabled &&
       d.data.length && d.dataKey.settings.type === TimeSeriesChartSeriesType.bar);
     return !axisBarDataItems.length;
-  }
-
-  private yAxisEmpty(yAxis: TimeSeriesChartYAxis): boolean {
-    const axisDataItems = this.dataItems.filter(d => d.yAxisId === yAxis.id && d.enabled &&
-      d.data.length);
-    return !axisDataItems.length;
-  }
-
-  private calculateYAxisInterval(axisList: TimeSeriesChartYAxis[]): boolean {
-    let changed = false;
-    for (const yAxis of axisList) {
-      const minInterval = this.yAxisEmpty(yAxis) ? undefined : (1 / Math.pow(10, yAxis.decimals));
-      if (yAxis.option.minInterval !== minInterval) {
-        yAxis.option.minInterval = minInterval;
-        changed = true;
-      }
-      if (yAxis.intervalCalculator) {
-        const axis = getYAxis(this.timeSeriesChart, yAxis.id);
-        if (axis) {
-          try {
-            const interval = yAxis.intervalCalculator(axis);
-            if ((yAxis.option as any).interval !== interval) {
-              (yAxis.option as any).interval = interval;
-              changed = true;
-            }
-          } catch (_e) {}
-        }
-      }
-    }
-    return changed;
   }
 
   private minTopOffset(): number {

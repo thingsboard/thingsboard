@@ -74,6 +74,10 @@
               <div translate>widgets.time-series-chart.axis.tick-labels</div>
             </mat-slide-toggle>
             <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+              <tb-auto-date-format-settings *ngIf="axisType === 'xAxis'"
+                                            formControlName="ticksFormat"
+                                            [defaultValues]="defaultXAxisTicksFormat">
+              </tb-auto-date-format-settings>
               <tb-font-settings formControlName="tickLabelFont"
                                 clearButton
                                 disabledLineHeight
@@ -125,6 +129,24 @@
                           colorClearButton
                           formControlName="splitLinesColor">
           </tb-color-input>
+        </div>
+        <div *ngIf="axisType === 'yAxis'" class="tb-form-row space-between">
+          <div tb-hint-tooltip-icon="{{ 'widgets.time-series-chart.axis.ticks-interval-hint' | translate }}">
+            {{ 'widgets.time-series-chart.axis.ticks-interval' | translate }}
+          </div>
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="interval"
+                   type="number" min="0" placeholder="{{ 'widgets.time-series-chart.axis.scale-auto' | translate }}">
+          </mat-form-field>
+        </div>
+        <div *ngIf="axisType === 'yAxis'" class="tb-form-row space-between">
+          <div tb-hint-tooltip-icon="{{ 'widgets.time-series-chart.axis.split-number-hint' | translate }}">
+            {{ 'widgets.time-series-chart.axis.split-number' | translate }}
+          </div>
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="splitNumber"
+                   type="number" min="1" placeholder="{{ 'widgets.time-series-chart.axis.scale-auto' | translate }}">
+          </mat-form-field>
         </div>
       </ng-template>
     </mat-expansion-panel>

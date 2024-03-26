@@ -104,7 +104,8 @@
               {{ 'tooltip.date' | translate }}
             </mat-slide-toggle>
             <div fxFlex.gt-xs fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-              <tb-date-format-select fxFlex excludeLastUpdateAgo formControlName="tooltipDateFormat"></tb-date-format-select>
+              <tb-date-format-select fxFlex excludeLastUpdateAgo includeAuto
+                                     formControlName="tooltipDateFormat"></tb-date-format-select>
               <tb-font-settings formControlName="tooltipDateFont"
                                 [previewText]="tooltipDatePreviewFn">
               </tb-font-settings>

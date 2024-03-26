@@ -31,7 +31,8 @@ import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
+import java.util.Objects;
 
 @Slf4j
 @RuleNode(
@@ -57,7 +58,7 @@ public class TbCheckAlarmStatusNode implements TbNode {
     public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
         try {
             Alarm alarm = JacksonUtil.fromString(msg.getData(), Alarm.class);
-
+            Objects.requireNonNull(alarm, "alarm is null");
             ListenableFuture<Alarm> latest = ctx.getAlarmService().findAlarmByIdAsync(ctx.getTenantId(), alarm.getId());
 
             Futures.addCallback(latest, new FutureCallback<>() {
@@ -78,7 +79,11 @@ public class TbCheckAlarmStatusNode implements TbNode {
                 }
             }, ctx.getDbCallbackExecutor());
         } catch (Exception e) {
-            log.error("Failed to parse alarm: [{}]", msg.getData());
+            if (e instanceof IllegalArgumentException || e instanceof NullPointerException) {
+                log.debug("[{}][{}] Failed to parse alarm: [{}] error [{}]", ctx.getTenantId(), ctx.getRuleChainName(), msg.getData(), e.getMessage());
+            } else {
+                log.error("[{}][{}] Failed to parse alarm: [{}]", ctx.getTenantId(), ctx.getRuleChainName(), msg.getData(), e);
+            }
             throw new TbNodeException(e);
         }
     }

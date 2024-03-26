@@ -34,6 +34,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -154,13 +155,13 @@ class TbDateTest {
         String s = "02:15:30 PM, Sun 10/09/2022";
         String pattern = "hh:mm:ss a, EEE M/d/uuuu";
         TbDate d = new TbDate(s, pattern, "en-US");
-            // tz = local
+        // tz = local
         int localOffsetHrs = ZoneId.systemDefault().getRules().getOffset(d.getInstant()).getTotalSeconds()/60/60;
         int hrs = 14 - localOffsetHrs;
         String expected = "2022-10-09T" + hrs + ":15:30Z";
         Assert.assertEquals(expected, d.toISOString());
 
-            // tz = "-04:00"
+        // tz = "-04:00"
         s = "2023-08-06T04:04:05.00-04:00";
         d = new TbDate(s);
         Assert.assertEquals("2023-08-06T08:04:05Z", d.toISOString());
@@ -309,7 +310,7 @@ class TbDateTest {
                 .put("timeZone", "America/New_York")
                 .put("dateStyle", "full")
                 .put("timeStyle", "full")
-                .toString())); 
+                .toString()));
         Assert.assertEquals("середа, 6 вересня 2023 р. о 04:04:05 за східноєвропейським літнім часом", d.toLocaleString("uk-UA", JacksonUtil.newObjectNode()
                 .put("timeZone", "Europe/Kiev")
                 .put("dateStyle", "full")
@@ -322,24 +323,24 @@ class TbDateTest {
                 .put("timeZone", "America/New_York")
                 .put("dateStyle", "full")
                 .put("timeStyle", "full")
-                .toString())); 
+                .toString()));
 
         Assert.assertEquals("9/5/2023, 9:04:05 PM", d.toLocaleString("en-US", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
                 .put("pattern", "M/d/yyyy, h:mm:ss a")
-                .toString())); 
+                .toString()));
         Assert.assertEquals("9/5/2023, 9:04:05 오후", d.toLocaleString("ko-KR", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
                 .put("pattern", "M/d/yyyy, h:mm:ss a")
-                .toString())); 
+                .toString()));
         Assert.assertEquals("9/6/2023, 4:04:05 дп", d.toLocaleString("uk-UA", JacksonUtil.newObjectNode()
                 .put("timeZone", "Europe/Kiev")
                 .put("pattern", "M/d/yyyy, h:mm:ss a")
-                .toString())); 
+                .toString()));
         Assert.assertEquals("9/5/2023, 9:04:05 م", d.toLocaleString("ar-EG", JacksonUtil.newObjectNode()
                 .put("timeZone", "America/New_York")
                 .put("pattern", "M/d/yyyy, h:mm:ss a")
-                .toString())); 
+                .toString()));
     }
 
     @Test
@@ -362,25 +363,25 @@ class TbDateTest {
         stringDateTZ = "2023-09-06T01:04:05.00-02:00";
         d = new TbDate(stringDateTZ);
         Assert.assertEquals("2023-09-06T03:04:05Z", d.toISOString());
-            // Without_TZ
+        // Without_TZ
         stringDateTZ = "2023-08-06T04:04:05.123";
         d = new TbDate(stringDateTZ);
         Assert.assertEquals("2023-08-06 04:04:05", d.toLocaleString());
 
-            // With TZ RFC_1123
+        // With TZ RFC_1123
         String stringDateRFC_1123 = "Sat, 3 Jun 2023 11:05:30 GMT";
         d = new TbDate(stringDateRFC_1123);
         Assert.assertEquals("2023-06-03T11:05:30Z", d.toISOString());
         stringDateRFC_1123  = "Sat, 3 Jun 2023 01:04:05 +043056";
         d = new TbDate(stringDateRFC_1123);
         Assert.assertEquals("2023-06-02T20:33:09Z", d.toISOString());
-       stringDateRFC_1123  = "Sat, 3 Jun 2023 11:05:30 +0400";
+        stringDateRFC_1123  = "Sat, 3 Jun 2023 11:05:30 +0400";
         d = new TbDate(stringDateRFC_1123);
         Assert.assertEquals("2023-06-03T07:05:30Z", d.toISOString());
         stringDateRFC_1123  = "Thu, 29 Feb 2024 11:05:30 -03";
         d = new TbDate(stringDateRFC_1123);
         Assert.assertEquals("2024-02-29T14:05:30Z", d.toISOString());
-            // Without TZ RFC_1123
+        // Without TZ RFC_1123
         stringDateRFC_1123  = "Sat, 3 Jun 2023 11:05:30";
         d = new TbDate(stringDateRFC_1123);
         Assert.assertEquals("2023-06-03 11:05:30", d.toLocaleString());
@@ -388,30 +389,30 @@ class TbDateTest {
         // With pattern + locale - ok
         String pattern = "hh:mm:ss a, EEE M/d/uuuu";
         String stringDate_ver_RFC_1123 = Runtime.version().feature() == 11 ? "09:15:30 nachm., So. 10/09/2022" :
-                                                                             "09:15:30 PM, So. 10/09/2022";
+                "09:15:30 PM, So. 10/09/2022";
         d = new TbDate(stringDate_ver_RFC_1123 , pattern, "de");
         Assert.assertEquals("2022-10-09 21:15:30", d.toLocaleString());
 
-            // failed TZ
+        // failed TZ
         String expectedMessage = "Cannot parse value";
         String finalStringDateZ_error0 = "2023-09-06T01:04:05.00+045";
         Exception actual = assertThrows(ConversionException.class, () -> {
             new TbDate(finalStringDateZ_error0);
         });
         assertTrue(actual.getMessage().contains(expectedMessage));
-            // failed TZ
+        // failed TZ
         String finalStringDateZ_error1 = "2023-08-06T04:04:05.123+04:00:00:00";
         actual = assertThrows(ConversionException.class, () -> {
             new TbDate(finalStringDateZ_error1);
         });
         assertTrue(actual.getMessage().contains(expectedMessage));
-            // failed TZ
+        // failed TZ
         String finalStringDateZ_error2 ="2023-08-06T04:04:05.123+4";
         actual = assertThrows(ConversionException.class, () -> {
             new TbDate(finalStringDateZ_error2);
         });
         assertTrue(actual.getMessage().contains(expectedMessage));
-            // The locale does not match the pattern RFC_1123
+        // The locale does not match the pattern RFC_1123
         String finalStringDateZ_error3= "02:15:30 PM, Sun 10/09/2022";
         pattern = "hh:mm:ss a, EEE M/d/uuuu";
         String finalPattern = pattern;
@@ -421,11 +422,11 @@ class TbDateTest {
         assertTrue(actual.getMessage().contains(expectedMessage));
 
         // failed DayOfWeek RFC_1123
-       String stringDateRFC_1123_error  = "Tue, 3 Jun 2023 11:05:30 GMT";
-       actual = assertThrows(ConversionException.class, () -> {
+        String stringDateRFC_1123_error  = "Tue, 3 Jun 2023 11:05:30 GMT";
+        actual = assertThrows(ConversionException.class, () -> {
             new TbDate(stringDateRFC_1123_error);
         });
-       assertTrue(actual.getMessage().contains(expectedMessage));
+        assertTrue(actual.getMessage().contains(expectedMessage));
     }
 
     @Test
@@ -729,36 +730,36 @@ class TbDateTest {
         Assert.assertEquals(567, d1.getUTCMilliseconds());
         Assert.assertEquals(3, d1.getUTCDay());
     }
-     @Test
+    @Test
     void TestMethodSeFullYearMonthDate() {
-         TbDate d = new TbDate(2024, 1, 1, 1, 15, 30, 567);
-         testResultChangeDateTime(d);
+        TbDate d = new TbDate(2024, 1, 1, 1, 15, 30, 567);
+        testResultChangeDateTime(d);
 
-         d = new TbDate(2023, 12, 31, 22, 15, 30, 567);
-         testResultChangeDateTime(d);
+        d = new TbDate(2023, 12, 31, 22, 15, 30, 567);
+        testResultChangeDateTime(d);
 
-         d = new TbDate(1975, 12, 31, 1, 15, 30, 567);
-         testResultChangeDateTime(d);
+        d = new TbDate(1975, 12, 31, 1, 15, 30, 567);
+        testResultChangeDateTime(d);
 
-         d.setFullYear(1969);
-         testResultChangeDateTime(d);
+        d.setFullYear(1969);
+        testResultChangeDateTime(d);
 
-         d.setFullYear(1975, 2);
-         testResultChangeDateTime(d);
+        d.setFullYear(1975, 2);
+        testResultChangeDateTime(d);
 
-         d.setFullYear(2023, 6, 30);
-         testResultChangeDateTime(d);
+        d.setFullYear(2023, 6, 30);
+        testResultChangeDateTime(d);
 
-         d.setMonth(2);
-         testResultChangeDateTime(d);
+        d.setMonth(2);
+        testResultChangeDateTime(d);
 
-         d.setMonth(1, 24);
-         testResultChangeDateTime(d);
+        d.setMonth(1, 24);
+        testResultChangeDateTime(d);
 
-         d.setDate(6);
-         testResultChangeDateTime(d);
-     }
-     @Test
+        d.setDate(6);
+        testResultChangeDateTime(d);
+    }
+    @Test
     void TestMethodSeHoursMinutesSecondsMilliSec() {
         TbDate d1 = new TbDate(1975, 12, 31, 23, 15, 30, 567, "+02:00");
         TbDate d2 = new TbDate(1975, 12, 31, 23, 15, 30, 567, "-02:00");

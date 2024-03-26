@@ -25,10 +25,6 @@
       forceSingleDatasource
       formControlName="datasources">
   </tb-datasources>
-  <tb-time-series-chart-y-axes-panel
-    formControlName="yAxes"
-    (axisRemoved)="yAxisRemoved($event)">
-  </tb-time-series-chart-y-axes-panel>
   <tb-data-keys-panel
       panelTitle="{{ 'widgets.chart.series' | translate }}"
       addKeyTitle="{{ 'widgets.chart.add-series' | translate }}"
@@ -45,6 +41,10 @@
       [entityAliasId]="datasource?.entityAliasId"
       formControlName="series">
   </tb-data-keys-panel>
+  <tb-time-series-chart-y-axes-panel
+    formControlName="yAxes"
+    (axisRemoved)="yAxisRemoved($event)">
+  </tb-time-series-chart-y-axes-panel>
   <tb-time-series-chart-thresholds-panel
     formControlName="thresholds"
     [aliasController]="aliasController"
@@ -189,7 +189,8 @@
             {{ 'tooltip.date' | translate }}
           </mat-slide-toggle>
           <div fxFlex.gt-xs fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-            <tb-date-format-select fxFlex excludeLastUpdateAgo formControlName="tooltipDateFormat"></tb-date-format-select>
+            <tb-date-format-select fxFlex excludeLastUpdateAgo includeAuto
+                                   formControlName="tooltipDateFormat"></tb-date-format-select>
             <tb-font-settings formControlName="tooltipDateFont"
                               [previewText]="tooltipDatePreviewFn">
             </tb-font-settings>

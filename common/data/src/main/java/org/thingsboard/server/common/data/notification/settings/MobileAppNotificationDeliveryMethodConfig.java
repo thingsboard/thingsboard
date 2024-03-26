@@ -15,10 +15,9 @@
  */
 package org.thingsboard.server.common.data.notification.settings;
 
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
-
-import javax.validation.constraints.NotEmpty;
 
 @Data
 public class MobileAppNotificationDeliveryMethodConfig implements NotificationDeliveryMethodConfig {
