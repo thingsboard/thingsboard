@@ -130,7 +130,7 @@ public class CustomerController extends BaseController {
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/customer", method = RequestMethod.POST)
     @ResponseBody
-    public Customer saveCustomer(@Parameter(description = "A JSON value representing the customer.") @RequestBody Customer customer) throws Exception {
+    public Customer saveCustomer(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the customer.") @RequestBody Customer customer) throws Exception {
         customer.setTenantId(getTenantId());
         checkEntity(customer.getId(), customer, Resource.CUSTOMER);
         return tbCustomerService.save(customer, getCurrentUser());

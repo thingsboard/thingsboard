@@ -97,8 +97,7 @@ public class EntityViewController extends BaseController {
 
     @ApiOperation(value = "Get entity view (getEntityViewById)",
             notes = "Fetch the EntityView object based on the provided entity view id. "
-                    + ENTITY_VIEW_DESCRIPTION + MODEL_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+                    + ENTITY_VIEW_DESCRIPTION + MODEL_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/entityView/{entityViewId}", method = RequestMethod.GET)
     @ResponseBody
@@ -111,8 +110,7 @@ public class EntityViewController extends BaseController {
 
     @ApiOperation(value = "Get Entity View info (getEntityViewInfoById)",
             notes = "Fetch the Entity View info object based on the provided Entity View Id. "
-                    + ENTITY_VIEW_INFO_DESCRIPTION + MODEL_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+                    + ENTITY_VIEW_INFO_DESCRIPTION + MODEL_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/entityView/info/{entityViewId}", method = RequestMethod.GET)
     @ResponseBody
@@ -127,8 +125,7 @@ public class EntityViewController extends BaseController {
     @ApiOperation(value = "Save or update entity view (saveEntityView)",
             notes = ENTITY_VIEW_DESCRIPTION + MODEL_DESCRIPTION +
                     "Remove 'id', 'tenantId' and optionally 'customerId' from the request body example (below) to create new Entity View entity." +
-                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/entityView", method = RequestMethod.POST)
     @ResponseBody
@@ -162,8 +159,7 @@ public class EntityViewController extends BaseController {
     }
 
     @ApiOperation(value = "Get Entity View by name (getTenantEntityView)",
-            notes = "Fetch the Entity View object based on the tenant id and entity view name. " + TENANT_AUTHORITY_PARAGRAPH,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+            notes = "Fetch the Entity View object based on the tenant id and entity view name. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/tenant/entityViews", params = {"entityViewName"}, method = RequestMethod.GET)
     @ResponseBody
@@ -399,8 +395,7 @@ public class EntityViewController extends BaseController {
                     EDGE_ASSIGN_ASYNC_FIRST_STEP_DESCRIPTION +
                     "Second, remote edge service will receive a copy of assignment entity view " +
                     EDGE_ASSIGN_RECEIVE_STEP_DESCRIPTION +
-                    "Third, once entity view will be delivered to edge service, it's going to be available for usage on remote edge instance.",
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+                    "Third, once entity view will be delivered to edge service, it's going to be available for usage on remote edge instance.")
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/entityView/{entityViewId}", method = RequestMethod.POST)
     @ResponseBody
@@ -424,8 +419,7 @@ public class EntityViewController extends BaseController {
                     EDGE_UNASSIGN_ASYNC_FIRST_STEP_DESCRIPTION +
                     "Second, remote edge service will receive an 'unassign' command to remove entity view " +
                     EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION +
-                    "Third, once 'unassign' command will be delivered to edge service, it's going to remove entity view locally.",
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+                    "Third, once 'unassign' command will be delivered to edge service, it's going to remove entity view locally.")
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/entityView/{entityViewId}", method = RequestMethod.DELETE)
     @ResponseBody

@@ -92,8 +92,8 @@
         <rabbitmq.version>4.8.0</rabbitmq.version>
         <surefire.version>3.0.0-M9</surefire.version>
         <jar-plugin.version>3.0.2</jar-plugin.version>
-        <springdoc-swagger.version>2.1.0</springdoc-swagger.version>
-        <swagger-annotations.version>2.2.9</swagger-annotations.version>
+        <springdoc-swagger.version>2.4.0TB</springdoc-swagger.version>
+        <swagger-annotations.version>2.2.20</swagger-annotations.version>
         <spatial4j.version>0.7</spatial4j.version>
         <jts.version>1.18.2</jts.version>
         <bouncycastle.version>1.69</bouncycastle.version>
@@ -111,7 +111,7 @@
         <kafka.version>3.2.0</kafka.version>
         <bucket4j.version>4.1.1</bucket4j.version>
         <antlr.version>2.7.7</antlr.version>
-        <snakeyaml.version>2.0</snakeyaml.version>
+        <snakeyaml.version>2.2</snakeyaml.version>
         <aws.sdk.version>1.11.747</aws.sdk.version>
         <pubsub.client.version>1.105.0</pubsub.client.version>
         <google.common.protos.version>2.1.0</google.common.protos.version> <!-- required by io.grpc:grpc-protobuf:1.38.0-->
@@ -1775,7 +1775,7 @@
                 <version>${curator.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.springdoc</groupId>
+                <groupId>org.thingsboard</groupId>
                 <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
                 <version>${springdoc-swagger.version}</version>
             </dependency>
