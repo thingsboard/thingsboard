@@ -193,7 +193,7 @@ ui:
   # Help parameters
   help:
     # Base URL for UI help assets
-    base-url: "${UI_HELP_BASE_URL:https://raw.githubusercontent.com/thingsboard/thingsboard-ui-help/release-3.6.2}"
+    base-url: "${UI_HELP_BASE_URL:https://raw.githubusercontent.com/thingsboard/thingsboard-ui-help/release-3.6.3}"
 
 # Database telemetry parameters
 database:
@@ -641,6 +641,18 @@ redis:
   db: "${REDIS_DB:0}"
   # db password
   password: "${REDIS_PASSWORD:}"
+  # ssl config
+  ssl:
+    # Enable/disable secure connection
+    enabled: "${TB_REDIS_SSL_ENABLED:false}"
+    # Server SSL credentials (only PEM format is supported)
+    credentials:
+      # Path redis server (CA) certificate
+      cert_file: "${TB_REDIS_SSL_PEM_CERT:}"
+      # Path to user certificate file. This is optional for the client and can be used for two-way authentication for the client
+      user_cert_file: "${TB_REDIS_SSL_PEM_KEY:}"
+      # Path to user private key file. This is optional for the client and only needed if ‘user_cert_file’ is configured.
+      user_key_file: "${TB_REDIS_SSL_PEM_KEY_PASSWORD:}"
   # pool config
   pool_config:
     # Maximum number of connections that can be allocated by the connection pool
@@ -716,7 +728,7 @@ spring:
         enabled: "true" # Enable/Disable the Spring Data JPA repositories support
   jpa:
     properties:
-      javax.persistence.query.timeout: "${JAVAX_PERSISTENCE_QUERY_TIMEOUT:30000}" # General timeout for JDBC queries
+      jakarta.persistence.query.timeout: "${JAVAX_PERSISTENCE_QUERY_TIMEOUT:30000}" # General timeout for JDBC queries
     open-in-view: "false" # Enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
     hibernate:
       # You can set a Hibernate feature that controls the DDL behavior in a more fine-grained way. The standard Hibernate property values are none, validate, update, create-drop. Spring Boot chooses a default value for you based on whether it thinks your database is embedded (default create-drop) or not (default none)
@@ -1018,6 +1030,16 @@ transport:
       # CoAP DTLS bind port
       bind_port: "${COAP_DTLS_BIND_PORT:5684}"
       # Server DTLS credentials
+      # CoAP DTLS connection ID length. RFC 9146, Connection Identifier for DTLS 1.2
+      # Default: off
+      # Control usage of DTLS connection ID length (CID).
+      # - 'off' to deactivate it.
+      # - 'on' to activate Connection ID support (same as CID 0 or more 0).
+      # - A positive value defines generated CID size in bytes.
+      # - A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic).
+      # - A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used
+      # - A value that are > 4: MultiNodeConnectionIdGenerator is used
+      connection_id_length: "${COAP_DTLS_CONNECTION_ID_LENGTH:}"
       credentials:
         # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
         type: "${COAP_DTLS_CREDENTIALS_TYPE:PEM}"
@@ -1055,8 +1077,16 @@ transport:
     dtls:
       # RFC7925_RETRANSMISSION_TIMEOUT_IN_MILLISECONDS = 9000
       retransmission_timeout: "${LWM2M_DTLS_RETRANSMISSION_TIMEOUT_MS:9000}"
-      # "" disables connection id support, 0 enables support but not for incoming traffic, any value greater than 0 set the connection id size in bytes
-      connection_id_length: "${LWM2M_DTLS_CONNECTION_ID_LENGTH:6}"
+      # CoAP DTLS connection ID length for LWM2M. RFC 9146, Connection Identifier for DTLS 1.2
+      # Default: off
+      # Control usage of DTLS connection ID length (CID).
+      # - 'off' to deactivate it.
+      # - 'on' to activate Connection ID support (same as CID 0 or more 0).
+      # - A positive value defines generated CID size in bytes.
+      # - A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic).
+      # - A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used
+      # - A value that are > 4: MultiNodeConnectionIdGenerator is used
+      connection_id_length: "${LWM2M_DTLS_CONNECTION_ID_LENGTH:}"
     server:
       # LwM2M Server ID
       id: "${LWM2M_SERVER_ID:123}"
@@ -1291,12 +1321,17 @@ edges:
     # Persist state of edge (active, last connect, last disconnect) into timeseries or attributes tables. 'false' means to store edge state into attributes table
     persistToTelemetry: "${EDGES_PERSIST_STATE_TO_TELEMETRY:false}"
 
+# Spring doc common parameters
+springdoc:
+  # If false swagger API docs will be unavailable
+  api-docs.enabled: "${SWAGGER_ENABLED:true}"
+  # Swagger default produces media-type
+  default-produces-media-type: "${SWAGGER_DEFAULT_PRODUCES_MEDIA_TYPE:application/json}"
+
 # Swagger common parameters
 swagger:
-  # If false swagger API docs will be unavailable
-  enabled: "${SWAGGER_ENABLED:true}"
   # General swagger match pattern of swagger UI links
-  api_path_regex: "${SWAGGER_API_PATH_REGEX:/api/.*}"
+  api_path: "${SWAGGER_API_PATH:/api/**}"
   # General swagger match pattern path of swagger UI links
   security_path_regex: "${SWAGGER_SECURITY_PATH_REGEX:/api/.*}"
   # Nonsecurity API path match pattern of swagger UI links

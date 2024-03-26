@@ -33,7 +33,7 @@ import {
 @Component({
   selector: 'tb-bar-chart-with-labels-widget-settings',
   templateUrl: './bar-chart-with-labels-widget-settings.component.html',
-  styleUrls: []
+  styleUrls: ['./../widget-settings.scss']
 })
 export class BarChartWithLabelsWidgetSettingsComponent extends WidgetSettingsComponent {
 
@@ -83,6 +83,8 @@ export class BarChartWithLabelsWidgetSettingsComponent extends WidgetSettingsCom
       tooltipDateFormat: [settings.tooltipDateFormat, []],
       tooltipDateFont: [settings.tooltipDateFont, []],
       tooltipDateColor: [settings.tooltipDateColor, []],
+      tooltipDateInterval: [settings.tooltipDateInterval, []],
+
       tooltipBackgroundColor: [settings.tooltipBackgroundColor, []],
       tooltipBackgroundBlur: [settings.tooltipBackgroundBlur, []],
 
@@ -137,10 +139,12 @@ export class BarChartWithLabelsWidgetSettingsComponent extends WidgetSettingsCom
         this.barChartWidgetSettingsForm.get('tooltipDateFormat').enable();
         this.barChartWidgetSettingsForm.get('tooltipDateFont').enable();
         this.barChartWidgetSettingsForm.get('tooltipDateColor').enable();
+        this.barChartWidgetSettingsForm.get('tooltipDateInterval').enable();
       } else {
         this.barChartWidgetSettingsForm.get('tooltipDateFormat').disable();
         this.barChartWidgetSettingsForm.get('tooltipDateFont').disable();
         this.barChartWidgetSettingsForm.get('tooltipDateColor').disable();
+        this.barChartWidgetSettingsForm.get('tooltipDateInterval').disable();
       }
     } else {
       this.barChartWidgetSettingsForm.get('tooltipValueFont').disable();
@@ -149,6 +153,7 @@ export class BarChartWithLabelsWidgetSettingsComponent extends WidgetSettingsCom
       this.barChartWidgetSettingsForm.get('tooltipDateFormat').disable();
       this.barChartWidgetSettingsForm.get('tooltipDateFont').disable();
       this.barChartWidgetSettingsForm.get('tooltipDateColor').disable();
+      this.barChartWidgetSettingsForm.get('tooltipDateInterval').disable();
       this.barChartWidgetSettingsForm.get('tooltipBackgroundColor').disable();
       this.barChartWidgetSettingsForm.get('tooltipBackgroundBlur').disable();
     }

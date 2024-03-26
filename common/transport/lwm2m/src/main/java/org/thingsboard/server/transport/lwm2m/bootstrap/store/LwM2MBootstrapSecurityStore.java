@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.lwm2m.bootstrap.store;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.peer.OscoreIdentity;
 import org.eclipse.leshan.server.bootstrap.BootstrapConfig;
 import org.eclipse.leshan.server.bootstrap.EditableBootstrapConfigStore;
 import org.eclipse.leshan.server.bootstrap.InvalidConfigurationException;
@@ -96,6 +97,11 @@ public class LwM2MBootstrapSecurityStore implements BootstrapSecurityStore {
             log.trace("Bootstrap Registration failed: No pre-shared key found for [identity: {}]", identity);
             return null;
         }
+    }
+
+    @Override
+    public SecurityInfo getByOscoreIdentity(OscoreIdentity oscoreIdentity) {
+        return null;
     }
 
     public TbLwM2MSecurityInfo getX509ByEndpoint(String endPoint) {

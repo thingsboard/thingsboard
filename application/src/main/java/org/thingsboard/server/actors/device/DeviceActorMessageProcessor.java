@@ -28,6 +28,7 @@ import org.thingsboard.common.util.LinkedHashMapRemoveEldest;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.shared.AbstractContextAwareMsgProcessor;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EdgeUtils;
@@ -66,6 +67,8 @@ import org.thingsboard.server.common.msg.rule.engine.DeviceCredentialsUpdateNoti
 import org.thingsboard.server.common.msg.rule.engine.DeviceEdgeUpdateMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.common.msg.timeout.DeviceActorServerSideRpcTimeoutMsg;
+import org.thingsboard.server.common.util.KvProtoUtil;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceSessionsCacheEntry;
@@ -94,7 +97,7 @@ import org.thingsboard.server.service.rpc.RpcSubmitStrategy;
 import org.thingsboard.server.service.state.DefaultDeviceStateService;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -504,13 +507,13 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     private void handleGetAttributesRequest(SessionInfoProto sessionInfo, GetAttributeRequestMsg request) {
         int requestId = request.getRequestId();
         if (request.getOnlyShared()) {
-            Futures.addCallback(findAllAttributesByScope(DataConstants.SHARED_SCOPE), new FutureCallback<>() {
+            Futures.addCallback(findAllAttributesByScope(AttributeScope.SHARED_SCOPE), new FutureCallback<>() {
                 @Override
                 public void onSuccess(@Nullable List<AttributeKvEntry> result) {
                     GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
                             .setRequestId(requestId)
                             .setSharedStateMsg(true)
-                            .addAllSharedAttributeList(toTsKvProtos(result))
+                            .addAllSharedAttributeList(KvProtoUtil.attrToTsKvProtos(result))
                             .setIsMultipleAttributesRequest(request.getSharedAttributeNamesCount() > 1)
                             .build();
                     sendToTransport(responseMsg, sessionInfo);
@@ -531,8 +534,8 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
                 public void onSuccess(@Nullable List<List<AttributeKvEntry>> result) {
                     GetAttributeResponseMsg responseMsg = GetAttributeResponseMsg.newBuilder()
                             .setRequestId(requestId)
-                            .addAllClientAttributeList(toTsKvProtos(result.get(0)))
-                            .addAllSharedAttributeList(toTsKvProtos(result.get(1)))
+                            .addAllClientAttributeList(KvProtoUtil.attrToTsKvProtos(result.get(0)))
+                            .addAllSharedAttributeList(KvProtoUtil.attrToTsKvProtos(result.get(1)))
                             .setIsMultipleAttributesRequest(
                                     request.getSharedAttributeNamesCount() + request.getClientAttributeNamesCount() > 1)
                             .build();
@@ -554,26 +557,26 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         ListenableFuture<List<AttributeKvEntry>> clientAttributesFuture;
         ListenableFuture<List<AttributeKvEntry>> sharedAttributesFuture;
         if (CollectionUtils.isEmpty(request.getClientAttributeNamesList()) && CollectionUtils.isEmpty(request.getSharedAttributeNamesList())) {
-            clientAttributesFuture = findAllAttributesByScope(DataConstants.CLIENT_SCOPE);
-            sharedAttributesFuture = findAllAttributesByScope(DataConstants.SHARED_SCOPE);
+            clientAttributesFuture = findAllAttributesByScope(AttributeScope.CLIENT_SCOPE);
+            sharedAttributesFuture = findAllAttributesByScope(AttributeScope.SHARED_SCOPE);
         } else if (!CollectionUtils.isEmpty(request.getClientAttributeNamesList()) && !CollectionUtils.isEmpty(request.getSharedAttributeNamesList())) {
-            clientAttributesFuture = findAttributesByScope(toSet(request.getClientAttributeNamesList()), DataConstants.CLIENT_SCOPE);
-            sharedAttributesFuture = findAttributesByScope(toSet(request.getSharedAttributeNamesList()), DataConstants.SHARED_SCOPE);
+            clientAttributesFuture = findAttributesByScope(toSet(request.getClientAttributeNamesList()), AttributeScope.CLIENT_SCOPE);
+            sharedAttributesFuture = findAttributesByScope(toSet(request.getSharedAttributeNamesList()), AttributeScope.SHARED_SCOPE);
         } else if (CollectionUtils.isEmpty(request.getClientAttributeNamesList()) && !CollectionUtils.isEmpty(request.getSharedAttributeNamesList())) {
             clientAttributesFuture = Futures.immediateFuture(Collections.emptyList());
-            sharedAttributesFuture = findAttributesByScope(toSet(request.getSharedAttributeNamesList()), DataConstants.SHARED_SCOPE);
+            sharedAttributesFuture = findAttributesByScope(toSet(request.getSharedAttributeNamesList()), AttributeScope.SHARED_SCOPE);
         } else {
             sharedAttributesFuture = Futures.immediateFuture(Collections.emptyList());
-            clientAttributesFuture = findAttributesByScope(toSet(request.getClientAttributeNamesList()), DataConstants.CLIENT_SCOPE);
+            clientAttributesFuture = findAttributesByScope(toSet(request.getClientAttributeNamesList()), AttributeScope.CLIENT_SCOPE);
         }
         return Futures.allAsList(Arrays.asList(clientAttributesFuture, sharedAttributesFuture));
     }
 
-    private ListenableFuture<List<AttributeKvEntry>> findAllAttributesByScope(String scope) {
+    private ListenableFuture<List<AttributeKvEntry>> findAllAttributesByScope(AttributeScope scope) {
         return systemContext.getAttributesService().findAll(tenantId, deviceId, scope);
     }
 
-    private ListenableFuture<List<AttributeKvEntry>> findAttributesByScope(Set<String> attributesSet, String scope) {
+    private ListenableFuture<List<AttributeKvEntry>> findAttributesByScope(Set<String> attributesSet, AttributeScope scope) {
         return systemContext.getAttributesService().find(tenantId, deviceId, scope, attributesSet);
     }
 
@@ -602,7 +605,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
                 if (DataConstants.SHARED_SCOPE.equals(msg.getScope())) {
                     List<AttributeKvEntry> attributes = new ArrayList<>(msg.getValues());
                     if (attributes.size() > 0) {
-                        List<TsKvProto> sharedUpdated = msg.getValues().stream().map(this::toTsKvProto)
+                        List<TsKvProto> sharedUpdated = msg.getValues().stream().map(t -> KvProtoUtil.toTsKvProto(t.getLastUpdateTs(), t))
                                 .collect(Collectors.toList());
                         if (!sharedUpdated.isEmpty()) {
                             notification.addAllSharedUpdated(sharedUpdated);
@@ -922,28 +925,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
 
         EdgeEvent edgeEvent = EdgeUtils.constructEdgeEvent(tenantId, edgeId, EdgeEventType.DEVICE, EdgeEventActionType.RPC_CALL, deviceId, body);
 
-        return Futures.transform(systemContext.getEdgeEventService().saveAsync(edgeEvent), unused -> {
-            systemContext.getClusterService().onEdgeEventUpdate(tenantId, edgeId);
-            return null;
-        }, systemContext.getDbCallbackExecutor());
-    }
-
-    private List<TsKvProto> toTsKvProtos(@Nullable List<AttributeKvEntry> result) {
-        List<TsKvProto> clientAttributes;
-        if (result == null || result.isEmpty()) {
-            clientAttributes = Collections.emptyList();
-        } else {
-            clientAttributes = new ArrayList<>(result.size());
-            for (AttributeKvEntry attrEntry : result) {
-                clientAttributes.add(toTsKvProto(attrEntry));
-            }
-        }
-        return clientAttributes;
-    }
-
-    private TsKvProto toTsKvProto(AttributeKvEntry attrEntry) {
-        return TsKvProto.newBuilder().setTs(attrEntry.getLastUpdateTs())
-                .setKv(toKeyValueProto(attrEntry)).build();
+        return systemContext.getEdgeEventService().saveAsync(edgeEvent);
     }
 
     private KeyValueProto toKeyValueProto(KvEntry kvEntry) {

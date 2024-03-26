@@ -15,12 +15,15 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.LwM2m;
-import org.eclipse.leshan.core.attributes.Attribute;
-import org.eclipse.leshan.core.attributes.AttributeSet;
 import org.eclipse.leshan.core.link.Link;
+import org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttribute;
+import org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributeModel;
+import org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributeSet;
 import org.eclipse.leshan.core.model.LwM2mModel;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
@@ -28,6 +31,7 @@ import org.eclipse.leshan.core.node.LwM2mObjectInstance;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.ObjectLink;
+import org.eclipse.leshan.core.observation.CompositeObservation;
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.observation.SingleObservation;
 import org.eclipse.leshan.core.request.CompositeDownlinkRequest;
@@ -37,6 +41,7 @@ import org.eclipse.leshan.core.request.DeleteRequest;
 import org.eclipse.leshan.core.request.DiscoverRequest;
 import org.eclipse.leshan.core.request.DownlinkRequest;
 import org.eclipse.leshan.core.request.ExecuteRequest;
+import org.eclipse.leshan.core.request.ObserveCompositeRequest;
 import org.eclipse.leshan.core.request.ObserveRequest;
 import org.eclipse.leshan.core.request.ReadCompositeRequest;
 import org.eclipse.leshan.core.request.ReadRequest;
@@ -52,6 +57,7 @@ import org.eclipse.leshan.core.response.DeleteResponse;
 import org.eclipse.leshan.core.response.DiscoverResponse;
 import org.eclipse.leshan.core.response.ExecuteResponse;
 import org.eclipse.leshan.core.response.LwM2mResponse;
+import org.eclipse.leshan.core.response.ObserveCompositeResponse;
 import org.eclipse.leshan.core.response.ObserveResponse;
 import org.eclipse.leshan.core.response.ReadCompositeResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
@@ -63,6 +69,8 @@ import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.device.profile.lwm2m.ObjectAttributes;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
@@ -70,31 +78,43 @@ import org.thingsboard.server.transport.lwm2m.server.LwM2mVersionedModelProvider
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import org.thingsboard.server.transport.lwm2m.server.common.LwM2MExecutorAwareService;
+import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MCancelObserveCompositeRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MObserveCompositeRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MReadCompositeRequest;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 import org.thingsboard.server.transport.lwm2m.server.rpc.composite.RpcWriteCompositeRequest;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static org.eclipse.leshan.core.attributes.Attribute.GREATER_THAN;
-import static org.eclipse.leshan.core.attributes.Attribute.LESSER_THAN;
-import static org.eclipse.leshan.core.attributes.Attribute.MAXIMUM_PERIOD;
-import static org.eclipse.leshan.core.attributes.Attribute.MINIMUM_PERIOD;
-import static org.eclipse.leshan.core.attributes.Attribute.STEP;
+import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.DIMENSION;
+import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.ENABLER_VERSION;
+import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.EVALUATE_MAXIMUM_PERIOD;
+import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.EVALUATE_MINIMUM_PERIOD;
+import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.GREATER_THAN;
+import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.LESSER_THAN;
+import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.MAXIMUM_PERIOD;
+import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.MINIMUM_PERIOD;
+import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.OBJECT_VERSION;
+import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.SERVER_URI;
+import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.SHORT_SERVER_ID;
+import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.STEP;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OBJLNK;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertMultiResourceValuesFromRpcBody;
@@ -148,8 +168,9 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
 
     @Override
     public void sendReadCompositeRequest(LwM2mClient client, TbLwM2MReadCompositeRequest request,
-                                         DownlinkRequestCallback<ReadCompositeRequest, ReadCompositeResponse> callback, ContentFormat compositeContentFormat) {
+                                         DownlinkRequestCallback<ReadCompositeRequest, ReadCompositeResponse> callback) {
         try {
+            ContentFormat compositeContentFormat = this.findFirstContentFormatForComposite(client.getClientSupportContentFormats());
             ReadCompositeRequest downlink = new ReadCompositeRequest(compositeContentFormat, compositeContentFormat, request.getObjectIds());
             sendCompositeRequest(client, downlink, this.config.getTimeout(), callback);
         } catch (InvalidRequestException e) {
@@ -162,23 +183,19 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         try {
             validateVersionedId(client, request);
             LwM2mPath resultIds = new LwM2mPath(request.getObjectId());
-            Set<Observation> observations = context.getServer().getObservationService().getObservations(client.getRegistration());
-            //TODO: should be able to use CompositeObservation
-            if (observations.stream().noneMatch(observation -> ((SingleObservation)observation).getPath().equals(resultIds))) {
-                ObserveRequest downlink;
-                ContentFormat contentFormat = getReadRequestContentFormat(client, request, modelProvider);
-                if (resultIds.isResource()) {
-                    downlink = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId());
-                } else if (resultIds.isObjectInstance()) {
-                    downlink = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId());
-                } else {
-                    downlink = new ObserveRequest(contentFormat, resultIds.getObjectId());
-                }
-                log.info("[{}] Send observation: {}.", client.getEndpoint(), request.getVersionedId());
-                sendSimpleRequest(client, downlink, request.getTimeout(), callback);
+            ObserveRequest downlink;
+            ContentFormat contentFormat = getReadRequestContentFormat(client, request, modelProvider);
+            if (resultIds.isResourceInstance()) {
+                downlink = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(), resultIds.getResourceInstanceId());
+            } else if (resultIds.isResource()) {
+                downlink = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId());
+            } else if (resultIds.isObjectInstance()) {
+                downlink = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId());
             } else {
-                callback.onValidationError(resultIds.toString(), "Observation is already registered!");
+                downlink = new ObserveRequest(contentFormat, resultIds.getObjectId());
             }
+            log.info("[{}] Send observation: {}.", client.getEndpoint(), request.getVersionedId());
+            sendSimpleRequest(client, downlink, request.getTimeout(), callback);
         } catch (InvalidRequestException e) {
             callback.onValidationError(request.toString(), e.getMessage());
         }
@@ -187,14 +204,90 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     @Override
     public void sendObserveAllRequest(LwM2mClient client, TbLwM2MObserveAllRequest request, DownlinkRequestCallback<TbLwM2MObserveAllRequest, Set<String>> callback) {
         Set<Observation> observations = context.getServer().getObservationService().getObservations(client.getRegistration());
-        //TODO: should be able to use CompositeObservation
-        Set<String> paths = observations.stream().map(observation -> ((SingleObservation)observation).getPath().toString()).collect(Collectors.toUnmodifiableSet());
+        Set<String> paths = new LinkedHashSet<>();
+        observations.stream().forEach(observation -> {
+            if (observation instanceof SingleObservation) {
+                paths.add("SingleObservation:" + ((SingleObservation) observation).getPath().toString());
+            } else {
+                List<LwM2mPath> listPath = ((CompositeObservation) observation).getPaths();
+                List<String> pathsComposite =  listPath.stream().map(lwM2mPath -> (lwM2mPath.toString())).collect(Collectors.toList());
+                Set <String> pathsCompositeSort = new TreeSet<>();
+                if (pathsComposite.size() == 1) {
+                    pathsCompositeSort.add("CompositeObservation: [" + pathsComposite.get(0) + "]");
+                } else if (pathsComposite.size() > 1) {
+                    List <String> sort = new LinkedList<>();
+                    sort.addAll(pathsComposite);
+                    sort.set(0, "CompositeObservation: [" + sort.get(0));
+                    sort.set(pathsComposite.size()-1, sort.get(pathsComposite.size()-1) + "]");
+                    pathsCompositeSort = new LinkedHashSet<>(sort);
+                }
+                paths.addAll(pathsCompositeSort);
+            }
+
+        });
         callback.onSuccess(request, paths);
     }
 
+    /**
+     * if resource (SingleObservation or in CompositeObservation) is already registered - return BAD REQUEST
+     */
     @Override
-    public void sendDiscoverAllRequest(LwM2mClient client, TbLwM2MDiscoverAllRequest request, DownlinkRequestCallback<TbLwM2MDiscoverAllRequest, List<Link>> callback) {
-        callback.onSuccess(request, Arrays.asList(client.getRegistration().getSortedObjectLinks()));
+    public void sendObserveCompositeRequest(LwM2mClient client, TbLwM2MObserveCompositeRequest request, DownlinkRequestCallback<ObserveCompositeRequest,
+            ObserveCompositeResponse> callback) {
+        try {
+            log.trace("[{}] Send Composite observation: [{}].", client.getEndpoint(), request.getObjectIds());
+            ContentFormat compositeContentFormat = this.findFirstContentFormatForComposite(client.getClientSupportContentFormats());
+            ObserveCompositeRequest downlink = new ObserveCompositeRequest(compositeContentFormat, compositeContentFormat, request.getObjectIds());
+            sendCompositeRequest(client, downlink, this.config.getTimeout(), callback);
+        } catch (InvalidRequestException e) {
+            callback.onValidationError(request.toString(), e.getMessage());
+        }
+    }
+
+    @Override
+    public void sendCancelObserveCompositeRequest(LwM2mClient client, TbLwM2MCancelObserveCompositeRequest request, DownlinkRequestCallback<TbLwM2MCancelObserveCompositeRequest, Integer> callback) {
+        try {
+            Set<Observation> observations = context.getServer().getObservationService().getObservations(client.getRegistration());
+            List<LwM2mPath> listPath = LwM2mPath.getLwM2mPathList(Arrays.asList(request.getObjectIds()));
+            Optional<Observation> observationOpt = Optional.ofNullable(observations.stream().filter(observation -> observation instanceof CompositeObservation && ((CompositeObservation) observation).getPaths().equals(listPath)).findFirst().orElse(null));
+            int cnt = 0;
+            if (observationOpt.isPresent()) {
+                cnt = context.getServer().getObservationService().cancelCompositeObservations(client.getRegistration(), request.getObjectIds());
+                callback.onSuccess(request, cnt);
+            } else {
+                Set<String> lwPaths = new HashSet<>();
+                for (Observation obs : observations) {
+                    LwM2mPath lwPathObs = ((SingleObservation) obs).getPath();
+                    for (LwM2mPath nodePath : listPath) {
+                        String validNodePath = validatePathObserveCancelAny(nodePath, lwPathObs, client);
+                        if (validNodePath != null) lwPaths.add(validNodePath);
+                    }
+                };
+                for (String nodePath : lwPaths) {
+                    cnt += context.getServer().getObservationService().cancelObservations(client.getRegistration(), nodePath);
+                }
+            }
+            callback.onSuccess(request, cnt);
+        } catch (ThingsboardException e){
+            callback.onValidationError(request.toString(), e.getMessage());
+        }
+    }
+
+    private String validatePathObserveCancelAny(LwM2mPath nodePath, LwM2mPath lwPathObs, LwM2mClient client) throws ThingsboardException {
+        if (nodePath.equals(lwPathObs) || lwPathObs.startWith(nodePath)) {    // nodePath = "3",     lwPathObs = "3/0/9": cancel for tne all lwPathObs
+            return lwPathObs.toString();
+        } else if (!nodePath.equals(lwPathObs) && nodePath.startWith(lwPathObs)) {
+            String errorMsg = String.format(
+                    "Unexpected error: There is registration with Endpoint %s for observation path [%s], that includes this observation path [%s]",
+                    client.getRegistration().getEndpoint(), lwPathObs, nodePath);
+            throw new ThingsboardException(errorMsg, ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
+        return null;
+    }
+
+    @Override
+    public void sendDiscoverAllRequest(LwM2mClient client, TbLwM2MDiscoverAllRequest request, DownlinkRequestCallback<TbLwM2MDiscoverAllRequest, List<String>> callback) {
+        callback.onSuccess(request, Arrays.stream(client.getRegistration().getSortedObjectLinks()).map(Link::toCoreLinkFormat).collect(Collectors.toList()));
     }
 
     @Override
@@ -242,13 +335,28 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
 
     @Override
     public void sendCancelObserveRequest(LwM2mClient client, TbLwM2MCancelObserveRequest request, DownlinkRequestCallback<TbLwM2MCancelObserveRequest, Integer> callback) {
-        validateVersionedId(client, request);
-        int observeCancelCnt = context.getServer().getObservationService().cancelObservations(client.getRegistration(), request.getObjectId());
-        callback.onSuccess(request, observeCancelCnt);
+        try{
+            validateVersionedId(client, request);
+            Set<Observation> observations = context.getServer().getObservationService().getObservations(client.getRegistration());
+            int observeCancelCnt = 0;
+            Set<String> lwPaths = new HashSet<>();
+            for (Observation obs : observations) {
+                LwM2mPath lwPathObs = ((SingleObservation) obs).getPath();
+                LwM2mPath nodePath = new LwM2mPath(request.getObjectId());
+                String validNodePath = validatePathObserveCancelAny(nodePath, lwPathObs, client);
+                if (validNodePath != null) lwPaths.add(validNodePath);
+            };
+            for (String nodePath : lwPaths) {
+                observeCancelCnt += context.getServer().getObservationService().cancelObservations(client.getRegistration(), nodePath);
+            }
+            callback.onSuccess(request, observeCancelCnt);
+        } catch (ThingsboardException e){
+            callback.onValidationError(request.toString(), e.getMessage());
+        }
     }
 
     @Override
-    public void sendCancelAllRequest(LwM2mClient client, TbLwM2MCancelAllRequest request, DownlinkRequestCallback<TbLwM2MCancelAllRequest, Integer> callback) {
+    public void sendCancelObserveAllRequest(LwM2mClient client, TbLwM2MCancelAllRequest request, DownlinkRequestCallback<TbLwM2MCancelAllRequest, Integer> callback) {
         int observeCancelCnt = context.getServer().getObservationService().cancelObservations(client.getRegistration());
         callback.onSuccess(request, observeCancelCnt);
     }
@@ -278,18 +386,38 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             if (request.getAttributes() == null) {
                 throw new IllegalArgumentException("Attributes to write are not specified!");
             }
-            ObjectAttributes params = request.getAttributes();
-            List<Attribute> attributes = new LinkedList<>();
-            addAttribute(attributes, MAXIMUM_PERIOD, params.getPmax());
-            addAttribute(attributes, MINIMUM_PERIOD, params.getPmin());
-            addAttribute(attributes, GREATER_THAN, params.getGt());
-            addAttribute(attributes, LESSER_THAN, params.getLt());
-            addAttribute(attributes, STEP, params.getSt());
-            AttributeSet attributeSet = new AttributeSet(attributes);
-            sendSimpleRequest(client, new WriteAttributesRequest(request.getObjectId(), attributeSet), request.getTimeout(), callback);
+            sendSimpleRequest(client, new WriteAttributesRequest(request.getObjectId(), getAttributesSet(request.getAttributes())), request.getTimeout(), callback);
         } catch (InvalidRequestException e) {
             callback.onValidationError(request.toString(), e.getMessage());
         }
+    }
+
+    private LwM2mAttributeSet getAttributesSet(ObjectAttributes params) {
+        List<LwM2mAttribute<?>> attributes = new LinkedList<>();
+        /**
+         * Only: AttributeClass.NOTIFICATION -> RW
+         */
+        addAttribute(attributes, MAXIMUM_PERIOD, params.getPmax());
+        addAttribute(attributes, MINIMUM_PERIOD, params.getPmin());
+        addAttribute(attributes, GREATER_THAN, params.getGt());
+        addAttribute(attributes, LESSER_THAN, params.getLt());
+        addAttribute(attributes, STEP, params.getSt());
+        addAttribute(attributes, EVALUATE_MAXIMUM_PERIOD, params.getEpmax());
+        addAttribute(attributes, EVALUATE_MINIMUM_PERIOD, params.getEpmin());
+        /**
+         * Only:  AttributeClass.PROPERTIES -> R
+         */
+        addAttribute(attributes, DIMENSION, params.getDim());                        // Attachment.RESOURCE
+        addAttribute(attributes, SHORT_SERVER_ID, params.getSsid());              // Attachment.OBJECT_INSTANCE
+        addAttribute(attributes, SERVER_URI, params.getUri());                          // Attachment.OBJECT_INSTANCE
+        if (params.getLwm2m() != null) {
+            addAttribute(attributes, ENABLER_VERSION, params.getLwm2m());   // attachment.ROOT
+        }
+        if (params.getVer() != null) {
+            addAttribute(attributes, OBJECT_VERSION, params.getVer());          // Attachment.OBJECT
+        }
+
+       return  new LwM2mAttributeSet(attributes);
     }
 
     @Override
@@ -338,9 +466,10 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
 
     @Override
     public void sendWriteCompositeRequest(LwM2mClient client, RpcWriteCompositeRequest rpcWriteCompositeRequest,
-                                          DownlinkRequestCallback<WriteCompositeRequest, WriteCompositeResponse> callback, ContentFormat contentFormatComposite) {
+                                          DownlinkRequestCallback<WriteCompositeRequest, WriteCompositeResponse> callback) {
         try {
-            WriteCompositeRequest downlink = new WriteCompositeRequest(contentFormatComposite, rpcWriteCompositeRequest.getNodes());
+            ContentFormat compositeContentFormat = this.findFirstContentFormatForComposite(client.getClientSupportContentFormats());
+            WriteCompositeRequest downlink = new WriteCompositeRequest(compositeContentFormat, rpcWriteCompositeRequest.getNodes());
             //TODO: replace config.getTimeout();
             sendWriteCompositeRequest(client, downlink, this.config.getTimeout(), callback);
         } catch (InvalidRequestException e) {
@@ -570,17 +699,18 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         }
     }
 
-    private static <T> void addAttribute(List<Attribute> attributes, String attributeName, T value) {
-        addAttribute(attributes, attributeName, value, null, null);
+    private static <T> void addAttribute(List<LwM2mAttribute<?>> attributes, LwM2mAttributeModel<T> attribute, T value) {
+        addAttribute(attributes, attribute, value, null, null);
     }
 
-    private static <T> void addAttribute(List<Attribute> attributes, String attributeName, T value, Function<T, ?> converter) {
-        addAttribute(attributes, attributeName, value, null, converter);
+    private static <T> void addAttribute(List<LwM2mAttribute<?>> attributes,  LwM2mAttributeModel<T> attribute, T value, Function<T, ?> converter) {
+        addAttribute(attributes, attribute, value, null, converter);
     }
 
-    private static <T> void addAttribute(List<Attribute> attributes, String attributeName, T value, Predicate<T> filter, Function<T, ?> converter) {
+    private static <T> void addAttribute(List<LwM2mAttribute<?>> attributes,  LwM2mAttributeModel<T> attributeName, T value, Predicate<T> filter, Function<T, ?> converter) {
         if (value != null && ((filter == null) || filter.test(value))) {
-            attributes.add(new Attribute(attributeName, converter != null ? converter.apply(value) : value));
+            T valueConvert = (T)  converter != null ?  (T) converter.apply(value) : value;
+            attributes.add(new LwM2mAttribute<>(attributeName, valueConvert));
         }
     }
 
@@ -620,7 +750,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                 } else if (OPAQUE.equals(resourceModel.type)) {
                     return ContentFormat.OPAQUE;
                 } else {
-                    return findFirst(client.getClientSupportContentFormats(), client.getDefaultContentFormat(), ContentFormat.CBOR, ContentFormat.SENML_CBOR, ContentFormat.SENML_JSON);
+                    return findFirstContentFormatForComp(client.getClientSupportContentFormats(), client.getDefaultContentFormat(), ContentFormat.CBOR, ContentFormat.SENML_CBOR, ContentFormat.SENML_JSON);
                 }
             } else {
                 return getContentFormatForComplex(client);
@@ -634,7 +764,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         if (LwM2m.LwM2mVersion.V1_0.equals(client.getRegistration().getLwM2mVersion())) {
             return ContentFormat.TLV;
         } else if (LwM2m.LwM2mVersion.V1_1.equals(client.getRegistration().getLwM2mVersion())) {
-            ContentFormat result = findFirst(client.getClientSupportContentFormats(), null, ContentFormat.SENML_CBOR, ContentFormat.SENML_JSON, ContentFormat.TLV, ContentFormat.JSON);
+            ContentFormat result = findFirstContentFormatForComp(client.getClientSupportContentFormats(), null, ContentFormat.SENML_CBOR, ContentFormat.SENML_JSON, ContentFormat.TLV, ContentFormat.JSON);
             if (result != null) {
                 return result;
             } else {
@@ -644,16 +774,6 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             throw new RuntimeException("The version " + client.getRegistration().getLwM2mVersion() + " is not supported!");
         }
     }
-
-    private static ContentFormat findFirst(Set<ContentFormat> supported, ContentFormat defaultValue, ContentFormat... desiredFormats) {
-        for (ContentFormat contentFormat : desiredFormats) {
-            if (supported.contains(contentFormat)) {
-                return contentFormat;
-            }
-        }
-        return defaultValue;
-    }
-
     private <R> String toString(R request) {
         try {
             return request != null ? request.toString() : "";
@@ -661,5 +781,39 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             log.debug("Failed to convert request to string", e);
             return request.getClass().getSimpleName();
         }
+    }
+
+    private ContentFormat findFirstContentFormatForComposite (Set<?> clientSupportContentFormats) {
+        ContentFormat contentFormat = findFirstContentFormatForComp(clientSupportContentFormats, null, ContentFormat.SENML_JSON, ContentFormat.SENML_CBOR);
+        if (contentFormat != null) {
+            return contentFormat;
+        } else {
+            throw new RuntimeException("This device does not support Composite Operation");
+        }
+    }
+    private static ContentFormat findFirstContentFormatForComp(Set<?> clientSupportContentFormats, ContentFormat defaultValue, ContentFormat... desiredFormats) {
+        AtomicReference<ContentFormat> compositeContentFormat = new AtomicReference<>();
+        clientSupportContentFormats.forEach(c -> {
+            if (c instanceof Collection) {
+                for (ContentFormat contentFormat : desiredFormats) {
+                    if (((Collection<?>) c).contains(contentFormat)) {
+                        compositeContentFormat.set(contentFormat);
+                        break;
+                    }
+                }
+            } else if (compositeContentFormat.get() == null && c instanceof ContentFormat) {
+                compositeContentFormat.set(Arrays.stream(desiredFormats).filter(f -> f.equals(c)).findFirst().get());
+            }
+        });
+        return compositeContentFormat.get() != null ? compositeContentFormat.get() : defaultValue;
+    }
+
+    private static <T> boolean containsObserveComposite(List<T> l1, List<T> l2) {
+        for (T elem : l1) {
+            if (l2.contains(elem)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

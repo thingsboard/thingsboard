@@ -16,7 +16,7 @@
 
 -->
 <ng-container [formGroup]="legendConfigForm">
-  <div class="tb-form-row space-between">
+  <div *ngIf="!hideDirection" class="tb-form-row space-between">
     <div>{{ 'legend.direction' | translate }}</div>
     <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
       <mat-select formControlName="direction">
@@ -31,8 +31,9 @@
     <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
       <mat-select formControlName="position">
         <mat-option *ngFor="let pos of legendPositions" [value]="pos"
-                    [disabled]="legendConfigForm.get('direction').value === legendDirection.row &&
-                                (pos === legendPosition.left || pos === legendPosition.right)">
+                    [disabled]="!hideDirection &&
+                                 legendConfigForm.get('direction').value === legendDirection.row &&
+                                 (pos === legendPosition.left || pos === legendPosition.right)">
           {{ legendPositionTranslations.get(legendPosition[pos]) | translate }}
         </mat-option>
       </mat-select>

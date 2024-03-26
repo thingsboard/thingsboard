@@ -152,7 +152,8 @@ export class AggregatedDataKeysPanelComponent implements ControlValueAccessor, O
   }
 
   addKey() {
-    const dataKey = this.callbacks.generateDataKey(this.keyName, this.dataKeyType, null);
+    const dataKey = this.callbacks.generateDataKey(this.keyName, this.dataKeyType, null,
+      true,null);
     dataKey.decimals = 0;
     dataKey.settings = {...aggregatedValueCardDefaultKeySettings};
     const keysArray = this.keysListFormGroup.get('keys') as UntypedFormArray;

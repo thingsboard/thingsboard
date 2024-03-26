@@ -687,7 +687,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         List<TbResource> resources = loadLwm2mResources();
 
         List<LwM2mObject> objects =
-                doGetTyped("/api/resource/lwm2m?sortProperty=id&sortOrder=ASC&objectIds=3_1.0,5_1.0,19_1.1", new TypeReference<>() {});
+                doGetTyped("/api/resource/lwm2m?sortProperty=id&sortOrder=ASC&objectIds=3_1.2,5_1.2,19_1.1", new TypeReference<>() {});
         Assert.assertNotNull(objects);
         Assert.assertEquals(3, objects.size());
 
