@@ -40,3 +40,40 @@ Collect and Visualize your IoT data in minutes by following this [guide](https:/
 ## Licenses
 
 This project is released under [Apache 2.0 License](./LICENSE).
+
+## Getting Timestamp Information in the Entities Table
+
+The entities table in our system provides access to timestamp information of selected keys through the special variables 'time' and 'timePrev'. These variables can be used in the cell style function and cell content function to customize the appearance and content of cells based on their timestamp information.
+
+Using 'time' and 'timePrev' in Cell Style Function
+The cell style function allows users to customize the appearance of cells based on their data. By using 'time' and 'timePrev', users can highlight cells based on the timestamp information.
+
+
+```javascript
+function cellStyleFunction(value, key, rowData) {
+  if (key === 'timestamp' && rowData.time - rowData.timePrev > 60) {
+    return { backgroundColor: 'red' };
+  }
+}
+
+```
+
+
+In this example, the cell style function checks if the key is 'timestamp' and if the time difference between the current timestamp ('time') and the previous timestamp ('timePrev') is greater than 60 seconds. If the condition is met, the cell background color is set to red.
+
+Using 'time' and 'timePrev' in Cell Content Function
+The cell content function allows users to customize the content of cells based on their data. By using 'time' and 'timePrev', users can display timestamp information in cells.
+
+```javascript
+Example:
+function cellContentFunction(value, key, rowData) {
+  if (key === 'timestamp') {
+    return `${new Date(rowData.time).toLocaleString()} (Prev: ${new Date(rowData.timePrev).toLocaleString()})`;
+  }
+  return value;
+}
+```
+
+In this example, the cell content function checks if the key is 'timestamp' and returns a formatted string that includes the current timestamp ('time') and the previous timestamp ('timePrev').
+
+By leveraging 'time' and 'timePrev' in the entities table, users can enhance the visualization and understanding of their data. These variables provide a powerful way to customize data display based on timestamp information. Experiment with these variables to create meaningful visualizations that suit your needs.
