@@ -26,7 +26,6 @@ import java.util.stream.Collectors;
  * @author Andrew Shvayka
  */
 public enum EntityType {
-
     TENANT(1),
     CUSTOMER(2),
     USER(3),
@@ -64,7 +63,7 @@ public enum EntityType {
     @Getter
     private final int protoNumber; // Corresponds to EntityTypeProto
 
-    EntityType(int protoNumber) {
+    private EntityType(int protoNumber) {
         this.protoNumber = protoNumber;
     }
 

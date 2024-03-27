@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.KeyValueProto;
+import org.thingsboard.server.gen.transport.TransportProtos.KeyValueType;
 import org.thingsboard.server.gen.transport.TransportProtos.SubscriptionMgrMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAlarmDeleteProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAlarmUpdateProto;
@@ -53,7 +54,6 @@ import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscript
 import org.thingsboard.server.service.ws.telemetry.sub.AlarmSubscriptionUpdate;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -61,14 +61,6 @@ import java.util.TreeMap;
 import java.util.UUID;
 
 public class TbSubscriptionUtils {
-
-    private static final DataType[] dataTypeByProtoNumber;
-
-    static {
-        int arraySize = Arrays.stream(DataType.values()).mapToInt(DataType::getProtoNumber).max().orElse(0);
-        dataTypeByProtoNumber = new DataType[arraySize + 1];
-        Arrays.stream(DataType.values()).forEach(dataType -> dataTypeByProtoNumber[dataType.getProtoNumber()] = dataType);
-    }
 
     public static ToCoreMsg toSubEventProto(String serviceId, TbEntitySubEvent event) {
         SubscriptionMgrMsgProto.Builder msgBuilder = SubscriptionMgrMsgProto.newBuilder();
@@ -243,7 +235,7 @@ public class TbSubscriptionUtils {
     private static TsKvProto.Builder toKeyValueProto(long ts, KvEntry attr) {
         KeyValueProto.Builder dataBuilder = KeyValueProto.newBuilder();
         dataBuilder.setKey(attr.getKey());
-        dataBuilder.setType(toProto(attr.getDataType()));
+        dataBuilder.setType(KeyValueType.forNumber(attr.getDataType().ordinal()));
         switch (attr.getDataType()) {
             case BOOLEAN:
                 attr.getBooleanValue().ifPresent(dataBuilder::setBoolV);
@@ -267,7 +259,7 @@ public class TbSubscriptionUtils {
     private static TransportProtos.TsValueProto toTsValueProto(long ts, KvEntry attr) {
         TransportProtos.TsValueProto.Builder dataBuilder = TransportProtos.TsValueProto.newBuilder();
         dataBuilder.setTs(ts);
-        dataBuilder.setType(toProto(attr.getDataType()));
+        dataBuilder.setType(KeyValueType.forNumber(attr.getDataType().ordinal()));
         switch (attr.getDataType()) {
             case BOOLEAN:
                 attr.getBooleanValue().ifPresent(dataBuilder::setBoolV);
@@ -307,7 +299,8 @@ public class TbSubscriptionUtils {
 
     private static KvEntry getKvEntry(KeyValueProto proto) {
         KvEntry entry = null;
-        switch (fromProto(proto.getType())) {
+        DataType type = DataType.values()[proto.getType().getNumber()];
+        switch (type) {
             case BOOLEAN:
                 entry = new BooleanDataEntry(proto.getKey(), proto.getBoolV());
                 break;
@@ -335,7 +328,8 @@ public class TbSubscriptionUtils {
 
     private static KvEntry getKvEntry(String key, TransportProtos.TsValueProto proto) {
         KvEntry entry = null;
-        switch (fromProto(proto.getType())) {
+        DataType type = DataType.values()[proto.getType().getNumber()];
+        switch (type) {
             case BOOLEAN:
                 entry = new BooleanDataEntry(key, proto.getBoolV());
                 break;
@@ -452,14 +446,6 @@ public class TbSubscriptionUtils {
             result.setAttrUpdate(builder);
         }
         return ToCoreNotificationMsg.newBuilder().setToLocalSubscriptionServiceMsg(result).build();
-    }
-
-    public static TransportProtos.KeyValueType toProto(DataType dataType) {
-        return TransportProtos.KeyValueType.forNumber(dataType.getProtoNumber());
-    }
-
-    public static DataType fromProto(TransportProtos.KeyValueType keyValueType) {
-        return dataTypeByProtoNumber[keyValueType.getNumber()];
     }
 
 }
