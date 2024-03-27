@@ -137,8 +137,7 @@ public class DeviceApiController implements TbTransportService {
                     + MARKDOWN_CODE_BLOCK_START
                     + ATTRIBUTE_PAYLOAD_EXAMPLE
                     + MARKDOWN_CODE_BLOCK_END
-                    + REQUIRE_ACCESS_TOKEN,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+                    + REQUIRE_ACCESS_TOKEN)
     @RequestMapping(value = "/{deviceToken}/attributes", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public DeferredResult<ResponseEntity> getDeviceAttributes(
             @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
@@ -174,13 +173,12 @@ public class DeviceApiController implements TbTransportService {
                     + MARKDOWN_CODE_BLOCK_START
                     + ATTRIBUTE_PAYLOAD_EXAMPLE
                     + MARKDOWN_CODE_BLOCK_END
-                    + REQUIRE_ACCESS_TOKEN,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+                    + REQUIRE_ACCESS_TOKEN)
     @RequestMapping(value = "/{deviceToken}/attributes", method = RequestMethod.POST)
     public DeferredResult<ResponseEntity> postDeviceAttributes(
             @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true , schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
             @PathVariable("deviceToken") String deviceToken,
-            @Parameter(description = "JSON with attribute key-value pairs. See API call description for example.")
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "JSON with attribute key-value pairs. See API call description for example.")
             @RequestBody String json) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
         transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
@@ -196,8 +194,7 @@ public class DeviceApiController implements TbTransportService {
             description = "Post time-series data on behalf of device. "
                     + "\n Example of the request: "
                     + TS_PAYLOAD
-                    + REQUIRE_ACCESS_TOKEN,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+                    + REQUIRE_ACCESS_TOKEN)
     @RequestMapping(value = "/{deviceToken}/telemetry", method = RequestMethod.POST)
     public DeferredResult<ResponseEntity> postTelemetry(
             @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true , schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
@@ -222,8 +219,7 @@ public class DeviceApiController implements TbTransportService {
                     + MARKDOWN_CODE_BLOCK_END
                     + "Note: both 'secretKey' and 'durationMs' is optional parameters. " +
                     "In case the secretKey is not specified, the empty string as a default value is used. In case the durationMs is not specified, the system parameter device.claim.duration is used.\n\n"
-                    + REQUIRE_ACCESS_TOKEN,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+                    + REQUIRE_ACCESS_TOKEN)
     @RequestMapping(value = "/{deviceToken}/claim", method = RequestMethod.POST)
     public DeferredResult<ResponseEntity> claimDevice(
             @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true , schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
@@ -244,8 +240,7 @@ public class DeviceApiController implements TbTransportService {
             description = "Subscribes to RPC commands using http long polling. " +
                     "Deprecated, since long polling is resource and network consuming. " +
                     "Consider using MQTT or CoAP protocol for light-weight real-time updates. \n\n" +
-                    REQUIRE_ACCESS_TOKEN,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+                    REQUIRE_ACCESS_TOKEN)
     @RequestMapping(value = "/{deviceToken}/rpc", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public DeferredResult<ResponseEntity> subscribeToCommands(
             @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true , schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
@@ -268,15 +263,14 @@ public class DeviceApiController implements TbTransportService {
 
     @Operation(summary = "Reply to RPC commands (replyToCommand)",
             description = "Replies to server originated RPC command identified by 'requestId' parameter. The response is arbitrary JSON.\n\n" +
-                    REQUIRE_ACCESS_TOKEN,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+                    REQUIRE_ACCESS_TOKEN)
     @RequestMapping(value = "/{deviceToken}/rpc/{requestId}", method = RequestMethod.POST)
     public DeferredResult<ResponseEntity> replyToCommand(
             @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true , schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
             @PathVariable("deviceToken") String deviceToken,
             @Parameter(description = "RPC request id from the incoming RPC request", required = true , schema = @Schema(defaultValue = "123"))
             @PathVariable("requestId") Integer requestId,
-            @Parameter(description = "Reply to the RPC request, JSON. For example: {\"status\":\"success\"}", required = true)
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Reply to the RPC request, JSON. For example: {\"status\":\"success\"}", required = true)
             @RequestBody String json) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<ResponseEntity>();
         transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
@@ -296,13 +290,12 @@ public class DeviceApiController implements TbTransportService {
                     MARKDOWN_CODE_BLOCK_START +
                     "{\"result\": 4}" +
                     MARKDOWN_CODE_BLOCK_END +
-                    REQUIRE_ACCESS_TOKEN,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+                    REQUIRE_ACCESS_TOKEN)
     @RequestMapping(value = "/{deviceToken}/rpc", method = RequestMethod.POST)
     public DeferredResult<ResponseEntity> postRpcRequest(
             @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true , schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
             @PathVariable("deviceToken") String deviceToken,
-            @Parameter(description = "The RPC request JSON", required = true)
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "The RPC request JSON", required = true)
             @RequestBody String json) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<ResponseEntity>();
         transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
@@ -324,8 +317,7 @@ public class DeviceApiController implements TbTransportService {
             description = "Subscribes to client and shared scope attribute updates using http long polling. " +
                     "Deprecated, since long polling is resource and network consuming. " +
                     "Consider using MQTT or CoAP protocol for light-weight real-time updates. \n\n" +
-                    REQUIRE_ACCESS_TOKEN,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+                    REQUIRE_ACCESS_TOKEN)
     @RequestMapping(value = "/{deviceToken}/attributes/updates", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     public DeferredResult<ResponseEntity> subscribeToAttributes(
             @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true , schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
@@ -356,8 +348,7 @@ public class DeviceApiController implements TbTransportService {
                     "Optional 'chunk' and 'size' parameters may be used to download the firmware in chunks. " +
                     "For example, device may request first 16 KB of firmware using 'chunk'=0 and 'size'=16384. " +
                     "Next 16KB using 'chunk'=1 and 'size'=16384. The last chunk should have less bytes then requested using 'size' parameter. \n\n" +
-                    REQUIRE_ACCESS_TOKEN,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+                    REQUIRE_ACCESS_TOKEN)
     @RequestMapping(value = "/{deviceToken}/firmware", method = RequestMethod.GET)
     public DeferredResult<ResponseEntity> getFirmware(
             @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true , schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
@@ -383,8 +374,7 @@ public class DeviceApiController implements TbTransportService {
                     "Optional 'chunk' and 'size' parameters may be used to download the software in chunks. " +
                     "For example, device may request first 16 KB of software using 'chunk'=0 and 'size'=16384. " +
                     "Next 16KB using 'chunk'=1 and 'size'=16384. The last chunk should have less bytes then requested using 'size' parameter. \n\n" +
-                    REQUIRE_ACCESS_TOKEN,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+                    REQUIRE_ACCESS_TOKEN)
     @RequestMapping(value = "/{deviceToken}/software", method = RequestMethod.GET)
     public DeferredResult<ResponseEntity> getSoftware(
             @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true , schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
@@ -418,12 +408,10 @@ public class DeviceApiController implements TbTransportService {
                     "  \"credentialsType\":\"ACCESS_TOKEN\",\n" +
                     "  \"credentialsValue\":\"DEVICE_ACCESS_TOKEN\",\n" +
                     "  \"status\":\"SUCCESS\"\n" +
-                    "}" + MARKDOWN_CODE_BLOCK_END
-            ,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+                    "}" + MARKDOWN_CODE_BLOCK_END)
     @RequestMapping(value = "/provision", method = RequestMethod.POST)
     public DeferredResult<ResponseEntity> provisionDevice(
-            @Parameter(description = "JSON with provision request. See API call description for example.")
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "JSON with provision request. See API call description for example.")
             @RequestBody String json) {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<>();
         transportContext.getTransportService().process(JsonConverter.convertToProvisionRequestMsg(json),

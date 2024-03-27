@@ -7,13 +7,9 @@
         </encoder>
     </appender>
 
-    <logger name="org.thingsboard.server.dao" level="WARN"/>
-    <logger name="org.testcontainers" level="INFO" />
+    <logger name="org.thingsboard.rule.engine.filter.TbCheckAlarmStatusNode" level="DEBUG"/>
 
-    <!-- Log Hibernate SQL queries -->
-    <!-- <logger name="org.hibernate.SQL" level="DEBUG"/> -->
-
-    <root level="WARN">
+    <root level="INFO">
         <appender-ref ref="console"/>
     </root>
 

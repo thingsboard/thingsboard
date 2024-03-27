@@ -184,8 +184,7 @@ public class AdminController extends BaseController {
     }
 
     @ApiOperation(value = "Get the JWT Settings object (getJwtSettings)",
-            notes = "Get the JWT Settings object that contains JWT token policy, etc. " + SYSTEM_AUTHORITY_PARAGRAPH,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+            notes = "Get the JWT Settings object that contains JWT token policy, etc. " + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/jwtSettings", method = RequestMethod.GET)
     @ResponseBody
@@ -195,8 +194,7 @@ public class AdminController extends BaseController {
     }
 
     @ApiOperation(value = "Update JWT Settings (saveJwtSettings)",
-            notes = "Updates the JWT Settings object that contains JWT token policy, etc. The tokenSigningKey field is a Base64 encoded string." + SYSTEM_AUTHORITY_PARAGRAPH,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+            notes = "Updates the JWT Settings object that contains JWT token policy, etc. The tokenSigningKey field is a Base64 encoded string." + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/jwtSettings", method = RequestMethod.POST)
     @ResponseBody
