@@ -18,6 +18,7 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import {
   AxisPosition,
   calculateThresholdsOffset,
+  createTimeSeriesVisualMapOption,
   createTimeSeriesXAxisOption,
   createTimeSeriesYAxis,
   defaultTimeSeriesChartYAxisSettings,
@@ -51,7 +52,8 @@ import {
   EChartsOption,
   echartsTooltipFormatter,
   EChartsTooltipTrigger,
-  getAxisExtent, getFocusedSeriesIndex,
+  getAxisExtent,
+  getFocusedSeriesIndex,
   measureXAxisNameHeight,
   measureYAxisNameWidth,
   toNamedData
@@ -60,7 +62,7 @@ import { DateFormatProcessor } from '@shared/models/widget-settings.models';
 import { isDefinedAndNotNull, isEqual, mergeDeep } from '@core/utils';
 import { DataKey, Datasource, DatasourceType, widgetType } from '@shared/models/widget.models';
 import * as echarts from 'echarts/core';
-import { CallbackDataParams } from 'echarts/types/dist/shared';
+import { CallbackDataParams, PiecewiseVisualMapOption } from 'echarts/types/dist/shared';
 import { Renderer2 } from '@angular/core';
 import { CustomSeriesOption, LineSeriesOption } from 'echarts/charts';
 import { BehaviorSubject } from 'rxjs';
@@ -107,6 +109,9 @@ export class TbTimeSeriesChart {
   private dataItems: TimeSeriesChartDataItem[] = [];
   private thresholdItems: TimeSeriesChartThresholdItem[] = [];
 
+  private hasVisualMap = false;
+  private visualMapSelectedRanges: {[key: number]: boolean};
+
   private timeSeriesChart: ECharts;
   private timeSeriesChartOptions: EChartsOption;
 
@@ -145,6 +150,7 @@ export class TbTimeSeriesChart {
     this.setupYAxes();
     this.setupData();
     this.setupThresholds();
+    this.setupVisualMap();
     if (this.settings.showTooltip && this.settings.tooltipShowDate) {
       this.tooltipDateFormat = DateFormatProcessor.fromSettings(this.ctx.$injector, this.settings.tooltipDateFormat);
     }
@@ -185,6 +191,9 @@ export class TbTimeSeriesChart {
         this.timeSeriesChartOptions.tooltip[0].axisPointer.type = 'line';
       } else {
         this.timeSeriesChartOptions.tooltip[0].axisPointer.type = 'shadow';
+      }
+      if (this.hasVisualMap) {
+        (this.timeSeriesChartOptions.visualMap as PiecewiseVisualMapOption).selected = this.visualMapSelectedRanges;
       }
       this.barRenderSharedContext.timeInterval = this.ctx.timeWindow.interval;
       this.updateSeriesData(true);
@@ -263,6 +272,16 @@ export class TbTimeSeriesChart {
     }
   }
 
+  public toggleVisualMapRange(index: number): void {
+    if (this.hasVisualMap) {
+      this.visualMapSelectedRanges[index] = !this.visualMapSelectedRanges[index];
+      this.timeSeriesChart.dispatchAction({
+        type: 'selectDataRange',
+        selected: this.visualMapSelectedRanges
+      });
+    }
+  }
+
   public destroy(): void {
     if (this.shapeResize$) {
       this.shapeResize$.disconnect();
@@ -284,8 +303,7 @@ export class TbTimeSeriesChart {
       this.darkMode = darkMode;
       if (this.timeSeriesChart) {
         this.timeSeriesChartOptions = updateDarkMode(this.timeSeriesChartOptions,
-          this.settings, this.yAxisList, this.dataItems,
-          this.thresholdItems, darkMode);
+          this.settings, this.yAxisList, this.dataItems, darkMode);
         this.timeSeriesChart.setOption(this.timeSeriesChartOptions);
       }
     }
@@ -431,6 +449,15 @@ export class TbTimeSeriesChart {
     }
   }
 
+  private setupVisualMap(): void {
+    if (this.settings.visualMapSettings?.pieces && this.settings.visualMapSettings?.pieces.length) {
+      this.hasVisualMap = true;
+      this.visualMapSelectedRanges = {};
+      this.settings.visualMapSettings.pieces.forEach((_val, index) => {
+        this.visualMapSelectedRanges[index] = true;
+      });
+    }
+  }
 
   private nextComponentId(): string {
     return (this.componentIndexCounter++) + '';
@@ -536,6 +563,10 @@ export class TbTimeSeriesChart {
       animationEasingUpdate: this.settings.animation.animationEasingUpdate,
       animationDelayUpdate: this.settings.animation.animationDelayUpdate
     };
+    if (this.hasVisualMap) {
+      this.timeSeriesChartOptions.visualMap =
+        createTimeSeriesVisualMapOption(this.settings.visualMapSettings, this.visualMapSelectedRanges);
+    }
 
     this.timeSeriesChartOptions.xAxis[0].tbTimeWindow = this.ctx.defaultSubscription.timeWindow;
 

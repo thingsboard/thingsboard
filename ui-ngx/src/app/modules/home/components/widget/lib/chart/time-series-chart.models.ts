@@ -31,12 +31,17 @@ import {
   textStyle,
   tsToFormatTimeUnit
 } from '@shared/models/widget-settings.models';
-import { LabelLayoutOptionCallback, XAXisOption, YAXisOption } from 'echarts/types/dist/shared';
+import {
+  LabelLayoutOptionCallback,
+  VisualMapComponentOption,
+  XAXisOption,
+  YAXisOption
+} from 'echarts/types/dist/shared';
 import { CustomSeriesOption, LineSeriesOption } from 'echarts/charts';
 import {
   formatValue,
   isDefinedAndNotNull,
-  isFunction,
+  isFunction, isNumber,
   isNumeric,
   isUndefined,
   isUndefinedOrNull,
@@ -417,7 +422,7 @@ export interface TimeSeriesChartThreshold {
   units?: string;
   decimals?: number;
   lineColor: string;
-  lineType: TimeSeriesChartLineType;
+  lineType: TimeSeriesChartLineType | number | number[];
   lineWidth: number;
   startSymbol: TimeSeriesChartShape;
   startSymbolSize: number;
@@ -427,6 +432,7 @@ export interface TimeSeriesChartThreshold {
   labelPosition: ThresholdLabelPosition;
   labelFont: Font;
   labelColor: string;
+  additionalLabelOption?: {[key: string]: any};
 }
 
 export const timeSeriesChartThresholdValid = (threshold: TimeSeriesChartThreshold): boolean => {
@@ -567,6 +573,39 @@ export interface TimeSeriesChartAnimationSettings {
   animationDelayUpdate: number;
 }
 
+export interface TimeSeriesChartVisualMapPiece {
+  lt?: number;
+  gt?: number;
+  lte?: number;
+  gte?: number;
+  value?: number;
+  color?: string;
+}
+
+export const createTimeSeriesChartVisualMapPiece = (color: string, from?: number, to?: number): TimeSeriesChartVisualMapPiece => {
+  const piece: TimeSeriesChartVisualMapPiece = {
+    color
+  };
+  if (isNumber(from) && isNumber(to)) {
+    if (from === to) {
+      piece.value = from;
+    } else {
+      piece.gte = from;
+      piece.lt = to;
+    }
+  } else if (isNumber(from)) {
+    piece.gte = from;
+  } else if (isNumber(to)) {
+    piece.lt = to;
+  }
+  return piece;
+};
+
+export interface TimeSeriesChartVisualMapSettings {
+  outOfRangeColor: string;
+  pieces: TimeSeriesChartVisualMapPiece[];
+}
+
 export interface TimeSeriesChartSettings extends EChartsTooltipWidgetSettings {
   thresholds: TimeSeriesChartThreshold[];
   darkMode: boolean;
@@ -577,6 +616,7 @@ export interface TimeSeriesChartSettings extends EChartsTooltipWidgetSettings {
   animation: TimeSeriesChartAnimationSettings;
   barWidthSettings: TimeSeriesChartBarWidthSettings;
   noAggregationBarWidthSettings: TimeSeriesChartNoAggregationBarWidthSettings;
+  visualMapSettings?: TimeSeriesChartVisualMapSettings;
 }
 
 export const timeSeriesChartDefaultSettings: TimeSeriesChartSettings = {
@@ -675,7 +715,7 @@ export const timeSeriesChartDefaultSettings: TimeSeriesChartSettings = {
 };
 
 export interface SeriesFillSettings {
-  type: SeriesFillType;
+  type: SeriesFillType | 'default';
   opacity: number;
   gradient: {
     start: number;
@@ -960,7 +1000,7 @@ export const createTimeSeriesXAxisOption = (settings: TimeSeriesChartXAxisSettin
       fontFamily: xAxisTickLabelStyle.fontFamily,
       fontSize: xAxisTickLabelStyle.fontSize,
       hideOverlap: true,
-      formatter: (value: number, index: number, extra: {level: number}) => {
+      formatter: (value: number, _index: number, extra: {level: number}) => {
         const unit = tsToFormatTimeUnit(value);
         const format = ticksFormat[unit];
         const formatted = datePipe.transform(value, format);
@@ -989,6 +1029,21 @@ export const createTimeSeriesXAxisOption = (settings: TimeSeriesChartXAxisSettin
     bandWidthCalculator: timeAxisBandWidthCalculator
   };
 };
+
+export const createTimeSeriesVisualMapOption = (settings: TimeSeriesChartVisualMapSettings,
+                                                selectedRanges: {[key: number]: boolean}): VisualMapComponentOption => ({
+  show: false,
+  type: 'piecewise',
+  selected: selectedRanges,
+  dimension: 1,
+  pieces: settings.pieces,
+  outOfRange: {
+  color: settings.outOfRangeColor
+},
+  inRange: !settings.pieces.length ? {
+    color: settings.outOfRangeColor
+  } : undefined
+});
 
 export const generateChartData = (dataItems: TimeSeriesChartDataItem[],
                                   thresholdItems: TimeSeriesChartThresholdItem[],
@@ -1072,6 +1127,9 @@ const generateChartThresholds = (thresholdItems: TimeSeriesChartThresholdItem[])
             }
           }
         };
+        if (item.settings.additionalLabelOption) {
+          seriesOption.markLine.label = {...seriesOption.markLine.label, ...item.settings.additionalLabelOption};
+        }
         item.option = seriesOption;
       }
       seriesOption.markLine.data = [];
@@ -1147,7 +1205,7 @@ const generateChartSeries = (dataItems: TimeSeriesChartDataItem[],
 
 export const updateDarkMode = (options: EChartsOption, settings: TimeSeriesChartSettings,
                                yAxisList: TimeSeriesChartYAxis[],
-                               dataItems: TimeSeriesChartDataItem[], thresholdDataItems: TimeSeriesChartThresholdItem[],
+                               dataItems: TimeSeriesChartDataItem[],
                                darkMode: boolean): EChartsOption => {
   options.darkMode = darkMode;
   if (Array.isArray(options.yAxis)) {
@@ -1246,7 +1304,7 @@ const createTimeSeriesChartSeries = (item: TimeSeriesChartDataItem,
         lineSeriesOption.areaStyle = {};
         if (lineSettings.fillAreaSettings.type === SeriesFillType.opacity) {
           lineSeriesOption.areaStyle.opacity = lineSettings.fillAreaSettings.opacity;
-        } else {
+        } else if (lineSettings.fillAreaSettings.type === SeriesFillType.gradient) {
           lineSeriesOption.areaStyle.opacity = 1;
           lineSeriesOption.areaStyle.color = createLinearOpacityGradient(seriesColor, lineSettings.fillAreaSettings.gradient);
         }
@@ -1264,7 +1322,7 @@ const createTimeSeriesChartSeries = (item: TimeSeriesChartDataItem,
         borderWidth: barSettings.showBorder ? barSettings.borderWidth : 0,
         borderRadius: barSettings.borderRadius
       };
-      if (barSettings.backgroundSettings.type === SeriesFillType.none) {
+      if (barSettings.backgroundSettings.type === SeriesFillType.none || barSettings.backgroundSettings.type === 'default') {
         barVisualSettings.color = seriesColor;
       } else if (barSettings.backgroundSettings.type === SeriesFillType.opacity) {
         barVisualSettings.color = tinycolor(seriesColor).setAlpha(barSettings.backgroundSettings.opacity).toRgbString();
