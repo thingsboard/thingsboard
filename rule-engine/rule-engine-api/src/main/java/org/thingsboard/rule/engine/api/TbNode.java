@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
@@ -34,6 +35,11 @@ public interface TbNode {
     default void destroy() {
     }
 
+    default void destroy(TbContext ctx, ComponentLifecycleEvent reason) {
+        // Call legacy method for backward compatibility.
+        destroy();
+    }
+
     default void onPartitionChangeMsg(TbContext ctx, PartitionChangeMsg msg) {
     }
 
@@ -43,7 +49,7 @@ public interface TbNode {
      *
      * @param fromVersion        The version from which the configuration needs to be upgraded.
      * @param oldConfiguration   The old configuration to be upgraded.
-     * @return                   A pair consisting of a Boolean flag indicating the success of the upgrade
+     * @return A pair consisting of a Boolean flag indicating the success of the upgrade
      *                           and a JsonNode representing the upgraded configuration.
      * @throws TbNodeException   If an error occurs during the upgrade process.
      */

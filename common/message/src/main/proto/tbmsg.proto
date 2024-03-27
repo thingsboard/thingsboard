@@ -66,4 +66,6 @@ message TbMsgProto {
     int64 customerIdLSB = 18;
 
     TbMsgProcessingCtxProto ctx = 19;
+
+    optional string queueName = 20;
 }

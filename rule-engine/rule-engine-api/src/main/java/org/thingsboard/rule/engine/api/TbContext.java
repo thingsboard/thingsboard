@@ -44,6 +44,7 @@ import org.thingsboard.server.common.data.rule.RuleNodeState;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -78,6 +79,7 @@ import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
@@ -249,6 +251,8 @@ public interface TbContext {
 
     boolean isLocalEntity(EntityId entityId);
 
+    TopicPartitionInfo getTopicPartitionInfo(EntityId entityId);
+
     RuleNodeId getSelfId();
 
     RuleNode getSelf();
@@ -383,6 +387,8 @@ public interface TbContext {
     RuleNodeState saveRuleNodeState(RuleNodeState state);
 
     void clearRuleNodeStates();
+
+    Optional<RuleNodeCacheManager> getRuleNodeCacheManager();
 
     void addTenantProfileListener(Consumer<TenantProfile> listener);
 
