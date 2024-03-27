@@ -103,7 +103,7 @@
             org/thingsboard/server/extensions/core/plugin/telemetry/gen/**/*
         </sonar.exclusions>
         <elasticsearch.version>5.0.2</elasticsearch.version>
-        <delight-nashorn-sandbox.version>0.2.1</delight-nashorn-sandbox.version>
+        <delight-nashorn-sandbox.version>0.4.2</delight-nashorn-sandbox.version>
         <nashorn-core.version>15.4</nashorn-core.version>
         <!-- IMPORTANT: If you change the version of the kafka client, make sure to synchronize our overwritten implementation of the
         org.apache.kafka.common.network.NetworkReceive class in the application module. It addresses the issue https://issues.apache.org/jira/browse/KAFKA-4090.
