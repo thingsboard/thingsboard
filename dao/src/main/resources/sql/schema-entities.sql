@@ -559,6 +559,7 @@ CREATE TABLE IF NOT EXISTS key_dictionary
 CREATE TABLE IF NOT EXISTS oauth2_params (
     id uuid NOT NULL CONSTRAINT oauth2_params_pkey PRIMARY KEY,
     enabled boolean,
+    edge_enabled boolean,
     tenant_id uuid,
     created_time bigint NOT NULL
 );
