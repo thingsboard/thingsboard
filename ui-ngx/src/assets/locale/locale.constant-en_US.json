@@ -584,6 +584,15 @@
         "no-alarm-types-matching": "No alarm types matching '{{entitySubtype}}' were found.",
         "alarm-type-list-empty": "No alarm types selected."
     },
+    "alarm-rule": {
+        "add": "Add alarm rule",
+        "alarm-rule": "Alarm rule",
+        "alarm-rule-details": "Alarm rule details",
+        "alarm-rules": "Alarm rules",
+        "no-alarm-rules": "No alarm rules",
+        "search": "Search alarm rules",
+        "selected": "{ count, plural, =1 {1 alarm rule} other {# alarm rules} } selected"
+    },
     "alarm-activity": {
         "add": "Add a comment...",
         "alarm-comment": "Alarm comment",
@@ -1726,6 +1735,7 @@
         "condition-type-duration": "Duration",
         "condition-during": "During {{during}}",
         "condition-during-dynamic": "During \"{{ attribute }}\" ({{during}})",
+        "condition-type-no-update": "No update",
         "condition-type-repeating": "Repeating",
         "condition-type-required": "Condition type is required.",
         "condition-repeating-value": "Count of events",
@@ -2204,6 +2214,8 @@
         "list-of-dashboards": "{ count, plural, =1 {One dashboard} other {List of # dashboards} }",
         "dashboard-name-starts-with": "Dashboards whose names start with '{{prefix}}'",
         "type-alarm": "Alarm",
+        "type-alarm-rule": "Alarm rule",
+        "type-alarm-rules": "Alarm rules",
         "type-alarms": "Alarms",
         "list-of-alarms": "{ count, plural, =1 {One alarm} other {List of # alarms} }",
         "alarm-name-starts-with": "Alarms whose names start with '{{prefix}}'",
@@ -2255,8 +2267,6 @@
         "type-notification-template": "Notification template",
         "type-notification-templates": "Notification templates",
         "list-of-notification-templates": "{ count, plural, =1 {One notification template} other {List of # notification templates} }",
-        "type-alarm-rule": "Alarm rule",
-        "type-alarm-rules": "Alarm rules",
         "list-of-alarm-rules": "{ count, plural, =1 {One alarm rule} other {List of # alarm ruless} }"
     },
     "entity-field": {

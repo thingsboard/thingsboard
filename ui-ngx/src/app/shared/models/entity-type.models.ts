@@ -264,6 +264,19 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
       }
     ],
     [
+      EntityType.ALARM_RULE,
+      {
+        type: 'entity.type-alarm-rule',
+        typePlural: 'entity.type-alarm-rules',
+        list: 'entity.list-of-alarm-rules',
+        noEntities: 'alarm-rule.no-alarm-rules',
+        search: 'alarm-rule.search',
+        selectedEntities: 'alarm-rule.selected',
+        details: 'alarm-rule.alarm-rule-details',
+        add: 'alarm-rule.add',
+      }
+    ],
+    [
       EntityType.API_USAGE_STATE,
       {
         type: 'entity.type-api-usage-state'
@@ -412,19 +425,6 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
         search: 'notification.search-templates',
         selectedEntities: 'notification.selected-template'
       }
-    ],
-    [
-      EntityType.ALARM_RULE,
-      {
-        type: 'entity.type-alarm-rule',
-        typePlural: 'entity.type-alarm-rules',
-        list: 'entity.list-of-alarm-rules',
-        noEntities: 'alarm-rule.no-alarm-rules',
-        search: 'alarm_rule.search',
-        selectedEntities: 'alarm-rule.selected',
-        details: 'alarm-rule.alarm-rule-details',
-        add: 'alarm-rule.add',
-      }
     ]
   ]
 );
@@ -531,6 +531,12 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource<BaseDa
       EntityType.QUEUE,
       {
         helpLinkId: 'queue'
+      }
+    ],
+    [
+      EntityType.ALARM_RULE,
+      {
+        helpLinkId: 'alarmRules'
       }
     ]
   ]

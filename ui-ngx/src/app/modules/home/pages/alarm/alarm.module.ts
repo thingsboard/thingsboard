@@ -20,9 +20,12 @@ import { SharedModule } from '@shared/shared.module';
 import { HomeDialogsModule } from '../../dialogs/home-dialogs.module';
 import { HomeComponentsModule } from '@modules/home/components/home-components.module';
 import { AlarmRoutingModule } from '@home/pages/alarm/alarm-routing.module';
+import { AlarmRuleComponent } from '@home/pages/alarm/alarm-rule.component';
 
 @NgModule({
-  declarations: [],
+  declarations: [
+    AlarmRuleComponent
+  ],
   imports: [
     CommonModule,
     SharedModule,
