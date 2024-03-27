@@ -785,6 +785,9 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         verify(firebaseService).sendMessage(eq(tenantId), eq("testCredentials"),
                 eq("customerFcmToken"), eq("Title"), eq("Message"), anyMap(), eq(2));
         verifyNoMoreInteractions(firebaseService);
+
+        Integer unreadCount = doGet("/api/notifications/unread/count", Integer.class);
+        assertThat(unreadCount).isEqualTo(2);
     }
 
     @Test

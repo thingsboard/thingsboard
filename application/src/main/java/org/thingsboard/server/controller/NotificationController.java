@@ -182,6 +182,17 @@ public class NotificationController extends BaseController {
         return notificationService.findNotificationsByRecipientIdAndReadStatus(user.getTenantId(), deliveryMethod, user.getId(), unreadOnly, pageLink);
     }
 
+    @ApiOperation(value = "Get unread notifications count (getUnreadNotificationsCount)",
+            notes = "Returns unread notifications count for chosen delivery method." +
+                    AVAILABLE_FOR_ANY_AUTHORIZED_USER)
+    @GetMapping("/notifications/unread/count")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    public Integer getUnreadNotificationsCount(@ApiParam(value = "Delivery method", allowableValues = DELIVERY_METHOD_ALLOWABLE_VALUES)
+                                               @RequestParam(defaultValue = "MOBILE_APP") NotificationDeliveryMethod deliveryMethod,
+                                               @AuthenticationPrincipal SecurityUser user) {
+        return notificationService.countUnreadNotificationsByRecipientId(user.getTenantId(), deliveryMethod, user.getId());
+    }
+
     @ApiOperation(value = "Mark notification as read (markNotificationAsRead)",
             notes = "Marks notification as read by its id." +
                     AVAILABLE_FOR_ANY_AUTHORIZED_USER)
