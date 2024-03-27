@@ -72,6 +72,7 @@
                   [aliasController]="aliasController"
                   [datakeySettingsSchema]="dataKeySettingsSchema"
                   [dataKeySettingsDirective]="dataKeySettingsDirective"
+                  [datakeySettingsFunction]="dataKeySettingsFunction"
                   [dashboard]="dashboard"
                   [widget]="widget"
                   [callbacks]="dataKeysCallbacks"
@@ -82,10 +83,12 @@
     <tb-data-keys *ngIf="hasAdditionalLatestDataKeys" class="tb-data-keys" fxFlex
                   [widgetType]="widgetTypes.latest"
                   [datasourceType]="datasourceFormGroup.get('type').value"
+                  latestDataKeys
                   [optDataKeys]="true"
                   [aliasController]="aliasController"
                   [datakeySettingsSchema]="latestDataKeySettingsSchema"
                   [dataKeySettingsDirective]="latestDataKeySettingsDirective"
+                  [datakeySettingsFunction]="dataKeySettingsFunction"
                   [dashboard]="dashboard"
                   [widget]="widget"
                   [callbacks]="dataKeysCallbacks"

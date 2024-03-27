@@ -30,7 +30,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -156,7 +156,7 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
         when(ctxMock.getTenantId()).thenReturn(tenantId);
         when(ctxMock.getTelemetryService()).thenReturn(telemetryServiceMock);
         willCallRealMethod().given(node).init(any(TbContext.class), any(TbNodeConfiguration.class));
-        willCallRealMethod().given(node).saveAttr(any(), eq(ctxMock), any(TbMsg.class), anyString(), anyBoolean());
+        willCallRealMethod().given(node).saveAttr(any(), eq(ctxMock), any(TbMsg.class), any(AttributeScope.class), anyBoolean());
 
         node.init(ctxMock, tbNodeConfiguration);
 
@@ -168,12 +168,12 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
         var testTbMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, md, TbMsg.EMPTY_STRING);
         List<AttributeKvEntry> testAttrList = List.of(new BaseAttributeKvEntry(0L, new StringDataEntry("testKey", "testValue")));
 
-        node.saveAttr(testAttrList, ctxMock, testTbMsg, DataConstants.SHARED_SCOPE, false);
+        node.saveAttr(testAttrList, ctxMock, testTbMsg, AttributeScope.SHARED_SCOPE, false);
 
         ArgumentCaptor<Boolean> notifyDeviceCaptor = ArgumentCaptor.forClass(Boolean.class);
 
         verify(telemetryServiceMock, times(1)).saveAndNotify(
-                eq(tenantId), eq(deviceId), eq(DataConstants.SHARED_SCOPE),
+                eq(tenantId), eq(deviceId), eq(AttributeScope.SHARED_SCOPE),
                 eq(testAttrList), notifyDeviceCaptor.capture(), any()
         );
         boolean notifyDevice = notifyDeviceCaptor.getValue();

@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.transport.service;
 
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -24,8 +25,8 @@ import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.transport.TransportResourceCache;
 import org.thingsboard.server.common.transport.TransportService;
+import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbTransportComponent;
 
 import java.util.Optional;
@@ -39,18 +40,14 @@ import java.util.concurrent.locks.ReentrantLock;
 @Slf4j
 @Component
 @TbTransportComponent
+@RequiredArgsConstructor
 public class DefaultTransportResourceCache implements TransportResourceCache {
 
     private final Lock resourceFetchLock = new ReentrantLock();
     private final ConcurrentMap<ResourceCompositeKey, TbResource> resources = new ConcurrentHashMap<>();
     private final Set<ResourceCompositeKey> keys = ConcurrentHashMap.newKeySet();
-    private final DataDecodingEncodingService dataDecodingEncodingService;
+    @Lazy
     private final TransportService transportService;
-
-    public DefaultTransportResourceCache(DataDecodingEncodingService dataDecodingEncodingService, @Lazy TransportService transportService) {
-        this.dataDecodingEncodingService = dataDecodingEncodingService;
-        this.transportService = transportService;
-    }
 
     @Override
     public Optional<TbResource> get(TenantId tenantId, ResourceType resourceType, String resourceKey) {
@@ -92,9 +89,8 @@ public class DefaultTransportResourceCache implements TransportResourceCache {
                 .setResourceKey(compositeKey.resourceKey);
         TransportProtos.GetResourceResponseMsg responseMsg = transportService.getResource(builder.build());
 
-        Optional<TbResource> optionalResource = dataDecodingEncodingService.decode(responseMsg.getResource().toByteArray());
-        if (optionalResource.isPresent()) {
-            TbResource resource = optionalResource.get();
+        if (responseMsg.hasResource()) {
+            TbResource resource = ProtoUtils.fromProto(responseMsg.getResource());
             resources.put(new ResourceCompositeKey(resource.getTenantId(), resource.getResourceType(), resource.getResourceKey()), resource);
             return resource;
         }

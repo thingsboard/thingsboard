@@ -36,7 +36,7 @@ import org.thingsboard.server.common.data.sync.vc.VersionCreationResult;
 import org.thingsboard.server.common.data.sync.vc.VersionedEntityInfo;
 import org.thingsboard.server.service.sync.vc.GitRepository.Diff;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
