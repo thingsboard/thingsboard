@@ -14,11 +14,9 @@
 /// limitations under the License.
 ///
 
-import { Input } from '@angular/core';
-import { Validators } from '@angular/forms';
 import { ResourcesService } from '@core/services/resources.service';
 import { Observable } from 'rxjs';
-import { Unit } from '@shared/models/unit.models';
+import { ValueTypeData } from '@shared/models/constants';
 
 export enum StorageTypes {
   MEMORY = 'memory',
@@ -99,8 +97,7 @@ export const GecurityTypesTranslationsMap = new Map<SecurityTypes, string>(
   [
     [SecurityTypes.ACCESS_TOKEN, 'gateway.security-types.access-token'],
     [SecurityTypes.USERNAME_PASSWORD, 'gateway.security-types.username-password'],
-    [SecurityTypes.TLS_ACCESS_TOKEN, 'gateway.security-types.tls-access-token'],
-    // [SecurityTypes.TLS_PRIVATE_KEY, 'gateway.security-types.tls-private-key'],
+    [SecurityTypes.TLS_ACCESS_TOKEN, 'gateway.security-types.tls-access-token']
   ]
 );
 
@@ -223,7 +220,6 @@ export enum SourceTypes {
   MSG = 'message',
   TOPIC = 'topic',
   CONST = 'constant'
-  // CUSTOM = 'json'
 }
 
 export const SourceTypeTranslationsMap = new Map<SourceTypes, string>(
@@ -298,3 +294,44 @@ export enum ServerSideRPCType {
 
 export const getDefaultConfig = (resourcesService: ResourcesService, type: string): Observable<any> =>
   resourcesService.loadJsonResource(`/assets/metadata/connector-default-configs/${type}.json`);
+
+export enum MappingValueType {
+  STRING = 'string',
+  INTEGER = 'integer',
+  DOUBLE = 'double',
+  BOOLEAN = 'boolean'
+}
+
+export const mappingValueTypesMap = new Map<MappingValueType, ValueTypeData>(
+  [
+    [
+      MappingValueType.STRING,
+      {
+        name: 'value.string',
+        icon: 'mdi:format-text'
+      }
+    ],
+    [
+      MappingValueType.INTEGER,
+      {
+        name: 'value.integer',
+        icon: 'mdi:numeric'
+      }
+    ],
+    [
+      MappingValueType.DOUBLE,
+      {
+        name: 'value.double',
+        icon: 'mdi:numeric'
+      }
+    ],
+    [
+      MappingValueType.BOOLEAN,
+      {
+        name: 'value.boolean',
+        icon: 'mdi:checkbox-marked-outline'
+      }
+    ]
+  ]
+);
+

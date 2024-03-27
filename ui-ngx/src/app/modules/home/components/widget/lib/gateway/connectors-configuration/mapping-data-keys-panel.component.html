@@ -18,32 +18,14 @@
 <div class="tb-mapping-keys-panel">
   <div class="tb-form-panel no-border no-padding">
     <div class="tb-form-panel-title">{{ panelTitle  | translate }}{{' (' + keysListFormArray.controls.length + ')'}}</div>
-  <!--  <div class="tb-form-table">-->
-    <div class="tb-form-panel no-border no-padding key-panel" *ngIf="keysListFormArray.controls.length; else noKeys">
-      <!--  class="tb-form-table-body tb-drop-list"-->
-      <!--  cdkDropList cdkDropListOrientation="vertical"-->
-      <!--  [cdkDropListDisabled]="!dragEnabled"-->
-      <!--  (cdkDropListDropped)="keyDrop($event)"-->
-      <div class="tb-form-panel no-border no-padding tb-flex row center align-center" *ngFor="let keyControl of keysListFormArray.controls; trackBy: trackByKey; let $index = index;">
+    <div #scrollPanel [scrollTop]="scrollPanel.scrollHeight" class="tb-form-panel no-border no-padding key-panel" *ngIf="keysListFormArray.controls.length; else noKeys">
+      <div class="tb-form-panel no-border no-padding tb-flex row center align-center" *ngFor="let keyControl of keysListFormArray.controls; trackBy: trackByKey; let $index = index; let last = last;">
         <div class="tb-form-panel stroked tb-flex">
-    <!--        dkDrag [cdkDragDisabled]="!dragEnabled"-->
-    <!--        class="tb-draggable-form-table-row"-->
           <ng-container [formGroup]="keyControl">
-            <mat-expansion-panel class="tb-settings" [expanded]="$index === 0">
+            <mat-expansion-panel class="tb-settings" [expanded]="last">
               <mat-expansion-panel-header fxLayout="row wrap">
                 <mat-panel-title>
                   {{ keyControl.get('key').value + '-' + valueTitle(keyControl.get('value').value) }}
-      <!--              <div class="tb-form-table-row-cell-buttons">-->
-      <!--                <button fxHide.lt-lg-->
-      <!--                        mat-icon-button-->
-      <!--                        type="button"-->
-      <!--                        cdkDragHandle-->
-      <!--                        [ngClass]="{'tb-hidden': !dragEnabled}"-->
-      <!--                        matTooltip="{{ 'action.drag' | translate }}"-->
-      <!--                        matTooltipPosition="above">-->
-      <!--                  <mat-icon>drag_indicator</mat-icon>-->
-      <!--                </button>-->
-      <!--              </div>-->
                 </mat-panel-title>
               </mat-expansion-panel-header>
               <ng-template matExpansionPanelContent>
@@ -60,9 +42,6 @@
                                 class="tb-error">
                         warning
                       </mat-icon>
-      <!--                  <mat-error *ngIf="attributeFormGroup.get('key').hasError('maxlength')">-->
-      <!--                    {{ 'attribute.key-max-length' | translate }}-->
-      <!--                  </mat-error>-->
                     </mat-form-field>
                   </div>
                 </div>
@@ -83,9 +62,9 @@
                         </mat-select-trigger>
                         <ng-container *ngIf="!rawData">
                           <mat-option *ngFor="let valueType of valueTypeKeys" [value]="valueType">
-                            <mat-icon class="tb-mat-20" svgIcon="{{ valueTypes.get(valueTypeEnum[valueType]).icon }}">
+                            <mat-icon class="tb-mat-20" svgIcon="{{ valueTypes.get(valueType).icon }}">
                             </mat-icon>
-                            <span>{{ valueTypes.get(valueTypeEnum[valueType]).name | translate }}</span>
+                            <span>{{ valueTypes.get(valueType).name | translate }}</span>
                           </mat-option>
                         </ng-container>
                         <mat-option *ngIf="rawData" [value]="'raw'">
@@ -105,10 +84,6 @@
                         warning
                       </mat-icon>
                     </mat-form-field>
-<!--                    <tb-value-input-->
-<!--                      formControlName="value">-->
-<!--                      &lt;!&ndash;              [requiredText]="isTelemetry ? 'attribute.telemetry-value-required' : 'attribute.value-required'"&ndash;&gt;-->
-<!--                    </tb-value-input>-->
                   </div>
                 </div>
               </ng-template>
@@ -123,7 +98,6 @@
           <mat-icon>delete</mat-icon>
         </button>
       </div>
-  <!--    <tb-error *ngIf="errorText" noMargin [error]="errorText" style="padding-left: 12px;"></tb-error>-->
     </div>
     <div>
       <button type="button" mat-stroked-button color="primary" (click)="addKey()">

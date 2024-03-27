@@ -30,27 +30,24 @@ import {
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { PageLink } from '@shared/models/page/page-link';
-import { MatPaginator } from '@angular/material/paginator';
-import { MatSort } from '@angular/material/sort';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { DialogService } from '@core/services/dialog.service';
-import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, map, take, takeUntil, tap } from 'rxjs/operators';
 import { Overlay } from '@angular/cdk/overlay';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityService } from '@core/http/entity.service';
-import { ControlValueAccessor, FormArray, FormBuilder, NG_VALUE_ACCESSOR, UntypedFormArray } from '@angular/forms';
+import { ControlValueAccessor, FormBuilder, NG_VALUE_ACCESSOR, UntypedFormArray } from '@angular/forms';
 import {
   ConvertorTypeTranslationsMap,
   MappingTypes,
   MappingTypeTranslationsMap,
   RequestTypes
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
-import { CollectionViewer, DataSource, SelectionModel } from '@angular/cdk/collections';
+import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { MappingDialogComponent } from '@home/components/widget/lib/gateway/dialog/mapping-dialog.component';
 import { isDefinedAndNotNull, isUndefinedOrNull } from '@core/utils';
 
@@ -96,9 +93,6 @@ export class MappingTableComponent extends PageComponent implements ControlValue
 
   @ViewChild('searchInput') searchInputField: ElementRef;
 
-  // @ViewChild(MatPaginator) paginator: MatPaginator;
-  // @ViewChild(MatSort) sort: MatSort;
-
   mappingFormGroup: UntypedFormArray;
   textSearch = this.fb.control('', {nonNullable: true});
 
@@ -120,7 +114,6 @@ export class MappingTableComponent extends PageComponent implements ControlValue
     super(store);
     this.mappingFormGroup = this.fb.array([]);
     this.dirtyValue = !this.activeValue;
-    // const sortOrder: SortOrder = { property: 'key', direction: Direction.ASC };
     this.dataSource = new MappingDatasource();
   }
 

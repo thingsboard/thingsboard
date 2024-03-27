@@ -26,10 +26,7 @@ import {
   GatewayConnectorDefaultTypesTranslates,
   GatewayLogLevel, getDefaultConfig
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
-import { forkJoin, Observable, of, Subject } from 'rxjs';
-import { catchError, map, takeUntil } from 'rxjs/operators';
-import { camelCase } from '@core/utils';
-import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
+import { Subject } from 'rxjs';
 import { ResourcesService } from '@core/services/resources.service';
 
 @Component({
@@ -87,7 +84,6 @@ export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDia
     const value = this.connectorForm.getRawValue();
     if (value.useDefaults) {
       getDefaultConfig(this.resourcesService, value.type).subscribe((defaultConfig) => {
-        console.log(defaultConfig, 'defaultConfig');
         value.configurationJson = defaultConfig;
         if (this.connectorForm.valid) {
           this.dialogRef.close(value);

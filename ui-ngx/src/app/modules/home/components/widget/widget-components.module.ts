@@ -81,7 +81,6 @@ import { MappingDialogComponent } from '@home/components/widget/lib/gateway/dial
 import { DeviceInfoTableComponent } from '@home/components/widget/lib/gateway/connectors-configuration/device-info-table.component';
 import { MappingDataKeysPanelComponent } from '@home/components/widget/lib/gateway/connectors-configuration/mapping-data-keys-panel.component';
 import { BrokerSecurityComponent } from '@home/components/widget/lib/gateway/connectors-configuration/broker-security.component';
-import { MqttBasicConfigComponent } from '@home/components/widget/lib/gateway/connectors-configuration/mqtt-basic-config.component';
 
 @NgModule({
   declarations:
@@ -113,7 +112,6 @@ import { MqttBasicConfigComponent } from '@home/components/widget/lib/gateway/co
       DeviceInfoTableComponent,
       MappingDataKeysPanelComponent,
       BrokerSecurityComponent,
-      MqttBasicConfigComponent,
       GatewayLogsComponent,
       GatewayStatisticsComponent,
       GatewayServiceRPCComponent,
@@ -172,7 +170,6 @@ import { MqttBasicConfigComponent } from '@home/components/widget/lib/gateway/co
         DeviceInfoTableComponent,
         MappingDataKeysPanelComponent,
         BrokerSecurityComponent,
-        MqttBasicConfigComponent,
         GatewayLogsComponent,
         GatewayStatisticsComponent,
         GatewayServiceRPCComponent,

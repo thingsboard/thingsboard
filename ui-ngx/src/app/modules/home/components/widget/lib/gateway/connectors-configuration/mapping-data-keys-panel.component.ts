@@ -27,25 +27,19 @@ import {
   UntypedFormBuilder,
   Validators
 } from '@angular/forms';
-import { MatDialog } from '@angular/material/dialog';
-import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
-import { DataKey, DatasourceType, JsonSettingsSchema, widgetType } from '@shared/models/widget.models';
-import { dataKeyRowValidator, dataKeyValid } from '@home/components/widget/config/basic/common/data-key-row.component';
-import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { UtilsService } from '@core/services/utils.service';
-import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { TbPopoverComponent } from '@shared/components/popover.component';
-import { WidgetService } from '@core/http/widget.service';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
-import { ColorSettings } from '@shared/models/widget-settings.models';
-import { TranslateService } from '@ngx-translate/core';
 import { isDefinedAndNotNull } from '@core/utils';
-import { ValueType, valueTypesMap } from '@shared/models/constants';
-import { MappingKeysType } from '@home/components/widget/lib/gateway/gateway-widget.models';
+import { ValueType } from '@shared/models/constants';
+import {
+  MappingKeysType,
+  MappingValueType,
+  mappingValueTypesMap
+} from '@home/components/widget/lib/gateway/gateway-widget.models';
 
 @Component({
   selector: 'tb-mapping-data-keys-panel',
@@ -83,23 +77,19 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
   @Output()
   keysDataApplied = new EventEmitter<Array<any>>();
 
-  valueTypeKeys = Object.keys(ValueType);
+  valueTypeKeys = Object.values(MappingValueType);
 
   MappingKeysType = MappingKeysType;
 
-  valueTypeEnum = ValueType;
+  valueTypeEnum = MappingValueType;
 
-  valueTypes = valueTypesMap;
+  valueTypes = mappingValueTypesMap;
 
   dataKeyType: DataKeyType;
 
   keysListFormArray: UntypedFormArray;
 
   errorText = '';
-
-  // get dragEnabled(): boolean {
-  //   return this.keysFormArray().controls.length > 1;
-  // }
 
   constructor(private fb: UntypedFormBuilder,
               protected store: Store<AppState>) {
@@ -108,26 +98,7 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
 
   ngOnInit() {
     this.keysListFormArray = this.prepareKeysFormArray(this.keys)
-    // this.keysListFormArray.valueChanges.subscribe(
-    //   () => {
-    //     let keys: DataKey[] = this.keysListFormArray.get('keys').value;
-    //     if (keys) {
-    //       keys = keys.filter(k => dataKeyValid(k));
-    //     }
-    //   }
-    // );
   }
-
-  // keyDrop(event: CdkDragDrop<string[]>) {
-  //   const keysArray = this.keysListFormGroup.get('keys') as UntypedFormArray;
-  //   const key = keysArray.at(event.previousIndex);
-  //   keysArray.removeAt(event.previousIndex);
-  //   keysArray.insert(event.currentIndex, key);
-  // }
-
-  // keysFormArray(): UntypedFormArray {
-  //   return this.keysListFormArray;
-  // }
 
   trackByKey(index: number, keyControl: AbstractControl): any {
     return keyControl;
@@ -143,12 +114,8 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
       value: ['', Validators.required]
     });
     if (this.keysType !== MappingKeysType.CUSTOM) {
-      dataKeyFormGroup.addControl('type', this.fb.control(this.rawData ? 'raw' : ValueType.STRING));
-      // if (this.rawData) {
-      //   dataKeyFormGroup.get('type').disable();
-      // }
+      dataKeyFormGroup.addControl('type', this.fb.control(this.rawData ? 'raw' : MappingValueType.STRING));
     }
-    // const keyControl = this.fb.control(dataKey, [this.dataKeyValidator]);
     this.keysListFormArray.push(dataKeyFormGroup);
   }
 
@@ -191,7 +158,6 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
         });
         keysControlGroups.push(dataKeyFormGroup);
       });
-      console.log(keysControlGroups, 'keysControlGroups');
     }
     return this.fb.array(keysControlGroups);
   }
@@ -205,15 +171,5 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
     }
     return '';
   }
-
-  // private dataKeyValidator(control: AbstractControl): ValidationErrors | null  {
-  //   const dataKey: any = control.value;
-  //   if (!(!!dataKey && !!dataKey.type && !!dataKey.name)) {
-  //     return {
-  //       required: true
-  //     };
-  //   }
-  //   return null;
-  // }
 
 }

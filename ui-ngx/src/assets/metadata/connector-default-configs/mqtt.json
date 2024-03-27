@@ -30,29 +30,29 @@
         "timeout": 60000,
         "attributes": [
           {
-            "type": "STRING",
+            "type": "string",
             "key": "model",
             "value": "${sensorModel}"
           },
           {
-            "type": "STRING",
+            "type": "string",
             "key": "${sensorModel}",
             "value": "on"
           }
         ],
         "timeseries": [
           {
-            "type": "DOUBLE",
+            "type": "string",
             "key": "temperature",
             "value": "${temp}"
           },
           {
-            "type": "DOUBLE",
+            "type": "double",
             "key": "humidity",
             "value": "${hum}"
           },
           {
-            "type": "STRING",
+            "type": "string",
             "key": "combine",
             "value": "${hum}:${temp}"
           }
@@ -74,19 +74,19 @@
         "timeout": 60000,
         "attributes": [
           {
-            "type": "STRING",
+            "type": "string",
             "key": "model",
             "value": "${sensorModel}"
           }
         ],
         "timeseries": [
           {
-            "type": "DOUBLE",
+            "type": "double",
             "key": "temperature",
             "value": "${temp}"
           },
           {
-            "type": "DOUBLE",
+            "type": "string",
             "key": "humidity",
             "value": "${hum}"
           }
@@ -99,7 +99,9 @@
       "converter": {
         "type": "bytes",
         "deviceInfo": {
+            "deviceNameExpressionSource": "message",
         	"deviceNameExpression": "[0:4]",
+            "deviceProfileExpressionSource": "constant",
         	"deviceProfileExpression": "default"
         },
         "sendDataOnlyOnChange": false,

@@ -70,8 +70,6 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 })
 export class DeviceInfoTableComponent extends PageComponent implements ControlValueAccessor, Validator, AfterViewInit, OnInit, OnDestroy {
 
-  sourceTypes = Object.values(SourceTypes);
-
   SourceTypeTranslationsMap = SourceTypeTranslationsMap;
 
   @coerceBoolean()
@@ -81,6 +79,9 @@ export class DeviceInfoTableComponent extends PageComponent implements ControlVa
   @coerceBoolean()
   @Input()
   required = false;
+
+  @Input()
+  sourceTypes: Array<SourceTypes> = Object.values(SourceTypes);
 
   deviceInfoTypeValue: any;
 

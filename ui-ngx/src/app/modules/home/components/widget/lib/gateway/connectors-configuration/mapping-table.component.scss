@@ -119,9 +119,6 @@
 }
 
 :host ::ng-deep {
-  .mat-sort-header-sorted .mat-sort-header-arrow {
-    opacity: 1 !important;
-  }
   mat-cell.tb-value-cell {
     cursor: pointer;
     .mat-icon {

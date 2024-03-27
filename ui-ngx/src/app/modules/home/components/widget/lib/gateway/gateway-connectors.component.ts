@@ -21,7 +21,7 @@ import { FormBuilder, FormGroup, UntypedFormControl, ValidatorFn, Validators } f
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeService } from '@core/http/attribute.service';
 import { TranslateService } from '@ngx-translate/core';
-import { forkJoin, Observable, Subscription } from 'rxjs';
+import { forkJoin, Observable, Subject, Subscription } from 'rxjs';
 import { AttributeData, AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { PageComponent } from '@shared/components/page.component';
 import { PageLink } from '@shared/models/page/page-link';
@@ -44,13 +44,13 @@ import {
   ConnectorConfigurationModes,
   GatewayConnector,
   GatewayConnectorDefaultTypesTranslates,
-  GatewayLogLevel, getDefaultConfig,
+  GatewayLogLevel,
   MappingTypes,
   MqttVersions
 } from './gateway-widget.models';
 import { MatDialog } from '@angular/material/dialog';
 import { AddConnectorDialogComponent } from '@home/components/widget/lib/gateway/dialog/add-connector-dialog.component';
-import { ResourcesService } from '@core/services/resources.service';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-gateway-connector',
@@ -121,6 +121,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     }
   };
 
+  private destroy$ = new Subject<void>();
   private subscription: IWidgetSubscription;
 
   constructor(protected store: Store<AppState>,
@@ -149,9 +150,8 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       key: ['auto'],
       class: [''],
       configuration: [''],
-      // TODO dynamic structure building
       configurationJson: [{}, [Validators.required]],
-      basicConfig: this.fb.group({  // TODO TRANSITION TO CUSTOM COMPONENT IN THE END
+      basicConfig: this.fb.group({
       })
     });
     this.connectorForm.disable();
@@ -159,7 +159,9 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
   ngAfterViewInit() {
 
-    this.connectorForm.get('type').valueChanges.subscribe(type => {
+    this.connectorForm.get('type').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(type => {
       if (type && !this.initialConnector) {
         this.attributeService.getEntityAttributes(this.device, AttributeScope.CLIENT_SCOPE,
           [`${type.toUpperCase()}_DEFAULT_CONFIG`], {ignoreErrors: true}).subscribe(defaultConfig=>{
@@ -174,7 +176,9 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       }
     });
 
-    this.connectorForm.get('configurationJson').valueChanges.subscribe((config) => {
+    this.connectorForm.get('configurationJson').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((config) => {
       const basicConfig = this.connectorForm.get('basicConfig');
       const connectorName = this.connectorForm.get('name').value;
       const type = this.connectorForm.get('type').value;
@@ -245,6 +249,12 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     };
   }
 
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+    super.ngOnDestroy();
+  }
+
   saveConnector(): void {
     const value = this.connectorForm.value;
     value.configuration = camelCase(value.name) + '.json';
@@ -313,7 +323,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       this.generateSubscription();
     });
     this.inactiveConnectorsDataSource.loadAttributes(this.device, AttributeScope.SHARED_SCOPE, this.pageLink, reload).subscribe(data => {
-      // console.log(this.activeData, 'updateData (this.activeData)');
       this.sharedAttributeData = data.data.filter(value => this.activeConnectors.includes(value.key));
       this.combineData();
     });
@@ -343,23 +352,13 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   }
 
   private combineData() {
-    // console.log('combineData: ', this.activeData, this.inactiveData, this.sharedAttributeData);
     this.dataSource.data = [...this.activeData, ...this.inactiveData, ...this.sharedAttributeData].filter((item, index, self) =>
       index === self.findIndex((t) => t.key === item.key)
     ).map(attribute => {
       attribute.value = typeof attribute.value === 'string' ? JSON.parse(attribute.value) : attribute.value;
       return attribute;
     });
-    // console.log(this.dataSource.data, 'this.dataSource.data');
   }
-
-  // addAttribute(): void {
-  //   if (this.connectorForm.disabled) {
-  //     this.connectorForm.enable();
-  //   }
-  //   this.nameInput.nativeElement.focus();
-  //   this.clearOutConnectorForm();
-  // }
 
   private clearOutConnectorForm(): void {
     this.initialConnector = null;
@@ -439,8 +438,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     if ($event) {
       $event.stopPropagation();
     }
-    //TODO discuss this change
-    // this.initialConnector = attribute.value;
     const title = `Delete connector ${attribute.key}?`;
     const content = `All connector data will be deleted.`;
     this.dialogService.confirm(title, content, 'Cancel', 'Delete').subscribe(result => {
@@ -546,10 +543,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
         if (this.connectorForm.disabled) {
           this.connectorForm.enable();
         }
-        // if (value.useDefaults) {
-        //   value.configurationJson = getDefaultConfig(this.resourcesService, value.type);
-        //   console.log(value.configurationJson, 'value.configurationJson');
-        // }
         if (!value.configurationJson) {
           value.configurationJson = {};
         }
@@ -631,7 +624,9 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     if (this.basicConfigSub) {
       this.basicConfigSub.unsubscribe();
     }
-    this.basicConfigSub = this.connectorForm.get('basicConfig').valueChanges.subscribe((config) => {
+    this.basicConfigSub = this.connectorForm.get('basicConfig').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((config) => {
       const configJson = this.connectorForm.get('configurationJson');
       const connectorName = this.connectorForm.get('name').value;
       const type = this.connectorForm.get('type').value;

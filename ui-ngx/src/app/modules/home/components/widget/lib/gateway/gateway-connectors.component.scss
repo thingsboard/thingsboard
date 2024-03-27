@@ -129,8 +129,7 @@
   tb-json-object-edit > div {
     flex-grow: 1;
   }
-  //tb-toggle-password {
-  // TODO move to form.scss
+
   .mat-mdc-icon-button.mat-mdc-button-base {
     width: 36px;
     height: 40px;
@@ -140,6 +139,5 @@
   .mat-mdc-tab-group, .mat-mdc-tab-body-wrapper {
     height: 100%;
   }
-  //}
 }
 

@@ -1,0 +1,58 @@
+{
+  "connection": {
+    "str": "Driver={PostgreSQL};Server=localhost;Port=5432;Database=thingsboard;Uid=postgres;Pwd=postgres;",
+    "attributes": {
+      "autocommit": true,
+      "timeout": 0
+    },
+    "encoding": "utf-8",
+    "decoding": {
+      "char": "utf-8",
+      "wchar": "utf-8",
+      "metadata": "utf-16le"
+    },
+    "reconnect": true,
+    "reconnectPeriod": 60
+  },
+  "pyodbc": {
+    "pooling": false
+  },
+  "polling": {
+    "query": "SELECT bool_v, str_v, dbl_v, long_v, entity_id, ts FROM ts_kv WHERE ts > ? ORDER BY ts ASC LIMIT 10",
+    "period": 10,
+    "iterator": {
+      "column": "ts",
+      "query": "SELECT MIN(ts) - 1 FROM ts_kv",
+      "persistent": false
+    }
+  },
+  "mapping": {
+    "device": {
+      "type": "postgres",
+      "name": "'ODBC ' + entity_id"
+    },
+    "sendDataOnlyOnChange": false,
+    "attributes": "*",
+    "timeseries": [
+      {
+        "name": "value",
+        "value": "[i for i in [str_v, long_v, dbl_v,bool_v] if i is not None][0]"
+      }
+    ]
+  },
+  "serverSideRpc": {
+    "enableUnknownRpc": false,
+    "overrideRpcConfig": true,
+    "methods": [
+      "procedureOne",
+      {
+        "name": "procedureTwo",
+        "args": [
+          "One",
+          2,
+          3.0
+        ]
+      }
+    ]
+  }
+}

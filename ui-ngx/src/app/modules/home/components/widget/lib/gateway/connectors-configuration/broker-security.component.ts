@@ -46,7 +46,7 @@ import {
   BrokerSecurityTypes,
   BrokerSecurityTypeTranslations,
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
-import { startWith, takeUntil } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-broker-security',
@@ -118,6 +118,7 @@ export class BrokerSecurityComponent extends PageComponent implements ControlVal
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+    super.ngOnDestroy();
   }
 
   ngAfterViewInit() {
