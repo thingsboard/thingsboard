@@ -50,10 +50,11 @@ import {
   ECharts,
   echartsModule,
   EChartsOption,
-  echartsTooltipFormatter,
+  echartsTooltipFormatter, timeAxisBandWidthCalculator,
   toNamedData
 } from '@home/components/widget/lib/chart/echarts-widget.models';
 import { CallbackDataParams } from 'echarts/types/dist/shared';
+import { AggregationType } from '@shared/models/time/time.models';
 
 interface VisualPiece {
   lt?: number;
@@ -197,6 +198,10 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
   disabledLegendLabelStyle: ComponentStyle;
   visibleRangeItems: RangeItem[];
 
+  private get noAggregation(): boolean {
+    return this.ctx.defaultSubscription.timeWindowConfig?.aggregation?.type === AggregationType.NONE;
+  }
+
   private rangeItems: RangeItem[];
 
   private shapeResize$: ResizeObserver;
@@ -318,13 +323,14 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
       tooltip: {
         trigger: 'axis',
         confine: true,
-        appendToBody: true,
+        appendTo: 'body',
         axisPointer: {
           type: 'shadow'
         },
         formatter: (params: CallbackDataParams[]) =>
           this.settings.showTooltip ? echartsTooltipFormatter(this.renderer, this.tooltipDateFormat,
-            this.settings, params, this.decimals, this.units, 0) : undefined,
+            this.settings, params, this.decimals, this.units, 0, null,
+            this.noAggregation ? null : this.ctx.timeWindow.interval) : undefined,
         padding: [8, 12],
         backgroundColor: this.settings.tooltipBackgroundColor,
         borderWidth: 0,
@@ -350,7 +356,8 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
           onZero: false
         },
         min: this.ctx.defaultSubscription.timeWindow.minTime,
-        max: this.ctx.defaultSubscription.timeWindow.maxTime
+        max: this.ctx.defaultSubscription.timeWindow.maxTime,
+        bandWidthCalculator: timeAxisBandWidthCalculator
       },
       yAxis: {
         type: 'value',

@@ -15,17 +15,48 @@
  */
 package org.thingsboard.server.config;
 
-import com.fasterxml.classmate.TypeResolver;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.JsonNode;
+import io.swagger.v3.core.converter.AnnotatedType;
+import io.swagger.v3.core.converter.ModelConverter;
+import io.swagger.v3.core.converter.ModelConverters;
+import io.swagger.v3.core.util.Json;
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.Operation;
+import io.swagger.v3.oas.models.PathItem;
+import io.swagger.v3.oas.models.Paths;
+import io.swagger.v3.oas.models.examples.Example;
+import io.swagger.v3.oas.models.info.Contact;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.info.License;
+import io.swagger.v3.oas.models.media.Content;
+import io.swagger.v3.oas.models.media.MediaType;
+import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.parameters.RequestBody;
+import io.swagger.v3.oas.models.responses.ApiResponse;
+import io.swagger.v3.oas.models.responses.ApiResponses;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
+import org.springdoc.core.customizers.OpenApiCustomizer;
+import org.springdoc.core.customizers.OperationCustomizer;
+import org.springdoc.core.customizers.RouterOperationCustomizer;
+import org.springdoc.core.discoverer.SpringDocParameterNameDiscoverer;
+import org.springdoc.core.models.GroupedOpenApi;
+import org.springdoc.core.properties.SpringDocConfigProperties;
+import org.springdoc.core.properties.SwaggerUiConfigProperties;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.annotation.Order;
-import org.springframework.http.HttpMethod;
+import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.security.Authority;
@@ -34,52 +65,17 @@ import org.thingsboard.server.exception.ThingsboardErrorResponse;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginResponse;
-import springfox.documentation.builders.ApiInfoBuilder;
-import springfox.documentation.builders.ExampleBuilder;
-import springfox.documentation.builders.OperationBuilder;
-import springfox.documentation.builders.RepresentationBuilder;
-import springfox.documentation.builders.RequestParameterBuilder;
-import springfox.documentation.builders.ResponseBuilder;
-import springfox.documentation.schema.Example;
-import springfox.documentation.service.ApiDescription;
-import springfox.documentation.service.ApiInfo;
-import springfox.documentation.service.ApiListing;
-import springfox.documentation.service.AuthorizationScope;
-import springfox.documentation.service.Contact;
-import springfox.documentation.service.HttpLoginPasswordScheme;
-import springfox.documentation.service.ParameterType;
-import springfox.documentation.service.Response;
-import springfox.documentation.service.SecurityReference;
-import springfox.documentation.service.SecurityScheme;
-import springfox.documentation.service.Tag;
-import springfox.documentation.spi.DocumentationType;
-import springfox.documentation.spi.service.ApiListingBuilderPlugin;
-import springfox.documentation.spi.service.ApiListingScannerPlugin;
-import springfox.documentation.spi.service.contexts.ApiListingContext;
-import springfox.documentation.spi.service.contexts.DocumentationContext;
-import springfox.documentation.spi.service.contexts.OperationContext;
-import springfox.documentation.spi.service.contexts.SecurityContext;
-import springfox.documentation.spring.web.plugins.Docket;
-import springfox.documentation.spring.web.readers.operation.CachingOperationNameGenerator;
-import springfox.documentation.swagger.common.SwaggerPluginSupport;
-import springfox.documentation.swagger.web.DocExpansion;
-import springfox.documentation.swagger.web.ModelRendering;
-import springfox.documentation.swagger.web.OperationsSorter;
-import springfox.documentation.swagger.web.UiConfiguration;
-import springfox.documentation.swagger.web.UiConfigurationBuilder;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Set;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
+import java.util.Map;
+import java.util.Objects;
+import java.util.TreeMap;
 
-import static com.google.common.collect.Lists.newArrayList;
-import static java.util.function.Predicate.not;
-import static springfox.documentation.builders.PathSelectors.any;
-import static springfox.documentation.builders.PathSelectors.regex;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @Slf4j
 @Configuration
@@ -87,10 +83,14 @@ import static springfox.documentation.builders.PathSelectors.regex;
 @Profile("!test")
 public class SwaggerConfiguration {
 
-    @Value("${swagger.enabled:true}")
-    private boolean enabled;
-    @Value("${swagger.api_path_regex}")
-    private String apiPathRegex;
+    public static final String LOGIN_ENDPOINT = "/api/auth/login";
+
+    private static final ApiResponses loginResponses = loginResponses();
+    private static final ApiResponses defaultErrorResponses = defaultErrorResponses(false);
+    private static final ApiResponses defaultPostErrorResponses = defaultErrorResponses(true);
+
+    @Value("${swagger.api_path:/api/**}")
+    private String apiPath;
     @Value("${swagger.security_path_regex}")
     private String securityPathRegex;
     @Value("${swagger.non_security_path_regex}")
@@ -114,289 +114,362 @@ public class SwaggerConfiguration {
     @Value("${app.version:unknown}")
     private String appVersion;
 
-    @Bean
-    public Docket thingsboardApi() {
-        TypeResolver typeResolver = new TypeResolver();
-        return new Docket(DocumentationType.OAS_30)
-                .enable(enabled)
-                .groupName("thingsboard")
-                .apiInfo(apiInfo())
-                .additionalModels(
-                        typeResolver.resolve(ThingsboardErrorResponse.class),
-                        typeResolver.resolve(ThingsboardCredentialsExpiredResponse.class),
-                        typeResolver.resolve(LoginRequest.class),
-                        typeResolver.resolve(LoginResponse.class)
-                )
-                .select()
-                .paths(apiPaths())
-                .paths(any())
-                .build()
-                .globalResponses(HttpMethod.GET,
-                        defaultErrorResponses(false)
-                )
-                .globalResponses(HttpMethod.POST,
-                        defaultErrorResponses(true)
-                )
-                .globalResponses(HttpMethod.DELETE,
-                        defaultErrorResponses(false)
-                )
-                .securitySchemes(newArrayList(httpLogin()))
-                .securityContexts(newArrayList(securityContext()))
-                .ignoredParameterTypes(AuthenticationPrincipal.class)
-                .enableUrlTemplating(true);
-    }
 
     @Bean
-    @Order(SwaggerPluginSupport.SWAGGER_PLUGIN_ORDER)
-    ApiListingScannerPlugin loginEndpointListingScanner(final CachingOperationNameGenerator operationNames) {
-        return new ApiListingScannerPlugin() {
-            @Override
-            public List<ApiDescription> apply(DocumentationContext context) {
-                return List.of(loginEndpointApiDescription(operationNames));
-            }
+    public OpenAPI thingsboardApi() {
+        Contact contact = new Contact()
+                .name(contactName)
+                .url(contactUrl)
+                .email(contactEmail);
 
-            @Override
-            public boolean supports(DocumentationType delimiter) {
-                return DocumentationType.SWAGGER_2.equals(delimiter) || DocumentationType.OAS_30.equals(delimiter);
-            }
-        };
-    }
+        License license = new License()
+                .name(licenseTitle)
+                .url(licenseUrl);
 
-    @Bean
-    @Order(SwaggerPluginSupport.SWAGGER_PLUGIN_ORDER)
-    ApiListingBuilderPlugin loginEndpointListingBuilder() {
-        return new ApiListingBuilderPlugin() {
-            @Override
-            public void apply(ApiListingContext apiListingContext) {
-                if (apiListingContext.getResourceGroup().getGroupName().equals("default")) {
-                    ApiListing apiListing = apiListingContext.apiListingBuilder().build();
-                    if (apiListing.getResourcePath().equals("/api/auth/login")) {
-                        apiListingContext.apiListingBuilder().tags(Set.of(new Tag("login-endpoint", "Login Endpoint")));
-                        apiListingContext.apiListingBuilder().description("Login Endpoint");
-                    }
-                }
-            }
-
-            @Override
-            public boolean supports(DocumentationType delimiter) {
-                return DocumentationType.SWAGGER_2.equals(delimiter) || DocumentationType.OAS_30.equals(delimiter);
-            }
-        };
-    }
-
-    @Bean
-    UiConfiguration uiConfig() {
-        return UiConfigurationBuilder.builder()
-                .deepLinking(true)
-                .displayOperationId(false)
-                .defaultModelsExpandDepth(1)
-                .defaultModelExpandDepth(1)
-                .defaultModelRendering(ModelRendering.EXAMPLE)
-                .displayRequestDuration(false)
-                .docExpansion(DocExpansion.LIST)
-                .filter(false)
-                .maxDisplayedTags(null)
-                .operationsSorter(OperationsSorter.ALPHA)
-                .showExtensions(false)
-                .showCommonExtensions(false)
-                .supportedSubmitMethods(UiConfiguration.Constants.DEFAULT_SUBMIT_METHODS)
-                .validatorUrl(null)
-                .persistAuthorization(true)
-                .syntaxHighlightActivate(true)
-                .syntaxHighlightTheme("agate")
-                .build();
-    }
-
-    private SecurityScheme httpLogin() {
-        return HttpLoginPasswordScheme
-                .X_AUTHORIZATION_BUILDER
-                .loginEndpoint("/api/auth/login")
-                .name("HTTP login form")
-                .description("Enter Username / Password")
-                .build();
-    }
-
-    private SecurityContext securityContext() {
-        return SecurityContext.builder()
-                .securityReferences(defaultAuth())
-                .operationSelector(securityPathOperationSelector())
-                .build();
-    }
-
-    private Predicate<String> apiPaths() {
-        return regex(apiPathRegex);
-    }
-
-    private Predicate<OperationContext> securityPathOperationSelector() {
-        return new SecurityPathOperationSelector(securityPathRegex, nonSecurityPathRegex);
-    }
-
-    List<SecurityReference> defaultAuth() {
-        AuthorizationScope[] authorizationScopes = new AuthorizationScope[3];
-        authorizationScopes[0] = new AuthorizationScope(Authority.SYS_ADMIN.name(), "System administrator");
-        authorizationScopes[1] = new AuthorizationScope(Authority.TENANT_ADMIN.name(), "Tenant administrator");
-        authorizationScopes[2] = new AuthorizationScope(Authority.CUSTOMER_USER.name(), "Customer");
-        return newArrayList(
-                new SecurityReference("HTTP login form", authorizationScopes));
-    }
-
-    private ApiInfo apiInfo() {
         String apiVersion = version;
         if (StringUtils.isEmpty(apiVersion)) {
             apiVersion = appVersion;
         }
-        return new ApiInfoBuilder()
+
+        Info info = new Info()
                 .title(title)
                 .description(description)
-                .contact(new Contact(contactName, contactUrl, contactEmail))
-                .license(licenseTitle)
-                .licenseUrl(licenseUrl)
-                .version(apiVersion)
+                .contact(contact)
+                .license(license)
+                .version(apiVersion);
+
+        SecurityScheme securityScheme = new SecurityScheme()
+                .type(SecurityScheme.Type.HTTP)
+                .description("Enter Username / Password")
+                .scheme("loginPassword")
+                .bearerFormat("/api/auth/login|X-Authorization");
+
+        var openApi = new OpenAPI()
+                .components(new Components().addSecuritySchemes("HTTP login form", securityScheme))
+                .info(info);
+        addDefaultSchemas(openApi);
+        addLoginOperation(openApi);
+        return openApi;
+    }
+
+    @Bean
+    @Primary
+    public SpringDocConfigProperties springDocConfig(SpringDocConfigProperties springDocProperties) {
+        springDocProperties.getApiDocs().setVersion(SpringDocConfigProperties.ApiDocs.OpenApiVersion.OPENAPI_3_1);
+        springDocProperties.setRemoveBrokenReferenceDefinitions(false);
+        return springDocProperties;
+    }
+
+    @Bean
+    @Primary
+    public SwaggerUiConfigProperties swaggerUiConfig(SwaggerUiConfigProperties uiProperties) {
+        uiProperties.setDeepLinking(true);
+        uiProperties.setDisplayOperationId(false);
+        uiProperties.setDefaultModelsExpandDepth(1);
+        uiProperties.setDefaultModelExpandDepth(1);
+        uiProperties.setDefaultModelRendering("example");
+        uiProperties.setDisplayRequestDuration(false);
+        uiProperties.setDocExpansion("list");
+        uiProperties.setFilter("false");
+        uiProperties.setMaxDisplayedTags(null);
+        uiProperties.setOperationsSorter("alpha");
+        uiProperties.setTagsSorter("alpha");
+        uiProperties.setShowExtensions(false);
+        uiProperties.setShowCommonExtensions(false);
+        uiProperties.setSupportedSubmitMethods(List.of("get", "put", "post", "delete", "options", "head", "patch", "trace"));
+        uiProperties.setValidatorUrl(null);
+        uiProperties.setPersistAuthorization(true);
+
+        var syntaxHighLight = new SwaggerUiConfigProperties.SyntaxHighlight();
+        syntaxHighLight.setActivated(true);
+        syntaxHighLight.setTheme("agate");
+
+        uiProperties.setSyntaxHighlight(syntaxHighLight);
+        return uiProperties;
+    }
+
+    private void addLoginOperation(OpenAPI openAPI) {
+        var operation = new Operation();
+        operation.summary("Login method to get user JWT token data");
+        operation.description("""
+                Login method used to authenticate user and get JWT token data.
+
+                Value of the response **token** field can be used as **X-Authorization** header value:
+
+                `X-Authorization: Bearer $JWT_TOKEN_VALUE`.""");
+        var requestBody = new RequestBody().description("Login request")
+                .content(new Content().addMediaType(APPLICATION_JSON_VALUE,
+                new MediaType().schema(new Schema<LoginRequest>().$ref("#/components/schemas/LoginRequest"))));
+        operation.requestBody(requestBody);
+
+        operation.responses(loginResponses);
+
+        operation.addTagsItem("login-endpoint");
+        var pathItem = new PathItem().post(operation);
+        openAPI.path(LOGIN_ENDPOINT, pathItem);
+    }
+
+    @Bean
+    public GroupedOpenApi groupedApi(SpringDocParameterNameDiscoverer localSpringDocParameterNameDiscoverer) {
+        return GroupedOpenApi.builder()
+                .group("thingsboard")
+                .pathsToMatch(apiPath)
+                .addRouterOperationCustomizer(routerOperationCustomizer(localSpringDocParameterNameDiscoverer))
+                .addOperationCustomizer(operationCustomizer())
+                .addOpenApiCustomizer(customOpenApiCustomizer())
                 .build();
     }
 
-    private ApiDescription loginEndpointApiDescription(final CachingOperationNameGenerator operationNames) {
-        return new ApiDescription(null, "/api/auth/login", "Login method to get user JWT token data", "Login endpoint", Collections.singletonList(
-                new OperationBuilder(operationNames)
-                        .summary("Login method to get user JWT token data")
-                        .tags(Set.of("login-endpoint"))
-                        .authorizations(new ArrayList<>())
-                        .position(0)
-                        .codegenMethodNameStem("loginPost")
-                        .method(HttpMethod.POST)
-                        .notes("Login method used to authenticate user and get JWT token data.\n\nValue of the response **token** " +
-                                "field can be used as **X-Authorization** header value:\n\n`X-Authorization: Bearer $JWT_TOKEN_VALUE`.")
-                        .requestParameters(
-                                List.of(
-                                        new RequestParameterBuilder()
-                                                .in(ParameterType.BODY)
-                                                .required(true)
-                                                .description("Login request")
-                                                .content(c ->
-                                                         c.requestBody(true)
-                                                          .representation(MediaType.APPLICATION_JSON)
-                                                          .apply(classRepresentation(LoginRequest.class, false))
-                                                )
-                                                .build()
-                                )
-                        )
-                        .responses(loginResponses())
-                        .build()
-        ), false);
+    @Bean
+    @Lazy(false)
+    ModelConverter mapAwareConverter() {
+        return (type, context, chain) -> {
+            if (chain.hasNext()) {
+                Schema schema = chain.next().resolve(type, context, chain);
+                JavaType javaType = Json.mapper().constructType(type.getType());
+                if (javaType != null) {
+                    Class<?> cls = javaType.getRawClass();
+                    if (Map.class.isAssignableFrom(cls)) {
+                        if (schema != null && schema.getProperties() != null) {
+                            schema.getProperties().remove("empty");
+                            if (schema.getProperties().isEmpty()) {
+                                schema.setProperties(null);
+                            }
+                        }
+                    }
+                }
+                return schema;
+            } else {
+                return null;
+            }
+        };
     }
 
-    private Collection<Response> loginResponses() {
-        List<Response> responses = new ArrayList<>();
-        responses.add(
-                new ResponseBuilder()
-                        .code("200")
-                        .description("OK")
-                        .representation(MediaType.APPLICATION_JSON)
-                        .apply(classRepresentation(LoginResponse.class, true)).
-                        build()
-        );
-        responses.addAll(loginErrorResponses());
-        return responses;
+    private void addDefaultSchemas(OpenAPI openAPI) {
+        var jsonNodeSchema = ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(JsonNode.class)).schema;
+        jsonNodeSchema.setType("any");
+        //noinspection unchecked
+        jsonNodeSchema.setExamples(List.of(JacksonUtil.newObjectNode()));
+        jsonNodeSchema.setDescription("A value representing the any type (object or primitive)");
+        openAPI.getComponents()
+                .addSchemas("JsonNode", jsonNodeSchema)
+                .addSchemas("LoginRequest", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(LoginRequest.class)).schema)
+                .addSchemas("LoginResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(LoginResponse.class)).schema)
+                .addSchemas("ThingsboardErrorResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(ThingsboardErrorResponse.class)).schema)
+                .addSchemas("ThingsboardCredentialsExpiredResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(ThingsboardCredentialsExpiredResponse.class)).schema);
     }
 
-    /** Helper methods **/
-
-    private List<Response> defaultErrorResponses(boolean isPost) {
-        return List.of(
-                errorResponse("400", "Bad Request",
-                        ThingsboardErrorResponse.of(isPost ? "Invalid request body" : "Invalid UUID string: 123", ThingsboardErrorCode.BAD_REQUEST_PARAMS, HttpStatus.BAD_REQUEST)),
-                errorResponse("401", "Unauthorized",
-                        ThingsboardErrorResponse.of("Authentication failed", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)),
-                errorResponse("403", "Forbidden",
-                        ThingsboardErrorResponse.of("You don't have permission to perform this operation!",
-                        ThingsboardErrorCode.PERMISSION_DENIED, HttpStatus.FORBIDDEN)),
-                errorResponse("404", "Not Found",
-                        ThingsboardErrorResponse.of("Requested item wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND, HttpStatus.NOT_FOUND)),
-                errorResponse("429", "Too Many Requests",
-                        ThingsboardErrorResponse.of("Too many requests for current tenant!",
-                        ThingsboardErrorCode.TOO_MANY_REQUESTS, HttpStatus.TOO_MANY_REQUESTS))
-        );
+    private RouterOperationCustomizer routerOperationCustomizer(SpringDocParameterNameDiscoverer localSpringDocParameterNameDiscoverer) {
+        return (routerOperation, handlerMethod) -> {
+            String[] pNames = localSpringDocParameterNameDiscoverer.getParameterNames(handlerMethod.getMethod());
+            String[] reflectionParametersNames = Arrays.stream(handlerMethod.getMethod().getParameters()).map(java.lang.reflect.Parameter::getName).toArray(String[]::new);
+            if (pNames == null || Arrays.stream(pNames).anyMatch(Objects::isNull))
+                pNames = reflectionParametersNames;
+            MethodParameter[] parameters = handlerMethod.getMethodParameters();
+            List<String> requestParams = new ArrayList<>();
+            for (var i = 0; i < parameters.length; i++) {
+                var methodParameter = parameters[i];
+                RequestParam requestParam = methodParameter.getParameterAnnotation(RequestParam.class);
+                if (requestParam != null) {
+                    String pName = StringUtils.isNotBlank(requestParam.value()) ? requestParam.value() :
+                            pNames[i];
+                    if (StringUtils.isNotBlank(pName)) {
+                        requestParams.add(pName);
+                    }
+                }
+            }
+            if (!requestParams.isEmpty()) {
+                var path = routerOperation.getPath() + "{?" + String.join(",", requestParams) + "}";
+                routerOperation.setPath(path);
+            }
+            return routerOperation;
+        };
     }
 
-    private List<Response> loginErrorResponses() {
-        return List.of(
-                errorResponse("401", "Unauthorized",
-                        List.of(
-                                errorExample("bad-credentials", "Bad credentials",
-                                    ThingsboardErrorResponse.of("Invalid username or password", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)),
-                                 errorExample("token-expired", "JWT token expired",
-                                    ThingsboardErrorResponse.of("Token has expired", ThingsboardErrorCode.JWT_TOKEN_EXPIRED, HttpStatus.UNAUTHORIZED)),
-                                errorExample("account-disabled", "Disabled account",
-                                    ThingsboardErrorResponse.of("User account is not active", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)),
-                                errorExample("account-locked", "Locked account",
-                                    ThingsboardErrorResponse.of("User account is locked due to security policy", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)),
-                                errorExample("authentication-failed", "General authentication error",
-                                    ThingsboardErrorResponse.of("Authentication failed", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED))
-                        )
-                ),
-                errorResponse("401 ", "Unauthorized (**Expired credentials**)",
-                        List.of(
-                                errorExample("credentials-expired", "Expired credentials",
-                                        ThingsboardCredentialsExpiredResponse.of("User password expired!", StringUtils.randomAlphanumeric(30)))
-                        ), ThingsboardCredentialsExpiredResponse.class
+    private OperationCustomizer operationCustomizer() {
+        return (operation, handlerMethod) -> {
+            if (StringUtils.isBlank(operation.getSummary())) {
+                operation.setSummary(operation.getOperationId());
+            }
+            return operation;
+        };
+    }
+
+    private OpenApiCustomizer customOpenApiCustomizer() {
+        var loginForm = new SecurityRequirement().addList("HTTP login form", Arrays.asList(
+                Authority.SYS_ADMIN.name(),
+                Authority.TENANT_ADMIN.name(),
+                Authority.CUSTOMER_USER.name()
+        ));
+        return openAPI -> {
+            var paths = openAPI.getPaths();
+            paths.entrySet().stream().peek(entry -> {
+                securityCustomization(loginForm, entry);
+                if (!entry.getKey().equals(LOGIN_ENDPOINT)) {
+                    defaultErrorResponsesCustomization(entry.getValue());
+                }
+            }).map(this::tagsCustomization).filter(Objects::nonNull).distinct().sorted(Comparator.comparing(Tag::getName)).forEach(openAPI::addTagsItem);
+
+            var pathItemsByTags = new TreeMap<String, Map<String, PathItem>>();
+            paths.forEach((k, v) -> {
+                var tagItem = tagItemFromPathItem(v);
+                if (tagItem != null) {
+                    var pathItemMap = pathItemsByTags.computeIfAbsent(tagItem, k1 -> new TreeMap<>());
+                    pathItemMap.put(k, v);
+                }
+            });
+            var sortedPaths = new Paths();
+            pathItemsByTags.forEach((tagItem, pathItemMap) -> {
+                pathItemMap.forEach(sortedPaths::addPathItem);
+            });
+            sortedPaths.setExtensions(paths.getExtensions());
+            openAPI.setPaths(sortedPaths);
+            var sortedSchemas = new TreeMap<>(openAPI.getComponents().getSchemas());
+            openAPI.getComponents().setSchemas(new LinkedHashMap<>(sortedSchemas));
+        };
+    }
+
+
+    private Tag tagsCustomization(Map.Entry<String, PathItem> entry) {
+        var tagItem = tagItemFromPathItem(entry.getValue());
+        if (tagItem != null) {
+            return tagFromTagItem(tagItem);
+        }
+        return null;
+    }
+
+    private String tagItemFromPathItem(PathItem item) {
+        var operations = item.readOperationsMap().values();
+        var operation = operations.stream().findAny();
+        if (operation.isPresent()) {
+            var tags = operation.get().getTags();
+            if (tags != null && !tags.isEmpty()) {
+                return tags.get(0);
+            }
+        }
+        return null;
+    }
+
+    private Tag tagFromTagItem(String tagItem) {
+        String[] words = tagItem.split("-");
+        StringBuilder sb = new StringBuilder();
+
+        for (String word : words) {
+            sb.append(word.substring(0, 1).toUpperCase());
+            sb.append(word.substring(1).toLowerCase());
+            sb.append(" ");
+        }
+
+        return new Tag().name(tagItem).description(sb.toString().trim());
+    }
+
+    private void defaultErrorResponsesCustomization(PathItem pathItem) {
+        pathItem.readOperationsMap().forEach(((httpMethod, operation) -> {
+            var errorResponses = httpMethod.equals(PathItem.HttpMethod.POST) ? defaultPostErrorResponses : defaultErrorResponses;
+            var responses = operation.getResponses();
+            if (responses == null) {
+                responses = errorResponses;
+            } else {
+                ApiResponses updated = responses;
+                errorResponses.forEach((key, apiResponse) -> {
+                    if (!updated.containsKey(key)) {
+                        updated.put(key, apiResponse);
+                    }
+                });
+            }
+            operation.setResponses(responses);
+        }));
+    }
+
+    private void securityCustomization(SecurityRequirement loginForm, Map.Entry<String, PathItem> entry) {
+        var path = entry.getKey();
+        if (path.matches(securityPathRegex) && !path.matches(nonSecurityPathRegex) && !path.equals(LOGIN_ENDPOINT)) {
+            entry.getValue()
+                    .readOperationsMap()
+                    .values()
+                    .forEach(operation -> operation.addSecurityItem(loginForm));
+        }
+    }
+
+    private static ApiResponses loginResponses() {
+        ApiResponses apiResponses = new ApiResponses();
+        apiResponses.addApiResponse("200", new ApiResponse().description("OK")
+                .content(new Content().addMediaType(APPLICATION_JSON_VALUE,
+                        new MediaType().schema(new Schema<LoginResponse>().$ref("#/components/schemas/LoginResponse")))));
+        apiResponses.putAll(loginErrorResponses());
+        return apiResponses;
+    }
+
+    private static ApiResponses defaultErrorResponses(boolean isPost) {
+        ApiResponses apiResponses = new ApiResponses();
+        apiResponses.addApiResponse("400", errorResponse("400", "Bad Request",
+                ThingsboardErrorResponse.of(isPost ? "Invalid request body" : "Invalid UUID string: 123", ThingsboardErrorCode.BAD_REQUEST_PARAMS, HttpStatus.BAD_REQUEST)));
+
+        apiResponses.addApiResponse("401", errorResponse("401", "Unauthorized",
+                ThingsboardErrorResponse.of("Authentication failed", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)));
+
+        apiResponses.addApiResponse("403", errorResponse("403", "Forbidden",
+                ThingsboardErrorResponse.of("You don't have permission to perform this operation!", ThingsboardErrorCode.PERMISSION_DENIED, HttpStatus.FORBIDDEN)));
+
+        apiResponses.addApiResponse("404", errorResponse("404", "Not Found",
+                ThingsboardErrorResponse.of("Requested item wasn't found!", ThingsboardErrorCode.ITEM_NOT_FOUND, HttpStatus.NOT_FOUND)));
+
+        apiResponses.addApiResponse("429", errorResponse("429", "Too Many Requests",
+                ThingsboardErrorResponse.of("Too many requests for current tenant!", ThingsboardErrorCode.TOO_MANY_REQUESTS, HttpStatus.TOO_MANY_REQUESTS)));
+
+        return apiResponses;
+    }
+
+    private static ApiResponses loginErrorResponses() {
+        ApiResponses apiResponses = new ApiResponses();
+
+        apiResponses.addApiResponse("401", errorResponse("Unauthorized",
+                Map.of(
+                        "bad-credentials", errorExample("Bad credentials",
+                                ThingsboardErrorResponse.of("Invalid username or password", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)),
+                        "token-expired", errorExample("JWT token expired",
+                                ThingsboardErrorResponse.of("Token has expired", ThingsboardErrorCode.JWT_TOKEN_EXPIRED, HttpStatus.UNAUTHORIZED)),
+                        "account-disabled", errorExample("Disabled account",
+                                ThingsboardErrorResponse.of("User account is not active", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)),
+                        "account-locked", errorExample("Locked account",
+                                ThingsboardErrorResponse.of("User account is locked due to security policy", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED)),
+                        "authentication-failed", errorExample("General authentication error",
+                                ThingsboardErrorResponse.of("Authentication failed", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED))
                 )
-        );
+        ));
+        var credentialsExpiredSchema = new Schema<ThingsboardCredentialsExpiredResponse>();
+        credentialsExpiredSchema.$ref("#/components/schemas/ThingsboardCredentialsExpiredResponse");
+        apiResponses.addApiResponse("401 ", errorResponse("Unauthorized (**Expired credentials**)",
+                Map.of(
+                        "credentials-expired", errorExample("Expired credentials",
+                                ThingsboardCredentialsExpiredResponse.of("User password expired!", StringUtils.randomAlphanumeric(30)))
+                ),
+                credentialsExpiredSchema
+        ));
+        return apiResponses;
     }
 
-    private Response errorResponse(String code, String description, ThingsboardErrorResponse example) {
-        return errorResponse(code, description,  List.of(errorExample("error-code-" + code, description, example)));
+    private static ApiResponse errorResponse(String code, String description, ThingsboardErrorResponse example) {
+        return errorResponse(description, Map.of("error-code-" + code, errorExample(description, example)));
     }
 
-    private Response errorResponse(String code, String description, List<Example> examples) {
-        return errorResponse(code, description, examples, ThingsboardErrorResponse.class);
+    private static ApiResponse errorResponse(String description, Map<String, Example> examples) {
+        var schema = new Schema<ThingsboardErrorResponse>();
+        schema.$ref("#/components/schemas/ThingsboardErrorResponse");
+        return errorResponse(description, examples, schema);
     }
 
-    private Response errorResponse(String code, String description, List<Example> examples,
-                                   Class<? extends ThingsboardErrorResponse> errorResponseClass) {
-        return new ResponseBuilder()
-                .code(code)
-                .description(description)
-                .examples(examples)
-                .representation(MediaType.APPLICATION_JSON)
-                .apply(classRepresentation(errorResponseClass, true))
-                .build();
+    private static ApiResponse errorResponse(String description, Map<String, Example> examples, Schema<? extends ThingsboardErrorResponse> errorResponseSchema) {
+        MediaType mediaType = new MediaType().schema(errorResponseSchema);
+        mediaType.setExamples(examples);
+        Content content =  new Content().addMediaType(org.springframework.http.MediaType.APPLICATION_JSON_VALUE, mediaType);
+        return new ApiResponse().description(description).content(content);
     }
 
-    private Example errorExample(String id, String summary, ThingsboardErrorResponse example) {
-        return new ExampleBuilder()
-                .mediaType(MediaType.APPLICATION_JSON_VALUE)
+    private static Example errorExample(String summary, ThingsboardErrorResponse example) {
+        return new Example()
                 .summary(summary)
-                .id(id)
-                .value(example).build();
+                .value(example);
     }
-
-    private Consumer<RepresentationBuilder> classRepresentation(Class<?> clazz, boolean isResponse) {
-        return r -> r.model(
-                m ->
-                        m.referenceModel(ref ->
-                                ref.key(k ->
-                                        k.qualifiedModelName(q ->
-                                                q.namespace(clazz.getPackageName())
-                                                        .name(clazz.getSimpleName())).isResponse(isResponse)))
-        );
-    }
-
-    private static class SecurityPathOperationSelector implements Predicate<OperationContext> {
-
-        private final Predicate<String> securityPathSelector;
-
-        SecurityPathOperationSelector(String securityPathRegex, String nonSecurityPathRegex) {
-            this.securityPathSelector = regex(securityPathRegex).and(
-                not(
-                    regex(nonSecurityPathRegex)
-            ));
-        }
-
-        @Override
-        public boolean test(OperationContext operationContext) {
-            return this.securityPathSelector.test(operationContext.requestMappingPattern());
-        }
-    }
-
 
 }

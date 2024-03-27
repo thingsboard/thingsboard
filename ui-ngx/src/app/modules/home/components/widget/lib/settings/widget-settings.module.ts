@@ -330,6 +330,21 @@ import {
 import {
   ToggleButtonWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/button/toggle-button-widget-settings.component';
+import {
+  TimeSeriesChartKeySettingsComponent
+} from '@home/components/widget/lib/settings/chart/time-series-chart-key-settings.component';
+import {
+  TimeSeriesChartLineSettingsComponent
+} from '@home/components/widget/lib/settings/chart/time-series-chart-line-settings.component';
+import {
+  TimeSeriesChartFillSettingsComponent
+} from '@home/components/widget/lib/settings/chart/time-series-chart-fill-settings.component';
+import {
+  TimeSeriesChartBarSettingsComponent
+} from '@home/components/widget/lib/settings/chart/time-series-chart-bar-settings.component';
+import {
+  TimeSeriesChartWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/chart/time-series-chart-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -448,7 +463,12 @@ import {
     CommandButtonWidgetSettingsComponent,
     PowerButtonWidgetSettingsComponent,
     SliderWidgetSettingsComponent,
-    ToggleButtonWidgetSettingsComponent
+    ToggleButtonWidgetSettingsComponent,
+    TimeSeriesChartKeySettingsComponent,
+    TimeSeriesChartLineSettingsComponent,
+    TimeSeriesChartBarSettingsComponent,
+    TimeSeriesChartFillSettingsComponent,
+    TimeSeriesChartWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -572,7 +592,12 @@ import {
     CommandButtonWidgetSettingsComponent,
     PowerButtonWidgetSettingsComponent,
     SliderWidgetSettingsComponent,
-    ToggleButtonWidgetSettingsComponent
+    ToggleButtonWidgetSettingsComponent,
+    TimeSeriesChartKeySettingsComponent,
+    TimeSeriesChartLineSettingsComponent,
+    TimeSeriesChartBarSettingsComponent,
+    TimeSeriesChartFillSettingsComponent,
+    TimeSeriesChartWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -663,5 +688,7 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-command-button-widget-settings': CommandButtonWidgetSettingsComponent,
   'tb-power-button-widget-settings': PowerButtonWidgetSettingsComponent,
   'tb-slider-widget-settings': SliderWidgetSettingsComponent,
-  'tb-toggle-button-widget-settings': ToggleButtonWidgetSettingsComponent
+  'tb-toggle-button-widget-settings': ToggleButtonWidgetSettingsComponent,
+  'tb-time-series-chart-key-settings': TimeSeriesChartKeySettingsComponent,
+  'tb-time-series-chart-widget-settings': TimeSeriesChartWidgetSettingsComponent
 };
