@@ -51,7 +51,7 @@ import {
   EChartsOption,
   echartsTooltipFormatter,
   EChartsTooltipTrigger,
-  getAxisExtent,
+  getAxisExtent, getFocusedSeriesIndex,
   measureXAxisNameHeight,
   measureYAxisNameWidth,
   toNamedData
@@ -300,6 +300,8 @@ export class TbTimeSeriesChart {
     const targetBarWidth = noAggregationBarWidthSettings.strategy === TimeSeriesChartNoAggregationBarWidthStrategy.group ?
       noAggregationBarWidthSettings.groupWidth : noAggregationBarWidthSettings.barWidth;
     this.barRenderSharedContext = {
+      barGap: this.settings.barWidthSettings.barGap,
+      intervalGap: this.settings.barWidthSettings.intervalGap,
       timeInterval: this.ctx.timeWindow?.interval,
       noAggregationBarWidthStrategy: noAggregationBarWidthSettings.strategy,
       noAggregationWidthRelative: targetBarWidth.relative,
@@ -492,8 +494,9 @@ export class TbTimeSeriesChart {
         },
         formatter: (params: CallbackDataParams[]) =>
           this.settings.showTooltip ? echartsTooltipFormatter(this.renderer, this.tooltipDateFormat,
-            this.settings, params, 0, '', -1, this.dataItems,
-            this.noAggregation ? null : this.ctx.timeWindow.interval) : undefined,
+            this.settings, params, 0, '',
+            this.settings.tooltipShowFocusedSeries ? getFocusedSeriesIndex(this.timeSeriesChart) : -1,
+            this.dataItems,  this.noAggregation ? null : this.ctx.timeWindow.interval) : undefined,
         padding: [8, 12],
         backgroundColor: this.settings.tooltipBackgroundColor,
         borderWidth: 0,

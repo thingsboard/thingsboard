@@ -22,7 +22,7 @@ import {
   TimeSeriesChartNoAggregationBarWidthStrategy
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { CustomSeriesRenderItemParams } from 'echarts';
-import { CustomSeriesRenderItemAPI, CustomSeriesRenderItemReturn } from 'echarts/types/dist/shared';
+import { CallbackDataParams, CustomSeriesRenderItemAPI, CustomSeriesRenderItemReturn } from 'echarts/types/dist/shared';
 import { isNumeric } from '@core/utils';
 import * as echarts from 'echarts/core';
 
@@ -34,6 +34,8 @@ export interface BarVisualSettings {
 }
 
 export interface BarRenderSharedContext {
+  barGap: number;
+  intervalGap: number;
   timeInterval: Interval;
   noAggregationBarWidthStrategy: TimeSeriesChartNoAggregationBarWidthStrategy;
   noAggregationWidthRelative: boolean;
@@ -47,6 +49,7 @@ export interface BarRenderContext {
   noAggregation?: boolean;
   visualSettings?: BarVisualSettings;
   labelOption?: SeriesLabelOption;
+  additionalLabelOption?: {[key: string]: any};
   barStackIndex?: number;
   currentStackItems?: TimeSeriesChartDataItem[];
 }
@@ -77,10 +80,13 @@ export const renderTimeSeriesBar = (params: CustomSeriesRenderItemParams, api: C
     start = time - interval / 2;
   }
 
-  const gap = 0.3;
-  const barInterval = separateBar ? interval : interval / (renderCtx.barsCount + gap * (renderCtx.barsCount + 3));
-  const intervalGap = barInterval * gap * 2;
-  const barGap = barInterval * gap;
+  const barGapRatio = renderCtx.shared.barGap;
+  const intervalGapRatio = renderCtx.shared.intervalGap;
+  const barInterval = separateBar
+    ? interval
+    : interval / (renderCtx.barsCount + barGapRatio * (renderCtx.barsCount - 1) + intervalGapRatio * 2);
+  const intervalGap = barInterval * intervalGapRatio;
+  const barGap = barInterval * barGapRatio;
   const value = api.value(1);
   const startTime = separateBar ? start : start + intervalGap + (barInterval + barGap) * renderCtx.barIndex;
   const delta = barInterval;
@@ -124,7 +130,7 @@ export const renderTimeSeriesBar = (params: CustomSeriesRenderItemParams, api: C
 
   const zeroPos = api.coord([0, offset]);
 
-  const style: any = {
+  let style: any = {
     fill: renderCtx.visualSettings.color,
     stroke: renderCtx.visualSettings.borderColor,
     lineWidth: renderCtx.visualSettings.borderWidth
@@ -139,10 +145,17 @@ export const renderTimeSeriesBar = (params: CustomSeriesRenderItemParams, api: C
         position = 'top';
       }
     }
-    style.text = (renderCtx.labelOption.formatter as LabelFormatterCallback)({value: [null, value]} as any);
+    style.text = (renderCtx.labelOption.formatter as LabelFormatterCallback)(
+      {
+        seriesName: params.seriesName,
+        value: [null, value]
+      } as CallbackDataParams);
     style.textDistance = 5;
     style.textPosition = position;
     style.rich = renderCtx.labelOption.rich;
+    if (renderCtx.additionalLabelOption) {
+      style = {...style, ...renderCtx.additionalLabelOption};
+    }
   }
 
   let borderRadius: number[];

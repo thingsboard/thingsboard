@@ -266,6 +266,48 @@ export const getAxisExtent = (chart: ECharts, axisId: string): [number, number] 
   return [0,0];
 };
 
+let componentBlurredKey: string;
+
+const isBlurred = (model: SeriesModel): boolean => {
+  if (!componentBlurredKey) {
+    const innerKeys = Object.keys(model).filter(k => k.startsWith('__ec_inner_'));
+    for (const k of innerKeys) {
+      const obj = model[k];
+      if (obj.hasOwnProperty('isBlured')) {
+        componentBlurredKey = k;
+        break;
+      }
+    }
+  }
+  if (componentBlurredKey) {
+    const obj = model[componentBlurredKey];
+    return !!obj?.isBlured;
+  } else {
+    return false;
+  }
+};
+
+export const getFocusedSeriesIndex = (chart: ECharts): number => {
+  const model: GlobalModel = (chart as any).getModel();
+  const models = model.queryComponents({mainType: 'series'});
+  if (models) {
+    let hasBlurred = false;
+    let notBlurredIndex = -1;
+    for (const _model of models) {
+      const seriesModel = _model as SeriesModel;
+      const blurred = isBlurred(seriesModel);
+      if (!blurred) {
+        notBlurredIndex = seriesModel.seriesIndex;
+      }
+      hasBlurred = blurred || hasBlurred;
+    }
+    if (hasBlurred) {
+      return notBlurredIndex;
+    }
+  }
+  return -1;
+};
+
 export const toNamedData = (data: DataSet): NamedDataSet => {
   if (!data?.length) {
     return [];
@@ -304,6 +346,7 @@ export const tooltipTriggerTranslationMap = new Map<EChartsTooltipTrigger, strin
 export interface EChartsTooltipWidgetSettings {
   showTooltip: boolean;
   tooltipTrigger?: EChartsTooltipTrigger;
+  tooltipShowFocusedSeries?: boolean;
   tooltipValueFont: Font;
   tooltipValueColor: string;
   tooltipShowDate: boolean;
