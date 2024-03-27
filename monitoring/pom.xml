@@ -42,7 +42,7 @@
         <pkg.implementationTitle>ThingsBoard Monitoring Service</pkg.implementationTitle>
         <pkg.mainClass>org.thingsboard.monitoring.ThingsboardMonitoringApplication</pkg.mainClass>
 
-        <californium.version>2.6.1</californium.version>
+        <californium.version>3.7.0</californium.version>
         <leshan.version>2.0.0-M4</leshan.version>
     </properties>
 
