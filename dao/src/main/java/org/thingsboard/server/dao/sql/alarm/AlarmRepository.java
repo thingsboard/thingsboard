@@ -321,6 +321,9 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
     @Query("SELECT a.id FROM AlarmEntity a WHERE a.tenantId = :tenantId AND a.assigneeId = :assigneeId")
     Page<UUID> findAlarmIdsByAssigneeId(@Param("tenantId") UUID tenantId, @Param("assigneeId") UUID assigneeId, Pageable pageable);
 
+    @Query("SELECT a.id FROM AlarmEntity a WHERE a.tenantId = :tenantId AND a.originatorId = :originatorId")
+    Page<UUID> findAlarmIdsByOriginatorId(@Param("tenantId") UUID tenantId, @Param("originatorId") UUID originatorId, Pageable pageable);
+
     @Query(value = "SELECT create_or_update_active_alarm(:t_id, :c_id, :a_id, :a_created_ts, :a_o_id, :a_o_type, :a_type, :a_severity, " +
             ":a_start_ts, :a_end_ts, :a_details, :a_propagate, :a_propagate_to_owner, " +
             ":a_propagate_to_tenant, :a_propagation_types, :a_creation_enabled)", nativeQuery = true)
