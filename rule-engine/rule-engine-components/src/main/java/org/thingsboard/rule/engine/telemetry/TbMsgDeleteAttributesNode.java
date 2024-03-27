@@ -15,6 +15,8 @@
  */
 package org.thingsboard.rule.engine.telemetry;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -25,6 +27,7 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.List;
@@ -38,6 +41,7 @@ import static org.thingsboard.server.common.data.DataConstants.SCOPE;
 @RuleNode(
         type = ComponentType.ACTION,
         name = "delete attributes",
+        version = 1,
         configClazz = TbMsgDeleteAttributesNodeConfiguration.class,
         nodeDescription = "Delete attributes for Message Originator.",
         nodeDetails = "Attempt to remove attributes by selected keys. If msg originator doesn't have an attribute with " +
@@ -69,7 +73,7 @@ public class TbMsgDeleteAttributesNode implements TbNode {
         if (keysToDelete.isEmpty()) {
             ctx.tellSuccess(msg);
         } else {
-            AttributeScope scope = getScope(msg.getMetaData().getValue(SCOPE));
+            AttributeScope scope = getScope(msg);
             ctx.getTelemetryService().deleteAndNotify(
                     ctx.getTenantId(),
                     msg.getOriginator(),
@@ -83,7 +87,27 @@ public class TbMsgDeleteAttributesNode implements TbNode {
         }
     }
 
-    private AttributeScope getScope(String mdScopeValue) {
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0:
+                if (!oldConfiguration.has("useAttributesScopeTemplate")) {
+                    hasChanges = true;
+                    ((ObjectNode) oldConfiguration).put("useAttributesScopeTemplate", false);
+                }
+                break;
+            default:
+                break;
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
+    }
+
+    private AttributeScope getScope(TbMsg msg) {
+        if (config.isUseAttributesScopeTemplate()) {
+            return AttributeScope.valueOf(TbNodeUtils.processPattern(config.getScope(), msg));
+        }
+        String mdScopeValue = msg.getMetaData().getValue(SCOPE);
         if (StringUtils.isNotEmpty(mdScopeValue)) {
             return AttributeScope.valueOf(mdScopeValue);
         }

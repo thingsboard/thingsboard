@@ -16,13 +16,17 @@
 package org.thingsboard.rule.engine.telemetry;
 
 import lombok.extern.slf4j.Slf4j;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.provider.Arguments;
 import org.mockito.ArgumentCaptor;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.AttributeScope;
@@ -38,8 +42,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatCode;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -54,7 +61,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @Slf4j
-public class TbMsgDeleteAttributesNodeTest {
+public class TbMsgDeleteAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
     DeviceId deviceId;
     TbMsgDeleteAttributesNode node;
     TbMsgDeleteAttributesNodeConfiguration config;
@@ -127,6 +134,79 @@ public class TbMsgDeleteAttributesNodeTest {
         onMsg_thenVerifyOutput(false, false, true);
     }
 
+    @Test
+    void givenUseTemplateTrueAndMetadataKey_whenOnMsg_thenDeleteAttributes() throws Exception {
+        config.setUseAttributesScopeTemplate(true);
+        config.setScope("${scopeInMetadata}");
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctx, nodeConfiguration);
+
+        final Map<String, String> mdMap = Map.of("scopeInMetadata", "SERVER_SCOPE");
+        final String data = "{\"TestAttribute_2\": \"humidity\", \"TestAttribute_3\": \"voltage\"}";
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, deviceId, new TbMsgMetaData(mdMap), data);
+
+        node.onMsg(ctx, msg);
+
+        verify(ctx).tellSuccess(eq(msg));
+    }
+
+    @Test
+    void givenUseTemplateTrueAndDataKey_whenOnMsg_thenDeleteAttributes() throws Exception {
+        config.setUseAttributesScopeTemplate(true);
+        config.setScope("$[scopeInData]");
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctx, nodeConfiguration);
+
+        final String data = "{\"TestAttribute_2\": \"humidity\", \"TestAttribute_3\": \"voltage\", \"scopeInData\": \"SERVER_SCOPE\"}";
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, deviceId, TbMsgMetaData.EMPTY, data);
+
+        node.onMsg(ctx, msg);
+
+        verify(ctx).tellSuccess(eq(msg));
+    }
+
+    @Test
+    void givenUseTemplateTrueAndInvalidMetadataKey_whenOnMsg_thenThrowException() throws TbNodeException {
+        config.setUseAttributesScopeTemplate(true);
+        config.setScope("${scopeInMetadata}");
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctx, nodeConfiguration);
+
+        final Map<String, String> mdMap = Map.of("scopeMetadata", "SERVER_SCOPE");
+        final String data = "{\"TestAttribute_2\": \"humidity\", \"TestAttribute_3\": \"voltage\"}";
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, deviceId, new TbMsgMetaData(mdMap), data);
+
+        Assertions.assertThatThrownBy(() -> node.onMsg(ctx, msg))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("No enum constant org.thingsboard.server.common.data.AttributeScope." + config.getScope());
+    }
+
+    @Test
+    void givenUseTemplateTrueAndMetadataKeyNonExistingScope_whenOnMsg_thenThrowException() throws TbNodeException {
+        config.setUseAttributesScopeTemplate(true);
+        config.setScope("${scopeInMetadata}");
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctx, nodeConfiguration);
+
+        final Map<String, String> mdMap = Map.of("scopeInMetadata", "ANOTHER_SCOPE");
+        final String data = "{\"TestAttribute_2\": \"humidity\", \"TestAttribute_3\": \"voltage\"}";
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, deviceId, new TbMsgMetaData(mdMap), data);
+
+        assertThatThrownBy(() -> node.onMsg(ctx, msg))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("No enum constant org.thingsboard.server.common.data.AttributeScope." + msg.getMetaData().getValue("scopeInMetadata"));
+
+    }
+
+    @Test
+    void givenDefaultConfig_whenInit_thenOk() {
+        config = new TbMsgDeleteAttributesNodeConfiguration().defaultConfiguration();
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+
+        assertThatCode(() -> node.init(ctx, nodeConfiguration))
+                .doesNotThrowAnyException();
+    }
+
     void onMsg_thenVerifyOutput(boolean sendAttributesDeletedNotification, boolean notifyDevice, boolean notifyDeviceMetadata) throws Exception {
         final Map<String, String> mdMap = Map.of(
                 "TestAttribute_1", "temperature",
@@ -154,5 +234,27 @@ public class TbMsgDeleteAttributesNodeTest {
         verify(ctx, times(1)).tellSuccess(newMsgCaptor.capture());
         verify(ctx, never()).tellFailure(any(), any());
         verify(telemetryService, times(1)).deleteAndNotify(any(), any(), any(AttributeScope.class), anyList(), eq(notifyDevice || notifyDeviceMetadata), any());
+    }
+
+    private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
+        return Stream.of(
+                //config for version 0
+                Arguments.of(0,
+                        "{\"scope\": \"SERVER_SCOPE\", \"keys\": [], \"sendAttributesDeletedNotification\": false, \"notifyDevice\": false}",
+                        true,
+                        "{\"scope\": \"SERVER_SCOPE\", \"keys\": [], \"sendAttributesDeletedNotification\": false, \"notifyDevice\": false, \"useAttributesScopeTemplate\": false}"
+                ),
+                //config for version 1 with upgrade from version 0
+                Arguments.of(1,
+                        "{\"scope\": \"SERVER_SCOPE\", \"keys\": [], \"sendAttributesDeletedNotification\": false, \"notifyDevice\": false, \"useAttributesScopeTemplate\": false}",
+                        false,
+                        "{\"scope\": \"SERVER_SCOPE\", \"keys\": [], \"sendAttributesDeletedNotification\": false, \"notifyDevice\": false, \"useAttributesScopeTemplate\": false}"
+                )
+        );
+    }
+
+    @Override
+    protected TbNode getTestNode() {
+        return node;
     }
 }

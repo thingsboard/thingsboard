@@ -29,6 +29,7 @@ public class TbMsgDeleteAttributesNodeConfiguration implements NodeConfiguration
     private List<String> keys;
     private boolean sendAttributesDeletedNotification;
     private boolean notifyDevice;
+    private boolean useAttributesScopeTemplate;
 
     @Override
     public TbMsgDeleteAttributesNodeConfiguration defaultConfiguration() {
@@ -37,6 +38,7 @@ public class TbMsgDeleteAttributesNodeConfiguration implements NodeConfiguration
         configuration.setKeys(Collections.emptyList());
         configuration.setSendAttributesDeletedNotification(false);
         configuration.setNotifyDevice(false);
+        configuration.setUseAttributesScopeTemplate(false);
         return configuration;
     }
 }
