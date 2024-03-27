@@ -16,7 +16,6 @@
 package org.thingsboard.server.transport.http;
 
 import com.google.gson.JsonParseException;
-import com.google.gson.JsonSyntaxException;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.http.ResponseEntity;
@@ -28,12 +27,10 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import java.io.IOException;
 import java.util.function.Consumer;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 class DeviceApiControllerTest {
 
     @Test
-    void DeviceAuthCallbackTest() {
+    void deviceAuthCallbackTest() {
         TransportContext transportContext = Mockito.mock(TransportContext.class);
         DeferredResult<ResponseEntity> responseWriter = Mockito.mock(DeferredResult.class);
         Consumer<TransportProtos.SessionInfoProto> onSuccess = x -> {};
@@ -49,7 +46,7 @@ class DeviceApiControllerTest {
     }
 
     @Test
-    void DeviceProvisionCallbackTest() {
+    void deviceProvisionCallbackTest() {
         DeferredResult<ResponseEntity> responseWriter = Mockito.mock(DeferredResult.class);
         var callback = new DeviceApiController.DeviceProvisionCallback(responseWriter);
 
@@ -62,14 +59,23 @@ class DeviceApiControllerTest {
         callback.onError(new RuntimeException("oops it is run time error"));
     }
 
-//@Test
-//    void GetOtaPackageCallback() {
-//          DeferredResult<ResponseEntity> responseWriter = Mockito.mock(DeferredResult.class);
-//          String title = "Title";
-//          String version = "version";
-//          int chuckSize = 11;
-//          int chuck = 3;
-//
-//          var callback = new DeviceApiController.GetOtaPackageCallback(responseWriter, title, version, chuckSize, chuck);
-//    }
+@Test
+    void getOtaPackageCallback() {
+          TransportContext transportContext = Mockito.mock(TransportContext.class);
+          DeferredResult<ResponseEntity> responseWriter = Mockito.mock(DeferredResult.class);
+          String title = "Title";
+          String version = "version";
+          int chuckSize = 11;
+          int chuck = 3;
+
+          var callback = new DeviceApiController.GetOtaPackageCallback(transportContext, responseWriter, title, version, chuckSize, chuck);
+
+          callback.onError(new HttpMessageNotReadableException("JSON incorrect syntax"));
+
+          callback.onError(new JsonParseException("Json ; expected"));
+
+          callback.onError(new IOException("not found"));
+
+          callback.onError(new RuntimeException("oops it is run time error"));
+    }
 }

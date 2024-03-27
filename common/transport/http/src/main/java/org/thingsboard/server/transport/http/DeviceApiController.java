@@ -431,7 +431,7 @@ public class DeviceApiController implements TbTransportService {
                             .setDeviceIdMSB(sessionInfo.getDeviceIdMSB())
                             .setDeviceIdLSB(sessionInfo.getDeviceIdLSB())
                             .setType(firmwareType.name()).build();
-                    transportContext.getTransportService().process(sessionInfo, requestMsg, new GetOtaPackageCallback(responseWriter, title, version, size, chunk));
+                    transportContext.getTransportService().process(sessionInfo, requestMsg, new GetOtaPackageCallback(transportContext,responseWriter, title, version, size, chunk));
                 }));
         return responseWriter;
     }
@@ -494,14 +494,16 @@ public class DeviceApiController implements TbTransportService {
         }
     }
 
-    private class GetOtaPackageCallback implements TransportServiceCallback<TransportProtos.GetOtaPackageResponseMsg> {
+    static class GetOtaPackageCallback implements TransportServiceCallback<TransportProtos.GetOtaPackageResponseMsg> {
+        private final TransportContext transportContext;
         private final DeferredResult<ResponseEntity> responseWriter;
         private final String title;
         private final String version;
         private final int chuckSize;
         private final int chuck;
 
-        GetOtaPackageCallback(DeferredResult<ResponseEntity> responseWriter, String title, String version, int chuckSize, int chuck) {
+        GetOtaPackageCallback(TransportContext transportContext, DeferredResult<ResponseEntity> responseWriter, String title, String version, int chuckSize, int chuck) {
+            this.transportContext = transportContext;
             this.responseWriter = responseWriter;
             this.title = title;
             this.version = version;
