@@ -61,10 +61,10 @@ public class NashornJsInvokeService extends AbstractJsInvokeService {
     @Value("${js.local.monitor_thread_pool_size}")
     private int monitorThreadPoolSize;
 
-    @Value("${js.local.max_cpu_time}")
+    @Value("${js.local.max_cpu_time:8000}") // 8 seconds
     private long maxCpuTime;
 
-    @Value("${js.local.max_memory}")
+    @Value("${js.local.max_memory:104857600}") // 100 MiB
     private long maxMemory;
 
     @Getter
