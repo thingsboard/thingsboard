@@ -42,7 +42,7 @@ public class OAuth2EdgeTest extends AbstractEdgeTest {
     public void testOAuth2Support() throws Exception {
         loginSysAdmin();
 
-        // enable oauth, verify nothing sent to edge
+        // enable oauth
         edgeImitator.allowIgnoredTypes();
         edgeImitator.expectMessageAmount(1);
         OAuth2Info oAuth2Info = createDefaultOAuth2Info();
