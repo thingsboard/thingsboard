@@ -29,6 +29,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNode;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
 import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EventInfo;
@@ -78,6 +79,7 @@ import org.thingsboard.server.dao.usagerecord.ApiUsageStateDao;
 import org.thingsboard.server.gen.transport.TransportProtos.HousekeeperTaskProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperServiceMsg;
 import org.thingsboard.server.service.housekeeper.processor.TelemetryDeletionTaskProcessor;
+import org.thingsboard.server.service.housekeeper.processor.TsHistoryDeletionTaskProcessor;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -134,7 +136,7 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
     @Autowired
     private EntityServiceRegistry entityServiceRegistry;
     @SpyBean
-    private TelemetryDeletionTaskProcessor telemetryDeletionTaskProcessor;
+    private TsHistoryDeletionTaskProcessor tsHistoryDeletionTaskProcessor;
 
     private TenantId tenantId;
 
@@ -258,7 +260,7 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
     @Test
     public void whenTaskProcessingFails_thenReprocessUntilSuccessful() throws Exception {
         TimeoutException error = new TimeoutException("Test timeout");
-        doThrow(error).when(telemetryDeletionTaskProcessor).process(any());
+        doThrow(error).when(tsHistoryDeletionTaskProcessor).process(any());
 
         Device device = createDevice("vep9ruv32", "vep9ruv32");
         createRelatedData(device.getId());
@@ -267,17 +269,17 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
 
         int attempts = 3;
         await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
-            verifyTaskProcessing(device.getId(), HousekeeperTaskType.DELETE_TELEMETRY, 0);
+            verifyTaskProcessing(device.getId(), HousekeeperTaskType.DELETE_TS_HISTORY, 0);
             for (int i = 1; i <= attempts; i++) {
                 int attempt = i;
-                verify(housekeeperReprocessingService).submitForReprocessing(argThat(getTaskMatcher(device.getId(), HousekeeperTaskType.DELETE_TELEMETRY,
+                verify(housekeeperReprocessingService).submitForReprocessing(argThat(getTaskMatcher(device.getId(), HousekeeperTaskType.DELETE_TS_HISTORY,
                         task -> task.getErrorsCount() > 0 && task.getAttempt() == attempt)), argThat(e -> e.getMessage().equals(error.getMessage())));
-                verifyTaskProcessing(device.getId(), HousekeeperTaskType.DELETE_TELEMETRY, attempt);
+                verifyTaskProcessing(device.getId(), HousekeeperTaskType.DELETE_TS_HISTORY, attempt);
             }
         });
 
         assertThat(getTimeseriesHistory(device.getId())).isNotEmpty();
-        doCallRealMethod().when(telemetryDeletionTaskProcessor).process(any()); // fixing the code
+        doCallRealMethod().when(tsHistoryDeletionTaskProcessor).process(any()); // fixing the code
         await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
             assertThat(getTimeseriesHistory(device.getId())).isEmpty();
         });
@@ -286,7 +288,7 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
     @Test
     public void whenReprocessingAttemptsExceeded_thenReprocessOnNextStartUp() throws Exception {
         TimeoutException error = new TimeoutException("Test timeout");
-        doThrow(error).when(telemetryDeletionTaskProcessor).process(any());
+        doThrow(error).when(tsHistoryDeletionTaskProcessor).process(any());
 
         Device device = createDevice("woeifjiowejf", "woeifjiowejf");
         createRelatedData(device.getId());
@@ -296,18 +298,18 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         int maxAttempts = 5;
         await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
             for (int i = 1; i <= maxAttempts; i++) {
-                verifyTaskProcessing(device.getId(), HousekeeperTaskType.DELETE_TELEMETRY, i);
+                verifyTaskProcessing(device.getId(), HousekeeperTaskType.DELETE_TS_HISTORY, i);
             }
         });
 
         Mockito.clearInvocations(housekeeperService);
-        doCallRealMethod().when(telemetryDeletionTaskProcessor).process(any());
+        doCallRealMethod().when(tsHistoryDeletionTaskProcessor).process(any());
         TimeUnit.SECONDS.sleep(2);
-        verify(housekeeperService, never()).processTask(argThat(getTaskMatcher(device.getId(), HousekeeperTaskType.DELETE_TELEMETRY, null)));
+        verify(housekeeperService, never()).processTask(argThat(getTaskMatcher(device.getId(), HousekeeperTaskType.DELETE_TS_HISTORY, null)));
 
         housekeeperReprocessingService.cycle.set(0); // imitating start-up
         await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
-            verifyTaskProcessing(device.getId(), HousekeeperTaskType.DELETE_TELEMETRY, 6);
+            verifyTaskProcessing(device.getId(), HousekeeperTaskType.DELETE_TS_HISTORY, 6);
         });
     }
 
@@ -325,7 +327,7 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
 
     private void createRelatedData(EntityId entityId) throws Exception {
         createTelemetry(entityId);
-        for (String scope : List.of(DataConstants.SERVER_SCOPE, DataConstants.SHARED_SCOPE, DataConstants.CLIENT_SCOPE)) {
+        for (AttributeScope scope : List.of(AttributeScope.SERVER_SCOPE, AttributeScope.SHARED_SCOPE, AttributeScope.CLIENT_SCOPE)) {
             createAttribute(entityId, scope, scope + ATTRIBUTE_KEY);
         }
         createEvent(entityId);
@@ -351,7 +353,7 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         assertThat(relationService.findByFrom(tenantId, entityId, RelationTypeGroup.COMMON)).isEmpty();
     }
 
-    private void createAttribute(EntityId entityId, String scope, String key) throws Exception {
+    private void createAttribute(EntityId entityId, AttributeScope scope, String key) throws Exception {
         attributesService.save(tenantId, entityId, scope, new BaseAttributeKvEntry(System.currentTimeMillis(), new StringDataEntry(key, KV_VALUE))).get();
     }
 

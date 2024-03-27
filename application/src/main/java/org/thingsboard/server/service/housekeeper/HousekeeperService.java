@@ -17,7 +17,6 @@ package org.thingsboard.server.service.housekeeper;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
@@ -51,7 +50,6 @@ import java.util.stream.Collectors;
 @TbCoreComponent
 @Service
 @Slf4j
-@ConditionalOnProperty(name = "queue.core.housekeeper.enabled", havingValue = "true", matchIfMissing = true)
 public class HousekeeperService {
 
     private final Map<HousekeeperTaskType, HousekeeperTaskProcessor<?>> taskProcessors;

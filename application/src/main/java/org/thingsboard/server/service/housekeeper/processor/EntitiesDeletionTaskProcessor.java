@@ -24,7 +24,7 @@ import org.thingsboard.server.dao.entity.EntityServiceRegistry;
 
 @Component
 @RequiredArgsConstructor
-public class EntitiesDeletionTaskProcessor implements HousekeeperTaskProcessor<EntitiesDeletionHousekeeperTask> {
+public class EntitiesDeletionTaskProcessor extends HousekeeperTaskProcessor<EntitiesDeletionHousekeeperTask> {
 
     private final EntityServiceRegistry entityServiceRegistry;
 

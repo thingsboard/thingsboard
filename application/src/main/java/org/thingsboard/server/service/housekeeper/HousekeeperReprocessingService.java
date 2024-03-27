@@ -18,7 +18,6 @@ package org.thingsboard.server.service.housekeeper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -49,7 +48,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 @TbCoreComponent
 @Service
 @Slf4j
-@ConditionalOnProperty(name = "queue.core.housekeeper.enabled", havingValue = "true", matchIfMissing = true)
 public class HousekeeperReprocessingService {
 
     private final HousekeeperService housekeeperService;

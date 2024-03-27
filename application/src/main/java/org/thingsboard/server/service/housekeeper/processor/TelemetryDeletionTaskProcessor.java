@@ -18,10 +18,12 @@ package org.thingsboard.server.service.housekeeper.processor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.kv.BaseDeleteTsKvQuery;
-import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
+import org.thingsboard.server.common.data.housekeeper.LatestTsDeletionHousekeeperTask;
+import org.thingsboard.server.common.data.housekeeper.TsHistoryDeletionHousekeeperTask;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
 import java.util.List;
@@ -29,18 +31,25 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class TelemetryDeletionTaskProcessor implements HousekeeperTaskProcessor<HousekeeperTask> {
+public class TelemetryDeletionTaskProcessor extends HousekeeperTaskProcessor<HousekeeperTask> {
 
     private final TimeseriesService timeseriesService;
 
     @Override
     public void process(HousekeeperTask task) throws Exception {
-        List<String> keys = timeseriesService.findAllKeysByEntityIds(task.getTenantId(), List.of(task.getEntityId()));
+        TenantId tenantId = task.getTenantId();
+        EntityId entityId = task.getEntityId();
+        List<String> keys = timeseriesService.findAllKeysByEntityIds(tenantId, List.of(entityId));
+
         for (String key : keys) {
-            DeleteTsKvQuery deleteQuery = new BaseDeleteTsKvQuery(key, 0, System.currentTimeMillis(), false, true);
-            timeseriesService.remove(task.getTenantId(), task.getEntityId(), List.of(deleteQuery)).get();
+            var latestTsDeletionTask = new LatestTsDeletionHousekeeperTask(tenantId, entityId, key);
+            housekeeperClient.submitTask(latestTsDeletionTask);
+
+            var tsHistoryDeletionTask = new TsHistoryDeletionHousekeeperTask(tenantId, entityId, key);
+            housekeeperClient.submitTask(tsHistoryDeletionTask);
         }
-        log.debug("[{}][{}][{}] Deleted {} telemetry keys", task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(), keys.size());
+
+        log.trace("[{}][{}][{}] Submitted latest and ts history deletion tasks for {} keys", tenantId, entityId.getEntityType(), entityId, keys.size());
     }
 
     @Override

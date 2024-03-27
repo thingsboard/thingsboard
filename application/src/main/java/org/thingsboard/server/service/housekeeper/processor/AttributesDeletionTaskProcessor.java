@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class AttributesDeletionTaskProcessor implements HousekeeperTaskProcessor<HousekeeperTask> {
+public class AttributesDeletionTaskProcessor extends HousekeeperTaskProcessor<HousekeeperTask> {
 
     private final AttributesService attributesService;
 

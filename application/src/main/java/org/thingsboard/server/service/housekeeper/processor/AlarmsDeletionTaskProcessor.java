@@ -26,7 +26,7 @@ import org.thingsboard.server.dao.alarm.AlarmService;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class AlarmsDeletionTaskProcessor implements HousekeeperTaskProcessor<HousekeeperTask> {
+public class AlarmsDeletionTaskProcessor extends HousekeeperTaskProcessor<HousekeeperTask> {
 
     private final AlarmService alarmService;
 

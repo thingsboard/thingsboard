@@ -1624,8 +1624,6 @@ queue:
       # Statistics printing interval for Core microservices
       print-interval-ms: "${TB_QUEUE_CORE_STATS_PRINT_INTERVAL_MS:60000}"
     housekeeper:
-      # Enabled/disable Housekeeping service, which does cleanup of telemetry, attributes, events, etc.
-      enabled: "${TB_HOUSEKEEPER_ENABLED:true}"
       # Topic name for Housekeeper tasks
       topic: "${TB_HOUSEKEEPER_TOPIC:tb_housekeeper}"
       # Topic name for Housekeeper tasks to be reprocessed

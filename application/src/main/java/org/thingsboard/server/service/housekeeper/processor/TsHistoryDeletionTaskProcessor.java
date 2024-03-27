@@ -18,30 +18,31 @@ package org.thingsboard.server.service.housekeeper.processor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.id.AlarmId;
-import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
-import org.thingsboard.server.common.data.housekeeper.AlarmsUnassignHousekeeperTask;
-import org.thingsboard.server.service.entitiy.alarm.TbAlarmService;
+import org.thingsboard.server.common.data.housekeeper.TsHistoryDeletionHousekeeperTask;
+import org.thingsboard.server.common.data.kv.BaseDeleteTsKvQuery;
+import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
+import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
 import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class AlarmsUnassignTaskProcessor extends HousekeeperTaskProcessor<AlarmsUnassignHousekeeperTask> {
+public class TsHistoryDeletionTaskProcessor extends HousekeeperTaskProcessor<TsHistoryDeletionHousekeeperTask> {
 
-    private final TbAlarmService alarmService;
+    private final TimeseriesService timeseriesService;
 
     @Override
-    public void process(AlarmsUnassignHousekeeperTask task) throws Exception {
-        List<AlarmId> alarms = alarmService.unassignDeletedUserAlarms(task.getTenantId(), (UserId) task.getEntityId(), task.getUserTitle(), task.getTs());
-        log.debug("[{}][{}] Unassigned {} alarms", task.getTenantId(), task.getEntityId(), alarms.size());
+    public void process(TsHistoryDeletionHousekeeperTask task) throws Exception {
+        DeleteTsKvQuery deleteQuery = new BaseDeleteTsKvQuery(task.getKey(), 0, System.currentTimeMillis(), false, false);
+        timeseriesService.remove(task.getTenantId(), task.getEntityId(), List.of(deleteQuery)).get();
+        log.debug("[{}][{}][{}] Deleted timeseries history for key '{}'", task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(), task.getKey());
     }
 
     @Override
     public HousekeeperTaskType getTaskType() {
-        return HousekeeperTaskType.UNASSIGN_ALARMS;
+        return HousekeeperTaskType.DELETE_TS_HISTORY;
     }
 
 }

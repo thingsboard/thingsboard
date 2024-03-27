@@ -15,22 +15,23 @@
  */
 package org.thingsboard.server.common.data.housekeeper;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.AccessLevel;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 
-@RequiredArgsConstructor
-@Getter
-public enum HousekeeperTaskType {
+@Data
+@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class LatestTsDeletionHousekeeperTask extends HousekeeperTask {
 
-    DELETE_ENTITIES("entities deletion"),
-    DELETE_ATTRIBUTES("attributes deletion"),
-    DELETE_TELEMETRY("telemetry deletion"),
-    DELETE_LATEST_TS("latest telemetry deletion"),
-    DELETE_TS_HISTORY("timeseries history deletion"),
-    DELETE_EVENTS("events deletion"),
-    DELETE_ALARMS("alarms deletion"),
-    UNASSIGN_ALARMS("alarms unassigning");
+    private String key;
 
-    private final String description;
+    public LatestTsDeletionHousekeeperTask(TenantId tenantId, EntityId entityId, String key) {
+        super(tenantId, entityId, HousekeeperTaskType.DELETE_LATEST_TS);
+        this.key = key;
+    }
 
 }
