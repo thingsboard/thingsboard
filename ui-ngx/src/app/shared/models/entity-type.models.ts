@@ -39,6 +39,7 @@ export enum EntityType {
   OTA_PACKAGE = 'OTA_PACKAGE',
   RPC = 'RPC',
   QUEUE = 'QUEUE',
+  QUEUE_STATS = 'QUEUE_STATS',
   NOTIFICATION = 'NOTIFICATION',
   NOTIFICATION_REQUEST = 'NOTIFICATION_REQUEST',
   NOTIFICATION_RULE = 'NOTIFICATION_RULE',
@@ -360,6 +361,13 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
         search: 'queue.search',
         details: 'queue.details',
         selectedEntities: 'queue.selected-queues'
+      }
+    ],
+    [
+      EntityType.QUEUE_STATS,
+      {
+        type: 'entity.type-queue-stats',
+        typePlural: 'entity.type-queues-stats'
       }
     ],
     [

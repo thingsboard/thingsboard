@@ -43,7 +43,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.DaoUtil.convertTenantEntityInfosToDto;
-import static org.thingsboard.server.dao.asset.BaseAssetService.TB_SERVICE_QUEUE;
 
 /**
  * Created by Valerii Sosliuk on 5/19/2017.
@@ -244,7 +243,7 @@ public class JpaAssetDao extends JpaAbstractDao<AssetEntity, Asset> implements A
 
     @Override
     public Long countByTenantId(TenantId tenantId) {
-        return assetRepository.countByTenantIdAndTypeIsNot(tenantId.getId(), TB_SERVICE_QUEUE);
+        return assetRepository.countByTenantId(tenantId.getId());
     }
 
     @Override

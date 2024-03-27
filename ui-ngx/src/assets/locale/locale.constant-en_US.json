@@ -2245,6 +2245,8 @@
         "type-ota-package": "OTA package",
         "type-rpc": "RPC",
         "type-queue": "Queue",
+        "type-queue-stats": "Queue statistics",
+        "type-queues-stats": "Queues statistics",
         "type-notification": "Notification",
         "type-notification-rule": "Notification rule",
         "type-notification-rules": "Notification rules",
@@ -2272,7 +2274,9 @@
         "address2": "Address 2",
         "zip": "Zip",
         "phone": "Phone",
-        "label": "Label"
+        "label": "Label",
+        "queue-name": "Queue name",
+        "service-id": "Service Id"
     },
     "entity-view": {
         "entity-view": "Entity view",

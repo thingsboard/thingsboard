@@ -54,6 +54,7 @@ enum EntityTypeProto {
   NOTIFICATION_REQUEST  = 31;
   NOTIFICATION          = 32;
   NOTIFICATION_RULE     = 33;
+  QUEUE_STATS     = 34;
 }
 
 /**

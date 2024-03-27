@@ -25,7 +25,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -34,12 +33,13 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.queue.ProcessingStrategy;
 import org.thingsboard.server.common.data.queue.ProcessingStrategyType;
 import org.thingsboard.server.common.data.queue.Queue;
+import org.thingsboard.server.common.data.queue.QueueStats;
 import org.thingsboard.server.common.data.queue.SubmitStrategy;
 import org.thingsboard.server.common.data.queue.SubmitStrategyType;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.stats.StatsFactory;
-import org.thingsboard.server.dao.asset.AssetService;
+import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -50,6 +50,7 @@ import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingRes
 import org.thingsboard.server.service.stats.DefaultRuleEngineStatisticsService;
 import org.thingsboard.server.service.stats.RuleEngineStatisticsService;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -66,7 +67,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.thingsboard.server.dao.asset.BaseAssetService.TB_SERVICE_QUEUE;
 
 @DaoSqlTest
 @TestPropertySource(properties = {
@@ -81,7 +81,7 @@ public class BaseQueueControllerTest extends AbstractControllerTest {
     @SpyBean
     private TimeseriesDao timeseriesDao;
     @Autowired
-    private AssetService assetService;
+    private QueueStatsService queueStatsService;
 
     @Test
     public void testQueueWithServiceTypeRE() throws Exception {
@@ -176,16 +176,17 @@ public class BaseQueueControllerTest extends AbstractControllerTest {
         });
         ruleEngineStatisticsService.reportQueueStats(System.currentTimeMillis(), testStats);
 
-        Asset serviceAsset = assetService.findAssetsByTenantIdAndType(tenantId, TB_SERVICE_QUEUE, new PageLink(100)).getData()
-                .stream().filter(asset -> asset.getName().startsWith(queue.getName()))
-                .findFirst().get();
+        List<QueueStats> queueStatsList = queueStatsService.findByTenantId(tenantId);
+        assertThat(queueStatsList).hasSize(1);
+        QueueStats queueStats = queueStatsList.get(0);
+        assertThat(queueStats.getQueueName()).isEqualTo(queue.getName());
 
         ArgumentCaptor<Long> ttlCaptor = ArgumentCaptor.forClass(Long.class);
-        verify(timeseriesDao).save(eq(tenantId), eq(serviceAsset.getId()), argThat(tsKvEntry -> {
+        verify(timeseriesDao).save(eq(tenantId), eq(queueStats.getId()), argThat(tsKvEntry -> {
             return tsKvEntry.getKey().equals(TbRuleEngineConsumerStats.SUCCESSFUL_MSGS) &&
                     tsKvEntry.getLongValue().get().equals(5L);
         }), ttlCaptor.capture());
-        verify(timeseriesDao).save(eq(tenantId), eq(serviceAsset.getId()), argThat(tsKvEntry -> {
+        verify(timeseriesDao).save(eq(tenantId), eq(queueStats.getId()), argThat(tsKvEntry -> {
             return tsKvEntry.getKey().equals(TbRuleEngineConsumerStats.FAILED_MSGS) &&
                     tsKvEntry.getLongValue().get().equals(5L);
         }), ttlCaptor.capture());
@@ -193,7 +194,7 @@ public class BaseQueueControllerTest extends AbstractControllerTest {
             assertThat(usedTtl).isEqualTo(TimeUnit.DAYS.toSeconds(queueStatsTtlDays));
         });
 
-        verify(timeseriesDao).save(eq(tenantId), eq(serviceAsset.getId()), argThat(tsKvEntry -> {
+        verify(timeseriesDao).save(eq(tenantId), eq(queueStats.getId()), argThat(tsKvEntry -> {
             return tsKvEntry.getKey().equals(DefaultRuleEngineStatisticsService.RULE_ENGINE_EXCEPTION) &&
                     tsKvEntry.getJsonValue().get().equals(ruleEngineException.toJsonString(0));
         }), ttlCaptor.capture());
