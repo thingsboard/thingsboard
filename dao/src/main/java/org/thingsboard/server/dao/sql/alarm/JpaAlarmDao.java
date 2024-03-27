@@ -383,7 +383,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
 
     @Override
     public PageData<EntitySubtype> findTenantAlarmTypes(UUID tenantId, PageLink pageLink) {
-        Page<String> page = alarmRepository.findTenantAlarmTypes(tenantId, Objects.toString(pageLink.getTextSearch(), ""), toPageable(pageLink));
+        Page<String> page = alarmRepository.findTenantAlarmTypes(tenantId, Objects.toString(pageLink.getTextSearch(), ""), toPageable(pageLink, false));
         if (page.isEmpty()) {
             return PageData.emptyPageData();
         }
