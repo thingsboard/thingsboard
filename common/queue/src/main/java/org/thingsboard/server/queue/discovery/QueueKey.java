@@ -17,6 +17,7 @@ package org.thingsboard.server.queue.discovery;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.With;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.Queue;
@@ -27,6 +28,7 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 public class QueueKey {
 
     private final ServiceType type;
+    @With
     private final String queueName;
     private final TenantId tenantId;
 
@@ -52,6 +54,14 @@ public class QueueKey {
         this.type = type;
         this.queueName = DataConstants.MAIN_QUEUE_NAME;
         this.tenantId = TenantId.SYS_TENANT_ID;
+    }
+
+    public boolean isMain() {
+        return DataConstants.MAIN_QUEUE_NAME.equals(queueName);
+    }
+
+    public boolean isInternal() {
+        return DataConstants.INTERNAL_QUEUE_NAME.equals(queueName);
     }
 
     @Override

@@ -127,3 +127,7 @@ CREATE INDEX IF NOT EXISTS idx_resource_etag ON resource(tenant_id, etag);
 CREATE INDEX IF NOT EXISTS idx_resource_etag ON resource(tenant_id, etag);
 
 CREATE INDEX IF NOT EXISTS idx_resource_type_public_resource_key ON resource(resource_type, public_resource_key);
+
+CREATE INDEX IF NOT EXISTS idx_alarm_rules_tenant_id on alarm_rule(tenant_id);
+
+CREATE INDEX IF NOT EXISTS idx_alarm_rules_enabled on alarm_rule(tenant_id) WHERE enabled = true;

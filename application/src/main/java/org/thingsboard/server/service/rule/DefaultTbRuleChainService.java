@@ -61,6 +61,9 @@ import java.util.TreeSet;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.data.DataConstants.ALARM_RULES_NODE_TYPE;
+import static org.thingsboard.server.common.data.DataConstants.DEVICE_PROFILE_NODE_TYPE;
+
 @RequiredArgsConstructor
 @Service
 @TbCoreComponent
@@ -365,7 +368,13 @@ public class DefaultTbRuleChainService extends AbstractTbEntityService implement
     public RuleNode updateRuleNodeConfiguration(RuleNode node) {
         var ruleChainId = node.getRuleChainId();
         var ruleNodeId = node.getId();
+
+        if (node.getType().equals(DEVICE_PROFILE_NODE_TYPE)) {
+            node.setType(ALARM_RULES_NODE_TYPE);
+        }
+
         var ruleNodeType = node.getType();
+
         try {
             var ruleNodeClass = componentDiscoveryService.getRuleNodeInfo(ruleNodeType)
                     .orElseThrow(() -> new RuntimeException("Rule node " + ruleNodeType + " is not supported!"));

@@ -39,19 +39,25 @@ import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionKeyType;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleCondition;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmRuleConfiguration;
+import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentValueType;
+import org.thingsboard.server.common.data.alarm.rule.condition.ConstantArgument;
+import org.thingsboard.server.common.data.alarm.rule.condition.FromMessageArgument;
+import org.thingsboard.server.common.data.alarm.rule.condition.ArgumentOperation;
+import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionFilter;
+import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmConditionSpec;
+import org.thingsboard.server.common.data.alarm.rule.filter.AlarmRuleDeviceTypeEntityFilter;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.DeviceData;
-import org.thingsboard.server.common.data.device.profile.AlarmCondition;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
-import org.thingsboard.server.common.data.device.profile.AlarmRule;
-import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
-import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionSpec;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.common.data.notification.Notification;
@@ -83,9 +89,6 @@ import org.thingsboard.server.common.data.notification.targets.platform.SystemAd
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
-import org.thingsboard.server.common.data.query.EntityKeyValueType;
-import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.security.Authority;
@@ -99,7 +102,7 @@ import org.thingsboard.server.service.notification.rule.cache.DefaultNotificatio
 import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -212,7 +215,6 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         }
         notificationRule.setRecipientsConfig(recipientsConfig);
         notificationRule = saveNotificationRule(notificationRule);
-
 
         String alarmType = "myBoolIsTrue";
         DeviceProfile deviceProfile = createDeviceProfileWithAlarmRules(alarmType);
@@ -833,36 +835,48 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     private DeviceProfile createDeviceProfileWithAlarmRules(String alarmType) {
         DeviceProfile deviceProfile = createDeviceProfile("For notification rule test");
         deviceProfile.setTenantId(tenantId);
+        deviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
 
-        List<DeviceProfileAlarm> alarms = new ArrayList<>();
-        DeviceProfileAlarm alarm = new DeviceProfileAlarm();
-        alarm.setAlarmType(alarmType);
-        alarm.setId(alarmType);
+        createAlarmRule(tenantId, deviceProfile.getId(), alarmType);
+
+        return deviceProfile;
+    }
+
+    private AlarmRule createAlarmRule(TenantId tenantId, DeviceProfileId deviceProfileId, String alarmType) {
         AlarmRule alarmRule = new AlarmRule();
-        alarmRule.setAlarmDetails("Details");
+        alarmRule.setTenantId(tenantId);
+        alarmRule.setAlarmType(alarmType);
+        alarmRule.setName(alarmType);
+        alarmRule.setEnabled(true);
+
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setSpec(new SimpleAlarmConditionSpec());
-        List<AlarmConditionFilter> condition = new ArrayList<>();
 
-        AlarmConditionFilter alarmConditionFilter = new AlarmConditionFilter();
-        alarmConditionFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "bool"));
-        BooleanFilterPredicate predicate = new BooleanFilterPredicate();
-        predicate.setOperation(BooleanFilterPredicate.BooleanOperation.EQUAL);
-        predicate.setValue(new FilterPredicateValue<>(true));
+        var boolKey = new FromMessageArgument(AlarmConditionKeyType.ATTRIBUTE, "bool", ArgumentValueType.BOOLEAN);
+        var boolConst = new ConstantArgument(ArgumentValueType.BOOLEAN, Boolean.TRUE);
 
-        alarmConditionFilter.setPredicate(predicate);
-        alarmConditionFilter.setValueType(EntityKeyValueType.BOOLEAN);
-        condition.add(alarmConditionFilter);
-        alarmCondition.setCondition(condition);
-        alarmRule.setCondition(alarmCondition);
-        TreeMap<AlarmSeverity, AlarmRule> createRules = new TreeMap<>();
-        createRules.put(AlarmSeverity.CRITICAL, alarmRule);
-        alarm.setCreateRules(createRules);
-        alarms.add(alarm);
+        SimpleAlarmConditionFilter alarmConditionFilter = new SimpleAlarmConditionFilter();
+        alarmConditionFilter.setLeftArgId("boolKey");
+        alarmConditionFilter.setRightArgId("boolConst");
+        alarmConditionFilter.setOperation(ArgumentOperation.EQUAL);
+        alarmCondition.setConditionFilter(alarmConditionFilter);
 
-        deviceProfile.getProfileData().setAlarms(alarms);
-        deviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
-        return deviceProfile;
+        AlarmRuleCondition alarmRuleCondition = new AlarmRuleCondition();
+        alarmRuleCondition.setAlarmCondition(alarmCondition);
+        AlarmRuleConfiguration alarmRuleConfiguration = new AlarmRuleConfiguration();
+        alarmRuleConfiguration.setArguments(Map.of("boolKey", boolKey, "boolConst", boolConst));
+
+        AlarmRuleDeviceTypeEntityFilter sourceFilter = new AlarmRuleDeviceTypeEntityFilter(List.of(deviceProfileId));
+        alarmRuleConfiguration.setSourceEntityFilters(Collections.singletonList(sourceFilter));
+
+        alarmRuleConfiguration.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRuleCondition)));
+
+        alarmRule.setConfiguration(alarmRuleConfiguration);
+
+        alarmRule.setConfiguration(alarmRuleConfiguration);
+
+        alarmRule = doPost("/api/alarmRule", alarmRule, AlarmRule.class);
+        return alarmRule;
     }
 
 }

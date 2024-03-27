@@ -18,7 +18,7 @@ package org.thingsboard.server.common.data.query;
 import lombok.Data;
 
 @Data
-public class NumericFilterPredicate implements SimpleKeyFilterPredicate<Double>  {
+public class NumericFilterPredicate implements SimpleKeyFilterPredicate<Double> {
 
     private NumericOperation operation;
     private FilterPredicateValue<Double> value;
@@ -26,6 +26,11 @@ public class NumericFilterPredicate implements SimpleKeyFilterPredicate<Double> 
     @Override
     public FilterPredicateType getType() {
         return FilterPredicateType.NUMERIC;
+    }
+
+    @Override
+    public String getOperationName() {
+        return operation.name();
     }
 
     public enum NumericOperation {

@@ -78,6 +78,8 @@ import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRuleInfo;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.asset.AssetProfile;
@@ -94,6 +96,7 @@ import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.AlarmRuleId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -1687,6 +1690,37 @@ public class RestClient implements Closeable {
 
     public Long countAlarmsByQuery(AlarmCountQuery query) {
         return restTemplate.postForObject(baseURL + "/api/alarmsQuery/count", query, Long.class);
+    }
+
+    public Optional<AlarmRule> getAlarmRuleById(AlarmRuleId alarmRuleId) {
+        try {
+            ResponseEntity<AlarmRule> alarmRule = restTemplate.getForEntity(baseURL + "/api/alarmRule/{alarmRuleId}", AlarmRule.class, alarmRuleId);
+            return Optional.ofNullable(alarmRule.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public AlarmRule saveAlarmRule(AlarmRule alarmRule) {
+        return restTemplate.postForEntity(baseURL + "/api/alarmRule", alarmRule, AlarmRule.class).getBody();
+    }
+
+    public void deleteAlarmRule(AlarmRuleId alarmRuleId) {
+        restTemplate.delete(baseURL + "/api/alarmRule/{alarmRuleId}", alarmRuleId);
+    }
+
+    public PageData<AlarmRuleInfo> getAlarmRuleInfos(PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/api/alarmRuleInfos?" + getUrlParams(pageLink),
+                HttpMethod.GET, HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<AlarmRuleInfo>>() {
+                }, params).getBody();
     }
 
     public void saveRelation(EntityRelation relation) {

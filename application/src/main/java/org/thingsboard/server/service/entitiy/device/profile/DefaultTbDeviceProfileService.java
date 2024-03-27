@@ -18,10 +18,12 @@ package org.thingsboard.server.service.entitiy.device.profile;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileSaveResult;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -38,15 +40,19 @@ public class DefaultTbDeviceProfileService extends AbstractTbEntityService imple
     private final DeviceProfileService deviceProfileService;
 
     @Override
+    @Transactional
     public DeviceProfile save(DeviceProfile deviceProfile, User user) throws Exception {
         ActionType actionType = deviceProfile.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = deviceProfile.getTenantId();
         try {
-            DeviceProfile savedDeviceProfile = checkNotNull(deviceProfileService.saveDeviceProfile(deviceProfile));
+            DeviceProfileSaveResult deviceProfileResult = deviceProfileService.saveDeviceProfileWithAlarmRules(deviceProfile);
+            DeviceProfile savedDeviceProfile = deviceProfileResult.deviceProfile();
             autoCommit(user, savedDeviceProfile.getId());
-
-            logEntityActionService.logEntityAction(tenantId, savedDeviceProfile.getId(), savedDeviceProfile,
-                    null, actionType, user);
+            logEntityActionService.logEntityAction(tenantId, savedDeviceProfile.getId(), savedDeviceProfile, null, actionType, user);
+            deviceProfileResult.alarmRulePairs().forEach(pair -> {
+                var alarmRule = pair.getFirst();
+                logEntityActionService.logEntityAction(tenantId, alarmRule.getId(), alarmRule, null, pair.getSecond() ? ActionType.ADDED : ActionType.UPDATED, user);
+            });
             return savedDeviceProfile;
         } catch (Exception e) {
             logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.DEVICE_PROFILE), deviceProfile, actionType, user, e);

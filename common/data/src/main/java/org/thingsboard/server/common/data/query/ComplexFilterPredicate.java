@@ -30,6 +30,11 @@ public class ComplexFilterPredicate implements KeyFilterPredicate {
         return FilterPredicateType.COMPLEX;
     }
 
+    @Override
+    public String getOperationName() {
+        return operation.name();
+    }
+
     public enum ComplexOperation {
         AND,
         OR

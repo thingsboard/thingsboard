@@ -363,7 +363,7 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
     protected void testLogEntityAction(HasName entity, EntityId originatorId, TenantId tenantId,
                                        CustomerId customerId, UserId userId, String userName,
                                        ActionType actionType, int cntTime, Object... additionalInfo) {
-        ArgumentMatcher<HasName> matcherEntityEquals = entity == null ? Objects::isNull : argument -> argument.toString().equals(entity.toString());
+        ArgumentMatcher<HasName> matcherEntityEquals = entity == null ? Objects::isNull : argument -> argument.equals(entity);
         ArgumentMatcher<EntityId> matcherOriginatorId = argument -> argument.equals(originatorId);
         ArgumentMatcher<CustomerId> matcherCustomerId = customerId == null ?
                 argument -> argument.getClass().equals(CustomerId.class) : argument -> argument.equals(customerId);

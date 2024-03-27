@@ -54,6 +54,7 @@ enum EntityTypeProto {
   NOTIFICATION_REQUEST  = 31;
   NOTIFICATION          = 32;
   NOTIFICATION_RULE     = 33;
+  ALARM_RULE            = 34;
 }
 
 /**
@@ -319,6 +320,24 @@ message RepositorySettingsProto {
   bool showMergeCommits = 10;
 }
 
+message AssetProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 assetIdMSB = 3;
+  int64 assetIdLSB = 4;
+  int64 createdTime = 5;
+  string assetName = 6;
+  optional string assetLabel = 7;
+  string assetType = 8;
+  optional string additionalInfo = 9;
+  int64 assetProfileIdMSB = 10;
+  int64 assetProfileIdLSB = 11;
+  optional int64 customerIdMSB = 12;
+  optional int64 customerIdLSB = 13;
+  optional int64 externalIdMSB = 14;
+  optional int64 externalIdLSB = 15;
+}
+
 /**
  * Transport Service Messages;
  */
@@ -551,6 +570,7 @@ message EntityUpdateMsg {
     DeviceProto device = 3;
     DeviceProfileProto deviceProfile = 4;
     ApiUsageStateProto apiUsageState = 5;
+    AssetProto asset = 6;
   }
 }
 
@@ -1473,6 +1493,7 @@ message ToRuleEngineMsg {
   bytes tbMsg = 3;
   repeated string relationTypes = 4;
   string failureMessage = 5;
+  string queueName = 6;
 }
 
 message ToRuleEngineNotificationMsg {

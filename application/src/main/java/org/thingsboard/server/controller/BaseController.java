@@ -58,6 +58,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.asset.AssetProfile;
@@ -68,6 +69,7 @@ import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.AlarmRuleId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -107,6 +109,7 @@ import org.thingsboard.server.common.data.util.ThrowingBiFunction;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.alarm.AlarmCommentService;
+import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -216,6 +219,9 @@ public abstract class BaseController {
 
     @Autowired
     protected AlarmSubscriptionService alarmService;
+
+    @Autowired
+    protected AlarmRuleService alarmRuleService;
 
     @Autowired
     protected AlarmCommentService alarmCommentService;
@@ -546,6 +552,9 @@ public abstract class BaseController {
                 case ALARM:
                     checkAlarmId(new AlarmId(entityId.getId()), operation);
                     return;
+                case ALARM_RULE:
+                    checkAlarmRuleId(new AlarmRuleId(entityId.getId()), operation);
+                    return;
                 case DEVICE:
                     checkDeviceId(new DeviceId(entityId.getId()), operation);
                     return;
@@ -664,6 +673,10 @@ public abstract class BaseController {
 
     AlarmInfo checkAlarmInfoId(AlarmId alarmId, Operation operation) throws ThingsboardException {
         return checkEntityId(alarmId, alarmService::findAlarmInfoById, operation);
+    }
+
+    AlarmRule checkAlarmRuleId(AlarmRuleId alarmRuleId, Operation operation) throws ThingsboardException {
+        return checkEntityId(alarmRuleId, alarmRuleService::findAlarmRuleById, operation);
     }
 
     AlarmComment checkAlarmCommentId(AlarmCommentId alarmCommentId, AlarmId alarmId) throws ThingsboardException {

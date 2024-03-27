@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.EntityInfo;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileSaveResult;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -37,6 +38,8 @@ public interface DeviceProfileService extends EntityDaoService {
     DeviceProfile findDeviceProfileByName(TenantId tenantId, String profileName, boolean putInCache);
 
     DeviceProfileInfo findDeviceProfileInfoById(TenantId tenantId, DeviceProfileId deviceProfileId);
+
+    DeviceProfileSaveResult saveDeviceProfileWithAlarmRules(DeviceProfile deviceProfile);
 
     DeviceProfile saveDeviceProfile(DeviceProfile deviceProfile);
 
@@ -63,5 +66,7 @@ public interface DeviceProfileService extends EntityDaoService {
     void deleteDeviceProfilesByTenantId(TenantId tenantId);
 
     List<EntityInfo> findDeviceProfileNamesByTenantId(TenantId tenantId, boolean activeOnly);
+
+    PageData<DeviceProfile> findDeviceProfilesWithAlarmRules(TenantId tenantId, PageLink pageLink);
 
 }

@@ -31,11 +31,14 @@ import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.device.data.CoapDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.Lwm2mDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.PowerMode;
 import org.thingsboard.server.common.data.device.data.PowerSavingConfiguration;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
+import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceCredentialsId;
@@ -997,6 +1000,57 @@ public class ProtoUtils {
         return deviceCredentials;
     }
 
+    public static TransportProtos.AssetProto toProto(Asset asset) {
+        var builder = TransportProtos.AssetProto.newBuilder()
+                .setTenantIdMSB(asset.getTenantId().getId().getMostSignificantBits())
+                .setTenantIdLSB(asset.getTenantId().getId().getLeastSignificantBits())
+                .setAssetIdMSB(asset.getId().getId().getMostSignificantBits())
+                .setAssetIdLSB(asset.getId().getId().getLeastSignificantBits())
+                .setCreatedTime(asset.getCreatedTime())
+                .setAssetName(asset.getName())
+                .setAssetType(asset.getType())
+                .setAssetProfileIdMSB(asset.getAssetProfileId().getId().getMostSignificantBits())
+                .setAssetProfileIdLSB(asset.getAssetProfileId().getId().getLeastSignificantBits());
+
+        if (isNotNull(asset.getCustomerId())) {
+            builder.setCustomerIdMSB(getMsb(asset.getCustomerId()))
+                    .setCustomerIdLSB(getLsb(asset.getCustomerId()));
+        }
+        if (isNotNull(asset.getLabel())) {
+            builder.setAssetLabel(asset.getLabel());
+        }
+        if (isNotNull(asset.getAdditionalInfo())) {
+            builder.setAdditionalInfo(JacksonUtil.toString(asset.getAdditionalInfo()));
+        }
+        if (isNotNull(asset.getExternalId())) {
+            builder.setExternalIdMSB(getMsb(asset.getExternalId()))
+                    .setExternalIdLSB(getLsb(asset.getExternalId()));
+        }
+        return builder.build();
+    }
+
+    public static Asset fromProto(TransportProtos.AssetProto proto) {
+        Asset asset = new Asset(getEntityId(proto.getAssetIdMSB(), proto.getAssetIdLSB(), AssetId::new));
+        asset.setCreatedTime(proto.getCreatedTime());
+        asset.setTenantId(getEntityId(proto.getTenantIdMSB(), proto.getTenantIdLSB(), TenantId::new));
+        asset.setName(proto.getAssetName());
+        asset.setType(proto.getAssetType());
+        asset.setAssetProfileId(getEntityId(proto.getAssetProfileIdMSB(), proto.getAssetProfileIdLSB(), AssetProfileId::new));
+        if (proto.hasCustomerIdMSB() && proto.hasCustomerIdLSB()) {
+            asset.setCustomerId(getEntityId(proto.getCustomerIdMSB(), proto.getCustomerIdLSB(), CustomerId::new));
+        }
+        if (proto.hasAssetLabel()) {
+            asset.setLabel(proto.getAssetLabel());
+        }
+        if (proto.hasAdditionalInfo()) {
+            asset.setAdditionalInfo(JacksonUtil.toJsonNode(proto.getAdditionalInfo()));
+        }
+        if (proto.hasExternalIdMSB() && proto.hasExternalIdLSB()) {
+            asset.setExternalId(getEntityId(proto.getExternalIdMSB(), proto.getExternalIdLSB(), AssetId::new));
+        }
+        return asset;
+    }
+
     public static <T> TransportProtos.EntityUpdateMsg toEntityUpdateProto(T entity) {
         var builder = TransportProtos.EntityUpdateMsg.newBuilder();
         if (entity instanceof Device) {
@@ -1009,6 +1063,8 @@ public class ProtoUtils {
             builder.setTenantProfile(toProto((TenantProfile) entity));
         } else if (entity instanceof ApiUsageState) {
             builder.setApiUsageState(toProto((ApiUsageState) entity));
+        } else if (entity instanceof Asset) {
+            builder.setAsset(toProto((Asset) entity));
         } else {
             log.warn("[{}] entity does not support toProto serialization .", entity.getClass().getSimpleName());
         }

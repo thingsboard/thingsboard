@@ -48,6 +48,7 @@ import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
+import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
 import org.thingsboard.server.dao.audit.AuditLogLevelFilter;
 import org.thingsboard.server.dao.audit.AuditLogLevelMask;
 import org.thingsboard.server.dao.audit.AuditLogLevelProperties;
@@ -88,6 +89,9 @@ public abstract class AbstractServiceTest {
     public void afterAbstractService() {
         tenantService.deleteTenants();
     }
+
+    @Autowired
+    protected AlarmRuleService alarmRuleService;
 
     public class IdComparator<D extends HasId> implements Comparator<D> {
         @Override

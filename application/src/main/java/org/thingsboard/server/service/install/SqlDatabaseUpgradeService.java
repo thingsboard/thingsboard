@@ -15,11 +15,35 @@
  */
 package org.thingsboard.server.service.install;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
+import org.thingsboard.server.common.data.alarm.rule.utils.AlarmRuleMigrator;
+import org.thingsboard.server.common.data.device.profile.alarm.rule.DeviceProfileAlarm;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageDataIterable;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.dao.alarm.rule.AlarmRuleDao;
+import org.thingsboard.server.dao.device.DeviceProfileService;
+import org.thingsboard.server.dao.rule.RuleChainService;
+import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.service.alarm.rule.state.PersistedAlarmState;
+import org.thingsboard.server.service.alarm.rule.state.PersistedEntityState;
+import org.thingsboard.server.service.alarm.rule.store.RedisAlarmRuleEntityStateStore;
 import org.thingsboard.server.service.install.update.DefaultDataUpdateService;
 
 import java.nio.charset.Charset;
@@ -32,8 +56,18 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+
+import static org.thingsboard.server.common.data.DataConstants.ALARM_RULES_NODE_TYPE;
+import static org.thingsboard.server.common.data.DataConstants.DEVICE_PROFILE_NODE_TYPE;
 
 @Service
 @Profile("install")
@@ -52,7 +86,25 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
     private String dbPassword;
 
     @Autowired
+    private TenantService tenantService;
+
+    @Autowired
     private InstallScripts installScripts;
+
+    @Autowired
+    private AlarmRuleDao alarmRuleService;
+
+    @Autowired
+    private Optional<RedisAlarmRuleEntityStateStore> stateStore;
+
+    @Autowired
+    private RuleChainService ruleChainService;
+
+    @Autowired
+    private DbUpgradeExecutorService dbUpgradeExecutor;
+
+    @Autowired
+    private DeviceProfileService deviceProfileService;
 
     @Override
     public void upgradeDatabase(String fromVersion) throws Exception {
@@ -62,8 +114,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                 break;
             case "3.5.1":
                 updateSchema("3.5.1", 3005001, "3.6.0", 3006000, conn -> {
-                    String[] entityNames = new String[]{"device", "component_descriptor", "customer", "dashboard", "rule_chain", "rule_node", "ota_package",
-                            "asset_profile", "asset", "device_profile", "tb_user", "tenant_profile", "tenant", "widgets_bundle", "entity_view", "edge"};
+                    String[] entityNames = new String[]{"device", "component_descriptor", "customer", "dashboard", "rule_chain", "rule_node", "ota_package", "asset_profile", "asset", "device_profile", "tb_user", "tenant_profile", "tenant", "widgets_bundle", "entity_view", "edge"};
                     for (String entityName : entityNames) {
                         try {
                             conn.createStatement().execute("ALTER TABLE " + entityName + " DROP COLUMN search_text CASCADE");
@@ -83,10 +134,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     } catch (Exception e) {
                     }
                     try {
-                        conn.createStatement().execute("UPDATE rule_node SET " +
-                                "configuration = (configuration::jsonb || '{\"updateAttributesOnlyOnValueChange\": \"false\"}'::jsonb)::varchar, " +
-                                "configuration_version = 1 " +
-                                "WHERE type = 'org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode' AND configuration_version < 1;");
+                        conn.createStatement().execute("UPDATE rule_node SET " + "configuration = (configuration::jsonb || '{\"updateAttributesOnlyOnValueChange\": \"false\"}'::jsonb)::varchar, " + "configuration_version = 1 " + "WHERE type = 'org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode' AND configuration_version < 1;");
                     } catch (Exception e) {
                     }
                     try {
@@ -116,7 +164,92 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                 updateSchema("3.6.2", 3006002, "3.6.3", 3006003, null);
                 break;
             case "3.6.3":
-                updateSchema("3.6.3", 3006003, "3.7.0", 3007000, null);
+                updateSchema("3.6.3", 3006003, "3.7.0", 3007000, conn -> {
+                    log.info("Alarm Rules migration ...");
+
+                    List<ListenableFuture<?>> futures = new ArrayList<>();
+                    PageDataIterable<TenantId> tenantIds = new PageDataIterable<>(pageLink -> tenantService.findTenantsIds(pageLink), 1024);
+                    for (TenantId tenantId : tenantIds) {
+                        futures.add(dbUpgradeExecutor.submit(() -> {
+                            PageLink profilePageLink = new PageLink(1000);
+                            PageData<DeviceProfile> profiles;
+                            do {
+                                profiles = deviceProfileService.findDeviceProfilesWithAlarmRules(tenantId, profilePageLink);
+
+                                try {
+                                    RuleChainId rootRuleChainId;
+                                    try {
+                                        rootRuleChainId = Optional.ofNullable(ruleChainService.getRootTenantRuleChain(tenantId)).map(RuleChain::getId).orElse(null);
+                                    } catch (Exception e) {
+                                        rootRuleChainId = null;
+                                    }
+
+                                    for (DeviceProfile deviceProfile : profiles.getData()) {
+                                        Map<String, String> alarmRuleIdMapping = new HashMap<>();
+                                        DeviceProfileId deviceProfileId = deviceProfile.getId();
+                                        for (DeviceProfileAlarm alarm : deviceProfile.getProfileData().getAlarms()) {
+                                            AlarmRule savedRule = alarmRuleService.save(tenantId, AlarmRuleMigrator.migrate(tenantId, deviceProfile, alarm));
+                                            alarmRuleIdMapping.put(alarm.getId(), savedRule.getId().toString());
+                                        }
+
+                                        deviceProfile.getProfileData().setAlarms(null);
+                                        deviceProfileService.saveDeviceProfile(deviceProfile);
+
+                                        RuleChainId ruleChainId = Optional.ofNullable(deviceProfile.getDefaultRuleChainId()).orElse(rootRuleChainId);
+
+                                        if (ruleChainId == null || stateStore.isEmpty()) {
+                                            continue;
+                                        }
+
+                                        List<JsonNode> states = alarmRuleService.findRuleNodeStatesByRuleChainIdAndType(deviceProfileId, ruleChainId, DEVICE_PROFILE_NODE_TYPE);
+                                        states.forEach(stateNode -> {
+                                            Map<String, PersistedAlarmState> alarmStates = new HashMap<>();
+                                            DeviceId deviceId = new DeviceId(UUID.fromString(stateNode.get("entity_id").asText()));
+                                            RuleNodeId ruleNodeId = new RuleNodeId(UUID.fromString(stateNode.get("rule_node_id").asText()));
+                                            boolean debugMode = stateNode.get("debug_mode").asBoolean();
+
+                                            PersistedEntityState persistedEntityState = JacksonUtil.fromString(stateNode.get("state_data").asText(), PersistedEntityState.class);
+                                            persistedEntityState.setTenantId(tenantId);
+                                            persistedEntityState.setEntityId(deviceId);
+
+                                            persistedEntityState.getAlarmStates().forEach((id, alarmState) -> {
+                                                String newId = alarmRuleIdMapping.get(id);
+                                                alarmState.setLastRuleNodeId(ruleNodeId);
+                                                alarmState.setLastRuleChainId(ruleChainId);
+                                                alarmState.setLastRuleNodeDebugMode(debugMode);
+                                                alarmStates.put(newId, alarmState);
+                                            });
+
+                                            persistedEntityState.setAlarmStates(alarmStates);
+
+                                            stateStore.get().put(persistedEntityState);
+                                        });
+                                    }
+                                } catch (Exception e) {
+                                    log.warn("Failed to migrate AlarmRules or Persisted States!", e);
+                                }
+                            } while (profiles.hasNext());
+                        }));
+                    }
+
+                    try {
+                        Futures.allAsList(futures).get();
+                    } catch (InterruptedException | ExecutionException e) {
+                        log.warn("Failed to await rules migration!!!", e);
+                    }
+
+                    log.info("Updating device profile nodes...");
+
+                    try {
+                        conn.createStatement().execute(String.format("UPDATE rule_node rn SET type = '%s' WHERE rn.type = '%s';", ALARM_RULES_NODE_TYPE, DEVICE_PROFILE_NODE_TYPE));
+                    } catch (Exception e) {
+                    }
+
+                    try {
+                        conn.createStatement().execute("DROP TABLE IF EXISTS rule_node_state;");
+                    } catch (Exception e) {
+                    }
+                });
                 break;
             default:
                 throw new RuntimeException("Unable to upgrade SQL database, unsupported fromVersion: " + fromVersion);

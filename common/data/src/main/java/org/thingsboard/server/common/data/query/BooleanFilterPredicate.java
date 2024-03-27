@@ -28,6 +28,11 @@ public class BooleanFilterPredicate implements SimpleKeyFilterPredicate<Boolean>
         return FilterPredicateType.BOOLEAN;
     }
 
+    @Override
+    public String getOperationName() {
+        return operation.name();
+    }
+
     public enum BooleanOperation {
         EQUAL,
         NOT_EQUAL

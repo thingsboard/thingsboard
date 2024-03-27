@@ -37,8 +37,10 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.dao.alarm.AlarmService;
+import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
@@ -74,13 +76,17 @@ public class DefaultTbAlarmServiceTest {
     @MockBean
     protected AlarmService alarmService;
     @MockBean
-    protected TbAlarmCommentService alarmCommentService;
+    protected TbAlarmCommentService tbAlarmCommentService;
+    @MockBean
+    protected AlarmCommentService alarmCommentService;
     @MockBean
     protected AlarmSubscriptionService alarmSubscriptionService;
     @MockBean
     protected CustomerService customerService;
     @MockBean
     protected TbClusterService tbClusterService;
+    @MockBean
+    protected AlarmRuleService alarmRuleService;
     @MockBean
     private EntitiesVersionControlService vcService;
     @SpyBean
@@ -107,7 +113,7 @@ public class DefaultTbAlarmServiceTest {
                 .thenReturn(AlarmApiCallResult.builder().successful(true).modified(true).alarm(new AlarmInfo()).build());
         service.ack(alarm, new User(new UserId(UUID.randomUUID())));
 
-        verify(alarmCommentService, times(1)).saveAlarmComment(any(), any(), any());
+        verify(tbAlarmCommentService, times(1)).saveAlarmComment(any(), any(), any());
         verify(logEntityActionService, times(1)).logEntityAction(any(), any(), any(), any(), eq(ActionType.ALARM_ACK), any());
         verify(alarmSubscriptionService, times(1)).acknowledgeAlarm(any(), any(), anyLong());
     }
@@ -120,7 +126,7 @@ public class DefaultTbAlarmServiceTest {
                 .thenReturn(AlarmApiCallResult.builder().successful(true).cleared(true).alarm(new AlarmInfo()).build());
         service.clear(alarm, new User(new UserId(UUID.randomUUID())));
 
-        verify(alarmCommentService, times(1)).saveAlarmComment(any(), any(), any());
+        verify(tbAlarmCommentService, times(1)).saveAlarmComment(any(), any(), any());
         verify(logEntityActionService, times(1)).logEntityAction(any(), any(), any(), any(), eq(ActionType.ALARM_CLEAR), any());
         verify(alarmSubscriptionService, times(1)).clearAlarm(any(), any(), anyLong(), any());
     }
@@ -155,7 +161,7 @@ public class DefaultTbAlarmServiceTest {
                 .comment(commentNode)
                 .build();
 
-        verify(alarmCommentService, times(1))
+        verify(tbAlarmCommentService, times(1))
                 .saveAlarmComment(eq(alarm), eq(expectedAlarmComment), eq(user));
     }
 
@@ -184,7 +190,7 @@ public class DefaultTbAlarmServiceTest {
                 .comment(commentNode)
                 .build();
 
-        verify(alarmCommentService, times(1))
+        verify(tbAlarmCommentService, times(1))
                 .saveAlarmComment(eq(alarm), eq(expectedAlarmComment), eq(null));
     }
 

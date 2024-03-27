@@ -16,6 +16,7 @@
 package org.thingsboard.server.queue.provider;
 
 import com.google.protobuf.util.JsonFormat;
+import jakarta.annotation.PreDestroy;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
@@ -33,8 +34,8 @@ import org.thingsboard.server.queue.TbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.DefaultTbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.TbProtoJsQueueMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
 import org.thingsboard.server.queue.settings.TbQueueRemoteJsInvokeSettings;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
@@ -45,7 +46,6 @@ import org.thingsboard.server.queue.sqs.TbAwsSqsProducerTemplate;
 import org.thingsboard.server.queue.sqs.TbAwsSqsQueueAttributes;
 import org.thingsboard.server.queue.sqs.TbAwsSqsSettings;
 
-import jakarta.annotation.PreDestroy;
 import java.nio.charset.StandardCharsets;
 
 @Component
@@ -158,7 +158,6 @@ public class AwsSqsTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory 
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToOtaPackageStateServiceMsg>> createToOtaPackageStateServiceMsgProducer() {
         return new TbAwsSqsProducerTemplate<>(otaAdmin, sqsSettings, topicService.buildTopicName(coreSettings.getOtaPackageTopic()));
     }
-
 
     @PreDestroy
     private void destroy() {

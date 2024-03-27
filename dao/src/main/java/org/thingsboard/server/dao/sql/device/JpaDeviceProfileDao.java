@@ -130,6 +130,14 @@ public class JpaDeviceProfileDao extends JpaAbstractDao<DeviceProfileEntity, Dev
     }
 
     @Override
+    public PageData<DeviceProfile> findDeviceProfilesWithAlarmRules(TenantId tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(
+                deviceProfileRepository.findDeviceProfilesWIthAlarmRules(
+                        tenantId.getId(),
+                        DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
     public DeviceProfile findByTenantIdAndExternalId(UUID tenantId, UUID externalId) {
         return DaoUtil.getData(deviceProfileRepository.findByTenantIdAndExternalId(tenantId, externalId));
     }

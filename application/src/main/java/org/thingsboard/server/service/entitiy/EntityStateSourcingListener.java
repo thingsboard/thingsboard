@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.id.AlarmRuleId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -115,6 +116,9 @@ public class EntityStateSourcingListener {
                 ApiUsageState apiUsageState = (ApiUsageState) event.getEntity();
                 tbClusterService.onApiStateChange(apiUsageState, null);
                 break;
+            case ALARM_RULE:
+                tbClusterService.onAlarmRuleChange(event.getTenantId(), (AlarmRuleId) event.getEntityId(), lifecycleEvent);
+                break;
             default:
                 break;
         }
@@ -145,7 +149,8 @@ public class EntityStateSourcingListener {
             case RULE_CHAIN:
                 RuleChain ruleChain = (RuleChain) event.getEntity();
                 if (RuleChainType.CORE.equals(ruleChain.getType())) {
-                    Set<RuleChainId> referencingRuleChainIds = JacksonUtil.fromString(event.getBody(), new TypeReference<>() {});
+                    Set<RuleChainId> referencingRuleChainIds = JacksonUtil.fromString(event.getBody(), new TypeReference<>() {
+                    });
                     if (referencingRuleChainIds != null) {
                         referencingRuleChainIds.forEach(referencingRuleChainId ->
                                 tbClusterService.broadcastEntityStateChangeEvent(tenantId, referencingRuleChainId, ComponentLifecycleEvent.UPDATED));
@@ -172,6 +177,9 @@ public class EntityStateSourcingListener {
             case TB_RESOURCE:
                 TbResourceInfo tbResource = (TbResourceInfo) event.getEntity();
                 tbClusterService.onResourceDeleted(tbResource, null);
+                break;
+            case ALARM_RULE:
+                tbClusterService.onAlarmRuleChange(event.getTenantId(), (AlarmRuleId) event.getEntityId(), ComponentLifecycleEvent.DELETED);
                 break;
             default:
                 break;

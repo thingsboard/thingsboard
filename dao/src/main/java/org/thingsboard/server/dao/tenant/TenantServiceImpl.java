@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
@@ -133,6 +134,9 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
 
     @Autowired
     private AdminSettingsService adminSettingsService;
+
+    @Autowired
+    private AlarmRuleService alarmRuleService;
 
     @Autowired
     private NotificationSettingsService notificationSettingsService;
@@ -253,6 +257,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         notificationTargetService.deleteNotificationTargetsByTenantId(tenantId);
         notificationSettingsService.deleteNotificationSettings(tenantId);
         adminSettingsService.deleteAdminSettingsByTenantId(tenantId);
+        alarmRuleService.deleteAlarmRulesByTenantId(tenantId);
         tenantDao.removeById(tenantId, tenantId.getId());
         publishEvictEvent(new TenantEvictEvent(tenantId, true));
         eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId)

@@ -35,4 +35,7 @@ public interface KeyFilterPredicate extends Serializable {
     @JsonIgnore
     FilterPredicateType getType();
 
+    @JsonIgnore
+    String getOperationName();
+
 }

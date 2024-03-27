@@ -18,12 +18,12 @@ package org.thingsboard.server.cluster;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.id.AlarmRuleId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -42,6 +42,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToVersionControlServ
 import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueClusterService;
 
+import java.util.Set;
 import java.util.UUID;
 
 public interface TbClusterService extends TbQueueClusterService {
@@ -61,6 +62,8 @@ public interface TbClusterService extends TbQueueClusterService {
     void pushMsgToRuleEngine(TopicPartitionInfo tpi, UUID msgId, ToRuleEngineMsg msg, TbQueueCallback callback);
 
     void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, TbMsg msg, TbQueueCallback callback);
+
+    void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, TbMsg tbMsg, Set<String> relations, TbQueueCallback callback);
 
     void pushNotificationToRuleEngine(String targetServiceId, FromDeviceRpcResponse response, TbQueueCallback callback);
 
@@ -100,4 +103,5 @@ public interface TbClusterService extends TbQueueClusterService {
 
     void sendNotificationMsgToEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, EdgeEventActionType action, EdgeId sourceEdgeId);
 
+    void onAlarmRuleChange(TenantId tenantId, AlarmRuleId alarmRuleId, ComponentLifecycleEvent event);
 }

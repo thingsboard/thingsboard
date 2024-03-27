@@ -20,10 +20,14 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileSaveResult;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
+import org.thingsboard.server.common.data.util.CollectionsUtil;
+import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
@@ -34,6 +38,7 @@ import org.thingsboard.server.service.sync.vc.data.EntitiesImportCtx;
 public class DeviceProfileImportService extends BaseEntityImportService<DeviceProfileId, DeviceProfile, EntityExportData<DeviceProfile>> {
 
     private final DeviceProfileService deviceProfileService;
+    private final AlarmRuleService alarmRuleService;
 
     @Override
     protected void setOwner(TenantId tenantId, DeviceProfile deviceProfile, IdProvider idProvider) {
@@ -52,7 +57,19 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
 
     @Override
     protected DeviceProfile saveOrUpdate(EntitiesImportCtx ctx, DeviceProfile deviceProfile, EntityExportData<DeviceProfile> exportData, IdProvider idProvider) {
-        return deviceProfileService.saveDeviceProfile(deviceProfile);
+        DeviceProfileSaveResult deviceProfileResult = deviceProfileService.saveDeviceProfileWithAlarmRules(deviceProfile);
+        TenantId tenantId = ctx.getTenantId();
+        var alarmRulePairs = deviceProfileResult.alarmRulePairs();
+        if (CollectionsUtil.isNotEmpty(alarmRulePairs)) {
+            alarmRulePairs.forEach(pair -> {
+                AlarmRule alarmRule = pair.getFirst();
+                Boolean created = pair.getSecond();
+                ActionType actionType = created ? ActionType.ADDED : ActionType.UPDATED;
+                ctx.registerResult(EntityType.ALARM_RULE, created);
+                ctx.addEventCallback(() -> logEntityActionService.logEntityAction(tenantId, alarmRule.getId(), alarmRule, null, actionType, ctx.getUser()));
+            });
+        }
+        return deviceProfileResult.deviceProfile();
     }
 
     @Override

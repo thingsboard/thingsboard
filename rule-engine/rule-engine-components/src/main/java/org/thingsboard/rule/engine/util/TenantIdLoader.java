@@ -19,6 +19,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.AlarmRuleId;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
@@ -140,6 +141,9 @@ public class TenantIdLoader {
                 return ctxTenantId;
             case NOTIFICATION_RULE:
                 tenantEntity = ctx.getNotificationRuleService().findNotificationRuleById(ctxTenantId, new NotificationRuleId(id));
+                break;
+            case ALARM_RULE:
+                tenantEntity = ctx.getAlarmRuleService().findAlarmRuleById(ctxTenantId, new AlarmRuleId(id));
                 break;
             default:
                 throw new RuntimeException("Unexpected entity type: " + entityId.getEntityType());
