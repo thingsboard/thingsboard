@@ -47,8 +47,10 @@ import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityDataSortOrder;
+import org.thingsboard.server.common.data.query.EntityFilterType;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
+import org.thingsboard.server.common.data.query.EntityListFilter;
 import org.thingsboard.server.common.data.query.FilterPredicateType;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.KeyFilterPredicate;
@@ -62,7 +64,6 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.subscription.TbAttributeSubscriptionScope;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -114,7 +115,41 @@ public class DefaultEntityQueryService implements EntityQueryService {
                     securityUser
             );
         }
-        return entityService.findEntityDataByQuery(securityUser.getTenantId(), securityUser.getCustomerId(), query);
+        if (EntityFilterType.RELATIONS_QUERY.equals(query.getEntityFilter().getType())) {
+            return entityService.findEntityDataByQuery(securityUser.getTenantId(), securityUser.getCustomerId(), query);
+        }
+
+        List<EntityKey> entityFields = null;
+        List<EntityKey> latestValues = null;
+        if (query.getPageLink().getSortOrder() != null) {
+            if (query.getEntityFields() != null) {
+                entityFields = query.getEntityFields().stream()
+                        .filter(entityKey -> entityKey.getKey().equals(query.getPageLink().getSortOrder().getKey().getKey()))
+                        .collect(Collectors.toList());
+            }
+            if (query.getLatestValues() != null) {
+                latestValues = query.getLatestValues().stream()
+                        .filter(entityKey -> entityKey.getKey().equals(query.getPageLink().getSortOrder().getKey().getKey()))
+                        .collect(Collectors.toList());
+            }
+        }
+        EntityDataQuery entityQuery = new EntityDataQuery(query.getEntityFilter(), query.getPageLink(), entityFields, latestValues, query.getKeyFilters());
+        PageData<EntityData> entityDataByQuery = entityService.findEntityDataByQuery(securityUser.getTenantId(), securityUser.getCustomerId(), entityQuery);
+        if (entityDataByQuery == null) {
+            return null;
+        }
+        List<EntityData> dataList = entityDataByQuery.getData();
+        List<String> entityIds = dataList.stream().map(data -> data.getEntityId().getId().toString()).toList();
+        EntityType entityType = dataList.isEmpty() ? null : dataList.get(0).getEntityId().getEntityType();
+
+        EntityListFilter filter = new EntityListFilter();
+        filter.setEntityType(entityType);
+        filter.setEntityList(entityIds);
+
+        EntityDataPageLink entityDataPageLink = new EntityDataPageLink(query.getPageLink().getPageSize(), 0, query.getPageLink().getTextSearch(), query.getPageLink().getSortOrder());
+        EntityDataQuery entityListDataQuery = new EntityDataQuery(filter, entityDataPageLink, query.getEntityFields(), query.getLatestValues(), null);
+        PageData<EntityData> result = entityService.findEntityDataByQuery(securityUser.getTenantId(), securityUser.getCustomerId(), entityListDataQuery);
+        return new PageData<>(result.getData(), entityDataByQuery.getTotalPages(), entityDataByQuery.getTotalElements(), entityDataByQuery.hasNext());
     }
 
     private void resolveDynamicValuesInPredicates(List<KeyFilterPredicate> predicates, SecurityUser user) {
