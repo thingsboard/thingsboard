@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -33,7 +33,8 @@ class DeviceApiControllerTest {
     void deviceAuthCallbackTest() {
         TransportContext transportContext = Mockito.mock(TransportContext.class);
         DeferredResult<ResponseEntity> responseWriter = Mockito.mock(DeferredResult.class);
-        Consumer<TransportProtos.SessionInfoProto> onSuccess = x -> {};
+        Consumer<TransportProtos.SessionInfoProto> onSuccess = x -> {
+        };
         var callback = new DeviceApiController.DeviceAuthCallback(transportContext, responseWriter, onSuccess);
 
         callback.onError(new HttpMessageNotReadableException("JSON incorrect syntax"));
@@ -59,23 +60,23 @@ class DeviceApiControllerTest {
         callback.onError(new RuntimeException("oops it is run time error"));
     }
 
-@Test
+    @Test
     void getOtaPackageCallback() {
-          TransportContext transportContext = Mockito.mock(TransportContext.class);
-          DeferredResult<ResponseEntity> responseWriter = Mockito.mock(DeferredResult.class);
-          String title = "Title";
-          String version = "version";
-          int chuckSize = 11;
-          int chuck = 3;
+        TransportContext transportContext = Mockito.mock(TransportContext.class);
+        DeferredResult<ResponseEntity> responseWriter = Mockito.mock(DeferredResult.class);
+        String title = "Title";
+        String version = "version";
+        int chunkSize = 11;
+        int chunk = 3;
 
-          var callback = new DeviceApiController.GetOtaPackageCallback(transportContext, responseWriter, title, version, chuckSize, chuck);
+        var callback = new DeviceApiController.GetOtaPackageCallback(transportContext, responseWriter, title, version, chunkSize, chunk);
 
-          callback.onError(new HttpMessageNotReadableException("JSON incorrect syntax"));
+        callback.onError(new HttpMessageNotReadableException("JSON incorrect syntax"));
 
-          callback.onError(new JsonParseException("Json ; expected"));
+        callback.onError(new JsonParseException("Json ; expected"));
 
-          callback.onError(new IOException("not found"));
+        callback.onError(new IOException("not found"));
 
-          callback.onError(new RuntimeException("oops it is run time error"));
+        callback.onError(new RuntimeException("oops it is run time error"));
     }
 }

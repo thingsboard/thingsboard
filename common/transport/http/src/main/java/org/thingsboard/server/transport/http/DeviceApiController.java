@@ -431,21 +431,16 @@ public class DeviceApiController implements TbTransportService {
                             .setDeviceIdMSB(sessionInfo.getDeviceIdMSB())
                             .setDeviceIdLSB(sessionInfo.getDeviceIdLSB())
                             .setType(firmwareType.name()).build();
-                    transportContext.getTransportService().process(sessionInfo, requestMsg, new GetOtaPackageCallback(transportContext,responseWriter, title, version, size, chunk));
+                    transportContext.getTransportService().process(sessionInfo, requestMsg, new GetOtaPackageCallback(transportContext, responseWriter, title, version, size, chunk));
                 }));
         return responseWriter;
     }
 
+    @RequiredArgsConstructor
     static class DeviceAuthCallback implements TransportServiceCallback<ValidateDeviceCredentialsResponse> {
         private final TransportContext transportContext;
         private final DeferredResult<ResponseEntity> responseWriter;
         private final Consumer<SessionInfoProto> onSuccess;
-
-        DeviceAuthCallback(TransportContext transportContext, DeferredResult<ResponseEntity> responseWriter, Consumer<SessionInfoProto> onSuccess) {
-            this.transportContext = transportContext;
-            this.responseWriter = responseWriter;
-            this.onSuccess = onSuccess;
-        }
 
         @Override
         public void onSuccess(ValidateDeviceCredentialsResponse msg) {
@@ -469,12 +464,9 @@ public class DeviceApiController implements TbTransportService {
         }
     }
 
+    @RequiredArgsConstructor
     static class DeviceProvisionCallback implements TransportServiceCallback<ProvisionDeviceResponseMsg> {
         private final DeferredResult<ResponseEntity> responseWriter;
-
-        DeviceProvisionCallback(DeferredResult<ResponseEntity> responseWriter) {
-            this.responseWriter = responseWriter;
-        }
 
         @Override
         public void onSuccess(ProvisionDeviceResponseMsg msg) {
@@ -494,22 +486,14 @@ public class DeviceApiController implements TbTransportService {
         }
     }
 
+    @RequiredArgsConstructor
     static class GetOtaPackageCallback implements TransportServiceCallback<TransportProtos.GetOtaPackageResponseMsg> {
         private final TransportContext transportContext;
         private final DeferredResult<ResponseEntity> responseWriter;
         private final String title;
         private final String version;
-        private final int chuckSize;
-        private final int chuck;
-
-        GetOtaPackageCallback(TransportContext transportContext, DeferredResult<ResponseEntity> responseWriter, String title, String version, int chuckSize, int chuck) {
-            this.transportContext = transportContext;
-            this.responseWriter = responseWriter;
-            this.title = title;
-            this.version = version;
-            this.chuckSize = chuckSize;
-            this.chuck = chuck;
-        }
+        private final int chunkSize;
+        private final int chunk;
 
         @Override
         public void onSuccess(TransportProtos.GetOtaPackageResponseMsg otaPackageResponseMsg) {
@@ -517,7 +501,7 @@ public class DeviceApiController implements TbTransportService {
                 responseWriter.setResult(new ResponseEntity<>(HttpStatus.NOT_FOUND));
             } else if (title.equals(otaPackageResponseMsg.getTitle()) && version.equals(otaPackageResponseMsg.getVersion())) {
                 String otaPackageId = new UUID(otaPackageResponseMsg.getOtaPackageIdMSB(), otaPackageResponseMsg.getOtaPackageIdLSB()).toString();
-                ByteArrayResource resource = new ByteArrayResource(transportContext.getOtaPackageDataCache().get(otaPackageId, chuckSize, chuck));
+                ByteArrayResource resource = new ByteArrayResource(transportContext.getOtaPackageDataCache().get(otaPackageId, chunkSize, chunk));
                 ResponseEntity<ByteArrayResource> response = ResponseEntity.ok()
                         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + otaPackageResponseMsg.getFileName())
                         .header("x-filename", otaPackageResponseMsg.getFileName())
