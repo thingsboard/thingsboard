@@ -1,0 +1,539 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form [formGroup]="mappingForm" (ngSubmit)="add()">
+  <mat-toolbar color="primary">
+    <h2>{{ MappingTypeTranslationsMap.get(this.data?.mappingType) | translate}}</h2>
+    <span fxFlex></span>
+    <div [tb-help]="helpLinkId()"></div>
+    <button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+  </mat-progress-bar>
+  <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
+  <div mat-dialog-content>
+    <fieldset [disabled]="isLoading$ | async" class="tb-form-panel no-border no-padding" fxLayout="column">
+      <div class="tb-form-hint tb-primary-fill">
+        {{ MappingHintTranslationsMap.get(this.data?.mappingType) | translate }}
+      </div>
+      <ng-container [ngSwitch]="data.mappingType">
+        <ng-template [ngSwitchCase]="MappingTypes.DATA">
+          <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+            <div class="fixed-title-width tb-required" translate>gateway.topic-filter</div>
+            <div class="tb-flex no-gap">
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput name="value" formControlName="topicFilter" placeholder="{{ 'gateway.set' | translate }}"/>
+                <mat-icon matSuffix
+                          matTooltipPosition="above"
+                          matTooltipClass="tb-error-tooltip"
+                          [matTooltip]="('gateway.topic-required') | translate"
+                          *ngIf="mappingForm.get('topicFilter').hasError('required') && mappingForm.get('topicFilter').touched"
+                          class="tb-error">
+                  warning
+                </mat-icon>
+              </mat-form-field>
+            </div>
+          </div>
+          <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+            <div class="fixed-title-width" translate>gateway.mqtt-qos</div>
+            <div class="tb-flex no-gap">
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <mat-select formControlName="subscriptionQos">
+                  <mat-option *ngFor="let type of qualityTypes" [value]="type">
+                    {{ QualityTranslationsMap.get(type) | translate }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </div>
+          <ng-container formGroupName="converter">
+            <div class="tb-form-panel stroked">
+              <div class="tb-flex row space-between align-center no-gap fill-width">
+                <div class="tb-form-panel-title" translate>gateway.converter</div>
+                <tb-toggle-select formControlName="type" appearance="fill">
+                  <tb-toggle-option *ngFor="let type of convertorTypes" [value]="type">
+                    {{ ConvertorTypeTranslationsMap.get(type) | translate }}
+                  </tb-toggle-option>
+                </tb-toggle-select>
+              </div>
+              <ng-container [formGroupName]="converterType" [ngSwitch]="converterType">
+                <ng-template [ngSwitchCase]="ConvertorTypes.JSON">
+                  <tb-device-info-table formControlName="deviceInfo" deviceInfoType="full">
+                  </tb-device-info-table>
+                </ng-template>
+                <ng-template [ngSwitchCase]="ConvertorTypes.BYTES">
+                  <tb-device-info-table formControlName="deviceInfo" deviceInfoType="full" useSource="false">
+                  </tb-device-info-table>
+                </ng-template>
+                <div class="tb-form-panel no-border no-padding"
+                     *ngIf="converterType === ConvertorTypes.BYTES || converterType === ConvertorTypes.JSON">
+                  <div class="tb-form-row space-between tb-flex">
+                    <div class="fixed-title-width" translate>gateway.attributes</div>
+                    <div class="tb-flex">
+                      <mat-chip-listbox class="tb-flex">
+                          <mat-chip *ngFor="let attribute of converterAttributes">
+                            {{ attribute.key }}
+                          </mat-chip>
+                      </mat-chip-listbox>
+                      <button type="button"
+                              mat-icon-button
+                              color="primary"
+                              #attributesButton
+                              (click)="manageKeys($event, attributesButton, MappingKeysType.ATTRIBUTES)">
+                        <tb-icon matButtonIcon>edit</tb-icon>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="tb-form-row space-between tb-flex">
+                    <div class="fixed-title-width" translate>gateway.telemetry</div>
+                    <div class="tb-flex">
+                      <mat-chip-listbox class="tb-flex">
+                        <mat-chip *ngFor="let telemetry of converterTelemetry">
+                          {{ telemetry.key }}
+                        </mat-chip>
+                      </mat-chip-listbox>
+                      <button type="button"
+                              mat-icon-button
+                              color="primary"
+                              #telemetryButton
+                              (click)="manageKeys($event, telemetryButton, MappingKeysType.TIMESERIES)">
+                        <tb-icon matButtonIcon>edit</tb-icon>
+                      </button>
+                      <!--              [disabled]="disabled"-->
+                    </div>
+                  </div>
+                </div>
+    <!--            </ng-template>-->
+    <!--            <ng-template *ngIf="converterType === ConvertorTypes.CUSTOM">-->
+                <div class="tb-form-panel no-border no-padding" *ngIf="converterType === ConvertorTypes.CUSTOM">
+                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <!--        showMappingField('topicFilter')-->
+                    <div class="fixed-title-width" translate>gateway.extension</div>
+                    <div class="tb-flex no-gap">
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <input matInput name="value" formControlName="extension" placeholder="{{ 'gateway.set' | translate }}"/>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                  <div class="tb-form-row space-between same-padding tb-flex column">
+                    <div class="tb-form-panel-title" translate>gateway.extension-configuration</div>
+                    <div class="tb-form-hint tb-primary-fill">{{ 'gateway.extension-configuration-hint' | translate }}</div>
+                    <div class="tb-form-row space-between tb-flex">
+                      <div class="fixed-title-width" translate>gateway.keys</div>
+                      <div class="tb-flex">
+                        <mat-chip-listbox class="tb-flex">
+                          <mat-chip *ngFor="let telemetry of customKeys | keyvalue">
+                            {{ telemetry.key }}
+                          </mat-chip>
+                        </mat-chip-listbox>
+                        <button type="button"
+                                mat-icon-button
+                                color="primary"
+                                #keysButton
+                                (click)="manageKeys($event, keysButton, MappingKeysType.CUSTOM)">
+                          <tb-icon matButtonIcon>edit</tb-icon>
+                        </button>
+                        <!--              [disabled]="disabled"-->
+                      </div>
+                    </div>
+                  </div>
+                </div>
+    <!--            </ng-template>-->
+              </ng-container>
+            </div>
+          </ng-container>
+        </ng-template>
+        <ng-template [ngSwitchCase]="MappingTypes.REQUESTS">
+            <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+              <!--        showMappingField('QoS')-->
+              <div class="fixed-title-width" translate>gateway.request-type</div>
+              <div class="tb-flex no-gap">
+                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                  <mat-select formControlName="requestType">
+                    <mat-option *ngFor="let type of requestTypes" [value]="type">
+                      {{ RequestTypesTranslationsMap.get(type) | translate }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </div>
+            <ng-container formGroupName="requestValue">
+              <ng-container [formGroupName]="requestMappingType" [ngSwitch]="requestMappingType">
+                <div class="tb-form-row column-xs" fxLayoutAlign="space-between center"
+                     *ngIf="requestMappingType === RequestTypes.ATTRIBUTE_REQUEST ||
+                            requestMappingType === RequestTypes.CONNECT_REQUEST ||
+                            requestMappingType === RequestTypes.DISCONNECT_REQUEST">
+                  <!--        showMappingField('topicFilter')-->
+                  <div class="fixed-title-width tb-required" translate>gateway.topic-filter</div>
+                  <div class="tb-flex no-gap">
+                    <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                      <input matInput name="value" [formControl]="mappingForm.get('requestValue').get(requestMappingType).get('topicFilter')"
+                             placeholder="{{ 'gateway.set' | translate }}"/>
+                      <mat-icon matSuffix
+                                matTooltipPosition="above"
+                                matTooltipClass="tb-error-tooltip"
+                                [matTooltip]="('gateway.topic-required') | translate"
+                                *ngIf="mappingForm.get('requestValue').get(requestMappingType).get('topicFilter').hasError('required') &&
+                                       mappingForm.get('requestValue').get(requestMappingType).get('topicFilter').touched"
+                                class="tb-error">
+                        warning
+                      </mat-icon>
+                    </mat-form-field>
+                  </div>
+                </div>
+                <ng-template [ngSwitchCase]="RequestTypes.CONNECT_REQUEST">
+                  <tb-device-info-table formControlName="deviceInfo" deviceInfoType="full">
+                  </tb-device-info-table>
+                </ng-template>
+                <ng-template [ngSwitchCase]="RequestTypes.DISCONNECT_REQUEST">
+                  <tb-device-info-table formControlName="deviceInfo" deviceInfoType="partial">
+                  </tb-device-info-table>
+                </ng-template>
+                <ng-template [ngSwitchCase]="RequestTypes.ATTRIBUTE_REQUEST">
+                  <div class="tb-form-panel stroked">
+                    <div class="tb-form-panel-title tb-required" translate>gateway.from-device-request-settings</div>
+                    <tb-device-info-table formControlName="deviceInfo" deviceInfoType="partial" required="true">
+                    </tb-device-info-table>
+                    <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                      <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.attribute-name-expression-hint' | translate }}" translate>
+                        gateway.attribute-name-expression
+                      </div>
+                      <div class="tb-flex">
+                        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                          <mat-select formControlName="attributeNameExpressionSource">
+                            <mat-option *ngFor="let type of sourceTypes" [value]="type">
+                              {{ SourceTypeTranslationsMap.get(type) | translate }}
+                            </mat-option>
+                          </mat-select>
+                        </mat-form-field>
+                        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                          <input matInput name="value" formControlName="attributeNameExpression" placeholder="{{ 'gateway.set' | translate }}"/>
+                          <mat-icon matSuffix
+                                    matTooltipPosition="above"
+                                    matTooltipClass="tb-error-tooltip"
+                                    [matTooltip]="('gateway.attribute-name-expression-required') | translate"
+                                    *ngIf="mappingForm.get('requestValue.attributeRequests.attributeNameExpression').hasError('required') &&
+                                           mappingForm.get('requestValue.attributeRequests.attributeNameExpression').touched"
+                                    class="tb-error">
+                            warning
+                          </mat-icon>
+                        </mat-form-field>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="tb-form-panel stroked">
+                    <div class="tb-form-panel-title tb-required" translate>gateway.to-device-response-settings</div>
+                    <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                      <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.response-topic-expression-hint' | translate }}" translate>
+                        gateway.response-topic-expression
+                      </div>
+                      <div class="tb-flex no-gap">
+                        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                          <input matInput name="value" formControlName="topicExpression" placeholder="{{ 'gateway.set' | translate }}"/>
+                          <mat-icon matSuffix
+                                    matTooltipPosition="above"
+                                    matTooltipClass="tb-error-tooltip"
+                                    [matTooltip]="('gateway.response-topic-expression-required') | translate"
+                                    *ngIf="mappingForm.get('requestValue.attributeRequests.topicExpression').hasError('required') &&
+                                           mappingForm.get('requestValue.attributeRequests.topicExpression').touched"
+                                    class="tb-error">
+                            warning
+                          </mat-icon>
+                        </mat-form-field>
+                      </div>
+                    </div>
+                    <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="retain">
+                        <mat-label tb-hint-tooltip-icon="{{ 'gateway.retain-hint' | translate }}">
+                          {{ 'gateway.retain' | translate }}
+                        </mat-label>
+                      </mat-slide-toggle>
+                    </div>
+                    <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                      <!--        showMappingField('QoS')-->
+                      <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.response-value-expression-hint' | translate }}" translate>
+                        gateway.response-value-expression
+                      </div>
+                      <div class="tb-flex no-gap">
+                        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                          <input matInput name="value" formControlName="valueExpression" placeholder="{{ 'gateway.set' | translate }}"/>
+                          <mat-icon matSuffix
+                                    matTooltipPosition="above"
+                                    matTooltipClass="tb-error-tooltip"
+                                    [matTooltip]="('gateway.response-value-expression-required') | translate"
+                                    *ngIf="mappingForm.get('requestValue.attributeRequests.valueExpression').hasError('required') &&
+                                           mappingForm.get('requestValue.attributeRequests.valueExpression').touched"
+                                    class="tb-error">
+                            warning
+                          </mat-icon>
+                        </mat-form-field>
+                      </div>
+                    </div>
+                  </div>
+                </ng-template>
+                <ng-template [ngSwitchCase]="RequestTypes.ATTRIBUTE_UPDATE">
+                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <!--        showMappingField('QoS')-->
+                    <div class="fixed-title-width tb-required" translate>gateway.device-name-filter</div>
+                    <div class="tb-flex no-gap">
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <input matInput name="value" formControlName="deviceNameFilter" placeholder="{{ 'gateway.set' | translate }}"/>
+                        <mat-icon matSuffix
+                                  matTooltipPosition="above"
+                                  matTooltipClass="tb-error-tooltip"
+                                  [matTooltip]="('gateway.device-name-filter-required') | translate"
+                                  *ngIf="mappingForm.get('requestValue.attributeUpdates.deviceNameFilter').hasError('required') &&
+                                           mappingForm.get('requestValue.attributeUpdates.deviceNameFilter').touched"
+                                  class="tb-error">
+                          warning
+                        </mat-icon>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <!--        showMappingField('QoS')-->
+                    <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.attribute-filter-hint' | translate }}" translate>
+                      gateway.attribute-filter
+                    </div>
+                    <div class="tb-flex no-gap">
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <input matInput name="value" formControlName="attributeFilter" placeholder="{{ 'gateway.set' | translate }}"/>
+                        <mat-icon matSuffix
+                                  matTooltipPosition="above"
+                                  matTooltipClass="tb-error-tooltip"
+                                  [matTooltip]="('gateway.attribute-filter-required') | translate"
+                                  *ngIf="mappingForm.get('requestValue.attributeUpdates.attributeFilter').hasError('required') &&
+                                           mappingForm.get('requestValue.attributeUpdates.attributeFilter').touched"
+                                  class="tb-error">
+                          warning
+                        </mat-icon>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <!--        showMappingField('QoS')-->
+                    <div class="fixed-title-width" translate>gateway.response-topic-expression</div>
+                    <div class="tb-flex no-gap">
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <input matInput name="value" formControlName="topicExpression" placeholder="{{ 'gateway.set' | translate }}"/>
+                        <mat-icon matSuffix
+                                  matTooltipPosition="above"
+                                  matTooltipClass="tb-error-tooltip"
+                                  [matTooltip]="('gateway.response-topic-expression-required') | translate"
+                                  *ngIf="mappingForm.get('requestValue.attributeRequests.topicExpression').hasError('required') &&
+                                           mappingForm.get('requestValue.attributeRequests.topicExpression').touched"
+                                  class="tb-error">
+                          warning
+                        </mat-icon>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="retain">
+                      <mat-label tb-hint-tooltip-icon="{{ 'gateway.retain-hint' | translate }}">
+                        {{ 'gateway.retain' | translate }}
+                      </mat-label>
+                    </mat-slide-toggle>
+                  </div>
+                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <!--        showMappingField('QoS')-->
+                    <div class="fixed-title-width" translate>gateway.response-value-expression</div>
+                    <div class="tb-flex no-gap">
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <input matInput name="value" formControlName="valueExpression" placeholder="{{ 'gateway.set' | translate }}"/>
+                        <mat-icon matSuffix
+                                  matTooltipPosition="above"
+                                  matTooltipClass="tb-error-tooltip"
+                                  [matTooltip]="('gateway.response-value-expression-required') | translate"
+                                  *ngIf="mappingForm.get('requestValue.attributeRequests.valueExpression').hasError('required') &&
+                                           mappingForm.get('requestValue.attributeRequests.valueExpression').touched"
+                                  class="tb-error">
+                          warning
+                        </mat-icon>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                </ng-template>
+                <ng-template [ngSwitchCase]="RequestTypes.SERVER_SIDE_RPC">
+                  <div class="tb-flex row center align-center no-gap fill-width">
+                    <tb-toggle-select formControlName="type" appearance="fill">
+                      <tb-toggle-option [value]="ServerSideRPCType.TWO_WAY">
+                        {{ 'gateway.with-response' | translate }}
+                      </tb-toggle-option>
+                      <tb-toggle-option [value]="ServerSideRPCType.ONE_WAY">
+                        {{ 'gateway.without-response' | translate }}
+                      </tb-toggle-option>
+                    </tb-toggle-select>
+                  </div>
+                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <!--        showMappingField('QoS')-->
+                    <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.device-name-filter-hint' | translate }}" translate>
+                      gateway.device-name-filter
+                    </div>
+                    <div class="tb-flex no-gap">
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <input matInput name="value" formControlName="deviceNameFilter" placeholder="{{ 'gateway.set' | translate }}"/>
+                        <mat-icon matSuffix
+                                  matTooltipPosition="above"
+                                  matTooltipClass="tb-error-tooltip"
+                                  [matTooltip]="('gateway.device-name-filter-required') | translate"
+                                  *ngIf="mappingForm.get('requestValue.serverSideRpc.deviceNameFilter').hasError('required') &&
+                                           mappingForm.get('requestValue.serverSideRpc.deviceNameFilter').touched"
+                                  class="tb-error">
+                          warning
+                        </mat-icon>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <!--        showMappingField('QoS')-->
+                    <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.method-filter-hint' | translate }}" translate>
+                      gateway.method-filter
+                    </div>
+                    <div class="tb-flex no-gap">
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <input matInput name="value" formControlName="methodFilter" placeholder="{{ 'gateway.set' | translate }}"/>
+                        <mat-icon matSuffix
+                                  matTooltipPosition="above"
+                                  matTooltipClass="tb-error-tooltip"
+                                  [matTooltip]="('gateway.method-filter-required') | translate"
+                                  *ngIf="mappingForm.get('requestValue.serverSideRpc.methodFilter').hasError('required') &&
+                                           mappingForm.get('requestValue.serverSideRpc.methodFilter').touched"
+                                  class="tb-error">
+                          warning
+                        </mat-icon>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <!--        showMappingField('QoS')-->
+                    <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.request-topic-expression-hint' | translate }}" translate>
+                      gateway.request-topic-expression
+                    </div>
+                    <div class="tb-flex no-gap">
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <input matInput name="value" formControlName="requestTopicExpression" placeholder="{{ 'gateway.set' | translate }}"/>
+                        <mat-icon matSuffix
+                                  matTooltipPosition="above"
+                                  matTooltipClass="tb-error-tooltip"
+                                  [matTooltip]="('gateway.request-topic-expression-required') | translate"
+                                  *ngIf="mappingForm.get('requestValue.serverSideRpc.requestTopicExpression').hasError('required') &&
+                                           mappingForm.get('requestValue.serverSideRpc.requestTopicExpression').touched"
+                                  class="tb-error">
+                          warning
+                        </mat-icon>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.value-expression-hint' | translate }}" translate>
+                      gateway.value-expression
+                    </div>
+                    <div class="tb-flex no-gap">
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <input matInput name="value" formControlName="valueExpression" placeholder="{{ 'gateway.set' | translate }}"/>
+                        <mat-icon matSuffix
+                                  matTooltipPosition="above"
+                                  matTooltipClass="tb-error-tooltip"
+                                  [matTooltip]="('gateway.value-expression-required') | translate"
+                                  *ngIf="mappingForm.get('requestValue.serverSideRpc.valueExpression').hasError('required') &&
+                                           mappingForm.get('requestValue.serverSideRpc.valueExpression').touched"
+                                  class="tb-error">
+                          warning
+                        </mat-icon>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                  <ng-container *ngIf="mappingForm.get('requestValue.serverSideRpc.type').value === ServerSideRPCType.TWO_WAY">
+                    <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                      <div class="fixed-title-width tb-required" translate>gateway.response-topic-expression</div>
+                      <div class="tb-flex no-gap">
+                        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                          <input matInput name="value" formControlName="responseTopicExpression" placeholder="{{ 'gateway.set' | translate }}"/>
+                          <mat-icon matSuffix
+                                    matTooltipPosition="above"
+                                    matTooltipClass="tb-error-tooltip"
+                                    [matTooltip]="('gateway.response-topic-expression-required') | translate"
+                                    *ngIf="mappingForm.get('requestValue.serverSideRpc.responseTopicExpression').hasError('required') &&
+                                           mappingForm.get('requestValue.serverSideRpc.responseTopicExpression').touched"
+                                    class="tb-error">
+                            warning
+                          </mat-icon>
+                        </mat-form-field>
+                      </div>
+                    </div>
+                    <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                      <div class="fixed-title-width" translate>gateway.response-topic-Qos</div>
+                      <mat-form-field class="tb-flex" appearance="outline" subscriptSizing="dynamic">
+                        <mat-select formControlName="responseTopicQoS">
+                          <mat-option *ngFor="let type of qualityTypes" [value]="type">
+                            {{ QualityTranslationsMap.get(type) | translate }}
+                          </mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+                    <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                      <div class="fixed-title-width tb-required" translate>gateway.response-timeout</div>
+                      <div class="tb-flex no-gap">
+                        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                          <input matInput name="value" type="number" formControlName="responseTimeout" placeholder="{{ 'gateway.set' | translate }}"/>
+                          <mat-icon matSuffix
+                                    matTooltipPosition="above"
+                                    matTooltipClass="tb-error-tooltip"
+                                    [matTooltip]="('gateway.response-timeout-required') | translate"
+                                    *ngIf="mappingForm.get('requestValue.serverSideRpc.responseTimeout').hasError('required') &&
+                                           mappingForm.get('requestValue.serverSideRpc.responseTimeout').touched"
+                                    class="tb-error">
+                            warning
+                          </mat-icon>
+                        </mat-form-field>
+                      </div>
+                    </div>
+                  </ng-container>
+                </ng-template>
+              </ng-container>
+            </ng-container>
+        </ng-template>
+      </ng-container>
+<!--      <div *ngIf="connectorForm.get('type').value === 'mqtt'" class="tb-form-row column-xs" fxLayoutAlign="space-between center">-->
+<!--        <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="sendDataOnlyOnChange">-->
+<!--          <mat-label tb-hint-tooltip-icon="{{ 'gateway.send-change-data-hint' | translate }}">-->
+<!--            {{ 'gateway.send-change-data' | translate }}-->
+<!--          </mat-label>-->
+<!--        </mat-slide-toggle>-->
+<!--      </div>-->
+    </fieldset>
+  </div>
+  <div mat-dialog-actions fxLayoutAlign="end center">
+    <button mat-button color="primary"
+            type="button"
+            cdkFocusInitial
+            [disabled]="(isLoading$ | async)"
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            type="submit"
+            [disabled]="(isLoading$ | async) || mappingForm.invalid || !mappingForm.dirty">
+      {{ this.data.buttonTitle | translate }}
+    </button>
+  </div>
+</form>

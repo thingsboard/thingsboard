@@ -1,0 +1,150 @@
+///
+/// Copyright © 2016-2024 The Thingsboard Authors
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///     http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
+
+import {
+  AfterViewInit,
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  forwardRef,
+  Input,
+  NgZone,
+  OnDestroy,
+  OnInit,
+  ViewContainerRef
+} from '@angular/core';
+import { PageComponent } from '@shared/components/page.component';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
+import { TranslateService } from '@ngx-translate/core';
+import { MatDialog } from '@angular/material/dialog';
+import { DialogService } from '@core/services/dialog.service';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { Overlay } from '@angular/cdk/overlay';
+import { UtilsService } from '@core/services/utils.service';
+import { EntityService } from '@core/http/entity.service';
+import {
+  ControlValueAccessor,
+  FormBuilder, FormGroup, NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
+  UntypedFormGroup, ValidationErrors, Validator, Validators
+} from '@angular/forms';
+import {
+  MappingTypes,
+  MqttVersions,
+  SourceTypes,
+  SourceTypeTranslationsMap
+} from '@home/components/widget/lib/gateway/gateway-widget.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
+import { generateSecret } from '@core/utils';
+
+@Component({
+  selector: 'tb-mqtt-basic-config',
+  templateUrl: './mqtt-basic-config.component.html',
+  styleUrls: ['./mqtt-basic-config.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => MqttBasicConfigComponent),
+      multi: true
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => MqttBasicConfigComponent),
+      multi: true
+    }
+  ]
+})
+export class MqttBasicConfigComponent extends PageComponent implements ControlValueAccessor, Validator, AfterViewInit, OnInit, OnDestroy {
+
+  mqttConfigFormGroup: UntypedFormGroup;
+
+  mqttVersions = MqttVersions;
+
+  mappingTypes = MappingTypes;
+
+  private destroy$ = new Subject<void>();
+  private propagateChange = (v: any) => {};
+
+  constructor(protected store: Store<AppState>,
+              public translate: TranslateService,
+              public dialog: MatDialog,
+              private overlay: Overlay,
+              private viewContainerRef: ViewContainerRef,
+              private dialogService: DialogService,
+              private entityService: EntityService,
+              private utils: UtilsService,
+              private zone: NgZone,
+              private cd: ChangeDetectorRef,
+              private elementRef: ElementRef,
+              private fb: FormBuilder) {
+    super(store);
+    console.log('mqttconfig inited');
+  }
+
+  ngOnInit() {
+    this.mqttConfigFormGroup = this.fb.group({
+      broker: this.fb.group({
+        name: ['', [Validators.required]],
+        host: ['', [Validators.required]],
+        port: [null, [Validators.required]],
+        version: [5, []],
+        clientId: ['', []],
+        maxNumberOfWorkers: [100, [Validators.required, Validators.min(1)]],
+        maxMessageNumberPerWorker: [10, [Validators.required, Validators.min(1)]],
+        security: [{}, [Validators.required]]
+      }),
+      dataMapping: [[], Validators.required],
+      requestsMapping: [{}, []]
+    });
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  ngAfterViewInit() {
+  }
+
+  registerOnChange(fn: any): void {
+    this.propagateChange = fn;
+  }
+
+  registerOnTouched(fn: any): void {}
+
+  writeValue(deviceInfo: any) {
+    this.mqttConfigFormGroup.patchValue(deviceInfo, {emitEvent: false});
+  }
+
+  validate(): ValidationErrors | null {
+    return this.mqttConfigFormGroup.valid ? null : {
+      mqttConfigForm: { valid: false }
+    };
+  }
+
+  updateView(value: any) {
+    this.propagateChange(value);
+  }
+
+  generate(formControlName: string) {
+    this.mqttConfigFormGroup.get(formControlName).patchValue(generateSecret(5));
+  }
+
+}

@@ -75,6 +75,13 @@ import { ActionButtonWidgetComponent } from '@home/components/widget/lib/button/
 import { CommandButtonWidgetComponent } from '@home/components/widget/lib/button/command-button-widget.component';
 import { PowerButtonWidgetComponent } from '@home/components/widget/lib/rpc/power-button-widget.component';
 import { SliderWidgetComponent } from '@home/components/widget/lib/rpc/slider-widget.component';
+import { AddConnectorDialogComponent } from '@home/components/widget/lib/gateway/dialog/add-connector-dialog.component';
+import { MappingTableComponent } from '@home/components/widget/lib/gateway/connectors-configuration/mapping-table.component';
+import { MappingDialogComponent } from '@home/components/widget/lib/gateway/dialog/mapping-dialog.component';
+import { DeviceInfoTableComponent } from '@home/components/widget/lib/gateway/connectors-configuration/device-info-table.component';
+import { MappingDataKeysPanelComponent } from '@home/components/widget/lib/gateway/connectors-configuration/mapping-data-keys-panel.component';
+import { BrokerSecurityComponent } from '@home/components/widget/lib/gateway/connectors-configuration/broker-security.component';
+import { MqttBasicConfigComponent } from '@home/components/widget/lib/gateway/connectors-configuration/mqtt-basic-config.component';
 
 @NgModule({
   declarations:
@@ -100,6 +107,13 @@ import { SliderWidgetComponent } from '@home/components/widget/lib/rpc/slider-wi
       LegendComponent,
       FlotWidgetComponent,
       GatewayConnectorComponent,
+      AddConnectorDialogComponent,
+      MappingTableComponent,
+      MappingDialogComponent,
+      DeviceInfoTableComponent,
+      MappingDataKeysPanelComponent,
+      BrokerSecurityComponent,
+      MqttBasicConfigComponent,
       GatewayLogsComponent,
       GatewayStatisticsComponent,
       GatewayServiceRPCComponent,
@@ -152,6 +166,13 @@ import { SliderWidgetComponent } from '@home/components/widget/lib/rpc/slider-wi
         LegendComponent,
         FlotWidgetComponent,
         GatewayConnectorComponent,
+        AddConnectorDialogComponent,
+        MappingTableComponent,
+        MappingDialogComponent,
+        DeviceInfoTableComponent,
+        MappingDataKeysPanelComponent,
+        BrokerSecurityComponent,
+        MqttBasicConfigComponent,
         GatewayLogsComponent,
         GatewayStatisticsComponent,
         GatewayServiceRPCComponent,

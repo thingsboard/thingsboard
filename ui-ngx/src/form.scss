@@ -57,6 +57,9 @@
     }
     &.no-padding {
       padding: 0;
+      &.padding-top {
+        padding-top: 16px;
+      }
     }
     &.stroked {
       box-shadow: none;
@@ -252,6 +255,9 @@
     &.space-between {
       justify-content: space-between;
     }
+    &.center {
+      justify-content: center;
+    }
     &.align-center {
       align-items: center;
     }
@@ -260,6 +266,9 @@
     }
     &.fill-width {
       width: 100%;
+    }
+    &.fill-height {
+      height: 100%;
     }
   }
 
@@ -481,6 +490,9 @@
       display: flex;
       flex-direction: column;
       gap: 12px;
+      &.no-gap {
+        gap: 0;
+      }
     }
 
     .tb-prompt {

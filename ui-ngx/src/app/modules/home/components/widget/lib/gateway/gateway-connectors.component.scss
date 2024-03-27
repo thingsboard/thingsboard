@@ -43,6 +43,26 @@
 
       .table-container {
         overflow: auto;
+
+        .tb-add-new {
+          display: flex;
+          z-index: 1;
+          pointer-events: none;
+
+          button.connector {
+            height: auto;
+            padding-right: 12px;
+            font-size: 20px;
+            border-style: dashed;
+            border-width: 2px;
+            border-radius: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            color: rgba(0, 0, 0, 0.38);
+          }
+        }
       }
     }
 
@@ -105,7 +125,21 @@
   }
 }
 
-:host ::ng-deep tb-json-object-edit > div {
-  flex-grow: 1;
+:host ::ng-deep {
+  tb-json-object-edit > div {
+    flex-grow: 1;
+  }
+  //tb-toggle-password {
+  // TODO move to form.scss
+  .mat-mdc-icon-button.mat-mdc-button-base {
+    width: 36px;
+    height: 40px;
+    padding: 8px 4px;
+  }
+
+  .mat-mdc-tab-group, .mat-mdc-tab-body-wrapper {
+    height: 100%;
+  }
+  //}
 }
 

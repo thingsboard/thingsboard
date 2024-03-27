@@ -14,6 +14,12 @@
 /// limitations under the License.
 ///
 
+import { Input } from '@angular/core';
+import { Validators } from '@angular/forms';
+import { ResourcesService } from '@core/services/resources.service';
+import { Observable } from 'rxjs';
+import { Unit } from '@shared/models/unit.models';
+
 export enum StorageTypes {
   MEMORY = 'memory',
   FILE = 'file',
@@ -140,3 +146,155 @@ export interface GatewayLogData {
   message: string;
   status: GatewayStatus;
 }
+
+export interface AddConnectorConfigData {
+  dataSourceData: Array<any>
+}
+
+export enum ConnectorConfigurationModes {
+  BASIC = 'basic',
+  ADVANCED = 'advanced'
+}
+
+export enum BrokerSecurityTypes {
+  ANONYMOUS = 'anonymous',
+  BASIC = 'basic',
+  CERTIFICATES = 'certificates'
+}
+
+export const BrokerSecurityTypeTranslations = new Map<BrokerSecurityTypes, string>(
+  [
+    [BrokerSecurityTypes.ANONYMOUS, 'gateway.broker.security-types.anonymous'],
+    [BrokerSecurityTypes.BASIC, 'gateway.broker.security-types.basic'],
+    [BrokerSecurityTypes.CERTIFICATES, 'gateway.broker.security-types.certificates']
+  ]
+);
+
+export const MqttVersions = [
+  { name: 3.1, value: 3 },
+  { name: 3.11, value: 4 },
+  { name: 5, value: 5 }
+];
+
+export enum MappingTypes {
+  DATA = 'data',
+  REQUESTS = 'requests'
+}
+
+export const MappingTypeTranslationsMap = new Map<MappingTypes, string>(
+  [
+    [MappingTypes.DATA, 'gateway.data-mapping'],
+    [MappingTypes.REQUESTS, 'gateway.requests-mapping']
+  ]
+);
+
+export const MappingHintTranslationsMap = new Map<MappingTypes, string>(
+  [
+    [MappingTypes.DATA, 'gateway.data-mapping-hint'],
+    [MappingTypes.REQUESTS, 'gateway.requests-mapping-hint']
+  ]
+);
+
+export const QualityTypes = [0, 1 ,2];
+
+export const QualityTypeTranslationsMap = new Map<number, string>(
+  [
+    [0, 'gateway.qos.at-most-once'],
+    [1, 'gateway.qos.at-least-once'],
+    [2, 'gateway.qos.exactly-once']
+  ]
+);
+
+export enum ConvertorTypes {
+  JSON = 'json',
+  BYTES = 'bytes',
+  CUSTOM = 'custom'
+}
+
+export const ConvertorTypeTranslationsMap = new Map<ConvertorTypes, string>(
+  [
+    [ConvertorTypes.JSON, 'gateway.JSON'],
+    [ConvertorTypes.BYTES, 'gateway.bytes'],
+    [ConvertorTypes.CUSTOM, 'gateway.custom']
+  ]
+);
+
+export enum SourceTypes {
+  MSG = 'message',
+  TOPIC = 'topic',
+  CONST = 'constant'
+  // CUSTOM = 'json'
+}
+
+export const SourceTypeTranslationsMap = new Map<SourceTypes, string>(
+  [
+    [SourceTypes.MSG, 'gateway.source-type.msg'],
+    [SourceTypes.TOPIC, 'gateway.source-type.topic'],
+    [SourceTypes.CONST, 'gateway.source-type.const'],
+  ]
+);
+
+export enum RequestTypes {
+  CONNECT_REQUEST = 'connectRequests',
+  DISCONNECT_REQUEST = 'disconnectRequests',
+  ATTRIBUTE_REQUEST = 'attributeRequests',
+  ATTRIBUTE_UPDATE = 'attributeUpdates',
+  SERVER_SIDE_RPC = 'serverSideRpc'
+}
+
+export const RequestTypesTranslationsMap = new Map<RequestTypes, string>(
+  [
+    [RequestTypes.CONNECT_REQUEST, 'gateway.request.connect-request'],
+    [RequestTypes.DISCONNECT_REQUEST, 'gateway.request.disconnect-request'],
+    [RequestTypes.ATTRIBUTE_REQUEST, 'gateway.request.attribute-request'],
+    [RequestTypes.ATTRIBUTE_UPDATE, 'gateway.request.attribute-update'],
+    [RequestTypes.SERVER_SIDE_RPC, 'gateway.request.rpc-connection'],
+  ]
+);
+
+export enum MappingKeysType {
+  ATTRIBUTES = 'attributes',
+  TIMESERIES = 'timeseries',
+  CUSTOM = 'extensionConfig'
+}
+
+export const MappingKeysPanelTitleTranslationsMap = new Map<MappingKeysType, string>(
+  [
+    [MappingKeysType.ATTRIBUTES, 'gateway.attributes'],
+    [MappingKeysType.TIMESERIES, 'gateway.telemetry'],
+    [MappingKeysType.CUSTOM, 'gateway.keys']
+  ]
+);
+
+export const MappingKeysAddKeyTranslationsMap = new Map<MappingKeysType, string>(
+  [
+    [MappingKeysType.ATTRIBUTES, 'gateway.add-attribute'],
+    [MappingKeysType.TIMESERIES, 'gateway.add-telemetry'],
+    [MappingKeysType.CUSTOM, 'gateway.add-key']
+  ]
+);
+
+export const MappingKeysDeleteKeyTranslationsMap = new Map<MappingKeysType, string>(
+  [
+    [MappingKeysType.ATTRIBUTES, 'gateway.delete-attribute'],
+    [MappingKeysType.TIMESERIES, 'gateway.delete-telemetry'],
+    [MappingKeysType.CUSTOM, 'gateway.delete-key']
+  ]
+);
+
+export const MappingKeysNoKeysTextTranslationsMap = new Map<MappingKeysType, string>(
+  [
+    [MappingKeysType.ATTRIBUTES, 'gateway.no-attributes'],
+    [MappingKeysType.TIMESERIES, 'gateway.no-telemetry'],
+    [MappingKeysType.CUSTOM, 'gateway.no-keys']
+  ]
+);
+
+export enum ServerSideRPCType {
+  ONE_WAY = 'oneWay',
+  TWO_WAY = 'twoWay'
+}
+
+
+export const getDefaultConfig = (resourcesService: ResourcesService, type: string): Observable<any> =>
+  resourcesService.loadJsonResource(`/assets/metadata/connector-default-configs/${type}.json`);
