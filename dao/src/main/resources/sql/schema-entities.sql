@@ -864,6 +864,7 @@ CREATE TABLE IF NOT EXISTS notification (
     request_id UUID,
     recipient_id UUID NOT NULL,
     type VARCHAR(50) NOT NULL,
+    delivery_method VARCHAR(50) NOT NULL,
     subject VARCHAR(255),
     body VARCHAR(1000) NOT NULL,
     additional_config VARCHAR(1000),

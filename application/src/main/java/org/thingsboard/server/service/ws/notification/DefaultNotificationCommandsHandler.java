@@ -51,6 +51,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.data.notification.NotificationDeliveryMethod.WEB;
+
 @Service
 @TbCoreComponent
 @RequiredArgsConstructor
@@ -104,7 +106,7 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
     private void fetchUnreadNotifications(NotificationsSubscription subscription) {
         log.trace("[{}, subId: {}] Fetching unread notifications from DB", subscription.getSessionId(), subscription.getSubscriptionId());
         PageData<Notification> notifications = notificationService.findLatestUnreadNotificationsByRecipientId(subscription.getTenantId(),
-                (UserId) subscription.getEntityId(), subscription.getLimit());
+                WEB, (UserId) subscription.getEntityId(), subscription.getLimit());
         subscription.getLatestUnreadNotifications().clear();
         notifications.getData().forEach(notification -> {
             subscription.getLatestUnreadNotifications().put(notification.getUuidId(), notification);
@@ -114,7 +116,7 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
 
     private void fetchUnreadNotificationsCount(NotificationsCountSubscription subscription) {
         log.trace("[{}, subId: {}] Fetching unread notifications count from DB", subscription.getSessionId(), subscription.getSubscriptionId());
-        int unreadCount = notificationService.countUnreadNotificationsByRecipientId(subscription.getTenantId(), (UserId) subscription.getEntityId());
+        int unreadCount = notificationService.countUnreadNotificationsByRecipientId(subscription.getTenantId(), WEB, (UserId) subscription.getEntityId());
         subscription.getTotalUnreadCounter().set(unreadCount);
     }
 
@@ -235,7 +237,7 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
     @Override
     public void handleMarkAllAsReadCmd(WebSocketSessionRef sessionRef, MarkAllNotificationsAsReadCmd cmd) {
         SecurityUser securityCtx = sessionRef.getSecurityCtx();
-        notificationCenter.markAllNotificationsAsRead(securityCtx.getTenantId(), securityCtx.getId());
+        notificationCenter.markAllNotificationsAsRead(securityCtx.getTenantId(), WEB, securityCtx.getId());
     }
 
     @Override

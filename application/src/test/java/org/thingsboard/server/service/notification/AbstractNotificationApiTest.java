@@ -145,7 +145,7 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
 
     protected NotificationRequest submitNotificationRequest(List<NotificationTargetId> targets, String text, int delayInSec, NotificationDeliveryMethod... deliveryMethods) {
         if (deliveryMethods.length == 0) {
-            deliveryMethods = new NotificationDeliveryMethod[]{NotificationDeliveryMethod.WEB};
+            deliveryMethods = new NotificationDeliveryMethod[]{NotificationDeliveryMethod.WEB, NotificationDeliveryMethod.MOBILE_APP};
         }
         NotificationTemplate notificationTemplate = createNotificationTemplate(DEFAULT_NOTIFICATION_TYPE, DEFAULT_NOTIFICATION_SUBJECT, text, deliveryMethods);
         return submitNotificationRequest(targets, notificationTemplate.getId(), delayInSec);
@@ -247,8 +247,12 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
     }
 
     protected List<Notification> getMyNotifications(boolean unreadOnly, int limit) throws Exception {
-        return doGetTypedWithPageLink("/api/notifications?unreadOnly={unreadOnly}&", new TypeReference<PageData<Notification>>() {},
-                new PageLink(limit, 0), unreadOnly).getData();
+        return getMyNotifications(NotificationDeliveryMethod.WEB, unreadOnly, limit);
+    }
+
+    protected List<Notification> getMyNotifications(NotificationDeliveryMethod deliveryMethod, boolean unreadOnly, int limit) throws Exception {
+        return doGetTypedWithPageLink("/api/notifications?unreadOnly={unreadOnly}&deliveryMethod={deliveryMethod}&", new TypeReference<PageData<Notification>>() {},
+                new PageLink(limit, 0), unreadOnly, deliveryMethod).getData();
     }
 
     protected NotificationRule createNotificationRule(NotificationRuleTriggerConfig triggerConfig, String subject, String text, NotificationTargetId... targets) {
