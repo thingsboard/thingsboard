@@ -19,6 +19,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
 
@@ -54,5 +57,16 @@ public class JacksonUtilTest {
         Assert.assertEquals(asset.getId(), result.getId());
         Assert.assertEquals(asset.getName(), result.getName());
         Assert.assertEquals(asset.getType(), result.getType());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "", "false", "\"", "\"\"", "\"This is a string with double quotes\"", "Path: /home/developer/test.txt",
+            "First line\nSecond line\n\nFourth line", "Before\rAfter", "Tab\tSeparated\tValues", "Test\bbackspace", "[]",
+            "[1, 2, 3]", "{\"key\": \"value\"}", "{\n\"temperature\": 25.5,\n\"humidity\": 50.2\n\"}", "Expression: (a + b) * c",
+            "世界", "Україна", "\u1F1FA\u1F1E6", "🇺🇦"})
+    public void toPlainTextTest(String original) {
+         String serialized = JacksonUtil.toString(original);
+        Assertions.assertNotNull(serialized);
+        Assertions.assertEquals(original, JacksonUtil.toPlainText(serialized));
     }
 }
