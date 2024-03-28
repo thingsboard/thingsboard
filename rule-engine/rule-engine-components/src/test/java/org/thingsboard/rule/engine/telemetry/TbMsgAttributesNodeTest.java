@@ -17,6 +17,7 @@ package org.thingsboard.rule.engine.telemetry;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -47,15 +48,20 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatCode;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.BDDMockito.willCallRealMethod;
+import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -69,12 +75,30 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
     private TenantId tenantId;
     private DeviceId deviceId;
     private TbMsgAttributesNode node;
+    private TbMsgAttributesNodeConfiguration config;
+    private TbNodeConfiguration nodeConfiguration;
+    private TbContext ctx;
+    private RuleEngineTelemetryService telemetryService;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws TbNodeException {
         tenantId = new TenantId(UUID.fromString("6c18691e-4470-4766-9739-aface71d761f"));
         deviceId = new DeviceId(UUID.fromString("b66159d7-c77e-45e8-bb41-a8f557f434c1"));
         node = spy(TbMsgAttributesNode.class);
+        ctx = mock(TbContext.class);
+        config = new TbMsgAttributesNodeConfiguration().defaultConfiguration();
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctx, nodeConfiguration);
+
+        telemetryService = mock(RuleEngineTelemetryService.class);
+
+        willReturn(telemetryService).given(ctx).getTelemetryService();
+        willAnswer(invocation -> {
+            TelemetryNodeCallback callBack = invocation.getArgument(5);
+            callBack.onSuccess(null);
+            return null;
+        }).given(telemetryService).saveAndNotify(
+                any(), any(), any(AttributeScope.class), anyList(), anyBoolean(), any());
     }
 
     @Test
@@ -180,6 +204,97 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
         assertThat(notifyDevice).isEqualTo(expectedArgumentValue);
     }
 
+    @Test
+    void givenUseTemplateTrueAndNoMetadataKeyInMsg_whenOnMsg_thenSaveAttributes() throws Exception {
+        config.setUseAttributesScopeTemplate(true);
+        config.setScope("${scopeInMetadata}");
+        config.setUpdateAttributesOnlyOnValueChange(false);
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctx, nodeConfiguration);
+
+        final Map<String, String> mdMap = Map.of("scope", "SERVER_SCOPE");
+        final String data = "{\"TestAttribute_2\": \"humidity\", \"TestAttribute_3\": \"voltage\"}";
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, deviceId, new TbMsgMetaData(mdMap), data);
+
+        node.onMsg(ctx, msg);
+
+        verify(telemetryService).saveAndNotify(eq(ctx.getTenantId()), eq(msg.getOriginator()), eq(AttributeScope.SERVER_SCOPE),
+                anyList(), eq(true), eq(new TelemetryNodeCallback(ctx, msg)));
+        verify(ctx).tellSuccess(eq(msg));
+    }
+
+    @Test
+    void givenUseTemplateTrueAndStrangeDataKey_whenOnMsg_thenSaveAttributes() throws Exception {
+        config.setUseAttributesScopeTemplate(true);
+        config.setScope("$[scopeInData]");
+        config.setUpdateAttributesOnlyOnValueChange(false);
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctx, nodeConfiguration);
+
+        final String data = "{\"TestAttribute_2\": \"humidity\", \"TestAttribute_3\": \"voltage\", \"scopeInData\": \" SeRvEr_ScOpE \"}";
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, deviceId, TbMsgMetaData.EMPTY, data);
+
+        node.onMsg(ctx, msg);
+
+        verify(ctx).tellSuccess(eq(msg));
+    }
+
+    @Test
+    void givenUseTemplateTrueAndInvalidMetadataKey_whenOnMsg_thenThrowException() throws TbNodeException {
+        config.setUseAttributesScopeTemplate(true);
+        config.setScope("${scopeInMetadata}");
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctx, nodeConfiguration);
+
+        final Map<String, String> mdMap = Map.of("scopeMetadata", "SERVER_SCOPE");
+        final String data = "{\"TestAttribute_2\": \"humidity\", \"TestAttribute_3\": \"voltage\"}";
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, deviceId, new TbMsgMetaData(mdMap), data);
+
+        Assertions.assertThatThrownBy(() -> node.onMsg(ctx, msg))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Failed to parse scope! No enum constant for name: " + config.getScope());
+    }
+
+    @Test
+    void givenUseTemplateTrueAndMetadataKeyNonExistingScope_whenOnMsg_thenThrowException() throws TbNodeException {
+        config.setUseAttributesScopeTemplate(true);
+        config.setScope("${scopeInMetadata}");
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctx, nodeConfiguration);
+
+        final Map<String, String> mdMap = Map.of("scopeInMetadata", "ANOTHER_SCOPE");
+        final String data = "{\"TestAttribute_2\": \"humidity\", \"TestAttribute_3\": \"voltage\"}";
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, deviceId, new TbMsgMetaData(mdMap), data);
+
+        assertThatThrownBy(() -> node.onMsg(ctx, msg))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Failed to parse scope! No enum constant for name: " + msg.getMetaData().getValue("scopeInMetadata"));
+
+    }
+
+    @Test
+    void givenScopeIsNull_whenOnMsg_thenThrowException() throws TbNodeException {
+        config.setScope(null);
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctx, nodeConfiguration);
+
+        final Map<String, String> mdMap = Map.of("scopeInMetadata", "ANOTHER_SCOPE");
+        final String data = "{\"TestAttribute_2\": \"humidity\", \"TestAttribute_3\": \"voltage\"}";
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, deviceId, new TbMsgMetaData(mdMap), data);
+
+        assertThatThrownBy(() -> node.onMsg(ctx, msg))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Failed to parse scope! Provided value is null!");
+    }
+
+    @Test
+    void givenDefaultConfig_whenInit_thenOk() {
+        config = new TbMsgAttributesNodeConfiguration().defaultConfiguration();
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+
+        assertThatCode(() -> node.init(ctx, nodeConfiguration))
+                .doesNotThrowAnyException();
+    }
 
     // Rule nodes upgrade
     private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
@@ -188,37 +303,47 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
                 Arguments.of(0,
                         "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":\"false\",\"sendAttributesUpdatedNotification\":\"false\"}",
                         true,
-                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":false,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":false}"),
+                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":false,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":false,\"useAttributesScopeTemplate\":false}"),
                 // default config for version 1 with upgrade from version 0
                 Arguments.of(0,
                         "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":false,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}",
-                        false,
-                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":false,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}"),
+                        true,
+                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":false,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true,\"useAttributesScopeTemplate\":false}"),
                 // all flags are booleans
                 Arguments.of(1,
                         "{\"scope\":\"SHARED_SCOPE\",\"notifyDevice\":true,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}",
-                        false,
-                        "{\"scope\":\"SHARED_SCOPE\",\"notifyDevice\":true,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}"),
+                        true,
+                        "{\"scope\":\"SHARED_SCOPE\",\"notifyDevice\":true,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true,\"useAttributesScopeTemplate\":false}"),
                 // no boolean flags set
                 Arguments.of(1,
                         "{\"scope\":\"CLIENT_SCOPE\"}",
                         true,
-                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":true,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}"),
+                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":true,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true,\"useAttributesScopeTemplate\":false}"),
                 // all flags are boolean strings
                 Arguments.of(1,
                         "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":\"false\",\"sendAttributesUpdatedNotification\":\"false\",\"updateAttributesOnlyOnValueChange\":\"true\"}",
                         true,
-                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":false,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}"),
+                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":false,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true,\"useAttributesScopeTemplate\":false}"),
                 // at least one flag is boolean string
                 Arguments.of(1,
                         "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":\"false\",\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}",
                         true,
-                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":false,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}"),
+                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":false,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true,\"useAttributesScopeTemplate\":false}"),
                 // notify device flag is null
                 Arguments.of(1,
                         "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":\"null\",\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}",
                         true,
-                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":true,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}")
+                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":true,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true,\"useAttributesScopeTemplate\":false}"),
+                // config for version 2
+                Arguments.of(2,
+                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":false,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true}",
+                        true,
+                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":false, \"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true,\"useAttributesScopeTemplate\":false}"),
+                // config for version 3 with upgrade from version 2
+                Arguments.of(2,
+                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":false,\"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true,\"useAttributesScopeTemplate\":false}",
+                        false,
+                        "{\"scope\":\"CLIENT_SCOPE\",\"notifyDevice\":false, \"sendAttributesUpdatedNotification\":false,\"updateAttributesOnlyOnValueChange\":true,\"useAttributesScopeTemplate\":false}")
         );
     }
 

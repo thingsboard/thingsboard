@@ -105,13 +105,25 @@ public class TbMsgDeleteAttributesNode implements TbNode {
 
     private AttributeScope getScope(TbMsg msg) {
         if (config.isUseAttributesScopeTemplate()) {
-            return AttributeScope.valueOf(TbNodeUtils.processPattern(config.getScope(), msg));
+            try {
+                return AttributeScope.parseFrom(TbNodeUtils.processPattern(config.getScope(), msg));
+            } catch (Exception e) {
+                String mdScopeValue = msg.getMetaData().getValue(SCOPE);
+                if (StringUtils.isEmpty(mdScopeValue)) {
+                    throw e;
+                }
+                try {
+                    return AttributeScope.parseFrom(mdScopeValue);
+                } catch (Exception ex) {
+                    throw e;
+                }
+            }
         }
         String mdScopeValue = msg.getMetaData().getValue(SCOPE);
         if (StringUtils.isNotEmpty(mdScopeValue)) {
-            return AttributeScope.valueOf(mdScopeValue);
+            return AttributeScope.parseFrom(mdScopeValue);
         }
-        return AttributeScope.valueOf(config.getScope());
+        return AttributeScope.parseFrom(config.getScope());
     }
 
     private boolean checkNotifyDevice(String notifyDeviceMdValue, AttributeScope scope) {

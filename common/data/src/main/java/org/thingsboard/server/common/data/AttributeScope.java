@@ -29,4 +29,15 @@ public enum AttributeScope {
         this.id = id;
     }
 
+    public static AttributeScope parseFrom(String scope) {
+        if (scope == null) {
+            throw new IllegalArgumentException("Failed to parse scope! Provided value is null!");
+        }
+        try {
+            return valueOf(scope.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Failed to parse scope! No enum constant for name: " + scope, e);
+        }
+    }
+
 }

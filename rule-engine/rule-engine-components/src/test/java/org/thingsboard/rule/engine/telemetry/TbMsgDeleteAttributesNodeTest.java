@@ -29,8 +29,10 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -146,7 +148,14 @@ public class TbMsgDeleteAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, deviceId, new TbMsgMetaData(mdMap), data);
 
         node.onMsg(ctx, msg);
+        List<String> keysToDelete = config.getKeys().stream()
+                .map(keyPattern -> TbNodeUtils.processPattern(keyPattern, msg))
+                .distinct()
+                .filter(StringUtils::isNotBlank)
+                .toList();
 
+        verify(telemetryService).deleteAndNotify(eq(ctx.getTenantId()), eq(msg.getOriginator()), eq(AttributeScope.SERVER_SCOPE),
+                eq(keysToDelete), eq(false), eq(new TelemetryNodeCallback(ctx, msg)));
         verify(ctx).tellSuccess(eq(msg));
     }
 
@@ -158,6 +167,51 @@ public class TbMsgDeleteAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
         node.init(ctx, nodeConfiguration);
 
         final String data = "{\"TestAttribute_2\": \"humidity\", \"TestAttribute_3\": \"voltage\", \"scopeInData\": \"SERVER_SCOPE\"}";
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, deviceId, TbMsgMetaData.EMPTY, data);
+
+        node.onMsg(ctx, msg);
+        List<String> keysToDelete = config.getKeys().stream()
+                .map(keyPattern -> TbNodeUtils.processPattern(keyPattern, msg))
+                .distinct()
+                .filter(StringUtils::isNotBlank)
+                .toList();
+
+        verify(telemetryService).deleteAndNotify(eq(ctx.getTenantId()), eq(msg.getOriginator()), eq(AttributeScope.SERVER_SCOPE),
+                eq(keysToDelete), eq(false), eq(new TelemetryNodeCallback(ctx, msg)));
+        verify(ctx).tellSuccess(eq(msg));
+    }
+
+    @Test
+    void givenUseTemplateTrueAndNoMetadataKeyInMsg_whenOnMsg_thenDeleteAttributes() throws Exception {
+        config.setUseAttributesScopeTemplate(true);
+        config.setScope("${scopeInMetadata}");
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctx, nodeConfiguration);
+
+        final Map<String, String> mdMap = Map.of("scope", "SERVER_SCOPE");
+        final String data = "{\"TestAttribute_2\": \"humidity\", \"TestAttribute_3\": \"voltage\"}";
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, deviceId, new TbMsgMetaData(mdMap), data);
+
+        node.onMsg(ctx, msg);
+        List<String> keysToDelete = config.getKeys().stream()
+                .map(keyPattern -> TbNodeUtils.processPattern(keyPattern, msg))
+                .distinct()
+                .filter(StringUtils::isNotBlank)
+                .toList();
+
+        verify(telemetryService).deleteAndNotify(eq(ctx.getTenantId()), eq(msg.getOriginator()), eq(AttributeScope.SERVER_SCOPE),
+                eq(keysToDelete), eq(false), eq(new TelemetryNodeCallback(ctx, msg)));
+        verify(ctx).tellSuccess(eq(msg));
+    }
+
+    @Test
+    void givenUseTemplateTrueAndStrangeDataKey_whenOnMsg_thenDeleteAttributes() throws Exception {
+        config.setUseAttributesScopeTemplate(true);
+        config.setScope("$[scopeInData]");
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctx, nodeConfiguration);
+
+        final String data = "{\"TestAttribute_2\": \"humidity\", \"TestAttribute_3\": \"voltage\", \"scopeInData\": \" SeRvEr_ScOpE \"}";
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, deviceId, TbMsgMetaData.EMPTY, data);
 
         node.onMsg(ctx, msg);
@@ -178,7 +232,7 @@ public class TbMsgDeleteAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
 
         Assertions.assertThatThrownBy(() -> node.onMsg(ctx, msg))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("No enum constant org.thingsboard.server.common.data.AttributeScope." + config.getScope());
+                .hasMessage("Failed to parse scope! No enum constant for name: " + config.getScope());
     }
 
     @Test
@@ -194,8 +248,22 @@ public class TbMsgDeleteAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
 
         assertThatThrownBy(() -> node.onMsg(ctx, msg))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("No enum constant org.thingsboard.server.common.data.AttributeScope." + msg.getMetaData().getValue("scopeInMetadata"));
+                .hasMessage("Failed to parse scope! No enum constant for name: " + msg.getMetaData().getValue("scopeInMetadata"));
 
+    }
+    @Test
+    void givenScopeIsNull_whenOnMsg_thenThrowException() throws TbNodeException {
+        config.setScope(null);
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctx, nodeConfiguration);
+
+        final Map<String, String> mdMap = Map.of("scopeInMetadata", "ANOTHER_SCOPE");
+        final String data = "{\"TestAttribute_2\": \"humidity\", \"TestAttribute_3\": \"voltage\"}";
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, deviceId, new TbMsgMetaData(mdMap), data);
+
+        assertThatThrownBy(() -> node.onMsg(ctx, msg))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Failed to parse scope! Provided value is null!");
     }
 
     @Test
