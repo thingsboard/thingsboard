@@ -14,7 +14,6 @@
 -- limitations under the License.
 --
 
-
 -- create new attribute_kv table schema
 DO
 $$
@@ -106,3 +105,10 @@ EXCEPTION
         RAISE EXCEPTION 'Error during COPY: %', SQLERRM;
 END
 $$;
+
+-- OAUTH2 PARAMS ALTER TABLE START
+
+ALTER TABLE oauth2_params
+    ADD COLUMN IF NOT EXISTS edge_enabled boolean DEFAULT false;
+
+-- OAUTH2 PARAMS ALTER TABLE END
