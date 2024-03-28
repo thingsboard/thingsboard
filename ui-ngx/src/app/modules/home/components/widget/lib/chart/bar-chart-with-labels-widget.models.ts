@@ -44,6 +44,7 @@ export interface BarChartWithLabelsWidgetSettings extends EChartsTooltipWidgetSe
   legendLabelFont: Font;
   legendLabelColor: string;
   background: BackgroundSettings;
+  padding: string;
 }
 
 export const barChartWithLabelsDefaultSettings: BarChartWithLabelsWidgetSettings = {
@@ -110,7 +111,8 @@ export const barChartWithLabelsDefaultSettings: BarChartWithLabelsWidgetSettings
       color: 'rgba(255,255,255,0.72)',
       blur: 3
     }
-  }
+  },
+  padding: '12px'
 };
 
 export const barChartWithLabelsTimeSeriesSettings = (settings: BarChartWithLabelsWidgetSettings): DeepPartial<TimeSeriesChartSettings> => ({

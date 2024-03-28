@@ -60,6 +60,7 @@ export interface RangeChartWidgetSettings extends EChartsTooltipWidgetSettings {
   legendLabelFont: Font;
   legendLabelColor: string;
   background: BackgroundSettings;
+  padding: string;
 }
 
 export const rangeChartDefaultSettings: RangeChartWidgetSettings = {
@@ -118,7 +119,8 @@ export const rangeChartDefaultSettings: RangeChartWidgetSettings = {
       color: 'rgba(255,255,255,0.72)',
       blur: 3
     }
-  }
+  },
+  padding: '12px'
 };
 
 export const rangeChartTimeSeriesSettings = (settings: RangeChartWidgetSettings, rangeItems: RangeItem[],

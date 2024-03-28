@@ -333,7 +333,10 @@ export class TbTimeSeriesChart {
             timeSeriesChartKeyDefaultSettings, dataKey.settings);
           if ((keySettings.type === TimeSeriesChartSeriesType.line && keySettings.lineSettings.showPointLabel &&
               keySettings.lineSettings.pointLabelPosition === SeriesLabelPosition.top) ||
-            (keySettings.type === TimeSeriesChartSeriesType.bar && keySettings.barSettings.showLabel)) {
+            (keySettings.type === TimeSeriesChartSeriesType.bar &&
+              keySettings.barSettings.showLabel &&
+              [SeriesLabelPosition.top, SeriesLabelPosition.bottom]
+              .includes(keySettings.barSettings.labelPosition as SeriesLabelPosition))) {
             this.topPointLabels = true;
           }
           dataKey.settings = keySettings;
@@ -366,6 +369,11 @@ export class TbTimeSeriesChart {
     for (const thresholdSettings of this.settings.thresholds) {
       const threshold = mergeDeep<TimeSeriesChartThreshold>({} as TimeSeriesChartThreshold,
         timeSeriesChartThresholdDefaultSettings, thresholdSettings);
+      if (!this.topPointLabels) {
+        if (threshold.showLabel && !threshold.labelPosition.endsWith('Bottom')) {
+          this.topPointLabels = true;
+        }
+      }
       let latestDataKey: DataKey = null;
       let entityDataKey: DataKey = null;
       let value = null;
