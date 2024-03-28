@@ -54,7 +54,7 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_R
         type = ComponentType.ACTION,
         name = "save attributes",
         configClazz = TbMsgAttributesNodeConfiguration.class,
-        version = 2,
+        version = 3,
         nodeDescription = "Saves attributes data",
         nodeDetails = "Saves entity attributes based on configurable scope parameter. Expects messages with 'POST_ATTRIBUTES_REQUEST' message type. " +
                       "If upsert(update/insert) operation is completed successfully rule node will send the incoming message via <b>Success</b> chain, otherwise, <b>Failure</b> chain is used. " +
@@ -90,7 +90,7 @@ public class TbMsgAttributesNode implements TbNode {
             ctx.tellSuccess(msg);
             return;
         }
-        AttributeScope scope = getScope(msg.getMetaData().getValue(SCOPE));
+        AttributeScope scope = getScope(msg);
         boolean sendAttributesUpdateNotification = checkSendNotification(scope);
 
         if (!config.isUpdateAttributesOnlyOnValueChange()) {
@@ -154,11 +154,27 @@ public class TbMsgAttributesNode implements TbNode {
         return StringUtils.isEmpty(notifyDeviceMdValue) || Boolean.parseBoolean(notifyDeviceMdValue);
     }
 
-    private AttributeScope getScope(String mdScopeValue) {
-        if (StringUtils.isNotEmpty(mdScopeValue)) {
-            return AttributeScope.valueOf(mdScopeValue);
+    private AttributeScope getScope(TbMsg msg) {
+        if (config.isUseAttributesScopeTemplate()) {
+            try {
+                return AttributeScope.parseFrom(TbNodeUtils.processPattern(config.getScope(), msg));
+            } catch (Exception e) {
+                String mdScopeValue = msg.getMetaData().getValue(SCOPE);
+                if (StringUtils.isEmpty(mdScopeValue)) {
+                    throw e;
+                }
+                try {
+                    return AttributeScope.parseFrom(mdScopeValue);
+                } catch (Exception ex) {
+                    throw e;
+                }
+            }
         }
-        return AttributeScope.valueOf(config.getScope());
+        String mdScopeValue = msg.getMetaData().getValue(SCOPE);
+        if (StringUtils.isNotEmpty(mdScopeValue)) {
+            return AttributeScope.parseFrom(mdScopeValue);
+        }
+        return AttributeScope.parseFrom(config.getScope());
     }
 
     @Override
@@ -177,6 +193,11 @@ public class TbMsgAttributesNode implements TbNode {
                 hasChanges = fixEscapedBooleanConfigParameter(oldConfiguration, SEND_ATTRIBUTES_UPDATED_NOTIFICATION_KEY, hasChanges, false);
                 // update updateAttributesOnlyOnValueChange.
                 hasChanges = fixEscapedBooleanConfigParameter(oldConfiguration, UPDATE_ATTRIBUTES_ONLY_ON_VALUE_CHANGE_KEY, hasChanges, true);
+            case 2:
+                if (!oldConfiguration.has("useAttributesScopeTemplate")) {
+                hasChanges = true;
+                ((ObjectNode) oldConfiguration).put("useAttributesScopeTemplate", false);
+            }
                 break;
             default:
                 break;
