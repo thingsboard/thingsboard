@@ -70,6 +70,14 @@ export class TimeSeriesChartAxisSettingsComponent implements OnInit, ControlValu
   @coerceBoolean()
   advanced = false;
 
+  @Input()
+  @coerceBoolean()
+  hideUnits = false;
+
+  @Input()
+  @coerceBoolean()
+  hideDecimals = false;
+
   private modelValue: TimeSeriesChartXAxisSettings | TimeSeriesChartYAxisSettings;
 
   private propagateChange = null;

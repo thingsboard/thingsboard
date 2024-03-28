@@ -408,6 +408,38 @@ export const defaultTimeSeriesChartYAxisSettings: TimeSeriesChartYAxisSettings =
     splitLinesColor: timeSeriesChartColorScheme['axis.splitLine'].light
 };
 
+export const defaultTimeSeriesChartXAxisSettings: TimeSeriesChartXAxisSettings = {
+  show: true,
+  label: '',
+  labelFont: {
+    family: 'Roboto',
+    size: 12,
+    sizeUnit: 'px',
+    style: 'normal',
+    weight: '600',
+    lineHeight: '1'
+  },
+  labelColor: timeSeriesChartColorScheme['axis.label'].light,
+  position: AxisPosition.bottom,
+  showTickLabels: true,
+  tickLabelFont: {
+    family: 'Roboto',
+    size: 10,
+    sizeUnit: 'px',
+    style: 'normal',
+    weight: '400',
+    lineHeight: '1'
+  },
+  tickLabelColor: timeSeriesChartColorScheme['axis.tickLabel'].light,
+  ticksFormat: {},
+  showTicks: true,
+  ticksColor: timeSeriesChartColorScheme['axis.ticks'].light,
+  showLine: true,
+  lineColor: timeSeriesChartColorScheme['axis.line'].light,
+  showSplitLines: true,
+  splitLinesColor: timeSeriesChartColorScheme['axis.splitLine'].light
+};
+
 export type TimeSeriesChartYAxes = {[id: TimeSeriesChartYAxisId]: TimeSeriesChartYAxisSettings};
 
 export interface TimeSeriesChartThreshold {
@@ -521,6 +553,20 @@ export interface TimeSeriesChartNoAggregationBarWidthSettings {
   barWidth?: TimeSeriesChartBarWidth;
 }
 
+export const timeSeriesChartNoAggregationBarWidthDefaultSettings: TimeSeriesChartNoAggregationBarWidthSettings = {
+  strategy: TimeSeriesChartNoAggregationBarWidthStrategy.group,
+  groupWidth: {
+    relative: true,
+    relativeWidth: 2,
+    absoluteWidth: 1000
+  },
+  barWidth: {
+    relative: true,
+    relativeWidth: 2,
+    absoluteWidth: 1000
+  }
+};
+
 export interface TimeSeriesChartBarWidthSettings {
   barGap: number;
   intervalGap: number;
@@ -572,6 +618,17 @@ export interface TimeSeriesChartAnimationSettings {
   animationEasingUpdate: TimeSeriesChartAnimationEasing;
   animationDelayUpdate: number;
 }
+
+export const timeSeriesChartAnimationDefaultSettings: TimeSeriesChartAnimationSettings = {
+  animation: true,
+  animationThreshold: 2000,
+  animationDuration: 500,
+  animationEasing: TimeSeriesChartAnimationEasing.cubicOut,
+  animationDelay: 0,
+  animationDurationUpdate: 300,
+  animationEasingUpdate: TimeSeriesChartAnimationEasing.cubicOut,
+  animationDelayUpdate: 0
+};
 
 export interface TimeSeriesChartVisualMapPiece {
   lt?: number;
@@ -629,64 +686,16 @@ export const timeSeriesChartDefaultSettings: TimeSeriesChartSettings = {
                        defaultTimeSeriesChartYAxisSettings,
                        { id: 'default', order: 0 } as TimeSeriesChartYAxisSettings)
   },
-  xAxis: {
-    show: true,
-    label: '',
-    labelFont: {
-      family: 'Roboto',
-      size: 12,
-      sizeUnit: 'px',
-      style: 'normal',
-      weight: '600',
-      lineHeight: '1'
-    },
-    labelColor: timeSeriesChartColorScheme['axis.label'].light,
-    position: AxisPosition.bottom,
-    showTickLabels: true,
-    tickLabelFont: {
-      family: 'Roboto',
-      size: 10,
-      sizeUnit: 'px',
-      style: 'normal',
-      weight: '400',
-      lineHeight: '1'
-    },
-    tickLabelColor: timeSeriesChartColorScheme['axis.tickLabel'].light,
-    ticksFormat: {},
-    showTicks: true,
-    ticksColor: timeSeriesChartColorScheme['axis.ticks'].light,
-    showLine: true,
-    lineColor: timeSeriesChartColorScheme['axis.line'].light,
-    showSplitLines: true,
-    splitLinesColor: timeSeriesChartColorScheme['axis.splitLine'].light
-  },
-  animation: {
-    animation: true,
-    animationThreshold: 2000,
-    animationDuration: 500,
-    animationEasing: TimeSeriesChartAnimationEasing.cubicOut,
-    animationDelay: 0,
-    animationDurationUpdate: 300,
-    animationEasingUpdate: TimeSeriesChartAnimationEasing.cubicOut,
-    animationDelayUpdate: 0
-  },
+  xAxis: mergeDeep({} as TimeSeriesChartXAxisSettings,
+    defaultTimeSeriesChartXAxisSettings),
+  animation: mergeDeep({} as TimeSeriesChartAnimationSettings,
+    timeSeriesChartAnimationDefaultSettings),
   barWidthSettings: {
     barGap: 0.3,
     intervalGap: 0.6
   },
-  noAggregationBarWidthSettings: {
-    strategy: TimeSeriesChartNoAggregationBarWidthStrategy.group,
-    groupWidth: {
-      relative: true,
-      relativeWidth: 2,
-      absoluteWidth: 1000
-    },
-    barWidth: {
-      relative: true,
-      relativeWidth: 2,
-      absoluteWidth: 1000
-    }
-  },
+  noAggregationBarWidthSettings: mergeDeep({} as TimeSeriesChartNoAggregationBarWidthSettings,
+    timeSeriesChartNoAggregationBarWidthDefaultSettings),
   showTooltip: true,
   tooltipTrigger: EChartsTooltipTrigger.axis,
   tooltipValueFont: {
@@ -1000,6 +1009,11 @@ export const createTimeSeriesXAxisOption = (settings: TimeSeriesChartXAxisSettin
       fontFamily: xAxisTickLabelStyle.fontFamily,
       fontSize: xAxisTickLabelStyle.fontSize,
       hideOverlap: true,
+      /** Min/Max time label always visible **/
+      /* alignMinLabel: 'left',
+      alignMaxLabel: 'right',
+      showMinLabel: true,
+      showMaxLabel: true, */
       formatter: (value: number, _index: number, extra: {level: number}) => {
         const unit = tsToFormatTimeUnit(value);
         const format = ticksFormat[unit];

@@ -19,26 +19,49 @@ import {
   BackgroundType,
   ComponentStyle,
   customDateFormat,
-  Font, textStyle
+  Font,
+  textStyle
 } from '@shared/models/widget-settings.models';
 import { LegendPosition } from '@shared/models/widget.models';
 import { EChartsTooltipWidgetSettings } from '@home/components/widget/lib/chart/echarts-widget.models';
 import { DeepPartial } from '@shared/models/common';
 import {
-  TimeSeriesChartKeySettings, TimeSeriesChartSeriesType,
-  TimeSeriesChartSettings
+  defaultTimeSeriesChartXAxisSettings,
+  defaultTimeSeriesChartYAxisSettings,
+  SeriesFillSettings,
+  SeriesFillType,
+  timeSeriesChartAnimationDefaultSettings,
+  TimeSeriesChartAnimationSettings,
+  TimeSeriesChartKeySettings,
+  timeSeriesChartNoAggregationBarWidthDefaultSettings,
+  TimeSeriesChartNoAggregationBarWidthSettings,
+  TimeSeriesChartSeriesType,
+  TimeSeriesChartSettings,
+  TimeSeriesChartThreshold,
+  TimeSeriesChartXAxisSettings,
+  TimeSeriesChartYAxisSettings
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { CallbackDataParams, LabelLayoutOptionCallbackParams } from 'echarts/types/dist/shared';
-import { formatValue } from '@core/utils';
+import { formatValue, mergeDeep } from '@core/utils';
 import { LabelLayoutOption } from 'echarts/types/src/util/types';
 
 export interface BarChartWithLabelsWidgetSettings extends EChartsTooltipWidgetSettings {
+  dataZoom: boolean;
   showBarLabel: boolean;
   barLabelFont: Font;
   barLabelColor: string;
   showBarValue: boolean;
   barValueFont: Font;
   barValueColor: string;
+  showBarBorder: boolean;
+  barBorderWidth: number;
+  barBorderRadius: number;
+  barBackgroundSettings: SeriesFillSettings;
+  noAggregationBarWidthSettings: TimeSeriesChartNoAggregationBarWidthSettings;
+  yAxis: TimeSeriesChartYAxisSettings;
+  xAxis: TimeSeriesChartXAxisSettings;
+  animation: TimeSeriesChartAnimationSettings;
+  thresholds: TimeSeriesChartThreshold[];
   showLegend: boolean;
   legendPosition: LegendPosition;
   legendLabelFont: Font;
@@ -48,6 +71,7 @@ export interface BarChartWithLabelsWidgetSettings extends EChartsTooltipWidgetSe
 }
 
 export const barChartWithLabelsDefaultSettings: BarChartWithLabelsWidgetSettings = {
+  dataZoom: false,
   showBarLabel: true,
   barLabelFont: {
     family: 'Roboto',
@@ -68,6 +92,28 @@ export const barChartWithLabelsDefaultSettings: BarChartWithLabelsWidgetSettings
     lineHeight: '12px'
   },
   barValueColor: 'rgba(0, 0, 0, 0.76)',
+  showBarBorder: false,
+  barBorderWidth: 2,
+  barBorderRadius: 0,
+  barBackgroundSettings: {
+    type: SeriesFillType.none,
+    opacity: 0.4,
+    gradient: {
+      start: 100,
+      end: 0
+    }
+  },
+  noAggregationBarWidthSettings: mergeDeep({} as TimeSeriesChartNoAggregationBarWidthSettings,
+    timeSeriesChartNoAggregationBarWidthDefaultSettings),
+  yAxis: mergeDeep({} as TimeSeriesChartYAxisSettings,
+    defaultTimeSeriesChartYAxisSettings,
+    { id: 'default', order: 0, showLine: false, showTicks: false } as TimeSeriesChartYAxisSettings),
+  xAxis: mergeDeep({} as TimeSeriesChartXAxisSettings,
+    defaultTimeSeriesChartXAxisSettings,
+    {showTicks: false, showSplitLines: false} as TimeSeriesChartXAxisSettings),
+  animation: mergeDeep({} as TimeSeriesChartAnimationSettings,
+    timeSeriesChartAnimationDefaultSettings),
+  thresholds: [],
   showLegend: true,
   legendPosition: LegendPosition.top,
   legendLabelFont: {
@@ -116,27 +162,18 @@ export const barChartWithLabelsDefaultSettings: BarChartWithLabelsWidgetSettings
 };
 
 export const barChartWithLabelsTimeSeriesSettings = (settings: BarChartWithLabelsWidgetSettings): DeepPartial<TimeSeriesChartSettings> => ({
-  dataZoom: false,
+  dataZoom: settings.dataZoom,
   yAxes: {
-    default: {
-      show: true,
-      showLine: false,
-      showTicks: false,
-      showTickLabels: true,
-      showSplitLines: true,
-    }
+    default: settings.yAxis
   },
-  xAxis: {
-    show: true,
-    showLine: true,
-    showTicks: false,
-    showTickLabels: true,
-    showSplitLines: false
-  },
+  xAxis: settings.xAxis,
   barWidthSettings: {
     barGap: 0,
     intervalGap: 0.5
   },
+  noAggregationBarWidthSettings: settings.noAggregationBarWidthSettings,
+  animation: settings.animation,
+  thresholds: settings.thresholds,
   showTooltip: settings.showTooltip,
   tooltipValueFont: settings.tooltipValueFont,
   tooltipValueColor: settings.tooltipValueColor,
@@ -164,10 +201,11 @@ export const barChartWithLabelsTimeSeriesKeySettings = (settings: BarChartWithLa
   return {
     type: TimeSeriesChartSeriesType.bar,
     barSettings: {
-      showBorder: false,
-      borderWidth: 0,
-      borderRadius: 0,
-      showLabel: settings.showBarLabel,
+      showBorder: settings.showBarBorder,
+      borderWidth: settings.barBorderWidth,
+      borderRadius: settings.barBorderRadius,
+      backgroundSettings: settings.barBackgroundSettings,
+      showLabel: settings.showBarLabel || settings.showBarValue,
       labelPosition: 'insideBottom',
       labelFormatter: (params: CallbackDataParams): string => {
         const labelParts: string[] = [];

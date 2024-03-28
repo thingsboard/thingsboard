@@ -5172,7 +5172,7 @@
             "bar-appearance":"Wygląd słupka",
             "label-on-bar":"Etykieta na słupku",
             "value-on-bar":"Wartość na słupku",
-            "bar-chart-card-style":"Styl karty wykresu słupkowego"
+            "bar-chart-style":"Styl wykresu słupkowego"
         },
         "battery-level":{
             "layout":"Układ",

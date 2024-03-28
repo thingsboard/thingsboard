@@ -584,7 +584,7 @@ export class TbTimeSeriesChart {
     }
 
     this.timeSeriesChart.setOption(this.timeSeriesChartOptions);
-    this.updateAxes();
+    this.updateAxes(false);
 
     if (this.settings.dataZoom) {
       this.timeSeriesChart.on('datazoom', () => {
@@ -609,7 +609,7 @@ export class TbTimeSeriesChart {
       this.barRenderSharedContext, this.darkMode);
   }
 
-  private updateAxes() {
+  private updateAxes(lazy = true) {
     const leftAxisList = this.yAxisList.filter(axis => axis.option.position === 'left');
     let res = this.updateYAxisOffset(leftAxisList);
     let leftOffset = res.offset + (!res.offset && this.settings.dataZoom ? 5 : 0);
@@ -659,7 +659,7 @@ export class TbTimeSeriesChart {
     }
     if (changed) {
       this.timeSeriesChartOptions.yAxis = this.yAxisList.map(axis => axis.option);
-      this.timeSeriesChart.setOption(this.timeSeriesChartOptions, {replaceMerge: ['yAxis', 'xAxis', 'grid'], lazyUpdate: true});
+      this.timeSeriesChart.setOption(this.timeSeriesChartOptions, {replaceMerge: ['yAxis', 'xAxis', 'grid'], lazyUpdate: lazy});
     }
     if (this.yAxisList.length) {
       const extent = getAxisExtent(this.timeSeriesChart, this.yAxisList[0].id);

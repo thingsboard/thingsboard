@@ -127,6 +127,9 @@ import {
 import {
   AutoDateFormatSettingsComponent
 } from '@home/components/widget/lib/settings/common/auto-date-format-settings.component';
+import {
+  TimeSeriesChartFillSettingsComponent
+} from '@home/components/widget/lib/settings/common/chart/time-series-chart-fill-settings.component';
 
 @NgModule({
   declarations: [
@@ -174,6 +177,7 @@ import {
     TimeSeriesChartYAxisRowComponent,
     TimeSeriesChartYAxisSettingsPanelComponent,
     TimeSeriesChartAnimationSettingsComponent,
+    TimeSeriesChartFillSettingsComponent,
     DataKeyInputComponent,
     EntityAliasInputComponent
   ],
@@ -227,6 +231,7 @@ import {
     TimeSeriesChartYAxisRowComponent,
     TimeSeriesChartYAxisSettingsPanelComponent,
     TimeSeriesChartAnimationSettingsComponent,
+    TimeSeriesChartFillSettingsComponent,
     DataKeyInputComponent,
     EntityAliasInputComponent
   ],

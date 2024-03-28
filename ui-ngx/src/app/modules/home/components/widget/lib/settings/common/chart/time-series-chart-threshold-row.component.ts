@@ -53,6 +53,7 @@ import { deepClone } from '@core/utils';
 import {
   TimeSeriesChartThresholdSettingsPanelComponent
 } from '@home/components/widget/lib/settings/common/chart/time-series-chart-threshold-settings-panel.component';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-time-series-chart-threshold-row',
@@ -100,6 +101,10 @@ export class TimeSeriesChartThresholdRowComponent implements ControlValueAccesso
 
   @Input()
   yAxisIds: TimeSeriesChartYAxisId[];
+
+  @Input()
+  @coerceBoolean()
+  hideYAxis = false;
 
   @Output()
   thresholdRemoved = new EventEmitter();
@@ -220,6 +225,7 @@ export class TimeSeriesChartThresholdRowComponent implements ControlValueAccesso
       const ctx: any = {
         thresholdSettings: deepClone(this.modelValue),
         widgetConfig: this.widgetConfig,
+        hideYAxis: this.hideYAxis,
         yAxisIds: this.yAxisIds
       };
       const thresholdSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,

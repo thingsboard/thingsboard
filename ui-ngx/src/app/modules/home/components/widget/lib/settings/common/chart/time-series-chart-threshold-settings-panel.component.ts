@@ -30,6 +30,7 @@ import {
 import { merge } from 'rxjs';
 import { WidgetConfig } from '@shared/models/widget.models';
 import { formatValue, isDefinedAndNotNull } from '@core/utils';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-time-series-chart-threshold-settings-panel',
@@ -65,6 +66,10 @@ export class TimeSeriesChartThresholdSettingsPanelComponent implements OnInit {
 
   @Input()
   popover: TbPopoverComponent<TimeSeriesChartThresholdSettingsPanelComponent>;
+
+  @Input()
+  @coerceBoolean()
+  hideYAxis = false;
 
   @Output()
   thresholdSettingsApplied = new EventEmitter<Partial<TimeSeriesChartThreshold>>();

@@ -5422,7 +5422,7 @@
             "bar-appearance": "Bar appearance",
             "label-on-bar": "Label on bar",
             "value-on-bar": "Value on bar",
-            "bar-chart-card-style": "Bar chart card style"
+            "bar-chart-style": "Bar chart style"
         },
         "battery-level": {
             "layout": "Layout",
