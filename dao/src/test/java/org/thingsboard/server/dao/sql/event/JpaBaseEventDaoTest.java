@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.event.EventDao;
+import org.thingsboard.server.dao.model.sql.RuleNodeDebugEventEntity;
 
 import java.util.List;
 import java.util.UUID;
@@ -42,6 +43,10 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
 
     @Autowired
     private EventDao eventDao;
+
+    @Autowired
+    private RuleNodeDebugEventRepository ruleNodeDebugEventRepository;
+
     UUID tenantId = Uuids.timeBased();
 
 
@@ -106,6 +111,23 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
 
     }
 
+    @Test
+    public void findLatestDebugRuleNodeInEvent() throws Exception {
+
+        UUID entityId = Uuids.timeBased();
+
+        RuleNodeDebugEventEntity event = getDebugInEventEntity(Uuids.timeBased(), tenantId, entityId);
+        eventDao.saveAsync(event.toData()).get(1, TimeUnit.MINUTES);
+        Thread.sleep(2);
+        RuleNodeDebugEventEntity event2 = getDebugInEventEntity(Uuids.timeBased(), tenantId, entityId);
+        eventDao.saveAsync(event2.toData()).get(1, TimeUnit.MINUTES);
+
+        RuleNodeDebugEventEntity foundEvent = ruleNodeDebugEventRepository.findLatestDebugRuleNodeInEvent(tenantId, entityId).get();
+        assertNotNull("Events expected to be not null", foundEvent);
+        assertEquals(event2.getEventType(), foundEvent.getEventType());
+        assertEquals(event2.getId(), foundEvent.getId());
+    }
+
     private Event getStatsEvent(UUID eventId, UUID tenantId, UUID entityId) {
         StatisticsEvent.StatisticsEventBuilder event = StatisticsEvent.builder();
         event.id(eventId);
@@ -116,5 +138,14 @@ public class JpaBaseEventDaoTest extends AbstractJpaDaoTest {
         event.messagesProcessed(1);
         event.errorsOccurred(0);
         return event.build();
+    }
+
+    private RuleNodeDebugEventEntity getDebugInEventEntity(UUID eventId, UUID tenantId, UUID entityId) {
+        RuleNodeDebugEventEntity event = new RuleNodeDebugEventEntity();
+        event.setId(eventId);
+        event.setEventType("IN");
+        event.setEntityId(entityId);
+        event.setTenantId(tenantId);
+        return event;
     }
 }

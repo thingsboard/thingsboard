@@ -63,6 +63,15 @@ public interface EventDao {
     List<? extends Event> findLatestEvents(UUID tenantId, UUID entityId, EventType eventType, int limit);
 
     /**
+     * Find latest debug IN event by tenantId, entityId.
+     *
+     * @param tenantId the tenantId
+     * @param entityId the entityId
+     * @return the latest debug IN event
+     */
+    Event findLatestDebugRuleNodeInEvent(UUID tenantId, UUID entityId);
+
+    /**
      * Executes stored procedure to cleanup old events. Uses separate ttl for debug and other events.
      * @param regularEventExpTs the expiration time of the regular events
      * @param debugEventExpTs the expiration time of the debug events
