@@ -117,7 +117,7 @@ public class CachedAttributesService implements AttributesService {
     @Override
     public ListenableFuture<Optional<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, AttributeScope scope, String attributeKey) {
         validate(entityId, scope);
-        Validator.validateString(attributeKey, k ->"Incorrect attribute key " + k);
+        Validator.validateString(attributeKey, k -> "Incorrect attribute key " + k);
 
         return cacheExecutor.submit(() -> {
             AttributeCacheKey attributeCacheKey = new AttributeCacheKey(scope, entityId, attributeKey);

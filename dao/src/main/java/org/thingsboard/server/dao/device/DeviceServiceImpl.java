@@ -389,7 +389,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         log.trace("Executing findDevicesByTenantIdAndTypeAndEmptyOtaPackage, tenantId [{}], deviceProfileId [{}], type [{}], pageLink [{}]",
                 tenantId, deviceProfileId, type, pageLink);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
-        validateId(tenantId, id -> INCORRECT_DEVICE_PROFILE_ID + id);
+        validateId(deviceProfileId, id -> INCORRECT_DEVICE_PROFILE_ID + id);
         validatePageLink(pageLink);
         return deviceDao.findDevicesByTenantIdAndTypeAndEmptyOtaPackage(tenantId.getId(), deviceProfileId.getId(), type, pageLink);
     }
@@ -398,7 +398,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     public Long countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage(TenantId tenantId, DeviceProfileId deviceProfileId, OtaPackageType type) {
         log.trace("Executing countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage, tenantId [{}], deviceProfileId [{}], type [{}]", tenantId, deviceProfileId, type);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
-        validateId(tenantId, id -> INCORRECT_DEVICE_PROFILE_ID + id);
+        validateId(deviceProfileId, id -> INCORRECT_DEVICE_PROFILE_ID + id);
         return deviceDao.countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage(tenantId.getId(), deviceProfileId.getId(), type);
     }
 
