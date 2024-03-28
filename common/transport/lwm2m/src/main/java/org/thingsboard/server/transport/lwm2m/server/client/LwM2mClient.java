@@ -229,7 +229,7 @@ public class LwM2mClient {
             this.resources.get(pathRezIdVer).updateLwM2mResource(resource, mode);
             return true;
         } else {
-            LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathRezIdVer));
+            LwM2mPath pathIds = getLwM2mPathFromString(pathRezIdVer);
             ResourceModel resourceModel = modelProvider.getObjectModel(registration).getResourceModel(pathIds.getObjectId(), pathIds.getResourceId());
             if (resourceModel != null) {
                 this.resources.put(pathRezIdVer, new ResourceValue(resource, resourceModel));
@@ -257,7 +257,7 @@ public class LwM2mClient {
     }
 
     public String getRezIdByResourceNameAndObjectInstanceId(String resourceName, String pathObjectInstanceIdVer, LwM2mModelProvider modelProvider) {
-        LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathObjectInstanceIdVer));
+        LwM2mPath pathIds = getLwM2mPathFromString(pathObjectInstanceIdVer);
         if (pathIds.isObjectInstance()) {
             Set<Integer> rezIds = modelProvider.getObjectModel(registration)
                     .getObjectModel(pathIds.getObjectId()).resources.entrySet()
@@ -271,7 +271,7 @@ public class LwM2mClient {
     }
 
     public ResourceModel getResourceModel(String pathIdVer, LwM2mModelProvider modelProvider) {
-        LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer));
+        LwM2mPath pathIds = getLwM2mPathFromString(pathIdVer);
         String verSupportedObject = String.valueOf(registration.getSupportedObject().get(pathIds.getObjectId()));
         String verRez = getVerFromPathIdVerOrId(pathIdVer);
         return verRez != null && verRez.equals(verSupportedObject) ? modelProvider.getObjectModel(registration)
@@ -289,7 +289,7 @@ public class LwM2mClient {
 
     public ObjectModel getObjectModel(String pathIdVer, LwM2mModelProvider modelProvider) {
         try {
-            LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathIdVer));
+            LwM2mPath pathIds = getLwM2mPathFromString(pathIdVer);
             String verSupportedObject = String.valueOf(registration.getSupportedObject().get(pathIds.getObjectId()));
             String verRez = getVerFromPathIdVerOrId(pathIdVer);
             return verRez != null && verRez.equals(verSupportedObject) ? modelProvider.getObjectModel(registration)
@@ -309,7 +309,7 @@ public class LwM2mClient {
 
     public Collection<LwM2mResource> getNewResourceForInstance(String pathRezIdVer, Object params, LwM2mModelProvider modelProvider,
                                                                LwM2mValueConverter converter) {
-        LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathRezIdVer));
+        LwM2mPath pathIds = getLwM2mPathFromString(pathRezIdVer);
         Collection<LwM2mResource> resources = ConcurrentHashMap.newKeySet();
         Map<Integer, ResourceModel> resourceModels = modelProvider.getObjectModel(registration)
                 .getObjectModel(pathIds.getObjectId()).resources;
@@ -329,7 +329,7 @@ public class LwM2mClient {
      */
     public Collection<LwM2mResource> getNewResourcesForInstance(String pathRezIdVer, Object params, LwM2mModelProvider modelProvider,
                                                                 LwM2mValueConverter converter) {
-        LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathRezIdVer));
+        LwM2mPath pathIds = getLwM2mPathFromString(pathRezIdVer);
         Collection<LwM2mResource> resources = ConcurrentHashMap.newKeySet();
         Map<Integer, ResourceModel> resourceModels = modelProvider.getObjectModel(registration)
                 .getObjectModel(pathIds.getObjectId()).resources;
@@ -370,7 +370,7 @@ public class LwM2mClient {
     }
 
     public String isValidObjectVersion(String path) {
-        LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(path));
+        LwM2mPath pathIds = getLwM2mPathFromString(path);
         LwM2m.Version verSupportedObject = registration.getSupportedObject().get(pathIds.getObjectId());
         if (verSupportedObject == null) {
             return String.format("Specified object id %s absent in the list supported objects of the client or is security object!", pathIds.getObjectId());
@@ -390,7 +390,7 @@ public class LwM2mClient {
     public void deleteResources(String pathIdVer, LwM2mModelProvider modelProvider) {
         Set<String> key = getKeysEqualsIdVer(pathIdVer);
         key.forEach(pathRez -> {
-            LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathRez));
+            LwM2mPath pathIds = getLwM2mPathFromString(pathRez);
             ResourceModel resourceModel = modelProvider.getObjectModel(registration).getResourceModel(pathIds.getObjectId(), pathIds.getResourceId());
             if (resourceModel != null) {
                 this.resources.get(pathRez).setResourceModel(resourceModel);
@@ -410,7 +410,7 @@ public class LwM2mClient {
     }
 
     private void saveResourceModel(String pathRez, LwM2mModelProvider modelProvider) {
-        LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(pathRez));
+        LwM2mPath pathIds = getLwM2mPathFromString(pathRez);
         ResourceModel resourceModel = modelProvider.getObjectModel(registration).getResourceModel(pathIds.getObjectId(), pathIds.getResourceId());
         this.resources.get(pathRez).setResourceModel(resourceModel);
     }
@@ -454,6 +454,10 @@ public class LwM2mClient {
         boolean result = firstEdrxDownlink;
         firstEdrxDownlink = false;
         return result;
+    }
+
+    public LwM2mPath getLwM2mPathFromString(String path) {
+        return new LwM2mPath(fromVersionedIdToObjectId(path));
     }
 
 }
