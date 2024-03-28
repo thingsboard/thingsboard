@@ -19,8 +19,6 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.thingsboard.common.util.ThingsBoardExecutors;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.queue.TbQueueAdmin;
@@ -32,11 +30,6 @@ import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingStrategyFactory;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineSubmitStrategyFactory;
 import org.thingsboard.server.service.stats.RuleEngineStatisticsService;
-
-import javax.annotation.PostConstruct;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 @Component
 @TbRuleEngineComponent
@@ -68,22 +61,4 @@ public class TbRuleEngineConsumerContext {
     private final TbQueueProducerProvider producerProvider;
     private final TbQueueAdmin queueAdmin;
 
-    private ExecutorService consumersExecutor;
-    private ExecutorService mgmtExecutor;
-    private ScheduledExecutorService scheduler;
-
-    private volatile boolean isReady = false;
-
-    @PostConstruct
-    void init() {
-        this.consumersExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("tb-rule-engine-consumer"));
-        this.mgmtExecutor = ThingsBoardExecutors.newWorkStealingPool(mgmtThreadPoolSize, "tb-rule-engine-mgmt");
-        this.scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("tb-rule-engine-consumer-scheduler"));
-    }
-
-    public void stop() {
-        scheduler.shutdownNow();
-        consumersExecutor.shutdownNow();
-        mgmtExecutor.shutdownNow();
-    }
 }
