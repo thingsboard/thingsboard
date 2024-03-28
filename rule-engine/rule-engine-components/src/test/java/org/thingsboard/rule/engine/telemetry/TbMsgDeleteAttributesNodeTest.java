@@ -215,7 +215,14 @@ public class TbMsgDeleteAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, deviceId, TbMsgMetaData.EMPTY, data);
 
         node.onMsg(ctx, msg);
+        List<String> keysToDelete = config.getKeys().stream()
+                .map(keyPattern -> TbNodeUtils.processPattern(keyPattern, msg))
+                .distinct()
+                .filter(StringUtils::isNotBlank)
+                .toList();
 
+        verify(telemetryService).deleteAndNotify(eq(ctx.getTenantId()), eq(msg.getOriginator()), eq(AttributeScope.SERVER_SCOPE),
+                eq(keysToDelete), eq(false), eq(new TelemetryNodeCallback(ctx, msg)));
         verify(ctx).tellSuccess(eq(msg));
     }
 

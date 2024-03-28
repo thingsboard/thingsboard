@@ -75,30 +75,12 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
     private TenantId tenantId;
     private DeviceId deviceId;
     private TbMsgAttributesNode node;
-    private TbMsgAttributesNodeConfiguration config;
-    private TbNodeConfiguration nodeConfiguration;
-    private TbContext ctx;
-    private RuleEngineTelemetryService telemetryService;
 
     @BeforeEach
-    void setUp() throws TbNodeException {
+    void setUp() {
         tenantId = new TenantId(UUID.fromString("6c18691e-4470-4766-9739-aface71d761f"));
         deviceId = new DeviceId(UUID.fromString("b66159d7-c77e-45e8-bb41-a8f557f434c1"));
         node = spy(TbMsgAttributesNode.class);
-        ctx = mock(TbContext.class);
-        config = new TbMsgAttributesNodeConfiguration().defaultConfiguration();
-        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-        node.init(ctx, nodeConfiguration);
-
-        telemetryService = mock(RuleEngineTelemetryService.class);
-
-        willReturn(telemetryService).given(ctx).getTelemetryService();
-        willAnswer(invocation -> {
-            TelemetryNodeCallback callBack = invocation.getArgument(5);
-            callBack.onSuccess(null);
-            return null;
-        }).given(telemetryService).saveAndNotify(
-                any(), any(), any(AttributeScope.class), anyList(), anyBoolean(), any());
     }
 
     @Test
@@ -206,11 +188,14 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
 
     @Test
     void givenUseTemplateTrueAndNoMetadataKeyInMsg_whenOnMsg_thenSaveAttributes() throws Exception {
+        var ctx = mock(TbContext.class);
+        var config = new TbMsgAttributesNodeConfiguration().defaultConfiguration();
         config.setUseAttributesScopeTemplate(true);
         config.setScope("${scopeInMetadata}");
         config.setUpdateAttributesOnlyOnValueChange(false);
-        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        var nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
+        var telemetryService = mockTelemetryServiceSaveAndNotify(ctx);
 
         final Map<String, String> mdMap = Map.of("scope", "SERVER_SCOPE");
         final String data = "{\"TestAttribute_2\": \"humidity\", \"TestAttribute_3\": \"voltage\"}";
@@ -224,31 +209,37 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @Test
-    void givenUseTemplateTrueAndStrangeDataKey_whenOnMsg_thenSaveAttributes() throws Exception {
+    void givenUseTemplateTrueAndSpongeCaseDataKey_whenOnMsg_thenSaveAttributes() throws Exception {
+        var ctx = mock(TbContext.class);
+        var config = new TbMsgAttributesNodeConfiguration().defaultConfiguration();
         config.setUseAttributesScopeTemplate(true);
         config.setScope("$[scopeInData]");
         config.setUpdateAttributesOnlyOnValueChange(false);
-        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        var nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
+        var telemetryService = mockTelemetryServiceSaveAndNotify(ctx);
 
         final String data = "{\"TestAttribute_2\": \"humidity\", \"TestAttribute_3\": \"voltage\", \"scopeInData\": \" SeRvEr_ScOpE \"}";
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, deviceId, TbMsgMetaData.EMPTY, data);
 
         node.onMsg(ctx, msg);
 
+        verify(telemetryService).saveAndNotify(eq(ctx.getTenantId()), eq(msg.getOriginator()), eq(AttributeScope.SERVER_SCOPE),
+                anyList(), eq(true), eq(new TelemetryNodeCallback(ctx, msg)));
         verify(ctx).tellSuccess(eq(msg));
     }
 
     @Test
     void givenUseTemplateTrueAndInvalidMetadataKey_whenOnMsg_thenThrowException() throws TbNodeException {
+        var ctx = mock(TbContext.class);
+        var config = new TbMsgAttributesNodeConfiguration().defaultConfiguration();
         config.setUseAttributesScopeTemplate(true);
         config.setScope("${scopeInMetadata}");
-        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        var nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
 
-        final Map<String, String> mdMap = Map.of("scopeMetadata", "SERVER_SCOPE");
         final String data = "{\"TestAttribute_2\": \"humidity\", \"TestAttribute_3\": \"voltage\"}";
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, deviceId, new TbMsgMetaData(mdMap), data);
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, deviceId, TbMsgMetaData.EMPTY, data);
 
         Assertions.assertThatThrownBy(() -> node.onMsg(ctx, msg))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -257,9 +248,11 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
 
     @Test
     void givenUseTemplateTrueAndMetadataKeyNonExistingScope_whenOnMsg_thenThrowException() throws TbNodeException {
+        var ctx = mock(TbContext.class);
+        var config = new TbMsgAttributesNodeConfiguration().defaultConfiguration();
         config.setUseAttributesScopeTemplate(true);
         config.setScope("${scopeInMetadata}");
-        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        var nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
 
         final Map<String, String> mdMap = Map.of("scopeInMetadata", "ANOTHER_SCOPE");
@@ -274,8 +267,10 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
 
     @Test
     void givenScopeIsNull_whenOnMsg_thenThrowException() throws TbNodeException {
+        var ctx = mock(TbContext.class);
+        var config = new TbMsgAttributesNodeConfiguration().defaultConfiguration();
         config.setScope(null);
-        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        var nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctx, nodeConfiguration);
 
         final Map<String, String> mdMap = Map.of("scopeInMetadata", "ANOTHER_SCOPE");
@@ -289,11 +284,25 @@ class TbMsgAttributesNodeTest extends AbstractRuleNodeUpgradeTest {
 
     @Test
     void givenDefaultConfig_whenInit_thenOk() {
-        config = new TbMsgAttributesNodeConfiguration().defaultConfiguration();
-        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        var ctx = mock(TbContext.class);
+        var config = new TbMsgAttributesNodeConfiguration().defaultConfiguration();
+        var nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
         assertThatCode(() -> node.init(ctx, nodeConfiguration))
                 .doesNotThrowAnyException();
+    }
+
+    private RuleEngineTelemetryService mockTelemetryServiceSaveAndNotify(TbContext ctx) {
+        var telemetryService = mock(RuleEngineTelemetryService.class);
+
+        willReturn(telemetryService).given(ctx).getTelemetryService();
+        willAnswer(invocation -> {
+            TelemetryNodeCallback callBack = invocation.getArgument(5);
+            callBack.onSuccess(null);
+            return null;
+        }).given(telemetryService).saveAndNotify(
+                any(), any(), any(AttributeScope.class), anyList(), anyBoolean(), any());
+        return telemetryService;
     }
 
     // Rule nodes upgrade
