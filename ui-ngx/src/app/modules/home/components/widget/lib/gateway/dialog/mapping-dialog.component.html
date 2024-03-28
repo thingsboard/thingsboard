@@ -512,7 +512,7 @@
     </button>
     <button mat-raised-button color="primary"
             type="submit"
-            [disabled]="(isLoading$ | async) || mappingForm.invalid || !mappingForm.dirty">
+            [disabled]="(isLoading$ | async) || mappingForm.invalid || !mappingForm.dirty || !keysPopupClosed">
       {{ this.data.buttonTitle | translate }}
     </button>
   </div>

@@ -82,6 +82,8 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
 
   MappingTypeTranslationsMap = MappingTypeTranslationsMap;
 
+  keysPopupClosed = true;
+
   submitted = false;
 
   private destroy$ = new Subject<void>();
@@ -241,7 +243,9 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
   }
 
   cancel(): void {
-    this.dialogRef.close(null);
+    if (this.keysPopupClosed) {
+      this.dialogRef.close(null);
+    }
   }
 
   add(): void {
@@ -269,6 +273,7 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
         deleteKeyTitle: MappingKeysDeleteKeyTranslationsMap.get(keysType),
         noKeysText: MappingKeysNoKeysTextTranslationsMap.get(keysType)
       };
+      this.keysPopupClosed = false;
       const dataKeysPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
         this.viewContainerRef, MappingDataKeysPanelComponent, 'leftBottom', false, null,
         ctx,
@@ -278,6 +283,10 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
       dataKeysPanelPopover.tbComponentRef.instance.keysDataApplied.subscribe((keysData) => {
         dataKeysPanelPopover.hide();
         keysControl.patchValue(keysData);
+        keysControl.markAsDirty();
+      });
+      dataKeysPanelPopover.tbHideStart.subscribe(() => {
+        this.keysPopupClosed = true;
       });
     }
   }

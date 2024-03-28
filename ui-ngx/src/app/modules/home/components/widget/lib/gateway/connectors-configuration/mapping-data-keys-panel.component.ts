@@ -34,7 +34,6 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
 import { isDefinedAndNotNull } from '@core/utils';
-import { ValueType } from '@shared/models/constants';
 import {
   MappingKeysType,
   MappingValueType,

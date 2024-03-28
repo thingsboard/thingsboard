@@ -18,8 +18,9 @@
 <div class="tb-mapping-keys-panel">
   <div class="tb-form-panel no-border no-padding">
     <div class="tb-form-panel-title">{{ panelTitle  | translate }}{{' (' + keysListFormArray.controls.length + ')'}}</div>
-    <div #scrollPanel [scrollTop]="scrollPanel.scrollHeight" class="tb-form-panel no-border no-padding key-panel" *ngIf="keysListFormArray.controls.length; else noKeys">
-      <div class="tb-form-panel no-border no-padding tb-flex row center align-center" *ngFor="let keyControl of keysListFormArray.controls; trackBy: trackByKey; let $index = index; let last = last;">
+    <div class="tb-form-panel no-border no-padding key-panel" *ngIf="keysListFormArray.controls.length; else noKeys">
+      <div class="tb-form-panel no-border no-padding tb-flex no-flex row center align-center fill-width"
+           *ngFor="let keyControl of keysListFormArray.controls; trackBy: trackByKey; let $index = index; let last = last;">
         <div class="tb-form-panel stroked tb-flex">
           <ng-container [formGroup]="keyControl">
             <mat-expansion-panel class="tb-settings" [expanded]="last">
@@ -106,7 +107,9 @@
     </div>
   </div>
   <ng-template #noKeys>
-    <span class="tb-prompt tb-flex center align-center" translate>{{ noKeysText }}</span>
+    <div class="tb-flex no-flex center align-center key-panel">
+      <span class="tb-prompt" translate>{{ noKeysText }}</span>
+    </div>
   </ng-template>
   <div class="tb-flex flex-end">
     <button mat-button

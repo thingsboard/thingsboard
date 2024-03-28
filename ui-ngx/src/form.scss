@@ -245,6 +245,9 @@
     display: flex;
     flex: 1;
     gap: 8px;
+    &.no-flex {
+      flex: none;
+    }
     &.row {
       flex-direction: row;
     }
