@@ -118,16 +118,20 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     @Transactional
     public RuleChain saveRuleChain(RuleChain ruleChain, boolean publishSaveEvent) {
         ruleChainValidator.validate(ruleChain, RuleChain::getTenantId);
+        RuleChain savedRuleChain = saveRuleChainInternal(ruleChain);
+        if (ruleChain.getId() == null) {
+            entityCountService.publishCountEntityEvictEvent(ruleChain.getTenantId(), EntityType.RULE_CHAIN);
+        }
+        if (publishSaveEvent) {
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedRuleChain.getTenantId())
+                    .entity(savedRuleChain).entityId(savedRuleChain.getId()).created(ruleChain.getId() == null).build());
+        }
+        return savedRuleChain;
+    }
+
+    private RuleChain saveRuleChainInternal(RuleChain ruleChain) {
         try {
-            RuleChain savedRuleChain = ruleChainDao.save(ruleChain.getTenantId(), ruleChain);
-            if (ruleChain.getId() == null) {
-                entityCountService.publishCountEntityEvictEvent(ruleChain.getTenantId(), EntityType.RULE_CHAIN);
-            }
-            if (publishSaveEvent) {
-                eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedRuleChain.getTenantId())
-                        .entity(savedRuleChain).entityId(savedRuleChain.getId()).created(ruleChain.getId() == null).build());
-            }
-            return savedRuleChain;
+            return ruleChainDao.saveAndFlush(ruleChain.getTenantId(), ruleChain);
         } catch (Exception e) {
             checkConstraintViolation(e, "rule_chain_external_id_unq_key", "Rule Chain with such external id already exists!");
             throw e;
