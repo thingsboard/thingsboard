@@ -167,7 +167,7 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
     public ApiUsageState findApiUsageStateById(TenantId tenantId, ApiUsageStateId id) {
         log.trace("Executing findApiUsageStateById, tenantId [{}], apiUsageStateId [{}]", tenantId, id);
         validateId(tenantId, t -> INCORRECT_TENANT_ID + t);
-        validateId(id, usId -> "Incorrect apiUsageStateId " + usId);
+        validateId(id, u -> "Incorrect apiUsageStateId " + u);
         return apiUsageStateDao.findById(tenantId, id.getId());
     }
 

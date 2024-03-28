@@ -173,7 +173,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     @Override
     public UserCredentials findUserCredentialsByResetToken(TenantId tenantId, String resetToken) {
         log.trace("Executing findUserCredentialsByResetToken [{}]", resetToken);
-        validateString(resetToken, t -> "Incorrect activateToken " + t);
+        validateString(resetToken, t -> "Incorrect resetToken " + t);
         return userCredentialsDao.findByResetToken(tenantId, resetToken);
     }
 
@@ -335,7 +335,7 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
         log.trace("Executing findTenantAndCustomerUsers, tenantId [{}], customerIds [{}], pageLink [{}]", tenantId, customerIds, pageLink);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         validatePageLink(pageLink);
-        customerIds.forEach(customerId -> {validateId(customerId, id -> "Incorrect customerId " + id);});
+        customerIds.forEach(customerId -> validateId(customerId, id -> "Incorrect customerId " + id));
         return userDao.findUsersByCustomerIds(tenantId.getId(), customerIds, pageLink);
     }
 

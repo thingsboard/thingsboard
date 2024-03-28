@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.service;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.thingsboard.server.common.data.id.*;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
@@ -27,20 +26,15 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-
 class ValidatorTest {
 
     final DeviceId goodDeviceId = new DeviceId(UUID.fromString("18594c15-9f05-4cda-b58e-70172467c3e5"));
     final UserId nullUserId = new UserId(null);
 
-    @BeforeEach
-    void setUp() {
-    }
-
     @Test
     void validateEntityIdTest() {
         Validator.validateEntityId(TenantId.SYS_TENANT_ID, id -> "Incorrect entityId " + id);
-        Validator.validateEntityId((goodDeviceId), id -> "Incorrect entityId " + id);
+        Validator.validateEntityId(goodDeviceId, id -> "Incorrect entityId " + id);
 
         assertThatThrownBy(() -> Validator.validateEntityId(null, id -> "Incorrect entityId " + id))
                 .as("EntityId is null")
@@ -51,7 +45,6 @@ class ValidatorTest {
                 .as("EntityId with null UUID")
                 .isInstanceOf(IncorrectParameterException.class)
                 .hasMessageContaining("Incorrect entityId null");
-
     }
 
     @Test
@@ -84,13 +77,12 @@ class ValidatorTest {
                 .as("Id is null")
                 .isInstanceOf(IncorrectParameterException.class)
                 .hasMessageContaining("Incorrect Id null");
-
     }
 
     @Test
     void validateUUIDBasedIdTest() {
         Validator.validateId(TenantId.SYS_TENANT_ID, id -> "Incorrect Id " + id);
-        Validator.validateId((goodDeviceId), id -> "Incorrect Id " + id);
+        Validator.validateId(goodDeviceId, id -> "Incorrect Id " + id);
 
         assertThatThrownBy(() -> Validator.validateId((UUIDBased) null, id -> "Incorrect Id " + id))
                 .as("Id is null")
@@ -119,7 +111,7 @@ class ValidatorTest {
                 .isInstanceOf(IncorrectParameterException.class)
                 .hasMessageContaining("Incorrect Ids []");
 
-        ArrayList<DeviceId> badList = new ArrayList<>(2);
+        List<DeviceId> badList = new ArrayList<>(2);
         badList.add(goodDeviceId);
         badList.add(null);
 
