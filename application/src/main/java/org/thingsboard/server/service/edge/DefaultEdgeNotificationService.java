@@ -42,6 +42,7 @@ import org.thingsboard.server.service.edge.rpc.processor.device.DeviceEdgeProces
 import org.thingsboard.server.service.edge.rpc.processor.device.profile.DeviceProfileEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.edge.EdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.entityview.EntityViewEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.oauth2.OAuth2EdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.ota.OtaPackageEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.queue.QueueEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.relation.RelationEdgeProcessor;
@@ -53,8 +54,8 @@ import org.thingsboard.server.service.edge.rpc.processor.user.UserEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.widget.WidgetBundleEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.widget.WidgetTypeEdgeProcessor;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -125,6 +126,9 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
 
     @Autowired
     private ResourceEdgeProcessor resourceEdgeProcessor;
+
+    @Autowired
+    private OAuth2EdgeProcessor oAuth2EdgeProcessor;
 
     @Autowired
     protected ApplicationEventPublisher eventPublisher;
@@ -230,6 +234,9 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                             break;
                         case TB_RESOURCE:
                             resourceEdgeProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
+                            break;
+                        case OAUTH2:
+                            oAuth2EdgeProcessor.processOAuth2Notification(tenantId, edgeNotificationMsg);
                             break;
                         default:
                             log.warn("[{}] Edge event type [{}] is not designed to be pushed to edge", tenantId, type);

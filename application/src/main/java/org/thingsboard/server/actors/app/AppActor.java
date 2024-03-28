@@ -17,6 +17,7 @@ package org.thingsboard.server.actors.app;
 
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.actors.ProcessFailureStrategy;
 import org.thingsboard.server.actors.TbActor;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.TbActorException;
@@ -88,7 +89,7 @@ public class AppActor extends ContextAwareActor {
             case APP_INIT_MSG:
                 break;
             case PARTITION_CHANGE_MSG:
-                ctx.broadcastToChildren(msg);
+                ctx.broadcastToChildren(msg, true);
                 break;
             case COMPONENT_LIFE_CYCLE_MSG:
                 onComponentLifecycleMsg((ComponentLifecycleMsg) msg);
@@ -202,8 +203,7 @@ public class AppActor extends ContextAwareActor {
         return Optional.ofNullable(ctx.getOrCreateChildActor(new TbEntityActorId(tenantId),
                 () -> DefaultActorService.TENANT_DISPATCHER_NAME,
                 () -> new TenantActor.ActorCreator(systemContext, tenantId),
-                () -> systemContext.getServiceInfoProvider().isService(ServiceType.TB_CORE) ||
-                        systemContext.getPartitionService().isManagedByCurrentService(tenantId)));
+                () -> true));
     }
 
     private void onToEdgeSessionMsg(EdgeSessionMsg msg) {
@@ -218,6 +218,12 @@ public class AppActor extends ContextAwareActor {
         } else {
             log.debug("[{}] Invalid edge session msg: {}", msg.getTenantId(), msg);
         }
+    }
+
+    @Override
+    public ProcessFailureStrategy onProcessFailure(TbActorMsg msg, Throwable t) {
+        log.error("Failed to process msg: {}", msg, t);
+        return doProcessFailure(t);
     }
 
     public static class ActorCreator extends ContextBasedCreator {

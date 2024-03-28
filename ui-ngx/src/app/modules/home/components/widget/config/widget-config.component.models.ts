@@ -23,9 +23,8 @@ import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { AbstractControl, UntypedFormGroup } from '@angular/forms';
-import { DataKey, DatasourceType, KeyInfo, WidgetConfigMode, widgetType } from '@shared/models/widget.models';
+import { DataKey, DatasourceType, WidgetConfigMode, widgetType } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
-import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { isDefinedAndNotNull } from '@core/utils';
 import { IAliasController } from '@core/api/widget-api.models';
 
@@ -187,22 +186,23 @@ export abstract class BasicWidgetConfigComponent extends PageComponent implement
     if (keys && keys.length) {
       dataKeys.length = 0;
       keys.forEach(key => {
-        const dataKey = this.constructDataKey(configData, key);
+        const dataKey = this.constructDataKey(configData, key, false);
         dataKeys.push(dataKey);
       });
     }
     if (latestKeys && latestKeys.length) {
       latestDataKeys.length = 0;
       latestKeys.forEach(key => {
-        const dataKey = this.constructDataKey(configData, key);
+        const dataKey = this.constructDataKey(configData, key, true);
         latestDataKeys.push(dataKey);
       });
     }
   }
 
-  protected constructDataKey(configData: WidgetConfigComponentData, key: DataKey): DataKey {
+  protected constructDataKey(configData: WidgetConfigComponentData, key: DataKey, isLatestKey: boolean): DataKey {
     const dataKey =
-      this.widgetConfigComponent.widgetConfigCallbacks.generateDataKey(key.name, key.type, configData.dataKeySettingsSchema);
+      this.widgetConfigComponent.widgetConfigCallbacks.generateDataKey(key.name, key.type,
+        configData.dataKeySettingsSchema, isLatestKey, configData.dataKeySettingsFunction);
     if (key.label) {
       dataKey.label = key.label;
     }

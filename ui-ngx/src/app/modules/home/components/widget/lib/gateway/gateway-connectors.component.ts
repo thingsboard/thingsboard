@@ -50,6 +50,7 @@ import { EntityType } from '@shared/models/entity-type.models';
 import {
   AddConnectorConfigData,
   ConnectorConfigurationModes,
+  ConnectorType,
   GatewayConnector,
   GatewayConnectorDefaultTypesTranslates,
   GatewayLogLevel,
@@ -275,10 +276,10 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     const value = this.connectorForm.value;
     value.configuration = camelCase(value.name) + '.json';
     delete value.basicConfig;
-    if (value.type !== 'grpc') {
+    if (value.type !== ConnectorType.GRPC) {
       delete value.key;
     }
-    if (value.type !== 'custom') {
+    if (value.type !== ConnectorType.CUSTOM) {
       delete value.class;
     }
     value.ts = new Date().getTime();
@@ -382,7 +383,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     this.connectorForm.setValue({
       mode: ConnectorConfigurationModes.BASIC,
       name: '',
-      type: 'mqtt',
+      type: ConnectorType.MQTT,
       sendDataOnlyOnChange: false,
       logLevel: GatewayLogLevel.INFO,
       key: 'auto',
@@ -413,7 +414,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
       this.initialConnector = connector;
 
-      if (connector.type === 'mqtt') {
+      if (connector.type === ConnectorType.MQTT) {
         this.addMQTTConfigControls();
       } else {
         this.connectorForm.setControl('basicConfig', this.fb.group({}), {emitEvent: false});

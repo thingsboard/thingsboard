@@ -193,7 +193,7 @@ ui:
   # Help parameters
   help:
     # Base URL for UI help assets
-    base-url: "${UI_HELP_BASE_URL:https://raw.githubusercontent.com/thingsboard/thingsboard-ui-help/release-3.6.2}"
+    base-url: "${UI_HELP_BASE_URL:https://raw.githubusercontent.com/thingsboard/thingsboard-ui-help/release-3.6.3}"
 
 # Database telemetry parameters
 database:
@@ -309,7 +309,7 @@ cassandra:
     # Interval in milliseconds for printing Cassandra query queue statistic
     rate_limit_print_interval_ms: "${CASSANDRA_QUERY_RATE_LIMIT_PRINT_MS:10000}"
     # set all data type values except target to null for the same ts on save
-    set_null_values_enabled: "${CASSANDRA_QUERY_SET_NULL_VALUES_ENABLED:false}"
+    set_null_values_enabled: "${CASSANDRA_QUERY_SET_NULL_VALUES_ENABLED:true}"
     # log one of cassandra queries with specified frequency (0 - logging is disabled)
     print_queries_freq: "${CASSANDRA_QUERY_PRINT_FREQ:0}"
     tenant_rate_limits:
@@ -379,7 +379,9 @@ sql:
       # Enable/disable TTL (Time To Live) for timeseries records
       enabled: "${SQL_TTL_TS_ENABLED:true}"
       execution_interval_ms: "${SQL_TTL_TS_EXECUTION_INTERVAL:86400000}" # Number of milliseconds. The current value corresponds to one day
-      ts_key_value_ttl: "${SQL_TTL_TS_TS_KEY_VALUE_TTL:0}" # Number of seconds
+      # The parameter to specify system TTL(Time To Live) value for timeseries records. Value set in seconds.
+      # 0 - records are never expired.
+      ts_key_value_ttl: "${SQL_TTL_TS_TS_KEY_VALUE_TTL:0}"
     events:
       # Enable/disable TTL (Time To Live) for event records
       enabled: "${SQL_TTL_EVENTS_ENABLED:true}"
@@ -639,6 +641,18 @@ redis:
   db: "${REDIS_DB:0}"
   # db password
   password: "${REDIS_PASSWORD:}"
+  # ssl config
+  ssl:
+    # Enable/disable secure connection
+    enabled: "${TB_REDIS_SSL_ENABLED:false}"
+    # Server SSL credentials (only PEM format is supported)
+    credentials:
+      # Path redis server (CA) certificate
+      cert_file: "${TB_REDIS_SSL_PEM_CERT:}"
+      # Path to user certificate file. This is optional for the client and can be used for two-way authentication for the client
+      user_cert_file: "${TB_REDIS_SSL_PEM_KEY:}"
+      # Path to user private key file. This is optional for the client and only needed if ‘user_cert_file’ is configured.
+      user_key_file: "${TB_REDIS_SSL_PEM_KEY_PASSWORD:}"
   # pool config
   pool_config:
     # Maximum number of connections that can be allocated by the connection pool
@@ -714,7 +728,7 @@ spring:
         enabled: "true" # Enable/Disable the Spring Data JPA repositories support
   jpa:
     properties:
-      javax.persistence.query.timeout: "${JAVAX_PERSISTENCE_QUERY_TIMEOUT:30000}" # General timeout for JDBC queries
+      jakarta.persistence.query.timeout: "${JAVAX_PERSISTENCE_QUERY_TIMEOUT:30000}" # General timeout for JDBC queries
     open-in-view: "false" # Enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
     hibernate:
       # You can set a Hibernate feature that controls the DDL behavior in a more fine-grained way. The standard Hibernate property values are none, validate, update, create-drop. Spring Boot chooses a default value for you based on whether it thinks your database is embedded (default create-drop) or not (default none)
@@ -786,7 +800,7 @@ state:
   defaultInactivityTimeoutInSec: "${DEFAULT_INACTIVITY_TIMEOUT:600}"
   defaultStateCheckIntervalInSec: "${DEFAULT_STATE_CHECK_INTERVAL:60}" # Interval for checking the device state after a specified period. Time in seconds
   # Controls whether we store the device 'active' flag in attributes (default) or telemetry.
-  # If you device to change this parameter, you should re-create the device info view as one of the following:
+  # If you decide to change this parameter, you should re-create the device info view as one of the following:
   # If 'persistToTelemetry' is changed from 'false' to 'true': 'CREATE OR REPLACE VIEW device_info_view AS SELECT * FROM device_info_active_ts_view;'
   # If 'persistToTelemetry' is changed from 'true' to 'false': 'CREATE OR REPLACE VIEW device_info_view AS SELECT * FROM device_info_active_attribute_view;'
   persistToTelemetry: "${PERSIST_STATE_TO_TELEMETRY:false}"
@@ -794,6 +808,15 @@ state:
   # Used only when state.persistToTelemetry is set to 'true' and Cassandra is used for timeseries data.
   # 0 means time-to-live mechanism is disabled.
   telemetryTtl: "${STATE_TELEMETRY_TTL:0}"
+  # Configuration properties for rule nodes related to device activity state
+  rule:
+    node:
+      # Device state rule node
+      deviceState:
+        # Defines the rate at which device connectivity events can be triggered.
+        # Comma-separated list of capacity:duration pairs that define bandwidth capacity and refill duration for token bucket rate limit algorithm.
+        # Refill is set to be greedy. Please refer to Bucket4j library documentation for more details.
+        rateLimit: "${DEVICE_STATE_NODE_RATE_LIMIT_CONFIGURATION:1:1,30:60,60:3600}"
 
 # Tbel parameters
 tbel:
@@ -1007,6 +1030,16 @@ transport:
       # CoAP DTLS bind port
       bind_port: "${COAP_DTLS_BIND_PORT:5684}"
       # Server DTLS credentials
+      # CoAP DTLS connection ID length. RFC 9146, Connection Identifier for DTLS 1.2
+      # Default: off
+      # Control usage of DTLS connection ID length (CID).
+      # - 'off' to deactivate it.
+      # - 'on' to activate Connection ID support (same as CID 0 or more 0).
+      # - A positive value defines generated CID size in bytes.
+      # - A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic).
+      # - A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used
+      # - A value that are > 4: MultiNodeConnectionIdGenerator is used
+      connection_id_length: "${COAP_DTLS_CONNECTION_ID_LENGTH:}"
       credentials:
         # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
         type: "${COAP_DTLS_CREDENTIALS_TYPE:PEM}"
@@ -1044,6 +1077,16 @@ transport:
     dtls:
       # RFC7925_RETRANSMISSION_TIMEOUT_IN_MILLISECONDS = 9000
       retransmission_timeout: "${LWM2M_DTLS_RETRANSMISSION_TIMEOUT_MS:9000}"
+      # CoAP DTLS connection ID length for LWM2M. RFC 9146, Connection Identifier for DTLS 1.2
+      # Default: off
+      # Control usage of DTLS connection ID length (CID).
+      # - 'off' to deactivate it.
+      # - 'on' to activate Connection ID support (same as CID 0 or more 0).
+      # - A positive value defines generated CID size in bytes.
+      # - A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic).
+      # - A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used
+      # - A value that are > 4: MultiNodeConnectionIdGenerator is used
+      connection_id_length: "${LWM2M_DTLS_CONNECTION_ID_LENGTH:}"
     server:
       # LwM2M Server ID
       id: "${LWM2M_SERVER_ID:123}"
@@ -1278,12 +1321,17 @@ edges:
     # Persist state of edge (active, last connect, last disconnect) into timeseries or attributes tables. 'false' means to store edge state into attributes table
     persistToTelemetry: "${EDGES_PERSIST_STATE_TO_TELEMETRY:false}"
 
+# Spring doc common parameters
+springdoc:
+  # If false swagger API docs will be unavailable
+  api-docs.enabled: "${SWAGGER_ENABLED:true}"
+  # Swagger default produces media-type
+  default-produces-media-type: "${SWAGGER_DEFAULT_PRODUCES_MEDIA_TYPE:application/json}"
+
 # Swagger common parameters
 swagger:
-  # If false swagger API docs will be unavailable
-  enabled: "${SWAGGER_ENABLED:true}"
   # General swagger match pattern of swagger UI links
-  api_path_regex: "${SWAGGER_API_PATH_REGEX:/api/.*}"
+  api_path: "${SWAGGER_API_PATH:/api/**}"
   # General swagger match pattern path of swagger UI links
   security_path_regex: "${SWAGGER_SECURITY_PATH_REGEX:/api/.*}"
   # Nonsecurity API path match pattern of swagger UI links

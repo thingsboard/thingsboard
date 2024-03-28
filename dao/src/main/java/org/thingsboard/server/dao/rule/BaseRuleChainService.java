@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentClusteringMode;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -73,6 +74,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -109,14 +111,22 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     @Override
     @Transactional
     public RuleChain saveRuleChain(RuleChain ruleChain) {
+        return saveRuleChain(ruleChain, true);
+    }
+
+    @Override
+    @Transactional
+    public RuleChain saveRuleChain(RuleChain ruleChain, boolean publishSaveEvent) {
         ruleChainValidator.validate(ruleChain, RuleChain::getTenantId);
         try {
             RuleChain savedRuleChain = ruleChainDao.save(ruleChain.getTenantId(), ruleChain);
             if (ruleChain.getId() == null) {
                 entityCountService.publishCountEntityEvictEvent(ruleChain.getTenantId(), EntityType.RULE_CHAIN);
             }
-            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedRuleChain.getTenantId())
-                    .entity(savedRuleChain).entityId(savedRuleChain.getId()).created(ruleChain.getId() == null).build());
+            if (publishSaveEvent) {
+                eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedRuleChain.getTenantId())
+                        .entity(savedRuleChain).entityId(savedRuleChain.getId()).created(ruleChain.getId() == null).build());
+            }
             return savedRuleChain;
         } catch (Exception e) {
             checkConstraintViolation(e, "rule_chain_external_id_unq_key", "Rule Chain with such external id already exists!");
@@ -136,6 +146,8 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             } else if (!previousRootRuleChain.getId().equals(ruleChain.getId())) {
                 previousRootRuleChain.setRoot(false);
                 ruleChainDao.save(tenantId, previousRootRuleChain);
+                eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId)
+                        .entityId(previousRootRuleChain.getId()).entity(previousRootRuleChain).created(false).build());
                 setRootAndSave(tenantId, ruleChain);
                 return true;
             }
@@ -146,11 +158,18 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     private void setRootAndSave(TenantId tenantId, RuleChain ruleChain) {
         ruleChain.setRoot(true);
         ruleChainDao.save(tenantId, ruleChain);
+        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(ruleChain.getId()).entity(ruleChain).created(false).build());
     }
 
     @Override
     @Transactional
     public RuleChainUpdateResult saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData, Function<RuleNode, RuleNode> ruleNodeUpdater) {
+        return saveRuleChainMetaData(tenantId, ruleChainMetaData, ruleNodeUpdater, true);
+    }
+
+
+    @Override
+    public RuleChainUpdateResult saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData, Function<RuleNode, RuleNode> ruleNodeUpdater, boolean publishSaveEvent) {
         Validator.validateId(ruleChainMetaData.getRuleChainId(), "Incorrect rule chain id.");
         RuleChain ruleChain = findRuleChainById(tenantId, ruleChainMetaData.getRuleChainId());
         if (ruleChain == null) {
@@ -264,8 +283,9 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         if (!relations.isEmpty()) {
             relationService.saveRelations(tenantId, relations);
         }
-        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entity(ruleChain).entityId(ruleChain.getId()).build());
-
+        if (publishSaveEvent) {
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entity(ruleChain).entityId(ruleChain.getId()).build());
+        }
         return RuleChainUpdateResult.successful(updatedRuleNodes);
     }
 
@@ -293,11 +313,11 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             List<EntityRelation> nodeRelations = getRuleNodeRelations(tenantId, node.getId());
             for (EntityRelation nodeRelation : nodeRelations) {
                 String type = nodeRelation.getType();
-                if (nodeRelation.getTo().getEntityType() == EntityType.RULE_NODE) {
+                if (EntityType.RULE_NODE.equals(nodeRelation.getTo().getEntityType())) {
                     RuleNodeId toNodeId = new RuleNodeId(nodeRelation.getTo().getId());
                     int toIndex = ruleNodeIndexMap.get(toNodeId);
                     ruleChainMetaData.addConnectionInfo(fromIndex, toIndex, type);
-                } else if (nodeRelation.getTo().getEntityType() == EntityType.RULE_CHAIN) {
+                } else if (EntityType.RULE_CHAIN.equals(nodeRelation.getTo().getEntityType())) {
                     log.warn("[{}][{}] Unsupported node relation: {}", tenantId, ruleChainId, nodeRelation.getTo());
                 }
             }
@@ -413,29 +433,23 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     public void deleteRuleChainById(TenantId tenantId, RuleChainId ruleChainId) {
         Validator.validateId(ruleChainId, "Incorrect rule chain id for delete request.");
         RuleChain ruleChain = ruleChainDao.findById(tenantId, ruleChainId.getId());
+
+        List<RuleNode> referencingRuleNodes = getReferencingRuleChainNodes(tenantId, ruleChainId);
+        Set<RuleChainId> referencingRuleChainIds = referencingRuleNodes.stream().map(RuleNode::getRuleChainId).collect(Collectors.toSet());
+
         if (ruleChain != null) {
             if (ruleChain.isRoot()) {
                 throw new DataValidationException("Deletion of Root Tenant Rule Chain is prohibited!");
             }
             if (RuleChainType.EDGE.equals(ruleChain.getType())) {
-                PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
-                PageData<Edge> pageData;
-                do {
-                    pageData = edgeService.findEdgesByTenantIdAndEntityId(tenantId, ruleChainId, pageLink);
-                    if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
-                        for (Edge edge : pageData.getData()) {
-                            if (edge.getRootRuleChainId() != null && edge.getRootRuleChainId().equals(ruleChainId)) {
-                                throw new DataValidationException("Can't delete rule chain that is root for edge [" + edge.getName() + "]. Please assign another root rule chain first to the edge!");
-                            }
-                        }
-                        if (pageData.hasNext()) {
-                            pageLink = pageLink.nextPageLink();
-                        }
+                for (Edge edge : new PageDataIterable<>(link -> edgeService.findEdgesByTenantIdAndEntityId(tenantId, ruleChainId, link), DEFAULT_PAGE_SIZE)) {
+                    if (edge.getRootRuleChainId() != null && edge.getRootRuleChainId().equals(ruleChainId)) {
+                        throw new DataValidationException("Can't delete rule chain that is root for edge [" + edge.getName() + "]. Please assign another root rule chain first to the edge!");
                     }
-                } while (pageData != null && pageData.hasNext());
+                }
             }
         }
-        checkRuleNodesAndDelete(tenantId, ruleChainId);
+        checkRuleNodesAndDelete(tenantId, ruleChain, referencingRuleChainIds);
     }
 
     @Override
@@ -751,11 +765,15 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         return ruleNodeDao.save(tenantId, ruleNode);
     }
 
-    private void checkRuleNodesAndDelete(TenantId tenantId, RuleChainId ruleChainId) {
+    private void checkRuleNodesAndDelete(TenantId tenantId, RuleChain ruleChain, Set<RuleChainId> referencingRuleChainIds) {
         try {
             entityCountService.publishCountEntityEvictEvent(tenantId, EntityType.RULE_CHAIN);
-            ruleChainDao.removeById(tenantId, ruleChainId.getId());
-            eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(ruleChainId).build());
+            ruleChainDao.removeById(tenantId, ruleChain.getUuidId());
+
+            if (referencingRuleChainIds != null) {
+                referencingRuleChainIds.remove(ruleChain.getId());
+            }
+            eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(ruleChain.getId()).entity(ruleChain).body(JacksonUtil.toString(referencingRuleChainIds)).build());
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_default_rule_chain_device_profile")) {
@@ -766,7 +784,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 throw t;
             }
         }
-        deleteRuleNodes(tenantId, ruleChainId);
+        deleteRuleNodes(tenantId, ruleChain.getId());
     }
 
     private void deleteRuleNodes(TenantId tenantId, List<RuleNode> ruleNodes) {
@@ -835,7 +853,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
                 @Override
                 protected void removeEntity(TenantId tenantId, RuleChain entity) {
-                    checkRuleNodesAndDelete(tenantId, entity.getId());
+                    checkRuleNodesAndDelete(tenantId, entity, null);
                 }
             };
 

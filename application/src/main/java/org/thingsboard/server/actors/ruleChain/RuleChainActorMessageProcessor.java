@@ -161,6 +161,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
     @Override
     public void onPartitionChangeMsg(PartitionChangeMsg msg) {
+        log.debug("[{}][{}] onPartitionChangeMsg: [{}]", tenantId, entityId, msg);
         nodeActors.values().stream().map(RuleNodeCtx::getSelfActor).forEach(actorRef -> actorRef.tellWithHighPriority(msg));
     }
 

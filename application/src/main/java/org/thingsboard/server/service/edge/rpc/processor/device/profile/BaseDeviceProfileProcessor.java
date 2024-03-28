@@ -66,7 +66,7 @@ public abstract class BaseDeviceProfileProcessor extends BaseEdgeProcessor {
             if (created) {
                 deviceProfile.setId(deviceProfileId);
             }
-            deviceProfileService.saveDeviceProfile(deviceProfile, false);
+            deviceProfileService.saveDeviceProfile(deviceProfile, false, true);
         } catch (Exception e) {
             log.error("[{}] Failed to process device profile update msg [{}]", tenantId, deviceProfileUpdateMsg, e);
             throw e;

@@ -16,33 +16,26 @@
 package org.thingsboard.server.service.edge.rpc.processor.device.profile;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Optional;
 import java.util.UUID;
 
 @Component
 @TbCoreComponent
 public class DeviceProfileEdgeProcessorV1 extends DeviceProfileEdgeProcessor {
-
-    @Autowired
-    private DataDecodingEncodingService dataDecodingEncodingService;
 
     @Override
     protected DeviceProfile constructDeviceProfileFromUpdateMsg(TenantId tenantId, DeviceProfileId deviceProfileId, DeviceProfileUpdateMsg deviceProfileUpdateMsg) {
@@ -63,9 +56,7 @@ public class DeviceProfileEdgeProcessorV1 extends DeviceProfileEdgeProcessor {
                 ? deviceProfileUpdateMsg.getProvisionDeviceKey() : null);
         deviceProfile.setDefaultQueueName(deviceProfileUpdateMsg.getDefaultQueueName());
 
-        Optional<DeviceProfileData> profileDataOpt =
-                dataDecodingEncodingService.decode(deviceProfileUpdateMsg.getProfileDataBytes().toByteArray());
-        deviceProfile.setProfileData(profileDataOpt.orElse(null));
+        deviceProfile.setProfileDataBytes(deviceProfileUpdateMsg.getProfileDataBytes().toByteArray());
 
         String defaultQueueName = StringUtils.isNotBlank(deviceProfileUpdateMsg.getDefaultQueueName())
                 ? deviceProfileUpdateMsg.getDefaultQueueName() : null;

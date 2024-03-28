@@ -153,10 +153,6 @@ public class TbMsgPushToEdgeNode extends AbstractTbMsgPushNode<TbMsgPushToEdgeNo
 
     private ListenableFuture<Void> notifyEdge(TbContext ctx, EdgeEvent edgeEvent, EdgeId edgeId) {
         edgeEvent.setEdgeId(edgeId);
-        ListenableFuture<Void> future = ctx.getEdgeEventService().saveAsync(edgeEvent);
-        return Futures.transform(future, result -> {
-            ctx.onEdgeEventUpdate(ctx.getTenantId(), edgeId);
-            return null;
-        }, ctx.getDbCallbackExecutor());
+        return ctx.getEdgeEventService().saveAsync(edgeEvent);
     }
 }

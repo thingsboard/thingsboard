@@ -18,7 +18,8 @@ package org.thingsboard.server.common.stats;
 import io.micrometer.core.instrument.Timer;
 
 public interface StatsFactory {
-    StatsCounter createStatsCounter(String key, String statsName);
+
+    StatsCounter createStatsCounter(String key, String statsName, String... otherTags);
 
     DefaultCounter createDefaultCounter(String key, String... tags);
 
@@ -27,4 +28,5 @@ public interface StatsFactory {
     MessagesStats createMessagesStats(String key);
 
     Timer createTimer(String key, String... tags);
+
 }

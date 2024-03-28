@@ -31,8 +31,9 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.NotificationCenter;
+import org.thingsboard.rule.engine.api.RuleEngineDeviceStateManager;
 import org.thingsboard.rule.engine.api.SmsService;
-import org.thingsboard.rule.engine.api.slack.SlackService;
+import org.thingsboard.rule.engine.api.notification.SlackService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.script.api.js.JsInvokeService;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
@@ -92,7 +93,6 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.queue.discovery.DiscoveryService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
@@ -115,8 +115,9 @@ import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.service.transport.TbCoreToTransportService;
 
-import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
+import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.concurrent.ConcurrentHashMap;
@@ -185,10 +186,6 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private DataDecodingEncodingService encodingService;
-
-    @Autowired
-    @Getter
     private DeviceService deviceService;
 
     @Autowired
@@ -202,6 +199,10 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private DeviceCredentialsService deviceCredentialsService;
+
+    @Autowired(required = false)
+    @Getter
+    private RuleEngineDeviceStateManager deviceStateManager;
 
     @Autowired
     @Getter
@@ -555,6 +556,10 @@ public class ActorSystemContext {
     @Value("${actors.rule.external.force_ack:false}")
     @Getter
     private boolean externalNodeForceAck;
+
+    @Value("${state.rule.node.deviceState.rateLimit:1:1,30:60,60:3600}")
+    @Getter
+    private String deviceStateNodeRateLimitConfig;
 
     @Getter
     @Setter

@@ -169,7 +169,8 @@
             {{ 'tooltip.date' | translate }}
           </mat-slide-toggle>
           <div fxFlex.gt-xs fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-            <tb-date-format-select fxFlex excludeLastUpdateAgo formControlName="tooltipDateFormat"></tb-date-format-select>
+            <tb-date-format-select fxFlex excludeLastUpdateAgo includeAuto
+                                   formControlName="tooltipDateFormat"></tb-date-format-select>
             <tb-font-settings formControlName="tooltipDateFont"
                               [previewText]="tooltipDatePreviewFn">
             </tb-font-settings>
@@ -178,6 +179,13 @@
                             formControlName="tooltipDateColor">
             </tb-color-input>
           </div>
+        </div>
+        <div class="tb-form-row">
+          <mat-slide-toggle class="mat-slide" formControlName="tooltipDateInterval">
+            <div tb-hint-tooltip-icon="{{'tooltip.show-date-time-interval-hint' | translate}}">
+              {{ 'tooltip.show-date-time-interval' | translate }}
+            </div>
+          </mat-slide-toggle>
         </div>
         <div class="tb-form-row space-between">
           <div>{{ 'tooltip.background-color' | translate }}</div>

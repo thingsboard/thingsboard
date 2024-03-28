@@ -18,7 +18,7 @@ package org.thingsboard.rule.engine.api;
 import io.netty.channel.EventLoopGroup;
 import org.thingsboard.common.util.ExecutorProvider;
 import org.thingsboard.common.util.ListeningExecutor;
-import org.thingsboard.rule.engine.api.slack.SlackService;
+import org.thingsboard.rule.engine.api.notification.SlackService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
@@ -31,7 +31,6 @@ import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -238,8 +237,6 @@ public interface TbContext {
 
     TbMsg attributesDeletedActionMsg(EntityId originator, RuleNodeId ruleNodeId, String scope, List<String> keys);
 
-    void onEdgeEventUpdate(TenantId tenantId, EdgeId edgeId);
-
     /*
      *
      *  METHODS TO PROCESS THE MESSAGES
@@ -279,6 +276,10 @@ public interface TbContext {
     AssetProfileService getAssetProfileService();
 
     DeviceCredentialsService getDeviceCredentialsService();
+
+    RuleEngineDeviceStateManager getDeviceStateManager();
+
+    String getDeviceStateNodeRateLimitConfig();
 
     TbClusterService getClusterService();
 

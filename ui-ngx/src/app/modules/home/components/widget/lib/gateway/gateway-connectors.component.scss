@@ -126,10 +126,6 @@
 }
 
 :host ::ng-deep {
-  tb-json-object-edit > div {
-    flex-grow: 1;
-  }
-
   .mat-mdc-icon-button.mat-mdc-button-base {
     width: 36px;
     height: 40px;

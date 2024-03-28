@@ -19,6 +19,7 @@ import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.dao.asset.AssetProfileService;
@@ -31,6 +32,7 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.resource.ResourceService;
@@ -60,6 +62,7 @@ import org.thingsboard.server.service.edge.rpc.processor.device.profile.DevicePr
 import org.thingsboard.server.service.edge.rpc.processor.edge.EdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.entityview.EntityViewEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.entityview.EntityViewProcessorFactory;
+import org.thingsboard.server.service.edge.rpc.processor.oauth2.OAuth2EdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.ota.OtaPackageEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.queue.QueueEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.relation.RelationEdgeProcessor;
@@ -151,6 +154,12 @@ public class EdgeContextComponent {
     private ResourceService resourceService;
 
     @Autowired
+    private OAuth2Service oAuth2Service;
+
+    @Autowired
+    private RateLimitService rateLimitService;
+
+    @Autowired
     private NotificationRuleProcessor notificationRuleProcessor;
 
     @Autowired
@@ -215,6 +224,9 @@ public class EdgeContextComponent {
 
     @Autowired
     private ResourceEdgeProcessor resourceEdgeProcessor;
+
+    @Autowired
+    private OAuth2EdgeProcessor oAuth2EdgeProcessor;
 
     @Autowired
     private EdgeMsgConstructor edgeMsgConstructor;

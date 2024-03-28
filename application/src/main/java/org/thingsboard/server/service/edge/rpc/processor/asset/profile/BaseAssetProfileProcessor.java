@@ -47,7 +47,6 @@ public abstract class BaseAssetProfileProcessor extends BaseEdgeProcessor {
                 assetProfile.setId(assetProfileId);
                 assetProfile.setDefault(assetProfileById.isDefault());
             }
-            assetProfile.setDefault(false);
             String assetProfileName = assetProfile.getName();
             AssetProfile assetProfileByName = assetProfileService.findAssetProfileByName(tenantId, assetProfileName);
             if (assetProfileByName != null && !assetProfileByName.getId().equals(assetProfileId)) {
@@ -67,7 +66,7 @@ public abstract class BaseAssetProfileProcessor extends BaseEdgeProcessor {
             if (created) {
                 assetProfile.setId(assetProfileId);
             }
-            assetProfileService.saveAssetProfile(assetProfile, false);
+            assetProfileService.saveAssetProfile(assetProfile, false, true);
         } catch (Exception e) {
             log.error("[{}] Failed to process asset profile update msg [{}]", tenantId, assetProfileUpdateMsg, e);
             throw e;
