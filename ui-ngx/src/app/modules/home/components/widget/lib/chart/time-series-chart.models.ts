@@ -81,7 +81,7 @@ export const timeSeriesChartTypeTranslations = new Map<TimeSeriesChartType, stri
   ]
 );
 
-const timeSeriesChartColorScheme: TbColorScheme = {
+export const timeSeriesChartColorScheme: TbColorScheme = {
   'threshold.line': {
     light: 'rgba(0, 0, 0, 0.76)',
     dark: '#eee'
@@ -1365,28 +1365,26 @@ const createSeriesLabelOption = (item: TimeSeriesChartDataItem, show: boolean,
     labelStyle = createChartTextStyle(labelFont, labelColor, darkMode, 'series.label');
   }
   let formatter: LabelFormatterCallback;
-  if (labelFormatter) {
-    if (isFunction(labelFormatter)) {
-      formatter = labelFormatter as LabelFormatterCallback;
-    } else if (labelFormatter.length) {
-      const formatFunction = parseFunction(labelFormatter, ['value']);
-      formatter = (params): string => {
-        let result: string;
-        try {
-          result = formatFunction(params.value[1]);
-        } catch (_e) {
-        }
-        if (isUndefined(result)) {
-          result = formatValue(params.value[1], item.decimals, item.units, false);
-        }
-        return `{value|${result}}`;
-      };
-    } else {
-      formatter = (params): string => {
-        const value = formatValue(params.value[1], item.decimals, item.units, false);
-        return `{value|${value}}`;
-      };
-    }
+  if (isFunction(labelFormatter)) {
+    formatter = labelFormatter as LabelFormatterCallback;
+  } else if (labelFormatter?.length) {
+    const formatFunction = parseFunction(labelFormatter, ['value']);
+    formatter = (params): string => {
+      let result: string;
+      try {
+        result = formatFunction(params.value[1]);
+      } catch (_e) {
+      }
+      if (isUndefined(result)) {
+        result = formatValue(params.value[1], item.decimals, item.units, false);
+      }
+      return `{value|${result}}`;
+    };
+  } else {
+    formatter = (params): string => {
+      const value = formatValue(params.value[1], item.decimals, item.units, false);
+      return `{value|${value}}`;
+    };
   }
   return {
     show,

@@ -6172,9 +6172,12 @@
         "range-chart": {
             "chart": "Chart",
             "data-zoom": "Data zoom",
+            "range-chart-appearance": "Range chart appearance",
             "range-colors": "Range colors",
             "out-of-range-color": "Out of range color",
+            "show-range-thresholds": "Show range thresholds",
             "fill-area": "Fill area",
+            "fill-area-opacity": "Fill area opacity",
             "range-chart-card-style": "Range chart card style"
         },
         "rpc": {

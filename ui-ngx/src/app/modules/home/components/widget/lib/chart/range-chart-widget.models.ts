@@ -27,16 +27,25 @@ import { LegendPosition } from '@shared/models/widget.models';
 import { EChartsTooltipWidgetSettings } from '@home/components/widget/lib/chart/echarts-widget.models';
 import {
   createTimeSeriesChartVisualMapPiece,
+  defaultTimeSeriesChartXAxisSettings,
+  defaultTimeSeriesChartYAxisSettings,
+  LineSeriesStepType,
   SeriesFillType,
+  SeriesLabelPosition, timeSeriesChartAnimationDefaultSettings,
+  TimeSeriesChartAnimationSettings,
+  timeSeriesChartColorScheme,
   TimeSeriesChartKeySettings,
+  TimeSeriesChartLineType,
   TimeSeriesChartSeriesType,
   TimeSeriesChartSettings,
   TimeSeriesChartShape,
   TimeSeriesChartThreshold,
   TimeSeriesChartThresholdType,
-  TimeSeriesChartVisualMapPiece
+  TimeSeriesChartVisualMapPiece,
+  TimeSeriesChartXAxisSettings,
+  TimeSeriesChartYAxisSettings
 } from '@home/components/widget/lib/chart/time-series-chart.models';
-import { isNumber } from '@core/utils';
+import { isNumber, mergeDeep } from '@core/utils';
 import { DeepPartial } from '@shared/models/common';
 
 export interface RangeItem {
@@ -54,7 +63,26 @@ export interface RangeChartWidgetSettings extends EChartsTooltipWidgetSettings {
   dataZoom: boolean;
   rangeColors: Array<ColorRange>;
   outOfRangeColor: string;
+  showRangeThresholds: boolean;
   fillArea: boolean;
+  fillAreaOpacity: number;
+  showLine: boolean;
+  step: boolean;
+  stepType: LineSeriesStepType;
+  smooth: boolean;
+  lineType: TimeSeriesChartLineType;
+  lineWidth: number;
+  showPoints: boolean;
+  showPointLabel: boolean;
+  pointLabelPosition: SeriesLabelPosition;
+  pointLabelFont: Font;
+  pointLabelColor: string;
+  pointShape: TimeSeriesChartShape;
+  pointSize: number;
+  yAxis: TimeSeriesChartYAxisSettings;
+  xAxis: TimeSeriesChartXAxisSettings;
+  animation: TimeSeriesChartAnimationSettings;
+  thresholds: TimeSeriesChartThreshold[];
   showLegend: boolean;
   legendPosition: LegendPosition;
   legendLabelFont: Font;
@@ -75,7 +103,38 @@ export const rangeChartDefaultSettings: RangeChartWidgetSettings = {
     {from: 40, color: '#D81838'}
   ],
   outOfRangeColor: '#ccc',
+  showRangeThresholds: true,
   fillArea: true,
+  fillAreaOpacity: 0.7,
+  showLine: true,
+  step: false,
+  stepType: LineSeriesStepType.start,
+  smooth: false,
+  lineType: TimeSeriesChartLineType.solid,
+  lineWidth: 2,
+  showPoints: false,
+  showPointLabel: false,
+  pointLabelPosition: SeriesLabelPosition.top,
+  pointLabelFont: {
+    family: 'Roboto',
+    size: 11,
+    sizeUnit: 'px',
+    style: 'normal',
+    weight: '400',
+    lineHeight: '1'
+  },
+  pointLabelColor: timeSeriesChartColorScheme['series.label'].light,
+  pointShape: TimeSeriesChartShape.emptyCircle,
+  pointSize: 4,
+  yAxis: mergeDeep({} as TimeSeriesChartYAxisSettings,
+    defaultTimeSeriesChartYAxisSettings,
+    { id: 'default', order: 0, showLine: false, showTicks: false } as TimeSeriesChartYAxisSettings),
+  xAxis: mergeDeep({} as TimeSeriesChartXAxisSettings,
+    defaultTimeSeriesChartXAxisSettings,
+    {showSplitLines: false} as TimeSeriesChartXAxisSettings),
+  animation: mergeDeep({} as TimeSeriesChartAnimationSettings,
+    timeSeriesChartAnimationDefaultSettings),
+  thresholds: [],
   showLegend: true,
   legendPosition: LegendPosition.top,
   legendLabelFont: {
@@ -125,7 +184,7 @@ export const rangeChartDefaultSettings: RangeChartWidgetSettings = {
 
 export const rangeChartTimeSeriesSettings = (settings: RangeChartWidgetSettings, rangeItems: RangeItem[],
                                              decimals: number, units: string): DeepPartial<TimeSeriesChartSettings> => {
-  const thresholds: DeepPartial<TimeSeriesChartThreshold>[] = getMarkPoints(rangeItems).map(item => ({
+  let thresholds: DeepPartial<TimeSeriesChartThreshold>[] = settings.showRangeThresholds ? getMarkPoints(rangeItems).map(item => ({
     type: TimeSeriesChartThresholdType.constant,
     yAxisId: 'default',
     units,
@@ -146,28 +205,24 @@ export const rangeChartTimeSeriesSettings = (settings: RangeChartWidgetSettings,
       borderRadius: 4,
     },
     value: item
-  } as DeepPartial<TimeSeriesChartThreshold>));
+  } as DeepPartial<TimeSeriesChartThreshold>)) : [];
+  if (settings.thresholds?.length) {
+    thresholds = thresholds.concat(settings.thresholds);
+  }
   return {
     dataZoom: settings.dataZoom,
     thresholds,
     yAxes: {
       default: {
-        show: true,
-        showLine: false,
-        showTicks: false,
-        showTickLabels: true,
-        showSplitLines: true,
-        decimals,
-        units
+        ...settings.yAxis,
+        ...{
+          decimals,
+          units
+        }
       }
     },
-    xAxis: {
-      show: true,
-      showLine: true,
-      showTicks: true,
-      showTickLabels: true,
-      showSplitLines: false
-    },
+    xAxis: settings.xAxis,
+    animation: settings.animation,
     visualMapSettings: {
       outOfRangeColor: settings.outOfRangeColor,
       pieces: rangeItems.map(item => item.piece)
@@ -188,12 +243,22 @@ export const rangeChartTimeSeriesSettings = (settings: RangeChartWidgetSettings,
 export const rangeChartTimeSeriesKeySettings = (settings: RangeChartWidgetSettings): DeepPartial<TimeSeriesChartKeySettings> => ({
     type: TimeSeriesChartSeriesType.line,
     lineSettings: {
-      showLine: true,
-      smooth: false,
-      showPoints: false,
+      showLine: settings.showLine,
+      step: settings.step,
+      stepType: settings.stepType,
+      smooth: settings.smooth,
+      lineType: settings.lineType,
+      lineWidth: settings.lineWidth,
+      showPoints: settings.showPoints,
+      showPointLabel: settings.showPointLabel,
+      pointLabelPosition: settings.pointLabelPosition,
+      pointLabelFont: settings.pointLabelFont,
+      pointLabelColor: settings.pointLabelColor,
+      pointShape: settings.pointShape,
+      pointSize: settings.pointSize,
       fillAreaSettings: {
         type: settings.fillArea ? SeriesFillType.opacity : SeriesFillType.none,
-        opacity: 0.7
+        opacity: settings.fillAreaOpacity
       }
     }
   });
