@@ -17,7 +17,15 @@
 import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, Input, NgZone, ViewChild } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormGroup, UntypedFormControl, ValidatorFn, Validators } from '@angular/forms';
+import {
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  FormGroupDirective, NgForm,
+  UntypedFormControl,
+  ValidatorFn,
+  Validators
+} from '@angular/forms';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeService } from '@core/http/attribute.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -51,10 +59,18 @@ import {
 import { MatDialog } from '@angular/material/dialog';
 import { AddConnectorDialogComponent } from '@home/components/widget/lib/gateway/dialog/add-connector-dialog.component';
 import { takeUntil } from 'rxjs/operators';
+import { ErrorStateMatcher } from '@angular/material/core';
+
+export class ForceErrorStateMatcher implements ErrorStateMatcher {
+  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+    return (control && control.invalid);
+  }
+}
 
 @Component({
   selector: 'tb-gateway-connector',
   templateUrl: './gateway-connectors.component.html',
+  providers: [{ provide: ErrorStateMatcher, useClass: ForceErrorStateMatcher }],
   styleUrls: ['./gateway-connectors.component.scss']
 })
 export class GatewayConnectorComponent extends PageComponent implements AfterViewInit {
