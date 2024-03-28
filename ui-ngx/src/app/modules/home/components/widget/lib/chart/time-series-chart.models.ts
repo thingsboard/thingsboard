@@ -715,7 +715,7 @@ export const timeSeriesChartDefaultSettings: TimeSeriesChartSettings = {
 };
 
 export interface SeriesFillSettings {
-  type: SeriesFillType | 'default';
+  type: SeriesFillType;
   opacity: number;
   gradient: {
     start: number;
@@ -1322,7 +1322,7 @@ const createTimeSeriesChartSeries = (item: TimeSeriesChartDataItem,
         borderWidth: barSettings.showBorder ? barSettings.borderWidth : 0,
         borderRadius: barSettings.borderRadius
       };
-      if (barSettings.backgroundSettings.type === SeriesFillType.none || barSettings.backgroundSettings.type === 'default') {
+      if (barSettings.backgroundSettings.type === SeriesFillType.none) {
         barVisualSettings.color = seriesColor;
       } else if (barSettings.backgroundSettings.type === SeriesFillType.opacity) {
         barVisualSettings.color = tinycolor(seriesColor).setAlpha(barSettings.backgroundSettings.opacity).toRgbString();

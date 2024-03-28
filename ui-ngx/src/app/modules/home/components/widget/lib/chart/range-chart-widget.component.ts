@@ -30,115 +30,24 @@ import {
 import { WidgetContext } from '@home/models/widget-component.models';
 import {
   backgroundStyle,
-  ColorRange,
   ComponentStyle,
-  filterIncludingColorRanges,
   getDataKey,
   overlayStyle,
-  sortedColorRange,
   textStyle
 } from '@shared/models/widget-settings.models';
-import { isDefinedAndNotNull, isNumber } from '@core/utils';
-import { rangeChartDefaultSettings, RangeChartWidgetSettings } from './range-chart-widget.models';
+import { isDefinedAndNotNull } from '@core/utils';
+import {
+  rangeChartDefaultSettings,
+  rangeChartTimeSeriesKeySettings,
+  rangeChartTimeSeriesSettings,
+  RangeChartWidgetSettings,
+  RangeItem,
+  toRangeItems
+} from './range-chart-widget.models';
 import { Observable } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
-import { DeepPartial } from '@shared/models/common';
-import {
-  createTimeSeriesChartVisualMapPiece,
-  SeriesFillType,
-  TimeSeriesChartKeySettings,
-  TimeSeriesChartSettings,
-  TimeSeriesChartShape,
-  TimeSeriesChartThreshold,
-  TimeSeriesChartThresholdType, TimeSeriesChartVisualMapPiece
-} from '@home/components/widget/lib/chart/time-series-chart.models';
 import { TbTimeSeriesChart } from '@home/components/widget/lib/chart/time-series-chart';
-
-interface RangeItem {
-  index: number;
-  from?: number;
-  to?: number;
-  color: string;
-  label: string;
-  visible: boolean;
-  enabled: boolean;
-  piece: TimeSeriesChartVisualMapPiece;
-}
-
-const rangeItemLabel = (from?: number, to?: number): string => {
-  if (isNumber(from) && isNumber(to)) {
-    if (from === to) {
-      return `${from}`;
-    } else {
-      return `${from} - ${to}`;
-    }
-  } else if (isNumber(from)) {
-    return `≥ ${from}`;
-  } else if (isNumber(to)) {
-    return `< ${to}`;
-  } else {
-    return null;
-  }
-};
-
-const toRangeItems = (colorRanges: Array<ColorRange>): RangeItem[] => {
-  const rangeItems: RangeItem[] = [];
-  let counter = 0;
-  const ranges = sortedColorRange(filterIncludingColorRanges(colorRanges)).filter(r => isNumber(r.from) || isNumber(r.to));
-  for (let i = 0; i < ranges.length; i++) {
-    const range = ranges[i];
-    let from = range.from;
-    const to = range.to;
-    if (i > 0) {
-      const prevRange = ranges[i - 1];
-      if (isNumber(prevRange.to) && isNumber(from) && from < prevRange.to) {
-        from = prevRange.to;
-      }
-    }
-    rangeItems.push(
-      {
-        index: counter++,
-        color: range.color,
-        enabled: true,
-        visible: true,
-        from,
-        to,
-        label: rangeItemLabel(from, to),
-        piece: createTimeSeriesChartVisualMapPiece(range.color, from, to)
-      }
-    );
-    if (!isNumber(from) || !isNumber(to)) {
-      const value = !isNumber(from) ? to : from;
-      rangeItems.push(
-        {
-          index: counter++,
-          color: 'transparent',
-          enabled: true,
-          visible: false,
-          label: '',
-          piece: { gt: value - 0.000000001, lt: value + 0.000000001, color: 'transparent'}
-        }
-      );
-    }
-  }
-  return rangeItems;
-};
-
-const getMarkPoints = (ranges: Array<RangeItem>): number[] => {
-  const points = new Set<number>();
-  for (const range of ranges) {
-    if (range.visible) {
-      if (isNumber(range.from)) {
-        points.add(range.from);
-      }
-      if (isNumber(range.to)) {
-        points.add(range.to);
-      }
-    }
-  }
-  return Array.from(points).sort();
-};
 
 @Component({
   selector: 'tb-range-chart-widget',
@@ -196,17 +105,7 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
       this.units = dataKey.units;
     }
     if (dataKey) {
-      dataKey.settings = {
-        type: 'line',
-        lineSettings: {
-          showLine: true,
-          smooth: false,
-          showPoints: false,
-          fillAreaSettings: {
-            type: this.settings.fillArea ? 'default' : SeriesFillType.none
-          }
-        }
-      } as DeepPartial<TimeSeriesChartKeySettings>;
+      dataKey.settings = rangeChartTimeSeriesKeySettings(this.settings);
     }
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
@@ -226,64 +125,7 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
   }
 
   ngAfterViewInit() {
-    const thresholds: DeepPartial<TimeSeriesChartThreshold>[] = getMarkPoints(this.rangeItems).map(item => ({
-      type: TimeSeriesChartThresholdType.constant,
-      yAxisId: 'default',
-      units: this.units,
-      decimals: this.decimals,
-      lineWidth: 1,
-      lineColor: '#37383b',
-      lineType: [3, 3],
-      startSymbol: TimeSeriesChartShape.circle,
-      startSymbolSize: 5,
-      endSymbol: TimeSeriesChartShape.arrow,
-      endSymbolSize: 7,
-      showLabel: true,
-      labelPosition: 'insideEndTop',
-      labelColor: '#37383b',
-      additionalLabelOption: {
-        backgroundColor: 'rgba(255,255,255,0.56)',
-        padding: [4, 5],
-        borderRadius: 4,
-      },
-      value: item
-    } as DeepPartial<TimeSeriesChartThreshold>));
-    const settings: DeepPartial<TimeSeriesChartSettings> = {
-      dataZoom: this.settings.dataZoom,
-      thresholds,
-      yAxes: {
-        default: {
-          show: true,
-          showLine: false,
-          showTicks: false,
-          showTickLabels: true,
-          showSplitLines: true,
-          decimals: this.decimals,
-          units: this.units
-        }
-      },
-      xAxis: {
-        show: true,
-        showLine: true,
-        showTicks: true,
-        showTickLabels: true,
-        showSplitLines: false
-      },
-      visualMapSettings: {
-        outOfRangeColor: this.settings.outOfRangeColor,
-        pieces: this.rangeItems.map(item => item.piece)
-      },
-      showTooltip: this.settings.showTooltip,
-      tooltipValueFont: this.settings.tooltipValueFont,
-      tooltipValueColor: this.settings.tooltipValueColor,
-      tooltipShowDate: this.settings.tooltipShowDate,
-      tooltipDateInterval: this.settings.tooltipDateInterval,
-      tooltipDateFormat: this.settings.tooltipDateFormat,
-      tooltipDateFont: this.settings.tooltipDateFont,
-      tooltipDateColor: this.settings.tooltipDateColor,
-      tooltipBackgroundColor: this.settings.tooltipBackgroundColor,
-      tooltipBackgroundBlur: this.settings.tooltipBackgroundBlur,
-    };
+    const settings = rangeChartTimeSeriesSettings(this.settings, this.rangeItems, this.decimals, this.units);
     this.timeSeriesChart = new TbTimeSeriesChart(this.ctx, settings, this.chartShape.nativeElement, this.renderer);
   }
 

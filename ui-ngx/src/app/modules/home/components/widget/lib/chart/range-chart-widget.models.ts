@@ -18,11 +18,37 @@ import {
   BackgroundSettings,
   BackgroundType,
   ColorRange,
+  filterIncludingColorRanges,
   Font,
-  simpleDateFormat
+  simpleDateFormat,
+  sortedColorRange
 } from '@shared/models/widget-settings.models';
 import { LegendPosition } from '@shared/models/widget.models';
 import { EChartsTooltipWidgetSettings } from '@home/components/widget/lib/chart/echarts-widget.models';
+import {
+  createTimeSeriesChartVisualMapPiece,
+  SeriesFillType,
+  TimeSeriesChartKeySettings,
+  TimeSeriesChartSeriesType,
+  TimeSeriesChartSettings,
+  TimeSeriesChartShape,
+  TimeSeriesChartThreshold,
+  TimeSeriesChartThresholdType,
+  TimeSeriesChartVisualMapPiece
+} from '@home/components/widget/lib/chart/time-series-chart.models';
+import { isNumber } from '@core/utils';
+import { DeepPartial } from '@shared/models/common';
+
+export interface RangeItem {
+  index: number;
+  from?: number;
+  to?: number;
+  color: string;
+  label: string;
+  visible: boolean;
+  enabled: boolean;
+  piece: TimeSeriesChartVisualMapPiece;
+}
 
 export interface RangeChartWidgetSettings extends EChartsTooltipWidgetSettings {
   dataZoom: boolean;
@@ -93,4 +119,153 @@ export const rangeChartDefaultSettings: RangeChartWidgetSettings = {
       blur: 3
     }
   }
+};
+
+export const rangeChartTimeSeriesSettings = (settings: RangeChartWidgetSettings, rangeItems: RangeItem[],
+                                             decimals: number, units: string): DeepPartial<TimeSeriesChartSettings> => {
+  const thresholds: DeepPartial<TimeSeriesChartThreshold>[] = getMarkPoints(rangeItems).map(item => ({
+    type: TimeSeriesChartThresholdType.constant,
+    yAxisId: 'default',
+    units,
+    decimals,
+    lineWidth: 1,
+    lineColor: '#37383b',
+    lineType: [3, 3],
+    startSymbol: TimeSeriesChartShape.circle,
+    startSymbolSize: 5,
+    endSymbol: TimeSeriesChartShape.arrow,
+    endSymbolSize: 7,
+    showLabel: true,
+    labelPosition: 'insideEndTop',
+    labelColor: '#37383b',
+    additionalLabelOption: {
+      backgroundColor: 'rgba(255,255,255,0.56)',
+      padding: [4, 5],
+      borderRadius: 4,
+    },
+    value: item
+  } as DeepPartial<TimeSeriesChartThreshold>));
+  return {
+    dataZoom: settings.dataZoom,
+    thresholds,
+    yAxes: {
+      default: {
+        show: true,
+        showLine: false,
+        showTicks: false,
+        showTickLabels: true,
+        showSplitLines: true,
+        decimals,
+        units
+      }
+    },
+    xAxis: {
+      show: true,
+      showLine: true,
+      showTicks: true,
+      showTickLabels: true,
+      showSplitLines: false
+    },
+    visualMapSettings: {
+      outOfRangeColor: settings.outOfRangeColor,
+      pieces: rangeItems.map(item => item.piece)
+    },
+    showTooltip: settings.showTooltip,
+    tooltipValueFont: settings.tooltipValueFont,
+    tooltipValueColor: settings.tooltipValueColor,
+    tooltipShowDate: settings.tooltipShowDate,
+    tooltipDateInterval: settings.tooltipDateInterval,
+    tooltipDateFormat: settings.tooltipDateFormat,
+    tooltipDateFont: settings.tooltipDateFont,
+    tooltipDateColor: settings.tooltipDateColor,
+    tooltipBackgroundColor: settings.tooltipBackgroundColor,
+    tooltipBackgroundBlur: settings.tooltipBackgroundBlur,
+  };
+};
+
+export const rangeChartTimeSeriesKeySettings = (settings: RangeChartWidgetSettings): DeepPartial<TimeSeriesChartKeySettings> => ({
+    type: TimeSeriesChartSeriesType.line,
+    lineSettings: {
+      showLine: true,
+      smooth: false,
+      showPoints: false,
+      fillAreaSettings: {
+        type: settings.fillArea ? SeriesFillType.opacity : SeriesFillType.none,
+        opacity: 0.7
+      }
+    }
+  });
+
+export const toRangeItems = (colorRanges: Array<ColorRange>): RangeItem[] => {
+  const rangeItems: RangeItem[] = [];
+  let counter = 0;
+  const ranges = sortedColorRange(filterIncludingColorRanges(colorRanges)).filter(r => isNumber(r.from) || isNumber(r.to));
+  for (let i = 0; i < ranges.length; i++) {
+    const range = ranges[i];
+    let from = range.from;
+    const to = range.to;
+    if (i > 0) {
+      const prevRange = ranges[i - 1];
+      if (isNumber(prevRange.to) && isNumber(from) && from < prevRange.to) {
+        from = prevRange.to;
+      }
+    }
+    rangeItems.push(
+      {
+        index: counter++,
+        color: range.color,
+        enabled: true,
+        visible: true,
+        from,
+        to,
+        label: rangeItemLabel(from, to),
+        piece: createTimeSeriesChartVisualMapPiece(range.color, from, to)
+      }
+    );
+    if (!isNumber(from) || !isNumber(to)) {
+      const value = !isNumber(from) ? to : from;
+      rangeItems.push(
+        {
+          index: counter++,
+          color: 'transparent',
+          enabled: true,
+          visible: false,
+          label: '',
+          piece: { gt: value - 0.000000001, lt: value + 0.000000001, color: 'transparent'}
+        }
+      );
+    }
+  }
+  return rangeItems;
+};
+
+const rangeItemLabel = (from?: number, to?: number): string => {
+  if (isNumber(from) && isNumber(to)) {
+    if (from === to) {
+      return `${from}`;
+    } else {
+      return `${from} - ${to}`;
+    }
+  } else if (isNumber(from)) {
+    return `≥ ${from}`;
+  } else if (isNumber(to)) {
+    return `< ${to}`;
+  } else {
+    return null;
+  }
+};
+
+const getMarkPoints = (ranges: Array<RangeItem>): number[] => {
+  const points = new Set<number>();
+  for (const range of ranges) {
+    if (range.visible) {
+      if (isNumber(range.from)) {
+        points.add(range.from);
+      }
+      if (isNumber(range.to)) {
+        points.add(range.to);
+      }
+    }
+  }
+  return Array.from(points).sort();
 };
