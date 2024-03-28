@@ -88,7 +88,7 @@ public class DeviceConnectivityServiceImpl implements DeviceConnectivityService 
     public JsonNode findDevicePublishTelemetryCommands(String baseUrl, Device device) throws URISyntaxException {
         DeviceId deviceId = device.getId();
         log.trace("Executing findDevicePublishTelemetryCommands [{}]", deviceId);
-        validateId(deviceId, INCORRECT_DEVICE_ID + deviceId);
+        validateId(deviceId, id -> INCORRECT_DEVICE_ID + id);
 
         DeviceCredentials creds = deviceCredentialsService.findDeviceCredentialsByDeviceId(device.getTenantId(), deviceId);
         DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileById(device.getTenantId(), device.getDeviceProfileId());

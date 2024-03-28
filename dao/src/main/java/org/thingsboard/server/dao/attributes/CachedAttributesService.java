@@ -117,7 +117,7 @@ public class CachedAttributesService implements AttributesService {
     @Override
     public ListenableFuture<Optional<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, AttributeScope scope, String attributeKey) {
         validate(entityId, scope);
-        Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey);
+        Validator.validateString(attributeKey, k -> "Incorrect attribute key " + k);
 
         return cacheExecutor.submit(() -> {
             AttributeCacheKey attributeCacheKey = new AttributeCacheKey(scope, entityId, attributeKey);
@@ -152,7 +152,7 @@ public class CachedAttributesService implements AttributesService {
     public ListenableFuture<List<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, AttributeScope scope, final Collection<String> attributeKeysNonUnique) {
         validate(entityId, scope);
         final var attributeKeys = new LinkedHashSet<>(attributeKeysNonUnique); // deduplicate the attributes
-        attributeKeys.forEach(attributeKey -> Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey));
+        attributeKeys.forEach(attributeKey -> Validator.validateString(attributeKey, k ->"Incorrect attribute key " + k));
 
         //CacheExecutor for Redis or DirectExecutor for local Caffeine
         return Futures.transformAsync(cacheExecutor.submit(() -> findCachedAttributes(entityId, scope, attributeKeys)),

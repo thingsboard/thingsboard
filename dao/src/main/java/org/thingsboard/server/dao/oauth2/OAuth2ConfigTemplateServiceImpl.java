@@ -64,14 +64,14 @@ public class OAuth2ConfigTemplateServiceImpl extends AbstractEntityService imple
     @Override
     public Optional<OAuth2ClientRegistrationTemplate> findClientRegistrationTemplateByProviderId(String providerId) {
         log.trace("Executing findClientRegistrationTemplateByProviderId [{}]", providerId);
-        validateString(providerId, INCORRECT_CLIENT_REGISTRATION_PROVIDER_ID + providerId);
+        validateString(providerId, id -> INCORRECT_CLIENT_REGISTRATION_PROVIDER_ID + id);
         return clientRegistrationTemplateDao.findByProviderId(providerId);
     }
 
     @Override
     public OAuth2ClientRegistrationTemplate findClientRegistrationTemplateById(OAuth2ClientRegistrationTemplateId templateId) {
         log.trace("Executing findClientRegistrationTemplateById [{}]", templateId);
-        validateId(templateId, INCORRECT_CLIENT_REGISTRATION_TEMPLATE_ID + templateId);
+        validateId(templateId, id -> INCORRECT_CLIENT_REGISTRATION_TEMPLATE_ID + id);
         return clientRegistrationTemplateDao.findById(TenantId.SYS_TENANT_ID, templateId.getId());
     }
 
@@ -84,7 +84,7 @@ public class OAuth2ConfigTemplateServiceImpl extends AbstractEntityService imple
     @Override
     public void deleteClientRegistrationTemplateById(OAuth2ClientRegistrationTemplateId templateId) {
         log.trace("Executing deleteClientRegistrationTemplateById [{}]", templateId);
-        validateId(templateId, INCORRECT_CLIENT_REGISTRATION_TEMPLATE_ID + templateId);
+        validateId(templateId, id -> INCORRECT_CLIENT_REGISTRATION_TEMPLATE_ID + id);
         clientRegistrationTemplateDao.removeById(TenantId.SYS_TENANT_ID, templateId.getId());
     }
 }
