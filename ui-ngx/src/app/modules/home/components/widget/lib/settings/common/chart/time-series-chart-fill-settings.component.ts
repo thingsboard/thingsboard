@@ -34,7 +34,7 @@ import { AppState } from '@core/core.state';
 @Component({
   selector: 'tb-time-series-chart-fill-settings',
   templateUrl: './time-series-chart-fill-settings.component.html',
-  styleUrls: ['./../widget-settings.scss'],
+  styleUrls: ['./../../widget-settings.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
