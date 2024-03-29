@@ -5172,7 +5172,7 @@
             "bar-appearance":"Wygląd słupka",
             "label-on-bar":"Etykieta na słupku",
             "value-on-bar":"Wartość na słupku",
-            "bar-chart-card-style":"Styl karty wykresu słupkowego"
+            "bar-chart-style":"Styl wykresu słupkowego"
         },
         "battery-level":{
             "layout":"Układ",
@@ -5924,7 +5924,7 @@
             "range-colors":"Kolory zakresu",
             "out-of-range-color":"Kolor poza zakresem",
             "fill-area":"Wypełnij obszar",
-            "range-chart-card-style":"Styl karty wykresu zakresu"
+            "range-chart-style":"Styl wykresu zakresu"
         },
         "rpc":{
             "value-settings":"Ustawienia wartości",

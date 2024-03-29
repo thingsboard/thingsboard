@@ -18,6 +18,7 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import {
   AxisPosition,
   calculateThresholdsOffset,
+  createTimeSeriesVisualMapOption,
   createTimeSeriesXAxisOption,
   createTimeSeriesYAxis,
   defaultTimeSeriesChartYAxisSettings,
@@ -31,7 +32,6 @@ import {
   TimeSeriesChartNoAggregationBarWidthStrategy,
   TimeSeriesChartSeriesType,
   TimeSeriesChartSettings,
-  TimeSeriesChartShape,
   TimeSeriesChartThreshold,
   timeSeriesChartThresholdDefaultSettings,
   TimeSeriesChartThresholdItem,
@@ -48,10 +48,11 @@ import {
   calculateYAxisWidth,
   ECharts,
   echartsModule,
-  EChartsOption,
+  EChartsOption, EChartsShape,
   echartsTooltipFormatter,
   EChartsTooltipTrigger,
   getAxisExtent,
+  getFocusedSeriesIndex,
   measureXAxisNameHeight,
   measureYAxisNameWidth,
   toNamedData
@@ -60,7 +61,7 @@ import { DateFormatProcessor } from '@shared/models/widget-settings.models';
 import { isDefinedAndNotNull, isEqual, mergeDeep } from '@core/utils';
 import { DataKey, Datasource, DatasourceType, widgetType } from '@shared/models/widget.models';
 import * as echarts from 'echarts/core';
-import { CallbackDataParams } from 'echarts/types/dist/shared';
+import { CallbackDataParams, PiecewiseVisualMapOption } from 'echarts/types/dist/shared';
 import { Renderer2 } from '@angular/core';
 import { CustomSeriesOption, LineSeriesOption } from 'echarts/charts';
 import { BehaviorSubject } from 'rxjs';
@@ -86,7 +87,7 @@ export class TbTimeSeriesChart {
           settings.type = TimeSeriesChartSeriesType.line;
           settings.lineSettings.showLine = false;
           settings.lineSettings.showPoints = true;
-          settings.lineSettings.pointShape = TimeSeriesChartShape.circle;
+          settings.lineSettings.pointShape = EChartsShape.circle;
           settings.lineSettings.pointSize = 8;
         }
         return settings;
@@ -106,6 +107,9 @@ export class TbTimeSeriesChart {
   private yAxisList: TimeSeriesChartYAxis[] = [];
   private dataItems: TimeSeriesChartDataItem[] = [];
   private thresholdItems: TimeSeriesChartThresholdItem[] = [];
+
+  private hasVisualMap = false;
+  private visualMapSelectedRanges: {[key: number]: boolean};
 
   private timeSeriesChart: ECharts;
   private timeSeriesChartOptions: EChartsOption;
@@ -145,6 +149,7 @@ export class TbTimeSeriesChart {
     this.setupYAxes();
     this.setupData();
     this.setupThresholds();
+    this.setupVisualMap();
     if (this.settings.showTooltip && this.settings.tooltipShowDate) {
       this.tooltipDateFormat = DateFormatProcessor.fromSettings(this.ctx.$injector, this.settings.tooltipDateFormat);
     }
@@ -185,6 +190,9 @@ export class TbTimeSeriesChart {
         this.timeSeriesChartOptions.tooltip[0].axisPointer.type = 'line';
       } else {
         this.timeSeriesChartOptions.tooltip[0].axisPointer.type = 'shadow';
+      }
+      if (this.hasVisualMap) {
+        (this.timeSeriesChartOptions.visualMap as PiecewiseVisualMapOption).selected = this.visualMapSelectedRanges;
       }
       this.barRenderSharedContext.timeInterval = this.ctx.timeWindow.interval;
       this.updateSeriesData(true);
@@ -263,6 +271,16 @@ export class TbTimeSeriesChart {
     }
   }
 
+  public toggleVisualMapRange(index: number): void {
+    if (this.hasVisualMap) {
+      this.visualMapSelectedRanges[index] = !this.visualMapSelectedRanges[index];
+      this.timeSeriesChart.dispatchAction({
+        type: 'selectDataRange',
+        selected: this.visualMapSelectedRanges
+      });
+    }
+  }
+
   public destroy(): void {
     if (this.shapeResize$) {
       this.shapeResize$.disconnect();
@@ -284,8 +302,7 @@ export class TbTimeSeriesChart {
       this.darkMode = darkMode;
       if (this.timeSeriesChart) {
         this.timeSeriesChartOptions = updateDarkMode(this.timeSeriesChartOptions,
-          this.settings, this.yAxisList, this.dataItems,
-          this.thresholdItems, darkMode);
+          this.settings, this.yAxisList, this.dataItems, darkMode);
         this.timeSeriesChart.setOption(this.timeSeriesChartOptions);
       }
     }
@@ -300,6 +317,8 @@ export class TbTimeSeriesChart {
     const targetBarWidth = noAggregationBarWidthSettings.strategy === TimeSeriesChartNoAggregationBarWidthStrategy.group ?
       noAggregationBarWidthSettings.groupWidth : noAggregationBarWidthSettings.barWidth;
     this.barRenderSharedContext = {
+      barGap: this.settings.barWidthSettings.barGap,
+      intervalGap: this.settings.barWidthSettings.intervalGap,
       timeInterval: this.ctx.timeWindow?.interval,
       noAggregationBarWidthStrategy: noAggregationBarWidthSettings.strategy,
       noAggregationWidthRelative: targetBarWidth.relative,
@@ -313,7 +332,10 @@ export class TbTimeSeriesChart {
             timeSeriesChartKeyDefaultSettings, dataKey.settings);
           if ((keySettings.type === TimeSeriesChartSeriesType.line && keySettings.lineSettings.showPointLabel &&
               keySettings.lineSettings.pointLabelPosition === SeriesLabelPosition.top) ||
-            (keySettings.type === TimeSeriesChartSeriesType.bar && keySettings.barSettings.showLabel)) {
+            (keySettings.type === TimeSeriesChartSeriesType.bar &&
+              keySettings.barSettings.showLabel &&
+              [SeriesLabelPosition.top, SeriesLabelPosition.bottom]
+              .includes(keySettings.barSettings.labelPosition as SeriesLabelPosition))) {
             this.topPointLabels = true;
           }
           dataKey.settings = keySettings;
@@ -346,6 +368,11 @@ export class TbTimeSeriesChart {
     for (const thresholdSettings of this.settings.thresholds) {
       const threshold = mergeDeep<TimeSeriesChartThreshold>({} as TimeSeriesChartThreshold,
         timeSeriesChartThresholdDefaultSettings, thresholdSettings);
+      if (!this.topPointLabels) {
+        if (threshold.showLabel && !threshold.labelPosition.endsWith('Bottom')) {
+          this.topPointLabels = true;
+        }
+      }
       let latestDataKey: DataKey = null;
       let entityDataKey: DataKey = null;
       let value = null;
@@ -429,6 +456,15 @@ export class TbTimeSeriesChart {
     }
   }
 
+  private setupVisualMap(): void {
+    if (this.settings.visualMapSettings?.pieces && this.settings.visualMapSettings?.pieces.length) {
+      this.hasVisualMap = true;
+      this.visualMapSelectedRanges = {};
+      this.settings.visualMapSettings.pieces.forEach((_val, index) => {
+        this.visualMapSelectedRanges[index] = true;
+      });
+    }
+  }
 
   private nextComponentId(): string {
     return (this.componentIndexCounter++) + '';
@@ -492,8 +528,9 @@ export class TbTimeSeriesChart {
         },
         formatter: (params: CallbackDataParams[]) =>
           this.settings.showTooltip ? echartsTooltipFormatter(this.renderer, this.tooltipDateFormat,
-            this.settings, params, 0, '', -1, this.dataItems,
-            this.noAggregation ? null : this.ctx.timeWindow.interval) : undefined,
+            this.settings, params, 0, '',
+            this.settings.tooltipShowFocusedSeries ? getFocusedSeriesIndex(this.timeSeriesChart) : -1,
+            this.dataItems,  this.noAggregation ? null : this.ctx.timeWindow.interval) : undefined,
         padding: [8, 12],
         backgroundColor: this.settings.tooltipBackgroundColor,
         borderWidth: 0,
@@ -533,6 +570,10 @@ export class TbTimeSeriesChart {
       animationEasingUpdate: this.settings.animation.animationEasingUpdate,
       animationDelayUpdate: this.settings.animation.animationDelayUpdate
     };
+    if (this.hasVisualMap) {
+      this.timeSeriesChartOptions.visualMap =
+        createTimeSeriesVisualMapOption(this.settings.visualMapSettings, this.visualMapSelectedRanges);
+    }
 
     this.timeSeriesChartOptions.xAxis[0].tbTimeWindow = this.ctx.defaultSubscription.timeWindow;
 
@@ -542,7 +583,7 @@ export class TbTimeSeriesChart {
     }
 
     this.timeSeriesChart.setOption(this.timeSeriesChartOptions);
-    this.updateAxes();
+    this.updateAxes(false);
 
     if (this.settings.dataZoom) {
       this.timeSeriesChart.on('datazoom', () => {
@@ -567,7 +608,7 @@ export class TbTimeSeriesChart {
       this.barRenderSharedContext, this.darkMode);
   }
 
-  private updateAxes() {
+  private updateAxes(lazy = true) {
     const leftAxisList = this.yAxisList.filter(axis => axis.option.position === 'left');
     let res = this.updateYAxisOffset(leftAxisList);
     let leftOffset = res.offset + (!res.offset && this.settings.dataZoom ? 5 : 0);
@@ -617,7 +658,7 @@ export class TbTimeSeriesChart {
     }
     if (changed) {
       this.timeSeriesChartOptions.yAxis = this.yAxisList.map(axis => axis.option);
-      this.timeSeriesChart.setOption(this.timeSeriesChartOptions, {replaceMerge: ['yAxis', 'xAxis', 'grid'], lazyUpdate: true});
+      this.timeSeriesChart.setOption(this.timeSeriesChartOptions, {replaceMerge: ['yAxis', 'xAxis', 'grid'], lazyUpdate: lazy});
     }
     if (this.yAxisList.length) {
       const extent = getAxisExtent(this.timeSeriesChart, this.yAxisList[0].id);
@@ -696,7 +737,7 @@ export class TbTimeSeriesChart {
   private minTopOffset(): number {
     const showTickLabels =
       !!this.yAxisList.find(yAxis => yAxis.settings.show && yAxis.settings.showTickLabels);
-    return (this.topPointLabels) ? 20 :
+    return (this.topPointLabels) ? 25 :
       (showTickLabels ? 10 : 5);
   }
 
