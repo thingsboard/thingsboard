@@ -44,6 +44,7 @@ import org.thingsboard.server.gen.edge.v1.DownlinkResponseMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeConfiguration;
 import org.thingsboard.server.gen.edge.v1.EntityDataProto;
 import org.thingsboard.server.gen.edge.v1.EntityViewUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.OAuth2UpdateMsg;
 import org.thingsboard.server.gen.edge.v1.OtaPackageUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.QueueUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RelationUpdateMsg;
@@ -312,6 +313,11 @@ public class EdgeImitator {
         if (downlinkMsg.getResourceUpdateMsgCount() > 0) {
             for (ResourceUpdateMsg resourceUpdateMsg : downlinkMsg.getResourceUpdateMsgList()) {
                 result.add(saveDownlinkMsg(resourceUpdateMsg));
+            }
+        }
+        if (downlinkMsg.getOAuth2UpdateMsgCount() > 0) {
+            for (OAuth2UpdateMsg oAuth2UpdateMsg : downlinkMsg.getOAuth2UpdateMsgList()) {
+                result.add(saveDownlinkMsg(oAuth2UpdateMsg));
             }
         }
         if (downlinkMsg.hasEdgeConfiguration()) {

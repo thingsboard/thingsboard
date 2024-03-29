@@ -30,6 +30,7 @@ import {
 import { WidgetContext } from '@home/models/widget-component.models';
 import { formatValue, isDefinedAndNotNull, isNumeric } from '@core/utils';
 import {
+  autoDateFormat,
   backgroundStyle,
   ColorProcessor,
   ComponentStyle,
@@ -174,7 +175,7 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
         }
       },
       tooltipDateInterval: false,
-      tooltipDateFormat: simpleDateFormat('dd MMM yyyy HH:mm:ss')
+      tooltipDateFormat: autoDateFormat()
     };
 
     this.lineChart = new TbTimeSeriesChart(this.ctx, settings, this.chartElement.nativeElement, this.renderer, false);

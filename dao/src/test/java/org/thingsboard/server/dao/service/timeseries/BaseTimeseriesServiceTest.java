@@ -48,6 +48,7 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -119,18 +120,18 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
 
         assertNotNull(tsList);
         assertEquals(4, tsList.size());
-        for (int i = 0; i < tsList.size(); i++) {
-            assertEquals(TS, tsList.get(i).getTs());
+        for (TsKvEntry entry : tsList) {
+            assertEquals(TS, entry.getTs());
         }
 
-        Collections.sort(tsList, (o1, o2) -> o1.getKey().compareTo(o2.getKey()));
+        Collections.sort(tsList, Comparator.comparing(KvEntry::getKey));
 
         List<TsKvEntry> expected = Arrays.asList(
                 toTsEntry(TS, stringKvEntry),
                 toTsEntry(TS, longKvEntry),
                 toTsEntry(TS, doubleKvEntry),
                 toTsEntry(TS, booleanKvEntry));
-        Collections.sort(expected, (o1, o2) -> o1.getKey().compareTo(o2.getKey()));
+        Collections.sort(expected, Comparator.comparing(KvEntry::getKey));
 
         assertEquals(expected, tsList);
     }
@@ -190,7 +191,7 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         Assert.assertEquals(toTsEntry(TS - 2, stringKvEntry), entries.get(1));
         Assert.assertEquals(toTsEntry(TS - 1, stringKvEntry), entries.get(2));
 
-        EntityView entityView = saveAndCreateEntityView(deviceId, Arrays.asList(STRING_KEY));
+        EntityView entityView = saveAndCreateEntityView(deviceId, List.of(STRING_KEY));
 
         entries = tsService.findAll(tenantId, entityView.getId(), queries).get(MAX_TIMEOUT, TimeUnit.SECONDS);
         Assert.assertEquals(3, entries.size());
@@ -350,7 +351,7 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         Assert.assertEquals(toTsEntry(TS - 2, stringKvEntry), entries.get(1));
         Assert.assertEquals(toTsEntry(TS - 3, stringKvEntry), entries.get(2));
 
-        EntityView entityView = saveAndCreateEntityView(deviceId, Arrays.asList(STRING_KEY));
+        EntityView entityView = saveAndCreateEntityView(deviceId, List.of(STRING_KEY));
 
         entries = tsService.findAll(tenantId, entityView.getId(), queries).get(MAX_TIMEOUT, TimeUnit.SECONDS);
         Assert.assertEquals(3, entries.size());

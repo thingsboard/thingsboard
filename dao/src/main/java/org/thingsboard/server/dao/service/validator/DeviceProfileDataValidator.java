@@ -23,7 +23,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-import org.springframework.util.Base64Utils;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -64,6 +63,7 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.PKIXParameters;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -327,10 +327,13 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
             if (!isBootstrapServerUpdateEnable && serverConfig.isBootstrapServerIs()) {
                 throw new DeviceCredentialsValidationException("Bootstrap config must not include \"Bootstrap Server\". \"Include Bootstrap Server updates\" is " + isBootstrapServerUpdateEnable + ".");
             }
-            String server = serverConfig.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server" + " shortServerId: " + serverConfig.getShortServerId() + ":";
-            if (serverConfig.getShortServerId() < 1 || serverConfig.getShortServerId() > 65534) {
-                throw new DeviceCredentialsValidationException(server + " ShortServerId must not be less than 1 and more than 65534!");
+            if (!serverConfig.isBootstrapServerIs() && (serverConfig.getShortServerId() < 1 || serverConfig.getShortServerId() > 65534)) {
+                throw new DeviceCredentialsValidationException("LwM2M Server ShortServerId must not be less than 1 and more than 65534!");
             }
+           if (serverConfig.isBootstrapServerIs() && !(serverConfig.getShortServerId() == null || serverConfig.getShortServerId() ==0)) {
+                throw new DeviceCredentialsValidationException("Bootstrap Server ShortServerId must be null or '0'!");
+            }
+            String server = serverConfig.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server";
             if (!shortServerIds.add(serverConfig.getShortServerId())) {
                 throw new DeviceCredentialsValidationException(server + " \"Short server Id\" value = " + serverConfig.getShortServerId() + ". This value must be a unique value for all servers!");
             }
@@ -408,6 +411,6 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
     }
 
     private String getCertificateString(X509Certificate cert) throws CertificateEncodingException {
-        return EncryptionUtil.certTrimNewLines(Base64Utils.encodeToString(cert.getEncoded()));
+        return EncryptionUtil.certTrimNewLines(Base64.getEncoder().encodeToString(cert.getEncoded()));
     }
 }

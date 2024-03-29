@@ -427,6 +427,7 @@ public class ModelConstants {
      */
     public static final String OAUTH2_PARAMS_TABLE_NAME = "oauth2_params";
     public static final String OAUTH2_PARAMS_ENABLED_PROPERTY = "enabled";
+    public static final String OAUTH2_PARAMS_EDGE_ENABLED_PROPERTY = "edge_enabled";
     public static final String OAUTH2_PARAMS_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
 
     public static final String OAUTH2_REGISTRATION_TABLE_NAME = "oauth2_registration";

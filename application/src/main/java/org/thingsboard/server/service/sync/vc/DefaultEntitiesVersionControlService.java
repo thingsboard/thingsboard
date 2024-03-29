@@ -69,7 +69,7 @@ import org.thingsboard.server.common.data.util.ThrowingRunnable;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
+import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
 import org.thingsboard.server.service.executors.VersionControlExecutor;
 import org.thingsboard.server.service.sync.ie.EntitiesExportImportService;
 import org.thingsboard.server.service.sync.ie.exporting.ExportableEntitiesService;
@@ -110,7 +110,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     private final GitVersionControlQueueService gitServiceQueue;
     private final EntitiesExportImportService exportImportService;
     private final ExportableEntitiesService exportableEntitiesService;
-    private final TbNotificationEntityService entityNotificationService;
+    private final TbLogEntityActionService logEntityActionService;
     private final TransactionTemplate transactionTemplate;
     private final TbTransactionalCache<UUID, VersionControlTaskCacheEntry> taskCache;
     private final VersionControlExecutor executor;
@@ -292,7 +292,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
             return cachePut(ctx.getRequestId(), result);
         } catch (LoadEntityException e) {
             return cachePut(ctx.getRequestId(), onError(e.getExternalId(), e.getCause()));
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.info("[{}] Failed to process request [{}] due to: ", ctx.getTenantId(), request, e);
             return cachePut(ctx.getRequestId(), VersionLoadResult.error(EntityLoadError.runtimeError(e)));
         }
@@ -435,7 +435,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
             exportableEntitiesService.removeById(ctx.getTenantId(), entityId);
 
             ThrowingRunnable callback = () -> {
-                entityNotificationService.logEntityAction(ctx.getTenantId(), entity.getId(), entity, null,
+                logEntityActionService.logEntityAction(ctx.getTenantId(), entity.getId(), entity, null,
                         ActionType.DELETED, ctx.getUser());
             };
             if (ctx.isRollbackOnError()) {

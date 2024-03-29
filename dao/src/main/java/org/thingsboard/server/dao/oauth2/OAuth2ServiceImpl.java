@@ -40,10 +40,11 @@ import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.oauth2.SchemeType;
 import org.thingsboard.server.common.data.oauth2.TenantNameStrategyType;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 
-import javax.transaction.Transactional;
+import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -58,6 +59,7 @@ import static org.thingsboard.server.dao.service.Validator.validateString;
 @Slf4j
 @Service
 public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Service {
+
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String INCORRECT_CLIENT_REGISTRATION_ID = "Incorrect clientRegistrationId ";
     public static final String INCORRECT_DOMAIN_NAME = "Incorrect domainName ";
@@ -116,6 +118,7 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
                 });
             }
         });
+        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(TenantId.SYS_TENANT_ID).entity(oauth2Info).build());
     }
 
     @Override
@@ -123,7 +126,8 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
         log.trace("Executing findOAuth2Info");
         OAuth2Info oauth2Info = new OAuth2Info();
         List<OAuth2Params> oauth2ParamsList = oauth2ParamsDao.find(TenantId.SYS_TENANT_ID);
-        oauth2Info.setEnabled(oauth2ParamsList.stream().anyMatch(param -> param.isEnabled()));
+        oauth2Info.setEnabled(oauth2ParamsList.stream().anyMatch(OAuth2Params::isEnabled));
+        oauth2Info.setEdgeEnabled(oauth2ParamsList.stream().anyMatch(OAuth2Params::isEdgeEnabled));
         List<OAuth2ParamsInfo> oauth2ParamsInfos = new ArrayList<>();
         oauth2Info.setOauth2ParamsInfos(oauth2ParamsInfos);
         oauth2ParamsList.stream().sorted(Comparator.comparing(BaseData::getUuidId)).forEach(oauth2Params -> {

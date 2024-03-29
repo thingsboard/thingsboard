@@ -29,8 +29,8 @@ import org.thingsboard.monitoring.data.MonitoredServiceKey;
 import org.thingsboard.monitoring.data.ServiceFailureException;
 import org.thingsboard.monitoring.util.TbStopWatch;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;

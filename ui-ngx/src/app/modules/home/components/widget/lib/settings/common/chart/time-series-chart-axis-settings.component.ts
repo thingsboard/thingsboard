@@ -23,9 +23,9 @@ import {
   Validators
 } from '@angular/forms';
 import {
-  AxisPosition,
+  AxisPosition, defaultXAxisTicksFormat,
   timeSeriesAxisPositionTranslations,
-  TimeSeriesChartAxisSettings,
+  TimeSeriesChartAxisSettings, TimeSeriesChartXAxisSettings,
   TimeSeriesChartYAxisSettings
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { merge } from 'rxjs';
@@ -58,6 +58,8 @@ export class TimeSeriesChartAxisSettingsComponent implements OnInit, ControlValu
 
   functionScopeVariables = this.widgetService.getWidgetScopeVariables();
 
+  defaultXAxisTicksFormat = defaultXAxisTicksFormat;
+
   @Input()
   disabled: boolean;
 
@@ -68,7 +70,7 @@ export class TimeSeriesChartAxisSettingsComponent implements OnInit, ControlValu
   @coerceBoolean()
   advanced = false;
 
-  private modelValue: TimeSeriesChartAxisSettings | TimeSeriesChartYAxisSettings;
+  private modelValue: TimeSeriesChartXAxisSettings | TimeSeriesChartYAxisSettings;
 
   private propagateChange = null;
 
@@ -103,8 +105,12 @@ export class TimeSeriesChartAxisSettingsComponent implements OnInit, ControlValu
       this.axisSettingsFormGroup.addControl('units', this.fb.control(null, []));
       this.axisSettingsFormGroup.addControl('decimals', this.fb.control(null, [Validators.min(0)]));
       this.axisSettingsFormGroup.addControl('ticksFormatter', this.fb.control(null, []));
+      this.axisSettingsFormGroup.addControl('interval', this.fb.control(null, [Validators.min(0)]));
+      this.axisSettingsFormGroup.addControl('splitNumber', this.fb.control(null, [Validators.min(1)]));
       this.axisSettingsFormGroup.addControl('min', this.fb.control(null, []));
       this.axisSettingsFormGroup.addControl('max', this.fb.control(null, []));
+    } else if (this.axisType === 'xAxis') {
+      this.axisSettingsFormGroup.addControl('ticksFormat', this.fb.control(null, []));
     }
     this.axisSettingsFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
@@ -161,11 +167,17 @@ export class TimeSeriesChartAxisSettingsComponent implements OnInit, ControlValu
         if (this.axisType === 'yAxis') {
           this.axisSettingsFormGroup.get('ticksFormatter').enable({emitEvent: false});
         }
+        if (this.axisType === 'xAxis') {
+          this.axisSettingsFormGroup.get('ticksFormat').enable({emitEvent: false});
+        }
       } else {
         this.axisSettingsFormGroup.get('tickLabelFont').disable({emitEvent: false});
         this.axisSettingsFormGroup.get('tickLabelColor').disable({emitEvent: false});
         if (this.axisType === 'yAxis') {
           this.axisSettingsFormGroup.get('ticksFormatter').disable({emitEvent: false});
+        }
+        if (this.axisType === 'xAxis') {
+          this.axisSettingsFormGroup.get('ticksFormat').disable({emitEvent: false});
         }
       }
       if (showTicks) {

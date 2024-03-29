@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileConfiguration;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantProfileDao;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -143,7 +144,10 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
         log.trace("Executing save [{}]", apiUsageState.getTenantId());
         validateId(apiUsageState.getTenantId(), INCORRECT_TENANT_ID + apiUsageState.getTenantId());
         validateId(apiUsageState.getId(), "Can't save new usage state. Only update is allowed!");
-        return apiUsageStateDao.save(apiUsageState.getTenantId(), apiUsageState);
+        ApiUsageState savedState = apiUsageStateDao.save(apiUsageState.getTenantId(), apiUsageState);
+        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedState.getTenantId()).entityId(savedState.getId())
+                .entity(savedState).build());
+        return savedState;
     }
 
     @Override

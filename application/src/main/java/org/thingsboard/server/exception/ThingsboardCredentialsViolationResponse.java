@@ -15,11 +15,11 @@
  */
 package org.thingsboard.server.exception;
 
-import io.swagger.annotations.ApiModel;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.http.HttpStatus;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 
-@ApiModel
+@Schema
 public class ThingsboardCredentialsViolationResponse extends ThingsboardErrorResponse {
 
     protected ThingsboardCredentialsViolationResponse(String message) {

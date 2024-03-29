@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.lwm2m.config;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.elements.config.Configuration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,8 +43,8 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
     private int dtlsRetransmissionTimeout;
 
     @Getter
-    @Value("${transport.lwm2m.dtls.connection_id_length:6}")
-    private Integer dtlsConnectionIdLength;
+    @Value("${transport.lwm2m.dtls.connection_id_length:}")
+    private Integer dtlsCidLength;
 
     @Getter
     @Value("${transport.lwm2m.timeout:}")
@@ -108,6 +109,10 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
     @Getter
     @Setter
     private List<TbProperty> networkConfig;
+
+    @Getter
+    @Setter
+    private Configuration coapConfig;
 
     @Bean
     @ConfigurationProperties(prefix = "transport.lwm2m.server.security.credentials")

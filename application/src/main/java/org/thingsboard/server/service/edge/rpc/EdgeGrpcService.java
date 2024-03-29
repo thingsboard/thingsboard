@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.ResourceUtils;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -54,9 +55,9 @@ import org.thingsboard.server.service.edge.EdgeContextComponent;
 import org.thingsboard.server.service.state.DefaultDeviceStateService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
-import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
@@ -415,7 +416,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                     Collections.singletonList(new BasicTsKvEntry(System.currentTimeMillis(), new LongDataEntry(key, value))),
                     new AttributeSaveCallback(tenantId, edgeId, key, value));
         } else {
-            tsSubService.saveAttrAndNotify(tenantId, edgeId, DataConstants.SERVER_SCOPE, key, value, new AttributeSaveCallback(tenantId, edgeId, key, value));
+            tsSubService.saveAttrAndNotify(tenantId, edgeId, AttributeScope.SERVER_SCOPE, key, value, new AttributeSaveCallback(tenantId, edgeId, key, value));
         }
     }
 
@@ -427,7 +428,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                     Collections.singletonList(new BasicTsKvEntry(System.currentTimeMillis(), new BooleanDataEntry(key, value))),
                     new AttributeSaveCallback(tenantId, edgeId, key, value));
         } else {
-            tsSubService.saveAttrAndNotify(tenantId, edgeId, DataConstants.SERVER_SCOPE, key, value, new AttributeSaveCallback(tenantId, edgeId, key, value));
+            tsSubService.saveAttrAndNotify(tenantId, edgeId, AttributeScope.SERVER_SCOPE, key, value, new AttributeSaveCallback(tenantId, edgeId, key, value));
         }
     }
 

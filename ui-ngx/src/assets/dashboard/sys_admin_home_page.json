@@ -2023,6 +2023,7 @@
                 "lineHeight": "1"
               },
               "tickLabelColor": "rgba(0, 0, 0, 0.54)",
+              "ticksFormat": {},
               "showTicks": false,
               "ticksColor": "rgba(0, 0, 0, 0.54)",
               "showLine": false,
@@ -2076,9 +2077,11 @@
             "tooltipValueColor": "rgba(0, 0, 0, 0.76)",
             "tooltipShowDate": true,
             "tooltipDateFormat": {
-              "format": "MMMM dd, yyyy",
+              "format": null,
               "lastUpdateAgo": false,
-              "custom": true
+              "custom": false,
+              "auto": true,
+              "autoDateFormatSettings": {}
             },
             "tooltipDateFont": {
               "family": "Roboto",
@@ -2494,6 +2497,7 @@
                 "lineHeight": "1"
               },
               "tickLabelColor": "rgba(0, 0, 0, 0.54)",
+              "ticksFormat": {},
               "showTicks": false,
               "ticksColor": "rgba(0, 0, 0, 0.54)",
               "showLine": false,
@@ -2547,9 +2551,11 @@
             "tooltipValueColor": "rgba(0, 0, 0, 0.76)",
             "tooltipShowDate": true,
             "tooltipDateFormat": {
-              "format": "dd MMM yyyy HH:mm:ss",
+              "format": null,
               "lastUpdateAgo": false,
-              "custom": false
+              "custom": false,
+              "auto": true,
+              "autoDateFormatSettings": {}
             },
             "tooltipDateFont": {
               "family": "Roboto",
