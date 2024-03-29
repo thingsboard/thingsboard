@@ -6176,9 +6176,10 @@
             "range-colors": "Range colors",
             "out-of-range-color": "Out of range color",
             "show-range-thresholds": "Show range thresholds",
+            "range-thresholds-settings": "Range thresholds settings",
             "fill-area": "Fill area",
             "fill-area-opacity": "Fill area opacity",
-            "range-chart-card-style": "Range chart card style"
+            "range-chart-style": "Range chart style"
         },
         "rpc": {
             "value-settings": "Value settings",
@@ -6772,7 +6773,8 @@
               "label-position-inside-middle-bottom": "Inside middle bottom",
               "label-position-inside-end": "Inside end",
               "label-position-inside-end-top": "Inside end top",
-              "label-position-inside-end-bottom": "Inside end bottom"
+              "label-position-inside-end-bottom": "Inside end bottom",
+              "label-background": "Label background"
             },
             "axis": {
               "axes": "Axes",
@@ -6853,6 +6855,7 @@
                 "show-points": "Show points",
                 "point-label": "Point label",
                 "point-label-hint": "Display label with value over the series point.",
+                "point-label-background": "Point label background",
                 "point-shape": "Point shape",
                 "point-size": "Point size"
               },
@@ -6861,7 +6864,8 @@
                 "border-width": "Border width",
                 "border-radius": "Border radius",
                 "label": "Label",
-                "label-hint": "Display label with value over the bar."
+                "label-hint": "Display label with value over the bar.",
+                "label-background": "Label background"
               }
             }
         },

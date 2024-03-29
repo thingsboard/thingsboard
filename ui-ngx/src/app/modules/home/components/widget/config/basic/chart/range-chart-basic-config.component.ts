@@ -49,11 +49,10 @@ import {
   lineSeriesStepTypeTranslations,
   seriesLabelPositions,
   seriesLabelPositionTranslations,
-  timeSeriesChartShapes,
-  timeSeriesChartShapeTranslations,
   timeSeriesLineTypes,
   timeSeriesLineTypeTranslations
 } from '@home/components/widget/lib/chart/time-series-chart.models';
+import { echartsShapes, echartsShapeTranslations } from '@home/components/widget/lib/chart/echarts-widget.models';
 
 @Component({
   selector: 'tb-range-chart-basic-config',
@@ -83,9 +82,9 @@ export class RangeChartBasicConfigComponent extends BasicWidgetConfigComponent {
 
   seriesLabelPositionTranslations = seriesLabelPositionTranslations;
 
-  timeSeriesChartShapes = timeSeriesChartShapes;
+  echartsShapes = echartsShapes;
 
-  timeSeriesChartShapeTranslations = timeSeriesChartShapeTranslations;
+  echartsShapeTranslations = echartsShapeTranslations;
 
   legendPositions = legendPositions;
 
@@ -139,8 +138,9 @@ export class RangeChartBasicConfigComponent extends BasicWidgetConfigComponent {
       rangeColors: [settings.rangeColors, []],
       outOfRangeColor: [settings.outOfRangeColor, []],
       showRangeThresholds: [settings.showRangeThresholds, []],
+      rangeThreshold: [settings.rangeThreshold, []],
       fillArea: [settings.fillArea, []],
-      fillAreaOpacity: [settings.fillAreaOpacity, [Validators.min(0), Validators.max(100)]],
+      fillAreaOpacity: [settings.fillAreaOpacity, [Validators.min(0), Validators.max(1)]],
 
       showLine: [settings.showLine, []],
       step: [settings.step, []],
@@ -154,6 +154,8 @@ export class RangeChartBasicConfigComponent extends BasicWidgetConfigComponent {
       pointLabelPosition: [settings.pointLabelPosition, []],
       pointLabelFont: [settings.pointLabelFont, []],
       pointLabelColor: [settings.pointLabelColor, []],
+      enablePointLabelBackground: [settings.enablePointLabelBackground, []],
+      pointLabelBackground: [settings.pointLabelBackground, []],
       pointShape: [settings.pointShape, []],
       pointSize: [settings.pointSize, [Validators.min(0)]],
 
@@ -216,6 +218,7 @@ export class RangeChartBasicConfigComponent extends BasicWidgetConfigComponent {
     this.widgetConfig.config.settings.rangeColors = config.rangeColors;
     this.widgetConfig.config.settings.outOfRangeColor = config.outOfRangeColor;
     this.widgetConfig.config.settings.showRangeThresholds = config.showRangeThresholds;
+    this.widgetConfig.config.settings.rangeThreshold = config.rangeThreshold;
     this.widgetConfig.config.settings.fillArea = config.fillArea;
     this.widgetConfig.config.settings.fillAreaOpacity = config.fillAreaOpacity;
 
@@ -231,6 +234,8 @@ export class RangeChartBasicConfigComponent extends BasicWidgetConfigComponent {
     this.widgetConfig.config.settings.pointLabelPosition = config.pointLabelPosition;
     this.widgetConfig.config.settings.pointLabelFont = config.pointLabelFont;
     this.widgetConfig.config.settings.pointLabelColor = config.pointLabelColor;
+    this.widgetConfig.config.settings.enablePointLabelBackground = config.enablePointLabelBackground;
+    this.widgetConfig.config.settings.pointLabelBackground = config.pointLabelBackground;
     this.widgetConfig.config.settings.pointShape = config.pointShape;
     this.widgetConfig.config.settings.pointSize = config.pointSize;
 
@@ -268,16 +273,19 @@ export class RangeChartBasicConfigComponent extends BasicWidgetConfigComponent {
   }
 
   protected validatorTriggers(): string[] {
-    return ['showTitle', 'showIcon', 'fillArea', 'showLine', 'step', 'showPointLabel', 'showLegend', 'showTooltip', 'tooltipShowDate'];
+    return ['showTitle', 'showIcon', 'showRangeThresholds', 'fillArea', 'showLine',
+      'step', 'showPointLabel', 'enablePointLabelBackground', 'showLegend', 'showTooltip', 'tooltipShowDate'];
   }
 
   protected updateValidators(emitEvent: boolean, trigger?: string) {
     const showTitle: boolean = this.rangeChartWidgetConfigForm.get('showTitle').value;
     const showIcon: boolean = this.rangeChartWidgetConfigForm.get('showIcon').value;
+    const showRangeThresholds: boolean = this.rangeChartWidgetConfigForm.get('showRangeThresholds').value;
     const fillArea: boolean = this.rangeChartWidgetConfigForm.get('fillArea').value;
     const showLine: boolean = this.rangeChartWidgetConfigForm.get('showLine').value;
     const step: boolean = this.rangeChartWidgetConfigForm.get('step').value;
     const showPointLabel: boolean = this.rangeChartWidgetConfigForm.get('showPointLabel').value;
+    const enablePointLabelBackground: boolean = this.rangeChartWidgetConfigForm.get('enablePointLabelBackground').value;
     const showLegend: boolean = this.rangeChartWidgetConfigForm.get('showLegend').value;
     const showTooltip: boolean = this.rangeChartWidgetConfigForm.get('showTooltip').value;
     const tooltipShowDate: boolean = this.rangeChartWidgetConfigForm.get('tooltipShowDate').value;
@@ -309,6 +317,12 @@ export class RangeChartBasicConfigComponent extends BasicWidgetConfigComponent {
       this.rangeChartWidgetConfigForm.get('iconColor').disable();
     }
 
+    if (showRangeThresholds) {
+      this.rangeChartWidgetConfigForm.get('rangeThreshold').enable();
+    } else {
+      this.rangeChartWidgetConfigForm.get('rangeThreshold').disable();
+    }
+
     if (fillArea) {
       this.rangeChartWidgetConfigForm.get('fillAreaOpacity').enable();
     } else {
@@ -337,10 +351,18 @@ export class RangeChartBasicConfigComponent extends BasicWidgetConfigComponent {
       this.rangeChartWidgetConfigForm.get('pointLabelPosition').enable();
       this.rangeChartWidgetConfigForm.get('pointLabelFont').enable();
       this.rangeChartWidgetConfigForm.get('pointLabelColor').enable();
+      this.rangeChartWidgetConfigForm.get('enablePointLabelBackground').enable({emitEvent: false});
+      if (enablePointLabelBackground) {
+        this.rangeChartWidgetConfigForm.get('pointLabelBackground').enable();
+      } else {
+        this.rangeChartWidgetConfigForm.get('pointLabelBackground').disable();
+      }
     } else {
       this.rangeChartWidgetConfigForm.get('pointLabelPosition').disable();
       this.rangeChartWidgetConfigForm.get('pointLabelFont').disable();
       this.rangeChartWidgetConfigForm.get('pointLabelColor').disable();
+      this.rangeChartWidgetConfigForm.get('enablePointLabelBackground').disable({emitEvent: false});
+      this.rangeChartWidgetConfigForm.get('pointLabelBackground').disable();
     }
 
     if (showLegend) {

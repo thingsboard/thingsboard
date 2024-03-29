@@ -73,7 +73,7 @@ export class TimeSeriesChartFillSettingsComponent implements OnInit, ControlValu
   ngOnInit(): void {
     this.fillSettingsFormGroup = this.fb.group({
       type: [null, []],
-      opacity: [null, [Validators.min(0), Validators.max(100)]],
+      opacity: [null, [Validators.min(0), Validators.max(1)]],
       gradient: this.fb.group({
         start: [null, [Validators.min(0), Validators.max(100)]],
         end: [null, [Validators.min(0), Validators.max(100)]]

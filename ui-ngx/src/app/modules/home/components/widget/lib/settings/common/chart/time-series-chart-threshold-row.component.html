@@ -98,14 +98,13 @@
     </mat-form-field>
   </div>
   <div class="tb-form-table-row-cell-buttons">
-    <button type="button"
-            mat-icon-button
-            #matButton
-            (click)="editThreshold($event, matButton)"
-            matTooltip="{{ 'widgets.time-series-chart.threshold.threshold-settings' | translate }}"
-            matTooltipPosition="above">
-      <mat-icon>settings</mat-icon>
-    </button>
+    <tb-time-series-chart-threshold-settings
+        [widgetConfig]="widgetConfig"
+        [yAxisIds]="yAxisIds"
+        [hideYAxis]="hideYAxis"
+        icon="settings"
+        [formControl]="thresholdSettingsFormControl">
+    </tb-time-series-chart-threshold-settings>
     <button type="button"
             mat-icon-button
             (click)="thresholdRemoved.emit()"

@@ -24,22 +24,21 @@ import {
   sortedColorRange
 } from '@shared/models/widget-settings.models';
 import { LegendPosition } from '@shared/models/widget.models';
-import { EChartsTooltipWidgetSettings } from '@home/components/widget/lib/chart/echarts-widget.models';
+import { EChartsShape, EChartsTooltipWidgetSettings } from '@home/components/widget/lib/chart/echarts-widget.models';
 import {
   createTimeSeriesChartVisualMapPiece,
   defaultTimeSeriesChartXAxisSettings,
   defaultTimeSeriesChartYAxisSettings,
   LineSeriesStepType,
   SeriesFillType,
-  SeriesLabelPosition, timeSeriesChartAnimationDefaultSettings,
+  SeriesLabelPosition, ThresholdLabelPosition, timeSeriesChartAnimationDefaultSettings,
   TimeSeriesChartAnimationSettings,
   timeSeriesChartColorScheme,
   TimeSeriesChartKeySettings,
   TimeSeriesChartLineType,
   TimeSeriesChartSeriesType,
   TimeSeriesChartSettings,
-  TimeSeriesChartShape,
-  TimeSeriesChartThreshold,
+  TimeSeriesChartThreshold, timeSeriesChartThresholdDefaultSettings,
   TimeSeriesChartThresholdType,
   TimeSeriesChartVisualMapPiece,
   TimeSeriesChartXAxisSettings,
@@ -64,6 +63,7 @@ export interface RangeChartWidgetSettings extends EChartsTooltipWidgetSettings {
   rangeColors: Array<ColorRange>;
   outOfRangeColor: string;
   showRangeThresholds: boolean;
+  rangeThreshold: Partial<TimeSeriesChartThreshold>;
   fillArea: boolean;
   fillAreaOpacity: number;
   showLine: boolean;
@@ -77,7 +77,9 @@ export interface RangeChartWidgetSettings extends EChartsTooltipWidgetSettings {
   pointLabelPosition: SeriesLabelPosition;
   pointLabelFont: Font;
   pointLabelColor: string;
-  pointShape: TimeSeriesChartShape;
+  enablePointLabelBackground: boolean;
+  pointLabelBackground: string;
+  pointShape: EChartsShape;
   pointSize: number;
   yAxis: TimeSeriesChartYAxisSettings;
   xAxis: TimeSeriesChartXAxisSettings;
@@ -104,6 +106,17 @@ export const rangeChartDefaultSettings: RangeChartWidgetSettings = {
   ],
   outOfRangeColor: '#ccc',
   showRangeThresholds: true,
+  rangeThreshold: mergeDeep({} as Partial<TimeSeriesChartThreshold>,
+    timeSeriesChartThresholdDefaultSettings,
+    { lineColor: '#37383b',
+      lineType: TimeSeriesChartLineType.dashed,
+      startSymbol: EChartsShape.circle,
+      startSymbolSize: 5,
+      endSymbol: EChartsShape.arrow,
+      endSymbolSize: 7,
+      labelPosition: ThresholdLabelPosition.insideEndTop,
+      labelColor: '#37383b',
+      enableLabelBackground: true}),
   fillArea: true,
   fillAreaOpacity: 0.7,
   showLine: true,
@@ -124,7 +137,9 @@ export const rangeChartDefaultSettings: RangeChartWidgetSettings = {
     lineHeight: '1'
   },
   pointLabelColor: timeSeriesChartColorScheme['series.label'].light,
-  pointShape: TimeSeriesChartShape.emptyCircle,
+  enablePointLabelBackground: false,
+  pointLabelBackground: 'rgba(255,255,255,0.56)',
+  pointShape: EChartsShape.emptyCircle,
   pointSize: 4,
   yAxis: mergeDeep({} as TimeSeriesChartYAxisSettings,
     defaultTimeSeriesChartYAxisSettings,
@@ -185,26 +200,12 @@ export const rangeChartDefaultSettings: RangeChartWidgetSettings = {
 export const rangeChartTimeSeriesSettings = (settings: RangeChartWidgetSettings, rangeItems: RangeItem[],
                                              decimals: number, units: string): DeepPartial<TimeSeriesChartSettings> => {
   let thresholds: DeepPartial<TimeSeriesChartThreshold>[] = settings.showRangeThresholds ? getMarkPoints(rangeItems).map(item => ({
-    type: TimeSeriesChartThresholdType.constant,
+    ...{type: TimeSeriesChartThresholdType.constant,
     yAxisId: 'default',
     units,
     decimals,
-    lineWidth: 1,
-    lineColor: '#37383b',
-    lineType: [3, 3],
-    startSymbol: TimeSeriesChartShape.circle,
-    startSymbolSize: 5,
-    endSymbol: TimeSeriesChartShape.arrow,
-    endSymbolSize: 7,
-    showLabel: true,
-    labelPosition: 'insideEndTop',
-    labelColor: '#37383b',
-    additionalLabelOption: {
-      backgroundColor: 'rgba(255,255,255,0.56)',
-      padding: [4, 5],
-      borderRadius: 4,
-    },
-    value: item
+    value: item},
+    ...settings.rangeThreshold
   } as DeepPartial<TimeSeriesChartThreshold>)) : [];
   if (settings.thresholds?.length) {
     thresholds = thresholds.concat(settings.thresholds);
@@ -254,6 +255,8 @@ export const rangeChartTimeSeriesKeySettings = (settings: RangeChartWidgetSettin
       pointLabelPosition: settings.pointLabelPosition,
       pointLabelFont: settings.pointLabelFont,
       pointLabelColor: settings.pointLabelColor,
+      enablePointLabelBackground: settings.enablePointLabelBackground,
+      pointLabelBackground: settings.pointLabelBackground,
       pointShape: settings.pointShape,
       pointSize: settings.pointSize,
       fillAreaSettings: {

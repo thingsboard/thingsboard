@@ -102,10 +102,17 @@
                       formControlName="outOfRangeColor">
       </tb-color-input>
     </div>
-    <div class="tb-form-row">
+    <div class="tb-form-row space-between">
       <mat-slide-toggle class="mat-slide" formControlName="showRangeThresholds">
         {{ 'widgets.range-chart.show-range-thresholds' | translate }}
       </mat-slide-toggle>
+      <tb-time-series-chart-threshold-settings
+          boxButton
+          hideYAxis
+          [widgetConfig]="widgetConfig?.config"
+          title="widgets.range-chart.range-thresholds-settings"
+          formControlName="rangeThreshold">
+      </tb-time-series-chart-threshold-settings>
     </div>
     <div class="tb-form-row">
       <mat-slide-toggle class="mat-slide" formControlName="fillArea">
@@ -115,8 +122,8 @@
     <div class="tb-form-row space-between column-xs">
       <div translate>widgets.range-chart.fill-area-opacity</div>
       <mat-form-field class="medium-width number" appearance="outline" subscriptSizing="dynamic">
-        <input matInput type="number" formControlName="fillAreaOpacity" min="0" max="100"
-               step="1" placeholder="{{ 'widget-config.set' | translate }}"/>
+        <input matInput type="number" formControlName="fillAreaOpacity" min="0" max="1"
+               step="0.1" placeholder="{{ 'widget-config.set' | translate }}"/>
       </mat-form-field>
     </div>
     <div class="tb-form-panel stroked">
@@ -193,12 +200,21 @@
           </tb-color-input>
         </div>
       </div>
+      <div class="tb-form-row space-between">
+        <mat-slide-toggle class="mat-slide" formControlName="enablePointLabelBackground">
+          {{ 'widgets.time-series-chart.series.point.point-label-background' | translate }}
+        </mat-slide-toggle>
+        <tb-color-input asBoxInput
+                        colorClearButton
+                        formControlName="pointLabelBackground">
+        </tb-color-input>
+      </div>
       <div class="tb-form-row space-between column-xs">
         <div translate>widgets.time-series-chart.series.point.point-shape</div>
         <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
           <mat-select formControlName="pointShape">
-            <mat-option *ngFor="let shape of timeSeriesChartShapes" [value]="shape">
-              {{ timeSeriesChartShapeTranslations.get(shape) | translate }}
+            <mat-option *ngFor="let shape of echartsShapes" [value]="shape">
+              {{ echartsShapeTranslations.get(shape) | translate }}
             </mat-option>
           </mat-select>
         </mat-form-field>

@@ -152,6 +152,9 @@ export const renderTimeSeriesBar = (params: CustomSeriesRenderItemParams, api: C
       } as CallbackDataParams);
     style.textDistance = 5;
     style.textPosition = position;
+    style.textBackgroundColor = renderCtx.labelOption.backgroundColor;
+    style.textPadding = renderCtx.labelOption.padding;
+    style.textBorderRadius = renderCtx.labelOption.borderRadius;
     style.rich = renderCtx.labelOption.rich;
     if (renderCtx.additionalLabelOption) {
       style = {...style, ...renderCtx.additionalLabelOption};

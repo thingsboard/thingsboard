@@ -32,7 +32,6 @@ import {
   TimeSeriesChartNoAggregationBarWidthStrategy,
   TimeSeriesChartSeriesType,
   TimeSeriesChartSettings,
-  TimeSeriesChartShape,
   TimeSeriesChartThreshold,
   timeSeriesChartThresholdDefaultSettings,
   TimeSeriesChartThresholdItem,
@@ -49,7 +48,7 @@ import {
   calculateYAxisWidth,
   ECharts,
   echartsModule,
-  EChartsOption,
+  EChartsOption, EChartsShape,
   echartsTooltipFormatter,
   EChartsTooltipTrigger,
   getAxisExtent,
@@ -88,7 +87,7 @@ export class TbTimeSeriesChart {
           settings.type = TimeSeriesChartSeriesType.line;
           settings.lineSettings.showLine = false;
           settings.lineSettings.showPoints = true;
-          settings.lineSettings.pointShape = TimeSeriesChartShape.circle;
+          settings.lineSettings.pointShape = EChartsShape.circle;
           settings.lineSettings.pointSize = 8;
         }
         return settings;
@@ -738,7 +737,7 @@ export class TbTimeSeriesChart {
   private minTopOffset(): number {
     const showTickLabels =
       !!this.yAxisList.find(yAxis => yAxis.settings.show && yAxis.settings.showTickLabels);
-    return (this.topPointLabels) ? 20 :
+    return (this.topPointLabels) ? 25 :
       (showTickLabels ? 10 : 5);
   }
 
