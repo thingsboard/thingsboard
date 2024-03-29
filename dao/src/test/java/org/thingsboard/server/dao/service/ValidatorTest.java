@@ -111,7 +111,7 @@ class ValidatorTest {
                 .isInstanceOf(IncorrectParameterException.class)
                 .hasMessageContaining("Incorrect Ids []");
 
-        List<DeviceId> badList = new ArrayList<>(2);
+        List<UUIDBased> badList = new ArrayList<>(2);
         badList.add(goodDeviceId);
         badList.add(null);
 
