@@ -18,6 +18,7 @@ import { HasUUID } from '@shared/models/id/has-uuid';
 
 export interface OAuth2Info {
   enabled: boolean;
+  edgeEnabled: boolean;
   oauth2ParamsInfos: OAuth2ParamsInfo[];
 }
 

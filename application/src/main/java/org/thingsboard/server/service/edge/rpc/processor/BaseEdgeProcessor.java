@@ -51,9 +51,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
-import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageDataIterableByTenantIdEntityId;
-import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -75,6 +74,7 @@ import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.edge.EdgeSynchronizationManager;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -101,6 +101,7 @@ import org.thingsboard.server.service.edge.rpc.constructor.dashboard.DashboardMs
 import org.thingsboard.server.service.edge.rpc.constructor.device.DeviceMsgConstructorFactory;
 import org.thingsboard.server.service.edge.rpc.constructor.edge.EdgeMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.entityview.EntityViewMsgConstructorFactory;
+import org.thingsboard.server.service.edge.rpc.constructor.oauth2.OAuth2MsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.ota.OtaPackageMsgConstructorFactory;
 import org.thingsboard.server.service.edge.rpc.constructor.queue.QueueMsgConstructorFactory;
 import org.thingsboard.server.service.edge.rpc.constructor.relation.RelationMsgConstructorFactory;
@@ -227,6 +228,9 @@ public abstract class BaseEdgeProcessor {
     protected ResourceService resourceService;
 
     @Autowired
+    protected OAuth2Service oAuth2Service;
+
+    @Autowired
     @Lazy
     protected TbQueueProducerProvider producerProvider;
 
@@ -256,6 +260,9 @@ public abstract class BaseEdgeProcessor {
 
     @Autowired
     protected EntityDataMsgConstructor entityDataMsgConstructor;
+
+    @Autowired
+    protected OAuth2MsgConstructor oAuth2MsgConstructor;
 
     @Autowired
     protected RuleChainMsgConstructorFactory ruleChainMsgConstructorFactory;
@@ -392,18 +399,13 @@ public abstract class BaseEdgeProcessor {
 
     protected ListenableFuture<Void> processActionForAllEdges(TenantId tenantId, EdgeEventType type,
                                                               EdgeEventActionType actionType, EntityId entityId,
-                                                              EdgeId sourceEdgeId) {
+                                                              JsonNode body, EdgeId sourceEdgeId) {
         List<ListenableFuture<Void>> futures = new ArrayList<>();
         if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
-            PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
-            PageData<TenantId> tenantsIds;
-            do {
-                tenantsIds = tenantService.findTenantsIds(pageLink);
-                for (TenantId tenantId1 : tenantsIds.getData()) {
-                    futures.addAll(processActionForAllEdgesByTenantId(tenantId1, type, actionType, entityId, null, sourceEdgeId));
-                }
-                pageLink = pageLink.nextPageLink();
-            } while (tenantsIds.hasNext());
+            PageDataIterable<TenantId> tenantIds = new PageDataIterable<>(link -> tenantService.findTenantsIds(link), 1024);
+            for (TenantId tenantId1 : tenantIds) {
+                futures.addAll(processActionForAllEdgesByTenantId(tenantId1, type, actionType, entityId, body, sourceEdgeId));
+            }
         } else {
             futures = processActionForAllEdgesByTenantId(tenantId, type, actionType, entityId, null, sourceEdgeId);
         }
@@ -416,22 +418,13 @@ public abstract class BaseEdgeProcessor {
                                                                             EntityId entityId,
                                                                             JsonNode body,
                                                                             EdgeId sourceEdgeId) {
-        PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
-        PageData<Edge> pageData;
         List<ListenableFuture<Void>> futures = new ArrayList<>();
-        do {
-            pageData = edgeService.findEdgesByTenantId(tenantId, pageLink);
-            if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
-                for (Edge edge : pageData.getData()) {
-                    if (!edge.getId().equals(sourceEdgeId)) {
-                        futures.add(saveEdgeEvent(tenantId, edge.getId(), type, actionType, entityId, body));
-                    }
-                }
-                if (pageData.hasNext()) {
-                    pageLink = pageLink.nextPageLink();
-                }
+        PageDataIterable<Edge> edges = new PageDataIterable<>(link -> edgeService.findEdgesByTenantId(tenantId, link), 1024);
+        for (Edge edge : edges) {
+            if (!edge.getId().equals(sourceEdgeId)) {
+                futures.add(saveEdgeEvent(tenantId, edge.getId(), type, actionType, entityId, body));
             }
-        } while (pageData != null && pageData.hasNext());
+        }
         return futures;
     }
 
@@ -539,35 +532,24 @@ public abstract class BaseEdgeProcessor {
     }
 
     private ListenableFuture<Void> updateDependentRuleChains(TenantId tenantId, RuleChainId processingRuleChainId, EdgeId edgeId) {
-        PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
-        PageData<RuleChain> pageData;
         List<ListenableFuture<Void>> futures = new ArrayList<>();
-        do {
-            pageData = ruleChainService.findRuleChainsByTenantIdAndEdgeId(tenantId, edgeId, pageLink);
-            if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
-                for (RuleChain ruleChain : pageData.getData()) {
-                    if (!ruleChain.getId().equals(processingRuleChainId)) {
-                        List<RuleChainConnectionInfo> connectionInfos =
-                                ruleChainService.loadRuleChainMetaData(ruleChain.getTenantId(), ruleChain.getId()).getRuleChainConnections();
-                        if (connectionInfos != null && !connectionInfos.isEmpty()) {
-                            for (RuleChainConnectionInfo connectionInfo : connectionInfos) {
-                                if (connectionInfo.getTargetRuleChainId().equals(processingRuleChainId)) {
-                                    futures.add(saveEdgeEvent(tenantId,
-                                            edgeId,
-                                            EdgeEventType.RULE_CHAIN_METADATA,
-                                            EdgeEventActionType.UPDATED,
-                                            ruleChain.getId(),
-                                            null));
-                                }
-                            }
-                        }
+        PageDataIterable<RuleChain> ruleChains = new PageDataIterable<>(link -> ruleChainService.findRuleChainsByTenantIdAndEdgeId(tenantId, edgeId, link), 1024);
+        for (RuleChain ruleChain : ruleChains) {
+            List<RuleChainConnectionInfo> connectionInfos =
+                    ruleChainService.loadRuleChainMetaData(ruleChain.getTenantId(), ruleChain.getId()).getRuleChainConnections();
+            if (connectionInfos != null && !connectionInfos.isEmpty()) {
+                for (RuleChainConnectionInfo connectionInfo : connectionInfos) {
+                    if (connectionInfo.getTargetRuleChainId().equals(processingRuleChainId)) {
+                        futures.add(saveEdgeEvent(tenantId,
+                                edgeId,
+                                EdgeEventType.RULE_CHAIN_METADATA,
+                                EdgeEventActionType.UPDATED,
+                                ruleChain.getId(),
+                                null));
                     }
                 }
-                if (pageData.hasNext()) {
-                    pageLink = pageLink.nextPageLink();
-                }
             }
-        } while (pageData != null && pageData.hasNext());
+        }
         return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
     }
 
@@ -577,7 +559,7 @@ public abstract class BaseEdgeProcessor {
             case UPDATED:
             case DELETED:
             case CREDENTIALS_UPDATED: // used by USER entity
-                return processActionForAllEdges(tenantId, type, actionType, entityId, sourceEdgeId);
+                return processActionForAllEdges(tenantId, type, actionType, entityId, null, sourceEdgeId);
             default:
                 return Futures.immediateFuture(null);
         }
