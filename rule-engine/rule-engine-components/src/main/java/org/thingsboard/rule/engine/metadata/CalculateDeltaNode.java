@@ -37,7 +37,6 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -129,8 +128,8 @@ public class CalculateDeltaNode implements TbNode {
     }
 
     private ListenableFuture<ValueWithTs> fetchLatestValueAsync(EntityId entityId) {
-        return Futures.transform(timeseriesService.findLatest(ctx.getTenantId(), entityId, Collections.singletonList(config.getInputValueKey())),
-                list -> extractValue(list.get(0))
+        return Futures.transform(timeseriesService.findLatest(ctx.getTenantId(), entityId, config.getInputValueKey()),
+                tsKvEntryOpt -> tsKvEntryOpt.map(this::extractValue).orElse(null)
                 , ctx.getDbCallbackExecutor());
     }
 
@@ -138,7 +137,7 @@ public class CalculateDeltaNode implements TbNode {
         List<TsKvEntry> tsKvEntries = timeseriesService.findLatestSync(
                 ctx.getTenantId(),
                 entityId,
-                Collections.singletonList(config.getInputValueKey()));
+                List.of(config.getInputValueKey()));
         return extractValue(tsKvEntries.get(0));
     }
 
@@ -161,36 +160,23 @@ public class CalculateDeltaNode implements TbNode {
         double result = 0.0;
         long ts = kvEntry.getTs();
         switch (kvEntry.getDataType()) {
-            case LONG:
-                result = kvEntry.getLongValue().get();
-                break;
-            case DOUBLE:
-                result = kvEntry.getDoubleValue().get();
-                break;
-            case STRING:
+            case LONG -> result = kvEntry.getLongValue().get();
+            case DOUBLE -> result = kvEntry.getDoubleValue().get();
+            case STRING -> {
                 try {
                     result = Double.parseDouble(kvEntry.getStrValue().get());
                 } catch (NumberFormatException e) {
                     throw new IllegalArgumentException("Calculation failed. Unable to parse value [" + kvEntry.getStrValue().get() + "]" +
                             " of telemetry [" + kvEntry.getKey() + "] to Double");
                 }
-                break;
-            case BOOLEAN:
-                throw new IllegalArgumentException("Calculation failed. Boolean values are not supported!");
-            case JSON:
-                throw new IllegalArgumentException("Calculation failed. JSON values are not supported!");
+            }
+            case BOOLEAN -> throw new IllegalArgumentException("Calculation failed. Boolean values are not supported!");
+            case JSON -> throw new IllegalArgumentException("Calculation failed. JSON values are not supported!");
         }
         return new ValueWithTs(ts, result);
     }
 
-    private static class ValueWithTs {
-        private final long ts;
-        private final double value;
-
-        private ValueWithTs(long ts, double value) {
-            this.ts = ts;
-            this.value = value;
-        }
+    private record ValueWithTs(long ts, double value) {
     }
 
 }

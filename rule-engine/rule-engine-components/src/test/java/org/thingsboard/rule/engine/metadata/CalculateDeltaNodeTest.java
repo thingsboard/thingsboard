@@ -47,6 +47,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -68,9 +69,9 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class CalculateDeltaNodeTest {
 
-    private static final DeviceId DUMMY_DEVICE_ORIGINATOR = new DeviceId(UUID.randomUUID());
-    private static final TenantId TENANT_ID = new TenantId(UUID.randomUUID());
-    private static final ListeningExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
+    private final DeviceId DUMMY_DEVICE_ORIGINATOR = new DeviceId(UUID.fromString("2ba3ded4-882b-40cf-999a-89da9ccd58f9"));
+    private final TenantId TENANT_ID = new TenantId(UUID.fromString("3842e740-0d89-43a9-8d52-ae44023847ba"));
+    private final ListeningExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
     @Mock
     private TbContext ctxMock;
     @Mock
@@ -435,8 +436,8 @@ public class CalculateDeltaNodeTest {
         when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
         when(timeseriesServiceMock.findLatest(
-                eq(TENANT_ID), eq(DUMMY_DEVICE_ORIGINATOR), argThat(new ListMatcher<>(List.of(tsKvEntry.getKey())))
-        )).thenReturn(Futures.immediateFuture(List.of(tsKvEntry)));
+                eq(TENANT_ID), eq(DUMMY_DEVICE_ORIGINATOR), eq(tsKvEntry.getKey())
+        )).thenReturn(Futures.immediateFuture(Optional.of(tsKvEntry)));
     }
 
     @RequiredArgsConstructor
