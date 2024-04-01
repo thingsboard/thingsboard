@@ -1304,6 +1304,8 @@ edges:
       private_key: "${EDGES_RPC_SSL_PRIVATE_KEY:privateKeyFile.pem}"
     # Maximum size (in bytes) of inbound messages the cloud can handle from the edge. By default, it can handle messages up to 4 Megabytes
     max_inbound_message_size: "${EDGES_RPC_MAX_INBOUND_MESSAGE_SIZE:4194304}"
+    # Maximum length of telemetry (time-series and attributes) message the cloud sends to the edge. By default, there is no limitation.
+    max_telemetry_message_size: "${EDGES_RPC_MAX_TELEMETRY_MESSAGE_SIZE:0}"
   storage:
     # Max records of edge event to read from DB and sent to the edge
     max_read_records_count: "${EDGES_STORAGE_MAX_READ_RECORDS_COUNT:50}"

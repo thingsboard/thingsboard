@@ -526,17 +526,18 @@ public abstract class BaseEdgeProcessorTest {
     }
 
     protected static Stream<Arguments> provideParameters() {
-        UUID dashoboardUUID = UUID.randomUUID();
-        UUID ruleChaindUUID = UUID.randomUUID();
+        UUID dashboardUUID = UUID.randomUUID();
+        UUID ruleChainUUID = UUID.randomUUID();
         return Stream.of(
                 Arguments.of(EdgeVersion.V_3_3_0, 0, 0, 0, 0),
                 Arguments.of(EdgeVersion.V_3_3_3, 0, 0, 0, 0),
                 Arguments.of(EdgeVersion.V_3_4_0, 0, 0, 0, 0),
                 Arguments.of(EdgeVersion.V_3_6_0,
-                        dashoboardUUID.getMostSignificantBits(),
-                        dashoboardUUID.getLeastSignificantBits(),
-                        ruleChaindUUID.getMostSignificantBits(),
-                        ruleChaindUUID.getLeastSignificantBits())
+                        dashboardUUID.getMostSignificantBits(),
+                        dashboardUUID.getLeastSignificantBits(),
+                        ruleChainUUID.getMostSignificantBits(),
+                        ruleChainUUID.getLeastSignificantBits())
         );
     }
+
 }
