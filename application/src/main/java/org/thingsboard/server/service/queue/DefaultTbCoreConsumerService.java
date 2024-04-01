@@ -33,6 +33,7 @@ import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.JavaSerDesUtil;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.event.ErrorEvent;
@@ -223,8 +224,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
         log.info("Subscribing to partitions: {}", event.getPartitions());
-        System.out.println("eventPartitions = " + event.getPartitions());
-        this.mainConsumer.subscribe(event.getPartitions());
+        this.mainConsumer.subscribe(event.getCorePartitions(mainConsumer.getTopic(), false));
         this.usageStatsConsumer.subscribe(
                 event
                         .getPartitions()
@@ -232,6 +232,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                         .map(tpi -> tpi.newByTopic(usageStatsConsumer.getTopic()))
                         .collect(Collectors.toSet()));
         this.firmwareStatesConsumer.subscribe();
+        System.out.println("core subs = " + this.mainConsumer.getFullTopicNames());
     }
 
     @Override

@@ -32,11 +32,13 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos.EdgeNotificationMsgProto;
@@ -46,6 +48,7 @@ import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
+import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 import org.thingsboard.server.service.edge.stats.EdgeConsumerStats;
@@ -55,6 +58,7 @@ import org.thingsboard.server.service.queue.processing.IdMsgPair;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -112,14 +116,14 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
 
     @Override
     public void onTbApplicationEvent(PartitionChangeEvent event) {
-        if (event.getServiceType().equals(ServiceType.TB_CORE)) {
+        System.out.println("event subs edge = " + event);
+        if (ServiceType.TB_CORE.equals(event.getServiceType())) {
             log.info("Subscribing to partitions: {}", event.getPartitions());
-            mainConsumer.subscribe(event.getPartitions());
+            this.mainConsumer.subscribe(event.getCorePartitions(mainConsumer.getTopic(), true));
         }
     }
 
-    @EventListener(ApplicationReadyEvent.class)
-    @Order(value = 2)
+    @AfterStartUp(order = AfterStartUp.REGULAR_SERVICE)
     public void onApplicationEvent(ApplicationReadyEvent event) {
         super.onApplicationEvent(event);
     }
@@ -216,7 +220,7 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
     }
 
     @Override
-    protected void handleNotification(UUID id, TbProtoQueueMsg<ToEdgeNotificationMsg> msg, TbCallback callback) throws Exception {
+    protected void handleNotification(UUID id, TbProtoQueueMsg<ToEdgeNotificationMsg> msg, TbCallback callback) {
         ToEdgeNotificationMsg toEdgeNotificationMsg = msg.getValue();
         if (toEdgeNotificationMsg.hasEdgeEventUpdate()) {
             forwardToAppActor(id, ProtoUtils.fromProto(toEdgeNotificationMsg.getEdgeEventUpdate()));
@@ -241,44 +245,25 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
             ListenableFuture<Void> future;
             switch (type) {
                 case EDGE -> future = edgeCtx.getEdgeProcessor().processEdgeNotification(tenantId, edgeNotificationMsg);
-                case ASSET ->
-                        future = edgeCtx.getAssetProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
-                case ASSET_PROFILE ->
-                        future = edgeCtx.getAssetProfileProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
-                case DEVICE ->
-                        future = edgeCtx.getDeviceProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
-                case DEVICE_PROFILE ->
-                        future = edgeCtx.getDeviceProfileProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
-                case ENTITY_VIEW ->
-                        future = edgeCtx.getEntityViewProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
-                case DASHBOARD ->
-                        future = edgeCtx.getDashboardProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
-                case RULE_CHAIN ->
-                        future = edgeCtx.getRuleChainProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
-                case USER ->
-                        future = edgeCtx.getUserProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
-                case CUSTOMER ->
-                        future = edgeCtx.getCustomerProcessor().processCustomerNotification(tenantId, edgeNotificationMsg);
-                case OTA_PACKAGE ->
-                        future = edgeCtx.getOtaPackageProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
-                case WIDGETS_BUNDLE ->
-                        future = edgeCtx.getWidgetBundleProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
-                case WIDGET_TYPE ->
-                        future = edgeCtx.getWidgetTypeProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
-                case QUEUE ->
-                        future = edgeCtx.getQueueProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
-                case ALARM ->
-                        future = edgeCtx.getAlarmProcessor().processAlarmNotification(tenantId, edgeNotificationMsg);
-                case ALARM_COMMENT ->
-                        future = edgeCtx.getAlarmProcessor().processAlarmCommentNotification(tenantId, edgeNotificationMsg);
-                case RELATION ->
-                        future = edgeCtx.getRelationProcessor().processRelationNotification(tenantId, edgeNotificationMsg);
-                case TENANT ->
-                        future = edgeCtx.getTenantProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
-                case TENANT_PROFILE ->
-                        future = edgeCtx.getTenantProfileProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
-                case TB_RESOURCE ->
-                        future = edgeCtx.getResourceProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
+                case ASSET -> future = edgeCtx.getAssetProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
+                case ASSET_PROFILE -> future = edgeCtx.getAssetProfileProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
+                case DEVICE -> future = edgeCtx.getDeviceProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
+                case DEVICE_PROFILE -> future = edgeCtx.getDeviceProfileProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
+                case ENTITY_VIEW -> future = edgeCtx.getEntityViewProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
+                case DASHBOARD -> future = edgeCtx.getDashboardProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
+                case RULE_CHAIN -> future = edgeCtx.getRuleChainProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
+                case USER -> future = edgeCtx.getUserProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
+                case CUSTOMER -> future = edgeCtx.getCustomerProcessor().processCustomerNotification(tenantId, edgeNotificationMsg);
+                case OTA_PACKAGE -> future = edgeCtx.getOtaPackageProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
+                case WIDGETS_BUNDLE -> future = edgeCtx.getWidgetBundleProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
+                case WIDGET_TYPE -> future = edgeCtx.getWidgetTypeProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
+                case QUEUE -> future = edgeCtx.getQueueProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
+                case ALARM -> future = edgeCtx.getAlarmProcessor().processAlarmNotification(tenantId, edgeNotificationMsg);
+                case ALARM_COMMENT -> future = edgeCtx.getAlarmProcessor().processAlarmCommentNotification(tenantId, edgeNotificationMsg);
+                case RELATION -> future = edgeCtx.getRelationProcessor().processRelationNotification(tenantId, edgeNotificationMsg);
+                case TENANT -> future = edgeCtx.getTenantProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
+                case TENANT_PROFILE -> future = edgeCtx.getTenantProfileProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
+                case TB_RESOURCE -> future = edgeCtx.getResourceProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
                 default -> {
                     future = Futures.immediateFuture(null);
                     log.warn("[{}] Edge event type [{}] is not designed to be pushed to edge", tenantId, type);

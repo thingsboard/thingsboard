@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EdgeUtils;
@@ -412,7 +413,8 @@ public class DefaultTbClusterService implements TbClusterService {
         log.trace("[{}] Processing edge {} event update ", tenantId, edgeId);
         EdgeEventUpdateMsg msg = new EdgeEventUpdateMsg(tenantId, edgeId);
         ToEdgeNotificationMsg toEdgeNotificationMsg = ToEdgeNotificationMsg.newBuilder().setEdgeEventUpdate(toProto(msg)).build();
-        pushMsgToEdge(toEdgeNotificationMsg, cache.get(edgeId).get());
+        var cacheValueWrapper = cache.get(edgeId);
+        pushMsgToEdge(toEdgeNotificationMsg, cacheValueWrapper != null ? cacheValueWrapper.get() : null);
     }
 
     @Override
@@ -438,7 +440,7 @@ public class DefaultTbClusterService implements TbClusterService {
 
     @Override
     public void pushMsgToEdge(TenantId tenantId, EntityId entityId, ToEdgeMsg msg, TbQueueCallback callback) {
-        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, DataConstants.EDGE_QUEUE_NAME, tenantId, entityId);
         TbQueueProducer<TbProtoQueueMsg<ToEdgeMsg>> toEdgeProducer = producerProvider.getTbEdgeMsgProducer();
         toEdgeProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), callback);
         toEdgeMsgs.incrementAndGet();
@@ -575,14 +577,11 @@ public class DefaultTbClusterService implements TbClusterService {
 
     private void pushDeviceUpdateMessage(TenantId tenantId, EdgeId edgeId, EntityId entityId, EdgeEventActionType action) {
         log.trace("{} Going to send edge update notification for device actor, device id {}, edge id {}", tenantId, entityId, edgeId);
-        switch (action) {
-            case ASSIGNED_TO_EDGE:
-                pushMsgToCore(new DeviceEdgeUpdateMsg(tenantId, new DeviceId(entityId.getId()), edgeId), null);
-                break;
-            case UNASSIGNED_FROM_EDGE:
-                EdgeId relatedEdgeId = findRelatedEdgeIdIfAny(tenantId, entityId);
-                pushMsgToCore(new DeviceEdgeUpdateMsg(tenantId, new DeviceId(entityId.getId()), relatedEdgeId), null);
-                break;
+        if (EdgeEventActionType.ASSIGNED_TO_EDGE.equals(action)) {
+            pushMsgToCore(new DeviceEdgeUpdateMsg(tenantId, new DeviceId(entityId.getId()), edgeId), null);
+        } else if (EdgeEventActionType.UNASSIGNED_FROM_EDGE.equals(action)) {
+            EdgeId relatedEdgeId = findRelatedEdgeIdIfAny(tenantId, entityId);
+            pushMsgToCore(new DeviceEdgeUpdateMsg(tenantId, new DeviceId(entityId.getId()), relatedEdgeId), null);
         }
     }
 
@@ -653,4 +652,5 @@ public class DefaultTbClusterService implements TbClusterService {
             toTransportNfs.incrementAndGet();
         }
     }
+
 }

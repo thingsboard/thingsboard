@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.msg.queue;
 
+import org.thingsboard.server.common.data.DataConstants;
+
 public enum ServiceType {
 
     TB_CORE, TB_RULE_ENGINE, TB_TRANSPORT, JS_EXECUTOR, TB_VC_EXECUTOR;
@@ -22,4 +24,13 @@ public enum ServiceType {
     public static ServiceType of(String serviceType) {
         return ServiceType.valueOf(serviceType.replace("-", "_").toUpperCase());
     }
+
+    public static ServiceType ofWithEdge(String serviceType) {
+        if (serviceType.equals(TB_CORE.name() + "_" + DataConstants.EDGE_QUEUE_NAME)) {
+            return TB_CORE;
+        } else {
+            return ServiceType.valueOf(serviceType);
+        }
+    }
+
 }
