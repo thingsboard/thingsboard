@@ -26,8 +26,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
-import org.springframework.core.annotation.Order;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -38,7 +36,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos.EdgeNotificationMsgProto;
@@ -46,6 +43,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeNotificationMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.AfterStartUp;
@@ -58,7 +56,6 @@ import org.thingsboard.server.service.queue.processing.IdMsgPair;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -116,10 +113,13 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
 
     @Override
     public void onTbApplicationEvent(PartitionChangeEvent event) {
-        System.out.println("event subs edge = " + event);
         if (ServiceType.TB_CORE.equals(event.getServiceType())) {
             log.info("Subscribing to partitions: {}", event.getPartitions());
-            this.mainConsumer.subscribe(event.getCorePartitions(mainConsumer.getTopic(), true));
+            event.getPartitionsMap().forEach((queueKey, tpi) -> {
+                if (queueKey.equals(new QueueKey(ServiceType.TB_CORE).withQueueName(DataConstants.EDGE_QUEUE_NAME))) {
+                    this.mainConsumer.subscribe(event.getPartitionsMap().get(queueKey));
+                }
+            });
         }
     }
 

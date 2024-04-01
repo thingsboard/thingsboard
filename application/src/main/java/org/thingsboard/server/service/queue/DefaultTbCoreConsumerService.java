@@ -79,6 +79,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceAct
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.AfterStartUp;
@@ -224,15 +225,18 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
         log.info("Subscribing to partitions: {}", event.getPartitions());
-        this.mainConsumer.subscribe(event.getCorePartitions(mainConsumer.getTopic(), false));
-        this.usageStatsConsumer.subscribe(
-                event
-                        .getPartitions()
-                        .stream()
-                        .map(tpi -> tpi.newByTopic(usageStatsConsumer.getTopic()))
-                        .collect(Collectors.toSet()));
-        this.firmwareStatesConsumer.subscribe();
-        System.out.println("core subs = " + this.mainConsumer.getFullTopicNames());
+        event.getPartitionsMap().forEach((queueKey, topicPartitionInfo) -> {
+            if (!queueKey.equals(new QueueKey(ServiceType.TB_CORE).withQueueName(DataConstants.EDGE_QUEUE_NAME))) {
+                this.mainConsumer.subscribe(event.getPartitionsMap().get(queueKey));
+                this.usageStatsConsumer.subscribe(
+                        event
+                                .getPartitions()
+                                .stream()
+                                .map(tpi -> tpi.newByTopic(usageStatsConsumer.getTopic()))
+                                .collect(Collectors.toSet()));
+                this.firmwareStatesConsumer.subscribe();
+            }
+        });
     }
 
     @Override
