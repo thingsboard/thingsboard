@@ -58,6 +58,7 @@ public class EntitiesImportCtx {
     private boolean finalImportAttempt = false;
     private EntityImportSettings settings;
     private EntityImportResult<?> currentImportResult;
+    private boolean rollbackOnError;
 
     public EntitiesImportCtx(UUID requestId, User user, String versionId) {
         this(requestId, user, versionId, null);
