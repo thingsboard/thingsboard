@@ -19,7 +19,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -27,6 +29,7 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.rule.engine.util.SemaphoreWithTbMsgQueue;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -37,15 +40,14 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
 @Slf4j
 @RuleNode(type = ComponentType.ENRICHMENT,
-        name = "calculate delta", relationTypes = {TbNodeConnectionType.SUCCESS, TbNodeConnectionType.FAILURE, TbNodeConnectionType.OTHER},
+        name = "calculate delta",
+        relationTypes = {TbNodeConnectionType.SUCCESS, TbNodeConnectionType.FAILURE, TbNodeConnectionType.OTHER},
         configClazz = CalculateDeltaNodeConfiguration.class,
         nodeDescription = "Calculates delta and amount of time passed between previous timeseries key reading " +
                 "and current value for this key from the incoming message",
@@ -56,19 +58,24 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
 public class CalculateDeltaNode implements TbNode {
 
     private Map<EntityId, ValueWithTs> cache;
+    private Map<EntityId, SemaphoreWithTbMsgQueue> locks;
+
     private CalculateDeltaNodeConfiguration config;
     private TbContext ctx;
     private TimeseriesService timeseriesService;
     private boolean useCache;
+    private String inputKey;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, CalculateDeltaNodeConfiguration.class);
         this.ctx = ctx;
         this.timeseriesService = ctx.getTimeseriesService();
+        this.inputKey = config.getInputValueKey();
         this.useCache = config.isUseCache();
         if (useCache) {
-            cache = new ConcurrentHashMap<>();
+            locks = new ConcurrentReferenceHashMap<>(16, ConcurrentReferenceHashMap.ReferenceType.WEAK);
+            cache = new ConcurrentReferenceHashMap<>(16, ConcurrentReferenceHashMap.ReferenceType.SOFT);
         }
     }
 
@@ -79,78 +86,34 @@ public class CalculateDeltaNode implements TbNode {
             return;
         }
         JsonNode json = JacksonUtil.toJsonNode(msg.getData());
-        String inputKey = config.getInputValueKey();
         if (!json.has(inputKey)) {
             ctx.tellNext(msg, TbNodeConnectionType.OTHER);
             return;
         }
-        withCallback(getLastValue(msg.getOriginator()),
+        if (useCache) {
+            var semaphoreWithQueue = locks.computeIfAbsent(msg.getOriginator(), SemaphoreWithTbMsgQueue::new);
+            semaphoreWithQueue.addToQueueAndTryProcess(msg, ctx, this::processMsgAsync);
+            return;
+        }
+        withCallback(fetchLatestValueAsync(msg.getOriginator()),
                 previousData -> {
-                    double currentValue = json.get(inputKey).asDouble();
-                    long currentTs = msg.getMetaDataTs();
-
-                    if (useCache) {
-                        cache.put(msg.getOriginator(), new ValueWithTs(currentTs, currentValue));
-                    }
-
-                    BigDecimal delta = BigDecimal.valueOf(previousData != null ? currentValue - previousData.value : 0.0);
-
-                    if (config.isTellFailureIfDeltaIsNegative() && delta.doubleValue() < 0) {
-                        ctx.tellFailure(msg, new IllegalArgumentException("Delta value is negative!"));
-                        return;
-                    }
-
-                    if (config.getRound() != null) {
-                        delta = delta.setScale(config.getRound(), RoundingMode.HALF_UP);
-                    }
-
-                    ObjectNode result = (ObjectNode) json;
-                    if (delta.stripTrailingZeros().scale() > 0) {
-                        result.put(config.getOutputValueKey(), delta.doubleValue());
-                    } else {
-                        result.put(config.getOutputValueKey(), delta.longValueExact());
-                    }
-
-                    if (config.isAddPeriodBetweenMsgs()) {
-                        long period = previousData != null ? currentTs - previousData.ts : 0;
-                        result.put(config.getPeriodValueKey(), period);
-                    }
-                    ctx.tellSuccess(TbMsg.transformMsgData(msg, JacksonUtil.toString(result)));
+                    processCalculateDelta(msg.getOriginator(), msg.getMetaDataTs(), (ObjectNode) json, previousData);
+                    ctx.tellSuccess(TbMsg.transformMsgData(msg, JacksonUtil.toString(json)));
                 },
-                t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
+                t -> ctx.tellFailure(msg, t), MoreExecutors.directExecutor());
     }
 
     @Override
     public void destroy() {
         if (useCache) {
             cache.clear();
+            locks.clear();
         }
     }
 
     private ListenableFuture<ValueWithTs> fetchLatestValueAsync(EntityId entityId) {
         return Futures.transform(timeseriesService.findLatest(ctx.getTenantId(), entityId, config.getInputValueKey()),
-                tsKvEntryOpt -> tsKvEntryOpt.map(this::extractValue).orElse(null)
-                , ctx.getDbCallbackExecutor());
-    }
-
-    private ValueWithTs fetchLatestValue(EntityId entityId) {
-        List<TsKvEntry> tsKvEntries = timeseriesService.findLatestSync(
-                ctx.getTenantId(),
-                entityId,
-                List.of(config.getInputValueKey()));
-        return extractValue(tsKvEntries.get(0));
-    }
-
-    private ListenableFuture<ValueWithTs> getLastValue(EntityId entityId) {
-        if (useCache) {
-            ValueWithTs latestValue;
-            if ((latestValue = cache.get(entityId)) == null) {
-                latestValue = fetchLatestValue(entityId);
-            }
-            return Futures.immediateFuture(latestValue);
-        } else {
-            return fetchLatestValueAsync(entityId);
-        }
+                tsKvEntryOpt -> tsKvEntryOpt.map(this::extractValue).orElse(null), ctx.getDbCallbackExecutor());
     }
 
     private ValueWithTs extractValue(TsKvEntry kvEntry) {
@@ -174,6 +137,44 @@ public class CalculateDeltaNode implements TbNode {
             case JSON -> throw new IllegalArgumentException("Calculation failed. JSON values are not supported!");
         }
         return new ValueWithTs(ts, result);
+    }
+
+    private void processCalculateDelta(EntityId originator, long msgTs, ObjectNode json, ValueWithTs previousData) {
+        double currentValue = json.get(inputKey).asDouble();
+        if (useCache) {
+            cache.put(originator, new ValueWithTs(msgTs, currentValue));
+        }
+        BigDecimal delta = BigDecimal.valueOf(previousData != null ? currentValue - previousData.value : 0.0);
+        if (config.isTellFailureIfDeltaIsNegative() && delta.doubleValue() < 0) {
+            throw new IllegalArgumentException("Delta value is negative!");
+        }
+        if (config.getRound() != null) {
+            delta = delta.setScale(config.getRound(), RoundingMode.HALF_UP);
+        }
+        if (delta.stripTrailingZeros().scale() > 0) {
+            json.put(config.getOutputValueKey(), delta.doubleValue());
+        } else {
+            json.put(config.getOutputValueKey(), delta.longValueExact());
+        }
+        if (config.isAddPeriodBetweenMsgs()) {
+            long period = previousData != null ? msgTs - previousData.ts : 0;
+            json.put(config.getPeriodValueKey(), period);
+        }
+    }
+
+    protected ListenableFuture<TbMsg> processMsgAsync(TbContext ctx, TbMsg msg) {
+        ListenableFuture<ValueWithTs> latestValueFuture = getLatestFromCacheOrFetchFromDb(msg);
+        return Futures.transform(latestValueFuture, previousData -> {
+            ObjectNode json = (ObjectNode) JacksonUtil.toJsonNode(msg.getData());
+            processCalculateDelta(msg.getOriginator(), msg.getMetaDataTs(), json, previousData);
+            return TbMsg.transformMsgData(msg, JacksonUtil.toString(json));
+        }, MoreExecutors.directExecutor());
+    }
+
+    private ListenableFuture<ValueWithTs> getLatestFromCacheOrFetchFromDb(TbMsg msg) {
+        EntityId originator = msg.getOriginator();
+        ValueWithTs valueWithTs = cache.get(msg.getOriginator());
+        return valueWithTs != null ? Futures.immediateFuture(valueWithTs) : fetchLatestValueAsync(originator);
     }
 
     private record ValueWithTs(long ts, double value) {
