@@ -86,7 +86,9 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
         validateEntityDataQuery(query);
 
-        if (EntityFilterType.RELATIONS_QUERY.equals(query.getEntityFilter().getType()) || StringUtils.isNotEmpty(query.getPageLink().getTextSearch())) {
+        if (EntityFilterType.RELATIONS_QUERY.equals(query.getEntityFilter().getType())
+                || EntityFilterType.SINGLE_ENTITY.equals(query.getEntityFilter().getType())
+                || StringUtils.isNotEmpty(query.getPageLink().getTextSearch())) {
             return this.entityQueryDao.findEntityDataByQuery(tenantId, customerId, query);
         }
 
