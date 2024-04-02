@@ -25,12 +25,9 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
@@ -156,26 +153,6 @@ public class TbMsgPushToEdgeNode extends AbstractTbMsgPushNode<TbMsgPushToEdgeNo
             log.error("Failed to build edge event", e);
             ctx.tellFailure(msg, e);
         }
-    }
-
-    @Override
-    protected AttributeScope getScope(TbMsg msg) {
-        if (config.isUseAttributesScopeTemplate()) {
-            try {
-                return AttributeScope.parseFrom(TbNodeUtils.processPattern(config.getScope(), msg));
-            } catch (Exception e) {
-                String mdScopeValue = msg.getMetaData().getValue("scope");
-                if (StringUtils.isEmpty(mdScopeValue)) {
-                    throw e;
-                }
-                try {
-                    return AttributeScope.parseFrom(mdScopeValue);
-                } catch (Exception ex) {
-                    throw e;
-                }
-            }
-        }
-        return super.getScope(msg);
     }
 
     @Override

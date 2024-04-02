@@ -146,6 +146,21 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
     }
 
     protected AttributeScope getScope(TbMsg msg) {
+        if (config.isUseAttributesScopeTemplate()) {
+            try {
+                return AttributeScope.parseFrom(TbNodeUtils.processPattern(config.getScope(), msg));
+            } catch (Exception e) {
+                String mdScopeValue = msg.getMetaData().getValue("scope");
+                if (StringUtils.isEmpty(mdScopeValue)) {
+                    throw e;
+                }
+                try {
+                    return AttributeScope.parseFrom(mdScopeValue);
+                } catch (Exception ex) {
+                    throw e;
+                }
+            }
+        }
         String mdScopeValue = msg.getMetaData().getValue(SCOPE);
         if (StringUtils.isNotEmpty(mdScopeValue)) {
             return AttributeScope.parseFrom(mdScopeValue);

@@ -23,11 +23,13 @@ import org.thingsboard.server.common.data.AttributeScope;
 public class BaseTbMsgPushNodeConfiguration implements NodeConfiguration<BaseTbMsgPushNodeConfiguration> {
 
     private String scope;
+    private boolean useAttributesScopeTemplate;
 
     @Override
     public BaseTbMsgPushNodeConfiguration defaultConfiguration() {
         BaseTbMsgPushNodeConfiguration configuration = new BaseTbMsgPushNodeConfiguration();
         configuration.setScope(AttributeScope.SERVER_SCOPE.name());
+        configuration.setUseAttributesScopeTemplate(false);
         return configuration;
     }
 }

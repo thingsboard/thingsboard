@@ -23,8 +23,6 @@ import org.thingsboard.server.common.data.DataConstants;
 @Data
 public class TbMsgPushToEdgeNodeConfiguration extends BaseTbMsgPushNodeConfiguration {
 
-    private boolean useAttributesScopeTemplate;
-
     @Override
     public TbMsgPushToEdgeNodeConfiguration defaultConfiguration() {
         TbMsgPushToEdgeNodeConfiguration configuration = new TbMsgPushToEdgeNodeConfiguration();
