@@ -19,8 +19,8 @@
   width: 100%;
   height: 100%;
   display: block;
-  .tb-entity-table {
-    .tb-entity-table-content {
+  .tb-mapping-table {
+    .tb-mapping-table-content {
       width: 100%;
       height: 100%;
       background: #fff;
@@ -40,7 +40,7 @@
         overflow: hidden;
       }
 
-      .tb-entity-table-title {
+      .tb-mapping-table-title {
         padding-right: 20px;
         white-space: nowrap;
         overflow: hidden;
@@ -53,54 +53,11 @@
           table-layout: fixed;
           min-width: 450px;
         }
-
-        .tb-add-new {
-          display: flex;
-          z-index: 1;
-          pointer-events: none;
-
-          button.connector {
-            height: auto;
-            padding-right: 12px;
-            font-size: 20px;
-            border-style: dashed;
-            border-width: 2px;
-            border-radius: 8px;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            align-items: center;
-            color: rgba(0, 0, 0, 0.38);
-          }
-        }
-      }
-
-      .tb-entity-table-info{
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-
-      .button-widget-action{
-        margin-left: auto;
-        overflow: hidden;
-        text-overflow: ellipsis;
       }
 
       .ellipsis {
         overflow: hidden;
         text-overflow: ellipsis;
-      }
-
-      .attribute-copy {
-        visibility: hidden;
-        transition: visibility 0.1s;
-      }
-
-      .attribute:hover {
-        .attribute-copy {
-          visibility: visible;
-        }
       }
     }
   }
@@ -110,7 +67,7 @@
       height: auto;
       min-height: 100px;
 
-      .tb-entity-table-title{
+      .tb-mapping-table-title{
         padding-bottom: 5px;
         width: 100%;
       }

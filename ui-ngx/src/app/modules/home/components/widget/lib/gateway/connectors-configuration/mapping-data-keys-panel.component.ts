@@ -35,6 +35,7 @@ import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
 import { isDefinedAndNotNull } from '@core/utils';
 import {
+  MappingDataKey,
   MappingKeysType,
   MappingValueType,
   mappingValueTypesMap
@@ -61,7 +62,7 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
   noKeysText: string;
 
   @Input()
-  keys: string;
+  keys: Array<MappingDataKey> | {[key: string]: any};
 
   @Input()
   keysType: string;
@@ -140,7 +141,7 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
     this.keysDataApplied.emit(keys);
   }
 
-  private prepareKeysFormArray(keys: any): UntypedFormArray {
+  private prepareKeysFormArray(keys: Array<MappingDataKey> | {[key: string]: any}): UntypedFormArray {
     const keysControlGroups: Array<AbstractControl> = [];
     if (keys) {
       if (this.keysType === MappingKeysType.CUSTOM) {
@@ -161,7 +162,7 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
     return this.fb.array(keysControlGroups);
   }
 
-  valueTitle(value: any): any {
+  valueTitle(value: any): string {
     if (isDefinedAndNotNull(value)) {
       if (typeof value === 'object') {
         return JSON.stringify(value);

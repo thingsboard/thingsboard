@@ -36,7 +36,7 @@
         <div class="tb-flex no-gap">
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="type">
-              <mat-option *ngFor="let type of gatewayConnectorDefaultTypes | keyvalue" [value]="type.key">
+              <mat-option *ngFor="let type of gatewayConnectorDefaultTypesTranslatesMap | keyvalue" [value]="type.key">
                 {{ type.value }}
               </mat-option>
             </mat-select>
@@ -76,7 +76,7 @@
           </mat-label>
         </mat-slide-toggle>
       </div>
-      <div *ngIf="connectorForm.get('type').value === 'mqtt'" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+      <div *ngIf="connectorForm.get('type').value === connectorType.MQTT" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
         <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="sendDataOnlyOnChange">
           <mat-label tb-hint-tooltip-icon="{{ 'gateway.send-change-data-hint' | translate }}">
             {{ 'gateway.send-change-data' | translate }}

@@ -23,7 +23,8 @@ import { BaseData, HasId } from '@shared/models/base-data';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 import {
-  GatewayConnectorDefaultTypesTranslates,
+  ConnectorType,
+  GatewayConnectorDefaultTypesTranslatesMap,
   GatewayLogLevel, getDefaultConfig
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { Subject } from 'rxjs';
@@ -39,7 +40,9 @@ export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDia
 
   connectorForm: UntypedFormGroup;
 
-  gatewayConnectorDefaultTypes = GatewayConnectorDefaultTypesTranslates;
+  connectorType = ConnectorType;
+
+  gatewayConnectorDefaultTypesTranslatesMap = GatewayConnectorDefaultTypesTranslatesMap;
   gatewayLogLevel = Object.values(GatewayLogLevel);
 
   submitted = false;
@@ -54,7 +57,7 @@ export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDia
               private resourcesService: ResourcesService) {
     super(store, router, dialogRef);
     this.connectorForm = this.fb.group({
-      type: ['mqtt', []],
+      type: [ConnectorType.MQTT, []],
       name: ['', [Validators.required, this.uniqNameRequired()]],
       logLevel: [GatewayLogLevel.INFO, []],
       useDefaults: [true, []],

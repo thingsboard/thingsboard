@@ -17,6 +17,7 @@
 import { ResourcesService } from '@core/services/resources.service';
 import { Observable } from 'rxjs';
 import { ValueTypeData } from '@shared/models/constants';
+import { isUndefinedOrNull } from '@core/utils';
 
 export enum StorageTypes {
   MEMORY = 'memory',
@@ -130,7 +131,7 @@ export enum ConnectorType {
   CUSTOM = 'custom'
 }
 
-export const GatewayConnectorDefaultTypesTranslates = new Map<ConnectorType, string>([
+export const GatewayConnectorDefaultTypesTranslatesMap = new Map<ConnectorType, string>([
   [ConnectorType.MQTT, 'MQTT'],
   [ConnectorType.MODBUS, 'MODBUS'],
   [ConnectorType.GRPC, 'GRPC'],
@@ -311,22 +312,33 @@ export interface AddConnectorConfigData {
   dataSourceData: Array<any>
 }
 
+export interface MappingDataKey {
+  key: string,
+  value: any,
+  type: MappingValueType
+}
+export interface MappingInfo {
+  mappingType: MappingType,
+  value: {[key: string]: any},
+  buttonTitle: string
+}
+
 export enum ConnectorConfigurationModes {
   BASIC = 'basic',
   ADVANCED = 'advanced'
 }
 
-export enum BrokerSecurityTypes {
+export enum BrokerSecurityType {
   ANONYMOUS = 'anonymous',
   BASIC = 'basic',
   CERTIFICATES = 'certificates'
 }
 
-export const BrokerSecurityTypeTranslations = new Map<BrokerSecurityTypes, string>(
+export const BrokerSecurityTypeTranslationsMap = new Map<BrokerSecurityType, string>(
   [
-    [BrokerSecurityTypes.ANONYMOUS, 'gateway.broker.security-types.anonymous'],
-    [BrokerSecurityTypes.BASIC, 'gateway.broker.security-types.basic'],
-    [BrokerSecurityTypes.CERTIFICATES, 'gateway.broker.security-types.certificates']
+    [BrokerSecurityType.ANONYMOUS, 'gateway.broker.security-types.anonymous'],
+    [BrokerSecurityType.BASIC, 'gateway.broker.security-types.basic'],
+    [BrokerSecurityType.CERTIFICATES, 'gateway.broker.security-types.certificates']
   ]
 );
 
@@ -336,22 +348,22 @@ export const MqttVersions = [
   { name: 5, value: 5 }
 ];
 
-export enum MappingTypes {
+export enum MappingType {
   DATA = 'data',
   REQUESTS = 'requests'
 }
 
-export const MappingTypeTranslationsMap = new Map<MappingTypes, string>(
+export const MappingTypeTranslationsMap = new Map<MappingType, string>(
   [
-    [MappingTypes.DATA, 'gateway.data-mapping'],
-    [MappingTypes.REQUESTS, 'gateway.requests-mapping']
+    [MappingType.DATA, 'gateway.data-mapping'],
+    [MappingType.REQUESTS, 'gateway.requests-mapping']
   ]
 );
 
-export const MappingHintTranslationsMap = new Map<MappingTypes, string>(
+export const MappingHintTranslationsMap = new Map<MappingType, string>(
   [
-    [MappingTypes.DATA, 'gateway.data-mapping-hint'],
-    [MappingTypes.REQUESTS, 'gateway.requests-mapping-hint']
+    [MappingType.DATA, 'gateway.data-mapping-hint'],
+    [MappingType.REQUESTS, 'gateway.requests-mapping-hint']
   ]
 );
 
@@ -365,17 +377,17 @@ export const QualityTypeTranslationsMap = new Map<number, string>(
   ]
 );
 
-export enum ConvertorTypes {
+export enum ConvertorType {
   JSON = 'json',
   BYTES = 'bytes',
   CUSTOM = 'custom'
 }
 
-export const ConvertorTypeTranslationsMap = new Map<ConvertorTypes, string>(
+export const ConvertorTypeTranslationsMap = new Map<ConvertorType, string>(
   [
-    [ConvertorTypes.JSON, 'gateway.JSON'],
-    [ConvertorTypes.BYTES, 'gateway.bytes'],
-    [ConvertorTypes.CUSTOM, 'gateway.custom']
+    [ConvertorType.JSON, 'gateway.JSON'],
+    [ConvertorType.BYTES, 'gateway.bytes'],
+    [ConvertorType.CUSTOM, 'gateway.custom']
   ]
 );
 
@@ -383,6 +395,11 @@ export enum SourceTypes {
   MSG = 'message',
   TOPIC = 'topic',
   CONST = 'constant'
+}
+
+export enum DeviceInfoType {
+  FULL = 'full',
+  PARTIAL = 'partial'
 }
 
 export const SourceTypeTranslationsMap = new Map<SourceTypes, string>(
@@ -393,7 +410,7 @@ export const SourceTypeTranslationsMap = new Map<SourceTypes, string>(
   ]
 );
 
-export enum RequestTypes {
+export enum RequestType {
   CONNECT_REQUEST = 'connectRequests',
   DISCONNECT_REQUEST = 'disconnectRequests',
   ATTRIBUTE_REQUEST = 'attributeRequests',
@@ -401,13 +418,13 @@ export enum RequestTypes {
   SERVER_SIDE_RPC = 'serverSideRpc'
 }
 
-export const RequestTypesTranslationsMap = new Map<RequestTypes, string>(
+export const RequestTypesTranslationsMap = new Map<RequestType, string>(
   [
-    [RequestTypes.CONNECT_REQUEST, 'gateway.request.connect-request'],
-    [RequestTypes.DISCONNECT_REQUEST, 'gateway.request.disconnect-request'],
-    [RequestTypes.ATTRIBUTE_REQUEST, 'gateway.request.attribute-request'],
-    [RequestTypes.ATTRIBUTE_UPDATE, 'gateway.request.attribute-update'],
-    [RequestTypes.SERVER_SIDE_RPC, 'gateway.request.rpc-connection'],
+    [RequestType.CONNECT_REQUEST, 'gateway.request.connect-request'],
+    [RequestType.DISCONNECT_REQUEST, 'gateway.request.disconnect-request'],
+    [RequestType.ATTRIBUTE_REQUEST, 'gateway.request.attribute-request'],
+    [RequestType.ATTRIBUTE_UPDATE, 'gateway.request.attribute-update'],
+    [RequestType.SERVER_SIDE_RPC, 'gateway.request.rpc-connection'],
   ]
 );
 

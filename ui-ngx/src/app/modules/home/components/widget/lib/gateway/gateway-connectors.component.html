@@ -155,7 +155,7 @@
         {{initialConnector?.type ? gatewayConnectorDefaultTypes.get(initialConnector.type) : ''}}
         {{'gateway.configuration' | translate}}
       </div>
-      <tb-toggle-select *ngIf="initialConnector && initialConnector.type === 'mqtt'" formControlName="mode" appearance="fill">
+      <tb-toggle-select *ngIf="initialConnector && initialConnector.type === connectorType.MQTT" formControlName="mode" appearance="fill">
         <tb-toggle-option [value]="connectorConfigurationModes.BASIC">
           {{ 'gateway.basic' | translate }}
         </tb-toggle-option>
@@ -194,8 +194,8 @@
                 </mat-form-field>
               </div>
             </div>
-            <div *ngIf="connectorForm.get('type').value === 'mqtt'" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-              <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="sendDataOnlyOnChange">
+            <div *ngIf="connectorForm.get('type').value === connectorType.MQTT" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+              <mat-slide-toggle class="mat-slide" formControlName="sendDataOnlyOnChange">
                 <mat-label tb-hint-tooltip-icon="{{ 'gateway.send-change-data-hint' | translate }}">
                   {{ 'gateway.send-change-data' | translate }}
                 </mat-label>
@@ -203,29 +203,12 @@
             </div>
           </div>
         </mat-tab>
-        <ng-container *ngIf="connectorForm.get('type').value === 'mqtt' &&
+        <ng-container *ngIf="connectorForm.get('type').value === connectorType.MQTT &&
                              connectorForm.get('mode').value === connectorConfigurationModes.BASIC; else defaultConfig"
                       formGroupName="basicConfig">
           <mat-tab label="{{ 'gateway.broker.connection' | translate }}*">
             <ng-container formGroupName="broker">
               <div class="tb-form-panel no-border no-padding padding-top">
-                <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                  <div class="fixed-title-width tb-required" translate>gateway.broker.name</div>
-                  <div class="tb-flex no-gap">
-                    <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                      <input matInput name="value" formControlName="name" placeholder="{{ 'gateway.set' | translate }}"/>
-                      <mat-icon matSuffix
-                                matTooltipPosition="above"
-                                matTooltipClass="tb-error-tooltip"
-                                [matTooltip]="('gateway.broker.name-required') | translate"
-                                *ngIf="connectorForm.get('basicConfig.broker.name').hasError('required')
-                                       && connectorForm.get('basicConfig.broker.name').touched"
-                                class="tb-error">
-                        warning
-                      </mat-icon>
-                    </mat-form-field>
-                  </div>
-                </div>
                 <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
                   <div class="fixed-title-width tb-required" translate>gateway.host</div>
                   <div class="tb-flex no-gap">
@@ -308,12 +291,14 @@
               <ng-container formGroupName="broker">
                 <div class="tb-form-panel no-border no-padding padding-top">
                   <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                    <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.max-number-of-workers-hint' | translate }}" translate>
+                    <div class="fixed-title-width tb-required" [style.width.%]="50"
+                         tb-hint-tooltip-icon="{{ 'gateway.max-number-of-workers-hint' | translate }}" translate>
                       gateway.max-number-of-workers
                     </div>
-                    <div class="tb-flex no-gap" [style.padding-left.px]="66">
+                    <div class="tb-flex no-gap">
                       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                        <input matInput name="value" type="number" min="1" formControlName="maxNumberOfWorkers" placeholder="{{ 'gateway.default' | translate }}"/>
+                        <input matInput name="value" type="number" min="1" formControlName="maxNumberOfWorkers"
+                               placeholder="{{ 'gateway.default' | translate }}"/>
                         <mat-icon matSuffix
                                   matTooltipPosition="above"
                                   matTooltipClass="tb-error-tooltip"
@@ -328,12 +313,14 @@
                     </div>
                   </div>
                   <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                    <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.max-messages-queue-for-worker-hint' | translate }}" translate>
+                    <div class="fixed-title-width tb-required" [style.width.%]="50"
+                         tb-hint-tooltip-icon="{{ 'gateway.max-messages-queue-for-worker-hint' | translate }}" translate>
                       gateway.max-messages-queue-for-worker
                     </div>
                     <div class="tb-flex no-gap">
                       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                        <input matInput name="value" type="number" min="1" formControlName="maxMessageNumberPerWorker" placeholder="{{ 'gateway.default' | translate }}"/>
+                        <input matInput name="value" type="number" min="1" formControlName="maxMessageNumberPerWorker"
+                               placeholder="{{ 'gateway.default' | translate }}"/>
                         <mat-icon matSuffix
                                   matTooltipPosition="above"
                                   matTooltipClass="tb-error-tooltip"

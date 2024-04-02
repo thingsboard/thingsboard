@@ -33,7 +33,7 @@ import {
   BLEMethodsTranslates,
   CANByteOrders,
   ConnectorType,
-  GatewayConnectorDefaultTypesTranslates,
+  GatewayConnectorDefaultTypesTranslatesMap,
   HTTPMethods,
   ModbusCodesTranslate,
   ModbusCommandTypes,
@@ -97,7 +97,7 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
   bLEMethodsTranslates = BLEMethodsTranslates;
   SocketMethodProcessingsTranslates = SocketMethodProcessingsTranslates;
   SNMPMethodsTranslations = SNMPMethodsTranslations;
-  gatewayConnectorDefaultTypesTranslates = GatewayConnectorDefaultTypesTranslates;
+  gatewayConnectorDefaultTypesTranslates = GatewayConnectorDefaultTypesTranslatesMap;
   modbusCodesTranslate = ModbusCodesTranslate;
 
   urlPattern = /^[-a-zA-Zd_$:{}?~+=\/.0-9-]*$/;

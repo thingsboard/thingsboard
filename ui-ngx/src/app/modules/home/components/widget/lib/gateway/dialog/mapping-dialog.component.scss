@@ -33,4 +33,16 @@
       }
     }
   }
+  .tb-form-row {
+    .fixed-title-width {
+      min-width: 120px;
+      width: 30%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .mat-mdc-form-field {
+      width: 0;
+    }
+  }
 }

@@ -23,19 +23,19 @@ import { BaseData, HasId } from '@shared/models/base-data';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 import {
-  ConvertorTypes,
-  ConvertorTypeTranslationsMap,
-  MappingHintTranslationsMap,
+  ConvertorType,
+  ConvertorTypeTranslationsMap, DeviceInfoType, MappingDataKey,
+  MappingHintTranslationsMap, MappingInfo,
   MappingKeysAddKeyTranslationsMap,
   MappingKeysDeleteKeyTranslationsMap,
   MappingKeysNoKeysTextTranslationsMap,
   MappingKeysPanelTitleTranslationsMap,
   MappingKeysType,
-  MappingTypes,
+  MappingType,
   MappingTypeTranslationsMap,
   QualityTypes,
   QualityTypeTranslationsMap,
-  RequestTypes,
+  RequestType,
   RequestTypesTranslationsMap,
   ServerSideRPCType,
   SourceTypes,
@@ -57,22 +57,24 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
 
   mappingForm: UntypedFormGroup;
 
-  MappingTypes = MappingTypes;
+  MappingType = MappingType;
 
   qualityTypes = QualityTypes;
   QualityTranslationsMap = QualityTypeTranslationsMap;
 
-  convertorTypes = Object.values(ConvertorTypes);
-  ConvertorTypes = ConvertorTypes;
+  convertorTypes = Object.values(ConvertorType);
+  ConvertorTypeEnum = ConvertorType;
   ConvertorTypeTranslationsMap = ConvertorTypeTranslationsMap;
 
   sourceTypes = Object.values(SourceTypes);
   sourceTypesEnum = SourceTypes;
   SourceTypeTranslationsMap = SourceTypeTranslationsMap;
 
-  requestTypes = Object.values(RequestTypes);
-  RequestTypes = RequestTypes;
+  requestTypes = Object.values(RequestType);
+  RequestTypeEnum = RequestType;
   RequestTypesTranslationsMap = RequestTypesTranslationsMap;
+
+  DeviceInfoType = DeviceInfoType;
 
   ServerSideRPCType = ServerSideRPCType;
 
@@ -90,8 +92,8 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
-              @Inject(MAT_DIALOG_DATA) public data: any,
-              public dialogRef: MatDialogRef<MappingDialogComponent, any>,
+              @Inject(MAT_DIALOG_DATA) public data: MappingInfo,
+              public dialogRef: MatDialogRef<MappingDialogComponent, {[key: string]: any}>,
               private fb: FormBuilder,
               private popoverService: TbPopoverService,
               private renderer: Renderer2,
@@ -101,27 +103,27 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
     this.createMappingForm();
   }
 
-  get converterAttributes(): Array<any> {
+  get converterAttributes(): Array<MappingDataKey> {
     if (this.converterType) {
       return this.mappingForm.get('converter').get(this.converterType).value.attributes;
     }
   }
 
-  get converterTelemetry(): Array<any> {
+  get converterTelemetry(): Array<MappingDataKey> {
     if (this.converterType) {
       return this.mappingForm.get('converter').get(this.converterType).value.timeseries;
     }
   }
 
-  get converterType(): ConvertorTypes {
+  get converterType(): ConvertorType {
     return this.mappingForm.get('converter').get('type').value;
   }
 
-  get customKeys(): any {
+  get customKeys(): {[key: string]: any} {
     return this.mappingForm.get('converter').get('custom').value.extensionConfig;
   }
 
-  get requestMappingType(): any {
+  get requestMappingType(): RequestType {
     return this.mappingForm.get('requestType').value;
   }
 
@@ -136,11 +138,11 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
 
   private createMappingForm(): void {
     this.mappingForm = this.fb.group({});
-    if (this.data.mappingType === MappingTypes.DATA) {
+    if (this.data.mappingType === MappingType.DATA) {
       this.mappingForm.addControl('topicFilter', this.fb.control('', [Validators.required]));
       this.mappingForm.addControl('subscriptionQos', this.fb.control(0));
       this.mappingForm.addControl('converter', this.fb.group({
-        type: [ConvertorTypes.JSON, []],
+        type: [ConvertorType.JSON, []],
         json: this.fb.group({
           deviceInfo: [{}, []],
           attributes: [[], []],
@@ -152,7 +154,7 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
           timeseries: [[], []]
         }),
         custom: this.fb.group({
-          extension: ['', []],
+          extension: ['', [Validators.required]],
           extensionConfig: [{}, []]
         }),
       }));
@@ -169,8 +171,8 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
       })
     }
 
-    if (this.data.mappingType === MappingTypes.REQUESTS) {
-      this.mappingForm.addControl('requestType', this.fb.control(RequestTypes.CONNECT_REQUEST, []));
+    if (this.data.mappingType === MappingType.REQUESTS) {
+      this.mappingForm.addControl('requestType', this.fb.control(RequestType.CONNECT_REQUEST, []));
       this.mappingForm.addControl('requestValue', this.fb.group({
         connectRequests: this.fb.group({
           topicFilter: ['', [Validators.required]],
@@ -197,7 +199,7 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
           retain: [true, []]
         }),
         serverSideRpc: this.fb.group({
-          type: [ServerSideRPCType.TWO_WAY, []],
+          type: [ServerSideRPCType.ONE_WAY, []],
           deviceNameFilter: ['', [Validators.required]],
           methodFilter: ['', [Validators.required]],
           requestTopicExpression: ['', [Validators.required]],
@@ -267,7 +269,7 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
       const ctx: any = {
         keys: keysControl.value,
         keysType: keysType,
-        rawData: this.mappingForm.get('converter.type').value === ConvertorTypes.BYTES,
+        rawData: this.mappingForm.get('converter.type').value === ConvertorType.BYTES,
         panelTitle: MappingKeysPanelTitleTranslationsMap.get(keysType),
         addKeyTitle: MappingKeysAddKeyTranslationsMap.get(keysType),
         deleteKeyTitle: MappingKeysDeleteKeyTranslationsMap.get(keysType),
@@ -291,9 +293,9 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
     }
   }
 
-  private prepareMappingData(): any {
+  private prepareMappingData(): {[key: string]: any} {
     const formValue = this.mappingForm.value;
-    if (this.data.mappingType === MappingTypes.DATA) {
+    if (this.data.mappingType === MappingType.DATA) {
       const { converter, topicFilter, subscriptionQos } = formValue;
       return {
         topicFilter,
@@ -311,10 +313,10 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
     }
   }
 
-  private prepareFormValueData(): any {
+  private prepareFormValueData(): {[key: string]: any} {
     if (this.data.value && Object.keys(this.data.value).length) {
-      if (this.data.mappingType === MappingTypes.DATA) {
-        const {converter, topicFilter, subscriptionQos} = this.data.value;
+      if (this.data.mappingType === MappingType.DATA) {
+        const { converter, topicFilter, subscriptionQos } = this.data.value;
         return {
           topicFilter,
           subscriptionQos,

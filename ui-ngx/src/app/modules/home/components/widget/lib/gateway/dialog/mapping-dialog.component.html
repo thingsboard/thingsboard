@@ -35,7 +35,7 @@
         {{ MappingHintTranslationsMap.get(this.data?.mappingType) | translate }}
       </div>
       <ng-container [ngSwitch]="data.mappingType">
-        <ng-template [ngSwitchCase]="MappingTypes.DATA">
+        <ng-template [ngSwitchCase]="MappingType.DATA">
           <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
             <div class="fixed-title-width tb-required" translate>gateway.topic-filter</div>
             <div class="tb-flex no-gap">
@@ -75,16 +75,17 @@
                 </tb-toggle-select>
               </div>
               <ng-container [formGroupName]="converterType" [ngSwitch]="converterType">
-                <ng-template [ngSwitchCase]="ConvertorTypes.JSON">
-                  <tb-device-info-table formControlName="deviceInfo" deviceInfoType="full">
+                <ng-template [ngSwitchCase]="ConvertorTypeEnum.JSON">
+                  <tb-device-info-table formControlName="deviceInfo" [deviceInfoType]="DeviceInfoType.FULL" required="true">
                   </tb-device-info-table>
                 </ng-template>
-                <ng-template [ngSwitchCase]="ConvertorTypes.BYTES">
-                  <tb-device-info-table formControlName="deviceInfo" deviceInfoType="full" [sourceTypes]="[sourceTypesEnum.MSG, sourceTypesEnum.CONST]">
+                <ng-template [ngSwitchCase]="ConvertorTypeEnum.BYTES">
+                  <tb-device-info-table formControlName="deviceInfo" [deviceInfoType]="DeviceInfoType.FULL"
+                                        [sourceTypes]="[sourceTypesEnum.MSG, sourceTypesEnum.CONST]" required="true">
                   </tb-device-info-table>
                 </ng-template>
                 <div class="tb-form-panel no-border no-padding"
-                     *ngIf="converterType === ConvertorTypes.BYTES || converterType === ConvertorTypes.JSON">
+                     *ngIf="converterType === ConvertorTypeEnum.BYTES || converterType === ConvertorTypeEnum.JSON">
                   <div class="tb-form-row space-between tb-flex">
                     <div class="fixed-title-width" translate>gateway.attributes</div>
                     <div class="tb-flex">
@@ -120,12 +121,21 @@
                     </div>
                   </div>
                 </div>
-                <div class="tb-form-panel no-border no-padding" *ngIf="converterType === ConvertorTypes.CUSTOM">
+                <div class="tb-form-panel no-border no-padding" *ngIf="converterType === ConvertorTypeEnum.CUSTOM">
                   <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                    <div class="fixed-title-width" translate>gateway.extension</div>
+                    <div class="fixed-title-width tb-required" translate>gateway.extension</div>
                     <div class="tb-flex no-gap">
                       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                         <input matInput name="value" formControlName="extension" placeholder="{{ 'gateway.set' | translate }}"/>
+                        <mat-icon matSuffix
+                                  matTooltipPosition="above"
+                                  matTooltipClass="tb-error-tooltip"
+                                  [matTooltip]="('gateway.extension-required') | translate"
+                                  *ngIf="mappingForm.get('converter.custom.extension').hasError('required') &&
+                                         mappingForm.get('converter.topicFilter').touched"
+                                  class="tb-error">
+                          warning
+                        </mat-icon>
                       </mat-form-field>
                     </div>
                   </div>
@@ -155,7 +165,7 @@
             </div>
           </ng-container>
         </ng-template>
-        <ng-template [ngSwitchCase]="MappingTypes.REQUESTS">
+        <ng-template [ngSwitchCase]="MappingType.REQUESTS">
             <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
               <div class="fixed-title-width" translate>gateway.request-type</div>
               <div class="tb-flex no-gap">
@@ -169,12 +179,11 @@
               </div>
             </div>
             <ng-container formGroupName="requestValue">
-              <ng-container [formGroupName]="requestMappingType" [ngSwitch]="requestMappingType">
+              <ng-container [formGroup]="mappingForm.get('requestValue').get(requestMappingType)" [ngSwitch]="requestMappingType">
                 <div class="tb-form-row column-xs" fxLayoutAlign="space-between center"
-                     *ngIf="requestMappingType === RequestTypes.ATTRIBUTE_REQUEST ||
-                            requestMappingType === RequestTypes.CONNECT_REQUEST ||
-                            requestMappingType === RequestTypes.DISCONNECT_REQUEST">
-                  <!--        showMappingField('topicFilter')-->
+                     *ngIf="requestMappingType === RequestTypeEnum.ATTRIBUTE_REQUEST ||
+                            requestMappingType === RequestTypeEnum.CONNECT_REQUEST ||
+                            requestMappingType === RequestTypeEnum.DISCONNECT_REQUEST">
                   <div class="fixed-title-width tb-required" translate>gateway.topic-filter</div>
                   <div class="tb-flex no-gap">
                     <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
@@ -192,18 +201,18 @@
                     </mat-form-field>
                   </div>
                 </div>
-                <ng-template [ngSwitchCase]="RequestTypes.CONNECT_REQUEST">
-                  <tb-device-info-table formControlName="deviceInfo" deviceInfoType="full">
+                <ng-template [ngSwitchCase]="RequestTypeEnum.CONNECT_REQUEST">
+                  <tb-device-info-table formControlName="deviceInfo" [deviceInfoType]="DeviceInfoType.FULL" required="true">
                   </tb-device-info-table>
                 </ng-template>
-                <ng-template [ngSwitchCase]="RequestTypes.DISCONNECT_REQUEST">
-                  <tb-device-info-table formControlName="deviceInfo" deviceInfoType="partial">
+                <ng-template [ngSwitchCase]="RequestTypeEnum.DISCONNECT_REQUEST">
+                  <tb-device-info-table formControlName="deviceInfo" [deviceInfoType]="DeviceInfoType.PARTIAL" required="true">
                   </tb-device-info-table>
                 </ng-template>
-                <ng-template [ngSwitchCase]="RequestTypes.ATTRIBUTE_REQUEST">
+                <ng-template [ngSwitchCase]="RequestTypeEnum.ATTRIBUTE_REQUEST">
                   <div class="tb-form-panel stroked">
                     <div class="tb-form-panel-title tb-required" translate>gateway.from-device-request-settings</div>
-                    <tb-device-info-table formControlName="deviceInfo" deviceInfoType="partial" required="true">
+                    <tb-device-info-table formControlName="deviceInfo" [deviceInfoType]="DeviceInfoType.PARTIAL" required="true">
                     </tb-device-info-table>
                     <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
                       <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.attribute-name-expression-hint' | translate }}" translate>
@@ -254,7 +263,7 @@
                       </div>
                     </div>
                     <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="retain">
+                      <mat-slide-toggle class="mat-slide" formControlName="retain">
                         <mat-label tb-hint-tooltip-icon="{{ 'gateway.retain-hint' | translate }}">
                           {{ 'gateway.retain' | translate }}
                         </mat-label>
@@ -281,7 +290,7 @@
                     </div>
                   </div>
                 </ng-template>
-                <ng-template [ngSwitchCase]="RequestTypes.ATTRIBUTE_UPDATE">
+                <ng-template [ngSwitchCase]="RequestTypeEnum.ATTRIBUTE_UPDATE">
                   <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
                     <div class="fixed-title-width tb-required" translate>gateway.device-name-filter</div>
                     <div class="tb-flex no-gap">
@@ -300,7 +309,6 @@
                     </div>
                   </div>
                   <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                    <!--        showMappingField('QoS')-->
                     <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.attribute-filter-hint' | translate }}" translate>
                       gateway.attribute-filter
                     </div>
@@ -320,7 +328,7 @@
                     </div>
                   </div>
                   <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                    <div class="fixed-title-width" translate>gateway.response-topic-expression</div>
+                    <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.expression-hint' | translate }}" translate>gateway.response-topic-expression</div>
                     <div class="tb-flex no-gap">
                       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                         <input matInput name="value" formControlName="topicExpression" placeholder="{{ 'gateway.set' | translate }}"/>
@@ -328,8 +336,8 @@
                                   matTooltipPosition="above"
                                   matTooltipClass="tb-error-tooltip"
                                   [matTooltip]="('gateway.response-topic-expression-required') | translate"
-                                  *ngIf="mappingForm.get('requestValue.attributeRequests.topicExpression').hasError('required') &&
-                                           mappingForm.get('requestValue.attributeRequests.topicExpression').touched"
+                                  *ngIf="mappingForm.get('requestValue.attributeUpdates.topicExpression').hasError('required') &&
+                                           mappingForm.get('requestValue.attributeUpdates.topicExpression').touched"
                                   class="tb-error">
                           warning
                         </mat-icon>
@@ -344,7 +352,7 @@
                     </mat-slide-toggle>
                   </div>
                   <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                    <div class="fixed-title-width" translate>gateway.response-value-expression</div>
+                    <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.expression-hint' | translate }}" translate>gateway.response-value-expression</div>
                     <div class="tb-flex no-gap">
                       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                         <input matInput name="value" formControlName="valueExpression" placeholder="{{ 'gateway.set' | translate }}"/>
@@ -352,8 +360,8 @@
                                   matTooltipPosition="above"
                                   matTooltipClass="tb-error-tooltip"
                                   [matTooltip]="('gateway.response-value-expression-required') | translate"
-                                  *ngIf="mappingForm.get('requestValue.attributeRequests.valueExpression').hasError('required') &&
-                                           mappingForm.get('requestValue.attributeRequests.valueExpression').touched"
+                                  *ngIf="mappingForm.get('requestValue.attributeUpdates.valueExpression').hasError('required') &&
+                                           mappingForm.get('requestValue.attributeUpdates.valueExpression').touched"
                                   class="tb-error">
                           warning
                         </mat-icon>
@@ -361,7 +369,7 @@
                     </div>
                   </div>
                 </ng-template>
-                <ng-template [ngSwitchCase]="RequestTypes.SERVER_SIDE_RPC">
+                <ng-template [ngSwitchCase]="RequestTypeEnum.SERVER_SIDE_RPC">
                   <div class="tb-flex row center align-center no-gap fill-width">
                     <tb-toggle-select formControlName="type" appearance="fill">
                       <tb-toggle-option [value]="ServerSideRPCType.TWO_WAY">
@@ -373,7 +381,6 @@
                     </tb-toggle-select>
                   </div>
                   <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                    <!--        showMappingField('QoS')-->
                     <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.device-name-filter-hint' | translate }}" translate>
                       gateway.device-name-filter
                     </div>

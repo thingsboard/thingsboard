@@ -42,9 +42,13 @@ import {
   ControlValueAccessor,
   FormBuilder, NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  UntypedFormGroup, ValidationErrors, Validator, Validators
+  UntypedFormGroup,
+  ValidationErrors,
+  Validator,
+  Validators
 } from '@angular/forms';
 import {
+  DeviceInfoType,
   SourceTypes,
   SourceTypeTranslationsMap
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
@@ -129,7 +133,7 @@ export class DeviceInfoTableComponent extends PageComponent implements ControlVa
       this.mappingFormGroup.addControl('deviceNameExpressionSource',
         this.fb.control(SourceTypes.MSG, []));
     }
-    if (this.deviceInfoTypeValue === 'full') {
+    if (this.deviceInfoType === DeviceInfoType.FULL) {
       if (this.useSource) {
         this.mappingFormGroup.addControl('deviceProfileExpressionSource',
           this.fb.control(SourceTypes.MSG, []));

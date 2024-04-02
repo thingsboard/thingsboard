@@ -2803,6 +2803,7 @@
         "download-tip": "Download configuration file",
         "drop-file": "Drop file here or",
         "extension": "Extension",
+        "extension-required": "Extension is required.",
         "extension-configuration": "Extension configuration",
         "extension-configuration-hint": "Configuration for convertor",
         "fill-connector-defaults": "Fill configuration with default values",

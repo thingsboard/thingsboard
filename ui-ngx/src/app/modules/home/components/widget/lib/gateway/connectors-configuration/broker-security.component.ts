@@ -40,11 +40,14 @@ import {
   FormBuilder,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  UntypedFormGroup, ValidationErrors, Validator, Validators
+  UntypedFormGroup,
+  ValidationErrors,
+  Validator,
+  Validators
 } from '@angular/forms';
 import {
-  BrokerSecurityTypes,
-  BrokerSecurityTypeTranslations,
+  BrokerSecurityType,
+  BrokerSecurityTypeTranslationsMap,
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { takeUntil } from 'rxjs/operators';
 
@@ -68,11 +71,11 @@ import { takeUntil } from 'rxjs/operators';
 })
 export class BrokerSecurityComponent extends PageComponent implements ControlValueAccessor, Validator, AfterViewInit, OnInit, OnDestroy {
 
-  BrokerSecurityTypes = BrokerSecurityTypes;
+  BrokerSecurityType = BrokerSecurityType;
 
-  securityTypes = Object.values(BrokerSecurityTypes);
+  securityTypes = Object.values(BrokerSecurityType);
 
-  SecurityTypeTranslations = BrokerSecurityTypeTranslations;
+  SecurityTypeTranslationsMap = BrokerSecurityTypeTranslationsMap;
 
   securityFormGroup: UntypedFormGroup;
 
@@ -93,12 +96,12 @@ export class BrokerSecurityComponent extends PageComponent implements ControlVal
               private fb: FormBuilder) {
     super(store);
     this.securityFormGroup = this.fb.group({
-      type: [BrokerSecurityTypes.ANONYMOUS, []],
+      type: [BrokerSecurityType.ANONYMOUS, []],
       username: ['', [Validators.required]],
-      password: ['', [Validators.required]],
-      pathToCACert: ['', [Validators.required]],
-      pathToPrivateKey: ['', [Validators.required]],
-      pathToClientCert: ['', [Validators.required]]
+      password: ['', []],
+      pathToCACert: ['', []],
+      pathToPrivateKey: ['', []],
+      pathToClientCert: ['', []]
     });
     this.securityFormGroup.valueChanges.pipe(
       takeUntil(this.destroy$)
@@ -132,7 +135,7 @@ export class BrokerSecurityComponent extends PageComponent implements ControlVal
 
   writeValue(deviceInfo: any) {
     if (!deviceInfo.type) {
-      deviceInfo.type = BrokerSecurityTypes.ANONYMOUS;
+      deviceInfo.type = BrokerSecurityType.ANONYMOUS;
     }
     this.securityFormGroup.reset(deviceInfo);
     this.updateView(deviceInfo);
@@ -155,10 +158,10 @@ export class BrokerSecurityComponent extends PageComponent implements ControlVal
       this.securityFormGroup.get('pathToCACert').disable({emitEvent: false});
       this.securityFormGroup.get('pathToPrivateKey').disable({emitEvent: false});
       this.securityFormGroup.get('pathToClientCert').disable({emitEvent: false});
-      if (type === BrokerSecurityTypes.BASIC) {
+      if (type === BrokerSecurityType.BASIC) {
         this.securityFormGroup.get('username').enable({emitEvent: false});
         this.securityFormGroup.get('password').enable({emitEvent: false});
-      } else if (type === BrokerSecurityTypes.CERTIFICATES) {
+      } else if (type === BrokerSecurityType.CERTIFICATES) {
         this.securityFormGroup.get('pathToCACert').enable({emitEvent: false});
         this.securityFormGroup.get('pathToPrivateKey').enable({emitEvent: false});
         this.securityFormGroup.get('pathToClientCert').enable({emitEvent: false});

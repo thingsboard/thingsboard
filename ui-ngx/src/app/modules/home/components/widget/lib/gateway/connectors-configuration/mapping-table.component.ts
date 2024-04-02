@@ -36,16 +36,18 @@ import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { DialogService } from '@core/services/dialog.service';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, map, take, takeUntil, tap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, map, takeUntil } from 'rxjs/operators';
 import { Overlay } from '@angular/cdk/overlay';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityService } from '@core/http/entity.service';
 import { ControlValueAccessor, FormBuilder, NG_VALUE_ACCESSOR, UntypedFormArray } from '@angular/forms';
 import {
   ConvertorTypeTranslationsMap,
-  MappingTypes,
+  MappingInfo,
+  MappingType,
   MappingTypeTranslationsMap,
-  RequestTypes
+  RequestType,
+  RequestTypesTranslationsMap
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { MappingDialogComponent } from '@home/components/widget/lib/gateway/dialog/mapping-dialog.component';
@@ -78,14 +80,14 @@ export class MappingTableComponent extends PageComponent implements ControlValue
 
   viewsInited = false;
 
-  mappingTypeValue: MappingTypes;
+  mappingTypeValue: MappingType;
 
-  get mappingType(): MappingTypes {
+  get mappingType(): MappingType {
     return this.mappingTypeValue;
   }
 
   @Input()
-  set mappingType(value: MappingTypes) {
+  set mappingType(value: MappingType) {
     if (this.mappingTypeValue !== value) {
       this.mappingTypeValue = value;
     }
@@ -118,7 +120,7 @@ export class MappingTableComponent extends PageComponent implements ControlValue
   }
 
   ngOnInit() {
-    if (this.mappingType === MappingTypes.DATA) {
+    if (this.mappingType === MappingType.DATA) {
       this.mappingColumns.push(
         {def: 'topicFilter', title: 'gateway.topic-filter'},
         {def: 'QoS', title: 'gateway.mqtt-qos'},
@@ -163,10 +165,10 @@ export class MappingTableComponent extends PageComponent implements ControlValue
 
   writeValue(config: any) {
     if (isUndefinedOrNull(config)) {
-      config = this.mappingType === MappingTypes.REQUESTS ? {} : [];
+      config = this.mappingType === MappingType.REQUESTS ? {} : [];
     }
     let mappingConfigs = config;
-    if (this.mappingType === MappingTypes.REQUESTS) {
+    if (this.mappingType === MappingType.REQUESTS) {
       mappingConfigs = [];
 
       Object.keys(config).forEach((configKey) => {
@@ -185,9 +187,9 @@ export class MappingTableComponent extends PageComponent implements ControlValue
     this.updateTableData(mappingConfigs);
   }
 
-  updateView(mappingConfigs: Array<any>) {
+  updateView(mappingConfigs: Array<{[key: string]: any}>) {
     let config;
-    if (this.mappingType === MappingTypes.REQUESTS) {
+    if (this.mappingType === MappingType.REQUESTS) {
       config = {};
       for (let mappingConfig of mappingConfigs) {
         if (config[mappingConfig.requestType]) {
@@ -221,7 +223,7 @@ export class MappingTableComponent extends PageComponent implements ControlValue
       $event.stopPropagation();
     }
     const value = isDefinedAndNotNull(index) ? this.mappingFormGroup.at(index).value : {};
-    this.dialog.open<MappingDialogComponent, any, boolean>(MappingDialogComponent, {
+    this.dialog.open<MappingDialogComponent, MappingInfo, boolean>(MappingDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
@@ -242,9 +244,9 @@ export class MappingTableComponent extends PageComponent implements ControlValue
     );
   }
 
-  updateTableData(value, textSearch?: string): void {
+  updateTableData(value: Array<{[key: string]: any}>, textSearch?: string): void {
     let tableValue = value;
-    if (this.mappingType === MappingTypes.DATA) {
+    if (this.mappingType === MappingType.DATA) {
       tableValue = tableValue.map((value) => {
         return {
           topicFilter: value.topicFilter,
@@ -255,15 +257,15 @@ export class MappingTableComponent extends PageComponent implements ControlValue
     } else {
       tableValue = tableValue.map((value) => {
         let details;
-        if (value.requestType === RequestTypes.ATTRIBUTE_UPDATE) {
+        if (value.requestType === RequestType.ATTRIBUTE_UPDATE) {
           details = value.requestValue.attributeFilter;
-        } else if (value.requestType === RequestTypes.SERVER_SIDE_RPC) {
+        } else if (value.requestType === RequestType.SERVER_SIDE_RPC) {
           details = value.requestValue.methodFilter;
         } else {
           details = value.requestValue.topicFilter;
         }
         return {
-          type: value.requestType,
+          type: this.translate.instant(RequestTypesTranslationsMap.get(value.requestType)),
           details
         };
       });
@@ -299,13 +301,13 @@ export class MappingTableComponent extends PageComponent implements ControlValue
 
 export class MappingDatasource implements DataSource<any> {
 
-  private mappingSubject = new BehaviorSubject<any[]>([]);
+  private mappingSubject = new BehaviorSubject<Array<{[key: string]: any}>>([]);
 
-  private allMappings: Observable<Array<any>>;
+  private allMappings: Observable<Array<{[key: string]: any}>>;
 
   constructor() {}
 
-  connect(collectionViewer: CollectionViewer): Observable<any[] | ReadonlyArray<any>> {
+  connect(collectionViewer: CollectionViewer): Observable<Array<{[key: string]: any}>> {
     return this.mappingSubject.asObservable();
   }
 
@@ -313,7 +315,7 @@ export class MappingDatasource implements DataSource<any> {
     this.mappingSubject.complete();
   }
 
-  loadMappings(mappings: any, pageLink?: PageLink, reload: boolean = false): void {
+  loadMappings(mappings: Array<{[key: string]: any}>, pageLink?: PageLink, reload: boolean = false): void {
     if (reload) {
       this.allMappings = null;
     }
