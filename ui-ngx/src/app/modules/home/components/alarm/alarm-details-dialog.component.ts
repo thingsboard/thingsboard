@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit, ViewChild } from '@angular/core';
+import { Component, Inject, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -51,7 +51,7 @@ export interface AlarmDetailsDialogData {
   templateUrl: './alarm-details-dialog.component.html',
   styleUrls: ['./alarm-details-dialog.component.scss']
 })
-export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDialogComponent, boolean> implements OnInit {
+export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDialogComponent, boolean> {
 
   alarmId: string;
   alarmFormGroup: UntypedFormGroup;
@@ -134,7 +134,7 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
         duration = this.millisecondsToTimeStringPipe.transform(Date.now() - alarm.startTs);
       }
       if (alarm.endTs && (alarm.status === AlarmStatus.CLEARED_ACK || alarm.status === AlarmStatus.CLEARED_UNACK)) {
-        duration = this.millisecondsToTimeStringPipe.transform(alarm.endTs - alarm.startTs);
+        duration = this.millisecondsToTimeStringPipe.transform(alarm.clearTs - alarm.startTs);
       }
       this.alarmFormGroup.get('duration').patchValue(duration);
     }
@@ -144,8 +144,6 @@ export class AlarmDetailsDialogComponent extends DialogComponent<AlarmDetailsDia
     this.alarmFormGroup.get('alarmDetails').patchValue(alarm.details);
   }
 
-  ngOnInit(): void {
-  }
 
   close(): void {
     this.dialogRef.close(this.alarmUpdated);
