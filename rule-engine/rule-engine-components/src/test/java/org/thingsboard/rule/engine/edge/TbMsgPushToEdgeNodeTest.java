@@ -18,16 +18,21 @@ package org.thingsboard.rule.engine.edge;
 import com.google.common.util.concurrent.SettableFuture;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -45,13 +50,18 @@ import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
 
+import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
 @RunWith(MockitoJUnitRunner.class)
-public class TbMsgPushToEdgeNodeTest {
+public class TbMsgPushToEdgeNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private static final List<TbMsgType> MISC_EVENTS = List.of(TbMsgType.CONNECT_EVENT, TbMsgType.DISCONNECT_EVENT,
             TbMsgType.ACTIVITY_EVENT, TbMsgType.INACTIVITY_EVENT);
@@ -127,6 +137,87 @@ public class TbMsgPushToEdgeNodeTest {
         for (var event : MISC_EVENTS) {
             testEvent(event, TbMsgMetaData.EMPTY, EdgeEventActionType.TIMESERIES_UPDATED, "data");
         }
+    }
+
+    @Test
+    public void testAttributeUpdateMsgUseTemplateIsTrueValidScope() throws TbNodeException {
+        node = new TbMsgPushToEdgeNode();
+        TbMsgPushToEdgeNodeConfiguration config = new TbMsgPushToEdgeNodeConfiguration();
+        config.setScope("${attributesScope}");
+        config.setUseAttributesScopeTemplate(true);
+        node.init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        EdgeId edgeId = new EdgeId(UUID.randomUUID());
+        PageData<EdgeId> edgePageData = new PageData<>(List.of(edgeId), 1, 1, false);
+
+        Mockito.when(ctx.getTenantId()).thenReturn(tenantId);
+        Mockito.when(ctx.getEdgeService()).thenReturn(edgeService);
+        Mockito.when(edgeService.findRelatedEdgeIdsByEntityId(any(), any(), any())).thenReturn(edgePageData);
+        Mockito.when(ctx.getEdgeEventService()).thenReturn(edgeEventService);
+        Mockito.when(ctx.getDbCallbackExecutor()).thenReturn(dbCallbackExecutor);
+        Mockito.when(edgeService.findRelatedEdgeIdsByEntityId(tenantId, deviceId, new PageLink(TbMsgPushToEdgeNode.DEFAULT_PAGE_SIZE))).thenReturn(edgePageData);
+        Mockito.when(edgeEventService.saveAsync(any())).thenReturn(SettableFuture.create());
+
+        Map<String, String> metadata = Map.of(
+                "attributesScope", "SERVER_SCOPE"
+        );
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, deviceId, new TbMsgMetaData(metadata), TbMsg.EMPTY_JSON_OBJECT);
+        node.onMsg(ctx, msg);
+
+        ArgumentMatcher<EdgeEvent> eventArgumentMatcher = edgeEvent ->
+                edgeEvent.getBody().get("scope").equals(JacksonUtil.valueToTree(AttributeScope.SERVER_SCOPE));
+        verify(edgeEventService).saveAsync(Mockito.argThat(eventArgumentMatcher));
+    }
+
+    @Test
+    public void testAttributeUpdateMsgUseTemplateIsTrueInvalidScope() throws TbNodeException {
+        node = new TbMsgPushToEdgeNode();
+        TbMsgPushToEdgeNodeConfiguration config = new TbMsgPushToEdgeNodeConfiguration();
+        config.setScope("${attributesScope}");
+        config.setUseAttributesScopeTemplate(true);
+        node.init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+
+        EdgeId edgeId = new EdgeId(UUID.randomUUID());
+        PageData<EdgeId> edgePageData = new PageData<>(List.of(edgeId), 1, 1, false);
+
+        Mockito.when(ctx.getTenantId()).thenReturn(tenantId);
+        Mockito.when(ctx.getEdgeService()).thenReturn(edgeService);
+        Mockito.when(edgeService.findRelatedEdgeIdsByEntityId(any(), any(), any())).thenReturn(edgePageData);
+
+        Map<String, String> metadata = Map.of(
+                "attributesScope", "ANOTHER_SCOPE"
+        );
+
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, deviceId, new TbMsgMetaData(metadata), TbMsg.EMPTY_JSON_OBJECT);
+
+        node.onMsg(ctx, msg);
+
+        ArgumentCaptor<Throwable> exceptionCaptor = ArgumentCaptor.forClass(Throwable.class);
+        verify(ctx).tellFailure(eq(msg), exceptionCaptor.capture());
+        Throwable exception = exceptionCaptor.getValue();
+        assertEquals(IllegalArgumentException.class, exception.getClass());
+        assertEquals("Failed to parse scope! No enum constant for name: " + msg.getMetaData().getValue("attributesScope"), exception.getMessage());
+    }
+
+    private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
+        return Stream.of(
+                //config for version 0
+                Arguments.of(0,
+                        "{\"scope\": \"SERVER_SCOPE\"}",
+                        true,
+                        "{\"scope\": \"SERVER_SCOPE\", \"useAttributesScopeTemplate\": false}"
+                ),
+                //config for version 1 with upgrade from version 0
+                Arguments.of(1,
+                        "{\"scope\": \"SERVER_SCOPE\", \"useAttributesScopeTemplate\": false}",
+                        false,
+                        "{\"scope\": \"SERVER_SCOPE\", \"useAttributesScopeTemplate\": false}"
+                )
+        );
+    }
+
+    @Override
+    protected TbNode getTestNode() {
+        return spy(new TbMsgPushToEdgeNode());
     }
 
     private void testEvent(TbMsgType event, TbMsgMetaData metaData, EdgeEventActionType expectedType, String dataKey) {
