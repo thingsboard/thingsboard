@@ -112,3 +112,25 @@ ALTER TABLE oauth2_params
     ADD COLUMN IF NOT EXISTS edge_enabled boolean DEFAULT false;
 
 -- OAUTH2 PARAMS ALTER TABLE END
+
+-- QUEUE STATS UPDATE START
+
+CREATE TABLE IF NOT EXISTS queue_stats (
+    id uuid NOT NULL CONSTRAINT queue_stats_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid NOT NULL,
+    queue_name varchar(255) NOT NULL,
+    service_id varchar(255) NOT NULL,
+    CONSTRAINT queue_stats_name_unq_key UNIQUE (tenant_id, queue_name, service_id)
+);
+
+INSERT INTO queue_stats
+    SELECT id, created_time, tenant_id, substring(name FROM 1 FOR position('_' IN name) - 1) AS queue_name,
+           substring(name FROM position('_' IN name) + 1) AS service_id
+    FROM asset
+    WHERE type = 'TbServiceQueue' and name LIKE '%\_%';
+
+DELETE FROM asset WHERE type='TbServiceQueue';
+DELETE FROM asset_profile WHERE name ='TbServiceQueue';
+
+-- QUEUE STATS UPDATE END
