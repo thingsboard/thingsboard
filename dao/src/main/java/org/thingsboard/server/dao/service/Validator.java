@@ -41,6 +41,7 @@ public class Validator {
      * @param entityId      the entityId
      * @param errorMessage  the error message for exception
      */
+    @Deprecated
     public static void validateEntityId(EntityId entityId, String errorMessage) {
         if (entityId == null || entityId.getId() == null) {
             throw new IncorrectParameterException(errorMessage);
@@ -106,6 +107,7 @@ public class Validator {
      * @param id            the id
      * @param errorMessage  the error message for exception
      */
+    @Deprecated
     public static void validateId(UUID id, String errorMessage) {
         if (id == null) {
             throw new IncorrectParameterException(errorMessage);
@@ -132,6 +134,7 @@ public class Validator {
      * @param id            the id
      * @param errorMessage  the error message for exception
      */
+    @Deprecated
     public static void validateId(UUIDBased id, String errorMessage) {
         if (id == null || id.getId() == null) {
             throw new IncorrectParameterException(errorMessage);
@@ -172,6 +175,7 @@ public class Validator {
      * @param ids           the list of ids
      * @param errorMessage  the error message for exception
      */
+    @Deprecated
     public static void validateIds(List<? extends UUIDBased> ids, String errorMessage) {
         if (ids == null || ids.isEmpty()) {
             throw new IncorrectParameterException(errorMessage);
