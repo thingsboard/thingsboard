@@ -75,7 +75,7 @@
         <freemarker.version>2.3.30</freemarker.version>
         <mail.version>1.6.2</mail.version>
         <curator.version>5.5.0</curator.version>
-        <zookeeper.version>3.8.1</zookeeper.version>
+        <zookeeper.version>3.9.2</zookeeper.version>
         <protobuf.version>3.21.9</protobuf.version>
         <grpc.version>1.42.1</grpc.version>
         <tbel.version>1.1.5</tbel.version>
