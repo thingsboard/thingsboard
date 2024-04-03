@@ -16,7 +16,10 @@
 package org.thingsboard.server.dao.service;
 
 import org.junit.jupiter.api.Test;
-import org.thingsboard.server.common.data.id.*;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UUIDBased;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 
 import java.util.ArrayList;
