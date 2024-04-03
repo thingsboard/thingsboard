@@ -299,7 +299,7 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
     public ListenableFuture<List<EntityView>> findEntityViewsByTenantIdAndEntityIdAsync(TenantId tenantId, EntityId entityId) {
         log.trace("Executing findEntityViewsByTenantIdAndEntityIdAsync, tenantId [{}], entityId [{}]", tenantId, entityId);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
-        validateId(entityId.getId(), "Incorrect entityId" + entityId);
+        validateId(entityId.getId(), id -> "Incorrect entityId" + id);
 
         return service.submit(() -> cache.getAndPutInTransaction(EntityViewCacheKey.byEntityId(tenantId, entityId),
                 () -> entityViewDao.findEntityViewsByTenantIdAndEntityId(tenantId.getId(), entityId.getId()),
@@ -310,7 +310,7 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
     public List<EntityView> findEntityViewsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId) {
         log.trace("Executing findEntityViewsByTenantIdAndEntityId, tenantId [{}], entityId [{}]", tenantId, entityId);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
-        validateId(entityId.getId(), "Incorrect entityId" + entityId);
+        validateId(entityId.getId(), id -> "Incorrect entityId" + id);
 
         return cache.getAndPutInTransaction(EntityViewCacheKey.byEntityId(tenantId, entityId),
                 () -> entityViewDao.findEntityViewsByTenantIdAndEntityId(tenantId.getId(), entityId.getId()),

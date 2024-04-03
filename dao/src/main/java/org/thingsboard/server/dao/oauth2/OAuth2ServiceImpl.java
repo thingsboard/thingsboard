@@ -142,14 +142,14 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
     @Override
     public OAuth2Registration findRegistration(UUID id) {
         log.trace("Executing findRegistration [{}]", id);
-        validateId(id, INCORRECT_CLIENT_REGISTRATION_ID + id);
+        validateId(id, uuid -> INCORRECT_CLIENT_REGISTRATION_ID + uuid);
         return oauth2RegistrationDao.findById(null, id);
     }
 
     @Override
     public String findAppSecret(UUID id, String pkgName) {
         log.trace("Executing findAppSecret [{}][{}]", id, pkgName);
-        validateId(id, INCORRECT_CLIENT_REGISTRATION_ID + id);
+        validateId(id, uuid -> INCORRECT_CLIENT_REGISTRATION_ID + uuid);
         validateString(pkgName, "Incorrect package name");
         return oauth2RegistrationDao.findAppSecret(id, pkgName);
     }

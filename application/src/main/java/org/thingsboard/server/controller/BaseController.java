@@ -541,7 +541,7 @@ public abstract class BaseController {
             if (entityId == null) {
                 throw new ThingsboardException("Parameter entityId can't be empty!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
             }
-            validateId(entityId.getId(), "Incorrect entityId " + entityId);
+            validateId(entityId.getId(), id -> "Incorrect entityId " + id);
             switch (entityId.getEntityType()) {
                 case ALARM:
                     checkAlarmId(new AlarmId(entityId.getId()), operation);

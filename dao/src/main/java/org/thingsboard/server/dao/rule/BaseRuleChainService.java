@@ -755,7 +755,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     @Override
     public List<RuleNode> findAllRuleNodesByIds(List<RuleNodeId> ruleNodeIds) {
         log.trace("Executing findAllRuleNodesByIds, ruleNodeIds {}", ruleNodeIds);
-        validateIds(ruleNodeIds, "Incorrect ruleNodeIds " + ruleNodeIds);
+        validateIds(ruleNodeIds, ids -> "Incorrect ruleNodeIds " + ids);
         assert ruleNodeIds.size() <= 1024;
         return ruleNodeDao.findAllRuleNodeByIds(ruleNodeIds);
     }

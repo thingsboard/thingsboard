@@ -79,7 +79,7 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
     @Override
     public void deleteApiUsageStateByEntityId(EntityId entityId) {
         log.trace("Executing deleteApiUsageStateByEntityId [{}]", entityId);
-        validateId(entityId.getId(), "Invalid entity id");
+        validateId(entityId.getId(), id -> "Invalid entity id " + id);
         apiUsageStateDao.deleteApiUsageStateByEntityId(entityId);
     }
 
@@ -159,7 +159,7 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
 
     @Override
     public ApiUsageState findApiUsageStateByEntityId(EntityId entityId) {
-        validateId(entityId.getId(), "Invalid entity id");
+        validateId(entityId.getId(), id -> "Invalid entity id " + id);
         return apiUsageStateDao.findApiUsageStateByEntityId(entityId);
     }
 
