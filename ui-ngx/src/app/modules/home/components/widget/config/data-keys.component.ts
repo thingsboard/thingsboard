@@ -19,6 +19,7 @@ import {
   ChangeDetectorRef,
   Component,
   ElementRef,
+  EventEmitter,
   forwardRef,
   Input,
   OnChanges,
@@ -71,6 +72,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { DatasourceComponent } from '@home/components/widget/config/datasource.component';
 import { ColorPickerPanelComponent } from '@shared/components/color-picker/color-picker-panel.component';
 import { TbPopoverService } from '@shared/components/popover.service';
+import { EmitService } from '@app/shared/services/emit';
 
 @Component({
   selector: 'tb-data-keys',
@@ -224,7 +226,8 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
               private popoverService: TbPopoverService,
               private viewContainerRef: ViewContainerRef,
               private renderer: Renderer2,
-              public truncate: TruncatePipe) {
+              public truncate: TruncatePipe,
+              private emitService: EmitService) {
   }
 
   updateValidators() {
@@ -464,6 +467,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
     this.propagateChange(this.modelValue);
     const focus = !this.maxDataKeysSet || this.modelValue.length < this.maxDataKeys;
     this.clear('', focus);
+    this.emitService.dataKeysEmitter.emit(this.keys);
   }
 
   add(event: MatChipInputEvent): void {
@@ -486,6 +490,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
       }
       this.propagateChange(this.modelValue);
       this.clear();
+      this.emitService.dataKeysEmitter.emit(this.keys);
     }
   }
 
@@ -510,6 +515,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
     this.keysListFormGroup.get('keys').setValue(this.keys);
     this.dragIndex = -1;
     this.propagateChange(this.modelValue);
+    this.emitService.dataKeysEmitter.emit(this.keys);
   }
 
   openColorPickerPopup(key: DataKey, $event: Event, keyColorButton: HTMLDivElement) {

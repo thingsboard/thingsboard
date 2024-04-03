@@ -32,3 +32,9 @@
     flex: 1;
   }
 }
+
+::ng-deep {
+  .mat-input-datetime .mdc-floating-label.mat-mdc-floating-label {
+    top: 21px !important;
+  }
+}
