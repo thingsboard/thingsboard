@@ -102,28 +102,28 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     @Override
     public AssetInfo findAssetInfoById(TenantId tenantId, AssetId assetId) {
         log.trace("Executing findAssetInfoById [{}]", assetId);
-        validateId(assetId, INCORRECT_ASSET_ID + assetId);
+        validateId(assetId, id -> INCORRECT_ASSET_ID + id);
         return assetDao.findAssetInfoById(tenantId, assetId.getId());
     }
 
     @Override
     public Asset findAssetById(TenantId tenantId, AssetId assetId) {
         log.trace("Executing findAssetById [{}]", assetId);
-        validateId(assetId, INCORRECT_ASSET_ID + assetId);
+        validateId(assetId, id -> INCORRECT_ASSET_ID + id);
         return assetDao.findById(tenantId, assetId.getId());
     }
 
     @Override
     public ListenableFuture<Asset> findAssetByIdAsync(TenantId tenantId, AssetId assetId) {
         log.trace("Executing findAssetById [{}]", assetId);
-        validateId(assetId, INCORRECT_ASSET_ID + assetId);
+        validateId(assetId, id -> INCORRECT_ASSET_ID + id);
         return assetDao.findByIdAsync(tenantId, assetId.getId());
     }
 
     @Override
     public Asset findAssetByTenantIdAndName(TenantId tenantId, String name) {
         log.trace("Executing findAssetByTenantIdAndName [{}][{}]", tenantId, name);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         return cache.getAndPutInTransaction(new AssetCacheKey(tenantId, name),
                 () -> assetDao.findAssetsByTenantIdAndName(tenantId.getId(), name)
                         .orElse(null), true);
@@ -198,7 +198,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     @Override
     @Transactional
     public void deleteAsset(TenantId tenantId, AssetId assetId) {
-        validateId(assetId, INCORRECT_ASSET_ID + assetId);
+        validateId(assetId, id -> INCORRECT_ASSET_ID + id);
         if (entityViewService.existsByTenantIdAndEntityId(tenantId, assetId)) {
             throw new DataValidationException("Can't delete asset that has entity views!");
         }
@@ -222,7 +222,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     @Override
     public PageData<Asset> findAssetsByTenantId(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findAssetsByTenantId, tenantId [{}], pageLink [{}]", tenantId, pageLink);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         validatePageLink(pageLink);
         return assetDao.findAssetsByTenantId(tenantId.getId(), pageLink);
     }
@@ -230,7 +230,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     @Override
     public PageData<AssetInfo> findAssetInfosByTenantId(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findAssetInfosByTenantId, tenantId [{}], pageLink [{}]", tenantId, pageLink);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         validatePageLink(pageLink);
         return assetDao.findAssetInfosByTenantId(tenantId.getId(), pageLink);
     }
@@ -238,7 +238,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     @Override
     public PageData<Asset> findAssetsByTenantIdAndType(TenantId tenantId, String type, PageLink pageLink) {
         log.trace("Executing findAssetsByTenantIdAndType, tenantId [{}], type [{}], pageLink [{}]", tenantId, type, pageLink);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         validateString(type, t -> "Incorrect type " + t);
         validatePageLink(pageLink);
         return assetDao.findAssetsByTenantIdAndType(tenantId.getId(), type, pageLink);
@@ -247,7 +247,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     @Override
     public PageData<AssetInfo> findAssetInfosByTenantIdAndType(TenantId tenantId, String type, PageLink pageLink) {
         log.trace("Executing findAssetInfosByTenantIdAndType, tenantId [{}], type [{}], pageLink [{}]", tenantId, type, pageLink);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         validateString(type, t -> "Incorrect type " + t);
         validatePageLink(pageLink);
         return assetDao.findAssetInfosByTenantIdAndType(tenantId.getId(), type, pageLink);
@@ -256,8 +256,8 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     @Override
     public PageData<AssetInfo> findAssetInfosByTenantIdAndAssetProfileId(TenantId tenantId, AssetProfileId assetProfileId, PageLink pageLink) {
         log.trace("Executing findAssetInfosByTenantIdAndAssetProfileId, tenantId [{}], assetProfileId [{}], pageLink [{}]", tenantId, assetProfileId, pageLink);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        validateId(assetProfileId, INCORRECT_ASSET_PROFILE_ID + assetProfileId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateId(assetProfileId, id -> INCORRECT_ASSET_PROFILE_ID + id);
         validatePageLink(pageLink);
         return assetDao.findAssetInfosByTenantIdAndAssetProfileId(tenantId.getId(), assetProfileId.getId(), pageLink);
     }
@@ -265,7 +265,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     @Override
     public ListenableFuture<List<Asset>> findAssetsByTenantIdAndIdsAsync(TenantId tenantId, List<AssetId> assetIds) {
         log.trace("Executing findAssetsByTenantIdAndIdsAsync, tenantId [{}], assetIds [{}]", tenantId, assetIds);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         validateIds(assetIds, ids -> "Incorrect assetIds " + ids);
         return assetDao.findAssetsByTenantIdAndIdsAsync(tenantId.getId(), toUUIDs(assetIds));
     }
@@ -273,15 +273,15 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     @Override
     public void deleteAssetsByTenantId(TenantId tenantId) {
         log.trace("Executing deleteAssetsByTenantId, tenantId [{}]", tenantId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         tenantAssetsRemover.removeEntities(tenantId, tenantId);
     }
 
     @Override
     public PageData<Asset> findAssetsByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink) {
         log.trace("Executing findAssetsByTenantIdAndCustomerId, tenantId [{}], customerId [{}], pageLink [{}]", tenantId, customerId, pageLink);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
         validatePageLink(pageLink);
         return assetDao.findAssetsByTenantIdAndCustomerId(tenantId.getId(), customerId.getId(), pageLink);
     }
@@ -289,8 +289,8 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     @Override
     public PageData<AssetInfo> findAssetInfosByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink) {
         log.trace("Executing findAssetInfosByTenantIdAndCustomerId, tenantId [{}], customerId [{}], pageLink [{}]", tenantId, customerId, pageLink);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
         validatePageLink(pageLink);
         return assetDao.findAssetInfosByTenantIdAndCustomerId(tenantId.getId(), customerId.getId(), pageLink);
     }
@@ -298,8 +298,8 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     @Override
     public PageData<Asset> findAssetsByTenantIdAndCustomerIdAndType(TenantId tenantId, CustomerId customerId, String type, PageLink pageLink) {
         log.trace("Executing findAssetsByTenantIdAndCustomerIdAndType, tenantId [{}], customerId [{}], type [{}], pageLink [{}]", tenantId, customerId, type, pageLink);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
         validateString(type, t -> "Incorrect type " + t);
         validatePageLink(pageLink);
         return assetDao.findAssetsByTenantIdAndCustomerIdAndType(tenantId.getId(), customerId.getId(), type, pageLink);
@@ -308,8 +308,8 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     @Override
     public PageData<AssetInfo> findAssetInfosByTenantIdAndCustomerIdAndType(TenantId tenantId, CustomerId customerId, String type, PageLink pageLink) {
         log.trace("Executing findAssetInfosByTenantIdAndCustomerIdAndType, tenantId [{}], customerId [{}], type [{}], pageLink [{}]", tenantId, customerId, type, pageLink);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
         validateString(type, t -> "Incorrect type " + t);
         validatePageLink(pageLink);
         return assetDao.findAssetInfosByTenantIdAndCustomerIdAndType(tenantId.getId(), customerId.getId(), type, pageLink);
@@ -318,9 +318,9 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     @Override
     public PageData<AssetInfo> findAssetInfosByTenantIdAndCustomerIdAndAssetProfileId(TenantId tenantId, CustomerId customerId, AssetProfileId assetProfileId, PageLink pageLink) {
         log.trace("Executing findAssetInfosByTenantIdAndCustomerIdAndAssetProfileId, tenantId [{}], customerId [{}], assetProfileId [{}], pageLink [{}]", tenantId, customerId, assetProfileId, pageLink);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
-        validateId(assetProfileId, INCORRECT_ASSET_PROFILE_ID + assetProfileId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
+        validateId(assetProfileId, id -> INCORRECT_ASSET_PROFILE_ID + id);
         validatePageLink(pageLink);
         return assetDao.findAssetInfosByTenantIdAndCustomerIdAndAssetProfileId(tenantId.getId(), customerId.getId(), assetProfileId.getId(), pageLink);
     }
@@ -328,8 +328,8 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     @Override
     public ListenableFuture<List<Asset>> findAssetsByTenantIdCustomerIdAndIdsAsync(TenantId tenantId, CustomerId customerId, List<AssetId> assetIds) {
         log.trace("Executing findAssetsByTenantIdAndCustomerIdAndIdsAsync, tenantId [{}], customerId [{}], assetIds [{}]", tenantId, customerId, assetIds);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
         validateIds(assetIds, ids -> "Incorrect assetIds " + ids);
         return assetDao.findAssetsByTenantIdAndCustomerIdAndIdsAsync(tenantId.getId(), customerId.getId(), toUUIDs(assetIds));
     }
@@ -337,8 +337,8 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     @Override
     public void unassignCustomerAssets(TenantId tenantId, CustomerId customerId) {
         log.trace("Executing unassignCustomerAssets, tenantId [{}], customerId [{}]", tenantId, customerId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
         customerAssetsUnasigner.removeEntities(tenantId, customerId);
     }
 
@@ -370,7 +370,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     @Override
     public ListenableFuture<List<EntitySubtype>> findAssetTypesByTenantId(TenantId tenantId) {
         log.trace("Executing findAssetTypesByTenantId, tenantId [{}]", tenantId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         return assetDao.findTenantAssetTypesAsync(tenantId.getId());
     }
 
@@ -419,8 +419,8 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     @Override
     public PageData<Asset> findAssetsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, PageLink pageLink) {
         log.trace("Executing findAssetsByTenantIdAndEdgeId, tenantId [{}], edgeId [{}], pageLink [{}]", tenantId, edgeId, pageLink);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        validateId(edgeId, INCORRECT_EDGE_ID + edgeId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateId(edgeId, id -> INCORRECT_EDGE_ID + id);
         validatePageLink(pageLink);
         return assetDao.findAssetsByTenantIdAndEdgeId(tenantId.getId(), edgeId.getId(), pageLink);
     }
@@ -428,8 +428,8 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     @Override
     public PageData<Asset> findAssetsByTenantIdAndEdgeIdAndType(TenantId tenantId, EdgeId edgeId, String type, PageLink pageLink) {
         log.trace("Executing findAssetsByTenantIdAndEdgeIdAndType, tenantId [{}], edgeId [{}], type [{}] pageLink [{}]", tenantId, edgeId, type, pageLink);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        validateId(edgeId, INCORRECT_EDGE_ID + edgeId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateId(edgeId, id -> INCORRECT_EDGE_ID + id);
         validateString(type, t -> "Incorrect type " + t);
         validatePageLink(pageLink);
         return assetDao.findAssetsByTenantIdAndEdgeIdAndType(tenantId.getId(), edgeId.getId(), type, pageLink);
