@@ -241,7 +241,7 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
   }
 
   helpLinkId(): string {
-    return "";
+    return "https://thingsboard.io/docs/iot-gateway/config/mqtt/#section-mapping";
   }
 
   cancel(): void {

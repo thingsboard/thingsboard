@@ -624,7 +624,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   private addMQTTConfigControls(): void {
     const configControl = this.fb.group({});
     const brokerGroup = this.fb.group({
-      name: ['', [Validators.required]],
+      name: ['', []],
       host: ['', [Validators.required]],
       port: [null, [Validators.required]],
       version: [5, []],

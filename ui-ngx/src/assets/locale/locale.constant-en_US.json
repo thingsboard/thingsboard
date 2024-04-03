@@ -2807,6 +2807,7 @@
         "extension-configuration": "Extension configuration",
         "extension-configuration-hint": "Configuration for convertor",
         "fill-connector-defaults": "Fill configuration with default values",
+        "fill-connector-defaults-hint": "This property allows to fill connector configuration with default values on it's creation.",
         "from-device-request-settings": "From device request settings",
         "to-device-response-settings": "To device request settings",
         "gateway": "Gateway",

@@ -23,8 +23,14 @@
     <div class="tb-form-table-header tb-flex space-between" style="padding: 0 16px;">
       <div class="tb-form-table-header-cell" translate>gateway.device-info.parameter</div>
       <div *ngIf="useSource" class="tb-form-table-header-cell" translate>gateway.device-info.source</div>
-      <div class="tb-form-table-header-cell" tb-hint-tooltip-icon="{{ 'gateway.device-info.expression-hint' | translate }}" translate>
-        gateway.device-info.expression
+      <div class="tb-form-table-header-cell tb-flex no-flex align-center" translate>
+        <div translate>gateway.device-info.expression</div>
+        <div class="see-example"
+             [tb-help-popup]="'widget/lib/gateway/expressions_fn'"
+             tb-help-popup-placement="left"
+             trigger-style="font-size: 12px"
+             [tb-help-popup-style]="{maxWidth: '970px'}">
+        </div>
       </div>
     </div>
     <div class="tb-form-table-body no-gap">
