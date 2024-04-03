@@ -9,6 +9,7 @@
 
     <logger name="org.thingsboard.server.dao" level="WARN"/>
     <logger name="org.testcontainers" level="INFO" />
+    <logger name="org.thingsboard.server.dao.sqlts" level="INFO" />
 
     <!-- Log Hibernate SQL queries -->
     <!-- <logger name="org.hibernate.SQL" level="DEBUG"/> -->

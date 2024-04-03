@@ -489,6 +489,10 @@ cache:
   attributes:
     # make sure that if cache.type is 'redis' and cache.attributes.enabled is 'true' if you change 'maxmemory-policy' Redis config property to 'allkeys-lru', 'allkeys-lfu' or 'allkeys-random'
     enabled: "${CACHE_ATTRIBUTES_ENABLED:true}"
+  ts_latest:
+    # Will enable cache-aside strategy for SQL timeseries latest DAO.
+    # make sure that if cache.type is 'redis' and cache.ts_latest.enabled is 'true' if you change 'maxmemory-policy' Redis config property to 'allkeys-lru', 'allkeys-lfu' or 'allkeys-random'
+    enabled: "${CACHE_TS_LATEST_ENABLED:true}"
   specs:
     relations:
       timeToLiveInMinutes: "${CACHE_SPECS_RELATIONS_TTL:1440}" # Relations cache TTL
@@ -539,6 +543,9 @@ cache:
     attributes:
       timeToLiveInMinutes: "${CACHE_SPECS_ATTRIBUTES_TTL:1440}" # Attributes cache TTL
       maxSize: "${CACHE_SPECS_ATTRIBUTES_MAX_SIZE:100000}" # 0 means the cache is disabled
+    tsLatest:
+      timeToLiveInMinutes: "${CACHE_SPECS_TS_LATEST_TTL:1440}" # Timeseries latest cache TTL
+      maxSize: "${CACHE_SPECS_TS_LATEST_MAX_SIZE:100000}" # 0 means the cache is disabled
     userSessionsInvalidation:
       # The value of this TTL is ignored and replaced by the JWT refresh token expiration time
       timeToLiveInMinutes: "0"
