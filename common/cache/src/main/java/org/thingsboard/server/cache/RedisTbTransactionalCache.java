@@ -29,7 +29,6 @@ import org.springframework.data.redis.core.types.Expiration;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.thingsboard.server.common.data.FstStatsService;
-import redis.clients.jedis.Connection;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.util.JedisClusterCRC16;
@@ -79,7 +78,7 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
     public TbCacheValueWrapper<V> get(K key) {
         try (var connection = connectionFactory.getConnection()) {
             byte[] rawKey = getRawKey(key);
-            byte[] rawValue = connection.get(rawKey);
+            byte[] rawValue = connection.stringCommands().get(rawKey);
             if (rawValue == null) {
                 return null;
             } else if (Arrays.equals(rawValue, BINARY_NULL_VALUE)) {
@@ -113,7 +112,7 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
     @Override
     public void evict(K key) {
         try (var connection = connectionFactory.getConnection()) {
-            connection.del(getRawKey(key));
+            connection.keyCommands().del(getRawKey(key));
         }
     }
 
@@ -124,7 +123,7 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
             return;
         }
         try (var connection = connectionFactory.getConnection()) {
-            connection.del(keys.stream().map(this::getRawKey).toArray(byte[][]::new));
+            connection.keyCommands().del(keys.stream().map(this::getRawKey).toArray(byte[][]::new));
         }
     }
 
@@ -132,10 +131,10 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
     public void evictOrPut(K key, V value) {
         try (var connection = connectionFactory.getConnection()) {
             var rawKey = getRawKey(key);
-            var records = connection.del(rawKey);
+            var records = connection.keyCommands().del(rawKey);
             if (records == null || records == 0) {
                 //We need to put the value in case of Redis, because evict will NOT cancel concurrent transaction used to "get" the missing value from cache.
-                connection.set(rawKey, getRawValue(value), evictExpiration, RedisStringCommands.SetOption.UPSERT);
+                connection.stringCommands().set(rawKey, getRawValue(value), evictExpiration, RedisStringCommands.SetOption.UPSERT);
             }
         }
     }
@@ -153,7 +152,7 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
         return new RedisTbCacheTransaction<>(this, connection);
     }
 
-    private RedisConnection getConnection(byte[] rawKey) {
+    protected RedisConnection getConnection(byte[] rawKey) {
         if (!connectionFactory.isRedisClusterAware()) {
             return connectionFactory.getConnection();
         }
@@ -168,7 +167,7 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
         return jedisConnection;
     }
 
-    private RedisConnection watch(byte[][] rawKeysList) {
+    protected RedisConnection watch(byte[][] rawKeysList) {
         RedisConnection connection = getConnection(rawKeysList[0]);
         try {
             connection.watch(rawKeysList);
@@ -180,7 +179,7 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
         return connection;
     }
 
-    private byte[] getRawKey(K key) {
+    protected byte[] getRawKey(K key) {
         String keyString = cacheName + key.toString();
         byte[] rawKey;
         try {
@@ -196,7 +195,7 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
         return rawKey;
     }
 
-    private byte[] getRawValue(V value) {
+    protected byte[] getRawValue(V value) {
         if (value == null) {
             return BINARY_NULL_VALUE;
         } else {
@@ -216,7 +215,7 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
     public void put(RedisConnection connection, K key, V value, RedisStringCommands.SetOption setOption) {
         byte[] rawKey = getRawKey(key);
         byte[] rawValue = getRawValue(value);
-        connection.set(rawKey, rawValue, cacheTtl, setOption);
+        connection.stringCommands().set(rawKey, rawValue, cacheTtl, setOption);
     }
 
 }
