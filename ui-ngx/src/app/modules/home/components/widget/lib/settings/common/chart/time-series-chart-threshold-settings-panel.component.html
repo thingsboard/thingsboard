@@ -98,10 +98,10 @@
           <input matInput type="number" formControlName="lineWidth" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}"/>
         </mat-form-field>
       </div>
-      <div class="tb-form-row space-between column-xs">
+      <div class="tb-form-row column-xs">
         <div translate>widgets.time-series-chart.threshold.start-symbol</div>
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-          <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+        <div class="tb-flex row flex-end">
+          <mat-form-field class="medium-width" fxFlex.lt-md appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="startSymbol">
               <mat-option *ngFor="let shape of echartsShapes" [value]="shape">
                 {{ echartsShapeTranslations.get(shape) | translate }}
@@ -109,16 +109,16 @@
             </mat-select>
           </mat-form-field>
           <div class="tb-small-label" translate>widgets.time-series-chart.threshold.symbol-size</div>
-          <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
+          <mat-form-field appearance="outline" class="number fixed-width" subscriptSizing="dynamic">
             <input matInput formControlName="startSymbolSize"
                    type="number" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
         </div>
       </div>
-      <div class="tb-form-row space-between column-xs">
+      <div class="tb-form-row column-xs">
         <div translate>widgets.time-series-chart.threshold.end-symbol</div>
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-          <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+        <div class="tb-flex row flex-end">
+          <mat-form-field class="medium-width" fxFlex.lt-md appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="endSymbol">
               <mat-option *ngFor="let shape of echartsShapes" [value]="shape">
                 {{ echartsShapeTranslations.get(shape) | translate }}
@@ -126,7 +126,7 @@
             </mat-select>
           </mat-form-field>
           <div class="tb-small-label" translate>widgets.time-series-chart.threshold.symbol-size</div>
-          <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
+          <mat-form-field appearance="outline" class="number fixed-width" subscriptSizing="dynamic">
             <input matInput formControlName="endSymbolSize"
                    type="number" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
