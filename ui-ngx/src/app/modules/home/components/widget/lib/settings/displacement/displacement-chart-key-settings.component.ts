@@ -28,7 +28,8 @@ import {
 } from "@angular/forms";
 import { AppState } from "@app/core/core.state";
 import { WidgetConfigComponentData } from "@app/modules/home/models/widget-component.models";
-import { PageComponent } from "@app/shared/public-api";
+import { DataKey, PageComponent } from "@app/shared/public-api";
+import { EmitService } from "@app/shared/services/emit";
 import { Store } from "@ngrx/store";
 import { TranslateService } from "@ngx-translate/core";
 
@@ -90,14 +91,15 @@ export class DisplacementChartKeySettingsComponent extends PageComponent impleme
   widgetConfig: WidgetConfigComponentData;
   
   private modelValue: any;
-
   private propagateChange = null;
+  private dataKeysSubscription: any;
   
   public displacementSettingsFormGroup: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private emitService: EmitService) {
     super(store);
   }
 
@@ -145,6 +147,18 @@ export class DisplacementChartKeySettingsComponent extends PageComponent impleme
     });
 
     this.updateValidators(false);
+
+    this.dataKeysSubscription = this.emitService.dataKeysEmitter.subscribe((keys) => {
+      this.updateBaseline(keys);
+      this.updatePosition(keys);
+      this.updateModel();
+    });
+  }
+
+  ngOnDestroy() {
+    if (this.dataKeysSubscription) {
+      this.dataKeysSubscription.unsubscribe();
+    }
   }
 
   dataKeys(): string[] {
@@ -178,7 +192,6 @@ export class DisplacementChartKeySettingsComponent extends PageComponent impleme
       color: [null, [Validators.required]],
     });
     layersArray.push(layerGroup);
-    this.displacementSettingsFormGroup.updateValueAndValidity();
   }
 
   addThreshold() {
@@ -189,7 +202,6 @@ export class DisplacementChartKeySettingsComponent extends PageComponent impleme
       color: [null, [Validators.required]],
     });
     thresholdsArray.push(thresholdControl);
-    this.displacementSettingsFormGroup.updateValueAndValidity();
   }
 
   removeLayer(index: number) {
@@ -200,6 +212,45 @@ export class DisplacementChartKeySettingsComponent extends PageComponent impleme
   removeThreshold(index: number) {
     const thresholdsArray = this.displacementSettingsFormGroup.get('thresholds') as UntypedFormArray;
     thresholdsArray.removeAt(index);
+  }
+
+  updateBaseline(keys: DataKey[]) {
+    const baselineArray = this.baselineArray.controls.map((c) => c.getRawValue());
+    this.baselineArray.clear();
+    keys.forEach((key) => {
+      const matchedGroup = baselineArray.find((e) => e.key === key.name);
+      if (matchedGroup) {
+        this.baselineArray.push(this.fb.group({
+          key: [key.name, [Validators.required]],
+          value: [matchedGroup.value, [Validators.required]],
+        }), {emitEvent: false});
+      } else {
+        this.baselineArray.push(this.fb.group({
+          key: [key.name, [Validators.required]],
+          value: [null, [Validators.required]],
+        }), {emitEvent: false});
+      }
+    });
+  }
+
+  updatePosition(keys: DataKey[]) {
+    const positionArray = this.positionArray.controls.map((c) => c.getRawValue());
+    console.log(positionArray)
+    this.positionArray.clear();
+    keys.forEach((key) => {
+      const matchedGroup = positionArray.find((e) => e.key === key.name);
+      if (matchedGroup) {
+        this.positionArray.push(this.fb.group({
+          key: [key.name, [Validators.required]],
+          depth: [matchedGroup.depth, [Validators.required]],
+        }), {emitEvent: false});
+      } else {
+        this.positionArray.push(this.fb.group({
+          key: [key.name, [Validators.required]],
+          depth: [null, [Validators.required]],
+        }), {emitEvent: false});
+      }
+    });
   }
 
   registerOnChange(fn: any): void {
