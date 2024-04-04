@@ -17,10 +17,9 @@ package org.thingsboard.rule.engine.action;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -36,6 +35,8 @@ import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.EnumSet;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
@@ -45,7 +46,7 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
 @Slf4j
 public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerActionNodeConfiguration> implements TbNode {
 
-    private final ConcurrentMap<CustomerCreationLock, Object> customerCreationLocks = new ConcurrentReferenceHashMap<>();
+    private ConcurrentMap<CustomerCreationLock, Object> customerCreationLocks;
 
     private static final Set<EntityType> supportedEntityTypes = EnumSet.of(EntityType.ASSET, EntityType.DEVICE,
             EntityType.ENTITY_VIEW, EntityType.DASHBOARD, EntityType.EDGE);
@@ -57,6 +58,9 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = loadCustomerNodeActionConfig(configuration);
+        if (createCustomerIfNotExists()) {
+            customerCreationLocks = new ConcurrentReferenceHashMap<>();
+        }
     }
 
     protected abstract boolean createCustomerIfNotExists();
@@ -79,13 +83,17 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
     protected ListenableFuture<CustomerId> getCustomerIdFuture(TbContext ctx, TbMsg msg) {
         var tenantId = ctx.getTenantId();
         var customerTitle = TbNodeUtils.processPattern(this.config.getCustomerNamePattern(), msg);
+        ListenableFuture<Optional<Customer>> customerByTitleFuture = findCustomerByTitleAsync(ctx, customerTitle);
         if (createCustomerIfNotExists()) {
-            var customerCreationLock = new CustomerCreationLock(tenantId, customerTitle);
-            synchronized (customerCreationLocks.computeIfAbsent(customerCreationLock, k -> new Object())) {
-                return ctx.getDbCallbackExecutor().submit(() -> {
-                    var customerOptional = ctx.getCustomerService().findCustomerByTenantIdAndTitle(tenantId, customerTitle);
-                    if (customerOptional.isPresent()) {
-                        return customerOptional.get().getId();
+            return Futures.transform(customerByTitleFuture, customerOpt -> {
+                if (customerOpt.isPresent()) {
+                    return customerOpt.get().getId();
+                }
+                var customerCreationLock = new CustomerCreationLock(tenantId, customerTitle);
+                synchronized (customerCreationLocks.computeIfAbsent(customerCreationLock, k -> new Object())) {
+                    customerOpt = ctx.getCustomerService().findCustomerByTenantIdAndTitle(tenantId, customerTitle);
+                    if (customerOpt.isPresent()) {
+                        return customerOpt.get().getId();
                     }
                     var newCustomer = new Customer();
                     newCustomer.setTitle(customerTitle);
@@ -95,16 +103,20 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
                             () -> log.trace("Pushed Customer Created message: {}", savedCustomer),
                             throwable -> log.warn("Failed to push Customer Created message: {}", savedCustomer, throwable));
                     return savedCustomer.getId();
-                });
-            }
+                }
+            }, MoreExecutors.directExecutor());
         }
-        return ctx.getDbCallbackExecutor().submit(() -> {
-            var customerOptional = ctx.getCustomerService().findCustomerByTenantIdAndTitle(tenantId, customerTitle);
-            if (customerOptional.isPresent()) {
-                return customerOptional.get().getId();
+        return Futures.transform(customerByTitleFuture, customerOpt -> {
+            if (customerOpt.isEmpty()) {
+                throw new NoSuchElementException("Customer with title '" + customerTitle + "' doesn't exist!");
             }
-            throw new RuntimeException("No customer found with name '" + customerTitle + "'.");
-        });
+            return customerOpt.get().getId();
+        }, MoreExecutors.directExecutor());
+    }
+
+    ListenableFuture<Optional<Customer>> findCustomerByTitleAsync(TbContext ctx, String customerTitle) {
+        return ctx.getDbCallbackExecutor().executeAsync(() ->
+                ctx.getCustomerService().findCustomerByTenantIdAndTitle(ctx.getTenantId(), customerTitle));
     }
 
     private static String unsupportedOriginatorTypeErrorMessage(EntityType originatorType) {
@@ -116,7 +128,7 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
     public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) {
         boolean hasChanges = false;
         switch (fromVersion) {
-            case 0: {
+            case 0 -> {
                 if (oldConfiguration.has("customerCacheExpiration")) {
                     ((ObjectNode) oldConfiguration).remove("customerCacheExpiration");
                     hasChanges = true;
@@ -126,11 +138,7 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
         return new TbPair<>(hasChanges, oldConfiguration);
     }
 
-    @Data
-    @RequiredArgsConstructor
-    private static class CustomerCreationLock {
-        private final TenantId tenantId;
-        private final String customerTitle;
+    private record CustomerCreationLock(TenantId tenantId, String customerTitle) {
     }
 
 }

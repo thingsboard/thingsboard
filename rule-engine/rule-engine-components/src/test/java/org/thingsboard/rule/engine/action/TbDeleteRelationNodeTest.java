@@ -213,9 +213,27 @@ public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         var md = getMetadataWithNameTemplate();
         var msg = getTbMsg(originatorId, md);
 
-        // WHEN-THEN
-        assertThatThrownBy(() -> node.onMsg(ctxMock, msg))
-                .isInstanceOf(RuntimeException.class).hasCauseInstanceOf(NoSuchElementException.class);
+        // todo fix TestDbCallbackExecutor exception handling.
+        switch (entityType) {
+            case CUSTOMER -> {
+                node.onMsg(ctxMock, msg);
+                ArgumentCaptor<Throwable> throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
+                verify(ctxMock).tellFailure(eq(msg), throwableCaptor.capture());
+                assertThat(throwableCaptor.getValue())
+                        .isInstanceOf(NoSuchElementException.class)
+                        .hasMessage(EntityType.CUSTOMER.getNormalName() + " with title 'EntityName' doesn't exist!");
+            }
+            case DEVICE, ASSET -> {
+                node.onMsg(ctxMock, msg);
+                ArgumentCaptor<Throwable> throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
+                verify(ctxMock).tellFailure(eq(msg), throwableCaptor.capture());
+                assertThat(throwableCaptor.getValue())
+                        .isInstanceOf(NoSuchElementException.class)
+                        .hasMessage(entityType.getNormalName() + " with name 'EntityName' doesn't exist!");
+            }
+            default -> assertThatThrownBy(() -> node.onMsg(ctxMock, msg))
+                    .isInstanceOf(RuntimeException.class).hasCauseInstanceOf(NoSuchElementException.class);
+        }
     }
 
     @ParameterizedTest

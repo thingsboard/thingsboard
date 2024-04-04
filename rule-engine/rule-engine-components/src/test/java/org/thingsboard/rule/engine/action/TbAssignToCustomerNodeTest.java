@@ -254,10 +254,13 @@ class TbAssignToCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
         when(customerServiceMock.findCustomerByTenantIdAndTitle(eq(TENANT_ID), eq(customerTitle))).thenReturn(Optional.empty());
 
         // WHEN
-        var exception = assertThrows(RuntimeException.class, () -> node.onMsg(ctxMock, msg));
+        node.onMsg(ctxMock, msg);
 
         // THEN
-        assertThat(exception.getCause().getMessage()).isEqualTo("No customer found with name '" + customerTitle + "'.");
+        ArgumentCaptor<Throwable> throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
+        verify(ctxMock).tellFailure(eq(msg), throwableCaptor.capture());
+        assertThat(throwableCaptor.getValue()).hasMessage("Customer with title '" + customerTitle + "' doesn't exist!");
+
         verifyNoMoreInteractions(customerServiceMock);
         verifyNoMoreInteractions(ctxMock);
     }

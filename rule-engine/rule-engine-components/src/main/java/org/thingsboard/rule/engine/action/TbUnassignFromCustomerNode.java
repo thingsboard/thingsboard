@@ -77,18 +77,13 @@ public class TbUnassignFromCustomerNode extends TbAbstractCustomerActionNode<TbU
         }
         return ctx.getDbCallbackExecutor().submit(() -> {
             switch (originatorType) {
-                case ASSET:
-                    ctx.getAssetService().unassignAssetFromCustomer(tenantId, new AssetId(originator.getId()));
-                    break;
-                case DEVICE:
-                    ctx.getDeviceService().unassignDeviceFromCustomer(tenantId, new DeviceId(originator.getId()));
-                    break;
-                case ENTITY_VIEW:
-                    ctx.getEntityViewService().unassignEntityViewFromCustomer(tenantId, new EntityViewId(originator.getId()));
-                    break;
-                case EDGE:
-                    ctx.getEdgeService().unassignEdgeFromCustomer(tenantId, new EdgeId(originator.getId()));
-                    break;
+                case ASSET ->
+                        ctx.getAssetService().unassignAssetFromCustomer(tenantId, new AssetId(originator.getId()));
+                case DEVICE ->
+                        ctx.getDeviceService().unassignDeviceFromCustomer(tenantId, new DeviceId(originator.getId()));
+                case ENTITY_VIEW ->
+                        ctx.getEntityViewService().unassignEntityViewFromCustomer(tenantId, new EntityViewId(originator.getId()));
+                case EDGE -> ctx.getEdgeService().unassignEdgeFromCustomer(tenantId, new EdgeId(originator.getId()));
             }
             return null;
         });

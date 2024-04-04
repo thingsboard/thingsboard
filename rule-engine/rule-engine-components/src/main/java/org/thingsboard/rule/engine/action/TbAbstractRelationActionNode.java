@@ -19,8 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -41,6 +40,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.EnumSet;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.Executor;
@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationActionNodeConfiguration> implements TbNode {
 
-    private final ConcurrentMap<EntityCreationLock, Object> entitiesCreationLocks = new ConcurrentReferenceHashMap<>();
+    private ConcurrentMap<EntityCreationLock, Object> entitiesCreationLocks;
 
     private static final Set<EntityType> supportedEntityTypes = EnumSet.of(EntityType.TENANT, EntityType.DEVICE,
             EntityType.ASSET, EntityType.CUSTOMER, EntityType.ENTITY_VIEW, EntityType.DASHBOARD, EntityType.EDGE, EntityType.USER);
@@ -61,6 +61,9 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = loadEntityNodeActionConfig(configuration);
+        if (createEntityIfNotExists()) {
+            entitiesCreationLocks = new ConcurrentReferenceHashMap<>();
+        }
     }
 
     protected abstract boolean createEntityIfNotExists();
@@ -80,13 +83,16 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
         var targetEntityName = processPattern(msg, config.getEntityNamePattern());
         boolean createEntityIfNotExists = createEntityIfNotExists();
         switch (entityType) {
-            case DEVICE:
-                var deviceService = ctx.getDeviceService();
+            case DEVICE -> {
+                ListenableFuture<Device> deviceByNameFuture = findDeviceByNameAsync(ctx, targetEntityName);
                 if (createEntityIfNotExists) {
-                    var entityCreationLock = new EntityCreationLock(tenantId, entityType, targetEntityName);
-                    synchronized (entitiesCreationLocks.computeIfAbsent(entityCreationLock, k -> new Object())) {
-                        return ctx.getDbCallbackExecutor().executeAsync(() -> {
-                            var device = deviceService.findDeviceByTenantIdAndName(tenantId, targetEntityName);
+                    return Futures.transform(deviceByNameFuture, device -> {
+                        if (device != null) {
+                            return device.getId();
+                        }
+                        var entityCreationLock = new EntityCreationLock(tenantId, entityType, targetEntityName);
+                        synchronized (entitiesCreationLocks.computeIfAbsent(entityCreationLock, k -> new Object())) {
+                            device = ctx.getDeviceService().findDeviceByTenantIdAndName(tenantId, targetEntityName);
                             if (device != null) {
                                 return device.getId();
                             }
@@ -95,29 +101,32 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                             newDevice.setName(targetEntityName);
                             newDevice.setType(deviceProfileName);
                             newDevice.setTenantId(tenantId);
-                            var savedDevice = deviceService.saveDevice(newDevice);
+                            var savedDevice = ctx.getDeviceService().saveDevice(newDevice);
                             ctx.getClusterService().onDeviceUpdated(savedDevice, null);
                             ctx.enqueue(ctx.deviceCreatedMsg(savedDevice, ctx.getSelfId()),
                                     () -> log.trace("Pushed Device Created message: {}", savedDevice),
                                     throwable -> log.warn("Failed to push Device Created message: {}", savedDevice, throwable));
                             return savedDevice.getId();
-                        });
-                    }
+                        }
+                    }, MoreExecutors.directExecutor());
                 }
-                return ctx.getDbCallbackExecutor().executeAsync(() -> {
-                    var device = deviceService.findDeviceByTenantIdAndName(tenantId, targetEntityName);
+                return Futures.transform(deviceByNameFuture, device -> {
                     if (device == null) {
                         throw new NoSuchElementException("Device with name '" + targetEntityName + "' doesn't exist!");
                     }
                     return device.getId();
-                });
-            case ASSET:
-                var assetService = ctx.getAssetService();
+                }, MoreExecutors.directExecutor());
+            }
+            case ASSET -> {
+                ListenableFuture<Asset> assetByNameFuture = findAssetByNameAsync(ctx, targetEntityName);
                 if (createEntityIfNotExists) {
-                    var entityCreationLock = new EntityCreationLock(tenantId, entityType, targetEntityName);
-                    synchronized (entitiesCreationLocks.computeIfAbsent(entityCreationLock, k -> new Object())) {
-                        return ctx.getDbCallbackExecutor().executeAsync(() -> {
-                            var asset = assetService.findAssetByTenantIdAndName(tenantId, targetEntityName);
+                    return Futures.transform(assetByNameFuture, asset -> {
+                        if (asset != null) {
+                            return asset.getId();
+                        }
+                        var entityCreationLock = new EntityCreationLock(tenantId, entityType, targetEntityName);
+                        synchronized (entitiesCreationLocks.computeIfAbsent(entityCreationLock, k -> new Object())) {
+                            asset = ctx.getAssetService().findAssetByTenantIdAndName(tenantId, targetEntityName);
                             if (asset != null) {
                                 return asset.getId();
                             }
@@ -126,50 +135,53 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                             newAsset.setName(targetEntityName);
                             newAsset.setType(assetProfileName);
                             newAsset.setTenantId(tenantId);
-                            var savedAsset = assetService.saveAsset(newAsset);
+                            var savedAsset = ctx.getAssetService().saveAsset(newAsset);
                             ctx.enqueue(ctx.assetCreatedMsg(savedAsset, ctx.getSelfId()),
                                     () -> log.trace("Pushed Asset Created message: {}", savedAsset),
                                     throwable -> log.warn("Failed to push Asset Created message: {}", savedAsset, throwable));
                             return savedAsset.getId();
-                        });
-                    }
+                        }
+                    }, MoreExecutors.directExecutor());
                 }
-                return ctx.getDbCallbackExecutor().executeAsync(() -> {
-                    var asset = assetService.findAssetByTenantIdAndName(tenantId, targetEntityName);
+                return Futures.transform(assetByNameFuture, asset -> {
                     if (asset == null) {
                         throw new NoSuchElementException("Asset with name '" + targetEntityName + "' doesn't exist!");
                     }
                     return asset.getId();
-                });
-            case CUSTOMER:
-                var customerService = ctx.getCustomerService();
+                }, MoreExecutors.directExecutor());
+            }
+            case CUSTOMER -> {
+                ListenableFuture<Optional<Customer>> customerByTitleFuture = findCustomerByTitleAsync(ctx, targetEntityName);
                 if (createEntityIfNotExists) {
-                    var entityCreationLock = new EntityCreationLock(tenantId, entityType, targetEntityName);
-                    synchronized (entitiesCreationLocks.computeIfAbsent(entityCreationLock, k -> new Object())) {
-                        return ctx.getDbCallbackExecutor().executeAsync(() -> {
-                            var customerOpt = customerService.findCustomerByTenantIdAndTitle(tenantId, targetEntityName);
+                    return Futures.transform(customerByTitleFuture, customerOpt -> {
+                        if (customerOpt.isPresent()) {
+                            return customerOpt.get().getId();
+                        }
+                        var entityCreationLock = new EntityCreationLock(tenantId, entityType, targetEntityName);
+                        synchronized (entitiesCreationLocks.computeIfAbsent(entityCreationLock, k -> new Object())) {
+                            customerOpt = ctx.getCustomerService().findCustomerByTenantIdAndTitle(tenantId, targetEntityName);
                             if (customerOpt.isPresent()) {
                                 return customerOpt.get().getId();
                             }
                             var newCustomer = new Customer();
                             newCustomer.setTitle(targetEntityName);
                             newCustomer.setTenantId(tenantId);
-                            var savedCustomer = customerService.saveCustomer(newCustomer);
+                            var savedCustomer = ctx.getCustomerService().saveCustomer(newCustomer);
                             ctx.enqueue(ctx.customerCreatedMsg(savedCustomer, ctx.getSelfId()),
                                     () -> log.trace("Pushed Customer Created message: {}", savedCustomer),
                                     throwable -> log.warn("Failed to push Customer Created message: {}", savedCustomer, throwable));
                             return savedCustomer.getId();
-                        });
-                    }
+                        }
+                    }, MoreExecutors.directExecutor());
                 }
-                return ctx.getDbCallbackExecutor().executeAsync(() -> {
-                    var customerOpt = customerService.findCustomerByTenantIdAndTitle(tenantId, targetEntityName);
+                return Futures.transform(customerByTitleFuture, customerOpt -> {
                     if (customerOpt.isEmpty()) {
                         throw new NoSuchElementException("Customer with title '" + targetEntityName + "' doesn't exist!");
                     }
                     return customerOpt.get().getId();
-                });
-            case ENTITY_VIEW:
+                }, MoreExecutors.directExecutor());
+            }
+            case ENTITY_VIEW -> {
                 return ctx.getDbCallbackExecutor().executeAsync(() -> {
                     var entityViewService = ctx.getEntityViewService();
                     var entityView = entityViewService.findEntityViewByTenantIdAndName(tenantId, targetEntityName);
@@ -178,7 +190,8 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                     }
                     throw new NoSuchElementException("EntityView with name '" + targetEntityName + "' doesn't exist!");
                 });
-            case EDGE:
+            }
+            case EDGE -> {
                 return ctx.getDbCallbackExecutor().executeAsync(() -> {
                     var edgeService = ctx.getEdgeService();
                     var edge = edgeService.findEdgeByTenantIdAndName(tenantId, targetEntityName);
@@ -187,7 +200,8 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                     }
                     throw new NoSuchElementException("Edge with name '" + targetEntityName + "' doesn't exist!");
                 });
-            case DASHBOARD:
+            }
+            case DASHBOARD -> {
                 return ctx.getDbCallbackExecutor().executeAsync(() -> {
                     var dashboardService = ctx.getDashboardService();
                     var dashboardInfo = dashboardService.findFirstDashboardInfoByTenantIdAndName(tenantId, targetEntityName);
@@ -196,7 +210,8 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                     }
                     throw new NoSuchElementException("Dashboard with title '" + targetEntityName + "' doesn't exist!");
                 });
-            case USER:
+            }
+            case USER -> {
                 return ctx.getDbCallbackExecutor().executeAsync(() -> {
                     var userService = ctx.getUserService();
                     var user = userService.findUserByTenantIdAndEmail(tenantId, targetEntityName);
@@ -205,9 +220,24 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                     }
                     throw new NoSuchElementException("User with email '" + targetEntityName + "' doesn't exist!");
                 });
-            default:
-                throw new IllegalArgumentException(unsupportedEntityTypeErrorMessage(entityType));
+            }
+            default -> throw new IllegalArgumentException(unsupportedEntityTypeErrorMessage(entityType));
         }
+    }
+
+    ListenableFuture<Device> findDeviceByNameAsync(TbContext ctx, String deviceName) {
+        return ctx.getDbCallbackExecutor().executeAsync(() ->
+                ctx.getDeviceService().findDeviceByTenantIdAndName(ctx.getTenantId(), deviceName));
+    }
+
+    ListenableFuture<Asset> findAssetByNameAsync(TbContext ctx, String assetName) {
+        return ctx.getDbCallbackExecutor().executeAsync(() ->
+                ctx.getAssetService().findAssetByTenantIdAndName(ctx.getTenantId(), assetName));
+    }
+
+    ListenableFuture<Optional<Customer>> findCustomerByTitleAsync(TbContext ctx, String customerTitle) {
+        return ctx.getDbCallbackExecutor().executeAsync(() ->
+                ctx.getCustomerService().findCustomerByTenantIdAndTitle(ctx.getTenantId(), customerTitle));
     }
 
     protected ListenableFuture<Boolean> deleteRelationsByTypeAndDirection(TbContext ctx, TbMsg msg, Executor executor) {
@@ -250,7 +280,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
         boolean hasChanges = false;
         var config = (ObjectNode) oldConfiguration;
         switch (fromVersion) {
-            case 0: {
+            case 0 -> {
                 if (!config.has("entityCacheExpiration")) {
                     break;
                 }
@@ -277,12 +307,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
         return new TbPair<>(hasChanges, config);
     }
 
-    @Data
-    @RequiredArgsConstructor
-    private static class EntityCreationLock {
-        private final TenantId tenantId;
-        private final EntityType entityType;
-        private final String entityName;
+    private record EntityCreationLock(TenantId tenantId, EntityType entityType, String entityName) {
     }
 
 }

@@ -64,21 +64,16 @@ public class TbAssignToCustomerNode extends TbAbstractCustomerActionNode<TbAssig
                 ctx.getDbCallbackExecutor().submit(() -> {
                     var originator = msg.getOriginator();
                     switch (originator.getEntityType()) {
-                        case ASSET:
-                            ctx.getAssetService().assignAssetToCustomer(ctx.getTenantId(), new AssetId(originator.getId()), customerId);
-                            break;
-                        case DEVICE:
-                            ctx.getDeviceService().assignDeviceToCustomer(ctx.getTenantId(), new DeviceId(originator.getId()), customerId);
-                            break;
-                        case ENTITY_VIEW:
-                            ctx.getEntityViewService().assignEntityViewToCustomer(ctx.getTenantId(), new EntityViewId(originator.getId()), customerId);
-                            break;
-                        case EDGE:
-                            ctx.getEdgeService().assignEdgeToCustomer(ctx.getTenantId(), new EdgeId(originator.getId()), customerId);
-                            break;
-                        case DASHBOARD:
-                            ctx.getDashboardService().assignDashboardToCustomer(ctx.getTenantId(), new DashboardId(originator.getId()), customerId);
-                            break;
+                        case ASSET ->
+                                ctx.getAssetService().assignAssetToCustomer(ctx.getTenantId(), new AssetId(originator.getId()), customerId);
+                        case DEVICE ->
+                                ctx.getDeviceService().assignDeviceToCustomer(ctx.getTenantId(), new DeviceId(originator.getId()), customerId);
+                        case ENTITY_VIEW ->
+                                ctx.getEntityViewService().assignEntityViewToCustomer(ctx.getTenantId(), new EntityViewId(originator.getId()), customerId);
+                        case EDGE ->
+                                ctx.getEdgeService().assignEdgeToCustomer(ctx.getTenantId(), new EdgeId(originator.getId()), customerId);
+                        case DASHBOARD ->
+                                ctx.getDashboardService().assignDashboardToCustomer(ctx.getTenantId(), new DashboardId(originator.getId()), customerId);
                     }
                     return null;
                 }), MoreExecutors.directExecutor());

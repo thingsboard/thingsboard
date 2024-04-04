@@ -226,9 +226,27 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         var md = getMetadataWithNameTemplate();
         var msg = getTbMsg(originatorId, md);
 
-        // WHEN-THEN
-        assertThatThrownBy(() -> node.onMsg(ctxMock, msg))
-                .isInstanceOf(RuntimeException.class).hasCauseInstanceOf(NoSuchElementException.class);
+        // todo fix TestDbCallbackExecutor exception handling.
+        switch (entityType) {
+            case CUSTOMER -> {
+                node.onMsg(ctxMock, msg);
+                ArgumentCaptor<Throwable> throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
+                verify(ctxMock).tellFailure(eq(msg), throwableCaptor.capture());
+                assertThat(throwableCaptor.getValue())
+                        .isInstanceOf(NoSuchElementException.class)
+                        .hasMessage(EntityType.CUSTOMER.getNormalName() + " with title 'EntityName' doesn't exist!");
+            }
+            case DEVICE, ASSET -> {
+                node.onMsg(ctxMock, msg);
+                ArgumentCaptor<Throwable> throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
+                verify(ctxMock).tellFailure(eq(msg), throwableCaptor.capture());
+                assertThat(throwableCaptor.getValue())
+                        .isInstanceOf(NoSuchElementException.class)
+                        .hasMessage(entityType.getNormalName() + " with name 'EntityName' doesn't exist!");
+            }
+            default -> assertThatThrownBy(() -> node.onMsg(ctxMock, msg))
+                    .isInstanceOf(RuntimeException.class).hasCauseInstanceOf(NoSuchElementException.class);
+        }
     }
 
     @ParameterizedTest
@@ -593,20 +611,20 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         return Map.of(
                 EntityType.DEVICE, (hasId, entityCreatedMsg) -> {
                     var device = (Device) hasId;
-                    verify(deviceServiceMock).findDeviceByTenantIdAndName(eq(tenantId), eq("EntityName"));
+                    verify(deviceServiceMock, times(2)).findDeviceByTenantIdAndName(eq(tenantId), eq("EntityName"));
                     verify(deviceServiceMock).saveDevice(any());
                     verify(clusterServiceMock).onDeviceUpdated(eq(device), eq(null));
                     verify(ctxMock).enqueue(eq(entityCreatedMsg), any(), any());
                     verifyNoMoreInteractions(deviceServiceMock, clusterServiceMock);
                 },
                 EntityType.ASSET, (hasId, entityCreatedMsg) -> {
-                    verify(assetServiceMock).findAssetByTenantIdAndName(eq(tenantId), eq("EntityName"));
+                    verify(assetServiceMock, times(2)).findAssetByTenantIdAndName(eq(tenantId), eq("EntityName"));
                     verify(assetServiceMock).saveAsset(any());
                     verify(ctxMock).enqueue(eq(entityCreatedMsg), any(), any());
                     verifyNoMoreInteractions(assetServiceMock);
                 },
                 EntityType.CUSTOMER, (hasId, entityCreatedMsg) -> {
-                    verify(customerServiceMock).findCustomerByTenantIdAndTitle(eq(tenantId), eq("EntityName"));
+                    verify(customerServiceMock, times(2)).findCustomerByTenantIdAndTitle(eq(tenantId), eq("EntityName"));
                     verify(customerServiceMock).saveCustomer(any());
                     verify(ctxMock).enqueue(eq(entityCreatedMsg), any(), any());
                     verifyNoMoreInteractions(customerServiceMock);
