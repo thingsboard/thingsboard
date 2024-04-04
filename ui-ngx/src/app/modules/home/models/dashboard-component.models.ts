@@ -26,7 +26,7 @@ import {
 import { WidgetLayout, WidgetLayouts } from '@app/shared/models/dashboard.models';
 import { IDashboardWidget, WidgetAction, WidgetContext, WidgetHeaderAction } from './widget-component.models';
 import { Timewindow } from '@shared/models/time/time.models';
-import { Observable, of, Subject } from 'rxjs';
+import { Observable, of, Subject, tap } from 'rxjs';
 import {
   convertKeysToCamelCase,
   formattedDataFormDatasourceData,
@@ -440,7 +440,8 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
 
     const title = isDefined(this.widgetContext.widgetTitle)
       && this.widgetContext.widgetTitle.length ? this.widgetContext.widgetTitle : this.widget.config.title;
-    this.title$ = this.widgetContext.registerLabelPattern(title, this.title$);
+    this.title$ = this.widgetContext.registerLabelPattern(title, this.title$).pipe(
+      tap(value => this.widget.config.titleByPattern = value));
     this.titleTooltip = isDefined(this.widgetContext.widgetTitleTooltip)
       && this.widgetContext.widgetTitleTooltip.length ? this.widgetContext.widgetTitleTooltip : this.widget.config.titleTooltip;
     this.titleTooltip = this.dashboard.utils.customTranslation(this.titleTooltip, this.titleTooltip);

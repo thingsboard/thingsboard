@@ -200,7 +200,7 @@ export class ImportExportService {
 
   public exportWidget(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget) {
     const widgetItem = this.itembuffer.prepareWidgetItem(dashboard, sourceState, sourceLayout, widget);
-    let name = widgetItem.widget.config.title;
+    let name = widgetItem.widget.config.titleByPattern;
     name = name.toLowerCase().replace(/\W/g, '_');
     this.exportToPc(this.prepareExport(widgetItem), name);
   }
