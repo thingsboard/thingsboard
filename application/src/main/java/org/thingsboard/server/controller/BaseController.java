@@ -506,7 +506,7 @@ public abstract class BaseController {
 
     TenantProfile checkTenantProfileId(TenantProfileId tenantProfileId, Operation operation) throws ThingsboardException {
         try {
-            validateId(tenantProfileId, "Incorrect tenantProfileId " + tenantProfileId);
+            validateId(tenantProfileId, id -> "Incorrect tenantProfileId " + id);
             TenantProfile tenantProfile = tenantProfileService.findTenantProfileById(getTenantId(), tenantProfileId);
             checkNotNull(tenantProfile, "Tenant profile with id [" + tenantProfileId + "] is not found");
             accessControlService.checkPermission(getCurrentUser(), Resource.TENANT_PROFILE, operation);
@@ -541,7 +541,7 @@ public abstract class BaseController {
             if (entityId == null) {
                 throw new ThingsboardException("Parameter entityId can't be empty!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
             }
-            validateId(entityId.getId(), "Incorrect entityId " + entityId);
+            validateId(entityId.getId(), id -> "Incorrect entityId " + id);
             switch (entityId.getEntityType()) {
                 case ALARM:
                     checkAlarmId(new AlarmId(entityId.getId()), operation);
@@ -668,7 +668,7 @@ public abstract class BaseController {
 
     AlarmComment checkAlarmCommentId(AlarmCommentId alarmCommentId, AlarmId alarmId) throws ThingsboardException {
         try {
-            validateId(alarmCommentId, "Incorrect alarmCommentId " + alarmCommentId);
+            validateId(alarmCommentId, id -> "Incorrect alarmCommentId " + id);
             AlarmComment alarmComment = alarmCommentService.findAlarmCommentByIdAsync(getCurrentUser().getTenantId(), alarmCommentId).get();
             checkNotNull(alarmComment, "Alarm comment with id [" + alarmCommentId + "] is not found");
             if (!alarmId.equals(alarmComment.getAlarmId())) {
@@ -736,7 +736,7 @@ public abstract class BaseController {
     }
 
     protected RuleNode checkRuleNode(RuleNodeId ruleNodeId, Operation operation) throws ThingsboardException {
-        validateId(ruleNodeId, "Incorrect ruleNodeId " + ruleNodeId);
+        validateId(ruleNodeId, id -> "Incorrect ruleNodeId " + id);
         RuleNode ruleNode = ruleChainService.findRuleNodeById(getTenantId(), ruleNodeId);
         checkNotNull(ruleNode, "Rule node with id [" + ruleNodeId + "] is not found");
         checkRuleChain(ruleNode.getRuleChainId(), operation);
