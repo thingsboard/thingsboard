@@ -98,6 +98,7 @@ import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.thingsboard.server.common.data.query.EntityKeyType.ATTRIBUTE;
 import static org.thingsboard.server.common.data.query.EntityKeyType.ENTITY_FIELD;
 
 @Slf4j
@@ -2114,37 +2115,40 @@ public class EntityServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testFindEntityQueryWith_3000_pageSize() throws InterruptedException {
+    public void testFindEntityQuery_for_5000_devices_with_3000_pageSize() {
         int pageSize = 3000;
+        int expectedDevicesSize = 4000;
+        int unexpectedDevicesSize = 1000;
 
-        List<Device> devices = new ArrayList<>();
-
-        for (int i = 0; i < pageSize; i++) {
+        for (int i = 0; i < expectedDevicesSize + unexpectedDevicesSize; i++) {
             Device device = new Device();
             device.setTenantId(tenantId);
-            device.setName("Device_" + i);
+            if (i < expectedDevicesSize) {
+                device.setName("Device_" + i); // match deviceNameFilter 'D%'
+            } else {
+                device.setName("Test_" + i); // does not match deviceNameFilter 'D%'
+            }
             device.setType("default");
             device.setLabel("testLabel" + (int) (Math.random() * 1000));
-            devices.add(deviceService.saveDevice(device));
-            //TO make sure devices have different created time
-            Thread.sleep(1);
+            Device savedDevice = deviceService.saveDevice(device);
+
+            attributesService.save(tenantId, savedDevice.getId(), AttributeScope.CLIENT_SCOPE,
+                    new BaseAttributeKvEntry(System.currentTimeMillis(), new LongDataEntry("telemetry", (long) i)));
         }
 
         DeviceTypeFilter filter = new DeviceTypeFilter();
         filter.setDeviceTypes(List.of("default"));
         filter.setDeviceNameFilter("D%");
 
-        EntityDataSortOrder sortOrder = new EntityDataSortOrder(new EntityKey(ENTITY_FIELD, "name"), EntityDataSortOrder.Direction.DESC);
+        EntityDataSortOrder sortOrder = new EntityDataSortOrder(new EntityKey(ATTRIBUTE, "telemetry"), EntityDataSortOrder.Direction.DESC);
 
         List<KeyFilter> deviceTypeFilters = createStringKeyFilters("type", ENTITY_FIELD, StringFilterPredicate.StringOperation.EQUAL, "default");
 
-        KeyFilter createdTimeFilter = createNumericKeyFilter("createdTime", ENTITY_FIELD, NumericFilterPredicate.NumericOperation.GREATER, 1L);
-        List<KeyFilter> createdTimeFilters = Collections.singletonList(createdTimeFilter);
+        List<KeyFilter> attributeFilters = Collections.singletonList(createNumericKeyFilter("telemetry", ATTRIBUTE, NumericFilterPredicate.NumericOperation.LESS, expectedDevicesSize));
 
         List<KeyFilter> nameFilters = createStringKeyFilters("name", ENTITY_FIELD, StringFilterPredicate.StringOperation.CONTAINS, "Device");
 
-        List<EntityKey> entityFields = Arrays.asList(new EntityKey(ENTITY_FIELD, "name"),
-                new EntityKey(ENTITY_FIELD, "type"));
+        List<EntityKey> entityFields = Arrays.asList(new EntityKey(ENTITY_FIELD, "name"), new EntityKey(ENTITY_FIELD, "type"));
 
         // 1. Device type filters:
 
@@ -2158,11 +2162,14 @@ public class EntityServiceTest extends AbstractServiceTest {
         EntityDataQuery optimizedQuery = new EntityDataQuery(filter, optimizedPageLink, entityFields, null, deviceTypeFilters);
         PageData<EntityData> optimizedData = entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), optimizedQuery);
         List<EntityData> loadedEntities = getLoadedEntities(optimizedData, optimizedQuery);
-        Assert.assertEquals(devices.size(), loadedEntities.size());
+        Assert.assertEquals(expectedDevicesSize, loadedEntities.size());
+        loadedEntities = getLoadedEntities(originalData, originalQuery);
+        Assert.assertEquals(expectedDevicesSize, loadedEntities.size());
+        Assert.assertEquals(pageSize, optimizedData.getData().size());
 
-        for (int i = 0; i < devices.size(); i++) {
-            var originalElement = originalData.getData().get(i);
-            var optimizedElement = optimizedData.getData().get(i);
+        for (int i = 0; i < pageSize; i++) {
+            EntityData originalElement = originalData.getData().get(i);
+            EntityData optimizedElement = optimizedData.getData().get(i);
             Assert.assertEquals(originalElement.getEntityId(), optimizedElement.getEntityId());
             originalElement.getLatest().get(ENTITY_FIELD).forEach((key, value) -> {
                 Assert.assertEquals(value.getValue(), optimizedElement.getLatest().get(EntityKeyType.ENTITY_FIELD).get(key).getValue());
@@ -2176,19 +2183,22 @@ public class EntityServiceTest extends AbstractServiceTest {
 
         // query with textSearch - optimization is not performing
         originalPageLink = new EntityDataPageLink(pageSize, 0, "Device", sortOrder);
-        originalQuery = new EntityDataQuery(filter, originalPageLink, entityFields, null, createdTimeFilters);
+        originalQuery = new EntityDataQuery(filter, originalPageLink, entityFields, null, attributeFilters);
         originalData = entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), originalQuery);
 
         // query without textSearch - optimization is performing
         optimizedPageLink = new EntityDataPageLink(pageSize, 0, null, sortOrder);
-        optimizedQuery = new EntityDataQuery(filter, optimizedPageLink, entityFields, null, createdTimeFilters);
+        optimizedQuery = new EntityDataQuery(filter, optimizedPageLink, entityFields, null, attributeFilters);
         optimizedData = entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), optimizedQuery);
         loadedEntities = getLoadedEntities(optimizedData, optimizedQuery);
-        Assert.assertEquals(devices.size(), loadedEntities.size());
+        Assert.assertEquals(expectedDevicesSize, loadedEntities.size());
+        loadedEntities = getLoadedEntities(originalData, originalQuery);
+        Assert.assertEquals(expectedDevicesSize, loadedEntities.size());
+        Assert.assertEquals(pageSize, optimizedData.getData().size());
 
-        for (int i = 0; i < devices.size(); i++) {
-            var originalElement = originalData.getData().get(i);
-            var optimizedElement = optimizedData.getData().get(i);
+        for (int i = 0; i < pageSize; i++) {
+            EntityData originalElement = originalData.getData().get(i);
+            EntityData optimizedElement = optimizedData.getData().get(i);
             Assert.assertEquals(originalElement.getEntityId(), optimizedElement.getEntityId());
             originalElement.getLatest().get(ENTITY_FIELD).forEach((key, value) -> {
                 Assert.assertEquals(value.getValue(), optimizedElement.getLatest().get(EntityKeyType.ENTITY_FIELD).get(key).getValue());
@@ -2210,11 +2220,14 @@ public class EntityServiceTest extends AbstractServiceTest {
         optimizedQuery = new EntityDataQuery(filter, optimizedPageLink, entityFields, null, nameFilters);
         optimizedData = entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), optimizedQuery);
         loadedEntities = getLoadedEntities(optimizedData, optimizedQuery);
-        Assert.assertEquals(devices.size(), loadedEntities.size());
+        Assert.assertEquals(expectedDevicesSize, loadedEntities.size());
+        loadedEntities = getLoadedEntities(originalData, originalQuery);
+        Assert.assertEquals(expectedDevicesSize, loadedEntities.size());
+        Assert.assertEquals(pageSize, optimizedData.getData().size());
 
-        for (int i = 0; i < devices.size(); i++) {
-            var originalElement = originalData.getData().get(i);
-            var optimizedElement = optimizedData.getData().get(i);
+        for (int i = 0; i < pageSize; i++) {
+            EntityData originalElement = originalData.getData().get(i);
+            EntityData optimizedElement = optimizedData.getData().get(i);
             Assert.assertEquals(originalElement.getEntityId(), optimizedElement.getEntityId());
             originalElement.getLatest().get(ENTITY_FIELD).forEach((key, value) -> {
                 Assert.assertEquals(value.getValue(), optimizedElement.getLatest().get(EntityKeyType.ENTITY_FIELD).get(key).getValue());

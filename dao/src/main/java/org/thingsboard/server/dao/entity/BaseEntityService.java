@@ -95,7 +95,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
         validateEntityDataQuery(query);
 
-        if (isOptimizationExcluded(query)) {
+        if (!isValidForOptimization(query)) {
             return this.entityQueryDao.findEntityDataByQuery(tenantId, customerId, query);
         }
 
@@ -204,25 +204,25 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         }
     }
 
-    private boolean isOptimizationExcluded(EntityDataQuery query) {
+    private boolean isValidForOptimization(EntityDataQuery query) {
         if (StringUtils.isNotEmpty(query.getPageLink().getTextSearch())) {
-            return true;
+            return false;
         }
 
         if (EXCLUDED_TYPES_FROM_OPTIMIZATION.contains(query.getEntityFilter().getType())) {
-            return true;
+            return false;
         }
 
         if ((query.getEntityFields() == null || query.getEntityFields().isEmpty()) &&
                 (query.getLatestValues() == null || query.getLatestValues().isEmpty())) {
-            return true;
+            return false;
         }
 
-        Set<EntityKey> entityKeys = new HashSet<>(Optional.ofNullable(query.getKeyFilters()).orElse(Collections.emptyList()).stream().map(KeyFilter::getKey).toList());
+        Set<EntityKey> filteringKeys = new HashSet<>(Optional.ofNullable(query.getKeyFilters()).orElse(Collections.emptyList()).stream().map(KeyFilter::getKey).toList());
         Set<EntityKey> entityFields = new HashSet<>(Optional.ofNullable(query.getEntityFields()).orElse(Collections.emptyList()));
         Set<EntityKey> latestValues = new HashSet<>(Optional.ofNullable(query.getLatestValues()).orElse(Collections.emptyList()));
 
-        return entityKeys.equals(entityFields) && entityKeys.equals(latestValues);
+        return !(filteringKeys.containsAll(entityFields) && filteringKeys.containsAll(latestValues));
     }
 
     private PageData<EntityData> findEntityIdsByFilterAndSorterColumns(TenantId tenantId, CustomerId customerId, EntityDataQuery query) {
