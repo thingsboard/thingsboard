@@ -53,28 +53,28 @@ public class BaseQueueStatsService extends AbstractEntityService implements Queu
     @Override
     public QueueStats findQueueStatsById(TenantId tenantId, QueueStatsId queueStatsId) {
         log.trace("Executing findQueueStatsById [{}]", queueStatsId);
-        validateId(queueStatsId, "Incorrect queueStatsId " + queueStatsId);
+        validateId(queueStatsId, id -> "Incorrect queueStatsId " + id);
         return queueStatsDao.findById(tenantId, queueStatsId.getId());
     }
 
     @Override
     public QueueStats findByTenantIdAndNameAndServiceId(TenantId tenantId, String queueName, String serviceId) {
         log.trace("Executing findByTenantIdAndNameAndServiceId, tenantId: [{}], queueName: [{}], serviceId: [{}]", tenantId, queueName, serviceId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         return queueStatsDao.findByTenantIdQueueNameAndServiceId(tenantId, queueName, serviceId);
     }
 
     @Override
     public List<QueueStats> findByTenantId(TenantId tenantId) {
         log.trace("Executing findByTenantId, tenantId: [{}]", tenantId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         return queueStatsDao.findByTenantId(tenantId);
     }
 
     @Override
     public void deleteByTenantId(TenantId tenantId) {
         log.trace("Executing deleteByTenantId, tenantId [{}]", tenantId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         queueStatsDao.deleteByTenantId(tenantId);
     }
 
