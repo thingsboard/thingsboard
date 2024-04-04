@@ -2179,7 +2179,7 @@ public class EntityServiceTest extends AbstractServiceTest {
         Assert.assertEquals(originalData.getTotalPages(), optimizedData.getTotalPages());
         Assert.assertEquals(originalData.getTotalElements(), optimizedData.getTotalElements());
 
-        // 2. Device create time filters
+        // 2. Device attribute filters
 
         // query with textSearch - optimization is not performing
         originalPageLink = new EntityDataPageLink(pageSize, 0, "Device", sortOrder);
