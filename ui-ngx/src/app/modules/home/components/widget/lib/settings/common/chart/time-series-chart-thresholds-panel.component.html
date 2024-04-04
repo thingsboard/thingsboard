@@ -21,7 +21,7 @@
     <div class="tb-form-table-header">
       <div class="tb-form-table-header-cell tb-threshold-source-header" translate>widgets.time-series-chart.threshold.source</div>
       <div class="tb-form-table-header-cell tb-threshold-key-value-header" translate>widgets.time-series-chart.threshold.key-value</div>
-      <div class="tb-form-table-header-cell tb-y-axis-header" translate>widgets.time-series-chart.axis.y-axis</div>
+      <div *ngIf="!hideYAxis" class="tb-form-table-header-cell tb-y-axis-header" translate>widgets.time-series-chart.axis.y-axis</div>
       <div class="tb-form-table-header-cell tb-color-header" translate>widgets.color.color</div>
       <div class="tb-form-table-header-cell tb-units-header" translate>widget-config.units-short</div>
       <div class="tb-form-table-header-cell tb-decimals-header" translate>widget-config.decimals-short</div>
@@ -31,6 +31,7 @@
       <div *ngFor="let thresholdControl of thresholdsFormArray().controls; trackBy: trackByThreshold; let $index = index; let $last = last">
         <tb-time-series-chart-threshold-row fxFlex
                                     [formControl]="thresholdControl"
+                                    [hideYAxis]="hideYAxis"
                                     [yAxisIds]="yAxisIds"
                                     (thresholdRemoved)="removeThreshold($index)">
         </tb-time-series-chart-threshold-row>

@@ -13,21 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.utils;
+package org.thingsboard.server.dao.queue;
 
-import org.junit.Test;
-import org.thingsboard.server.common.data.kv.DataType;
-import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.queue.QueueStats;
+import org.thingsboard.server.dao.Dao;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.List;
 
-public class TbSubscriptionUtilsTest {
+public interface QueueStatsDao extends Dao<QueueStats> {
 
-    @Test
-    public void protoDataTypeSerialization() {
-        for (DataType dataType : DataType.values()) {
-            assertThat(TbSubscriptionUtils.fromProto(TbSubscriptionUtils.toProto(dataType))).as(dataType.name()).isEqualTo(dataType);
-        }
-    }
+    QueueStats findByTenantIdQueueNameAndServiceId(TenantId tenantId, String queueName, String serviceId);
+
+    List<QueueStats> findByTenantId(TenantId tenantId);
+
+    void deleteByTenantId(TenantId tenantId);
 
 }

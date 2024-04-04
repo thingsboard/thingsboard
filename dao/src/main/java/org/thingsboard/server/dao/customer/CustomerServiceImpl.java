@@ -108,14 +108,14 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
     @Override
     public Customer findCustomerById(TenantId tenantId, CustomerId customerId) {
         log.trace("Executing findCustomerById [{}]", customerId);
-        Validator.validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
+        Validator.validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
         return customerDao.findById(tenantId, customerId.getId());
     }
 
     @Override
     public Optional<Customer> findCustomerByTenantIdAndTitle(TenantId tenantId, String title) {
         log.trace("Executing findCustomerByTenantIdAndTitle [{}] [{}]", tenantId, title);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         return Optional.ofNullable(cache.getAndPutInTransaction(new CustomerCacheKey(tenantId, title),
                 () -> customerDao.findCustomerByTenantIdAndTitle(tenantId.getId(), title)
                         .orElse(null), true));
@@ -124,7 +124,7 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
     @Override
     public ListenableFuture<Customer> findCustomerByIdAsync(TenantId tenantId, CustomerId customerId) {
         log.trace("Executing findCustomerByIdAsync [{}]", customerId);
-        validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
+        validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
         return customerDao.findByIdAsync(tenantId, customerId.getId());
     }
 
@@ -166,7 +166,7 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
     @Transactional
     public void deleteCustomer(TenantId tenantId, CustomerId customerId) {
         log.trace("Executing deleteCustomer [{}]", customerId);
-        Validator.validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
+        Validator.validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
         Customer customer = findCustomerById(tenantId, customerId);
         if (customer == null) {
             throw new IncorrectParameterException("Unable to delete non-existent customer.");
@@ -188,9 +188,13 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
     @Override
     public Customer findOrCreatePublicCustomer(TenantId tenantId) {
         log.trace("Executing findOrCreatePublicCustomer, tenantId [{}]", tenantId);
-        Validator.validateId(tenantId, INCORRECT_CUSTOMER_ID + tenantId);
+        Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + tenantId);
+        Optional<Customer> publicCustomerOpt = customerDao.findPublicCustomerByTenantId(tenantId.getId());
+        if (publicCustomerOpt.isPresent()) {
+            return publicCustomerOpt.get();
+        }
         synchronized (publicCustomerCreationLocks.computeIfAbsent(tenantId, k -> new Object())) {
-            Optional<Customer> publicCustomerOpt = customerDao.findPublicCustomerByTenantId(tenantId.getId());
+            publicCustomerOpt = customerDao.findPublicCustomerByTenantId(tenantId.getId());
             if (publicCustomerOpt.isPresent()) {
                 return publicCustomerOpt.get();
             }
@@ -209,7 +213,7 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
     @Override
     public PageData<Customer> findCustomersByTenantId(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findCustomersByTenantId, tenantId [{}], pageLink [{}]", tenantId, pageLink);
-        Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
+        Validator.validateId(tenantId, id -> "Incorrect tenantId " + id);
         Validator.validatePageLink(pageLink);
         return customerDao.findCustomersByTenantId(tenantId.getId(), pageLink);
     }
@@ -217,7 +221,7 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
     @Override
     public void deleteCustomersByTenantId(TenantId tenantId) {
         log.trace("Executing deleteCustomersByTenantId, tenantId [{}]", tenantId);
-        Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
+        Validator.validateId(tenantId, id -> "Incorrect tenantId " + id);
         customersByTenantRemover.removeEntities(tenantId, tenantId);
     }
 

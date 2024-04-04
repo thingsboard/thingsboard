@@ -561,6 +561,7 @@ CREATE TABLE IF NOT EXISTS key_dictionary
 CREATE TABLE IF NOT EXISTS oauth2_params (
     id uuid NOT NULL CONSTRAINT oauth2_params_pkey PRIMARY KEY,
     enabled boolean,
+    edge_enabled boolean,
     tenant_id uuid,
     created_time bigint NOT NULL
 );
@@ -884,4 +885,13 @@ CREATE TABLE IF NOT EXISTS alarm_types (
     type varchar(255) NOT NULL,
     CONSTRAINT tenant_id_type_unq_key UNIQUE (tenant_id, type),
     CONSTRAINT fk_entity_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenant(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS queue_stats (
+    id uuid NOT NULL CONSTRAINT queue_stats_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid NOT NULL,
+    queue_name varchar(255) NOT NULL,
+    service_id varchar(255) NOT NULL,
+    CONSTRAINT queue_stats_name_unq_key UNIQUE (tenant_id, queue_name, service_id)
 );

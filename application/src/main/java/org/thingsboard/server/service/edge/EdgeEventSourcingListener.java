@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.oauth2.OAuth2Info;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -159,43 +160,41 @@ public class EdgeEventSourcingListener {
     private boolean isValidSaveEntityEventForEdgeProcessing(SaveEntityEvent<?> event) {
         Object entity = event.getEntity();
         Object oldEntity = event.getOldEntity();
-        switch (event.getEntityId().getEntityType()) {
-            case RULE_CHAIN:
-                if (entity instanceof RuleChain) {
-                    RuleChain ruleChain = (RuleChain) entity;
-                    return RuleChainType.EDGE.equals(ruleChain.getType());
-                }
-                break;
-            case USER:
-                if (entity instanceof User) {
-                    User user = (User) entity;
-                    if (Authority.SYS_ADMIN.equals(user.getAuthority())) {
+        if (event.getEntityId() != null) {
+            switch (event.getEntityId().getEntityType()) {
+                case RULE_CHAIN:
+                    if (entity instanceof RuleChain ruleChain) {
+                        return RuleChainType.EDGE.equals(ruleChain.getType());
+                    }
+                    break;
+                case USER:
+                    if (entity instanceof User user) {
+                        if (Authority.SYS_ADMIN.equals(user.getAuthority())) {
+                            return false;
+                        }
+                        if (oldEntity != null) {
+                            User oldUser = (User) oldEntity;
+                            cleanUpUserAdditionalInfo(oldUser);
+                            cleanUpUserAdditionalInfo(user);
+                            return !user.equals(oldUser);
+                        }
+                    }
+                    break;
+                case OTA_PACKAGE:
+                    if (entity instanceof OtaPackageInfo otaPackageInfo) {
+                        return otaPackageInfo.hasUrl() || otaPackageInfo.isHasData();
+                    }
+                    break;
+                case ALARM:
+                    if (entity instanceof AlarmApiCallResult || entity instanceof Alarm) {
                         return false;
                     }
-                    if (oldEntity != null) {
-                        User oldUser = (User) oldEntity;
-                        cleanUpUserAdditionalInfo(oldUser);
-                        cleanUpUserAdditionalInfo(user);
-                        return !user.equals(oldUser);
-                    }
-                }
-                break;
-            case OTA_PACKAGE:
-                if (entity instanceof OtaPackageInfo) {
-                    OtaPackageInfo otaPackageInfo = (OtaPackageInfo) entity;
-                    return otaPackageInfo.hasUrl() || otaPackageInfo.isHasData();
-                }
-                break;
-            case ALARM:
-                if (entity instanceof AlarmApiCallResult || entity instanceof Alarm) {
+                    break;
+                case TENANT:
+                    return !event.getCreated();
+                case API_USAGE_STATE, EDGE:
                     return false;
-                }
-                break;
-            case TENANT:
-                return !event.getCreated();
-            case API_USAGE_STATE:
-            case EDGE:
-                return false;
+            }
         }
         // Default: If the entity doesn't match any of the conditions, consider it as valid.
         return true;
@@ -206,8 +205,7 @@ public class EdgeEventSourcingListener {
         if (user.getAdditionalInfo() instanceof NullNode) {
             user.setAdditionalInfo(null);
         }
-        if (user.getAdditionalInfo() instanceof ObjectNode) {
-            ObjectNode additionalInfo = ((ObjectNode) user.getAdditionalInfo());
+        if (user.getAdditionalInfo() instanceof ObjectNode additionalInfo) {
             additionalInfo.remove(UserServiceImpl.FAILED_LOGIN_ATTEMPTS);
             additionalInfo.remove(UserServiceImpl.LAST_LOGIN_TS);
             if (additionalInfo.isEmpty()) {
@@ -221,12 +219,16 @@ public class EdgeEventSourcingListener {
     private EdgeEventType getEdgeEventTypeForEntityEvent(Object entity) {
         if (entity instanceof AlarmComment) {
             return EdgeEventType.ALARM_COMMENT;
+        } else if (entity instanceof OAuth2Info) {
+            return EdgeEventType.OAUTH2;
         }
         return null;
     }
 
     private String getBodyMsgForEntityEvent(Object entity) {
         if (entity instanceof AlarmComment) {
+            return JacksonUtil.toString(entity);
+        } else if (entity instanceof OAuth2Info) {
             return JacksonUtil.toString(entity);
         }
         return null;
@@ -238,4 +240,5 @@ public class EdgeEventSourcingListener {
         }
         return isCreated ? EdgeEventActionType.ADDED : EdgeEventActionType.UPDATED;
     }
+
 }

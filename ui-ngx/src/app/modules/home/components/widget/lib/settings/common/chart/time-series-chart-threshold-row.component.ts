@@ -19,11 +19,11 @@ import {
   Component,
   EventEmitter,
   forwardRef,
-  Input, OnChanges,
+  Input,
+  OnChanges,
   OnInit,
   Output,
-  Renderer2, SimpleChanges,
-  ViewContainerRef,
+  SimpleChanges,
   ViewEncapsulation
 } from '@angular/core';
 import {
@@ -36,7 +36,8 @@ import {
 } from '@angular/forms';
 import {
   TimeSeriesChartThreshold,
-  TimeSeriesChartThresholdType, TimeSeriesChartYAxisId,
+  TimeSeriesChartThresholdType,
+  TimeSeriesChartYAxisId,
   timeSeriesThresholdTypes,
   timeSeriesThresholdTypeTranslations
 } from '@home/components/widget/lib/chart/time-series-chart.models';
@@ -47,12 +48,8 @@ import { IAliasController } from '@core/api/widget-api.models';
 import { DataKey, Datasource, DatasourceType, WidgetConfig } from '@shared/models/widget.models';
 import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { MatButton } from '@angular/material/button';
-import { TbPopoverService } from '@shared/components/popover.service';
 import { deepClone } from '@core/utils';
-import {
-  TimeSeriesChartThresholdSettingsPanelComponent
-} from '@home/components/widget/lib/settings/common/chart/time-series-chart-threshold-settings-panel.component';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-time-series-chart-threshold-row',
@@ -101,6 +98,10 @@ export class TimeSeriesChartThresholdRowComponent implements ControlValueAccesso
   @Input()
   yAxisIds: TimeSeriesChartYAxisId[];
 
+  @Input()
+  @coerceBoolean()
+  hideYAxis = false;
+
   @Output()
   thresholdRemoved = new EventEmitter();
 
@@ -112,12 +113,11 @@ export class TimeSeriesChartThresholdRowComponent implements ControlValueAccesso
 
   entityKeyFormControl: UntypedFormControl;
 
+  thresholdSettingsFormControl: UntypedFormControl;
+
   private propagateChange = (_val: any) => {};
 
   constructor(private fb: UntypedFormBuilder,
-              private popoverService: TbPopoverService,
-              private renderer: Renderer2,
-              private viewContainerRef: ViewContainerRef,
               private thresholdsPanel: TimeSeriesChartThresholdsPanelComponent,
               private cd: ChangeDetectorRef) {
   }
@@ -134,6 +134,7 @@ export class TimeSeriesChartThresholdRowComponent implements ControlValueAccesso
     });
     this.latestKeyFormControl = this.fb.control(null, [Validators.required]);
     this.entityKeyFormControl = this.fb.control(null, [Validators.required]);
+    this.thresholdSettingsFormControl = this.fb.control(null);
     this.thresholdFormGroup.valueChanges.subscribe(
       () => this.updateModel()
     );
@@ -143,6 +144,18 @@ export class TimeSeriesChartThresholdRowComponent implements ControlValueAccesso
     this.entityKeyFormControl.valueChanges.subscribe(
       () => this.updateModel()
     );
+    this.thresholdSettingsFormControl.valueChanges.subscribe((thresholdSettings: Partial<TimeSeriesChartThreshold>) => {
+      this.modelValue = {...this.modelValue, ...thresholdSettings};
+      this.thresholdFormGroup.patchValue(
+        {
+          yAxisId: this.modelValue.yAxisId,
+          units: this.modelValue.units,
+          decimals: this.modelValue.decimals,
+          lineColor: this.modelValue.lineColor
+        },
+        {emitEvent: false});
+      this.propagateChange(this.modelValue);
+    });
     this.thresholdFormGroup.get('type').valueChanges.subscribe(() => {
       this.updateValidators();
     });
@@ -175,8 +188,10 @@ export class TimeSeriesChartThresholdRowComponent implements ControlValueAccesso
       this.thresholdFormGroup.disable({emitEvent: false});
       this.latestKeyFormControl.disable({emitEvent: false});
       this.entityKeyFormControl.disable({emitEvent: false});
+      this.thresholdSettingsFormControl.disable({emitEvent: false});
     } else {
       this.thresholdFormGroup.enable({emitEvent: false});
+      this.thresholdSettingsFormControl.enable({emitEvent: false});
       this.updateValidators();
     }
   }
@@ -205,43 +220,10 @@ export class TimeSeriesChartThresholdRowComponent implements ControlValueAccesso
         name: value.entityKey
       }, {emitEvent: false});
     }
+    this.thresholdSettingsFormControl.patchValue(deepClone(this.modelValue),
+      {emitEvent: false});
     this.updateValidators();
     this.cd.markForCheck();
-  }
-
-  editThreshold($event: Event, matButton: MatButton) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    const trigger = matButton._elementRef.nativeElement;
-    if (this.popoverService.hasPopover(trigger)) {
-      this.popoverService.hidePopover(trigger);
-    } else {
-      const ctx: any = {
-        thresholdSettings: deepClone(this.modelValue),
-        widgetConfig: this.widgetConfig,
-        yAxisIds: this.yAxisIds
-      };
-      const thresholdSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, TimeSeriesChartThresholdSettingsPanelComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], true, null,
-        ctx,
-        {},
-        {}, {}, true);
-      thresholdSettingsPanelPopover.tbComponentRef.instance.popover = thresholdSettingsPanelPopover;
-      thresholdSettingsPanelPopover.tbComponentRef.instance.thresholdSettingsApplied.subscribe((thresholdSettings) => {
-        thresholdSettingsPanelPopover.hide();
-        this.modelValue = {...this.modelValue, ...thresholdSettings};
-        this.thresholdFormGroup.patchValue(
-          {
-            yAxisId: this.modelValue.yAxisId,
-            units: this.modelValue.units,
-            decimals: this.modelValue.decimals,
-            lineColor: this.modelValue.lineColor
-          },
-          {emitEvent: false});
-        this.propagateChange(this.modelValue);
-      });
-    }
   }
 
   private updateValidators() {
@@ -282,6 +264,8 @@ export class TimeSeriesChartThresholdRowComponent implements ControlValueAccesso
       this.modelValue.entityKey = entityKey?.name;
       this.modelValue.entityKeyType = (entityKey?.type as any);
     }
+    this.thresholdSettingsFormControl.patchValue(deepClone(this.modelValue),
+      {emitEvent: false});
     this.propagateChange(this.modelValue);
   }
 }

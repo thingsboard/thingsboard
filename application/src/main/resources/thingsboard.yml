@@ -872,6 +872,8 @@ js:
     monitor_thread_pool_size: "${LOCAL_JS_SANDBOX_MONITOR_THREAD_POOL_SIZE:4}"
     # Maximum CPU time in milliseconds allowed for script execution
     max_cpu_time: "${LOCAL_JS_SANDBOX_MAX_CPU_TIME:8000}"
+    # Maximum memory in Bytes which JS executor thread can allocate (approximate calculation). A zero memory limit in combination with a non-zero CPU limit is not recommended due to the implementation of Nashorn 0.4.2. 100MiB is effectively unlimited for most cases
+    max_memory: "${LOCAL_JS_SANDBOX_MAX_MEMORY:104857600}"
     # Maximum allowed JavaScript execution errors before JavaScript will be blacklisted
     max_errors: "${LOCAL_JS_SANDBOX_MAX_ERRORS:3}"
     # JS Eval max request timeout. 0 - no timeout
@@ -1310,6 +1312,8 @@ edges:
       private_key: "${EDGES_RPC_SSL_PRIVATE_KEY:privateKeyFile.pem}"
     # Maximum size (in bytes) of inbound messages the cloud can handle from the edge. By default, it can handle messages up to 4 Megabytes
     max_inbound_message_size: "${EDGES_RPC_MAX_INBOUND_MESSAGE_SIZE:4194304}"
+    # Maximum length of telemetry (time-series and attributes) message the cloud sends to the edge. By default, there is no limitation.
+    max_telemetry_message_size: "${EDGES_RPC_MAX_TELEMETRY_MESSAGE_SIZE:0}"
   storage:
     # Max records of edge event to read from DB and sent to the edge
     max_read_records_count: "${EDGES_STORAGE_MAX_READ_RECORDS_COUNT:50}"
@@ -1338,6 +1342,8 @@ springdoc:
 swagger:
   # General swagger match pattern of swagger UI links
   api_path: "${SWAGGER_API_PATH:/api/**}"
+  # General swagger match pattern path of swagger UI links
+  security_path_regex: "${SWAGGER_SECURITY_PATH_REGEX:/api/.*}"
   # Nonsecurity API path match pattern of swagger UI links
   non_security_path_regex: "${SWAGGER_NON_SECURITY_PATH_REGEX:/api/(?:noauth|v1)/.*}"
   # The title on the API doc UI page
