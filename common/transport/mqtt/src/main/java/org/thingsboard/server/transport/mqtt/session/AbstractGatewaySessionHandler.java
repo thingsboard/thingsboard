@@ -32,17 +32,21 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ConcurrentReferenceHashMap;
+import org.thingsboard.server.common.adaptor.AdaptorException;
+import org.thingsboard.server.common.adaptor.JsonConverter;
+import org.thingsboard.server.common.adaptor.ProtoConverter;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
-import org.thingsboard.server.common.adaptor.AdaptorException;
-import org.thingsboard.server.common.adaptor.JsonConverter;
-import org.thingsboard.server.common.adaptor.ProtoConverter;
 import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
@@ -64,6 +68,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -89,6 +94,8 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
 
     private static final String CAN_T_PARSE_VALUE = "Can't parse value: ";
     private static final String DEVICE_PROPERTY = "device";
+    private static final String GATEWAY_PROPERTY = "gateway";
+    public static final String OVERWRITE_ACTIVITY_TIME = "overwriteActivityTime";
 
     protected final MqttTransportContext context;
     protected final TransportService transportService;
@@ -101,7 +108,11 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     protected final ChannelHandlerContext channel;
     protected final DeviceSessionCtx deviceSessionCtx;
 
-    public AbstractGatewaySessionHandler(DeviceSessionCtx deviceSessionCtx, UUID sessionId) {
+    @Getter
+    @Setter
+    private boolean overwriteDevicesActivity = false;
+
+    public AbstractGatewaySessionHandler(DeviceSessionCtx deviceSessionCtx, UUID sessionId, boolean overwriteDevicesActivity) {
         this.context = deviceSessionCtx.getContext();
         this.transportService = context.getTransportService();
         this.deviceSessionCtx = deviceSessionCtx;
@@ -112,6 +123,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         this.deviceCreationLockMap = createWeakMap();
         this.mqttQoSMap = deviceSessionCtx.getMqttQoSMap();
         this.channel = deviceSessionCtx.getChannel();
+        this.overwriteDevicesActivity = overwriteDevicesActivity;
     }
 
     ConcurrentReferenceHashMap<String, Lock> createWeakMap() {
@@ -161,6 +173,12 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
             onDeviceRpcResponseJson(msgId, payload);
         } else {
             onDeviceRpcResponseProto(msgId, payload);
+        }
+    }
+
+    public void onGatewayPing() {
+        if (overwriteDevicesActivity) {
+            devices.forEach((deviceName, deviceSessionCtx) -> transportService.recordActivity(deviceSessionCtx.getSessionInfo()));
         }
     }
 
@@ -219,6 +237,16 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
                 logDeviceCreationError(t, deviceName);
             }
         }, context.getExecutor());
+    }
+
+    public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
+        log.trace("[{}][{}] onDeviceUpdate: [{}]", gateway.getTenantId(), gateway.getDeviceId(), device);
+        if (device.getAdditionalInfo().has(GATEWAY_PROPERTY)
+                && device.getAdditionalInfo().get(GATEWAY_PROPERTY).asBoolean()
+                && device.getAdditionalInfo().has(OVERWRITE_ACTIVITY_TIME)
+                && device.getAdditionalInfo().get(OVERWRITE_ACTIVITY_TIME).isBoolean()) {
+            overwriteDevicesActivity = device.getAdditionalInfo().get(OVERWRITE_ACTIVITY_TIME).asBoolean();
+        }
     }
 
     ListenableFuture<T> onDeviceConnect(String deviceName, String deviceType) {
