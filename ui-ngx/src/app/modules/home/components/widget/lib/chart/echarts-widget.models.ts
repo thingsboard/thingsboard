@@ -17,7 +17,7 @@
 import * as echarts from 'echarts/core';
 import AxisModel from 'echarts/types/src/coord/cartesian/AxisModel';
 import { estimateLabelUnionRect } from 'echarts/lib/coord/axisHelper';
-import { formatValue, isDefinedAndNotNull } from '@core/utils';
+import { formatValue, isDefinedAndNotNull, isNumber } from '@core/utils';
 import {
   DataZoomComponent,
   DataZoomComponentOption,
@@ -55,6 +55,7 @@ import { DateFormatProcessor, DateFormatSettings, Font } from '@shared/models/wi
 import GlobalModel from 'echarts/types/src/model/Global';
 import Axis2D from 'echarts/types/src/coord/cartesian/Axis2D';
 import SeriesModel from 'echarts/types/src/model/Series';
+import { MarkLine2DDataItemOption } from 'echarts/types/src/component/marker/MarkLineModel';
 
 class EChartsModule {
   private initialized = false;
@@ -109,6 +110,51 @@ export type EChartsSeriesItem = {
   units?: string;
   decimals?: number;
 };
+
+export enum EChartsShape {
+  emptyCircle = 'emptyCircle',
+  circle = 'circle',
+  rect = 'rect',
+  roundRect = 'roundRect',
+  triangle = 'triangle',
+  diamond = 'diamond',
+  pin = 'pin',
+  arrow = 'arrow',
+  none = 'none'
+}
+
+export const echartsShapes = Object.keys(EChartsShape) as EChartsShape[];
+
+export const echartsShapeTranslations = new Map<EChartsShape, string>(
+  [
+    [EChartsShape.emptyCircle, 'widgets.time-series-chart.shape-empty-circle'],
+    [EChartsShape.circle, 'widgets.time-series-chart.shape-circle'],
+    [EChartsShape.rect, 'widgets.time-series-chart.shape-rect'],
+    [EChartsShape.roundRect, 'widgets.time-series-chart.shape-round-rect'],
+    [EChartsShape.triangle, 'widgets.time-series-chart.shape-triangle'],
+    [EChartsShape.diamond, 'widgets.time-series-chart.shape-diamond'],
+    [EChartsShape.pin, 'widgets.time-series-chart.shape-pin'],
+    [EChartsShape.arrow, 'widgets.time-series-chart.shape-arrow'],
+    [EChartsShape.none, 'widgets.time-series-chart.shape-none']
+  ]
+);
+
+type EChartsShapeOffsetFunction = (size: number) => number;
+
+export const timeSeriesChartShapeOffsetFunctions = new Map<EChartsShape, EChartsShapeOffsetFunction>(
+  [
+    [EChartsShape.emptyCircle, size => size / 2 + 1],
+    [EChartsShape.circle, size => size / 2],
+    [EChartsShape.rect, size => size / 2],
+    [EChartsShape.roundRect, size => size / 2],
+    [EChartsShape.triangle, size => size / 2],
+    [EChartsShape.diamond, size => size / 2],
+    [EChartsShape.pin, size => size],
+    [EChartsShape.arrow, () => 0],
+    [EChartsShape.none, () => 0],
+  ]
+);
+
 
 export const timeAxisBandWidthCalculator: TimeAxisBandWidthCalculator = (model) => {
   let interval: number;
@@ -211,7 +257,23 @@ export const measureXAxisNameHeight = (chart: ECharts, name: string): number => 
   return 0;
 };
 
-export const measureThresholdLabelOffset = (chart: ECharts, axisId: string, thresholdId: string, value: any): [number, number] => {
+const measureSymbolOffset = (symbol: string, symbolSize: any): number => {
+  if (isNumber(symbolSize)) {
+    if (symbol) {
+      const offsetFunction = timeSeriesChartShapeOffsetFunctions.get(symbol as EChartsShape);
+      if (offsetFunction) {
+        return offsetFunction(symbolSize);
+      } else {
+        return symbolSize / 2;
+      }
+    }
+  } else {
+    return 0;
+  }
+}
+
+export const measureThresholdOffset = (chart: ECharts, axisId: string, thresholdId: string, value: any): [number, number] => {
+  const offset: [number, number] = [0,0];
   const axis = getYAxis(chart, axisId);
   if (axis && !axis.scale.isBlank()) {
     const extent = axis.scale.getExtent();
@@ -220,6 +282,16 @@ export const measureThresholdLabelOffset = (chart: ECharts, axisId: string, thre
     if (models?.length) {
       const lineSeriesModel = models[0] as SeriesModel<LineSeriesOption>;
       const markLineModel = lineSeriesModel.getModel('markLine');
+      const dataOption = markLineModel.get('data');
+      for (const dataItemOption of dataOption) {
+        const dataItem = dataItemOption as MarkLine2DDataItemOption;
+        const start = dataItem[0];
+        const startOffset = measureSymbolOffset(start.symbol, start.symbolSize);
+        offset[0] = Math.max(offset[0], startOffset);
+        const end = dataItem[1];
+        const endOffset = measureSymbolOffset(end.symbol, end.symbolSize);
+        offset[1] = Math.max(offset[1], endOffset);
+      }
       const labelPosition = markLineModel.get(['label', 'position']);
       if (labelPosition === 'start' || labelPosition === 'end') {
         const labelModel = markLineModel.getModel('label');
@@ -239,23 +311,38 @@ export const measureThresholdLabelOffset = (chart: ECharts, axisId: string, thre
           }
         }
         if (!textWidth) {
-          return [0,0];
+          return offset;
         }
         const distanceOpt = markLineModel.get(['label', 'distance']);
         let distance = 5;
         if (distanceOpt) {
           distance = typeof distanceOpt === 'number' ? distanceOpt : distanceOpt[0];
         }
-        const offset = distance + textWidth;
+        const paddingOpt = markLineModel.get(['label', 'padding']);
+        let leftPadding = 0;
+        let rightPadding = 0;
+        if (paddingOpt) {
+          if (Array.isArray(paddingOpt)) {
+            if (paddingOpt.length === 4) {
+              leftPadding = paddingOpt[3];
+              rightPadding = paddingOpt[1];
+            } else if (paddingOpt.length === 2) {
+              leftPadding = rightPadding = paddingOpt[1];
+            }
+          } else {
+            leftPadding = rightPadding = paddingOpt;
+          }
+        }
+        const textOffset = distance + textWidth + leftPadding + rightPadding;
         if (labelPosition === 'start') {
-          return [offset, 0];
+          offset[0] = Math.max(offset[0], textOffset);
         } else {
-          return [0, offset];
+          offset[1] = Math.max(offset[1], textOffset);
         }
       }
     }
   }
-  return [0,0];
+  return offset;
 };
 
 export const getAxisExtent = (chart: ECharts, axisId: string): [number, number] => {
@@ -264,6 +351,48 @@ export const getAxisExtent = (chart: ECharts, axisId: string): [number, number] 
     return axis.scale.getExtent();
   }
   return [0,0];
+};
+
+let componentBlurredKey: string;
+
+const isBlurred = (model: SeriesModel): boolean => {
+  if (!componentBlurredKey) {
+    const innerKeys = Object.keys(model).filter(k => k.startsWith('__ec_inner_'));
+    for (const k of innerKeys) {
+      const obj = model[k];
+      if (obj.hasOwnProperty('isBlured')) {
+        componentBlurredKey = k;
+        break;
+      }
+    }
+  }
+  if (componentBlurredKey) {
+    const obj = model[componentBlurredKey];
+    return !!obj?.isBlured;
+  } else {
+    return false;
+  }
+};
+
+export const getFocusedSeriesIndex = (chart: ECharts): number => {
+  const model: GlobalModel = (chart as any).getModel();
+  const models = model.queryComponents({mainType: 'series'});
+  if (models) {
+    let hasBlurred = false;
+    let notBlurredIndex = -1;
+    for (const _model of models) {
+      const seriesModel = _model as SeriesModel;
+      const blurred = isBlurred(seriesModel);
+      if (!blurred) {
+        notBlurredIndex = seriesModel.seriesIndex;
+      }
+      hasBlurred = blurred || hasBlurred;
+    }
+    if (hasBlurred) {
+      return notBlurredIndex;
+    }
+  }
+  return -1;
 };
 
 export const toNamedData = (data: DataSet): NamedDataSet => {
@@ -304,6 +433,7 @@ export const tooltipTriggerTranslationMap = new Map<EChartsTooltipTrigger, strin
 export interface EChartsTooltipWidgetSettings {
   showTooltip: boolean;
   tooltipTrigger?: EChartsTooltipTrigger;
+  tooltipShowFocusedSeries?: boolean;
   tooltipValueFont: Font;
   tooltipValueColor: string;
   tooltipShowDate: boolean;

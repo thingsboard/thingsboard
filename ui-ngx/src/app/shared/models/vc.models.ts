@@ -144,6 +144,7 @@ export interface EntityTypeVersionLoadConfig extends VersionLoadConfig {
 export interface EntityTypeVersionLoadRequest extends VersionLoadRequest {
   entityTypes: {[entityType: string]: EntityTypeVersionLoadConfig};
   type: VersionLoadRequestType.ENTITY_TYPE;
+  rollbackOnError: boolean;
 }
 
 export function createDefaultEntityTypesVersionLoad(): {[entityType: string]: EntityTypeVersionLoadConfig} {

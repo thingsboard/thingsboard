@@ -29,6 +29,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.StringUtils;
@@ -45,16 +46,17 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.asset.AssetDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.service.stats.DefaultRuleEngineStatisticsService;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
@@ -328,6 +330,53 @@ public class AssetControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testDeleteAssetWithPropagatedAlarm() throws Exception {
+        Device device = new Device();
+        device.setTenantId(savedTenant.getTenantId());
+        device.setName("Test device");
+        device.setLabel("Label");
+        device.setType("default");
+        device = doPost("/api/device", device, Device.class);
+
+        Asset asset = new Asset();
+        asset.setName("My asset");
+        asset.setType("default");
+        asset = doPost("/api/asset", asset, Asset.class);
+
+        EntityRelation entityRelation = new EntityRelation(asset.getId(), device.getId(), "CONTAINS");
+        doPost("/api/relation", entityRelation);
+
+        //create alarm
+        Alarm alarm = Alarm.builder()
+                .tenantId(savedTenant.getTenantId())
+                .originator(device.getId())
+                .severity(AlarmSeverity.CRITICAL)
+                .type("test_type")
+                .propagate(true)
+                .build();
+
+        alarm = doPost("/api/alarm", alarm, Alarm.class);
+        Assert.assertNotNull(alarm);
+
+        PageData<AlarmInfo> deviceAlarms = doGetTyped("/api/alarm/DEVICE/" + device.getUuidId() + "?page=0&pageSize=10", new TypeReference<>() {
+        });
+        assertThat(deviceAlarms.getData()).hasSize(1);
+
+        PageData<AlarmInfo> assetAlarms = doGetTyped("/api/alarm/ASSET/" + asset.getUuidId() + "?page=0&pageSize=10", new TypeReference<>() {
+        });
+        assertThat(assetAlarms.getData()).hasSize(1);
+
+        //delete asset
+        doDelete("/api/asset/" + asset.getId().getId().toString())
+                .andExpect(status().isOk());
+
+        //check device alarms
+        PageData<AlarmInfo> deviceAlarmsAfterAssetDeletion = doGetTyped("/api/alarm/DEVICE/" + device.getUuidId() + "?page=0&pageSize=10", new TypeReference<PageData<AlarmInfo>>() {
+        });
+        assertThat(deviceAlarmsAfterAssetDeletion.getData()).hasSize(1);
+    }
+
+    @Test
     public void testDeleteAssetAssignedToEntityView() throws Exception {
         Asset asset1 = new Asset();
         asset1.setName("My asset 1");
@@ -566,8 +615,6 @@ public class AssetControllerTest extends AbstractControllerTest {
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new Asset(), new Asset(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.ADDED, cntEntity, cntEntity, cntEntity);
-
-        loadedAssets.removeIf(asset -> asset.getType().equals(DefaultRuleEngineStatisticsService.TB_SERVICE_QUEUE));
 
         assets.sort(idComparator);
         loadedAssets.sort(idComparator);

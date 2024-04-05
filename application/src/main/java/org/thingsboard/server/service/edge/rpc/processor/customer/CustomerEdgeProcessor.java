@@ -29,8 +29,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.gen.edge.v1.CustomerUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
@@ -85,20 +84,11 @@ public class CustomerEdgeProcessor extends BaseEdgeProcessor {
         CustomerId customerId = new CustomerId(EntityIdFactory.getByEdgeEventTypeAndUuid(type, uuid).getId());
         switch (actionType) {
             case UPDATED:
-                PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
-                PageData<Edge> pageData;
                 List<ListenableFuture<Void>> futures = new ArrayList<>();
-                do {
-                    pageData = edgeService.findEdgesByTenantIdAndCustomerId(tenantId, customerId, pageLink);
-                    if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
-                        for (Edge edge : pageData.getData()) {
-                            futures.add(saveEdgeEvent(tenantId, edge.getId(), type, actionType, customerId, null));
-                        }
-                        if (pageData.hasNext()) {
-                            pageLink = pageLink.nextPageLink();
-                        }
-                    }
-                } while (pageData != null && pageData.hasNext());
+                PageDataIterable<Edge> edges = new PageDataIterable<>(link -> edgeService.findEdgesByTenantIdAndCustomerId(tenantId, customerId, link), 1024);
+                for (Edge edge : edges) {
+                    futures.add(saveEdgeEvent(tenantId, edge.getId(), type, actionType, customerId, null));
+                }
                 return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
             case DELETED:
                 EdgeId edgeId = new EdgeId(new UUID(edgeNotificationMsg.getEdgeIdMSB(), edgeNotificationMsg.getEdgeIdLSB()));

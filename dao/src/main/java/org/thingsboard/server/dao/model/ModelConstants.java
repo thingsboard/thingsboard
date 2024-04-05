@@ -427,6 +427,7 @@ public class ModelConstants {
      */
     public static final String OAUTH2_PARAMS_TABLE_NAME = "oauth2_params";
     public static final String OAUTH2_PARAMS_ENABLED_PROPERTY = "enabled";
+    public static final String OAUTH2_PARAMS_EDGE_ENABLED_PROPERTY = "edge_enabled";
     public static final String OAUTH2_PARAMS_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
 
     public static final String OAUTH2_REGISTRATION_TABLE_NAME = "oauth2_registration";
@@ -609,6 +610,14 @@ public class ModelConstants {
     public static final String QUEUE_PROCESSING_STRATEGY_PROPERTY = "processing_strategy";
     public static final String QUEUE_TABLE_NAME = "queue";
     public static final String QUEUE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+
+    /**
+     * Tenant queue stats constants.
+     */
+    public static final String QUEUE_STATS_TABLE_NAME = "queue_stats";
+    public static final String QUEUE_STATS_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String QUEUE_STATS_QUEUE_NAME_PROPERTY = "queue_name";
+    public static final String QUEUE_STATS_SERVICE_ID_PROPERTY = "service_id";
 
     /**
      * Notification constants

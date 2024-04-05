@@ -38,6 +38,7 @@ import { IAliasController } from '@core/api/widget-api.models';
 import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
 import { DataKey, Datasource, WidgetConfig } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-time-series-chart-thresholds-panel',
@@ -76,6 +77,10 @@ export class TimeSeriesChartThresholdsPanelComponent implements ControlValueAcce
 
   @Input()
   yAxisIds: TimeSeriesChartYAxisId[];
+
+  @Input()
+  @coerceBoolean()
+  hideYAxis = false;
 
   thresholdsFormGroup: UntypedFormGroup;
 
