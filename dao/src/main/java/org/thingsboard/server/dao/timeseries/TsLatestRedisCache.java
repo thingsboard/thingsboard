@@ -15,8 +15,10 @@
  */
 package org.thingsboard.server.dao.timeseries;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisStringCommands;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.CacheSpecsMap;
 import org.thingsboard.server.cache.RedisTbTransactionalCache;
@@ -25,11 +27,24 @@ import org.thingsboard.server.cache.TbJavaRedisSerializer;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 
+import java.io.Serializable;
+
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
 @Service("TsLatestCache")
-public class TsLatestRedisCache extends RedisTbTransactionalCache<TsLatestCacheKey, TsKvEntry> {
+@Slf4j
+public class TsLatestRedisCache<K extends Serializable, V extends Serializable> extends RedisTbTransactionalCache<TsLatestCacheKey, TsKvEntry> {
 
     public TsLatestRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
-        super(CacheConstants.TS_LATEST_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbJavaRedisSerializer<>());    }
+        super(CacheConstants.TS_LATEST_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbJavaRedisSerializer<>());
+    }
+
+    @Override
+    public void put(TsLatestCacheKey key, TsKvEntry value) {
+        log.trace("put [{}][{}]", key, value);
+        final byte[] rawKey = getRawKey(key);
+        try (var connection = getConnection(rawKey)) {
+            put(connection, rawKey, value, RedisStringCommands.SetOption.UPSERT);
+        }
+    }
 
 }

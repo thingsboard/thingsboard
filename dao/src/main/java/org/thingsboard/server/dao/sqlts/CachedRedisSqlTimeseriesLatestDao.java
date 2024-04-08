@@ -15,7 +15,10 @@
  */
 package org.thingsboard.server.dao.sqlts;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -63,7 +66,24 @@ public class CachedRedisSqlTimeseriesLatestDao extends BaseAbstractSqlTimeseries
 
     @Override
     public ListenableFuture<Void> saveLatest(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry) {
-        return sqlDao.saveLatest(tenantId, entityId, tsKvEntry);
+        ListenableFuture<Void> future = sqlDao.saveLatest(tenantId, entityId, tsKvEntry);
+        future = Futures.transform(future, x -> {
+                    cache.put(new TsLatestCacheKey(entityId, tsKvEntry.getKey()), tsKvEntry);
+                    return x;
+                },
+                cacheExecutorService);
+        Futures.addCallback(future, new FutureCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                log.trace("saveLatest onSuccess [{}][{}][{}]", entityId, tsKvEntry.getKey(), tsKvEntry);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.trace("saveLatest onFailure [{}][{}][{}]", entityId, tsKvEntry.getKey(), tsKvEntry, t);
+            }
+        }, MoreExecutors.directExecutor());
+        return future;
     }
 
     @Override

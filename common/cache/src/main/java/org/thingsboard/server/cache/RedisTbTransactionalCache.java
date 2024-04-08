@@ -214,8 +214,12 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
 
     public void put(RedisConnection connection, K key, V value, RedisStringCommands.SetOption setOption) {
         byte[] rawKey = getRawKey(key);
+        put(connection, rawKey, value, setOption);
+    }
+
+    public void put(RedisConnection connection, byte[] rawKey, V value, RedisStringCommands.SetOption setOption) {
         byte[] rawValue = getRawValue(value);
-        connection.stringCommands().set(rawKey, rawValue, cacheTtl, setOption);
+        connection.stringCommands().set(rawKey, rawValue, this.cacheTtl, setOption);
     }
 
 }
