@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.mqtt.session;
 
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -241,11 +242,12 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
 
     public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
         log.trace("[{}][{}] onDeviceUpdate: [{}]", gateway.getTenantId(), gateway.getDeviceId(), device);
-        if (device.getAdditionalInfo().has(GATEWAY_PROPERTY)
-                && device.getAdditionalInfo().get(GATEWAY_PROPERTY).asBoolean()
-                && device.getAdditionalInfo().has(OVERWRITE_ACTIVITY_TIME)
-                && device.getAdditionalInfo().get(OVERWRITE_ACTIVITY_TIME).isBoolean()) {
-            overwriteDevicesActivity = device.getAdditionalInfo().get(OVERWRITE_ACTIVITY_TIME).asBoolean();
+        JsonNode deviceAdditionalInfo = device.getAdditionalInfo();
+        if (deviceAdditionalInfo.has(GATEWAY_PROPERTY)
+                && deviceAdditionalInfo.get(GATEWAY_PROPERTY).asBoolean()
+                && deviceAdditionalInfo.has(OVERWRITE_ACTIVITY_TIME)
+                && deviceAdditionalInfo.get(OVERWRITE_ACTIVITY_TIME).isBoolean()) {
+            overwriteDevicesActivity = deviceAdditionalInfo.get(OVERWRITE_ACTIVITY_TIME).asBoolean();
         }
     }
 
