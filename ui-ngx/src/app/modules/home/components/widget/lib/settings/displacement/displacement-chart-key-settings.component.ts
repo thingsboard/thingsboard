@@ -137,20 +137,21 @@ export class DisplacementChartKeySettingsComponent extends PageComponent impleme
       layers: this.fb.array([]),
       thresholds: this.fb.array([]),
     });
+    this.updateValidators(false);
 
     this.displacementSettingsFormGroup.get('baseline.enterManually').valueChanges.subscribe(() => {
-      this.updateValidators(true);
+      this.updateValidators(false);
     });
 
     this.displacementSettingsFormGroup.valueChanges.subscribe(() => {
+      this.updateValidators(false);
       this.updateModel();
     });
-
-    this.updateValidators(false);
 
     this.dataKeysSubscription = this.emitService.dataKeysEmitter.subscribe((keys) => {
       this.updateBaseline(keys);
       this.updatePosition(keys);
+      this.updateValidators(false);
       this.updateModel();
     });
   }
@@ -223,19 +224,18 @@ export class DisplacementChartKeySettingsComponent extends PageComponent impleme
         this.baselineArray.push(this.fb.group({
           key: [key.name, [Validators.required]],
           value: [matchedGroup.value, [Validators.required]],
-        }), {emitEvent: false});
+        }));
       } else {
         this.baselineArray.push(this.fb.group({
           key: [key.name, [Validators.required]],
           value: [null, [Validators.required]],
-        }), {emitEvent: false});
+        }));
       }
     });
   }
 
   updatePosition(keys: DataKey[]) {
     const positionArray = this.positionArray.controls.map((c) => c.getRawValue());
-    console.log(positionArray)
     this.positionArray.clear();
     keys.forEach((key) => {
       const matchedGroup = positionArray.find((e) => e.key === key.name);
@@ -243,12 +243,12 @@ export class DisplacementChartKeySettingsComponent extends PageComponent impleme
         this.positionArray.push(this.fb.group({
           key: [key.name, [Validators.required]],
           depth: [matchedGroup.depth, [Validators.required]],
-        }), {emitEvent: false});
+        }));
       } else {
         this.positionArray.push(this.fb.group({
           key: [key.name, [Validators.required]],
           depth: [null, [Validators.required]],
-        }), {emitEvent: false});
+        }));
       }
     });
   }
@@ -261,7 +261,7 @@ export class DisplacementChartKeySettingsComponent extends PageComponent impleme
 
   writeValue(value: any): void {
     this.modelValue = value;
-    this.displacementSettingsFormGroup.patchValue(value, {emitEvent: false});
+    this.displacementSettingsFormGroup.patchValue(value);
 
     const layers = value.layers;
     const thresholds = value.thresholds;
@@ -271,14 +271,14 @@ export class DisplacementChartKeySettingsComponent extends PageComponent impleme
         to: [layer.to, [Validators.required]],
         title: [layer.title, [Validators.required]],
         color: [layer.color, [Validators.required]],
-      }), {emitEvent: false}));
+      })));
     }
     if (thresholds && thresholds.length) {
       thresholds.forEach((threshold) => this.thresholdsArray.push(this.fb.group({
         x_pos: [threshold.x_pos, [Validators.required]],
         title: [threshold.title, [Validators.required]],
         color: [threshold.color, [Validators.required]],
-      }), {emitEvent: false}))
+      })));
     }
 
     this.updateValidators(false);
@@ -310,18 +310,18 @@ export class DisplacementChartKeySettingsComponent extends PageComponent impleme
       this.displacementSettingsFormGroup.get('baseline.baseline').disable({emitEvent});
     }
 
-    this.displacementSettingsFormGroup.get('grid').updateValueAndValidity({emitEvent: false});
-    this.displacementSettingsFormGroup.get('xaxis.min').updateValueAndValidity({emitEvent: false});
-    this.displacementSettingsFormGroup.get('xaxis.max').updateValueAndValidity({emitEvent: false});
-    this.displacementSettingsFormGroup.get('yaxis.unit').updateValueAndValidity({emitEvent: false});
-    this.displacementSettingsFormGroup.get('calculation.type').updateValueAndValidity({emitEvent: false});
-    this.displacementSettingsFormGroup.get('calculation.direction').updateValueAndValidity({emitEvent: false});
-    this.displacementSettingsFormGroup.get('baseline.baseline_date').updateValueAndValidity({emitEvent: false});
-    this.displacementSettingsFormGroup.get('baseline.baseline_time').updateValueAndValidity({emitEvent: false});
-    this.displacementSettingsFormGroup.get('baseline.enterManually').updateValueAndValidity({emitEvent: false});
-    this.displacementSettingsFormGroup.get('baseline.baseline').updateValueAndValidity({emitEvent: false});
-    this.displacementSettingsFormGroup.get('position').updateValueAndValidity({emitEvent: false});
-    this.displacementSettingsFormGroup.get('layers').updateValueAndValidity({emitEvent: false});
-    this.displacementSettingsFormGroup.get('thresholds').updateValueAndValidity({emitEvent: false});
+    this.displacementSettingsFormGroup.get('grid').updateValueAndValidity({emitEvent});
+    this.displacementSettingsFormGroup.get('xaxis.min').updateValueAndValidity({emitEvent});
+    this.displacementSettingsFormGroup.get('xaxis.max').updateValueAndValidity({emitEvent});
+    this.displacementSettingsFormGroup.get('yaxis.unit').updateValueAndValidity({emitEvent});
+    this.displacementSettingsFormGroup.get('calculation.type').updateValueAndValidity({emitEvent});
+    this.displacementSettingsFormGroup.get('calculation.direction').updateValueAndValidity({emitEvent});
+    this.displacementSettingsFormGroup.get('baseline.baseline_date').updateValueAndValidity({emitEvent});
+    this.displacementSettingsFormGroup.get('baseline.baseline_time').updateValueAndValidity({emitEvent});
+    this.displacementSettingsFormGroup.get('baseline.enterManually').updateValueAndValidity({emitEvent});
+    this.displacementSettingsFormGroup.get('baseline.baseline').updateValueAndValidity({emitEvent});
+    this.displacementSettingsFormGroup.get('position').updateValueAndValidity({emitEvent});
+    this.displacementSettingsFormGroup.get('layers').updateValueAndValidity({emitEvent});
+    this.displacementSettingsFormGroup.get('thresholds').updateValueAndValidity({emitEvent});
   }
 }
