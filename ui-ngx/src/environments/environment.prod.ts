@@ -15,11 +15,11 @@
 ///
 
 export const environment = {
-  appTitle: 'NewSense',
+  appTitle: "NewSense",
   production: true,
-// @ts-ignore
+  // @ts-ignore
   tbVersion: TB_VERSION,
-// @ts-ignore
+  // @ts-ignore
   supportedLangs: SUPPORTED_LANGS,
-  defaultLang: 'vi_VN'
+  defaultLang: "en_US",
 };

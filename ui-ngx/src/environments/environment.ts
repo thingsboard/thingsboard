@@ -19,13 +19,13 @@
 // The list of file replacements can be found in `angular.json`.
 
 export const environment = {
-  appTitle: 'NewSense',
+  appTitle: "NewSense",
   production: false,
-// @ts-ignore
+  // @ts-ignore
   tbVersion: TB_VERSION,
-// @ts-ignore
+  // @ts-ignore
   supportedLangs: SUPPORTED_LANGS,
-  defaultLang: 'vi_VN'
+  defaultLang: "en_US",
 };
 
 /*
