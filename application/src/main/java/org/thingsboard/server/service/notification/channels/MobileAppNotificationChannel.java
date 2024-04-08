@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.notification.channels;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Strings;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.MessagingErrorCode;
@@ -60,6 +61,19 @@ public class MobileAppNotificationChannel implements NotificationChannel<User, M
     @Override
     public void sendNotification(User recipient, MobileAppDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) throws Exception {
         NotificationRequest request = ctx.getRequest();
+        NotificationInfo info = request.getInfo();
+        if (info != null && info.getDashboardId() != null) {
+            ObjectNode additionalConfig = JacksonUtil.asObject(processedTemplate.getAdditionalConfig());
+            ObjectNode onClick = JacksonUtil.asObject(additionalConfig.get("onClick"));
+            if (onClick.get("enabled") == null || !Boolean.parseBoolean(onClick.get("enabled").asText())) {
+                onClick.put("enabled", true);
+                onClick.put("linkType", "DASHBOARD");
+                onClick.put("setEntityIdInState", true);
+                onClick.put("dashboardId", info.getDashboardId().toString());
+                additionalConfig.set("onClick", onClick);
+            }
+            processedTemplate.setAdditionalConfig(additionalConfig);
+        }
         Notification notification = Notification.builder()
                 .requestId(request.getId())
                 .recipientId(recipient.getId())
@@ -68,7 +82,7 @@ public class MobileAppNotificationChannel implements NotificationChannel<User, M
                 .subject(processedTemplate.getSubject())
                 .text(processedTemplate.getBody())
                 .additionalConfig(processedTemplate.getAdditionalConfig())
-                .info(request.getInfo())
+                .info(info)
                 .status(NotificationStatus.SENT)
                 .build();
         notificationService.saveNotification(recipient.getTenantId(), notification);
@@ -114,12 +128,6 @@ public class MobileAppNotificationChannel implements NotificationChannel<User, M
         Optional.ofNullable(info.getStateEntityId()).ifPresent(stateEntityId -> {
             data.put("stateEntityId", stateEntityId.getId().toString());
             data.put("stateEntityType", stateEntityId.getEntityType().name());
-            if (!"true".equals(data.get("onClick.enabled")) && info.getDashboardId() != null) {
-                data.put("onClick.enabled", "true");
-                data.put("onClick.linkType", "DASHBOARD");
-                data.put("onClick.setEntityIdInState", "true");
-                data.put("onClick.dashboardId", info.getDashboardId().toString());
-            }
         });
         data.put("notificationType", ctx.getNotificationType().name());
         switch (ctx.getNotificationType()) {
