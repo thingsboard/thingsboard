@@ -243,10 +243,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
         log.trace("[{}][{}] onDeviceUpdate: [{}]", gateway.getTenantId(), gateway.getDeviceId(), device);
         JsonNode deviceAdditionalInfo = device.getAdditionalInfo();
-        if (deviceAdditionalInfo.has(GATEWAY_PROPERTY)
-                && deviceAdditionalInfo.get(GATEWAY_PROPERTY).asBoolean()
-                && deviceAdditionalInfo.has(OVERWRITE_ACTIVITY_TIME)
-                && deviceAdditionalInfo.get(OVERWRITE_ACTIVITY_TIME).isBoolean()) {
+        if (deviceAdditionalInfo.has(GATEWAY_PROPERTY) && deviceAdditionalInfo.has(OVERWRITE_ACTIVITY_TIME)) {
             overwriteDevicesActivity = deviceAdditionalInfo.get(OVERWRITE_ACTIVITY_TIME).asBoolean();
         }
     }

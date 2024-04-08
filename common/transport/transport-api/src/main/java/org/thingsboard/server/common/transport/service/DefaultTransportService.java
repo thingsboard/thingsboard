@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.transport.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -1047,11 +1048,9 @@ public class DefaultTransportService extends TransportActivityManager implements
                         .setDeviceProfileIdLSB(deviceProfileIdLSB)
                         .setDeviceName(device.getName())
                         .setDeviceType(device.getType()).build();
-                if (device.getAdditionalInfo().has("gateway")
-                        && device.getAdditionalInfo().get("gateway").asBoolean()
-                        && device.getAdditionalInfo().has(OVERWRITE_ACTIVITY_TIME)
-                        && device.getAdditionalInfo().get(OVERWRITE_ACTIVITY_TIME).isBoolean()) {
-                    md.setOverwriteActivityTime(device.getAdditionalInfo().get(OVERWRITE_ACTIVITY_TIME).asBoolean());
+                JsonNode deviceAdditionalInfo = device.getAdditionalInfo();
+                if (deviceAdditionalInfo.has("gateway") && deviceAdditionalInfo.has(OVERWRITE_ACTIVITY_TIME)) {
+                    md.setOverwriteActivityTime(deviceAdditionalInfo.get(OVERWRITE_ACTIVITY_TIME).asBoolean());
                 }
                 md.setSessionInfo(newSessionInfo);
                 transportCallbackExecutor.submit(() -> md.getListener().onDeviceUpdate(newSessionInfo, device, Optional.ofNullable(newDeviceProfile)));
