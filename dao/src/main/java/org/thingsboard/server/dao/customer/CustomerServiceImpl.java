@@ -187,6 +187,7 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
     }
 
     @Override
+    @Transactional
     public Customer findOrCreatePublicCustomer(TenantId tenantId) {
         log.trace("Executing findOrCreatePublicCustomer, tenantId [{}]", tenantId);
         Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + tenantId);
