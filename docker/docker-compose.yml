@@ -220,6 +220,9 @@ services:
     image: "${DOCKER_REPO}/${LWM2M_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
     ports:
       - "5685:5685/udp"
+      - "5686:5686/udp"
+      - "5687:5687/udp"
+      - "5688:5688/udp"
     environment:
       TB_SERVICE_ID: tb-lwm2m-transport
       JAVA_OPTS: "${JAVA_OPTS}"
