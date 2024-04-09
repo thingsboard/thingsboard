@@ -28,7 +28,8 @@ import {
 } from "@angular/forms";
 import { AppState } from "@app/core/core.state";
 import { WidgetConfigComponentData } from "@app/modules/home/models/widget-component.models";
-import { PageComponent } from "@app/shared/public-api";
+import { DataKey, PageComponent } from "@app/shared/public-api";
+import { EmitService } from "@app/shared/services/emit";
 import { Store } from "@ngrx/store";
 import { TranslateService } from "@ngx-translate/core";
 
@@ -90,14 +91,15 @@ export class DisplacementChartKeySettingsComponent extends PageComponent impleme
   widgetConfig: WidgetConfigComponentData;
   
   private modelValue: any;
-
   private propagateChange = null;
+  private dataKeysSubscription: any;
   
   public displacementSettingsFormGroup: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
               private translate: TranslateService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private emitService: EmitService) {
     super(store);
   }
 
@@ -135,16 +137,29 @@ export class DisplacementChartKeySettingsComponent extends PageComponent impleme
       layers: this.fb.array([]),
       thresholds: this.fb.array([]),
     });
+    this.updateValidators(false);
 
     this.displacementSettingsFormGroup.get('baseline.enterManually').valueChanges.subscribe(() => {
-      this.updateValidators(true);
+      this.updateValidators(false);
     });
 
     this.displacementSettingsFormGroup.valueChanges.subscribe(() => {
+      this.updateValidators(false);
       this.updateModel();
     });
 
-    this.updateValidators(false);
+    this.dataKeysSubscription = this.emitService.dataKeysEmitter.subscribe((keys) => {
+      this.updateBaseline(keys);
+      this.updatePosition(keys);
+      this.updateValidators(false);
+      this.updateModel();
+    });
+  }
+
+  ngOnDestroy() {
+    if (this.dataKeysSubscription) {
+      this.dataKeysSubscription.unsubscribe();
+    }
   }
 
   dataKeys(): string[] {
@@ -178,7 +193,6 @@ export class DisplacementChartKeySettingsComponent extends PageComponent impleme
       color: [null, [Validators.required]],
     });
     layersArray.push(layerGroup);
-    this.displacementSettingsFormGroup.updateValueAndValidity();
   }
 
   addThreshold() {
@@ -189,7 +203,6 @@ export class DisplacementChartKeySettingsComponent extends PageComponent impleme
       color: [null, [Validators.required]],
     });
     thresholdsArray.push(thresholdControl);
-    this.displacementSettingsFormGroup.updateValueAndValidity();
   }
 
   removeLayer(index: number) {
@@ -202,6 +215,44 @@ export class DisplacementChartKeySettingsComponent extends PageComponent impleme
     thresholdsArray.removeAt(index);
   }
 
+  updateBaseline(keys: DataKey[]) {
+    const baselineArray = this.baselineArray.controls.map((c) => c.getRawValue());
+    this.baselineArray.clear();
+    keys.forEach((key) => {
+      const matchedGroup = baselineArray.find((e) => e.key === key.name);
+      if (matchedGroup) {
+        this.baselineArray.push(this.fb.group({
+          key: [key.name, [Validators.required]],
+          value: [matchedGroup.value, [Validators.required]],
+        }));
+      } else {
+        this.baselineArray.push(this.fb.group({
+          key: [key.name, [Validators.required]],
+          value: [null, [Validators.required]],
+        }));
+      }
+    });
+  }
+
+  updatePosition(keys: DataKey[]) {
+    const positionArray = this.positionArray.controls.map((c) => c.getRawValue());
+    this.positionArray.clear();
+    keys.forEach((key) => {
+      const matchedGroup = positionArray.find((e) => e.key === key.name);
+      if (matchedGroup) {
+        this.positionArray.push(this.fb.group({
+          key: [key.name, [Validators.required]],
+          depth: [matchedGroup.depth, [Validators.required]],
+        }));
+      } else {
+        this.positionArray.push(this.fb.group({
+          key: [key.name, [Validators.required]],
+          depth: [null, [Validators.required]],
+        }));
+      }
+    });
+  }
+
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
   }
@@ -210,7 +261,7 @@ export class DisplacementChartKeySettingsComponent extends PageComponent impleme
 
   writeValue(value: any): void {
     this.modelValue = value;
-    this.displacementSettingsFormGroup.patchValue(value, {emitEvent: false});
+    this.displacementSettingsFormGroup.patchValue(value);
 
     const layers = value.layers;
     const thresholds = value.thresholds;
@@ -220,14 +271,14 @@ export class DisplacementChartKeySettingsComponent extends PageComponent impleme
         to: [layer.to, [Validators.required]],
         title: [layer.title, [Validators.required]],
         color: [layer.color, [Validators.required]],
-      }), {emitEvent: false}));
+      })));
     }
     if (thresholds && thresholds.length) {
       thresholds.forEach((threshold) => this.thresholdsArray.push(this.fb.group({
         x_pos: [threshold.x_pos, [Validators.required]],
         title: [threshold.title, [Validators.required]],
         color: [threshold.color, [Validators.required]],
-      }), {emitEvent: false}))
+      })));
     }
 
     this.updateValidators(false);
@@ -259,18 +310,18 @@ export class DisplacementChartKeySettingsComponent extends PageComponent impleme
       this.displacementSettingsFormGroup.get('baseline.baseline').disable({emitEvent});
     }
 
-    this.displacementSettingsFormGroup.get('grid').updateValueAndValidity({emitEvent: false});
-    this.displacementSettingsFormGroup.get('xaxis.min').updateValueAndValidity({emitEvent: false});
-    this.displacementSettingsFormGroup.get('xaxis.max').updateValueAndValidity({emitEvent: false});
-    this.displacementSettingsFormGroup.get('yaxis.unit').updateValueAndValidity({emitEvent: false});
-    this.displacementSettingsFormGroup.get('calculation.type').updateValueAndValidity({emitEvent: false});
-    this.displacementSettingsFormGroup.get('calculation.direction').updateValueAndValidity({emitEvent: false});
-    this.displacementSettingsFormGroup.get('baseline.baseline_date').updateValueAndValidity({emitEvent: false});
-    this.displacementSettingsFormGroup.get('baseline.baseline_time').updateValueAndValidity({emitEvent: false});
-    this.displacementSettingsFormGroup.get('baseline.enterManually').updateValueAndValidity({emitEvent: false});
-    this.displacementSettingsFormGroup.get('baseline.baseline').updateValueAndValidity({emitEvent: false});
-    this.displacementSettingsFormGroup.get('position').updateValueAndValidity({emitEvent: false});
-    this.displacementSettingsFormGroup.get('layers').updateValueAndValidity({emitEvent: false});
-    this.displacementSettingsFormGroup.get('thresholds').updateValueAndValidity({emitEvent: false});
+    this.displacementSettingsFormGroup.get('grid').updateValueAndValidity({emitEvent});
+    this.displacementSettingsFormGroup.get('xaxis.min').updateValueAndValidity({emitEvent});
+    this.displacementSettingsFormGroup.get('xaxis.max').updateValueAndValidity({emitEvent});
+    this.displacementSettingsFormGroup.get('yaxis.unit').updateValueAndValidity({emitEvent});
+    this.displacementSettingsFormGroup.get('calculation.type').updateValueAndValidity({emitEvent});
+    this.displacementSettingsFormGroup.get('calculation.direction').updateValueAndValidity({emitEvent});
+    this.displacementSettingsFormGroup.get('baseline.baseline_date').updateValueAndValidity({emitEvent});
+    this.displacementSettingsFormGroup.get('baseline.baseline_time').updateValueAndValidity({emitEvent});
+    this.displacementSettingsFormGroup.get('baseline.enterManually').updateValueAndValidity({emitEvent});
+    this.displacementSettingsFormGroup.get('baseline.baseline').updateValueAndValidity({emitEvent});
+    this.displacementSettingsFormGroup.get('position').updateValueAndValidity({emitEvent});
+    this.displacementSettingsFormGroup.get('layers').updateValueAndValidity({emitEvent});
+    this.displacementSettingsFormGroup.get('thresholds').updateValueAndValidity({emitEvent});
   }
 }
