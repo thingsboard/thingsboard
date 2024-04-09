@@ -124,8 +124,8 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                         if (asset != null) {
                             return asset.getId();
                         }
-                        var entityCreationLock = new EntityCreationLockKey(tenantId, entityType, targetEntityName);
-                        synchronized (entitiesCreationLocks.computeIfAbsent(entityCreationLock, k -> new Object())) {
+                        var entityCreationLockKey = new EntityCreationLockKey(tenantId, entityType, targetEntityName);
+                        synchronized (entitiesCreationLocks.computeIfAbsent(entityCreationLockKey, k -> new Object())) {
                             asset = ctx.getAssetService().findAssetByTenantIdAndName(tenantId, targetEntityName);
                             if (asset != null) {
                                 return asset.getId();
@@ -157,8 +157,8 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                         if (customerOpt.isPresent()) {
                             return customerOpt.get().getId();
                         }
-                        var entityCreationLock = new EntityCreationLockKey(tenantId, entityType, targetEntityName);
-                        synchronized (entitiesCreationLocks.computeIfAbsent(entityCreationLock, k -> new Object())) {
+                        var entityCreationLockKey = new EntityCreationLockKey(tenantId, entityType, targetEntityName);
+                        synchronized (entitiesCreationLocks.computeIfAbsent(entityCreationLockKey, k -> new Object())) {
                             customerOpt = ctx.getCustomerService().findCustomerByTenantIdAndTitle(tenantId, targetEntityName);
                             if (customerOpt.isPresent()) {
                                 return customerOpt.get().getId();
