@@ -199,7 +199,7 @@ public abstract class AbstractLwm2mClientTest extends AbstractContainerTest{
             lwModel.setTitle(resourceName);
             lwModel.setFileName(resourceName);
             lwModel.setTenantId(tenantId);
-            byte[] bytes = IOUtils.toByteArray(AbstractLwm2mClientTest.class.getClassLoader().getResourceAsStream("lwm2m/" + resourceName));
+            byte[] bytes = IOUtils.toByteArray(AbstractLwm2mClientTest.class.getClassLoader().getResourceAsStream("lwm2m-registry/" + resourceName));
             lwModel.setData(bytes);
             testRestClient.postTbResourceIfNotExists(lwModel);
         }

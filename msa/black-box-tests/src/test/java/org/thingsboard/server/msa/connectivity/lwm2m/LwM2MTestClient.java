@@ -110,7 +110,7 @@ public class LwM2MTestClient {
 
         List<ObjectModel> models = new ArrayList<>();
         for (String resourceName : resources) {
-            models.addAll(ObjectLoader.loadDdfFile(LwM2MTestClient.class.getClassLoader().getResourceAsStream("lwm2m/" + resourceName), resourceName));
+            models.addAll(ObjectLoader.loadDdfFile(LwM2MTestClient.class.getClassLoader().getResourceAsStream("lwm2m-registry/" + resourceName), resourceName));
         }
         LwM2mModel model = new StaticModel(models);
         ObjectsInitializer initializer = new ObjectsInitializer(model);

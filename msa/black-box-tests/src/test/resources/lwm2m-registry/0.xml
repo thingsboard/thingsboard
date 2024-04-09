@@ -1,21 +1,62 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <!--
+FILE INFORMATION
 
-    Copyright © 2016-2024 The Thingsboard Authors
+OMA Permanent Document
+   File: OMA-SUP-XML_0-V1_2-20201110-A.xml
+   Path: http://www.openmobilealliance.org/release/ObjLwM2M_Security/
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+OMNA LwM2M Registry
+   Path: https://github.com/OpenMobileAlliance/lwm2m-registry
+   Name: 0.xml
 
-        http://www.apache.org/licenses/LICENSE-2.0
+NORMATIVE INFORMATION
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+  Information about this file can be found in the latest revision of
+
+  OMA-TS-LightweightM2M_Core-V1_2
+
+  This is available at http://www.openmobilealliance.org/release/LightweightM2M/
+
+  Send comments to https://github.com/OpenMobileAlliance/OMA_LwM2M_for_Developers/issues
+
+LEGAL DISCLAIMER
+
+  Copyright 2020 Open Mobile Alliance.
+
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions
+  are met:
+
+  1. Redistributions of source code must retain the above copyright
+  notice, this list of conditions and the following disclaimer.
+  2. Redistributions in binary form must reproduce the above copyright
+  notice, this list of conditions and the following disclaimer in the
+  documentation and/or other materials provided with the distribution.
+  3. Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived
+  from this software without specific prior written permission.
+
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+  COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  POSSIBILITY OF SUCH DAMAGE.
+
+  The above license is used as a license under copyright only.  Please
+  reference the OMA IPR Policy for patent licensing terms:
+  https://www.omaspecworks.org/about/intellectual-property-rights/
 
 -->
+
 <LWM2M xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.openmobilealliance.org/tech/profiles/LWM2M-v1_1.xsd">
   <Object ObjectType="MODefinition">
 		<Name>LWM2M Security</Name>
@@ -179,7 +220,7 @@ If the value is set to 0, or if this resource is not instantiated, the Bootstrap
         <Operations></Operations>
         <MultipleInstances>Single</MultipleInstances>
 				<Mandatory>Optional</Mandatory>
-				<Type>Integer</Type>
+				<Type>Unsigned Integer</Type>
 				<RangeEnumeration>0..3</RangeEnumeration>
 				<Units></Units>
 				<Description><![CDATA[The Matching Type Resource specifies how the certificate or raw public key in in the Server Public Key is presented. Four values are currently defined:
@@ -203,7 +244,7 @@ If the value is set to 0, or if this resource is not instantiated, the Bootstrap
         <Operations></Operations>
         <MultipleInstances>Single</MultipleInstances>
 				<Mandatory>Optional</Mandatory>
-				<Type>Integer</Type>
+				<Type>Unsigned Integer</Type>
 				<RangeEnumeration>0..3</RangeEnumeration>
 				<Units></Units>
 				<Description><![CDATA[The Certificate Usage Resource specifies the semantic of the certificate or 
@@ -220,7 +261,7 @@ If the value is set to 0, or if this resource is not instantiated, the Bootstrap
         <Operations></Operations>
         <MultipleInstances>Multiple</MultipleInstances>
 				<Mandatory>Optional</Mandatory>
-				<Type>Integer</Type>
+				<Type>Unsigned Integer</Type>
 				<RangeEnumeration></RangeEnumeration>
 				<Units></Units>
 				<Description><![CDATA[When this resource is present it instructs the TLS/DTLS client to propose the indicated ciphersuite(s) in the ClientHello of the handshake. A ciphersuite is indicated as a 32-bit integer value. The IANA TLS ciphersuite registry is maintained at https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml. As an example, the TLS_PSK_WITH_AES_128_CCM_8 ciphersuite is represented with the following string "0xC0,0xA8". To form an integer value the two values are concatenated. In this example, the value is 0xc0a8 or 49320.]]></Description>
@@ -239,7 +280,7 @@ If the value is set to 0, or if this resource is not instantiated, the Bootstrap
 				<Operations></Operations>
 				<MultipleInstances>Multiple</MultipleInstances>
 				<Mandatory>Optional</Mandatory>
-				<Type>Integer</Type>
+				<Type>Unsigned Integer</Type>
 				<RangeEnumeration>0..65535</RangeEnumeration>
 				<Units></Units>
 				<Description><![CDATA[If this resource is defined, it indicates what groups the LwM2M Client should use with a LwM2M Server/LwM2M Bootstrap-Server (ordered from most preferred to least preferred). Resource instance 0 indicates the most preferred group. The values are taken from Section 4.2.7 of RFC 8446. An example is secp256r1 (0x0017).]]></Description>
@@ -249,7 +290,7 @@ If the value is set to 0, or if this resource is not instantiated, the Bootstrap
 				<Operations></Operations>
 				<MultipleInstances>Multiple</MultipleInstances>
 				<Mandatory>Optional</Mandatory>
-				<Type>Integer</Type>
+				<Type>Unsigned Integer</Type>
 				<RangeEnumeration>0..65535</RangeEnumeration>
 				<Units></Units>
 				<Description><![CDATA[If this resource is defined, it indicates what signature algorithms the LwM2M Server/LwM2M Bootstrap-Server supports. The values are taken from Section 4.2.3 of RFC 8446. An example is ecdsa_secp256r1_sha256(0x0403).]]></Description>
@@ -258,7 +299,7 @@ If the value is set to 0, or if this resource is not instantiated, the Bootstrap
 				<Operations></Operations>
 				<MultipleInstances>Multiple</MultipleInstances>
 				<Mandatory>Optional</Mandatory>
-				<Type>Integer</Type>
+				<Type>Unsigned Integer</Type>
 				<RangeEnumeration>0..65535</RangeEnumeration>
 				<Units></Units>
 				<Description><![CDATA[If this resource is defined, it indicates what signature algorithms the LwM2M Client should use with a LwM2M Server/LwM2M Bootstrap-Server (ordered from most preferred to least preferred). Resource instance 0 indicates the most preferred group. The values are taken from Section 4.2.3 of RFC 8446. An example is ecdsa_secp256r1_sha256(0x0403).]]></Description>
@@ -268,7 +309,7 @@ If the value is set to 0, or if this resource is not instantiated, the Bootstrap
 				<Operations></Operations>
 				<MultipleInstances>Multiple</MultipleInstances>
 				<Mandatory>Optional</Mandatory>
-				<Type>Integer</Type>
+				<Type>Unsigned Integer</Type>
 				<RangeEnumeration>0..65535</RangeEnumeration>
 				<Units></Units>
 				<Description><![CDATA[If this resource is defined, it indicates what certificate-specific signature algorithms the the LwM2M Server/LwM2M Bootstrap-Server supports. The values are taken from Section 4.2.3 of RFC 8446. An example is ecdsa_secp256r1_sha256(0x0403).]]></Description>
@@ -278,7 +319,7 @@ If the value is set to 0, or if this resource is not instantiated, the Bootstrap
 				<Operations></Operations>
 				<MultipleInstances>Single</MultipleInstances>
 				<Mandatory>Optional</Mandatory>
-				<Type>Integer</Type>
+				<Type>Unsigned Integer</Type>
 				<RangeEnumeration>0..65535</RangeEnumeration>
 				<Units></Units>
 				<Description><![CDATA[If this resource is defined, it indicates which features the LwM2M Client should use with the respective LwM2M Server/LwM2M Bootstrap-Server. The bitmask values listed below are defined. A bit value of '0' means the feature should not be used. bit(0) - PSK Plain, bit(1) - 0-RTT, bit(2) - PSK with PFS, bit(3) - Certificate-based Authentication. Bit(4) to bit(31) are reserved.]]></Description>
@@ -288,7 +329,7 @@ If the value is set to 0, or if this resource is not instantiated, the Bootstrap
 				<Operations></Operations>
 				<MultipleInstances>Single</MultipleInstances>
 				<Mandatory>Optional</Mandatory>
-				<Type>Integer</Type>
+				<Type>Unsigned Integer</Type>
 				<RangeEnumeration>0..65535</RangeEnumeration>
 				<Units></Units>
 				<Description><![CDATA[If this resource is defined, it indicates what extensions the LwM2M Server/LwM2M Bootstrap-Server supports in form of a bitmap.  The following values are defined: bit(0) - Server Name Indication (RFC 6066), bit (1) - Max Fragment Length (RFC 6066), bit (2) - Status Request (RFC 6066), bit (3) - Heartbeat (RFC 6520), bit (4) - Application Layer Protocol Negotiation (RFC 7301), bit (5) - Signed Certificate Timestamp (RFC 6962), bit (6) - Certificate Compression (draft-ietf-tls-certificate-compression), bit (7) - Record Size Limit (RFC 8449), bit (8) - Ticket Pinning (draft-ietf-tls-pinning-ticket), bit (9) - Certificate Authorities (RFC 8446), bit (10) - OID Filters (RFC 8446), bit (11) - Post Handshake Auth (RFC 8446), bit (12) - Connection ID (draft-ietf-tls-dtls-connection-id/draft-ietf-tls-dtls13). Bit(13) to bit(31) are reserved. ]]></Description>
@@ -298,7 +339,7 @@ If the value is set to 0, or if this resource is not instantiated, the Bootstrap
 				<Operations></Operations>
 				<MultipleInstances>Single</MultipleInstances>
 				<Mandatory>Optional</Mandatory>
-				<Type>Integer</Type>
+				<Type>Unsigned Integer</Type>
 				<RangeEnumeration>0..65535</RangeEnumeration>
 				<Units></Units>
 				<Description><![CDATA[If this resource is defined, it indicates what extensions the LwM2M Client should use with the LwM2M Server/LwM2M Bootstrap-Server in form of a bitmap. The following values are defined: bit(0) - Server Name Indication (RFC 6066), bit (1) - Max Fragment Length (RFC 6066), bit (2) - Status Request (RFC 6066), bit (3) - Heartbeat (RFC 6520), bit (4) - Application Layer Protocol Negotiation (RFC 7301), bit (5) - Signed Certificate Timestamp (RFC 6962), bit (6) - Certificate Compression (draft-ietf-tls-certificate-compression), bit (7) - Record Size Limit (RFC 8449), bit (8) - Ticket Pinning (draft-ietf-tls-pinning-ticket), bit (9) - Certificate Authorities (RFC 8446), bit (10) - OID Filters (RFC 8446), bit (11) - Post Handshake Auth (RFC 8446), bit (12) - Connection ID (draft-ietf-tls-dtls-connection-id/draft-ietf-tls-dtls13). Bit(13) to bit(31) are reserved. ]]></Description>
