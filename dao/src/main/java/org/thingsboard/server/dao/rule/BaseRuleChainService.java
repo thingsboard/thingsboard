@@ -651,8 +651,8 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     @Override
     public PageData<RuleChain> findRuleChainsByTenantIdAndEdgeId(TenantId tenantId, EdgeId edgeId, PageLink pageLink) {
         log.trace("Executing findRuleChainsByTenantIdAndEdgeId, tenantId [{}], edgeId [{}], pageLink [{}]", tenantId, edgeId, pageLink);
-        Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
-        Validator.validateId(edgeId, "Incorrect edgeId " + edgeId);
+        Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        Validator.validateId(edgeId, id -> "Incorrect edgeId " + id);
         Validator.validatePageLink(pageLink);
         return ruleChainDao.findRuleChainsByTenantIdAndEdgeId(tenantId.getId(), edgeId.getId(), pageLink);
     }
@@ -711,14 +711,14 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     @Override
     public PageData<RuleChain> findAutoAssignToEdgeRuleChainsByTenantId(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findAutoAssignToEdgeRuleChainsByTenantId, tenantId [{}], pageLink {}", tenantId, pageLink);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         return ruleChainDao.findAutoAssignToEdgeRuleChainsByTenantId(tenantId.getId(), pageLink);
     }
 
     @Override
     public List<RuleNode> findRuleNodesByTenantIdAndType(TenantId tenantId, String type, String search) {
         log.trace("Executing findRuleNodes, tenantId [{}], type {}, search {}", tenantId, type, search);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         validateString(type, "Incorrect type of the rule node");
         validateString(search, "Incorrect search text");
         return ruleNodeDao.findRuleNodesByTenantIdAndType(tenantId, type, search);
@@ -727,7 +727,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     @Override
     public List<RuleNode> findRuleNodesByTenantIdAndType(TenantId tenantId, String type) {
         log.trace("Executing findRuleNodes, tenantId [{}], type {}", tenantId, type);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         validateString(type, "Incorrect type of the rule node");
         return ruleNodeDao.findRuleNodesByTenantIdAndType(tenantId, type, "");
     }
@@ -761,7 +761,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     @Override
     public List<RuleNode> findAllRuleNodesByIds(List<RuleNodeId> ruleNodeIds) {
         log.trace("Executing findAllRuleNodesByIds, ruleNodeIds {}", ruleNodeIds);
-        validateIds(ruleNodeIds, "Incorrect ruleNodeIds " + ruleNodeIds);
+        validateIds(ruleNodeIds, ids -> "Incorrect ruleNodeIds " + ids);
         assert ruleNodeIds.size() <= 1024;
         return ruleNodeDao.findAllRuleNodeByIds(ruleNodeIds);
     }

@@ -236,14 +236,14 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
                 @Override
                 public void onSuccess(Void unused) {
                     entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null,
-                            null, ActionType.ATTRIBUTES_UPDATED, null, scope, attributes);
+                            null, ActionType.ATTRIBUTES_UPDATED, null, AttributeScope.valueOf(scope), attributes);
                 }
 
                 @Override
                 public void onFailure(Throwable throwable) {
                     entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null,
                             null, ActionType.ATTRIBUTES_UPDATED, BaseController.toException(throwable),
-                            scope, attributes);
+                            AttributeScope.valueOf(scope), attributes);
                     throw new RuntimeException(throwable);
                 }
 

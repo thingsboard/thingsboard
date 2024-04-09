@@ -94,7 +94,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
     @Override
     public Tenant findTenantById(TenantId tenantId) {
         log.trace("Executing findTenantById [{}]", tenantId);
-        Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
 
         return cache.getAndPutInTransaction(tenantId, () -> tenantDao.findById(tenantId, tenantId.getId()), true);
     }
@@ -102,14 +102,14 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
     @Override
     public TenantInfo findTenantInfoById(TenantId tenantId) {
         log.trace("Executing findTenantInfoById [{}]", tenantId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         return tenantDao.findTenantInfoById(tenantId, tenantId.getId());
     }
 
     @Override
     public ListenableFuture<Tenant> findTenantByIdAsync(TenantId callerId, TenantId tenantId) {
         log.trace("Executing findTenantByIdAsync [{}]", tenantId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         return tenantDao.findByIdAsync(callerId, tenantId.getId());
     }
 
@@ -154,7 +154,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
     public void deleteTenant(TenantId tenantId) {
         log.trace("Executing deleteTenant [{}]", tenantId);
         Tenant tenant = findTenantById(tenantId);
-        Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
 
         userService.deleteByTenantId(tenantId);
         adminSettingsService.deleteAdminSettingsByTenantId(tenantId);
@@ -167,7 +167,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
                 EntityType.DASHBOARD, EntityType.CUSTOMER, EntityType.EDGE, EntityType.RULE_CHAIN,
                 EntityType.API_USAGE_STATE, EntityType.TB_RESOURCE, EntityType.OTA_PACKAGE, EntityType.RPC,
                 EntityType.QUEUE, EntityType.NOTIFICATION_REQUEST, EntityType.NOTIFICATION_RULE,
-                EntityType.NOTIFICATION_TEMPLATE, EntityType.NOTIFICATION_TARGET
+                EntityType.NOTIFICATION_TEMPLATE, EntityType.NOTIFICATION_TARGET, EntityType.QUEUE_STATS
         );
 
         publishEvictEvent(new TenantEvictEvent(tenantId, true));

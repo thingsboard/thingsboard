@@ -34,7 +34,7 @@ public class AlarmsDeletionTaskProcessor extends HousekeeperTaskProcessor<Housek
     public void process(HousekeeperTask task) throws Exception {
         EntityType entityType = task.getEntityId().getEntityType();
         if (entityType == EntityType.DEVICE || entityType == EntityType.ASSET) {
-            int count = alarmService.deleteAlarmsByEntityId(task.getTenantId(), task.getEntityId());
+            int count = alarmService.deleteAlarmsByOriginatorId(task.getTenantId(), task.getEntityId());
             log.debug("[{}][{}][{}] Deleted {} alarms", task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(), count);
         } else {
             int count = alarmService.deleteEntityAlarmRecords(task.getTenantId(), task.getEntityId());

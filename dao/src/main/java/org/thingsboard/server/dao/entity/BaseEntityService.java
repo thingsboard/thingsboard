@@ -17,8 +17,10 @@ package org.thingsboard.server.dao.entity;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasEmail;
 import org.thingsboard.server.common.data.HasLabel;
@@ -33,13 +35,18 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
+import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityFilterType;
+import org.thingsboard.server.common.data.query.EntityKey;
+import org.thingsboard.server.common.data.query.EntityListFilter;
 import org.thingsboard.server.common.data.query.RelationsQueryFilter;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.id.EntityId.NULL_UUID;
 import static org.thingsboard.server.dao.service.Validator.validateEntityDataPageLink;
@@ -60,13 +67,14 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     private EntityQueryDao entityQueryDao;
 
     @Autowired
+    @Lazy
     EntityServiceRegistry entityServiceRegistry;
 
     @Override
     public long countEntitiesByQuery(TenantId tenantId, CustomerId customerId, EntityCountQuery query) {
         log.trace("Executing countEntitiesByQuery, tenantId [{}], customerId [{}], query [{}]", tenantId, customerId, query);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
         validateEntityCountQuery(query);
         return this.entityQueryDao.countEntitiesByQuery(tenantId, customerId, query);
     }
@@ -74,10 +82,56 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     @Override
     public PageData<EntityData> findEntityDataByQuery(TenantId tenantId, CustomerId customerId, EntityDataQuery query) {
         log.trace("Executing findEntityDataByQuery, tenantId [{}], customerId [{}], query [{}]", tenantId, customerId, query);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
         validateEntityDataQuery(query);
-        return this.entityQueryDao.findEntityDataByQuery(tenantId, customerId, query);
+
+        if (EntityFilterType.RELATIONS_QUERY.equals(query.getEntityFilter().getType())
+                || EntityFilterType.SINGLE_ENTITY.equals(query.getEntityFilter().getType())
+                || StringUtils.isNotEmpty(query.getPageLink().getTextSearch())) {
+            return this.entityQueryDao.findEntityDataByQuery(tenantId, customerId, query);
+        }
+
+        // 1 step - find entity data by filter and sort columns
+        PageData<EntityData> entityDataByQuery = findEntityIdsByFilterAndSorterColumns(tenantId, customerId, query);
+        if (entityDataByQuery == null || entityDataByQuery.getData().isEmpty()) {
+            return entityDataByQuery;
+        }
+        // 2 step - find entity data by entity ids from the 1st step
+        PageData<EntityData> result = findEntityDataByEntityIds(tenantId, customerId, query, entityDataByQuery.getData());
+        return new PageData<>(result.getData(), entityDataByQuery.getTotalPages(), entityDataByQuery.getTotalElements(), entityDataByQuery.hasNext());
+    }
+
+    private PageData<EntityData> findEntityIdsByFilterAndSorterColumns(TenantId tenantId, CustomerId customerId, EntityDataQuery query) {
+        List<EntityKey> entityFields = null;
+        List<EntityKey> latestValues = null;
+        if (query.getPageLink().getSortOrder() != null) {
+            if (query.getEntityFields() != null) {
+                entityFields = query.getEntityFields().stream()
+                        .filter(entityKey -> entityKey.getKey().equals(query.getPageLink().getSortOrder().getKey().getKey()))
+                        .collect(Collectors.toList());
+            }
+            if (query.getLatestValues() != null) {
+                latestValues = query.getLatestValues().stream()
+                        .filter(entityKey -> entityKey.getKey().equals(query.getPageLink().getSortOrder().getKey().getKey()))
+                        .collect(Collectors.toList());
+            }
+        }
+        EntityDataQuery entityQuery = new EntityDataQuery(query.getEntityFilter(), query.getPageLink(), entityFields, latestValues, query.getKeyFilters());
+        return this.entityQueryDao.findEntityDataByQuery(tenantId, customerId, entityQuery);
+    }
+
+    private PageData<EntityData> findEntityDataByEntityIds(TenantId tenantId, CustomerId customerId, EntityDataQuery query, List<EntityData> data) {
+        List<String> entityIds = data.stream().map(d -> d.getEntityId().getId().toString()).toList();
+        EntityType entityType = data.isEmpty() ? null : data.get(0).getEntityId().getEntityType();
+
+        EntityListFilter filter = new EntityListFilter();
+        filter.setEntityType(entityType);
+        filter.setEntityList(entityIds);
+
+        EntityDataPageLink pageLink = new EntityDataPageLink(query.getPageLink().getPageSize(), 0, null, query.getPageLink().getSortOrder());
+        EntityDataQuery entityQuery = new EntityDataQuery(filter, pageLink, query.getEntityFields(), query.getLatestValues(), null);
+        return this.entityQueryDao.findEntityDataByQuery(tenantId, customerId, entityQuery);
     }
 
     @Override
@@ -131,8 +185,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     }
 
     private CustomerId getCustomerId(HasId<?> entity) {
-        if (entity instanceof HasCustomerId) {
-            HasCustomerId hasCustomerId = (HasCustomerId) entity;
+        if (entity instanceof HasCustomerId hasCustomerId) {
             CustomerId customerId = hasCustomerId.getCustomerId();
             if (customerId == null) {
                 customerId = NULL_CUSTOMER_ID;
@@ -174,4 +227,5 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
             throw new IncorrectParameterException("Relation query filter root entity should not be blank");
         }
     }
+
 }

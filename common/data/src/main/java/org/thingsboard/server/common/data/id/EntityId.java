@@ -35,10 +35,10 @@ public interface EntityId extends HasUUID, Serializable { //NOSONAR, the constan
 
     UUID NULL_UUID = UUID.fromString("13814000-1dd2-11b2-8080-808080808080");
 
-    @Schema(required = true, description = "ID of the entity, time-based UUID v1", example = "784f394c-42b6-435a-983c-b7beff2784f9")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "ID of the entity, time-based UUID v1", example = "784f394c-42b6-435a-983c-b7beff2784f9")
     UUID getId();
 
-    @Schema(required = true, example = "DEVICE")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, example = "DEVICE")
     EntityType getEntityType();
 
     @JsonIgnore

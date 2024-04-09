@@ -19,16 +19,13 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
-import jakarta.annotation.PostConstruct;
+import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import jakarta.annotation.PostConstruct;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -65,26 +62,17 @@ public class DefaultStatsFactory implements StatsFactory {
 
 
     @Override
-    public StatsCounter createStatsCounter(String key, String statsName) {
-        return createStatsCounter(key, statsName, Collections.emptyMap());
-    }
-
-    @Override
-    public StatsCounter createStatsCounter(String key, String statsName, Map<String, String> tags) {
-        String[] tagsArr = new String[]{STATS_NAME_TAG, statsName};
-        if (!tags.isEmpty()) {
-            List<String> tagsList = new ArrayList<>(List.of(tagsArr));
-            tags.forEach((name, value) -> {
-                tagsList.add(name);
-                tagsList.add(value);
-            });
-            tagsArr = tagsList.toArray(String[]::new);
+    public StatsCounter createStatsCounter(String key, String statsName, String... otherTags) {
+        String[] tags = new String[]{STATS_NAME_TAG, statsName};
+        if (otherTags.length > 0) {
+            if (otherTags.length % 2 != 0) {
+                throw new IllegalArgumentException("Invalid tags array size");
+            }
+            tags = ArrayUtils.addAll(tags, otherTags);
         }
         return new StatsCounter(
                 new AtomicInteger(0),
-                metricsEnabled ?
-                        meterRegistry.counter(key, tagsArr)
-                        : STUB_COUNTER,
+                metricsEnabled ? meterRegistry.counter(key, tags) : STUB_COUNTER,
                 statsName
         );
     }

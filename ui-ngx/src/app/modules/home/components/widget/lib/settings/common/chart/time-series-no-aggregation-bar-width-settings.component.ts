@@ -29,6 +29,7 @@ import {
   timeSeriesChartNoAggregationBarWidthStrategyTranslations
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { merge } from 'rxjs';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-time-series-no-aggregation-bar-width-settings',
@@ -52,6 +53,10 @@ export class TimeSeriesNoAggregationBarWidthSettingsComponent implements OnInit,
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  @coerceBoolean()
+  stroked = false;
 
   private modelValue: TimeSeriesChartNoAggregationBarWidthSettings;
 

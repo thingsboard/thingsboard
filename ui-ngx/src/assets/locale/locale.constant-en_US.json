@@ -283,6 +283,7 @@
           "domain-schema-https": "HTTPS",
           "domain-schema-mixed": "HTTP+HTTPS",
           "enable": "Enable OAuth2 settings",
+          "edge-enable": "Propagate to Edge",
           "domains": "Domains",
           "mobile-apps": "Mobile applications",
           "no-mobile-apps": "No applications configured",
@@ -2244,6 +2245,8 @@
         "type-ota-package": "OTA package",
         "type-rpc": "RPC",
         "type-queue": "Queue",
+        "type-queue-stats": "Queue statistics",
+        "type-queues-stats": "Queues statistics",
         "type-notification": "Notification",
         "type-notification-rule": "Notification rule",
         "type-notification-rules": "Notification rules",
@@ -2271,7 +2274,9 @@
         "address2": "Address 2",
         "zip": "Zip",
         "phone": "Phone",
-        "label": "Label"
+        "label": "Label",
+        "queue-name": "Queue name",
+        "service-id": "Service Id"
     },
     "entity-view": {
         "entity-view": "Entity view",
@@ -5018,7 +5023,9 @@
         "device-credentials-conflict": "Failed to load the device with external id <b>{{entityId}}</b><br/>due to the same credentials are already present in the database for another device.<br/>Please consider disabling the <b>load credentials</b> setting in the restore form.",
         "missing-referenced-entity": "Failed to load the <b>{{sourceEntityTypeName}}</b> with external id <b>{{sourceEntityId}}</b><br/>because it references missing <b>{{targetEntityTypeName}}</b> with id <b>{{targetEntityId}}</b>.",
         "runtime-failed": "<b>Failed:</b> {{message}}",
-        "auto-commit-settings-read-only-hint": "Auto-commit feature doesn't work with enabled read-only option in Repository settings."
+        "auto-commit-settings-read-only-hint": "Auto-commit feature doesn't work with enabled read-only option in Repository settings.",
+        "rollback-on-error": "Rollback on error",
+        "rollback-on-error-hint": "If you have a large amount of entities to restore, consider disabling this option to increase performance.\n Note, if an error occurs over the course of version loading, already persisted entities (with relations, attributes, etc.) will stay as is"
     },
     "widget": {
         "widget-library": "Widgets library",
@@ -5425,7 +5432,7 @@
             "bar-appearance": "Bar appearance",
             "label-on-bar": "Label on bar",
             "value-on-bar": "Value on bar",
-            "bar-chart-card-style": "Bar chart card style"
+            "bar-chart-style": "Bar chart style"
         },
         "battery-level": {
             "layout": "Layout",
@@ -6175,10 +6182,14 @@
         "range-chart": {
             "chart": "Chart",
             "data-zoom": "Data zoom",
+            "range-chart-appearance": "Range chart appearance",
             "range-colors": "Range colors",
             "out-of-range-color": "Out of range color",
+            "show-range-thresholds": "Show range thresholds",
+            "range-thresholds-settings": "Range thresholds settings",
             "fill-area": "Fill area",
-            "range-chart-card-style": "Range chart card style"
+            "fill-area-opacity": "Fill area opacity",
+            "range-chart-style": "Range chart style"
         },
         "rpc": {
             "value-settings": "Value settings",
@@ -6772,7 +6783,8 @@
               "label-position-inside-middle-bottom": "Inside middle bottom",
               "label-position-inside-end": "Inside end",
               "label-position-inside-end-top": "Inside end top",
-              "label-position-inside-end-bottom": "Inside end bottom"
+              "label-position-inside-end-bottom": "Inside end bottom",
+              "label-background": "Label background"
             },
             "axis": {
               "axes": "Axes",
@@ -6853,6 +6865,7 @@
                 "show-points": "Show points",
                 "point-label": "Point label",
                 "point-label-hint": "Display label with value over the series point.",
+                "point-label-background": "Point label background",
                 "point-shape": "Point shape",
                 "point-size": "Point size"
               },
@@ -6861,7 +6874,8 @@
                 "border-width": "Border width",
                 "border-radius": "Border radius",
                 "label": "Label",
-                "label-hint": "Display label with value over the bar."
+                "label-hint": "Display label with value over the bar.",
+                "label-background": "Label background"
               }
             }
         },

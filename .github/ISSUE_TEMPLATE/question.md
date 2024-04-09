@@ -3,7 +3,7 @@ name: Question
 about: Describe your questions in detail
 title: "Your title here"
 labels: ['question']
-assignees: 'AndriichnekoDm'
+assignees: 'Ultrazombie'
 
 ---
 

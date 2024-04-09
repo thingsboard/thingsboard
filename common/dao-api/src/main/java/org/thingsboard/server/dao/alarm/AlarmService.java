@@ -81,7 +81,7 @@ public interface AlarmService extends EntityDaoService {
 
     void delAlarmTypes(TenantId tenantId, Set<String> types);
 
-    int deleteAlarmsByEntityId(TenantId tenantId, EntityId entityId);
+    int deleteAlarmsByOriginatorId(TenantId tenantId, EntityId entityId);
 
     // Other API
     Alarm findAlarmById(TenantId tenantId, AlarmId alarmId);
@@ -107,6 +107,8 @@ public interface AlarmService extends EntityDaoService {
                                                         AlarmDataQuery query, Collection<EntityId> orderedEntityIds);
 
     PageData<AlarmId> findAlarmIdsByAssigneeId(TenantId tenantId, UserId userId, PageLink pageLink);
+
+    PageData<AlarmId> findAlarmIdsByOriginatorId(TenantId tenantId, EntityId originatorId, PageLink pageLink);
 
     int deleteEntityAlarmRecords(TenantId tenantId, EntityId entityId);
 

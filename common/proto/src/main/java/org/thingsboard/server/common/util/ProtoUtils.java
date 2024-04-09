@@ -434,36 +434,28 @@ public class ProtoUtils {
     }
 
     public static TransportProtos.ToDeviceActorNotificationMsgProto toProto(ToDeviceActorNotificationMsg msg) {
-        if (msg instanceof DeviceEdgeUpdateMsg) {
-            DeviceEdgeUpdateMsg updateMsg = (DeviceEdgeUpdateMsg) msg;
+        if (msg instanceof DeviceEdgeUpdateMsg updateMsg) {
             TransportProtos.DeviceEdgeUpdateMsgProto proto = toProto(updateMsg);
             return TransportProtos.ToDeviceActorNotificationMsgProto.newBuilder().setDeviceEdgeUpdateMsg(proto).build();
-        } else if (msg instanceof DeviceNameOrTypeUpdateMsg) {
-            DeviceNameOrTypeUpdateMsg updateMsg = (DeviceNameOrTypeUpdateMsg) msg;
+        } else if (msg instanceof DeviceNameOrTypeUpdateMsg updateMsg) {
             TransportProtos.DeviceNameOrTypeUpdateMsgProto proto = toProto(updateMsg);
             return TransportProtos.ToDeviceActorNotificationMsgProto.newBuilder().setDeviceNameOrTypeMsg(proto).build();
-        } else if (msg instanceof DeviceAttributesEventNotificationMsg) {
-            DeviceAttributesEventNotificationMsg updateMsg = (DeviceAttributesEventNotificationMsg) msg;
+        } else if (msg instanceof DeviceAttributesEventNotificationMsg updateMsg) {
             TransportProtos.DeviceAttributesEventMsgProto proto = toProto(updateMsg);
             return TransportProtos.ToDeviceActorNotificationMsgProto.newBuilder().setDeviceAttributesEventMsg(proto).build();
-        } else if (msg instanceof DeviceCredentialsUpdateNotificationMsg) {
-            DeviceCredentialsUpdateNotificationMsg updateMsg = (DeviceCredentialsUpdateNotificationMsg) msg;
+        } else if (msg instanceof DeviceCredentialsUpdateNotificationMsg updateMsg) {
             TransportProtos.DeviceCredentialsUpdateMsgProto proto = toProto(updateMsg);
             return TransportProtos.ToDeviceActorNotificationMsgProto.newBuilder().setDeviceCredentialsUpdateMsg(proto).build();
-        } else if (msg instanceof ToDeviceRpcRequestActorMsg) {
-            ToDeviceRpcRequestActorMsg updateMsg = (ToDeviceRpcRequestActorMsg) msg;
+        } else if (msg instanceof ToDeviceRpcRequestActorMsg updateMsg) {
             TransportProtos.ToDeviceRpcRequestActorMsgProto proto = toProto(updateMsg);
             return TransportProtos.ToDeviceActorNotificationMsgProto.newBuilder().setToDeviceRpcRequestMsg(proto).build();
-        } else if (msg instanceof FromDeviceRpcResponseActorMsg) {
-            FromDeviceRpcResponseActorMsg updateMsg = (FromDeviceRpcResponseActorMsg) msg;
+        } else if (msg instanceof FromDeviceRpcResponseActorMsg updateMsg) {
             TransportProtos.FromDeviceRpcResponseActorMsgProto proto = toProto(updateMsg);
             return TransportProtos.ToDeviceActorNotificationMsgProto.newBuilder().setFromDeviceRpcResponseMsg(proto).build();
-        } else if (msg instanceof RemoveRpcActorMsg) {
-            RemoveRpcActorMsg updateMsg = (RemoveRpcActorMsg) msg;
+        } else if (msg instanceof RemoveRpcActorMsg updateMsg) {
             TransportProtos.RemoveRpcActorMsgProto proto = toProto(updateMsg);
             return TransportProtos.ToDeviceActorNotificationMsgProto.newBuilder().setRemoveRpcActorMsg(proto).build();
-        } else if (msg instanceof DeviceDeleteMsg) {
-            DeviceDeleteMsg updateMsg = (DeviceDeleteMsg) msg;
+        } else if (msg instanceof DeviceDeleteMsg updateMsg) {
             TransportProtos.DeviceDeleteMsgProto proto = toProto(updateMsg);
             return TransportProtos.ToDeviceActorNotificationMsgProto.newBuilder().setDeviceDeleteMsg(proto).build();
         }
@@ -507,24 +499,14 @@ public class ProtoUtils {
         List<AttributeKvEntry> result = new ArrayList<>();
         for (TransportProtos.AttributeValueProto kvEntry : valuesList) {
             boolean hasValue = kvEntry.getHasV();
-            KvEntry entry = null;
-            switch (kvEntry.getType()) {
-                case BOOLEAN_V:
-                    entry = new BooleanDataEntry(kvEntry.getKey(), hasValue ? kvEntry.getBoolV() : null);
-                    break;
-                case LONG_V:
-                    entry = new LongDataEntry(kvEntry.getKey(), hasValue ? kvEntry.getLongV() : null);
-                    break;
-                case DOUBLE_V:
-                    entry = new DoubleDataEntry(kvEntry.getKey(), hasValue ? kvEntry.getDoubleV() : null);
-                    break;
-                case STRING_V:
-                    entry = new StringDataEntry(kvEntry.getKey(), hasValue ? kvEntry.getStringV() : null);
-                    break;
-                case JSON_V:
-                    entry = new JsonDataEntry(kvEntry.getKey(), hasValue ? kvEntry.getJsonV() : null);
-                    break;
-            }
+            KvEntry entry = switch (kvEntry.getType()) {
+                case BOOLEAN_V -> new BooleanDataEntry(kvEntry.getKey(), hasValue ? kvEntry.getBoolV() : null);
+                case LONG_V -> new LongDataEntry(kvEntry.getKey(), hasValue ? kvEntry.getLongV() : null);
+                case DOUBLE_V -> new DoubleDataEntry(kvEntry.getKey(), hasValue ? kvEntry.getDoubleV() : null);
+                case STRING_V -> new StringDataEntry(kvEntry.getKey(), hasValue ? kvEntry.getStringV() : null);
+                case JSON_V -> new JsonDataEntry(kvEntry.getKey(), hasValue ? kvEntry.getJsonV() : null);
+                default -> null;
+            };
             result.add(new BaseAttributeKvEntry(kvEntry.getLastUpdateTs(), entry));
         }
         return result;
@@ -1029,15 +1011,11 @@ public class ProtoUtils {
                 .setDeviceProfileIdLSB(device.getDeviceProfileId().getId().getLeastSignificantBits())
                 .setAdditionalInfo(JacksonUtil.toString(device.getAdditionalInfo()));
 
-        PowerSavingConfiguration psmConfiguration = null;
-        switch (device.getDeviceData().getTransportConfiguration().getType()) {
-            case LWM2M:
-                psmConfiguration = (Lwm2mDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration();
-                break;
-            case COAP:
-                psmConfiguration = (CoapDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration();
-                break;
-        }
+        PowerSavingConfiguration psmConfiguration = switch (device.getDeviceData().getTransportConfiguration().getType()) {
+            case LWM2M -> (Lwm2mDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration();
+            case COAP -> (CoapDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration();
+            default -> null;
+        };
 
         if (psmConfiguration != null) {
             PowerMode powerMode = psmConfiguration.getPowerMode();
@@ -1079,4 +1057,5 @@ public class ProtoUtils {
     private static Long checkLong(Long l) {
         return isNotNull(l) ? l : 0;
     }
+
 }

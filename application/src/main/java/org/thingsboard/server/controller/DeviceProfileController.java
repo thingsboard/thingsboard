@@ -86,8 +86,7 @@ public class DeviceProfileController extends BaseController {
 
     @ApiOperation(value = "Get Device Profile (getDeviceProfileById)",
             notes = "Fetch the Device Profile object based on the provided Device Profile Id. " +
-                    "The server checks that the device profile is owned by the same tenant. " + TENANT_AUTHORITY_PARAGRAPH,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+                    "The server checks that the device profile is owned by the same tenant. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/deviceProfile/{deviceProfileId}", method = RequestMethod.GET)
     @ResponseBody
@@ -107,8 +106,7 @@ public class DeviceProfileController extends BaseController {
 
     @ApiOperation(value = "Get Device Profile Info (getDeviceProfileInfoById)",
             notes = "Fetch the Device Profile Info object based on the provided Device Profile Id. "
-                    + DEVICE_PROFILE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+                    + DEVICE_PROFILE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/deviceProfileInfo/{deviceProfileId}", method = RequestMethod.GET)
     @ResponseBody
@@ -122,8 +120,7 @@ public class DeviceProfileController extends BaseController {
 
     @ApiOperation(value = "Get Default Device Profile (getDefaultDeviceProfileInfo)",
             notes = "Fetch the Default Device Profile Info object. " +
-                    DEVICE_PROFILE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+                    DEVICE_PROFILE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/deviceProfileInfo/default", method = RequestMethod.GET)
     @ResponseBody
@@ -136,8 +133,7 @@ public class DeviceProfileController extends BaseController {
                     "If profile is not set returns a list of unique keys among all profiles. " +
                     "The call is used for auto-complete in the UI forms. " +
                     "The implementation limits the number of devices that participate in search to 100 as a trade of between accurate results and time-consuming queries. " +
-                    TENANT_AUTHORITY_PARAGRAPH,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+                    TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/deviceProfile/devices/keys/timeseries", method = RequestMethod.GET)
     @ResponseBody
@@ -160,8 +156,7 @@ public class DeviceProfileController extends BaseController {
                     "If profile is not set returns a list of unique keys among all profiles. " +
                     "The call is used for auto-complete in the UI forms. " +
                     "The implementation limits the number of devices that participate in search to 100 as a trade of between accurate results and time-consuming queries. " +
-                    TENANT_AUTHORITY_PARAGRAPH,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+                    TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/deviceProfile/devices/keys/attributes", method = RequestMethod.GET)
     @ResponseBody
@@ -186,8 +181,7 @@ public class DeviceProfileController extends BaseController {
                     "Referencing non-existing device profile Id will cause 'Not Found' error. " + NEW_LINE +
                     "Device profile name is unique in the scope of tenant. Only one 'default' device profile may exist in scope of tenant." + DEVICE_PROFILE_DATA +
                     "Remove 'id', 'tenantId' from the request body example (below) to create new Device Profile entity. " +
-                    TENANT_AUTHORITY_PARAGRAPH,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+                    TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/deviceProfile", method = RequestMethod.POST)
     @ResponseBody
@@ -215,8 +209,7 @@ public class DeviceProfileController extends BaseController {
     }
 
     @ApiOperation(value = "Make Device Profile Default (setDefaultDeviceProfile)",
-            notes = "Marks device profile as default within a tenant scope." + TENANT_AUTHORITY_PARAGRAPH,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+            notes = "Marks device profile as default within a tenant scope." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/deviceProfile/{deviceProfileId}/default", method = RequestMethod.POST)
     @ResponseBody
@@ -232,8 +225,7 @@ public class DeviceProfileController extends BaseController {
 
     @ApiOperation(value = "Get Device Profiles (getDeviceProfiles)",
             notes = "Returns a page of devices profile objects owned by tenant. " +
-                    PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+                    PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/deviceProfiles", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
@@ -254,8 +246,7 @@ public class DeviceProfileController extends BaseController {
 
     @ApiOperation(value = "Get Device Profiles for transport type (getDeviceProfileInfos)",
             notes = "Returns a page of devices profile info objects owned by tenant. " +
-                    PAGE_DATA_PARAMETERS + DEVICE_PROFILE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+                    PAGE_DATA_PARAMETERS + DEVICE_PROFILE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/deviceProfileInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody

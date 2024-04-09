@@ -59,28 +59,28 @@ public class BaseAttributesService implements AttributesService {
     @Override
     public ListenableFuture<Optional<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String scope, String attributeKey) {
         validate(entityId, scope);
-        Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey);
+        Validator.validateString(attributeKey, k -> "Incorrect attribute key " + k);
         return Futures.immediateFuture(attributesDao.find(tenantId, entityId, AttributeScope.valueOf(scope), attributeKey));
     }
 
     @Override
     public ListenableFuture<Optional<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, AttributeScope scope, String attributeKey) {
         validate(entityId, scope);
-        Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey);
+        Validator.validateString(attributeKey, k -> "Incorrect attribute key " + k);
         return Futures.immediateFuture(attributesDao.find(tenantId, entityId, scope, attributeKey));
     }
 
     @Override
     public ListenableFuture<List<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String scope, Collection<String> attributeKeys) {
         validate(entityId, scope);
-        attributeKeys.forEach(attributeKey -> Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey));
+        attributeKeys.forEach(attributeKey -> Validator.validateString(attributeKey, k -> "Incorrect attribute key " + k));
         return Futures.immediateFuture(attributesDao.find(tenantId, entityId, AttributeScope.valueOf(scope), attributeKeys));
     }
 
     @Override
     public ListenableFuture<List<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, AttributeScope scope, Collection<String> attributeKeys) {
         validate(entityId, scope);
-        attributeKeys.forEach(attributeKey -> Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey));
+        attributeKeys.forEach(attributeKey -> Validator.validateString(attributeKey, k -> "Incorrect attribute key " + k));
         return Futures.immediateFuture(attributesDao.find(tenantId, entityId, scope, attributeKeys));
     }
 

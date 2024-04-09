@@ -54,15 +54,15 @@ public class BaseRpcService implements RpcService {
     @Override
     public void deleteRpc(TenantId tenantId, RpcId rpcId) {
         log.trace("Executing deleteRpc, tenantId [{}], rpcId [{}]", tenantId, rpcId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        validateId(rpcId, INCORRECT_RPC_ID + rpcId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateId(rpcId, id -> INCORRECT_RPC_ID + id);
         rpcDao.removeById(tenantId, rpcId.getId());
     }
 
     @Override
     public void deleteAllRpcByTenantId(TenantId tenantId) {
         log.trace("Executing deleteAllRpcByTenantId, tenantId [{}]", tenantId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         tenantRpcRemover.removeEntities(tenantId, tenantId);
     }
 
@@ -74,23 +74,23 @@ public class BaseRpcService implements RpcService {
     @Override
     public Rpc findById(TenantId tenantId, RpcId rpcId) {
         log.trace("Executing findById, tenantId [{}], rpcId [{}]", tenantId, rpcId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        validateId(rpcId, INCORRECT_RPC_ID + rpcId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateId(rpcId, id -> INCORRECT_RPC_ID + id);
         return rpcDao.findById(tenantId, rpcId.getId());
     }
 
     @Override
     public ListenableFuture<Rpc> findRpcByIdAsync(TenantId tenantId, RpcId rpcId) {
         log.trace("Executing findRpcByIdAsync, tenantId [{}], rpcId: [{}]", tenantId, rpcId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        validateId(rpcId, INCORRECT_RPC_ID + rpcId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateId(rpcId, id -> INCORRECT_RPC_ID + id);
         return rpcDao.findByIdAsync(tenantId, rpcId.getId());
     }
 
     @Override
     public PageData<Rpc> findAllByDeviceIdAndStatus(TenantId tenantId, DeviceId deviceId, RpcStatus rpcStatus, PageLink pageLink) {
         log.trace("Executing findAllByDeviceIdAndStatus, tenantId [{}], deviceId [{}], rpcStatus [{}], pageLink [{}]", tenantId, deviceId, rpcStatus, pageLink);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         validatePageLink(pageLink);
         return rpcDao.findAllByDeviceIdAndStatus(tenantId, deviceId, rpcStatus, pageLink);
     }
@@ -98,7 +98,7 @@ public class BaseRpcService implements RpcService {
     @Override
     public PageData<Rpc> findAllByDeviceId(TenantId tenantId, DeviceId deviceId, PageLink pageLink) {
         log.trace("Executing findAllByDeviceIdAndStatus, tenantId [{}], deviceId [{}], pageLink [{}]", tenantId, deviceId, pageLink);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         validatePageLink(pageLink);
         return rpcDao.findAllByDeviceId(tenantId, deviceId, pageLink);
     }
