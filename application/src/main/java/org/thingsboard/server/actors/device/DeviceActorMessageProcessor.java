@@ -43,7 +43,6 @@ import org.thingsboard.server.common.data.id.RpcId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKey;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
@@ -74,8 +73,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceSessionsCacheEntry;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.KeyValueProto;
-import org.thingsboard.server.gen.transport.TransportProtos.KeyValueType;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionCloseNotificationProto;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionEvent;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionEventMsg;
@@ -254,14 +251,12 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     }
 
     private boolean isSendNewRpcAvailable() {
-        switch (rpcSubmitStrategy) {
-            case SEQUENTIAL_ON_ACK_FROM_DEVICE:
-                return toDeviceRpcPendingMap.values().stream().filter(md -> !md.isDelivered()).findAny().isEmpty();
-            case SEQUENTIAL_ON_RESPONSE_FROM_DEVICE:
-                return toDeviceRpcPendingMap.values().stream().filter(ToDeviceRpcRequestMetadata::isDelivered).findAny().isEmpty();
-            default:
-                return true;
-        }
+        return switch (rpcSubmitStrategy) {
+            case SEQUENTIAL_ON_ACK_FROM_DEVICE -> toDeviceRpcPendingMap.values().stream().filter(md -> !md.isDelivered()).findAny().isEmpty();
+            case SEQUENTIAL_ON_RESPONSE_FROM_DEVICE ->
+                    toDeviceRpcPendingMap.values().stream().filter(ToDeviceRpcRequestMetadata::isDelivered).findAny().isEmpty();
+            default -> true;
+        };
     }
 
     private void createRpc(ToDeviceRpcRequest request, RpcStatus status) {
@@ -925,34 +920,6 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         EdgeEvent edgeEvent = EdgeUtils.constructEdgeEvent(tenantId, edgeId, EdgeEventType.DEVICE, EdgeEventActionType.RPC_CALL, deviceId, body);
 
         return systemContext.getEdgeEventService().saveAsync(edgeEvent);
-    }
-
-    private KeyValueProto toKeyValueProto(KvEntry kvEntry) {
-        KeyValueProto.Builder builder = KeyValueProto.newBuilder();
-        builder.setKey(kvEntry.getKey());
-        switch (kvEntry.getDataType()) {
-            case BOOLEAN:
-                builder.setType(KeyValueType.BOOLEAN_V);
-                builder.setBoolV(kvEntry.getBooleanValue().get());
-                break;
-            case DOUBLE:
-                builder.setType(KeyValueType.DOUBLE_V);
-                builder.setDoubleV(kvEntry.getDoubleValue().get());
-                break;
-            case LONG:
-                builder.setType(KeyValueType.LONG_V);
-                builder.setLongV(kvEntry.getLongValue().get());
-                break;
-            case STRING:
-                builder.setType(KeyValueType.STRING_V);
-                builder.setStringV(kvEntry.getStrValue().get());
-                break;
-            case JSON:
-                builder.setType(KeyValueType.JSON_V);
-                builder.setJsonV(kvEntry.getJsonValue().get());
-                break;
-        }
-        return builder.build();
     }
 
     void restoreSessions() {
