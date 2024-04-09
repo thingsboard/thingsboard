@@ -72,13 +72,22 @@ public class TbRuleChainInputNode implements TbNode {
         } catch (Exception e) {
             throw new TbNodeException("Failed to parse rule chain id: " + config.getRuleChainId(), true);
         }
+        if (ruleChainUUID.equals(ctx.getSelf().getRuleChainId().getId())) {
+            throw new TbNodeException("The rule chain id and the current rule chain id cannot be equals!", true);
+        }
         this.ruleChainId = new RuleChainId(ruleChainUUID);
         ctx.checkTenantEntity(ruleChainId);
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        ctx.input(msg, getRuleChainId(ctx, msg));
+        RuleChainId targetRuleChainId = getRuleChainId(ctx, msg);
+        if (targetRuleChainId.equals(ctx.getSelf().getRuleChainId())) {
+            ctx.tellFailure(msg, new RuntimeException(
+                    "Message cannot be forwarded to the default rule chain since current rule chain is the default rule chain!"));
+            return;
+        }
+        ctx.input(msg, targetRuleChainId);
     }
 
     @Override
