@@ -129,6 +129,7 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
     }
 
     @Override
+    @Transactional
     public Customer saveCustomer(Customer customer) {
         return saveCustomer(customer, true);
     }
@@ -144,7 +145,7 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
         }
         var evictEvent = new CustomerCacheEvictEvent(customer.getTenantId(), customer.getTitle(), oldCustomerTitle);
         try {
-            Customer savedCustomer = customerDao.save(customer.getTenantId(), customer);
+            Customer savedCustomer = customerDao.saveAndFlush(customer.getTenantId(), customer);
             dashboardService.updateCustomerDashboards(savedCustomer.getTenantId(), savedCustomer.getId());
             if (customer.getId() == null) {
                 countService.publishCountEntityEvictEvent(savedCustomer.getTenantId(), EntityType.CUSTOMER);

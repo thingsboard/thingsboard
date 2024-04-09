@@ -23,18 +23,6 @@ UPDATE customer SET is_public = true WHERE title = 'Public';
 
 -- UPDATE CUSTOMERS WITH SAME TITLE START
 
--- Check for postgres version to install pgcrypto
--- if version less then 130000 to have ability use gen_random_uuid();
-
-DO
-$$
-    BEGIN
-        IF (SELECT current_setting('server_version_num')::int) < 130000 THEN
-            CREATE EXTENSION IF NOT EXISTS pgcrypto;
-        END IF;
-    END
-$$;
-
 CREATE OR REPLACE PROCEDURE update_customers_with_the_same_title()
     LANGUAGE plpgsql
 AS
@@ -42,20 +30,41 @@ $$
 DECLARE
     customer_record  RECORD;
     dashboard_record RECORD;
+    title_exists     BOOLEAN;
     new_title        TEXT;
     updated_json     JSONB;
 BEGIN
     RAISE NOTICE 'Starting the customer and dashboard update process.';
 
     FOR customer_record IN
-        SELECT id, tenant_id, title
-        FROM customer
-        WHERE id IN (SELECT c1.id
-                     FROM customer c1
-                              JOIN customer c2 ON c1.tenant_id = c2.tenant_id AND c1.title = c2.title
-                     WHERE c1.id > c2.id)
+        SELECT id, tenant_id, title, duplicate_number
+        FROM (
+                 SELECT
+                     id,
+                     tenant_id,
+                     title,
+                     ROW_NUMBER() OVER(PARTITION BY tenant_id, title ORDER BY id) AS duplicate_number
+                 FROM customer
+             ) AS duplicate_customers
+        WHERE duplicate_number > 1
         LOOP
-            new_title := customer_record.title || '_' || gen_random_uuid();
+            -- Attempt with 'duplicate' suffix
+            new_title := customer_record.title || ' duplicate ' || (customer_record.duplicate_number - 1)::TEXT;
+
+            -- Check if new_title already exists for the same tenant_id
+            SELECT EXISTS (
+                SELECT 1
+                FROM customer
+                WHERE tenant_id = customer_record.tenant_id
+                  AND title = new_title
+            ) INTO title_exists;
+
+            -- If generated title exists, use customer id instead to create a unique title
+            IF title_exists THEN
+                new_title := customer_record.title || ' duplicate ' || customer_record.id::TEXT;
+            END IF;
+
+            -- Update the customer title
             UPDATE customer
             SET title = new_title
             WHERE id = customer_record.id;

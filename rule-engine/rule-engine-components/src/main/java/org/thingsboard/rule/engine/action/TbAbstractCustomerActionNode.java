@@ -46,7 +46,7 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
 @Slf4j
 public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerActionNodeConfiguration> implements TbNode {
 
-    private ConcurrentMap<CustomerCreationLock, Object> customerCreationLocks;
+    private ConcurrentMap<CustomerCreationLockKey, Object> customerCreationLocks;
 
     private static final Set<EntityType> supportedEntityTypes = EnumSet.of(EntityType.ASSET, EntityType.DEVICE,
             EntityType.ENTITY_VIEW, EntityType.DASHBOARD, EntityType.EDGE);
@@ -89,8 +89,8 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
                 if (customerOpt.isPresent()) {
                     return customerOpt.get().getId();
                 }
-                var customerCreationLock = new CustomerCreationLock(tenantId, customerTitle);
-                synchronized (customerCreationLocks.computeIfAbsent(customerCreationLock, k -> new Object())) {
+                var customerCreationLockKey = new CustomerCreationLockKey(tenantId, customerTitle);
+                synchronized (customerCreationLocks.computeIfAbsent(customerCreationLockKey, k -> new Object())) {
                     customerOpt = ctx.getCustomerService().findCustomerByTenantIdAndTitle(tenantId, customerTitle);
                     if (customerOpt.isPresent()) {
                         return customerOpt.get().getId();
@@ -138,7 +138,7 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
         return new TbPair<>(hasChanges, oldConfiguration);
     }
 
-    private record CustomerCreationLock(TenantId tenantId, String customerTitle) {
+    private record CustomerCreationLockKey(TenantId tenantId, String customerTitle) {
     }
 
 }

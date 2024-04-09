@@ -148,6 +148,7 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
     }
 
     @Override
+    @Transactional
     public User saveUser(TenantId tenantId, User user) {
         log.trace("Executing saveUser [{}]", user);
         User oldUser = userValidator.validate(user, User::getTenantId);
@@ -157,7 +158,7 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
         var evictEvent = new UserCacheEvictEvent(user.getTenantId(), user.getEmail(), oldUser != null ? oldUser.getEmail() : null);
         User savedUser;
         try {
-            savedUser = userDao.save(user.getTenantId(), user);
+            savedUser = userDao.saveAndFlush(user.getTenantId(), user);
             publishEvictEvent(evictEvent);
             if (user.getId() == null) {
                 countService.publishCountEntityEvictEvent(savedUser.getTenantId(), EntityType.USER);

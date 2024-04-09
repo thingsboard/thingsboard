@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationActionNodeConfiguration> implements TbNode {
 
-    private ConcurrentMap<EntityCreationLock, Object> entitiesCreationLocks;
+    private ConcurrentMap<EntityCreationLockKey, Object> entitiesCreationLocks;
 
     private static final Set<EntityType> supportedEntityTypes = EnumSet.of(EntityType.TENANT, EntityType.DEVICE,
             EntityType.ASSET, EntityType.CUSTOMER, EntityType.ENTITY_VIEW, EntityType.DASHBOARD, EntityType.EDGE, EntityType.USER);
@@ -90,8 +90,8 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                         if (device != null) {
                             return device.getId();
                         }
-                        var entityCreationLock = new EntityCreationLock(tenantId, entityType, targetEntityName);
-                        synchronized (entitiesCreationLocks.computeIfAbsent(entityCreationLock, k -> new Object())) {
+                        var entityCreationLockKey = new EntityCreationLockKey(tenantId, entityType, targetEntityName);
+                        synchronized (entitiesCreationLocks.computeIfAbsent(entityCreationLockKey, k -> new Object())) {
                             device = ctx.getDeviceService().findDeviceByTenantIdAndName(tenantId, targetEntityName);
                             if (device != null) {
                                 return device.getId();
@@ -124,7 +124,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                         if (asset != null) {
                             return asset.getId();
                         }
-                        var entityCreationLock = new EntityCreationLock(tenantId, entityType, targetEntityName);
+                        var entityCreationLock = new EntityCreationLockKey(tenantId, entityType, targetEntityName);
                         synchronized (entitiesCreationLocks.computeIfAbsent(entityCreationLock, k -> new Object())) {
                             asset = ctx.getAssetService().findAssetByTenantIdAndName(tenantId, targetEntityName);
                             if (asset != null) {
@@ -157,7 +157,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
                         if (customerOpt.isPresent()) {
                             return customerOpt.get().getId();
                         }
-                        var entityCreationLock = new EntityCreationLock(tenantId, entityType, targetEntityName);
+                        var entityCreationLock = new EntityCreationLockKey(tenantId, entityType, targetEntityName);
                         synchronized (entitiesCreationLocks.computeIfAbsent(entityCreationLock, k -> new Object())) {
                             customerOpt = ctx.getCustomerService().findCustomerByTenantIdAndTitle(tenantId, targetEntityName);
                             if (customerOpt.isPresent()) {
@@ -307,7 +307,7 @@ public abstract class TbAbstractRelationActionNode<C extends TbAbstractRelationA
         return new TbPair<>(hasChanges, config);
     }
 
-    private record EntityCreationLock(TenantId tenantId, EntityType entityType, String entityName) {
+    private record EntityCreationLockKey(TenantId tenantId, EntityType entityType, String entityName) {
     }
 
 }
