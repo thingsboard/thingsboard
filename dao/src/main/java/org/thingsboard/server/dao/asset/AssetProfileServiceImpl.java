@@ -129,16 +129,12 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
     }
 
     @Override
-    public AssetProfile saveAssetProfile(AssetProfile assetProfile, boolean doValidate) {
-        return doSaveAssetProfile(assetProfile, doValidate);
+    public AssetProfile saveAssetProfile(AssetProfile assetProfile) {
+        return saveAssetProfile(assetProfile, true, true);
     }
 
     @Override
-    public AssetProfile saveAssetProfile(AssetProfile assetProfile) {
-        return doSaveAssetProfile(assetProfile, true);
-    }
-
-    private AssetProfile doSaveAssetProfile(AssetProfile assetProfile, boolean doValidate) {
+    public AssetProfile saveAssetProfile(AssetProfile assetProfile, boolean doValidate, boolean publishSaveEvent) {
         log.trace("Executing saveAssetProfile [{}]", assetProfile);
         AssetProfile oldAssetProfile = null;
         if (doValidate) {
@@ -152,8 +148,10 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
             savedAssetProfile = assetProfileDao.saveAndFlush(assetProfile.getTenantId(), assetProfile);
             publishEvictEvent(new AssetProfileEvictEvent(savedAssetProfile.getTenantId(), savedAssetProfile.getName(),
                     oldAssetProfile != null ? oldAssetProfile.getName() : null, savedAssetProfile.getId(), savedAssetProfile.isDefault()));
-            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedAssetProfile.getTenantId()).entityId(savedAssetProfile.getId())
-                    .created(oldAssetProfile == null).build());
+            if (publishSaveEvent) {
+                eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedAssetProfile.getTenantId()).entity(savedAssetProfile)
+                        .entityId(savedAssetProfile.getId()).created(oldAssetProfile == null).build());
+            }
         } catch (Exception t) {
             handleEvictEvent(new AssetProfileEvictEvent(assetProfile.getTenantId(), assetProfile.getName(),
                     oldAssetProfile != null ? oldAssetProfile.getName() : null, null, assetProfile.isDefault()));
@@ -229,7 +227,7 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
         AssetProfile assetProfile = findAssetProfileByName(tenantId, name, false);
         if (assetProfile == null) {
             try {
-                assetProfile = this.doCreateDefaultAssetProfile(tenantId, name, name.equals("default"));
+                assetProfile = this.doCreateDefaultAssetProfile(tenantId, name, name.equals("default"), true);
             } catch (DataValidationException e) {
                 if (ASSET_PROFILE_WITH_SUCH_NAME_ALREADY_EXISTS.equals(e.getMessage())) {
                     assetProfile = findAssetProfileByName(tenantId, name, false);
@@ -244,17 +242,17 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
     @Override
     public AssetProfile createDefaultAssetProfile(TenantId tenantId) {
         log.trace("Executing createDefaultAssetProfile tenantId [{}]", tenantId);
-        return doCreateDefaultAssetProfile(tenantId, "default", true);
+        return doCreateDefaultAssetProfile(tenantId, "default", true, false);
     }
 
-    private AssetProfile doCreateDefaultAssetProfile(TenantId tenantId, String profileName, boolean defaultProfile) {
+    private AssetProfile doCreateDefaultAssetProfile(TenantId tenantId, String profileName, boolean defaultProfile, boolean publishSaveEvent) {
         validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
         AssetProfile assetProfile = new AssetProfile();
         assetProfile.setTenantId(tenantId);
         assetProfile.setDefault(defaultProfile);
         assetProfile.setName(profileName);
         assetProfile.setDescription("Default asset profile");
-        return saveAssetProfile(assetProfile);
+        return saveAssetProfile(assetProfile, true, publishSaveEvent);
     }
 
     @Override

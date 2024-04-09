@@ -16,13 +16,11 @@
 package org.thingsboard.server.common.transport.util;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.binary.Base64;
 import org.bouncycastle.asn1.x500.RDN;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
-import org.springframework.util.Base64Utils;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 
 import java.io.ByteArrayInputStream;
@@ -31,6 +29,8 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.Base64;
+
 
 /**
  * @author Valerii Sosliuk
@@ -43,7 +43,7 @@ public class SslUtil {
 
     public static String getCertificateString(Certificate cert)
             throws CertificateEncodingException {
-        return EncryptionUtil.certTrimNewLines(Base64Utils.encodeToString(cert.getEncoded()));
+        return EncryptionUtil.certTrimNewLines(Base64.getEncoder().encodeToString(cert.getEncoded()));
     }
 
     public static String getCertificateChainString(Certificate[] chain)
@@ -52,7 +52,7 @@ public class SslUtil {
         String end = "-----END CERTIFICATE-----";
         StringBuilder stringBuilder = new StringBuilder();
         for (Certificate cert: chain) {
-            stringBuilder.append(begin).append(EncryptionUtil.certTrimNewLines(Base64Utils.encodeToString(cert.getEncoded()))).append(end).append("\n");
+            stringBuilder.append(begin).append(EncryptionUtil.certTrimNewLines(Base64.getEncoder().encodeToString(cert.getEncoded()))).append(end).append("\n");
         }
         return stringBuilder.toString();
     }
@@ -64,7 +64,7 @@ public class SslUtil {
                 fileContent = fileContent.replace("-----BEGIN CERTIFICATE-----", "")
                         .replace("-----END CERTIFICATE-----", "")
                         .replaceAll("\\s", "");
-                byte[] decoded = Base64.decodeBase64(fileContent);
+                byte[] decoded = Base64.getDecoder().decode(fileContent);
                 CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
                 try (InputStream inStream = new ByteArrayInputStream(decoded)) {
                     certificate = (X509Certificate) certFactory.generateCertificate(inStream);

@@ -35,7 +35,7 @@ public class RpcDiscoverCallback extends RpcLwM2MDownlinkCallback<DiscoverReques
     }
 
     protected Optional<String> serializeSuccessfulResponse(DiscoverResponse response) {
-        return Optional.of(serializer.serialize(response.getObjectLinks()));
+        return Optional.of(serializer.serializeCoreLinkFormat(response.getObjectLinks()));
     }
 
 }
