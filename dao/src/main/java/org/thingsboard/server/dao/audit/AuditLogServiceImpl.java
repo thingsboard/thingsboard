@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.StringUtils;
@@ -200,10 +201,10 @@ public class AuditLogServiceImpl implements AuditLogService {
                 break;
             case ATTRIBUTES_UPDATED:
                 actionData.put("entityId", entityId.toString());
-                String scope = extractParameter(String.class, 0, additionalInfo);
+                AttributeScope scope = extractParameter(AttributeScope.class, 0, additionalInfo);
                 @SuppressWarnings("unchecked")
                 List<AttributeKvEntry> attributes = extractParameter(List.class, 1, additionalInfo);
-                actionData.put("scope", scope);
+                actionData.put("scope", scope.name());
                 ObjectNode attrsNode = JacksonUtil.newObjectNode();
                 if (attributes != null) {
                     for (AttributeKvEntry attr : attributes) {
@@ -215,8 +216,8 @@ public class AuditLogServiceImpl implements AuditLogService {
             case ATTRIBUTES_DELETED:
             case ATTRIBUTES_READ:
                 actionData.put("entityId", entityId.toString());
-                scope = extractParameter(String.class, 0, additionalInfo);
-                actionData.put("scope", scope);
+                scope = extractParameter(AttributeScope.class, 0, additionalInfo);
+                actionData.put("scope", scope.name());
                 @SuppressWarnings("unchecked")
                 List<String> keys = extractParameter(List.class, 1, additionalInfo);
                 ArrayNode attrsArrayNode = actionData.putArray("attributes");
