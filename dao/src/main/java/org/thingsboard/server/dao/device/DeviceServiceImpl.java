@@ -306,6 +306,9 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     @Override
     public Device assignDeviceToCustomer(TenantId tenantId, DeviceId deviceId, CustomerId customerId) {
         Device device = findDeviceById(tenantId, deviceId);
+        if (customerId.equals(device.getCustomerId())) {
+            return device;
+        }
         device.setCustomerId(customerId);
         return saveDevice(device);
     }
@@ -314,6 +317,9 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     @Override
     public Device unassignDeviceFromCustomer(TenantId tenantId, DeviceId deviceId) {
         Device device = findDeviceById(tenantId, deviceId);
+        if (device.getCustomerId() == null) {
+            return device;
+        }
         device.setCustomerId(null);
         return saveDevice(device);
     }

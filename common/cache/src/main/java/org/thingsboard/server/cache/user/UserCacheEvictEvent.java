@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.action;
+package org.thingsboard.server.cache.user;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.thingsboard.rule.engine.api.NodeConfiguration;
+import lombok.RequiredArgsConstructor;
+import org.thingsboard.server.common.data.id.TenantId;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class TbUnassignFromCustomerNodeConfiguration extends TbAbstractCustomerActionNodeConfiguration implements NodeConfiguration<TbUnassignFromCustomerNodeConfiguration> {
+@RequiredArgsConstructor
+public class UserCacheEvictEvent {
 
-    @Override
-    public TbUnassignFromCustomerNodeConfiguration defaultConfiguration() {
-        var configuration = new TbUnassignFromCustomerNodeConfiguration();
-        configuration.setCustomerNamePattern("");
-        return configuration;
-    }
+    private final TenantId tenantId;
+    private final String newEmail;
+    private final String oldEmail;
+
 }
