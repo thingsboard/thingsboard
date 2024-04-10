@@ -186,6 +186,10 @@
             <artifactId>allure-testng</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.eclipse.leshan</groupId>
+            <artifactId>leshan-client-cf</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

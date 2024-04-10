@@ -21,10 +21,10 @@
 
     <appender name="fileLogAppender"
               class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>/var/log/tb-coap-transport/${TB_SERVICE_ID}/tb-coap-transport.log</file>
+        <file>/var/log/tb-lwm2m-transport/${TB_SERVICE_ID}/tb-lwm2m-transport.log</file>
         <rollingPolicy
                 class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>/var/log/tb-coap-transport/${TB_SERVICE_ID}/tb-coap-transport.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <fileNamePattern>/var/log/tb-lwm2m-transport/${TB_SERVICE_ID}/tb-lwm2m-transport.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <maxFileSize>100MB</maxFileSize>
             <maxHistory>30</maxHistory>
             <totalSizeCap>3GB</totalSizeCap>
@@ -46,6 +46,8 @@
 
     <logger name="org.apache.kafka.common.utils.AppInfoParser" level="WARN"/>
     <logger name="org.apache.kafka.clients" level="WARN"/>
+
+    <logger name="org.thingsboard.server.transport.lwm2m" level="TRACE"/>
 
     <root level="INFO">
         <appender-ref ref="fileLogAppender"/>
