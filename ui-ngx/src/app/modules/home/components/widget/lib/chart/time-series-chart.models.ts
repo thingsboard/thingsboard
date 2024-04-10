@@ -17,8 +17,10 @@
 import {
   ECharts,
   EChartsOption,
-  EChartsSeriesItem, EChartsShape,
+  EChartsSeriesItem,
+  EChartsShape,
   EChartsTooltipTrigger,
+  EChartsTooltipValueFormatFunction,
   EChartsTooltipWidgetSettings,
   measureThresholdOffset,
   timeAxisBandWidthCalculator
@@ -41,7 +43,8 @@ import { CustomSeriesOption, LineSeriesOption } from 'echarts/charts';
 import {
   formatValue,
   isDefinedAndNotNull,
-  isFunction, isNumber,
+  isFunction,
+  isNumber,
   isNumeric,
   isUndefined,
   isUndefinedOrNull,
@@ -51,7 +54,8 @@ import {
 import { LinearGradientObject } from 'zrender/lib/graphic/LinearGradient';
 import tinycolor from 'tinycolor2';
 import { ValueAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
-import { LabelFormatterCallback, LabelLayoutOption, SeriesLabelOption } from 'echarts/types/src/util/types';
+import { LabelLayoutOption, SeriesLabelOption } from 'echarts/types/src/util/types';
+import { LabelFormatterCallback } from 'echarts';
 import {
   BarRenderContext,
   BarRenderSharedContext,
@@ -70,7 +74,8 @@ export enum TimeSeriesChartType {
   default = 'default',
   line = 'line',
   bar = 'bar',
-  point = 'point'
+  point = 'point',
+  state = 'state'
 }
 
 export const timeSeriesChartTypeTranslations = new Map<TimeSeriesChartType, string>(
@@ -197,6 +202,21 @@ export const timeSeriesThresholdTypeTranslations = new Map<TimeSeriesChartThresh
     [TimeSeriesChartThresholdType.constant, 'widgets.time-series-chart.threshold.type-constant'],
     [TimeSeriesChartThresholdType.latestKey, 'widgets.time-series-chart.threshold.type-latest-key'],
     [TimeSeriesChartThresholdType.entity, 'widgets.time-series-chart.threshold.type-entity']
+  ]
+);
+
+
+export enum TimeSeriesChartStateSourceType {
+  constant = 'constant',
+  range = 'range'
+}
+
+export const timeSeriesStateSourceTypes = Object.keys(TimeSeriesChartStateSourceType) as TimeSeriesChartStateSourceType[];
+
+export const timeSeriesStateSourceTypeTranslations = new Map<TimeSeriesChartStateSourceType, string>(
+  [
+    [TimeSeriesChartStateSourceType.constant, 'widgets.time-series-chart.state.type-constant'],
+    [TimeSeriesChartStateSourceType.range, 'widgets.time-series-chart.state.type-range']
   ]
 );
 
@@ -639,6 +659,39 @@ export interface TimeSeriesChartVisualMapSettings {
   pieces: TimeSeriesChartVisualMapPiece[];
 }
 
+export interface TimeSeriesChartStateSettings {
+  label: string;
+  value: number;
+  sourceType: TimeSeriesChartStateSourceType;
+  sourceValue?: any;
+  sourceRangeFrom?: number;
+  sourceRangeTo?: number;
+}
+
+export const timeSeriesChartStateValid = (state: TimeSeriesChartStateSettings): boolean => {
+  if (isUndefinedOrNull(state.value) || !state.sourceType) {
+    return false;
+  }
+  switch (state.sourceType) {
+    case TimeSeriesChartStateSourceType.constant:
+      if (isUndefinedOrNull(state.sourceValue)) {
+        return false;
+      }
+      break;
+  }
+  return true;
+};
+
+export const timeSeriesChartStateValidator = (control: AbstractControl): ValidationErrors | null => {
+  const state: TimeSeriesChartStateSettings = control.value;
+  if (!timeSeriesChartStateValid(state)) {
+    return {
+      state: true
+    };
+  }
+  return null;
+};
+
 export interface TimeSeriesChartSettings extends EChartsTooltipWidgetSettings {
   thresholds: TimeSeriesChartThreshold[];
   darkMode: boolean;
@@ -650,6 +703,7 @@ export interface TimeSeriesChartSettings extends EChartsTooltipWidgetSettings {
   barWidthSettings: TimeSeriesChartBarWidthSettings;
   noAggregationBarWidthSettings: TimeSeriesChartNoAggregationBarWidthSettings;
   visualMapSettings?: TimeSeriesChartVisualMapSettings;
+  states?: TimeSeriesChartStateSettings[];
 }
 
 export const timeSeriesChartDefaultSettings: TimeSeriesChartSettings = {
@@ -751,6 +805,7 @@ export interface TimeSeriesChartKeySettings {
   type: TimeSeriesChartSeriesType;
   lineSettings: LineSeriesSettings;
   barSettings: BarSeriesSettings;
+  tooltipValueFormatter?: string | EChartsTooltipValueFormatFunction;
 }
 
 export const timeSeriesChartKeyDefaultSettings: TimeSeriesChartKeySettings = {
@@ -1359,28 +1414,28 @@ const createSeriesLabelOption = (item: TimeSeriesChartDataItem, show: boolean,
   if (show) {
     labelStyle = createChartTextStyle(labelFont, labelColor, darkMode, 'series.label', labelColorFill);
   }
-  let formatter: LabelFormatterCallback;
-  if (isFunction(labelFormatter)) {
-    formatter = labelFormatter as LabelFormatterCallback;
-  } else if (labelFormatter?.length) {
-    const formatFunction = parseFunction(labelFormatter, ['value']);
-    formatter = (params): string => {
-      let result: string;
-      try {
-        result = formatFunction(params.value[1]);
-      } catch (_e) {
-      }
-      if (isUndefined(result)) {
-        result = formatValue(params.value[1], item.decimals, item.units, false);
-      }
-      return `{value|${result}}`;
-    };
-  } else {
-    formatter = (params): string => {
-      const value = formatValue(params.value[1], item.decimals, item.units, false);
-      return `{value|${value}}`;
-    };
+  let formatFunction: (...args: any[]) => any;
+  if (typeof labelFormatter === 'string' && labelFormatter.length) {
+    formatFunction = parseFunction(labelFormatter, ['value']);
   }
+  const formatter: LabelFormatterCallback = (params): string => {
+    let result: string;
+    if (typeof labelFormatter === 'string') {
+      if (formatFunction) {
+        try {
+          result = formatFunction(params.value[1]);
+        } catch (_e) {
+        }
+      }
+    } else if (isFunction(labelFormatter)) {
+      result = labelFormatter(params);
+    }
+    if (isUndefined(result)) {
+      result = formatValue(params.value[1], item.decimals, item.units, false);
+      result = `{value|${result}}`;
+    }
+    return result;
+  };
   const labelOption: SeriesLabelOption = {
     show,
     position,

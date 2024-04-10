@@ -18,7 +18,7 @@
 <ng-container [formGroup]="lineSettingsFormGroup">
   <div *ngIf="chartType !== TimeSeriesChartType.point" class="tb-form-panel stroked">
     <div class="tb-form-panel-title" translate>widgets.time-series-chart.series.line.line</div>
-    <div class="tb-form-row">
+    <div *ngIf="chartType !== TimeSeriesChartType.state" class="tb-form-row">
       <mat-slide-toggle class="mat-slide" formControlName="showLine">
         {{ 'widgets.time-series-chart.series.line.show-line' | translate }}
       </mat-slide-toggle>
@@ -35,7 +35,7 @@
         </mat-select>
       </mat-form-field>
     </div>
-    <div class="tb-form-row">
+    <div *ngIf="chartType !== TimeSeriesChartType.state" class="tb-form-row">
       <mat-slide-toggle class="mat-slide" formControlName="smooth">
         {{ 'widgets.time-series-chart.series.line.smooth-line' | translate }}
       </mat-slide-toggle>

@@ -147,12 +147,22 @@ export class TimeSeriesChartLineSettingsComponent implements OnInit, ControlValu
   }
 
   private updateValidators() {
+    const state = this.chartType === TimeSeriesChartType.state;
     const showLine: boolean = this.lineSettingsFormGroup.get('showLine').value;
     const step: boolean = this.lineSettingsFormGroup.get('step').value;
     const showPointLabel: boolean = this.lineSettingsFormGroup.get('showPointLabel').value;
     const enablePointLabelBackground: boolean = this.lineSettingsFormGroup.get('enablePointLabelBackground').value;
+    if (state) {
+      this.lineSettingsFormGroup.get('showLine').disable({emitEvent: false});
+    } else {
+      this.lineSettingsFormGroup.get('showLine').enable({emitEvent: false});
+    }
     if (showLine) {
-      this.lineSettingsFormGroup.get('step').enable({emitEvent: false});
+      if (state) {
+        this.lineSettingsFormGroup.get('step').disable({emitEvent: false});
+      } else {
+        this.lineSettingsFormGroup.get('step').enable({emitEvent: false});
+      }
       if (step) {
         this.lineSettingsFormGroup.get('stepType').enable({emitEvent: false});
         this.lineSettingsFormGroup.get('smooth').disable({emitEvent: false});
