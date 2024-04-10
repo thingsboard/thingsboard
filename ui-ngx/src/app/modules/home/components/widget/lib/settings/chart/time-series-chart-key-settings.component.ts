@@ -29,6 +29,7 @@ import {
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 import { TimeSeriesChartWidgetSettings } from '@home/components/widget/lib/chart/time-series-chart-widget.models';
+import { WidgetService } from '@core/http/widget.service';
 
 @Component({
   selector: 'tb-time-series-chart-key-settings',
@@ -53,7 +54,10 @@ export class TimeSeriesChartKeySettingsComponent extends WidgetSettingsComponent
 
   yAxisIds: TimeSeriesChartYAxisId[];
 
+  functionScopeVariables = this.widgetService.getWidgetScopeVariables();
+
   constructor(protected store: Store<AppState>,
+              private widgetService: WidgetService,
               private fb: UntypedFormBuilder) {
     super(store);
   }
@@ -88,7 +92,8 @@ export class TimeSeriesChartKeySettingsComponent extends WidgetSettingsComponent
       dataHiddenByDefault: [seriesSettings.dataHiddenByDefault, []],
       type: [seriesSettings.type, []],
       lineSettings: [seriesSettings.lineSettings, []],
-      barSettings: [seriesSettings.barSettings, []]
+      barSettings: [seriesSettings.barSettings, []],
+      tooltipValueFormatter: [seriesSettings.tooltipValueFormatter, []],
     });
   }
 

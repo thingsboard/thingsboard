@@ -56,6 +56,16 @@
                                         formControlName="barSettings">
     </tb-time-series-chart-bar-settings>
   </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.chart.tooltip-settings</div>
+    <tb-js-func
+        formControlName="tooltipValueFormatter"
+        [globalVariables]="functionScopeVariables"
+        [functionArgs]="['value', 'latestData']"
+        functionTitle="{{ 'widgets.chart.tooltip-value-format-function' | translate }}"
+        helpId="widget/lib/flot/tooltip_value_format_fn">
+    </tb-js-func>
+  </div>
 </ng-container>
 <ng-template #chartTypeTitle>
   <div class="tb-form-panel-title">{{ timeSeriesChartTypeTranslations.get(chartType) | translate }}</div>

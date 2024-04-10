@@ -46,8 +46,9 @@ import {
 } from '@home/components/widget/lib/chart/time-series-chart-widget.models';
 import { EChartsTooltipTrigger } from '@home/components/widget/lib/chart/echarts-widget.models';
 import {
-  TimeSeriesChartKeySettings, TimeSeriesChartThreshold,
-  TimeSeriesChartType, TimeSeriesChartYAxes,
+  TimeSeriesChartKeySettings,
+  TimeSeriesChartType,
+  TimeSeriesChartYAxes,
   TimeSeriesChartYAxisId
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 
@@ -178,6 +179,9 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
 
       actions: [configData.config.actions || {}, []]
     });
+    if (this.chartType === TimeSeriesChartType.state) {
+      this.timeSeriesChartWidgetConfigForm.addControl('states', this.fb.control(settings.states, []));
+    }
   }
 
   protected prepareOutputConfig(config: any): WidgetConfigComponentData {
@@ -233,6 +237,10 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
     this.widgetConfig.config.settings.padding = config.padding;
 
     this.widgetConfig.config.actions = config.actions;
+
+    if (this.chartType === TimeSeriesChartType.state) {
+      this.widgetConfig.config.settings.states = config.states;
+    }
     return this.widgetConfig;
   }
 

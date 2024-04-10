@@ -1,0 +1,60 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@import '../../../../../../../../../scss/constants';
+
+.tb-time-series-states-panel {
+  .tb-form-table {
+    overflow-x: auto;
+  }
+  .tb-form-table-header-cell {
+    &.tb-state-label-header {
+      flex: 1;
+      min-width: 80px;
+    }
+    &.tb-state-value-header {
+      width: 80px;
+      min-width: 80px;
+    }
+    &.tb-state-source-header {
+      width: 100px;
+      min-width: 100px;
+    }
+    &.tb-state-source-value-header {
+      flex: 1;
+      min-width: 200px;
+      @media #{$mat-gt-sm} {
+        min-width: 358px;
+      }
+    }
+    &.tb-actions-header {
+      width: 40px;
+      min-width: 40px;
+    }
+  }
+  .tb-form-table-header {
+    min-width: fit-content;
+  }
+  .tb-form-table-body {
+    min-width: fit-content;
+    .mat-divider {
+      margin-top: 8px;
+      @media #{$mat-gt-sm} {
+        display: none;
+      }
+    }
+  }
+}

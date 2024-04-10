@@ -17,7 +17,7 @@
 import * as echarts from 'echarts/core';
 import AxisModel from 'echarts/types/src/coord/cartesian/AxisModel';
 import { estimateLabelUnionRect } from 'echarts/lib/coord/axisHelper';
-import { formatValue, isDefinedAndNotNull, isNumber } from '@core/utils';
+import { isDefinedAndNotNull, isFunction, isNumber } from '@core/utils';
 import {
   DataZoomComponent,
   DataZoomComponentOption,
@@ -42,7 +42,7 @@ import {
 } from 'echarts/charts';
 import { LabelLayout } from 'echarts/features';
 import { CanvasRenderer, SVGRenderer } from 'echarts/renderers';
-import { DataEntry, DataKey, DataSet } from '@shared/models/widget.models';
+import { DataEntry, DataKey, DataSet, Datasource, FormattedData } from '@shared/models/widget.models';
 import {
   calculateAggIntervalWithWidgetTimeWindow,
   Interval,
@@ -56,6 +56,7 @@ import GlobalModel from 'echarts/types/src/model/Global';
 import Axis2D from 'echarts/types/src/coord/cartesian/Axis2D';
 import SeriesModel from 'echarts/types/src/model/Series';
 import { MarkLine2DDataItemOption } from 'echarts/types/src/component/marker/MarkLineModel';
+import { TimeAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
 
 class EChartsModule {
   private initialized = false;
@@ -101,14 +102,19 @@ export type EChartsDataItem = [number, any, number, number];
 
 export type NamedDataSet = {name: string; value: EChartsDataItem}[];
 
+export type EChartsTooltipValueFormatFunction = (value: any, latestData: FormattedData, units?: string, decimals?: number) => string;
+
 export type EChartsSeriesItem = {
   id: string;
+  datasource: Datasource;
   dataKey: DataKey;
   data: NamedDataSet;
   dataSet?: DataSet;
   enabled: boolean;
   units?: string;
   decimals?: number;
+  latestData?: FormattedData;
+  tooltipValueFormatFunction?: EChartsTooltipValueFormatFunction;
 };
 
 export enum EChartsShape {
@@ -270,7 +276,7 @@ const measureSymbolOffset = (symbol: string, symbolSize: any): number => {
   } else {
     return 0;
   }
-}
+};
 
 export const measureThresholdOffset = (chart: ECharts, axisId: string, thresholdId: string, value: any): [number, number] => {
   const offset: [number, number] = [0,0];
@@ -395,7 +401,7 @@ export const getFocusedSeriesIndex = (chart: ECharts): number => {
   return -1;
 };
 
-export const toNamedData = (data: DataSet): NamedDataSet => {
+export const toNamedData = (data: DataSet, valueConverter?: (value: any) => any): NamedDataSet => {
   if (!data?.length) {
     return [];
   } else {
@@ -403,14 +409,43 @@ export const toNamedData = (data: DataSet): NamedDataSet => {
       const ts = isDefinedAndNotNull(d[2]) ? d[2][0] : d[0];
       return {
         name: ts + '',
-        value: toEChartsDataItem(d)
+        value: toEChartsDataItem(d, valueConverter)
       };
     });
   }
 };
 
-const toEChartsDataItem = (entry: DataEntry): EChartsDataItem => {
-  const item: EChartsDataItem = [entry[0], entry[1], entry[0], entry[0]];
+const minDataTs = (dataSet: NamedDataSet): number => dataSet.length ? dataSet.map(data =>
+  Number(data.name)).reduce((a, b) => Math.min(a, b)) : undefined;
+
+const maxDataTs = (dataSet: NamedDataSet): number => dataSet.length ? dataSet.map(data =>
+  Number(data.name)).reduce((a, b) => Math.max(a, b)) : undefined;
+
+export const adjustTimeAxisExtentToData = (timeAxisOption: TimeAxisBaseOption,
+                                           dataItems: EChartsSeriesItem[],
+                                           defaultMin: number,
+                                           defaultMax: number): void => {
+  let min: number;
+  let max: number;
+  for (const item of dataItems) {
+    if (item.enabled) {
+      const minTs = minDataTs(item.data);
+      if (typeof minTs !== 'undefined') {
+        min = (typeof min !== 'undefined') ? Math.min(min, minTs) : minTs;
+      }
+      const maxTs = maxDataTs(item.data);
+      if (typeof maxTs !== 'undefined') {
+        max = (typeof max !== 'undefined') ? Math.max(max, maxTs) : maxTs;
+      }
+    }
+  }
+  timeAxisOption.min = (typeof min !== 'undefined') ? min : defaultMin;
+  timeAxisOption.max = (typeof max !== 'undefined') ? max : defaultMax;
+};
+
+const toEChartsDataItem = (entry: DataEntry, valueConverter?: (value: any) => any): EChartsDataItem => {
+  const value = valueConverter ? valueConverter(entry[1]) : entry[1];
+  const item: EChartsDataItem = [entry[0], value, entry[0], entry[0]];
   if (isDefinedAndNotNull(entry[2])) {
     item[2] = entry[2][0];
     item[3] = entry[2][1];
@@ -436,6 +471,7 @@ export interface EChartsTooltipWidgetSettings {
   tooltipShowFocusedSeries?: boolean;
   tooltipValueFont: Font;
   tooltipValueColor: string;
+  tooltipValueFormatter?: string | EChartsTooltipValueFormatFunction;
   tooltipShowDate: boolean;
   tooltipDateInterval?: boolean;
   tooltipDateFormat: DateFormatSettings;
@@ -445,12 +481,25 @@ export interface EChartsTooltipWidgetSettings {
   tooltipBackgroundBlur: number;
 }
 
+export const createTooltipValueFormatFunction =
+  (tooltipValueFormatter: string | EChartsTooltipValueFormatFunction): EChartsTooltipValueFormatFunction => {
+  let tooltipValueFormatFunction: EChartsTooltipValueFormatFunction;
+  if (isFunction(tooltipValueFormatter)) {
+    tooltipValueFormatFunction = tooltipValueFormatter as EChartsTooltipValueFormatFunction;
+  } else if (typeof tooltipValueFormatter === 'string' && tooltipValueFormatter.length) {
+    try {
+      tooltipValueFormatFunction =
+        new Function('value', 'latestData', tooltipValueFormatter) as EChartsTooltipValueFormatFunction;
+    } catch (e) {}
+  }
+  return tooltipValueFormatFunction;
+};
+
 export const echartsTooltipFormatter = (renderer: Renderer2,
                                         tooltipDateFormat: DateFormatProcessor,
                                         settings: EChartsTooltipWidgetSettings,
                                         params: CallbackDataParams[] | CallbackDataParams,
-                                        decimals: number,
-                                        units: string,
+                                        valueFormatFunction: EChartsTooltipValueFormatFunction,
                                         focusedSeriesIndex: number,
                                         series?: EChartsSeriesItem[],
                                         interval?: Interval): null | HTMLElement => {
@@ -499,10 +548,12 @@ export const echartsTooltipFormatter = (renderer: Renderer2,
     seriesParams = params;
   }
   if (seriesParams) {
-    renderer.appendChild(tooltipElement, constructEchartsTooltipSeriesElement(renderer, settings, seriesParams, decimals, units, series));
+    renderer.appendChild(tooltipElement,
+      constructEchartsTooltipSeriesElement(renderer, settings, seriesParams, valueFormatFunction, series));
   } else if (Array.isArray(params)) {
     for (seriesParams of params) {
-      renderer.appendChild(tooltipElement, constructEchartsTooltipSeriesElement(renderer, settings, seriesParams, decimals, units, series));
+      renderer.appendChild(tooltipElement,
+        constructEchartsTooltipSeriesElement(renderer, settings, seriesParams, valueFormatFunction, series));
     }
   }
   return tooltipElement;
@@ -511,8 +562,7 @@ export const echartsTooltipFormatter = (renderer: Renderer2,
 const constructEchartsTooltipSeriesElement = (renderer: Renderer2,
                                               settings: EChartsTooltipWidgetSettings,
                                               seriesParams: CallbackDataParams,
-                                              decimals: number,
-                                              units: string,
+                                              valueFormatFunction: EChartsTooltipValueFormatFunction,
                                               series?: EChartsSeriesItem[]): HTMLElement => {
   const labelValueElement: HTMLElement = renderer.createElement('div');
   renderer.setStyle(labelValueElement, 'display', 'flex');
@@ -542,16 +592,25 @@ const constructEchartsTooltipSeriesElement = (renderer: Renderer2,
   renderer.setStyle(labelTextElement, 'color', 'rgba(0, 0, 0, 0.76)');
   renderer.appendChild(labelElement, labelTextElement);
   const valueElement: HTMLElement = renderer.createElement('div');
-  let formatDecimals = decimals;
-  let formatUnits = units;
+  let formatFunction = valueFormatFunction;
+  let latestData: FormattedData;
+  let units = '';
+  let decimals = 0;
   if (series) {
     const item = series.find(s => s.id === seriesParams.seriesId);
     if (item) {
-      formatDecimals = item.decimals;
-      formatUnits = item.units;
+      if (item.tooltipValueFormatFunction) {
+        formatFunction = item.tooltipValueFormatFunction;
+      }
+      latestData = item.latestData;
+      units = item.units;
+      decimals = item.decimals;
     }
   }
-  const value = formatValue(seriesParams.value[1], formatDecimals, formatUnits, false);
+  if (!latestData) {
+    latestData = {} as FormattedData;
+  }
+  const value = formatFunction(seriesParams.value[1], latestData, units, decimals);
   renderer.appendChild(valueElement, renderer.createText(value));
   renderer.setStyle(valueElement, 'flex', '1');
   renderer.setStyle(valueElement, 'text-align', 'end');
