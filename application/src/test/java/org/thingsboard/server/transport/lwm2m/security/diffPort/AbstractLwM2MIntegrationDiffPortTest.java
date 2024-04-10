@@ -59,23 +59,25 @@ public abstract class AbstractLwM2MIntegrationDiffPortTest extends AbstractSecur
                 .until(() -> lwM2MTestClient.getClientStates().contains(ON_REGISTRATION_SUCCESS) || lwM2MTestClient.getClientStates().contains(ON_REGISTRATION_STARTED));
         Assert.assertTrue(lwM2MTestClient.getClientStates().containsAll(expectedStatusesRegistrationLwm2mSuccess));
 
+        doAnswer(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocation) throws Throwable {
+                Object[] arguments = invocation.getArguments();
+                if (arguments.length > 0 && arguments[0] instanceof RegistrationUpdate) {
+                    log.error("RegistrationUpdate arguments [{}]", arguments);
+                    int portOld = ((RegistrationUpdate) arguments[0]).getPort();
+                    int portValueChange = 5;
+                    arguments[0] = registrationUpdateNewPort((RegistrationUpdate) arguments[0], portValueChange);
+                    int portNew =  ((RegistrationUpdate) arguments[0]).getPort();
+                    Assert.assertEquals((portNew - portOld), portValueChange);
+                }
+                return invocation.callRealMethod();
+            }
+        }).when(registrationStoreTest).updateRegistration(any(RegistrationUpdate.class));
+
         await(awaitAlias)
                 .atMost(40, TimeUnit.SECONDS)
                 .until(() -> {
-                    doAnswer(new Answer<Object>() {
-                        @Override
-                        public Object answer(InvocationOnMock invocation) throws Throwable {
-                            Object[] arguments = invocation.getArguments();
-                            if (arguments.length > 0 && arguments[0] instanceof RegistrationUpdate) {
-                                int portOld = ((RegistrationUpdate) arguments[0]).getPort();
-                                int portValueChange = 5;
-                                arguments[0] = registrationUpdateNewPort((RegistrationUpdate) arguments[0], portValueChange);
-                                int portNew =  ((RegistrationUpdate) arguments[0]).getPort();
-                                Assert.assertEquals((portNew - portOld), portValueChange);
-                            }
-                            return invocation.callRealMethod();
-                        }
-                    }).when(registrationStoreTest).updateRegistration(any(RegistrationUpdate.class));
                     return  lwM2MTestClient.getClientStates().contains(ON_UPDATE_SUCCESS);
                 });
         Assert.assertTrue(lwM2MTestClient.getClientStates().containsAll(expectedStatusesRegistrationLwm2mSuccessUpdate));
