@@ -250,7 +250,7 @@ public class EntityActionService {
         return result;
     }
 
-    private void addTimeseries(ObjectNode entityNode, List<TsKvEntry> timeseries) throws Exception {
+    private void addTimeseries(ObjectNode entityNode, List<TsKvEntry> timeseries) {
         if (timeseries != null && !timeseries.isEmpty()) {
             ArrayNode result = entityNode.putArray("timeseries");
             Map<Long, List<TsKvEntry>> groupedTelemetry = timeseries.stream()

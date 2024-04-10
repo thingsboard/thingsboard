@@ -248,4 +248,5 @@ public class EdgeGrpcClient implements EdgeRpcClient {
             uplinkMsgLock.unlock();
         }
     }
+
 }
