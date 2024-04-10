@@ -35,7 +35,7 @@ public class QueueStatsId extends UUIDBased implements EntityId {
         return new QueueStatsId(UUID.fromString(queueId));
     }
 
-    @Schema(required = true, description = "string", example = "QUEUE_STATS", allowableValues = "QUEUE_STATS")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "QUEUE_STATS", allowableValues = "QUEUE_STATS")
     @Override
     public EntityType getEntityType() {
         return EntityType.QUEUE_STATS;
