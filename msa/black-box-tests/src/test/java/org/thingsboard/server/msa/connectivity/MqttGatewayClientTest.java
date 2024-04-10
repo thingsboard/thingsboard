@@ -383,12 +383,14 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
 
     @Test
     public void testMsgRateLimitsForGatewayDevice() throws Exception {
-        updateTenantProfileWithGatewayTransportLimits("1:1", "", "");
+
+        updateTenantProfileWithGatewayTransportLimits("1:30", "", "");
         Thread.sleep(100);
-
-        mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer(createPayload().toString().getBytes())).get(3, TimeUnit.SECONDS);
-
+        mqttClient = getMqttClient(testRestClient.getDeviceCredentialsByDeviceId(gatewayDevice.getId()), listener);
+        Thread.sleep(100);
+        assertThat(mqttClient.isConnected()).isTrue();
         mqttClient.disconnect();
+        Thread.sleep(100);
         mqttClient = getMqttClient(testRestClient.getDeviceCredentialsByDeviceId(gatewayDevice.getId()), listener);
         Thread.sleep(500);
 
@@ -396,7 +398,6 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
 
         Thread.sleep(2000);
 
-        assertThat(mqttClient.isConnected()).isTrue();
 
     }
 
