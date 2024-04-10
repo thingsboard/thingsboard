@@ -22,8 +22,6 @@ import org.eclipse.leshan.core.peer.SocketIdentity;
 import org.eclipse.leshan.server.registration.RegistrationStore;
 import org.eclipse.leshan.server.registration.RegistrationUpdate;
 import org.junit.Assert;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -50,6 +48,19 @@ public abstract class AbstractLwM2MIntegrationDiffPortTest extends AbstractSecur
     protected void basicTestConnectionDifferentPort(Lwm2mDeviceProfileTransportConfiguration transportConfiguration,
                                                     String awaitAlias) throws Exception {
 
+        doAnswer((invocation) -> {
+            Object[] arguments = invocation.getArguments();
+            log.warn("doAnswer for registrationStoreTest.updateRegistration with args {}", arguments);
+//            if (arguments.length > 0 && arguments[0] instanceof RegistrationUpdate) {
+                int portOld = ((RegistrationUpdate) arguments[0]).getPort();
+                int portValueChange = 5;
+                arguments[0] = registrationUpdateNewPort((RegistrationUpdate) arguments[0], portValueChange);
+                int portNew =  ((RegistrationUpdate) arguments[0]).getPort();
+                Assert.assertEquals((portNew - portOld), portValueChange);
+//            }
+            return invocation.callRealMethod();
+        }).when(registrationStoreTest).updateRegistration(any(RegistrationUpdate.class));
+
         createDeviceProfile(transportConfiguration);
         createDevice(deviceCredentials, clientEndpoint);
         createNewClient(security, null, true, clientEndpoint);
@@ -59,27 +70,10 @@ public abstract class AbstractLwM2MIntegrationDiffPortTest extends AbstractSecur
                 .until(() -> lwM2MTestClient.getClientStates().contains(ON_REGISTRATION_SUCCESS) || lwM2MTestClient.getClientStates().contains(ON_REGISTRATION_STARTED));
         Assert.assertTrue(lwM2MTestClient.getClientStates().containsAll(expectedStatusesRegistrationLwm2mSuccess));
 
-        doAnswer(new Answer<Object>() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                Object[] arguments = invocation.getArguments();
-                if (arguments.length > 0 && arguments[0] instanceof RegistrationUpdate) {
-                    log.error("RegistrationUpdate arguments [{}]", arguments);
-                    int portOld = ((RegistrationUpdate) arguments[0]).getPort();
-                    int portValueChange = 5;
-                    arguments[0] = registrationUpdateNewPort((RegistrationUpdate) arguments[0], portValueChange);
-                    int portNew =  ((RegistrationUpdate) arguments[0]).getPort();
-                    Assert.assertEquals((portNew - portOld), portValueChange);
-                }
-                return invocation.callRealMethod();
-            }
-        }).when(registrationStoreTest).updateRegistration(any(RegistrationUpdate.class));
-
         await(awaitAlias)
                 .atMost(40, TimeUnit.SECONDS)
-                .until(() -> {
-                    return  lwM2MTestClient.getClientStates().contains(ON_UPDATE_SUCCESS);
-                });
+                .until(() -> lwM2MTestClient.getClientStates().contains(ON_UPDATE_SUCCESS));
+
         Assert.assertTrue(lwM2MTestClient.getClientStates().containsAll(expectedStatusesRegistrationLwm2mSuccessUpdate));
     }
 
