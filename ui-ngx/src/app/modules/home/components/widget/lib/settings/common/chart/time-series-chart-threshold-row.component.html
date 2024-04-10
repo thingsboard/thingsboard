@@ -73,7 +73,7 @@
       [formControl]="entityKeyFormControl">
     </tb-data-key-input>
   </div>
-  <div class="tb-y-axis-field">
+  <div *ngIf="!hideYAxis" class="tb-y-axis-field">
     <mat-form-field class="tb-inline-field fixed-height" appearance="outline" subscriptSizing="dynamic">
       <mat-select formControlName="yAxisId">
         <mat-option *ngFor="let yAxis of yAxisIds" [value]="yAxis">
@@ -98,14 +98,13 @@
     </mat-form-field>
   </div>
   <div class="tb-form-table-row-cell-buttons">
-    <button type="button"
-            mat-icon-button
-            #matButton
-            (click)="editThreshold($event, matButton)"
-            matTooltip="{{ 'widgets.time-series-chart.threshold.threshold-settings' | translate }}"
-            matTooltipPosition="above">
-      <mat-icon>settings</mat-icon>
-    </button>
+    <tb-time-series-chart-threshold-settings
+        [widgetConfig]="widgetConfig"
+        [yAxisIds]="yAxisIds"
+        [hideYAxis]="hideYAxis"
+        icon="settings"
+        [formControl]="thresholdSettingsFormControl">
+    </tb-time-series-chart-threshold-settings>
     <button type="button"
             mat-icon-button
             (click)="thresholdRemoved.emit()"

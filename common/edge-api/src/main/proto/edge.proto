@@ -37,6 +37,7 @@ enum EdgeVersion {
   V_3_6_0 = 3;
   V_3_6_1 = 4;
   V_3_6_2 = 5;
+  V_3_7_0 = 6;
 }
 
 /**
@@ -467,6 +468,10 @@ message ResourceUpdateMsg {
   string entity = 11;
 }
 
+message OAuth2UpdateMsg {
+  string entity = 1;
+}
+
 message RuleChainMetadataRequestMsg {
   int64 ruleChainIdMSB = 1;
   int64 ruleChainIdLSB = 2;
@@ -668,5 +673,6 @@ message DownlinkMsg {
   repeated TenantProfileUpdateMsg tenantProfileUpdateMsg = 27;
   repeated ResourceUpdateMsg resourceUpdateMsg = 28;
   repeated AlarmCommentUpdateMsg alarmCommentUpdateMsg = 29;
+  repeated OAuth2UpdateMsg oAuth2UpdateMsg = 30;
 }
 

@@ -1582,10 +1582,10 @@
   dependencies:
     tslib "^2.2.0"
 
-"@geoman-io/leaflet-geoman-free@^2.13.0":
-  version "2.16.0"
-  resolved "https://registry.yarnpkg.com/@geoman-io/leaflet-geoman-free/-/leaflet-geoman-free-2.16.0.tgz#c8a92fcc2cdd5770ebf43f8ef9f03cc8ef842359"
-  integrity sha512-BnKAAoTXraWVFfhX/0gT/iBgAz1BPfpbdQ9dJamEFI4lIku9UNXXluu/E0k7YkZETq0tENX2GPnKLB4p+VgrSw==
+"@geoman-io/leaflet-geoman-free@2.14.2":
+  version "2.14.2"
+  resolved "https://registry.yarnpkg.com/@geoman-io/leaflet-geoman-free/-/leaflet-geoman-free-2.14.2.tgz#c84c2115c263f34d11dc0b43859551639fe3d56b"
+  integrity sha512-6lIyG8RvSVdFjVjiQgBPyNASjymSyqzsiUeBW0pA+q41lB5fAg4SDC6SfJvWdEyDHa81Jb5FWjUkCc9O+u0gbg==
   dependencies:
     "@turf/boolean-contains" "^6.5.0"
     "@turf/kinks" "^6.5.0"
@@ -3079,28 +3079,28 @@
   resolved "https://registry.yarnpkg.com/@types/json5/-/json5-0.0.29.tgz#ee28707ae94e11d2b827bcbe5270bcea7f3e71ee"
   integrity sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==
 
-"@types/leaflet-polylinedecorator@^1.6.1":
+"@types/leaflet-polylinedecorator@1.6.4":
   version "1.6.4"
   resolved "https://registry.yarnpkg.com/@types/leaflet-polylinedecorator/-/leaflet-polylinedecorator-1.6.4.tgz#2270b84585bd28bbf1fef237be8480196c44ac06"
   integrity sha512-meH/jC58Drt/9aqLhuzMCUQjHgMTud+UuQBK5gT6E8M6OfM/rftz/VgvdxOCCAQC9isrp4pqahDgEswesb5X3A==
   dependencies:
     "@types/leaflet" "*"
 
-"@types/leaflet-providers@^1.2.1":
+"@types/leaflet-providers@1.2.4":
   version "1.2.4"
   resolved "https://registry.yarnpkg.com/@types/leaflet-providers/-/leaflet-providers-1.2.4.tgz#284e8a197d4c2dbfeda436842e03b2adb502be16"
   integrity sha512-4wYEpreixp+G5t510s202eQ5eubOmxHevIfCNrzUZbzp50XQsC9lSetX7MnPl3ANRJnUBbCWOzZ9EQFiH0Jm+g==
   dependencies:
     "@types/leaflet" "*"
 
-"@types/leaflet.gridlayer.googlemutant@^0.4.6":
+"@types/leaflet.gridlayer.googlemutant@0.4.9":
   version "0.4.9"
   resolved "https://registry.yarnpkg.com/@types/leaflet.gridlayer.googlemutant/-/leaflet.gridlayer.googlemutant-0.4.9.tgz#9090ddf4578ce631d22b8aafc5ed12525b4fbf90"
   integrity sha512-u/5Avs1KKkeABRDixGbGp2ldFs67+fYIATpkvvFgN+LQPNfq7dFd5adkksshiQBfYJ4SaQg1VJgN2dNirIC0aQ==
   dependencies:
     "@types/leaflet" "*"
 
-"@types/leaflet.markercluster@^1.5.1":
+"@types/leaflet.markercluster@1.5.4":
   version "1.5.4"
   resolved "https://registry.yarnpkg.com/@types/leaflet.markercluster/-/leaflet.markercluster-1.5.4.tgz#2ab43417cf3f6a42d0f1baf4e1c8f659cf1dc3a1"
   integrity sha512-tfMP8J62+wfsVLDLGh5Zh1JZxijCaBmVsMAX78MkLPwvPitmZZtSin5aWOVRhZrCS+pEOZwNzexbfWXlY+7yjg==
@@ -3114,7 +3114,7 @@
   dependencies:
     "@types/geojson" "*"
 
-"@types/leaflet@~1.8.0":
+"@types/leaflet@1.8.0":
   version "1.8.0"
   resolved "https://registry.yarnpkg.com/@types/leaflet/-/leaflet-1.8.0.tgz#dc92d3e868fb6d5067b4b59fa08cd4441f84fabe"
   integrity sha512-+sXFmiJTFdhaXXIGFlV5re9AdqtAODoXbGAvxx02e5SHXL3ir7ClP5J7pahO8VmzKY3dth4RUS1nf2BTT+DW1A==
@@ -5437,10 +5437,9 @@ ecc-jsbn@~0.1.1:
     jsbn "~0.1.0"
     safer-buffer "^2.1.0"
 
-echarts@^5.5.0:
-  version "5.5.0"
-  resolved "https://registry.yarnpkg.com/echarts/-/echarts-5.5.0.tgz#c13945a7f3acdd67c134d8a9ac67e917830113ac"
-  integrity sha512-rNYnNCzqDAPCr4m/fqyUFv7fD9qIsd50S6GDFgO1DxZhncCsNsG7IfUlAlvZe5oSEQxtsjnHiUuppzccry93Xw==
+"echarts@https://github.com/thingsboard/echarts/archive/5.5.0-TB.tar.gz":
+  version "5.5.0-TB"
+  resolved "https://github.com/thingsboard/echarts/archive/5.5.0-TB.tar.gz#d1017728576b3fd65532eb17e503d1349f7feaed"
   dependencies:
     tslib "2.3.0"
     zrender "5.5.0"
@@ -7750,14 +7749,14 @@ lcov-parse@1.0.0:
   resolved "https://registry.yarnpkg.com/lcov-parse/-/lcov-parse-1.0.0.tgz#eb0d46b54111ebc561acb4c408ef9363bdc8f7e0"
   integrity sha512-aprLII/vPzuQvYZnDRU78Fns9I2Ag3gi4Ipga/hxnVMCZC8DnR2nI7XBqrPoywGfxqIx/DgarGvDJZAD3YBTgQ==
 
-leaflet-polylinedecorator@^1.6.0:
+leaflet-polylinedecorator@1.6.0:
   version "1.6.0"
   resolved "https://registry.yarnpkg.com/leaflet-polylinedecorator/-/leaflet-polylinedecorator-1.6.0.tgz#9ef79fd1b5302d67b72efe959a8ecd2553f27266"
   integrity sha512-kn3krmZRetgvN0wjhgYL8kvyLS0tUogAl0vtHuXQnwlYNjbl7aLQpkoFUo8UB8gVZoB0dhI4Tb55VdTJAcYzzQ==
   dependencies:
     leaflet-rotatedmarker "^0.2.0"
 
-leaflet-providers@^1.13.0:
+leaflet-providers@1.13.0:
   version "1.13.0"
   resolved "https://registry.yarnpkg.com/leaflet-providers/-/leaflet-providers-1.13.0.tgz#10c843a23d5823a65096d40ad53f27029e13434b"
   integrity sha512-f/sN5wdgBbVA2jcCYzScIfYNxKdn2wBJP9bu+5cRX9Xj6g8Bt1G9Sr8WgJAt/ckIFIc3LVVxCBNFpSCfTuUElg==
@@ -7767,17 +7766,17 @@ leaflet-rotatedmarker@^0.2.0:
   resolved "https://registry.yarnpkg.com/leaflet-rotatedmarker/-/leaflet-rotatedmarker-0.2.0.tgz#4467f49f98d1bfd56959bd9c6705203dd2601277"
   integrity sha512-yc97gxLXwbZa+Gk9VCcqI0CkvIBC9oNTTjFsHqq4EQvANrvaboib4UdeQLyTnEqDpaXHCqzwwVIDHtvz2mUiDg==
 
-leaflet.gridlayer.googlemutant@^0.13.5:
-  version "0.13.5"
-  resolved "https://registry.yarnpkg.com/leaflet.gridlayer.googlemutant/-/leaflet.gridlayer.googlemutant-0.13.5.tgz#7182c26f479e726bff8b85a7ebf9d3f44dd3ea57"
-  integrity sha512-DHUEXpo1t0WZ9tpdLUHHkrTK7LldCXr/gqkV5E/4hHidDJB2srceLLCZj4PV/pl0jPdTkVBT+Lr8nL9EZDB5hw==
+leaflet.gridlayer.googlemutant@0.14.1:
+  version "0.14.1"
+  resolved "https://registry.yarnpkg.com/leaflet.gridlayer.googlemutant/-/leaflet.gridlayer.googlemutant-0.14.1.tgz#c282209aa1a39eb2f87d8aaa4e9894181c9e20a0"
+  integrity sha512-/OYxEjmgxO1U1KOhTzg+m8c0b95J0943LU8DXQmdJu/x2f+1Ur78rvEPO2QCS0cmwZ3m6FvE5I3zXnBzJNWRCA==
 
-leaflet.markercluster@^1.5.3:
+leaflet.markercluster@1.5.3:
   version "1.5.3"
   resolved "https://registry.yarnpkg.com/leaflet.markercluster/-/leaflet.markercluster-1.5.3.tgz#9cdb52a4eab92671832e1ef9899669e80efc4056"
   integrity sha512-vPTw/Bndq7eQHjLBVlWpnGeLa3t+3zGiuM7fJwCkiMFq+nmRuG3RI3f7f4N4TDX7T4NpbAXpR2+NTRSEGfCSeA==
 
-leaflet@~1.8.0:
+leaflet@1.8.0:
   version "1.8.0"
   resolved "https://registry.yarnpkg.com/leaflet/-/leaflet-1.8.0.tgz#4615db4a22a304e8e692cae9270b983b38a2055e"
   integrity sha512-gwhMjFCQiYs3x/Sf+d49f10ERXaEFCPr+nVTryhAW8DWbMGqJqt9G4XuIaHmFW08zYvhgdzqXGr8AlW8v8dQkA==

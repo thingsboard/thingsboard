@@ -76,13 +76,16 @@ export class TimeSeriesChartBarSettingsComponent implements OnInit, ControlValue
       labelPosition: [null, []],
       labelFont: [null, []],
       labelColor: [null, []],
+      enableLabelBackground: [null, []],
+      labelBackground: [null, []],
       backgroundSettings: [null, []]
     });
     this.barSettingsFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
     });
     merge(this.barSettingsFormGroup.get('showBorder').valueChanges,
-      this.barSettingsFormGroup.get('showLabel').valueChanges)
+      this.barSettingsFormGroup.get('showLabel').valueChanges,
+      this.barSettingsFormGroup.get('enableLabelBackground').valueChanges)
     .subscribe(() => {
       this.updateValidators();
     });
@@ -116,6 +119,7 @@ export class TimeSeriesChartBarSettingsComponent implements OnInit, ControlValue
   private updateValidators() {
     const showBorder: boolean = this.barSettingsFormGroup.get('showBorder').value;
     const showLabel: boolean = this.barSettingsFormGroup.get('showLabel').value;
+    const enableLabelBackground: boolean = this.barSettingsFormGroup.get('enableLabelBackground').value;
     if (showBorder) {
       this.barSettingsFormGroup.get('borderWidth').enable({emitEvent: false});
     } else {
@@ -125,10 +129,18 @@ export class TimeSeriesChartBarSettingsComponent implements OnInit, ControlValue
       this.barSettingsFormGroup.get('labelPosition').enable({emitEvent: false});
       this.barSettingsFormGroup.get('labelFont').enable({emitEvent: false});
       this.barSettingsFormGroup.get('labelColor').enable({emitEvent: false});
+      this.barSettingsFormGroup.get('enableLabelBackground').enable({emitEvent: false});
+      if (enableLabelBackground) {
+        this.barSettingsFormGroup.get('labelBackground').enable({emitEvent: false});
+      } else {
+        this.barSettingsFormGroup.get('labelBackground').disable({emitEvent: false});
+      }
     } else {
       this.barSettingsFormGroup.get('labelPosition').disable({emitEvent: false});
       this.barSettingsFormGroup.get('labelFont').disable({emitEvent: false});
       this.barSettingsFormGroup.get('labelColor').disable({emitEvent: false});
+      this.barSettingsFormGroup.get('enableLabelBackground').disable({emitEvent: false});
+      this.barSettingsFormGroup.get('labelBackground').disable({emitEvent: false});
     }
   }
 

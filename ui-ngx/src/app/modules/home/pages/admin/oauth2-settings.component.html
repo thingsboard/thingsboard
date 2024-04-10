@@ -29,13 +29,18 @@
     <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
     <mat-card-content style="padding-top: 16px;">
       <form [formGroup]="oauth2SettingsForm" (ngSubmit)="save()">
-        <fieldset [disabled]="isLoading$ | async">
-          <mat-checkbox formControlName="enabled">
-            {{ 'admin.oauth2.enable' | translate }}
-          </mat-checkbox>
-          <section *ngIf="oauth2SettingsForm.get('enabled').value" style="margin-top: 1em;">
+        <fieldset class="tb-form-panel stroked gap-xs-12" style="margin-bottom: 16px" [disabled]="isLoading$ | async">
+          <div class="tb-form-row no-border no-padding column-xs">
+            <mat-chip-listbox formControlName="enabled">
+              <mat-chip-option [value]="true">{{ 'admin.oauth2.enable' | translate }}</mat-chip-option>
+            </mat-chip-listbox>
+            <mat-chip-listbox formControlName="edgeEnabled">
+              <mat-chip-option [value]="true">{{ 'admin.oauth2.edge-enable' | translate }}</mat-chip-option>
+            </mat-chip-listbox>
+          </div>
+          <section *ngIf="oauth2SettingsForm.get('enabled').value && oauth2ParamsInfos.controls.length">
             <ng-container formArrayName="oauth2ParamsInfos">
-              <div class="container">
+              <div>
                 <mat-accordion multi>
                   <ng-container *ngFor="let oauth2ParamsInfo of oauth2ParamsInfos.controls; let i = index; trackBy: trackByItem">
                     <mat-expansion-panel [formGroupName]="i">

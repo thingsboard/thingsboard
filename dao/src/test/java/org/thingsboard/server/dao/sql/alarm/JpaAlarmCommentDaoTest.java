@@ -81,7 +81,7 @@ public class JpaAlarmCommentDaoTest extends AbstractJpaDaoTest {
     private void saveAlarmComment(UUID id, UUID alarmId, UUID userId, AlarmCommentType type) {
         AlarmComment alarmComment = new AlarmComment();
         alarmComment.setId(new AlarmCommentId(id));
-        alarmComment.setAlarmId(TenantId.fromUUID(alarmId));
+        alarmComment.setAlarmId(new AlarmId(alarmId));
         alarmComment.setUserId(new UserId(userId));
         alarmComment.setType(type);
         alarmComment.setComment(JacksonUtil.newObjectNode().put("text", RandomStringUtils.randomAlphanumeric(10)));
