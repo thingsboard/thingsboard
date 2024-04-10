@@ -56,6 +56,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.refEq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.thingsboard.server.common.data.msg.TbMsgType.ACTIVITY_EVENT;
@@ -89,7 +90,7 @@ public class TbCopyAttributesToEntityViewNodeTest {
     }
 
     @Test
-    public void givenExistingAttributes_whenOnMsg_thenCopyAttributeValuesToView() {
+    public void givenExistingAttributes_whenOnMsg_thenCopyAttributesToView() {
         EntityViewId entityViewId = EntityViewId.fromString("a2109747-d1f4-475a-baaa-55f5d4897ad8");
         EntityView entityView = new EntityView(entityViewId);
         entityView.setStartTimeMs(Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli());
@@ -126,7 +127,7 @@ public class TbCopyAttributesToEntityViewNodeTest {
     }
 
     @Test
-    void givenExistingAttributesAndMsgTypeAttributesDeleted_whenOnMsg_thenDeleteAttributeValuesFromView() {
+    public void givenExistingAttributesAndMsgTypeAttributesDeleted_whenOnMsg_thenDeleteAttributesFromView() {
         EntityViewId entityViewId = EntityViewId.fromString("d117f1a4-24ea-4fdd-b94e-5a472e99d925");
         EntityView entityView = new EntityView(entityViewId);
         entityView.setStartTimeMs(Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli());
@@ -163,7 +164,69 @@ public class TbCopyAttributesToEntityViewNodeTest {
     }
 
     @Test
-    void givenAttributesDateOutOfStartDateAndEndDate_whenOnMsg_thenThrowsException() {
+    public void givenNonMatchedAttributesAndMsgTypeIsAttributesDeleted_whenOnMsg_thenNoAttributesDeleteFromView() {
+        EntityViewId entityViewId = EntityViewId.fromString("a2109747-d1f4-475a-baaa-55f5d4897ad8");
+        EntityView entityView = new EntityView(entityViewId);
+        entityView.setStartTimeMs(Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli());
+        entityView.setEndTimeMs(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli());
+        AttributesEntityView attributes = new AttributesEntityView(List.of("attribute1"), Collections.emptyList(), Collections.emptyList());
+        entityView.setKeys(new TelemetryEntityView(Collections.emptyList(), attributes));
+
+        TbMsg msg = TbMsg.newMsg(
+                TbMsgType.ATTRIBUTES_DELETED, DEVICE_ID, new TbMsgMetaData(Map.of("scope", "CLIENT_SCOPE")),
+                "{\"attributes\": [\"anotherAttribute\"]}");
+
+        when(ctxMock.getEntityViewService()).thenReturn(entityViewServiceMock);
+        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
+        when(entityViewServiceMock.findEntityViewsByTenantIdAndEntityIdAsync(any(), any()))
+                .thenReturn(Futures.immediateFuture(List.of(entityView)));
+
+        node.onMsg(ctxMock, msg);
+
+        verify(entityViewServiceMock).findEntityViewsByTenantIdAndEntityIdAsync(eq(TENANT_ID), eq(DEVICE_ID));
+        verify(ctxMock).ack(eq(msg));
+        verify(ctxMock, never()).getTelemetryService();
+    }
+
+    @Test
+    public void givenNonMatchedAttributesAndMsgTypeIsPostAttributesRequest_whenOnMsg_thenCopyNoAttributesToView() {
+        EntityViewId entityViewId = EntityViewId.fromString("a2109747-d1f4-475a-baaa-55f5d4897ad8");
+        EntityView entityView = new EntityView(entityViewId);
+        entityView.setStartTimeMs(Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli());
+        entityView.setEndTimeMs(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli());
+        AttributesEntityView attributes = new AttributesEntityView(List.of("attribute1"), Collections.emptyList(), Collections.emptyList());
+        entityView.setKeys(new TelemetryEntityView(Collections.emptyList(), attributes));
+
+        TbMsg msg = TbMsg.newMsg(
+                TbMsgType.POST_ATTRIBUTES_REQUEST, DEVICE_ID, new TbMsgMetaData(Map.of("scope", "CLIENT_SCOPE")),
+                "{\"attribute2\": \"value2\"}");
+
+        when(ctxMock.getEntityViewService()).thenReturn(entityViewServiceMock);
+        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
+        when(entityViewServiceMock.findEntityViewsByTenantIdAndEntityIdAsync(any(), any()))
+                .thenReturn(Futures.immediateFuture(List.of(entityView)));
+        when(ctxMock.getTelemetryService()).thenReturn(telemetryServiceMock);
+        doAnswer(invocation -> {
+            FutureCallback<Void> callback = invocation.getArgument(4);
+            callback.onSuccess(null);
+            return null;
+        }).when(telemetryServiceMock).saveAndNotify(any(), any(), any(AttributeScope.class), anyList(), any(FutureCallback.class));
+        doAnswer(invocation -> {
+            TbMsg newMsg = TbMsg.newMsg(msg.getQueueName(), msg.getType(), entityViewId, msg.getCustomerId(), msg.getMetaData(), msg.getData());
+            return newMsg;
+        }).when(ctxMock).newMsg(any(), any(String.class), any(), any(), any(), any());
+
+        node.onMsg(ctxMock, msg);
+
+        verify(entityViewServiceMock).findEntityViewsByTenantIdAndEntityIdAsync(eq(TENANT_ID), eq(DEVICE_ID));
+        verify(telemetryServiceMock).saveAndNotify(eq(TENANT_ID), eq(entityViewId), eq(AttributeScope.CLIENT_SCOPE), eq(Collections.emptyList()), any(FutureCallback.class));
+        verify(ctxMock).ack(eq(msg));
+        TbMsg expectedNewMsg = TbMsg.newMsg(msg.getQueueName(), msg.getType(), entityViewId, msg.getCustomerId(), msg.getMetaData(), msg.getData());
+        verify(ctxMock).enqueueForTellNext(refEq(expectedNewMsg, "ts", "id", "ctx"), eq("Success"));
+    }
+
+    @Test
+    public void givenAttributesValidityPeriodOutOfStartDateAndEndDate_whenOnMsg_thenThrowsException() {
         EntityViewId entityViewId = EntityViewId.fromString("d117f1a4-24ea-4fdd-b94e-5a472e99d925");
         EntityView entityView = new EntityView(entityViewId);
         entityView.setStartTimeMs(Instant.now().minus(2, ChronoUnit.DAYS).toEpochMilli());
@@ -187,7 +250,7 @@ public class TbCopyAttributesToEntityViewNodeTest {
     }
 
     @Test
-    void givenEmptyMetadata_whenOnMsg_thenThrowsException() {
+    public void givenEmptyMetadata_whenOnMsg_thenThrowsException() {
         TbMsg msg = TbMsg.newMsg(
                 ATTRIBUTES_UPDATED, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
 
