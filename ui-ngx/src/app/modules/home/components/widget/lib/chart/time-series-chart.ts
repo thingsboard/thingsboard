@@ -601,13 +601,15 @@ export class TbTimeSeriesChart {
         {
           type: 'inside',
           disabled: !this.settings.dataZoom,
-          realtime: true
+          realtime: true,
+          filterMode: this.stateData ? 'none' : 'filter'
         },
         {
           type: 'slider',
           show: this.settings.dataZoom,
           showDetail: false,
           realtime: true,
+          filterMode: this.stateData ? 'none' : 'filter',
           bottom: 10
         }
       ],
