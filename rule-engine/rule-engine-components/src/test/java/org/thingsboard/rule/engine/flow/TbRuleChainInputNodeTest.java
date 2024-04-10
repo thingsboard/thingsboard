@@ -109,8 +109,11 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
     @ValueSource(strings = {"91acbce0-079fdb", "", "  ", "my test string"})
     public void givenInvalidRuleChainId_whenInit_thenThrowsException(String ruleChainId) {
         //GIVEN
+        RuleNode currentRuleNode = new RuleNode(new RuleNodeId(UUID.fromString("09184b16-f176-4eee-987e-1b0501b38d6e")));
         config.setRuleChainId(ruleChainId);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+
+        when(ctxMock.getSelf()).thenReturn(currentRuleNode);
 
         //WHEN-THEN
         Assertions.assertThatThrownBy(() -> node.init(ctxMock, nodeConfiguration))
@@ -124,9 +127,14 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
         RuleChain rootRuleChain = new RuleChain(
                 new RuleChainId(UUID.fromString("77124ff7-1ca2-4ad2-bc65-cf860de249ea")));
 
+        String currentRuleChainIdStr = "752b70c2-20e6-4a37-b7f7-4271249fc643";
+        RuleChainId currentRuleChainId = new RuleChainId(UUID.fromString(currentRuleChainIdStr));
+        RuleNode currentRuleNode = new RuleNode(new RuleNodeId(UUID.fromString("09184b16-f176-4eee-987e-1b0501b38d6e")));
+        currentRuleNode.setRuleChainId(currentRuleChainId);
         config.setForwardMsgToDefaultRuleChain(true);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
+        when(ctxMock.getSelf()).thenReturn(currentRuleNode);
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
         when(ctxMock.getRuleChainService()).thenReturn(ruleChainServiceMock);
         when(ruleChainServiceMock.getRootTenantRuleChain(any())).thenReturn(rootRuleChain);
@@ -144,9 +152,11 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
     @Test
     public void givenForwardMsgToDefaultIsTrueAndNoTenantRootRuleChain_whenInit_thenThrowsException() {
         //GIVEN
+        RuleNode currentRuleNode = new RuleNode(new RuleNodeId(UUID.fromString("09184b16-f176-4eee-987e-1b0501b38d6e")));
         config.setForwardMsgToDefaultRuleChain(true);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
+        when(ctxMock.getSelf()).thenReturn(currentRuleNode);
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
         when(ctxMock.getRuleChainService()).thenReturn(ruleChainServiceMock);
         when(ruleChainServiceMock.getRootTenantRuleChain(any())).thenReturn(null);
@@ -177,7 +187,7 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
         //WHEN-THEN
         Assertions.assertThatThrownBy(() -> node.init(ctxMock, nodeConfiguration))
                 .isInstanceOf(TbNodeException.class)
-                .hasMessage("The rule chain id and the current rule chain id cannot be equals!");
+                .hasMessage("Forwarding messages to the current rule chain is not allowed!");
     }
 
     @Test
@@ -386,7 +396,7 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
         ArgumentCaptor<Throwable> captor = ArgumentCaptor.forClass(Throwable.class);
         verify(ctxMock).tellFailure(eq(msg), captor.capture());
         assertThat(captor.getValue().toString())
-                .isEqualTo("java.lang.RuntimeException: Message cannot be forwarded to the default rule chain since current rule chain is the default rule chain!");
+                .isEqualTo("java.lang.RuntimeException: Forwarding messages to the current rule chain is not allowed!");
     }
 
     private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {

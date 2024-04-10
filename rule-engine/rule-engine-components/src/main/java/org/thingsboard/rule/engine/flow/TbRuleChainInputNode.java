@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -56,12 +57,14 @@ public class TbRuleChainInputNode implements TbNode {
 
     private TbRuleChainInputNodeConfiguration config;
     private RuleChainId ruleChainId;
+    private RuleChainId currentRuleChainId;
     private boolean forwardMsgToDefaultRuleChain;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbRuleChainInputNodeConfiguration.class);
         this.forwardMsgToDefaultRuleChain = config.isForwardMsgToDefaultRuleChain();
+        this.currentRuleChainId = ctx.getSelf().getRuleChainId();
         if (forwardMsgToDefaultRuleChain) {
             this.ruleChainId = getRootRuleChainId(ctx);
             return;
@@ -72,8 +75,8 @@ public class TbRuleChainInputNode implements TbNode {
         } catch (Exception e) {
             throw new TbNodeException("Failed to parse rule chain id: " + config.getRuleChainId(), true);
         }
-        if (ruleChainUUID.equals(ctx.getSelf().getRuleChainId().getId())) {
-            throw new TbNodeException("The rule chain id and the current rule chain id cannot be equals!", true);
+        if (ruleChainUUID.equals(currentRuleChainId.getId())) {
+            throw new TbNodeException("Forwarding messages to the current rule chain is not allowed!", true);
         }
         this.ruleChainId = new RuleChainId(ruleChainUUID);
         ctx.checkTenantEntity(ruleChainId);
@@ -81,10 +84,13 @@ public class TbRuleChainInputNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        RuleChainId targetRuleChainId = getRuleChainId(ctx, msg);
-        if (targetRuleChainId.equals(ctx.getSelf().getRuleChainId())) {
-            ctx.tellFailure(msg, new RuntimeException(
-                    "Message cannot be forwarded to the default rule chain since current rule chain is the default rule chain!"));
+        if (!forwardMsgToDefaultRuleChain) {
+            ctx.input(msg, ruleChainId);
+            return;
+        }
+        RuleChainId targetRuleChainId = getTargetRuleChainId(ctx, msg);
+        if (targetRuleChainId.equals(currentRuleChainId)) {
+            ctx.tellFailure(msg, new RuntimeException("Forwarding messages to the current rule chain is not allowed!"));
             return;
         }
         ctx.input(msg, targetRuleChainId);
@@ -106,23 +112,15 @@ public class TbRuleChainInputNode implements TbNode {
         return new TbPair<>(hasChanges, oldConfiguration);
     }
 
-    private RuleChainId getRuleChainId(TbContext ctx, TbMsg msg) {
-        if (!forwardMsgToDefaultRuleChain) {
-            return ruleChainId;
-        }
-        RuleChainId targetRuleChainId = null;
-        switch (msg.getOriginator().getEntityType()) {
-            case DEVICE:
-                targetRuleChainId = ctx.getDeviceProfileCache().get(ctx.getTenantId(), (DeviceId) msg.getOriginator()).getDefaultRuleChainId();
-                break;
-            case ASSET:
-                targetRuleChainId = ctx.getAssetProfileCache().get(ctx.getTenantId(), (AssetId) msg.getOriginator()).getDefaultRuleChainId();
-                break;
-        }
-        if (targetRuleChainId == null) {
-            targetRuleChainId = ruleChainId;
-        }
-        return targetRuleChainId;
+    private RuleChainId getTargetRuleChainId(TbContext ctx, TbMsg msg) {
+        RuleChainId targetRuleChainId = switch (msg.getOriginator().getEntityType()) {
+            case DEVICE ->
+                    ctx.getDeviceProfileCache().get(ctx.getTenantId(), (DeviceId) msg.getOriginator()).getDefaultRuleChainId();
+            case ASSET ->
+                    ctx.getAssetProfileCache().get(ctx.getTenantId(), (AssetId) msg.getOriginator()).getDefaultRuleChainId();
+            default -> null;
+        };
+        return Optional.ofNullable(targetRuleChainId).orElse(ruleChainId);
     }
 
     private RuleChainId getRootRuleChainId(TbContext ctx) throws TbNodeException {
