@@ -65,14 +65,18 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
     }
 
     @Override
-    public EntityType checkLimits(TenantId tenantId, DeviceId deviceId, int dataPoints) {
+    public EntityType checkLimits(TenantId tenantId, DeviceId deviceId, int dataPoints, boolean isGateway) {
         if (!tenantAllowed.getOrDefault(tenantId, Boolean.TRUE)) {
             return EntityType.API_USAGE_STATE;
         }
         if (!checkEntityRateLimit(dataPoints, getTenantRateLimits(tenantId))) {
             return EntityType.TENANT;
         }
-        if (!checkEntityRateLimit(dataPoints, getDeviceRateLimits(tenantId, deviceId))) {
+        if (isGateway) {
+            if (!checkGatewayRateLimit(dataPoints, getDeviceRateLimits(tenantId, deviceId))) {
+                return EntityType.DEVICE;
+            }
+        } else if (!checkEntityRateLimit(dataPoints, getDeviceRateLimits(tenantId, deviceId))) {
             return EntityType.DEVICE;
         }
         return null;
@@ -83,6 +87,14 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
             return limits.getTelemetryMsgRateLimit().tryConsume() && limits.getTelemetryDataPointsRateLimit().tryConsume(dataPoints);
         } else {
             return limits.getRegularMsgRateLimit().tryConsume();
+        }
+    }
+
+    private boolean checkGatewayRateLimit(int dataPoints, EntityTransportRateLimits limits) {
+        if (dataPoints > 0) {
+            return limits.getGatewayTelemetryMsgRateLimit().tryConsume() && limits.getGatewayTelemetryDataPointsRateLimit().tryConsume(dataPoints);
+        } else {
+            return limits.getGatewayMsgRateLimit().tryConsume();
         }
     }
 
@@ -223,11 +235,17 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
         boolean regularUpdate = !oldRateLimits.getRegularMsgRateLimit().getConfiguration().equals(newRateLimits.getRegularMsgRateLimit().getConfiguration());
         boolean telemetryMsgRateUpdate = !oldRateLimits.getTelemetryMsgRateLimit().getConfiguration().equals(newRateLimits.getTelemetryMsgRateLimit().getConfiguration());
         boolean telemetryDataPointUpdate = !oldRateLimits.getTelemetryDataPointsRateLimit().getConfiguration().equals(newRateLimits.getTelemetryDataPointsRateLimit().getConfiguration());
-        if (regularUpdate || telemetryMsgRateUpdate || telemetryDataPointUpdate) {
+        boolean gatewayMsgRateUpdate = !oldRateLimits.getGatewayMsgRateLimit().getConfiguration().equals(newRateLimits.getGatewayMsgRateLimit().getConfiguration());
+        boolean gatewayTelemetryMsgRateUpdate = !oldRateLimits.getGatewayTelemetryMsgRateLimit().getConfiguration().equals(newRateLimits.getGatewayTelemetryMsgRateLimit().getConfiguration());
+        boolean gatewayTelemetryDpRateUpdate = !oldRateLimits.getGatewayTelemetryDataPointsRateLimit().getConfiguration().equals(newRateLimits.getGatewayTelemetryDataPointsRateLimit().getConfiguration());
+        if (regularUpdate || telemetryMsgRateUpdate || telemetryDataPointUpdate || gatewayMsgRateUpdate || gatewayTelemetryMsgRateUpdate || gatewayTelemetryDpRateUpdate) {
             return new EntityTransportRateLimits(
                     regularUpdate ? newLimit(newRateLimits.getRegularMsgRateLimit().getConfiguration()) : oldRateLimits.getRegularMsgRateLimit(),
                     telemetryMsgRateUpdate ? newLimit(newRateLimits.getTelemetryMsgRateLimit().getConfiguration()) : oldRateLimits.getTelemetryMsgRateLimit(),
-                    telemetryDataPointUpdate ? newLimit(newRateLimits.getTelemetryDataPointsRateLimit().getConfiguration()) : oldRateLimits.getTelemetryDataPointsRateLimit());
+                    telemetryDataPointUpdate ? newLimit(newRateLimits.getTelemetryDataPointsRateLimit().getConfiguration()) : oldRateLimits.getTelemetryDataPointsRateLimit(),
+                    gatewayMsgRateUpdate ? newLimit(newRateLimits.getGatewayMsgRateLimit().getConfiguration()) : oldRateLimits.getGatewayMsgRateLimit(),
+                    gatewayTelemetryMsgRateUpdate ? newLimit(newRateLimits.getGatewayTelemetryMsgRateLimit().getConfiguration()) : oldRateLimits.getGatewayTelemetryMsgRateLimit(),
+                    gatewayTelemetryDpRateUpdate ? newLimit(newRateLimits.getGatewayTelemetryDataPointsRateLimit().getConfiguration()) : oldRateLimits.getGatewayTelemetryDataPointsRateLimit());
         } else {
             return null;
         }
@@ -237,12 +255,15 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
         TenantProfileData profileData = tenantProfile.getProfileData();
         DefaultTenantProfileConfiguration profile = (DefaultTenantProfileConfiguration) profileData.getConfiguration();
         if (profile == null) {
-            return new EntityTransportRateLimits(ALLOW, ALLOW, ALLOW);
+            return new EntityTransportRateLimits(ALLOW, ALLOW, ALLOW, ALLOW, ALLOW, ALLOW);
         } else {
             TransportRateLimit regularMsgRateLimit = newLimit(tenant ? profile.getTransportTenantMsgRateLimit() : profile.getTransportDeviceMsgRateLimit());
             TransportRateLimit telemetryMsgRateLimit = newLimit(tenant ? profile.getTransportTenantTelemetryMsgRateLimit() : profile.getTransportDeviceTelemetryMsgRateLimit());
             TransportRateLimit telemetryDpRateLimit = newLimit(tenant ? profile.getTransportTenantTelemetryDataPointsRateLimit() : profile.getTransportDeviceTelemetryDataPointsRateLimit());
-            return new EntityTransportRateLimits(regularMsgRateLimit, telemetryMsgRateLimit, telemetryDpRateLimit);
+            TransportRateLimit gatewayMsgRateLimit = newLimit(tenant ? profile.getTransportTenantMsgRateLimit() : profile.getTransportGatewayMsgRateLimit());
+            TransportRateLimit gatewayTelemetryMsgRateLimit = newLimit(tenant ? profile.getTransportTenantTelemetryMsgRateLimit() : profile.getTransportGatewayTelemetryMsgRateLimit());
+            TransportRateLimit gatewayTelemetryDpRateLimit = newLimit(tenant ? profile.getTransportTenantTelemetryDataPointsRateLimit() : profile.getTransportGatewayTelemetryDataPointsRateLimit());
+            return new EntityTransportRateLimits(regularMsgRateLimit, telemetryMsgRateLimit, telemetryDpRateLimit, gatewayMsgRateLimit, gatewayTelemetryMsgRateLimit, gatewayTelemetryDpRateLimit);
         }
     }
 

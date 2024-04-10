@@ -42,11 +42,16 @@ import org.thingsboard.mqtt.MqttHandler;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.msa.AbstractContainerTest;
 import org.thingsboard.server.msa.DisableUIListeners;
 import org.thingsboard.server.msa.WsClient;
@@ -57,6 +62,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -100,7 +106,8 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
     }
 
     @AfterMethod
-    public void removeGateway()  {
+    public void removeGateway() {
+        updateTenantProfileWithGatewayTransportLimits("", "", "");
         testRestClient.deleteDeviceIfExists(this.gatewayDevice.getId());
         testRestClient.deleteDeviceIfExists(this.createdDevice.getId());
         this.listener = null;
@@ -374,6 +381,139 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         this.createdDevice = createDeviceThroughGateway(mqttClient, gatewayDevice);
     }
 
+    @Test
+    public void testMsgRateLimitsForGatewayDevice() throws Exception {
+        updateTenantProfileWithGatewayTransportLimits("1:1", "", "");
+        Thread.sleep(100);
+
+        mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer(createPayload().toString().getBytes())).get(3, TimeUnit.SECONDS);
+
+        mqttClient.disconnect();
+        mqttClient = getMqttClient(testRestClient.getDeviceCredentialsByDeviceId(gatewayDevice.getId()), listener);
+        Thread.sleep(500);
+
+        assertThat(mqttClient.isConnected()).isFalse();
+
+        Thread.sleep(2000);
+
+        assertThat(mqttClient.isConnected()).isTrue();
+
+    }
+
+    @Test
+    public void testTelemetryMsgRateLimitsForGatewayDevice() throws Exception {
+        updateTenantProfileWithGatewayTransportLimits("", "1:5", "");
+        Thread.sleep(100);
+
+        WsClient wsClient = subscribeToWebSocket(gatewayDevice.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
+        mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer(createPayload().toString().getBytes())).get(3, TimeUnit.SECONDS);
+        WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
+        log.info("Received telemetry: {}", actualLatestTelemetry);
+        wsClient.closeBlocking();
+
+        assertThat(actualLatestTelemetry.getData()).hasSize(4);
+        assertThat(actualLatestTelemetry.getLatestValues().keySet()).containsOnlyOnceElementsOf(Arrays.asList("booleanKey", "stringKey", "doubleKey", "longKey"));
+
+        assertThat(actualLatestTelemetry.getDataValuesByKey("booleanKey").get(1)).isEqualTo(Boolean.TRUE.toString());
+        assertThat(actualLatestTelemetry.getDataValuesByKey("stringKey").get(1)).isEqualTo("value1");
+        assertThat(actualLatestTelemetry.getDataValuesByKey("doubleKey").get(1)).isEqualTo(Double.toString(42.0));
+        assertThat(actualLatestTelemetry.getDataValuesByKey("longKey").get(1)).isEqualTo(Long.toString(73));
+
+        Thread.sleep(100);
+
+        wsClient = subscribeToWebSocket(gatewayDevice.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
+        mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer(createAltPayload().toString().getBytes())).get(3, TimeUnit.SECONDS);
+        Exception exception = null;
+        try {
+            wsClient.getLastMessage();
+        } catch (RuntimeException e) {
+            exception = e;
+            log.info("Rate limit is working as expected");
+        } finally {
+            wsClient.closeBlocking();
+            if (exception == null) {
+                throw new RuntimeException("Rate limit is not working as expected");
+            }
+        }
+    }
+
+    @Test
+    public void testTelemetryDataPointsRateLimitsForGatewayDevice() throws Exception {
+        updateTenantProfileWithGatewayTransportLimits("", "", "4:5");
+        Thread.sleep(100);
+
+        WsClient wsClient = subscribeToWebSocket(gatewayDevice.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
+        mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer(createPayload().toString().getBytes())).get(3, TimeUnit.SECONDS);
+        WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
+        log.info("Received telemetry: {}", actualLatestTelemetry);
+        wsClient.closeBlocking();
+
+        assertThat(actualLatestTelemetry.getData()).hasSize(4);
+        assertThat(actualLatestTelemetry.getLatestValues().keySet()).containsOnlyOnceElementsOf(Arrays.asList("booleanKey", "stringKey", "doubleKey", "longKey"));
+
+        assertThat(actualLatestTelemetry.getDataValuesByKey("booleanKey").get(1)).isEqualTo(Boolean.TRUE.toString());
+        assertThat(actualLatestTelemetry.getDataValuesByKey("stringKey").get(1)).isEqualTo("value1");
+        assertThat(actualLatestTelemetry.getDataValuesByKey("doubleKey").get(1)).isEqualTo(Double.toString(42.0));
+        assertThat(actualLatestTelemetry.getDataValuesByKey("longKey").get(1)).isEqualTo(Long.toString(73));
+
+        Thread.sleep(100);
+
+        wsClient = subscribeToWebSocket(gatewayDevice.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
+        mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer(createAltPayload().toString().getBytes())).get(3, TimeUnit.SECONDS);
+        Exception exception = null;
+        try {
+            wsClient.getLastMessage();
+        } catch (RuntimeException e) {
+            exception = e;
+            log.info("Rate limit is working as expected");
+        } finally {
+            wsClient.closeBlocking();
+            if (exception == null) {
+                throw new RuntimeException("Rate limit is not working as expected");
+            }
+        }
+    }
+
+    @Test
+    public void testNoRateLimitsForGatewayDevice() throws Exception {
+
+        updateTenantProfileWithGatewayTransportLimits("", "", "");
+
+        Thread.sleep(100);
+
+        WsClient wsClient = subscribeToWebSocket(gatewayDevice.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
+        mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer(createPayload().toString().getBytes())).get();
+        WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
+
+        log.info("Received telemetry: {}", actualLatestTelemetry);
+
+        assertThat(actualLatestTelemetry.getData()).hasSize(4);
+        assertThat(actualLatestTelemetry.getLatestValues().keySet()).containsOnlyOnceElementsOf(Arrays.asList("booleanKey", "stringKey", "doubleKey", "longKey"));
+
+        assertThat(actualLatestTelemetry.getDataValuesByKey("booleanKey").get(1)).isEqualTo(Boolean.TRUE.toString());
+        assertThat(actualLatestTelemetry.getDataValuesByKey("stringKey").get(1)).isEqualTo("value1");
+        assertThat(actualLatestTelemetry.getDataValuesByKey("doubleKey").get(1)).isEqualTo(Double.toString(42.0));
+        assertThat(actualLatestTelemetry.getDataValuesByKey("longKey").get(1)).isEqualTo(Long.toString(73));
+
+        wsClient.closeBlocking();
+
+        wsClient = subscribeToWebSocket(gatewayDevice.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
+        mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer(createAltPayload().toString().getBytes())).get();
+        actualLatestTelemetry = wsClient.getLastMessage();
+
+        log.info("Received telemetry: {}", actualLatestTelemetry);
+
+        wsClient.closeBlocking();
+
+        assertThat(actualLatestTelemetry.getData()).hasSize(4);
+        assertThat(actualLatestTelemetry.getLatestValues().keySet()).containsOnlyOnceElementsOf(Arrays.asList("booleanAltKey", "stringAltKey", "doubleAltKey", "longAltKey"));
+
+        assertThat(actualLatestTelemetry.getDataValuesByKey("booleanAltKey").get(1)).isEqualTo(Boolean.FALSE.toString());
+        assertThat(actualLatestTelemetry.getDataValuesByKey("stringAltKey").get(1)).isEqualTo("value2");
+        assertThat(actualLatestTelemetry.getDataValuesByKey("doubleAltKey").get(1)).isEqualTo(Double.toString(45.0));
+        assertThat(actualLatestTelemetry.getDataValuesByKey("longAltKey").get(1)).isEqualTo(Long.toString(78));
+    }
+
     private void checkAttribute(boolean client, String expectedValue) throws Exception {
         JsonObject gatewayAttributesRequest = new JsonObject();
         int messageId = new Random().nextInt(100);
@@ -455,5 +595,35 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         private final String message;
     }
 
+    protected JsonObject createAltPayload() {
+        JsonObject values = new JsonObject();
+        values.addProperty("stringAltKey", "value2");
+        values.addProperty("booleanAltKey", false);
+        values.addProperty("doubleAltKey", 45.0);
+        values.addProperty("longAltKey", 78L);
+
+        return values;
+    }
+
+    private void updateTenantProfileWithGatewayTransportLimits(String msgRateLimit, String telemetryMsgRateLimit, String telemetryDataPointsRateLimit) {
+        testRestClient.login("sysadmin@thingsboard.org", "sysadmin");
+        PageLink pageLink = new PageLink(10);
+        PageData<TenantProfile> tenantProfiles = testRestClient.getTenantProfiles(pageLink);
+        Optional<TenantProfile> defaultTenantProfile = tenantProfiles.getData().stream().filter(tenantProfile -> tenantProfile.getName().equals("Default")).findFirst();
+
+        assertThat(defaultTenantProfile).isPresent();
+
+        TenantProfile tenantProfile = defaultTenantProfile.get();
+        TenantProfileData profileData = tenantProfile.getProfileData();
+        DefaultTenantProfileConfiguration configuration = (DefaultTenantProfileConfiguration) profileData.getConfiguration();
+
+        configuration.setTransportGatewayMsgRateLimit(msgRateLimit);
+        configuration.setTransportGatewayTelemetryMsgRateLimit(telemetryMsgRateLimit);
+        configuration.setTransportGatewayTelemetryDataPointsRateLimit(telemetryDataPointsRateLimit);
+        profileData.setConfiguration(configuration);
+        tenantProfile.setProfileData(profileData);
+        testRestClient.postTenantProfile(tenantProfile);
+        testRestClient.login("tenant@thingsboard.org", "tenant");
+    }
 
 }

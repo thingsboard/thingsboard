@@ -509,12 +509,24 @@
       </tb-rate-limits>
     </div>
     <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+      <tb-rate-limits fxFlex formControlName="transportGatewayMsgRateLimit"
+                      [type]="rateLimitsType.GATEWAY_MESSAGES">
+      </tb-rate-limits>
+      <div fxFlex></div>
+    </div>
+    <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
       <tb-rate-limits fxFlex formControlName="transportTenantTelemetryMsgRateLimit"
                       [type]="rateLimitsType.TENANT_TELEMETRY_MESSAGES">
       </tb-rate-limits>
       <tb-rate-limits fxFlex formControlName="transportDeviceTelemetryMsgRateLimit"
                       [type]="rateLimitsType.DEVICE_TELEMETRY_MESSAGES">
       </tb-rate-limits>
+    </div>
+    <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+      <tb-rate-limits fxFlex formControlName="transportGatewayTelemetryMsgRateLimit"
+                      [type]="rateLimitsType.GATEWAY_TELEMETRY_MESSAGES">
+      </tb-rate-limits>
+      <div fxFlex></div>
     </div>
     <mat-expansion-panel class="configuration-panel">
       <mat-expansion-panel-header>
@@ -530,6 +542,12 @@
           <tb-rate-limits fxFlex formControlName="transportDeviceTelemetryDataPointsRateLimit"
                           [type]="rateLimitsType.DEVICE_TELEMETRY_DATA_POINTS">
           </tb-rate-limits>
+        </div>
+        <div fxFlex fxLayout="row"  fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+          <tb-rate-limits fxFlex formControlName="transportGatewayTelemetryDataPointsRateLimit"
+                          [type]="rateLimitsType.GATEWAY_TELEMETRY_DATA_POINTS">
+          </tb-rate-limits>
+          <div fxFlex></div>
         </div>
         <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
           <tb-rate-limits fxFlex formControlName="tenantServerRestLimitsConfiguration"

@@ -93,6 +93,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ProtoUtils {
 
+    private static final String GATEWAY_PROPERTY = "gateway";
+
     private static final EntityType[] entityTypeByProtoNumber;
 
     static {
@@ -1028,6 +1030,9 @@ public class ProtoUtils {
                     builder.setPagingTransmissionWindow(checkLong(psmConfiguration.getPagingTransmissionWindow()));
                 }
             }
+        }
+        if (device.getAdditionalInfo().has(GATEWAY_PROPERTY) && device.getAdditionalInfo().get(GATEWAY_PROPERTY).asBoolean()) {
+            builder.setGateway(true);
         }
         return builder.build();
     }

@@ -33,6 +33,7 @@ public class TransportDeviceInfo implements Serializable {
     private DeviceId deviceId;
     private String deviceName;
     private String deviceType;
+    private boolean gateway;
     private PowerMode powerMode;
     private String additionalInfo;
     private Long edrxCycle;

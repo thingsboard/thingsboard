@@ -25,5 +25,8 @@ public class EntityTransportRateLimits {
     private TransportRateLimit regularMsgRateLimit;
     private TransportRateLimit telemetryMsgRateLimit;
     private TransportRateLimit telemetryDataPointsRateLimit;
+    private TransportRateLimit gatewayMsgRateLimit;
+    private TransportRateLimit gatewayTelemetryMsgRateLimit;
+    private TransportRateLimit gatewayTelemetryDataPointsRateLimit;
 
 }

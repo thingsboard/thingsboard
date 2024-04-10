@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EventInfo;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -209,6 +210,28 @@ public class TestRestClient {
                 .post("/api/v1/provision")
                 .getBody()
                 .jsonPath();
+    }
+
+    public PageData<TenantProfile> getTenantProfiles(PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
+        return given().spec(requestSpec).queryParams(params)
+                .get("/api/tenantProfiles")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(new TypeRef<PageData<TenantProfile>>() {
+                });
+    }
+
+    public TenantProfile postTenantProfile(TenantProfile tenantProfile) {
+        return given().spec(requestSpec)
+                .body(tenantProfile)
+                .post("/api/tenantProfile")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(TenantProfile.class);
     }
 
     public PageData<RuleChain> getRuleChains(PageLink pageLink) {

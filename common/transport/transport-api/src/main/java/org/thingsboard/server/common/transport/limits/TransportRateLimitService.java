@@ -24,7 +24,7 @@ import java.net.InetSocketAddress;
 
 public interface TransportRateLimitService {
 
-    EntityType checkLimits(TenantId tenantId, DeviceId deviceId, int dataPoints);
+    EntityType checkLimits(TenantId tenantId, DeviceId deviceId, int dataPoints, boolean isGateway);
 
     void update(TenantProfileUpdateResult update);
 

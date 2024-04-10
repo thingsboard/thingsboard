@@ -20,6 +20,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -105,8 +107,6 @@ import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbTransportComponent;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -507,6 +507,7 @@ public class DefaultTransportService extends TransportActivityManager implements
         tdi.setAdditionalInfo(di.getAdditionalInfo());
         tdi.setDeviceName(di.getDeviceName());
         tdi.setDeviceType(di.getDeviceType());
+        tdi.setGateway(di.getGateway());
         if (StringUtils.isNotEmpty(di.getPowerMode())) {
             tdi.setPowerMode(PowerMode.valueOf(di.getPowerMode()));
             tdi.setEdrxCycle(di.getEdrxCycle());
@@ -864,20 +865,29 @@ public class DefaultTransportService extends TransportActivityManager implements
         }
         TenantId tenantId = TenantId.fromUUID(new UUID(sessionInfo.getTenantIdMSB(), sessionInfo.getTenantIdLSB()));
         DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
+        boolean isGateway = sessionInfo.getGateway();
 
-        EntityType rateLimitedEntityType = rateLimitService.checkLimits(tenantId, deviceId, dataPoints);
+        EntityType rateLimitedEntityType = rateLimitService.checkLimits(tenantId, deviceId, dataPoints, isGateway);
         if (rateLimitedEntityType == null) {
             return true;
         } else {
             if (callback != null) {
                 callback.onError(new TbRateLimitsException(rateLimitedEntityType));
             }
-            if (rateLimitedEntityType == EntityType.DEVICE || rateLimitedEntityType == EntityType.TENANT) {
+            boolean isDeviceRateLimitTriggered = EntityType.DEVICE.equals(rateLimitedEntityType);
+            if (isDeviceRateLimitTriggered && isGateway) {
                 notificationRuleProcessor.process(RateLimitsTrigger.builder()
                         .tenantId(tenantId)
-                        .api(rateLimitedEntityType == EntityType.DEVICE ? LimitedApi.TRANSPORT_MESSAGES_PER_DEVICE : LimitedApi.TRANSPORT_MESSAGES_PER_TENANT)
-                        .limitLevel(rateLimitedEntityType == EntityType.DEVICE ? deviceId : tenantId)
-                        .limitLevelEntityName(rateLimitedEntityType == EntityType.DEVICE ? sessionInfo.getDeviceName() : null)
+                        .api(LimitedApi.TRANSPORT_MESSAGES_PER_GATEWAY)
+                        .limitLevel(deviceId)
+                        .limitLevelEntityName(sessionInfo.getDeviceName())
+                        .build());
+            } else if (isDeviceRateLimitTriggered || EntityType.TENANT.equals(rateLimitedEntityType)) {
+                notificationRuleProcessor.process(RateLimitsTrigger.builder()
+                        .tenantId(tenantId)
+                        .api(isDeviceRateLimitTriggered ? LimitedApi.TRANSPORT_MESSAGES_PER_DEVICE : LimitedApi.TRANSPORT_MESSAGES_PER_TENANT)
+                        .limitLevel(isDeviceRateLimitTriggered ? deviceId : tenantId)
+                        .limitLevelEntityName(isDeviceRateLimitTriggered ? sessionInfo.getDeviceName() : null)
                         .build());
             }
             return false;
@@ -1036,12 +1046,22 @@ public class DefaultTransportService extends TransportActivityManager implements
                 } else {
                     newDeviceProfile = null;
                 }
+                boolean isGateway = false;
+                if (device.getAdditionalInfo().has("gateway")
+                        && device.getAdditionalInfo().get("gateway").asBoolean()
+                        && device.getAdditionalInfo().has(OVERWRITE_ACTIVITY_TIME)
+                        && device.getAdditionalInfo().get(OVERWRITE_ACTIVITY_TIME).isBoolean()) {
+                    isGateway = true;
+                    md.setOverwriteActivityTime(device.getAdditionalInfo().get(OVERWRITE_ACTIVITY_TIME).asBoolean());
+                }
                 TransportProtos.SessionInfoProto newSessionInfo = TransportProtos.SessionInfoProto.newBuilder()
                         .mergeFrom(md.getSessionInfo())
                         .setDeviceProfileIdMSB(deviceProfileIdMSB)
                         .setDeviceProfileIdLSB(deviceProfileIdLSB)
                         .setDeviceName(device.getName())
-                        .setDeviceType(device.getType()).build();
+                        .setDeviceType(device.getType())
+                        .setGateway(isGateway)
+                        .build();
                 if (device.getAdditionalInfo().has("gateway")
                         && device.getAdditionalInfo().get("gateway").asBoolean()
                         && device.getAdditionalInfo().has(OVERWRITE_ACTIVITY_TIME)
