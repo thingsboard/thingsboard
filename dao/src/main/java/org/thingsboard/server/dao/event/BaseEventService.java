@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.service.DataValidator;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -146,7 +147,7 @@ public class BaseEventService implements EventService {
     }
 
     private EventInfo convert(EntityType entityType, Event event) {
-        return event == null ? null : event.toInfo(entityType);
+        return Optional.ofNullable(event).map(e -> e.toInfo(entityType)).orElse(null);
     }
 
 }
