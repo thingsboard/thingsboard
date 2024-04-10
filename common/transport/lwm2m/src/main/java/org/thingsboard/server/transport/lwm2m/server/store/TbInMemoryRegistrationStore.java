@@ -148,7 +148,7 @@ public class TbInMemoryRegistrationStore implements RegistrationStore, Startable
     @Override
     public UpdatedRegistration updateRegistration(RegistrationUpdate update) {
         // test fix bug Diff port
-        log.warn("updateRegistration inMemory {}", update);
+        log.trace("updateRegistration inMemory {}", update);
         try {
             lock.writeLock().lock();
 
