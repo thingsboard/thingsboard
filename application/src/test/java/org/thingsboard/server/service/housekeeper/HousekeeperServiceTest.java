@@ -368,7 +368,7 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
     }
 
     private void verifyNoAlarms(EntityId entityId) {
-        assertThat(alarmService.findAlarmIdsByOriginatorId(tenantId, entityId, new PageLink(1)).getData()).isEmpty();
+        assertThat(alarmService.findAlarmIdsByOriginatorIdAndIdOffset(tenantId, entityId, null, 10)).isEmpty();
     }
 
     private void createAttribute(EntityId entityId, AttributeScope scope, String key) throws Exception {
@@ -410,7 +410,7 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         List<EntityAlarm> entityAlarms = alarmDao.findEntityAlarmRecords(tenantId, alarm.getId());
         assertThat(entityAlarms).anyMatch(entityAlarm -> entityAlarm.getEntityId().equals(deviceId) && entityAlarm.getAlarmType().equals(alarm.getType()));
         assertThat(entityAlarms).anyMatch(entityAlarm -> entityAlarm.getEntityId().equals(propagatedEntityId) && entityAlarm.getAlarmType().equals(alarm.getType()));
-        assertThat(alarmService.findAlarmIdsByOriginatorId(tenantId, deviceId, new PageLink(1)).getData()).isNotEmpty();
+        assertThat(alarmService.findAlarmIdsByOriginatorIdAndIdOffset(tenantId, deviceId, null, 10)).isNotEmpty();
     }
 
     private void createAlarm(DeviceId deviceId) {
@@ -420,7 +420,7 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
                 .severity(AlarmSeverity.CRITICAL)
                 .type("test alarm for " + deviceId + " " + RandomStringUtils.randomAlphabetic(10))
                 .build(), Alarm.class);
-        assertThat(alarmService.findAlarmIdsByOriginatorId(tenantId, deviceId, new PageLink(1)).getData()).isNotEmpty();
+        assertThat(alarmService.findAlarmIdsByOriginatorIdAndIdOffset(tenantId, deviceId, null, 10)).isNotEmpty();
     }
 
     private TsKvEntry getLatestTelemetry(EntityId entityId) throws Exception {

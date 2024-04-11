@@ -80,7 +80,7 @@ public interface AlarmDao extends Dao<Alarm> {
 
     PageData<AlarmId> findAlarmIdsByAssigneeId(TenantId tenantId, UUID userId, PageLink pageLink);
 
-    PageData<AlarmId> findAlarmIdsByOriginatorId(TenantId tenantId, EntityId originatorId, PageLink pageLink);
+    PageData<AlarmId> findAlarmIdsByOriginatorId(TenantId tenantId, EntityId originatorId, AlarmId idOffset, PageLink pageLink);
 
     void createEntityAlarmRecord(EntityAlarm entityAlarm);
 

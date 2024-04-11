@@ -19,7 +19,9 @@ import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.Dao;
@@ -40,6 +42,9 @@ import java.util.UUID;
 public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
         extends JpaAbstractDaoListeningExecutorService
         implements Dao<D> {
+
+    @Autowired
+    protected JdbcTemplate jdbcTemplate;
 
     protected abstract Class<E> getEntityClass();
 
@@ -115,6 +120,20 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
     public void removeAllByIds(Collection<UUID> ids) {
         JpaRepository<E, UUID> repository = getRepository();
         ids.forEach(repository::deleteById);
+    }
+
+    @Override
+    public List<UUID> findIdsByTenantIdAndIdOffset(TenantId tenantId, UUID idOffset, int limit) {
+        String tableName = Optional.ofNullable(getEntityType())
+                .orElseThrow(() -> new IllegalArgumentException("Entity type not specified"))
+                .getTableName();
+        if (idOffset == null) {
+            return jdbcTemplate.queryForList("SELECT id FROM " + tableName + " WHERE tenant_id = ? ORDER BY id LIMIT ?",
+                    UUID.class, tenantId.getId(), limit);
+        } else {
+            return jdbcTemplate.queryForList("SELECT id FROM " + tableName + " WHERE tenant_id = ? AND id > ? ORDER BY id LIMIT ?",
+                    UUID.class, tenantId.getId(), idOffset, limit);
+        }
     }
 
     @Override

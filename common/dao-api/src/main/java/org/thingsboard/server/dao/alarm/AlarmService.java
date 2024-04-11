@@ -41,6 +41,7 @@ import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 
@@ -106,7 +107,7 @@ public interface AlarmService extends EntityDaoService {
 
     PageData<AlarmId> findAlarmIdsByAssigneeId(TenantId tenantId, UserId userId, PageLink pageLink);
 
-    PageData<AlarmId> findAlarmIdsByOriginatorId(TenantId tenantId, EntityId originatorId, PageLink pageLink);
+    List<AlarmId> findAlarmIdsByOriginatorIdAndIdOffset(TenantId tenantId, EntityId originatorId, AlarmId idOffset, int limit);
 
     int deleteEntityAlarmRecords(TenantId tenantId, EntityId entityId);
 

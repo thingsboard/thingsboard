@@ -313,9 +313,9 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
     }
 
     @Override
-    public PageData<AlarmId> findAlarmIdsByOriginatorId(TenantId tenantId, EntityId originatorId, PageLink pageLink) {
-        log.trace("[{}] Executing findAlarmsByOriginatorId [{}]", tenantId, originatorId);
-        return alarmDao.findAlarmIdsByOriginatorId(tenantId, originatorId, pageLink);
+    public List<AlarmId> findAlarmIdsByOriginatorIdAndIdOffset(TenantId tenantId, EntityId originatorId, AlarmId idOffset, int limit) {
+        log.trace("[{}] Executing findAlarmIdsByOriginatorIdAndIdOffset [{}][{}]", tenantId, originatorId, idOffset);
+        return alarmDao.findAlarmIdsByOriginatorId(tenantId, originatorId, idOffset, new PageLink(limit)).getData();
     }
 
     @Override

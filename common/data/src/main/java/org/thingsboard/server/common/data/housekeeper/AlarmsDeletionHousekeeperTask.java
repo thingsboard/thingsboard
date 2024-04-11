@@ -34,13 +34,13 @@ public class AlarmsDeletionHousekeeperTask extends HousekeeperTask {
 
     private List<UUID> alarms;
 
+    public AlarmsDeletionHousekeeperTask(TenantId tenantId, EntityId entityId) {
+        this(tenantId, entityId, null);
+    }
+
     public AlarmsDeletionHousekeeperTask(TenantId tenantId, EntityId entityId, List<UUID> alarms) {
         super(tenantId, entityId, HousekeeperTaskType.DELETE_ALARMS);
         this.alarms = alarms;
-    }
-
-    public AlarmsDeletionHousekeeperTask(TenantId tenantId, EntityId entityId) {
-        super(tenantId, entityId, HousekeeperTaskType.DELETE_ALARMS);
     }
 
 }

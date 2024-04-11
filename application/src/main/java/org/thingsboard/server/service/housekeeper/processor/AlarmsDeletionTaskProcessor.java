@@ -25,9 +25,9 @@ import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
-import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.alarm.AlarmService;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -46,13 +46,18 @@ public class AlarmsDeletionTaskProcessor extends HousekeeperTaskProcessor<Alarms
 
         if (entityType == EntityType.DEVICE || entityType == EntityType.ASSET) {
             if (task.getAlarms() == null) {
-                DaoUtil.iterateWithKeyOffset(pageLink -> {
-                    return alarmService.findAlarmIdsByOriginatorId(tenantId, entityId, pageLink);
-                }, 128, alarms -> {
+                AlarmId last = null;
+                while (true) {
+                    List<AlarmId> alarms = alarmService.findAlarmIdsByOriginatorIdAndIdOffset(tenantId, entityId, last, 128);
+                    if (alarms.isEmpty()) {
+                        break;
+                    }
+
                     housekeeperClient.submitTask(new AlarmsDeletionHousekeeperTask(tenantId, entityId, alarms.stream()
                             .map(UUIDBased::getId).collect(Collectors.toList())));
+                    last = alarms.get(alarms.size() - 1);
                     log.debug("[{}][{}][{}] Submitted task for deleting {} alarms", tenantId, entityType, entityId, alarms.size());
-                });
+                }
             } else {
                 for (UUID alarmId : task.getAlarms()) {
                     alarmService.delAlarm(tenantId, new AlarmId(alarmId));

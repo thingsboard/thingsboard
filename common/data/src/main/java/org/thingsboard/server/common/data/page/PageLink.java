@@ -16,20 +16,15 @@
 package org.thingsboard.server.common.data.page;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import org.springframework.data.domain.Sort;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Data
-@AllArgsConstructor
-@Builder
 public class PageLink {
 
     protected static final String DEFAULT_SORT_PROPERTY = "id";
@@ -39,7 +34,6 @@ public class PageLink {
     private final int pageSize;
     private final int page;
     private final SortOrder sortOrder;
-    private UUID idOffset;
 
     public PageLink(PageLink pageLink) {
         this.pageSize = pageLink.getPageSize();
@@ -69,10 +63,10 @@ public class PageLink {
 
     @JsonIgnore
     public PageLink nextPageLink() {
-        return new PageLink(this.pageSize, this.page+1, this.textSearch, this.sortOrder);
+        return new PageLink(this.pageSize, this.page + 1, this.textSearch, this.sortOrder);
     }
 
-    public Sort toSort(SortOrder sortOrder, Map<String,String> columnMap, boolean addDefaultSorting) {
+    public Sort toSort(SortOrder sortOrder, Map<String, String> columnMap, boolean addDefaultSorting) {
         if (sortOrder == null) {
             return DEFAULT_SORT;
         } else {
@@ -80,7 +74,7 @@ public class PageLink {
         }
     }
 
-    public Sort toSort(List<SortOrder> sortOrders, Map<String,String> columnMap, boolean addDefaultSorting) {
+    public Sort toSort(List<SortOrder> sortOrders, Map<String, String> columnMap, boolean addDefaultSorting) {
         if (addDefaultSorting && !isDefaultSortOrderAvailable(sortOrders)) {
             sortOrders = new ArrayList<>(sortOrders);
             sortOrders.add(new SortOrder(DEFAULT_SORT_PROPERTY, SortOrder.Direction.ASC));
@@ -88,7 +82,7 @@ public class PageLink {
         return Sort.by(sortOrders.stream().map(s -> toSortOrder(s, columnMap)).collect(Collectors.toList()));
     }
 
-    private Sort.Order toSortOrder(SortOrder sortOrder, Map<String,String> columnMap) {
+    private Sort.Order toSortOrder(SortOrder sortOrder, Map<String, String> columnMap) {
         String property = sortOrder.getProperty();
         if (columnMap.containsKey(property)) {
             property = columnMap.get(property);

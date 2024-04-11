@@ -24,6 +24,9 @@ import lombok.ToString;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.util.List;
+import java.util.UUID;
+
 @Data
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
@@ -31,10 +34,16 @@ import org.thingsboard.server.common.data.id.TenantId;
 public class EntitiesDeletionHousekeeperTask extends HousekeeperTask {
 
     private EntityType entityType;
+    private List<UUID> entities;
 
     protected EntitiesDeletionHousekeeperTask(TenantId tenantId, EntityType entityType) {
+        this(tenantId, entityType, null);
+    }
+
+    public EntitiesDeletionHousekeeperTask(TenantId tenantId, EntityType entityType, List<UUID> entities) {
         super(tenantId, tenantId, HousekeeperTaskType.DELETE_ENTITIES);
         this.entityType = entityType;
+        this.entities = entities;
     }
 
     @JsonIgnore

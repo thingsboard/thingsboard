@@ -23,7 +23,6 @@ import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.page.PageData;
@@ -167,26 +166,6 @@ public abstract class DaoUtil {
             hasNextBatch = batch.hasNext();
             pageLink = pageLink.nextPageLink();
         } while (hasNextBatch);
-    }
-
-    public static <T extends EntityId> void iterateWithKeyOffset(Function<PageLink, PageData<T>> findFunction, int pageSize, Consumer<List<T>> processor) {
-        List<T> data;
-        UUID last = null;
-        while (true) {
-            PageLink pageLink = PageLink.builder()
-                    .pageSize(pageSize)
-                    .sortOrder(SortOrder.of("id", SortOrder.Direction.ASC))
-                    .idOffset(last)
-                    .build();
-            data = findFunction.apply(pageLink).getData();
-
-            if (!data.isEmpty()) {
-                processor.accept(data);
-                last = data.get(data.size() - 1).getId();
-            } else {
-                break;
-            }
-        }
     }
 
     public static String getStringId(UUIDBased id) {
