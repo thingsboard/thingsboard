@@ -46,7 +46,7 @@
         <spring-data.version>3.1.0</spring-data.version>
         <spring.version>6.0.9</spring.version>
         <spring-redis.version>6.1.0</spring-redis.version>
-        <spring-security.version>6.1.0</spring-security.version>
+        <spring-security.version>6.1.8</spring-security.version>
         <spring-data-redis.version>3.1.0</spring-data-redis.version>
         <jedis.version>4.3.2</jedis.version>
         <jjwt.version>0.9.1</jjwt.version>
