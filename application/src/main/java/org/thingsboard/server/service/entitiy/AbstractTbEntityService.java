@@ -25,10 +25,9 @@ import org.springframework.context.annotation.Lazy;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.alarm.AlarmInfo;
-import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -72,11 +71,11 @@ public abstract class AbstractTbEntityService {
     @Lazy
     private EntitiesVersionControlService vcService;
 
-    protected void removeAlarmsByEntityId(TenantId tenantId, EntityId entityId) {
-        PageData<AlarmInfo> alarms =
-                alarmService.findAlarms(tenantId, new AlarmQuery(entityId, new TimePageLink(Integer.MAX_VALUE), null, null, null, false));
+    protected void removeAlarmsByOriginatorId(TenantId tenantId, EntityId entityId) {
+        PageData<AlarmId> alarms =
+                alarmService.findAlarmIdsByOriginatorId(tenantId, entityId, new TimePageLink(Integer.MAX_VALUE));
 
-        alarms.getData().stream().map(AlarmInfo::getId).forEach(alarmId -> alarmService.delAlarm(tenantId, alarmId));
+        alarms.getData().forEach(alarmId -> alarmService.delAlarm(tenantId, alarmId));
     }
 
     protected <T> T checkNotNull(T reference) throws ThingsboardException {
