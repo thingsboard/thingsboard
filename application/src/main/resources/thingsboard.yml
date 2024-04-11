@@ -1638,11 +1638,13 @@ queue:
       poll-interval-ms: "${TB_HOUSEKEEPER_POLL_INTERVAL_MS:500}"
       # Timeout in milliseconds for task processing. Tasks that fail to finish on time will be submitted for reprocessing
       task-processing-timeout-ms: "${TB_HOUSEKEEPER_TASK_PROCESSING_TIMEOUT_MS:120000}"
-      # Delay in seconds for starting tasks reprocessing after start-up
-      reprocessing-start-delay-sec: "${TB_HOUSEKEEPER_REPROCESSING_START_DELAY_SEC:300}"
-      # Period in seconds of tasks reprocessing
-      task-reprocessing-delay-sec: "${TB_HOUSEKEEPER_TASK_REPROCESSING_DELAY_SEC:3600}"
-      # Maximum amount of task reprocessing attempts. After exceeding, the task will be ignored until the next service start-up
+      # Comma-separated list of task types that shouldn't be processed. Available task types:
+      # DELETE_ATTRIBUTES, DELETE_TELEMETRY (both DELETE_LATEST_TS and DELETE_TS_HISTORY will be disabled),
+      # DELETE_LATEST_TS, DELETE_TS_HISTORY, DELETE_EVENTS, DELETE_ALARMS, UNASSIGN_ALARMS
+      disabled-task-types: "${TB_HOUSEKEEPER_DISABLED_TASK_TYPES:}"
+      # Delay in milliseconds between tasks reprocessing
+      task-reprocessing-delay-ms: "${TB_HOUSEKEEPER_TASK_REPROCESSING_DELAY_MS:5000}"
+      # Maximum amount of task reprocessing attempts. After exceeding, the task will be dropped
       max-reprocessing-attempts: "${TB_HOUSEKEEPER_MAX_REPROCESSING_ATTEMPTS:10}"
       stats:
         # Enable/disable statistics for Housekeeper

@@ -17,6 +17,7 @@ package org.thingsboard.server.service.housekeeper;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import net.bytebuddy.implementation.bytecode.Throw;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -104,8 +105,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DaoSqlTest
 @TestPropertySource(properties = {
         "transport.http.enabled=true",
-        "queue.core.housekeeper.reprocessing-start-delay-sec=1",
-        "queue.core.housekeeper.task-reprocessing-delay-sec=2",
+        "queue.core.housekeeper.task-reprocessing-delay-ms=2000",
         "queue.core.housekeeper.poll-interval-ms=1000",
         "queue.core.housekeeper.max-reprocessing-attempts=5"
 })
@@ -258,7 +258,7 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
     }
 
     @Test
-    public void whenTaskProcessingFails_thenReprocessUntilSuccessful() throws Exception {
+    public void whenTaskProcessingFails_thenReprocess() throws Exception {
         TimeoutException error = new TimeoutException("Test timeout");
         doThrow(error).when(tsHistoryDeletionTaskProcessor).process(any());
 
@@ -267,8 +267,8 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
 
         doDelete("/api/device/" + device.getId()).andExpect(status().isOk());
 
-        int attempts = 3;
-        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
+        int attempts = 2;
+        await().atMost(30, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).untilAsserted(() -> {
             verifyTaskProcessing(device.getId(), HousekeeperTaskType.DELETE_TS_HISTORY, 0);
             for (int i = 1; i <= attempts; i++) {
                 int attempt = i;
@@ -279,7 +279,7 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         });
 
         assertThat(getTimeseriesHistory(device.getId())).isNotEmpty();
-        doCallRealMethod().when(tsHistoryDeletionTaskProcessor).process(any()); // fixing the code
+        doCallRealMethod().when(tsHistoryDeletionTaskProcessor).process(any());
         await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
             assertThat(getTimeseriesHistory(device.getId())).isEmpty();
         });
@@ -314,7 +314,12 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
     }
 
     private void verifyTaskProcessing(EntityId entityId, HousekeeperTaskType taskType, int expectedAttempt) throws Exception {
-        verify(housekeeperService).processTask(argThat(getTaskMatcher(entityId, taskType, task -> task.getAttempt() == expectedAttempt)));
+        try {
+            verify(housekeeperService).processTask(argThat(getTaskMatcher(entityId, taskType, task -> task.getAttempt() == expectedAttempt)));
+        } catch (Throwable e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     private ArgumentMatcher<ToHousekeeperServiceMsg> getTaskMatcher(EntityId entityId, HousekeeperTaskType taskType,

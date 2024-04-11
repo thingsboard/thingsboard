@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
+import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
 import org.thingsboard.server.common.msg.housekeeper.HousekeeperClient;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -33,11 +34,14 @@ import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 @Slf4j
 public class DefaultHousekeeperClient implements HousekeeperClient {
 
+    private final HousekeeperConfig config;
     private final TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> producer;
     private final TopicPartitionInfo submitTpi;
     private final TbQueueCallback submitCallback;
 
-    public DefaultHousekeeperClient(TbQueueProducerProvider producerProvider) {
+    public DefaultHousekeeperClient(HousekeeperConfig config,
+                                    TbQueueProducerProvider producerProvider) {
+        this.config = config;
         this.producer = producerProvider.getHousekeeperMsgProducer();
         this.submitTpi = TopicPartitionInfo.builder().topic(producer.getDefaultTopic()).build();
         this.submitCallback = new TbQueueCallback() {
@@ -55,7 +59,13 @@ public class DefaultHousekeeperClient implements HousekeeperClient {
 
     @Override
     public void submitTask(HousekeeperTask task) {
-        log.debug("[{}][{}][{}] Submitting task: {}", task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(), task.getTaskType());
+        HousekeeperTaskType taskType = task.getTaskType();
+        if (config.getDisabledTaskTypes().contains(taskType)) {
+            log.trace("Task type {} is disabled, ignoring {}", taskType, task);
+            return;
+        }
+
+        log.debug("[{}][{}][{}] Submitting task: {}", task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(), taskType);
         /*
          * using msg key as entity id so that msgs related to certain entity are pushed to same partition,
          * e.g. on tenant deletion (entity id is tenant id), we need to clean up tenant entities in certain order

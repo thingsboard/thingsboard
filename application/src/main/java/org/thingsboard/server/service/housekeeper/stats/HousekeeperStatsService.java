@@ -105,7 +105,7 @@ public class HousekeeperStatsService {
         }
 
         private StatsCounter register(String statsName, StatsFactory statsFactory) {
-            StatsCounter counter = statsFactory.createStatsCounter(StatsType.HOUSEKEEPER.getName(), statsName, Map.of("taskType", taskType.name()));
+            StatsCounter counter = statsFactory.createStatsCounter(StatsType.HOUSEKEEPER.getName(), statsName, "taskType", taskType.name());
             counters.add(counter);
             return counter;
         }

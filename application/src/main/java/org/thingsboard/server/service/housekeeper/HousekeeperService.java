@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.housekeeper;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
@@ -29,11 +28,13 @@ import org.thingsboard.server.gen.transport.TransportProtos.HousekeeperTaskProto
 import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperServiceMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.housekeeper.HousekeeperConfig;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.housekeeper.processor.HousekeeperTaskProcessor;
 import org.thingsboard.server.service.housekeeper.stats.HousekeeperStatsService;
+import org.thingsboard.server.service.queue.consumer.QueueConsumerManager;
 
 import javax.annotation.PreDestroy;
 import java.util.List;
@@ -54,90 +55,79 @@ public class HousekeeperService {
 
     private final Map<HousekeeperTaskType, HousekeeperTaskProcessor<?>> taskProcessors;
 
+    private final HousekeeperConfig config;
     private final HousekeeperReprocessingService reprocessingService;
     private final Optional<HousekeeperStatsService> statsService;
     private final NotificationRuleProcessor notificationRuleProcessor;
-    private final TbQueueConsumer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> consumer;
+    private final QueueConsumerManager<TbProtoQueueMsg<ToHousekeeperServiceMsg>> consumer;
 
     private final ExecutorService consumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("housekeeper-consumer"));
-    private final ExecutorService executor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("housekeeper-task-processor"));
+    private final ExecutorService taskExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("housekeeper-task-processor"));
 
-    @Value("${queue.core.housekeeper.task-processing-timeout-ms:120000}")
-    private int taskProcessingTimeout;
-    @Value("${queue.core.housekeeper.poll-interval-ms:500}")
-    private int pollInterval;
-
-    private boolean stopped;
-
-    public HousekeeperService(HousekeeperReprocessingService reprocessingService,
+    public HousekeeperService(HousekeeperConfig config,
+                              HousekeeperReprocessingService reprocessingService,
                               TbCoreQueueFactory queueFactory,
                               Optional<HousekeeperStatsService> statsService,
                               NotificationRuleProcessor notificationRuleProcessor,
                               @Lazy List<HousekeeperTaskProcessor<?>> taskProcessors) {
+        this.config = config;
         this.reprocessingService = reprocessingService;
         this.statsService = statsService;
         this.notificationRuleProcessor = notificationRuleProcessor;
-        this.consumer = queueFactory.createHousekeeperMsgConsumer();
+        this.consumer = QueueConsumerManager.<TbProtoQueueMsg<ToHousekeeperServiceMsg>>builder()
+                .name("Housekeeper")
+                .msgPackProcessor(this::processMsgs)
+                .pollInterval(config.getPollInterval())
+                .consumerCreator(queueFactory::createHousekeeperMsgConsumer)
+                .consumerExecutor(consumerExecutor)
+                .build();
         this.taskProcessors = taskProcessors.stream().collect(Collectors.toMap(HousekeeperTaskProcessor::getTaskType, p -> p));
     }
 
     @AfterStartUp(order = AfterStartUp.REGULAR_SERVICE)
     public void afterStartUp() {
         consumer.subscribe();
-        consumerExecutor.submit(() -> {
-            while (!stopped && !consumer.isStopped()) {
-                try {
-                    List<TbProtoQueueMsg<ToHousekeeperServiceMsg>> msgs = consumer.poll(pollInterval);
-                    if (msgs.isEmpty()) {
-                        continue;
-                    }
+        consumer.launch();
+    }
 
-                    for (TbProtoQueueMsg<ToHousekeeperServiceMsg> msg : msgs) {
-                        log.trace("Processing task: {}", msg);
-                        try {
-                            processTask(msg.getValue());
-                        } catch (InterruptedException e) {
-                            return;
-                        } catch (Throwable e) {
-                            log.error("Unexpected error during message processing [{}]", msg, e);
-                            reprocessingService.submitForReprocessing(msg.getValue(), e);
-                        }
-                    }
-                    consumer.commit();
-                } catch (Throwable t) {
-                    if (!consumer.isStopped()) {
-                        log.warn("Failed to process messages from queue", t);
-                        try {
-                            Thread.sleep(pollInterval);
-                        } catch (InterruptedException interruptedException) {
-                            log.trace("Failed to wait until the server has capacity to handle new requests", interruptedException);
-                        }
-                    }
-                }
+    private void processMsgs(List<TbProtoQueueMsg<ToHousekeeperServiceMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> consumer) {
+        for (TbProtoQueueMsg<ToHousekeeperServiceMsg> msg : msgs) {
+            log.trace("Processing task: {} attempt={}", msg, msg.getValue().getTask().getAttempt());
+            try {
+                processTask(msg.getValue());
+            } catch (InterruptedException e) {
+                return;
+            } catch (Throwable e) {
+                log.error("Unexpected error during message processing [{}]", msg, e);
+                reprocessingService.submitForReprocessing(msg.getValue(), e);
             }
-        });
-        log.info("Started Housekeeper service");
+        }
+        consumer.commit();
     }
 
     @SuppressWarnings("unchecked")
     protected <T extends HousekeeperTask> void processTask(ToHousekeeperServiceMsg msg) throws Exception {
         HousekeeperTask task = JacksonUtil.fromString(msg.getTask().getValue(), HousekeeperTask.class);
-        HousekeeperTaskProcessor<T> taskProcessor = (HousekeeperTaskProcessor<T>) taskProcessors.get(task.getTaskType());
+        HousekeeperTaskType taskType = task.getTaskType();
+        if (config.getDisabledTaskTypes().contains(taskType)) {
+            log.debug("Task type {} is disabled, ignoring {}", taskType, task);
+            return;
+        }
+        HousekeeperTaskProcessor<T> taskProcessor = (HousekeeperTaskProcessor<T>) taskProcessors.get(taskType);
         if (taskProcessor == null) {
-            throw new IllegalArgumentException("Unsupported task type " + task.getTaskType());
+            throw new IllegalArgumentException("Unsupported task type " + taskType);
         }
 
         if (log.isDebugEnabled()) {
             log.debug("[{}] {} {}", task.getTenantId(), isNew(msg.getTask()) ? "Processing" : "Reprocessing", task.getDescription());
         }
         try {
-            Future<Object> future = executor.submit(() -> {
+            Future<Object> future = taskExecutor.submit(() -> {
                 taskProcessor.process((T) task);
                 return null;
             });
-            future.get(taskProcessingTimeout, TimeUnit.MILLISECONDS);
-
-            statsService.ifPresent(statsService -> statsService.reportProcessed(task.getTaskType(), msg));
+            future.get(config.getTaskProcessingTimeout(), TimeUnit.MILLISECONDS);
+            statsService.ifPresent(statsService -> statsService.reportProcessed(taskType, msg));
         } catch (InterruptedException e) {
             throw e;
         } catch (Throwable e) {
@@ -145,19 +135,23 @@ public class HousekeeperService {
             if (e instanceof ExecutionException) {
                 error = e.getCause();
             } else if (e instanceof TimeoutException) {
-                error = new TimeoutException("Timeout after " + taskProcessingTimeout + " seconds");
+                error = new TimeoutException("Timeout after " + config.getTaskProcessingTimeout() + " seconds");
             }
             log.error("[{}][{}][{}] {} task processing failed, submitting for reprocessing (attempt {}): {}",
                     task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(),
-                    task.getTaskType(), msg.getTask().getAttempt(), task, error);
-            reprocessingService.submitForReprocessing(msg, error);
+                    taskType, msg.getTask().getAttempt(), task, error);
 
-            statsService.ifPresent(statsService -> statsService.reportFailure(task.getTaskType(), msg));
-            notificationRuleProcessor.process(TaskProcessingFailureTrigger.builder()
-                    .task(task)
-                    .error(error)
-                    .attempt(msg.getTask().getAttempt())
-                    .build());
+            if (msg.getTask().getAttempt() < config.getMaxReprocessingAttempts()) {
+                reprocessingService.submitForReprocessing(msg, error);
+            } else {
+                log.error("Failed to process task in {} attempts: {}", msg.getTask().getAttempt(), msg);
+                notificationRuleProcessor.process(TaskProcessingFailureTrigger.builder()
+                        .task(task)
+                        .error(error)
+                        .attempt(msg.getTask().getAttempt())
+                        .build());
+            }
+            statsService.ifPresent(statsService -> statsService.reportFailure(taskType, msg));
         }
     }
 
@@ -167,12 +161,8 @@ public class HousekeeperService {
 
     @PreDestroy
     private void stop() throws Exception {
-        stopped = true;
-        consumer.unsubscribe();
-        consumerExecutor.shutdown();
-        if (!consumerExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
-            consumerExecutor.shutdownNow();
-        }
+        consumer.stop();
+        consumerExecutor.shutdownNow();
         log.info("Stopped Housekeeper service");
     }
 
