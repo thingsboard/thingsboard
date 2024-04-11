@@ -42,8 +42,8 @@
         <jakarta.xml.bind-api.version>4.0.0</jakarta.xml.bind-api.version>
         <javax.xml.bind-api.version>2.4.0-b180830.0359</javax.xml.bind-api.version>
         <jaxb-runtime.version>4.0.2</jaxb-runtime.version>
-        <spring-boot.version>3.1.0</spring-boot.version>
-        <spring-data.version>3.1.0</spring-data.version>
+        <spring-boot.version>3.1.10</spring-boot.version>
+        <spring-data.version>3.1.10</spring-data.version>
         <spring.version>6.0.18</spring.version>
         <spring-redis.version>6.1.0</spring-redis.version>
         <spring-security.version>6.1.8</spring-security.version>
