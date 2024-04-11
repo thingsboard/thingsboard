@@ -148,7 +148,7 @@
         <testcontainers.version>1.18.3</testcontainers.version>
         <zeroturnaround.version>1.12</zeroturnaround.version>
         <opensmpp.version>3.0.0</opensmpp.version>
-        <jgit.version>6.1.0.202203080745-r</jgit.version>
+        <jgit.version>6.9.0.202403050737-r</jgit.version>
         <exp4j.version>0.4.8</exp4j.version>
         <aerogear-otp.version>1.0.0</aerogear-otp.version>
         <selenium.version>4.6.0</selenium.version>
