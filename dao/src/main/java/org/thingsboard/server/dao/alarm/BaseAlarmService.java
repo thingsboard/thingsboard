@@ -456,15 +456,18 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
     private void validateAlarmRequest(AlarmModificationRequest request) {
         ConstraintValidator.validateFields(request);
         if (request.getEndTs() > 0 && request.getStartTs() > request.getEndTs()) {
-            throw new DataValidationException("Alarm start ts can't be greater then alarm end ts!");
+            throw new DataValidationException("Alarm start ts can't be greater than alarm end ts!");
         }
         if (!tenantService.tenantExists(request.getTenantId())) {
             throw new DataValidationException("Alarm is referencing to non-existent tenant!");
         }
-        if (request.getStartTs() == 0L) {
-            request.setStartTs(System.currentTimeMillis());
-        }
-        if (request.getEndTs() == 0L) {
+        if (request.getStartTs() == 0L && request.getEndTs() == 0L) {
+            long currentTs = System.currentTimeMillis();
+            request.setStartTs(currentTs);
+            request.setEndTs(currentTs);
+        } else if (request.getStartTs() == 0L) {
+            request.setStartTs(request.getEndTs());
+        } else if (request.getEndTs() == 0L) {
             request.setEndTs(request.getStartTs());
         }
     }
