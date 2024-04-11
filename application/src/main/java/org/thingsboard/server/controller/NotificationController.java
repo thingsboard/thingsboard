@@ -105,6 +105,8 @@ public class NotificationController extends BaseController {
     private final NotificationCenter notificationCenter;
     private final NotificationSettingsService notificationSettingsService;
 
+    private static final String DELIVERY_METHOD_ALLOWABLE_VALUES = "WEB,MOBILE_APP";
+
     @ApiOperation(value = "Get notifications (getNotifications)",
             notes = "Returns the page of notifications for current user." + NEW_LINE +
                     PAGE_DATA_PARAMETERS +
@@ -172,10 +174,23 @@ public class NotificationController extends BaseController {
                                                    @RequestParam(required = false) String sortOrder,
                                                    @Parameter(description = "To search for unread notifications only")
                                                    @RequestParam(defaultValue = "false") boolean unreadOnly,
+                                                   @ApiParam(value = "Delivery method", allowableValues = DELIVERY_METHOD_ALLOWABLE_VALUES)
+                                                   @RequestParam(defaultValue = "WEB") NotificationDeliveryMethod deliveryMethod,
                                                    @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         // no permissions
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        return notificationService.findNotificationsByRecipientIdAndReadStatus(user.getTenantId(), user.getId(), unreadOnly, pageLink);
+        return notificationService.findNotificationsByRecipientIdAndReadStatus(user.getTenantId(), deliveryMethod, user.getId(), unreadOnly, pageLink);
+    }
+
+    @ApiOperation(value = "Get unread notifications count (getUnreadNotificationsCount)",
+            notes = "Returns unread notifications count for chosen delivery method." +
+                    AVAILABLE_FOR_ANY_AUTHORIZED_USER)
+    @GetMapping("/notifications/unread/count")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    public Integer getUnreadNotificationsCount(@ApiParam(value = "Delivery method", allowableValues = DELIVERY_METHOD_ALLOWABLE_VALUES)
+                                               @RequestParam(defaultValue = "MOBILE_APP") NotificationDeliveryMethod deliveryMethod,
+                                               @AuthenticationPrincipal SecurityUser user) {
+        return notificationService.countUnreadNotificationsByRecipientId(user.getTenantId(), deliveryMethod, user.getId());
     }
 
     @ApiOperation(value = "Mark notification as read (markNotificationAsRead)",
@@ -195,9 +210,11 @@ public class NotificationController extends BaseController {
                     AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PutMapping("/notifications/read")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    public void markAllNotificationsAsRead(@AuthenticationPrincipal SecurityUser user) {
+    public void markAllNotificationsAsRead(@ApiParam(value = "Delivery method", allowableValues = DELIVERY_METHOD_ALLOWABLE_VALUES)
+                                           @RequestParam(defaultValue = "WEB") NotificationDeliveryMethod deliveryMethod,
+                                           @AuthenticationPrincipal SecurityUser user) {
         // no permissions
-        notificationCenter.markAllNotificationsAsRead(user.getTenantId(), user.getId());
+        notificationCenter.markAllNotificationsAsRead(user.getTenantId(), deliveryMethod, user.getId());
     }
 
     @ApiOperation(value = "Delete notification (deleteNotification)",
