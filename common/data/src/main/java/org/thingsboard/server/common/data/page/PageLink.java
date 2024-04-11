@@ -16,15 +16,20 @@
 package org.thingsboard.server.common.data.page;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import org.springframework.data.domain.Sort;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Data
+@AllArgsConstructor
+@Builder
 public class PageLink {
 
     protected static final String DEFAULT_SORT_PROPERTY = "id";
@@ -34,6 +39,7 @@ public class PageLink {
     private final int pageSize;
     private final int page;
     private final SortOrder sortOrder;
+    private UUID idOffset;
 
     public PageLink(PageLink pageLink) {
         this.pageSize = pageLink.getPageSize();

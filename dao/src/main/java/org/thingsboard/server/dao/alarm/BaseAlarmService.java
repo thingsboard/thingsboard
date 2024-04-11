@@ -51,7 +51,6 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
-import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
@@ -213,21 +212,6 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
         if (!types.isEmpty() && alarmDao.removeAlarmTypesIfNoAlarmsPresent(tenantId.getId(), types)) {
             publishEvictEvent(new AlarmTypesCacheEvictEvent(tenantId));
         }
-    }
-
-    @Override
-    public int deleteAlarmsByOriginatorId(TenantId tenantId, EntityId entityId) {
-        TimePageLink pageLink = new TimePageLink(256);
-        PageData<AlarmId> alarms;
-        int count = 0;
-        do {
-            alarms = alarmService.findAlarmIdsByOriginatorId(tenantId, entityId, pageLink);
-            for (AlarmId alarmId : alarms.getData()) {
-                delAlarm(tenantId, alarmId);
-                count++;
-            }
-        } while (alarms.hasNext());
-        return count;
     }
 
     private List<EntityId> createEntityAlarmRecords(Alarm alarm) throws ExecutionException, InterruptedException {

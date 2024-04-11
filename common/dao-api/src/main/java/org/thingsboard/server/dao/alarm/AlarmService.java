@@ -81,8 +81,6 @@ public interface AlarmService extends EntityDaoService {
 
     void delAlarmTypes(TenantId tenantId, Set<String> types);
 
-    int deleteAlarmsByOriginatorId(TenantId tenantId, EntityId entityId);
-
     // Other API
     Alarm findAlarmById(TenantId tenantId, AlarmId alarmId);
 

@@ -92,7 +92,7 @@ public class HousekeeperService {
 
     private void processMsgs(List<TbProtoQueueMsg<ToHousekeeperServiceMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> consumer) {
         for (TbProtoQueueMsg<ToHousekeeperServiceMsg> msg : msgs) {
-            log.trace("Processing task: {} attempt={}", msg, msg.getValue().getTask().getAttempt());
+            log.trace("Processing task: {}", msg);
             try {
                 processTask(msg.getValue());
             } catch (InterruptedException e) {

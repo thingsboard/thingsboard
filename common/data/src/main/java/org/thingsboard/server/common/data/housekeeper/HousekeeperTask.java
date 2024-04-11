@@ -37,6 +37,7 @@ import java.io.Serializable;
         @Type(name = "DELETE_TS_HISTORY", value = TsHistoryDeletionHousekeeperTask.class),
         @Type(name = "DELETE_LATEST_TS", value = LatestTsDeletionHousekeeperTask.class),
         @Type(name = "DELETE_ENTITIES", value = EntitiesDeletionHousekeeperTask.class),
+        @Type(name = "DELETE_ALARMS", value = AlarmsDeletionHousekeeperTask.class),
         @Type(name = "UNASSIGN_ALARMS", value = AlarmsUnassignHousekeeperTask.class)
 })
 @Data
@@ -81,7 +82,7 @@ public class HousekeeperTask implements Serializable {
     }
 
     public static HousekeeperTask deleteAlarms(TenantId tenantId, EntityId entityId) {
-        return new HousekeeperTask(tenantId, entityId, HousekeeperTaskType.DELETE_ALARMS);
+        return new AlarmsDeletionHousekeeperTask(tenantId, entityId);
     }
 
     public static HousekeeperTask deleteEntities(TenantId tenantId, EntityType entityType) {

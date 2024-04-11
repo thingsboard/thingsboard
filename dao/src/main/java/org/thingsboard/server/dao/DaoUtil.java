@@ -18,10 +18,12 @@ package org.thingsboard.server.dao;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.page.PageData;
@@ -51,8 +53,17 @@ public abstract class DaoUtil {
         return new PageData<>(data, page.getTotalPages(), page.getTotalElements(), page.hasNext());
     }
 
-    public static <T> PageData<T> pageToPageData(Page<T> page) {
-        return new PageData<>(page.getContent(), page.getTotalPages(), page.getTotalElements(), page.hasNext());
+    public static <T> PageData<T> pageToPageData(Slice<T> slice) {
+        int totalPages;
+        long totalElements;
+        if (slice instanceof Page<T> page) {
+            totalPages = page.getTotalPages();
+            totalElements = page.getTotalElements();
+        } else {
+            totalPages = 0;
+            totalElements = 0;
+        }
+        return new PageData<>(slice.getContent(), totalPages, totalElements, slice.hasNext());
     }
 
     public static Pageable toPageable(PageLink pageLink) {
@@ -156,6 +167,26 @@ public abstract class DaoUtil {
             hasNextBatch = batch.hasNext();
             pageLink = pageLink.nextPageLink();
         } while (hasNextBatch);
+    }
+
+    public static <T extends EntityId> void iterateWithKeyOffset(Function<PageLink, PageData<T>> findFunction, int pageSize, Consumer<List<T>> processor) {
+        List<T> data;
+        UUID last = null;
+        while (true) {
+            PageLink pageLink = PageLink.builder()
+                    .pageSize(pageSize)
+                    .sortOrder(SortOrder.of("id", SortOrder.Direction.ASC))
+                    .idOffset(last)
+                    .build();
+            data = findFunction.apply(pageLink).getData();
+
+            if (!data.isEmpty()) {
+                processor.accept(data);
+                last = data.get(data.size() - 1).getId();
+            } else {
+                break;
+            }
+        }
     }
 
     public static String getStringId(UUIDBased id) {
