@@ -35,9 +35,7 @@ public class NotificationMsgConstructorImpl implements NotificationMsgConstructo
 
     @Override
     public NotificationRuleUpdateMsg constructNotificationRuleUpdateMsg(UpdateMsgType msgType, NotificationRule notificationRule) {
-        return NotificationRuleUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(notificationRule))
-                .setIdMSB(notificationRule.getId().getId().getMostSignificantBits())
-                .setIdLSB(notificationRule.getId().getId().getLeastSignificantBits()).build();
+        return NotificationRuleUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(notificationRule)).build();
     }
 
     @Override
@@ -50,9 +48,7 @@ public class NotificationMsgConstructorImpl implements NotificationMsgConstructo
 
     @Override
     public NotificationTargetUpdateMsg constructNotificationTargetUpdateMsg(UpdateMsgType msgType, NotificationTarget notificationTarget) {
-        return NotificationTargetUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(notificationTarget))
-                .setIdMSB(notificationTarget.getId().getId().getMostSignificantBits())
-                .setIdLSB(notificationTarget.getId().getId().getLeastSignificantBits()).build();
+        return NotificationTargetUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(notificationTarget)).build();
     }
 
     @Override
@@ -65,9 +61,7 @@ public class NotificationMsgConstructorImpl implements NotificationMsgConstructo
 
     @Override
     public NotificationTemplateUpdateMsg constructNotificationTemplateUpdateMsg(UpdateMsgType msgType, NotificationTemplate notificationTemplate) {
-        return NotificationTemplateUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(notificationTemplate))
-                .setIdMSB(notificationTemplate.getId().getId().getMostSignificantBits())
-                .setIdLSB(notificationTemplate.getId().getId().getLeastSignificantBits()).build();
+        return NotificationTemplateUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(notificationTemplate)).build();
     }
 
     @Override
