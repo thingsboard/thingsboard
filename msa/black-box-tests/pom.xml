@@ -172,6 +172,12 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.thingsboard</groupId>
+            <artifactId>application</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.seleniumhq.selenium</groupId>
             <artifactId>selenium-java</artifactId>
             <scope>test</scope>

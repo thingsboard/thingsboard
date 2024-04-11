@@ -37,13 +37,20 @@ import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfilePr
 import org.thingsboard.server.common.data.id.DeviceId;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 
 @Slf4j
 @Listeners(TestListener.class)
 public abstract class AbstractContainerTest {
+
+    public static final int TIMEOUT = 30;
+    protected ContainerWsClient containerWsClient;
 
     protected final static String TEST_PROVISION_DEVICE_KEY = "test_provision_key";
     protected final static String TEST_PROVISION_DEVICE_SECRET = "test_provision_secret";
@@ -53,7 +60,7 @@ public abstract class AbstractContainerTest {
     protected static TestRestClient testRestClient;
 
     @BeforeSuite
-    public void beforeSuite() {
+    public void beforeSuite() throws URISyntaxException {
         if ("false".equals(System.getProperty("runLocal", "false"))) {
             containerTestSuite.start();
         }
@@ -182,6 +189,20 @@ public abstract class AbstractContainerTest {
         deviceProfile.setProfileData(deviceProfileData);
         deviceProfile.setProvisionDeviceKey(testProvisionDeviceKey);
         return testRestClient.postDeviceProfile(deviceProfile);
+    }
+
+    protected ContainerWsClient buildAndConnectWebSocketClient() throws URISyntaxException, InterruptedException {
+        return buildAndConnectWebSocketClient("/api/ws");
+    }
+
+    protected ContainerWsClient buildAndConnectWebSocketClient(String path) throws URISyntaxException, InterruptedException {
+        String wsUrl = TestProperties.getBaseUrl().replace("http", "ws");
+        ContainerWsClient wsClient = new ContainerWsClient(new URI(wsUrl + path));
+        assertThat(wsClient.connectBlocking(TIMEOUT, TimeUnit.SECONDS)).isTrue();
+        if (!path.contains("token=")) {
+            wsClient.authenticate(testRestClient.getToken());
+        }
+        return wsClient;
     }
 
 }
