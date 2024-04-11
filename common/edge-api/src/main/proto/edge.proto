@@ -474,22 +474,22 @@ message OAuth2UpdateMsg {
 
 message NotificationRuleUpdateMsg {
   UpdateMsgType msgType = 1;
-  int64 idMSB = 2;
-  int64 idLSB = 3;
+  optional int64 idMSB = 2;
+  optional int64 idLSB = 3;
   optional string entity = 4;
 }
 
 message NotificationTargetUpdateMsg {
   UpdateMsgType msgType = 1;
-  int64 idMSB = 2;
-  int64 idLSB = 3;
+  optional int64 idMSB = 2;
+  optional int64 idLSB = 3;
   optional string entity = 4;
 }
 
 message NotificationTemplateUpdateMsg {
   UpdateMsgType msgType = 1;
-  int64 idMSB = 2;
-  int64 idLSB = 3;
+  optional int64 idMSB = 2;
+  optional int64 idLSB = 3;
   optional string entity = 4;
 }
 
