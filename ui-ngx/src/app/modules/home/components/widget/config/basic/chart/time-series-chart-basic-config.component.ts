@@ -131,6 +131,11 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
 
       yAxes: [settings.yAxes, []],
       series: [this.getSeries(configData.config.datasources), []],
+
+      comparisonEnabled: [settings.comparisonEnabled, []],
+      timeForComparison: [settings.timeForComparison, []],
+      comparisonCustomIntervalValue: [settings.comparisonCustomIntervalValue, [Validators.min(0)]],
+
       thresholds: [settings.thresholds, []],
 
       showTitle: [configData.config.showTitle, []],
@@ -200,6 +205,10 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
     this.widgetConfig.config.iconColor = config.iconColor;
 
     this.widgetConfig.config.settings = this.widgetConfig.config.settings || {};
+
+    this.widgetConfig.config.settings.comparisonEnabled = config.comparisonEnabled;
+    this.widgetConfig.config.settings.timeForComparison = config.timeForComparison;
+    this.widgetConfig.config.settings.comparisonCustomIntervalValue = config.comparisonCustomIntervalValue;
 
     this.widgetConfig.config.settings.thresholds = config.thresholds;
 

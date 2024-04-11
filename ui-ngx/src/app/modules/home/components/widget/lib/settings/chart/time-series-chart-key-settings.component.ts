@@ -94,6 +94,11 @@ export class TimeSeriesChartKeySettingsComponent extends WidgetSettingsComponent
       lineSettings: [seriesSettings.lineSettings, []],
       barSettings: [seriesSettings.barSettings, []],
       tooltipValueFormatter: [seriesSettings.tooltipValueFormatter, []],
+      comparisonSettings: this.fb.group({
+        showValuesForComparison: [seriesSettings.comparisonSettings?.showValuesForComparison, []],
+        comparisonValuesLabel: [seriesSettings.comparisonSettings?.comparisonValuesLabel, []],
+        color: [seriesSettings.comparisonSettings?.color, []]
+      })
     });
   }
 
