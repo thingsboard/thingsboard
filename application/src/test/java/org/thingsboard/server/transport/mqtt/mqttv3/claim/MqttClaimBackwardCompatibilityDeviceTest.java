@@ -36,7 +36,6 @@ public class MqttClaimBackwardCompatibilityDeviceTest extends MqttClaimDeviceTes
                 .useJsonPayloadFormatForDefaultDownlinkTopics(true)
                 .build();
         processBeforeTest(configProperties);
-        createCustomerAndUser();
     }
 
     @Test
