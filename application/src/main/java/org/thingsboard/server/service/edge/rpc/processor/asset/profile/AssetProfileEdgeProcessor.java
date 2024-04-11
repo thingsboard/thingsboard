@@ -86,7 +86,7 @@ public abstract class AssetProfileEdgeProcessor extends BaseAssetProfileProcesso
             AssetProfile assetProfile = assetProfileService.findAssetProfileById(tenantId, assetProfileId);
             String assetProfileAsString = JacksonUtil.toString(assetProfile);
             TbMsgMetaData msgMetaData = getEdgeActionTbMsgMetaData(edge, null);
-            pushEntityEventToRuleEngine(tenantId, assetProfileId, null, TbMsgType.ENTITY_CREATED, assetProfileAsString, msgMetaData);
+            pushEntityEventToRuleEngine(tenantId, assetProfileId, null, assetProfileAsString, msgMetaData);
         } catch (Exception e) {
             log.warn("[{}][{}] Failed to push asset profile action to rule engine: {}", tenantId, assetProfileId, TbMsgType.ENTITY_CREATED.name(), e);
         }

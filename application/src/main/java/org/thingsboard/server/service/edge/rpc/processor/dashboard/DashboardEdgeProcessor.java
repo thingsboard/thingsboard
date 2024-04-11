@@ -90,7 +90,7 @@ public abstract class DashboardEdgeProcessor extends BaseDashboardProcessor impl
             Dashboard dashboard = dashboardService.findDashboardById(tenantId, dashboardId);
             String dashboardAsString = JacksonUtil.toString(dashboard);
             TbMsgMetaData msgMetaData = getEdgeActionTbMsgMetaData(edge, null);
-            pushEntityEventToRuleEngine(tenantId, dashboardId, null, TbMsgType.ENTITY_CREATED, dashboardAsString, msgMetaData);
+            pushEntityEventToRuleEngine(tenantId, dashboardId, null, dashboardAsString, msgMetaData);
         } catch (Exception e) {
             log.warn("[{}][{}] Failed to push dashboard action to rule engine: {}", tenantId, dashboardId, TbMsgType.ENTITY_CREATED.name(), e);
         }

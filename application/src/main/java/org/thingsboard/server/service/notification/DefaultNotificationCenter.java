@@ -247,7 +247,7 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
     private void processForTarget(NotificationTarget target, NotificationProcessingContext ctx) {
         Iterable<? extends NotificationRecipient> recipients;
         switch (target.getConfiguration().getType()) {
-            case PLATFORM_USERS: {
+            case PLATFORM_USERS -> {
                 PlatformUsersNotificationTargetConfig targetConfig = (PlatformUsersNotificationTargetConfig) target.getConfiguration();
                 if (targetConfig.getUsersFilter().getType().isForRules() && ctx.getRequest().getInfo() instanceof RuleOriginatedNotificationInfo) {
                     recipients = new PageDataIterable<>(pageLink -> {
@@ -258,21 +258,16 @@ public class DefaultNotificationCenter extends AbstractSubscriptionService imple
                         return notificationTargetService.findRecipientsForNotificationTargetConfig(ctx.getTenantId(), targetConfig, pageLink);
                     }, 256);
                 }
-                break;
             }
-            case SLACK: {
+            case SLACK -> {
                 SlackNotificationTargetConfig targetConfig = (SlackNotificationTargetConfig) target.getConfiguration();
                 recipients = List.of(targetConfig.getConversation());
-                break;
             }
-            case MICROSOFT_TEAMS: {
+            case MICROSOFT_TEAMS -> {
                 MicrosoftTeamsNotificationTargetConfig targetConfig = (MicrosoftTeamsNotificationTargetConfig) target.getConfiguration();
                 recipients = List.of(targetConfig);
-                break;
             }
-            default: {
-                recipients = Collections.emptyList();
-            }
+            default -> recipients = Collections.emptyList();
         }
 
         Set<NotificationDeliveryMethod> deliveryMethods = new HashSet<>(ctx.getDeliveryMethods());

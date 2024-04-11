@@ -95,7 +95,7 @@ public abstract class EntityViewEdgeProcessor extends BaseEntityViewProcessor im
             EntityView entityView = entityViewService.findEntityViewById(tenantId, entityViewId);
             String entityViewAsString = JacksonUtil.toString(entityView);
             TbMsgMetaData msgMetaData = getEdgeActionTbMsgMetaData(edge, entityView.getCustomerId());
-            pushEntityEventToRuleEngine(tenantId, entityViewId, entityView.getCustomerId(), TbMsgType.ENTITY_CREATED, entityViewAsString, msgMetaData);
+            pushEntityEventToRuleEngine(tenantId, entityViewId, entityView.getCustomerId(), entityViewAsString, msgMetaData);
         } catch (Exception e) {
             log.warn("[{}][{}] Failed to push entity view action to rule engine: {}", tenantId, entityViewId, TbMsgType.ENTITY_CREATED.name(), e);
         }
