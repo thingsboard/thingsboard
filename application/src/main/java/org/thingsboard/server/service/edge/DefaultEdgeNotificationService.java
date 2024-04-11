@@ -16,6 +16,8 @@
 package org.thingsboard.server.service.edge;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,6 +44,7 @@ import org.thingsboard.server.service.edge.rpc.processor.device.DeviceEdgeProces
 import org.thingsboard.server.service.edge.rpc.processor.device.profile.DeviceProfileEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.edge.EdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.entityview.EntityViewEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.notification.NotificationEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.oauth2.OAuth2EdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.ota.OtaPackageEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.queue.QueueEdgeProcessor;
@@ -54,8 +57,6 @@ import org.thingsboard.server.service.edge.rpc.processor.user.UserEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.widget.WidgetBundleEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.widget.WidgetTypeEdgeProcessor;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -128,6 +129,9 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     private ResourceEdgeProcessor resourceEdgeProcessor;
 
     @Autowired
+    private NotificationEdgeProcessor notificationEdgeProcessor;
+
+    @Autowired
     private OAuth2EdgeProcessor oAuth2EdgeProcessor;
 
     @Autowired
@@ -194,9 +198,8 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                         case RELATION -> relationProcessor.processRelationNotification(tenantId, edgeNotificationMsg);
                         case TENANT -> tenantEdgeProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
                         case TENANT_PROFILE -> tenantProfileEdgeProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
-                        case NOTIFICATION_RULE -> System.out.println();
-                        case NOTIFICATION_TARGET -> System.out.println();
-                        case NOTIFICATION_TEMPLATE -> System.out.println();
+                        case NOTIFICATION_RULE, NOTIFICATION_TARGET, NOTIFICATION_TEMPLATE ->
+                                notificationEdgeProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
                         case TB_RESOURCE -> resourceEdgeProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
                         case OAUTH2 -> oAuth2EdgeProcessor.processOAuth2Notification(tenantId, edgeNotificationMsg);
                         default -> log.warn("[{}] Edge event type [{}] is not designed to be pushed to edge", tenantId, type);

@@ -606,8 +606,9 @@ public abstract class BaseEdgeProcessor {
         return metaData;
     }
 
-    protected void pushEntityEventToRuleEngine(TenantId tenantId, EntityId entityId, CustomerId customerId, String msgData, TbMsgMetaData metaData) {
-        TbMsg tbMsg = TbMsg.newMsg(TbMsgType.ENTITY_CREATED, entityId, customerId, metaData, TbMsgDataType.JSON, msgData);
+    protected void pushEntityEventToRuleEngine(TenantId tenantId, EntityId entityId, CustomerId customerId,
+                                               TbMsgType msgType, String msgData, TbMsgMetaData metaData) {
+        TbMsg tbMsg = TbMsg.newMsg(msgType, entityId, customerId, metaData, TbMsgDataType.JSON, msgData);
         tbClusterService.pushMsgToRuleEngine(tenantId, entityId, tbMsg, new TbQueueCallback() {
             @Override
             public void onSuccess(TbQueueMsgMetadata metadata) {

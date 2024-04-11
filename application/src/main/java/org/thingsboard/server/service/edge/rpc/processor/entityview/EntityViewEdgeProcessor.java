@@ -95,7 +95,7 @@ public abstract class EntityViewEdgeProcessor extends BaseEntityViewProcessor im
             EntityView entityView = entityViewService.findEntityViewById(tenantId, entityViewId);
             String entityViewAsString = JacksonUtil.toString(entityView);
             TbMsgMetaData msgMetaData = getEdgeActionTbMsgMetaData(edge, entityView.getCustomerId());
-            pushEntityEventToRuleEngine(tenantId, entityViewId, entityView.getCustomerId(), entityViewAsString, msgMetaData);
+            pushEntityEventToRuleEngine(tenantId, entityViewId, entityView.getCustomerId(), TbMsgType.ENTITY_CREATED, entityViewAsString, msgMetaData);
         } catch (Exception e) {
             log.warn("[{}][{}] Failed to push entity view action to rule engine: {}", tenantId, entityViewId, TbMsgType.ENTITY_CREATED.name(), e);
         }
@@ -105,11 +105,7 @@ public abstract class EntityViewEdgeProcessor extends BaseEntityViewProcessor im
         EntityViewId entityViewId = new EntityViewId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
-            case ADDED:
-            case UPDATED:
-            case ASSIGNED_TO_EDGE:
-            case ASSIGNED_TO_CUSTOMER:
-            case UNASSIGNED_FROM_CUSTOMER:
+            case ADDED, UPDATED, ASSIGNED_TO_EDGE, ASSIGNED_TO_CUSTOMER, UNASSIGNED_FROM_CUSTOMER -> {
                 EntityView entityView = entityViewService.findEntityViewById(edgeEvent.getTenantId(), entityViewId);
                 if (entityView != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
@@ -120,17 +116,17 @@ public abstract class EntityViewEdgeProcessor extends BaseEntityViewProcessor im
                             .addEntityViewUpdateMsg(entityViewUpdateMsg)
                             .build();
                 }
-                break;
-            case DELETED:
-            case UNASSIGNED_FROM_EDGE:
+            }
+            case DELETED, UNASSIGNED_FROM_EDGE -> {
                 EntityViewUpdateMsg entityViewUpdateMsg = ((EntityViewMsgConstructor)
                         entityViewMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructEntityViewDeleteMsg(entityViewId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addEntityViewUpdateMsg(entityViewUpdateMsg)
                         .build();
-                break;
+            }
         }
         return downlinkMsg;
     }
+
 }

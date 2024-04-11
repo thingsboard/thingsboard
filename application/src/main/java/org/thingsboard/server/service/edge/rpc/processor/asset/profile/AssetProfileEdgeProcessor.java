@@ -86,7 +86,7 @@ public abstract class AssetProfileEdgeProcessor extends BaseAssetProfileProcesso
             AssetProfile assetProfile = assetProfileService.findAssetProfileById(tenantId, assetProfileId);
             String assetProfileAsString = JacksonUtil.toString(assetProfile);
             TbMsgMetaData msgMetaData = getEdgeActionTbMsgMetaData(edge, null);
-            pushEntityEventToRuleEngine(tenantId, assetProfileId, null, assetProfileAsString, msgMetaData);
+            pushEntityEventToRuleEngine(tenantId, assetProfileId, null, TbMsgType.ENTITY_CREATED, assetProfileAsString, msgMetaData);
         } catch (Exception e) {
             log.warn("[{}][{}] Failed to push asset profile action to rule engine: {}", tenantId, assetProfileId, TbMsgType.ENTITY_CREATED.name(), e);
         }
@@ -97,8 +97,7 @@ public abstract class AssetProfileEdgeProcessor extends BaseAssetProfileProcesso
         AssetProfileId assetProfileId = new AssetProfileId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
-            case ADDED:
-            case UPDATED:
+            case ADDED, UPDATED -> {
                 AssetProfile assetProfile = assetProfileService.findAssetProfileById(edgeEvent.getTenantId(), assetProfileId);
                 if (assetProfile != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
@@ -110,16 +109,17 @@ public abstract class AssetProfileEdgeProcessor extends BaseAssetProfileProcesso
                             .addAssetProfileUpdateMsg(assetProfileUpdateMsg)
                             .build();
                 }
-                break;
-            case DELETED:
+            }
+            case DELETED -> {
                 AssetProfileUpdateMsg assetProfileUpdateMsg = ((AssetMsgConstructor)
                         assetMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructAssetProfileDeleteMsg(assetProfileId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addAssetProfileUpdateMsg(assetProfileUpdateMsg)
                         .build();
-                break;
+            }
         }
         return downlinkMsg;
     }
+
 }
