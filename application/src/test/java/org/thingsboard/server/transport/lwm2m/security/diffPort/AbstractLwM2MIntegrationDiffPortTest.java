@@ -50,14 +50,12 @@ public abstract class AbstractLwM2MIntegrationDiffPortTest extends AbstractSecur
 
         doAnswer((invocation) -> {
             Object[] arguments = invocation.getArguments();
-            log.warn("doAnswer for registrationStoreTest.updateRegistration with args {}", arguments);
-//            if (arguments.length > 0 && arguments[0] instanceof RegistrationUpdate) {
-                int portOld = ((RegistrationUpdate) arguments[0]).getPort();
-                int portValueChange = 5;
-                arguments[0] = registrationUpdateNewPort((RegistrationUpdate) arguments[0], portValueChange);
-                int portNew =  ((RegistrationUpdate) arguments[0]).getPort();
-                Assert.assertEquals((portNew - portOld), portValueChange);
-//            }
+            log.trace("doAnswer for registrationStoreTest.updateRegistration with args {}", arguments);
+            int portOld = ((RegistrationUpdate) arguments[0]).getPort();
+            int portValueChange = 5;
+            arguments[0] = registrationUpdateNewPort((RegistrationUpdate) arguments[0], portValueChange);
+            int portNew =  ((RegistrationUpdate) arguments[0]).getPort();
+            Assert.assertEquals((portNew - portOld), portValueChange);
             return invocation.callRealMethod();
         }).when(registrationStoreTest).updateRegistration(any(RegistrationUpdate.class));
 
