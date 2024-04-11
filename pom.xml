@@ -108,7 +108,7 @@
         <!-- IMPORTANT: If you change the version of the kafka client, make sure to synchronize our overwritten implementation of the
         org.apache.kafka.common.network.NetworkReceive class in the application module. It addresses the issue https://issues.apache.org/jira/browse/KAFKA-4090.
         Here is the source to track https://github.com/apache/kafka/tree/trunk/clients/src/main/java/org/apache/kafka/common/network -->
-        <kafka.version>3.2.0</kafka.version>
+        <kafka.version>3.7.0</kafka.version>
         <bucket4j.version>4.1.1</bucket4j.version>
         <antlr.version>2.7.7</antlr.version>
         <snakeyaml.version>2.2</snakeyaml.version>
