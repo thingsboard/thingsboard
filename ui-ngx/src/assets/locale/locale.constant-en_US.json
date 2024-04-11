@@ -7222,6 +7222,7 @@
         "widget-action": {
             "action-cell-button": "Action cell button",
             "row-click": "On row click",
+            "cell-click": "On cell click",
             "polygon-click": "On polygon click",
             "marker-click": "On marker click",
             "circle-click": "On circle click",
@@ -7230,6 +7231,7 @@
             "element-click": "On HTML element click",
             "pie-slice-click": "On slice click",
             "row-double-click": "On row double click",
+            "cell-double-click": "On cell double click",
             "card-click": "On card click",
             "click": "On click"
         }
