@@ -34,17 +34,17 @@ import java.util.List;
 @Builder
 @Schema
 public class OAuth2RegistrationInfo {
-    @Schema(description = "Config for mapping OAuth2 log in response to platform entities", required = true)
+    @Schema(description = "Config for mapping OAuth2 log in response to platform entities", requiredMode = Schema.RequiredMode.REQUIRED)
     private OAuth2MapperConfig mapperConfig;
-    @Schema(description = "OAuth2 client ID. Cannot be empty", required = true)
+    @Schema(description = "OAuth2 client ID. Cannot be empty", requiredMode = Schema.RequiredMode.REQUIRED)
     private String clientId;
-    @Schema(description = "OAuth2 client secret. Cannot be empty", required = true)
+    @Schema(description = "OAuth2 client secret. Cannot be empty", requiredMode = Schema.RequiredMode.REQUIRED)
     private String clientSecret;
-    @Schema(description = "Authorization URI of the OAuth2 provider. Cannot be empty", required = true)
+    @Schema(description = "Authorization URI of the OAuth2 provider. Cannot be empty", requiredMode = Schema.RequiredMode.REQUIRED)
     private String authorizationUri;
-    @Schema(description = "Access token URI of the OAuth2 provider. Cannot be empty", required = true)
+    @Schema(description = "Access token URI of the OAuth2 provider. Cannot be empty", requiredMode = Schema.RequiredMode.REQUIRED)
     private String accessTokenUri;
-    @Schema(description = "OAuth scopes that will be requested from OAuth2 platform. Cannot be empty", required = true)
+    @Schema(description = "OAuth scopes that will be requested from OAuth2 platform. Cannot be empty", requiredMode = Schema.RequiredMode.REQUIRED)
     private List<String> scope;
     @Schema(description = "User info URI of the OAuth2 provider")
     private String userInfoUri;
@@ -52,14 +52,14 @@ public class OAuth2RegistrationInfo {
     private String userNameAttributeName;
     @Schema(description = "JSON Web Key URI of the OAuth2 provider")
     private String jwkSetUri;
-    @Schema(description = "Client authentication method to use: 'BASIC' or 'POST'. Cannot be empty", required = true)
+    @Schema(description = "Client authentication method to use: 'BASIC' or 'POST'. Cannot be empty", requiredMode = Schema.RequiredMode.REQUIRED)
     private String clientAuthenticationMethod;
-    @Schema(description = "OAuth2 provider label. Cannot be empty", required = true)
+    @Schema(description = "OAuth2 provider label. Cannot be empty", requiredMode = Schema.RequiredMode.REQUIRED)
     private String loginButtonLabel;
     @Schema(description = "Log in button icon for OAuth2 provider")
     private String loginButtonIcon;
     @Schema(description = "List of platforms for which usage of the OAuth2 client is allowed (empty for all allowed)")
     private List<PlatformType> platforms;
-    @Schema(description = "Additional info of OAuth2 client (e.g. providerName)", required = true)
+    @Schema(description = "Additional info of OAuth2 client (e.g. providerName)", requiredMode = Schema.RequiredMode.REQUIRED)
     private JsonNode additionalInfo;
 }

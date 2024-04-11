@@ -31,8 +31,8 @@ import lombok.ToString;
 @Builder
 @Schema
 public class OAuth2DomainInfo {
-    @Schema(description = "Domain scheme. Mixed scheme means than both HTTP and HTTPS are going to be used", required = true)
+    @Schema(description = "Domain scheme. Mixed scheme means than both HTTP and HTTPS are going to be used", requiredMode = Schema.RequiredMode.REQUIRED)
     private SchemeType scheme;
-    @Schema(description = "Domain name. Cannot be empty", required = true)
+    @Schema(description = "Domain name. Cannot be empty", requiredMode = Schema.RequiredMode.REQUIRED)
     private String name;
 }

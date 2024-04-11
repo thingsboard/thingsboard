@@ -29,7 +29,7 @@ public class NotificationTargetId extends UUIDBased implements EntityId {
         super(id);
     }
 
-    @Schema(required = true, description = "string", example = "NOTIFICATION_TARGET", allowableValues = "NOTIFICATION_TARGET")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "NOTIFICATION_TARGET", allowableValues = "NOTIFICATION_TARGET")
     @Override
     public EntityType getEntityType() {
         return EntityType.NOTIFICATION_TARGET;
