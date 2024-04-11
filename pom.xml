@@ -44,7 +44,7 @@
         <jaxb-runtime.version>4.0.2</jaxb-runtime.version>
         <spring-boot.version>3.1.0</spring-boot.version>
         <spring-data.version>3.1.0</spring-data.version>
-        <spring.version>6.0.9</spring.version>
+        <spring.version>6.0.18</spring.version>
         <spring-redis.version>6.1.0</spring-redis.version>
         <spring-security.version>6.1.8</spring-security.version>
         <spring-data-redis.version>3.1.0</spring-data-redis.version>
