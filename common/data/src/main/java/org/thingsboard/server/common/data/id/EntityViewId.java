@@ -38,7 +38,7 @@ public class EntityViewId extends UUIDBased implements EntityId {
         return new EntityViewId(UUID.fromString(entityViewID));
     }
 
-    @Schema(required = true, description = "string", example = "ENTITY_VIEW", allowableValues = "ENTITY_VIEW")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "ENTITY_VIEW", allowableValues = "ENTITY_VIEW")
     @Override
     public EntityType getEntityType() {
         return EntityType.ENTITY_VIEW;
