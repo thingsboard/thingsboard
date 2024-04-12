@@ -771,4 +771,57 @@ class TbClearAlarmNodeTest {
         then(ctxMock).should(never()).tellSuccess(any());
     }
 
+    @Test
+    @DisplayName("When alarm API call is unsuccessful, node should tell failure.")
+    void whenAlarmApiCallIsUnsuccessful_thenShouldTellFailureAndNoOtherActions() throws Exception {
+        // GIVEN
+        config = config.defaultConfiguration();
+
+        var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, msgOriginator, metadata, "{\"temperature\": 50}");
+
+        given(ctxMock.getTenantId()).willReturn(tenantId);
+        given(ctxMock.getAlarmService()).willReturn(alarmServiceMock);
+        given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
+        given(ctxMock.createScriptEngine(ScriptLanguage.TBEL, config.getAlarmDetailsBuildTbel())).willReturn(alarmDetailsScriptMock);
+        given(alarmDetailsScriptMock.executeJsonAsync(any())).willReturn(Futures.immediateFuture(JacksonUtil.newObjectNode()));
+
+        var alarmId = new AlarmId(Uuids.timeBased());
+        var activeAlarm = Alarm.builder()
+                .type(config.getAlarmType())
+                .tenantId(tenantId)
+                .originator(msgOriginator)
+                .severity(AlarmSeverity.WARNING)
+                .startTs(100L)
+                .endTs(200L)
+                .details(JacksonUtil.newObjectNode())
+                .build();
+        activeAlarm.setId(alarmId);
+        given(alarmServiceMock.findLatestActiveByOriginatorAndType(tenantId, msgOriginator, activeAlarm.getType())).willReturn(activeAlarm);
+
+        given(alarmServiceMock.clearAlarm(eq(tenantId), eq(alarmId), anyLong(), any())).willReturn(AlarmApiCallResult.builder().successful(false).build());
+
+        // node initialization
+        nodeSpy.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+
+        // WHEN
+        nodeSpy.onMsg(ctxMock, msg);
+
+        // THEN
+        then(ctxMock).should().logJsEvalRequest();
+        then(ctxMock).should().logJsEvalResponse();
+
+        var exceptionCaptor = ArgumentCaptor.forClass(Throwable.class);
+        then(ctxMock).should().tellFailure(eq(msg), exceptionCaptor.capture());
+        Throwable actualException = exceptionCaptor.getValue();
+        assertThat(actualException).hasMessage("Failed to clear alarm: API returned unsuccessful result. Probably alarm was already deleted.")
+                .isExactlyInstanceOf(RuntimeException.class)
+                .hasNoCause();
+
+        then(ctxMock).should(never()).tellNext(any(), eq(TbNodeConnectionType.FALSE));
+        then(ctxMock).should(never()).tellNext(any(), eq("Created"));
+        then(ctxMock).should(never()).tellNext(any(), eq("Updated"));
+        then(ctxMock).should(never()).tellNext(any(), eq("Cleared"));
+        then(ctxMock).should(never()).tellSuccess(any());
+    }
+
 }
