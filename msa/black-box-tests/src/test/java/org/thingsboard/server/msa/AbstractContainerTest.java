@@ -196,8 +196,7 @@ public abstract class AbstractContainerTest {
     }
 
     protected ContainerWsClient buildAndConnectWebSocketClient(String path) throws URISyntaxException, InterruptedException {
-        String wsUrl = TestProperties.getBaseUrl().replace("http", "ws");
-        ContainerWsClient wsClient = new ContainerWsClient(new URI(wsUrl + path));
+        ContainerWsClient wsClient = new ContainerWsClient(new URI(TestProperties.getWebSocketUrl() + path));
         assertThat(wsClient.connectBlocking(TIMEOUT, TimeUnit.SECONDS)).isTrue();
         if (!path.contains("token=")) {
             wsClient.authenticate(testRestClient.getToken());
