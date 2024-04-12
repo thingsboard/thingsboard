@@ -15,17 +15,17 @@
     limitations under the License.
 
 -->
-<div class="tb-y-axis-settings-panel" [formGroup]="yAxisSettingsFormGroup">
-  <div class="tb-y-axis-settings-title">{{ 'widgets.time-series-chart.axis.y-axis-settings' | translate }}</div>
-  <div class="tb-y-axis-settings-panel-content">
+<div class="tb-axis-settings-panel" [formGroup]="axisSettingsFormGroup">
+  <div class="tb-axis-settings-title">{{ panelTitle }}</div>
+  <div class="tb-axis-settings-panel-content">
     <tb-time-series-chart-axis-settings
-      formControlName="yAxis"
+      formControlName="axis"
       alwaysExpanded
       [advanced]="advanced"
-      axisType="yAxis">
+      [axisType]="axisType">
     </tb-time-series-chart-axis-settings>
   </div>
-  <div class="tb-y-axis-settings-panel-buttons">
+  <div class="tb-axis-settings-panel-buttons">
     <button mat-button
             color="primary"
             type="button"
@@ -35,8 +35,8 @@
     <button mat-raised-button
             color="primary"
             type="button"
-            (click)="applyYAxisSettings()"
-            [disabled]="yAxisSettingsFormGroup.invalid || !yAxisSettingsFormGroup.dirty">
+            (click)="applyAxisSettings()"
+            [disabled]="axisSettingsFormGroup.invalid || !axisSettingsFormGroup.dirty">
       {{ 'action.apply' | translate }}
     </button>
   </div>

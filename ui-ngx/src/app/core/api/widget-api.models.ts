@@ -30,7 +30,12 @@ import {
 import { TimeService } from '../services/time.service';
 import { DeviceService } from '../http/device.service';
 import { UtilsService } from '@core/services/utils.service';
-import { SubscriptionTimewindow, Timewindow, WidgetTimewindow } from '@shared/models/time/time.models';
+import {
+  ComparisonDuration,
+  SubscriptionTimewindow,
+  Timewindow,
+  WidgetTimewindow
+} from '@shared/models/time/time.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RafService } from '@core/services/raf.service';
@@ -265,7 +270,7 @@ export interface WidgetSubscriptionOptions {
   onTimewindowChangeFunction?: (timewindow: Timewindow) => Timewindow;
   legendConfig?: LegendConfig;
   comparisonEnabled?: boolean;
-  timeForComparison?: moment_.unitOfTime.DurationConstructor;
+  timeForComparison?: ComparisonDuration;
   comparisonCustomIntervalValue?: number;
   decimals?: number;
   units?: string;

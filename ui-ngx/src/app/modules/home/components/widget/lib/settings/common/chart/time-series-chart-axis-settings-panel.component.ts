@@ -17,40 +17,49 @@
 import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
-import { TimeSeriesChartYAxisSettings } from '@home/components/widget/lib/chart/time-series-chart.models';
+import {
+  TimeSeriesChartAxisSettings,
+  TimeSeriesChartYAxisSettings
+} from '@home/components/widget/lib/chart/time-series-chart.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-time-series-chart-y-axis-settings-panel',
-  templateUrl: './time-series-chart-y-axis-settings-panel.component.html',
+  selector: 'tb-time-series-chart-axis-settings-panel',
+  templateUrl: './time-series-chart-axis-settings-panel.component.html',
   providers: [],
-  styleUrls: ['./time-series-chart-y-axis-settings-panel.component.scss'],
+  styleUrls: ['./time-series-chart-axis-settings-panel.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
-export class TimeSeriesChartYAxisSettingsPanelComponent implements OnInit {
+export class TimeSeriesChartAxisSettingsPanelComponent implements OnInit {
 
   @Input()
-  yAxisSettings: TimeSeriesChartYAxisSettings;
+  axisType: 'xAxis' | 'yAxis' = 'xAxis';
+
+  @Input()
+  panelTitle: string;
+
+  @Input()
+  axisSettings: TimeSeriesChartAxisSettings;
 
   @Input()
   @coerceBoolean()
   advanced = false;
 
   @Input()
-  popover: TbPopoverComponent<TimeSeriesChartYAxisSettingsPanelComponent>;
+  popover: TbPopoverComponent<TimeSeriesChartAxisSettingsPanelComponent>;
 
   @Output()
-  yAxisSettingsApplied = new EventEmitter<TimeSeriesChartYAxisSettings>();
+  axisSettingsApplied = new EventEmitter<TimeSeriesChartAxisSettings>();
 
-  yAxisSettingsFormGroup: UntypedFormGroup;
+  axisSettingsFormGroup: UntypedFormGroup;
 
   constructor(private fb: UntypedFormBuilder) {
   }
 
   ngOnInit(): void {
-    this.yAxisSettingsFormGroup = this.fb.group(
+    this.axisSettingsFormGroup = this.fb.group(
       {
-        yAxis: [this.yAxisSettings, []]
+        axis: [this.axisSettings, []]
       }
     );
   }
@@ -59,8 +68,8 @@ export class TimeSeriesChartYAxisSettingsPanelComponent implements OnInit {
     this.popover?.hide();
   }
 
-  applyYAxisSettings() {
-    const yAxisSettings = this.yAxisSettingsFormGroup.get('yAxis').getRawValue();
-    this.yAxisSettingsApplied.emit(yAxisSettings);
+  applyAxisSettings() {
+    const axisSettings = this.axisSettingsFormGroup.get('axis').getRawValue();
+    this.axisSettingsApplied.emit(axisSettings);
   }
 }

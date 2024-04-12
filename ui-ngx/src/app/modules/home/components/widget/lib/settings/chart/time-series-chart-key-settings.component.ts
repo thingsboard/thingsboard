@@ -54,6 +54,8 @@ export class TimeSeriesChartKeySettingsComponent extends WidgetSettingsComponent
 
   yAxisIds: TimeSeriesChartYAxisId[];
 
+  comparisonEnabled: boolean;
+
   functionScopeVariables = this.widgetService.getWidgetScopeVariables();
 
   constructor(protected store: Store<AppState>,
@@ -73,6 +75,7 @@ export class TimeSeriesChartKeySettingsComponent extends WidgetSettingsComponent
     }
     const widgetSettings = (widgetConfig.config?.settings || {}) as TimeSeriesChartWidgetSettings;
     this.yAxisIds = widgetSettings.yAxes ? Object.keys(widgetSettings.yAxes) : ['default'];
+    this.comparisonEnabled = !!widgetSettings.comparisonEnabled;
   }
 
   protected defaultSettings(): WidgetSettings {
@@ -94,16 +97,23 @@ export class TimeSeriesChartKeySettingsComponent extends WidgetSettingsComponent
       lineSettings: [seriesSettings.lineSettings, []],
       barSettings: [seriesSettings.barSettings, []],
       tooltipValueFormatter: [seriesSettings.tooltipValueFormatter, []],
+      comparisonSettings: this.fb.group({
+        showValuesForComparison: [seriesSettings.comparisonSettings?.showValuesForComparison, []],
+        comparisonValuesLabel: [seriesSettings.comparisonSettings?.comparisonValuesLabel, []],
+        color: [seriesSettings.comparisonSettings?.color, []]
+      })
     });
   }
 
   protected validatorTriggers(): string[] {
-    return ['showInLegend', 'type'];
+    return ['showInLegend', 'type', 'comparisonSettings.showValuesForComparison'];
   }
 
   protected updateValidators(_emitEvent: boolean) {
     const showInLegend: boolean = this.timeSeriesChartKeySettingsForm.get('showInLegend').value;
     const type: TimeSeriesChartSeriesType = this.timeSeriesChartKeySettingsForm.get('type').value;
+    const showValuesForComparison: boolean =
+      this.timeSeriesChartKeySettingsForm.get('comparisonSettings').get('showValuesForComparison').value;
     if (showInLegend) {
       this.timeSeriesChartKeySettingsForm.get('dataHiddenByDefault').enable();
     } else {
@@ -116,6 +126,18 @@ export class TimeSeriesChartKeySettingsComponent extends WidgetSettingsComponent
     } else if (type === TimeSeriesChartSeriesType.bar) {
       this.timeSeriesChartKeySettingsForm.get('lineSettings').disable();
       this.timeSeriesChartKeySettingsForm.get('barSettings').enable();
+    }
+    if (this.comparisonEnabled) {
+      this.timeSeriesChartKeySettingsForm.get('comparisonSettings').enable({emitEvent: false});
+      if (showValuesForComparison) {
+        this.timeSeriesChartKeySettingsForm.get('comparisonSettings').get('comparisonValuesLabel').enable();
+        this.timeSeriesChartKeySettingsForm.get('comparisonSettings').get('color').enable();
+      } else {
+        this.timeSeriesChartKeySettingsForm.get('comparisonSettings').get('comparisonValuesLabel').disable();
+        this.timeSeriesChartKeySettingsForm.get('comparisonSettings').get('color').disable();
+      }
+    } else {
+      this.timeSeriesChartKeySettingsForm.get('comparisonSettings').disable({emitEvent: false});
     }
   }
 }
