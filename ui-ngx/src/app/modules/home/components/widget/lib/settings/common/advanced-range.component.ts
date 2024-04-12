@@ -14,28 +14,33 @@
 /// limitations under the License.
 ///
 
-import { ValueSourceProperty } from '@home/components/widget/lib/settings/common/value-source.component';
 import { Component, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
+import {
+  ControlValueAccessor,
+  NG_VALUE_ACCESSOR,
+  UntypedFormBuilder,
+  UntypedFormGroup,
+  Validators
+} from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { TranslateService } from '@ngx-translate/core';
 import { IAliasController } from '@core/api/widget-api.models';
+import { AdvancedColorRange } from '@shared/models/widget-settings.models';
 
 @Component({
-  selector: 'tb-tick-value',
-  templateUrl: './tick-value.component.html',
-  styleUrls: [],
+  selector: 'tb-advanced-range',
+  templateUrl: './advanced-range.component.html',
+  styleUrls: ['./advanced-range.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TickValueComponent),
+      useExisting: forwardRef(() => AdvancedRangeComponent),
       multi: true
     }
   ]
 })
-export class TickValueComponent extends PageComponent implements OnInit, ControlValueAccessor {
+export class AdvancedRangeComponent extends PageComponent implements OnInit, ControlValueAccessor {
 
   @Input()
   disabled: boolean;
@@ -44,25 +49,26 @@ export class TickValueComponent extends PageComponent implements OnInit, Control
   aliasController: IAliasController;
 
   @Output()
-  removeTickValue = new EventEmitter();
+  removeAdvancedRange = new EventEmitter();
 
-  private modelValue: ValueSourceProperty;
+  private modelValue: AdvancedColorRange;
 
-  private propagateChange = null;
+  private propagateChange = (v: any) => { };
 
-  public tickValueFormGroup: UntypedFormGroup;
+  public advancedRangeLevelFormGroup: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
-              private translate: TranslateService,
               private fb: UntypedFormBuilder) {
     super(store);
   }
 
   ngOnInit(): void {
-    this.tickValueFormGroup = this.fb.group({
-      tickValue: [null, []]
+    this.advancedRangeLevelFormGroup = this.fb.group({
+      from: [null, []],
+      to: [null, []],
+      color: [null, [Validators.required]]
     });
-    this.tickValueFormGroup.valueChanges.subscribe(() => {
+    this.advancedRangeLevelFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
     });
   }
@@ -77,22 +83,19 @@ export class TickValueComponent extends PageComponent implements OnInit, Control
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (isDisabled) {
-      this.tickValueFormGroup.disable({emitEvent: false});
+      this.advancedRangeLevelFormGroup.disable({emitEvent: false});
     } else {
-      this.tickValueFormGroup.enable({emitEvent: false});
+      this.advancedRangeLevelFormGroup.enable({emitEvent: false});
     }
   }
 
-  writeValue(value: ValueSourceProperty): void {
+  writeValue(value: AdvancedColorRange): void {
     this.modelValue = value;
-    this.tickValueFormGroup.patchValue(
-      {tickValue: value}, {emitEvent: false}
-    );
+    this.advancedRangeLevelFormGroup.patchValue(value, {emitEvent: false});
   }
 
   private updateModel() {
-    const value: ValueSourceProperty = this.tickValueFormGroup.get('tickValue').value;
-    this.modelValue = value;
+    this.modelValue = this.advancedRangeLevelFormGroup.value;
     this.propagateChange(this.modelValue);
   }
 }

@@ -38,6 +38,7 @@
   <button type="button"
           mat-stroked-button
           class="tb-box-button"
+          [ngClass]="{'button-no-border': noBorder}"
           [disabled]="disabled"
           #matButton
           (click)="openColorPickerPopup($event, matButton._elementRef)">

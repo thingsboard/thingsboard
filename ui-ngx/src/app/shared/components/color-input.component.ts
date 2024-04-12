@@ -77,6 +77,10 @@ export class ColorInputComponent extends PageComponent implements OnInit, Contro
   @coerceBoolean()
   openOnInput = false;
 
+  @Input()
+  @coerceBoolean()
+  noBorder = false;
+
   private requiredValue: boolean;
   get required(): boolean {
     return this.requiredValue;

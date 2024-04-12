@@ -24,21 +24,15 @@ import {
   FixedLevelColors
 } from '@home/components/widget/lib/digital-gauge.models';
 import tinycolor from 'tinycolor2';
-import { isDefined, isDefinedAndNotNull } from '@core/utils';
+import { isDefined, isDefinedAndNotNull, parseFunction, safeExecute } from '@core/utils';
 import { prepareFontSettings } from '@home/components/widget/lib/settings.models';
 import { CanvasDigitalGauge, CanvasDigitalGaugeOptions } from '@home/components/widget/lib/canvas-digital-gauge';
 import { DatePipe } from '@angular/common';
-import {
-  DataKey,
-  Datasource,
-  DatasourceData,
-  DatasourceType,
-  JsonSettingsSchema,
-  widgetType
-} from '@shared/models/widget.models';
+import { DataKey, Datasource, DatasourceData, DatasourceType, widgetType } from '@shared/models/widget.models';
 import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { EMPTY, Observable } from 'rxjs';
+import { ColorType } from '@shared/models/widget-settings.models';
 import GenericOptions = CanvasGauges.GenericOptions;
 
 // @dynamic
@@ -70,6 +64,7 @@ export class TbCanvasDigitalGauge {
 
     this.localSettings.gaugeWidthScale = settings.gaugeWidthScale || 0.75;
     this.localSettings.gaugeColor = settings.gaugeColor || tinycolor(keyColor).setAlpha(0.2).toRgbString();
+    this.localSettings.barColor = settings.barColor;
 
     this.localSettings.useFixedLevelColor = settings.useFixedLevelColor || false;
     if (!settings.useFixedLevelColor) {
@@ -282,7 +277,7 @@ export class TbCanvasDigitalGauge {
       color: this.localSettings.gaugeColor
     });
 
-    function setLevelColor(levelSetting: AttributeSourceProperty, color: string) {
+    function setLevelColor(levelSetting, color: string) {
       if (levelSetting.valueSource === 'predefinedValue' && isFinite(levelSetting.value)) {
         predefineLevelColors.push({
           value: levelSetting.value,
@@ -296,6 +291,11 @@ export class TbCanvasDigitalGauge {
           return;
         }
         predefineLevelColors.push(null);
+      } else if (isFinite(levelSetting)) {
+        predefineLevelColors.push({
+          value: levelSetting,
+          color
+        });
       }
     }
 
@@ -409,6 +409,13 @@ export class TbCanvasDigitalGauge {
             this.gauge._value = value;
           }
           this.gauge.value = value;
+          if (this.localSettings.barColor?.type === ColorType.function && isDefined(this.localSettings.barColor?.colorFunction)) {
+            this.localSettings.levelColors = [safeExecute(parseFunction(this.localSettings.barColor.colorFunction, ['value']), [value])];
+            this.updateSetting();
+          } else if (this.localSettings.barColor?.type === ColorType.constant && isDefinedAndNotNull(this.localSettings.barColor?.color)) {
+            this.localSettings.levelColors = [this.localSettings.barColor.color];
+            this.updateSetting();
+          }
         } else if (this.localSettings.showTimestamp && this.gauge.timestamp !== timestamp) {
           this.gauge.timestamp = timestamp;
         }

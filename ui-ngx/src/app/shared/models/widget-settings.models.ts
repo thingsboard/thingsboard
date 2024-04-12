@@ -14,7 +14,15 @@
 /// limitations under the License.
 ///
 
-import { isDefinedAndNotNull, isNumber, isNumeric, isUndefinedOrNull, mergeDeep, parseFunction } from '@core/utils';
+import {
+  isDefinedAndNotNull,
+  isNumber,
+  isNumeric,
+  isString,
+  isUndefinedOrNull,
+  mergeDeep,
+  parseFunction
+} from '@core/utils';
 import {
   DataEntry,
   DataKey,
@@ -22,20 +30,31 @@ import {
   DatasourceData,
   DatasourceType,
   TargetDevice,
-  TargetDeviceType
+  TargetDeviceType, widgetType
 } from '@shared/models/widget.models';
-import { Injector } from '@angular/core';
+import { ChangeDetectorRef, Injector } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { AlarmFilterConfig } from '@shared/models/query/query.models';
 import { AlarmSearchStatus } from '@shared/models/alarm.models';
-import { Observable, of } from 'rxjs';
+import { EMPTY, Observable, of } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { map } from 'rxjs/operators';
 import { DomSanitizer } from '@angular/platform-browser';
 import { AVG_MONTH, DAY, HOUR, Interval, IntervalMath, MINUTE, SECOND, YEAR } from '@shared/models/time/time.models';
 import moment from 'moment';
+import {
+  attributesGaugeType,
+  ColorLevelSetting,
+  FixedLevelColors
+} from '@home/components/widget/lib/digital-gauge.models';
+import tinycolor from 'tinycolor2';
+import { DigitalGaugeColorRange } from '@home/components/widget/lib/canvas-digital-gauge';
+import { WidgetContext } from '@home/models/widget-component.models';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
+import { ValueSourceProperty } from '@home/components/widget/lib/settings/common/value-source.component';
 
 export type ComponentStyle = {[klass: string]: any};
 
@@ -81,6 +100,7 @@ export interface Font {
 
 export enum ColorType {
   constant = 'constant',
+  gradient = 'gradient',
   range = 'range',
   function = 'function'
 }
@@ -88,6 +108,7 @@ export enum ColorType {
 export const colorTypeTranslations = new Map<ColorType, string>(
   [
     [ColorType.constant, 'widgets.color.color-type-constant'],
+    [ColorType.gradient, 'widgets.color.color-type-gradient'],
     [ColorType.range, 'widgets.color.color-type-range'],
     [ColorType.function, 'widgets.color.color-type-function']
   ]
@@ -96,6 +117,12 @@ export const colorTypeTranslations = new Map<ColorType, string>(
 export interface ColorRange {
   from?: number;
   to?: number;
+  color: string;
+}
+
+export interface AdvancedColorRange {
+  from?: ValueSourceProperty;
+  to?: ValueSourceProperty;
   color: string;
 }
 
@@ -175,8 +202,26 @@ export const sortedColorRange = (ranges: Array<ColorRange>): Array<ColorRange> =
 export interface ColorSettings {
   type: ColorType;
   color: string;
-  rangeList?: ColorRange[];
+  rangeList?: ColorRangeSettings;
+  gradient?: ColorGradientSettings;
   colorFunction?: string;
+}
+
+export interface ColorRangeSettings {
+  advancedMode?: boolean;
+  range?: ColorRange[];
+  rangeAdvanced?: AdvancedColorRange[];
+}
+
+export interface AdvancedGradient {
+  source: ValueSourceProperty;
+  color: string;
+}
+
+export interface ColorGradientSettings {
+  advancedMode?: boolean;
+  gradient?: Array<string>;
+  gradientAdvanced?: Array<AdvancedGradient>;
 }
 
 export interface TimewindowStyle {
@@ -248,15 +293,17 @@ type ValueColorFunction = (value: any) => string;
 
 export abstract class ColorProcessor {
 
-  static fromSettings(color: ColorSettings): ColorProcessor {
+  static fromSettings(color: ColorSettings, ctx?: WidgetContext, cd?: ChangeDetectorRef): ColorProcessor {
     const settings = color || constantColor(null);
     switch (settings.type) {
       case ColorType.constant:
         return new ConstantColorProcessor(settings);
       case ColorType.range:
-        return new RangeColorProcessor(settings);
+        return new RangeColorProcessor(settings, ctx, cd);
       case ColorType.function:
         return new FunctionColorProcessor(settings);
+      case ColorType.gradient:
+        return new GradientColorProcessor(settings, ctx, cd);
       default:
         return new ConstantColorProcessor(settings);
     }
@@ -269,6 +316,46 @@ export abstract class ColorProcessor {
   }
 
   abstract update(value: any): void;
+  abstract destroy(): void;
+
+  generateDatasource(ctx: WidgetContext, datasources: Datasource[], entityAlias: string,
+                     attribute: string, settings: any): Datasource[]{
+    const entityAliasId = ctx.aliasController.getEntityAliasId(entityAlias);
+    if (!entityAliasId) {
+      throw new Error('Not valid entity aliase name ' + entityAlias);
+    }
+
+    const datasource = datasources.find((datasourceIteration) => datasourceIteration.entityAliasId === entityAliasId);
+
+    const dataKey: DataKey = {
+      type: DataKeyType.attribute,
+      name: attribute,
+      label: attribute,
+      settings: [settings],
+      _hash: Math.random()
+    };
+
+    if (datasource) {
+      const findDataKey = datasource.dataKeys.find((dataKeyIteration) => dataKeyIteration.name === attribute);
+
+      if (findDataKey) {
+        findDataKey.settings.push(settings);
+      } else {
+        datasource.dataKeys.push(dataKey);
+      }
+    } else {
+      const datasourceAttribute: Datasource = {
+        type: DatasourceType.entity,
+        name: entityAlias,
+        aliasName: entityAlias,
+        entityAliasId,
+        dataKeys: [dataKey]
+      };
+      datasources.push(datasourceAttribute);
+    }
+
+    return datasources;
+  }
 
 }
 
@@ -278,25 +365,135 @@ class ConstantColorProcessor extends ColorProcessor {
   }
 
   update(value: any): void {}
+  destroy(): void {}
 }
 
 class RangeColorProcessor extends ColorProcessor {
 
-  constructor(protected settings: ColorSettings) {
+  private advancedRangeSourcesSubscription: IWidgetSubscription;
+
+  private progress;
+
+  constructor(protected settings: ColorSettings,
+              protected ctx: WidgetContext,
+              protected cd: ChangeDetectorRef) {
     super(settings);
   }
 
+  advancedRangeSubscribe(options: ColorRangeSettings){
+    let advancedRangeDatasource: Datasource[] = [];
+    let index = 0;
+
+    function setRangeColor(rangeSetting, color: string) {
+      if (rangeSetting.valueSource === 'predefinedValue' && isFinite(rangeSetting.value)) {
+        index++;
+      } else if (rangeSetting.entityAlias && rangeSetting.attribute) {
+        try {
+          advancedRangeDatasource = this.generateDatasource(this.ctx, advancedRangeDatasource,
+            rangeSetting.entityAlias, rangeSetting.attribute, {color, index});
+        } catch (e) {
+          return;
+        }
+        index++;
+      }
+    }
+
+    for (const range of options.rangeAdvanced) {
+      if (range.from) {
+        setRangeColor.call(this, range.from, range.color);
+      }
+      if (range.to) {
+        setRangeColor.call(this, range.to, range.color);
+      }
+    }
+
+    if (advancedRangeDatasource.length) {
+      this.subscribeAttributes(advancedRangeDatasource).subscribe((subscription) => {
+        this.advancedRangeSourcesSubscription = subscription;
+      });
+    } else {
+      this.color = this.computeFromRange(this.progress);
+      this.cd.markForCheck();
+    }
+  }
+
+  subscribeAttributes(datasource: Datasource[]): Observable<IWidgetSubscription> {
+    if (!datasource.length) {
+      return EMPTY;
+    }
+
+    const levelColorsSourcesSubscriptionOptions: WidgetSubscriptionOptions = {
+      datasources: datasource,
+      useDashboardTimewindow: false,
+      type: widgetType.latest,
+      callbacks: {
+        onDataUpdated: (subscription) => {
+          this.updateAttribute(subscription.data);
+          this.color = this.computeFromRange(this.progress);
+          this.cd.markForCheck();
+        }
+      }
+    };
+
+    return this.ctx.subscriptionApi.createSubscription(levelColorsSourcesSubscriptionOptions, true);
+  }
+
+  updateAttribute(data: Array<DatasourceData>) {
+    for (const keyData of data) {
+      if (keyData && keyData.data && keyData.data[0]) {
+        const attrValue = keyData.data[0][1];
+        if (isFinite(attrValue)) {
+          for (const setting of keyData.dataKey.settings) {
+            const index = Math.floor(setting.index/2);
+            if (index === setting.index/2) {
+              this.settings.rangeList.rangeAdvanced[index].from.value = attrValue;
+            } else {
+              this.settings.rangeList.rangeAdvanced[index].to.value = attrValue;
+            }
+          }
+        }
+      }
+    }
+  }
+
   update(value: any): void {
-    this.color = this.computeFromRange(value);
+    this.progress = value;
+    if(isDefinedAndNotNull(this.settings.rangeList?.advancedMode) && this.settings.rangeList?.advancedMode) {
+      this.advancedRangeSubscribe(this.settings.rangeList);
+    } else {
+      this.color = this.computeFromRange(value);
+    }
+  }
+
+  destroy(): void {
+    if (this.advancedRangeSourcesSubscription) {
+      this.ctx.subscriptionApi.removeSubscription(this.advancedRangeSourcesSubscription.id);
+    }
   }
 
   private computeFromRange(value: any): string {
-    if (this.settings.rangeList?.length && isDefinedAndNotNull(value) && isNumeric(value)) {
+    let rangeList: any = this.settings.rangeList as Array<ColorRange>;
+    let advancedMode = false;
+
+    if (isDefinedAndNotNull(this.settings.rangeList?.advancedMode)) {
+      advancedMode = this.settings.rangeList.advancedMode;
+      rangeList = advancedMode ?
+        this.settings.rangeList.rangeAdvanced as Array<AdvancedColorRange> :
+        this.settings.rangeList.range as Array<ColorRange>;
+    }
+
+    if (rangeList.length && isDefinedAndNotNull(value) && isNumeric(value)) {
       const num = Number(value);
-      for (const range of this.settings.rangeList) {
-        if (RangeColorProcessor.constantRange(range) && range.from === num) {
+      for (const range of rangeList) {
+        if (advancedMode ?
+          (RangeColorProcessor.constantAdvancedRange(range) && range.from.value === num ) :
+          (RangeColorProcessor.constantRange(range) && range.from === num)
+        ) {
           return range.color;
-        } else if ((!isNumber(range.from) || num >= range.from) && (!isNumber(range.to) || num < range.to)) {
+        } else if (advancedMode ?
+          ((!isNumber(range.from.value) || num >= range.from.value) && (!isNumber(range.to.value) || num < range.to.value)) :
+          ((!isNumber(range.from) || num >= range.from) && (!isNumber(range.to) || num < range.to))
+        ) {
           return range.color;
         }
       }
@@ -304,8 +501,11 @@ class RangeColorProcessor extends ColorProcessor {
     return this.settings.color;
   }
 
-  public static constantRange(range: ColorRange): boolean {
+  public static constantRange(range): boolean {
     return isNumber(range.from) && isNumber(range.to) && range.from === range.to;
+  }
+  public static constantAdvancedRange(range): boolean {
+    return isNumber(range.from.value) && isNumber(range.to.value) && range.from.value === range.to.value;
   }
 }
 
@@ -321,6 +521,143 @@ class FunctionColorProcessor extends ColorProcessor {
   update(value: any): void {
     if (this.colorFunction) {
       this.color = this.colorFunction(value) || this.settings.color;
+    }
+  }
+
+  destroy(): void {}
+}
+
+class GradientColorProcessor extends ColorProcessor {
+
+  private progress: number;
+
+  private advancedGradientSourcesSubscription: IWidgetSubscription;
+
+  constructor(protected settings: ColorSettings,
+              protected ctx: WidgetContext,
+              protected cd: ChangeDetectorRef) {
+    super(settings);
+  }
+
+  update(value: any): void {
+    this.progress = value / 100;
+    if(isDefinedAndNotNull(this.settings.gradient.advancedMode) && this.settings.gradient.advancedMode) {
+      this.advancedRangeSubscribe(this.settings.gradient.gradientAdvanced);
+    } else {
+      this.color = this.getProgressColor(this.progress, this.settings.gradient.gradient);
+    }
+  }
+
+  destroy(): void {
+    if (this.advancedGradientSourcesSubscription) {
+      this.ctx.subscriptionApi.removeSubscription(this.advancedGradientSourcesSubscription.id);
+    }
+  }
+
+  getProgressColor(progress: number, levelColors): string {
+    const colorsCount = levelColors.length;
+    const inc = colorsCount > 1 ? (1 / (colorsCount - 1)) : 1;
+    const colorsRange = [];
+    for (let i = 0; i < levelColors.length; i++) {
+      const levelColor: any = this.settings.gradient.advancedMode ? levelColors[i].color : levelColors[i];
+      if (levelColor !== null) {
+        const tColor = tinycolor(levelColor);
+        colorsRange.push({
+          pct: this.settings.gradient.advancedMode ? levelColors[i].source.value / 100 : inc * i,
+          color: tColor.toRgb(),
+          alpha: tColor.getAlpha(),
+          rgbString: tColor.toRgbString()
+        });
+      }
+    }
+
+    if (progress === 0 || colorsRange.length === 1) {
+      return colorsRange[0].rgbString;
+    }
+
+    for (let j = 1; j < colorsRange.length; j++) {
+      if (progress <= colorsRange[j].pct) {
+        const lower = colorsRange[j - 1];
+        const upper = colorsRange[j];
+        const range = upper.pct - lower.pct;
+        const rangePct = (progress - lower.pct) / range;
+        const pctLower = 1 - rangePct;
+        const pctUpper = rangePct;
+        const color = tinycolor({
+          r: Math.floor(lower.color.r * pctLower + upper.color.r * pctUpper),
+          g: Math.floor(lower.color.g * pctLower + upper.color.g * pctUpper),
+          b: Math.floor(lower.color.b * pctLower + upper.color.b * pctUpper),
+          a: (lower.alpha + upper.alpha)/2
+        });
+        return color.toRgbString();
+      }
+    }
+    return colorsRange[colorsRange.length - 1].rgbString;
+  }
+
+  advancedRangeSubscribe(options: Array<AdvancedGradient>){
+    let advancedGradientDatasource: Datasource[] = [];
+    let index = 0;
+
+    function setGradientColor(gradientSetting: ValueSourceProperty) {
+      if (gradientSetting.valueSource === 'predefinedValue' && isFinite(gradientSetting.value)) {
+        index++;
+      } else if (gradientSetting.entityAlias && gradientSetting.attribute) {
+        try {
+          advancedGradientDatasource = this.generateDatasource(this.ctx, advancedGradientDatasource,
+            gradientSetting.entityAlias, gradientSetting.attribute, {index});
+        } catch (e) {
+          return;
+        }
+        index++;
+      }
+    }
+
+    for (const gradient of options) {
+      setGradientColor.call(this, gradient.source);
+    }
+
+    if (advancedGradientDatasource.length) {
+      this.subscribeAttributes(advancedGradientDatasource).subscribe((subscription) => {
+        this.advancedGradientSourcesSubscription = subscription;
+      });
+    } else {
+      this.color = this.getProgressColor(this.progress, this.settings.gradient.gradientAdvanced);
+      this.cd.markForCheck();
+    }
+  }
+
+  subscribeAttributes(datasource: Datasource[]): Observable<IWidgetSubscription> {
+    if (!datasource.length) {
+      return EMPTY;
+    }
+
+    const levelColorsSourcesSubscriptionOptions: WidgetSubscriptionOptions = {
+      datasources: datasource,
+      useDashboardTimewindow: false,
+      type: widgetType.latest,
+      callbacks: {
+        onDataUpdated: (subscription) => {
+          this.updateAttribute(subscription.data);
+          this.color = this.getProgressColor(this.progress, this.settings.gradient.gradientAdvanced);
+          this.cd.markForCheck();
+        }
+      }
+    };
+
+    return this.ctx.subscriptionApi.createSubscription(levelColorsSourcesSubscriptionOptions, true);
+  }
+
+  updateAttribute(data: Array<DatasourceData>) {
+    for (const keyData of data) {
+      if (keyData && keyData.data && keyData.data[0]) {
+        const attrValue = keyData.data[0][1];
+        if (isFinite(attrValue)) {
+          for (const setting of keyData.dataKey.settings) {
+            this.settings.gradient.gradientAdvanced[setting.index].source.value = attrValue;
+          }
+        }
+      }
     }
   }
 }
