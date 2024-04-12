@@ -80,6 +80,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.HousekeeperTaskProto
 import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperServiceMsg;
 import org.thingsboard.server.service.housekeeper.processor.TsHistoryDeletionTaskProcessor;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -232,13 +233,17 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         createRelatedData(differentTenantCustomerId);
         loginDifferentTenant();
 
-        Device device = createDevice("test", "test");
-        createRelatedData(device.getId());
+        List<DeviceId> devices = new ArrayList<>();
+        for (int i = 1; i <= 300; i++) {
+            Device device = createDevice("test" + i, "test" + i);
+            createRelatedData(device.getId());
+            devices.add(device.getId());
+        }
 
         Asset asset = createAsset();
         createRelatedData(asset.getId());
-        createRelation(device.getId(), asset.getId());
-        createAlarm(device.getId(), asset.getId());
+        createRelation(devices.get(0), asset.getId());
+        createAlarm(devices.get(0), asset.getId());
 
         RuleChainMetaData ruleChainMetaData = createRuleChain();
         RuleChainId ruleChainId = ruleChainMetaData.getRuleChainId();
@@ -256,8 +261,10 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         loginSysAdmin();
         deleteDifferentTenant();
 
-        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
-            verifyNoRelatedData(device.getId());
+        await().atMost(60, TimeUnit.SECONDS).untilAsserted(() -> {
+            for (DeviceId deviceId : devices) {
+                verifyNoRelatedData(deviceId);
+            }
             verifyNoRelatedData(asset.getId());
             verifyNoRelatedData(ruleNode1Id);
             verifyNoRelatedData(ruleNode2Id);

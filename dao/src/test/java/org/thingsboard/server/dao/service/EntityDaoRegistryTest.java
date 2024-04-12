@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.EntityType;
@@ -26,6 +27,7 @@ import org.thingsboard.server.dao.entity.EntityDaoRegistry;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @Slf4j
@@ -46,9 +48,28 @@ public class EntityDaoRegistryTest extends AbstractServiceTest {
     @Test
     public void givenAllDaos_whenFindById_thenOk() {
         for (EntityType entityType : EntityType.values()) {
+            Dao<?> dao = entityDaoRegistry.getDao(entityType);
             assertDoesNotThrow(() -> {
-                entityDaoRegistry.getDao(entityType).findById(TenantId.SYS_TENANT_ID, UUID.randomUUID());
+                dao.findById(TenantId.SYS_TENANT_ID, UUID.randomUUID());
             });
+        }
+    }
+
+    @Test
+    public void givenAllDaos_whenFindIdsByTenantIdAndIdOffset_thenOk() {
+        for (EntityType entityType : EntityType.values()) {
+            Dao<?> dao = entityDaoRegistry.getDao(entityType);
+            try {
+                dao.findIdsByTenantIdAndIdOffset(TenantId.SYS_TENANT_ID, null, 10);
+                dao.findIdsByTenantIdAndIdOffset(TenantId.SYS_TENANT_ID, UUID.randomUUID(), 10);
+            } catch (Exception e) {
+                String error = ExceptionUtils.getRootCauseMessage(e);
+                if (error.contains("tenant_id")) {
+                    log.debug("[{}] Ignoring not found tenant_id column", entityType);
+                } else {
+                    fail("findIdsByTenantIdAndIdOffset for " + entityType + " dao threw error: " + error);
+                }
+            }
         }
     }
 

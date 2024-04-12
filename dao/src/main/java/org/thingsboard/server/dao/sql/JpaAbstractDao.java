@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.BaseEntity;
+import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Collection;
@@ -123,23 +124,28 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
     }
 
     @Override
-    public List<UUID> findIdsByTenantIdAndIdOffset(TenantId tenantId, UUID idOffset, int limit) {
-        String tableName = Optional.ofNullable(getEntityType())
-                .orElseThrow(() -> new IllegalArgumentException("Entity type not specified"))
-                .getTableName();
-        if (idOffset == null) {
-            return jdbcTemplate.queryForList("SELECT id FROM " + tableName + " WHERE tenant_id = ? ORDER BY id LIMIT ?",
-                    UUID.class, tenantId.getId(), limit);
-        } else {
-            return jdbcTemplate.queryForList("SELECT id FROM " + tableName + " WHERE tenant_id = ? AND id > ? ORDER BY id LIMIT ?",
-                    UUID.class, tenantId.getId(), idOffset, limit);
-        }
-    }
-
-    @Override
     public List<D> find(TenantId tenantId) {
         List<E> entities = Lists.newArrayList(getRepository().findAll());
         return DaoUtil.convertDataList(entities);
+    }
+
+    @Override
+    public List<UUID> findIdsByTenantIdAndIdOffset(TenantId tenantId, UUID idOffset, int limit) {
+        String query = "SELECT id FROM " + getEntityType().getTableName() + " WHERE " + getTenantIdColumn() + " = ? ";
+        Object[] params;
+        if (idOffset == null) {
+            params = new Object[]{tenantId.getId(), limit};
+        } else {
+            query += " AND id > ? ";
+            params = new Object[]{tenantId.getId(), idOffset, limit};
+        }
+        query += " ORDER BY id LIMIT ?";
+
+        return jdbcTemplate.queryForList(query, UUID.class, params);
+    }
+
+    protected String getTenantIdColumn() {
+        return ModelConstants.TENANT_ID_COLUMN;
     }
 
 }
