@@ -65,7 +65,7 @@ public class DefaultHousekeeperClient implements HousekeeperClient {
             return;
         }
 
-        log.debug("[{}][{}][{}] Submitting task: {}", task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(), taskType);
+        log.debug("[{}][{}][{}] Submitting task: {}", task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(), task);
         /*
          * using msg key as entity id so that msgs related to certain entity are pushed to same partition,
          * e.g. on tenant deletion (entity id is tenant id), we need to clean up tenant entities in certain order

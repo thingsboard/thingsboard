@@ -451,6 +451,17 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         checkRuleNodesAndDelete(tenantId, ruleChain, referencingRuleChainIds);
     }
 
+    @Override
+    @Transactional
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        if (force) {
+            RuleChain ruleChain = findRuleChainById(tenantId, (RuleChainId) id);
+            checkRuleNodesAndDelete(tenantId, ruleChain, null);
+        } else {
+            deleteRuleChainById(tenantId, (RuleChainId) id);
+        }
+    }
+
     @Transactional
     @Override
     public void deleteRuleChainsByTenantId(TenantId tenantId) {
@@ -822,12 +833,6 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     @Override
     public long countByTenantId(TenantId tenantId) {
         return ruleChainDao.countByTenantId(tenantId);
-    }
-
-    @Override
-    @Transactional
-    public void deleteEntity(TenantId tenantId, EntityId id) {
-        deleteRuleChainById(tenantId, (RuleChainId) id);
     }
 
     @Override

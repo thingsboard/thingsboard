@@ -55,19 +55,16 @@ public class EntitiesDeletionTaskProcessor extends HousekeeperTaskProcessor<Enti
                     break;
                 }
 
-                housekeeperClient.submitTask(new EntitiesDeletionHousekeeperTask(tenantId, entityType, task.getEntities()));
+                housekeeperClient.submitTask(new EntitiesDeletionHousekeeperTask(tenantId, entityType, entities));
                 last = entities.get(entities.size() - 1);
                 log.debug("[{}] Submitted task for deleting {} {}s", tenantId, entities.size(), entityType.getNormalName().toLowerCase());
             }
         } else {
             for (UUID entityUuid : task.getEntities()) {
                 EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, entityUuid);
-//                Optional<HasId<?>> entity = entityService.findEntity(tenantId, entityId);
-//                if (entity.isEmpty()) {
-//                    continue;
-//                }
-                entityService.deleteEntity(tenantId, entityId);
+                entityService.deleteEntity(tenantId, entityId, true);
             }
+            log.debug("[{}] Deleted {} {}s", tenantId, task.getEntities().size(), entityType.getNormalName().toLowerCase());
         }
     }
 

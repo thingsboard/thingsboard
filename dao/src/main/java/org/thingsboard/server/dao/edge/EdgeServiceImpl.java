@@ -21,6 +21,7 @@ import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import jakarta.annotation.Nullable;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
@@ -61,7 +62,6 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
-import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -72,7 +72,6 @@ import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 
-import jakarta.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -225,11 +224,20 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
         validateId(edgeId, id -> INCORRECT_EDGE_ID + id);
 
         Edge edge = edgeDao.findById(tenantId, edgeId.getId());
+        if (edge == null) {
+            return;
+        }
         edgeDao.removeById(tenantId, edgeId.getId());
 
         eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(edgeId).build());
         publishEvictEvent(new EdgeCacheEvictEvent(edge.getTenantId(), edge.getName(), null));
         eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(edgeId).build());
+    }
+
+    @Override
+    @Transactional
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        deleteEdge(tenantId, (EdgeId) id);
     }
 
     @Override

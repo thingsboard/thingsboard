@@ -156,7 +156,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         Tenant tenant = findTenantById(tenantId);
         Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
 
-        userService.deleteByTenantId(tenantId);
+        userService.deleteAllByTenantId(tenantId);
         adminSettingsService.deleteAdminSettingsByTenantId(tenantId);
         notificationSettingsService.deleteNotificationSettings(tenantId);
         tenantDao.removeById(tenantId, tenantId.getId());

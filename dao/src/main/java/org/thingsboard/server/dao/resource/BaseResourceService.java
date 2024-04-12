@@ -160,6 +160,11 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     }
 
     @Override
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        deleteResource(tenantId, (TbResourceId) id, force);
+    }
+
+    @Override
     public PageData<TbResourceInfo> findAllTenantResourcesByTenantId(TbResourceInfoFilter filter, PageLink pageLink) {
         TenantId tenantId = filter.getTenantId();
         log.trace("Executing findAllTenantResourcesByTenantId [{}]", tenantId);
@@ -211,11 +216,6 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findResourceInfoById(tenantId, new TbResourceId(entityId.getId())));
-    }
-
-    @Override
-    public void deleteEntity(TenantId tenantId, EntityId id) {
-        deleteResource(tenantId, (TbResourceId) id);
     }
 
     @Override

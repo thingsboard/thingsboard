@@ -60,6 +60,11 @@ public class BaseRpcService implements RpcService {
     }
 
     @Override
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        deleteRpc(tenantId, (RpcId) id);
+    }
+
+    @Override
     public void deleteAllRpcByTenantId(TenantId tenantId) {
         log.trace("Executing deleteAllRpcByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);

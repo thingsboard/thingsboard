@@ -84,6 +84,11 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     }
 
     @Override
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        deleteQueue(tenantId, (QueueId) id);
+    }
+
+    @Override
     public List<Queue> findQueuesByTenantId(TenantId tenantId) {
         log.trace("Executing findQueues, tenantId: [{}]", tenantId);
         return queueDao.findAllByTenantId(getSystemOrIsolatedTenantId(tenantId));

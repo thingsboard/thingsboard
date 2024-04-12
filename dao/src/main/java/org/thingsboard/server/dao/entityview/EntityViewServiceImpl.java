@@ -328,9 +328,18 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
         log.trace("Executing deleteEntityView [{}]", entityViewId);
         validateId(entityViewId, id -> INCORRECT_ENTITY_VIEW_ID + id);
         EntityView entityView = entityViewDao.findById(tenantId, entityViewId.getId());
+        if (entityView == null) {
+            return;
+        }
         entityViewDao.removeById(tenantId, entityViewId.getId());
         publishEvictEvent(new EntityViewEvictEvent(entityView.getTenantId(), entityView.getId(), entityView.getEntityId(), null, entityView.getName(), null));
         eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(entityViewId).build());
+    }
+
+    @Override
+    @Transactional
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        deleteEntityView(tenantId, (EntityViewId) id);
     }
 
     @Override

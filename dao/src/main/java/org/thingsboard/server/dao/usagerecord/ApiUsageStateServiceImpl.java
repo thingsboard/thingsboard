@@ -77,10 +77,20 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
         log.trace("Executing deleteApiUsageStateByEntityId [{}]", entityId);
         validateId(entityId.getId(), id -> "Invalid entity id " + id);
         ApiUsageState apiUsageState = findApiUsageStateByEntityId(entityId);
+        deleteApiUsageState(apiUsageState);
+    }
+
+    private void deleteApiUsageState(ApiUsageState apiUsageState) {
         if (apiUsageState != null) {
             apiUsageStateDao.removeById(apiUsageState.getTenantId(), apiUsageState.getUuidId());
             eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(apiUsageState.getTenantId()).entityId(apiUsageState.getId()).build());
         }
+    }
+
+    @Override
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        ApiUsageState apiUsageState = findApiUsageStateById(tenantId, (ApiUsageStateId) id);
+        deleteApiUsageState(apiUsageState);
     }
 
     @Override

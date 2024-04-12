@@ -199,11 +199,20 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     @Transactional
     public void deleteAsset(TenantId tenantId, AssetId assetId) {
         validateId(assetId, id -> INCORRECT_ASSET_ID + id);
-        if (entityViewService.existsByTenantIdAndEntityId(tenantId, assetId)) {
+        deleteEntity(tenantId, assetId, false);
+    }
+
+    @Override
+    @Transactional
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        if (!force && entityViewService.existsByTenantIdAndEntityId(tenantId, id)) {
             throw new DataValidationException("Can't delete asset that has entity views!");
         }
 
-        Asset asset = assetDao.findById(tenantId, assetId.getId());
+        Asset asset = assetDao.findById(tenantId, id.getId());
+        if (asset == null) {
+            return;
+        }
         deleteAsset(tenantId, asset);
     }
 
@@ -471,12 +480,6 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     @Override
     public long countByTenantId(TenantId tenantId) {
         return assetDao.countByTenantId(tenantId);
-    }
-
-    @Override
-    @Transactional
-    public void deleteEntity(TenantId tenantId, EntityId id) {
-        deleteAsset(tenantId, (AssetId) id);
     }
 
     @Override

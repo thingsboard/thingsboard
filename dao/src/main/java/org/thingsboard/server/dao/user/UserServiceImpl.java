@@ -322,9 +322,14 @@ public class UserServiceImpl extends AbstractEntityService implements UserServic
     }
 
     @Override
-    public void deleteByTenantId(TenantId tenantId) {
+    public void deleteAllByTenantId(TenantId tenantId) {
         log.trace("Executing deleteByTenantId, tenantId [{}]", tenantId);
         usersRemover.removeEntities(tenantId, tenantId);
+    }
+
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteAllByTenantId(tenantId);
     }
 
     @Override

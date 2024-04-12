@@ -219,6 +219,11 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
     }
 
     @Override
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        deleteOtaPackage(tenantId, (OtaPackageId) id);
+    }
+
+    @Override
     public long sumDataSizeByTenantId(TenantId tenantId) {
         return otaPackageDao.sumDataSizeByTenantId(tenantId);
     }

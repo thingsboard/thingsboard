@@ -217,11 +217,20 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     public void deleteDeviceProfile(TenantId tenantId, DeviceProfileId deviceProfileId) {
         log.trace("Executing deleteDeviceProfile [{}]", deviceProfileId);
         validateId(deviceProfileId, id -> INCORRECT_DEVICE_PROFILE_ID + id);
-        DeviceProfile deviceProfile = deviceProfileDao.findById(tenantId, deviceProfileId.getId());
-        if (deviceProfile != null && deviceProfile.isDefault()) {
+        deleteEntity(tenantId, deviceProfileId, false);
+    }
+
+    @Override
+    @Transactional
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        DeviceProfile deviceProfile = deviceProfileDao.findById(tenantId, id.getId());
+        if (deviceProfile == null) {
+            return;
+        }
+        if (!force && deviceProfile.isDefault()) {
             throw new DataValidationException("Deletion of Default Device Profile is prohibited!");
         }
-        this.removeDeviceProfile(tenantId, deviceProfile);
+        removeDeviceProfile(tenantId, deviceProfile);
     }
 
     private void removeDeviceProfile(TenantId tenantId, DeviceProfile deviceProfile) {
@@ -359,12 +368,6 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findDeviceProfileById(tenantId, new DeviceProfileId(entityId.getId())));
-    }
-
-    @Override
-    @Transactional
-    public void deleteEntity(TenantId tenantId, EntityId id) {
-        deleteDeviceProfile(tenantId, (DeviceProfileId) id);
     }
 
     @Override
