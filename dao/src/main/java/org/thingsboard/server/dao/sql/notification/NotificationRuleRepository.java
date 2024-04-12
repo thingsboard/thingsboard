@@ -38,7 +38,7 @@ public interface NotificationRuleRepository extends JpaRepository<NotificationRu
             "FROM NotificationRuleEntity r INNER JOIN NotificationTemplateEntity t ON r.templateId = t.id";
 
     @Query("SELECT r FROM NotificationRuleEntity r WHERE r.tenantId = :tenantId " +
-            "AND (:searchText is NULL OR ilike(r.name, concat('%', :searchText, '%')) = true)")
+            "AND (:searchText is NULL OR ilike(r.name, CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%')) = true)")
     Page<NotificationRuleEntity> findByTenantIdAndSearchText(@Param("tenantId") UUID tenantId,
                                                              @Param("searchText") String searchText,
                                                              Pageable pageable);
@@ -53,7 +53,7 @@ public interface NotificationRuleRepository extends JpaRepository<NotificationRu
     @Query(RULE_INFO_QUERY + " WHERE r.id = :id")
     NotificationRuleInfoEntity findInfoById(@Param("id") UUID id);
 
-    @Query(RULE_INFO_QUERY + " WHERE r.tenantId = :tenantId AND (:searchText IS NULL OR ilike(r.name, concat('%', :searchText, '%')) = true)")
+    @Query(RULE_INFO_QUERY + " WHERE r.tenantId = :tenantId AND (:searchText IS NULL OR ilike(r.name, CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%')) = true)")
     Page<NotificationRuleInfoEntity> findInfosByTenantIdAndSearchText(@Param("tenantId") UUID tenantId,
                                                                       @Param("searchText") String searchText,
                                                                       Pageable pageable);

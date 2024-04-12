@@ -35,8 +35,8 @@ public interface NotificationTemplateRepository extends JpaRepository<Notificati
 
     @Query("SELECT t FROM NotificationTemplateEntity t WHERE t.tenantId = :tenantId AND " +
             "t.notificationType IN :notificationTypes " +
-            "AND (:searchText is NULL OR ilike(t.name, concat('%', :searchText, '%')) = true " +
-            "OR ilike(t.notificationType, concat('%', :searchText, '%')) = true)")
+            "AND (:searchText is NULL OR ilike(t.name, CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%')) = true " +
+            "OR ilike(t.notificationType, CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%')) = true)")
     Page<NotificationTemplateEntity> findByTenantIdAndNotificationTypesAndSearchText(@Param("tenantId") UUID tenantId,
                                                                                      @Param("notificationTypes") List<NotificationType> notificationTypes,
                                                                                      @Param("searchText") String searchText,

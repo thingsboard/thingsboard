@@ -37,7 +37,7 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
 
     @Query("SELECT u FROM UserEntity u WHERE u.tenantId = :tenantId " +
             "AND u.customerId = :customerId AND u.authority = :authority " +
-            "AND (:searchText IS NULL OR ilike(u.email, CONCAT('%', :searchText, '%')) = true)")
+            "AND (:searchText IS NULL OR ilike(u.email, CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%')) = true)")
     Page<UserEntity> findUsersByAuthority(@Param("tenantId") UUID tenantId,
                                           @Param("customerId") UUID customerId,
                                           @Param("searchText") String searchText,
@@ -46,14 +46,14 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
 
     @Query("SELECT u FROM UserEntity u WHERE u.tenantId = :tenantId " +
             "AND u.customerId IN (:customerIds) " +
-            "AND (:searchText IS NULL OR ilike(u.email, CONCAT('%', :searchText, '%')) = true)")
+            "AND (:searchText IS NULL OR ilike(u.email, CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%')) = true)")
     Page<UserEntity> findTenantAndCustomerUsers(@Param("tenantId") UUID tenantId,
                                                 @Param("customerIds") Collection<UUID> customerIds,
                                                 @Param("searchText") String searchText,
                                                 Pageable pageable);
 
     @Query("SELECT u FROM UserEntity u WHERE u.tenantId = :tenantId " +
-            "AND (:searchText IS NULL OR ilike(u.email, CONCAT('%', :searchText, '%')) = true)")
+            "AND (:searchText IS NULL OR ilike(u.email, CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%')) = true)")
     Page<UserEntity> findByTenantId(@Param("tenantId") UUID tenantId,
                                     @Param("searchText") String searchText,
                                     Pageable pageable);

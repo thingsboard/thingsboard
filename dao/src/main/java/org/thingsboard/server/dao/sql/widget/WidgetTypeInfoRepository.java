@@ -31,8 +31,8 @@ public interface WidgetTypeInfoRepository extends JpaRepository<WidgetTypeInfoEn
             value = "SELECT * FROM widget_type_info_view wti WHERE wti.tenant_id = :systemTenantId " +
                     "AND ((:deprecatedFilterEnabled) IS FALSE OR wti.deprecated = :deprecatedFilter) " +
                     "AND ((:widgetTypesEmpty) IS TRUE OR wti.widget_type IN (:widgetTypes)) " +
-                    "AND (wti.name ILIKE CONCAT('%', :searchText, '%') " +
-                    "OR ((:fullSearch) IS TRUE AND (wti.description ILIKE CONCAT('%', :searchText, '%') " +
+                    "AND (wti.name ILIKE CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%') " +
+                    "OR ((:fullSearch) IS TRUE AND (wti.description ILIKE CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%') " +
                     "OR EXISTS (" +
                         "SELECT 1 " +
                         "FROM unnest(wti.tags) AS currentTag " +
@@ -45,8 +45,8 @@ public interface WidgetTypeInfoRepository extends JpaRepository<WidgetTypeInfoEn
             countQuery = "SELECT count(*) FROM widget_type_info_view wti WHERE wti.tenant_id = :systemTenantId " +
                     "AND ((:deprecatedFilterEnabled) IS FALSE OR wti.deprecated = :deprecatedFilter) " +
                     "AND ((:widgetTypesEmpty) IS TRUE OR wti.widget_type IN (:widgetTypes)) " +
-                    "AND (wti.name ILIKE CONCAT('%', :searchText, '%') " +
-                    "OR ((:fullSearch) IS TRUE AND (wti.description ILIKE CONCAT('%', :searchText, '%') " +
+                    "AND (wti.name ILIKE CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%') " +
+                    "OR ((:fullSearch) IS TRUE AND (wti.description ILIKE CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%') " +
                     "OR EXISTS (" +
                         "SELECT 1 " +
                         "FROM unnest(wti.tags) AS currentTag " +
@@ -70,8 +70,8 @@ public interface WidgetTypeInfoRepository extends JpaRepository<WidgetTypeInfoEn
             value = "SELECT * FROM widget_type_info_view wti WHERE wti.tenant_id IN (:tenantId, :nullTenantId) " +
                     "AND ((:deprecatedFilterEnabled) IS FALSE OR wti.deprecated = :deprecatedFilter) " +
                     "AND ((:widgetTypesEmpty) IS TRUE OR wti.widget_type IN (:widgetTypes)) " +
-                    "AND (wti.name ILIKE CONCAT('%', :searchText, '%') " +
-                    "OR ((:fullSearch) IS TRUE AND (wti.description ILIKE CONCAT('%', :searchText, '%') " +
+                    "AND (wti.name ILIKE CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%') " +
+                    "OR ((:fullSearch) IS TRUE AND (wti.description ILIKE CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%') " +
                     "OR EXISTS (" +
                         "SELECT 1 " +
                         "FROM unnest(wti.tags) AS currentTag " +
@@ -84,8 +84,8 @@ public interface WidgetTypeInfoRepository extends JpaRepository<WidgetTypeInfoEn
             countQuery = "SELECT count(*) FROM widget_type_info_view wti WHERE wti.tenant_id IN (:tenantId, :nullTenantId) " +
                     "AND ((:deprecatedFilterEnabled) IS FALSE OR wti.deprecated = :deprecatedFilter) " +
                     "AND ((:widgetTypesEmpty) IS TRUE OR wti.widget_type IN (:widgetTypes)) " +
-                    "AND (wti.name ILIKE CONCAT('%', :searchText, '%') " +
-                    "OR ((:fullSearch) IS TRUE AND (wti.description ILIKE CONCAT('%', :searchText, '%') " +
+                    "AND (wti.name ILIKE CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%') " +
+                    "OR ((:fullSearch) IS TRUE AND (wti.description ILIKE CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%') " +
                     "OR EXISTS (" +
                         "SELECT 1 " +
                         "FROM unnest(wti.tags) AS currentTag " +
@@ -110,8 +110,8 @@ public interface WidgetTypeInfoRepository extends JpaRepository<WidgetTypeInfoEn
             value = "SELECT * FROM widget_type_info_view wti WHERE wti.tenant_id = :tenantId " +
                     "AND ((:deprecatedFilterEnabled) IS FALSE OR wti.deprecated = :deprecatedFilter) " +
                     "AND ((:widgetTypesEmpty) IS TRUE OR wti.widget_type IN (:widgetTypes)) " +
-                    "AND (wti.name ILIKE CONCAT('%', :searchText, '%') " +
-                    "OR ((:fullSearch) IS TRUE AND (wti.description ILIKE CONCAT('%', :searchText, '%') " +
+                    "AND (wti.name ILIKE CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%') " +
+                    "OR ((:fullSearch) IS TRUE AND (wti.description ILIKE CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%') " +
                     "OR EXISTS (" +
                         "SELECT 1 " +
                         "FROM unnest(wti.tags) AS currentTag " +
@@ -124,8 +124,8 @@ public interface WidgetTypeInfoRepository extends JpaRepository<WidgetTypeInfoEn
             countQuery = "SELECT count(*) FROM widget_type_info_view wti WHERE wti.tenant_id = :tenantId " +
                     "AND ((:deprecatedFilterEnabled) IS FALSE OR wti.deprecated = :deprecatedFilter) " +
                     "AND ((:widgetTypesEmpty) IS TRUE OR wti.widget_type IN (:widgetTypes)) " +
-                    "AND (wti.name ILIKE CONCAT('%', :searchText, '%') " +
-                    "OR ((:fullSearch) IS TRUE AND (wti.description ILIKE CONCAT('%', :searchText, '%') " +
+                    "AND (wti.name ILIKE CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%') " +
+                    "OR ((:fullSearch) IS TRUE AND (wti.description ILIKE CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%') " +
                     "OR EXISTS (" +
                         "SELECT 1 " +
                         "FROM unnest(wti.tags) AS currentTag " +
@@ -156,8 +156,8 @@ public interface WidgetTypeInfoRepository extends JpaRepository<WidgetTypeInfoEn
                     "AND wbw.widget_type_id = wti.id " +
                     "AND ((:deprecatedFilterEnabled) IS FALSE OR wti.deprecated = :deprecatedFilter) " +
                     "AND ((:widgetTypesEmpty) IS TRUE OR wti.widget_type IN (:widgetTypes)) " +
-                    "AND (wti.name ILIKE CONCAT('%', :searchText, '%') " +
-                    "OR ((:fullSearch) IS TRUE AND (wti.description ILIKE CONCAT('%', :searchText, '%') " +
+                    "AND (wti.name ILIKE CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%') " +
+                    "OR ((:fullSearch) IS TRUE AND (wti.description ILIKE CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%') " +
                     "OR EXISTS (" +
                         "SELECT 1 " +
                         "FROM unnest(wti.tags) AS currentTag " +
@@ -173,8 +173,8 @@ public interface WidgetTypeInfoRepository extends JpaRepository<WidgetTypeInfoEn
                     "AND wbw.widget_type_id = wti.id " +
                     "AND ((:deprecatedFilterEnabled) IS FALSE OR wti.deprecated = :deprecatedFilter) " +
                     "AND ((:widgetTypesEmpty) IS TRUE OR wti.widget_type IN (:widgetTypes)) " +
-                    "AND (wti.name ILIKE CONCAT('%', :searchText, '%') " +
-                    "OR ((:fullSearch) IS TRUE AND (wti.description ILIKE CONCAT('%', :searchText, '%') " +
+                    "AND (wti.name ILIKE CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%') " +
+                    "OR ((:fullSearch) IS TRUE AND (wti.description ILIKE CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%') " +
                     "OR EXISTS (" +
                         "SELECT 1 " +
                         "FROM unnest(wti.tags) AS currentTag " +

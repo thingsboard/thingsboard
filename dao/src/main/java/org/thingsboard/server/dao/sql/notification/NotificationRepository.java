@@ -34,8 +34,8 @@ public interface NotificationRepository extends JpaRepository<NotificationEntity
 
     @Query("SELECT n FROM NotificationEntity n WHERE n.deliveryMethod = :deliveryMethod " +
             "AND n.recipientId = :recipientId AND n.status <> :status " +
-            "AND (:searchText is NULL OR ilike(n.subject, concat('%', :searchText, '%')) = true " +
-            "OR ilike(n.text, concat('%', :searchText, '%')) = true)")
+            "AND (:searchText is NULL OR ilike(n.subject, CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%')) = true " +
+            "OR ilike(n.text, CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%')) = true)")
     Page<NotificationEntity> findByDeliveryMethodAndRecipientIdAndStatusNot(@Param("deliveryMethod") NotificationDeliveryMethod deliveryMethod,
                                                                             @Param("recipientId") UUID recipientId,
                                                                             @Param("status") NotificationStatus status,
@@ -43,8 +43,8 @@ public interface NotificationRepository extends JpaRepository<NotificationEntity
                                                                             Pageable pageable);
 
     @Query("SELECT n FROM NotificationEntity n WHERE n.deliveryMethod = :deliveryMethod AND n.recipientId = :recipientId " +
-            "AND (:searchText is NULL OR ilike(n.subject, concat('%', :searchText, '%')) = true " +
-            "OR ilike(n.text, concat('%', :searchText, '%')) = true)")
+            "AND (:searchText is NULL OR ilike(n.subject, CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%')) = true " +
+            "OR ilike(n.text, CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%')) = true)")
     Page<NotificationEntity> findByDeliveryMethodAndRecipientId(@Param("deliveryMethod") NotificationDeliveryMethod deliveryMethod,
                                                                 @Param("recipientId") UUID recipientId,
                                                                 @Param("searchText") String searchText,

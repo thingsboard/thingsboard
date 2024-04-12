@@ -54,18 +54,18 @@ public interface ErrorEventRepository extends EventRepository<ErrorEventEntity, 
                     "AND e.entity_id = :entityId " +
                     "AND (:startTime IS NULL OR e.ts >= :startTime) " +
                     "AND (:endTime IS NULL OR e.ts <= :endTime) " +
-                    "AND (:serviceId IS NULL OR e.service_id ILIKE concat('%', :serviceId, '%')) " +
+                    "AND (:serviceId IS NULL OR e.service_id ILIKE CONCAT('%', COALESCE(CAST(:serviceId as text), ''), '%')) " +
                     "AND (:method IS NULL OR e.e_method ILIKE concat('%', :method, '%')) " +
-                    "AND (:error IS NULL OR e.e_error ILIKE concat('%', :error, '%'))"
+                    "AND (:error IS NULL OR e.e_error ILIKE CONCAT('%', COALESCE(CAST(:error as text), ''), '%'))"
             ,
             countQuery = "SELECT count(*) FROM error_event e WHERE " +
                     "e.tenant_id = :tenantId " +
                     "AND e.entity_id = :entityId " +
                     "AND (:startTime IS NULL OR e.ts >= :startTime) " +
                     "AND (:endTime IS NULL OR e.ts <= :endTime) " +
-                    "AND (:serviceId IS NULL OR e.service_id ILIKE concat('%', :serviceId, '%')) " +
+                    "AND (:serviceId IS NULL OR e.service_id ILIKE CONCAT('%', COALESCE(CAST(:serviceId as text), ''), '%')) " +
                     "AND (:method IS NULL OR e.e_method ILIKE concat('%', :method, '%')) " +
-                    "AND (:error IS NULL OR e.e_error ILIKE concat('%', :error, '%'))"
+                    "AND (:error IS NULL OR e.e_error ILIKE CONCAT('%', COALESCE(CAST(:error as text), ''), '%'))"
     )
     Page<ErrorEventEntity> findEvents(@Param("tenantId") UUID tenantId,
                                       @Param("entityId") UUID entityId,
@@ -97,9 +97,9 @@ public interface ErrorEventRepository extends EventRepository<ErrorEventEntity, 
                     "AND e.entity_id = :entityId " +
                     "AND (:startTime IS NULL OR e.ts >= :startTime) " +
                     "AND (:endTime IS NULL OR e.ts <= :endTime) " +
-                    "AND (:serviceId IS NULL OR e.service_id ILIKE concat('%', :serviceId, '%')) " +
+                    "AND (:serviceId IS NULL OR e.service_id ILIKE CONCAT('%', COALESCE(CAST(:serviceId as text), ''), '%')) " +
                     "AND (:method IS NULL OR e.e_method ILIKE concat('%', :method, '%')) " +
-                    "AND (:error IS NULL OR e.e_error ILIKE concat('%', :error, '%'))"
+                    "AND (:error IS NULL OR e.e_error ILIKE CONCAT('%', COALESCE(CAST(:error as text), ''), '%'))"
     )
     void removeEvents(@Param("tenantId") UUID tenantId,
                       @Param("entityId") UUID entityId,

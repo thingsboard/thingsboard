@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.tenant;
 
+import jakarta.annotation.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -37,14 +38,14 @@ public interface TenantRepository extends JpaRepository<TenantEntity, UUID> {
             "WHERE t.id = :tenantId")
     TenantInfoEntity findTenantInfoById(@Param("tenantId") UUID tenantId);
 
-    @Query("SELECT t FROM TenantEntity t WHERE (:textSearch IS NULL OR ilike(t.title, CONCAT('%', :textSearch, '%')) = true)")
+    @Query("SELECT t FROM TenantEntity t WHERE (:textSearch IS NULL OR ilike(t.title, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true)")
     Page<TenantEntity> findTenantsNextPage(@Param("textSearch") String textSearch,
                                            Pageable pageable);
 
     @Query("SELECT new org.thingsboard.server.dao.model.sql.TenantInfoEntity(t, p.name) " +
             "FROM TenantEntity t " +
             "LEFT JOIN TenantProfileEntity p on p.id = t.tenantProfileId " +
-            "WHERE (:textSearch IS NULL OR ilike(t.title, CONCAT('%', :textSearch, '%')) = true)")
+            "WHERE (:textSearch IS NULL OR ilike(t.title, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true)")
     Page<TenantInfoEntity> findTenantInfosNextPage(@Param("textSearch") String textSearch,
                                                           Pageable pageable);
 

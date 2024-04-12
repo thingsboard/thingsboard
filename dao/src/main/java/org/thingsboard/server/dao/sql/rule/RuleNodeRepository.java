@@ -31,20 +31,20 @@ public interface RuleNodeRepository extends JpaRepository<RuleNodeEntity, UUID> 
 
     @Query(nativeQuery = true, value = "SELECT * FROM rule_node r WHERE r.rule_chain_id in " +
             "(select id from rule_chain rc WHERE rc.tenant_id = :tenantId) AND r.type = :ruleType " +
-            " AND (:searchText IS NULL OR r.configuration ILIKE CONCAT('%', :searchText, '%'))")
+            " AND (:searchText IS NULL OR r.configuration ILIKE CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%'))")
     List<RuleNodeEntity> findRuleNodesByTenantIdAndType(@Param("tenantId") UUID tenantId,
                                                         @Param("ruleType") String ruleType,
                                                         @Param("searchText") String searchText);
 
     @Query(nativeQuery = true, value = "SELECT * FROM rule_node r WHERE r.type = :ruleType " +
-            " AND (:searchText IS NULL OR r.configuration ILIKE CONCAT('%', :searchText, '%'))")
+            " AND (:searchText IS NULL OR r.configuration ILIKE CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%'))")
     Page<RuleNodeEntity> findAllRuleNodesByType(@Param("ruleType") String ruleType,
                                                 @Param("searchText") String searchText,
                                                 Pageable pageable);
 
     @Query(nativeQuery = true, value = "SELECT * FROM rule_node r WHERE r.type = :ruleType " +
             " AND r.configuration_version < :version " +
-            " AND (:searchText IS NULL OR r.configuration ILIKE CONCAT('%', :searchText, '%'))")
+            " AND (:searchText IS NULL OR r.configuration ILIKE CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%'))")
     Page<RuleNodeEntity> findAllRuleNodesByTypeAndVersionLessThan(@Param("ruleType") String ruleType,
                                                                   @Param("version") int version,
                                                                   @Param("searchText") String searchText,

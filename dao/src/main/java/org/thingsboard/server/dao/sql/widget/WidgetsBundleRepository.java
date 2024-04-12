@@ -35,19 +35,19 @@ public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEnti
     WidgetsBundleEntity findWidgetsBundleByTenantIdAndAlias(UUID tenantId, String alias);
 
     @Query("SELECT wb FROM WidgetsBundleEntity wb WHERE wb.tenantId = :systemTenantId " +
-            "AND (:textSearch is NULL OR ilike(wb.title, CONCAT('%', :textSearch, '%')) = true)")
+            "AND (:textSearch is NULL OR ilike(wb.title, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true)")
     Page<WidgetsBundleEntity> findSystemWidgetsBundles(@Param("systemTenantId") UUID systemTenantId,
                                                        @Param("textSearch") String textSearch,
                                                        Pageable pageable);
 
     @Query(nativeQuery = true,
             value = "SELECT * FROM widgets_bundle wb WHERE wb.tenant_id = :systemTenantId " +
-                "AND (:textSearch IS NULL OR wb.title ILIKE CONCAT('%', :textSearch, '%') " +
-                "OR wb.description ILIKE CONCAT('%', :textSearch, '%') " +
+                "AND (:textSearch IS NULL OR wb.title ILIKE CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%') " +
+                "OR wb.description ILIKE CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%') " +
                 "OR wb.id in (SELECT wbw.widgets_bundle_id FROM widgets_bundle_widget wbw, widget_type wtd " +
                 "WHERE wtd.id = wbw.widget_type_id " +
-                "AND (:textSearch IS NULL OR wtd.name ILIKE CONCAT('%', :textSearch, '%') " +
-                "OR wtd.description ILIKE CONCAT('%', :textSearch, '%') " +
+                "AND (:textSearch IS NULL OR wtd.name ILIKE CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%') " +
+                "OR wtd.description ILIKE CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%') " +
                 "OR EXISTS (" +
                     "SELECT 1 " +
                     "FROM unnest(wtd.tags) AS currentTag " +
@@ -58,12 +58,12 @@ public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEnti
                         "OR :textSearch ILIKE '% ' || currentTag || ' %')" +
                 "))))",
             countQuery = "SELECT count(*) FROM widgets_bundle wb WHERE wb.tenant_id = :systemTenantId " +
-                "AND (:textSearch IS NULL OR wb.title ILIKE CONCAT('%', :textSearch, '%') " +
-                "OR wb.description ILIKE CONCAT('%', :textSearch, '%') " +
+                "AND (:textSearch IS NULL OR wb.title ILIKE CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%') " +
+                "OR wb.description ILIKE CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%') " +
                 "OR wb.id in (SELECT wbw.widgets_bundle_id FROM widgets_bundle_widget wbw, widget_type wtd " +
                 "WHERE wtd.id = wbw.widget_type_id " +
-                "AND (:textSearch IS NULL OR wtd.name ILIKE CONCAT('%', :textSearch, '%') " +
-                "OR wtd.description ILIKE CONCAT('%', :textSearch, '%') " +
+                "AND (:textSearch IS NULL OR wtd.name ILIKE CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%') " +
+                "OR wtd.description ILIKE CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%') " +
                 "OR EXISTS (" +
                     "SELECT 1 " +
                     "FROM unnest(wtd.tags) AS currentTag " +
@@ -79,25 +79,25 @@ public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEnti
                                                                  Pageable pageable);
 
     @Query("SELECT wb FROM WidgetsBundleEntity wb WHERE wb.tenantId = :tenantId " +
-            "AND (:textSearch IS NULL OR ilike(wb.title, CONCAT('%', :textSearch, '%')) = true)")
+            "AND (:textSearch IS NULL OR ilike(wb.title, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true)")
     Page<WidgetsBundleEntity> findTenantWidgetsBundlesByTenantId(@Param("tenantId") UUID tenantId,
                                                                  @Param("textSearch") String textSearch,
                                                                  Pageable pageable);
 
     @Query("SELECT wb FROM WidgetsBundleEntity wb WHERE wb.tenantId IN (:tenantIds) " +
-            "AND (:textSearch IS NULL OR ilike(wb.title, CONCAT('%', :textSearch, '%')) = true)")
+            "AND (:textSearch IS NULL OR ilike(wb.title, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true)")
     Page<WidgetsBundleEntity> findAllTenantWidgetsBundlesByTenantIds(@Param("tenantIds") List<UUID> tenantIds,
                                                                     @Param("textSearch") String textSearch,
                                                                     Pageable pageable);
 
     @Query(nativeQuery = true,
             value = "SELECT * FROM widgets_bundle wb WHERE wb.tenant_id IN (:tenantIds) " +
-                    "AND (:textSearch IS NULL OR wb.title ILIKE CONCAT('%', :textSearch, '%') " +
-                    "OR wb.description ILIKE CONCAT('%', :textSearch, '%') " +
+                    "AND (:textSearch IS NULL OR wb.title ILIKE CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%') " +
+                    "OR wb.description ILIKE CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%') " +
                     "OR wb.id in (SELECT wbw.widgets_bundle_id FROM widgets_bundle_widget wbw, widget_type wtd " +
                     "WHERE wtd.id = wbw.widget_type_id " +
-                    "AND (:textSearch IS NULL OR wtd.name ILIKE CONCAT('%', :textSearch, '%') " +
-                    "OR wtd.description ILIKE CONCAT('%', :textSearch, '%') " +
+                    "AND (:textSearch IS NULL OR wtd.name ILIKE CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%') " +
+                    "OR wtd.description ILIKE CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%') " +
                     "OR EXISTS (" +
                         "SELECT 1 " +
                         "FROM unnest(wtd.tags) AS currentTag " +
@@ -109,12 +109,12 @@ public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEnti
                     ")))) " +
                     "ORDER BY wb.widgets_bundle_order ASC NULLS LAST",
             countQuery = "SELECT count(*) FROM widgets_bundle wb WHERE wb.tenant_id IN (:tenantIds) " +
-                    "AND (:textSearch IS NULL OR wb.title ILIKE CONCAT('%', :textSearch, '%') " +
-                    "OR wb.description ILIKE CONCAT('%', :textSearch, '%') " +
+                    "AND (:textSearch IS NULL OR wb.title ILIKE CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%') " +
+                    "OR wb.description ILIKE CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%') " +
                     "OR wb.id in (SELECT wbw.widgets_bundle_id FROM widgets_bundle_widget wbw, widget_type wtd " +
                     "WHERE wtd.id = wbw.widget_type_id " +
-                    "AND (:textSearch IS NULL OR wtd.name ILIKE CONCAT('%', :textSearch, '%') " +
-                    "OR wtd.description ILIKE CONCAT('%', :textSearch, '%') " +
+                    "AND (:textSearch IS NULL OR wtd.name ILIKE CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%') " +
+                    "OR wtd.description ILIKE CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%') " +
                     "OR EXISTS (" +
                         "SELECT 1 " +
                         "FROM unnest(wtd.tags) AS currentTag " +

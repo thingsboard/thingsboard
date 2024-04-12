@@ -34,7 +34,7 @@ public interface EdgeEventRepository extends JpaRepository<EdgeEventEntity, UUID
             "AND (:endTime IS NULL OR e.createdTime <= :endTime) " +
             "AND (:seqIdStart IS NULL OR e.seqId > :seqIdStart) " +
             "AND (:seqIdEnd IS NULL OR e.seqId < :seqIdEnd) " +
-            "AND (:textSearch IS NULL OR ilike(e.edgeEventType, CONCAT('%', :textSearch, '%')) = true)"
+            "AND (:textSearch IS NULL OR ilike(e.edgeEventType, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true)"
     )
     Page<EdgeEventEntity> findEdgeEventsByTenantIdAndEdgeId(@Param("tenantId") UUID tenantId,
                                                             @Param("edgeId") UUID edgeId,

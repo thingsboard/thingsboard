@@ -35,11 +35,11 @@ public interface AuditLogRepository extends JpaRepository<AuditLogEntity, UUID> 
             "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
             "AND ((:#{#actionTypes == null} = true) OR a.actionType IN (:actionTypes)) " + //HHH-15968
 //            "AND ((:actionTypes) IS NULL OR a.actionType in (:actionTypes)) " +
-            "AND (:textSearch IS NULL OR ilike(a.entityType, CONCAT('%', :textSearch, '%')) = true " +
-            "OR ilike(a.entityName, CONCAT('%', :textSearch, '%')) = true " +
-            "OR ilike(a.userName, CONCAT('%', :textSearch, '%')) = true " +
-            "OR ilike(a.actionType, CONCAT('%', :textSearch, '%')) = true " +
-            "OR ilike(a.actionStatus, CONCAT('%', :textSearch, '%')) = true)"
+            "AND (:textSearch IS NULL OR ilike(a.entityType, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true " +
+            "OR ilike(a.entityName, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true " +
+            "OR ilike(a.userName, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true " +
+            "OR ilike(a.actionType, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true " +
+            "OR ilike(a.actionStatus, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true)"
     )
     Page<AuditLogEntity> findByTenantId(
                                  @Param("tenantId") UUID tenantId,
@@ -56,10 +56,10 @@ public interface AuditLogRepository extends JpaRepository<AuditLogEntity, UUID> 
             "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
             "AND ((:#{#actionTypes == null} = true) OR a.actionType IN (:actionTypes)) " + //HHH-15968
 //            "AND ((:actionTypes) IS NULL OR a.actionType in (:actionTypes)) " +
-            "AND (:textSearch IS NULL OR ilike(a.entityName, CONCAT('%', :textSearch, '%')) = true " +
-            "OR ilike(a.userName, CONCAT('%', :textSearch, '%')) = true " +
-            "OR ilike(a.actionType, CONCAT('%', :textSearch, '%')) = true " +
-            "OR ilike(a.actionStatus, CONCAT('%', :textSearch, '%')) = true)"
+            "AND (:textSearch IS NULL OR ilike(a.entityName, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true " +
+            "OR ilike(a.userName, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true " +
+            "OR ilike(a.actionType, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true " +
+            "OR ilike(a.actionStatus, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true)"
     )
     Page<AuditLogEntity> findAuditLogsByTenantIdAndEntityId(@Param("tenantId") UUID tenantId,
                                                             @Param("entityType") EntityType entityType,
@@ -77,11 +77,11 @@ public interface AuditLogRepository extends JpaRepository<AuditLogEntity, UUID> 
             "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
             "AND ((:#{#actionTypes == null} = true) OR a.actionType IN (:actionTypes)) " + //HHH-15968
 //            "AND ((:actionTypes) IS NULL OR a.actionType in (:actionTypes)) " +
-            "AND (:textSearch IS NULL OR ilike(a.entityType, CONCAT('%', :textSearch, '%')) = true " +
-            "OR ilike(a.entityName, CONCAT('%', :textSearch, '%')) = true " +
-            "OR ilike(a.userName, CONCAT('%', :textSearch, '%')) = true " +
-            "OR ilike(a.actionType, CONCAT('%', :textSearch, '%')) = true " +
-            "OR ilike(a.actionStatus, CONCAT('%', :textSearch, '%')) = true)"
+            "AND (:textSearch IS NULL OR ilike(a.entityType, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true " +
+            "OR ilike(a.entityName, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true " +
+            "OR ilike(a.userName, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true " +
+            "OR ilike(a.actionType, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true " +
+            "OR ilike(a.actionStatus, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true)"
     )
     Page<AuditLogEntity> findAuditLogsByTenantIdAndCustomerId(@Param("tenantId") UUID tenantId,
                                                               @Param("customerId") UUID customerId,
@@ -98,10 +98,10 @@ public interface AuditLogRepository extends JpaRepository<AuditLogEntity, UUID> 
             "AND (:endTime IS NULL OR a.createdTime <= :endTime) " +
             "AND ((:#{#actionTypes == null} = true) OR a.actionType IN (:actionTypes)) " + //HHH-15968
 //            "AND ((:actionTypes) IS NULL OR a.actionType in (:actionTypes)) " +
-            "AND (:textSearch IS NULL OR ilike(a.entityType, CONCAT('%', :textSearch, '%')) = true " +
-            "OR ilike(a.entityName, CONCAT('%', :textSearch, '%')) = true " +
-            "OR ilike(a.actionType, CONCAT('%', :textSearch, '%')) = true " +
-            "OR ilike(a.actionStatus, CONCAT('%', :textSearch, '%')) = true)"
+            "AND (:textSearch IS NULL OR ilike(a.entityType, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true " +
+            "OR ilike(a.entityName, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true " +
+            "OR ilike(a.actionType, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true " +
+            "OR ilike(a.actionStatus, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true)"
     )
     Page<AuditLogEntity> findAuditLogsByTenantIdAndUserId(@Param("tenantId") UUID tenantId,
                                                           @Param("userId") UUID userId,

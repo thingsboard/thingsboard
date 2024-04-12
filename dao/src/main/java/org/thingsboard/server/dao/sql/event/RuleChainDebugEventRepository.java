@@ -54,20 +54,20 @@ public interface RuleChainDebugEventRepository extends EventRepository<RuleChain
                     "AND e.entity_id = :entityId " +
                     "AND (:startTime IS NULL OR e.ts >= :startTime) " +
                     "AND (:endTime IS NULL OR e.ts <= :endTime) " +
-                    "AND (:serviceId IS NULL OR e.service_id ILIKE concat('%', :serviceId, '%')) " +
+                    "AND (:serviceId IS NULL OR e.service_id ILIKE CONCAT('%', COALESCE(CAST(:serviceId as text), ''), '%')) " +
                     "AND (:message IS NULL OR e.e_message ILIKE concat('%', :message, '%')) " +
                     "AND ((:isError = FALSE) OR e.e_error IS NOT NULL) " +
-                    "AND (:error IS NULL OR e.e_error ILIKE concat('%', :error, '%'))"
+                    "AND (:error IS NULL OR e.e_error ILIKE CONCAT('%', COALESCE(CAST(:error as text), ''), '%'))"
             ,
             countQuery = "SELECT count(*) FROM rule_chain_debug_event e WHERE " +
                     "e.tenant_id = :tenantId " +
                     "AND e.entity_id = :entityId " +
                     "AND (:startTime IS NULL OR e.ts >= :startTime) " +
                     "AND (:endTime IS NULL OR e.ts <= :endTime) " +
-                    "AND (:serviceId IS NULL OR e.service_id ILIKE concat('%', :serviceId, '%')) " +
+                    "AND (:serviceId IS NULL OR e.service_id ILIKE CONCAT('%', COALESCE(CAST(:serviceId as text), ''), '%')) " +
                     "AND (:message IS NULL OR e.e_message ILIKE concat('%', :message, '%')) " +
                     "AND ((:isError = FALSE) OR e.e_error IS NOT NULL) " +
-                    "AND (:error IS NULL OR e.e_error ILIKE concat('%', :error, '%'))"
+                    "AND (:error IS NULL OR e.e_error ILIKE CONCAT('%', COALESCE(CAST(:error as text), ''), '%'))"
     )
     Page<RuleChainDebugEventEntity> findEvents(@Param("tenantId") UUID tenantId,
                                                @Param("entityId") UUID entityId,
@@ -100,10 +100,10 @@ public interface RuleChainDebugEventRepository extends EventRepository<RuleChain
                     "AND e.entity_id = :entityId " +
                     "AND (:startTime IS NULL OR e.ts >= :startTime) " +
                     "AND (:endTime IS NULL OR e.ts <= :endTime) " +
-                    "AND (:serviceId IS NULL OR e.service_id ILIKE concat('%', :serviceId, '%')) " +
+                    "AND (:serviceId IS NULL OR e.service_id ILIKE CONCAT('%', COALESCE(CAST(:serviceId as text), ''), '%')) " +
                     "AND (:message IS NULL OR e.e_message ILIKE concat('%', :message, '%')) " +
                     "AND ((:isError = FALSE) OR e.e_error IS NOT NULL) " +
-                    "AND (:error IS NULL OR e.e_error ILIKE concat('%', :error, '%'))")
+                    "AND (:error IS NULL OR e.e_error ILIKE CONCAT('%', COALESCE(CAST(:error as text), ''), '%'))")
     void removeEvents(@Param("tenantId") UUID tenantId,
                       @Param("entityId") UUID entityId,
                       @Param("startTime") Long startTime,

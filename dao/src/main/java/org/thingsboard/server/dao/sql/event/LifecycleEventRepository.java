@@ -53,20 +53,20 @@ public interface LifecycleEventRepository extends EventRepository<LifecycleEvent
                     "AND e.entity_id = :entityId " +
                     "AND (:startTime IS NULL OR e.ts >= :startTime) " +
                     "AND (:endTime IS NULL OR e.ts <= :endTime) " +
-                    "AND (:serviceId IS NULL OR e.service_id ILIKE concat('%', :serviceId, '%')) " +
-                    "AND (:eventType IS NULL OR e.e_type ILIKE concat('%', :eventType, '%')) " +
+                    "AND (:serviceId IS NULL OR e.service_id ILIKE CONCAT('%', COALESCE(CAST(:serviceId as text), ''), '%')) " +
+                    "AND (:eventType IS NULL OR e.e_type ILIKE CONCAT('%', COALESCE(CAST(:eventType as text), ''), '%')) " +
                     "AND ((:statusFilterEnabled = FALSE) OR e.e_success = :statusFilter) " +
-                    "AND (:error IS NULL OR e.e_error ILIKE concat('%', :error, '%'))"
+                    "AND (:error IS NULL OR e.e_error ILIKE CONCAT('%', COALESCE(CAST(:error as text), ''), '%'))"
             ,
             countQuery = "SELECT count(*) FROM lc_event e WHERE " +
                     "e.tenant_id = :tenantId " +
                     "AND e.entity_id = :entityId " +
                     "AND (:startTime IS NULL OR e.ts >= :startTime) " +
                     "AND (:endTime IS NULL OR e.ts <= :endTime) " +
-                    "AND (:serviceId IS NULL OR e.service_id ILIKE concat('%', :serviceId, '%')) " +
-                    "AND (:eventType IS NULL OR e.e_type ILIKE concat('%', :eventType, '%')) " +
+                    "AND (:serviceId IS NULL OR e.service_id ILIKE CONCAT('%', COALESCE(CAST(:serviceId as text), ''), '%')) " +
+                    "AND (:eventType IS NULL OR e.e_type ILIKE CONCAT('%', COALESCE(CAST(:eventType as text), ''), '%')) " +
                     "AND ((:statusFilterEnabled = FALSE) OR e.e_success = :statusFilter) " +
-                    "AND (:error IS NULL OR e.e_error ILIKE concat('%', :error, '%'))"
+                    "AND (:error IS NULL OR e.e_error ILIKE CONCAT('%', COALESCE(CAST(:error as text), ''), '%'))"
     )
     Page<LifecycleEventEntity> findEvents(@Param("tenantId") UUID tenantId,
                                           @Param("entityId") UUID entityId,
@@ -100,10 +100,10 @@ public interface LifecycleEventRepository extends EventRepository<LifecycleEvent
                     "AND e.entity_id = :entityId " +
                     "AND (:startTime IS NULL OR e.ts >= :startTime) " +
                     "AND (:endTime IS NULL OR e.ts <= :endTime) " +
-                    "AND (:serviceId IS NULL OR e.service_id ILIKE concat('%', :serviceId, '%')) " +
-                    "AND (:eventType IS NULL OR e.e_type ILIKE concat('%', :eventType, '%')) " +
+                    "AND (:serviceId IS NULL OR e.service_id ILIKE CONCAT('%', COALESCE(CAST(:serviceId as text), ''), '%')) " +
+                    "AND (:eventType IS NULL OR e.e_type ILIKE CONCAT('%', COALESCE(CAST(:eventType as text), ''), '%')) " +
                     "AND ((:statusFilterEnabled = FALSE) OR e.e_success = :statusFilter) " +
-                    "AND (:error IS NULL OR e.e_error ILIKE concat('%', :error, '%'))"
+                    "AND (:error IS NULL OR e.e_error ILIKE CONCAT('%', COALESCE(CAST(:error as text), ''), '%'))"
     )
     void removeEvents(@Param("tenantId") UUID tenantId,
                       @Param("entityId") UUID entityId,

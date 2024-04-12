@@ -36,7 +36,7 @@ public interface WidgetTypeRepository extends JpaRepository<WidgetTypeDetailsEnt
     boolean existsByTenantIdAndId(UUID tenantId, UUID id);
 
     @Query("SELECT wtd FROM WidgetTypeDetailsEntity wtd WHERE wtd.tenantId = :tenantId " +
-            "AND (:textSearch IS NULL OR ilike(wtd.name, CONCAT('%', :textSearch, '%')) = true)")
+            "AND (:textSearch IS NULL OR ilike(wtd.name, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true)")
     Page<WidgetTypeDetailsEntity> findTenantWidgetTypeDetailsByTenantId(@Param("tenantId") UUID tenantId,
                                                                         @Param("textSearch") String textSearch,
                                                                         Pageable pageable);

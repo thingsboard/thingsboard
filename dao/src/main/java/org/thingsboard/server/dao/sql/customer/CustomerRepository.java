@@ -31,7 +31,7 @@ import java.util.UUID;
 public interface CustomerRepository extends JpaRepository<CustomerEntity, UUID>, ExportableEntityRepository<CustomerEntity> {
 
     @Query("SELECT c FROM CustomerEntity c WHERE c.tenantId = :tenantId " +
-            "AND (:textSearch IS NULL OR ilike(c.title, CONCAT('%', :textSearch, '%')) = true)")
+            "AND (:textSearch IS NULL OR ilike(c.title, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true)")
     Page<CustomerEntity> findByTenantId(@Param("tenantId") UUID tenantId,
                                         @Param("textSearch") String textSearch,
                                         Pageable pageable);

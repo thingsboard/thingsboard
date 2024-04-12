@@ -58,8 +58,8 @@ public interface RuleNodeDebugEventRepository extends EventRepository<RuleNodeDe
                     "AND e.entity_id = :entityId " +
                     "AND (:startTime IS NULL OR e.ts >= :startTime) " +
                     "AND (:endTime IS NULL OR e.ts <= :endTime) " +
-                    "AND (:serviceId IS NULL OR e.service_id ILIKE concat('%', :serviceId, '%')) " +
-                    "AND (:eventType IS NULL OR e.e_type ILIKE concat('%', :eventType, '%')) " +
+                    "AND (:serviceId IS NULL OR e.service_id ILIKE CONCAT('%', COALESCE(CAST(:serviceId as text), ''), '%')) " +
+                    "AND (:eventType IS NULL OR e.e_type ILIKE CONCAT('%', COALESCE(CAST(:eventType as text), ''), '%')) " +
                     "AND (:eventEntityId IS NULL OR e.e_entity_id = uuid(:eventEntityId)) " +
                     "AND (:eventEntityType IS NULL OR e.e_entity_type ILIKE concat('%', :eventEntityType, '%')) " +
                     "AND (:msgId IS NULL OR e.e_msg_id = uuid(:msgId)) " +
@@ -68,15 +68,15 @@ public interface RuleNodeDebugEventRepository extends EventRepository<RuleNodeDe
                     "AND (:data IS NULL OR e.e_data ILIKE concat('%', :data, '%')) " +
                     "AND (:metadata IS NULL OR e.e_metadata ILIKE concat('%', :metadata, '%')) " +
                     "AND ((:isError = FALSE) OR e.e_error IS NOT NULL) " +
-                    "AND (:error IS NULL OR e.e_error ILIKE concat('%', :error, '%'))"
+                    "AND (:error IS NULL OR e.e_error ILIKE CONCAT('%', COALESCE(CAST(:error as text), ''), '%'))"
             ,
             countQuery = "SELECT count(*) FROM rule_node_debug_event e WHERE " +
                     "e.tenant_id = :tenantId " +
                     "AND e.entity_id = :entityId " +
                     "AND (:startTime IS NULL OR e.ts >= :startTime) " +
                     "AND (:endTime IS NULL OR e.ts <= :endTime) " +
-                    "AND (:serviceId IS NULL OR e.service_id ILIKE concat('%', :serviceId, '%')) " +
-                    "AND (:eventType IS NULL OR e.e_type ILIKE concat('%', :eventType, '%')) " +
+                    "AND (:serviceId IS NULL OR e.service_id ILIKE CONCAT('%', COALESCE(CAST(:serviceId as text), ''), '%')) " +
+                    "AND (:eventType IS NULL OR e.e_type ILIKE CONCAT('%', COALESCE(CAST(:eventType as text), ''), '%')) " +
                     "AND (:eventEntityId IS NULL OR e.e_entity_id = uuid(:eventEntityId)) " +
                     "AND (:eventEntityType IS NULL OR e.e_entity_type ILIKE concat('%', :eventEntityType, '%')) " +
                     "AND (:msgId IS NULL OR e.e_msg_id = uuid(:msgId)) " +
@@ -85,7 +85,7 @@ public interface RuleNodeDebugEventRepository extends EventRepository<RuleNodeDe
                     "AND (:data IS NULL OR e.e_data ILIKE concat('%', :data, '%')) " +
                     "AND (:metadata IS NULL OR e.e_metadata ILIKE concat('%', :metadata, '%')) " +
                     "AND ((:isError = FALSE) OR e.e_error IS NOT NULL) " +
-                    "AND (:error IS NULL OR e.e_error ILIKE concat('%', :error, '%'))"
+                    "AND (:error IS NULL OR e.e_error ILIKE CONCAT('%', COALESCE(CAST(:error as text), ''), '%'))"
     )
     Page<RuleNodeDebugEventEntity> findEvents(@Param("tenantId") UUID tenantId,
                                               @Param("entityId") UUID entityId,
@@ -125,8 +125,8 @@ public interface RuleNodeDebugEventRepository extends EventRepository<RuleNodeDe
                     "AND e.entity_id = :entityId " +
                     "AND (:startTime IS NULL OR e.ts >= :startTime) " +
                     "AND (:endTime IS NULL OR e.ts <= :endTime) " +
-                    "AND (:serviceId IS NULL OR e.service_id ILIKE concat('%', :serviceId, '%')) " +
-                    "AND (:eventType IS NULL OR e.e_type ILIKE concat('%', :eventType, '%')) " +
+                    "AND (:serviceId IS NULL OR e.service_id ILIKE CONCAT('%', COALESCE(CAST(:serviceId as text), ''), '%')) " +
+                    "AND (:eventType IS NULL OR e.e_type ILIKE CONCAT('%', COALESCE(CAST(:eventType as text), ''), '%')) " +
                     "AND (:eventEntityId IS NULL OR e.e_entity_id = uuid(:eventEntityId)) " +
                     "AND (:eventEntityType IS NULL OR e.e_entity_type ILIKE concat('%', :eventEntityType, '%')) " +
                     "AND (:msgId IS NULL OR e.e_msg_id = uuid(:msgId)) " +
@@ -135,7 +135,7 @@ public interface RuleNodeDebugEventRepository extends EventRepository<RuleNodeDe
                     "AND (:data IS NULL OR e.e_data ILIKE concat('%', :data, '%')) " +
                     "AND (:metadata IS NULL OR e.e_metadata ILIKE concat('%', :metadata, '%')) " +
                     "AND ((:isError = FALSE) OR e.e_error IS NOT NULL) " +
-                    "AND (:error IS NULL OR e.e_error ILIKE concat('%', :error, '%'))")
+                    "AND (:error IS NULL OR e.e_error ILIKE CONCAT('%', COALESCE(CAST(:error as text), ''), '%'))")
     void removeEvents(@Param("tenantId") UUID tenantId,
                       @Param("entityId") UUID entityId,
                       @Param("startTime") Long startTime,

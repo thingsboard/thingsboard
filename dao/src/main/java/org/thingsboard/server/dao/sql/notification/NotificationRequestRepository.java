@@ -41,7 +41,7 @@ public interface NotificationRequestRepository extends JpaRepository<Notificatio
     Page<NotificationRequestEntity> findByTenantIdAndOriginatorEntityType(UUID tenantId, EntityType originatorType, Pageable pageable);
 
     @Query(REQUEST_INFO_QUERY + " WHERE r.tenantId = :tenantId AND r.originatorEntityType = :originatorType " +
-            "AND (:searchText is NULL OR (t.name IS NOT NULL AND ilike(t.name, concat('%', :searchText, '%')) = true))")
+            "AND (:searchText is NULL OR (t.name IS NOT NULL AND ilike(t.name, CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%')) = true))")
     Page<NotificationRequestInfoEntity> findInfosByTenantIdAndOriginatorEntityTypeAndSearchText(@Param("tenantId") UUID tenantId,
                                                                                                 @Param("originatorType") EntityType originatorType,
                                                                                                 @Param("searchText") String searchText,

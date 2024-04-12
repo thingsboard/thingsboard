@@ -33,7 +33,7 @@ public interface QueueRepository extends JpaRepository<QueueEntity, UUID> {
     List<QueueEntity> findByTenantId(UUID tenantId);
 
     @Query("SELECT q FROM QueueEntity q WHERE q.tenantId = :tenantId " +
-            "AND (:textSearch IS NULL OR ilike(q.name, CONCAT(:textSearch, '%')) = true)")
+            "AND (:textSearch IS NULL OR ilike(q.name, CONCAT(COALESCE(CAST(:textSearch as text), ''), '%')) = true)")
     Page<QueueEntity> findByTenantId(@Param("tenantId") UUID tenantId,
                                      @Param("textSearch") String textSearch,
                                      Pageable pageable);

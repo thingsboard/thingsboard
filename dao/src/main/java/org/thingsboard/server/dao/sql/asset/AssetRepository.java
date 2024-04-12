@@ -41,7 +41,7 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
     AssetInfoEntity findAssetInfoById(@Param("assetId") UUID assetId);
 
     @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
-            "AND (:textSearch IS NULL OR ilike(a.name, CONCAT('%', :textSearch, '%')) = true)")
+            "AND (:textSearch IS NULL OR ilike(a.name, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true)")
     Page<AssetEntity> findByTenantId(@Param("tenantId") UUID tenantId,
                                      @Param("textSearch") String textSearch,
                                      Pageable pageable);
@@ -51,17 +51,17 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
             "LEFT JOIN CustomerEntity c on c.id = a.customerId " +
             "LEFT JOIN AssetProfileEntity p on p.id = a.assetProfileId " +
             "WHERE a.tenantId = :tenantId " +
-            "AND (:textSearch IS NULL OR ilike(a.name, CONCAT('%', :textSearch, '%')) = true  " +
-            "  OR ilike(a.label, CONCAT('%', :textSearch, '%')) = true " +
-            "  OR ilike(p.name, CONCAT('%', :textSearch, '%')) = true " +
-            "  OR ilike(c.title, CONCAT('%', :textSearch, '%')) = true) ")
+            "AND (:textSearch IS NULL OR ilike(a.name, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true  " +
+            "  OR ilike(a.label, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true " +
+            "  OR ilike(p.name, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true " +
+            "  OR ilike(c.title, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true) ")
     Page<AssetInfoEntity> findAssetInfosByTenantId(@Param("tenantId") UUID tenantId,
                                                    @Param("textSearch") String textSearch,
                                                    Pageable pageable);
 
     @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
             "AND a.customerId = :customerId " +
-            "AND (:textSearch IS NULL OR ilike(a.name, CONCAT('%', :textSearch, '%')) = true)")
+            "AND (:textSearch IS NULL OR ilike(a.name, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true)")
     Page<AssetEntity> findByTenantIdAndCustomerId(@Param("tenantId") UUID tenantId,
                                                   @Param("customerId") UUID customerId,
                                                   @Param("textSearch") String textSearch,
@@ -69,7 +69,7 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
 
     @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
             "AND a.assetProfileId = :profileId " +
-            "AND (:searchText IS NULL OR ilike(a.name, CONCAT('%', :searchText, '%')) = true)")
+            "AND (:searchText IS NULL OR ilike(a.name, CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%')) = true)")
     Page<AssetEntity> findByTenantIdAndProfileId(@Param("tenantId") UUID tenantId,
                                                  @Param("profileId") UUID profileId,
                                                  @Param("searchText") String searchText,
@@ -81,7 +81,7 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
             "LEFT JOIN AssetProfileEntity p on p.id = a.assetProfileId " +
             "WHERE a.tenantId = :tenantId " +
             "AND a.customerId = :customerId " +
-            "AND (:searchText IS NULL OR ilike(a.name, CONCAT('%', :searchText, '%')) = true)")
+            "AND (:searchText IS NULL OR ilike(a.name, CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%')) = true)")
     Page<AssetInfoEntity> findAssetInfosByTenantIdAndCustomerId(@Param("tenantId") UUID tenantId,
                                                                 @Param("customerId") UUID customerId,
                                                                 @Param("searchText") String searchText,
@@ -95,7 +95,7 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
 
     @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
             "AND a.type = :type " +
-            "AND (:textSearch IS NULL OR ilike(a.name, CONCAT('%', :textSearch, '%')) = true)")
+            "AND (:textSearch IS NULL OR ilike(a.name, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true)")
     Page<AssetEntity> findByTenantIdAndType(@Param("tenantId") UUID tenantId,
                                             @Param("type") String type,
                                             @Param("textSearch") String textSearch,
@@ -107,9 +107,9 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
             "LEFT JOIN AssetProfileEntity p on p.id = a.assetProfileId " +
             "WHERE a.tenantId = :tenantId " +
             "AND a.type = :type " +
-            "AND (:textSearch IS NULL OR ilike(a.name, CONCAT('%', :textSearch, '%')) = true  " +
-            "  OR ilike(a.label, CONCAT('%', :textSearch, '%')) = true " +
-            "  OR ilike(c.title, CONCAT('%', :textSearch, '%')) = true) ")
+            "AND (:textSearch IS NULL OR ilike(a.name, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true  " +
+            "  OR ilike(a.label, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true " +
+            "  OR ilike(c.title, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true) ")
     Page<AssetInfoEntity> findAssetInfosByTenantIdAndType(@Param("tenantId") UUID tenantId,
                                                           @Param("type") String type,
                                                           @Param("textSearch") String textSearch,
@@ -121,9 +121,9 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
             "LEFT JOIN AssetProfileEntity p on p.id = a.assetProfileId " +
             "WHERE a.tenantId = :tenantId " +
             "AND a.assetProfileId = :assetProfileId " +
-            "AND (:textSearch IS NULL OR ilike(a.name, CONCAT('%', :textSearch, '%')) = true  " +
-            "  OR ilike(a.label, CONCAT('%', :textSearch, '%')) = true " +
-            "  OR ilike(c.title, CONCAT('%', :textSearch, '%')) = true) ")
+            "AND (:textSearch IS NULL OR ilike(a.name, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true  " +
+            "  OR ilike(a.label, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true " +
+            "  OR ilike(c.title, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true) ")
     Page<AssetInfoEntity> findAssetInfosByTenantIdAndAssetProfileId(@Param("tenantId") UUID tenantId,
                                                                     @Param("assetProfileId") UUID assetProfileId,
                                                                     @Param("textSearch") String textSearch,
@@ -132,7 +132,7 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
 
     @Query("SELECT a FROM AssetEntity a WHERE a.tenantId = :tenantId " +
             "AND a.customerId = :customerId AND a.type = :type " +
-            "AND (:textSearch IS NULL OR ilike(a.name, CONCAT('%', :textSearch, '%')) = true)")
+            "AND (:textSearch IS NULL OR ilike(a.name, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true)")
     Page<AssetEntity> findByTenantIdAndCustomerIdAndType(@Param("tenantId") UUID tenantId,
                                                          @Param("customerId") UUID customerId,
                                                          @Param("type") String type,
@@ -146,7 +146,7 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
             "WHERE a.tenantId = :tenantId " +
             "AND a.customerId = :customerId " +
             "AND a.type = :type " +
-            "AND (:textSearch IS NULL OR ilike(a.name, CONCAT('%', :textSearch, '%')) = true)")
+            "AND (:textSearch IS NULL OR ilike(a.name, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true)")
     Page<AssetInfoEntity> findAssetInfosByTenantIdAndCustomerIdAndType(@Param("tenantId") UUID tenantId,
                                                                        @Param("customerId") UUID customerId,
                                                                        @Param("type") String type,
@@ -160,7 +160,7 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
             "WHERE a.tenantId = :tenantId " +
             "AND a.customerId = :customerId " +
             "AND a.assetProfileId = :assetProfileId " +
-            "AND (:textSearch IS NULL OR ilike(a.name, CONCAT('%', :textSearch, '%')) = true)")
+            "AND (:textSearch IS NULL OR ilike(a.name, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true)")
     Page<AssetInfoEntity> findAssetInfosByTenantIdAndCustomerIdAndAssetProfileId(@Param("tenantId") UUID tenantId,
                                                                                  @Param("customerId") UUID customerId,
                                                                                  @Param("assetProfileId") UUID assetProfileId,
@@ -172,7 +172,7 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
     @Query("SELECT a FROM AssetEntity a, RelationEntity re WHERE a.tenantId = :tenantId " +
             "AND a.id = re.toId AND re.toType = 'ASSET' AND re.relationTypeGroup = 'EDGE' " +
             "AND re.relationType = 'Contains' AND re.fromId = :edgeId AND re.fromType = 'EDGE' " +
-            "AND (:searchText IS NULL OR ilike(a.name, CONCAT('%', :searchText, '%')) = true)")
+            "AND (:searchText IS NULL OR ilike(a.name, CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%')) = true)")
     Page<AssetEntity> findByTenantIdAndEdgeId(@Param("tenantId") UUID tenantId,
                                               @Param("edgeId") UUID edgeId,
                                               @Param("searchText") String searchText,
@@ -182,7 +182,7 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
             "AND a.id = re.toId AND re.toType = 'ASSET' AND re.relationTypeGroup = 'EDGE' " +
             "AND re.relationType = 'Contains' AND re.fromId = :edgeId AND re.fromType = 'EDGE' " +
             "AND a.type = :type " +
-            "AND (:searchText IS NULL OR ilike(a.name, CONCAT('%', :searchText, '%')) = true)")
+            "AND (:searchText IS NULL OR ilike(a.name, CONCAT('%', COALESCE(CAST(:searchText as text), ''), '%')) = true)")
     Page<AssetEntity> findByTenantIdAndEdgeIdAndType(@Param("tenantId") UUID tenantId,
                                                      @Param("edgeId") UUID edgeId,
                                                      @Param("type") String type,

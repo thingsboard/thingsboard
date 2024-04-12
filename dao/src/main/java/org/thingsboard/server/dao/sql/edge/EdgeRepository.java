@@ -30,7 +30,7 @@ public interface EdgeRepository extends JpaRepository<EdgeEntity, UUID> {
 
     @Query("SELECT d FROM EdgeEntity d WHERE d.tenantId = :tenantId " +
             "AND d.customerId = :customerId " +
-            "AND (:textSearch IS NULL OR ilike(d.name, CONCAT('%', :textSearch, '%')) = true)")
+            "AND (:textSearch IS NULL OR ilike(d.name, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true)")
     Page<EdgeEntity> findByTenantIdAndCustomerId(@Param("tenantId") UUID tenantId,
                                                  @Param("customerId") UUID customerId,
                                                  @Param("textSearch") String textSearch,
@@ -43,7 +43,7 @@ public interface EdgeRepository extends JpaRepository<EdgeEntity, UUID> {
     EdgeInfoEntity findEdgeInfoById(@Param("edgeId") UUID edgeId);
 
     @Query("SELECT d FROM EdgeEntity d WHERE d.tenantId = :tenantId " +
-            "AND (:textSearch IS NULL OR ilike(d.name, CONCAT('%', :textSearch, '%')) = true)")
+            "AND (:textSearch IS NULL OR ilike(d.name, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true)")
     Page<EdgeEntity> findByTenantId(@Param("tenantId") UUID tenantId,
                                     @Param("textSearch") String textSearch,
                                     Pageable pageable);
@@ -52,14 +52,14 @@ public interface EdgeRepository extends JpaRepository<EdgeEntity, UUID> {
             "FROM EdgeEntity d " +
             "LEFT JOIN CustomerEntity c on c.id = d.customerId " +
             "WHERE d.tenantId = :tenantId " +
-            "AND (:textSearch IS NULL OR ilike(d.name, CONCAT('%', :textSearch, '%')) = true)")
+            "AND (:textSearch IS NULL OR ilike(d.name, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true)")
     Page<EdgeInfoEntity> findEdgeInfosByTenantId(@Param("tenantId") UUID tenantId,
                                                  @Param("textSearch") String textSearch,
                                                  Pageable pageable);
 
     @Query("SELECT d FROM EdgeEntity d WHERE d.tenantId = :tenantId " +
             "AND d.type = :type " +
-            "AND (:textSearch IS NULL OR ilike(d.name, CONCAT('%', :textSearch, '%')) = true)")
+            "AND (:textSearch IS NULL OR ilike(d.name, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true)")
     Page<EdgeEntity> findByTenantIdAndType(@Param("tenantId") UUID tenantId,
                                            @Param("type") String type,
                                            @Param("textSearch") String textSearch,
@@ -70,7 +70,7 @@ public interface EdgeRepository extends JpaRepository<EdgeEntity, UUID> {
             "LEFT JOIN CustomerEntity c on c.id = d.customerId " +
             "WHERE d.tenantId = :tenantId " +
             "AND d.type = :type " +
-            "AND (:textSearch IS NULL OR ilike(d.name, CONCAT('%', :textSearch, '%')) = true)")
+            "AND (:textSearch IS NULL OR ilike(d.name, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true)")
     Page<EdgeInfoEntity> findEdgeInfosByTenantIdAndType(@Param("tenantId") UUID tenantId,
                                                         @Param("type") String type,
                                                         @Param("textSearch") String textSearch,
@@ -79,7 +79,7 @@ public interface EdgeRepository extends JpaRepository<EdgeEntity, UUID> {
     @Query("SELECT d FROM EdgeEntity d WHERE d.tenantId = :tenantId " +
             "AND d.customerId = :customerId " +
             "AND d.type = :type " +
-            "AND (:textSearch IS NULL OR ilike(d.name, CONCAT('%', :textSearch, '%')) = true)")
+            "AND (:textSearch IS NULL OR ilike(d.name, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true)")
     Page<EdgeEntity> findByTenantIdAndCustomerIdAndType(@Param("tenantId") UUID tenantId,
                                                         @Param("customerId") UUID customerId,
                                                         @Param("type") String type,
@@ -91,7 +91,7 @@ public interface EdgeRepository extends JpaRepository<EdgeEntity, UUID> {
             "LEFT JOIN CustomerEntity c on c.id = a.customerId " +
             "WHERE a.tenantId = :tenantId " +
             "AND a.customerId = :customerId " +
-            "AND (:textSearch IS NULL OR ilike(a.name, CONCAT('%', :textSearch, '%')) = true)")
+            "AND (:textSearch IS NULL OR ilike(a.name, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true)")
     Page<EdgeInfoEntity> findEdgeInfosByTenantIdAndCustomerId(@Param("tenantId") UUID tenantId,
                                                                 @Param("customerId") UUID customerId,
                                                                 @Param("textSearch") String textSearch,
@@ -103,7 +103,7 @@ public interface EdgeRepository extends JpaRepository<EdgeEntity, UUID> {
             "WHERE a.tenantId = :tenantId " +
             "AND a.customerId = :customerId " +
             "AND a.type = :type " +
-            "AND (:textSearch IS NULL OR ilike(a.name, CONCAT('%', :textSearch, '%')) = true)")
+            "AND (:textSearch IS NULL OR ilike(a.name, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true)")
     Page<EdgeInfoEntity> findEdgeInfosByTenantIdAndCustomerIdAndType(@Param("tenantId") UUID tenantId,
                                                                        @Param("customerId") UUID customerId,
                                                                        @Param("type") String type,
@@ -113,7 +113,7 @@ public interface EdgeRepository extends JpaRepository<EdgeEntity, UUID> {
     @Query("SELECT ee FROM EdgeEntity ee, RelationEntity re WHERE ee.tenantId = :tenantId " +
             "AND ee.id = re.fromId AND re.fromType = 'EDGE' AND re.relationTypeGroup = 'EDGE' " +
             "AND re.relationType = 'Contains' AND re.toId = :entityId AND re.toType = :entityType " +
-            "AND (:textSearch IS NULL OR ilike(ee.name, CONCAT('%', :textSearch, '%')) = true)")
+            "AND (:textSearch IS NULL OR ilike(ee.name, CONCAT('%', COALESCE(CAST(:textSearch as text), ''), '%')) = true)")
     Page<EdgeEntity> findByTenantIdAndEntityId(@Param("tenantId") UUID tenantId,
                                                @Param("entityId") UUID entityId,
                                                @Param("entityType") String entityType,

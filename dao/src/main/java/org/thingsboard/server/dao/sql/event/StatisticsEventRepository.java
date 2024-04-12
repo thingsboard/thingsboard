@@ -52,7 +52,7 @@ public interface StatisticsEventRepository extends EventRepository<StatisticsEve
                     "AND e.entity_id = :entityId " +
                     "AND (:startTime IS NULL OR e.ts >= :startTime) " +
                     "AND (:endTime IS NULL OR e.ts <= :endTime) " +
-                    "AND (:serviceId IS NULL OR e.service_id ILIKE concat('%', :serviceId, '%')) " +
+                    "AND (:serviceId IS NULL OR e.service_id ILIKE CONCAT('%', COALESCE(CAST(:serviceId as text), ''), '%')) " +
                     "AND (:minMessagesProcessed IS NULL OR e.e_messages_processed >= :minMessagesProcessed) " +
                     "AND (:maxMessagesProcessed IS NULL OR e.e_messages_processed < :maxMessagesProcessed) " +
                     "AND (:minErrorsOccurred IS NULL OR e.e_errors_occurred >= :minErrorsOccurred) " +
@@ -63,7 +63,7 @@ public interface StatisticsEventRepository extends EventRepository<StatisticsEve
                     "AND e.entity_id = :entityId " +
                     "AND (:startTime IS NULL OR e.ts >= :startTime) " +
                     "AND (:endTime IS NULL OR e.ts <= :endTime) " +
-                    "AND (:serviceId IS NULL OR e.service_id ILIKE concat('%', :serviceId, '%')) " +
+                    "AND (:serviceId IS NULL OR e.service_id ILIKE CONCAT('%', COALESCE(CAST(:serviceId as text), ''), '%')) " +
                     "AND (:minMessagesProcessed IS NULL OR e.e_messages_processed >= :minMessagesProcessed) " +
                     "AND (:maxMessagesProcessed IS NULL OR e.e_messages_processed < :maxMessagesProcessed) " +
                     "AND (:minErrorsOccurred IS NULL OR e.e_errors_occurred >= :minErrorsOccurred) " +
@@ -101,7 +101,7 @@ public interface StatisticsEventRepository extends EventRepository<StatisticsEve
                     "AND e.entity_id = :entityId " +
                     "AND (:startTime IS NULL OR e.ts >= :startTime) " +
                     "AND (:endTime IS NULL OR e.ts <= :endTime) " +
-                    "AND (:serviceId IS NULL OR e.service_id ILIKE concat('%', :serviceId, '%')) " +
+                    "AND (:serviceId IS NULL OR e.service_id ILIKE CONCAT('%', COALESCE(CAST(:serviceId as text), ''), '%')) " +
                     "AND (:minMessagesProcessed IS NULL OR e.e_messages_processed >= :minMessagesProcessed) " +
                     "AND (:maxMessagesProcessed IS NULL OR e.e_messages_processed < :maxMessagesProcessed) " +
                     "AND (:minErrorsOccurred IS NULL OR e.e_errors_occurred >= :minErrorsOccurred) " +
