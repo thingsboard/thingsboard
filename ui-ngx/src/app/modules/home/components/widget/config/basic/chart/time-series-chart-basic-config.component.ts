@@ -23,6 +23,7 @@ import { WidgetConfigComponentData } from '@home/models/widget-component.models'
 import {
   DataKey,
   Datasource,
+  DatasourceType,
   legendPositions,
   legendPositionTranslationMap,
   WidgetConfig,
@@ -89,6 +90,8 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
 
   chartType: TimeSeriesChartType = TimeSeriesChartType.default;
 
+  seriesMode = 'series';
+
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
               private $injector: Injector,
@@ -103,6 +106,11 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
         this.removeYaxisId(datasource.dataKeys, yAxisId);
       }
     }
+  }
+
+  seriesModeChange(seriesMode: string) {
+    this.seriesMode = seriesMode;
+    this.updateSeriesState();
   }
 
   protected configForm(): UntypedFormGroup {
@@ -135,6 +143,7 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
       comparisonEnabled: [settings.comparisonEnabled, []],
       timeForComparison: [settings.timeForComparison, []],
       comparisonCustomIntervalValue: [settings.comparisonCustomIntervalValue, [Validators.min(0)]],
+      comparisonXAxis: [settings.comparisonXAxis, []],
 
       thresholds: [settings.thresholds, []],
 
@@ -187,6 +196,7 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
     if (this.chartType === TimeSeriesChartType.state) {
       this.timeSeriesChartWidgetConfigForm.addControl('states', this.fb.control(settings.states, []));
     }
+    this.timeSeriesChartWidgetConfigForm.get('comparisonEnabled').valueChanges.subscribe(() => this.updateSeriesState());
   }
 
   protected prepareOutputConfig(config: any): WidgetConfigComponentData {
@@ -209,6 +219,7 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
     this.widgetConfig.config.settings.comparisonEnabled = config.comparisonEnabled;
     this.widgetConfig.config.settings.timeForComparison = config.timeForComparison;
     this.widgetConfig.config.settings.comparisonCustomIntervalValue = config.comparisonCustomIntervalValue;
+    this.widgetConfig.config.settings.comparisonXAxis = config.comparisonXAxis;
 
     this.widgetConfig.config.settings.thresholds = config.thresholds;
 
@@ -254,15 +265,26 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
   }
 
   protected validatorTriggers(): string[] {
-    return ['showTitle', 'showIcon', 'showLegend', 'showTooltip', 'tooltipShowDate'];
+    return ['comparisonEnabled', 'showTitle', 'showIcon', 'showLegend', 'showTooltip', 'tooltipShowDate'];
   }
 
   protected updateValidators(emitEvent: boolean, trigger?: string) {
+    const comparisonEnabled: boolean = this.timeSeriesChartWidgetConfigForm.get('comparisonEnabled').value;
     const showTitle: boolean = this.timeSeriesChartWidgetConfigForm.get('showTitle').value;
     const showIcon: boolean = this.timeSeriesChartWidgetConfigForm.get('showIcon').value;
     const showLegend: boolean = this.timeSeriesChartWidgetConfigForm.get('showLegend').value;
     const showTooltip: boolean = this.timeSeriesChartWidgetConfigForm.get('showTooltip').value;
     const tooltipShowDate: boolean = this.timeSeriesChartWidgetConfigForm.get('tooltipShowDate').value;
+
+    if (comparisonEnabled) {
+      this.timeSeriesChartWidgetConfigForm.get('timeForComparison').enable();
+      this.timeSeriesChartWidgetConfigForm.get('comparisonCustomIntervalValue').enable();
+      this.timeSeriesChartWidgetConfigForm.get('comparisonXAxis').enable();
+    } else {
+      this.timeSeriesChartWidgetConfigForm.get('timeForComparison').disable();
+      this.timeSeriesChartWidgetConfigForm.get('comparisonCustomIntervalValue').disable();
+      this.timeSeriesChartWidgetConfigForm.get('comparisonXAxis').disable();
+    }
 
     if (showTitle) {
       this.timeSeriesChartWidgetConfigForm.get('title').enable();
@@ -345,6 +367,19 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
     }
   }
 
+  private updateSeriesState() {
+    if (this.seriesMode === 'series') {
+      this.timeSeriesChartWidgetConfigForm.get('series').enable({emitEvent: false});
+    } else {
+      const comparisonEnabled = this.timeSeriesChartWidgetConfigForm.get('comparisonEnabled').value;
+      if (comparisonEnabled) {
+        this.timeSeriesChartWidgetConfigForm.get('series').enable({emitEvent: false});
+      } else {
+        this.timeSeriesChartWidgetConfigForm.get('series').disable({emitEvent: false});
+      }
+    }
+  }
+
   private removeYaxisId(series: DataKey[], yAxisId: TimeSeriesChartYAxisId): boolean {
     let changed = false;
     if (series) {
@@ -381,4 +416,6 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
     processor.update(Date.now());
     return processor.formatted;
   }
+
+  protected readonly DatasourceType = DatasourceType;
 }

@@ -23,7 +23,7 @@ import {
   WidgetSettings,
   WidgetSettingsComponent
 } from '@shared/models/widget.models';
-import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { formatValue, isDefinedAndNotNull, mergeDeep } from '@core/utils';
@@ -114,6 +114,11 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
   protected onSettingsSet(settings: WidgetSettings) {
     this.timeSeriesChartWidgetSettingsForm = this.fb.group({
 
+      comparisonEnabled: [settings.comparisonEnabled, []],
+      timeForComparison: [settings.timeForComparison, []],
+      comparisonCustomIntervalValue: [settings.comparisonCustomIntervalValue, [Validators.min(0)]],
+      comparisonXAxis: [settings.comparisonXAxis, []],
+
       yAxes: [settings.yAxes, []],
       thresholds: [settings.thresholds, []],
 
@@ -154,13 +159,24 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
   }
 
   protected validatorTriggers(): string[] {
-    return ['showLegend', 'showTooltip', 'tooltipShowDate'];
+    return ['comparisonEnabled', 'showLegend', 'showTooltip', 'tooltipShowDate'];
   }
 
   protected updateValidators(emitEvent: boolean) {
+    const comparisonEnabled: boolean = this.timeSeriesChartWidgetSettingsForm.get('comparisonEnabled').value;
     const showLegend: boolean = this.timeSeriesChartWidgetSettingsForm.get('showLegend').value;
     const showTooltip: boolean = this.timeSeriesChartWidgetSettingsForm.get('showTooltip').value;
     const tooltipShowDate: boolean = this.timeSeriesChartWidgetSettingsForm.get('tooltipShowDate').value;
+
+    if (comparisonEnabled) {
+      this.timeSeriesChartWidgetSettingsForm.get('timeForComparison').enable();
+      this.timeSeriesChartWidgetSettingsForm.get('comparisonCustomIntervalValue').enable();
+      this.timeSeriesChartWidgetSettingsForm.get('comparisonXAxis').enable();
+    } else {
+      this.timeSeriesChartWidgetSettingsForm.get('timeForComparison').disable();
+      this.timeSeriesChartWidgetSettingsForm.get('comparisonCustomIntervalValue').disable();
+      this.timeSeriesChartWidgetSettingsForm.get('comparisonXAxis').disable();
+    }
 
     if (showLegend) {
       this.timeSeriesChartWidgetSettingsForm.get('legendLabelFont').enable();

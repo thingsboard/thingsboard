@@ -170,7 +170,7 @@ export class TbTimeSeriesChart {
     this.comparisonEnabled = !!this.ctx.defaultSubscription.comparisonEnabled;
     this.stackMode = !this.comparisonEnabled && this.settings.stack;
     if (this.settings.states && this.settings.states.length) {
-      this.stateValueConverter = new TimeSeriesChartStateValueConverter(this.ctx.dashboard.utils, this.settings.states);
+      this.stateValueConverter = new TimeSeriesChartStateValueConverter(this.ctx.utilsService, this.settings.states);
       this.tooltipValueFormatFunction = this.stateValueConverter.tooltipFormatter;
     }
     const $dashboardPageElement = this.ctx.$containerParent.parents('.tb-dashboard-page');
@@ -503,12 +503,12 @@ export class TbTimeSeriesChart {
 
   private setupXAxes(): void {
     const mainXAxis = createTimeSeriesXAxis('main', this.settings.xAxis, this.ctx.defaultSubscription.timeWindow.minTime,
-      this.ctx.defaultSubscription.timeWindow.maxTime, this.ctx.date, this.darkMode);
+      this.ctx.defaultSubscription.timeWindow.maxTime, this.ctx.date, this.ctx.utilsService, this.darkMode);
     this.xAxisList.push(mainXAxis);
     if (this.comparisonEnabled) {
       const comparisonXAxis = createTimeSeriesXAxis('comparison', this.settings.comparisonXAxis,
         this.ctx.defaultSubscription.comparisonTimeWindow.minTime, this.ctx.defaultSubscription.comparisonTimeWindow.maxTime,
-        this.ctx.date, this.darkMode);
+        this.ctx.date, this.ctx.utilsService, this.darkMode);
       this.xAxisList.push(comparisonXAxis);
     }
   }
@@ -526,7 +526,7 @@ export class TbTimeSeriesChart {
         axisSettings.ticksGenerator = this.stateValueConverter.ticksGenerator;
         axisSettings.ticksFormatter = this.stateValueConverter.ticksFormatter;
       }
-      const yAxis = createTimeSeriesYAxis(units, decimals, axisSettings, this.darkMode);
+      const yAxis = createTimeSeriesYAxis(units, decimals, axisSettings, this.ctx.utilsService, this.darkMode);
       this.yAxisList.push(yAxis);
     }
   }

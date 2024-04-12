@@ -71,6 +71,7 @@ import { DatePipe } from '@angular/common';
 import { BuiltinTextPosition } from 'zrender/src/core/types';
 import { CartesianAxisOption } from 'echarts/types/src/coord/cartesian/AxisModel';
 import { WidgetTimewindow } from '@shared/models/time/time.models';
+import { UtilsService } from '@core/services/utils.service';
 
 export enum TimeSeriesChartType {
   default = 'default',
@@ -932,6 +933,7 @@ export interface TimeSeriesChartXAxis extends TimeSeriesChartAxis {
 export const createTimeSeriesYAxis = (units: string,
                                       decimals: number,
                                       settings: TimeSeriesChartYAxisSettings,
+                                      utils: UtilsService,
                                       darkMode: boolean): TimeSeriesChartYAxis => {
   const yAxisTickLabelStyle = createChartTextStyle(settings.tickLabelFont,
     settings.tickLabelColor, darkMode, 'axis.tickLabel');
@@ -986,7 +988,7 @@ export const createTimeSeriesYAxis = (units: string,
       splitNumber,
       interval,
       ticksGenerator,
-      name: settings.label,
+      name: utils.customTranslation(settings.label, settings.label),
       nameLocation: 'middle',
       nameRotate: settings.position === AxisPosition.left ? 90 : -90,
       nameTextStyle: {
@@ -1044,6 +1046,7 @@ export const createTimeSeriesXAxis = (id: string,
                                       settings: TimeSeriesChartXAxisSettings,
                                       min: number, max: number,
                                       datePipe: DatePipe,
+                                      utils: UtilsService,
                                       darkMode: boolean): TimeSeriesChartXAxis => {
   const xAxisTickLabelStyle = createChartTextStyle(settings.tickLabelFont,
     settings.tickLabelColor, darkMode, 'axis.tickLabel');
@@ -1060,7 +1063,7 @@ export const createTimeSeriesXAxis = (id: string,
       scale: true,
       position: settings.position,
       id,
-      name: settings.label,
+      name: utils.customTranslation(settings.label, settings.label),
       nameLocation: 'middle',
       nameTextStyle: {
         color: xAxisNameStyle.color,
