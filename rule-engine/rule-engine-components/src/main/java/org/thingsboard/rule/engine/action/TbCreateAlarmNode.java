@@ -191,8 +191,4 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
         return severity;
     }
 
-    long currentTimeMillis() {
-        return System.currentTimeMillis();
-    }
-
 }
