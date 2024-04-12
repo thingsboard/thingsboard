@@ -60,7 +60,7 @@ public class TbClearAlarmNode extends TbAbstractAlarmNode<TbClearAlarmNodeConfig
         var originator = msg.getOriginator();
         ListenableFuture<Alarm> alarmFuture;
         if (originator.getEntityType().equals(EntityType.ALARM)) {
-            alarmFuture = ctx.getDbCallbackExecutor().submit(() -> ctx.getAlarmService().findAlarmById(ctx.getTenantId(), new AlarmId(originator.getId())));
+            alarmFuture = ctx.getAlarmService().findAlarmByIdAsync(ctx.getTenantId(), new AlarmId(originator.getId()));
         } else {
             String alarmType = TbNodeUtils.processPattern(config.getAlarmType(), msg);
             alarmFuture = ctx.getDbCallbackExecutor().submit(() -> ctx.getAlarmService().findLatestActiveByOriginatorAndType(ctx.getTenantId(), originator, alarmType));

@@ -172,7 +172,7 @@ class TbClearAlarmNodeTest {
         given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
         given(ctxMock.createScriptEngine(scriptLang, alarmDetailsScript)).willReturn(alarmDetailsScriptMock);
 
-        given(alarmServiceMock.findAlarmById(tenantId, msgAlarmOriginator)).willReturn(null);
+        given(alarmServiceMock.findAlarmByIdAsync(tenantId, msgAlarmOriginator)).willReturn(Futures.immediateFuture(null));
 
         // node initialization
         nodeSpy.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
@@ -233,7 +233,7 @@ class TbClearAlarmNodeTest {
         given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
         given(ctxMock.createScriptEngine(scriptLang, alarmDetailsScript)).willReturn(alarmDetailsScriptMock);
 
-        given(alarmServiceMock.findAlarmById(tenantId, msgAlarmOriginator)).willReturn(clearedAlarm);
+        given(alarmServiceMock.findAlarmByIdAsync(tenantId, msgAlarmOriginator)).willReturn(Futures.immediateFuture(clearedAlarm));
 
         // node initialization
         nodeSpy.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
@@ -304,7 +304,7 @@ class TbClearAlarmNodeTest {
 
         var expectedAlarmInfo = new AlarmInfo(expectedAlarm);
 
-        given(alarmServiceMock.findAlarmById(tenantId, msgAlarmOriginator)).willReturn(activeAlarm);
+        given(alarmServiceMock.findAlarmByIdAsync(tenantId, msgAlarmOriginator)).willReturn(Futures.immediateFuture(activeAlarm));
         given(alarmServiceMock.clearAlarm(tenantId, alarmId, clearTs, newAlarmDetails))
                 .willReturn(AlarmApiCallResult.builder()
                         .successful(true)
