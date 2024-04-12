@@ -68,6 +68,15 @@
             <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
         </div>
+        <div *ngIf="axisType === 'yAxis' && advanced" class="tb-form-row">
+          <tb-js-func fxFlex
+                      formControlName="ticksGenerator"
+                      [globalVariables]="functionScopeVariables"
+                      [functionArgs]="['extent']"
+                      functionTitle="{{ 'widgets.time-series-chart.axis.ticks-generator-function' | translate }}"
+                      helpId="widget/lib/chart/ticks_generator_fn">
+          </tb-js-func>
+        </div>
         <div class="tb-form-panel no-padding stroked">
           <div class="tb-form-row no-border space-between column-xs">
             <mat-slide-toggle class="mat-slide" formControlName="showTickLabels">

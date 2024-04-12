@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.service.DataValidator;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -107,6 +108,11 @@ public class BaseEventService implements EventService {
     }
 
     @Override
+    public EventInfo findLatestDebugRuleNodeInEvent(TenantId tenantId, EntityId entityId) {
+        return convert(entityId.getEntityType(), eventDao.findLatestDebugRuleNodeInEvent(tenantId.getId(), entityId.getId()));
+    }
+
+    @Override
     public PageData<EventInfo> findEventsByFilter(TenantId tenantId, EntityId entityId, EventFilter eventFilter, TimePageLink pageLink) {
         return convert(entityId.getEntityType(), eventDao.findEventByFilter(tenantId.getId(), entityId.getId(), eventFilter, pageLink));
     }
@@ -138,6 +144,10 @@ public class BaseEventService implements EventService {
 
     private List<EventInfo> convert(EntityType entityType, List<? extends Event> list) {
         return list == null ? null : list.stream().map(e -> e.toInfo(entityType)).collect(Collectors.toList());
+    }
+
+    private EventInfo convert(EntityType entityType, Event event) {
+        return Optional.ofNullable(event).map(e -> e.toInfo(entityType)).orElse(null);
     }
 
 }

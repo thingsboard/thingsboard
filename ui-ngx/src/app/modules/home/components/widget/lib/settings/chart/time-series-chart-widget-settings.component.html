@@ -16,6 +16,10 @@
 
 -->
 <ng-container [formGroup]="timeSeriesChartWidgetSettingsForm">
+  <tb-time-series-chart-states-panel
+      *ngIf="chartType === TimeSeriesChartType.state"
+      formControlName="states">
+  </tb-time-series-chart-states-panel>
   <tb-time-series-chart-y-axes-panel
     formControlName="yAxes"
     (axisRemoved)="yAxisRemoved($event)"
@@ -118,6 +122,13 @@
               </tb-color-input>
             </div>
           </div>
+          <tb-js-func
+              formControlName="tooltipValueFormatter"
+              [globalVariables]="functionScopeVariables"
+              [functionArgs]="['value', 'latestData']"
+              functionTitle="{{ 'widgets.chart.tooltip-value-format-function' | translate }}"
+              helpId="widget/lib/flot/tooltip_value_format_fn">
+          </tb-js-func>
           <div class="tb-form-row column-xs">
             <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="tooltipShowDate">
               {{ 'tooltip.date' | translate }}

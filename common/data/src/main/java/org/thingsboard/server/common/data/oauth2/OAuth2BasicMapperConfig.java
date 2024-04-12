@@ -38,7 +38,7 @@ public class OAuth2BasicMapperConfig {
     @Length(fieldName = "lastNameAttributeKey", max = 31)
     @Schema(description = "Last name attribute key")
     private final String lastNameAttributeKey;
-    @Schema(description = "Tenant naming strategy. For DOMAIN type, domain for tenant name will be taken from the email (substring before '@')", required = true)
+    @Schema(description = "Tenant naming strategy. For DOMAIN type, domain for tenant name will be taken from the email (substring before '@')", requiredMode = Schema.RequiredMode.REQUIRED)
     private final TenantNameStrategyType tenantNameStrategy;
     @Length(fieldName = "tenantNamePattern")
     @Schema(description = "Tenant name pattern for CUSTOM naming strategy. " +

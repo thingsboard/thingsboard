@@ -32,7 +32,7 @@ public final class CustomerId extends UUIDBased implements EntityId {
         super(id);
     }
 
-    @Schema(required = true, description = "string", example = "CUSTOMER", allowableValues = "CUSTOMER")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "CUSTOMER", allowableValues = "CUSTOMER")
     @Override
     public EntityType getEntityType() {
         return EntityType.CUSTOMER;

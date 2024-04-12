@@ -98,6 +98,10 @@ public abstract class AbstractServiceTest {
 
 
     protected RuleNodeDebugEvent generateEvent(TenantId tenantId, EntityId entityId) throws IOException {
+        return generateEvent(tenantId, entityId, null);
+    }
+
+    protected RuleNodeDebugEvent generateEvent(TenantId tenantId, EntityId entityId, String eventType) throws IOException {
         if (tenantId == null) {
             tenantId = TenantId.fromUUID(Uuids.timeBased());
         }
@@ -105,6 +109,7 @@ public abstract class AbstractServiceTest {
                 .tenantId(tenantId)
                 .entityId(entityId.getId())
                 .serviceId("server A")
+                .eventType(eventType)
                 .data(JacksonUtil.toString(readFromResource("TestJsonData.json")))
                 .build();
     }

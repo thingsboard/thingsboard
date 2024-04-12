@@ -33,7 +33,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 })
 public interface EventFilter {
 
-    @Schema(required = true, description = "String value representing the event type", example = "STATS")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "String value representing the event type", example = "STATS")
     EventType getEventType();
 
     boolean isNotEmpty();

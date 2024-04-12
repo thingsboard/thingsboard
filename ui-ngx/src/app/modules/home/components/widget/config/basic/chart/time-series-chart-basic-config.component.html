@@ -41,6 +41,10 @@
       [entityAliasId]="datasource?.entityAliasId"
       formControlName="series">
   </tb-data-keys-panel>
+  <tb-time-series-chart-states-panel
+      *ngIf="chartType === TimeSeriesChartType.state"
+      formControlName="states">
+  </tb-time-series-chart-states-panel>
   <tb-time-series-chart-y-axes-panel
     formControlName="yAxes"
     (axisRemoved)="yAxisRemoved($event)">

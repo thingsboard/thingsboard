@@ -25,7 +25,7 @@ CREATE OR REPLACE PROCEDURE insert_tb_schema_settings()
 $$
 BEGIN
     IF (SELECT COUNT(*) FROM tb_schema_settings) = 0 THEN
-        INSERT INTO tb_schema_settings (schema_version) VALUES (3006000);
+        INSERT INTO tb_schema_settings (schema_version) VALUES (3006004);
     END IF;
 END;
 $$;
@@ -864,6 +864,7 @@ CREATE TABLE IF NOT EXISTS notification (
     request_id UUID,
     recipient_id UUID NOT NULL,
     type VARCHAR(50) NOT NULL,
+    delivery_method VARCHAR(50) NOT NULL,
     subject VARCHAR(255),
     body VARCHAR(1000) NOT NULL,
     additional_config VARCHAR(1000),

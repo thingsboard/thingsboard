@@ -6783,6 +6783,20 @@
               "label-position-inside-end-bottom": "Inside end bottom",
               "label-background": "Label background"
             },
+            "state": {
+              "states": "States",
+              "label": "Label",
+              "ticks-value": "Ticks value",
+              "source": "Source",
+              "value-range": "Value / Range",
+              "no-states": "No states configured",
+              "add-state": "Add state",
+              "type-constant": "Constant",
+              "type-range": "Range",
+              "from": "From",
+              "to": "To",
+              "remove-state": "Remove state"
+            },
             "axis": {
               "axes": "Axes",
               "x-axis": "X axis",
@@ -6798,6 +6812,7 @@
               "position-bottom": "Bottom",
               "tick-labels": "Tick labels",
               "ticks-formatter-function": "Ticks formatter function",
+              "ticks-generator-function": "Ticks generator function",
               "show-ticks": "Show ticks",
               "show-line": "Show line",
               "show-split-lines": "Show split lines",

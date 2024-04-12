@@ -30,7 +30,7 @@ import {
 import { TimeService } from '../services/time.service';
 import { DeviceService } from '../http/device.service';
 import { UtilsService } from '@core/services/utils.service';
-import { Timewindow, WidgetTimewindow } from '@shared/models/time/time.models';
+import { SubscriptionTimewindow, Timewindow, WidgetTimewindow } from '@shared/models/time/time.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { HttpErrorResponse } from '@angular/common/http';
 import { RafService } from '@core/services/raf.service';
@@ -303,6 +303,7 @@ export interface IWidgetSubscription {
   hiddenData?: Array<{data: DataSet}>;
   timeWindowConfig?: Timewindow;
   timeWindow?: WidgetTimewindow;
+  subscriptionTimewindow: SubscriptionTimewindow;
   onTimewindowChangeFunction?: (timewindow: Timewindow) => Timewindow;
   widgetTimewindowChanged$: Observable<WidgetTimewindow>;
   comparisonEnabled?: boolean;
