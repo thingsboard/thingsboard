@@ -647,10 +647,10 @@ class TbCreateAlarmNodeTest {
 
     @Test
     @DisplayName(
-            "When node is taking alarm data from incoming message and originator specified in alarm data has null UUID and alarm does not exists, " +
+            "When node is taking alarm data from incoming message and originator specified in alarm data is different from message originator UUID and alarm does not exists, " +
                     "then should create new alarm using info from incoming message."
     )
-    void whenAlarmDataIsTakenFromMsgAndAlarmDataOriginatorHasNullUuidAndAlarmDoesNotExist_thenNewAlarmIsCreated() throws Exception {
+    void whenAlarmDataIsTakenFromMsgAndAlarmDataOriginatorIsDifferentFromMsgOriginatorAndAlarmDoesNotExist_thenNewAlarmIsCreated() throws Exception {
         // GIVEN
 
         // node configuration
@@ -666,7 +666,7 @@ class TbCreateAlarmNodeTest {
         // alarm that is inside an incoming message
         var alarmFromIncomingMessage = Alarm.builder()
                 .tenantId(tenantId)
-                .originator(new DeviceId(EntityId.NULL_UUID))
+                .originator(new DeviceId(Uuids.timeBased()))
                 .cleared(false)
                 .acknowledged(false)
                 .severity(alarmSeverity)
