@@ -120,7 +120,7 @@ public class Asset extends BaseDataWithAdditionalInfo<AssetId> implements HasLab
         this.customerId = customerId;
     }
 
-    @Schema(required = true, description = "Unique Asset Name in scope of Tenant", example = "Empire State Building")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Unique Asset Name in scope of Tenant", example = "Empire State Building")
     @Override
     public String getName() {
         return name;

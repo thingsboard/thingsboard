@@ -208,52 +208,22 @@ public class AccessValidator {
 
     public void validate(SecurityUser currentUser, Operation operation, EntityId entityId, FutureCallback<ValidationResult> callback) {
         switch (entityId.getEntityType()) {
-            case DEVICE:
-                validateDevice(currentUser, operation, entityId, callback);
-                return;
-            case DEVICE_PROFILE:
-                validateDeviceProfile(currentUser, operation, entityId, callback);
-                return;
-            case ASSET:
-                validateAsset(currentUser, operation, entityId, callback);
-                return;
-            case ASSET_PROFILE:
-                validateAssetProfile(currentUser, operation, entityId, callback);
-                return;
-            case RULE_CHAIN:
-                validateRuleChain(currentUser, operation, entityId, callback);
-                return;
-            case CUSTOMER:
-                validateCustomer(currentUser, operation, entityId, callback);
-                return;
-            case TENANT:
-                validateTenant(currentUser, operation, entityId, callback);
-                return;
-            case TENANT_PROFILE:
-                validateTenantProfile(currentUser, operation, entityId, callback);
-                return;
-            case USER:
-                validateUser(currentUser, operation, entityId, callback);
-                return;
-            case ENTITY_VIEW:
-                validateEntityView(currentUser, operation, entityId, callback);
-                return;
-            case EDGE:
-                validateEdge(currentUser, operation, entityId, callback);
-                return;
-            case API_USAGE_STATE:
-                validateApiUsageState(currentUser, operation, entityId, callback);
-                return;
-            case TB_RESOURCE:
-                validateResource(currentUser, operation, entityId, callback);
-                return;
-            case OTA_PACKAGE:
-                validateOtaPackage(currentUser, operation, entityId, callback);
-                return;
-            case RPC:
-                validateRpc(currentUser, operation, entityId, callback);
-                return;
-            default:
+            case DEVICE -> validateDevice(currentUser, operation, entityId, callback);
+            case DEVICE_PROFILE -> validateDeviceProfile(currentUser, operation, entityId, callback);
+            case ASSET -> validateAsset(currentUser, operation, entityId, callback);
+            case ASSET_PROFILE -> validateAssetProfile(currentUser, operation, entityId, callback);
+            case RULE_CHAIN -> validateRuleChain(currentUser, operation, entityId, callback);
+            case CUSTOMER -> validateCustomer(currentUser, operation, entityId, callback);
+            case TENANT -> validateTenant(currentUser, operation, entityId, callback);
+            case TENANT_PROFILE -> validateTenantProfile(currentUser, operation, entityId, callback);
+            case USER -> validateUser(currentUser, operation, entityId, callback);
+            case ENTITY_VIEW -> validateEntityView(currentUser, operation, entityId, callback);
+            case EDGE -> validateEdge(currentUser, operation, entityId, callback);
+            case API_USAGE_STATE -> validateApiUsageState(currentUser, operation, entityId, callback);
+            case TB_RESOURCE -> validateResource(currentUser, operation, entityId, callback);
+            case OTA_PACKAGE -> validateOtaPackage(currentUser, operation, entityId, callback);
+            case RPC -> validateRpc(currentUser, operation, entityId, callback);
+            default ->
                 //TODO: add support of other entities
                 throw new IllegalStateException("Not Implemented!");
         }

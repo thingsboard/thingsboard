@@ -19,6 +19,8 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -115,9 +117,6 @@ import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.service.transport.TbCoreToTransportService;
-
-import jakarta.annotation.Nullable;
-import jakarta.annotation.PostConstruct;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;

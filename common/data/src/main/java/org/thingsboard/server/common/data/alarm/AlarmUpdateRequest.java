@@ -41,7 +41,7 @@ public class AlarmUpdateRequest implements AlarmModificationRequest {
             "Omit this field to create new alarm.")
     private AlarmId alarmId;
     @NotNull
-    @Schema(required = true, description = "Alarm severity", example = "CRITICAL")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Alarm severity", example = "CRITICAL")
     private AlarmSeverity severity;
     @Schema(description = "Timestamp of the alarm start time, in milliseconds", example = "1634058704565")
     private long startTs;

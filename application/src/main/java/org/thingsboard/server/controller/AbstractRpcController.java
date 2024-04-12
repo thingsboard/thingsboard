@@ -122,15 +122,9 @@ public abstract class AbstractRpcController extends BaseController {
             logRpcCall(rpcRequest, rpcError, null);
             RpcError error = rpcError.get();
             switch (error) {
-                case TIMEOUT:
-                    responseWriter.setResult(new ResponseEntity<>(timeoutStatus));
-                    break;
-                case NO_ACTIVE_CONNECTION:
-                    responseWriter.setResult(new ResponseEntity<>(noActiveConnectionStatus));
-                    break;
-                default:
-                    responseWriter.setResult(new ResponseEntity<>(timeoutStatus));
-                    break;
+                case TIMEOUT -> responseWriter.setResult(new ResponseEntity<>(timeoutStatus));
+                case NO_ACTIVE_CONNECTION -> responseWriter.setResult(new ResponseEntity<>(noActiveConnectionStatus));
+                default -> responseWriter.setResult(new ResponseEntity<>(timeoutStatus));
             }
         } else {
             Optional<String> responseData = response.getResponse();

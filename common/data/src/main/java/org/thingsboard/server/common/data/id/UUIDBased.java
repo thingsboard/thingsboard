@@ -36,7 +36,7 @@ public abstract class UUIDBased implements HasUUID, Serializable {
         this.id = id;
     }
 
-    @Schema(required = true, description = "string", example = "784f394c-42b6-435a-983c-b7beff2784f9")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "784f394c-42b6-435a-983c-b7beff2784f9")
     public UUID getId() {
         return id;
     }

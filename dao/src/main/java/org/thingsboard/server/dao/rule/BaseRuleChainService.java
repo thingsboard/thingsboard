@@ -119,7 +119,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     public RuleChain saveRuleChain(RuleChain ruleChain, boolean publishSaveEvent) {
         ruleChainValidator.validate(ruleChain, RuleChain::getTenantId);
         try {
-            RuleChain savedRuleChain = ruleChainDao.save(ruleChain.getTenantId(), ruleChain);
+            RuleChain savedRuleChain = ruleChainDao.saveAndFlush(ruleChain.getTenantId(), ruleChain);
             if (ruleChain.getId() == null) {
                 entityCountService.publishCountEntityEvictEvent(ruleChain.getTenantId(), EntityType.RULE_CHAIN);
             }

@@ -36,7 +36,7 @@ public class AlarmId extends UUIDBased implements EntityId {
         return new AlarmId(UUID.fromString(alarmId));
     }
 
-    @Schema(required = true, description = "string", example = "ALARM", allowableValues = "ALARM")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "ALARM", allowableValues = "ALARM")
     @Override
     public EntityType getEntityType() {
         return EntityType.ALARM;
