@@ -15,7 +15,9 @@
  */
 package org.thingsboard.server.dao.sql.user;
 
+import io.hypersistence.utils.hibernate.type.array.StringArrayType;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.query.TypedParameterValue;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -55,7 +57,7 @@ public class JpaUserSettingsDao extends JpaAbstractDaoListeningExecutorService i
 
     @Override
     public List<UserSettings> findByTypeAndPath(TenantId tenantId, UserSettingsType type, String... path) {
-        return DaoUtil.convertDataList(userSettingsRepository.findByTypeAndPathExisting(type.name(), path));
+        return DaoUtil.convertDataList(userSettingsRepository.findByTypeAndPathExisting(type.name(), new TypedParameterValue(StringArrayType.INSTANCE, path)));
     }
 
 }

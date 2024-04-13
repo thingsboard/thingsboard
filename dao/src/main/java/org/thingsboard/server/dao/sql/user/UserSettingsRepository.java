@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.user;
 
+import org.hibernate.query.TypedParameterValue;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -26,6 +27,6 @@ import java.util.List;
 public interface UserSettingsRepository extends JpaRepository<UserSettingsEntity, UserSettingsCompositeKey> {
 
     @Query(value = "SELECT * FROM user_settings WHERE type = :type AND (settings #> :path) IS NOT NULL", nativeQuery = true)
-    List<UserSettingsEntity> findByTypeAndPathExisting(@Param("type") String type, @Param("path") String[] path);
+    List<UserSettingsEntity> findByTypeAndPathExisting(@Param("type") String type, @Param("path") TypedParameterValue path);
 
 }
