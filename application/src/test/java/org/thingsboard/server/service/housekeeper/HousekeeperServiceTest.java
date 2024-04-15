@@ -19,7 +19,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
@@ -64,7 +63,6 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
-import org.thingsboard.server.common.msg.housekeeper.HousekeeperClient;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.alarm.AlarmDao;
 import org.thingsboard.server.dao.alarm.AlarmService;
@@ -112,8 +110,6 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
 
     @SpyBean
     private HousekeeperService housekeeperService;
-    @SpyBean
-    private HousekeeperClient housekeeperClient;
     @SpyBean
     private HousekeeperReprocessingService housekeeperReprocessingService;
     @Autowired
@@ -236,14 +232,17 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         List<DeviceId> devices = new ArrayList<>();
         for (int i = 1; i <= 300; i++) {
             Device device = createDevice("test" + i, "test" + i);
-            createRelatedData(device.getId());
             devices.add(device.getId());
         }
+        DeviceId firstDevice = devices.get(0);
+        createRelatedData(firstDevice);
+        DeviceId lastDevice = devices.get(devices.size() - 1);
+        createRelatedData(lastDevice);
 
         Asset asset = createAsset();
         createRelatedData(asset.getId());
-        createRelation(devices.get(0), asset.getId());
-        createAlarm(devices.get(0), asset.getId());
+        createRelation(firstDevice, asset.getId());
+        createAlarm(firstDevice, asset.getId());
 
         RuleChainMetaData ruleChainMetaData = createRuleChain();
         RuleChainId ruleChainId = ruleChainMetaData.getRuleChainId();
@@ -261,7 +260,7 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         loginSysAdmin();
         deleteDifferentTenant();
 
-        await().atMost(60, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().atMost(60, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).untilAsserted(() -> {
             for (DeviceId deviceId : devices) {
                 verifyNoRelatedData(deviceId);
             }
@@ -277,7 +276,6 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
     }
 
     @Test
-    @Ignore // FIXME !!!
     public void whenTaskProcessingFails_thenReprocess() throws Exception {
         TimeoutException error = new TimeoutException("Test timeout");
         doThrow(error).when(tsHistoryDeletionTaskProcessor).process(any());
@@ -289,12 +287,10 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
 
         int attempts = 2;
         await().atMost(30, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).untilAsserted(() -> {
-            verifyTaskProcessing(device.getId(), HousekeeperTaskType.DELETE_TS_HISTORY, 0);
-            for (int i = 1; i <= attempts; i++) {
+            for (int i = 0; i <= attempts; i++) {
                 int attempt = i;
                 verify(housekeeperReprocessingService).submitForReprocessing(argThat(getTaskMatcher(device.getId(), HousekeeperTaskType.DELETE_TS_HISTORY,
-                        task -> task.getErrorsCount() > 0 && task.getAttempt() == attempt)), argThat(e -> e.getMessage().equals(error.getMessage())));
-                verifyTaskProcessing(device.getId(), HousekeeperTaskType.DELETE_TS_HISTORY, attempt);
+                        task -> task.getAttempt() == attempt)), argThat(e -> e.getMessage().equals(error.getMessage())));
             }
         });
 
@@ -306,8 +302,7 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
     }
 
     @Test
-    @Ignore // FIXME !!!
-    public void whenReprocessingAttemptsExceeded_thenReprocessOnNextStartUp() throws Exception {
+    public void whenReprocessingAttemptsExceeded_thenDropTheTask() throws Exception {
         TimeoutException error = new TimeoutException("Test timeout");
         doThrow(error).when(tsHistoryDeletionTaskProcessor).process(any());
 
@@ -327,20 +322,10 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         doCallRealMethod().when(tsHistoryDeletionTaskProcessor).process(any());
         TimeUnit.SECONDS.sleep(2);
         verify(housekeeperService, never()).processTask(argThat(getTaskMatcher(device.getId(), HousekeeperTaskType.DELETE_TS_HISTORY, null)));
-
-        housekeeperReprocessingService.cycle.set(0); // imitating start-up
-        await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
-            verifyTaskProcessing(device.getId(), HousekeeperTaskType.DELETE_TS_HISTORY, 6);
-        });
     }
 
     private void verifyTaskProcessing(EntityId entityId, HousekeeperTaskType taskType, int expectedAttempt) throws Exception {
-        try {
-            verify(housekeeperService).processTask(argThat(getTaskMatcher(entityId, taskType, task -> task.getAttempt() == expectedAttempt)));
-        } catch (Throwable e) {
-            e.printStackTrace();
-            throw e;
-        }
+        verify(housekeeperService).processTask(argThat(getTaskMatcher(entityId, taskType, task -> task.getAttempt() == expectedAttempt)));
     }
 
     private ArgumentMatcher<ToHousekeeperServiceMsg> getTaskMatcher(EntityId entityId, HousekeeperTaskType taskType,

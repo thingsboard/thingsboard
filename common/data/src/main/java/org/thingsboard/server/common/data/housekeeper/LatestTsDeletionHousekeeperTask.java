@@ -36,4 +36,9 @@ public class LatestTsDeletionHousekeeperTask extends HousekeeperTask {
         this.key = key;
     }
 
+    @Override
+    public String getDescription() {
+        return super.getDescription() + (key != null ? " for key '" + key + "'" : "");
+    }
+
 }

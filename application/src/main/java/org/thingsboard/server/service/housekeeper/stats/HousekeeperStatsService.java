@@ -69,6 +69,7 @@ public class HousekeeperStatsService {
     }
 
     public void reportProcessed(HousekeeperTaskType taskType, ToHousekeeperServiceMsg msg) {
+        // todo: report timings
         HousekeeperStats stats = this.stats.get(taskType);
         if (msg.getTask().getErrorsCount() == 0) {
             stats.getProcessedCounter().increment();

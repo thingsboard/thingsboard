@@ -70,6 +70,7 @@ import org.thingsboard.server.actors.device.DeviceActorMessageProcessor;
 import org.thingsboard.server.actors.device.SessionInfo;
 import org.thingsboard.server.actors.device.ToDeviceRpcRequestMetadata;
 import org.thingsboard.server.actors.service.DefaultActorService;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -102,7 +103,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -116,6 +117,7 @@ import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.config.ThingsboardSecurityConfiguration;
 import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.ClaimDevicesService;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -231,7 +233,10 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     private TbTenantProfileService tbTenantProfileService;
 
     @Autowired
-    public TimeseriesService tsService;
+    protected TimeseriesService tsService;
+
+    @Autowired
+    protected AttributesService attributesService;
 
     @Autowired
     protected DefaultActorService actorService;
@@ -379,7 +384,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
             }
         }
         Awaitility.await("tenant cleanup finish").atMost(30, TimeUnit.SECONDS)
-                .until(() -> tsService.findLatest(TenantId.SYS_TENANT_ID, tenantId, "test").get().isEmpty());
+                .until(() -> attributesService.find(TenantId.SYS_TENANT_ID, tenantId, AttributeScope.SERVER_SCOPE, "test").get().isEmpty());
     }
 
     private List<Tenant> getAllTenants() throws Exception {
@@ -444,7 +449,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected Tenant createTenant(Tenant tenant) throws Exception {
         tenant = doPost("/api/tenant", tenant, Tenant.class);
-        tsService.save(TenantId.SYS_TENANT_ID, tenant.getId(), new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry("test", "test"))).get(); // creating marker ts to later know when Housekeeper finishes tenant cleanup
+        attributesService.save(TenantId.SYS_TENANT_ID, tenant.getId(), AttributeScope.SERVER_SCOPE, new BaseAttributeKvEntry(System.currentTimeMillis(), new StringDataEntry("test", "test"))).get(); // creating marker attr to later know when Housekeeper finishes tenant cleanup
         return tenant;
     }
 

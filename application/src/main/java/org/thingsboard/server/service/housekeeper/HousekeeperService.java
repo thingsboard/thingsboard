@@ -24,7 +24,6 @@ import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
 import org.thingsboard.server.common.data.notification.rule.trigger.TaskProcessingFailureTrigger;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
-import org.thingsboard.server.gen.transport.TransportProtos.HousekeeperTaskProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperServiceMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
@@ -118,15 +117,19 @@ public class HousekeeperService {
             throw new IllegalArgumentException("Unsupported task type " + taskType);
         }
 
-        if (log.isDebugEnabled()) {
-            log.debug("[{}] {} {}", task.getTenantId(), isNew(msg.getTask()) ? "Processing" : "Reprocessing", task.getDescription());
-        }
+
         try {
+            long startTs = System.currentTimeMillis();
             Future<Object> future = taskExecutor.submit(() -> {
                 taskProcessor.process((T) task);
                 return null;
             });
             future.get(config.getTaskProcessingTimeout(), TimeUnit.MILLISECONDS);
+
+            long timing = System.currentTimeMillis() - startTs;
+            if (log.isDebugEnabled()) {
+                log.debug("[{}] Processed {} in {} ms (attempt {})", task.getTenantId(), task.getDescription(), timing, msg.getTask().getAttempt());
+            }
             statsService.ifPresent(statsService -> statsService.reportProcessed(taskType, msg));
         } catch (InterruptedException e) {
             throw e;
@@ -137,14 +140,13 @@ public class HousekeeperService {
             } else if (e instanceof TimeoutException) {
                 error = new TimeoutException("Timeout after " + config.getTaskProcessingTimeout() + " seconds");
             }
-            log.error("[{}][{}][{}] {} task processing failed, submitting for reprocessing (attempt {}): {}",
-                    task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(),
-                    taskType, msg.getTask().getAttempt(), task, error);
 
             if (msg.getTask().getAttempt() < config.getMaxReprocessingAttempts()) {
+                log.warn("[{}] Failed to process {} (attempt {}), submitting for reprocessing",
+                        task.getTenantId(), task.getDescription(), msg.getTask().getAttempt(), error);
                 reprocessingService.submitForReprocessing(msg, error);
             } else {
-                log.error("Failed to process task in {} attempts: {}", msg.getTask().getAttempt(), msg);
+                log.error("[{}] Failed to process task in {} attempts: {}", task.getTenantId(), msg.getTask().getAttempt(), msg, e);
                 notificationRuleProcessor.process(TaskProcessingFailureTrigger.builder()
                         .task(task)
                         .error(error)
@@ -155,12 +157,8 @@ public class HousekeeperService {
         }
     }
 
-    private boolean isNew(HousekeeperTaskProto task) {
-        return task.getErrorsCount() == 0;
-    }
-
     @PreDestroy
-    private void stop() throws Exception {
+    private void stop() {
         consumer.stop();
         consumerExecutor.shutdownNow();
         log.info("Stopped Housekeeper service");
