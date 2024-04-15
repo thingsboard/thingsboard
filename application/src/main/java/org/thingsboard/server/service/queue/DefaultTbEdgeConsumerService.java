@@ -264,6 +264,7 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
                 case TENANT -> future = edgeCtx.getTenantProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
                 case TENANT_PROFILE -> future = edgeCtx.getTenantProfileProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
                 case TB_RESOURCE -> future = edgeCtx.getResourceProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
+                case OAUTH2 -> future = edgeCtx.getOAuth2EdgeProcessor().processOAuth2Notification(tenantId, edgeNotificationMsg);
                 default -> {
                     future = Futures.immediateFuture(null);
                     log.warn("[{}] Edge event type [{}] is not designed to be pushed to edge", tenantId, type);

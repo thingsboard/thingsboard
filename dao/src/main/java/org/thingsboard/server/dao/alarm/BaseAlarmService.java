@@ -169,7 +169,7 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
     @Override
     public PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId,
                                                                AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         validateEntityDataPageLink(query.getPageLink());
         return alarmDao.findAlarmDataByQueryForEntities(tenantId, query, orderedEntityIds);
     }
@@ -261,21 +261,21 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
     @Override
     public Alarm findAlarmById(TenantId tenantId, AlarmId alarmId) {
         log.trace("Executing findAlarmById [{}]", alarmId);
-        validateId(alarmId, "Incorrect alarmId " + alarmId);
+        validateId(alarmId, id -> "Incorrect alarmId " + id);
         return alarmDao.findAlarmById(tenantId, alarmId.getId());
     }
 
     @Override
     public ListenableFuture<Alarm> findAlarmByIdAsync(TenantId tenantId, AlarmId alarmId) {
         log.trace("Executing findAlarmByIdAsync [{}]", alarmId);
-        validateId(alarmId, "Incorrect alarmId " + alarmId);
+        validateId(alarmId, id -> "Incorrect alarmId " + id);
         return alarmDao.findAlarmByIdAsync(tenantId, alarmId.getId());
     }
 
     @Override
     public AlarmInfo findAlarmInfoById(TenantId tenantId, AlarmId alarmId) {
         log.trace("Executing findAlarmInfoByIdAsync [{}]", alarmId);
-        validateId(alarmId, "Incorrect alarmId " + alarmId);
+        validateId(alarmId, id -> "Incorrect alarmId " + id);
         return alarmDao.findAlarmInfoById(tenantId, alarmId.getId());
     }
 
@@ -302,8 +302,14 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
     @Override
     public PageData<AlarmId> findAlarmIdsByAssigneeId(TenantId tenantId, UserId userId, PageLink pageLink) {
         log.trace("[{}] Executing findAlarmIdsByAssigneeId [{}]", tenantId, userId);
-        validateId(userId, "Incorrect userId " + userId);
+        validateId(userId, id -> "Incorrect userId " + id);
         return alarmDao.findAlarmIdsByAssigneeId(tenantId, userId.getId(), pageLink);
+    }
+
+    @Override
+    public PageData<AlarmId> findAlarmIdsByOriginatorId(TenantId tenantId, EntityId originatorId, PageLink pageLink) {
+        log.trace("[{}] Executing findAlarmsByOriginatorId [{}]", tenantId, originatorId);
+        return alarmDao.findAlarmIdsByOriginatorId(tenantId, originatorId, pageLink);
     }
 
     @Override
@@ -336,14 +342,14 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
 
     @Override
     public long countAlarmsByQuery(TenantId tenantId, CustomerId customerId, AlarmCountQuery query) {
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         return alarmDao.countAlarmsByQuery(tenantId, customerId, query);
     }
 
     @Override
     public PageData<EntitySubtype> findAlarmTypesByTenantId(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findAlarmTypesByTenantId, tenantId [{}]", tenantId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         if (DEFAULT_ALARM_TYPES_PAGE_LINK.equals(pageLink)) {
             return cache.getAndPutInTransaction(tenantId, () ->
                     alarmDao.findTenantAlarmTypes(tenantId.getId(), pageLink), false);

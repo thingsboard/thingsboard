@@ -104,7 +104,7 @@ public class SslUtil {
     }
 
     private static PrivateKey readPrivateKey(Reader reader, String passStr) throws IOException, PKCSException {
-        char[] password = StringUtils.isEmpty(passStr) ? EMPTY_PASS : passStr.toCharArray();
+        char[] password = getPassword(passStr);
         PrivateKey privateKey = null;
         JcaPEMKeyConverter keyConverter = new JcaPEMKeyConverter();
         try (PEMParser pemParser = new PEMParser(reader)) {
@@ -128,6 +128,10 @@ public class SslUtil {
             }
         }
         return privateKey;
+    }
+
+    public static char[] getPassword(String passStr) {
+        return StringUtils.isEmpty(passStr) ? EMPTY_PASS : passStr.toCharArray();
     }
 
 }

@@ -24,8 +24,6 @@ import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { DashboardId } from '@shared/models/id/dashboard-id';
 import { EntityInfoData, HasTenantId } from '@shared/models/entity.models';
 
-export const TB_SERVICE_QUEUE = 'TbServiceQueue';
-
 export interface AssetProfile extends BaseData<AssetProfileId>, HasTenantId, ExportableEntity<AssetProfileId> {
   tenantId?: TenantId;
   name: string;

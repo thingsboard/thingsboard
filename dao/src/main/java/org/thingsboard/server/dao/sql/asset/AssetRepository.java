@@ -189,7 +189,7 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
                                                      @Param("searchText") String searchText,
                                                      Pageable pageable);
 
-    Long countByTenantIdAndTypeIsNot(UUID tenantId, String type);
+    Long countByTenantId(UUID tenantId);
 
     @Query("SELECT externalId FROM AssetEntity WHERE id = :id")
     UUID getExternalIdById(@Param("id") UUID id);

@@ -13,37 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 @import '../../../../../../../../../scss/constants';
 
-.tb-y-axis-settings-panel {
-  width: 530px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.tb-form-table-row.tb-time-series-state-row {
   @media #{$mat-lt-md} {
-    width: 90vw;
+    align-items: flex-start;
   }
-  .tb-y-axis-settings-panel-content {
+  .tb-state-label-field {
+    flex: 1;
+    min-width: 70px;
+  }
+  .tb-state-value-field {
+    width: 80px;
+    min-width: 80px;
+  }
+  .tb-state-source-field {
+    width: 100px;
+    min-width: 100px;
+  }
+  .tb-state-source-value-field {
+    flex: 1;
+    min-width: 200px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    overflow: auto;
-    margin: -10px;
-    padding: 10px;
-  }
-  .tb-y-axis-settings-title {
-    font-size: 16px;
-    font-weight: 500;
-    line-height: 24px;
-    letter-spacing: 0.25px;
-    color: rgba(0, 0, 0, 0.87);
-  }
-  .tb-y-axis-settings-panel-buttons {
-    height: 40px;
-    display: flex;
-    flex-direction: row;
-    gap: 16px;
-    justify-content: flex-end;
-    align-items: flex-end;
+    gap: 8px;
+    @media #{$mat-gt-sm} {
+      min-width: 358px;
+      flex-direction: row;
+      align-items: center;
+      gap: 12px;
+    }
+    .tb-inline-field {
+      flex: 1;
+    }
   }
 }

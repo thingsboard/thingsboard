@@ -35,7 +35,7 @@ public class TenantProfileId extends UUIDBased implements EntityId {
         return new TenantProfileId(UUID.fromString(tenantProfileId));
     }
 
-    @Schema(required = true, description = "string", example = "TENANT_PROFILE", allowableValues = "TENANT_PROFILE")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "TENANT_PROFILE", allowableValues = "TENANT_PROFILE")
     @Override
     public EntityType getEntityType() {
         return EntityType.TENANT_PROFILE;

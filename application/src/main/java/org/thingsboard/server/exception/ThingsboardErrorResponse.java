@@ -19,8 +19,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.http.HttpStatus;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 
-import java.util.Date;
-
 @Schema
 public class ThingsboardErrorResponse {
     // HTTP Response Status Code
@@ -32,13 +30,13 @@ public class ThingsboardErrorResponse {
     // Error code
     private final ThingsboardErrorCode errorCode;
 
-    private final Date timestamp;
+    private final long timestamp;
 
     protected ThingsboardErrorResponse(final String message, final ThingsboardErrorCode errorCode, HttpStatus status) {
         this.message = message;
         this.errorCode = errorCode;
         this.status = status;
-        this.timestamp = new java.util.Date();
+        this.timestamp = System.currentTimeMillis();
     }
 
     public static ThingsboardErrorResponse of(final String message, final ThingsboardErrorCode errorCode, HttpStatus status) {
@@ -74,7 +72,7 @@ public class ThingsboardErrorResponse {
     }
 
     @Schema(description = "Timestamp", accessMode = Schema.AccessMode.READ_ONLY)
-    public Date getTimestamp() {
+    public long getTimestamp() {
         return timestamp;
     }
 }

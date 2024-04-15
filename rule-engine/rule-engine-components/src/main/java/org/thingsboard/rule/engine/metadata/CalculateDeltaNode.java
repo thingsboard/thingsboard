@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
@@ -46,7 +47,9 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
 @Slf4j
 @RuleNode(type = ComponentType.ENRICHMENT,
-        name = "calculate delta", relationTypes = {TbNodeConnectionType.SUCCESS, TbNodeConnectionType.FAILURE, TbNodeConnectionType.OTHER},
+        name = "calculate delta",
+        version = 1,
+        relationTypes = {TbNodeConnectionType.SUCCESS, TbNodeConnectionType.FAILURE, TbNodeConnectionType.OTHER},
         configClazz = CalculateDeltaNodeConfiguration.class,
         nodeDescription = "Calculates delta and amount of time passed between previous timeseries key reading " +
                 "and current value for this key from the incoming message",
@@ -101,6 +104,11 @@ public class CalculateDeltaNode implements TbNode {
                         return;
                     }
 
+                    if (config.isExcludeZeroDeltas() && delta.doubleValue() == 0) {
+                        ctx.tellSuccess(msg);
+                        return;
+                    }
+
                     if (config.getRound() != null) {
                         delta = delta.setScale(config.getRound(), RoundingMode.HALF_UP);
                     }
@@ -126,6 +134,23 @@ public class CalculateDeltaNode implements TbNode {
         if (useCache) {
             cache.clear();
         }
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0:
+                String excludeZeroDeltas = "excludeZeroDeltas";
+                if (!oldConfiguration.has(excludeZeroDeltas)) {
+                    hasChanges = true;
+                    ((ObjectNode) oldConfiguration).put(excludeZeroDeltas, false);
+                }
+                break;
+            default:
+                break;
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
     }
 
     private ListenableFuture<ValueWithTs> fetchLatestValueAsync(EntityId entityId) {

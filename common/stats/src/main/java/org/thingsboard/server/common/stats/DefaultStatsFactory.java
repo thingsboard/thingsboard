@@ -19,6 +19,7 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
+import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -61,12 +62,17 @@ public class DefaultStatsFactory implements StatsFactory {
 
 
     @Override
-    public StatsCounter createStatsCounter(String key, String statsName) {
+    public StatsCounter createStatsCounter(String key, String statsName, String... otherTags) {
+        String[] tags = new String[]{STATS_NAME_TAG, statsName};
+        if (otherTags.length > 0) {
+            if (otherTags.length % 2 != 0) {
+                throw new IllegalArgumentException("Invalid tags array size");
+            }
+            tags = ArrayUtils.addAll(tags, otherTags);
+        }
         return new StatsCounter(
                 new AtomicInteger(0),
-                metricsEnabled ?
-                        meterRegistry.counter(key, STATS_NAME_TAG, statsName)
-                        : STUB_COUNTER,
+                metricsEnabled ? meterRegistry.counter(key, tags) : STUB_COUNTER,
                 statsName
         );
     }

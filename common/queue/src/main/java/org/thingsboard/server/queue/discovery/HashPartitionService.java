@@ -207,7 +207,7 @@ public class HashPartitionService implements PartitionService {
             evictTenantInfo(queueKey.getTenantId());
         });
         if (serviceInfoProvider.isService(ServiceType.TB_RULE_ENGINE)) {
-            publishPartitionChangeEvent(ServiceType.TB_RULE_ENGINE.name(), queueKeys.stream()
+            publishPartitionChangeEvent(ServiceType.TB_RULE_ENGINE, queueKeys.stream()
                     .collect(Collectors.toMap(k -> k, k -> Collections.emptySet())));
         }
     }
@@ -370,15 +370,10 @@ public class HashPartitionService implements PartitionService {
             }
         });
         if (!changedPartitionsMap.isEmpty()) {
-            Map<String , Map<QueueKey, Set<TopicPartitionInfo>>> partitionsByServiceType = new HashMap<>();
+            Map<ServiceType , Map<QueueKey, Set<TopicPartitionInfo>>> partitionsByServiceType = new HashMap<>();
             changedPartitionsMap.forEach((queueKey, partitions) -> {
-                if (EDGE_QUEUE_NAME.equals(queueKey.getQueueName())) {
-                    partitionsByServiceType.computeIfAbsent(queueKey.getType().name() + "_" + EDGE_QUEUE_NAME, serviceType -> new HashMap<>())
-                            .put(queueKey, partitions);
-                } else {
-                    partitionsByServiceType.computeIfAbsent(queueKey.getType().name(), serviceType -> new HashMap<>())
-                            .put(queueKey, partitions);
-                }
+                partitionsByServiceType.computeIfAbsent(queueKey.getType(), serviceType -> new HashMap<>())
+                        .put(queueKey, partitions);
             });
             partitionsByServiceType.forEach(this::publishPartitionChangeEvent);
         }
@@ -412,13 +407,12 @@ public class HashPartitionService implements PartitionService {
         applicationEventPublisher.publishEvent(new ServiceListChangedEvent(otherServices, currentService));
     }
 
-    private void publishPartitionChangeEvent(String type, Map<QueueKey, Set<TopicPartitionInfo>> partitionsMap) {
+    private void publishPartitionChangeEvent(ServiceType serviceType, Map<QueueKey, Set<TopicPartitionInfo>> partitionsMap) {
         log.info("Partitions changed: {}", System.lineSeparator() + partitionsMap.entrySet().stream()
                 .map(entry -> "[" + entry.getKey() + "] - [" + entry.getValue().stream()
                         .map(tpi -> tpi.getPartition().orElse(-1).toString()).sorted()
                         .collect(Collectors.joining(", ")) + "]")
                 .collect(Collectors.joining(System.lineSeparator())));
-        ServiceType serviceType = ServiceType.ofWithEdge(type);
         PartitionChangeEvent event = new PartitionChangeEvent(this, serviceType, partitionsMap);
         try {
             applicationEventPublisher.publishEvent(event);
