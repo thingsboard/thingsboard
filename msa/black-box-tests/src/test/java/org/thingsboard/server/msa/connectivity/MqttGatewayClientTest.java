@@ -407,6 +407,8 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         RateLimitsNotificationInfo info = (RateLimitsNotificationInfo) update.getInfo();
         assertThat(info.getApi()).isEqualTo(LimitedApi.TRANSPORT_MESSAGES_PER_GATEWAY);
         assertThat(info.getLimitLevel()).isEqualTo(gatewayDevice.getId());
+        containerWsClient.markAllNotificationsAsRead();
+        containerWsClient.close();
     }
 
     @Test
@@ -456,6 +458,8 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         RateLimitsNotificationInfo info = (RateLimitsNotificationInfo) update.getInfo();
         assertThat(info.getApi()).isEqualTo(LimitedApi.TRANSPORT_MESSAGES_PER_GATEWAY);
         assertThat(info.getLimitLevel()).isEqualTo(gatewayDevice.getId());
+        containerWsClient.markAllNotificationsAsRead();
+        containerWsClient.close();
 
     }
 
@@ -506,6 +510,8 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         RateLimitsNotificationInfo info = (RateLimitsNotificationInfo) update.getInfo();
         assertThat(info.getApi()).isEqualTo(LimitedApi.TRANSPORT_MESSAGES_PER_GATEWAY);
         assertThat(info.getLimitLevel()).isEqualTo(gatewayDevice.getId());
+        containerWsClient.markAllNotificationsAsRead();
+        containerWsClient.close();
     }
 
     @Test
@@ -546,6 +552,8 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         assertThat(actualLatestTelemetry.getDataValuesByKey("stringAltKey").get(1)).isEqualTo("value2");
         assertThat(actualLatestTelemetry.getDataValuesByKey("doubleAltKey").get(1)).isEqualTo(Double.toString(45.0));
         assertThat(actualLatestTelemetry.getDataValuesByKey("longAltKey").get(1)).isEqualTo(Long.toString(78));
+        containerWsClient.markAllNotificationsAsRead();
+        containerWsClient.close();
     }
 
     private void checkAttribute(boolean client, String expectedValue) throws Exception {
