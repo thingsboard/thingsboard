@@ -90,12 +90,16 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
             }
         }
 
-        Alarm existingAlarm = ctx.getAlarmService().findLatestActiveByOriginatorAndType(ctx.getTenantId(), msg.getOriginator(), alarmType);
-        if (existingAlarm == null || existingAlarm.isCleared()) {
-            return createNewAlarm(ctx, msg, msgAlarm);
-        } else {
-            return updateAlarm(ctx, msg, existingAlarm, msgAlarm);
-        }
+        ListenableFuture<Alarm> existingAlarmFuture = ctx.getDbCallbackExecutor().submit(
+                () -> ctx.getAlarmService().findLatestActiveByOriginatorAndType(ctx.getTenantId(), msg.getOriginator(), alarmType)
+        );
+        return Futures.transformAsync(existingAlarmFuture, existingAlarm -> {
+            if (existingAlarm == null || existingAlarm.isCleared()) {
+                return createNewAlarm(ctx, msg, msgAlarm);
+            } else {
+                return updateAlarm(ctx, msg, existingAlarm, msgAlarm);
+            }
+        }, MoreExecutors.directExecutor());
     }
 
     private Alarm getAlarmFromMessage(TenantId tenantId, TbMsg msg) throws IllegalArgumentException {
