@@ -15,14 +15,14 @@
  */
 package org.thingsboard.server.service.edge.instructions;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInstructions;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 public interface EdgeInstallInstructionsService {
 
     EdgeInstructions getInstallInstructions(Edge edge, String installationMethod, HttpServletRequest request);
 
     void setAppVersion(String version);
+
 }

@@ -27,7 +27,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
@@ -83,8 +82,6 @@ import java.util.UUID;
 @Slf4j
 public class DefaultEdgeRequestsService implements EdgeRequestsService {
 
-    private static final int DEFAULT_PAGE_SIZE = 1000;
-
     @Autowired
     private EdgeEventService edgeEventService;
 
@@ -110,19 +107,14 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
     @Autowired
     private DbCallbackExecutorService dbCallbackExecutorService;
 
-    @Autowired
-    private TbClusterService tbClusterService;
-
     @Override
     public ListenableFuture<Void> processRuleChainMetadataRequestMsg(TenantId tenantId, Edge edge, RuleChainMetadataRequestMsg ruleChainMetadataRequestMsg) {
         log.trace("[{}] processRuleChainMetadataRequestMsg [{}][{}]", tenantId, edge.getName(), ruleChainMetadataRequestMsg);
         if (ruleChainMetadataRequestMsg.getRuleChainIdMSB() == 0 || ruleChainMetadataRequestMsg.getRuleChainIdLSB() == 0) {
             return Futures.immediateFuture(null);
         }
-        RuleChainId ruleChainId =
-                new RuleChainId(new UUID(ruleChainMetadataRequestMsg.getRuleChainIdMSB(), ruleChainMetadataRequestMsg.getRuleChainIdLSB()));
-        return saveEdgeEvent(tenantId, edge.getId(),
-                EdgeEventType.RULE_CHAIN_METADATA, EdgeEventActionType.ADDED, ruleChainId, null);
+        RuleChainId ruleChainId = new RuleChainId(new UUID(ruleChainMetadataRequestMsg.getRuleChainIdMSB(), ruleChainMetadataRequestMsg.getRuleChainIdLSB()));
+        return saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.RULE_CHAIN_METADATA, EdgeEventActionType.ADDED, ruleChainId, null);
     }
 
     @Override

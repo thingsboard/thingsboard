@@ -42,6 +42,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmCommentUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
@@ -255,7 +256,7 @@ public final class EdgeGrpcSession implements Closeable {
                 @Override
                 public void onSuccess(Boolean isInterrupted) {
                     syncCompleted = true;
-                    ctx.getClusterService().onEdgeEventUpdate(edge.getTenantId(), edge.getId());
+                    ctx.getClusterService().onEdgeEventUpdate(new EdgeEventUpdateMsg(edge.getTenantId(), edge.getId()));
                 }
 
                 @Override

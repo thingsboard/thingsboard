@@ -226,10 +226,10 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
             forwardToAppActor(id, ProtoUtils.fromProto(toEdgeNotificationMsg.getEdgeEventUpdate()));
             callback.onSuccess();
         } else if (toEdgeNotificationMsg.hasToEdgeSyncRequest()) {
-            forwardToAppActor(id, ProtoUtils.fromProto(toEdgeNotificationMsg.getEdgeEventUpdate()));
+            forwardToAppActor(id, ProtoUtils.fromProto(toEdgeNotificationMsg.getToEdgeSyncRequest()));
             callback.onSuccess();
         } else if (toEdgeNotificationMsg.hasFromEdgeSyncResponse()) {
-            forwardToAppActor(id, ProtoUtils.fromProto(toEdgeNotificationMsg.getEdgeEventUpdate()));
+            forwardToAppActor(id, ProtoUtils.fromProto(toEdgeNotificationMsg.getFromEdgeSyncResponse()));
             callback.onSuccess();
         }
         if (statsEnabled) {

@@ -490,7 +490,7 @@ cache:
     # make sure that if cache.type is 'redis' and cache.attributes.enabled is 'true' if you change 'maxmemory-policy' Redis config property to 'allkeys-lru', 'allkeys-lfu' or 'allkeys-random'
     enabled: "${CACHE_ATTRIBUTES_ENABLED:true}"
   specs:
-    relations:
+    relations: # timeToLiveInMinutes persistent if set 0
       timeToLiveInMinutes: "${CACHE_SPECS_RELATIONS_TTL:1440}" # Relations cache TTL
       maxSize: "${CACHE_SPECS_RELATIONS_MAX_SIZE:10000}" # 0 means the cache is disabled
     deviceCredentials:

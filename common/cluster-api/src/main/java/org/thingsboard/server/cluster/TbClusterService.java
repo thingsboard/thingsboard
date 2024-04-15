@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
+import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
 import org.thingsboard.server.common.msg.edge.FromEdgeSyncResponse;
 import org.thingsboard.server.common.msg.edge.ToEdgeSyncRequest;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -92,13 +93,13 @@ public interface TbClusterService extends TbQueueClusterService {
 
     void onResourceDeleted(TbResourceInfo resource, TbQueueCallback callback);
 
-    void onEdgeEventUpdate(TenantId tenantId, EdgeId edgeId);
+    void onEdgeEventUpdate(EdgeEventUpdateMsg msg);
+
+    void pushEdgeSyncRequestToEdge(ToEdgeSyncRequest request);
+
+    void pushEdgeSyncResponseToEdge(FromEdgeSyncResponse response);
 
     void pushMsgToEdge(TenantId tenantId, EntityId entityId, ToEdgeMsg msg, TbQueueCallback callback);
-
-    void pushEdgeSyncRequestToCore(ToEdgeSyncRequest toEdgeSyncRequest, String serviceId);
-
-    void pushEdgeSyncResponseToCore(FromEdgeSyncResponse fromEdgeSyncResponse, String serviceId);
 
     void sendNotificationMsgToEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, EdgeEventActionType action, EdgeId sourceEdgeId);
 

@@ -64,15 +64,11 @@ public class DefaultEdgeUpgradeInstructionsService implements EdgeUpgradeInstruc
     public EdgeInstructions getUpgradeInstructions(String edgeVersion, String upgradeMethod) {
         String tbVersion = appVersion.replace("-SNAPSHOT", "");
         String currentEdgeVersion = convertEdgeVersionToDocsFormat(edgeVersion);
-        switch (upgradeMethod.toLowerCase()) {
-            case "docker":
-                return getDockerUpgradeInstructions(tbVersion, currentEdgeVersion);
-            case "ubuntu":
-            case "centos":
-                return getLinuxUpgradeInstructions(tbVersion, currentEdgeVersion, upgradeMethod.toLowerCase());
-            default:
-                throw new IllegalArgumentException("Unsupported upgrade method for Edge: " + upgradeMethod);
-        }
+        return switch (upgradeMethod.toLowerCase()) {
+            case "docker" -> getDockerUpgradeInstructions(tbVersion, currentEdgeVersion);
+            case "ubuntu", "centos" -> getLinuxUpgradeInstructions(tbVersion, currentEdgeVersion, upgradeMethod.toLowerCase());
+            default -> throw new IllegalArgumentException("Unsupported upgrade method for Edge: " + upgradeMethod);
+        };
     }
 
     @Override
@@ -191,4 +187,5 @@ public class DefaultEdgeUpgradeInstructionsService implements EdgeUpgradeInstruc
     private Path getEdgeInstallInstructionsDir() {
         return Paths.get(installScripts.getDataDir(), InstallScripts.JSON_DIR, EDGE_DIR, INSTRUCTIONS_DIR, UPGRADE_DIR);
     }
+
 }

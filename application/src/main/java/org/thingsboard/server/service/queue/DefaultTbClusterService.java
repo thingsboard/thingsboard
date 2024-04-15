@@ -409,41 +409,57 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     @Override
-    public void onEdgeEventUpdate(TenantId tenantId, EdgeId edgeId) {
-        log.trace("[{}] Processing edge {} event update ", tenantId, edgeId);
-        EdgeEventUpdateMsg msg = new EdgeEventUpdateMsg(tenantId, edgeId);
-        ToEdgeNotificationMsg toEdgeNotificationMsg = ToEdgeNotificationMsg.newBuilder().setEdgeEventUpdate(toProto(msg)).build();
-        var cacheValueWrapper = cache.get(edgeId);
-        pushMsgToEdge(toEdgeNotificationMsg, cacheValueWrapper != null ? cacheValueWrapper.get() : null);
-    }
-
-    @Override
-    public void pushEdgeSyncRequestToCore(ToEdgeSyncRequest toEdgeSyncRequest, String serviceId) {
-        log.trace("[{}] Processing edge sync request {} ", toEdgeSyncRequest.getTenantId(), toEdgeSyncRequest);
-        ToEdgeNotificationMsg toEdgeNotificationMsg = ToEdgeNotificationMsg.newBuilder().setToEdgeSyncRequest(toProto(toEdgeSyncRequest)).build();
-        pushMsgToEdge(toEdgeNotificationMsg, serviceId);
-    }
-
-    @Override
-    public void pushEdgeSyncResponseToCore(FromEdgeSyncResponse fromEdgeSyncResponse, String serviceId) {
-        log.trace("[{}] Processing edge sync response {}", fromEdgeSyncResponse.getTenantId(), fromEdgeSyncResponse);
-        ToEdgeNotificationMsg toEdgeNotificationMsg = ToEdgeNotificationMsg.newBuilder().setFromEdgeSyncResponse(toProto(fromEdgeSyncResponse)).build();
-        pushMsgToEdge(toEdgeNotificationMsg, serviceId);
-    }
-
-    private void pushMsgToEdge(ToEdgeNotificationMsg toEdgeNotificationMsg, String serviceId) {
-        TopicPartitionInfo tpi = topicService.getEdgeNotificationsTopic(ServiceType.TB_CORE, serviceId);
-        TbQueueProducer<TbProtoQueueMsg<ToEdgeNotificationMsg>> toEdgeNotificationProducer = producerProvider.getTbEdgeNotificationsMsgProducer();
-        toEdgeNotificationProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), toEdgeNotificationMsg), null);
-        toEdgeMsgs.incrementAndGet();
-    }
-
-    @Override
     public void pushMsgToEdge(TenantId tenantId, EntityId entityId, ToEdgeMsg msg, TbQueueCallback callback) {
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, DataConstants.EDGE_QUEUE_NAME, tenantId, entityId);
         TbQueueProducer<TbProtoQueueMsg<ToEdgeMsg>> toEdgeProducer = producerProvider.getTbEdgeMsgProducer();
         toEdgeProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), callback);
         toEdgeMsgs.incrementAndGet();
+    }
+
+    @Override
+    public void onEdgeEventUpdate(EdgeEventUpdateMsg msg) {
+        log.trace("[{}] Processing edge event update for edgeId: {}", msg.getTenantId(), msg.getEdgeId());
+        ToEdgeNotificationMsg toEdgeNotificationMsg = ToEdgeNotificationMsg.newBuilder().setEdgeEventUpdate(toProto(msg)).build();
+        processEdgeNotification(msg.getEdgeId(), toEdgeNotificationMsg);
+    }
+
+    @Override
+    public void pushEdgeSyncRequestToEdge(ToEdgeSyncRequest request) {
+        log.trace("[{}] Processing edge sync request for edgeId: {}", request.getTenantId(), request.getEdgeId());
+        ToEdgeNotificationMsg toEdgeNotificationMsg = ToEdgeNotificationMsg.newBuilder().setToEdgeSyncRequest(toProto(request)).build();
+        processEdgeNotification(request.getEdgeId(), toEdgeNotificationMsg);
+    }
+
+    @Override
+    public void pushEdgeSyncResponseToEdge(FromEdgeSyncResponse response) {
+        log.trace("[{}] Processing edge sync response for edgeId: {}", response.getTenantId(), response.getEdgeId());
+        ToEdgeNotificationMsg toEdgeNotificationMsg = ToEdgeNotificationMsg.newBuilder().setFromEdgeSyncResponse(toProto(response)).build();
+        processEdgeNotification(response.getEdgeId(), toEdgeNotificationMsg);
+    }
+
+    private void processEdgeNotification(EdgeId edgeId, ToEdgeNotificationMsg toEdgeNotificationMsg) {
+        var cacheValueWrapperOpt = Optional.ofNullable(cache.get(edgeId));
+        cacheValueWrapperOpt.ifPresentOrElse(
+                serviceId -> pushMsgToEdgeNotification(toEdgeNotificationMsg, serviceId.get()),
+                () -> broadcastEdgeNotification(edgeId, toEdgeNotificationMsg)
+        );
+    }
+
+    private void pushMsgToEdgeNotification(ToEdgeNotificationMsg toEdgeNotificationMsg, String serviceId) {
+        TopicPartitionInfo tpi = topicService.getEdgeNotificationsTopic(ServiceType.TB_CORE, serviceId);
+        TbQueueProducer<TbProtoQueueMsg<ToEdgeNotificationMsg>> toEdgeNotificationProducer = producerProvider.getTbEdgeNotificationsMsgProducer();
+        toEdgeNotificationProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), toEdgeNotificationMsg), null);
+        toEdgeNfs.incrementAndGet();
+    }
+
+    private void broadcastEdgeNotification(EdgeId edgeId, ToEdgeNotificationMsg toEdgeNotificationMsg) {
+        TbQueueProducer<TbProtoQueueMsg<ToEdgeNotificationMsg>> toEdgeNotificationProducer = producerProvider.getTbEdgeNotificationsMsgProducer();
+        Set<String> serviceIds = partitionService.getAllServiceIds(ServiceType.TB_CORE);
+        for (String serviceId : serviceIds) {
+            TopicPartitionInfo tpi = topicService.getEdgeNotificationsTopic(ServiceType.TB_CORE, serviceId);
+            toEdgeNotificationProducer.send(tpi, new TbProtoQueueMsg<>(edgeId.getId(), toEdgeNotificationMsg), null);
+            toEdgeNfs.incrementAndGet();
+        }
     }
 
     private void broadcast(ComponentLifecycleMsg msg) {

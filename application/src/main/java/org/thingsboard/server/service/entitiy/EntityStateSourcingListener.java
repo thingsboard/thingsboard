@@ -47,6 +47,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceCredentialsUpdateNotificationMsg;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
@@ -233,7 +234,7 @@ public class EntityStateSourcingListener {
         if (entity instanceof Edge) {
             tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, lifecycleEvent);
         } else if (entity instanceof EdgeEvent) {
-            tbClusterService.onEdgeEventUpdate(tenantId, (EdgeId) entityId);
+            tbClusterService.onEdgeEventUpdate(new EdgeEventUpdateMsg(tenantId, (EdgeId) entityId));
         }
     }
 
@@ -252,4 +253,5 @@ public class EntityStateSourcingListener {
         metaData.putValue("assignedFromTenantName", tenant.getName());
         return metaData;
     }
+
 }

@@ -21,6 +21,9 @@ import com.google.common.util.concurrent.Futures;
 import io.grpc.Server;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
+import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -57,9 +60,6 @@ import org.thingsboard.server.service.edge.EdgeContextComponent;
 import org.thingsboard.server.service.state.DefaultDeviceStateService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
-import jakarta.annotation.Nullable;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
@@ -202,21 +202,21 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     public void onToEdgeSessionMsg(TenantId tenantId, EdgeSessionMsg msg) {
         executorService.execute(() -> {
             switch (msg.getMsgType()) {
-                case EDGE_EVENT_UPDATE_TO_EDGE_SESSION_MSG:
+                case EDGE_EVENT_UPDATE_TO_EDGE_SESSION_MSG -> {
                     EdgeEventUpdateMsg edgeEventUpdateMsg = (EdgeEventUpdateMsg) msg;
-                    log.trace("[{}] onToEdgeSessionMsg [{}]", tenantId, msg);
+                    log.trace("[{}] onToEdgeEventUpdateMsg [{}]", tenantId, msg);
                     onEdgeEvent(tenantId, edgeEventUpdateMsg.getEdgeId());
-                    break;
-                case EDGE_SYNC_REQUEST_TO_EDGE_SESSION_MSG:
+                }
+                case EDGE_SYNC_REQUEST_TO_EDGE_SESSION_MSG -> {
                     ToEdgeSyncRequest toEdgeSyncRequest = (ToEdgeSyncRequest) msg;
                     log.trace("[{}] toEdgeSyncRequest [{}]", tenantId, msg);
                     startSyncProcess(tenantId, toEdgeSyncRequest.getEdgeId(), toEdgeSyncRequest.getId());
-                    break;
-                case EDGE_SYNC_RESPONSE_FROM_EDGE_SESSION_MSG:
+                }
+                case EDGE_SYNC_RESPONSE_FROM_EDGE_SESSION_MSG -> {
                     FromEdgeSyncResponse fromEdgeSyncResponse = (FromEdgeSyncResponse) msg;
                     log.trace("[{}] fromEdgeSyncResponse [{}]", tenantId, msg);
                     processSyncResponse(fromEdgeSyncResponse);
-                    break;
+                }
             }
         });
     }
@@ -286,10 +286,10 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         save(tenantId, edgeId, DefaultDeviceStateService.ACTIVITY_STATE, true);
         long lastConnectTs = System.currentTimeMillis();
         save(tenantId, edgeId, DefaultDeviceStateService.LAST_CONNECT_TIME, lastConnectTs);
+        cache.put(edgeId, serviceInfoProvider.getServiceId());
         pushRuleEngineMessage(tenantId, edge, lastConnectTs, TbMsgType.CONNECT_EVENT);
         cancelScheduleEdgeEventsCheck(edgeId);
         scheduleEdgeEventsCheck(edgeGrpcSession);
-        cache.put(edgeId, serviceInfoProvider.getServiceId());
     }
 
     private void startSyncProcess(TenantId tenantId, EdgeId edgeId, UUID requestId) {
@@ -300,7 +300,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 session.startSyncProcess(true);
                 success = true;
             }
-            clusterService.pushEdgeSyncResponseToCore(new FromEdgeSyncResponse(requestId, tenantId, edgeId, success), cache.get(edgeId).get());
+            clusterService.pushEdgeSyncResponseToEdge(new FromEdgeSyncResponse(requestId, tenantId, edgeId, success));
         }
     }
 
@@ -309,7 +309,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         log.trace("[{}][{}] Processing sync edge request [{}]", request.getTenantId(), request.getId(), request.getEdgeId());
         UUID requestId = request.getId();
         localSyncEdgeRequests.put(requestId, responseConsumer);
-        clusterService.pushEdgeSyncRequestToCore(request, cache.get(request.getEdgeId()).get());
+        clusterService.pushEdgeSyncRequestToEdge(request);
         scheduleSyncRequestTimeout(request, requestId);
     }
 
