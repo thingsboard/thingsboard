@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.objects.AttributesEntityView;
 import org.thingsboard.server.common.data.objects.TelemetryEntityView;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -54,7 +55,6 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.refEq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -70,6 +70,8 @@ public class TbCopyAttributesToEntityViewNodeTest {
 
     private final TenantId TENANT_ID = new TenantId(UUID.fromString("9fdb1f05-dc66-4960-9263-ae195f1b4533"));
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("1d453dc9-9333-476a-a51f-093cf2176e59"));
+    private final long FROM_DATE = Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli();
+    private final long TO_DATE = Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli();
 
     private TbCopyAttributesToEntityViewNode node;
     private EmptyNodeConfiguration config;
@@ -91,12 +93,8 @@ public class TbCopyAttributesToEntityViewNodeTest {
 
     @Test
     public void givenExistingAttributes_whenOnMsg_thenCopyAttributesToView() {
-        EntityViewId entityViewId = EntityViewId.fromString("a2109747-d1f4-475a-baaa-55f5d4897ad8");
-        EntityView entityView = new EntityView(entityViewId);
-        entityView.setStartTimeMs(Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli());
-        entityView.setEndTimeMs(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli());
-        AttributesEntityView attributes = new AttributesEntityView(List.of("attribute1"), Collections.emptyList(), Collections.emptyList());
-        entityView.setKeys(new TelemetryEntityView(Collections.emptyList(), attributes));
+        EntityView entityView = getEntityView();
+        EntityViewId entityViewId = entityView.getId();
 
         TbMsg msg = TbMsg.newMsg(
                 TbMsgType.POST_ATTRIBUTES_REQUEST, DEVICE_ID, new TbMsgMetaData(Map.of("scope", "CLIENT_SCOPE")),
@@ -112,28 +110,21 @@ public class TbCopyAttributesToEntityViewNodeTest {
             callback.onSuccess(null);
             return null;
         }).when(telemetryServiceMock).saveAndNotify(any(), any(), any(AttributeScope.class), anyList(), any(FutureCallback.class));
-        doAnswer(invocation -> {
-            TbMsg newMsg = TbMsg.newMsg(msg.getQueueName(), msg.getType(), entityViewId, msg.getCustomerId(), msg.getMetaData(), msg.getData());
-            return newMsg;
-        }).when(ctxMock).newMsg(any(), any(String.class), any(), any(), any(), any());
+        TbMsg newMsg = TbMsg.newMsg(msg, msg.getQueueName(), msg.getRuleChainId(), msg.getRuleNodeId());
+        doAnswer(invocation -> newMsg).when(ctxMock).newMsg(any(), any(String.class), any(), any(), any(), any());
 
         node.onMsg(ctxMock, msg);
 
         verify(entityViewServiceMock).findEntityViewsByTenantIdAndEntityIdAsync(eq(TENANT_ID), eq(DEVICE_ID));
         verify(telemetryServiceMock).saveAndNotify(eq(TENANT_ID), eq(entityViewId), eq(AttributeScope.CLIENT_SCOPE), anyList(), any(FutureCallback.class));
         verify(ctxMock).ack(eq(msg));
-        TbMsg expectedNewMsg = TbMsg.newMsg(msg.getQueueName(), msg.getType(), entityViewId, msg.getCustomerId(), msg.getMetaData(), msg.getData());
-        verify(ctxMock).enqueueForTellNext(refEq(expectedNewMsg, "ts", "id", "ctx"), eq("Success"));
+        verify(ctxMock).enqueueForTellNext(eq(newMsg), eq(TbNodeConnectionType.SUCCESS));
     }
 
     @Test
     public void givenExistingAttributesAndMsgTypeAttributesDeleted_whenOnMsg_thenDeleteAttributesFromView() {
-        EntityViewId entityViewId = EntityViewId.fromString("d117f1a4-24ea-4fdd-b94e-5a472e99d925");
-        EntityView entityView = new EntityView(entityViewId);
-        entityView.setStartTimeMs(Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli());
-        entityView.setEndTimeMs(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli());
-        AttributesEntityView attributes = new AttributesEntityView(List.of("attribute1"), Collections.emptyList(), Collections.emptyList());
-        entityView.setKeys(new TelemetryEntityView(Collections.emptyList(), attributes));
+        EntityView entityView = getEntityView();
+        EntityViewId entityViewId = entityView.getId();
 
         TbMsg msg = TbMsg.newMsg(
                 ATTRIBUTES_DELETED, DEVICE_ID, new TbMsgMetaData(Map.of("scope", "CLIENT_SCOPE")),
@@ -149,28 +140,20 @@ public class TbCopyAttributesToEntityViewNodeTest {
             callback.onSuccess(null);
             return null;
         }).when(telemetryServiceMock).deleteAndNotify(any(), any(), any(AttributeScope.class), anyList(), any(FutureCallback.class));
-        doAnswer(invocation -> {
-            TbMsg newMsg = TbMsg.newMsg(msg.getQueueName(), msg.getType(), entityViewId, msg.getCustomerId(), msg.getMetaData(), msg.getData());
-            return newMsg;
-        }).when(ctxMock).newMsg(any(), any(String.class), any(), any(), any(), any());
+        TbMsg newMsg = TbMsg.newMsg(msg, msg.getQueueName(), msg.getRuleChainId(), msg.getRuleNodeId());
+        doAnswer(invocation -> newMsg).when(ctxMock).newMsg(any(), any(String.class), any(), any(), any(), any());
 
         node.onMsg(ctxMock, msg);
 
         verify(entityViewServiceMock).findEntityViewsByTenantIdAndEntityIdAsync(eq(TENANT_ID), eq(DEVICE_ID));
         verify(telemetryServiceMock).deleteAndNotify(eq(TENANT_ID), eq(entityViewId), eq(AttributeScope.CLIENT_SCOPE), anyList(), any(FutureCallback.class));
         verify(ctxMock).ack(eq(msg));
-        TbMsg expectedNewMsg = TbMsg.newMsg(msg.getQueueName(), msg.getType(), entityViewId, msg.getCustomerId(), msg.getMetaData(), msg.getData());
-        verify(ctxMock).enqueueForTellNext(refEq(expectedNewMsg, "ts", "id", "ctx"), eq("Success"));
+        verify(ctxMock).enqueueForTellNext(eq(newMsg), eq(TbNodeConnectionType.SUCCESS));
     }
 
     @Test
     public void givenNonMatchedAttributesAndMsgTypeIsAttributesDeleted_whenOnMsg_thenNoAttributesDeleteFromView() {
-        EntityViewId entityViewId = EntityViewId.fromString("a2109747-d1f4-475a-baaa-55f5d4897ad8");
-        EntityView entityView = new EntityView(entityViewId);
-        entityView.setStartTimeMs(Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli());
-        entityView.setEndTimeMs(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli());
-        AttributesEntityView attributes = new AttributesEntityView(List.of("attribute1"), Collections.emptyList(), Collections.emptyList());
-        entityView.setKeys(new TelemetryEntityView(Collections.emptyList(), attributes));
+        EntityView entityView = getEntityView();
 
         TbMsg msg = TbMsg.newMsg(
                 TbMsgType.ATTRIBUTES_DELETED, DEVICE_ID, new TbMsgMetaData(Map.of("scope", "CLIENT_SCOPE")),
@@ -190,12 +173,8 @@ public class TbCopyAttributesToEntityViewNodeTest {
 
     @Test
     public void givenNonMatchedAttributesAndMsgTypeIsPostAttributesRequest_whenOnMsg_thenCopyNoAttributesToView() {
-        EntityViewId entityViewId = EntityViewId.fromString("a2109747-d1f4-475a-baaa-55f5d4897ad8");
-        EntityView entityView = new EntityView(entityViewId);
-        entityView.setStartTimeMs(Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli());
-        entityView.setEndTimeMs(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli());
-        AttributesEntityView attributes = new AttributesEntityView(List.of("attribute1"), Collections.emptyList(), Collections.emptyList());
-        entityView.setKeys(new TelemetryEntityView(Collections.emptyList(), attributes));
+        EntityView entityView = getEntityView();
+        EntityViewId entityViewId = entityView.getId();
 
         TbMsg msg = TbMsg.newMsg(
                 TbMsgType.POST_ATTRIBUTES_REQUEST, DEVICE_ID, new TbMsgMetaData(Map.of("scope", "CLIENT_SCOPE")),
@@ -211,28 +190,23 @@ public class TbCopyAttributesToEntityViewNodeTest {
             callback.onSuccess(null);
             return null;
         }).when(telemetryServiceMock).saveAndNotify(any(), any(), any(AttributeScope.class), anyList(), any(FutureCallback.class));
-        doAnswer(invocation -> {
-            TbMsg newMsg = TbMsg.newMsg(msg.getQueueName(), msg.getType(), entityViewId, msg.getCustomerId(), msg.getMetaData(), msg.getData());
-            return newMsg;
-        }).when(ctxMock).newMsg(any(), any(String.class), any(), any(), any(), any());
+        TbMsg newMsg = TbMsg.newMsg(msg, msg.getQueueName(), msg.getRuleChainId(), msg.getRuleNodeId());
+        doAnswer(invocation -> newMsg).when(ctxMock).newMsg(any(), any(String.class), any(), any(), any(), any());
 
         node.onMsg(ctxMock, msg);
 
         verify(entityViewServiceMock).findEntityViewsByTenantIdAndEntityIdAsync(eq(TENANT_ID), eq(DEVICE_ID));
         verify(telemetryServiceMock).saveAndNotify(eq(TENANT_ID), eq(entityViewId), eq(AttributeScope.CLIENT_SCOPE), eq(Collections.emptyList()), any(FutureCallback.class));
         verify(ctxMock).ack(eq(msg));
-        TbMsg expectedNewMsg = TbMsg.newMsg(msg.getQueueName(), msg.getType(), entityViewId, msg.getCustomerId(), msg.getMetaData(), msg.getData());
-        verify(ctxMock).enqueueForTellNext(refEq(expectedNewMsg, "ts", "id", "ctx"), eq("Success"));
+        verify(ctxMock).enqueueForTellNext(eq(newMsg), eq(TbNodeConnectionType.SUCCESS));
     }
 
     @Test
-    public void givenAttributesValidityPeriodOutOfStartDateAndEndDate_whenOnMsg_thenThrowsException() {
+    public void givenAttributesValidityPeriodOutOfStartDateAndEndDate_whenOnMsg_thenDoNothing() {
         EntityViewId entityViewId = EntityViewId.fromString("d117f1a4-24ea-4fdd-b94e-5a472e99d925");
         EntityView entityView = new EntityView(entityViewId);
         entityView.setStartTimeMs(Instant.now().minus(2, ChronoUnit.DAYS).toEpochMilli());
-        entityView.setStartTimeMs(Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli());
-        AttributesEntityView attributes = new AttributesEntityView(List.of("attribute1"), Collections.emptyList(), Collections.emptyList());
-        entityView.setKeys(new TelemetryEntityView(Collections.emptyList(), attributes));
+        entityView.setEndTimeMs(Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli());
 
         when(ctxMock.getEntityViewService()).thenReturn(entityViewServiceMock);
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
@@ -245,8 +219,8 @@ public class TbCopyAttributesToEntityViewNodeTest {
 
         node.onMsg(ctxMock, msg);
 
-        ArgumentCaptor<Throwable> captor = ArgumentCaptor.forClass(Throwable.class);
-        verify(ctxMock).tellFailure(eq(msg), captor.capture());
+        verify(entityViewServiceMock).findEntityViewsByTenantIdAndEntityIdAsync(eq(TENANT_ID), eq(DEVICE_ID));
+        verify(ctxMock).ack(eq(msg));
     }
 
     @Test
@@ -259,9 +233,7 @@ public class TbCopyAttributesToEntityViewNodeTest {
         ArgumentCaptor<Throwable> captor = ArgumentCaptor.forClass(Throwable.class);
         verify(ctxMock).tellFailure(eq(msg), captor.capture());
         Throwable throwable = captor.getValue();
-        assertThat(throwable.getClass()).isEqualTo(IllegalArgumentException.class);
-        String expectedExceptionMessage = "java.lang.IllegalArgumentException: Message metadata is empty";
-        assertThat(throwable.toString()).isEqualTo(expectedExceptionMessage);
+        assertThat(throwable).isInstanceOf(IllegalArgumentException.class).hasMessage("Message metadata is empty");
     }
 
     @ParameterizedTest
@@ -280,8 +252,16 @@ public class TbCopyAttributesToEntityViewNodeTest {
         ArgumentCaptor<Throwable> captor = ArgumentCaptor.forClass(Throwable.class);
         verify(ctxMock).tellFailure(eq(msg), captor.capture());
         Throwable throwable = captor.getValue();
-        assertThat(throwable.getClass()).isEqualTo(IllegalArgumentException.class);
-        String expectedExceptionMessage = "java.lang.IllegalArgumentException: Unsupported msg type [" + msg.getType() + "]";
-        assertThat(throwable.toString()).isEqualTo(expectedExceptionMessage);
+        assertThat(throwable).isInstanceOf(IllegalArgumentException.class).hasMessage("Unsupported msg type [" + msgType + "]");
+    }
+
+    private EntityView getEntityView() {
+        EntityViewId entityViewId = EntityViewId.fromString("a2109747-d1f4-475a-baaa-55f5d4897ad8");
+        EntityView entityView = new EntityView(entityViewId);
+        entityView.setStartTimeMs(FROM_DATE);
+        entityView.setEndTimeMs(TO_DATE);
+        AttributesEntityView attributes = new AttributesEntityView(List.of("attribute1"), Collections.emptyList(), Collections.emptyList());
+        entityView.setKeys(new TelemetryEntityView(Collections.emptyList(), attributes));
+        return entityView;
     }
 }
