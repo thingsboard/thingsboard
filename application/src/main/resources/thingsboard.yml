@@ -1643,7 +1643,7 @@ queue:
       # DELETE_LATEST_TS, DELETE_TS_HISTORY, DELETE_EVENTS, DELETE_ALARMS, UNASSIGN_ALARMS
       disabled-task-types: "${TB_HOUSEKEEPER_DISABLED_TASK_TYPES:}"
       # Delay in milliseconds between tasks reprocessing
-      task-reprocessing-delay-ms: "${TB_HOUSEKEEPER_TASK_REPROCESSING_DELAY_MS:5000}"
+      task-reprocessing-delay-ms: "${TB_HOUSEKEEPER_TASK_REPROCESSING_DELAY_MS:3000}"
       # Maximum amount of task reprocessing attempts. After exceeding, the task will be dropped
       max-reprocessing-attempts: "${TB_HOUSEKEEPER_MAX_REPROCESSING_ATTEMPTS:10}"
       stats:

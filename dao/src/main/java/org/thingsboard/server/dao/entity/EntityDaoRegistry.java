@@ -20,19 +20,23 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.dao.Dao;
 
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 public class EntityDaoRegistry {
 
-    private final Map<EntityType, Dao<?>> daos;
+    private final Map<EntityType, Dao<?>> daos = new EnumMap<>(EntityType.class);
 
     private EntityDaoRegistry(List<Dao<?>> daos) {
-        this.daos = daos.stream().filter(dao -> dao.getEntityType() != null)
-                .collect(Collectors.toMap(Dao::getEntityType, dao -> dao));
+        daos.forEach(dao -> {
+            EntityType entityType = dao.getEntityType();
+            if (entityType != null) {
+                this.daos.put(entityType, dao);
+            }
+        });
     }
 
     @SuppressWarnings("unchecked")

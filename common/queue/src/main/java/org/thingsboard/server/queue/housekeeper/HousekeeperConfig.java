@@ -32,7 +32,7 @@ public class HousekeeperConfig {
     private int taskProcessingTimeout;
     @Value("${queue.core.housekeeper.poll-interval-ms:500}")
     private int pollInterval;
-    @Value("${queue.core.housekeeper.task-reprocessing-delay-ms:5000}")
+    @Value("${queue.core.housekeeper.task-reprocessing-delay-ms:3000}")
     private int taskReprocessingDelay;
     @Value("${queue.core.housekeeper.max-reprocessing-attempts:10}")
     private int maxReprocessingAttempts;
