@@ -86,6 +86,7 @@ export interface DoughnutWidgetSettings {
   tooltipBackgroundColor: string;
   tooltipBackgroundBlur: number;
   background: BackgroundSettings;
+  padding: string;
 }
 
 export const doughnutDefaultSettings = (horizontal: boolean): DoughnutWidgetSettings => ({
@@ -144,5 +145,6 @@ export const doughnutDefaultSettings = (horizontal: boolean): DoughnutWidgetSett
       color: 'rgba(255,255,255,0.72)',
       blur: 3
     }
-  }
+  },
+  padding: '12px'
 });

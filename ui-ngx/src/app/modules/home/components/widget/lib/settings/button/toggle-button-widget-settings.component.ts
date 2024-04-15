@@ -72,7 +72,8 @@ export class ToggleButtonWidgetSettingsComponent extends WidgetSettingsComponent
       checkedAppearance: [settings.checkedAppearance, []],
       uncheckedAppearance: [settings.uncheckedAppearance, []],
 
-      background: [settings.background, []]
+      background: [settings.background, []],
+      padding: [settings.padding, []]
     });
   }
 

@@ -40,6 +40,8 @@ export class ToggleButtonWidgetComponent extends
 
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
+  overlayEnabled: boolean;
+  padding: string;
 
   value = false;
   disabled = false;
@@ -68,6 +70,8 @@ export class ToggleButtonWidgetComponent extends
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
+    this.overlayEnabled = this.settings.background.overlay.enabled;
+    this.padding = this.overlayEnabled ? undefined : this.settings.padding;
 
     const getInitialStateSettings =
       {...this.settings.initialState, actionLabel: this.ctx.translate.instant('widgets.rpc-state.initial-state')};

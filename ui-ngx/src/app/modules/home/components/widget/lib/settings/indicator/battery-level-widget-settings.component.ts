@@ -75,7 +75,8 @@ export class BatteryLevelWidgetSettingsComponent extends WidgetSettingsComponent
       batteryLevelColor: [settings.batteryLevelColor, []],
       batteryShapeColor: [settings.batteryShapeColor, []],
 
-      background: [settings.background, []]
+      background: [settings.background, []],
+      padding: [settings.padding, []]
     });
   }
 

@@ -61,6 +61,7 @@ export interface BatteryLevelWidgetSettings {
   batteryLevelColor: ColorSettings;
   batteryShapeColor: ColorSettings;
   background: BackgroundSettings;
+  padding: string;
 }
 
 export const batteryLevelDefaultSettings: BatteryLevelWidgetSettings = {
@@ -105,6 +106,7 @@ export const batteryLevelDefaultSettings: BatteryLevelWidgetSettings = {
       color: 'rgba(255,255,255,0.72)',
       blur: 3
     }
-  }
+  },
+  padding: '12px'
 };
 

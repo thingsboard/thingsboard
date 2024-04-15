@@ -66,7 +66,8 @@ export class ValueChartCardWidgetSettingsComponent extends WidgetSettingsCompone
       valueFont: [settings.valueFont, []],
       valueColor: [settings.valueColor, []],
 
-      background: [settings.background, []]
+      background: [settings.background, []],
+      padding: [settings.padding, []]
     });
   }
 

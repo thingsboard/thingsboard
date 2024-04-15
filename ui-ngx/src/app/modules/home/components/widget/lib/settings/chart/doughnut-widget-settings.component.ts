@@ -116,7 +116,8 @@ export class DoughnutWidgetSettingsComponent extends WidgetSettingsComponent {
       tooltipBackgroundColor: [settings.tooltipBackgroundColor, []],
       tooltipBackgroundBlur: [settings.tooltipBackgroundBlur, []],
 
-      background: [settings.background, []]
+      background: [settings.background, []],
+      padding: [settings.padding, []]
     });
   }
 

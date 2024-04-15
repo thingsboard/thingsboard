@@ -98,6 +98,8 @@ export class ProgressBarWidgetComponent implements OnInit, OnDestroy, AfterViewI
 
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
+  overlayEnabled: boolean;
+  padding: string;
 
   progressBarPanelResize$: ResizeObserver;
 
@@ -151,6 +153,8 @@ export class ProgressBarWidgetComponent implements OnInit, OnDestroy, AfterViewI
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
+    this.overlayEnabled = this.settings.background.overlay.enabled;
+    this.padding = this.overlayEnabled ? undefined : this.settings.padding;
   }
 
   ngAfterViewInit() {
