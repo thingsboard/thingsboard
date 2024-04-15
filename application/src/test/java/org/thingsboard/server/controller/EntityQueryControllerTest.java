@@ -560,7 +560,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         Awaitility.await()
                 .alias("data by query")
-                .atMost(30, TimeUnit.SECONDS)
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> {
                     var data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {});
                     var loadedEntities = new ArrayList<>(data.getData());

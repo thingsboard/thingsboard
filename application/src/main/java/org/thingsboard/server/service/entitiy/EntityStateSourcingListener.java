@@ -18,6 +18,7 @@ package org.thingsboard.server.service.entitiy;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.common.util.JacksonUtil;
@@ -63,6 +64,9 @@ public class EntityStateSourcingListener {
 
     private final TbClusterService tbClusterService;
 
+    @Value("${edges.enabled}")
+    private boolean edgesEnabled;
+
     @PostConstruct
     public void init() {
         log.info("EntityStateSourcingListener initiated");
@@ -103,7 +107,7 @@ public class EntityStateSourcingListener {
                 onDeviceProfileUpdate(deviceProfile, event.getOldEntity(), isCreated);
             }
             case EDGE -> {
-                handleEdgeEvent(tenantId, entityId, event.getEntity(), lifecycleEvent);
+                onEdgeEvent(tenantId, entityId, event.getEntity(), lifecycleEvent);
             }
             case TB_RESOURCE -> {
                 TbResource tbResource = (TbResource) event.getEntity();
@@ -230,8 +234,8 @@ public class EntityStateSourcingListener {
         tbClusterService.onDeviceUpdated(device, oldDevice);
     }
 
-    private void handleEdgeEvent(TenantId tenantId, EntityId entityId, Object entity, ComponentLifecycleEvent lifecycleEvent) {
-        if (entity instanceof Edge) {
+    private void onEdgeEvent(TenantId tenantId, EntityId entityId, Object entity, ComponentLifecycleEvent lifecycleEvent) {
+        if (entity instanceof Edge && edgesEnabled) {
             tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, lifecycleEvent);
         } else if (entity instanceof EdgeEvent) {
             tbClusterService.onEdgeEventUpdate(new EdgeEventUpdateMsg(tenantId, (EdgeId) entityId));

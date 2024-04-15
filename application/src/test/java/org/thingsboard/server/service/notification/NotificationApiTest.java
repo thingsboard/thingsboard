@@ -821,7 +821,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         String expectedSubject = "Comment on 'test' alarm";
         String expectedBody = TENANT_ADMIN_EMAIL + " added comment: text";
         ArgumentCaptor<Map<String, String>> msgCaptor = ArgumentCaptor.forClass(Map.class);
-        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(firebaseService).sendMessage(eq(tenantId), eq("testCredentials"),
                     eq(TEST_MOBILE_TOKEN), eq(expectedSubject),
                     eq(expectedBody),
@@ -876,7 +876,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
     }
 
     private NotificationRequestStats awaitNotificationRequest(NotificationRequestId requestId) {
-        return await().atMost(30, TimeUnit.SECONDS)
+        return await().atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> getStats(requestId), Objects::nonNull);
     }
 

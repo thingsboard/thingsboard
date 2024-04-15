@@ -46,7 +46,11 @@ public class CaffeineCacheDefaultConfigurationTest {
         SoftAssertions softly = new SoftAssertions();
         cacheSpecsMap.getSpecs().forEach((name, cacheSpecs)->{
             softly.assertThat(name).as("cache name").isNotEmpty();
-            softly.assertThat(cacheSpecs.getTimeToLiveInMinutes()).as("cache %s time to live", name).isGreaterThan(0);
+            if (name.equals("edgeSessions")) {
+                softly.assertThat(cacheSpecs.getTimeToLiveInMinutes()).as("cache %s time to live", name).isEqualTo(0);
+            } else {
+                softly.assertThat(cacheSpecs.getTimeToLiveInMinutes()).as("cache %s time to live", name).isGreaterThan(0);
+            }
             softly.assertThat(cacheSpecs.getMaxSize()).as("cache %s max size", name).isGreaterThan(0);
         });
         softly.assertAll();

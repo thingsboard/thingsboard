@@ -60,6 +60,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.security.Authority;
@@ -898,6 +899,9 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertTrue(popDeviceMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Device 1"));
         Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test"));
         Assert.assertTrue(popAssetMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Asset 1"));
+        if (!edgeImitator.getDownlinkMsgs().isEmpty()) {
+            System.out.println("events = " + edgeImitator.getDownlinkMsgs());
+        }
         Assert.assertTrue(edgeImitator.getDownlinkMsgs().isEmpty());
 
         edgeImitator.expectMessageAmount(20);
@@ -926,7 +930,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         attributes.put("active", true);
         doPost("/api/plugins/telemetry/EDGE/" + edge.getId() + "/attributes/" + DataConstants.SERVER_SCOPE, attributes);
         Awaitility.await()
-                .atMost(30, TimeUnit.SECONDS)
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> {
                     List<Map<String, Object>> values = doGetAsyncTyped("/api/plugins/telemetry/EDGE/" + edge.getId() +
                             "/values/attributes/SERVER_SCOPE", new TypeReference<>() {});
@@ -934,8 +938,9 @@ public class EdgeControllerTest extends AbstractControllerTest {
                     if (activeAttrOpt.isEmpty()) {
                         return false;
                     }
+                    List<RuleChain> ruleChains = getEdgeRuleChains(edge.getId());
                     Map<String, Object> activeAttr = activeAttrOpt.get();
-                    return "true".equals(activeAttr.get("value").toString());
+                    return "true".equals(activeAttr.get("value").toString()) && ruleChains.size() == 1;
                 });
     }
 
@@ -1164,6 +1169,12 @@ public class EdgeControllerTest extends AbstractControllerTest {
     private Edge savedEdge(String name) {
         Edge edge = constructEdge(name, "default");
         return doPost("/api/edge", edge, Edge.class);
+    }
+
+    private List<RuleChain> getEdgeRuleChains(EdgeId edgeId) throws Exception {
+        return doGetTypedWithTimePageLink("/api/edge/" + edgeId + "/ruleChains?",
+                new TypeReference<PageData<RuleChain>>() {
+                }, new TimePageLink(10)).getData();
     }
 
     @Test
