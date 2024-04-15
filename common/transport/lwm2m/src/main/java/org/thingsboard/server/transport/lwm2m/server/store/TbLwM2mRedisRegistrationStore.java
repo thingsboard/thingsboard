@@ -222,6 +222,7 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
 
     @Override
     public UpdatedRegistration updateRegistration(RegistrationUpdate update) {
+        log.trace("updateRegistration [{}]", update);
         Lock lock = null;
         try (var connection = connectionFactory.getConnection()) {
 

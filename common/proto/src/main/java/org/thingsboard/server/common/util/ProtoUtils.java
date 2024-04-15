@@ -260,31 +260,31 @@ public class ProtoUtils {
                         .setLastUpdateTs(attributeKvEntry.getLastUpdateTs())
                         .setKey(attributeKvEntry.getKey());
                 switch (attributeKvEntry.getDataType()) {
-                    case BOOLEAN:
+                    case BOOLEAN -> {
                         attributeKvEntry.getBooleanValue().ifPresent(attributeValueBuilder::setBoolV);
                         attributeValueBuilder.setHasV(attributeKvEntry.getBooleanValue().isPresent());
                         attributeValueBuilder.setType(TransportProtos.KeyValueType.BOOLEAN_V);
-                        break;
-                    case STRING:
+                    }
+                    case STRING -> {
                         attributeKvEntry.getStrValue().ifPresent(attributeValueBuilder::setStringV);
                         attributeValueBuilder.setHasV(attributeKvEntry.getStrValue().isPresent());
                         attributeValueBuilder.setType(TransportProtos.KeyValueType.STRING_V);
-                        break;
-                    case DOUBLE:
+                    }
+                    case DOUBLE -> {
                         attributeKvEntry.getDoubleValue().ifPresent(attributeValueBuilder::setDoubleV);
                         attributeValueBuilder.setHasV(attributeKvEntry.getDoubleValue().isPresent());
                         attributeValueBuilder.setType(TransportProtos.KeyValueType.DOUBLE_V);
-                        break;
-                    case LONG:
+                    }
+                    case LONG -> {
                         attributeKvEntry.getLongValue().ifPresent(attributeValueBuilder::setLongV);
                         attributeValueBuilder.setHasV(attributeKvEntry.getLongValue().isPresent());
                         attributeValueBuilder.setType(TransportProtos.KeyValueType.LONG_V);
-                        break;
-                    case JSON:
+                    }
+                    case JSON -> {
                         attributeKvEntry.getJsonValue().ifPresent(attributeValueBuilder::setJsonV);
                         attributeValueBuilder.setHasV(attributeKvEntry.getJsonValue().isPresent());
                         attributeValueBuilder.setType(TransportProtos.KeyValueType.JSON_V);
-                        break;
+                    }
                 }
                 builder.addValues(attributeValueBuilder.build());
             }

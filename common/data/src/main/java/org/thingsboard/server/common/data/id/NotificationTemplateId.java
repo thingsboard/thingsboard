@@ -29,7 +29,7 @@ public class NotificationTemplateId extends UUIDBased implements EntityId {
         super(id);
     }
 
-    @Schema(required = true, description = "string", example = "NOTIFICATION_TEMPLATE", allowableValues = "NOTIFICATION_TEMPLATE")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "NOTIFICATION_TEMPLATE", allowableValues = "NOTIFICATION_TEMPLATE")
     @Override
     public EntityType getEntityType() {
         return EntityType.NOTIFICATION_TEMPLATE;

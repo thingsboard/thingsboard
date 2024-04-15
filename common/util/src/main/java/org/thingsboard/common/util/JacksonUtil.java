@@ -255,6 +255,10 @@ public class JacksonUtil {
         return node;
     }
 
+    public static ObjectNode asObject(JsonNode node) {
+        return node != null && node.isObject() ? ((ObjectNode) node) : newObjectNode();
+    }
+
     public static void replaceUuidsRecursively(JsonNode node, Set<String> skippedRootFields, Pattern includedFieldsPattern, UnaryOperator<UUID> replacer, boolean root) {
         if (node == null) {
             return;
