@@ -32,16 +32,6 @@ import java.math.RoundingMode;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -54,7 +44,9 @@ import java.util.Set;
 public class TbUtils {
 
     private static final byte[] HEX_ARRAY = "0123456789ABCDEF".getBytes(StandardCharsets.US_ASCII);
+    private static final String ALLOWED_CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.!~*'();/?:@&=+$,#";
 
+    private static final String HEX = "0123456789ABCDEF";
     public static void register(ParserConfiguration parserConfig) throws Exception {
         parserConfig.addImport("btoa", new MethodStub(TbUtils.class.getMethod("btoa",
                 String.class)));
@@ -175,6 +167,14 @@ public class TbUtils {
                 ExecutionContext.class, Map.class, List.class)));
         parserConfig.addImport("toFlatMap", new MethodStub(TbUtils.class.getMethod("toFlatMap",
                 ExecutionContext.class, Map.class, List.class, boolean.class)));
+        parserConfig.addImport("encodeUri", new MethodStub(TbUtils.class.getMethod("encodeUri",
+                String.class)));
+        parserConfig.addImport("decodeUri", new MethodStub(TbUtils.class.getMethod("decodeUri",
+                String.class)));
+        parserConfig.addImport("encodeURIComponent", new MethodStub(TbUtils.class.getMethod("encodeURIComponent",
+                String.class)));
+        parserConfig.addImport("decodeURIComponent", new MethodStub(TbUtils.class.getMethod("decodeURIComponent",
+                String.class)));
     }
 
     public static String btoa(String input) {
@@ -661,6 +661,174 @@ public class TbUtils {
                 map.put(key, json);
             }
         }
+    }
+
+    /**
+     * This code goes beyond Javascript's by percent-encoding every character that is not an unreserved character
+     * according to RFC 3986 (https://www.rfc-editor.org/rfc/rfc3986).
+     * escapes all characters except:
+     * A–Z a–z 0–9 - _ . ! ~ * ' ( )
+     * ; / ? : @ & = + $ , #
+     * @param uri
+     * @return
+     */
+    public static String encodeUri(String uri) {
+        if (uri == null) return null;
+        byte[] bytes = uri.getBytes(StandardCharsets.UTF_8);
+        validationLoneSurrogate(uri);
+        StringBuilder builder = new StringBuilder(bytes.length);
+        for (byte c : bytes) {
+            if (ALLOWED_CHARS.indexOf(c) >= 0) {
+                builder.append((char) c);
+            } else {
+                builder.append('%')
+                        .append(HEX.charAt(c >> 4 & 0xf))
+                        .append(HEX.charAt(c & 0xf));
+            }
+        }
+
+        return builder.toString();
+    }
+
+    public static String decodeUri(String uri) {
+        if (uri == null) return null;
+
+        int length = uri.length();
+        byte[] bytes = new byte[length / 3];
+        StringBuilder builder = new StringBuilder(length);
+
+        for (int i = 0; i < length; ) {
+            char c = uri.charAt(i);
+            if (c != '%') {
+                builder.append(c);
+                i += 1;
+            } else {
+                int j = 0;
+                do {
+                    char h = uri.charAt(i + 1);
+                    char l = uri.charAt(i + 2);
+                    i += 3;
+
+                    h -= '0';
+                    if (h >= 10) {
+                        h |= ' ';
+                        h -= 'a' - '0';
+                        if (h >= 6) throw new IllegalArgumentException();
+                        h += 10;
+                    }
+
+                    l -= '0';
+                    if (l >= 10) {
+                        l |= ' ';
+                        l -= 'a' - '0';
+                        if (l >= 6) throw new IllegalArgumentException();
+                        l += 10;
+                    }
+
+                    bytes[j++] = (byte)(h << 4 | l);
+                    if (i >= length) break;
+                    c = uri.charAt(i);
+                } while (c == '%');
+                builder.append(new String(bytes, 0, j, StandardCharsets.UTF_8));
+            }
+        }
+
+        return builder.toString();
+    }
+
+    public static String encodeURIComponent(String input) {
+        if(StringUtils.isEmpty(input)) {
+            return input;
+        }
+
+        int l = input.length();
+        StringBuilder o = new StringBuilder(l * 3);
+        for (int i = 0; i < l; i++) {
+            String e = input.substring(i, i + 1);
+            if (ALLOWED_CHARS.indexOf(e) == -1) {
+                byte[] b = e.getBytes(StandardCharsets.UTF_8);
+                o.append(bytesToHex(b));
+                continue;
+            }
+            o.append(e);
+        }
+        return o.toString();
+    }
+
+    public static String decodeURIComponent(String encodedURI) {
+        char actualChar;
+
+        StringBuffer buffer = new StringBuffer();
+
+        int bytePattern, sumb = 0;
+
+        for (int i = 0, more = -1; i < encodedURI.length(); i++) {
+            actualChar = encodedURI.charAt(i);
+
+            switch (actualChar) {
+                case '%': {
+                    actualChar = encodedURI.charAt(++i);
+                    int hb = (Character.isDigit(actualChar) ? actualChar - '0'
+                            : 10 + Character.toLowerCase(actualChar) - 'a') & 0xF;
+                    actualChar = encodedURI.charAt(++i);
+                    int lb = (Character.isDigit(actualChar) ? actualChar - '0'
+                            : 10 + Character.toLowerCase(actualChar) - 'a') & 0xF;
+                    bytePattern = (hb << 4) | lb;
+                    break;
+                }
+                case '+': {
+                    bytePattern = ' ';
+                    break;
+                }
+                default: {
+                    bytePattern = actualChar;
+                }
+            }
+
+            if ((bytePattern & 0xc0) == 0x80) { // 10xxxxxx
+                sumb = (sumb << 6) | (bytePattern & 0x3f);
+                if (--more == 0)
+                    buffer.append((char) sumb);
+            } else if ((bytePattern & 0x80) == 0x00) { // 0xxxxxxx
+                buffer.append((char) bytePattern);
+            } else if ((bytePattern & 0xe0) == 0xc0) { // 110xxxxx
+                sumb = bytePattern & 0x1f;
+                more = 1;
+            } else if ((bytePattern & 0xf0) == 0xe0) { // 1110xxxx
+                sumb = bytePattern & 0x0f;
+                more = 2;
+            } else if ((bytePattern & 0xf8) == 0xf0) { // 11110xxx
+                sumb = bytePattern & 0x07;
+                more = 3;
+            } else if ((bytePattern & 0xfc) == 0xf8) { // 111110xx
+                sumb = bytePattern & 0x03;
+                more = 4;
+            } else { // 1111110x
+                sumb = bytePattern & 0x01;
+                more = 5;
+            }
+        }
+        return buffer.toString();
+    }
+
+    public static  boolean validationLoneSurrogate(String uri) {
+        int highSurrogateIndex = uri.indexOf('\uD800');
+        int lowSurrogateIndex = uri.indexOf('\uDFFF');
+        String msg = "URI malformed: '\\uD800  '\\uDFFF";
+        if (highSurrogateIndex == -1 && lowSurrogateIndex == -1) {
+            return true;
+        } else if (highSurrogateIndex == -1 || lowSurrogateIndex == -1) {
+            throw new IllegalArgumentException(msg);
+        } else {
+            while (highSurrogateIndex >= 0 && lowSurrogateIndex >= 0) {
+                if (lowSurrogateIndex != (highSurrogateIndex + 1)) {
+                    throw new IllegalArgumentException(msg);
+                }
+                highSurrogateIndex = uri.indexOf('\uD800', highSurrogateIndex + 1);
+                lowSurrogateIndex = uri.indexOf('\uDFFF', lowSurrogateIndex + 1);
+            }
+        }
+        return true;
     }
 
     private static boolean isValidRadix(String value, int radix) {

@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Random;
@@ -474,6 +473,40 @@ public class TbUtilsTest {
         }
     }
 
+    @Test
+    public void encodeUriMdnTest() {
+        String uri = "-_.!~*\'();/?:@&=+$,#ht://example.ж д a/path with spaces/?param1=Київ 1&param2=Україна2";
+        String uriExpected = "-_.!~*'();/?:@&=+$,#ht://example.%D0%B6%20%D0%B4%20a/path%20with%20spaces/?param1=%D0%9A%D0%B8%D1%97%D0%B2%201&param2=%D0%A3%D0%BA%D1%80%D0%B0%D1%97%D0%BD%D0%B02";
+        Assert.assertEquals(uriExpected, TbUtils.encodeUri(uri));
+        Assert.assertEquals(uri, TbUtils.decodeUri(uriExpected));
+    }
+    @Test
+    public void encodeUriMdn_LoneSurrogateOk_Test() {
+        String uri = "-_.!~*\'();/?:@&=+$,#ht://example.ж д a/path with spaces/?param1=Київ 1&param2=Україна2\uD800\uDFFF";
+        String uriExpected = "-_.!~*'();/?:@&=+$,#ht://example.%D0%B6%20%D0%B4%20a/path%20with%20spaces/?param1=%D0%9A%D0%B8%D1%97%D0%B2%201&param2=%D0%A3%D0%BA%D1%80%D0%B0%D1%97%D0%BD%D0%B02%F0%90%8F%BF";
+        Assert.assertEquals(uriExpected, TbUtils.encodeUri(uri));
+        Assert.assertEquals(uri, TbUtils.decodeUri(uriExpected));
+   }
+    @Test
+    public void encodeUriMdn_LoneSurrogateBad_Test() {
+        String uri = "\uD800-_.!~*\'();/?:@&=+$,#ht://example.ж д a/path with spaces/?param1=Київ 1&param2=Україна2";
+        Assert.assertThrows(IllegalArgumentException.class, () ->  TbUtils.encodeUri(uri));
+    }
+    @Test
+    public void loneSurrogateOk_Test() {
+        String loneSurrogate = "\uD800\uDFFF";
+        Assert.assertTrue(TbUtils.validationLoneSurrogate (loneSurrogate));
+    }
+    @Test
+    public void loneSurrogateTest_Bad_LoneHighSurrogateCodeUnit() {
+        String loneSurrogate = "\uD800";
+        Assert.assertThrows(IllegalArgumentException.class, () -> TbUtils.validationLoneSurrogate (loneSurrogate));
+    }
+    @Test
+    public void loneSurrogateTest_Bad_LoneLowSurrogateCodeUnit() {
+        String loneSurrogate = "\uDFFF";
+        Assert.assertThrows(IllegalArgumentException.class, () -> TbUtils.validationLoneSurrogate (loneSurrogate));
+    }
 
     private static List<Byte> toList(byte[] data) {
         List<Byte> result = new ArrayList<>(data.length);
