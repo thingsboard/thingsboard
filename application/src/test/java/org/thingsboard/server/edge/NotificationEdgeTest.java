@@ -53,9 +53,6 @@ import java.util.UUID;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@TestPropertySource(properties = {
-        "transport.mqtt.enabled=true"
-})
 @DaoSqlTest
 public class NotificationEdgeTest extends AbstractEdgeTest {
 
