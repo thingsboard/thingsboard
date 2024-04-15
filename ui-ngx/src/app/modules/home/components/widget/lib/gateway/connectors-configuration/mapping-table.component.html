@@ -57,16 +57,23 @@
         </button>
       </div>
     </mat-toolbar>
-    <div fxFlex class="table-container">
+    <div class="table-container">
       <table mat-table [dataSource]="dataSource">
-        <ng-container [matColumnDef]="column.def" *ngFor="let column of mappingColumns;">
-          <mat-header-cell *matHeaderCellDef>{{ column.title | translate }}</mat-header-cell>
-          <mat-cell *matCellDef="let mapping">{{ mapping[column.def] }}</mat-cell>
+        <ng-container [matColumnDef]="column.def" *ngFor="let column of mappingColumns; let i = index">
+          <mat-header-cell *matHeaderCellDef class="table-value-column" [class.request-column]="mappingType === mappingTypeEnum.REQUESTS">
+            {{ column.title | translate }}
+          </mat-header-cell>
+          <mat-cell *matCellDef="let mapping" class="table-value-column" [class.request-column]="mappingType === mappingTypeEnum.REQUESTS">
+            {{ mapping[column.def] }}
+          </mat-cell>
         </ng-container>
-        <ng-container matColumnDef="actions">
-          <mat-header-cell *matHeaderCellDef style="width: 12%"></mat-header-cell>
-          <mat-cell *matCellDef="let mapping; let i = index">
-            <div fxFlex fxLayout="row" style="align-items: center">
+        <ng-container matColumnDef="actions" stickyEnd>
+          <mat-header-cell *matHeaderCellDef
+                           [ngStyle.gt-md]="{ minWidth: '96px', maxWidth: '96px', width: '96px', textAlign: 'center'}">
+          </mat-header-cell>
+          <mat-cell *matCellDef="let mapping; let i = index"
+                    [ngStyle.gt-md]="{ minWidth: '96px', maxWidth: '96px', width: '96px'}">
+            <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
               <button mat-icon-button
                       (click)="manageMapping($event, i)">
                 <tb-icon>edit</tb-icon>
@@ -75,6 +82,23 @@
                       (click)="deleteMapping($event, i)">
                 <tb-icon>delete</tb-icon>
               </button>
+            </div>
+            <div fxHide fxShow.lt-lg fxFlex fxLayout="row" fxLayoutAlign="end">
+              <button mat-icon-button
+                      (click)="$event.stopPropagation()"
+                      [matMenuTriggerFor]="cellActionsMenu">
+                <mat-icon class="material-icons">more_vert</mat-icon>
+              </button>
+              <mat-menu #cellActionsMenu="matMenu" xPosition="before">
+                <button mat-icon-button
+                        (click)="manageMapping($event, i)">
+                  <tb-icon>edit</tb-icon>
+                </button>
+                <button mat-icon-button
+                        (click)="deleteMapping($event, i)">
+                  <tb-icon>delete</tb-icon>
+                </button>
+              </mat-menu>
             </div>
           </mat-cell>
         </ng-container>

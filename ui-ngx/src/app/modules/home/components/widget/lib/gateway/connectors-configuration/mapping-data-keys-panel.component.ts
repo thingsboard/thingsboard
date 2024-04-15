@@ -38,7 +38,8 @@ import {
   MappingDataKey,
   MappingKeysType,
   MappingValueType,
-  mappingValueTypesMap
+  mappingValueTypesMap,
+  noLeadTrailSpacesRegex
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 
 @Component({
@@ -75,7 +76,7 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
   popover: TbPopoverComponent<MappingDataKeysPanelComponent>;
 
   @Output()
-  keysDataApplied = new EventEmitter<Array<any>>();
+  keysDataApplied = new EventEmitter<Array<MappingDataKey> | {[key: string]: any}>();
 
   valueTypeKeys = Object.values(MappingValueType);
 
@@ -104,14 +105,10 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
     return keyControl;
   }
 
-  removeKey(index: number) {
-    this.keysListFormArray.removeAt(index);
-  }
-
   addKey(): void {
     const dataKeyFormGroup = this.fb.group({
-      key: ['', Validators.required],
-      value: ['', Validators.required]
+      key: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+      value: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]]
     });
     if (this.keysType !== MappingKeysType.CUSTOM) {
       dataKeyFormGroup.addControl('type', this.fb.control(this.rawData ? 'raw' : MappingValueType.STRING));
@@ -124,6 +121,7 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
       $event.stopPropagation();
     }
     this.keysListFormArray.removeAt(index);
+    this.keysListFormArray.markAsDirty();
   }
 
   cancel() {
@@ -152,8 +150,8 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
       keys.forEach((keyData) => {
         const { key, value, type } = keyData;
         const dataKeyFormGroup = this.fb.group({
-          key: [key, Validators.required],
-          value: [value, Validators.required],
+          key: [key, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+          value: [value, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           type: [type, []]
         });
         keysControlGroups.push(dataKeyFormGroup);

@@ -29,7 +29,7 @@ import {
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeService } from '@core/http/attribute.service';
 import { TranslateService } from '@ngx-translate/core';
-import { forkJoin, Observable, Subject, Subscription } from 'rxjs';
+import { forkJoin, Observable, of, Subject, Subscription } from 'rxjs';
 import { AttributeData, AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { PageComponent } from '@shared/components/page.component';
 import { PageLink } from '@shared/models/page/page-link';
@@ -55,7 +55,8 @@ import {
   GatewayConnectorDefaultTypesTranslatesMap,
   GatewayLogLevel,
   MappingType,
-  MqttVersions
+  MqttVersions,
+  noLeadTrailSpacesRegex
 } from './gateway-widget.models';
 import { MatDialog } from '@angular/material/dialog';
 import { AddConnectorDialogComponent } from '@home/components/widget/lib/gateway/dialog/add-connector-dialog.component';
@@ -161,16 +162,17 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     this.serverDataSource = new AttributeDatasource(this.attributeService, this.telemetryWsService, this.zone, this.translate);
     this.dataSource = new MatTableDataSource<AttributeData>([]);
     this.connectorForm = this.fb.group({
-      mode: [ConnectorConfigurationModes.BASIC, []],
-      name: ['', [Validators.required, this.uniqNameRequired()]],
-      type: ['', [Validators.required]],
-      logLevel: ['', [Validators.required]],
-      sendDataOnlyOnChange: [false, []],
-      key: ['auto'],
-      class: [''],
-      configuration: [''],
-      configurationJson: [{}, [Validators.required]],
-      basicConfig: this.fb.group({
+        mode: [ConnectorConfigurationModes.BASIC, []],
+        name: ['', [Validators.required, this.uniqNameRequired(), Validators.pattern(noLeadTrailSpacesRegex)]],
+        type: ['', [Validators.required]],
+        enableRemoteLogging: [false, []],
+        logLevel: ['', [Validators.required]],
+        sendDataOnlyOnChange: [false, []],
+        key: ['auto'],
+        class: [''],
+        configuration: [''],
+        configurationJson: [{}, [Validators.required]],
+        basicConfig: this.fb.group({
       })
     });
     this.connectorForm.disable();
@@ -392,6 +394,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       name: '',
       type: ConnectorType.MQTT,
       sendDataOnlyOnChange: false,
+      enableRemoteLogging: false,
       logLevel: GatewayLogLevel.INFO,
       key: 'auto',
       class: '',
@@ -402,34 +405,41 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     this.connectorForm.markAsPristine();
   }
 
-  selectConnector(attribute: AttributeData): void {
-    const connector = attribute.value;
-    if (connector?.name !== this.initialConnector?.name) {
-      if (this.connectorForm.disabled) {
-        this.connectorForm.enable();
-      }
-      if (!connector.configuration) {
-        connector.configuration = '';
-      }
-      if (!connector.key) {
-        connector.key = 'auto';
-      }
-      if (!connector.configurationJson) {
-        connector.configurationJson = {};
-      }
-      connector.basicConfig = connector.configurationJson;
-
-      this.initialConnector = connector;
-
-      if (connector.type === ConnectorType.MQTT) {
-        this.addMQTTConfigControls();
-      } else {
-        this.connectorForm.setControl('basicConfig', this.fb.group({}), {emitEvent: false});
-      }
-
-      this.connectorForm.patchValue(connector, {emitEvent: false});
-      this.connectorForm.markAsPristine();
+  selectConnector($event: Event, attribute: AttributeData): void {
+    if ($event) {
+      $event.stopPropagation();
     }
+    this.confirmConnectorChange().subscribe((result) => {
+      if (result) {
+        const connector = attribute.value;
+        if (connector?.name !== this.initialConnector?.name) {
+          if (this.connectorForm.disabled) {
+            this.connectorForm.enable();
+          }
+          if (!connector.configuration) {
+            connector.configuration = '';
+          }
+          if (!connector.key) {
+            connector.key = 'auto';
+          }
+          if (!connector.configurationJson) {
+            connector.configurationJson = {};
+          }
+          connector.basicConfig = connector.configurationJson;
+
+          this.initialConnector = connector;
+
+          if (connector.type === ConnectorType.MQTT) {
+            this.addMQTTConfigControls();
+          } else {
+            this.connectorForm.setControl('basicConfig', this.fb.group({}), {emitEvent: false});
+          }
+
+          this.connectorForm.patchValue(connector, {emitEvent: false});
+          this.connectorForm.markAsPristine();
+        }
+      }
+    });
   }
 
   isSameConnector(attribute: AttributeData): boolean {
@@ -462,7 +472,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     if ($event) {
       $event.stopPropagation();
     }
-    const title = `Delete connector ${attribute.key}?`;
+    const title = `Delete connector \"${attribute.key}\"?`;
     const content = `All connector data will be deleted.`;
     this.dialogService.confirm(title, content, 'Cancel', 'Delete').subscribe(result => {
       if (result) {
@@ -562,28 +572,31 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
         dataSourceData: this.dataSource.data
       }
     }).afterClosed().subscribe((value) => {
-      if (value) {
-        this.initialConnector = null;
-        if (this.connectorForm.disabled) {
-          this.connectorForm.enable();
+      this.confirmConnectorChange().subscribe((changeConfirmed) => {
+        if (value && changeConfirmed) {
+          this.initialConnector = null;
+          if (this.connectorForm.disabled) {
+            this.connectorForm.enable();
+          }
+          if (!value.configurationJson) {
+            value.configurationJson = {};
+          }
+          value.basicConfig = value.configurationJson;
+          if (value.type === ConnectorType.MQTT) {
+            this.addMQTTConfigControls();
+          } else {
+            this.connectorForm.setControl('basicConfig', this.fb.group({}), {emitEvent: false});
+          }
+          this.connectorForm.patchValue(value, {emitEvent: false});
+          this.generate('basicConfig.broker.clientId');
+          this.saveConnector();
         }
-        if (!value.configurationJson) {
-          value.configurationJson = {};
-        }
-        value.basicConfig = value.configurationJson;
-        if (value.type === ConnectorType.MQTT) {
-          this.addMQTTConfigControls();
-        } else {
-          this.connectorForm.setControl('basicConfig', this.fb.group({}), {emitEvent: false});
-        }
-        this.connectorForm.patchValue(value, {emitEvent: false});
-        this.saveConnector()
-      }
+      })
     });
   }
 
   generate(formControlName: string): void {
-    this.connectorForm.get(formControlName).patchValue(generateSecret(5));
+    this.connectorForm.get(formControlName).patchValue('tb_gw_' + generateSecret(5));
   }
 
   private onDataUpdateError(e: any): void {
@@ -625,10 +638,10 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     const configControl = this.fb.group({});
     const brokerGroup = this.fb.group({
       name: ['', []],
-      host: ['', [Validators.required]],
+      host: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       port: [null, [Validators.required]],
       version: [5, []],
-      clientId: ['', []],
+      clientId: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
       maxNumberOfWorkers: [100, [Validators.required, Validators.min(1)]],
       maxMessageNumberPerWorker: [10, [Validators.required, Validators.min(1)]],
       security: [{}, [Validators.required]]
@@ -662,5 +675,18 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
         this.connectorForm.get('configurationJson').patchValue(config, {emitEvent: false});
       }
     });
+  }
+
+  private confirmConnectorChange(): Observable<boolean> {
+    if (this.initialConnector && this.connectorForm.dirty) {
+      return this.dialogService.confirm(
+        this.translate.instant('gateway.change-connector-title'),
+        this.translate.instant('gateway.change-connector-text'),
+        this.translate.instant('action.no'),
+        this.translate.instant('action.yes'),
+        true
+      );
+    }
+    return of(true);
   }
 }

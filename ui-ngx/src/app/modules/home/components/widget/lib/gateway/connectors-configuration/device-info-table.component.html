@@ -15,28 +15,21 @@
     limitations under the License.
 
 -->
-<div class="tb-form-row space-between same-padding tb-flex column" [formGroup]="mappingFormGroup">
-  <div class="tb-form-panel-title {{ required ? 'tb-required' : '' }}" translate>
-    gateway.device-info-settings
-  </div>
-  <div class="tb-form-table">
-    <div class="tb-form-table-header tb-flex space-between" style="padding: 0 16px;">
-      <div class="tb-form-table-header-cell" translate>gateway.device-info.parameter</div>
-      <div *ngIf="useSource" class="tb-form-table-header-cell" translate>gateway.device-info.source</div>
-      <div class="tb-form-table-header-cell tb-flex no-flex align-center" translate>
-        <div translate>gateway.device-info.expression</div>
-        <div class="see-example"
-             [tb-help-popup]="'widget/lib/gateway/expressions_fn'"
-             tb-help-popup-placement="left"
-             trigger-style="font-size: 12px"
-             [tb-help-popup-style]="{maxWidth: '970px'}">
-        </div>
+<div class="tb-form-panel stroked" [formGroup]="mappingFormGroup">
+  <div class="tb-form-panel-title" [class.tb-required]="required" translate>device.device</div>
+  <div class="tb-form-table no-padding no-gap">
+    <div class="tb-form-table-header">
+      <div class="tb-form-table-header-cell table-name-column" translate>gateway.device-info.entity-field</div>
+      <div *ngIf="useSource" class="tb-form-table-header-cell table-column" translate>gateway.device-info.source</div>
+      <div class="tb-form-table-header-cell table-column" translate>
+        gateway.device-info.expression
       </div>
     </div>
     <div class="tb-form-table-body no-gap">
-      <div class="tb-form-row no-border same-padding">
-        <div class="fixed-title-width" translate>gateway.device-info.device-name</div>
-        <div class="tb-flex no-gap" *ngIf="useSource">
+      <div class="tb-form-table-row tb-form-row no-border same-padding top-same-padding"
+           [class.bottom-same-padding]="deviceInfoType !== DeviceInfoType.FULL">
+        <div class="fixed-title-width" translate>gateway.device-info.name</div>
+        <div class="tb-flex no-gap raw-value-option" *ngIf="useSource">
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="deviceNameExpressionSource">
               <mat-option *ngFor="let type of sourceTypes" [value]="type">
@@ -57,12 +50,19 @@
                       class="tb-error">
               warning
             </mat-icon>
+            <div matSuffix
+                 class="see-example"
+                 [tb-help-popup]="'widget/lib/gateway/expressions_fn'"
+                 tb-help-popup-placement="left"
+                 [tb-help-popup-style]="{maxWidth: '970px'}">
+            </div>
           </mat-form-field>
         </div>
       </div>
-      <div class="tb-form-row no-border same-padding" *ngIf="deviceInfoType === 'full'">
-        <div class="fixed-title-width" translate>gateway.device-info.device-profile</div>
-        <div class="tb-flex no-gap" *ngIf="useSource">
+      <div class="tb-form-table-row tb-form-row no-border same-padding bottom-same-padding"
+           *ngIf="deviceInfoType === DeviceInfoType.FULL">
+        <div class="fixed-title-width" translate>gateway.device-info.profile-name</div>
+        <div class="tb-flex no-gap raw-value-option" *ngIf="useSource">
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="deviceProfileExpressionSource">
               <mat-option *ngFor="let type of sourceTypes" [value]="type">
@@ -83,6 +83,12 @@
                       class="tb-error">
               warning
             </mat-icon>
+            <div matSuffix
+                 class="see-example"
+                 [tb-help-popup]="'widget/lib/gateway/expressions_fn'"
+                 tb-help-popup-placement="left"
+                 [tb-help-popup-style]="{maxWidth: '970px'}">
+            </div>
           </mat-form-field>
         </div>
       </div>

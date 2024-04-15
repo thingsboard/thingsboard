@@ -52,6 +52,15 @@
         .mat-mdc-table {
           table-layout: fixed;
           min-width: 450px;
+
+          .table-value-column {
+            padding: 0 12px;
+            width: 23%;
+
+            &.request-column {
+              width: 38%;
+            }
+          }
         }
       }
 

@@ -17,7 +17,8 @@
 import { ResourcesService } from '@core/services/resources.service';
 import { Observable } from 'rxjs';
 import { ValueTypeData } from '@shared/models/constants';
-import { isUndefinedOrNull } from '@core/utils';
+
+export const noLeadTrailSpacesRegex: RegExp = /^(?! )[\S\s]*(?<! )$/;
 
 export enum StorageTypes {
   MEMORY = 'memory',
@@ -109,6 +110,7 @@ export interface GatewayConnector {
   configurationJson: string;
   logLevel: string;
   key?: string;
+  class?: string;
 }
 
 export enum ConnectorType {
@@ -437,7 +439,7 @@ export enum MappingKeysType {
 export const MappingKeysPanelTitleTranslationsMap = new Map<MappingKeysType, string>(
   [
     [MappingKeysType.ATTRIBUTES, 'gateway.attributes'],
-    [MappingKeysType.TIMESERIES, 'gateway.telemetry'],
+    [MappingKeysType.TIMESERIES, 'gateway.timeseries'],
     [MappingKeysType.CUSTOM, 'gateway.keys']
   ]
 );
@@ -445,7 +447,7 @@ export const MappingKeysPanelTitleTranslationsMap = new Map<MappingKeysType, str
 export const MappingKeysAddKeyTranslationsMap = new Map<MappingKeysType, string>(
   [
     [MappingKeysType.ATTRIBUTES, 'gateway.add-attribute'],
-    [MappingKeysType.TIMESERIES, 'gateway.add-telemetry'],
+    [MappingKeysType.TIMESERIES, 'gateway.add-timeseries'],
     [MappingKeysType.CUSTOM, 'gateway.add-key']
   ]
 );
@@ -453,7 +455,7 @@ export const MappingKeysAddKeyTranslationsMap = new Map<MappingKeysType, string>
 export const MappingKeysDeleteKeyTranslationsMap = new Map<MappingKeysType, string>(
   [
     [MappingKeysType.ATTRIBUTES, 'gateway.delete-attribute'],
-    [MappingKeysType.TIMESERIES, 'gateway.delete-telemetry'],
+    [MappingKeysType.TIMESERIES, 'gateway.delete-timeseries'],
     [MappingKeysType.CUSTOM, 'gateway.delete-key']
   ]
 );
@@ -461,7 +463,7 @@ export const MappingKeysDeleteKeyTranslationsMap = new Map<MappingKeysType, stri
 export const MappingKeysNoKeysTextTranslationsMap = new Map<MappingKeysType, string>(
   [
     [MappingKeysType.ATTRIBUTES, 'gateway.no-attributes'],
-    [MappingKeysType.TIMESERIES, 'gateway.no-telemetry'],
+    [MappingKeysType.TIMESERIES, 'gateway.no-timeseries'],
     [MappingKeysType.CUSTOM, 'gateway.no-keys']
   ]
 );
@@ -515,3 +517,10 @@ export const mappingValueTypesMap = new Map<MappingValueType, ValueTypeData>(
   ]
 );
 
+export const DataConversionTranslationsMap = new Map<ConvertorType, string>(
+  [
+    [ConvertorType.JSON, 'gateway.JSON-hint'],
+    [ConvertorType.BYTES, 'gateway.bytes-hint'],
+    [ConvertorType.CUSTOM, 'gateway.custom-hint']
+  ]
+);

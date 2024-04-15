@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<form [formGroup]="connectorForm" (ngSubmit)="add()">
+<div [formGroup]="connectorForm" class="add-connector">
   <mat-toolbar color="primary">
     <h2>{{ "gateway.add-connector" | translate}}</h2>
     <span fxFlex></span>
@@ -30,7 +30,7 @@
   </mat-progress-bar>
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <div mat-dialog-content>
-    <fieldset [disabled]="isLoading$ | async" class="tb-form-panel no-border no-padding" fxLayout="column">
+    <div class="tb-form-panel no-border no-padding" fxLayout="column">
       <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
         <div class="fixed-title-width" translate>gateway.type</div>
         <div class="tb-flex no-gap">
@@ -47,12 +47,14 @@
         <div class="fixed-title-width tb-required" translate>gateway.name</div>
         <div class="tb-flex no-gap">
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-            <input matInput name="value" formControlName="name" placeholder="{{ 'gateway.default' | translate }}"/>
+            <input matInput name="value" formControlName="name" placeholder="{{ 'gateway.set' | translate }}"/>
             <mat-icon matSuffix
                       matTooltipPosition="above"
                       matTooltipClass="tb-error-tooltip"
-                      [matTooltip]="('gateway.name-required') | translate"
-                      *ngIf="connectorForm.get('name').hasError('required') && connectorForm.get('name').touched"
+                      [matTooltip]="(connectorForm.get('name').hasError('duplicateName') ?
+                                    'gateway.connector-duplicate-name' :'gateway.name-required') | translate"
+                      *ngIf="(connectorForm.get('name').hasError('required') && connectorForm.get('name').touched)
+                            || connectorForm.get('name').hasError('duplicateName')"
                       class="tb-error">
               warning
             </mat-icon>
@@ -83,7 +85,7 @@
           </mat-label>
         </mat-slide-toggle>
       </div>
-    </fieldset>
+    </div>
   </div>
   <div mat-dialog-actions fxLayoutAlign="end center">
     <button mat-button color="primary"
@@ -94,9 +96,9 @@
       {{ 'action.cancel' | translate }}
     </button>
     <button mat-raised-button color="primary"
-            type="submit"
+            (click)="add()"
             [disabled]="(isLoading$ | async) || connectorForm.invalid || !connectorForm.dirty">
       {{ 'action.add' | translate }}
     </button>
   </div>
-</form>
+</div>

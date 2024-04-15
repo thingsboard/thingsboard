@@ -15,12 +15,8 @@
  */
 
 :host {
-  form {
+  .add-connector {
     min-width: 400px;
     width: 500px;
   }
-}
-
-:host ::ng-deep .mat-padding{
-  padding: 0;
 }

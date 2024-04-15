@@ -49,6 +49,7 @@ import {
 } from '@angular/forms';
 import {
   DeviceInfoType,
+  noLeadTrailSpacesRegex,
   SourceTypes,
   SourceTypeTranslationsMap
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
@@ -75,6 +76,8 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 export class DeviceInfoTableComponent extends PageComponent implements ControlValueAccessor, Validator, AfterViewInit, OnInit, OnDestroy {
 
   SourceTypeTranslationsMap = SourceTypeTranslationsMap;
+
+  DeviceInfoType = DeviceInfoType;
 
   @coerceBoolean()
   @Input()
@@ -122,25 +125,30 @@ export class DeviceInfoTableComponent extends PageComponent implements ControlVa
 
   ngOnInit() {
     this.mappingFormGroup = this.fb.group({
-      deviceNameExpression: ['', this.required ? [Validators.required] : []]
+      deviceNameExpression: ['', this.required ?
+        [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)] : [Validators.pattern(noLeadTrailSpacesRegex)]]
     });
-    this.mappingFormGroup.valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe((value) => {
-      this.updateView(value);
-    });
+
     if (this.useSource) {
       this.mappingFormGroup.addControl('deviceNameExpressionSource',
         this.fb.control(SourceTypes.MSG, []));
     }
+
     if (this.deviceInfoType === DeviceInfoType.FULL) {
       if (this.useSource) {
         this.mappingFormGroup.addControl('deviceProfileExpressionSource',
           this.fb.control(SourceTypes.MSG, []));
       }
       this.mappingFormGroup.addControl('deviceProfileExpression',
-        this.fb.control('', this.required ? [Validators.required] : []));
+        this.fb.control('', this.required ?
+          [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)] : [Validators.pattern(noLeadTrailSpacesRegex)]));
     }
+
+    this.mappingFormGroup.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((value) => {
+      this.updateView(value);
+    });
   }
 
   ngOnDestroy() {

@@ -24,8 +24,12 @@ import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 import {
   ConvertorType,
-  ConvertorTypeTranslationsMap, DeviceInfoType, MappingDataKey,
-  MappingHintTranslationsMap, MappingInfo,
+  ConvertorTypeTranslationsMap,
+  DataConversionTranslationsMap,
+  DeviceInfoType,
+  MappingDataKey,
+  MappingHintTranslationsMap,
+  MappingInfo,
   MappingKeysAddKeyTranslationsMap,
   MappingKeysDeleteKeyTranslationsMap,
   MappingKeysNoKeysTextTranslationsMap,
@@ -33,6 +37,7 @@ import {
   MappingKeysType,
   MappingType,
   MappingTypeTranslationsMap,
+  noLeadTrailSpacesRegex,
   QualityTypes,
   QualityTypeTranslationsMap,
   RequestType,
@@ -84,6 +89,10 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
 
   MappingTypeTranslationsMap = MappingTypeTranslationsMap;
 
+  DataConversionTranslationsMap = DataConversionTranslationsMap;
+
+  hiddenAttributesCount = 0;
+
   keysPopupClosed = true;
 
   submitted = false;
@@ -103,15 +112,15 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
     this.createMappingForm();
   }
 
-  get converterAttributes(): Array<MappingDataKey> {
+  get converterAttributes(): Array<string> {
     if (this.converterType) {
-      return this.mappingForm.get('converter').get(this.converterType).value.attributes;
+      return this.mappingForm.get('converter').get(this.converterType).value.attributes.map(value => value.key);
     }
   }
 
   get converterTelemetry(): Array<MappingDataKey> {
     if (this.converterType) {
-      return this.mappingForm.get('converter').get(this.converterType).value.timeseries;
+      return this.mappingForm.get('converter').get(this.converterType).value.timeseries.map(value => value.key);
     }
   }
 
@@ -120,7 +129,7 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
   }
 
   get customKeys(): {[key: string]: any} {
-    return this.mappingForm.get('converter').get('custom').value.extensionConfig;
+    return Object.keys(this.mappingForm.get('converter').get('custom').value.extensionConfig);
   }
 
   get requestMappingType(): RequestType {
@@ -139,7 +148,8 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
   private createMappingForm(): void {
     this.mappingForm = this.fb.group({});
     if (this.data.mappingType === MappingType.DATA) {
-      this.mappingForm.addControl('topicFilter', this.fb.control('', [Validators.required]));
+      this.mappingForm.addControl('topicFilter',
+        this.fb.control('', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]));
       this.mappingForm.addControl('subscriptionQos', this.fb.control(0));
       this.mappingForm.addControl('converter', this.fb.group({
         type: [ConvertorType.JSON, []],
@@ -154,7 +164,7 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
           timeseries: [[], []]
         }),
         custom: this.fb.group({
-          extension: ['', [Validators.required]],
+          extension: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           extensionConfig: [{}, []]
         }),
       }));
@@ -175,36 +185,39 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
       this.mappingForm.addControl('requestType', this.fb.control(RequestType.CONNECT_REQUEST, []));
       this.mappingForm.addControl('requestValue', this.fb.group({
         connectRequests: this.fb.group({
-          topicFilter: ['', [Validators.required]],
+          topicFilter: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           deviceInfo: [{}, []]
         }),
         disconnectRequests: this.fb.group({
-          topicFilter: ['', [Validators.required]],
+          topicFilter: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           deviceInfo: [{}, []]
         }),
         attributeRequests: this.fb.group({
-          topicFilter: ['', [Validators.required]],
-          deviceInfo: [{}, [Validators.required]],
-          attributeNameExpressionSource: [SourceTypes.MSG],
-          attributeNameExpression: ['', [Validators.required]],
-          topicExpression: ['', [Validators.required]],
-          valueExpression: ['', [Validators.required]],
+          topicFilter: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+          deviceInfo:  this.fb.group({
+            deviceNameExpressionSource: [SourceTypes.MSG, []],
+            deviceNameExpression: ['', [Validators.required]],
+          }),
+          attributeNameExpressionSource: [SourceTypes.MSG, []],
+          attributeNameExpression: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+          topicExpression: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+          valueExpression: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           retain: [false, []]
         }),
         attributeUpdates: this.fb.group({
-          deviceNameFilter: ['', [Validators.required]],
-          attributeFilter: ['', [Validators.required]],
-          topicExpression: ['', [Validators.required]],
-          valueExpression: ['', [Validators.required]],
+          deviceNameFilter: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+          attributeFilter: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+          topicExpression: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+          valueExpression: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           retain: [true, []]
         }),
         serverSideRpc: this.fb.group({
           type: [ServerSideRPCType.ONE_WAY, []],
-          deviceNameFilter: ['', [Validators.required]],
-          methodFilter: ['', [Validators.required]],
-          requestTopicExpression: ['', [Validators.required]],
-          responseTopicExpression: ['', [Validators.required]],
-          valueExpression: ['', [Validators.required]],
+          deviceNameFilter: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+          methodFilter: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+          requestTopicExpression: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+          responseTopicExpression: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+          valueExpression: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           responseTopicQoS: [0, []],
           responseTimeout: [10000, [Validators.required]],
         })
@@ -292,6 +305,11 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
       });
     }
   }
+
+  // updateVisibleChips(count: number): void {
+  //   console.log(count, 'count');
+  //   this.hiddenAttributesCount = count;
+  // }
 
   private prepareMappingData(): {[key: string]: any} {
     const formValue = this.mappingForm.value;

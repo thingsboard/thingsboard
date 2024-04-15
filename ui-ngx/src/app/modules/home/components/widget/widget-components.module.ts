@@ -92,6 +92,7 @@ import { MappingDialogComponent } from '@home/components/widget/lib/gateway/dial
 import { DeviceInfoTableComponent } from '@home/components/widget/lib/gateway/connectors-configuration/device-info-table.component';
 import { MappingDataKeysPanelComponent } from '@home/components/widget/lib/gateway/connectors-configuration/mapping-data-keys-panel.component';
 import { BrokerSecurityComponent } from '@home/components/widget/lib/gateway/connectors-configuration/broker-security.component';
+import { EllipsisChipListDirective } from '@home/components/widget/lib/gateway/connectors-configuration/ellipsis-chip-list.directive';
 
 @NgModule({
   declarations:
@@ -132,6 +133,7 @@ import { BrokerSecurityComponent } from '@home/components/widget/lib/gateway/con
       GatewayConfigurationComponent,
       GatewayRemoteConfigurationDialogComponent,
       GatewayServiceRPCConnectorTemplateDialogComponent,
+      EllipsisChipListDirective,
       ValueCardWidgetComponent,
       AggregatedValueCardWidgetComponent,
       CountWidgetComponent,
@@ -189,6 +191,7 @@ import { BrokerSecurityComponent } from '@home/components/widget/lib/gateway/con
         GatewayLogsComponent,
         GatewayServiceRPCConnectorComponent,
         GatewayServiceRPCConnectorTemplatesComponent,
+        EllipsisChipListDirective,
         GatewayStatisticsComponent,
         GatewayServiceRPCComponent,
         DeviceGatewayCommandComponent,

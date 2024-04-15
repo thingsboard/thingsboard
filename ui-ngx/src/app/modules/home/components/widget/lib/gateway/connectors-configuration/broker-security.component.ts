@@ -47,7 +47,7 @@ import {
 } from '@angular/forms';
 import {
   BrokerSecurityType,
-  BrokerSecurityTypeTranslationsMap,
+  BrokerSecurityTypeTranslationsMap, noLeadTrailSpacesRegex,
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { takeUntil } from 'rxjs/operators';
 
@@ -97,11 +97,11 @@ export class BrokerSecurityComponent extends PageComponent implements ControlVal
     super(store);
     this.securityFormGroup = this.fb.group({
       type: [BrokerSecurityType.ANONYMOUS, []],
-      username: ['', [Validators.required]],
-      password: ['', []],
-      pathToCACert: ['', []],
-      pathToPrivateKey: ['', []],
-      pathToClientCert: ['', []]
+      username: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+      password: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
+      pathToCACert: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
+      pathToPrivateKey: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
+      pathToClientCert: ['', [Validators.pattern(noLeadTrailSpacesRegex)]]
     });
     this.securityFormGroup.valueChanges.pipe(
       takeUntil(this.destroy$)

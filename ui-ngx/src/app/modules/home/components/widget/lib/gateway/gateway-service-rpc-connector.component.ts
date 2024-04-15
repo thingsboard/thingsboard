@@ -37,6 +37,7 @@ import {
   HTTPMethods,
   ModbusCodesTranslate,
   ModbusCommandTypes,
+  noLeadTrailSpacesRegex,
   RPCCommand,
   RPCTemplateConfig,
   SNMPMethods,
@@ -52,8 +53,6 @@ import {
 } from '@shared/components/dialog/json-object-edit-dialog.component';
 import { jsonRequired } from '@shared/components/json-object-edit.component';
 import { deepClone } from '@core/utils';
-
-export const noLeadTrailSpacesRegex: RegExp = /^(?! )[\S\s]*(?<! )$/;
 
 @Component({
   selector: 'tb-gateway-service-rpc-connector',

@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<form [formGroup]="mappingForm" (ngSubmit)="add()">
+<div [formGroup]="mappingForm" class="key-mapping">
   <mat-toolbar color="primary">
     <h2>{{ MappingTypeTranslationsMap.get(this.data?.mappingType) | translate}}</h2>
     <span fxFlex></span>
@@ -26,26 +26,15 @@
       <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-toolbar>
-  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
-  </mat-progress-bar>
-  <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <div mat-dialog-content>
-    <fieldset [disabled]="isLoading$ | async" class="tb-form-panel no-border no-padding" fxLayout="column">
+    <div class="tb-form-panel no-border no-padding" fxLayout="column">
       <div class="tb-form-hint tb-primary-fill">
         {{ MappingHintTranslationsMap.get(this.data?.mappingType) | translate }}
       </div>
       <ng-container [ngSwitch]="data.mappingType">
         <ng-template [ngSwitchCase]="MappingType.DATA">
           <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-            <div class="fixed-title-width tb-flex no-flex align-center" translate>
-              <div class="tb-required" translate>gateway.topic-filter</div>
-              <div class="see-example"
-                   [tb-help-popup]="'widget/lib/gateway/topic-filter_fn'"
-                   tb-help-popup-placement="left"
-                   trigger-style="font-size: 12px"
-                   [tb-help-popup-style]="{maxWidth: '920px'}">
-              </div>
-            </div>
+            <div class="fixed-title-width tb-required" translate>gateway.topic-filter</div>
             <div class="tb-flex no-gap">
               <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                 <input matInput name="value" formControlName="topicFilter" placeholder="{{ 'gateway.set' | translate }}"/>
@@ -53,15 +42,24 @@
                           matTooltipPosition="above"
                           matTooltipClass="tb-error-tooltip"
                           [matTooltip]="('gateway.topic-required') | translate"
-                          *ngIf="mappingForm.get('topicFilter').hasError('required') && mappingForm.get('topicFilter').touched"
+                          *ngIf="mappingForm.get('topicFilter').hasError('required') &&
+                                 mappingForm.get('topicFilter').touched;"
                           class="tb-error">
                   warning
                 </mat-icon>
+                <div matSuffix
+                     class="see-example"
+                     [tb-help-popup]="'widget/lib/gateway/topic-filter_fn'"
+                     tb-help-popup-placement="left"
+                     [tb-help-popup-style]="{maxWidth: '970px'}">
+                </div>
               </mat-form-field>
             </div>
           </div>
           <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-            <div class="fixed-title-width" translate>gateway.mqtt-qos</div>
+            <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.response-topic-Qos-hint' | translate }}" translate>
+              gateway.mqtt-qos
+            </div>
             <div class="tb-flex no-gap">
               <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                 <mat-select formControlName="subscriptionQos">
@@ -73,14 +71,18 @@
             </div>
           </div>
           <ng-container formGroupName="converter">
+            <div class="tb-form-row space-between tb-flex">
+              <div class="fixed-title-width" translate>gateway.payload-type</div>
+              <tb-toggle-select formControlName="type" appearance="fill">
+                <tb-toggle-option *ngFor="let type of convertorTypes" [value]="type">
+                  {{ ConvertorTypeTranslationsMap.get(type) | translate }}
+                </tb-toggle-option>
+              </tb-toggle-select>
+            </div>
             <div class="tb-form-panel stroked">
-              <div class="tb-flex row space-between align-center no-gap fill-width">
-                <div class="tb-form-panel-title" translate>gateway.converter</div>
-                <tb-toggle-select formControlName="type" appearance="fill">
-                  <tb-toggle-option *ngFor="let type of convertorTypes" [value]="type">
-                    {{ ConvertorTypeTranslationsMap.get(type) | translate }}
-                  </tb-toggle-option>
-                </tb-toggle-select>
+              <div class="tb-form-panel-title" translate>gateway.data-conversion</div>
+              <div class="tb-form-hint tb-primary-fill">
+                {{ DataConversionTranslationsMap.get(converterType) | translate }}
               </div>
               <ng-container [formGroupName]="converterType" [ngSwitch]="converterType">
                 <ng-template [ngSwitchCase]="ConvertorTypeEnum.JSON">
@@ -97,9 +99,12 @@
                   <div class="tb-form-row space-between tb-flex">
                     <div class="fixed-title-width" translate>gateway.attributes</div>
                     <div class="tb-flex">
-                      <mat-chip-listbox class="tb-flex">
+                      <mat-chip-listbox [tb-ellipsis-chip-list]="converterAttributes" class="tb-flex">
                           <mat-chip *ngFor="let attribute of converterAttributes">
-                            {{ attribute.key }}
+                            {{ attribute }}
+                          </mat-chip>
+                          <mat-chip class="mat-mdc-chip ellipsis-chip">
+                            <label class="ellipsis-text"></label>
                           </mat-chip>
                       </mat-chip-listbox>
                       <button type="button"
@@ -112,11 +117,14 @@
                     </div>
                   </div>
                   <div class="tb-form-row space-between tb-flex">
-                    <div class="fixed-title-width" translate>gateway.telemetry</div>
+                    <div class="fixed-title-width" translate>gateway.timeseries</div>
                     <div class="tb-flex">
-                      <mat-chip-listbox class="tb-flex">
+                      <mat-chip-listbox class="tb-flex" [tb-ellipsis-chip-list]="converterTelemetry">
                         <mat-chip *ngFor="let telemetry of converterTelemetry">
-                          {{ telemetry.key }}
+                          {{ telemetry }}
+                        </mat-chip>
+                        <mat-chip class="mat-mdc-chip ellipsis-chip">
+                          <label class="ellipsis-text"></label>
                         </mat-chip>
                       </mat-chip-listbox>
                       <button type="button"
@@ -153,9 +161,12 @@
                     <div class="tb-form-row space-between tb-flex">
                       <div class="fixed-title-width" translate>gateway.keys</div>
                       <div class="tb-flex">
-                        <mat-chip-listbox class="tb-flex">
-                          <mat-chip *ngFor="let telemetry of customKeys | keyvalue">
-                            {{ telemetry.key }}
+                        <mat-chip-listbox [tb-ellipsis-chip-list]="customKeys" class="tb-flex">
+                          <mat-chip *ngFor="let telemetry of customKeys">
+                            {{ telemetry }}
+                          </mat-chip>
+                          <mat-chip class="mat-mdc-chip ellipsis-chip">
+                            <label class="ellipsis-text"></label>
                           </mat-chip>
                         </mat-chip-listbox>
                         <button type="button"
@@ -192,15 +203,7 @@
                      *ngIf="requestMappingType === RequestTypeEnum.ATTRIBUTE_REQUEST ||
                             requestMappingType === RequestTypeEnum.CONNECT_REQUEST ||
                             requestMappingType === RequestTypeEnum.DISCONNECT_REQUEST">
-                  <div class="fixed-title-width tb-flex no-flex align-center" translate>
-                    <div class="tb-required" translate>gateway.topic-filter</div>
-                    <div class="see-example"
-                         [tb-help-popup]="'widget/lib/gateway/topic-filter_fn'"
-                         tb-help-popup-placement="left"
-                         trigger-style="font-size: 12px"
-                         [tb-help-popup-style]="{maxWidth: '920px'}">
-                    </div>
-                  </div>
+                  <div class="fixed-title-width tb-required" translate>gateway.topic-filter</div>
                   <div class="tb-flex no-gap">
                     <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                       <input matInput name="value" [formControl]="mappingForm.get('requestValue').get(requestMappingType).get('topicFilter')"
@@ -214,6 +217,12 @@
                                 class="tb-error">
                         warning
                       </mat-icon>
+                      <div matSuffix
+                           class="see-example"
+                           [tb-help-popup]="'widget/lib/gateway/topic-filter_fn'"
+                           tb-help-popup-placement="left"
+                           [tb-help-popup-style]="{maxWidth: '970px'}">
+                      </div>
                     </mat-form-field>
                   </div>
                 </div>
@@ -228,18 +237,40 @@
                 <ng-template [ngSwitchCase]="RequestTypeEnum.ATTRIBUTE_REQUEST">
                   <div class="tb-form-panel stroked">
                     <div class="tb-form-panel-title tb-required" translate>gateway.from-device-request-settings</div>
-                    <tb-device-info-table formControlName="deviceInfo" [deviceInfoType]="DeviceInfoType.PARTIAL" required="true">
-                    </tb-device-info-table>
-                    <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <div class="tb-form-row column-xs" fxLayoutAlign="space-between center" formGroupName="deviceInfo">
                       <div class="fixed-title-width tb-flex no-flex align-center" translate>
-                        <div class="tb-required" translate>gateway.attribute-name-expression</div>
-                        <div class="see-example"
-                             [tb-help-popup]="'widget/lib/gateway/expressions_fn'"
-                             tb-help-popup-placement="left"
-                             trigger-style="font-size: 12px"
-                             [tb-help-popup-style]="{maxWidth: '970px'}">
-                        </div>
+                        <div class="tb-required" translate>gateway.device-info.device-name-expression</div>
                       </div>
+                      <div class="tb-flex">
+                        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                          <mat-select formControlName="deviceNameExpressionSource">
+                            <mat-option *ngFor="let type of sourceTypes" [value]="type">
+                              {{ SourceTypeTranslationsMap.get(type) | translate }}
+                            </mat-option>
+                          </mat-select>
+                        </mat-form-field>
+                        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                          <input matInput name="value" formControlName="deviceNameExpression" placeholder="{{ 'gateway.set' | translate }}"/>
+                            <mat-icon matSuffix
+                                      matTooltipPosition="above"
+                                      matTooltipClass="tb-error-tooltip"
+                                      [matTooltip]="('gateway.device-info.device-name-expression-required') | translate"
+                                      *ngIf="(mappingForm.get('requestValue.attributeRequests.deviceInfo.deviceNameExpression').hasError('required') &&
+                                             mappingForm.get('requestValue.attributeRequests.deviceInfo.deviceNameExpression').touched)"
+                                      class="tb-error">
+                              warning
+                            </mat-icon>
+                            <div matSuffix
+                                 class="see-example"
+                                 [tb-help-popup]="'widget/lib/gateway/expressions_fn'"
+                                 tb-help-popup-placement="left"
+                                 [tb-help-popup-style]="{maxWidth: '970px'}">
+                            </div>
+                        </mat-form-field>
+                      </div>
+                    </div>
+                    <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                      <div class="fixed-title-width tb-required" translate>gateway.attribute-name-expression</div>
                       <div class="tb-flex">
                         <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                           <mat-select formControlName="attributeNameExpressionSource">
@@ -259,6 +290,12 @@
                                     class="tb-error">
                             warning
                           </mat-icon>
+                          <div matSuffix
+                               class="see-example"
+                               [tb-help-popup]="'widget/lib/gateway/expressions_fn'"
+                               tb-help-popup-placement="left"
+                               [tb-help-popup-style]="{maxWidth: '970px'}">
+                          </div>
                         </mat-form-field>
                       </div>
                     </div>
@@ -266,47 +303,7 @@
                   <div class="tb-form-panel stroked">
                     <div class="tb-form-panel-title tb-required" translate>gateway.to-device-response-settings</div>
                     <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                      <div class="fixed-title-width tb-flex no-flex align-center" translate>
-                        <div class="tb-required" translate>gateway.response-topic-expression</div>
-                        <div class="see-example"
-                             [tb-help-popup]="'widget/lib/gateway/expressions_fn'"
-                             tb-help-popup-placement="left"
-                             trigger-style="font-size: 12px"
-                             [tb-help-popup-style]="{maxWidth: '970px'}">
-                        </div>
-                      </div>
-                      <div class="tb-flex no-gap">
-                        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                          <input matInput name="value" formControlName="topicExpression" placeholder="{{ 'gateway.set' | translate }}"/>
-                          <mat-icon matSuffix
-                                    matTooltipPosition="above"
-                                    matTooltipClass="tb-error-tooltip"
-                                    [matTooltip]="('gateway.response-topic-expression-required') | translate"
-                                    *ngIf="mappingForm.get('requestValue.attributeRequests.topicExpression').hasError('required') &&
-                                           mappingForm.get('requestValue.attributeRequests.topicExpression').touched"
-                                    class="tb-error">
-                            warning
-                          </mat-icon>
-                        </mat-form-field>
-                      </div>
-                    </div>
-                    <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                      <mat-slide-toggle class="mat-slide" formControlName="retain">
-                        <mat-label tb-hint-tooltip-icon="{{ 'gateway.retain-hint' | translate }}">
-                          {{ 'gateway.retain' | translate }}
-                        </mat-label>
-                      </mat-slide-toggle>
-                    </div>
-                    <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                      <div class="fixed-title-width tb-flex no-flex align-center" translate>
-                        <div class="tb-required" translate>gateway.response-value-expression</div>
-                        <div class="see-example"
-                             [tb-help-popup]="'widget/lib/gateway/expressions_fn'"
-                             tb-help-popup-placement="left"
-                             trigger-style="font-size: 12px"
-                             [tb-help-popup-style]="{maxWidth: '970px'}">
-                        </div>
-                      </div>
+                      <div class="fixed-title-width tb-required" translate>gateway.response-value-expression</div>
                       <div class="tb-flex no-gap">
                         <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                           <input matInput name="value" formControlName="valueExpression" placeholder="{{ 'gateway.set' | translate }}"/>
@@ -319,8 +316,44 @@
                                     class="tb-error">
                             warning
                           </mat-icon>
+                          <div matSuffix
+                               class="see-example"
+                               [tb-help-popup]="'widget/lib/gateway/expressions_fn'"
+                               tb-help-popup-placement="left"
+                               [tb-help-popup-style]="{maxWidth: '970px'}">
+                          </div>
                         </mat-form-field>
                       </div>
+                    </div>
+                    <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                      <div class="fixed-title-width tb-required" translate>gateway.response-topic-expression</div>
+                      <div class="tb-flex no-gap">
+                        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                          <input matInput name="value" formControlName="topicExpression" placeholder="{{ 'gateway.set' | translate }}"/>
+                          <mat-icon matSuffix
+                                    matTooltipPosition="above"
+                                    matTooltipClass="tb-error-tooltip"
+                                    [matTooltip]="('gateway.response-topic-expression-required') | translate"
+                                    *ngIf="mappingForm.get('requestValue.attributeRequests.topicExpression').hasError('required') &&
+                                           mappingForm.get('requestValue.attributeRequests.topicExpression').touched"
+                                    class="tb-error">
+                            warning
+                          </mat-icon>
+                          <div matSuffix
+                               class="see-example"
+                               [tb-help-popup]="'widget/lib/gateway/expressions_fn'"
+                               tb-help-popup-placement="left"
+                               [tb-help-popup-style]="{maxWidth: '970px'}">
+                          </div>
+                        </mat-form-field>
+                      </div>
+                    </div>
+                    <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                      <mat-slide-toggle class="mat-slide" formControlName="retain">
+                        <mat-label tb-hint-tooltip-icon="{{ 'gateway.retain-hint' | translate }}">
+                          {{ 'gateway.retain' | translate }}
+                        </mat-label>
+                      </mat-slide-toggle>
                     </div>
                   </div>
                 </ng-template>
@@ -362,47 +395,7 @@
                     </div>
                   </div>
                   <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                    <div class="fixed-title-width tb-flex no-flex align-center" translate>
-                      <div class="tb-required" translate>gateway.response-topic-expression</div>
-                      <div class="see-example"
-                           [tb-help-popup]="'widget/lib/gateway/expressions_fn'"
-                           tb-help-popup-placement="left"
-                           trigger-style="font-size: 12px"
-                           [tb-help-popup-style]="{maxWidth: '970px'}">
-                      </div>
-                    </div>
-                    <div class="tb-flex no-gap">
-                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                        <input matInput name="value" formControlName="topicExpression" placeholder="{{ 'gateway.set' | translate }}"/>
-                        <mat-icon matSuffix
-                                  matTooltipPosition="above"
-                                  matTooltipClass="tb-error-tooltip"
-                                  [matTooltip]="('gateway.response-topic-expression-required') | translate"
-                                  *ngIf="mappingForm.get('requestValue.attributeUpdates.topicExpression').hasError('required') &&
-                                           mappingForm.get('requestValue.attributeUpdates.topicExpression').touched"
-                                  class="tb-error">
-                          warning
-                        </mat-icon>
-                      </mat-form-field>
-                    </div>
-                  </div>
-                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                    <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="retain">
-                      <mat-label tb-hint-tooltip-icon="{{ 'gateway.retain-hint' | translate }}">
-                        {{ 'gateway.retain' | translate }}
-                      </mat-label>
-                    </mat-slide-toggle>
-                  </div>
-                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                    <div class="fixed-title-width tb-flex no-flex align-center" translate>
-                      <div class="tb-required" translate>gateway.response-value-expression</div>
-                      <div class="see-example"
-                           [tb-help-popup]="'widget/lib/gateway/expressions_fn'"
-                           tb-help-popup-placement="left"
-                           trigger-style="font-size: 12px"
-                           [tb-help-popup-style]="{maxWidth: '970px'}">
-                      </div>
-                    </div>
+                    <div class="fixed-title-width tb-required" translate>gateway.response-value-expression</div>
                     <div class="tb-flex no-gap">
                       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                         <input matInput name="value" formControlName="valueExpression" placeholder="{{ 'gateway.set' | translate }}"/>
@@ -415,8 +408,44 @@
                                   class="tb-error">
                           warning
                         </mat-icon>
+                        <div matSuffix
+                             class="see-example"
+                             [tb-help-popup]="'widget/lib/gateway/expressions_fn'"
+                             tb-help-popup-placement="left"
+                             [tb-help-popup-style]="{maxWidth: '970px'}">
+                        </div>
                       </mat-form-field>
                     </div>
+                  </div>
+                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <div class="fixed-title-width tb-required" translate>gateway.response-topic-expression</div>
+                    <div class="tb-flex no-gap">
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <input matInput name="value" formControlName="topicExpression" placeholder="{{ 'gateway.set' | translate }}"/>
+                        <mat-icon matSuffix
+                                  matTooltipPosition="above"
+                                  matTooltipClass="tb-error-tooltip"
+                                  [matTooltip]="('gateway.response-topic-expression-required') | translate"
+                                  *ngIf="mappingForm.get('requestValue.attributeUpdates.topicExpression').hasError('required') &&
+                                         mappingForm.get('requestValue.attributeUpdates.topicExpression').touched"
+                                  class="tb-error">
+                          warning
+                        </mat-icon>
+                        <div matSuffix
+                             class="see-example"
+                             [tb-help-popup]="'widget/lib/gateway/expressions_fn'"
+                             tb-help-popup-placement="left"
+                             [tb-help-popup-style]="{maxWidth: '970px'}">
+                        </div>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="retain">
+                      <mat-label tb-hint-tooltip-icon="{{ 'gateway.retain-hint' | translate }}">
+                        {{ 'gateway.retain' | translate }}
+                      </mat-label>
+                    </mat-slide-toggle>
                   </div>
                 </ng-template>
                 <ng-template [ngSwitchCase]="RequestTypeEnum.SERVER_SIDE_RPC">
@@ -469,15 +498,7 @@
                     </div>
                   </div>
                   <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                    <div class="fixed-title-width tb-flex no-flex align-center" translate>
-                      <div class="tb-required" translate>gateway.request-topic-expression</div>
-                      <div class="see-example"
-                           [tb-help-popup]="'widget/lib/gateway/expressions_fn'"
-                           tb-help-popup-placement="left"
-                           trigger-style="font-size: 12px"
-                           [tb-help-popup-style]="{maxWidth: '970px'}">
-                      </div>
-                    </div>
+                    <div class="fixed-title-width tb-required" translate>gateway.request-topic-expression</div>
                     <div class="tb-flex no-gap">
                       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                         <input matInput name="value" formControlName="requestTopicExpression" placeholder="{{ 'gateway.set' | translate }}"/>
@@ -490,19 +511,17 @@
                                   class="tb-error">
                           warning
                         </mat-icon>
+                        <div matSuffix
+                             class="see-example"
+                             [tb-help-popup]="'widget/lib/gateway/expressions_fn'"
+                             tb-help-popup-placement="left"
+                             [tb-help-popup-style]="{maxWidth: '970px'}">
+                        </div>
                       </mat-form-field>
                     </div>
                   </div>
                   <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                    <div class="fixed-title-width tb-flex no-flex align-center" translate>
-                      <div class="tb-required" translate>gateway.value-expression</div>
-                      <div class="see-example"
-                           [tb-help-popup]="'widget/lib/gateway/expressions_fn'"
-                           tb-help-popup-placement="left"
-                           trigger-style="font-size: 12px"
-                           [tb-help-popup-style]="{maxWidth: '970px'}">
-                      </div>
-                    </div>
+                    <div class="fixed-title-width tb-required" translate>gateway.value-expression</div>
                     <div class="tb-flex no-gap">
                       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                         <input matInput name="value" formControlName="valueExpression" placeholder="{{ 'gateway.set' | translate }}"/>
@@ -515,20 +534,18 @@
                                   class="tb-error">
                           warning
                         </mat-icon>
+                        <div matSuffix
+                             class="see-example"
+                             [tb-help-popup]="'widget/lib/gateway/expressions_fn'"
+                             tb-help-popup-placement="left"
+                             [tb-help-popup-style]="{maxWidth: '970px'}">
+                        </div>
                       </mat-form-field>
                     </div>
                   </div>
                   <ng-container *ngIf="mappingForm.get('requestValue.serverSideRpc.type').value === ServerSideRPCType.TWO_WAY">
                     <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                      <div class="fixed-title-width tb-flex no-flex align-center" translate>
-                        <div class="tb-required" translate>gateway.response-topic-expression</div>
-                        <div class="see-example"
-                             [tb-help-popup]="'widget/lib/gateway/expressions_fn'"
-                             tb-help-popup-placement="left"
-                             trigger-style="font-size: 12px"
-                             [tb-help-popup-style]="{maxWidth: '970px'}">
-                        </div>
-                      </div>
+                      <div class="fixed-title-width tb-required" translate>gateway.response-topic-expression</div>
                       <div class="tb-flex no-gap">
                         <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                           <input matInput name="value" formControlName="responseTopicExpression" placeholder="{{ 'gateway.set' | translate }}"/>
@@ -541,11 +558,19 @@
                                     class="tb-error">
                             warning
                           </mat-icon>
+                          <div matSuffix
+                               class="see-example"
+                               [tb-help-popup]="'widget/lib/gateway/expressions_fn'"
+                               tb-help-popup-placement="left"
+                               [tb-help-popup-style]="{maxWidth: '970px'}">
+                          </div>
                         </mat-form-field>
                       </div>
                     </div>
                     <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                      <div class="fixed-title-width" translate>gateway.response-topic-Qos</div>
+                      <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.response-topic-Qos-hint' | translate }}" translate>
+                        gateway.response-topic-Qos
+                      </div>
                       <mat-form-field class="tb-flex" appearance="outline" subscriptSizing="dynamic">
                         <mat-select formControlName="responseTopicQoS">
                           <mat-option *ngFor="let type of qualityTypes" [value]="type">
@@ -577,20 +602,19 @@
             </ng-container>
         </ng-template>
       </ng-container>
-    </fieldset>
+    </div>
   </div>
   <div mat-dialog-actions fxLayoutAlign="end center">
     <button mat-button color="primary"
             type="button"
             cdkFocusInitial
-            [disabled]="(isLoading$ | async)"
             (click)="cancel()">
       {{ 'action.cancel' | translate }}
     </button>
     <button mat-raised-button color="primary"
-            type="submit"
-            [disabled]="(isLoading$ | async) || mappingForm.invalid || !mappingForm.dirty || !keysPopupClosed">
+            (click)="add()"
+            [disabled]="mappingForm.invalid || !mappingForm.dirty || !keysPopupClosed">
       {{ this.data.buttonTitle | translate }}
     </button>
   </div>
-</form>
+</div>

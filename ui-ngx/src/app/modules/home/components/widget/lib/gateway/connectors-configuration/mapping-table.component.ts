@@ -69,6 +69,7 @@ import { isDefinedAndNotNull, isUndefinedOrNull } from '@core/utils';
 export class MappingTableComponent extends PageComponent implements ControlValueAccessor, AfterViewInit, OnInit, OnDestroy {
 
   mappingTypeTranslationsMap = MappingTypeTranslationsMap;
+  mappingTypeEnum = MappingType;
   displayedColumns = [];
   mappingColumns = [];
   textSearchMode = false;
@@ -124,7 +125,7 @@ export class MappingTableComponent extends PageComponent implements ControlValue
       this.mappingColumns.push(
         {def: 'topicFilter', title: 'gateway.topic-filter'},
         {def: 'QoS', title: 'gateway.mqtt-qos'},
-        {def: 'converter', title: 'gateway.converter'}
+        {def: 'converter', title: 'gateway.payload-type'}
       )
     } else {
       this.mappingColumns.push(
@@ -299,7 +300,7 @@ export class MappingTableComponent extends PageComponent implements ControlValue
 
 }
 
-export class MappingDatasource implements DataSource<any> {
+export class MappingDatasource implements DataSource<{[key: string]: any}> {
 
   private mappingSubject = new BehaviorSubject<Array<{[key: string]: any}>>([]);
 

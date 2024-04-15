@@ -9,9 +9,7 @@
     "maxNumberOfWorkers": 100,
     "sendDataOnlyOnChange": false,
     "security": {
-      "type": "basic",
-      "username": "user",
-      "password": "password"
+      "type": "anonymous"
     }
   },
   "dataMapping": [

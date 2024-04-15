@@ -15,17 +15,25 @@
  */
 
 :host {
-  form {
+  .key-mapping {
     min-width: 700px;
     width: 900px;
+    height: 770px;
+    display: flex;
+    flex-direction: column;
+
+    .mat-toolbar {
+      min-height: 64px;
+    }
+
+    tb-toggle-select {
+      padding: 4px 0;
+    }
   }
 }
 
 :host ::ng-deep {
-  .mat-padding {
-    padding: 0;
-  }
-  form {
+  .key-mapping {
     .mat-mdc-chip-listbox {
       .mdc-evolution-chip-set__chips {
         justify-content: flex-end;
@@ -44,5 +52,15 @@
     .mat-mdc-form-field {
       width: 0;
     }
+  }
+
+  .see-example {
+    width: 32px;
+    height: 32px;
+    margin: 4px;
+  }
+
+  .mat-mdc-form-field-icon-suffix {
+    display: flex;
   }
 }

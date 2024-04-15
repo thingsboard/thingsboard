@@ -25,7 +25,9 @@ import { Router } from '@angular/router';
 import {
   ConnectorType,
   GatewayConnectorDefaultTypesTranslatesMap,
-  GatewayLogLevel, getDefaultConfig
+  GatewayLogLevel,
+  getDefaultConfig,
+  noLeadTrailSpacesRegex
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { Subject } from 'rxjs';
 import { ResourcesService } from '@core/services/resources.service';
@@ -58,7 +60,7 @@ export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDia
     super(store, router, dialogRef);
     this.connectorForm = this.fb.group({
       type: [ConnectorType.MQTT, []],
-      name: ['', [Validators.required, this.uniqNameRequired()]],
+      name: ['', [Validators.required, this.uniqNameRequired(), Validators.pattern(noLeadTrailSpacesRegex)]],
       logLevel: [GatewayLogLevel.INFO, []],
       useDefaults: [true, []],
       sendDataOnlyOnChange: [false, []],

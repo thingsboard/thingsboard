@@ -505,6 +505,13 @@
     gap: 12px;
     padding-bottom: 12px;
 
+    &.no-padding {
+      padding: 0;
+    }
+    &.no-gap {
+      gap: 0;
+    }
+
     .tb-form-table-body {
       display: flex;
       flex-direction: column;

@@ -145,15 +145,15 @@
         <mat-header-row class="mat-row-select"
                         *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
         <mat-row class="mat-row-select" [class]="{'tb-current-entity': isSameConnector(attribute)}"
-                 *matRowDef="let attribute; let i = index; columns: displayedColumns;" (click)="selectConnector(attribute)"></mat-row>
+                 *matRowDef="let attribute; let i = index; columns: displayedColumns;" (click)="selectConnector($event, attribute)"></mat-row>
       </table>
     </div>
   </section>
   <section [formGroup]="connectorForm" class="tb-form-panel section-container flex">
-    <div class="tb-form-panel-title" fxLayoutAlign="space-between center">
-      <div class="tb-form-panel-title" style="height: 32px;">
-        {{initialConnector?.type ? gatewayConnectorDefaultTypes.get(initialConnector.type) : ''}}
-        {{'gateway.configuration' | translate}}
+    <div class="tb-form-panel-title tb-flex no-flex space-between align-center">
+      <div class="tb-form-panel-title">
+        {{ initialConnector?.type ? gatewayConnectorDefaultTypes.get(initialConnector.type) : '' }}
+        {{ 'gateway.configuration' | translate }}
       </div>
       <tb-toggle-select *ngIf="initialConnector && initialConnector.type === connectorType.MQTT" formControlName="mode" appearance="fill">
         <tb-toggle-option [value]="connectorConfigurationModes.BASIC">
@@ -164,6 +164,11 @@
         </tb-toggle-option>
       </tb-toggle-select>
     </div>
+    <span [fxShow]="!initialConnector"
+          fxLayoutAlign="center center"
+          class="no-data-found" translate>
+      gateway.select-connector
+    </span>
     <section class="tb-form-panel section-container no-border no-padding tb-flex space-between" *ngIf="initialConnector">
       <mat-tab-group>
         <mat-tab label="{{ 'gateway.general' | translate }}">
@@ -184,14 +189,24 @@
                 </mat-form-field>
               </div>
             </div>
-            <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-              <div class="fixed-title-width" translate>gateway.remote-logging-level</div>
-              <div class="tb-flex no-gap">
-                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                  <mat-select formControlName="logLevel">
-                    <mat-option *ngFor="let logLevel of gatewayLogLevel" [value]="logLevel">{{ logLevel }}</mat-option>
-                  </mat-select>
-                </mat-form-field>
+            <div class="tb-form-panel stroked">
+              <div class="tb-form-panel-title" translate>gateway.logs-configuration</div>
+              <div class="tb-form-row" fxLayoutAlign="space-between center">
+                <mat-slide-toggle class="mat-slide" formControlName="sendDataOnlyOnChange">
+                  <mat-label>
+                    {{ 'gateway.enable-remote-logging' | translate }}
+                  </mat-label>
+                </mat-slide-toggle>
+              </div>
+              <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                <div class="fixed-title-width" translate>gateway.remote-logging-level</div>
+                <div class="tb-flex no-gap">
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <mat-select formControlName="logLevel">
+                      <mat-option *ngFor="let logLevel of gatewayLogLevel" [value]="logLevel">{{ logLevel }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
               </div>
             </div>
             <div *ngIf="connectorForm.get('type').value === connectorType.MQTT" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
@@ -230,7 +245,7 @@
                   <div class="fixed-title-width tb-required" translate>gateway.port</div>
                   <div class="tb-flex no-gap">
                     <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                      <input matInput name="value" formControlName="port" placeholder="{{ 'gateway.set' | translate }}"/>
+                      <input matInput type="number" name="value" formControlName="port" placeholder="{{ 'gateway.set' | translate }}"/>
                       <mat-icon matSuffix
                                 matTooltipPosition="above"
                                 matTooltipClass="tb-error-tooltip"
