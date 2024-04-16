@@ -27,6 +27,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToDeviceRpcRequestMs
 import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportUpdateCredentialsProto;
 import org.thingsboard.server.gen.transport.TransportProtos.UplinkNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.DeviceTransportSettingsMsg;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -61,5 +62,5 @@ public interface SessionMsgListener {
 
     default void onResourceDelete(TransportProtos.ResourceDeleteMsg resourceUpdateMsgOpt) {}
 
-    default void onDeviceTransportSettings(UUID sessionId, TransportProtos.DeviceTransportSettingsMsg settingsMsg, EntityTransportRateLimits deviceRateLimits) {}
+    default void onDeviceTransportSettings(UUID sessionId, DeviceTransportSettingsMsg settingsMsg, EntityTransportRateLimits deviceRateLimits) {}
 }
