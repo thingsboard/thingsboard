@@ -467,6 +467,12 @@ public class JsonConverter {
         return result;
     }
 
+    public static JsonObject toGatewayDeviceDisconnectJson(String deviceName) {
+        JsonObject result = new JsonObject();
+        result.addProperty(DEVICE_PROPERTY, deviceName);
+        return result;
+    }
+
     public static JsonElement toErrorJson(String errorMsg) {
         JsonObject error = new JsonObject();
         error.addProperty("error", errorMsg);

@@ -32,17 +32,20 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
+import io.netty.handler.codec.mqtt.MqttVersion;
+import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ConcurrentReferenceHashMap;
-import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.transport.TransportService;
-import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.adaptor.AdaptorException;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.adaptor.ProtoConverter;
+import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
+import org.thingsboard.server.common.transport.TransportService;
+import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
@@ -51,19 +54,20 @@ import org.thingsboard.server.gen.transport.TransportProtos.GetOrCreateDeviceFro
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.transport.mqtt.MqttTransportContext;
 import org.thingsboard.server.transport.mqtt.MqttTransportHandler;
+import org.thingsboard.server.transport.mqtt.TopicType;
 import org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.util.ReturnCode;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState;
 
-import jakarta.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -762,15 +766,37 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
                 log.trace("[{}][{}][{}][{}] Published msg: [{}]", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName, msg);
                 if (msgId > 0) {
                     ctx.writeAndFlush(MqttTransportHandler.createMqttPubAckMsg(deviceSessionCtx, msgId, ReturnCode.SUCCESS));
+                } else {
+                    log.trace("[{}][{}][{}] Wrong msg id: [{}]", gateway.getTenantId(), gateway.getDeviceId(), sessionId, msg);
+                    ctx.writeAndFlush(MqttTransportHandler.createMqttPubAckMsg(deviceSessionCtx, msgId, ReturnCode.UNSPECIFIED_ERROR));
+                    closeDeviceSession(deviceName, ReturnCode.MALFORMED_PACKET);
                 }
             }
 
             @Override
             public void onError(Throwable e) {
                 log.trace("[{}][{}][{}] Failed to publish msg: [{}] for device: [{}]", gateway.getTenantId(), gateway.getDeviceId(), sessionId, msg, deviceName, e);
+                if (e instanceof TbRateLimitsException) {
+                    closeDeviceSession(deviceName, ReturnCode.MESSAGE_RATE_TOO_HIGH);
+                } else {
+                    closeDeviceSession(deviceName, ReturnCode.UNSPECIFIED_ERROR);
+                }
                 ctx.close();
             }
         };
     }
 
+
+    private void closeDeviceSession(String deviceName, ReturnCode returnCode) {
+        try {
+            if (MqttVersion.MQTT_5.equals(deviceSessionCtx.getMqttVersion())) {
+                MqttTransportAdaptor adaptor = deviceSessionCtx.getAdaptor(TopicType.V1);
+                int returnCodeValue = returnCode.byteValue() & 0xFF;
+                Optional<MqttMessage> deviceDisconnectPublishMsg = adaptor.convertToGatewayDeviceDisconnectPublish(deviceSessionCtx, deviceName, returnCodeValue);
+                deviceDisconnectPublishMsg.ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
+            }
+        } catch (Exception e) {
+            log.trace("Failed to send device disconnect to gateway session", e);
+        }
+    }
 }

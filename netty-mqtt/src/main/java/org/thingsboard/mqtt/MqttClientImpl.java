@@ -87,7 +87,7 @@ final class MqttClientImpl implements MqttClient {
     private volatile boolean reconnect = false;
     private String host;
     private int port;
-    private MqttClientCallback callback;
+    public MqttClientCallback callback;
 
     private final ListeningExecutor handlerExecutor;
 
@@ -426,7 +426,12 @@ final class MqttClientImpl implements MqttClient {
         disconnected = true;
         if (this.channel != null) {
             MqttMessage message = new MqttMessage(new MqttFixedHeader(MqttMessageType.DISCONNECT, false, MqttQoS.AT_MOST_ONCE, false, 0));
-            this.sendAndFlushPacket(message).addListener(future1 -> channel.close());
+            ChannelFuture channelFuture = this.sendAndFlushPacket(message);
+            eventLoop.schedule(() -> {
+                if (!channelFuture.isDone()) {
+                    this.channel.close();
+                }
+            }, 50, TimeUnit.MILLISECONDS);
         }
     }
 
