@@ -216,7 +216,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             log.debug("[{}] Cleanup RPC awaiting ack map due to session close!", sessionId);
             rpcAwaitingAck.clear();
         }
-        if (ctx.channel().isOpen()) {
+        if (ctx.channel() != null && ctx.channel().isOpen()) {
             if (msg != null && MqttVersion.MQTT_5 == deviceSessionCtx.getMqttVersion()) {
                 ChannelFuture channelFuture = ctx.writeAndFlush(msg).addListener(future -> ctx.close());
                 scheduler.schedule(() -> {
@@ -229,7 +229,12 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 ctx.close();
             }
         } else {
-            log.debug("[{}] Channel is already closed!", sessionId);
+            if (ctx.channel() != null) {
+                log.debug("[{}] Channel is already closed!", sessionId);
+            } else {
+                log.debug("[{}] Channel is null, closing ctx...", sessionId);
+                ctx.close();
+            }
         }
     }
 
