@@ -90,13 +90,13 @@ public abstract class AbstractPartitionBasedService<T extends EntityId> extends 
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent partitionChangeEvent) {
         log.debug("onTbApplicationEvent, processing event: {}", partitionChangeEvent);
-        subscribeQueue.add(partitionChangeEvent.getPartitions());
+        subscribeQueue.add(partitionChangeEvent.getCorePartitions());
         scheduledExecutor.submit(this::pollInitStateFromDB);
     }
 
     @Override
     protected boolean filterTbApplicationEvent(PartitionChangeEvent event) {
-        return event.getServiceType() == getServiceType() && event.isCorePartitionChange();
+        return event.getServiceType() == getServiceType();
     }
 
     protected void pollInitStateFromDB() {

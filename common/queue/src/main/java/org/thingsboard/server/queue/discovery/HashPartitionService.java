@@ -370,7 +370,7 @@ public class HashPartitionService implements PartitionService {
             }
         });
         if (!changedPartitionsMap.isEmpty()) {
-            Map<ServiceType , Map<QueueKey, Set<TopicPartitionInfo>>> partitionsByServiceType = new HashMap<>();
+            Map<ServiceType, Map<QueueKey, Set<TopicPartitionInfo>>> partitionsByServiceType = new HashMap<>();
             changedPartitionsMap.forEach((queueKey, partitions) -> {
                 partitionsByServiceType.computeIfAbsent(queueKey.getType(), serviceType -> new HashMap<>())
                         .put(queueKey, partitions);

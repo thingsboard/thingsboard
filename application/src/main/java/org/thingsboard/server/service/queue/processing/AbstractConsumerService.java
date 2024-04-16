@@ -91,9 +91,6 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
 
     @Override
     protected boolean filterTbApplicationEvent(PartitionChangeEvent event) {
-        if (getServiceType() == ServiceType.TB_CORE) {
-            return event.getServiceType() == getServiceType() && isCore();
-        }
         return event.getServiceType() == getServiceType();
     }
 
@@ -106,8 +103,6 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     protected abstract long getNotificationPollDuration();
 
     protected abstract long getNotificationPackProcessingTimeout();
-
-    protected abstract boolean isCore();
 
     protected void launchNotificationsConsumer() {
         notificationsConsumerExecutor.submit(() -> {

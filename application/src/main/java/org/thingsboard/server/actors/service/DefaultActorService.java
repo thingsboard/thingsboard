@@ -127,7 +127,7 @@ public class DefaultActorService extends TbApplicationEventListener<PartitionCha
 
     @Override
     protected boolean filterTbApplicationEvent(PartitionChangeEvent event) {
-        return event.getServiceType() == ServiceType.TB_RULE_ENGINE || event.isCorePartitionChange();
+        return event.getServiceType() == ServiceType.TB_RULE_ENGINE || event.getServiceType() == ServiceType.TB_CORE;
     }
 
     @PreDestroy

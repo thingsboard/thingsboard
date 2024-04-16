@@ -30,7 +30,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.TbActorMsg;
@@ -43,7 +42,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeNotificationMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.AfterStartUp;
@@ -114,12 +112,8 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
     @Override
     public void onTbApplicationEvent(PartitionChangeEvent event) {
         if (ServiceType.TB_CORE.equals(event.getServiceType())) {
-            log.info("Subscribing to partitions: {}", event.getPartitions());
-            event.getPartitionsMap().forEach((queueKey, tpi) -> {
-                if (queueKey.equals(new QueueKey(ServiceType.TB_CORE).withQueueName(DataConstants.EDGE_QUEUE_NAME))) {
-                    this.mainConsumer.subscribe(event.getPartitionsMap().get(queueKey));
-                }
-            });
+            log.info("Subscribing to partitions: {}", event.getEdgePartitions());
+            this.mainConsumer.subscribe(event.getEdgePartitions());
         }
     }
 
@@ -217,11 +211,6 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
     @Override
     protected long getNotificationPackProcessingTimeout() {
         return packProcessingTimeout;
-    }
-
-    @Override
-    protected boolean isCore() {
-        return false;
     }
 
     @Override

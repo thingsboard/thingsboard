@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.queue;
 
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationEventPublisher;
@@ -55,7 +56,6 @@ import org.thingsboard.server.service.queue.ruleengine.TbRuleEngineQueueConsumer
 import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 
-import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -168,12 +168,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     }
 
     @Override
-    protected boolean isCore() {
-        return false;
-    }
-
-    @Override
-    protected void handleNotification(UUID id, TbProtoQueueMsg<ToRuleEngineNotificationMsg> msg, TbCallback callback) throws Exception {
+    protected void handleNotification(UUID id, TbProtoQueueMsg<ToRuleEngineNotificationMsg> msg, TbCallback callback) {
         ToRuleEngineNotificationMsg nfMsg = msg.getValue();
         if (nfMsg.hasComponentLifecycle()) {
             handleComponentLifecycleMsg(id, ProtoUtils.fromProto(nfMsg.getComponentLifecycle()));

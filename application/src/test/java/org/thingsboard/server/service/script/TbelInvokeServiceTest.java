@@ -69,14 +69,14 @@ class TbelInvokeServiceTest extends AbstractControllerTest {
         for (int i = 0; i < 100; i++) {
             msg.put("temperature", i);
             boolean expected = i > 20;
-            boolean result = Boolean.valueOf(invokeScript(scriptId, JacksonUtil.toString(msg)));
+            boolean result = Boolean.parseBoolean(invokeScript(scriptId, JacksonUtil.toString(msg)));
             Assert.assertEquals(expected, result);
         }
         long startTs = System.currentTimeMillis();
         for (int i = 0; i < iterations; i++) {
             msg.put("temperature", i);
             boolean expected = i > 20;
-            boolean result = Boolean.valueOf(invokeScript(scriptId, JacksonUtil.toString(msg)));
+            boolean result = Boolean.parseBoolean(invokeScript(scriptId, JacksonUtil.toString(msg)));
             Assert.assertEquals(expected, result);
         }
         long duration = System.currentTimeMillis() - startTs;
