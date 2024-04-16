@@ -16,6 +16,7 @@
 package org.thingsboard.script.api.tbel;
 
 import com.google.common.primitives.Bytes;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.mvel2.ExecutionContext;
 import org.mvel2.ParserConfiguration;
@@ -29,31 +30,49 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
 
+@Slf4j
 public class TbUtils {
 
     private static final byte[] HEX_ARRAY = "0123456789ABCDEF".getBytes(StandardCharsets.US_ASCII);
+
+    private static final LinkedHashMap<String, String> enCodeMdn = new LinkedHashMap<>();
+
+    static {
+        enCodeMdn.put("\\+", "%20");
+        enCodeMdn.put("%21", "!");
+        enCodeMdn.put("%27", "'");
+        enCodeMdn.put("%28", "\\(");
+        enCodeMdn.put("%29", "\\)");
+        enCodeMdn.put("%7E", "~");
+        enCodeMdn.put("%3B", ";");
+        enCodeMdn.put("%2C", ",");
+        enCodeMdn.put("%2F", "/");
+        enCodeMdn.put("%3F", "\\?");
+        enCodeMdn.put("%3A", ":");
+        enCodeMdn.put("%40", "@");
+        enCodeMdn.put("%26", "&");
+        enCodeMdn.put("%3D", "=");
+        enCodeMdn.put("%2B", "\\+");
+        enCodeMdn.put("%24", Matcher.quoteReplacement("$"));
+        enCodeMdn.put("%23", "#");
+    }
 
     public static void register(ParserConfiguration parserConfig) throws Exception {
         parserConfig.addImport("btoa", new MethodStub(TbUtils.class.getMethod("btoa",
@@ -175,6 +194,10 @@ public class TbUtils {
                 ExecutionContext.class, Map.class, List.class)));
         parserConfig.addImport("toFlatMap", new MethodStub(TbUtils.class.getMethod("toFlatMap",
                 ExecutionContext.class, Map.class, List.class, boolean.class)));
+        parserConfig.addImport("encodeURI", new MethodStub(TbUtils.class.getMethod("encodeURI",
+                String.class)));
+        parserConfig.addImport("decodeURI", new MethodStub(TbUtils.class.getMethod("decodeURI",
+                String.class)));
     }
 
     public static String btoa(String input) {
@@ -621,6 +644,26 @@ public class TbUtils {
         ExecutionHashMap<String, Object> map = new ExecutionHashMap<>(16, ctx);
         parseRecursive(json, map, excludeList, "", pathInKey);
         return map;
+    }
+
+    public static String encodeURI(String uri) {
+        String encoded = URLEncoder.encode(uri, StandardCharsets.UTF_8);
+        Optional<String> encodedMdnOpt = Optional.of(encoded);
+        for (var entry : enCodeMdn.entrySet()) {
+            encodedMdnOpt = Optional.of(encodedMdnOpt.get().replaceAll(entry.getKey(), entry.getValue()));
+        }
+        return encodedMdnOpt.orElse(null);
+    }
+
+    public static String decodeURI(String uri) {
+        ArrayList<String> alKeys = new ArrayList<>(enCodeMdn.keySet());
+        Collections.reverse(alKeys);
+        Optional<String> encodedMdnOpt = Optional.of(uri);
+        for (String strKey : alKeys) {
+            encodedMdnOpt = Optional.of(encodedMdnOpt.get().replaceAll(enCodeMdn.get(strKey), strKey));
+            enCodeMdn.get(strKey);
+        }
+        return encodedMdnOpt.orElse(null) == null ? null : URLDecoder.decode(encodedMdnOpt.orElse(null), StandardCharsets.UTF_8);
     }
 
     private static void parseRecursive(Object json, Map<String, Object> map, List<String> excludeList, String path, boolean pathInKey) {
