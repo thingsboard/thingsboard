@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Random;
@@ -472,6 +471,17 @@ public class TbUtilsTest {
             Assert.assertTrue(e.getMessage().contains("The value '[0xFD]' could not be correctly converted to a byte. " +
                     "Must be a HexDecimal/String/Integer/Byte format !"));
         }
+    }
+
+    @Test
+    public void encodeDecodeUri_Test() {
+        String uriOriginal = "-_.!~*'();/?:@&=+$,#ht://example.ж д a/path with spaces/?param1=Київ 1&param2=Україна2";
+        String uriEncodeExpected = "-_.%21%7E*%27%28%29%3B%2F%3F%3A%40%26%3D%2B%24%2C%23ht%3A%2F%2Fexample.%D0%B6+%D0%B4+a%2Fpath+with+spaces%2F%3Fparam1%3D%D0%9A%D0%B8%D1%97%D0%B2+1%26param2%3D%D0%A3%D0%BA%D1%80%D0%B0%D1%97%D0%BD%D0%B02";
+        String uriEncodeActual = TbUtils.encodeURI(uriOriginal);
+        Assert.assertEquals(uriEncodeExpected, uriEncodeActual);
+
+        String uriDecodeActual = TbUtils.decodeURI(uriEncodeActual);
+        Assert.assertEquals(uriOriginal, uriDecodeActual);
     }
 
 

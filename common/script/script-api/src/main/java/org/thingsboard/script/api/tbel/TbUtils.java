@@ -29,19 +29,11 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -175,6 +167,11 @@ public class TbUtils {
                 ExecutionContext.class, Map.class, List.class)));
         parserConfig.addImport("toFlatMap", new MethodStub(TbUtils.class.getMethod("toFlatMap",
                 ExecutionContext.class, Map.class, List.class, boolean.class)));
+        parserConfig.addImport("encodeURI", new MethodStub(TbUtils.class.getMethod("encodeURI",
+                String.class)));
+        parserConfig.addImport("decodeURI", new MethodStub(TbUtils.class.getMethod("decodeURI",
+                String.class)));
+
     }
 
     public static String btoa(String input) {
@@ -621,6 +618,14 @@ public class TbUtils {
         ExecutionHashMap<String, Object> map = new ExecutionHashMap<>(16, ctx);
         parseRecursive(json, map, excludeList, "", pathInKey);
         return map;
+    }
+
+    public static String encodeURI(String uri) {
+        return URLEncoder.encode(uri, StandardCharsets.UTF_8);
+    }
+
+    public static String decodeURI(String uri) {
+        return URLDecoder.decode(uri, StandardCharsets.UTF_8);
     }
 
     private static void parseRecursive(Object json, Map<String, Object> map, List<String> excludeList, String path, boolean pathInKey) {
