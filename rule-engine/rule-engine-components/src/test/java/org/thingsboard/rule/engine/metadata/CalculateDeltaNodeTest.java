@@ -20,6 +20,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -54,9 +57,11 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -96,8 +101,6 @@ public class CalculateDeltaNodeTest {
         node = new CalculateDeltaNode();
         config = new CalculateDeltaNodeConfiguration().defaultConfiguration();
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-        when(ctxMock.getTimeseriesService()).thenReturn(timeseriesServiceMock);
-
         node.init(ctxMock, nodeConfiguration);
     }
 
@@ -109,6 +112,49 @@ public class CalculateDeltaNodeTest {
         assertFalse(config.isAddPeriodBetweenMsgs());
         assertEquals(config.getPeriodValueKey(), "periodInMs");
         assertTrue(config.isTellFailureIfDeltaIsNegative());
+    }
+
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {" "}) // blank value
+    public void givenInvalidInputKey_whenInitThenThrowException(String key) {
+        config.setInputValueKey(key);
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        var exception = assertThrows(TbNodeException.class, () -> node.init(ctxMock, nodeConfiguration));
+        assertThat(exception).hasMessage("Input value key should be specified!");
+        assertThat(exception.isUnrecoverable()).isTrue();
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {" "}) // blank value
+    public void givenInvalidOutputKey_whenInitThenThrowException(String key) {
+        config.setOutputValueKey(key);
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        var exception = assertThrows(TbNodeException.class, () -> node.init(ctxMock, nodeConfiguration));
+        assertThat(exception).hasMessage("Output value key should be specified!");
+        assertThat(exception.isUnrecoverable()).isTrue();
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {" "}) // blank value
+    public void givenInvalidPeriodKey_whenInitThenThrowException(String key) {
+        config.setPeriodValueKey(key);
+        config.setAddPeriodBetweenMsgs(true);
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        var exception = assertThrows(TbNodeException.class, () -> node.init(ctxMock, nodeConfiguration));
+        assertThat(exception).hasMessage("Period value key should be specified!");
+        assertThat(exception.isUnrecoverable()).isTrue();
+    }
+
+    @Test
+    public void givenInvalidPeriodKeyAndAddPeriodDisabled_whenInitThenNoExceptionThrown() {
+        config.setPeriodValueKey(null);
+        config.setAddPeriodBetweenMsgs(false);
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        assertDoesNotThrow(() -> node.init(ctxMock, nodeConfiguration));
     }
 
     @Test
@@ -528,6 +574,7 @@ public class CalculateDeltaNodeTest {
     private void mockFindLatestAsync(TsKvEntry tsKvEntry) {
         when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
+        when(ctxMock.getTimeseriesService()).thenReturn(timeseriesServiceMock);
         when(timeseriesServiceMock.findLatest(
                 eq(TENANT_ID), eq(DUMMY_DEVICE_ORIGINATOR), eq(tsKvEntry.getKey())
         )).thenReturn(Futures.immediateFuture(Optional.of(tsKvEntry)));

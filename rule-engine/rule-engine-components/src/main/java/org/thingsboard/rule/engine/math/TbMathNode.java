@@ -105,8 +105,8 @@ public class TbMathNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        var semaphoreWithQueue = locks.computeIfAbsent(msg.getOriginator(), SemaphoreWithTbMsgQueue::new);
-        semaphoreWithQueue.addToQueueAndTryProcess(msg, ctx, this::processMsgAsync);
+        locks.computeIfAbsent(msg.getOriginator(), SemaphoreWithTbMsgQueue::new)
+                .addToQueueAndTryProcess(msg, ctx, this::processMsgAsync);
     }
 
     ListenableFuture<TbMsg> processMsgAsync(TbContext ctx, TbMsg msg) {
