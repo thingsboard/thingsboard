@@ -36,8 +36,6 @@ public interface TbQueueConsumer<T extends TbQueueMsg> {
 
     void commit();
 
-    boolean isCommitSupported();
-
     boolean isStopped();
 
     List<String> getFullTopicNames();

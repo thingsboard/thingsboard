@@ -60,19 +60,10 @@ public class HousekeeperTask implements Serializable {
         return new HousekeeperTask(tenantId, entityId, HousekeeperTaskType.DELETE_ATTRIBUTES);
     }
 
-    /**
-     * Task for telemetry deletion, processed by TelemetryDeletionTaskProcessor.
-     * The processor will submit separate tasks for each key for latest and ts history deletion,
-     * processed by LatestTsDeletionTaskProcessor and TsHistoryDeletionTaskProcessor accordingly.
-     * */
     public static HousekeeperTask deleteTelemetry(TenantId tenantId, EntityId entityId) {
         return new HousekeeperTask(tenantId, entityId, HousekeeperTaskType.DELETE_TELEMETRY);
     }
 
-    /**
-     * Task for events deletion, processed by EventsDeletionTaskProcessor.
-     * All types of events will be dropped for this entity.
-     * */
     public static HousekeeperTask deleteEvents(TenantId tenantId, EntityId entityId) {
         return new HousekeeperTask(tenantId, entityId, HousekeeperTaskType.DELETE_EVENTS);
     }

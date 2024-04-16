@@ -201,11 +201,6 @@ public abstract class AbstractTbQueueConsumerTemplate<R, T extends TbQueueMsg> i
         return partitions.stream().map(TopicPartitionInfo::getFullTopicName).collect(Collectors.toList());
     }
 
-    @Override
-    public boolean isCommitSupported() {
-        return true;
-    }
-
     protected boolean isLongPollingSupported() {
         return false;
     }

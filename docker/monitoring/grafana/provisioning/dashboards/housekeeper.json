@@ -188,7 +188,7 @@
             "uid": "9BonzvTSz"
           },
           "exemplar": true,
-          "expr": "sum by (taskType) (increase(housekeeper_total{instance=\"192.168.3.27:8080\",statsName=\"failedProcessing\"}[1m]))",
+          "expr": "sum by (taskType) (increase(housekeeper_total{statsName=\"failedProcessing\"}[1m]))",
           "interval": "",
           "legendFormat": "{{taskType}}",
           "refId": "A"
@@ -274,7 +274,7 @@
             "uid": "9BonzvTSz"
           },
           "exemplar": true,
-          "expr": "sum by (taskType) (increase(housekeeper_total{instance=\"192.168.3.27:8080\",statsName=\"reprocessed\"}[1m]))",
+          "expr": "sum by (taskType) (increase(housekeeper_total{statsName=\"reprocessed\"}[1m]))",
           "interval": "",
           "legendFormat": "{{taskType}}",
           "refId": "A"
@@ -360,7 +360,7 @@
             "uid": "9BonzvTSz"
           },
           "exemplar": true,
-          "expr": "sum by (taskType) (increase(housekeeper_total{instance=\"192.168.3.27:8080\",statsName=\"failedReprocessing\"}[1m]))",
+          "expr": "sum by (taskType) (increase(housekeeper_total{statsName=\"failedReprocessing\"}[1m]))",
           "interval": "",
           "legendFormat": "{{taskType}}",
           "refId": "A"

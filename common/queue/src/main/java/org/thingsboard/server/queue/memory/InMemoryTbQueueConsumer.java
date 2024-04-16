@@ -114,9 +114,4 @@ public class InMemoryTbQueueConsumer<T extends TbQueueMsg> implements TbQueueCon
         return partitions.stream().map(TopicPartitionInfo::getFullTopicName).collect(Collectors.toList());
     }
 
-    @Override
-    public boolean isCommitSupported() {
-        return false;
-    }
-
 }
