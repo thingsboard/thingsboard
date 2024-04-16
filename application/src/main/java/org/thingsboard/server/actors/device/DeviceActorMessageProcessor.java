@@ -461,7 +461,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
             handleSessionActivity(sessionInfo, msg.getSubscriptionInfo());
         }
         if (msg.hasClaimDevice()) {
-            handleClaimDeviceMsg(msg.getClaimDevice());
+            handleClaimDeviceMsg(sessionInfo, msg.getClaimDevice());
         }
         if (msg.hasRpcResponseStatusMsg()) {
             processRpcResponseStatus(sessionInfo, msg.getRpcResponseStatusMsg());
@@ -486,9 +486,22 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
                 });
     }
 
-    private void handleClaimDeviceMsg(ClaimDeviceMsg msg) {
+    private void handleClaimDeviceMsg(SessionInfoProto sessionInfo, ClaimDeviceMsg msg) {
+        UUID sessionId = getSessionId(sessionInfo);
         DeviceId deviceId = new DeviceId(new UUID(msg.getDeviceIdMSB(), msg.getDeviceIdLSB()));
-        systemContext.getClaimDevicesService().registerClaimingInfo(tenantId, deviceId, msg.getSecretKey(), msg.getDurationMs());
+        ListenableFuture<Void> registrationFuture = systemContext.getClaimDevicesService()
+                        .registerClaimingInfo(tenantId, deviceId, msg.getSecretKey(), msg.getDurationMs());
+        Futures.addCallback(registrationFuture, new FutureCallback<>() {
+            @Override
+            public void onSuccess(Void result) {
+                log.debug("[{}][{}] Successfully processed register claiming info request!", sessionId, deviceId);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.error("[{}][{}] Failed to process register claiming info request due to: ", sessionId, deviceId, t);
+            }
+        }, MoreExecutors.directExecutor());
     }
 
     private void reportSessionOpen() {

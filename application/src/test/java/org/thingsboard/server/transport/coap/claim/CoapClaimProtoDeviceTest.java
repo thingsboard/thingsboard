@@ -39,7 +39,6 @@ public class CoapClaimProtoDeviceTest extends CoapClaimDeviceTest {
                 .transportPayloadType(TransportPayloadType.PROTOBUF)
                 .build();
         processBeforeTest(configProperties);
-        createCustomerAndUser();
     }
 
     @After

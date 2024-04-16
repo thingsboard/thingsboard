@@ -28,7 +28,7 @@ public class DefaultRuleChainCreateRequest implements Serializable {
 
     private static final long serialVersionUID = 5600333716030561537L;
 
-    @Schema(required = true, description = "Name of the new rule chain", example = "Root Rule Chain")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Name of the new rule chain", example = "Root Rule Chain")
     private String name;
 
 }

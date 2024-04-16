@@ -40,14 +40,14 @@ public class AlarmCreateOrUpdateActiveRequest implements AlarmModificationReques
     @Schema(description = "JSON object with Customer Id", accessMode = Schema.AccessMode.READ_ONLY)
     private CustomerId customerId;
     @NotNull
-    @Schema(required = true, description = "representing type of the Alarm", example = "High Temperature Alarm")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "representing type of the Alarm", example = "High Temperature Alarm")
     @Length(fieldName = "type")
     private String type;
     @NotNull
-    @Schema(required = true, description = "JSON object with alarm originator id")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "JSON object with alarm originator id")
     private EntityId originator;
     @NotNull
-    @Schema(required = true, description = "Alarm severity", example = "CRITICAL")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Alarm severity", example = "CRITICAL")
     private AlarmSeverity severity;
     @Schema(description = "Timestamp of the alarm start time, in milliseconds", example = "1634058704565")
     private long startTs;

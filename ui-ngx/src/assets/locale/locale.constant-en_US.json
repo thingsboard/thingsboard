@@ -2735,7 +2735,7 @@
         "rpc-command-result": "Response",
         "rpc-command-edit-params": "Edit parameters",
         "gateway-configuration": "General Configuration",
-        "docker-label": "Use the following instruction to run IoT Gateway in in Docker compose with credentials for selected device",
+        "docker-label": "Use the following instruction to run IoT Gateway in Docker compose with credentials for selected device",
         "install-docker-compose": "Use the instructions to download, install and setup docker compose",
         "download-configuration-file": "Download configuration file",
         "download-docker-compose": "Download docker-compose.yml for your gateway",
@@ -6749,6 +6749,15 @@
             "bar-width": "Bar width",
             "bar-width-relative": "Percentage of time window",
             "bar-width-absolute": "Absolute (ms)",
+            "comparison": {
+              "comparison": "Comparison",
+              "show": "Show",
+              "settings": "Comparison settings",
+              "show-values-for-comparison": "Show historical data for comparison",
+              "comparison-values-label": "Comparison key label",
+              "comparison-values-label-auto": "Auto",
+              "comparison-data-color": "Comparison data color"
+            },
             "threshold": {
               "thresholds": "Thresholds",
               "source": "Source",
@@ -6802,6 +6811,7 @@
               "x-axis": "X axis",
               "y-axis": "Y axis",
               "y-axis-settings": "Y axis settings",
+              "comparison-x-axis-settings": "Comparison X axis settings",
               "remove-y-axis": "Remove Y axis",
               "id": "Id",
               "label": "Label",
