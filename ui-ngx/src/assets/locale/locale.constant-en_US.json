@@ -6806,6 +6806,11 @@
               "to": "To",
               "remove-state": "Remove state"
             },
+            "grid": {
+              "grid": "Grid",
+              "background-color": "Background color",
+              "border": "Border"
+            },
             "axis": {
               "axes": "Axes",
               "x-axis": "X axis",
