@@ -82,7 +82,7 @@ import static org.mockito.Mockito.when;
 public class CalculateDeltaNodeTest {
 
     private final DeviceId DUMMY_DEVICE_ORIGINATOR = new DeviceId(UUID.fromString("2ba3ded4-882b-40cf-999a-89da9ccd58f9"));
-    private final TenantId TENANT_ID = new TenantId(UUID.fromString("3842e740-0d89-43a9-8d52-ae44023847ba"));
+    private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("3842e740-0d89-43a9-8d52-ae44023847ba"));
     private final ListeningExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
 
     private static final int RULE_DISPATCHER_POOL_SIZE = 2;
