@@ -173,7 +173,7 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
             throw new IllegalStateException("Invalid message structure, it is not a JSON Object:" + data);
         } else {
             JsonObject dataAsObject = data.getAsJsonObject();
-            BoundStatementBuilder stmtBuilder = new BoundStatementBuilder(saveStmt.bind());
+            BoundStatementBuilder stmtBuilder = getStmtBuilder();
             AtomicInteger i = new AtomicInteger(0);
             fieldsMap.forEach((key, value) -> {
                 if (key.equals(ENTITY_ID)) {
@@ -198,7 +198,7 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
                     } else if (dataKeyElement.isJsonObject()) {
                         stmtBuilder.setString(i.get(), dataKeyElement.getAsJsonObject().toString());
                     } else {
-                        throw new IllegalStateException("Message data key: '" + key + "' with value: '" + value + "' is not a JSON Object or JSON Primitive!");
+                        throw new IllegalStateException("Message data key: '" + key + "' with value: '" + dataKeyElement + "' is not a JSON Object or JSON Primitive!");
                     }
                 } else {
                     throw new RuntimeException("Message data doesn't contain key: " + "'" + key + "'!");
@@ -207,6 +207,10 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
             });
             return getFuture(executeAsyncWrite(ctx, stmtBuilder.build()), rs -> null);
         }
+    }
+
+    BoundStatementBuilder getStmtBuilder() {
+        return new BoundStatementBuilder(saveStmt.bind());
     }
 
     private TbResultSetFuture executeAsyncWrite(TbContext ctx, Statement statement) {
