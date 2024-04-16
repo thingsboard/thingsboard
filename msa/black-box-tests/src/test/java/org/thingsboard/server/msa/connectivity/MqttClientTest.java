@@ -331,6 +331,30 @@ public class MqttClientTest extends AbstractContainerTest {
     }
 
     @Test
+    public void requestDeviceSettings() throws Exception {
+        DeviceCredentials deviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
+
+        MqttMessageListener listener = new MqttMessageListener();
+        MqttClient mqttClient = getMqttClient(deviceCredentials, listener);
+        mqttClient.on("v1/devices/me/service/settings/response", listener, MqttQoS.AT_LEAST_ONCE).get();
+
+        mqttClient.publish("v1/devices/me/service/settings/request", Unpooled.wrappedBuffer("".getBytes())).get();
+
+        MqttEvent responseFromServer = listener.getEvents().poll(1 * timeoutMultiplier, TimeUnit.SECONDS);
+        JsonNode responseNode = mapper.readTree(responseFromServer.getMessage());
+        assertThat(responseNode).isNotNull();
+        assertThat(responseNode.has("payloadType")).isTrue();
+        assertThat(responseNode.has("maxPayloadSize")).isTrue();
+        assertThat(responseNode.has("maxSessionsPerDevice")).isTrue();
+        assertThat(responseNode.get("payloadType").asText()).isEqualTo("JSON");
+        assertThat(responseNode.get("maxPayloadSize").asInt()).isEqualTo(65536);
+        assertThat(responseNode.get("maxSessionsPerDevice").asInt()).isEqualTo(1);
+        assertThat(responseNode.has("regularMsgRateLimit")).isTrue();
+        assertThat(responseNode.has("telemetryMsgRateLimit")).isTrue();
+        assertThat(responseNode.has("telemetryDataPointsRateLimit")).isTrue();
+    }
+
+    @Test
     public void deviceDeletedClosingSession() throws Exception {
         DeviceCredentials deviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
 
