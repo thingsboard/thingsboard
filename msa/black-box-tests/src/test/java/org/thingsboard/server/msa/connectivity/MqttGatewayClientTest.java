@@ -45,6 +45,7 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.info.RateLimitsNotificationInfo;
@@ -107,6 +108,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         this.listener = new MqttMessageListener();
         this.mqttClient = getMqttClient(gatewayDeviceCredentials, listener);
         this.createdDevice = createDeviceThroughGateway(mqttClient, gatewayDevice);
+        containerWsClient = getContainerWsClient();
     }
 
     @AfterMethod
@@ -388,7 +390,6 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
     @Test
     public void testMsgRateLimitsForGatewayDevice() throws Exception {
         updateTenantProfileWithGatewayTransportLimits("1:30", "", "");
-        containerWsClient = buildAndConnectWebSocketClient();
         containerWsClient.subscribeForUnreadNotifications(10);
         Thread.sleep(500);
         mqttClient = getMqttClient(testRestClient.getDeviceCredentialsByDeviceId(gatewayDevice.getId()), listener);
@@ -407,14 +408,11 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         RateLimitsNotificationInfo info = (RateLimitsNotificationInfo) update.getInfo();
         assertThat(info.getApi()).isEqualTo(LimitedApi.TRANSPORT_MESSAGES_PER_GATEWAY);
         assertThat(info.getLimitLevel()).isEqualTo(gatewayDevice.getId());
-        containerWsClient.markAllNotificationsAsRead();
-        containerWsClient.close();
     }
 
     @Test
     public void testTelemetryMsgRateLimitsForGatewayDevice() throws Exception {
         updateTenantProfileWithGatewayTransportLimits("", "1:5", "");
-        containerWsClient = buildAndConnectWebSocketClient();
         containerWsClient.subscribeForUnreadNotifications(10);
         Thread.sleep(100);
 
@@ -458,15 +456,12 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         RateLimitsNotificationInfo info = (RateLimitsNotificationInfo) update.getInfo();
         assertThat(info.getApi()).isEqualTo(LimitedApi.TRANSPORT_MESSAGES_PER_GATEWAY);
         assertThat(info.getLimitLevel()).isEqualTo(gatewayDevice.getId());
-        containerWsClient.markAllNotificationsAsRead();
-        containerWsClient.close();
 
     }
 
     @Test
     public void testTelemetryDataPointsRateLimitsForGatewayDevice() throws Exception {
         updateTenantProfileWithGatewayTransportLimits("", "", "4:5");
-        containerWsClient = buildAndConnectWebSocketClient();
         containerWsClient.subscribeForUnreadNotifications(10);
         Thread.sleep(100);
 
@@ -510,8 +505,6 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         RateLimitsNotificationInfo info = (RateLimitsNotificationInfo) update.getInfo();
         assertThat(info.getApi()).isEqualTo(LimitedApi.TRANSPORT_MESSAGES_PER_GATEWAY);
         assertThat(info.getLimitLevel()).isEqualTo(gatewayDevice.getId());
-        containerWsClient.markAllNotificationsAsRead();
-        containerWsClient.close();
     }
 
     @Test

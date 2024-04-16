@@ -58,6 +58,8 @@ import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 @Slf4j
 public class ContainerWsClient extends WebSocketClient {
 
@@ -278,7 +280,10 @@ public class ContainerWsClient extends WebSocketClient {
         send(JacksonUtil.toString(cmdsWrapper));
     }
 
-    public ContainerWsClient subscribeForUnreadNotifications(int limit) {
+    public ContainerWsClient subscribeForUnreadNotifications(int limit) throws InterruptedException {
+        if (!this.isOpen()) {
+            this.connectBlocking(TIMEOUT, TimeUnit.MILLISECONDS);
+        }
         send(new NotificationsSubCmd(1, limit));
         this.limit = limit;
         return this;

@@ -50,7 +50,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public abstract class AbstractContainerTest {
 
     public static final int TIMEOUT = 30;
-    protected ContainerWsClient containerWsClient;
+    protected volatile ContainerWsClient containerWsClient;
 
     protected final static String TEST_PROVISION_DEVICE_KEY = "test_provision_key";
     protected final static String TEST_PROVISION_DEVICE_SECRET = "test_provision_secret";
@@ -74,6 +74,10 @@ public abstract class AbstractContainerTest {
     public void afterSuite() {
         if (containerTestSuite.isActive()) {
             containerTestSuite.stop();
+        }
+        if (containerWsClient.isOpen()) {
+            containerWsClient.markAllNotificationsAsRead();
+            containerWsClient.close();
         }
     }
 
@@ -189,6 +193,21 @@ public abstract class AbstractContainerTest {
         deviceProfile.setProfileData(deviceProfileData);
         deviceProfile.setProvisionDeviceKey(testProvisionDeviceKey);
         return testRestClient.postDeviceProfile(deviceProfile);
+    }
+
+    protected ContainerWsClient getContainerWsClient() {
+        if (containerWsClient == null) {
+            synchronized (this) {
+                try {
+                    if (containerWsClient == null) {
+                        containerWsClient = buildAndConnectWebSocketClient();
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+        return containerWsClient;
     }
 
     protected ContainerWsClient buildAndConnectWebSocketClient() throws URISyntaxException, InterruptedException {
