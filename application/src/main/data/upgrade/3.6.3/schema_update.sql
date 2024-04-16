@@ -25,24 +25,3 @@ CREATE INDEX IF NOT EXISTS idx_notification_delivery_method_recipient_id_created
 CREATE INDEX IF NOT EXISTS idx_notification_delivery_method_recipient_id_unread ON notification(delivery_method, recipient_id) WHERE status <> 'READ';
 
 -- NOTIFICATIONS UPDATE END
-
--- TENANT PROFILE UPDATE START
-
-UPDATE tenant_profile tp
-SET profile_data =
-    jsonb_set(
-        jsonb_set(
-                jsonb_set(
-                        profile_data,
-                        '{configuration,transportGatewayMsgRateLimit}',
-                        profile_data->'configuration'->'transportDeviceMsgRateLimit'
-                ),
-                '{configuration,transportGatewayTelemetryMsgRateLimit}',
-                profile_data->'configuration'->'transportDeviceTelemetryMsgRateLimit'
-        ),
-        '{configuration,transportGatewayTelemetryDataPointsRateLimit}',
-        profile_data->'configuration'->'transportDeviceTelemetryDataPointsRateLimit'
-    )
-WHERE jsonb_typeof(tp.profile_data #> '{configuration,transportGatewayMsgRateLimit}') IS NULL;
-
--- TENANT PROFILE UPDATE END
