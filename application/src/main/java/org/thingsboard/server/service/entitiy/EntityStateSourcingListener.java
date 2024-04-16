@@ -51,6 +51,7 @@ import org.thingsboard.server.common.msg.rule.engine.DeviceCredentialsUpdateNoti
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
+import org.thingsboard.server.dao.tenant.TenantService;
 
 import javax.annotation.PostConstruct;
 import java.util.Set;
@@ -61,6 +62,7 @@ import java.util.Set;
 public class EntityStateSourcingListener {
 
     private final TbClusterService tbClusterService;
+    private final TenantService tenantService;
 
     @PostConstruct
     public void init() {
@@ -121,6 +123,10 @@ public class EntityStateSourcingListener {
         TenantId tenantId = event.getTenantId();
         EntityId entityId = event.getEntityId();
         EntityType entityType = entityId.getEntityType();
+        if (entityType != EntityType.TENANT && !tenantService.tenantExists(tenantId)) {
+            log.debug("[{}] Ignoring DeleteEntityEvent because tenant does not exist: {}", tenantId, event);
+            return;
+        }
         log.debug("[{}][{}][{}] Handling entity deletion event: {}", tenantId, entityType, entityId, event);
 
         switch (entityType) {
