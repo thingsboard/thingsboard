@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.math.BigDecimal;
@@ -45,6 +46,7 @@ import java.util.Map;
 @Slf4j
 @RuleNode(type = ComponentType.ENRICHMENT,
         name = "calculate delta",
+        version = 1,
         relationTypes = {TbNodeConnectionType.SUCCESS, TbNodeConnectionType.FAILURE, TbNodeConnectionType.OTHER},
         configClazz = CalculateDeltaNodeConfiguration.class,
         nodeDescription = "Calculates delta and amount of time passed between previous timeseries key reading " +
@@ -101,6 +103,23 @@ public class CalculateDeltaNode implements TbNode {
         }
     }
 
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0:
+                String excludeZeroDeltas = "excludeZeroDeltas";
+                if (!oldConfiguration.has(excludeZeroDeltas)) {
+                    hasChanges = true;
+                    ((ObjectNode) oldConfiguration).put(excludeZeroDeltas, false);
+                }
+                break;
+            default:
+                break;
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
+    }
+
     private ListenableFuture<ValueWithTs> fetchLatestValueAsync(TbContext ctx, EntityId entityId) {
         return Futures.transform(ctx.getTimeseriesService().findLatest(ctx.getTenantId(), entityId, config.getInputValueKey()),
                 tsKvEntryOpt -> tsKvEntryOpt.map(this::extractValue).orElse(null), MoreExecutors.directExecutor());
@@ -140,6 +159,9 @@ public class CalculateDeltaNode implements TbNode {
             BigDecimal delta = BigDecimal.valueOf(previousData != null ? currentValue - previousData.value : 0.0);
             if (config.isTellFailureIfDeltaIsNegative() && delta.doubleValue() < 0) {
                 throw new IllegalArgumentException("Delta value is negative!");
+            }
+            if (config.isExcludeZeroDeltas() && delta.doubleValue() == 0) {
+                return msg;
             }
             if (config.getRound() != null) {
                 delta = delta.setScale(config.getRound(), RoundingMode.HALF_UP);

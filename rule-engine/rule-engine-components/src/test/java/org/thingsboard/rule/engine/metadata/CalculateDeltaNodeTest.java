@@ -21,16 +21,21 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.AbstractListeningExecutor;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
 import org.thingsboard.rule.engine.TestDbCallbackExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -53,7 +58,9 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -75,11 +82,12 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
-public class CalculateDeltaNodeTest {
+public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private final DeviceId DUMMY_DEVICE_ORIGINATOR = new DeviceId(UUID.fromString("2ba3ded4-882b-40cf-999a-89da9ccd58f9"));
     private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("3842e740-0d89-43a9-8d52-ae44023847ba"));
@@ -92,13 +100,13 @@ public class CalculateDeltaNodeTest {
     private TbContext ctxMock;
     @Mock
     private TimeseriesService timeseriesServiceMock;
+    @Spy
     private CalculateDeltaNode node;
     private CalculateDeltaNodeConfiguration config;
     private TbNodeConfiguration nodeConfiguration;
 
     @BeforeEach
     public void setUp() throws TbNodeException {
-        node = new CalculateDeltaNode();
         config = new CalculateDeltaNodeConfiguration().defaultConfiguration();
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctxMock, nodeConfiguration);
@@ -571,6 +579,85 @@ public class CalculateDeltaNodeTest {
         }
     }
 
+    @ParameterizedTest
+    @MethodSource("CalculateDeltaTestConfig")
+    public void givenCalculateDeltaConfig_whenOnMsg_thenVerify(CalculateDeltaTestConfig testConfig) throws TbNodeException {
+        // GIVEN
+        config.setTellFailureIfDeltaIsNegative(testConfig.tellFailureIfDeltaIsNegative());
+        config.setExcludeZeroDeltas(testConfig.excludeZeroDeltas());
+        config.setInputValueKey("temperature");
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctxMock, nodeConfiguration);
+
+        mockFindLatestAsync(new BasicTsKvEntry(1L, new DoubleDataEntry("temperature", testConfig.prevValue())));
+
+        var msgData = "{\"temperature\":" + testConfig.currentValue() + ",\"airPressure\":123}";
+        var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, msgData);
+
+        // WHEN
+        node.onMsg(ctxMock, msg);
+
+        // THEN
+        testConfig.verificationMethod().accept(ctxMock, msg);
+    }
+
+    private static Stream<CalculateDeltaTestConfig> CalculateDeltaTestConfig() {
+        return Stream.of(
+                // delta = 0, tell failure if delta is negative is set to true and exclude zero deltas is set to true so delta should filter out the message.
+                new CalculateDeltaTestConfig(true, true, 40, 40, (ctx, msg) -> {
+                    verify(ctx).tellSuccess(eq(msg));
+                    verify(ctx).getDbCallbackExecutor();
+                    verifyNoMoreInteractions(ctx);
+                }),
+                // delta < 0, tell failure if delta is negative is set to true so it should throw exception.
+                new CalculateDeltaTestConfig(true, true, 41, 40, (ctx, msg) -> {
+                    var errorCaptor = ArgumentCaptor.forClass(Throwable.class);
+                    verify(ctx).tellFailure(eq(msg), errorCaptor.capture());
+                    verify(ctx).getDbCallbackExecutor();
+                    verifyNoMoreInteractions(ctx);
+                    assertThat(errorCaptor.getValue()).isInstanceOf(IllegalArgumentException.class).hasMessage("Delta value is negative!");
+                }),
+                // delta < 0, exclude zero deltas is set to true so it should return message with delta if delta is negative is set to false.
+                new CalculateDeltaTestConfig(false, true, 41, 40, (ctx, msg) -> {
+                    var actualMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+                    verify(ctx).tellSuccess(actualMsgCaptor.capture());
+                    verify(ctx).getDbCallbackExecutor();
+                    verifyNoMoreInteractions(ctx);
+                    String expectedMsgData = "{\"temperature\":40.0,\"airPressure\":123,\"delta\":-1}";
+                    assertEquals(expectedMsgData, actualMsgCaptor.getValue().getData());
+                }),
+                // delta = 0, tell failure if delta is negative is set to false and exclude zero deltas is set to true so delta should filter out the message.
+                new CalculateDeltaTestConfig(false, true, 40, 40, (ctx, msg) -> {
+                    verify(ctx).tellSuccess(eq(msg));
+                    verify(ctx).getDbCallbackExecutor();
+                    verifyNoMoreInteractions(ctx);
+                }),
+                // delta > 0, exclude zero deltas is set to true so it should return message with delta.
+                new CalculateDeltaTestConfig(false, true, 39, 40, (ctx, msg) -> {
+                    var actualMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+                    verify(ctx).tellSuccess(actualMsgCaptor.capture());
+                    verify(ctx).getDbCallbackExecutor();
+                    verifyNoMoreInteractions(ctx);
+                    String expectedMsgData = "{\"temperature\":40.0,\"airPressure\":123,\"delta\":1}";
+                    assertEquals(expectedMsgData, actualMsgCaptor.getValue().getData());
+                }),
+                // delta > 0, exclude zero deltas is set to false so it should return message with delta.
+                new CalculateDeltaTestConfig(false, false, 39, 40, (ctx, msg) -> {
+                    var actualMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+                    verify(ctx).tellSuccess(actualMsgCaptor.capture());
+                    verify(ctx).getDbCallbackExecutor();
+                    verifyNoMoreInteractions(ctx);
+                    String expectedMsgData = "{\"temperature\":40.0,\"airPressure\":123,\"delta\":1}";
+                    assertEquals(expectedMsgData, actualMsgCaptor.getValue().getData());
+                })
+        );
+    }
+
+    private record CalculateDeltaTestConfig(boolean tellFailureIfDeltaIsNegative, boolean excludeZeroDeltas,
+                                            double prevValue, double currentValue,
+                                            BiConsumer<TbContext, TbMsg> verificationMethod) {
+    }
+
     private void mockFindLatestAsync(TsKvEntry tsKvEntry) {
         when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
@@ -580,4 +667,24 @@ public class CalculateDeltaNodeTest {
         )).thenReturn(Futures.immediateFuture(Optional.of(tsKvEntry)));
     }
 
+    private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
+        return Stream.of(
+                // default config for version 0
+                Arguments.of(0,
+                        "{\"inputValueKey\":\"pulseCounter\",\"outputValueKey\":\"delta\",\"useCache\":true,\"addPeriodBetweenMsgs\":false, \"periodValueKey\":\"periodInMs\", \"round\":null,\"tellFailureIfDeltaIsNegative\":true}",
+                        true,
+                        "{\"inputValueKey\":\"pulseCounter\",\"outputValueKey\":\"delta\",\"useCache\":true,\"addPeriodBetweenMsgs\":false, \"periodValueKey\":\"periodInMs\", \"round\":null,\"tellFailureIfDeltaIsNegative\":true, \"excludeZeroDeltas\":false}"),
+                // default config for version 1 with upgrade from version 0
+                Arguments.of(1,
+                        "{\"inputValueKey\":\"pulseCounter\",\"outputValueKey\":\"delta\",\"useCache\":true,\"addPeriodBetweenMsgs\":false, \"periodValueKey\":\"periodInMs\", \"round\":null,\"tellFailureIfDeltaIsNegative\":true, \"excludeZeroDeltas\":false}",
+                        false,
+                        "{\"inputValueKey\":\"pulseCounter\",\"outputValueKey\":\"delta\",\"useCache\":true,\"addPeriodBetweenMsgs\":false, \"periodValueKey\":\"periodInMs\", \"round\":null,\"tellFailureIfDeltaIsNegative\":true, \"excludeZeroDeltas\":false}")
+        );
+
+    }
+
+    @Override
+    protected TbNode getTestNode() {
+        return node;
+    }
 }

@@ -47,8 +47,8 @@ import org.thingsboard.server.actors.tenant.DebugTbRateLimits;
 import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -80,6 +80,7 @@ import org.thingsboard.server.service.security.permission.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -340,18 +341,8 @@ public class RuleChainController extends BaseController {
         RuleNodeId ruleNodeId = new RuleNodeId(toUUID(strRuleNodeId));
         checkRuleNode(ruleNodeId, Operation.READ);
         TenantId tenantId = getCurrentUser().getTenantId();
-        List<EventInfo> events = eventService.findLatestEvents(tenantId, ruleNodeId, EventType.DEBUG_RULE_NODE, 2);
-        JsonNode result = null;
-        if (events != null) {
-            for (EventInfo event : events) {
-                JsonNode body = event.getBody();
-                if (body.has("type") && body.get("type").asText().equals("IN")) {
-                    result = body;
-                    break;
-                }
-            }
-        }
-        return result;
+        return Optional.ofNullable(eventService.findLatestDebugRuleNodeInEvent(tenantId, ruleNodeId))
+                .map(EventInfo::getBody).orElse(null);
     }
 
     @ApiOperation(value = "Is TBEL script executor enabled",
@@ -371,7 +362,7 @@ public class RuleChainController extends BaseController {
     public JsonNode testScript(
             @Parameter(description = "Script language: JS or TBEL")
             @RequestParam(required = false) ScriptLanguage scriptLang,
-            @Parameter(description = "Test JS request. See API call description above.")
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Test JS request. See API call description above.")
             @RequestBody JsonNode inputParams) throws ThingsboardException, JsonProcessingException {
         String script = inputParams.get("script").asText();
         String scriptType = inputParams.get("scriptType").asText();
@@ -499,8 +490,7 @@ public class RuleChainController extends BaseController {
                     "Second, remote edge service will receive a copy of assignment rule chain " +
                     EDGE_ASSIGN_RECEIVE_STEP_DESCRIPTION +
                     "Third, once rule chain will be delivered to edge service, it's going to start processing messages locally. " +
-                    "\n\nOnly rule chain with type 'EDGE' can be assigned to edge." + TENANT_AUTHORITY_PARAGRAPH,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+                    "\n\nOnly rule chain with type 'EDGE' can be assigned to edge." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/ruleChain/{ruleChainId}", method = RequestMethod.POST)
     @ResponseBody
@@ -522,8 +512,7 @@ public class RuleChainController extends BaseController {
                     EDGE_UNASSIGN_ASYNC_FIRST_STEP_DESCRIPTION +
                     "Second, remote edge service will receive an 'unassign' command to remove rule chain " +
                     EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION +
-                    "Third, once 'unassign' command will be delivered to edge service, it's going to remove rule chain locally." + TENANT_AUTHORITY_PARAGRAPH,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+                    "Third, once 'unassign' command will be delivered to edge service, it's going to remove rule chain locally." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/ruleChain/{ruleChainId}", method = RequestMethod.DELETE)
     @ResponseBody

@@ -177,7 +177,7 @@ public class DeviceController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device", method = RequestMethod.POST)
     @ResponseBody
-    public Device saveDevice(@Parameter(description = "A JSON value representing the device.") @RequestBody Device device,
+    public Device saveDevice(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the device.") @RequestBody Device device,
                              @Parameter(description = "Optional value of the device credentials to be used during device creation. " +
                                      "If omitted, access token will be auto-generated.") @RequestParam(name = "accessToken", required = false) String accessToken) throws Exception {
         device.setTenantId(getCurrentUser().getTenantId());
@@ -534,8 +534,7 @@ public class DeviceController extends BaseController {
     }
 
     @ApiOperation(value = "Get Device Types (getDeviceTypes)",
-            notes = "Deprecated. See 'getDeviceProfileNames' API from Device Profile Controller instead." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+            notes = "Deprecated. See 'getDeviceProfileNames' API from Device Profile Controller instead." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/device/types", method = RequestMethod.GET)
     @ResponseBody
@@ -668,8 +667,7 @@ public class DeviceController extends BaseController {
                     EDGE_ASSIGN_ASYNC_FIRST_STEP_DESCRIPTION +
                     "Second, remote edge service will receive a copy of assignment device " +
                     EDGE_ASSIGN_RECEIVE_STEP_DESCRIPTION +
-                    "Third, once device will be delivered to edge service, it's going to be available for usage on remote edge instance." + TENANT_AUTHORITY_PARAGRAPH,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+                    "Third, once device will be delivered to edge service, it's going to be available for usage on remote edge instance." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/device/{deviceId}", method = RequestMethod.POST)
     @ResponseBody
@@ -693,8 +691,7 @@ public class DeviceController extends BaseController {
                     EDGE_UNASSIGN_ASYNC_FIRST_STEP_DESCRIPTION +
                     "Second, remote edge service will receive an 'unassign' command to remove device " +
                     EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION +
-                    "Third, once 'unassign' command will be delivered to edge service, it's going to remove device locally." + TENANT_AUTHORITY_PARAGRAPH,
-            responses = @ApiResponse(content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)))
+                    "Third, once 'unassign' command will be delivered to edge service, it's going to remove device locally." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @RequestMapping(value = "/edge/{edgeId}/device/{deviceId}", method = RequestMethod.DELETE)
     @ResponseBody

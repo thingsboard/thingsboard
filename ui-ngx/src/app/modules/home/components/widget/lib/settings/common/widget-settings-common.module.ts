@@ -116,8 +116,8 @@ import {
   TimeSeriesChartYAxisRowComponent
 } from '@home/components/widget/lib/settings/common/chart/time-series-chart-y-axis-row.component';
 import {
-  TimeSeriesChartYAxisSettingsPanelComponent
-} from '@home/components/widget/lib/settings/common/chart/time-series-chart-y-axis-settings-panel.component';
+  TimeSeriesChartAxisSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/chart/time-series-chart-axis-settings-panel.component';
 import {
   TimeSeriesChartAnimationSettingsComponent
 } from '@home/components/widget/lib/settings/common/chart/time-series-chart-animation-settings.component';
@@ -127,6 +127,21 @@ import {
 import {
   AutoDateFormatSettingsComponent
 } from '@home/components/widget/lib/settings/common/auto-date-format-settings.component';
+import {
+  TimeSeriesChartFillSettingsComponent
+} from '@home/components/widget/lib/settings/common/chart/time-series-chart-fill-settings.component';
+import {
+  TimeSeriesChartThresholdSettingsComponent
+} from '@home/components/widget/lib/settings/common/chart/time-series-chart-threshold-settings.component';
+import {
+  TimeSeriesChartStateRowComponent
+} from '@home/components/widget/lib/settings/common/chart/time-series-chart-state-row.component';
+import {
+  TimeSeriesChartStatesPanelComponent
+} from '@home/components/widget/lib/settings/common/chart/time-series-chart-states-panel.component';
+import {
+  TimeSeriesChartAxisSettingsButtonComponent
+} from '@home/components/widget/lib/settings/common/chart/time-series-chart-axis-settings-button.component';
 
 @NgModule({
   declarations: [
@@ -172,8 +187,13 @@ import {
     TimeSeriesNoAggregationBarWidthSettingsComponent,
     TimeSeriesChartYAxesPanelComponent,
     TimeSeriesChartYAxisRowComponent,
-    TimeSeriesChartYAxisSettingsPanelComponent,
+    TimeSeriesChartAxisSettingsPanelComponent,
+    TimeSeriesChartAxisSettingsButtonComponent,
     TimeSeriesChartAnimationSettingsComponent,
+    TimeSeriesChartFillSettingsComponent,
+    TimeSeriesChartThresholdSettingsComponent,
+    TimeSeriesChartStatesPanelComponent,
+    TimeSeriesChartStateRowComponent,
     DataKeyInputComponent,
     EntityAliasInputComponent
   ],
@@ -225,8 +245,13 @@ import {
     TimeSeriesNoAggregationBarWidthSettingsComponent,
     TimeSeriesChartYAxesPanelComponent,
     TimeSeriesChartYAxisRowComponent,
-    TimeSeriesChartYAxisSettingsPanelComponent,
+    TimeSeriesChartAxisSettingsPanelComponent,
+    TimeSeriesChartAxisSettingsButtonComponent,
     TimeSeriesChartAnimationSettingsComponent,
+    TimeSeriesChartFillSettingsComponent,
+    TimeSeriesChartThresholdSettingsComponent,
+    TimeSeriesChartStatesPanelComponent,
+    TimeSeriesChartStateRowComponent,
     DataKeyInputComponent,
     EntityAliasInputComponent
   ],

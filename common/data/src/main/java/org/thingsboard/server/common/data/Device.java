@@ -136,7 +136,7 @@ public class Device extends BaseDataWithAdditionalInfo<DeviceId> implements HasL
         this.customerId = customerId;
     }
 
-    @Schema(required = true, description = "Unique Device Name in scope of Tenant", example = "A4B72CCDFF33")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Unique Device Name in scope of Tenant", example = "A4B72CCDFF33")
     @Override
     public String getName() {
         return name;
@@ -164,7 +164,7 @@ public class Device extends BaseDataWithAdditionalInfo<DeviceId> implements HasL
         this.label = label;
     }
 
-    @Schema(required = true, description = "JSON object with Device Profile Id.")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "JSON object with Device Profile Id.")
     public DeviceProfileId getDeviceProfileId() {
         return deviceProfileId;
     }

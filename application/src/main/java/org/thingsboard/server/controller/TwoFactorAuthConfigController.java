@@ -100,7 +100,7 @@ public class TwoFactorAuthConfigController extends BaseController {
                     ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PostMapping("/account/config/generate")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    public TwoFaAccountConfig generateTwoFaAccountConfig(@Parameter(description = "2FA provider type to generate new account config for", schema = @Schema(defaultValue = "TOTP", required = true))
+    public TwoFaAccountConfig generateTwoFaAccountConfig(@Parameter(description = "2FA provider type to generate new account config for", schema = @Schema(defaultValue = "TOTP", requiredMode = Schema.RequiredMode.REQUIRED))
                                                          @RequestParam TwoFaProviderType providerType) throws Exception {
         SecurityUser user = getCurrentUser();
         return twoFactorAuthService.generateNewAccountConfig(user, providerType);
