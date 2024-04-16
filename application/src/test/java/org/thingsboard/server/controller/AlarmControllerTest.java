@@ -53,9 +53,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -584,7 +583,7 @@ public class AlarmControllerTest extends AbstractControllerTest {
         Assert.assertEquals(savedUser.getId(), foundAlarm.getAssigneeId());
         Assert.assertTrue(foundAlarm.getAssignTs() >= beforeAssignmentTs);
 
-        beforeAssignmentTs = System.currentTimeMillis();
+        long afterAssignmentTs = System.currentTimeMillis();
 
         loginSysAdmin();
 
@@ -592,12 +591,12 @@ public class AlarmControllerTest extends AbstractControllerTest {
 
         loginDifferentTenant();
 
-        foundAlarm = Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS)
-                .until(() -> doGet("/api/alarm/info/" + alarmId.getId(), AlarmInfo.class), Objects::nonNull);
-
-        Assert.assertNotNull(foundAlarm);
-        Assert.assertNull(foundAlarm.getAssigneeId());
-        Assert.assertTrue(foundAlarm.getAssignTs() >= beforeAssignmentTs);
+        Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            AlarmInfo alarmInfo = doGet("/api/alarm/info/" + alarmId.getId(), AlarmInfo.class);
+            Assert.assertNotNull(alarmInfo);
+            Assert.assertNull(alarmInfo.getAssigneeId());
+            Assert.assertTrue(alarmInfo.getAssignTs() >= afterAssignmentTs);
+        });
     }
 
     @Test
@@ -631,16 +630,16 @@ public class AlarmControllerTest extends AbstractControllerTest {
         Assert.assertEquals(savedUser.getId(), foundAlarm.getAssigneeId());
         Assert.assertTrue(foundAlarm.getAssignTs() >= beforeAssignmentTs);
 
-        beforeAssignmentTs = System.currentTimeMillis();
+        long afterAssignmentTs = System.currentTimeMillis();
 
         doDelete("/api/user/" + savedUser.getId().getId()).andExpect(status().isOk());
 
-        foundAlarm = Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS)
-                .until(() -> doGet("/api/alarm/info/" + alarmId.getId(), AlarmInfo.class), Objects::nonNull);
-
-        Assert.assertNotNull(foundAlarm);
-        Assert.assertNull(foundAlarm.getAssigneeId());
-        Assert.assertTrue(foundAlarm.getAssignTs() >= beforeAssignmentTs);
+         Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+             AlarmInfo alarmInfo = doGet("/api/alarm/info/" + alarmId.getId(), AlarmInfo.class);
+             Assert.assertNotNull(alarmInfo);
+             Assert.assertNull(alarmInfo.getAssigneeId());
+             Assert.assertTrue(alarmInfo.getAssignTs() >= afterAssignmentTs);
+         });
     }
 
     @Test
@@ -684,18 +683,18 @@ public class AlarmControllerTest extends AbstractControllerTest {
         Assert.assertEquals(savedUser.getId(), foundAlarm.getAssigneeId());
         Assert.assertTrue(foundAlarm.getAssignTs() >= beforeAssignmentTs);
 
-        beforeAssignmentTs = System.currentTimeMillis();
+        long afterAssignmentTs = System.currentTimeMillis();
 
         Mockito.reset(tbClusterService, auditLogService);
 
         doDelete("/api/customer/" + differentTenantCustomerId.getId()).andExpect(status().isOk());
 
-        foundAlarm = Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS)
-                .until(() -> doGet("/api/alarm/info/" + alarmId.getId(), AlarmInfo.class), Objects::nonNull);
-
-        Assert.assertNotNull(foundAlarm);
-        Assert.assertNull(foundAlarm.getAssigneeId());
-        Assert.assertTrue(foundAlarm.getAssignTs() >= beforeAssignmentTs);
+        Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            AlarmInfo alarmInfo = doGet("/api/alarm/info/" + alarmId.getId(), AlarmInfo.class);
+            Assert.assertNotNull(alarmInfo);
+            Assert.assertNull(alarmInfo.getAssigneeId());
+            Assert.assertTrue(alarmInfo.getAssignTs() >= afterAssignmentTs);
+        });
     }
 
     @Test
@@ -1003,27 +1002,20 @@ public class AlarmControllerTest extends AbstractControllerTest {
             types.remove(0);
         }
 
-        foundTypes = doGetTyped("/api/alarm/types?pageSize=1024&page=0", new TypeReference<PageData<EntitySubtype>>() {
-        })
-                .getData()
-                .stream()
-                .map(EntitySubtype::getType)
-                .collect(Collectors.toList());
-
-        Assert.assertEquals(types.size(), foundTypes.size());
-        Assert.assertEquals(types, foundTypes);
+        Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<String> actualTypes = doGetTyped("/api/alarm/types?pageSize=1024&page=0", new TypeReference<PageData<EntitySubtype>>() {})
+                    .getData().stream().map(EntitySubtype::getType).toList();
+            Assert.assertEquals(types.size(), actualTypes.size());
+            Assert.assertEquals(types, actualTypes);
+        });
 
         doDelete("/api/device/" + devices.get(0).getId()).andExpect(status().isOk());
 
-        foundTypes = doGetTyped("/api/alarm/types?pageSize=1024&page=0", new TypeReference<PageData<EntitySubtype>>() {
-        })
-                .getData()
-                .stream()
-                .map(EntitySubtype::getType)
-                .sorted()
-                .collect(Collectors.toList());
-
-        Assert.assertTrue(foundTypes.isEmpty());
+        Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<String> actualTypes = doGetTyped("/api/alarm/types?pageSize=1024&page=0", new TypeReference<PageData<EntitySubtype>>() {})
+                    .getData().stream().map(EntitySubtype::getType).sorted().toList();
+            Assert.assertTrue(actualTypes.isEmpty());
+        });
     }
 
 }

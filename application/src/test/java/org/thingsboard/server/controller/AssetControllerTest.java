@@ -42,6 +42,7 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -55,8 +56,10 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
@@ -312,8 +315,9 @@ public class AssetControllerTest extends AbstractControllerTest {
 
         alarm = doPost("/api/alarm", alarm, Alarm.class);
         Assert.assertNotNull(alarm);
+        AlarmId alarmId = alarm.getId();
 
-        AlarmInfo foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
+        AlarmInfo foundAlarm = doGet("/api/alarm/info/" + alarmId, AlarmInfo.class);
         Assert.assertNotNull(foundAlarm);
 
         doDelete("/api/asset/" + savedAsset.getId().getId().toString())
@@ -324,9 +328,11 @@ public class AssetControllerTest extends AbstractControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(statusReason(containsString(msgErrorNoFound("Asset", assetIdStr))));
 
-        doGet("/api/alarm/info/" + alarm.getId())
-                .andExpect(status().isNotFound())
-                .andExpect(statusReason(containsString(msgErrorNoFound("Alarm", alarm.getId().getId().toString()))));
+        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
+            doGet("/api/alarm/info/" + alarmId)
+                    .andExpect(status().isNotFound())
+                    .andExpect(statusReason(containsString(msgErrorNoFound("Alarm", alarmId.getId().toString()))));
+        });
     }
 
     @Test

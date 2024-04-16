@@ -150,7 +150,6 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         return savedTenant;
     }
 
-    @Transactional
     @Override
     public void deleteTenant(TenantId tenantId) {
         log.trace("Executing deleteTenant [{}]", tenantId);
@@ -162,17 +161,17 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         notificationSettingsService.deleteNotificationSettings(tenantId);
         tenantDao.removeById(tenantId, tenantId.getId());
 
-        cleanUpService.removeTenantEntities(tenantId, // don't forget to implement deleteByTenantId from EntityDaoService when adding entity type to this list
-                EntityType.ENTITY_VIEW, EntityType.WIDGETS_BUNDLE, EntityType.WIDGET_TYPE,
-                EntityType.ASSET, EntityType.ASSET_PROFILE, EntityType.DEVICE, EntityType.DEVICE_PROFILE,
-                EntityType.DASHBOARD, EntityType.CUSTOMER, EntityType.EDGE, EntityType.RULE_CHAIN,
-                EntityType.API_USAGE_STATE, EntityType.TB_RESOURCE, EntityType.OTA_PACKAGE, EntityType.RPC,
-                EntityType.QUEUE, EntityType.NOTIFICATION_REQUEST, EntityType.NOTIFICATION_RULE,
-                EntityType.NOTIFICATION_TEMPLATE, EntityType.NOTIFICATION_TARGET, EntityType.QUEUE_STATS
-        );
-
         publishEvictEvent(new TenantEvictEvent(tenantId, true));
         eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(tenantId).entity(tenant).build());
+
+        cleanUpService.removeTenantEntities(tenantId, // don't forget to implement deleteEntity from EntityDaoService when adding entity type to this list
+                EntityType.ENTITY_VIEW, EntityType.WIDGETS_BUNDLE, EntityType.WIDGET_TYPE,
+                EntityType.ASSET, EntityType.ASSET_PROFILE, EntityType.DEVICE, EntityType.DEVICE_PROFILE,
+                EntityType.DASHBOARD, EntityType.EDGE, EntityType.RULE_CHAIN, EntityType.API_USAGE_STATE,
+                EntityType.TB_RESOURCE, EntityType.OTA_PACKAGE, EntityType.RPC, EntityType.QUEUE,
+                EntityType.NOTIFICATION_REQUEST, EntityType.NOTIFICATION_RULE, EntityType.NOTIFICATION_TEMPLATE,
+                EntityType.NOTIFICATION_TARGET, EntityType.QUEUE_STATS, EntityType.CUSTOMER
+        );
     }
 
     @Override
