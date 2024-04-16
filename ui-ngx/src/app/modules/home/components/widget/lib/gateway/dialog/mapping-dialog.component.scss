@@ -15,10 +15,11 @@
  */
 
 :host {
+  display: grid;
+  height: 100%;
+
   .key-mapping {
-    min-width: 700px;
-    width: 900px;
-    height: 770px;
+    max-width: 900px;
     display: flex;
     flex-direction: column;
 
@@ -29,6 +30,10 @@
     tb-toggle-select {
       padding: 4px 0;
     }
+  }
+
+  .mat-mdc-dialog-content {
+    max-height: 670px;
   }
 }
 
@@ -43,7 +48,7 @@
   }
   .tb-form-row {
     .fixed-title-width {
-      min-width: 120px;
+      min-width: 40px;
       width: 35%;
       white-space: nowrap;
       overflow: hidden;

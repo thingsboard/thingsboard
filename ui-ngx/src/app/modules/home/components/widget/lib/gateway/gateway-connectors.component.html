@@ -177,7 +177,7 @@
               <div class="fixed-title-width tb-required" translate>gateway.name</div>
               <div class="tb-flex no-gap">
                 <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                  <input matInput name="value" formControlName="name" placeholder="{{ 'gateway.default' | translate }}"/>
+                  <input matInput name="value" formControlName="name" placeholder="{{ 'gateway.set' | translate }}"/>
                   <mat-icon matSuffix
                             matTooltipPosition="above"
                             matTooltipClass="tb-error-tooltip"
@@ -245,13 +245,14 @@
                   <div class="fixed-title-width tb-required" translate>gateway.port</div>
                   <div class="tb-flex no-gap">
                     <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                      <input matInput type="number" name="value" formControlName="port" placeholder="{{ 'gateway.set' | translate }}"/>
+                      <input matInput type="number" min="0" name="value" formControlName="port" placeholder="{{ 'gateway.set' | translate }}"/>
                       <mat-icon matSuffix
                                 matTooltipPosition="above"
                                 matTooltipClass="tb-error-tooltip"
-                                [matTooltip]="('gateway.port-required') | translate"
-                                *ngIf="connectorForm.get('basicConfig.broker.port').hasError('required')
-                                       && connectorForm.get('basicConfig.broker.port').touched"
+                                [matTooltip]="portErrorTooltip | translate"
+                                *ngIf="(connectorForm.get('basicConfig.broker.port').hasError('required') ||
+                                        connectorForm.get('basicConfig.broker.port').hasError('min')) &&
+                                        connectorForm.get('basicConfig.broker.port').touched"
                                 class="tb-error">
                         warning
                       </mat-icon>

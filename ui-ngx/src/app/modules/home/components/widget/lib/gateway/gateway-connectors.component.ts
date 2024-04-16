@@ -178,6 +178,15 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     this.connectorForm.disable();
   }
 
+  get portErrorTooltip(): string {
+    if (this.connectorForm.get('basicConfig.broker.port').hasError('required')) {
+      return 'gateway.port-required';
+    } else if (this.connectorForm.get('basicConfig.broker.port').hasError('min')) {
+      return 'gateway.only-natural-numbers';
+    }
+    return '';
+  }
+
   ngAfterViewInit() {
     this.connectorForm.get('type').valueChanges.pipe(
       takeUntil(this.destroy$)
@@ -639,7 +648,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     const brokerGroup = this.fb.group({
       name: ['', []],
       host: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-      port: [null, [Validators.required]],
+      port: [null, [Validators.required, Validators.min(0)]],
       version: [5, []],
       clientId: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
       maxNumberOfWorkers: [100, [Validators.required, Validators.min(1)]],

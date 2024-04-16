@@ -77,7 +77,7 @@ export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDia
   }
 
   helpLinkId(): string {
-    return "https://thingsboard.io/docs/iot-gateway/configuration/";
+    return 'https://thingsboard.io/docs/iot-gateway/configuration/';
   }
 
   cancel(): void {

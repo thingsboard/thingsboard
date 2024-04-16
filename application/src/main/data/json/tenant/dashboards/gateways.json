@@ -5218,7 +5218,7 @@
             "widgets": {
               "02a05113-d878-b086-328e-75bd6f02b2bb": {
                 "sizeX": 24,
-                "sizeY": 11,
+                "sizeY": 12,
                 "row": 0,
                 "col": 0
               }
@@ -5230,7 +5230,7 @@
               "backgroundSizeMode": "100%",
               "autoFillHeight": true,
               "backgroundImageUrl": null,
-              "mobileAutoFillHeight": false,
+              "mobileAutoFillHeight": true,
               "mobileRowHeight": 70,
               "outerMargin": true
             }

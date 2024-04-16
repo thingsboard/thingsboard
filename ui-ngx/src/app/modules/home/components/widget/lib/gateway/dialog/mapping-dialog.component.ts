@@ -254,7 +254,7 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
   }
 
   helpLinkId(): string {
-    return "https://thingsboard.io/docs/iot-gateway/config/mqtt/#section-mapping";
+    return 'https://thingsboard.io/docs/iot-gateway/config/mqtt/#section-mapping';
   }
 
   cancel(): void {
@@ -305,11 +305,6 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
       });
     }
   }
-
-  // updateVisibleChips(count: number): void {
-  //   console.log(count, 'count');
-  //   this.hiddenAttributesCount = count;
-  // }
 
   private prepareMappingData(): {[key: string]: any} {
     const formValue = this.mappingForm.value;
