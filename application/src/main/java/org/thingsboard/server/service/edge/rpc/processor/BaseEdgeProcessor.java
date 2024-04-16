@@ -73,6 +73,9 @@ import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.edge.EdgeSynchronizationManager;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.notification.NotificationRuleService;
+import org.thingsboard.server.dao.notification.NotificationTargetService;
+import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
@@ -99,6 +102,7 @@ import org.thingsboard.server.service.edge.rpc.constructor.dashboard.DashboardMs
 import org.thingsboard.server.service.edge.rpc.constructor.device.DeviceMsgConstructorFactory;
 import org.thingsboard.server.service.edge.rpc.constructor.edge.EdgeMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.entityview.EntityViewMsgConstructorFactory;
+import org.thingsboard.server.service.edge.rpc.constructor.notification.NotificationMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.oauth2.OAuth2MsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.ota.OtaPackageMsgConstructorFactory;
 import org.thingsboard.server.service.edge.rpc.constructor.queue.QueueMsgConstructorFactory;
@@ -227,6 +231,15 @@ public abstract class BaseEdgeProcessor {
     protected ResourceService resourceService;
 
     @Autowired
+    protected NotificationRuleService notificationRuleService;
+
+    @Autowired
+    protected NotificationTargetService notificationTargetService;
+
+    @Autowired
+    protected NotificationTemplateService notificationTemplateService;
+
+    @Autowired
     protected OAuth2Service oAuth2Service;
 
     @Autowired
@@ -261,7 +274,11 @@ public abstract class BaseEdgeProcessor {
     protected EntityDataMsgConstructor entityDataMsgConstructor;
 
     @Autowired
+    protected NotificationMsgConstructor notificationMsgConstructor;
+
+    @Autowired
     protected OAuth2MsgConstructor oAuth2MsgConstructor;
+
 
     @Autowired
     protected RuleChainMsgConstructorFactory ruleChainMsgConstructorFactory;
@@ -359,7 +376,8 @@ public abstract class BaseEdgeProcessor {
             case TIMESERIES_UPDATED, ALARM_ACK, ALARM_CLEAR, ALARM_ASSIGNED, ALARM_UNASSIGNED, CREDENTIALS_REQUEST, ADDED_COMMENT, UPDATED_COMMENT ->
                     true;
             default -> switch (type) {
-                case ALARM, ALARM_COMMENT, RULE_CHAIN, RULE_CHAIN_METADATA, USER, CUSTOMER, TENANT, TENANT_PROFILE, WIDGETS_BUNDLE, WIDGET_TYPE, ADMIN_SETTINGS, OTA_PACKAGE, QUEUE, RELATION ->
+                case ALARM, ALARM_COMMENT, RULE_CHAIN, RULE_CHAIN_METADATA, USER, CUSTOMER, TENANT, TENANT_PROFILE, WIDGETS_BUNDLE, WIDGET_TYPE,
+                        ADMIN_SETTINGS, OTA_PACKAGE, QUEUE, RELATION, NOTIFICATION_TEMPLATE, NOTIFICATION_TARGET, NOTIFICATION_RULE ->
                         true;
                 default -> false;
             };
@@ -417,10 +435,8 @@ public abstract class BaseEdgeProcessor {
         return switch (actionType) {
             case UPDATED, CREDENTIALS_UPDATED, ASSIGNED_TO_CUSTOMER, UNASSIGNED_FROM_CUSTOMER, UPDATED_COMMENT ->
                     UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE;
-            case ADDED, ASSIGNED_TO_EDGE, RELATION_ADD_OR_UPDATE, ADDED_COMMENT ->
-                    UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE;
-            case DELETED, UNASSIGNED_FROM_EDGE, RELATION_DELETED, DELETED_COMMENT, ALARM_DELETE ->
-                    UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE;
+            case ADDED, ASSIGNED_TO_EDGE, RELATION_ADD_OR_UPDATE, ADDED_COMMENT -> UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE;
+            case DELETED, UNASSIGNED_FROM_EDGE, RELATION_DELETED, DELETED_COMMENT, ALARM_DELETE -> UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE;
             case ALARM_ACK -> UpdateMsgType.ALARM_ACK_RPC_MESSAGE;
             case ALARM_CLEAR -> UpdateMsgType.ALARM_CLEAR_RPC_MESSAGE;
             default -> throw new RuntimeException("Unsupported actionType [" + actionType + "]");
@@ -528,28 +544,21 @@ public abstract class BaseEdgeProcessor {
 
     protected EntityId constructEntityId(String entityTypeStr, long entityIdMSB, long entityIdLSB) {
         EntityType entityType = EntityType.valueOf(entityTypeStr);
-        switch (entityType) {
-            case DEVICE:
-                return new DeviceId(new UUID(entityIdMSB, entityIdLSB));
-            case ASSET:
-                return new AssetId(new UUID(entityIdMSB, entityIdLSB));
-            case ENTITY_VIEW:
-                return new EntityViewId(new UUID(entityIdMSB, entityIdLSB));
-            case DASHBOARD:
-                return new DashboardId(new UUID(entityIdMSB, entityIdLSB));
-            case TENANT:
-                return TenantId.fromUUID(new UUID(entityIdMSB, entityIdLSB));
-            case CUSTOMER:
-                return new CustomerId(new UUID(entityIdMSB, entityIdLSB));
-            case USER:
-                return new UserId(new UUID(entityIdMSB, entityIdLSB));
-            case EDGE:
-                return new EdgeId(new UUID(entityIdMSB, entityIdLSB));
-            default:
+        return switch (entityType) {
+            case DEVICE -> new DeviceId(new UUID(entityIdMSB, entityIdLSB));
+            case ASSET -> new AssetId(new UUID(entityIdMSB, entityIdLSB));
+            case ENTITY_VIEW -> new EntityViewId(new UUID(entityIdMSB, entityIdLSB));
+            case DASHBOARD -> new DashboardId(new UUID(entityIdMSB, entityIdLSB));
+            case TENANT -> TenantId.fromUUID(new UUID(entityIdMSB, entityIdLSB));
+            case CUSTOMER -> new CustomerId(new UUID(entityIdMSB, entityIdLSB));
+            case USER -> new UserId(new UUID(entityIdMSB, entityIdLSB));
+            case EDGE -> new EdgeId(new UUID(entityIdMSB, entityIdLSB));
+            default -> {
                 log.warn("Unsupported entity type [{}] during construct of entity id. entityIdMSB [{}], entityIdLSB [{}]",
                         entityTypeStr, entityIdMSB, entityIdLSB);
-                return null;
-        }
+                yield null;
+            }
+        };
     }
 
     protected UUID safeGetUUID(long mSB, long lSB) {
@@ -570,8 +579,7 @@ public abstract class BaseEdgeProcessor {
             case TENANT -> tenantService.findTenantById(tenantId) != null;
             case DEVICE -> deviceService.findDeviceById(tenantId, new DeviceId(entityId.getId())) != null;
             case ASSET -> assetService.findAssetById(tenantId, new AssetId(entityId.getId())) != null;
-            case ENTITY_VIEW ->
-                    entityViewService.findEntityViewById(tenantId, new EntityViewId(entityId.getId())) != null;
+            case ENTITY_VIEW -> entityViewService.findEntityViewById(tenantId, new EntityViewId(entityId.getId())) != null;
             case CUSTOMER -> customerService.findCustomerById(tenantId, new CustomerId(entityId.getId())) != null;
             case USER -> userService.findUserById(tenantId, new UserId(entityId.getId())) != null;
             case DASHBOARD -> dashboardService.findDashboardById(tenantId, new DashboardId(entityId.getId())) != null;

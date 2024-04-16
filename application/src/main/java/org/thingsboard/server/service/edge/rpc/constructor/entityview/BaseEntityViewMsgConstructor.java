@@ -28,4 +28,5 @@ public abstract class BaseEntityViewMsgConstructor implements EntityViewMsgConst
                 .setIdMSB(entityViewId.getId().getMostSignificantBits())
                 .setIdLSB(entityViewId.getId().getLeastSignificantBits()).build();
     }
+
 }
