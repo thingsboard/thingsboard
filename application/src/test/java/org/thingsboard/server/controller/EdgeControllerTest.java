@@ -40,8 +40,8 @@ import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EdgeUpgradeInfo;
@@ -870,7 +870,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
 
         Asset asset = new Asset();
         asset.setName("Test Sync Edge Asset 1");
-        asset.setType("test");
+        asset.setType("default");
         Asset savedAsset = doPost("/api/asset", asset, Asset.class);
 
         Device device = new Device();
@@ -889,7 +889,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         edgeImitator.ignoreType(UserCredentialsUpdateMsg.class);
         edgeImitator.ignoreType(OAuth2UpdateMsg.class);
 
-        edgeImitator.expectMessageAmount(24);
+        edgeImitator.expectMessageAmount(23);
         edgeImitator.connect();
         waitForMessages(edgeImitator);
 
@@ -897,14 +897,11 @@ public class EdgeControllerTest extends AbstractControllerTest {
         // verify queue msgs
         Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popDeviceMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Device 1"));
-        Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test"));
+        Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popAssetMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Asset 1"));
-        if (!edgeImitator.getDownlinkMsgs().isEmpty()) {
-            System.out.println("events = " + edgeImitator.getDownlinkMsgs());
-        }
         Assert.assertTrue(edgeImitator.getDownlinkMsgs().isEmpty());
 
-        edgeImitator.expectMessageAmount(20);
+        edgeImitator.expectMessageAmount(19);
         doPost("/api/edge/sync/" + edge.getId());
         waitForMessages(edgeImitator);
 
@@ -928,7 +925,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
     private void simulateEdgeActivation(Edge edge) throws Exception {
         ObjectNode attributes = JacksonUtil.newObjectNode();
         attributes.put("active", true);
-        doPost("/api/plugins/telemetry/EDGE/" + edge.getId() + "/attributes/" + DataConstants.SERVER_SCOPE, attributes);
+        doPost("/api/plugins/telemetry/EDGE/" + edge.getId() + "/attributes/" + AttributeScope.SERVER_SCOPE, attributes);
         Awaitility.await()
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> {
@@ -966,12 +963,11 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
-        Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test"));
         Assert.assertTrue(popUserMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, TENANT_ADMIN_EMAIL, Authority.TENANT_ADMIN));
         Assert.assertTrue(popCustomerMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Public"));
         Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popDeviceMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Device 1"));
-        Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test"));
+        Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popAssetMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Asset 1"));
         Assert.assertTrue(popTenantMsg(edgeImitator.getDownlinkMsgs(), tenantId));
         Assert.assertTrue(popTenantProfileMsg(edgeImitator.getDownlinkMsgs(), tenantProfileId));

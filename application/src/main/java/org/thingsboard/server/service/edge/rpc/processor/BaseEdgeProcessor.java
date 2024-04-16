@@ -353,8 +353,7 @@ public abstract class BaseEdgeProcessor {
         }, dbCallbackExecutorService);
     }
 
-    private boolean doSaveIfEdgeIsOffline(EdgeEventType type,
-                                          EdgeEventActionType action) {
+    private boolean doSaveIfEdgeIsOffline(EdgeEventType type, EdgeEventActionType action) {
         return switch (action) {
             case TIMESERIES_UPDATED, ALARM_ACK, ALARM_CLEAR, ALARM_ASSIGNED, ALARM_UNASSIGNED, CREDENTIALS_REQUEST,
                     ADDED_COMMENT, UPDATED_COMMENT -> true;
@@ -367,8 +366,7 @@ public abstract class BaseEdgeProcessor {
     }
 
     private ListenableFuture<Void> doSaveEdgeEvent(TenantId tenantId, EdgeId edgeId, EdgeEventType type, EdgeEventActionType action, EntityId entityId, JsonNode body) {
-        log.debug("Pushing event to edge queue. tenantId [{}], edgeId [{}], type[{}], " +
-                        "action [{}], entityId [{}], body [{}]",
+        log.debug("Pushing event to edge queue. tenantId [{}], edgeId [{}], type[{}], action [{}], entityId [{}], body [{}]",
                 tenantId, edgeId, type, action, entityId, body);
 
         EdgeEvent edgeEvent = EdgeUtils.constructEdgeEvent(tenantId, edgeId, type, action, entityId, body);
