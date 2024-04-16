@@ -661,7 +661,6 @@ public class TbUtils {
         Optional<String> encodedMdnOpt = Optional.of(uri);
         for (String strKey : alKeys) {
             encodedMdnOpt = Optional.of(encodedMdnOpt.get().replaceAll(enCodeMdn.get(strKey), strKey));
-            enCodeMdn.get(strKey);
         }
         return encodedMdnOpt.orElse(null) == null ? null : URLDecoder.decode(encodedMdnOpt.orElse(null), StandardCharsets.UTF_8);
     }
