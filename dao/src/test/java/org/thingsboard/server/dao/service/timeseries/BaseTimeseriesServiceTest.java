@@ -160,6 +160,36 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    public void testFindLatestOpt() throws Exception {
+        saveEntries(deviceId, TS - 2);
+        saveEntries(deviceId, TS - 1);
+        saveEntries(deviceId, TS);
+
+        Optional<TsKvEntry> entryOpt = tsService.findLatest(tenantId, deviceId, STRING_KEY).get(MAX_TIMEOUT, TimeUnit.SECONDS);
+        assertThat(entryOpt).isNotNull().isPresent();
+        Assert.assertEquals(toTsEntry(TS, stringKvEntry), entryOpt.get());
+    }
+
+    @Test
+    public void testFindLatest_NotFound() throws Exception {
+        List<TsKvEntry> entries = tsService.findLatest(tenantId, deviceId, Collections.singleton(STRING_KEY)).get(MAX_TIMEOUT, TimeUnit.SECONDS);
+        assertThat(entries).hasSize(1);
+        TsKvEntry tsKvEntry = entries.get(0);
+        assertThat(tsKvEntry).isNotNull();
+        // null ts latest representation
+        assertThat(tsKvEntry.getKey()).isEqualTo(STRING_KEY);
+        assertThat(tsKvEntry.getDataType()).isEqualTo(DataType.STRING);
+        assertThat(tsKvEntry.getValue()).isNull();
+        assertThat(tsKvEntry.getTs()).isCloseTo(System.currentTimeMillis(), Offset.offset(TimeUnit.MINUTES.toMillis(1)));
+    }
+
+    @Test
+    public void testFindLatestOpt_NotFound() throws Exception {
+        Optional<TsKvEntry> entryOpt = tsService.findLatest(tenantId, deviceId, STRING_KEY).get(MAX_TIMEOUT, TimeUnit.SECONDS);
+        assertThat(entryOpt).isNotNull().isNotPresent();
+    }
+
+    @Test
     public void testFindLatestWithoutLatestUpdate() throws Exception {
         saveEntries(deviceId, TS - 2);
         saveEntries(deviceId, TS - 1);
