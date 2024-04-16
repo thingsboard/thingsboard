@@ -95,8 +95,6 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
 
     private static final String CAN_T_PARSE_VALUE = "Can't parse value: ";
     private static final String DEVICE_PROPERTY = "device";
-    private static final String GATEWAY_PROPERTY = "gateway";
-    public static final String OVERWRITE_ACTIVITY_TIME = "overwriteActivityTime";
 
     protected final MqttTransportContext context;
     protected final TransportService transportService;
@@ -243,8 +241,8 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
         log.trace("[{}][{}] onDeviceUpdate: [{}]", gateway.getTenantId(), gateway.getDeviceId(), device);
         JsonNode deviceAdditionalInfo = device.getAdditionalInfo();
-        if (deviceAdditionalInfo.has(GATEWAY_PROPERTY) && deviceAdditionalInfo.has(OVERWRITE_ACTIVITY_TIME)) {
-            overwriteDevicesActivity = deviceAdditionalInfo.get(OVERWRITE_ACTIVITY_TIME).asBoolean();
+        if (deviceAdditionalInfo.has(DataConstants.GATEWAY_PARAMETER) && deviceAdditionalInfo.has(DataConstants.OVERWRITE_ACTIVITY_TIME_PARAMETER)) {
+            overwriteDevicesActivity = deviceAdditionalInfo.get(DataConstants.OVERWRITE_ACTIVITY_TIME_PARAMETER).asBoolean();
         }
     }
 

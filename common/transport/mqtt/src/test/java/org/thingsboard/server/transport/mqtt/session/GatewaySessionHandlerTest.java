@@ -17,8 +17,10 @@ package org.thingsboard.server.transport.mqtt.session;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -34,6 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.willCallRealMethod;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -41,6 +44,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;
 
+@ExtendWith(MockitoExtension.class)
 public class GatewaySessionHandlerTest {
 
     @Mock
@@ -56,13 +60,12 @@ public class GatewaySessionHandlerTest {
 
     @BeforeEach
     public void setup() {
-        MockitoAnnotations.openMocks(this);
-        when(deviceSessionCtx.getSessionId()).thenReturn(UUID.randomUUID());
-        doNothing().when(transportService).recordActivity(any());
-        when(transportContext.getTransportService()).thenReturn(transportService);
-        when(deviceSessionCtx.getContext()).thenReturn(transportContext);
+        lenient().when(deviceSessionCtx.getSessionId()).thenReturn(UUID.randomUUID());
+        lenient().doNothing().when(transportService).recordActivity(any());
+        lenient().when(transportContext.getTransportService()).thenReturn(transportService);
+        lenient().when(deviceSessionCtx.getContext()).thenReturn(transportContext);
         handler = new GatewaySessionHandler(deviceSessionCtx, UUID.randomUUID(), true);
-        when(handler.getNodeId()).thenReturn("nodeId");
+        lenient().when(handler.getNodeId()).thenReturn("nodeId");
     }
 
     @Test
@@ -77,10 +80,10 @@ public class GatewaySessionHandlerTest {
         deviceInfo.setDeviceType("default");
         deviceInfo.setDeviceProfileId(new DeviceProfileId(UUID.randomUUID()));
         deviceInfo.setAdditionalInfo("{\"gateway\": true, \"overwriteDeviceActivity\": true}");
-        when(deviceSessionCtx.getDeviceInfo()).thenReturn(deviceInfo);
+        lenient().when(deviceSessionCtx.getDeviceInfo()).thenReturn(deviceInfo);
         GatewayDeviceSessionContext gatewayDeviceSessionContext = new GatewayDeviceSessionContext(handler, deviceInfo, null, null, transportService);
         devices.put("device1", gatewayDeviceSessionContext);
-        when(handler.getNodeId()).thenReturn("nodeId");
+        lenient().when(handler.getNodeId()).thenReturn("nodeId");
         Field devicesField = AbstractGatewaySessionHandler.class.getDeclaredField("devices");
         devicesField.setAccessible(true);
         devicesField.set(handler, devices);

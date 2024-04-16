@@ -133,7 +133,6 @@ import java.util.stream.Collectors;
 @TbTransportComponent
 public class DefaultTransportService extends TransportActivityManager implements TransportService {
 
-    public static final String OVERWRITE_ACTIVITY_TIME = "overwriteActivityTime";
     public static final TransportProtos.SessionEventMsg SESSION_EVENT_MSG_OPEN = TransportProtos.SessionEventMsg.newBuilder()
             .setSessionType(TransportProtos.SessionType.ASYNC)
             .setEvent(TransportProtos.SessionEvent.OPEN).build();
@@ -1049,8 +1048,11 @@ public class DefaultTransportService extends TransportActivityManager implements
                         .setDeviceName(device.getName())
                         .setDeviceType(device.getType()).build();
                 JsonNode deviceAdditionalInfo = device.getAdditionalInfo();
-                if (deviceAdditionalInfo.has("gateway") && deviceAdditionalInfo.has(OVERWRITE_ACTIVITY_TIME)) {
-                    md.setOverwriteActivityTime(deviceAdditionalInfo.get(OVERWRITE_ACTIVITY_TIME).asBoolean());
+                if (deviceAdditionalInfo.has(DataConstants.GATEWAY_PARAMETER)
+                        && deviceAdditionalInfo.get(DataConstants.GATEWAY_PARAMETER).asBoolean()
+                        && deviceAdditionalInfo.has(DataConstants.OVERWRITE_ACTIVITY_TIME_PARAMETER)
+                        && deviceAdditionalInfo.get(DataConstants.OVERWRITE_ACTIVITY_TIME_PARAMETER).isBoolean()) {
+                    md.setOverwriteActivityTime(deviceAdditionalInfo.get(DataConstants.OVERWRITE_ACTIVITY_TIME_PARAMETER).asBoolean());
                 }
                 md.setSessionInfo(newSessionInfo);
                 transportCallbackExecutor.submit(() -> md.getListener().onDeviceUpdate(newSessionInfo, device, Optional.ofNullable(newDeviceProfile)));
