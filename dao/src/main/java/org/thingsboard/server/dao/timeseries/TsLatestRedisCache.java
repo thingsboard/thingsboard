@@ -16,18 +16,24 @@
 package org.thingsboard.server.dao.timeseries;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStringCommands;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.CacheSpecsMap;
 import org.thingsboard.server.cache.RedisTbTransactionalCache;
 import org.thingsboard.server.cache.TBRedisCacheConfiguration;
+import org.thingsboard.server.cache.TbCacheTransaction;
+import org.thingsboard.server.cache.TbCacheValueWrapper;
 import org.thingsboard.server.cache.TbJavaRedisSerializer;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.List;
 
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
 @Service("TsLatestCache")
@@ -45,6 +51,53 @@ public class TsLatestRedisCache<K extends Serializable, V extends Serializable> 
         try (var connection = getConnection(rawKey)) {
             put(connection, rawKey, value, RedisStringCommands.SetOption.UPSERT);
         }
+    }
+
+    @Override
+    public void putIfAbsent(TsLatestCacheKey key, TsKvEntry value) {
+        log.trace("putIfAbsent [{}][{}]", key, value);
+        throw new NotImplementedException("putIfAbsent is not supported by TsLatestRedisCache");
+    }
+
+    @Override
+    public TbCacheValueWrapper<TsKvEntry> get(TsLatestCacheKey key) {
+        log.debug("get [{}]", key);
+        return super.get(key);
+    }
+
+    @Override
+    protected byte[] doGet(RedisConnection connection, byte[] rawKey) {
+        log.trace("doGet [{}][{}]", connection, rawKey);
+        return connection.stringCommands().get(rawKey);
+    }
+
+    @Override
+    public void evict(TsLatestCacheKey key){
+        log.trace("evict [{}]", key);
+        final byte[] rawKey = getRawKey(key);
+        try (var connection = getConnection(rawKey)) {
+            connection.keyCommands().del(rawKey);
+        }
+    }
+
+    @Override
+    public void evict(Collection<TsLatestCacheKey> keys) {
+        throw new NotImplementedException("evict by many keys is not supported by TsLatestRedisCache");
+    }
+
+    @Override
+    public void evictOrPut(TsLatestCacheKey key, TsKvEntry value) {
+        throw new NotImplementedException("evictOrPut is not supported by TsLatestRedisCache");
+    }
+
+    @Override
+    public TbCacheTransaction<TsLatestCacheKey, TsKvEntry> newTransactionForKey(TsLatestCacheKey key) {
+        throw new NotImplementedException("newTransactionForKey is not supported by TsLatestRedisCache");
+    }
+
+    @Override
+    public TbCacheTransaction<TsLatestCacheKey, TsKvEntry> newTransactionForKeys(List<TsLatestCacheKey> keys) {
+        throw new NotImplementedException("newTransactionForKeys is not supported by TsLatestRedisCache");
     }
 
 }

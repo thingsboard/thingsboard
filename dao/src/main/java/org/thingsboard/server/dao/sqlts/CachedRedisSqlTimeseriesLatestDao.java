@@ -24,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.cache.TbCacheValueWrapper;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -48,14 +49,12 @@ import java.util.Optional;
 @Primary
 public class CachedRedisSqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao implements TimeseriesLatestDao {
     public static final String STATS_NAME = "ts_latest.cache";
-
-    DefaultCounter hitCounter;
-    DefaultCounter missCounter;
-
     final CacheExecutorService cacheExecutorService;
     final SqlTimeseriesLatestDao sqlDao;
     final StatsFactory statsFactory;
     final TbTransactionalCache<TsLatestCacheKey, TsKvEntry> cache;
+    DefaultCounter hitCounter;
+    DefaultCounter missCounter;
 
     @PostConstruct
     public void init() {
@@ -72,37 +71,101 @@ public class CachedRedisSqlTimeseriesLatestDao extends BaseAbstractSqlTimeseries
                     return x;
                 },
                 cacheExecutorService);
-        Futures.addCallback(future, new FutureCallback<Void>() {
-            @Override
-            public void onSuccess(Void result) {
-                log.trace("saveLatest onSuccess [{}][{}][{}]", entityId, tsKvEntry.getKey(), tsKvEntry);
-            }
+        if (log.isTraceEnabled()) {
+            Futures.addCallback(future, new FutureCallback<>() {
+                @Override
+                public void onSuccess(Void result) {
+                    log.trace("saveLatest onSuccess [{}][{}][{}]", entityId, tsKvEntry.getKey(), tsKvEntry);
+                }
 
-            @Override
-            public void onFailure(Throwable t) {
-                log.trace("saveLatest onFailure [{}][{}][{}]", entityId, tsKvEntry.getKey(), tsKvEntry, t);
-            }
-        }, MoreExecutors.directExecutor());
+                @Override
+                public void onFailure(Throwable t) {
+                    log.info("saveLatest onFailure [{}][{}][{}]", entityId, tsKvEntry.getKey(), tsKvEntry, t);
+                }
+            }, MoreExecutors.directExecutor());
+        }
         return future;
     }
 
     @Override
     public ListenableFuture<TsKvLatestRemovingResult> removeLatest(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
-        return sqlDao.removeLatest(tenantId, entityId, query);
+        ListenableFuture<TsKvLatestRemovingResult> future = sqlDao.removeLatest(tenantId, entityId, query);
+        future = Futures.transform(future, x -> {
+                    cache.evict(new TsLatestCacheKey(entityId, query.getKey()));
+                    return x;
+                },
+                cacheExecutorService);
+        if (log.isTraceEnabled()) {
+            Futures.addCallback(future, new FutureCallback<>() {
+                @Override
+                public void onSuccess(TsKvLatestRemovingResult result) {
+                    log.trace("removeLatest onSuccess [{}][{}][{}]", entityId, query.getKey(), query);
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    log.info("removeLatest onFailure [{}][{}][{}]", entityId, query.getKey(), query, t);
+                }
+            }, MoreExecutors.directExecutor());
+        }
+        return future;
     }
 
     @Override
     public ListenableFuture<Optional<TsKvEntry>> findLatestOpt(TenantId tenantId, EntityId entityId, String key) {
-        return sqlDao.findLatestOpt(tenantId, entityId, key);
+        log.trace("findLatestOpt");
+        return doFindLatest(tenantId, entityId, key);
     }
 
     @Override
     public ListenableFuture<TsKvEntry> findLatest(TenantId tenantId, EntityId entityId, String key) {
-        return sqlDao.findLatest(tenantId, entityId, key);
+        return Futures.transform(doFindLatest(tenantId, entityId, key), x -> sqlDao.wrapNullTsKvEntry(key, x.orElse(null)), MoreExecutors.directExecutor());
+    }
+
+    public ListenableFuture<Optional<TsKvEntry>> doFindLatest(TenantId tenantId, EntityId entityId, String key) {
+        final TsLatestCacheKey cacheKey = new TsLatestCacheKey(entityId, key);
+        ListenableFuture<TbCacheValueWrapper<TsKvEntry>> cacheFuture = cacheExecutorService.submit(() -> cache.get(cacheKey));
+
+        return Futures.transformAsync(cacheFuture, (cacheValueWrap) -> {
+            if (cacheValueWrap != null) {
+                final TsKvEntry tsKvEntry = cacheValueWrap.get();
+                log.debug("findLatest cache hit [{}][{}][{}]", entityId, key, tsKvEntry);
+                return Futures.immediateFuture(Optional.ofNullable(tsKvEntry));
+            }
+            log.debug("findLatest cache miss [{}][{}]", entityId, key);
+            ListenableFuture<Optional<TsKvEntry>> daoFuture = sqlDao.findLatestOpt(tenantId,entityId, key);
+
+            return Futures.transformAsync(daoFuture, (daoValue) -> {
+
+                if (daoValue.isEmpty()) {
+                    //TODO implement the cache logic if no latest found in TS DAO. Currently we are always getting from DB to stay on the safe side
+                    return Futures.immediateFuture(daoValue);
+                }
+                ListenableFuture<Optional<TsKvEntry>> cachePutFuture = cacheExecutorService.submit(() -> {
+                    cache.put(new TsLatestCacheKey(entityId, key), daoValue.get());
+                    return daoValue;
+                });
+
+                Futures.addCallback(cachePutFuture, new FutureCallback<>() {
+                    @Override
+                    public void onSuccess(Optional<TsKvEntry> result) {
+                        log.trace("saveLatest onSuccess [{}][{}][{}]", entityId, key, result);
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+                        log.info("saveLatest onFailure [{}][{}][{}]", entityId, key, daoValue, t);
+                    }
+
+                }, MoreExecutors.directExecutor());
+                return cachePutFuture;
+            }, MoreExecutors.directExecutor());
+        }, MoreExecutors.directExecutor());
     }
 
     @Override
     public TsKvEntry findLatestSync(TenantId tenantId, EntityId entityId, String key) {
+        log.trace("findLatestSync DEPRECATED [{}][{}]", entityId, key);
         return sqlDao.findLatestSync(tenantId, entityId, key);
     }
 
