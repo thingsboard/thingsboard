@@ -35,7 +35,8 @@ import {
 } from '@home/components/widget/lib/chart/time-series-chart-widget.models';
 import {
   TimeSeriesChartKeySettings,
-  TimeSeriesChartType, TimeSeriesChartYAxes,
+  TimeSeriesChartType,
+  TimeSeriesChartYAxes,
   TimeSeriesChartYAxisId
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
@@ -108,7 +109,7 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
   }
 
   protected defaultSettings(): WidgetSettings {
-    return mergeDeep({} as TimeSeriesChartWidgetSettings, timeSeriesChartWidgetDefaultSettings);
+    return mergeDeep<TimeSeriesChartWidgetSettings>({} as TimeSeriesChartWidgetSettings, timeSeriesChartWidgetDefaultSettings);
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
@@ -124,6 +125,8 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
 
       dataZoom: [settings.dataZoom, []],
       stack: [settings.stack, []],
+
+      grid: [settings.grid, []],
 
       xAxis: [settings.xAxis, []],
 

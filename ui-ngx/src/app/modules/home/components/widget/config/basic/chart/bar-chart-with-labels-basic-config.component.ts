@@ -33,7 +33,7 @@ import {
   getTimewindowConfig,
   setTimewindowConfig
 } from '@home/components/widget/config/timewindow-config-panel.component';
-import { formatValue, isUndefined } from '@core/utils';
+import { formatValue, isUndefined, mergeDeep } from '@core/utils';
 import {
   cssSizeToStrSize,
   DateFormatProcessor,
@@ -88,7 +88,8 @@ export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigCom
   }
 
   protected onConfigSet(configData: WidgetConfigComponentData) {
-    const settings: BarChartWithLabelsWidgetSettings = {...barChartWithLabelsDefaultSettings, ...(configData.config.settings || {})};
+    const settings: BarChartWithLabelsWidgetSettings = mergeDeep<BarChartWithLabelsWidgetSettings>({} as BarChartWithLabelsWidgetSettings,
+      barChartWithLabelsDefaultSettings, configData.config.settings as BarChartWithLabelsWidgetSettings);
     const iconSize = resolveCssSize(configData.config.iconSize);
     this.barChartWidgetConfigForm = this.fb.group({
       timewindowConfig: [getTimewindowConfig(configData.config), []],
@@ -122,6 +123,8 @@ export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigCom
 
       units: [configData.config.units, []],
       decimals: [configData.config.decimals, []],
+
+      grid: [settings.grid, []],
 
       yAxis: [settings.yAxis, []],
       xAxis: [settings.xAxis, []],
@@ -191,6 +194,8 @@ export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigCom
 
     this.widgetConfig.config.units = config.units;
     this.widgetConfig.config.decimals = config.decimals;
+
+    this.widgetConfig.config.settings.grid = config.grid;
 
     this.widgetConfig.config.settings.yAxis = config.yAxis;
     this.widgetConfig.config.settings.xAxis = config.xAxis;
