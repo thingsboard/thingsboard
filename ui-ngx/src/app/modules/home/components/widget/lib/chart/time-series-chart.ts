@@ -624,14 +624,14 @@ export class TbTimeSeriesChart {
           type: 'inside',
           disabled: !this.settings.dataZoom,
           realtime: true,
-          filterMode: this.stateData ? 'none' : 'filter'
+          filterMode: this.stateData ? 'none' : 'weakFilter'
         },
         {
           type: 'slider',
           show: this.settings.dataZoom,
           showDetail: false,
           realtime: true,
-          filterMode: this.stateData ? 'none' : 'filter',
+          filterMode: this.stateData ? 'none' : 'weakFilter',
           bottom: 10
         }
       ],
