@@ -684,6 +684,12 @@ public final class EdgeGrpcSession implements Closeable {
                 return ctx.getTenantProcessor().convertTenantEventToDownlink(edgeEvent, this.edgeVersion);
             case TENANT_PROFILE:
                 return ctx.getTenantProfileProcessor().convertTenantProfileEventToDownlink(edgeEvent, this.edgeVersion);
+            case NOTIFICATION_RULE:
+                return ctx.getNotificationEdgeProcessor().convertNotificationRuleToDownlink(edgeEvent);
+            case NOTIFICATION_TARGET:
+                return ctx.getNotificationEdgeProcessor().convertNotificationTargetToDownlink(edgeEvent);
+            case NOTIFICATION_TEMPLATE:
+                return ctx.getNotificationEdgeProcessor().convertNotificationTemplateToDownlink(edgeEvent);
             case OAUTH2:
                 return ctx.getOAuth2EdgeProcessor().convertOAuth2EventToDownlink(edgeEvent);
             default:

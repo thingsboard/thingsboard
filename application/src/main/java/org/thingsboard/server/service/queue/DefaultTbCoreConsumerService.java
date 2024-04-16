@@ -358,6 +358,11 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     }
 
     @Override
+    protected boolean isCore() {
+        return true;
+    }
+
+    @Override
     protected void handleNotification(UUID id, TbProtoQueueMsg<ToCoreNotificationMsg> msg, TbCallback callback) {
         ToCoreNotificationMsg toCoreNotification = msg.getValue();
         if (toCoreNotification.hasToLocalSubscriptionServiceMsg()) {

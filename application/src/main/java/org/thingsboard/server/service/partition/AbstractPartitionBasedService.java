@@ -96,7 +96,7 @@ public abstract class AbstractPartitionBasedService<T extends EntityId> extends 
 
     @Override
     protected boolean filterTbApplicationEvent(PartitionChangeEvent event) {
-        return getServiceType().equals(event.getServiceType());
+        return event.getServiceType() == getServiceType() && event.isCorePartitionChange();
     }
 
     protected void pollInitStateFromDB() {

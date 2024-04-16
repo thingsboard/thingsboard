@@ -220,6 +220,11 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
     }
 
     @Override
+    protected boolean isCore() {
+        return false;
+    }
+
+    @Override
     protected void handleNotification(UUID id, TbProtoQueueMsg<ToEdgeNotificationMsg> msg, TbCallback callback) {
         ToEdgeNotificationMsg toEdgeNotificationMsg = msg.getValue();
         if (toEdgeNotificationMsg.hasEdgeEventUpdate()) {
@@ -263,6 +268,8 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
                 case RELATION -> future = edgeCtx.getRelationProcessor().processRelationNotification(tenantId, edgeNotificationMsg);
                 case TENANT -> future = edgeCtx.getTenantProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
                 case TENANT_PROFILE -> future = edgeCtx.getTenantProfileProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
+                case NOTIFICATION_RULE, NOTIFICATION_TARGET, NOTIFICATION_TEMPLATE ->
+                        future = edgeCtx.getNotificationEdgeProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
                 case TB_RESOURCE -> future = edgeCtx.getResourceProcessor().processEntityNotification(tenantId, edgeNotificationMsg);
                 case OAUTH2 -> future = edgeCtx.getOAuth2EdgeProcessor().processOAuth2Notification(tenantId, edgeNotificationMsg);
                 default -> {

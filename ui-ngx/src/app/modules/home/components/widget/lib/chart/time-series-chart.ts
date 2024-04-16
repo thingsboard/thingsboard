@@ -612,6 +612,10 @@ export class TbTimeSeriesChart {
         extraCssText: `line-height: 1; backdrop-filter: blur(${this.settings.tooltipBackgroundBlur}px);`
       }],
       grid: [{
+        show: this.settings.grid.show,
+        backgroundColor: this.settings.grid.backgroundColor,
+        borderWidth: this.settings.grid.borderWidth,
+        borderColor: this.settings.grid.borderColor,
         top: this.minTopOffset(),
         left: this.settings.dataZoom ? 5 : 0,
         right: this.settings.dataZoom ? 5 : 0,
@@ -624,14 +628,14 @@ export class TbTimeSeriesChart {
           type: 'inside',
           disabled: !this.settings.dataZoom,
           realtime: true,
-          filterMode: this.stateData ? 'none' : 'filter'
+          filterMode: this.stateData ? 'none' : 'weakFilter'
         },
         {
           type: 'slider',
           show: this.settings.dataZoom,
           showDetail: false,
           realtime: true,
-          filterMode: this.stateData ? 'none' : 'filter',
+          filterMode: this.stateData ? 'none' : 'weakFilter',
           bottom: 10
         }
       ],

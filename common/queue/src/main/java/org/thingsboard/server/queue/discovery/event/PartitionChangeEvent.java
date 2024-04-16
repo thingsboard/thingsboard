@@ -15,8 +15,10 @@
  */
 package org.thingsboard.server.queue.discovery.event;
 
+import lombok.Data;
 import lombok.Getter;
 import lombok.ToString;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.discovery.QueueKey;
@@ -24,6 +26,7 @@ import org.thingsboard.server.queue.discovery.QueueKey;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @ToString(callSuper = true)
 public class PartitionChangeEvent extends TbApplicationEvent {
@@ -44,6 +47,18 @@ public class PartitionChangeEvent extends TbApplicationEvent {
     // only for service types that have single QueueKey
     public Set<TopicPartitionInfo> getPartitions() {
         return partitionsMap.values().stream().findAny().orElse(Collections.emptySet());
+    }
+
+    public boolean isCorePartitionChange() {
+        AtomicBoolean isCorePartitionChange = new AtomicBoolean(true);
+        if (serviceType == ServiceType.TB_CORE) {
+            partitionsMap.forEach(((queueKey, topicPartitionInfos) -> {
+                if (queueKey.getQueueName().equals(DataConstants.EDGE_QUEUE_NAME)) {
+                    isCorePartitionChange.set(false);
+                }
+            }));
+        }
+        return isCorePartitionChange.get();
     }
 
 }

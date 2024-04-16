@@ -699,11 +699,26 @@ export interface TimeSeriesChartComparisonSettings extends WidgetComparisonSetti
   comparisonXAxis?: TimeSeriesChartXAxisSettings;
 }
 
+export interface TimeSeriesChartGridSettings {
+  show: boolean;
+  backgroundColor: string;
+  borderWidth: number;
+  borderColor: string;
+}
+
+export const timeSeriesChartGridDefaultSettings: TimeSeriesChartGridSettings = {
+  show: false,
+  backgroundColor: null,
+  borderWidth: 1,
+  borderColor: '#ccc'
+};
+
 export interface TimeSeriesChartSettings extends EChartsTooltipWidgetSettings, TimeSeriesChartComparisonSettings {
   thresholds: TimeSeriesChartThreshold[];
   darkMode: boolean;
   dataZoom: boolean;
   stack: boolean;
+  grid: TimeSeriesChartGridSettings;
   yAxes: TimeSeriesChartYAxes;
   xAxis: TimeSeriesChartXAxisSettings;
   animation: TimeSeriesChartAnimationSettings;
@@ -718,6 +733,8 @@ export const timeSeriesChartDefaultSettings: TimeSeriesChartSettings = {
   darkMode: false,
   dataZoom: true,
   stack: false,
+  grid: mergeDeep({} as TimeSeriesChartGridSettings,
+    timeSeriesChartGridDefaultSettings),
   yAxes: {
     default: mergeDeep({} as TimeSeriesChartYAxisSettings,
                        defaultTimeSeriesChartYAxisSettings,
@@ -1407,9 +1424,9 @@ const createTimeSeriesChartSeries = (item: TimeSeriesChartDataItem,
         lineSettings.pointLabelPosition,
         lineSettings.pointLabelFormatter, false, darkMode);
       lineSeriesOption.step = lineSettings.step ? lineSettings.stepType : false;
-      lineSeriesOption.smooth = lineSettings.smooth;
+      lineSeriesOption.smooth = lineSettings.smooth ? 0.25 : false;
       if (lineSettings.smooth) {
-        lineSeriesOption.smoothMonotone = 'x';
+        lineSeriesOption.smoothMonotone = 'none';
       }
       lineSeriesOption.lineStyle = {
         width: lineSettings.showLine ? lineSettings.lineWidth : 0,
