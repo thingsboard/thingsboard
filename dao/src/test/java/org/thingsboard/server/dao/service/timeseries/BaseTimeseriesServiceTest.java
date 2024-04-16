@@ -160,6 +160,40 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    public void testFindLatestOpt_givenSaveWithHistoricalNonOrderedTS() throws Exception {
+        save(tenantId, deviceId, toTsEntry(TS - 1, stringKvEntry));
+        save(tenantId, deviceId, toTsEntry(TS, stringKvEntry));
+        save(tenantId, deviceId, toTsEntry(TS - 10, stringKvEntry));
+        save(tenantId, deviceId, toTsEntry(TS - 11, stringKvEntry));
+
+        Optional<TsKvEntry> entryOpt = tsService.findLatest(tenantId, deviceId, STRING_KEY).get(MAX_TIMEOUT, TimeUnit.SECONDS);
+        assertThat(entryOpt).isNotNull().isPresent();
+        Assert.assertEquals(toTsEntry(TS, stringKvEntry), entryOpt.orElse(null));
+    }
+
+    @Test
+    public void testFindLatestOpt_givenSaveWithSameTSOverwriteValue() throws Exception {
+        save(tenantId, deviceId, toTsEntry(TS, new StringDataEntry(STRING_KEY, "old")));
+        save(tenantId, deviceId, toTsEntry(TS, new StringDataEntry(STRING_KEY, "new")));
+
+        Optional<TsKvEntry> entryOpt = tsService.findLatest(tenantId, deviceId, STRING_KEY).get(MAX_TIMEOUT, TimeUnit.SECONDS);
+        assertThat(entryOpt).isNotNull().isPresent();
+        Assert.assertEquals(toTsEntry(TS, new StringDataEntry(STRING_KEY, "new")), entryOpt.orElse(null));
+    }
+
+    public void testFindLatestOpt_givenSaveWithSameTSOverwriteTypeAndValue() throws Exception {
+        save(tenantId, deviceId, toTsEntry(TS, new JsonDataEntry("temp", "{\"hello\":\"world\"}")));
+        save(tenantId, deviceId, toTsEntry(TS, new BooleanDataEntry("temp", true)));
+        save(tenantId, deviceId, toTsEntry(TS, new LongDataEntry("temp", 100L)));
+        save(tenantId, deviceId, toTsEntry(TS, new DoubleDataEntry("temp", Math.PI)));
+        save(tenantId, deviceId, toTsEntry(TS, new StringDataEntry("temp", "NOOP")));
+
+        Optional<TsKvEntry> entryOpt = tsService.findLatest(tenantId, deviceId, STRING_KEY).get(MAX_TIMEOUT, TimeUnit.SECONDS);
+        assertThat(entryOpt).isNotNull().isPresent();
+        Assert.assertEquals(toTsEntry(TS, new StringDataEntry("temp", "NOOP")), entryOpt.orElse(null));
+    }
+
+    @Test
     public void testFindLatestOpt() throws Exception {
         saveEntries(deviceId, TS - 2);
         saveEntries(deviceId, TS - 1);
