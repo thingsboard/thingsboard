@@ -1083,11 +1083,12 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         try {
             JsonNode infoNode = context.getMapper().readTree(device.getAdditionalInfo());
             if (infoNode != null) {
-                JsonNode gatewayNode = infoNode.get("gateway");
+                JsonNode gatewayNode = infoNode.get(DataConstants.GATEWAY_PARAMETER);
                 if (gatewayNode != null && gatewayNode.asBoolean()) {
                     boolean overwriteDevicesActivity = false;
-                    if (infoNode.has(DefaultTransportService.OVERWRITE_ACTIVITY_TIME) && infoNode.get(DefaultTransportService.OVERWRITE_ACTIVITY_TIME).isBoolean()) {
-                        overwriteDevicesActivity = infoNode.get(DefaultTransportService.OVERWRITE_ACTIVITY_TIME).asBoolean();
+                    if (infoNode.has(DataConstants.OVERWRITE_ACTIVITY_TIME_PARAMETER)
+                            && infoNode.get(DataConstants.OVERWRITE_ACTIVITY_TIME_PARAMETER).isBoolean()) {
+                        overwriteDevicesActivity = infoNode.get(DataConstants.OVERWRITE_ACTIVITY_TIME_PARAMETER).asBoolean();
                         sessionMetaData.setOverwriteActivityTime(overwriteDevicesActivity);
                     }
                     gatewaySessionHandler = new GatewaySessionHandler(deviceSessionCtx, sessionId, overwriteDevicesActivity);
