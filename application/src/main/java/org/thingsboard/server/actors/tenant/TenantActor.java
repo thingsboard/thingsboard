@@ -272,12 +272,14 @@ public class TenantActor extends RuleChainManagerActor {
         }
         if (msg.getEntityId().getEntityType() == EntityType.EDGE) {
             EdgeId edgeId = new EdgeId(msg.getEntityId().getId());
-            EdgeRpcService edgeRpcService = systemContext.getEdgeRpcService();
-            if (msg.getEvent() == ComponentLifecycleEvent.DELETED) {
-                edgeRpcService.deleteEdge(tenantId, edgeId);
-            } else if (msg.getEvent() == ComponentLifecycleEvent.UPDATED) {
-                Edge edge = systemContext.getEdgeService().findEdgeById(tenantId, edgeId);
-                edgeRpcService.updateEdge(tenantId, edge);
+            if (isCore) {
+                EdgeRpcService edgeRpcService = systemContext.getEdgeRpcService();
+                if (msg.getEvent() == ComponentLifecycleEvent.DELETED) {
+                    edgeRpcService.deleteEdge(tenantId, edgeId);
+                } else if (msg.getEvent() == ComponentLifecycleEvent.UPDATED) {
+                    Edge edge = systemContext.getEdgeService().findEdgeById(tenantId, edgeId);
+                    edgeRpcService.updateEdge(tenantId, edge);
+                }
             }
         }
         if (msg.getEntityId().getEntityType() == EntityType.DEVICE && ComponentLifecycleEvent.DELETED == msg.getEvent() && isMyPartition(msg.getEntityId())) {

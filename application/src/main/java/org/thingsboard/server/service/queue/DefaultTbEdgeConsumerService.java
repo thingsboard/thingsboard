@@ -177,8 +177,8 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
                         }
                     }
                 }
-                log.info("TB Edge request consumer stopped.");
             }
+            log.info("TB Edge request consumer stopped.");
         });
     }
 
