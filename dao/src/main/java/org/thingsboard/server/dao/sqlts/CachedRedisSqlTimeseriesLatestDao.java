@@ -164,12 +164,6 @@ public class CachedRedisSqlTimeseriesLatestDao extends BaseAbstractSqlTimeseries
     }
 
     @Override
-    public TsKvEntry findLatestSync(TenantId tenantId, EntityId entityId, String key) {
-        log.trace("findLatestSync DEPRECATED [{}][{}]", entityId, key);
-        return sqlDao.findLatestSync(tenantId, entityId, key);
-    }
-
-    @Override
     public ListenableFuture<List<TsKvEntry>> findAllLatest(TenantId tenantId, EntityId entityId) {
         return sqlDao.findAllLatest(tenantId, entityId);
     }
