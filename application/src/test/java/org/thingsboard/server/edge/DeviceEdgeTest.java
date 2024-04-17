@@ -850,6 +850,7 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
     private DeviceCredentials buildDeviceCredentialsForUplinkMsg(DeviceId deviceId) {
         DeviceCredentials deviceCredentials = new DeviceCredentials();
         deviceCredentials.setDeviceId(deviceId);
+        deviceCredentials.setCredentialsId(String.valueOf(UUID.randomUUID()));
         deviceCredentials.setCredentialsValue("NEW_TOKEN");
         deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
         return deviceCredentials;

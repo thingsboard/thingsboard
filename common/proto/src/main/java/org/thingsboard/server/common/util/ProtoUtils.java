@@ -175,13 +175,15 @@ public class ProtoUtils {
                 .setTenantIdLSB(msg.getTenantId().getId().getLeastSignificantBits())
                 .setEdgeIdMSB(msg.getEdgeId().getId().getMostSignificantBits())
                 .setEdgeIdLSB(msg.getEdgeId().getId().getLeastSignificantBits())
+                .setHighPriority(msg.isHighPriority())
                 .build();
     }
 
     public static EdgeEventUpdateMsg fromProto(TransportProtos.EdgeEventUpdateMsgProto proto) {
         return new EdgeEventUpdateMsg(
                 TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
-                EdgeId.fromUUID(new UUID(proto.getEdgeIdMSB(), proto.getEdgeIdLSB()))
+                EdgeId.fromUUID(new UUID(proto.getEdgeIdMSB(), proto.getEdgeIdLSB())),
+                proto.getHighPriority()
         );
     }
 

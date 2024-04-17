@@ -27,6 +27,7 @@ public class EdgeEventUpdateMsg implements EdgeSessionMsg {
 
     private final TenantId tenantId;
     private final EdgeId edgeId;
+    private final boolean highPriority;
 
     @Override
     public MsgType getMsgType() {

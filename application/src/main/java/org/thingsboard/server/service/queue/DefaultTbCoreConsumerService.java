@@ -352,6 +352,11 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     }
 
     @Override
+    protected List<IdMsgPair<ToCoreNotificationMsg>> getOrderedMsgList(List<TbProtoQueueMsg<ToCoreNotificationMsg>> msgs) {
+        return msgs.stream().map(msg -> new IdMsgPair<>(UUID.randomUUID(), msg)).toList();
+    }
+
+    @Override
     protected void handleNotification(UUID id, TbProtoQueueMsg<ToCoreNotificationMsg> msg, TbCallback callback) {
         ToCoreNotificationMsg toCoreNotification = msg.getValue();
         if (toCoreNotification.hasToLocalSubscriptionServiceMsg()) {

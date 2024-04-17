@@ -104,6 +104,8 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
 
     protected abstract long getNotificationPackProcessingTimeout();
 
+    protected abstract List<IdMsgPair<N>> getOrderedMsgList(List<TbProtoQueueMsg<N>> msgs);
+
     protected void launchNotificationsConsumer() {
         notificationsConsumerExecutor.submit(() -> {
             while (!stopped) {
@@ -112,7 +114,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
                     if (msgs.isEmpty()) {
                         continue;
                     }
-                    List<IdMsgPair<N>> orderedMsgList = msgs.stream().map(msg -> new IdMsgPair<>(UUID.randomUUID(), msg)).toList();
+                    List<IdMsgPair<N>> orderedMsgList = getOrderedMsgList(msgs);
                     ConcurrentMap<UUID, TbProtoQueueMsg<N>> pendingMap = orderedMsgList.stream().collect(
                             Collectors.toConcurrentMap(IdMsgPair::getUuid, IdMsgPair::getMsg));
                     CountDownLatch processingTimeoutLatch = new CountDownLatch(1);

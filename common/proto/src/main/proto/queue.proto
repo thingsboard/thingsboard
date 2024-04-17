@@ -1109,6 +1109,7 @@ message EdgeEventUpdateMsgProto {
   int64 tenantIdLSB = 2;
   int64 edgeIdMSB = 3;
   int64 edgeIdLSB = 4;
+  bool highPriority = 5;
 }
 
 message ToEdgeSyncRequestMsgProto {
@@ -1474,9 +1475,10 @@ message ToEdgeMsg {
 }
 
 message ToEdgeNotificationMsg {
-  EdgeEventUpdateMsgProto edgeEventUpdate = 1;
-  ToEdgeSyncRequestMsgProto toEdgeSyncRequest = 2;
-  FromEdgeSyncResponseMsgProto fromEdgeSyncResponse = 3;
+  bool highPriority = 1;
+  EdgeEventUpdateMsgProto edgeEventUpdate = 2;
+  ToEdgeSyncRequestMsgProto toEdgeSyncRequest = 3;
+  FromEdgeSyncResponseMsgProto fromEdgeSyncResponse = 4;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */

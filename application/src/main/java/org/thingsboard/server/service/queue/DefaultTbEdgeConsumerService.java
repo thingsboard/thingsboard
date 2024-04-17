@@ -214,6 +214,14 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
     }
 
     @Override
+    protected List<IdMsgPair<ToEdgeNotificationMsg>> getOrderedMsgList(List<TbProtoQueueMsg<ToEdgeNotificationMsg>> msgs) {
+        return msgs.stream()
+                .sorted((msg1, msg2) -> Boolean.compare(msg2.getValue().getHighPriority(), msg1.getValue().getHighPriority()))
+                .map(msg -> new IdMsgPair<>(UUID.randomUUID(), msg))
+                .collect(Collectors.toList());
+    }
+
+    @Override
     protected void handleNotification(UUID id, TbProtoQueueMsg<ToEdgeNotificationMsg> msg, TbCallback callback) {
         ToEdgeNotificationMsg toEdgeNotificationMsg = msg.getValue();
         if (toEdgeNotificationMsg.hasEdgeEventUpdate()) {

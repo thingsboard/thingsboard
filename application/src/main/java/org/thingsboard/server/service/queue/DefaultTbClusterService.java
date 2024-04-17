@@ -419,7 +419,9 @@ public class DefaultTbClusterService implements TbClusterService {
     @Override
     public void onEdgeEventUpdate(EdgeEventUpdateMsg msg) {
         log.trace("[{}] Processing edge event update for edgeId: {}", msg.getTenantId(), msg.getEdgeId());
-        ToEdgeNotificationMsg toEdgeNotificationMsg = ToEdgeNotificationMsg.newBuilder().setEdgeEventUpdate(toProto(msg)).build();
+        ToEdgeNotificationMsg toEdgeNotificationMsg = ToEdgeNotificationMsg.newBuilder()
+                .setHighPriority(msg.isHighPriority())
+                .setEdgeEventUpdate(toProto(msg)).build();
         processEdgeNotification(msg.getEdgeId(), toEdgeNotificationMsg);
     }
 

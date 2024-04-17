@@ -112,7 +112,7 @@ class ProtoUtilsTest {
 
     @Test
     void protoEdgeEventUpdateSerialization() {
-        EdgeEventUpdateMsg msg = new EdgeEventUpdateMsg(tenantId, edgeId);
+        EdgeEventUpdateMsg msg = new EdgeEventUpdateMsg(tenantId, edgeId, false);
         assertThat(ProtoUtils.fromProto(ProtoUtils.toProto(msg))).as("deserialized").isEqualTo(msg);
     }
 
