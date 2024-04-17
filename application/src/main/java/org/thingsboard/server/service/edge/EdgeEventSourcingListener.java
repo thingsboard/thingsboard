@@ -100,7 +100,7 @@ public class EdgeEventSourcingListener {
     public void handleEvent(DeleteEntityEvent<?> event) {
         TenantId tenantId = event.getTenantId();
         EntityType entityType = event.getEntityId().getEntityType();
-        if (!tenantService.tenantExists(tenantId)) {
+        if (!tenantId.isSysTenantId() && !tenantService.tenantExists(tenantId)) {
             log.debug("[{}] Ignoring DeleteEntityEvent because tenant does not exist: {}", tenantId, event);
             return;
         }
