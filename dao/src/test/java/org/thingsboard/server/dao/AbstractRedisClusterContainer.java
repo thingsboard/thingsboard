@@ -58,21 +58,19 @@ public class AbstractRedisClusterContainer {
             redis5.start();
             redis6.start();
 
+            Thread.sleep(TimeUnit.SECONDS.toMillis(5)); // otherwise not all containers have time to start
+
             String clusterCreateCommand = "echo yes | redis-cli --cluster create " +
                      "127.0.0.1:6371 127.0.0.1:6372 127.0.0.1:6373 127.0.0.1:6374 127.0.0.1:6375 127.0.0.1:6376 " +
                     "--cluster-replicas 1";
-
             log.warn("Command to init Redis Cluster: {}", clusterCreateCommand);
-            log.warn("Connect to nodes : {}", nodes);
-            Thread.sleep(TimeUnit.SECONDS.toMillis(5));
             var result = redis6.execInContainer("/bin/sh", "-c", clusterCreateCommand);
             log.warn("Init cluster result: {}", result);
 
+            log.warn("Connect to nodes: {}", nodes);
             System.setProperty("cache.type", "redis");
             System.setProperty("redis.connection.type", "cluster");
             System.setProperty("redis.cluster.nodes", nodes);
-            System.setProperty("redis.password", "");
-
             System.setProperty("redis.cluster.useDefaultPoolConfig", "false");
         }
 
@@ -84,7 +82,7 @@ public class AbstractRedisClusterContainer {
             redis4.stop();
             redis5.stop();
             redis6.stop();
-            List.of("cache.type", "redis.connection.type", "redis.standalone.host", "redis.standalone.port")
+            List.of("cache.type", "redis.connection.type", "redis.cluster.nodes", "redis.cluster.useDefaultPoolConfig\"")
                     .forEach(System.getProperties()::remove);
         }
     };
