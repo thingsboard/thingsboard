@@ -56,6 +56,7 @@ import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.queue.Queue;
+import org.thingsboard.server.common.data.queue.QueueStats;
 import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleNode;
@@ -73,6 +74,7 @@ import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
+import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.user.UserService;
@@ -135,6 +137,8 @@ public class TenantIdLoaderTest {
     private NotificationRequestService notificationRequestService;
     @Mock
     private NotificationRuleService notificationRuleService;
+    @Mock
+    private QueueStatsService queueStatsService;
 
     private TenantId tenantId;
     private TenantProfileId tenantProfileId;
@@ -351,6 +355,12 @@ public class TenantIdLoaderTest {
                 notificationRule.setTenantId(tenantId);
                 when(ctx.getNotificationRuleService()).thenReturn(notificationRuleService);
                 doReturn(notificationRule).when(notificationRuleService).findNotificationRuleById(eq(tenantId), any());
+                break;
+            case QUEUE_STATS:
+                QueueStats queueStats = new QueueStats();
+                queueStats.setTenantId(tenantId);
+                when(ctx.getQueueStatsService()).thenReturn(queueStatsService);
+                doReturn(queueStats).when(queueStatsService).findQueueStatsById(eq(tenantId), any());
                 break;
             default:
                 throw new RuntimeException("Unexpected originator EntityType " + entityType);

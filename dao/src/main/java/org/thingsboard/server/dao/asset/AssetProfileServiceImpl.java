@@ -103,7 +103,7 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
     @Override
     public AssetProfile findAssetProfileById(TenantId tenantId, AssetProfileId assetProfileId, boolean putInCache) {
         log.trace("Executing findAssetProfileById [{}]", assetProfileId);
-        Validator.validateId(assetProfileId, INCORRECT_ASSET_PROFILE_ID + assetProfileId);
+        Validator.validateId(assetProfileId, id -> INCORRECT_ASSET_PROFILE_ID + id);
         return cache.getOrFetchFromDB(AssetProfileCacheKey.fromId(assetProfileId),
                 () -> assetProfileDao.findById(tenantId, assetProfileId.getId()), true, putInCache);
     }
@@ -116,7 +116,7 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
     @Override
     public AssetProfile findAssetProfileByName(TenantId tenantId, String profileName, boolean putInCache) {
         log.trace("Executing findAssetProfileByName [{}][{}]", tenantId, profileName);
-        Validator.validateString(profileName, INCORRECT_ASSET_PROFILE_NAME + profileName);
+        Validator.validateString(profileName, s -> INCORRECT_ASSET_PROFILE_NAME + s);
         return cache.getOrFetchFromDB(AssetProfileCacheKey.fromName(tenantId, profileName),
                 () -> assetProfileDao.findByName(tenantId, profileName), false, putInCache);
     }
@@ -124,7 +124,7 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
     @Override
     public AssetProfileInfo findAssetProfileInfoById(TenantId tenantId, AssetProfileId assetProfileId) {
         log.trace("Executing findAssetProfileInfoById [{}]", assetProfileId);
-        Validator.validateId(assetProfileId, INCORRECT_ASSET_PROFILE_ID + assetProfileId);
+        Validator.validateId(assetProfileId, id -> INCORRECT_ASSET_PROFILE_ID + id);
         return toAssetProfileInfo(findAssetProfileById(tenantId, assetProfileId));
     }
 
@@ -179,7 +179,7 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
     @Transactional
     public void deleteAssetProfile(TenantId tenantId, AssetProfileId assetProfileId) {
         log.trace("Executing deleteAssetProfile [{}]", assetProfileId);
-        Validator.validateId(assetProfileId, INCORRECT_ASSET_PROFILE_ID + assetProfileId);
+        Validator.validateId(assetProfileId, id -> INCORRECT_ASSET_PROFILE_ID + id);
         AssetProfile assetProfile = assetProfileDao.findById(tenantId, assetProfileId.getId());
         if (assetProfile != null && assetProfile.isDefault()) {
             throw new DataValidationException("Deletion of Default Asset Profile is prohibited!");
@@ -208,7 +208,7 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
     @Override
     public PageData<AssetProfile> findAssetProfiles(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findAssetProfiles tenantId [{}], pageLink [{}]", tenantId, pageLink);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         Validator.validatePageLink(pageLink);
         return assetProfileDao.findAssetProfiles(tenantId, pageLink);
     }
@@ -216,7 +216,7 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
     @Override
     public PageData<AssetProfileInfo> findAssetProfileInfos(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findAssetProfileInfos tenantId [{}], pageLink [{}]", tenantId, pageLink);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         Validator.validatePageLink(pageLink);
         return assetProfileDao.findAssetProfileInfos(tenantId, pageLink);
     }
@@ -246,7 +246,7 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
     }
 
     private AssetProfile doCreateDefaultAssetProfile(TenantId tenantId, String profileName, boolean defaultProfile, boolean publishSaveEvent) {
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         AssetProfile assetProfile = new AssetProfile();
         assetProfile.setTenantId(tenantId);
         assetProfile.setDefault(defaultProfile);
@@ -258,7 +258,7 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
     @Override
     public AssetProfile findDefaultAssetProfile(TenantId tenantId) {
         log.trace("Executing findDefaultAssetProfile tenantId [{}]", tenantId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         return cache.getAndPutInTransaction(AssetProfileCacheKey.defaultProfile(tenantId),
                 () -> assetProfileDao.findDefaultAssetProfile(tenantId), true);
     }
@@ -266,14 +266,14 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
     @Override
     public AssetProfileInfo findDefaultAssetProfileInfo(TenantId tenantId) {
         log.trace("Executing findDefaultAssetProfileInfo tenantId [{}]", tenantId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         return toAssetProfileInfo(findDefaultAssetProfile(tenantId));
     }
 
     @Override
     public boolean setDefaultAssetProfile(TenantId tenantId, AssetProfileId assetProfileId) {
         log.trace("Executing setDefaultAssetProfile [{}]", assetProfileId);
-        Validator.validateId(assetProfileId, INCORRECT_ASSET_PROFILE_ID + assetProfileId);
+        Validator.validateId(assetProfileId, id -> INCORRECT_ASSET_PROFILE_ID + id);
         AssetProfile assetProfile = assetProfileDao.findById(tenantId, assetProfileId.getId());
         if (!assetProfile.isDefault()) {
             assetProfile.setDefault(true);
@@ -299,7 +299,7 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
     @Override
     public void deleteAssetProfilesByTenantId(TenantId tenantId) {
         log.trace("Executing deleteAssetProfilesByTenantId, tenantId [{}]", tenantId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         tenantAssetProfilesRemover.removeEntities(tenantId, tenantId);
     }
 
@@ -322,7 +322,7 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
     @Override
     public List<EntityInfo> findAssetProfileNamesByTenantId(TenantId tenantId, boolean activeOnly) {
         log.trace("Executing findAssetProfileNamesByTenantId, tenantId [{}]", tenantId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         return assetProfileDao.findTenantAssetProfileNames(tenantId.getId(), activeOnly)
                 .stream().sorted(Comparator.comparing(EntityInfo::getName))
                 .collect(Collectors.toList());

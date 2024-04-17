@@ -35,7 +35,7 @@ public class DevicesEdgeEventFetcher extends BasePageableEdgeEventFetcher<Device
     private final DeviceService deviceService;
 
     @Override
-    PageData<Device> fetchPageData(TenantId tenantId, Edge edge, PageLink pageLink) {
+    PageData<Device> fetchEntities(TenantId tenantId, Edge edge, PageLink pageLink) {
         return deviceService.findDevicesByTenantIdAndEdgeId(tenantId, edge.getId(), pageLink);
     }
 
@@ -44,4 +44,5 @@ public class DevicesEdgeEventFetcher extends BasePageableEdgeEventFetcher<Device
         return EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE,
                 EdgeEventActionType.ADDED, device.getId(), null);
     }
+
 }

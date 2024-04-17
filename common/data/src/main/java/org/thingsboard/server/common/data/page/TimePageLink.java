@@ -19,11 +19,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import org.springframework.data.domain.Sort;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 @Data
 @ToString(callSuper = true)
@@ -67,29 +62,4 @@ public class TimePageLink extends PageLink {
                 this.startTime, this.endTime);
     }
 
-    @Override
-    public Sort toSort(SortOrder sortOrder, Map<String,String> columnMap) {
-        if (sortOrder == null) {
-            return super.toSort(sortOrder, columnMap);
-        } else {
-            return toSort(new ArrayList<>(List.of(sortOrder)), columnMap);
-        }
-    }
-
-    @Override
-    public Sort toSort(List<SortOrder> sortOrders, Map<String,String> columnMap) {
-        if (!isDefaultSortOrderAvailable(sortOrders)) {
-            sortOrders.add(new SortOrder(DEFAULT_SORT_PROPERTY, SortOrder.Direction.ASC));
-        }
-        return super.toSort(sortOrders, columnMap);
-    }
-
-    private boolean isDefaultSortOrderAvailable(List<SortOrder> sortOrders) {
-        for (SortOrder sortOrder : sortOrders) {
-            if (DEFAULT_SORT_PROPERTY.equals(sortOrder.getProperty())) {
-                return true;
-            }
-        }
-        return false;
-    }
 }
