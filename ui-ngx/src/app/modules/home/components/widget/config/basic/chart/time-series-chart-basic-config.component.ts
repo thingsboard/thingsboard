@@ -168,8 +168,12 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
       noAggregationBarWidthSettings: [settings.noAggregationBarWidthSettings, []],
 
       showLegend: [settings.showLegend, []],
+      legendColumnTitleFont: [settings.legendColumnTitleFont, []],
+      legendColumnTitleColor: [settings.legendColumnTitleColor, []],
       legendLabelFont: [settings.legendLabelFont, []],
       legendLabelColor: [settings.legendLabelColor, []],
+      legendValueFont: [settings.legendValueFont, []],
+      legendValueColor: [settings.legendValueColor, []],
       legendConfig: [settings.legendConfig, []],
 
       showTooltip: [settings.showTooltip, []],
@@ -236,8 +240,12 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
     this.widgetConfig.config.settings.noAggregationBarWidthSettings = config.noAggregationBarWidthSettings;
 
     this.widgetConfig.config.settings.showLegend = config.showLegend;
+    this.widgetConfig.config.settings.legendColumnTitleFont = config.legendColumnTitleFont;
+    this.widgetConfig.config.settings.legendColumnTitleColor = config.legendColumnTitleColor;
     this.widgetConfig.config.settings.legendLabelFont = config.legendLabelFont;
     this.widgetConfig.config.settings.legendLabelColor = config.legendLabelColor;
+    this.widgetConfig.config.settings.legendValueFont = config.legendValueFont;
+    this.widgetConfig.config.settings.legendValueColor = config.legendValueColor;
     this.widgetConfig.config.settings.legendConfig = config.legendConfig;
 
     this.widgetConfig.config.settings.showTooltip = config.showTooltip;
@@ -318,12 +326,20 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
     }
 
     if (showLegend) {
+      this.timeSeriesChartWidgetConfigForm.get('legendColumnTitleFont').enable();
+      this.timeSeriesChartWidgetConfigForm.get('legendColumnTitleColor').enable();
       this.timeSeriesChartWidgetConfigForm.get('legendLabelFont').enable();
       this.timeSeriesChartWidgetConfigForm.get('legendLabelColor').enable();
+      this.timeSeriesChartWidgetConfigForm.get('legendValueFont').enable();
+      this.timeSeriesChartWidgetConfigForm.get('legendValueColor').enable();
       this.timeSeriesChartWidgetConfigForm.get('legendConfig').enable();
     } else {
+      this.timeSeriesChartWidgetConfigForm.get('legendColumnTitleFont').disable();
+      this.timeSeriesChartWidgetConfigForm.get('legendColumnTitleColor').disable();
       this.timeSeriesChartWidgetConfigForm.get('legendLabelFont').disable();
       this.timeSeriesChartWidgetConfigForm.get('legendLabelColor').disable();
+      this.timeSeriesChartWidgetConfigForm.get('legendValueFont').disable();
+      this.timeSeriesChartWidgetConfigForm.get('legendValueColor').disable();
       this.timeSeriesChartWidgetConfigForm.get('legendConfig').disable();
     }
 
