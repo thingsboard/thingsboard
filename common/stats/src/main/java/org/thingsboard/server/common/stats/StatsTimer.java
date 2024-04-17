@@ -16,19 +16,40 @@
 package org.thingsboard.server.common.stats;
 
 import io.micrometer.core.instrument.Timer;
+import lombok.Getter;
 
-public interface StatsFactory {
+import java.util.concurrent.TimeUnit;
 
-    StatsCounter createStatsCounter(String key, String statsName, String... otherTags);
+public class StatsTimer {
 
-    DefaultCounter createDefaultCounter(String key, String... tags);
+    @Getter
+    private final String name;
+    private final Timer timer;
 
-    <T extends Number> T createGauge(String key, T number, String... tags);
+    private int count;
+    private long totalTime;
 
-    MessagesStats createMessagesStats(String key);
+    public StatsTimer(String name, Timer micrometerTimer) {
+        this.name = name;
+        this.timer = micrometerTimer;
+    }
 
-    Timer createTimer(String key, String... tags);
+    public  void record(long timeMs) {
+        count++;
+        totalTime += timeMs;
+        timer.record(timeMs, TimeUnit.MILLISECONDS);
+    }
 
-    StatsTimer createTimer(StatsType type, String name, String... tags);
+    public double getAvg() {
+        if (count == 0) {
+            return 0.0;
+        }
+        return (double) totalTime / count;
+    }
+
+    public  void reset() {
+        count = 0;
+        totalTime = 0;
+    }
 
 }

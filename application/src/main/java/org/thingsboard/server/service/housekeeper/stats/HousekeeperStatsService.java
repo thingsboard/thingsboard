@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
 import org.thingsboard.server.common.stats.DefaultCounter;
 import org.thingsboard.server.common.stats.StatsCounter;
 import org.thingsboard.server.common.stats.StatsFactory;
+import org.thingsboard.server.common.stats.StatsTimer;
 import org.thingsboard.server.common.stats.StatsType;
 import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperServiceMsg;
 
@@ -53,14 +54,14 @@ public class HousekeeperStatsService {
         String statsStr = stats.values().stream().map(stats -> {
             String countersStr = stats.getCounters().stream()
                     .filter(counter -> counter.get() > 0)
-                    .map(counter -> counter.getName() + " = " + counter.get())
-                    .collect(Collectors.joining(", "));
+                    .map(counter -> counter.getName() + " = [" + counter.get() + "]")
+                    .collect(Collectors.joining(" "));
             if (countersStr.isEmpty()) {
                 return null;
             } else {
-                return stats.getTaskType() + " {" + countersStr + "}";
+                return stats.getTaskType() + " " + countersStr + " avgProcessingTime [" + stats.getProcessingTimer().getAvg() + " ms]";
             }
-        }).filter(Objects::nonNull).collect(Collectors.joining("; "));
+        }).filter(Objects::nonNull).collect(Collectors.joining(", "));
 
         if (!statsStr.isEmpty()) {
             stats.values().forEach(HousekeeperStats::reset);
@@ -68,14 +69,14 @@ public class HousekeeperStatsService {
         }
     }
 
-    public void reportProcessed(HousekeeperTaskType taskType, ToHousekeeperServiceMsg msg) {
-        // todo: report timings
+    public void reportProcessed(HousekeeperTaskType taskType, ToHousekeeperServiceMsg msg, long timing) {
         HousekeeperStats stats = this.stats.get(taskType);
         if (msg.getTask().getErrorsCount() == 0) {
             stats.getProcessedCounter().increment();
         } else {
             stats.getReprocessedCounter().increment();
         }
+        stats.getProcessingTimer().record(timing);
     }
 
     public void reportFailure(HousekeeperTaskType taskType, ToHousekeeperServiceMsg msg) {
@@ -97,12 +98,15 @@ public class HousekeeperStatsService {
         private final StatsCounter reprocessedCounter;
         private final StatsCounter failedReprocessingCounter;
 
+        private final StatsTimer processingTimer;
+
         public HousekeeperStats(HousekeeperTaskType taskType, StatsFactory statsFactory) {
             this.taskType = taskType;
             this.processedCounter = register("processed", statsFactory);
             this.failedProcessingCounter = register("failedProcessing", statsFactory);
             this.reprocessedCounter = register("reprocessed", statsFactory);
             this.failedReprocessingCounter = register("failedReprocessing", statsFactory);
+            this.processingTimer = statsFactory.createTimer(StatsType.HOUSEKEEPER, "processingTime", "taskType", taskType.name());
         }
 
         private StatsCounter register(String statsName, StatsFactory statsFactory) {
@@ -113,7 +117,9 @@ public class HousekeeperStatsService {
 
         public void reset() {
             counters.forEach(DefaultCounter::clear);
+            processingTimer.reset();
         }
+
     }
 
 }

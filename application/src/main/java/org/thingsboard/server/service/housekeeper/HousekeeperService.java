@@ -130,7 +130,7 @@ public class HousekeeperService {
             if (log.isDebugEnabled()) {
                 log.debug("[{}] Processed {} in {} ms (attempt {})", task.getTenantId(), task.getDescription(), timing, msg.getTask().getAttempt());
             }
-            statsService.ifPresent(statsService -> statsService.reportProcessed(taskType, msg));
+            statsService.ifPresent(statsService -> statsService.reportProcessed(taskType, msg, timing));
         } catch (InterruptedException e) {
             throw e;
         } catch (Throwable e) {
