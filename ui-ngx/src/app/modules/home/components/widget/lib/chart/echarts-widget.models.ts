@@ -447,6 +447,8 @@ export interface EChartsTooltipWidgetSettings {
   showTooltip: boolean;
   tooltipTrigger?: EChartsTooltipTrigger;
   tooltipShowFocusedSeries?: boolean;
+  tooltipLabelFont: Font;
+  tooltipLabelColor: string;
   tooltipValueFont: Font;
   tooltipValueColor: string;
   tooltipValueFormatter?: string | EChartsTooltipValueFormatFunction;
@@ -631,13 +633,12 @@ const constructEchartsTooltipSeriesElement = (renderer: Renderer2,
   renderer.appendChild(labelElement, circleElement);
   const labelTextElement: HTMLElement = renderer.createElement('div');
   renderer.appendChild(labelTextElement, renderer.createText(item.param.seriesName));
-  renderer.setStyle(labelTextElement, 'font-family', 'Roboto');
-  renderer.setStyle(labelTextElement, 'font-size', '12px');
-  renderer.setStyle(labelTextElement, 'font-style', 'normal');
-  renderer.setStyle(labelTextElement, 'font-weight', '400');
-  renderer.setStyle(labelTextElement, 'line-height', '16px');
-  renderer.setStyle(labelTextElement, 'letter-spacing', '0.4px');
-  renderer.setStyle(labelTextElement, 'color', 'rgba(0, 0, 0, 0.76)');
+  renderer.setStyle(labelTextElement, 'font-family', settings.tooltipLabelFont.family);
+  renderer.setStyle(labelTextElement, 'font-size', settings.tooltipLabelFont.size + settings.tooltipLabelFont.sizeUnit);
+  renderer.setStyle(labelTextElement, 'font-style', settings.tooltipLabelFont.style);
+  renderer.setStyle(labelTextElement, 'font-weight', settings.tooltipLabelFont.weight);
+  renderer.setStyle(labelTextElement, 'line-height', settings.tooltipLabelFont.lineHeight);
+  renderer.setStyle(labelTextElement, 'color', settings.tooltipLabelColor);
   renderer.appendChild(labelElement, labelTextElement);
   const valueElement: HTMLElement = renderer.createElement('div');
   let formatFunction = valueFormatFunction;

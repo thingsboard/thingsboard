@@ -752,6 +752,15 @@ export const timeSeriesChartDefaultSettings: TimeSeriesChartSettings = {
     timeSeriesChartNoAggregationBarWidthDefaultSettings),
   showTooltip: true,
   tooltipTrigger: EChartsTooltipTrigger.axis,
+  tooltipLabelFont: {
+    family: 'Roboto',
+    size: 12,
+    sizeUnit: 'px',
+    style: 'normal',
+    weight: '400',
+    lineHeight: '16px'
+  },
+  tooltipLabelColor: 'rgba(0, 0, 0, 0.76)',
   tooltipValueFont: {
     family: 'Roboto',
     size: 12,

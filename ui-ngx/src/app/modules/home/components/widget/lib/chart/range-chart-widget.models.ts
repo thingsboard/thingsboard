@@ -165,6 +165,15 @@ export const rangeChartDefaultSettings: RangeChartWidgetSettings = {
   },
   legendLabelColor: 'rgba(0, 0, 0, 0.76)',
   showTooltip: true,
+  tooltipLabelFont: {
+    family: 'Roboto',
+    size: 12,
+    sizeUnit: 'px',
+    style: 'normal',
+    weight: '400',
+    lineHeight: '16px'
+  },
+  tooltipLabelColor: 'rgba(0, 0, 0, 0.76)',
   tooltipValueFont: {
     family: 'Roboto',
     size: 12,
@@ -233,6 +242,8 @@ export const rangeChartTimeSeriesSettings = (settings: RangeChartWidgetSettings,
       pieces: rangeItems.map(item => item.piece)
     },
     showTooltip: settings.showTooltip,
+    tooltipLabelFont: settings.tooltipLabelFont,
+    tooltipLabelColor: settings.tooltipLabelColor,
     tooltipValueFont: settings.tooltipValueFont,
     tooltipValueColor: settings.tooltipValueColor,
     tooltipShowDate: settings.tooltipShowDate,

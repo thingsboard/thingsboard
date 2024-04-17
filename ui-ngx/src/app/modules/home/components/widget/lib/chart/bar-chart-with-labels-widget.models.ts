@@ -131,6 +131,15 @@ export const barChartWithLabelsDefaultSettings: BarChartWithLabelsWidgetSettings
   },
   legendLabelColor: 'rgba(0, 0, 0, 0.76)',
   showTooltip: true,
+  tooltipLabelFont: {
+    family: 'Roboto',
+    size: 12,
+    sizeUnit: 'px',
+    style: 'normal',
+    weight: '400',
+    lineHeight: '16px'
+  },
+  tooltipLabelColor: 'rgba(0, 0, 0, 0.76)',
   tooltipValueFont: {
     family: 'Roboto',
     size: 12,
@@ -181,6 +190,8 @@ export const barChartWithLabelsTimeSeriesSettings = (settings: BarChartWithLabel
   animation: settings.animation,
   thresholds: settings.thresholds,
   showTooltip: settings.showTooltip,
+  tooltipLabelFont: settings.tooltipLabelFont,
+  tooltipLabelColor: settings.tooltipLabelColor,
   tooltipValueFont: settings.tooltipValueFont,
   tooltipValueColor: settings.tooltipValueColor,
   tooltipShowDate: settings.tooltipShowDate,

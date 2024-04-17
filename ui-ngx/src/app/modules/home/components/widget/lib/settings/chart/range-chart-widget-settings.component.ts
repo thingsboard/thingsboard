@@ -141,6 +141,8 @@ export class RangeChartWidgetSettingsComponent extends WidgetSettingsComponent {
       legendLabelColor: [settings.legendLabelColor, []],
 
       showTooltip: [settings.showTooltip, []],
+      tooltipLabelFont: [settings.tooltipLabelFont, []],
+      tooltipLabelColor: [settings.tooltipLabelColor, []],
       tooltipValueFont: [settings.tooltipValueFont, []],
       tooltipValueColor: [settings.tooltipValueColor, []],
       tooltipShowDate: [settings.tooltipShowDate, []],
@@ -232,6 +234,8 @@ export class RangeChartWidgetSettingsComponent extends WidgetSettingsComponent {
     }
 
     if (showTooltip) {
+      this.rangeChartWidgetSettingsForm.get('tooltipLabelFont').enable();
+      this.rangeChartWidgetSettingsForm.get('tooltipLabelColor').enable();
       this.rangeChartWidgetSettingsForm.get('tooltipValueFont').enable();
       this.rangeChartWidgetSettingsForm.get('tooltipValueColor').enable();
       this.rangeChartWidgetSettingsForm.get('tooltipShowDate').enable({emitEvent: false});
@@ -249,6 +253,8 @@ export class RangeChartWidgetSettingsComponent extends WidgetSettingsComponent {
         this.rangeChartWidgetSettingsForm.get('tooltipDateInterval').disable();
       }
     } else {
+      this.rangeChartWidgetSettingsForm.get('tooltipLabelFont').disable();
+      this.rangeChartWidgetSettingsForm.get('tooltipLabelColor').disable();
       this.rangeChartWidgetSettingsForm.get('tooltipValueFont').disable();
       this.rangeChartWidgetSettingsForm.get('tooltipValueColor').disable();
       this.rangeChartWidgetSettingsForm.get('tooltipShowDate').disable({emitEvent: false});

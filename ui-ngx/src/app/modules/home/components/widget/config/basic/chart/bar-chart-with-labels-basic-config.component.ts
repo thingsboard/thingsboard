@@ -139,6 +139,8 @@ export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigCom
       legendLabelColor: [settings.legendLabelColor, []],
 
       showTooltip: [settings.showTooltip, []],
+      tooltipLabelFont: [settings.tooltipLabelFont, []],
+      tooltipLabelColor: [settings.tooltipLabelColor, []],
       tooltipValueFont: [settings.tooltipValueFont, []],
       tooltipValueColor: [settings.tooltipValueColor, []],
       tooltipShowDate: [settings.tooltipShowDate, []],
@@ -210,6 +212,8 @@ export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigCom
     this.widgetConfig.config.settings.legendLabelColor = config.legendLabelColor;
 
     this.widgetConfig.config.settings.showTooltip = config.showTooltip;
+    this.widgetConfig.config.settings.tooltipLabelFont = config.tooltipLabelFont;
+    this.widgetConfig.config.settings.tooltipLabelColor = config.tooltipLabelColor;
     this.widgetConfig.config.settings.tooltipValueFont = config.tooltipValueFont;
     this.widgetConfig.config.settings.tooltipValueColor = config.tooltipValueColor;
     this.widgetConfig.config.settings.tooltipShowDate = config.tooltipShowDate;
@@ -302,6 +306,8 @@ export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigCom
     }
 
     if (showTooltip) {
+      this.barChartWidgetConfigForm.get('tooltipLabelFont').enable();
+      this.barChartWidgetConfigForm.get('tooltipLabelColor').enable();
       this.barChartWidgetConfigForm.get('tooltipValueFont').enable();
       this.barChartWidgetConfigForm.get('tooltipValueColor').enable();
       this.barChartWidgetConfigForm.get('tooltipShowDate').enable({emitEvent: false});
@@ -319,6 +325,8 @@ export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigCom
         this.barChartWidgetConfigForm.get('tooltipDateInterval').disable();
       }
     } else {
+      this.barChartWidgetConfigForm.get('tooltipLabelFont').disable();
+      this.barChartWidgetConfigForm.get('tooltipLabelColor').disable();
       this.barChartWidgetConfigForm.get('tooltipValueFont').disable();
       this.barChartWidgetConfigForm.get('tooltipValueColor').disable();
       this.barChartWidgetConfigForm.get('tooltipShowDate').disable({emitEvent: false});
