@@ -52,26 +52,26 @@ public class TbUtils {
 
     private static final byte[] HEX_ARRAY = "0123456789ABCDEF".getBytes(StandardCharsets.US_ASCII);
 
-    private static final LinkedHashMap<String, String> enCodeMdn = new LinkedHashMap<>();
+    private static final LinkedHashMap<String, String> mdnEncodingReplacements = new LinkedHashMap<>();
 
     static {
-        enCodeMdn.put("\\+", "%20");
-        enCodeMdn.put("%21", "!");
-        enCodeMdn.put("%27", "'");
-        enCodeMdn.put("%28", "\\(");
-        enCodeMdn.put("%29", "\\)");
-        enCodeMdn.put("%7E", "~");
-        enCodeMdn.put("%3B", ";");
-        enCodeMdn.put("%2C", ",");
-        enCodeMdn.put("%2F", "/");
-        enCodeMdn.put("%3F", "\\?");
-        enCodeMdn.put("%3A", ":");
-        enCodeMdn.put("%40", "@");
-        enCodeMdn.put("%26", "&");
-        enCodeMdn.put("%3D", "=");
-        enCodeMdn.put("%2B", "\\+");
-        enCodeMdn.put("%24", Matcher.quoteReplacement("$"));
-        enCodeMdn.put("%23", "#");
+        mdnEncodingReplacements.put("\\+", "%20");
+        mdnEncodingReplacements.put("%21", "!");
+        mdnEncodingReplacements.put("%27", "'");
+        mdnEncodingReplacements.put("%28", "\\(");
+        mdnEncodingReplacements.put("%29", "\\)");
+        mdnEncodingReplacements.put("%7E", "~");
+        mdnEncodingReplacements.put("%3B", ";");
+        mdnEncodingReplacements.put("%2C", ",");
+        mdnEncodingReplacements.put("%2F", "/");
+        mdnEncodingReplacements.put("%3F", "\\?");
+        mdnEncodingReplacements.put("%3A", ":");
+        mdnEncodingReplacements.put("%40", "@");
+        mdnEncodingReplacements.put("%26", "&");
+        mdnEncodingReplacements.put("%3D", "=");
+        mdnEncodingReplacements.put("%2B", "\\+");
+        mdnEncodingReplacements.put("%24", Matcher.quoteReplacement("$"));
+        mdnEncodingReplacements.put("%23", "#");
     }
 
     public static void register(ParserConfiguration parserConfig) throws Exception {
@@ -649,18 +649,18 @@ public class TbUtils {
     public static String encodeURI(String uri) {
         String encoded = URLEncoder.encode(uri, StandardCharsets.UTF_8);
         Optional<String> encodedMdnOpt = Optional.of(encoded);
-        for (var entry : enCodeMdn.entrySet()) {
+        for (var entry : mdnEncodingReplacements.entrySet()) {
             encodedMdnOpt = Optional.of(encodedMdnOpt.get().replaceAll(entry.getKey(), entry.getValue()));
         }
         return encodedMdnOpt.orElse(null);
     }
 
     public static String decodeURI(String uri) {
-        ArrayList<String> alKeys = new ArrayList<>(enCodeMdn.keySet());
-        Collections.reverse(alKeys);
+        ArrayList<String> allKeys = new ArrayList<>(mdnEncodingReplacements.keySet());
+        Collections.reverse(allKeys);
         Optional<String> encodedMdnOpt = Optional.of(uri);
-        for (String strKey : alKeys) {
-            encodedMdnOpt = Optional.of(encodedMdnOpt.get().replaceAll(enCodeMdn.get(strKey), strKey));
+        for (String strKey : allKeys) {
+            encodedMdnOpt = Optional.of(encodedMdnOpt.get().replaceAll(mdnEncodingReplacements.get(strKey), strKey));
         }
         return encodedMdnOpt.map(s -> URLDecoder.decode(s, StandardCharsets.UTF_8)).orElse(null);
     }
