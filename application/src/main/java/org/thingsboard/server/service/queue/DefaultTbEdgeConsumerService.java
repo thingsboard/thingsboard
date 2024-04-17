@@ -75,7 +75,7 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
     private int pollDuration;
     @Value("${queue.edge.pack_processing_timeout:10000}")
     private int packProcessingTimeout;
-    @Value("${queue.edge.pack_processing_retries:10}")
+    @Value("${queue.edge.pack_processing_retries:3}")
     private int packProcessingRetries;
     @Value("${queue.edge.stats.enabled:false}")
     private boolean statsEnabled;
@@ -134,47 +134,37 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
                     List<IdMsgPair<ToEdgeMsg>> orderedMsgList = msgs.stream().map(msg -> new IdMsgPair<>(UUID.randomUUID(), msg)).toList();
                     ConcurrentMap<UUID, TbProtoQueueMsg<ToEdgeMsg>> pendingMap = orderedMsgList.stream().collect(
                             Collectors.toConcurrentMap(IdMsgPair::getUuid, IdMsgPair::getMsg));
-                    int retryCount = 0;
-                    while (!stopped && !consumersExecutor.isShutdown()) {
-                        CountDownLatch processingTimeoutLatch = new CountDownLatch(1);
-                        TbPackProcessingContext<TbProtoQueueMsg<ToEdgeMsg>> ctx = new TbPackProcessingContext<>(
-                                processingTimeoutLatch, pendingMap, new ConcurrentHashMap<>());
-                        PendingMsgHolder pendingMsgHolder = new PendingMsgHolder();
-                        Future<?> submitFuture = consumersExecutor.submit(() ->
-                                orderedMsgList.forEach((element) -> {
-                                    UUID id = element.getUuid();
-                                    TbProtoQueueMsg<ToEdgeMsg> msg = element.getMsg();
-                                    TbCallback callback = new TbPackCallback<>(id, ctx);
-                                    try {
-                                        ToEdgeMsg toEdgeMsg = msg.getValue();
-                                        pendingMsgHolder.setToEdgeMsg(toEdgeMsg);
-                                        if (toEdgeMsg.hasEdgeNotificationMsg()) {
-                                            pushNotificationToEdge(toEdgeMsg.getEdgeNotificationMsg(), callback);
-                                        }
-                                        if (statsEnabled) {
-                                            stats.log(toEdgeMsg);
-                                        }
-                                    } catch (Throwable e) {
-                                        log.warn("[{}] Failed to process message: {}", id, msg, e);
-                                        callback.onFailure(e);
-                                    }
-                                }));
-                        if (!processingTimeoutLatch.await(packProcessingTimeout, TimeUnit.MILLISECONDS)) {
-                            if (!submitFuture.isDone()) {
-                                submitFuture.cancel(true);
-                                ToEdgeMsg lastSubmitMsg = pendingMsgHolder.getToEdgeMsg();
-                                log.info("Timeout to process message: {}", lastSubmitMsg);
+                    CountDownLatch processingTimeoutLatch = new CountDownLatch(1);
+                    TbPackProcessingContext<TbProtoQueueMsg<ToEdgeMsg>> ctx = new TbPackProcessingContext<>(
+                            processingTimeoutLatch, pendingMap, new ConcurrentHashMap<>());
+                    PendingMsgHolder pendingMsgHolder = new PendingMsgHolder();
+                    Future<?> submitFuture = consumersExecutor.submit(() -> {
+                        orderedMsgList.forEach((element) -> {
+                            UUID id = element.getUuid();
+                            TbProtoQueueMsg<ToEdgeMsg> msg = element.getMsg();
+                            TbCallback callback = new TbPackCallback<>(id, ctx);
+                            try {
+                                ToEdgeMsg toEdgeMsg = msg.getValue();
+                                pendingMsgHolder.setToEdgeMsg(toEdgeMsg);
+                                if (toEdgeMsg.hasEdgeNotificationMsg()) {
+                                    pushNotificationToEdge(toEdgeMsg.getEdgeNotificationMsg(), 0, packProcessingRetries, callback);
+                                }
+                                if (statsEnabled) {
+                                    stats.log(toEdgeMsg);
+                                }
+                            } catch (Throwable e) {
+                                log.warn("[{}] Failed to process message: {}", id, msg, e);
+                                callback.onFailure(e);
                             }
-                            ctx.getFailedMap().forEach((id, msg) -> log.warn("[{}] Failed to process message: {}", id, msg.getValue()));
-                        } else {
-                            break;
+                        });
+                    });
+                    if (!processingTimeoutLatch.await(packProcessingTimeout, TimeUnit.MILLISECONDS)) {
+                        if (!submitFuture.isDone()) {
+                            submitFuture.cancel(true);
+                            ToEdgeMsg lastSubmitMsg = pendingMsgHolder.getToEdgeMsg();
+                            log.info("Timeout to process message: {}", lastSubmitMsg);
                         }
-                        if (!ctx.getFailedMap().isEmpty() && retryCount != packProcessingRetries) {
-                            pendingMap = ctx.getFailedMap();
-                            retryCount++;
-                        } else {
-                            break;
-                        }
+                        ctx.getFailedMap().forEach((id, msg) -> log.warn("[{}] Failed to process message: {}", id, msg.getValue()));
                     }
                     mainConsumer.commit();
                 } catch (Exception e) {
@@ -239,7 +229,7 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
         }
     }
 
-    private void pushNotificationToEdge(EdgeNotificationMsgProto edgeNotificationMsg, TbCallback callback) {
+    private void pushNotificationToEdge(EdgeNotificationMsgProto edgeNotificationMsg, int retryCount, int retryLimit, TbCallback callback) {
         TenantId tenantId = TenantId.fromUUID(new UUID(edgeNotificationMsg.getTenantIdMSB(), edgeNotificationMsg.getTenantIdLSB()));
         log.debug("[{}] Pushing notification to edge {}", tenantId, edgeNotificationMsg);
         try {
@@ -282,11 +272,21 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
 
                 @Override
                 public void onFailure(@NotNull Throwable throwable) {
-                    callBackFailure(tenantId, edgeNotificationMsg, callback, throwable);
+                    if (retryCount < retryLimit) {
+                        log.warn("[{}] Retry {} for message due to failure: {}", tenantId, retryCount + 1, throwable.getMessage());
+                        pushNotificationToEdge(edgeNotificationMsg, retryCount + 1, retryLimit, callback);
+                    } else {
+                        callBackFailure(tenantId, edgeNotificationMsg, callback, throwable);
+                    }
                 }
             }, MoreExecutors.directExecutor());
         } catch (Exception e) {
-            callBackFailure(tenantId, edgeNotificationMsg, callback, e);
+            if (retryCount < retryLimit) {
+                log.warn("[{}] Retry {} for message due to exception: {}", tenantId, retryCount + 1, e.getMessage());
+                pushNotificationToEdge(edgeNotificationMsg, retryCount + 1, retryLimit, callback);
+            } else {
+                callBackFailure(tenantId, edgeNotificationMsg, callback, e);
+            }
         }
     }
 

@@ -1688,7 +1688,7 @@ queue:
     poll-interval: "${TB_QUEUE_EDGE_POLL_INTERVAL_MS:25}"
     # Timeout for processing a message pack by Edge queue
     pack-processing-timeout: "${TB_QUEUE_EDGE_PACK_PROCESSING_TIMEOUT_MS:10000}"
-    # Timeout for processing a message pack by Edge queue
+    # Retries for processing a failure message pack by Edge queue
     pack-processing-retries: "${TB_QUEUE_EDGE_MESSAGE_PROCESSING_RETRIES:3}"
     stats:
       # Enable/disable statistics for Edge
