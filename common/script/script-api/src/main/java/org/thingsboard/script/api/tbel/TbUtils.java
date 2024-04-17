@@ -43,7 +43,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 
@@ -612,22 +611,6 @@ public class TbUtils {
         return BigDecimal.valueOf(value).setScale(precision, RoundingMode.HALF_UP).floatValue();
     }
 
-    private static boolean isHexadecimal(String value) {
-        return value != null && (value.contains("0x") || value.contains("0X"));
-    }
-
-    private static String prepareNumberString(String value) {
-        if (value != null) {
-            value = value.trim();
-            if (isHexadecimal(value)) {
-                value = value.replace("0x", "");
-                value = value.replace("0X", "");
-            }
-            value = value.replace(",", ".");
-        }
-        return value;
-    }
-
     public static ExecutionHashMap<String, Object> toFlatMap(ExecutionContext ctx, Map<String, Object> json) {
         return toFlatMap(ctx, json, new ArrayList<>(), true);
     }
@@ -646,23 +629,22 @@ public class TbUtils {
         return map;
     }
 
+
     public static String encodeURI(String uri) {
         String encoded = URLEncoder.encode(uri, StandardCharsets.UTF_8);
-        Optional<String> encodedMdnOpt = Optional.of(encoded);
         for (var entry : mdnEncodingReplacements.entrySet()) {
-            encodedMdnOpt = Optional.of(encodedMdnOpt.get().replaceAll(entry.getKey(), entry.getValue()));
+            encoded = encoded.replaceAll(entry.getKey(), entry.getValue());
         }
-        return encodedMdnOpt.orElse(null);
+        return encoded;
     }
 
     public static String decodeURI(String uri) {
         ArrayList<String> allKeys = new ArrayList<>(mdnEncodingReplacements.keySet());
         Collections.reverse(allKeys);
-        Optional<String> encodedMdnOpt = Optional.of(uri);
         for (String strKey : allKeys) {
-            encodedMdnOpt = Optional.of(encodedMdnOpt.get().replaceAll(mdnEncodingReplacements.get(strKey), strKey));
+            uri = uri.replaceAll(mdnEncodingReplacements.get(strKey), strKey);
         }
-        return encodedMdnOpt.map(s -> URLDecoder.decode(s, StandardCharsets.UTF_8)).orElse(null);
+        return URLDecoder.decode(uri, StandardCharsets.UTF_8);
     }
 
     private static void parseRecursive(Object json, Map<String, Object> map, List<String> excludeList, String path, boolean pathInKey) {
@@ -703,6 +685,22 @@ public class TbUtils {
                 map.put(key, json);
             }
         }
+    }
+
+    private static boolean isHexadecimal(String value) {
+        return value != null && (value.contains("0x") || value.contains("0X"));
+    }
+
+    private static String prepareNumberString(String value) {
+        if (value != null) {
+            value = value.trim();
+            if (isHexadecimal(value)) {
+                value = value.replace("0x", "");
+                value = value.replace("0X", "");
+            }
+            value = value.replace(",", ".");
+        }
+        return value;
     }
 
     private static boolean isValidRadix(String value, int radix) {
