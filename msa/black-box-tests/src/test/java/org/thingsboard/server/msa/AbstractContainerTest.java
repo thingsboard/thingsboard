@@ -50,6 +50,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 public abstract class AbstractContainerTest {
 
     public static final int TIMEOUT = 30;
+
+    protected static final String WS_URL = "ws://localhost:8080";
     protected volatile ContainerWsClient containerWsClient;
 
     protected final static String TEST_PROVISION_DEVICE_KEY = "test_provision_key";
@@ -75,7 +77,7 @@ public abstract class AbstractContainerTest {
         if (containerTestSuite.isActive()) {
             containerTestSuite.stop();
         }
-        if (containerWsClient.isOpen()) {
+        if (containerWsClient != null && containerWsClient.isOpen()) {
             containerWsClient.markAllNotificationsAsRead();
             containerWsClient.close();
         }
@@ -215,7 +217,7 @@ public abstract class AbstractContainerTest {
     }
 
     protected ContainerWsClient buildAndConnectWebSocketClient(String path) throws URISyntaxException, InterruptedException {
-        ContainerWsClient wsClient = new ContainerWsClient(new URI(TestProperties.getWebSocketUrl() + path));
+        ContainerWsClient wsClient = new ContainerWsClient(new URI(WS_URL + path));
         assertThat(wsClient.connectBlocking(TIMEOUT, TimeUnit.SECONDS)).isTrue();
         if (!path.contains("token=")) {
             wsClient.authenticate(testRestClient.getToken());
