@@ -417,8 +417,8 @@ export const adjustTimeAxisExtentToData = (timeAxisOption: TimeAxisBaseOption,
       }
     }
   }
-  timeAxisOption.min = (typeof min !== 'undefined') ? min : defaultMin;
-  timeAxisOption.max = (typeof max !== 'undefined') ? max : defaultMax;
+  timeAxisOption.min = (typeof min !== 'undefined' && Math.abs(min - defaultMin) < 1000) ? min : defaultMin;
+  timeAxisOption.max = (typeof max !== 'undefined' && Math.abs(max - defaultMax) < 1000) ? max : defaultMax;
 };
 
 const toEChartsDataItem = (entry: DataEntry, valueConverter?: (value: any) => any): EChartsDataItem => {
