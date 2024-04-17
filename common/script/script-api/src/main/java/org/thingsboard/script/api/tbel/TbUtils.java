@@ -662,7 +662,7 @@ public class TbUtils {
         for (String strKey : alKeys) {
             encodedMdnOpt = Optional.of(encodedMdnOpt.get().replaceAll(enCodeMdn.get(strKey), strKey));
         }
-        return encodedMdnOpt.orElse(null) == null ? null : URLDecoder.decode(encodedMdnOpt.get(), StandardCharsets.UTF_8);
+        return encodedMdnOpt.map(s -> URLDecoder.decode(s, StandardCharsets.UTF_8)).orElse(null);
     }
 
     private static void parseRecursive(Object json, Map<String, Object> map, List<String> excludeList, String path, boolean pathInKey) {
