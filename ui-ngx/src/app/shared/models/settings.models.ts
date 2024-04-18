@@ -89,8 +89,7 @@ export interface GeneralSettings {
 
 export interface GatewaySettings {
   version: string;
-  availableVersions?: string[];
-  key?: string
+  availableVersions?: Array<string>;
 }
 
 export type DeviceConnectivityProtocol = 'http' | 'https' | 'mqtt' | 'mqtts' | 'coap' | 'coaps';

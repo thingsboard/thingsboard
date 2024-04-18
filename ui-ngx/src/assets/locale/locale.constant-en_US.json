@@ -98,7 +98,13 @@
         "settings": "Settings",
         "general": "General",
         "general-settings": "General Settings",
-        "gateway-settings": "Gateway settings",
+        "gateway-settings": {
+            "gateway-settings": "Gateway settings",
+            "property": "Property",
+            "value": "Value",
+            "version": "Version",
+            "version-hint": "This parameter sets the version of the gateway docker image in a compose file created through the ThingsBoard IoT Gateways dashboard."
+        },
         "home-settings": "Home Settings",
         "home": "Home",
         "outgoing-mail": "Mail server",
@@ -483,10 +489,7 @@
         "slack-settings": "Slack settings",
         "mobile-settings": "Mobile settings",
         "firebase-service-account-file": "Firebase service account credentials JSON file",
-        "select-firebase-service-account-file": "Drag and drop your Firebase service account credentials file or ",
-        "settings-saved-successfully": "Settings saved successfully!",
-        "settings-saving-error": "Settings wasn't saved!",
-        "version-setting-hint": "This parameter sets the version of the gateway docker image in a compose file created through the ThingsBoard IoT Gateways dashboard."
+        "select-firebase-service-account-file": "Drag and drop your Firebase service account credentials file or "
       },
     "alarm": {
         "alarm": "Alarm",
