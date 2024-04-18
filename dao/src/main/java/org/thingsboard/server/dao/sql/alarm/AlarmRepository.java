@@ -24,6 +24,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.dao.model.sql.AlarmEntity;
 import org.thingsboard.server.dao.model.sql.AlarmInfoEntity;
 
@@ -334,12 +335,20 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
     Page<UUID> findAlarmIdsByAssigneeId(@Param("tenantId") UUID tenantId, @Param("assigneeId") UUID assigneeId, Pageable pageable);
 
     // using Slice so that count query is not executed
-    @Query(value = "SELECT id FROM alarm WHERE tenant_id = :tenantId AND originator_id = :originatorId " +
-            "AND (cast(:idOffset as uuid) IS NULL OR id > cast(:idOffset as uuid))", nativeQuery = true)
-    Slice<UUID> findAlarmIdsByOriginatorId(@Param("tenantId") UUID tenantId,
-                                           @Param("originatorId") UUID originatorId,
-                                           @Param("idOffset") UUID idOffset,
-                                           Pageable pageable);
+    @Query("SELECT new org.thingsboard.server.common.data.util.TbPair(a.id, a.createdTime) " +
+            "FROM AlarmEntity a WHERE a.originatorId = :originatorId " +
+            "AND (a.createdTime > :createdTimeOffset OR " +
+            "(a.createdTime = :createdTimeOffset AND a.id > :idOffset))")
+    Slice<TbPair<UUID, Long>> findAlarmIdsByOriginatorId(@Param("originatorId") UUID originatorId,
+                                                         @Param("createdTimeOffset") long createdTimeOffset,
+                                                         @Param("idOffset") UUID idOffset,
+                                                         Pageable pageable);
+
+    // using Slice so that count query is not executed
+    @Query("SELECT new org.thingsboard.server.common.data.util.TbPair(a.id, a.createdTime) " +
+            "FROM AlarmEntity a WHERE a.originatorId = :originatorId")
+    Slice<TbPair<UUID, Long>> findAlarmIdsByOriginatorId(@Param("originatorId") UUID originatorId,
+                                                         Pageable pageable);
 
     @Query(value = "SELECT create_or_update_active_alarm(:t_id, :c_id, :a_id, :a_created_ts, :a_o_id, :a_o_type, :a_type, :a_severity, " +
             ":a_start_ts, :a_end_ts, :a_details, :a_propagate, :a_propagate_to_owner, " +

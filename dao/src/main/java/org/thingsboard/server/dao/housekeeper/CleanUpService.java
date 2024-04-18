@@ -77,7 +77,7 @@ public class CleanUpService {
 
     public void removeTenantEntities(TenantId tenantId, EntityType... entityTypes) {
         for (EntityType entityType : entityTypes) {
-            housekeeperClient.submitTask(HousekeeperTask.deleteEntities(tenantId, entityType));
+            housekeeperClient.submitTask(HousekeeperTask.deleteTenantEntities(tenantId, entityType));
         }
     }
 

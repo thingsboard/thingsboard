@@ -42,7 +42,7 @@ import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTra
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.event.RuleNodeDebugEvent;
-import org.thingsboard.server.common.data.housekeeper.EntitiesDeletionHousekeeperTask;
+import org.thingsboard.server.common.data.housekeeper.TenantEntitiesDeletionHousekeeperTask;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -142,8 +142,8 @@ public abstract class AbstractServiceTest {
     @Bean
     public HousekeeperClient housekeeperClient() {
         return task -> {
-            if (task.getTaskType() == HousekeeperTaskType.DELETE_ENTITIES) {
-                EntityDaoService entityService = entityServiceRegistry.getServiceByEntityType(((EntitiesDeletionHousekeeperTask) task).getEntityType());
+            if (task.getTaskType() == HousekeeperTaskType.DELETE_TENANT_ENTITIES) {
+                EntityDaoService entityService = entityServiceRegistry.getServiceByEntityType(((TenantEntitiesDeletionHousekeeperTask) task).getEntityType());
                 entityService.deleteByTenantId(task.getTenantId());
             }
         };

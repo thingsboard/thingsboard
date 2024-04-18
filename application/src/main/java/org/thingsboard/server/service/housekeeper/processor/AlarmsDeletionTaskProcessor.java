@@ -24,12 +24,11 @@ import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UUIDBased;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.dao.alarm.AlarmService;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -46,16 +45,19 @@ public class AlarmsDeletionTaskProcessor extends HousekeeperTaskProcessor<Alarms
 
         if (entityType == EntityType.DEVICE || entityType == EntityType.ASSET) {
             if (task.getAlarms() == null) {
-                AlarmId last = null;
+                AlarmId lastId = null;
+                long lastCreatedTime = 0;
                 while (true) {
-                    List<AlarmId> alarms = alarmService.findAlarmIdsByOriginatorIdAndIdOffset(tenantId, entityId, last, 128);
+                    List<TbPair<UUID, Long>> alarms = alarmService.findAlarmIdsByOriginatorId(tenantId, entityId, lastCreatedTime, lastId, 128);
                     if (alarms.isEmpty()) {
                         break;
                     }
 
-                    housekeeperClient.submitTask(new AlarmsDeletionHousekeeperTask(tenantId, entityId, alarms.stream()
-                            .map(UUIDBased::getId).collect(Collectors.toList())));
-                    last = alarms.get(alarms.size() - 1);
+                    housekeeperClient.submitTask(new AlarmsDeletionHousekeeperTask(tenantId, entityId, alarms.stream().map(TbPair::getFirst).toList()));
+
+                    TbPair<UUID, Long> last = alarms.get(alarms.size() - 1);
+                    lastId = new AlarmId(last.getFirst());
+                    lastCreatedTime = last.getSecond();
                     log.debug("[{}][{}][{}] Submitted task for deleting {} alarms", tenantId, entityType, entityId, alarms.size());
                 }
             } else {

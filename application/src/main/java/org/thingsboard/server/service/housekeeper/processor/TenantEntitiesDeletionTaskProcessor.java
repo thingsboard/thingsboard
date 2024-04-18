@@ -21,37 +21,43 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.housekeeper.EntitiesDeletionHousekeeperTask;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.housekeeper.TenantEntitiesDeletionHousekeeperTask;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.entity.EntityDaoService;
-import org.thingsboard.server.dao.entity.EntityServiceRegistry;
+import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.dao.entity.EntityDaoRegistry;
 
+import java.util.List;
 import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class EntitiesDeletionTaskProcessor extends HousekeeperTaskProcessor<EntitiesDeletionHousekeeperTask> {
+public class TenantEntitiesDeletionTaskProcessor extends HousekeeperTaskProcessor<TenantEntitiesDeletionHousekeeperTask> {
 
-    private final EntityServiceRegistry entityServiceRegistry;
+    private final EntityDaoRegistry entityDaoRegistry;
 
     @Override
-    public void process(EntitiesDeletionHousekeeperTask task) throws Exception {
+    public void process(TenantEntitiesDeletionHousekeeperTask task) throws Exception {
         EntityType entityType = task.getEntityType();
         TenantId tenantId = task.getTenantId();
-        EntityDaoService entityService = entityServiceRegistry.getServiceByEntityType(entityType);
+        Dao<?> entityDao = entityDaoRegistry.getDao(entityType);
 
-        for (UUID entityUuid : task.getEntities()) {
-            EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, entityUuid);
-            entityService.deleteEntity(tenantId, entityId, true);
+        UUID last = null;
+        while (true) {
+            List<UUID> entities = entityDao.findIdsByTenantIdAndIdOffset(tenantId, last, 128);
+            if (entities.isEmpty()) {
+                break;
+            }
+
+            housekeeperClient.submitTask(new EntitiesDeletionHousekeeperTask(tenantId, entityType, entities));
+            last = entities.get(entities.size() - 1);
+            log.debug("[{}] Submitted task for deleting {} {}s", tenantId, entities.size(), entityType.getNormalName().toLowerCase());
         }
-        log.debug("[{}] Deleted {} {}s", tenantId, task.getEntities().size(), entityType.getNormalName().toLowerCase());
     }
 
     @Override
     public HousekeeperTaskType getTaskType() {
-        return HousekeeperTaskType.DELETE_ENTITIES;
+        return HousekeeperTaskType.DELETE_TENANT_ENTITIES;
     }
 
 }

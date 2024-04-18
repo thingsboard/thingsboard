@@ -23,28 +23,23 @@ import lombok.ToString;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
 
-import java.util.List;
-import java.util.UUID;
-
 @Data
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
-public class EntitiesDeletionHousekeeperTask extends HousekeeperTask {
+public class TenantEntitiesDeletionHousekeeperTask extends HousekeeperTask {
 
     private EntityType entityType;
-    private List<UUID> entities;
 
-    public EntitiesDeletionHousekeeperTask(TenantId tenantId, EntityType entityType, List<UUID> entities) {
-        super(tenantId, tenantId, HousekeeperTaskType.DELETE_ENTITIES);
+    public TenantEntitiesDeletionHousekeeperTask(TenantId tenantId, EntityType entityType) {
+        super(tenantId, tenantId, HousekeeperTaskType.DELETE_TENANT_ENTITIES);
         this.entityType = entityType;
-        this.entities = entities;
     }
 
     @JsonIgnore
     @Override
     public String getDescription() {
-        return entityType.getNormalName().toLowerCase() + "s deletion (" + entities + ")";
+        return entityType.getNormalName().toLowerCase() + "s deletion";
     }
 
 }

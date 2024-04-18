@@ -36,6 +36,7 @@ import java.io.Serializable;
 @JsonSubTypes({
         @Type(name = "DELETE_TS_HISTORY", value = TsHistoryDeletionHousekeeperTask.class),
         @Type(name = "DELETE_LATEST_TS", value = LatestTsDeletionHousekeeperTask.class),
+        @Type(name = "DELETE_TENANT_ENTITIES", value = TenantEntitiesDeletionHousekeeperTask.class),
         @Type(name = "DELETE_ENTITIES", value = EntitiesDeletionHousekeeperTask.class),
         @Type(name = "DELETE_ALARMS", value = AlarmsDeletionHousekeeperTask.class),
         @Type(name = "UNASSIGN_ALARMS", value = AlarmsUnassignHousekeeperTask.class)
@@ -76,8 +77,8 @@ public class HousekeeperTask implements Serializable {
         return new AlarmsDeletionHousekeeperTask(tenantId, entityId);
     }
 
-    public static HousekeeperTask deleteEntities(TenantId tenantId, EntityType entityType) {
-        return new EntitiesDeletionHousekeeperTask(tenantId, entityType);
+    public static HousekeeperTask deleteTenantEntities(TenantId tenantId, EntityType entityType) {
+        return new TenantEntitiesDeletionHousekeeperTask(tenantId, entityType);
     }
 
     @JsonIgnore
