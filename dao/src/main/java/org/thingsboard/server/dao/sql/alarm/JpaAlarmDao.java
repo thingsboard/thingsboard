@@ -281,7 +281,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
                 asf.hasClearFilter() && asf.getClearFilter(),
                 asf.hasAckFilter(),
                 asf.hasAckFilter() && asf.getAckFilter(),
-                assigneeId == null ? null : UUID.fromString(assigneeId));
+                StringUtils.isNotBlank(assigneeId) ? UUID.fromString(assigneeId) : null);
     }
 
     @Override
