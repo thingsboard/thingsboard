@@ -40,7 +40,7 @@ public class OAuth2AppTokenFactory {
     public String validateTokenAndGetCallbackUrlScheme(String appPackage, String appToken, String appSecret) {
         Jws<Claims> jwsClaims;
         try {
-            jwsClaims = Jwts.parser().setSigningKey(appSecret).parseClaimsJws(appToken);
+            jwsClaims = Jwts.parser().setSigningKey(appSecret).build().parseClaimsJws(appToken);
         }
         catch (UnsupportedJwtException | MalformedJwtException | IllegalArgumentException | SignatureException ex) {
             throw new IllegalArgumentException("Invalid Application token: ", ex);
