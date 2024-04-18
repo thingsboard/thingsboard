@@ -16,7 +16,7 @@
 package org.thingsboard.server.service.sync.ie.importing.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
