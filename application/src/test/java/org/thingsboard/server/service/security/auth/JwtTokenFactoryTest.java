@@ -66,7 +66,7 @@ public class JwtTokenFactoryTest {
     public void beforeEach() {
         jwtSettings = new JwtSettings();
         jwtSettings.setTokenIssuer("tb");
-        jwtSettings.setTokenSigningKey("abewafaf");
+        jwtSettings.setTokenSigningKey("abewafaf".repeat(11)); //48*11 bits key > 512 bits
         jwtSettings.setTokenExpirationTime((int) TimeUnit.HOURS.toSeconds(2));
         jwtSettings.setRefreshTokenExpTime((int) TimeUnit.DAYS.toSeconds(7));
 

@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.security.model.token;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ClaimsBuilder;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtBuilder;
@@ -183,20 +184,21 @@ public class JwtTokenFactory {
 
         UserPrincipal principal = securityUser.getUserPrincipal();
 
-        Claims claims = Jwts.claims().setSubject(principal.getValue()).build();
-        claims.put(USER_ID, securityUser.getId().getId().toString());
-        claims.put(SCOPES, scopes);
+        ClaimsBuilder claims = Jwts.claims()
+                .subject(principal.getValue())
+                .add(USER_ID, securityUser.getId().getId().toString())
+                .add(SCOPES, scopes);
         if (securityUser.getSessionId() != null) {
-            claims.put(SESSION_ID, securityUser.getSessionId());
+            claims.add(SESSION_ID, securityUser.getSessionId());
         }
 
         ZonedDateTime currentTime = ZonedDateTime.now();
 
         return Jwts.builder()
-                .setClaims(claims)
-                .setIssuer(jwtSettingsService.getJwtSettings().getTokenIssuer())
-                .setIssuedAt(Date.from(currentTime.toInstant()))
-                .setExpiration(Date.from(currentTime.plusSeconds(expirationTime).toInstant()))
+                .claims(claims.build())
+                .issuer(jwtSettingsService.getJwtSettings().getTokenIssuer())
+                .issuedAt(Date.from(currentTime.toInstant()))
+                .expiration(Date.from(currentTime.plusSeconds(expirationTime).toInstant()))
                 .signWith(SignatureAlgorithm.HS512, jwtSettingsService.getJwtSettings().getTokenSigningKey());
     }
 
@@ -205,7 +207,7 @@ public class JwtTokenFactory {
             return Jwts.parser()
                     .setSigningKey(jwtSettingsService.getJwtSettings().getTokenSigningKey())
                     .build()
-                    .parseClaimsJws(token);
+                    .parseSignedClaims(token);
         } catch (UnsupportedJwtException | MalformedJwtException | IllegalArgumentException ex) {
             log.debug("Invalid JWT Token", ex);
             throw new BadCredentialsException("Invalid JWT token: ", ex);
