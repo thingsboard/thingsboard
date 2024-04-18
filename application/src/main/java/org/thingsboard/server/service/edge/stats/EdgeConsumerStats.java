@@ -39,7 +39,7 @@ public class EdgeConsumerStats {
     private final StatsCounter edgeSyncRequestCounter;
     private final StatsCounter edgeSyncResponseCounter;
 
-    private final List<StatsCounter> counters = new ArrayList<>(2);
+    private final List<StatsCounter> counters = new ArrayList<>(5);
 
     public EdgeConsumerStats(StatsFactory statsFactory) {
         String statsKey = StatsType.EDGE.getName();
