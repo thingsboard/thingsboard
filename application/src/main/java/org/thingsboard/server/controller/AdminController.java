@@ -65,6 +65,7 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.mobile.MobileAppSettings;
 import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.common.data.security.model.JwtSettings;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
@@ -75,6 +76,7 @@ import org.thingsboard.server.common.data.sync.vc.RepositorySettingsInfo;
 import org.thingsboard.server.common.data.sync.vc.VcUtils;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.audit.AuditLogService;
+import org.thingsboard.server.dao.mobile.MobileAppSettingsService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
@@ -95,6 +97,7 @@ import java.util.Optional;
 
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
 
 @RestController
 @TbCoreComponent
@@ -119,6 +122,7 @@ public class AdminController extends BaseController {
     private final UpdateService updateService;
     private final SystemInfoService systemInfoService;
     private final AuditLogService auditLogService;
+    private final MobileAppSettingsService mobileAppSettingsService;
 
     @ApiOperation(value = "Get the Administration Settings object using key (getAdminSettings)",
             notes = "Get the Administration Settings object using specified string key. Referencing non-existing key will cause an error." + SYSTEM_AUTHORITY_PARAGRAPH)
@@ -482,4 +486,31 @@ public class AdminController extends BaseController {
         adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminSettings);
         response.sendRedirect(prevUri);
     }
+
+    @ApiOperation(value = "Create Or Update the Mobile application settings (saveMobileAppSettings)",
+            notes = "The payload contains platform qr code widget settings and associated android and iOS applications." + SYSTEM_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
+    @RequestMapping(value = "/mobileAppSettings", method = RequestMethod.POST)
+    @ResponseStatus(value = HttpStatus.OK)
+    public MobileAppSettings saveMobileAppSettings(@Parameter(description = "A JSON value representing the mobile apps configuration")
+                                                   @RequestBody MobileAppSettings mobileAppSettings) throws ThingsboardException {
+        SecurityUser currentUser = getCurrentUser();
+        accessControlService.checkPermission(currentUser, Resource.MOBILE_APP_SETTINGS, Operation.WRITE);
+        mobileAppSettings.setTenantId(getTenantId());
+
+        return mobileAppSettingsService.saveMobileAppSettings(currentUser.getTenantId(), mobileAppSettings);
+    }
+
+    @ApiOperation(value = "Get Mobile application settings (getMobileAppSettings)",
+            notes = "The payload contains platform qr code widget settings and creds for associated android and iOS applications." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @RequestMapping(value = "/mobileAppSettings", method = RequestMethod.GET)
+    @ResponseBody
+    public MobileAppSettings getMobileAppSettings() throws ThingsboardException {
+        SecurityUser currentUser = getCurrentUser();
+        accessControlService.checkPermission(currentUser, Resource.MOBILE_APP_SETTINGS, Operation.READ);
+
+        return mobileAppSettingsService.getMobileAppSettings(currentUser.getTenantId());
+    }
+
 }

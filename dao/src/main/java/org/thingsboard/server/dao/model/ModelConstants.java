@@ -659,6 +659,15 @@ public class ModelConstants {
     public static final String NOTIFICATION_TEMPLATE_NOTIFICATION_TYPE_PROPERTY = "notification_type";
     public static final String NOTIFICATION_TEMPLATE_CONFIGURATION_PROPERTY = "configuration";
 
+    /**
+     * Mobile application settings constants.
+     */
+    public static final String MOBILE_APP_SETTINGS_TABLE_NAME = "mobile_app_settings";
+    public static final String MOBILE_APP_SETTINGS_APP_PACKAGE_PROPERTY = "app_package";
+    public static final String MOBILE_APP_SETTINGS_SHA256_CERT_FINGERPRINTS_PROPERTY = "sha256_cert_fingerprints";
+    public static final String MOBILE_APP_APP_ID_PROPERTY = "app_id";
+    public static final String MOBILE_APP_SETTINGS_PROPERTY = "settings";
+
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 
     protected static final String[] COUNT_AGGREGATION_COLUMNS = new String[]{count(LONG_VALUE_COLUMN), count(DOUBLE_VALUE_COLUMN), count(BOOLEAN_VALUE_COLUMN), count(STRING_VALUE_COLUMN), count(JSON_VALUE_COLUMN), max(TS_COLUMN)};
