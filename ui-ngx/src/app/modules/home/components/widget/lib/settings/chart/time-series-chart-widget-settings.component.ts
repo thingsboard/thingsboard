@@ -35,7 +35,8 @@ import {
 } from '@home/components/widget/lib/chart/time-series-chart-widget.models';
 import {
   TimeSeriesChartKeySettings,
-  TimeSeriesChartType, TimeSeriesChartYAxes,
+  TimeSeriesChartType,
+  TimeSeriesChartYAxes,
   TimeSeriesChartYAxisId
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
@@ -108,7 +109,7 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
   }
 
   protected defaultSettings(): WidgetSettings {
-    return mergeDeep({} as TimeSeriesChartWidgetSettings, timeSeriesChartWidgetDefaultSettings);
+    return mergeDeep<TimeSeriesChartWidgetSettings>({} as TimeSeriesChartWidgetSettings, timeSeriesChartWidgetDefaultSettings);
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
@@ -125,17 +126,25 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
       dataZoom: [settings.dataZoom, []],
       stack: [settings.stack, []],
 
+      grid: [settings.grid, []],
+
       xAxis: [settings.xAxis, []],
 
       noAggregationBarWidthSettings: [settings.noAggregationBarWidthSettings, []],
 
       showLegend: [settings.showLegend, []],
+      legendColumnTitleFont: [settings.legendColumnTitleFont, []],
+      legendColumnTitleColor: [settings.legendColumnTitleColor, []],
       legendLabelFont: [settings.legendLabelFont, []],
       legendLabelColor: [settings.legendLabelColor, []],
+      legendValueFont: [settings.legendValueFont, []],
+      legendValueColor: [settings.legendValueColor, []],
       legendConfig: [settings.legendConfig, []],
 
       showTooltip: [settings.showTooltip, []],
       tooltipTrigger: [settings.tooltipTrigger, []],
+      tooltipLabelFont: [settings.tooltipLabelFont, []],
+      tooltipLabelColor: [settings.tooltipLabelColor, []],
       tooltipValueFont: [settings.tooltipValueFont, []],
       tooltipValueColor: [settings.tooltipValueColor, []],
       tooltipValueFormatter: [settings.tooltipValueFormatter, []],
@@ -179,17 +188,27 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
     }
 
     if (showLegend) {
+      this.timeSeriesChartWidgetSettingsForm.get('legendColumnTitleFont').enable();
+      this.timeSeriesChartWidgetSettingsForm.get('legendColumnTitleColor').enable();
       this.timeSeriesChartWidgetSettingsForm.get('legendLabelFont').enable();
       this.timeSeriesChartWidgetSettingsForm.get('legendLabelColor').enable();
+      this.timeSeriesChartWidgetSettingsForm.get('legendValueFont').enable();
+      this.timeSeriesChartWidgetSettingsForm.get('legendValueColor').enable();
       this.timeSeriesChartWidgetSettingsForm.get('legendConfig').enable();
     } else {
+      this.timeSeriesChartWidgetSettingsForm.get('legendColumnTitleFont').disable();
+      this.timeSeriesChartWidgetSettingsForm.get('legendColumnTitleColor').disable();
       this.timeSeriesChartWidgetSettingsForm.get('legendLabelFont').disable();
       this.timeSeriesChartWidgetSettingsForm.get('legendLabelColor').disable();
+      this.timeSeriesChartWidgetSettingsForm.get('legendValueFont').disable();
+      this.timeSeriesChartWidgetSettingsForm.get('legendValueColor').disable();
       this.timeSeriesChartWidgetSettingsForm.get('legendConfig').disable();
     }
 
     if (showTooltip) {
       this.timeSeriesChartWidgetSettingsForm.get('tooltipTrigger').enable();
+      this.timeSeriesChartWidgetSettingsForm.get('tooltipLabelFont').enable();
+      this.timeSeriesChartWidgetSettingsForm.get('tooltipLabelColor').enable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipValueFont').enable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipValueColor').enable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipValueFormatter').enable();
@@ -208,6 +227,9 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
         this.timeSeriesChartWidgetSettingsForm.get('tooltipDateInterval').disable();
       }
     } else {
+      this.timeSeriesChartWidgetSettingsForm.get('tooltipTrigger').disable();
+      this.timeSeriesChartWidgetSettingsForm.get('tooltipLabelFont').disable();
+      this.timeSeriesChartWidgetSettingsForm.get('tooltipLabelColor').disable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipValueFont').disable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipValueColor').disable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipValueFormatter').disable();

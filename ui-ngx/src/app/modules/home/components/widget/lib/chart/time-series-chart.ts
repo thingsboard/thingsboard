@@ -588,6 +588,7 @@ export class TbTimeSeriesChart {
 
   private drawChart() {
     echartsModule.init();
+    this.renderer.setStyle(this.chartElement, 'letterSpacing', 'normal');
     this.timeSeriesChart = echarts.init(this.chartElement,  null, {
       renderer: 'canvas'
     });
@@ -612,6 +613,10 @@ export class TbTimeSeriesChart {
         extraCssText: `line-height: 1; backdrop-filter: blur(${this.settings.tooltipBackgroundBlur}px);`
       }],
       grid: [{
+        show: this.settings.grid.show,
+        backgroundColor: this.settings.grid.backgroundColor,
+        borderWidth: this.settings.grid.borderWidth,
+        borderColor: this.settings.grid.borderColor,
         top: this.minTopOffset(),
         left: this.settings.dataZoom ? 5 : 0,
         right: this.settings.dataZoom ? 5 : 0,
@@ -798,9 +803,13 @@ export class TbTimeSeriesChart {
   }
 
   private scaleYAxis(yAxis: TimeSeriesChartYAxis): boolean {
-    const axisBarDataItems = this.dataItems.filter(d => d.yAxisId === yAxis.id && d.enabled &&
-      d.data.length && d.dataKey.settings.type === TimeSeriesChartSeriesType.bar);
-    return !axisBarDataItems.length;
+    if (!this.stateData) {
+      const axisBarDataItems = this.dataItems.filter(d => d.yAxisId === yAxis.id && d.enabled &&
+        d.data.length && d.dataKey.settings.type === TimeSeriesChartSeriesType.bar);
+      return !axisBarDataItems.length;
+    } else {
+      return false;
+    }
   }
 
   private minTopOffset(): number {

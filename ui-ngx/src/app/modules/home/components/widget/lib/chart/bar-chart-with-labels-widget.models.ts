@@ -32,6 +32,8 @@ import {
   SeriesFillType,
   timeSeriesChartAnimationDefaultSettings,
   TimeSeriesChartAnimationSettings,
+  timeSeriesChartGridDefaultSettings,
+  TimeSeriesChartGridSettings,
   TimeSeriesChartKeySettings,
   timeSeriesChartNoAggregationBarWidthDefaultSettings,
   TimeSeriesChartNoAggregationBarWidthSettings,
@@ -58,6 +60,7 @@ export interface BarChartWithLabelsWidgetSettings extends EChartsTooltipWidgetSe
   barBorderRadius: number;
   barBackgroundSettings: SeriesFillSettings;
   noAggregationBarWidthSettings: TimeSeriesChartNoAggregationBarWidthSettings;
+  grid: TimeSeriesChartGridSettings;
   yAxis: TimeSeriesChartYAxisSettings;
   xAxis: TimeSeriesChartXAxisSettings;
   animation: TimeSeriesChartAnimationSettings;
@@ -105,6 +108,8 @@ export const barChartWithLabelsDefaultSettings: BarChartWithLabelsWidgetSettings
   },
   noAggregationBarWidthSettings: mergeDeep({} as TimeSeriesChartNoAggregationBarWidthSettings,
     timeSeriesChartNoAggregationBarWidthDefaultSettings),
+  grid: mergeDeep({} as TimeSeriesChartGridSettings,
+    timeSeriesChartGridDefaultSettings),
   yAxis: mergeDeep({} as TimeSeriesChartYAxisSettings,
     defaultTimeSeriesChartYAxisSettings,
     { id: 'default', order: 0, showLine: false, showTicks: false } as TimeSeriesChartYAxisSettings),
@@ -126,6 +131,15 @@ export const barChartWithLabelsDefaultSettings: BarChartWithLabelsWidgetSettings
   },
   legendLabelColor: 'rgba(0, 0, 0, 0.76)',
   showTooltip: true,
+  tooltipLabelFont: {
+    family: 'Roboto',
+    size: 12,
+    sizeUnit: 'px',
+    style: 'normal',
+    weight: '400',
+    lineHeight: '16px'
+  },
+  tooltipLabelColor: 'rgba(0, 0, 0, 0.76)',
   tooltipValueFont: {
     family: 'Roboto',
     size: 12,
@@ -163,6 +177,7 @@ export const barChartWithLabelsDefaultSettings: BarChartWithLabelsWidgetSettings
 
 export const barChartWithLabelsTimeSeriesSettings = (settings: BarChartWithLabelsWidgetSettings): DeepPartial<TimeSeriesChartSettings> => ({
   dataZoom: settings.dataZoom,
+  grid: settings.grid,
   yAxes: {
     default: settings.yAxis
   },
@@ -175,6 +190,8 @@ export const barChartWithLabelsTimeSeriesSettings = (settings: BarChartWithLabel
   animation: settings.animation,
   thresholds: settings.thresholds,
   showTooltip: settings.showTooltip,
+  tooltipLabelFont: settings.tooltipLabelFont,
+  tooltipLabelColor: settings.tooltipLabelColor,
   tooltipValueFont: settings.tooltipValueFont,
   tooltipValueColor: settings.tooltipValueColor,
   tooltipShowDate: settings.tooltipShowDate,
