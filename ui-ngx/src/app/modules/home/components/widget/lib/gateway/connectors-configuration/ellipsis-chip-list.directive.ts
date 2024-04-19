@@ -15,26 +15,31 @@
 ///
 
 import {
-  AfterViewInit,
   Directive,
   ElementRef,
+  Inject,
   Input,
   OnDestroy,
   Renderer2
 } from '@angular/core';
 import { isEqual } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
+import { WINDOW } from '@core/services/window.service';
+import { fromEvent, Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Directive({
   // eslint-disable-next-line @angular-eslint/directive-selector
   selector: '[tb-ellipsis-chip-list]'
 })
-export class EllipsisChipListDirective implements AfterViewInit, OnDestroy {
+export class EllipsisChipListDirective implements OnDestroy {
 
   chipsValue: string[];
 
+  private destroy$ = new Subject<void>();
+
   @Input('tb-ellipsis-chip-list')
-  set chips(value: any[]) {
+  set chips(value: string[]) {
     if (!isEqual(this.chipsValue, value)) {
       this.chipsValue = value;
       setTimeout(() => {
@@ -45,11 +50,15 @@ export class EllipsisChipListDirective implements AfterViewInit, OnDestroy {
 
   constructor(private el: ElementRef,
               private renderer: Renderer2,
-              private translate: TranslateService) {}
-
-  ngAfterViewInit(): void {
-    this.adjustChips();
-    window.addEventListener('resize', this.adjustChips.bind(this));
+              private translate: TranslateService,
+              @Inject(WINDOW) private window: Window) {
+    this.renderer.setStyle(this.el.nativeElement, 'max-height', '48px');
+    this.renderer.setStyle(this.el.nativeElement, 'overflow', 'auto');
+    fromEvent(window, 'resize').pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      this.adjustChips();
+    });
   }
 
   private adjustChips(): void {
@@ -58,17 +67,16 @@ export class EllipsisChipListDirective implements AfterViewInit, OnDestroy {
     const chipNodes = chipListElement.querySelectorAll('mat-chip:not(.ellipsis-chip)');
     const ellipsisChip = this.el.nativeElement.querySelector('.ellipsis-chip');
     this.renderer.setStyle(ellipsisChip,'display', 'inline-flex');
+    ellipsisText.innerHTML = this.translate.instant('gateway.ellipsis-chips-text',
+      {count: (this.chipsValue.length)});
 
-    const margin = parseFloat(window.getComputedStyle(ellipsisChip).marginLeft) | 0;
+    const margin = parseFloat(this.window.getComputedStyle(ellipsisChip).marginLeft) || 0;
     const availableWidth = chipListElement.offsetWidth - (ellipsisChip.offsetWidth + margin);
     let usedWidth = 0;
     let visibleChipsCount = 0;
 
     chipNodes.forEach((chip) => {
       this.renderer.setStyle(chip, 'display', 'inline-flex');
-    });
-
-    chipNodes.forEach((chip) => {
       if ((usedWidth + (chip.offsetWidth + margin) <= availableWidth) && (visibleChipsCount < this.chipsValue.length)) {
         visibleChipsCount++;
         usedWidth += chip.offsetWidth + margin;
@@ -85,7 +93,8 @@ export class EllipsisChipListDirective implements AfterViewInit, OnDestroy {
     }
   }
 
-  ngOnDestroy() {
-    window.removeEventListener('resize', this.adjustChips.bind(this));
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

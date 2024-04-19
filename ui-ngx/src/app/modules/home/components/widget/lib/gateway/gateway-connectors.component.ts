@@ -56,7 +56,8 @@ import {
   GatewayLogLevel,
   MappingType,
   MqttVersions,
-  noLeadTrailSpacesRegex
+  noLeadTrailSpacesRegex,
+  PortLimits
 } from './gateway-widget.models';
 import { MatDialog } from '@angular/material/dialog';
 import { AddConnectorDialogComponent } from '@home/components/widget/lib/gateway/dialog/add-connector-dialog.component';
@@ -109,6 +110,8 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   gatewayLogLevel = Object.values(GatewayLogLevel);
 
   mappingTypes = MappingType;
+
+  portLimits = PortLimits;
 
   mode: ConnectorConfigurationModes = this.connectorConfigurationModes.BASIC;
 
@@ -180,9 +183,13 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
   get portErrorTooltip(): string {
     if (this.connectorForm.get('basicConfig.broker.port').hasError('required')) {
-      return 'gateway.port-required';
-    } else if (this.connectorForm.get('basicConfig.broker.port').hasError('min')) {
-      return 'gateway.only-natural-numbers';
+      return this.translate.instant('gateway.port-required');
+    } else if (
+      this.connectorForm.get('basicConfig.broker.port').hasError('min') ||
+      this.connectorForm.get('basicConfig.broker.port').hasError('max')
+    ) {
+      return this.translate.instant('gateway.port-limits-error',
+        {min: PortLimits.MIN, max: PortLimits.MAX});
     }
     return '';
   }
@@ -418,10 +425,10 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     if ($event) {
       $event.stopPropagation();
     }
-    this.confirmConnectorChange().subscribe((result) => {
-      if (result) {
-        const connector = attribute.value;
-        if (connector?.name !== this.initialConnector?.name) {
+    const connector = attribute.value;
+    if (connector?.name !== this.initialConnector?.name) {
+      this.confirmConnectorChange().subscribe((result) => {
+        if (result) {
           if (this.connectorForm.disabled) {
             this.connectorForm.enable();
           }
@@ -447,8 +454,8 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
           this.connectorForm.patchValue(connector, {emitEvent: false});
           this.connectorForm.markAsPristine();
         }
-      }
-    });
+      });
+    }
   }
 
   isSameConnector(attribute: AttributeData): boolean {
@@ -573,34 +580,36 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     if ($event) {
       $event.stopPropagation();
     }
-    return this.dialog.open<AddConnectorDialogComponent,
-      AddConnectorConfigData>(AddConnectorDialogComponent, {
-      disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        dataSourceData: this.dataSource.data
+    this.confirmConnectorChange().subscribe((changeConfirmed) => {
+      if (changeConfirmed) {
+        return this.dialog.open<AddConnectorDialogComponent,
+          AddConnectorConfigData>(AddConnectorDialogComponent, {
+          disableClose: true,
+          panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+          data: {
+            dataSourceData: this.dataSource.data
+          }
+        }).afterClosed().subscribe((value) => {
+          if (value && changeConfirmed) {
+            this.initialConnector = null;
+            if (this.connectorForm.disabled) {
+              this.connectorForm.enable();
+            }
+            if (!value.configurationJson) {
+              value.configurationJson = {};
+            }
+            value.basicConfig = value.configurationJson;
+            if (value.type === ConnectorType.MQTT) {
+              this.addMQTTConfigControls();
+            } else {
+              this.connectorForm.setControl('basicConfig', this.fb.group({}), {emitEvent: false});
+            }
+            this.connectorForm.patchValue(value, {emitEvent: false});
+            this.generate('basicConfig.broker.clientId');
+            this.saveConnector();
+          }
+        });
       }
-    }).afterClosed().subscribe((value) => {
-      this.confirmConnectorChange().subscribe((changeConfirmed) => {
-        if (value && changeConfirmed) {
-          this.initialConnector = null;
-          if (this.connectorForm.disabled) {
-            this.connectorForm.enable();
-          }
-          if (!value.configurationJson) {
-            value.configurationJson = {};
-          }
-          value.basicConfig = value.configurationJson;
-          if (value.type === ConnectorType.MQTT) {
-            this.addMQTTConfigControls();
-          } else {
-            this.connectorForm.setControl('basicConfig', this.fb.group({}), {emitEvent: false});
-          }
-          this.connectorForm.patchValue(value, {emitEvent: false});
-          this.generate('basicConfig.broker.clientId');
-          this.saveConnector();
-        }
-      })
     });
   }
 
@@ -648,7 +657,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     const brokerGroup = this.fb.group({
       name: ['', []],
       host: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-      port: [null, [Validators.required, Validators.min(0)]],
+      port: [null, [Validators.required, Validators.min(PortLimits.MIN), Validators.max(PortLimits.MAX)]],
       version: [5, []],
       clientId: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
       maxNumberOfWorkers: [100, [Validators.required, Validators.min(1)]],

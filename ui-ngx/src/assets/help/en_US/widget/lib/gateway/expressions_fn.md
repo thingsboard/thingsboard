@@ -94,6 +94,3 @@ For bytes converter, expression fields can use slices format only. A slice speci
 |   AM123,mytype,12.2,45 |  [:]            |  AM123,mytype,12.2,45    | Extracting all data          |
 |   AM123,mytype,12.2,45 |  [18:]          |  45                      | Extracting humidity value    |
 |   AM123,mytype,12.2,45 |  [13:17]        |  12.2                    | Extracting temperature value |
-
-
-For more information about MQTT connector configuration use the [official documentation](https://thingsboard.io/docs/iot-gateway/config/mqtt/?MqttConverterTypeConfig=json#subsection-security).

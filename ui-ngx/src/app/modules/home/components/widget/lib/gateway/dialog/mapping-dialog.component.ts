@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnDestroy, OnInit, Renderer2, ViewContainerRef } from '@angular/core';
+import { Component, Inject, OnDestroy, Renderer2, ViewContainerRef } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -27,7 +27,6 @@ import {
   ConvertorTypeTranslationsMap,
   DataConversionTranslationsMap,
   DeviceInfoType,
-  MappingDataKey,
   MappingHintTranslationsMap,
   MappingInfo,
   MappingKeysAddKeyTranslationsMap,
@@ -58,7 +57,7 @@ import { MappingDataKeysPanelComponent } from '@home/components/widget/lib/gatew
   styleUrls: ['./mapping-dialog.component.scss'],
   providers: [],
 })
-export class MappingDialogComponent extends DialogComponent<MappingDialogComponent, BaseData<HasId>> implements OnInit, OnDestroy {
+export class MappingDialogComponent extends DialogComponent<MappingDialogComponent, BaseData<HasId>> implements OnDestroy {
 
   mappingForm: UntypedFormGroup;
 
@@ -118,7 +117,7 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
     }
   }
 
-  get converterTelemetry(): Array<MappingDataKey> {
+  get converterTelemetry(): Array<string> {
     if (this.converterType) {
       return this.mappingForm.get('converter').get(this.converterType).value.timeseries.map(value => value.key);
     }
@@ -128,15 +127,12 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
     return this.mappingForm.get('converter').get('type').value;
   }
 
-  get customKeys(): {[key: string]: any} {
+  get customKeys(): Array<string> {
     return Object.keys(this.mappingForm.get('converter').get('custom').value.extensionConfig);
   }
 
   get requestMappingType(): RequestType {
     return this.mappingForm.get('requestType').value;
-  }
-
-  ngOnInit(): void {
   }
 
   ngOnDestroy(): void {

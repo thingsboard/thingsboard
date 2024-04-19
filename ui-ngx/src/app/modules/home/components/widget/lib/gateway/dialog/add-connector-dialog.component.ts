@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, Inject, OnDestroy } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -23,7 +23,9 @@ import { BaseData, HasId } from '@shared/models/base-data';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 import {
+  AddConnectorConfigData,
   ConnectorType,
+  CreatedConnectorConfigData,
   GatewayConnectorDefaultTypesTranslatesMap,
   GatewayLogLevel,
   getDefaultConfig,
@@ -38,7 +40,7 @@ import { ResourcesService } from '@core/services/resources.service';
   styleUrls: ['./add-connector-dialog.component.scss'],
   providers: [],
 })
-export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDialogComponent, BaseData<HasId>> implements OnInit, OnDestroy {
+export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDialogComponent, BaseData<HasId>> implements OnDestroy {
 
   connectorForm: UntypedFormGroup;
 
@@ -53,8 +55,8 @@ export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDia
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
-              @Inject(MAT_DIALOG_DATA) public data: any,
-              public dialogRef: MatDialogRef<AddConnectorDialogComponent, any>,
+              @Inject(MAT_DIALOG_DATA) public data: AddConnectorConfigData,
+              public dialogRef: MatDialogRef<AddConnectorDialogComponent, CreatedConnectorConfigData>,
               private fb: FormBuilder,
               private resourcesService: ResourcesService) {
     super(store, router, dialogRef);
@@ -65,9 +67,6 @@ export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDia
       useDefaults: [true, []],
       sendDataOnlyOnChange: [false, []],
     });
-  }
-
-  ngOnInit(): void {
   }
 
   ngOnDestroy(): void {

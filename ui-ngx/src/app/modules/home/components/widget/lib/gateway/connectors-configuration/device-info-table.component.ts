@@ -15,7 +15,6 @@
 ///
 
 import {
-  AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
@@ -40,7 +39,8 @@ import { UtilsService } from '@core/services/utils.service';
 import { EntityService } from '@core/http/entity.service';
 import {
   ControlValueAccessor,
-  FormBuilder, NG_VALIDATORS,
+  FormBuilder,
+  NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   UntypedFormGroup,
   ValidationErrors,
@@ -73,7 +73,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
     }
   ]
 })
-export class DeviceInfoTableComponent extends PageComponent implements ControlValueAccessor, Validator, AfterViewInit, OnInit, OnDestroy {
+export class DeviceInfoTableComponent extends PageComponent implements ControlValueAccessor, Validator, OnInit, OnDestroy {
 
   SourceTypeTranslationsMap = SourceTypeTranslationsMap;
 
@@ -154,9 +154,6 @@ export class DeviceInfoTableComponent extends PageComponent implements ControlVa
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
-  }
-
-  ngAfterViewInit() {
   }
 
   registerOnChange(fn: any): void {

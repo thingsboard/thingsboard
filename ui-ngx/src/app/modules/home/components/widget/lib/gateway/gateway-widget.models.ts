@@ -17,6 +17,7 @@
 import { ResourcesService } from '@core/services/resources.service';
 import { Observable } from 'rxjs';
 import { ValueTypeData } from '@shared/models/constants';
+import { Validators } from '@angular/forms';
 
 export const noLeadTrailSpacesRegex: RegExp = /^(?! )[\S\s]*(?<! )$/;
 
@@ -37,6 +38,11 @@ export enum GatewayLogLevel {
   WARNING = 'WARNING',
   INFO = 'INFO',
   DEBUG = 'DEBUG'
+}
+
+export enum PortLimits {
+  MIN = 1,
+  MAX = 65535
 }
 
 export const GatewayStatus = {
@@ -312,6 +318,15 @@ export interface GatewayLogData {
 
 export interface AddConnectorConfigData {
   dataSourceData: Array<any>
+}
+
+export interface CreatedConnectorConfigData {
+  type: ConnectorType,
+  name: string,
+  logLevel: GatewayLogLevel,
+  useDefaults: boolean,
+  sendDataOnlyOnChange: boolean,
+  configurationJson?: {[key: string]: any}
 }
 
 export interface MappingDataKey {

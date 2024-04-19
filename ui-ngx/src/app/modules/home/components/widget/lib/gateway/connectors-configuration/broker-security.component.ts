@@ -15,14 +15,13 @@
 ///
 
 import {
-  AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  ElementRef, forwardRef,
+  ElementRef,
+  forwardRef,
   NgZone,
   OnDestroy,
-  OnInit,
   ViewContainerRef
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
@@ -47,7 +46,8 @@ import {
 } from '@angular/forms';
 import {
   BrokerSecurityType,
-  BrokerSecurityTypeTranslationsMap, noLeadTrailSpacesRegex,
+  BrokerSecurityTypeTranslationsMap,
+  noLeadTrailSpacesRegex
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { takeUntil } from 'rxjs/operators';
 
@@ -69,7 +69,7 @@ import { takeUntil } from 'rxjs/operators';
     }
   ]
 })
-export class BrokerSecurityComponent extends PageComponent implements ControlValueAccessor, Validator, AfterViewInit, OnInit, OnDestroy {
+export class BrokerSecurityComponent extends PageComponent implements ControlValueAccessor, Validator, OnDestroy {
 
   BrokerSecurityType = BrokerSecurityType;
 
@@ -115,16 +115,10 @@ export class BrokerSecurityComponent extends PageComponent implements ControlVal
     });
   }
 
-  ngOnInit() {
-  }
-
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
     super.ngOnDestroy();
-  }
-
-  ngAfterViewInit() {
   }
 
   registerOnChange(fn: any): void {
