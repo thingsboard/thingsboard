@@ -183,7 +183,7 @@ public class JwtTokenFactory {
 
         UserPrincipal principal = securityUser.getUserPrincipal();
 
-        Claims claims = Jwts.claims().setSubject(principal.getValue()).build();
+        Claims claims = Jwts.claims().setSubject(principal.getValue());
         claims.put(USER_ID, securityUser.getId().getId().toString());
         claims.put(SCOPES, scopes);
         if (securityUser.getSessionId() != null) {
@@ -204,7 +204,6 @@ public class JwtTokenFactory {
         try {
             return Jwts.parser()
                     .setSigningKey(jwtSettingsService.getJwtSettings().getTokenSigningKey())
-                    .build()
                     .parseClaimsJws(token);
         } catch (UnsupportedJwtException | MalformedJwtException | IllegalArgumentException ex) {
             log.debug("Invalid JWT Token", ex);

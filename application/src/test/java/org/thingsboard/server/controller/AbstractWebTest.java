@@ -563,7 +563,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         int i = token.lastIndexOf('.');
         Assert.assertTrue(i > 0);
         String withoutSignature = token.substring(0, i + 1);
-        Jwt<Header, Claims> jwsClaims = Jwts.parser().build().parseClaimsJwt(withoutSignature);
+        Jwt<Header, Claims> jwsClaims = Jwts.parser().parseClaimsJwt(withoutSignature);
         Claims claims = jwsClaims.getBody();
         String subject = claims.getSubject();
         Assert.assertEquals(username, subject);
