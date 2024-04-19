@@ -94,9 +94,13 @@ public class TbRedisLwM2MClientStore implements TbLwM2MClientStore {
         if (client.getState().equals(LwM2MClientState.UNREGISTERED)) {
             log.error("[{}] Client is in invalid state: {}!", client.getEndpoint(), client.getState(), new Exception());
         } else {
-            byte[] clientSerialized = serialize(client);
-            try (var connection = connectionFactory.getConnection()) {
-                connection.getSet(getKey(client.getEndpoint()), clientSerialized);
+            try {
+                byte[] clientSerialized = serialize(client);
+                try (var connection = connectionFactory.getConnection()) {
+                    connection.getSet(getKey(client.getEndpoint()), clientSerialized);
+                }
+            } catch (Exception e) {
+                log.warn("Failed to serialize client: {}", client, e);
             }
         }
     }

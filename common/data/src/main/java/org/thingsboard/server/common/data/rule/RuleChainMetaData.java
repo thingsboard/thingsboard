@@ -29,19 +29,19 @@ import java.util.List;
 @Data
 public class RuleChainMetaData {
 
-    @Schema(required = true, description = "JSON object with Rule Chain Id.", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "JSON object with Rule Chain Id.", accessMode = Schema.AccessMode.READ_ONLY)
     private RuleChainId ruleChainId;
 
-    @Schema(required = true, description = "Index of the first rule node in the 'nodes' list")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Index of the first rule node in the 'nodes' list")
     private Integer firstNodeIndex;
 
-    @Schema(required = true, description = "List of rule node JSON objects")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of rule node JSON objects")
     private List<RuleNode> nodes;
 
-    @Schema(required = true, description = "List of JSON objects that represent connections between rule nodes")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of JSON objects that represent connections between rule nodes")
     private List<NodeConnectionInfo> connections;
 
-    @Schema(required = true, description = "List of JSON objects that represent connections between rule nodes and other rule chains.")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of JSON objects that represent connections between rule nodes and other rule chains.")
     private List<RuleChainConnectionInfo> ruleChainConnections;
 
     public void addConnectionInfo(int fromIndex, int toIndex, String type) {

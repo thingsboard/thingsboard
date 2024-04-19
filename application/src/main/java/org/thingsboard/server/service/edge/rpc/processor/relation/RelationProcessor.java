@@ -29,4 +29,5 @@ public interface RelationProcessor extends EdgeProcessor {
     ListenableFuture<Void> processRelationMsgFromEdge(TenantId tenantId, Edge edge, RelationUpdateMsg relationUpdateMsg);
 
     DownlinkMsg convertRelationEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion);
+
 }
