@@ -127,7 +127,7 @@
         <wire-schema.version>3.7.1</wire-schema.version>
         <twilio.version>10.1.3</twilio.version>
         <hibernate-validator.version>8.0.1.Final</hibernate-validator.version>
-        <hypersistence-utils.version>3.7.3</hypersistence-utils.version>
+        <hypersistence-utils.version>3.7.4</hypersistence-utils.version> <!-- artifact name should be updated with hibernate-core version -->
         <jakarta.el.version>4.0.2</jakarta.el.version>
         <jakarta.validation-api.version>3.0.2</jakarta.validation-api.version>
         <antisamy.version>1.7.5</antisamy.version>
@@ -2034,7 +2034,7 @@
             </dependency>
             <dependency>
                 <groupId>io.hypersistence</groupId>
-                <artifactId>hypersistence-utils-hibernate-62</artifactId>
+                <artifactId>hypersistence-utils-hibernate-63</artifactId>
                 <version>${hypersistence-utils.version}</version>
             </dependency>
             <dependency>
