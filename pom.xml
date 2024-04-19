@@ -49,7 +49,7 @@
         <spring-redis.version>6.2.4</spring-redis.version>
         <spring-security.version>6.2.4</spring-security.version>
         <jedis.version>5.1.2</jedis.version>
-        <jjwt.version>0.12.5</jjwt.version>
+        <jjwt.version>0.9.1</jjwt.version> <!-- 0.12.5 requires JWT usage refactoring-->
         <slf4j.version>2.0.13</slf4j.version>
         <log4j.version>2.23.1</log4j.version>
         <logback.version>1.5.5</logback.version>
