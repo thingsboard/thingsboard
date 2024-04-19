@@ -139,7 +139,6 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   public enableStickyHeader = true;
   public enableStickyAction = true;
   public showCellActionsMenu = true;
-  public useCellClickAction = false;
   public pageSizeOptions;
   public pageLink: EntityDataPageLink;
   public sortOrderProperty: string;
@@ -170,6 +169,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   private columnWidth: {[key: string]: string} = {};
   private columnDefaultVisibility: {[key: string]: boolean} = {};
   private columnSelectionAvailability: {[key: string]: boolean} = {};
+  private columnsWithCellClick: Array<number> = [];
 
   private rowStylesInfo: RowStyleInfo;
 
@@ -284,6 +284,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
 
     this.hasRowAction = !!this.ctx.actionsApi.getActionDescriptors('rowClick').length ||
       !!this.ctx.actionsApi.getActionDescriptors('rowDoubleClick').length;
+    this.columnsWithCellClick = this.ctx.actionsApi.getActionDescriptors('cellClick').map(action => action.columnIndex);
 
     if (this.settings.entitiesTitle && this.settings.entitiesTitle.length) {
       this.ctx.widgetTitle = this.settings.entitiesTitle;
@@ -317,9 +318,6 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     cssParser.cssPreviewNamespace = namespace;
     cssParser.createStyleElement(namespace, cssString);
     $(this.elementRef.nativeElement).addClass(namespace);
-
-    this.useCellClickAction = this.isActionsConfigured(['cellClick', 'cellDoubleClick']) &&
-                                !this.isActionsConfigured(['rowClick', 'rowDoubleClick']);
   }
 
   private updateDatasources() {
@@ -697,14 +695,15 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     }
   }
 
-  public onCellClick($event: Event, entity: EntityData, key: EntityColumn, isDouble?: boolean) {
-    if ($event) {
-      $event.stopPropagation();
-    }
+  public onCellClick($event: Event, entity: EntityData, key: EntityColumn, columnIndex: number) {
     this.entityDatasource.toggleCurrentEntity(entity);
-    const actionSourceId = isDouble ? 'cellDoubleClick' : 'cellClick';
-    const descriptors = this.ctx.actionsApi.getActionDescriptors(actionSourceId);
+    const descriptors = this.ctx.actionsApi.getActionDescriptors('cellClick');
+    let descriptor;
     if (descriptors.length) {
+      descriptor = descriptors.find(desc => desc.columnIndex === columnIndex);
+    }
+    if ($event && descriptor) {
+      $event.stopPropagation();
       let entityId;
       let entityName;
       let entityLabel;
@@ -713,7 +712,13 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         entityName = entity.entityName;
         entityLabel = entity.entityLabel;
       }
-      this.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, {entity, key}, entityLabel);
+      this.ctx.actionsApi.handleWidgetAction($event, descriptor, entityId, entityName, {entity, key}, entityLabel);
+    }
+  }
+
+  public columnHasCellClick(index: number) {
+    if (this.columnsWithCellClick.length) {
+      return this.columnsWithCellClick.includes(index);
     }
   }
 

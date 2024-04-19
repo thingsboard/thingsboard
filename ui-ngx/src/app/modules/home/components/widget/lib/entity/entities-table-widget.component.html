@@ -40,21 +40,14 @@
     <div fxFlex class="table-container">
       <table mat-table [dataSource]="entityDatasource" [trackBy]="trackByEntityId"
                  matSort [matSortActive]="sortOrderProperty" [matSortDirection]="pageLinkSortDirection()" matSortDisableClear>
-        <ng-container [matColumnDef]="column.def" *ngFor="let column of columns; trackBy: trackByColumnDef;">
+        <ng-container [matColumnDef]="column.def" *ngFor="let column of columns; let $index = index; trackBy: trackByColumnDef;">
           <mat-header-cell [ngStyle]="headerStyle(column)" *matHeaderCellDef mat-sort-header [disabled]="!column.sortable"> {{ column.title }} </mat-header-cell>
-          <ng-container *ngIf="useCellClickAction; else rowActionEnabled" >
             <mat-cell *matCellDef="let entity; let row = index"
                       [innerHTML]="cellContent(entity, column, row)"
                       [ngStyle]="cellStyle(entity, column, row)"
-                      (click)="onCellClick($event, entity, column, false)" (dblclick)="onCellClick($event, entity, column, true)">
+                      (click)="onCellClick($event, entity, column, $index)"
+                      [class.tb-pointer]="columnHasCellClick($index)">
             </mat-cell>
-          </ng-container>
-          <ng-template #rowActionEnabled>
-            <mat-cell *matCellDef="let entity; let row = index"
-                      [innerHTML]="cellContent(entity, column, row)"
-                      [ngStyle]="cellStyle(entity, column, row)">
-            </mat-cell>
-          </ng-template>
         </ng-container>
         <ng-container matColumnDef="actions" [stickyEnd]="enableStickyAction">
           <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (entityDatasource.countCellButtonAction * 48) + 'px',
@@ -96,21 +89,12 @@
           </mat-cell>
         </ng-container>
         <mat-header-row *matHeaderRowDef="displayedColumns; sticky: enableStickyHeader"></mat-header-row>
-        <ng-container *ngIf="useCellClickAction; else rowActionEnabled" >
-          <mat-row [ngClass]="{'tb-current-entity': entityDatasource.isCurrentEntity(entity),
-                              'invisible': entityDatasource.dataLoading,
-                              'tb-pointer': hasRowAction}"
-                  *matRowDef="let entity; columns: displayedColumns; let row = index"
-                  [ngStyle]="rowStyle(entity, row)"></mat-row>
-        </ng-container>
-        <ng-template #rowActionEnabled>
-          <mat-row [ngClass]="{'tb-current-entity': entityDatasource.isCurrentEntity(entity),
-                              'invisible': entityDatasource.dataLoading,
-                              'tb-pointer': hasRowAction}"
-                  *matRowDef="let entity; columns: displayedColumns; let row = index"
-                  [ngStyle]="rowStyle(entity, row)"
-                  (click)="onRowClick($event, entity)" (dblclick)="onRowClick($event, entity, true)"></mat-row>
-        </ng-template>
+        <mat-row [ngClass]="{'tb-current-entity': entityDatasource.isCurrentEntity(entity),
+                             'invisible': entityDatasource.dataLoading,
+                             'tb-pointer': hasRowAction}"
+                 *matRowDef="let entity; columns: displayedColumns; let row = index"
+                 [ngStyle]="rowStyle(entity, row)"
+                 (click)="onRowClick($event, entity)" (dblclick)="onRowClick($event, entity, true)"></mat-row>
       </table>
       <span [fxShow]="(entityDatasource.isEmpty() | async) && !entityDatasource.dataLoading"
             fxLayoutAlign="center center"
