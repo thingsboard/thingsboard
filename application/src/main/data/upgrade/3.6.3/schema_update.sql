@@ -14,101 +14,14 @@
 -- limitations under the License.
 --
 
--- create new attribute_kv table schema
-DO
-$$
-    BEGIN
-        -- in case of running the upgrade script a second time:
-        IF EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name = 'attribute_kv' and column_name='entity_type') THEN
-            DROP VIEW IF EXISTS device_info_view;
-            DROP VIEW IF EXISTS device_info_active_attribute_view;
-            ALTER INDEX IF EXISTS idx_attribute_kv_by_key_and_last_update_ts RENAME TO idx_attribute_kv_by_key_and_last_update_ts_old;
-            IF EXISTS(SELECT 1 FROM pg_constraint WHERE conname = 'attribute_kv_pkey') THEN
-                ALTER TABLE attribute_kv RENAME CONSTRAINT attribute_kv_pkey TO attribute_kv_pkey_old;
-            END IF;
-            ALTER TABLE attribute_kv RENAME TO attribute_kv_old;
-            CREATE TABLE IF NOT EXISTS attribute_kv
-            (
-                entity_id uuid,
-                attribute_type int,
-                attribute_key int,
-                bool_v boolean,
-                str_v varchar(10000000),
-                long_v bigint,
-                dbl_v double precision,
-                json_v json,
-                last_update_ts bigint,
-                CONSTRAINT attribute_kv_pkey PRIMARY KEY (entity_id, attribute_type, attribute_key)
-            );
-        END IF;
-    END;
-$$;
+-- NOTIFICATIONS UPDATE START
 
--- rename ts_kv_dictionary table to key_dictionary or create table if not exists
-DO
-$$
-    BEGIN
-        IF EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = 'ts_kv_dictionary') THEN
-            ALTER TABLE ts_kv_dictionary RENAME CONSTRAINT ts_key_id_pkey TO key_dictionary_id_pkey;
-            ALTER TABLE ts_kv_dictionary RENAME TO key_dictionary;
-        ELSE CREATE TABLE IF NOT EXISTS key_dictionary(
-                key    varchar(255) NOT NULL,
-                key_id serial UNIQUE,
-                CONSTRAINT key_dictionary_id_pkey PRIMARY KEY (key)
-                );
-        END IF;
-    END;
-$$;
+ALTER TABLE notification ADD COLUMN IF NOT EXISTS delivery_method VARCHAR(50) NOT NULL default 'WEB';
 
--- insert keys into key_dictionary
-DO
-$$
-    BEGIN
-        IF EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = 'attribute_kv_old') THEN
-            INSERT INTO key_dictionary(key) SELECT DISTINCT attribute_key FROM attribute_kv_old ON CONFLICT DO NOTHING;
-        END IF;
-    END;
-$$;
+DROP INDEX IF EXISTS idx_notification_recipient_id_created_time;
+DROP INDEX IF EXISTS idx_notification_recipient_id_unread;
 
--- migrate attributes from attribute_kv_old to attribute_kv
-DO
-$$
-DECLARE
-    row_num_old integer;
-    row_num integer;
-BEGIN
-    IF EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = 'attribute_kv_old') THEN
-        INSERT INTO attribute_kv(entity_id, attribute_type, attribute_key, bool_v, str_v, long_v, dbl_v, json_v, last_update_ts)
-            SELECT a.entity_id, CASE
-                        WHEN a.attribute_type = 'CLIENT_SCOPE' THEN 1
-                        WHEN a.attribute_type = 'SERVER_SCOPE' THEN 2
-                        WHEN a.attribute_type = 'SHARED_SCOPE' THEN 3
-                        ELSE 0
-                        END,
-                k.key_id,  a.bool_v, a.str_v, a.long_v, a.dbl_v, a.json_v, a.last_update_ts
-                FROM attribute_kv_old a INNER JOIN key_dictionary k ON (a.attribute_key = k.key);
-        SELECT COUNT(*) INTO row_num_old FROM attribute_kv_old;
-        SELECT COUNT(*) INTO row_num FROM attribute_kv;
-        RAISE NOTICE 'Migrated % of % rows', row_num, row_num_old;
+CREATE INDEX IF NOT EXISTS idx_notification_delivery_method_recipient_id_created_time ON notification(delivery_method, recipient_id, created_time DESC);
+CREATE INDEX IF NOT EXISTS idx_notification_delivery_method_recipient_id_unread ON notification(delivery_method, recipient_id) WHERE status <> 'READ';
 
-        IF row_num != 0 THEN
-            DROP TABLE IF EXISTS attribute_kv_old;
-        ELSE
-           RAISE EXCEPTION 'Table attribute_kv is empty';
-        END IF;
-
-        CREATE INDEX IF NOT EXISTS idx_attribute_kv_by_key_and_last_update_ts ON attribute_kv(entity_id, attribute_key, last_update_ts desc);
-    END IF;
-EXCEPTION
-    WHEN others THEN
-        ROLLBACK;
-        RAISE EXCEPTION 'Error during COPY: %', SQLERRM;
-END
-$$;
-
--- OAUTH2 PARAMS ALTER TABLE START
-
-ALTER TABLE oauth2_params
-    ADD COLUMN IF NOT EXISTS edge_enabled boolean DEFAULT false;
-
--- OAUTH2 PARAMS ALTER TABLE END
+-- NOTIFICATIONS UPDATE END

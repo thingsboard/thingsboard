@@ -31,8 +31,8 @@ import lombok.ToString;
 @Builder
 @Schema
 public class OAuth2MobileInfo {
-    @Schema(description = "Application package name. Cannot be empty", required = true)
+    @Schema(description = "Application package name. Cannot be empty", requiredMode = Schema.RequiredMode.REQUIRED)
     private String pkgName;
-    @Schema(description = "Application secret. The length must be at least 16 characters", required = true)
+    @Schema(description = "Application secret. The length must be at least 16 characters", requiredMode = Schema.RequiredMode.REQUIRED)
     private String appSecret;
 }

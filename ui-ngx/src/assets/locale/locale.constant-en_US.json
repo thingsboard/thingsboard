@@ -2245,6 +2245,8 @@
         "type-ota-package": "OTA package",
         "type-rpc": "RPC",
         "type-queue": "Queue",
+        "type-queue-stats": "Queue statistics",
+        "type-queues-stats": "Queues statistics",
         "type-notification": "Notification",
         "type-notification-rule": "Notification rule",
         "type-notification-rules": "Notification rules",
@@ -2272,7 +2274,9 @@
         "address2": "Address 2",
         "zip": "Zip",
         "phone": "Phone",
-        "label": "Label"
+        "label": "Label",
+        "queue-name": "Queue name",
+        "service-id": "Service Id"
     },
     "entity-view": {
         "entity-view": "Entity view",
@@ -2758,7 +2762,7 @@
         "rpc-command-result": "Response",
         "rpc-command-edit-params": "Edit parameters",
         "gateway-configuration": "General Configuration",
-        "docker-label": "Use the following instruction to run IoT Gateway in in Docker compose with credentials for selected device",
+        "docker-label": "Use the following instruction to run IoT Gateway in Docker compose with credentials for selected device",
         "install-docker-compose": "Use the instructions to download, install and setup docker compose",
         "device-info-settings": "Device info settings",
         "device-info": {
@@ -3451,6 +3455,7 @@
             "months": "(month ago)",
             "years": "(year ago)"
         },
+        "column-title": "Column title",
         "label": "Label",
         "value": "Value"
     },
@@ -4611,6 +4616,7 @@
         "trigger": "Trigger",
         "trigger-point": "Point",
         "trigger-axis": "Axis",
+        "label": "Label",
         "value": "Value",
         "date": "Date",
         "show-date-time-interval": "Show date time interval",
@@ -5179,7 +5185,9 @@
         "device-credentials-conflict": "Failed to load the device with external id <b>{{entityId}}</b><br/>due to the same credentials are already present in the database for another device.<br/>Please consider disabling the <b>load credentials</b> setting in the restore form.",
         "missing-referenced-entity": "Failed to load the <b>{{sourceEntityTypeName}}</b> with external id <b>{{sourceEntityId}}</b><br/>because it references missing <b>{{targetEntityTypeName}}</b> with id <b>{{targetEntityId}}</b>.",
         "runtime-failed": "<b>Failed:</b> {{message}}",
-        "auto-commit-settings-read-only-hint": "Auto-commit feature doesn't work with enabled read-only option in Repository settings."
+        "auto-commit-settings-read-only-hint": "Auto-commit feature doesn't work with enabled read-only option in Repository settings.",
+        "rollback-on-error": "Rollback on error",
+        "rollback-on-error-hint": "If you have a large amount of entities to restore, consider disabling this option to increase performance.\n Note, if an error occurs over the course of version loading, already persisted entities (with relations, attributes, etc.) will stay as is"
     },
     "widget": {
         "widget-library": "Widgets library",
@@ -5586,7 +5594,7 @@
             "bar-appearance": "Bar appearance",
             "label-on-bar": "Label on bar",
             "value-on-bar": "Value on bar",
-            "bar-chart-card-style": "Bar chart card style"
+            "bar-chart-style": "Bar chart style"
         },
         "battery-level": {
             "layout": "Layout",
@@ -6336,10 +6344,14 @@
         "range-chart": {
             "chart": "Chart",
             "data-zoom": "Data zoom",
+            "range-chart-appearance": "Range chart appearance",
             "range-colors": "Range colors",
             "out-of-range-color": "Out of range color",
+            "show-range-thresholds": "Show range thresholds",
+            "range-thresholds-settings": "Range thresholds settings",
             "fill-area": "Fill area",
-            "range-chart-card-style": "Range chart card style"
+            "fill-area-opacity": "Fill area opacity",
+            "range-chart-style": "Range chart style"
         },
         "rpc": {
             "value-settings": "Value settings",
@@ -6902,6 +6914,15 @@
             "bar-width": "Bar width",
             "bar-width-relative": "Percentage of time window",
             "bar-width-absolute": "Absolute (ms)",
+            "comparison": {
+              "comparison": "Comparison",
+              "show": "Show",
+              "settings": "Comparison settings",
+              "show-values-for-comparison": "Show historical data for comparison",
+              "comparison-values-label": "Comparison key label",
+              "comparison-values-label-auto": "Auto",
+              "comparison-data-color": "Comparison data color"
+            },
             "threshold": {
               "thresholds": "Thresholds",
               "source": "Source",
@@ -6933,13 +6954,34 @@
               "label-position-inside-middle-bottom": "Inside middle bottom",
               "label-position-inside-end": "Inside end",
               "label-position-inside-end-top": "Inside end top",
-              "label-position-inside-end-bottom": "Inside end bottom"
+              "label-position-inside-end-bottom": "Inside end bottom",
+              "label-background": "Label background"
+            },
+            "state": {
+              "states": "States",
+              "label": "Label",
+              "ticks-value": "Ticks value",
+              "source": "Source",
+              "value-range": "Value / Range",
+              "no-states": "No states configured",
+              "add-state": "Add state",
+              "type-constant": "Constant",
+              "type-range": "Range",
+              "from": "From",
+              "to": "To",
+              "remove-state": "Remove state"
+            },
+            "grid": {
+              "grid": "Grid",
+              "background-color": "Background color",
+              "border": "Border"
             },
             "axis": {
               "axes": "Axes",
               "x-axis": "X axis",
               "y-axis": "Y axis",
               "y-axis-settings": "Y axis settings",
+              "comparison-x-axis-settings": "Comparison X axis settings",
               "remove-y-axis": "Remove Y axis",
               "id": "Id",
               "label": "Label",
@@ -6950,6 +6992,7 @@
               "position-bottom": "Bottom",
               "tick-labels": "Tick labels",
               "ticks-formatter-function": "Ticks formatter function",
+              "ticks-generator-function": "Ticks generator function",
               "show-ticks": "Show ticks",
               "show-line": "Show line",
               "show-split-lines": "Show split lines",
@@ -7014,6 +7057,7 @@
                 "show-points": "Show points",
                 "point-label": "Point label",
                 "point-label-hint": "Display label with value over the series point.",
+                "point-label-background": "Point label background",
                 "point-shape": "Point shape",
                 "point-size": "Point size"
               },
@@ -7022,7 +7066,8 @@
                 "border-width": "Border width",
                 "border-radius": "Border radius",
                 "label": "Label",
-                "label-hint": "Display label with value over the bar."
+                "label-hint": "Display label with value over the bar.",
+                "label-background": "Label background"
               }
             }
         },

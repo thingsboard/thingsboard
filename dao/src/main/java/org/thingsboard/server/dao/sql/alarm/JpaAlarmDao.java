@@ -297,6 +297,12 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
+    public PageData<AlarmId> findAlarmIdsByOriginatorId(TenantId tenantId, EntityId originatorId, PageLink pageLink) {
+        return DaoUtil.pageToPageData(alarmRepository.findAlarmIdsByOriginatorId(tenantId.getId(), originatorId.getId(), DaoUtil.toPageable(pageLink)))
+                .mapData(AlarmId::new);
+    }
+
+    @Override
     public void createEntityAlarmRecord(EntityAlarm entityAlarm) {
         log.debug("Saving entity {}", entityAlarm);
         entityAlarmRepository.save(new EntityAlarmEntity(entityAlarm));
@@ -383,7 +389,7 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
 
     @Override
     public PageData<EntitySubtype> findTenantAlarmTypes(UUID tenantId, PageLink pageLink) {
-        Page<String> page = alarmRepository.findTenantAlarmTypes(tenantId, Objects.toString(pageLink.getTextSearch(), ""), toPageable(pageLink));
+        Page<String> page = alarmRepository.findTenantAlarmTypes(tenantId, Objects.toString(pageLink.getTextSearch(), ""), toPageable(pageLink, false));
         if (page.isEmpty()) {
             return PageData.emptyPageData();
         }

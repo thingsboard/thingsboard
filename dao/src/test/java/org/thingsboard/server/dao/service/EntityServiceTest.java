@@ -26,7 +26,6 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.thingsboard.server.common.data.AttributeScope;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
@@ -99,6 +98,8 @@ import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.thingsboard.server.common.data.query.EntityKeyType.ATTRIBUTE;
+import static org.thingsboard.server.common.data.query.EntityKeyType.ENTITY_FIELD;
 
 @Slf4j
 @DaoSqlTest
@@ -2109,6 +2110,132 @@ public class EntityServiceTest extends AbstractServiceTest {
         data = entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), query);
         loadedEntities = getLoadedEntities(data, query);
         Assert.assertEquals(devices.size(), loadedEntities.size());
+
+        deviceService.deleteDevicesByTenantId(tenantId);
+    }
+
+    @Test
+    public void testFindEntityQuery_for_5000_devices_with_3000_pageSize() {
+        int pageSize = 3000;
+        int expectedDevicesSize = 4000;
+        int unexpectedDevicesSize = 1000;
+
+        for (int i = 0; i < expectedDevicesSize + unexpectedDevicesSize; i++) {
+            Device device = new Device();
+            device.setTenantId(tenantId);
+            if (i < expectedDevicesSize) {
+                device.setName("Device_" + i); // match deviceNameFilter 'D%'
+            } else {
+                device.setName("Test_" + i); // does not match deviceNameFilter 'D%'
+            }
+            device.setType("default");
+            device.setLabel("testLabel" + (int) (Math.random() * 1000));
+            Device savedDevice = deviceService.saveDevice(device);
+
+            attributesService.save(tenantId, savedDevice.getId(), AttributeScope.CLIENT_SCOPE,
+                    new BaseAttributeKvEntry(System.currentTimeMillis(), new LongDataEntry("telemetry", (long) i)));
+        }
+
+        DeviceTypeFilter filter = new DeviceTypeFilter();
+        filter.setDeviceTypes(List.of("default"));
+        filter.setDeviceNameFilter("D%");
+
+        EntityDataSortOrder sortOrder = new EntityDataSortOrder(new EntityKey(ATTRIBUTE, "telemetry"), EntityDataSortOrder.Direction.DESC);
+
+        List<KeyFilter> deviceTypeFilters = createStringKeyFilters("type", ENTITY_FIELD, StringFilterPredicate.StringOperation.EQUAL, "default");
+
+        List<KeyFilter> attributeFilters = Collections.singletonList(createNumericKeyFilter("telemetry", ATTRIBUTE, NumericFilterPredicate.NumericOperation.LESS, expectedDevicesSize));
+
+        List<KeyFilter> nameFilters = createStringKeyFilters("name", ENTITY_FIELD, StringFilterPredicate.StringOperation.CONTAINS, "Device");
+
+        List<EntityKey> entityFields = Arrays.asList(new EntityKey(ENTITY_FIELD, "name"), new EntityKey(ENTITY_FIELD, "type"));
+
+        // 1. Device type filters:
+
+        // query with textSearch - optimization is not performing
+        EntityDataPageLink originalPageLink = new EntityDataPageLink(pageSize, 0, "Device", sortOrder);
+        EntityDataQuery originalQuery = new EntityDataQuery(filter, originalPageLink, entityFields, null, deviceTypeFilters);
+        PageData<EntityData> originalData = entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), originalQuery);
+
+        // query without textSearch - optimization is performing
+        EntityDataPageLink optimizedPageLink = new EntityDataPageLink(pageSize, 0, null, sortOrder);
+        EntityDataQuery optimizedQuery = new EntityDataQuery(filter, optimizedPageLink, entityFields, null, deviceTypeFilters);
+        PageData<EntityData> optimizedData = entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), optimizedQuery);
+        List<EntityData> loadedEntities = getLoadedEntities(optimizedData, optimizedQuery);
+        Assert.assertEquals(expectedDevicesSize, loadedEntities.size());
+        loadedEntities = getLoadedEntities(originalData, originalQuery);
+        Assert.assertEquals(expectedDevicesSize, loadedEntities.size());
+        Assert.assertEquals(pageSize, optimizedData.getData().size());
+
+        for (int i = 0; i < pageSize; i++) {
+            EntityData originalElement = originalData.getData().get(i);
+            EntityData optimizedElement = optimizedData.getData().get(i);
+            Assert.assertEquals(originalElement.getEntityId(), optimizedElement.getEntityId());
+            originalElement.getLatest().get(ENTITY_FIELD).forEach((key, value) -> {
+                Assert.assertEquals(value.getValue(), optimizedElement.getLatest().get(EntityKeyType.ENTITY_FIELD).get(key).getValue());
+                Assert.assertEquals(value.getCount(), optimizedElement.getLatest().get(EntityKeyType.ENTITY_FIELD).get(key).getCount());
+            });
+        }
+        Assert.assertEquals(originalData.getTotalPages(), optimizedData.getTotalPages());
+        Assert.assertEquals(originalData.getTotalElements(), optimizedData.getTotalElements());
+
+        // 2. Device attribute filters
+
+        // query with textSearch - optimization is not performing
+        originalPageLink = new EntityDataPageLink(pageSize, 0, "Device", sortOrder);
+        originalQuery = new EntityDataQuery(filter, originalPageLink, entityFields, null, attributeFilters);
+        originalData = entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), originalQuery);
+
+        // query without textSearch - optimization is performing
+        optimizedPageLink = new EntityDataPageLink(pageSize, 0, null, sortOrder);
+        optimizedQuery = new EntityDataQuery(filter, optimizedPageLink, entityFields, null, attributeFilters);
+        optimizedData = entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), optimizedQuery);
+        loadedEntities = getLoadedEntities(optimizedData, optimizedQuery);
+        Assert.assertEquals(expectedDevicesSize, loadedEntities.size());
+        loadedEntities = getLoadedEntities(originalData, originalQuery);
+        Assert.assertEquals(expectedDevicesSize, loadedEntities.size());
+        Assert.assertEquals(pageSize, optimizedData.getData().size());
+
+        for (int i = 0; i < pageSize; i++) {
+            EntityData originalElement = originalData.getData().get(i);
+            EntityData optimizedElement = optimizedData.getData().get(i);
+            Assert.assertEquals(originalElement.getEntityId(), optimizedElement.getEntityId());
+            originalElement.getLatest().get(ENTITY_FIELD).forEach((key, value) -> {
+                Assert.assertEquals(value.getValue(), optimizedElement.getLatest().get(EntityKeyType.ENTITY_FIELD).get(key).getValue());
+                Assert.assertEquals(value.getCount(), optimizedElement.getLatest().get(EntityKeyType.ENTITY_FIELD).get(key).getCount());
+            });
+        }
+        Assert.assertEquals(originalData.getTotalPages(), optimizedData.getTotalPages());
+        Assert.assertEquals(originalData.getTotalElements(), optimizedData.getTotalElements());
+
+        // 3. Device name filters
+
+        // query with textSearch - optimization is not performing
+        originalPageLink = new EntityDataPageLink(pageSize, 0, "Device", sortOrder);
+        originalQuery = new EntityDataQuery(filter, originalPageLink, entityFields, null, nameFilters);
+        originalData = entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), originalQuery);
+
+        // query without textSearch - optimization is performing
+        optimizedPageLink = new EntityDataPageLink(pageSize, 0, null, sortOrder);
+        optimizedQuery = new EntityDataQuery(filter, optimizedPageLink, entityFields, null, nameFilters);
+        optimizedData = entityService.findEntityDataByQuery(tenantId, new CustomerId(CustomerId.NULL_UUID), optimizedQuery);
+        loadedEntities = getLoadedEntities(optimizedData, optimizedQuery);
+        Assert.assertEquals(expectedDevicesSize, loadedEntities.size());
+        loadedEntities = getLoadedEntities(originalData, originalQuery);
+        Assert.assertEquals(expectedDevicesSize, loadedEntities.size());
+        Assert.assertEquals(pageSize, optimizedData.getData().size());
+
+        for (int i = 0; i < pageSize; i++) {
+            EntityData originalElement = originalData.getData().get(i);
+            EntityData optimizedElement = optimizedData.getData().get(i);
+            Assert.assertEquals(originalElement.getEntityId(), optimizedElement.getEntityId());
+            originalElement.getLatest().get(ENTITY_FIELD).forEach((key, value) -> {
+                Assert.assertEquals(value.getValue(), optimizedElement.getLatest().get(EntityKeyType.ENTITY_FIELD).get(key).getValue());
+                Assert.assertEquals(value.getCount(), optimizedElement.getLatest().get(EntityKeyType.ENTITY_FIELD).get(key).getCount());
+            });
+        }
+        Assert.assertEquals(originalData.getTotalPages(), optimizedData.getTotalPages());
+        Assert.assertEquals(originalData.getTotalElements(), optimizedData.getTotalElements());
 
         deviceService.deleteDevicesByTenantId(tenantId);
     }

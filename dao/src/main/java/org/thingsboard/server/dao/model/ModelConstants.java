@@ -612,6 +612,14 @@ public class ModelConstants {
     public static final String QUEUE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
 
     /**
+     * Tenant queue stats constants.
+     */
+    public static final String QUEUE_STATS_TABLE_NAME = "queue_stats";
+    public static final String QUEUE_STATS_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String QUEUE_STATS_QUEUE_NAME_PROPERTY = "queue_name";
+    public static final String QUEUE_STATS_SERVICE_ID_PROPERTY = "service_id";
+
+    /**
      * Notification constants
      */
     public static final String NOTIFICATION_TARGET_TABLE_NAME = "notification_target";
@@ -621,6 +629,7 @@ public class ModelConstants {
     public static final String NOTIFICATION_REQUEST_ID_PROPERTY = "request_id";
     public static final String NOTIFICATION_RECIPIENT_ID_PROPERTY = "recipient_id";
     public static final String NOTIFICATION_TYPE_PROPERTY = "type";
+    public static final String NOTIFICATION_DELIVERY_METHOD_PROPERTY = "delivery_method";
     public static final String NOTIFICATION_SUBJECT_PROPERTY = "subject";
     public static final String NOTIFICATION_TEXT_PROPERTY = "body";
     public static final String NOTIFICATION_ADDITIONAL_CONFIG_PROPERTY = "additional_config";

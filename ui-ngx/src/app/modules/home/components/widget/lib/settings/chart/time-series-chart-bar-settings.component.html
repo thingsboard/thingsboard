@@ -59,6 +59,15 @@
       </tb-color-input>
     </div>
   </div>
+  <div class="tb-form-row space-between">
+    <mat-slide-toggle class="mat-slide" formControlName="enableLabelBackground">
+      {{ 'widgets.time-series-chart.series.bar.label-background' | translate }}
+    </mat-slide-toggle>
+    <tb-color-input asBoxInput
+                    colorClearButton
+                    formControlName="labelBackground">
+    </tb-color-input>
+  </div>
   <tb-time-series-chart-fill-settings
     formControlName="backgroundSettings"
     title="widgets.time-series-chart.series.background"

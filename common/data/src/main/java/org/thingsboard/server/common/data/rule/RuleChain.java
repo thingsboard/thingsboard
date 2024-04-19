@@ -39,11 +39,11 @@ public class RuleChain extends BaseDataWithAdditionalInfo<RuleChainId> implement
 
     private static final long serialVersionUID = -5656679015121935465L;
 
-    @Schema(required = true, description = "JSON object with Tenant Id.", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "JSON object with Tenant Id.", accessMode = Schema.AccessMode.READ_ONLY)
     private TenantId tenantId;
     @NoXss
     @Length(fieldName = "name")
-    @Schema(required = true, description = "Rule Chain name", example = "Humidity data processing")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Rule Chain name", example = "Humidity data processing")
     private String name;
     @Schema(description = "Rule Chain type. 'EDGE' rule chains are processing messages on the edge devices only.", example = "A4B72CCDFF33")
     private RuleChainType type;

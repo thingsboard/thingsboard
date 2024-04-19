@@ -37,6 +37,8 @@ enum EdgeVersion {
   V_3_6_0 = 3;
   V_3_6_1 = 4;
   V_3_6_2 = 5;
+  V_3_6_4 = 6;
+  V_3_7_0 = 7;
 }
 
 /**
@@ -471,6 +473,27 @@ message OAuth2UpdateMsg {
   string entity = 1;
 }
 
+message NotificationRuleUpdateMsg {
+  UpdateMsgType msgType = 1;
+  optional int64 idMSB = 2;
+  optional int64 idLSB = 3;
+  optional string entity = 4;
+}
+
+message NotificationTargetUpdateMsg {
+  UpdateMsgType msgType = 1;
+  optional int64 idMSB = 2;
+  optional int64 idLSB = 3;
+  optional string entity = 4;
+}
+
+message NotificationTemplateUpdateMsg {
+  UpdateMsgType msgType = 1;
+  optional int64 idMSB = 2;
+  optional int64 idLSB = 3;
+  optional string entity = 4;
+}
+
 message RuleChainMetadataRequestMsg {
   int64 ruleChainIdMSB = 1;
   int64 ruleChainIdLSB = 2;
@@ -673,5 +696,8 @@ message DownlinkMsg {
   repeated ResourceUpdateMsg resourceUpdateMsg = 28;
   repeated AlarmCommentUpdateMsg alarmCommentUpdateMsg = 29;
   repeated OAuth2UpdateMsg oAuth2UpdateMsg = 30;
+  repeated NotificationRuleUpdateMsg notificationRuleUpdateMsg = 31;
+  repeated NotificationTargetUpdateMsg notificationTargetUpdateMsg = 32;
+  repeated NotificationTemplateUpdateMsg notificationTemplateUpdateMsg = 33;
 }
 
