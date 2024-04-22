@@ -3314,6 +3314,7 @@
         "new-password-again": "Confirm new password",
         "password-link-sent-message": "Reset link has been sent",
         "email": "Email",
+        "invalid-email-format": "Invalid email format.",
         "login-with": "Login with {{name}}",
         "or": "or",
         "error": "Login error",
