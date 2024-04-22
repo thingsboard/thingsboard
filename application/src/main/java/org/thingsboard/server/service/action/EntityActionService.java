@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
@@ -127,20 +128,20 @@ public class EntityActionService {
                 } else {
                     entityNode = JacksonUtil.newObjectNode();
                     if (actionType == ActionType.ATTRIBUTES_UPDATED) {
-                        String scope = extractParameter(String.class, 0, additionalInfo);
+                        AttributeScope scope = extractParameter(AttributeScope.class, 0, additionalInfo);
                         @SuppressWarnings("unchecked")
                         List<AttributeKvEntry> attributes = extractParameter(List.class, 1, additionalInfo);
-                        metaData.putValue(DataConstants.SCOPE, scope);
+                        metaData.putValue(DataConstants.SCOPE, scope.name());
                         if (attributes != null) {
                             for (AttributeKvEntry attr : attributes) {
                                 JacksonUtil.addKvEntry(entityNode, attr);
                             }
                         }
                     } else if (actionType == ActionType.ATTRIBUTES_DELETED) {
-                        String scope = extractParameter(String.class, 0, additionalInfo);
+                        AttributeScope scope = extractParameter(AttributeScope.class, 0, additionalInfo);
                         @SuppressWarnings("unchecked")
                         List<String> keys = extractParameter(List.class, 1, additionalInfo);
-                        metaData.putValue(DataConstants.SCOPE, scope);
+                        metaData.putValue(DataConstants.SCOPE, scope.name());
                         ArrayNode attrsArrayNode = entityNode.putArray("attributes");
                         if (keys != null) {
                             keys.forEach(attrsArrayNode::add);
@@ -249,7 +250,7 @@ public class EntityActionService {
         return result;
     }
 
-    private void addTimeseries(ObjectNode entityNode, List<TsKvEntry> timeseries) throws Exception {
+    private void addTimeseries(ObjectNode entityNode, List<TsKvEntry> timeseries) {
         if (timeseries != null && !timeseries.isEmpty()) {
             ArrayNode result = entityNode.putArray("timeseries");
             Map<Long, List<TsKvEntry>> groupedTelemetry = timeseries.stream()

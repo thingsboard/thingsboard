@@ -32,4 +32,5 @@ public class DashboardMsgConstructorV2 extends BaseDashboardMsgConstructor {
                 .setIdMSB(dashboard.getId().getId().getMostSignificantBits())
                 .setIdLSB(dashboard.getId().getId().getLeastSignificantBits()).build();
     }
+
 }
