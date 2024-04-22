@@ -97,9 +97,9 @@ export class AppComponent implements OnInit {
       map(results => ({isAuthenticated: results[0], isUserLoaded: results[1]})),
       filter((data) => data.isUserLoaded),
       distinctUntilChanged((a, b) => isEqual(a, b)),
-      tap(() => {
+      tap((data) => {
         let userLang = getCurrentAuthState(this.store).userDetails?.additionalInfo?.lang ?? null;
-        if (!userLang) {
+        if (!userLang && !data.isAuthenticated) {
           const settings = this.storageService.getItem(SETTINGS_KEY);
           userLang = settings?.userLang ?? null;
         }
