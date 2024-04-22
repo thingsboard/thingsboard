@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.action;
 
+import com.google.common.util.concurrent.Futures;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -174,7 +175,9 @@ class TbUnassignFromCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
         // GIVEN
 
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
-        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
+        if (!type.equals(EntityType.DASHBOARD)) {
+            when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
+        }
 
         config.setCustomerNamePattern(customerTitle);
         var nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
@@ -187,7 +190,8 @@ class TbUnassignFromCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
         if (type.equals(EntityType.DASHBOARD)) {
             when(ctxMock.getCustomerService()).thenReturn(customerServiceMock);
             var customer = createCustomer(customerTitle);
-            when(customerServiceMock.findCustomerByTenantIdAndTitle(eq(TENANT_ID), eq(customerTitle))).thenReturn(Optional.of(customer));
+            when(customerServiceMock.findCustomerByTenantIdAndTitleAsync(eq(TENANT_ID), eq(customerTitle)))
+                    .thenReturn(Futures.immediateFuture(Optional.of(customer)));
         }
         Map<EntityType, Consumer<EntityId>> entityTypeToEntityIdConsumerMap = mockMethodCallsForSupportedTypes();
         entityTypeToEntityIdConsumerMap.get(type).accept(originator);
@@ -206,7 +210,9 @@ class TbUnassignFromCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
         // GIVEN
 
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
-        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
+        if (!type.equals(EntityType.DASHBOARD)) {
+            when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
+        }
 
         config.setCustomerNamePattern(customerTitle);
         var nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
@@ -218,7 +224,8 @@ class TbUnassignFromCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
         // we search for the customer only if incoming message originator is dashboard.
         if (type.equals(EntityType.DASHBOARD)) {
             when(ctxMock.getCustomerService()).thenReturn(customerServiceMock);
-            when(customerServiceMock.findCustomerByTenantIdAndTitle(eq(TENANT_ID), eq(customerTitle))).thenReturn(Optional.empty());
+            when(customerServiceMock.findCustomerByTenantIdAndTitleAsync(eq(TENANT_ID), eq(customerTitle)))
+                    .thenReturn(Futures.immediateFuture(Optional.empty()));
 
             // DASHBOARD WHEN
             node.onMsg(ctxMock, msg);

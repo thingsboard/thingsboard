@@ -218,7 +218,6 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         node.init(ctxMock, nodeConfiguration);
 
         when(ctxMock.getTenantId()).thenReturn(tenantId);
-        when(ctxMock.getDbCallbackExecutor()).thenReturn(dbExecutor);
 
         var mockMethodCallsMap = mockEntityServiceCallsEntityNotFound();
         mockMethodCallsMap.get(entityType).run();
@@ -226,27 +225,18 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         var md = getMetadataWithNameTemplate();
         var msg = getTbMsg(originatorId, md);
 
-        // todo fix TestDbCallbackExecutor exception handling.
-        switch (entityType) {
-            case CUSTOMER -> {
-                node.onMsg(ctxMock, msg);
-                ArgumentCaptor<Throwable> throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
-                verify(ctxMock).tellFailure(eq(msg), throwableCaptor.capture());
-                assertThat(throwableCaptor.getValue())
-                        .isInstanceOf(NoSuchElementException.class)
-                        .hasMessage(EntityType.CUSTOMER.getNormalName() + " with title 'EntityName' doesn't exist!");
-            }
-            case DEVICE, ASSET -> {
-                node.onMsg(ctxMock, msg);
-                ArgumentCaptor<Throwable> throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
-                verify(ctxMock).tellFailure(eq(msg), throwableCaptor.capture());
-                assertThat(throwableCaptor.getValue())
-                        .isInstanceOf(NoSuchElementException.class)
-                        .hasMessage(entityType.getNormalName() + " with name 'EntityName' doesn't exist!");
-            }
-            default -> assertThatThrownBy(() -> node.onMsg(ctxMock, msg))
-                    .isInstanceOf(RuntimeException.class).hasCauseInstanceOf(NoSuchElementException.class);
-        }
+
+        node.onMsg(ctxMock, msg);
+        ArgumentCaptor<Throwable> throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
+        verify(ctxMock).tellFailure(eq(msg), throwableCaptor.capture());
+        String validationField = switch (entityType) {
+            case CUSTOMER, DASHBOARD -> "title";
+            case USER -> "email";
+            default -> "name";
+        };
+        assertThat(throwableCaptor.getValue())
+                .isInstanceOf(NoSuchElementException.class)
+                .hasMessage("%s with %s 'EntityName' doesn't exist!", entityType.getNormalName(), validationField);
     }
 
     @ParameterizedTest
@@ -267,7 +257,9 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         node.init(ctxMock, nodeConfiguration);
 
         when(ctxMock.getTenantId()).thenReturn(tenantId);
-        when(ctxMock.getDbCallbackExecutor()).thenReturn(dbExecutor);
+        if (entityType.equals(EntityType.TENANT)) {
+            when(ctxMock.getDbCallbackExecutor()).thenReturn(dbExecutor);
+        }
         when(ctxMock.getRelationService()).thenReturn(relationServiceMock);
 
         var mockMethodCallsMap = mockEntityServiceCallsCreateEntityIfNotExistsDisabled();
@@ -291,7 +283,9 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
 
         verify(ctxMock).tellSuccess(eq(msg));
         verify(ctxMock, never()).tellFailure(any(), any());
-        verify(ctxMock).getDbCallbackExecutor();
+        if (entityType.equals(EntityType.TENANT)) {
+            verify(ctxMock).getDbCallbackExecutor();
+        }
         verifyNoMoreInteractions(ctxMock, relationServiceMock);
     }
 
@@ -313,7 +307,9 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         node.init(ctxMock, nodeConfiguration);
 
         when(ctxMock.getTenantId()).thenReturn(tenantId);
-        when(ctxMock.getDbCallbackExecutor()).thenReturn(dbExecutor);
+        if (entityType.equals(EntityType.TENANT)) {
+            when(ctxMock.getDbCallbackExecutor()).thenReturn(dbExecutor);
+        }
         when(ctxMock.getRelationService()).thenReturn(relationServiceMock);
 
         var mockMethodCallsMap = mockEntityServiceCallsCreateEntityIfNotExistsDisabled();
@@ -342,7 +338,9 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
 
         verify(ctxMock).tellSuccess(eq(msg));
         verify(ctxMock, never()).tellFailure(any(), any());
-        verify(ctxMock).getDbCallbackExecutor();
+        if (entityType.equals(EntityType.TENANT)) {
+            verify(ctxMock).getDbCallbackExecutor();
+        }
         verifyNoMoreInteractions(ctxMock, relationServiceMock);
     }
 
@@ -364,7 +362,9 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         node.init(ctxMock, nodeConfiguration);
 
         when(ctxMock.getTenantId()).thenReturn(tenantId);
-        when(ctxMock.getDbCallbackExecutor()).thenReturn(dbExecutor);
+        if (entityType.equals(EntityType.TENANT)) {
+            when(ctxMock.getDbCallbackExecutor()).thenReturn(dbExecutor);
+        }
         when(ctxMock.getRelationService()).thenReturn(relationServiceMock);
 
         var mockMethodCallsMap = mockEntityServiceCallsCreateEntityIfNotExistsDisabled();
@@ -401,7 +401,9 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
 
         verify(ctxMock).tellSuccess(eq(msg));
         verify(ctxMock, never()).tellFailure(any(), any());
-        verify(ctxMock).getDbCallbackExecutor();
+        if (entityType.equals(EntityType.TENANT)) {
+            verify(ctxMock).getDbCallbackExecutor();
+        }
         verifyNoMoreInteractions(ctxMock, relationServiceMock);
     }
 
@@ -423,7 +425,9 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         node.init(ctxMock, nodeConfiguration);
 
         when(ctxMock.getTenantId()).thenReturn(tenantId);
-        when(ctxMock.getDbCallbackExecutor()).thenReturn(dbExecutor);
+        if (entityType.equals(EntityType.TENANT)) {
+            when(ctxMock.getDbCallbackExecutor()).thenReturn(dbExecutor);
+        }
         when(ctxMock.getRelationService()).thenReturn(relationServiceMock);
 
         var mockMethodCallsMap = mockEntityServiceCallsCreateEntityIfNotExistsDisabled();
@@ -451,7 +455,9 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         verify(ctxMock).transformMsgOriginator(eq(msg), eq(entityId));
         verify(ctxMock).tellSuccess(eq(msgAfterOriginatorChanged));
         verify(ctxMock, never()).tellFailure(any(), any());
-        verify(ctxMock).getDbCallbackExecutor();
+        if (entityType.equals(EntityType.TENANT)) {
+            verify(ctxMock).getDbCallbackExecutor();
+        }
         verifyNoMoreInteractions(ctxMock, relationServiceMock);
     }
 
@@ -474,7 +480,9 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
 
         when(ctxMock.getTenantId()).thenReturn(tenantId);
         when(ctxMock.getSelfId()).thenReturn(ruleNodeId);
-        when(ctxMock.getDbCallbackExecutor()).thenReturn(dbExecutor);
+        if (entityType.equals(EntityType.TENANT)) {
+            when(ctxMock.getDbCallbackExecutor()).thenReturn(dbExecutor);
+        }
         when(ctxMock.getRelationService()).thenReturn(relationServiceMock);
 
         var mockMethodCallsMap = mockEntityServiceCallsCreateEntityIfNotExistsEnabled();
@@ -499,7 +507,9 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
 
         verify(ctxMock).tellSuccess(eq(msg));
         verify(ctxMock, never()).tellFailure(any(), any());
-        verify(ctxMock).getDbCallbackExecutor();
+        if (entityType.equals(EntityType.TENANT)) {
+            verify(ctxMock).getDbCallbackExecutor();
+        }
         verifyNoMoreInteractions(ctxMock, relationServiceMock);
     }
 
@@ -508,37 +518,37 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
                 EntityType.DEVICE, hasId -> {
                     var device = (Device) hasId;
                     when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
-                    when(deviceServiceMock.findDeviceByTenantIdAndName(any(), any())).thenReturn(device);
+                    when(deviceServiceMock.findDeviceByTenantIdAndNameAsync(any(), any())).thenReturn(Futures.immediateFuture(device));
                 },
                 EntityType.ASSET, hasId -> {
                     var asset = (Asset) hasId;
                     when(ctxMock.getAssetService()).thenReturn(assetServiceMock);
-                    when(assetServiceMock.findAssetByTenantIdAndName(any(), any())).thenReturn(asset);
+                    when(assetServiceMock.findAssetByTenantIdAndNameAsync(any(), any())).thenReturn(Futures.immediateFuture(asset));
                 },
                 EntityType.CUSTOMER, hasId -> {
                     var customer = (Customer) hasId;
                     when(ctxMock.getCustomerService()).thenReturn(customerServiceMock);
-                    when(customerServiceMock.findCustomerByTenantIdAndTitle(any(), any())).thenReturn(Optional.ofNullable(customer));
+                    when(customerServiceMock.findCustomerByTenantIdAndTitleAsync(any(), any())).thenReturn(Futures.immediateFuture(Optional.ofNullable(customer)));
                 },
                 EntityType.ENTITY_VIEW, hasId -> {
                     var entityView = (EntityView) hasId;
                     when(ctxMock.getEntityViewService()).thenReturn(entityViewServiceMock);
-                    when(entityViewServiceMock.findEntityViewByTenantIdAndName(any(), any())).thenReturn(entityView);
+                    when(entityViewServiceMock.findEntityViewByTenantIdAndNameAsync(any(), any())).thenReturn(Futures.immediateFuture(entityView));
                 },
                 EntityType.EDGE, hasId -> {
                     var edge = (Edge) hasId;
                     when(ctxMock.getEdgeService()).thenReturn(edgeServiceMock);
-                    when(edgeServiceMock.findEdgeByTenantIdAndName(any(), any())).thenReturn(edge);
+                    when(edgeServiceMock.findEdgeByTenantIdAndNameAsync(any(), any())).thenReturn(Futures.immediateFuture(edge));
                 },
                 EntityType.USER, hasId -> {
                     var user = (User) hasId;
                     when(ctxMock.getUserService()).thenReturn(userServiceMock);
-                    when(userServiceMock.findUserByTenantIdAndEmail(any(), any())).thenReturn(user);
+                    when(userServiceMock.findUserByTenantIdAndEmailAsync(any(), any())).thenReturn(Futures.immediateFuture(user));
                 },
                 EntityType.DASHBOARD, hasId -> {
                     var dashboard = (Dashboard) hasId;
                     when(ctxMock.getDashboardService()).thenReturn(dashboardServiceMock);
-                    when(dashboardServiceMock.findFirstDashboardInfoByTenantIdAndName(any(), any())).thenReturn(dashboard);
+                    when(dashboardServiceMock.findFirstDashboardInfoByTenantIdAndNameAsync(any(), any())).thenReturn(Futures.immediateFuture(dashboard));
                 },
                 EntityType.TENANT, hasId -> {
                 }
@@ -548,31 +558,31 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
     private Map<EntityType, Runnable> verifyEntityServiceCallsCreateEntityIfNotExistsDisabled() {
         return Map.of(
                 EntityType.DEVICE, () -> {
-                    verify(deviceServiceMock).findDeviceByTenantIdAndName(eq(tenantId), eq("EntityName"));
+                    verify(deviceServiceMock).findDeviceByTenantIdAndNameAsync(eq(tenantId), eq("EntityName"));
                     verifyNoMoreInteractions(deviceServiceMock);
                 },
                 EntityType.ASSET, () -> {
-                    verify(assetServiceMock).findAssetByTenantIdAndName(eq(tenantId), eq("EntityName"));
+                    verify(assetServiceMock).findAssetByTenantIdAndNameAsync(eq(tenantId), eq("EntityName"));
                     verifyNoMoreInteractions(assetServiceMock);
                 },
                 EntityType.CUSTOMER, () -> {
-                    verify(customerServiceMock).findCustomerByTenantIdAndTitle(eq(tenantId), eq("EntityName"));
+                    verify(customerServiceMock).findCustomerByTenantIdAndTitleAsync(eq(tenantId), eq("EntityName"));
                     verifyNoMoreInteractions(customerServiceMock);
                 },
                 EntityType.ENTITY_VIEW, () -> {
-                    verify(entityViewServiceMock).findEntityViewByTenantIdAndName(eq(tenantId), eq("EntityName"));
+                    verify(entityViewServiceMock).findEntityViewByTenantIdAndNameAsync(eq(tenantId), eq("EntityName"));
                     verifyNoMoreInteractions(entityViewServiceMock);
                 },
                 EntityType.EDGE, () -> {
-                    verify(edgeServiceMock).findEdgeByTenantIdAndName(eq(tenantId), eq("EntityName"));
+                    verify(edgeServiceMock).findEdgeByTenantIdAndNameAsync(eq(tenantId), eq("EntityName"));
                     verifyNoMoreInteractions(edgeServiceMock);
                 },
                 EntityType.USER, () -> {
-                    verify(userServiceMock).findUserByTenantIdAndEmail(eq(tenantId), eq("EntityName"));
+                    verify(userServiceMock).findUserByTenantIdAndEmailAsync(eq(tenantId), eq("EntityName"));
                     verifyNoMoreInteractions(userServiceMock);
                 },
                 EntityType.DASHBOARD, () -> {
-                    verify(dashboardServiceMock).findFirstDashboardInfoByTenantIdAndName(eq(tenantId), eq("EntityName"));
+                    verify(dashboardServiceMock).findFirstDashboardInfoByTenantIdAndNameAsync(eq(tenantId), eq("EntityName"));
                     verifyNoMoreInteractions(dashboardServiceMock);
                 },
                 EntityType.TENANT, () -> {
@@ -586,21 +596,21 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
                     var device = (Device) hasId;
                     when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
                     when(ctxMock.getClusterService()).thenReturn(clusterServiceMock);
-                    when(deviceServiceMock.findDeviceByTenantIdAndName(any(), any())).thenReturn(null);
+                    when(deviceServiceMock.findDeviceByTenantIdAndNameAsync(any(), any())).thenReturn(Futures.immediateFuture(null));
                     when(deviceServiceMock.saveDevice(any())).thenReturn(device);
                     doAnswer(invocation -> entityCreatedMsg).when(ctxMock).deviceCreatedMsg(any(), any());
                 },
                 EntityType.ASSET, (hasId, entityCreatedMsg) -> {
                     var asset = (Asset) hasId;
                     when(ctxMock.getAssetService()).thenReturn(assetServiceMock);
-                    when(assetServiceMock.findAssetByTenantIdAndName(any(), any())).thenReturn(null);
+                    when(assetServiceMock.findAssetByTenantIdAndNameAsync(any(), any())).thenReturn(Futures.immediateFuture(null));
                     when(assetServiceMock.saveAsset(any())).thenReturn(asset);
                     doAnswer(invocation -> entityCreatedMsg).when(ctxMock).assetCreatedMsg(any(), any());
                 },
                 EntityType.CUSTOMER, (hasId, entityCreatedMsg) -> {
                     var customer = (Customer) hasId;
                     when(ctxMock.getCustomerService()).thenReturn(customerServiceMock);
-                    when(customerServiceMock.findCustomerByTenantIdAndTitle(any(), any())).thenReturn(Optional.empty());
+                    when(customerServiceMock.findCustomerByTenantIdAndTitleAsync(any(), any())).thenReturn(Futures.immediateFuture(Optional.empty()));
                     when(customerServiceMock.saveCustomer(any())).thenReturn(customer);
                     doAnswer(invocation -> entityCreatedMsg).when(ctxMock).customerCreatedMsg(any(), any());
                 }
@@ -611,20 +621,20 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         return Map.of(
                 EntityType.DEVICE, (hasId, entityCreatedMsg) -> {
                     var device = (Device) hasId;
-                    verify(deviceServiceMock, times(2)).findDeviceByTenantIdAndName(eq(tenantId), eq("EntityName"));
+                    verify(deviceServiceMock, times(1)).findDeviceByTenantIdAndNameAsync(eq(tenantId), eq("EntityName"));
                     verify(deviceServiceMock).saveDevice(any());
                     verify(clusterServiceMock).onDeviceUpdated(eq(device), eq(null));
                     verify(ctxMock).enqueue(eq(entityCreatedMsg), any(), any());
                     verifyNoMoreInteractions(deviceServiceMock, clusterServiceMock);
                 },
                 EntityType.ASSET, (hasId, entityCreatedMsg) -> {
-                    verify(assetServiceMock, times(2)).findAssetByTenantIdAndName(eq(tenantId), eq("EntityName"));
+                    verify(assetServiceMock, times(1)).findAssetByTenantIdAndNameAsync(eq(tenantId), eq("EntityName"));
                     verify(assetServiceMock).saveAsset(any());
                     verify(ctxMock).enqueue(eq(entityCreatedMsg), any(), any());
                     verifyNoMoreInteractions(assetServiceMock);
                 },
                 EntityType.CUSTOMER, (hasId, entityCreatedMsg) -> {
-                    verify(customerServiceMock, times(2)).findCustomerByTenantIdAndTitle(eq(tenantId), eq("EntityName"));
+                    verify(customerServiceMock, times(1)).findCustomerByTenantIdAndTitleAsync(eq(tenantId), eq("EntityName"));
                     verify(customerServiceMock).saveCustomer(any());
                     verify(ctxMock).enqueue(eq(entityCreatedMsg), any(), any());
                     verifyNoMoreInteractions(customerServiceMock);
@@ -636,31 +646,31 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         return Map.of(
                 EntityType.DEVICE, () -> {
                     when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
-                    when(deviceServiceMock.findDeviceByTenantIdAndName(any(), any())).thenReturn(null);
+                    when(deviceServiceMock.findDeviceByTenantIdAndNameAsync(any(), any())).thenReturn(Futures.immediateFuture(null));
                 },
                 EntityType.ASSET, () -> {
                     when(ctxMock.getAssetService()).thenReturn(assetServiceMock);
-                    when(assetServiceMock.findAssetByTenantIdAndName(any(), any())).thenReturn(null);
+                    when(assetServiceMock.findAssetByTenantIdAndNameAsync(any(), any())).thenReturn(Futures.immediateFuture(null));
                 },
                 EntityType.CUSTOMER, () -> {
                     when(ctxMock.getCustomerService()).thenReturn(customerServiceMock);
-                    when(customerServiceMock.findCustomerByTenantIdAndTitle(any(), any())).thenReturn(Optional.empty());
+                    when(customerServiceMock.findCustomerByTenantIdAndTitleAsync(any(), any())).thenReturn(Futures.immediateFuture(Optional.empty()));
                 },
                 EntityType.ENTITY_VIEW, () -> {
                     when(ctxMock.getEntityViewService()).thenReturn(entityViewServiceMock);
-                    when(entityViewServiceMock.findEntityViewByTenantIdAndName(any(), any())).thenReturn(null);
+                    when(entityViewServiceMock.findEntityViewByTenantIdAndNameAsync(any(), any())).thenReturn(Futures.immediateFuture(null));
                 },
                 EntityType.EDGE, () -> {
                     when(ctxMock.getEdgeService()).thenReturn(edgeServiceMock);
-                    when(edgeServiceMock.findEdgeByTenantIdAndName(any(), any())).thenReturn(null);
+                    when(edgeServiceMock.findEdgeByTenantIdAndNameAsync(any(), any())).thenReturn(Futures.immediateFuture(null));
                 },
                 EntityType.USER, () -> {
                     when(ctxMock.getUserService()).thenReturn(userServiceMock);
-                    when(userServiceMock.findUserByTenantIdAndEmail(any(), any())).thenReturn(null);
+                    when(userServiceMock.findUserByTenantIdAndEmailAsync(any(), any())).thenReturn(Futures.immediateFuture(null));
                 },
                 EntityType.DASHBOARD, () -> {
                     when(ctxMock.getDashboardService()).thenReturn(dashboardServiceMock);
-                    when(dashboardServiceMock.findFirstDashboardInfoByTenantIdAndName(any(), any())).thenReturn(null);
+                    when(dashboardServiceMock.findFirstDashboardInfoByTenantIdAndNameAsync(any(), any())).thenReturn(Futures.immediateFuture(null));
                 }
         );
     }

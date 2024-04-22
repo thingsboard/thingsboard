@@ -15,30 +15,28 @@
  */
 package org.thingsboard.server.cache.user;
 
-import lombok.Builder;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.io.Serial;
 import java.io.Serializable;
 
-@Getter
 @EqualsAndHashCode
 @RequiredArgsConstructor
-@Builder
 public class UserCacheKey implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 7357353074893750678L;
 
+    @NonNull
     private final TenantId tenantId;
     private final String email;
 
     @Override
     public String toString() {
-        return tenantId + "_" + email;
+        return tenantId.getId() + "_" + email;
     }
 
 }

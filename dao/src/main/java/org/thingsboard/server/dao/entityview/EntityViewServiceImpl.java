@@ -188,6 +188,13 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
     }
 
     @Override
+    public ListenableFuture<EntityView> findEntityViewByTenantIdAndNameAsync(TenantId tenantId, String name) {
+        log.trace("Executing findEntityViewByTenantIdAndNameAsync [{}][{}]", tenantId, name);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        return service.submit(() -> findEntityViewByTenantIdAndName(tenantId, name));
+    }
+
+    @Override
     public PageData<EntityView> findEntityViewByTenantId(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findEntityViewsByTenantId, tenantId [{}], pageLink [{}]", tenantId, pageLink);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
@@ -296,7 +303,7 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
 
     @Override
     public ListenableFuture<EntityView> findEntityViewByIdAsync(TenantId tenantId, EntityViewId entityViewId) {
-        log.trace("Executing findEntityViewById [{}]", entityViewId);
+        log.trace("Executing findEntityViewByIdAsync [{}]", entityViewId);
         validateId(entityViewId, id -> INCORRECT_ENTITY_VIEW_ID + id);
         return entityViewDao.findByIdAsync(tenantId, entityViewId.getId());
     }

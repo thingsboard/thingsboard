@@ -16,102 +16,20 @@
 
 -- UPDATE PUBLIC CUSTOMERS START
 
-ALTER TABLE customer ADD COLUMN IF NOT EXISTS is_public boolean DEFAULT false;
-UPDATE customer SET is_public = true WHERE title = 'Public';
-
--- UPDATE PUBLIC CUSTOMERS END
-
--- UPDATE CUSTOMERS WITH SAME TITLE START
-
-CREATE OR REPLACE PROCEDURE update_customers_with_the_same_title()
-    LANGUAGE plpgsql
-AS
+DO
 $$
-DECLARE
-customer_record  RECORD;
-    dashboard_record RECORD;
-    title_exists     BOOLEAN;
-    new_title        TEXT;
-    updated_json     JSONB;
-BEGIN
-    RAISE NOTICE 'Starting the customer and dashboard update process.';
-
-FOR customer_record IN
-SELECT id, tenant_id, title, duplicate_number
-FROM (
-         SELECT
-             id,
-             tenant_id,
-             title,
-             ROW_NUMBER() OVER(PARTITION BY tenant_id, title ORDER BY id) AS duplicate_number
-         FROM customer
-     ) AS duplicate_customers
-WHERE duplicate_number > 1
-    LOOP
-            -- Attempt with 'duplicate' suffix
-            new_title := customer_record.title || ' duplicate ' || (customer_record.duplicate_number - 1)::TEXT;
-
--- Check if new_title already exists for the same tenant_id
-SELECT EXISTS (
-    SELECT 1
-    FROM customer
-    WHERE tenant_id = customer_record.tenant_id
-      AND title = new_title
-) INTO title_exists;
-
--- If generated title exists, use customer id instead to create a unique title
-IF title_exists THEN
-                new_title := customer_record.title || ' duplicate ' || customer_record.id::TEXT;
-END IF;
-
-            -- Update the customer title
-UPDATE customer
-SET title = new_title
-WHERE id = customer_record.id;
-RAISE NOTICE 'Updated customer with id: % with new title: %', customer_record.id, new_title;
-
-            -- Find and update related dashboards for the customer
-FOR dashboard_record IN
-SELECT d.id, d.assigned_customers
-FROM dashboard d
-         JOIN relation r ON d.id = r.to_id
-WHERE r.from_id = customer_record.id
-  AND r.to_type = 'DASHBOARD'
-  AND r.relation_type_group = 'DASHBOARD'
-  AND r.relation_type = 'Contains'
-    LOOP
-                    -- Update each assigned_customers entry where the customerId matches
-                    updated_json := (SELECT jsonb_agg(
-                                                    CASE
-                                                        WHEN (value -> 'customerId' ->> 'id')::uuid = customer_record.id
-                                                            THEN jsonb_set(value, '{title}', ('"' || new_title || '"')::jsonb)
-                                                        ELSE value
-                                                        END
-                                                )
-                                     FROM jsonb_array_elements(dashboard_record.assigned_customers::jsonb));
-
-UPDATE dashboard
-SET assigned_customers = updated_json
-WHERE id = dashboard_record.id;
-RAISE NOTICE 'Updated dashboard with id: % with new assigned_customers: %', dashboard_record.id, updated_json;
-END LOOP;
-END LOOP;
-    RAISE NOTICE 'Customers and dashboards update process completed successfully!';
-END;
+    BEGIN
+        IF NOT EXISTS (
+            SELECT FROM information_schema.columns
+            WHERE table_name = 'customer' AND column_name = 'is_public'
+        ) THEN
+            ALTER TABLE customer ADD COLUMN is_public boolean DEFAULT false;
+            UPDATE customer SET is_public = true WHERE title = 'Public';
+        END IF;
+    END
 $$;
 
-call update_customers_with_the_same_title();
-
-DROP PROCEDURE IF EXISTS update_customers_with_the_same_title;
-
--- UPDATE CUSTOMERS WITH SAME TITLE END
-
--- CUSTOMER UNIQUE CONSTRAINT UPDATE START
-
-ALTER TABLE customer DROP CONSTRAINT IF EXISTS customer_title_unq_key;
-ALTER TABLE customer ADD CONSTRAINT customer_title_unq_key UNIQUE (tenant_id, title);
-
--- CUSTOMER UNIQUE CONSTRAINT UPDATE END
+-- UPDATE PUBLIC CUSTOMERS END
 
 -- create new attribute_kv table schema
 DO

@@ -98,6 +98,13 @@ public class JpaCustomerDao extends JpaAbstractDao<CustomerEntity, Customer> imp
     }
 
     @Override
+    public PageData<Customer> findCustomersWithTheSameTitle(PageLink pageLink) {
+        return DaoUtil.toPageData(
+                customerRepository.findCustomersWithTheSameTitle(DaoUtil.toPageable(pageLink))
+        );
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.CUSTOMER;
     }

@@ -52,4 +52,11 @@ public class SqlEntityDatabaseSchemaService extends SqlAbstractDatabaseSchemaSer
         log.info("Installing SQL DataBase schema views and functions: " + SCHEMA_VIEWS_AND_FUNCTIONS_SQL);
         executeQueryFromFile(SCHEMA_VIEWS_AND_FUNCTIONS_SQL);
     }
+
+    @Override
+    public void createCustomerTitleUniqueConstraintIfNotExists() {
+        executeQuery("DO $$ BEGIN IF NOT EXISTS(SELECT FROM information_schema.constraint_column_usage " +
+                "WHERE table_name = 'customer' AND constraint_name = 'customer_title_unq_key') THEN " +
+                "ALTER TABLE customer ADD CONSTRAINT customer_title_unq_key UNIQUE (tenant_id, title); END IF; END $$;");
+    }
 }

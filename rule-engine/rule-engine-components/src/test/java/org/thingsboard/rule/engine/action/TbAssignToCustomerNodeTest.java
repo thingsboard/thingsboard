@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.action;
 
+import com.google.common.util.concurrent.Futures;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,9 +26,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
-import org.thingsboard.rule.engine.TestDbCallbackExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -100,8 +99,6 @@ class TbAssignToCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private final TenantId TENANT_ID = new TenantId(UUID.fromString("c818385f-e661-407f-8c52-daf2dddf406d"));
     private final RuleNodeId RULE_NODE_ID = new RuleNodeId(UUID.fromString("c3570bd0-c0bc-4609-97a4-6f57d7c8b809"));
-
-    private final ListeningExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
 
     private static Stream<Arguments> givenUnsupportedOriginatorType_whenOnMsg_thenVerifyExceptionThrown() {
         return unsupportedEntityTypes.stream().flatMap(type -> Stream.of(Arguments.of(type)));
@@ -177,7 +174,6 @@ class TbAssignToCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
         // GIVEN
 
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
-        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
         when(ctxMock.getCustomerService()).thenReturn(customerServiceMock);
 
         config.setCustomerNamePattern(customerTitle);
@@ -188,7 +184,8 @@ class TbAssignToCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
         var msg = getTbMsg(originator);
         var customer = createCustomer(customerTitle);
 
-        when(customerServiceMock.findCustomerByTenantIdAndTitle(eq(TENANT_ID), eq(customerTitle))).thenReturn(Optional.of(customer));
+        when(customerServiceMock.findCustomerByTenantIdAndTitleAsync(eq(TENANT_ID), eq(customerTitle)))
+                .thenReturn(Futures.immediateFuture(Optional.of(customer)));
         Map<EntityType, Consumer<EntityId>> entityTypeToAssignConsumerMap = mockMethodCallsForSupportedTypes();
         entityTypeToAssignConsumerMap.get(type).accept(originator);
 
@@ -206,7 +203,6 @@ class TbAssignToCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
         // GIVEN
 
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
-        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
         when(ctxMock.getCustomerService()).thenReturn(customerServiceMock);
         when(ctxMock.getSelfId()).thenReturn(RULE_NODE_ID);
 
@@ -219,7 +215,8 @@ class TbAssignToCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
         var msg = getTbMsg(originator);
         var customer = createCustomer(customerTitle);
 
-        when(customerServiceMock.findCustomerByTenantIdAndTitle(eq(TENANT_ID), eq(customerTitle))).thenReturn(Optional.empty());
+        when(customerServiceMock.findCustomerByTenantIdAndTitleAsync(eq(TENANT_ID), eq(customerTitle)))
+                .thenReturn(Futures.immediateFuture(Optional.empty()));
         when(customerServiceMock.saveCustomer(any(Customer.class))).thenReturn(customer);
         Map<EntityType, Consumer<EntityId>> entityTypeToEntityIdConsumerMap = mockMethodCallsForSupportedTypes();
         entityTypeToEntityIdConsumerMap.get(type).accept(originator);
@@ -241,7 +238,6 @@ class TbAssignToCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
         // GIVEN
 
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
-        when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
         when(ctxMock.getCustomerService()).thenReturn(customerServiceMock);
 
         config.setCustomerNamePattern(customerTitle);
@@ -251,7 +247,8 @@ class TbAssignToCustomerNodeTest extends AbstractRuleNodeUpgradeTest {
         var originator = toOriginator(type);
         var msg = getTbMsg(originator);
 
-        when(customerServiceMock.findCustomerByTenantIdAndTitle(eq(TENANT_ID), eq(customerTitle))).thenReturn(Optional.empty());
+        when(customerServiceMock.findCustomerByTenantIdAndTitleAsync(eq(TENANT_ID), eq(customerTitle)))
+                .thenReturn(Futures.immediateFuture(Optional.empty()));
 
         // WHEN
         node.onMsg(ctxMock, msg);

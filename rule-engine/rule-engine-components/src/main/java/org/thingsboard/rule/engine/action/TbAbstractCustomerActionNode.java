@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -30,23 +29,19 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.EnumSet;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
 @Slf4j
 public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerActionNodeConfiguration> implements TbNode {
-
-    private ConcurrentMap<CustomerCreationLockKey, Object> customerCreationLocks;
 
     private static final Set<EntityType> supportedEntityTypes = EnumSet.of(EntityType.ASSET, EntityType.DEVICE,
             EntityType.ENTITY_VIEW, EntityType.DASHBOARD, EntityType.EDGE);
@@ -58,9 +53,6 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = loadCustomerNodeActionConfig(configuration);
-        if (createCustomerIfNotExists()) {
-            customerCreationLocks = new ConcurrentReferenceHashMap<>();
-        }
     }
 
     protected abstract boolean createCustomerIfNotExists();
@@ -83,26 +75,28 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
     protected ListenableFuture<CustomerId> getCustomerIdFuture(TbContext ctx, TbMsg msg) {
         var tenantId = ctx.getTenantId();
         var customerTitle = TbNodeUtils.processPattern(this.config.getCustomerNamePattern(), msg);
-        ListenableFuture<Optional<Customer>> customerByTitleFuture = findCustomerByTitleAsync(ctx, customerTitle);
+        var customerService = ctx.getCustomerService();
+        var customerByTitleFuture = customerService.findCustomerByTenantIdAndTitleAsync(tenantId, customerTitle);
         if (createCustomerIfNotExists()) {
             return Futures.transform(customerByTitleFuture, customerOpt -> {
                 if (customerOpt.isPresent()) {
                     return customerOpt.get().getId();
                 }
-                var customerCreationLockKey = new CustomerCreationLockKey(tenantId, customerTitle);
-                synchronized (customerCreationLocks.computeIfAbsent(customerCreationLockKey, k -> new Object())) {
-                    customerOpt = ctx.getCustomerService().findCustomerByTenantIdAndTitle(tenantId, customerTitle);
-                    if (customerOpt.isPresent()) {
-                        return customerOpt.get().getId();
-                    }
+                try {
                     var newCustomer = new Customer();
                     newCustomer.setTitle(customerTitle);
                     newCustomer.setTenantId(tenantId);
-                    var savedCustomer = ctx.getCustomerService().saveCustomer(newCustomer);
+                    var savedCustomer = customerService.saveCustomer(newCustomer);
                     ctx.enqueue(ctx.customerCreatedMsg(savedCustomer, ctx.getSelfId()),
                             () -> log.trace("Pushed Customer Created message: {}", savedCustomer),
                             throwable -> log.warn("Failed to push Customer Created message: {}", savedCustomer, throwable));
                     return savedCustomer.getId();
+                } catch (DataValidationException e) {
+                    customerOpt = customerService.findCustomerByTenantIdAndTitle(tenantId, customerTitle);
+                    if (customerOpt.isPresent()) {
+                        return customerOpt.get().getId();
+                    }
+                    throw new RuntimeException("Failed to create customer with title '" + customerTitle + "' due to: ", e);
                 }
             }, MoreExecutors.directExecutor());
         }
@@ -112,11 +106,6 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
             }
             return customerOpt.get().getId();
         }, MoreExecutors.directExecutor());
-    }
-
-    ListenableFuture<Optional<Customer>> findCustomerByTitleAsync(TbContext ctx, String customerTitle) {
-        return ctx.getDbCallbackExecutor().executeAsync(() ->
-                ctx.getCustomerService().findCustomerByTenantIdAndTitle(ctx.getTenantId(), customerTitle));
     }
 
     private static String unsupportedOriginatorTypeErrorMessage(EntityType originatorType) {
@@ -136,9 +125,6 @@ public abstract class TbAbstractCustomerActionNode<C extends TbAbstractCustomerA
             }
         }
         return new TbPair<>(hasChanges, oldConfiguration);
-    }
-
-    private record CustomerCreationLockKey(TenantId tenantId, String customerTitle) {
     }
 
 }

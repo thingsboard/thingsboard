@@ -15,16 +15,7 @@
  */
 package org.thingsboard.server.cache.customer;
 
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import org.thingsboard.server.common.data.id.TenantId;
 
-@Data
-@RequiredArgsConstructor
-public class CustomerCacheEvictEvent {
-
-    private final TenantId tenantId;
-    private final String newTitle;
-    private final String oldTitle;
-
+public record CustomerCacheEvictEvent(TenantId tenantId, String newTitle, String oldTitle) {
 }
