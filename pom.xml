@@ -98,7 +98,7 @@
         <swagger-annotations.version>2.2.21</swagger-annotations.version>
         <spatial4j.version>0.8</spatial4j.version>
         <jts.version>1.19.0</jts.version>
-        <bouncycastle.version>1.78.1</bouncycastle.version>
+        <bouncycastle.version>1.78</bouncycastle.version>
         <winsw.version>2.0.1</winsw.version>
         <postgresql.driver.version>42.7.3</postgresql.driver.version>
         <sonar.exclusions>org/thingsboard/server/gen/**/*,
