@@ -5461,6 +5461,25 @@
             "signal-strength-card-style": "Signal strength card style",
             "no-signal-rssi-value": "\"No signal\" rssi value"
         },
+        "status-widget": {
+            "behavior": "Behavior",
+            "layout": "Layout",
+            "layout-default": "Default",
+            "layout-center": "Center",
+            "layout-icon": "Icon",
+            "on": "On",
+            "off": "Off",
+            "label": "Label",
+            "status": "Status",
+            "icon": "Icon",
+            "color-palette": "Color palette",
+            "disabled-color-palette": "Disabled color palette",
+            "primary": "Primary",
+            "primary-color-hint": "Color of icon and label",
+            "secondary": "Secondary",
+            "secondary-color-hint": "Color of status",
+            "background": "Background"
+        },
         "chart": {
             "common-settings": "Common settings",
             "enable-stacking-mode": "Enable stacking mode",
