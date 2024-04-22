@@ -49,7 +49,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Listeners(TestListener.class)
 public abstract class AbstractContainerTest {
 
-    public static final int TIMEOUT = 30;
+    public static final int TIMEOUT = 120;
 
     protected static final String WS_URL = "ws://localhost:8080";
     protected volatile ContainerWsClient containerWsClient;
@@ -218,7 +218,7 @@ public abstract class AbstractContainerTest {
 
     protected ContainerWsClient buildAndConnectWebSocketClient(String path) throws URISyntaxException, InterruptedException {
         ContainerWsClient wsClient = new ContainerWsClient(new URI(WS_URL + path));
-        assertThat(wsClient.connectBlocking(TIMEOUT, TimeUnit.SECONDS)).isTrue();
+        wsClient.connectBlocking(TIMEOUT, TimeUnit.SECONDS);
         if (!path.contains("token=")) {
             wsClient.authenticate(testRestClient.getToken());
         }

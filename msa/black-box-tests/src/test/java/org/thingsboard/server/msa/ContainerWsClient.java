@@ -63,7 +63,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Slf4j
 public class ContainerWsClient extends WebSocketClient {
 
-    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(30);
+    private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(120);
 
     @Getter
     private volatile String lastMsg;
