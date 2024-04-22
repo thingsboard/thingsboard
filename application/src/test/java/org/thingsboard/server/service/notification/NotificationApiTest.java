@@ -323,8 +323,10 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
         deleteDifferentTenant();
 
-        assertThat(notificationRequestService.findNotificationRequestsByTenantIdAndOriginatorType(tenantId, EntityType.USER, new PageLink(1)).getTotalElements())
-                .isZero();
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(notificationRequestService.findNotificationRequestsByTenantIdAndOriginatorType(tenantId, EntityType.USER, new PageLink(1)).getTotalElements())
+                    .isZero();
+        });
     }
 
     @Test
