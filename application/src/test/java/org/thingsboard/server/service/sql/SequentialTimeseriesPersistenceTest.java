@@ -147,7 +147,7 @@ public class SequentialTimeseriesPersistenceTest extends AbstractControllerTest 
     void checkDiffBetweenLatestTsForDevicesAndAsset(List<Device> devices, Asset asset) throws ExecutionException, InterruptedException, TimeoutException {
         TsKvEntry assetTsKvEntry = getTsKvLatest(asset.getId(), GENERIC_CUMULATIVE_OBJ);
         Assert.assertTrue(assetTsKvEntry.getJsonValue().isPresent());
-        JsonObject assetJsonObject = new JsonParser().parse(assetTsKvEntry.getJsonValue().get()).getAsJsonObject();
+        JsonObject assetJsonObject = JsonParser.parseString(assetTsKvEntry.getJsonValue().get()).getAsJsonObject();
         for (Device device : devices) {
             Long assetValue = assetJsonObject.get(device.getName()).getAsLong();
             TsKvEntry deviceLatest = getTsKvLatest(device.getId(), TOTALIZER);
@@ -182,7 +182,7 @@ public class SequentialTimeseriesPersistenceTest extends AbstractControllerTest 
     JsonObject getJsonObject(String key, long value, Optional<String> tsKvEntryOpt) {
         JsonObject jsonObject = new JsonObject();
         if (tsKvEntryOpt.isPresent()) {
-            jsonObject = new JsonParser().parse(tsKvEntryOpt.get()).getAsJsonObject();
+            jsonObject = JsonParser.parseString(tsKvEntryOpt.get()).getAsJsonObject();
         }
         jsonObject.addProperty(key, value);
         return jsonObject;
