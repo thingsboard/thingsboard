@@ -25,7 +25,6 @@ import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.AttributeScope;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
@@ -75,7 +74,6 @@ public class TbGpsGeofencingActionNode extends AbstractGeofencingNode<TbGpsGeofe
     private static final String REPORT_PRESENCE_STATUS_ON_EACH_MESSAGE = "reportPresenceStatusOnEachMessage";
     private final Map<EntityId, EntityGeofencingState> entityStates = new HashMap<>();
     private final Gson gson = new Gson();
-    private final JsonParser parser = new JsonParser();
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
@@ -88,7 +86,7 @@ public class TbGpsGeofencingActionNode extends AbstractGeofencingNode<TbGpsGeofe
                         .find(ctx.getTenantId(), msg.getOriginator(), AttributeScope.SERVER_SCOPE, ctx.getServiceId())
                         .get(1, TimeUnit.MINUTES);
                 if (entry.isPresent()) {
-                    JsonObject element = parser.parse(entry.get().getValueAsString()).getAsJsonObject();
+                    JsonObject element = JsonParser.parseString(entry.get().getValueAsString()).getAsJsonObject();
                     return new EntityGeofencingState(element.get("inside").getAsBoolean(), element.get("stateSwitchTime").getAsLong(), element.get("stayed").getAsBoolean());
                 } else {
                     return new EntityGeofencingState(false, 0L, false);
