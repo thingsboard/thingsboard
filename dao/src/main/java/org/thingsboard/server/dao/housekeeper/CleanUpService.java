@@ -31,6 +31,7 @@ import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.relation.RelationService;
 
 import java.util.EnumSet;
+import java.util.Optional;
 import java.util.Set;
 
 @Component
@@ -38,7 +39,7 @@ import java.util.Set;
 @Slf4j
 public class CleanUpService {
 
-    private final HousekeeperClient housekeeperClient;
+    private final Optional<HousekeeperClient> housekeeperClient;
     private final RelationService relationService;
 
     private final Set<EntityType> skippedEntities = EnumSet.of(
@@ -59,7 +60,7 @@ public class CleanUpService {
                 cleanUpRelatedData(tenantId, entityId);
             }
             if (entityType == EntityType.USER) {
-                housekeeperClient.submitTask(HousekeeperTask.unassignAlarms((User) event.getEntity()));
+                submitTask(HousekeeperTask.unassignAlarms((User) event.getEntity()));
             }
         } catch (Throwable e) {
             log.error("[{}][{}][{}] Failed to handle entity deletion event", tenantId, entityType, entityId.getId(), e);
@@ -69,16 +70,22 @@ public class CleanUpService {
     public void cleanUpRelatedData(TenantId tenantId, EntityId entityId) {
         log.debug("[{}][{}][{}] Cleaning up related data", tenantId, entityId.getEntityType(), entityId.getId());
         relationService.deleteEntityRelations(tenantId, entityId);
-        housekeeperClient.submitTask(HousekeeperTask.deleteAttributes(tenantId, entityId));
-        housekeeperClient.submitTask(HousekeeperTask.deleteTelemetry(tenantId, entityId));
-        housekeeperClient.submitTask(HousekeeperTask.deleteEvents(tenantId, entityId));
-        housekeeperClient.submitTask(HousekeeperTask.deleteAlarms(tenantId, entityId));
+        submitTask(HousekeeperTask.deleteAttributes(tenantId, entityId));
+        submitTask(HousekeeperTask.deleteTelemetry(tenantId, entityId));
+        submitTask(HousekeeperTask.deleteEvents(tenantId, entityId));
+        submitTask(HousekeeperTask.deleteAlarms(tenantId, entityId));
     }
 
     public void removeTenantEntities(TenantId tenantId, EntityType... entityTypes) {
         for (EntityType entityType : entityTypes) {
-            housekeeperClient.submitTask(HousekeeperTask.deleteTenantEntities(tenantId, entityType));
+            submitTask(HousekeeperTask.deleteTenantEntities(tenantId, entityType));
         }
+    }
+
+    private void submitTask(HousekeeperTask task) {
+        housekeeperClient.ifPresent(housekeeperClient -> {
+            housekeeperClient.submitTask(task);
+        });
     }
 
 }
