@@ -47,21 +47,17 @@ export class SettingsEffects {
   ) {
   }
 
-  persistSettings = createEffect(() => this.actions$.pipe(
+  setTranslateServiceLanguage = createEffect(() => this.actions$.pipe(
     ofType(
       SettingsActionTypes.CHANGE_LANGUAGE,
     ),
     withLatestFrom(this.store.pipe(select(selectSettingsState))),
-    tap(([action, settings]) =>
-      this.localStorageService.setItem(SETTINGS_KEY, settings)
-    )
-  ), {dispatch: false});
-
-  setTranslateServiceLanguage = createEffect(() => this.store.pipe(
-    select(selectSettingsState),
-    map(settings => settings.userLang),
-    distinctUntilChanged(),
-    tap(userLang => updateUserLang(this.translate, userLang))
+    map(settings => settings[1]),
+    distinctUntilChanged((a, b) => a?.userLang === b?.userLang),
+    tap(setting => {
+      this.localStorageService.setItem(SETTINGS_KEY, setting);
+      updateUserLang(this.translate, setting.userLang);
+    })
   ), {dispatch: false});
 
   setTitle = createEffect(() => merge(
