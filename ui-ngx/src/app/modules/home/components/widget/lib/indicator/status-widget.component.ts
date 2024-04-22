@@ -180,6 +180,7 @@ export class StatusWidgetComponent extends
   private onDisabled(value: boolean): void {
     const newDisabled = !!value;
     if (this.disabled !== newDisabled) {
+      this.disabled = newDisabled;
       this.updateDisabledState(this.disabled);
     }
   }
