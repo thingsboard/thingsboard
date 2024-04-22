@@ -134,3 +134,9 @@ DELETE FROM asset WHERE type='TbServiceQueue';
 DELETE FROM asset_profile WHERE name ='TbServiceQueue';
 
 -- QUEUE STATS UPDATE END
+
+-- NOTIFICATIONS UPDATE START
+
+ALTER TABLE notification_request ALTER COLUMN stats SET DATA TYPE varchar(100000);
+
+-- NOTIFICATIONS UPDATE END
