@@ -15,17 +15,24 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.store;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.SecurityMode;
 import org.eclipse.leshan.core.peer.OscoreIdentity;
 import org.eclipse.leshan.server.security.NonUniqueSecurityInfoException;
 import org.eclipse.leshan.server.security.SecurityInfo;
+import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.integration.redis.util.RedisLockRegistry;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.JavaSerDesUtil;
 import org.thingsboard.server.transport.lwm2m.secure.TbLwM2MSecurityInfo;
 
 import java.util.concurrent.locks.Lock;
 
+import static org.thingsboard.server.transport.lwm2m.server.store.TbLwM2mRedisRegistrationStore.REG_EP;
+
+@Slf4j
 public class TbLwM2mRedisSecurityStore implements TbEditableSecurityStore {
     private static final String SEC_EP = "SEC#EP#";
     private static final String LOCK_EP = "LOCK#EP#";
@@ -49,11 +56,19 @@ public class TbLwM2mRedisSecurityStore implements TbEditableSecurityStore {
             if (data == null || data.length == 0) {
                 return null;
             } else {
-                if (SecurityMode.NO_SEC.equals(((TbLwM2MSecurityInfo) JavaSerDesUtil.decode(data)).getSecurityMode())) {
+                TbLwM2MSecurityInfo tbLwM2MSecurityInfo = JavaSerDesUtil.decode(data);
+                if (tbLwM2MSecurityInfo != null) {
+                    if (SecurityMode.NO_SEC.equals(tbLwM2MSecurityInfo.getSecurityMode())){
+                        return SecurityInfo.newPreSharedKeyInfo(SecurityMode.NO_SEC.toString(), SecurityMode.NO_SEC.toString(),
+                                SecurityMode.NO_SEC.toString().getBytes());
+                    } else {
+                        return tbLwM2MSecurityInfo.getSecurityInfo();
+                    }
+                } else if (SecurityMode.NO_SEC.equals(getSecurityModeByRegistration (connection,  endpoint))){
                     return SecurityInfo.newPreSharedKeyInfo(SecurityMode.NO_SEC.toString(), SecurityMode.NO_SEC.toString(),
                             SecurityMode.NO_SEC.toString().getBytes());
                 } else {
-                    return ((TbLwM2MSecurityInfo) JavaSerDesUtil.decode(data)).getSecurityInfo();
+                    return null;
                 }
             }
         } finally {
@@ -167,5 +182,18 @@ public class TbLwM2mRedisSecurityStore implements TbEditableSecurityStore {
 
     private String toLockKey(String endpoint) {
         return LOCK_EP + endpoint;
+    }
+
+    private SecurityMode getSecurityModeByRegistration (RedisConnection connection, String endpoint) {
+        try {
+            byte[] data = connection.get((REG_EP + endpoint).getBytes());
+            JsonNode registrationNode = JacksonUtil.fromString(new String(data != null ? data : new byte[0]), JsonNode.class);
+            String typeModeStr = registrationNode.get("transportdata").get("identity").get("type").asText();
+            return "unsecure".equals(typeModeStr) ? SecurityMode.NO_SEC : null;
+        } catch (Exception e) {
+            log.error("Redis: Failed get SecurityMode by Registration, endpoint: [{}]", endpoint);
+            return null;
+        }
+
     }
 }
