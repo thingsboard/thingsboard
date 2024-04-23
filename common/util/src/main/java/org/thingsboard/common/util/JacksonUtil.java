@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.type.CollectionType;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.collect.Lists;
@@ -39,6 +40,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -133,7 +136,7 @@ public class JacksonUtil {
         try {
             return bytes != null ? OBJECT_MAPPER.readValue(bytes, clazz) : null;
         } catch (IOException e) {
-            throw new IllegalArgumentException("The given string value cannot be transformed to Json object: " + Arrays.toString(bytes), e);
+            throw new IllegalArgumentException("The given byte[] value cannot be transformed to Json object:" + Arrays.toString(bytes), e);
         }
     }
 
@@ -158,6 +161,15 @@ public class JacksonUtil {
             return value != null ? OBJECT_MAPPER.writeValueAsString(value) : null;
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("The given Json object value cannot be transformed to a String: " + value, e);
+        }
+    }
+
+    public static String writeValueAsString(Object value) {
+        try {
+            return OBJECT_MAPPER.writeValueAsString(value);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("The given Json object value: "
+                    + value + " cannot be transformed to a String", e);
         }
     }
 
@@ -206,6 +218,38 @@ public class JacksonUtil {
         }
     }
 
+    public static <T> T readValue(String file, CollectionType clazz) {
+        try {
+            return OBJECT_MAPPER.readValue(file, clazz);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Can't read file: " + file, e);
+        }
+    }
+
+    public static <T> T readValue(File file, TypeReference<T> clazz) {
+        try {
+            return OBJECT_MAPPER.readValue(file, clazz);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Can't read file: " + file, e);
+        }
+    }
+
+    public static <T> T readValue(File file, Class<T> clazz) {
+        try {
+            return OBJECT_MAPPER.readValue(file, clazz);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Can't read file: " + file, e);
+        }
+    }
+
+    public static JsonNode toJsonNode(Path file) {
+        try {
+            return OBJECT_MAPPER.readTree(Files.readAllBytes(file));
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Can't read file: " + file, e);
+        }
+    }
+
     public static JsonNode toJsonNode(File value) {
         try {
             return value != null ? OBJECT_MAPPER.readTree(value) : null;
@@ -248,7 +292,6 @@ public class JacksonUtil {
             throw new IllegalArgumentException("The given Json object value cannot be transformed to a String: " + value, e);
         }
     }
-
 
     public static JsonNode getSafely(JsonNode node, String... path) {
         if (node == null) {
