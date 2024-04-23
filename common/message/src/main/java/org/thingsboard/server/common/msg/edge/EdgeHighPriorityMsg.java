@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge.rpc;
+package org.thingsboard.server.common.msg.edge;
 
-import com.google.common.util.concurrent.SettableFuture;
 import lombok.Data;
-import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
-
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.concurrent.ScheduledFuture;
+import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.MsgType;
 
 @Data
-public class EdgeSessionState {
+public class EdgeHighPriorityMsg implements EdgeSessionMsg {
 
-    private final Map<Integer, DownlinkMsg> pendingMsgsMap = Collections.synchronizedMap(new LinkedHashMap<>());
-    private SettableFuture<Boolean> sendDownlinkMsgsFuture;
-    private ScheduledFuture<?> scheduledSendDownlinkTask;
+    private final TenantId tenantId;
+    private final EdgeEvent edgeEvent;
+
+    @Override
+    public MsgType getMsgType() {
+        return MsgType.EDGE_HIGH_PRIORITY_TO_EDGE_SESSION_MSG;
+    }
 
 }

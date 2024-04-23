@@ -27,7 +27,6 @@ import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -124,9 +123,6 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
 
     @Autowired
     protected EdgeEventService edgeEventService;
-
-    @Autowired
-    protected TbClusterService clusterService;
 
     @Before
     public void setupEdgeTest() throws Exception {

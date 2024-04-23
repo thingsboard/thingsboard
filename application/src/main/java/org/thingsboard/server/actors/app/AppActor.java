@@ -37,12 +37,10 @@ import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
-import org.thingsboard.server.common.msg.edge.EdgeSessionMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.common.msg.queue.ServiceType;
-import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
@@ -109,11 +107,6 @@ public class AppActor extends ContextAwareActor {
             case SERVER_RPC_RESPONSE_TO_DEVICE_ACTOR_MSG:
             case REMOVE_RPC_TO_DEVICE_ACTOR_MSG:
                 onToDeviceActorMsg((TenantAwareMsg) msg, true);
-                break;
-            case EDGE_EVENT_UPDATE_TO_EDGE_SESSION_MSG:
-            case EDGE_SYNC_REQUEST_TO_EDGE_SESSION_MSG:
-            case EDGE_SYNC_RESPONSE_FROM_EDGE_SESSION_MSG:
-                onToEdgeSessionMsg((EdgeSessionMsg) msg);
                 break;
             case SESSION_TIMEOUT_MSG:
                 ctx.broadcastToChildrenByType(msg, EntityType.TENANT);
@@ -204,20 +197,6 @@ public class AppActor extends ContextAwareActor {
                 () -> DefaultActorService.TENANT_DISPATCHER_NAME,
                 () -> new TenantActor.ActorCreator(systemContext, tenantId),
                 () -> true));
-    }
-
-    private void onToEdgeSessionMsg(EdgeSessionMsg msg) {
-        TbActorRef target = null;
-        if (ModelConstants.SYSTEM_TENANT.equals(msg.getTenantId())) {
-            log.warn("Message has system tenant id: {}", msg);
-        } else {
-            target = getOrCreateTenantActor(msg.getTenantId()).orElse(null);
-        }
-        if (target != null) {
-            target.tellWithHighPriority(msg);
-        } else {
-            log.debug("[{}] Invalid edge session msg: {}", msg.getTenantId(), msg);
-        }
     }
 
     @Override

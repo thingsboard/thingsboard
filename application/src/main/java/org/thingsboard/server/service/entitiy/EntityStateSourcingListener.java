@@ -18,7 +18,6 @@ package org.thingsboard.server.service.entitiy;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.common.util.JacksonUtil;
@@ -48,6 +47,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
+import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceCredentialsUpdateNotificationMsg;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
@@ -62,9 +62,6 @@ import java.util.Set;
 public class EntityStateSourcingListener {
 
     private final TbClusterService tbClusterService;
-
-    @Value("${edges.enabled}")
-    private boolean edgesEnabled;
 
     @PostConstruct
     public void init() {
@@ -231,11 +228,10 @@ public class EntityStateSourcingListener {
     }
 
     private void onEdgeEvent(TenantId tenantId, EntityId entityId, Object entity, ComponentLifecycleEvent lifecycleEvent) {
-        if (entity instanceof Edge && edgesEnabled) {
-            tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, lifecycleEvent);
+        if (entity instanceof Edge) {
+            tbClusterService.onEdgeStateChangeEvent(new ComponentLifecycleMsg(tenantId, entityId, lifecycleEvent));
         } else if (entity instanceof EdgeEvent edgeEvent) {
-            boolean highPriority = edgeEvent.getBody() != null && edgeEvent.getBody().has("highPriority");
-            tbClusterService.onEdgeEventUpdate(new EdgeEventUpdateMsg(tenantId, edgeEvent.getEdgeId(), highPriority));
+            tbClusterService.onEdgeEventUpdate(new EdgeEventUpdateMsg(tenantId, edgeEvent.getEdgeId()));
         }
     }
 

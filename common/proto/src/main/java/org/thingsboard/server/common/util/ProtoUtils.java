@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
@@ -26,6 +27,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
@@ -35,6 +37,8 @@ import org.thingsboard.server.common.data.device.data.CoapDeviceTransportConfigu
 import org.thingsboard.server.common.data.device.data.Lwm2mDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.PowerMode;
 import org.thingsboard.server.common.data.device.data.PowerSavingConfiguration;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
@@ -67,6 +71,7 @@ import org.thingsboard.server.common.data.sync.vc.RepositoryAuthMethod;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
+import org.thingsboard.server.common.msg.edge.EdgeHighPriorityMsg;
 import org.thingsboard.server.common.msg.edge.FromEdgeSyncResponse;
 import org.thingsboard.server.common.msg.edge.ToEdgeSyncRequest;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
@@ -169,21 +174,63 @@ public class ProtoUtils {
         );
     }
 
+    public static TransportProtos.EdgeHighPriorityMsgProto toProto(EdgeHighPriorityMsg msg) {
+        TransportProtos.EdgeHighPriorityMsgProto.Builder builder = TransportProtos.EdgeHighPriorityMsgProto.newBuilder()
+                .setTenantIdMSB(msg.getTenantId().getId().getMostSignificantBits())
+                .setTenantIdLSB(msg.getTenantId().getId().getLeastSignificantBits())
+                .setType(msg.getEdgeEvent().getType().name())
+                .setAction(msg.getEdgeEvent().getAction().name());
+
+        if (msg.getEdgeEvent().getEntityId() != null) {
+            builder.setEntityIdMSB(msg.getEdgeEvent().getEntityId().getMostSignificantBits());
+            builder.setEntityIdLSB(msg.getEdgeEvent().getEntityId().getLeastSignificantBits());
+        }
+        if (msg.getEdgeEvent().getEdgeId() != null) {
+            builder.setEdgeIdMSB(msg.getEdgeEvent().getEdgeId().getId().getMostSignificantBits());
+            builder.setEdgeIdLSB(msg.getEdgeEvent().getEdgeId().getId().getLeastSignificantBits());
+        }
+        if (msg.getEdgeEvent().getBody() != null) {
+            builder.setBody(JacksonUtil.toString(msg.getEdgeEvent().getBody()));
+        }
+
+        return builder.build();
+    }
+
+    public static EdgeHighPriorityMsg fromProto(TransportProtos.EdgeHighPriorityMsgProto proto) {
+        EdgeEventType type = EdgeEventType.valueOf(proto.getType());
+        EdgeEventActionType actionType = EdgeEventActionType.valueOf(proto.getAction());
+        JsonNode body = proto.hasBody() ? JacksonUtil.toJsonNode(proto.getBody()) : null;
+
+        EdgeId edgeId = null;
+        if (proto.hasEdgeIdMSB() && proto.hasEdgeIdLSB()) {
+            edgeId = EdgeId.fromUUID(new UUID(proto.getEdgeIdMSB(), proto.getEdgeIdLSB()));
+        }
+
+        EntityId entityId = null;
+        if (proto.hasEntityIdMSB() && proto.hasEntityIdLSB()) {
+            entityId = EntityIdFactory.getByEdgeEventTypeAndUuid(type, new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()));
+        }
+
+        return new EdgeHighPriorityMsg(
+                TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
+                EdgeUtils.constructEdgeEvent(TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
+                        edgeId, type, actionType, entityId, body)
+        );
+    }
+
     public static TransportProtos.EdgeEventUpdateMsgProto toProto(EdgeEventUpdateMsg msg) {
         return TransportProtos.EdgeEventUpdateMsgProto.newBuilder()
                 .setTenantIdMSB(msg.getTenantId().getId().getMostSignificantBits())
                 .setTenantIdLSB(msg.getTenantId().getId().getLeastSignificantBits())
                 .setEdgeIdMSB(msg.getEdgeId().getId().getMostSignificantBits())
                 .setEdgeIdLSB(msg.getEdgeId().getId().getLeastSignificantBits())
-                .setHighPriority(msg.isHighPriority())
                 .build();
     }
 
     public static EdgeEventUpdateMsg fromProto(TransportProtos.EdgeEventUpdateMsgProto proto) {
         return new EdgeEventUpdateMsg(
                 TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
-                EdgeId.fromUUID(new UUID(proto.getEdgeIdMSB(), proto.getEdgeIdLSB())),
-                proto.getHighPriority()
+                EdgeId.fromUUID(new UUID(proto.getEdgeIdMSB(), proto.getEdgeIdLSB()))
         );
     }
 

@@ -127,6 +127,7 @@ public enum MsgType {
      * Message that is sent on Edge Event to Edge Session
      */
     EDGE_EVENT_UPDATE_TO_EDGE_SESSION_MSG,
+    EDGE_HIGH_PRIORITY_TO_EDGE_SESSION_MSG,
 
     /**
      * Messages that are sent to and from edge session to start edge synchronization process

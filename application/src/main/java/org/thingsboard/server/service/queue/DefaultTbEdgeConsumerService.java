@@ -30,9 +30,13 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.msg.edge.EdgeSessionMsg;
+import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.stats.StatsFactory;
@@ -47,7 +51,6 @@ import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
-import org.thingsboard.server.service.edge.stats.EdgeConsumerStats;
 import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
 import org.thingsboard.server.service.queue.processing.IdMsgPair;
 
@@ -204,28 +207,44 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
     }
 
     @Override
-    protected List<IdMsgPair<ToEdgeNotificationMsg>> getOrderedMsgList(List<TbProtoQueueMsg<ToEdgeNotificationMsg>> msgs) {
-        return msgs.stream()
-                .sorted((msg1, msg2) -> Boolean.compare(msg2.getValue().getHighPriority(), msg1.getValue().getHighPriority()))
-                .map(msg -> new IdMsgPair<>(UUID.randomUUID(), msg))
-                .collect(Collectors.toList());
-    }
-
-    @Override
     protected void handleNotification(UUID id, TbProtoQueueMsg<ToEdgeNotificationMsg> msg, TbCallback callback) {
         ToEdgeNotificationMsg toEdgeNotificationMsg = msg.getValue();
-        if (toEdgeNotificationMsg.hasEdgeEventUpdate()) {
-            forwardToAppActor(id, ProtoUtils.fromProto(toEdgeNotificationMsg.getEdgeEventUpdate()));
-            callback.onSuccess();
-        } else if (toEdgeNotificationMsg.hasToEdgeSyncRequest()) {
-            forwardToAppActor(id, ProtoUtils.fromProto(toEdgeNotificationMsg.getToEdgeSyncRequest()));
-            callback.onSuccess();
-        } else if (toEdgeNotificationMsg.hasFromEdgeSyncResponse()) {
-            forwardToAppActor(id, ProtoUtils.fromProto(toEdgeNotificationMsg.getFromEdgeSyncResponse()));
-            callback.onSuccess();
+        try {
+            if (toEdgeNotificationMsg.hasEdgeHighPriority()) {
+                EdgeSessionMsg edgeSessionMsg = ProtoUtils.fromProto(toEdgeNotificationMsg.getEdgeHighPriority());
+                edgeCtx.getEdgeRpcService().onToEdgeSessionMsg(edgeSessionMsg.getTenantId(), edgeSessionMsg);
+                callback.onSuccess();
+            } else if (toEdgeNotificationMsg.hasEdgeEventUpdate()) {
+                EdgeSessionMsg edgeSessionMsg = ProtoUtils.fromProto(toEdgeNotificationMsg.getEdgeEventUpdate());
+                edgeCtx.getEdgeRpcService().onToEdgeSessionMsg(edgeSessionMsg.getTenantId(), edgeSessionMsg);
+                callback.onSuccess();
+            } else if (toEdgeNotificationMsg.hasToEdgeSyncRequest()) {
+                EdgeSessionMsg edgeSessionMsg = ProtoUtils.fromProto(toEdgeNotificationMsg.getToEdgeSyncRequest());
+                edgeCtx.getEdgeRpcService().onToEdgeSessionMsg(edgeSessionMsg.getTenantId(), edgeSessionMsg);
+                callback.onSuccess();
+            } else if (toEdgeNotificationMsg.hasFromEdgeSyncResponse()) {
+                EdgeSessionMsg edgeSessionMsg = ProtoUtils.fromProto(toEdgeNotificationMsg.getFromEdgeSyncResponse());
+                edgeCtx.getEdgeRpcService().onToEdgeSessionMsg(edgeSessionMsg.getTenantId(), edgeSessionMsg);
+                callback.onSuccess();
+            } else if (toEdgeNotificationMsg.hasComponentLifecycle()) {
+                ComponentLifecycleMsg componentLifecycle = ProtoUtils.fromProto(toEdgeNotificationMsg.getComponentLifecycle());
+                TenantId tenantId = componentLifecycle.getTenantId();
+                EdgeId edgeId = new EdgeId(componentLifecycle.getEntityId().getId());
+                if (ComponentLifecycleEvent.DELETED.equals(componentLifecycle.getEvent())) {
+                    edgeCtx.getEdgeRpcService().deleteEdge(tenantId, edgeId);
+                } else if (ComponentLifecycleEvent.UPDATED.equals(componentLifecycle.getEvent())) {
+                    Edge edge = edgeCtx.getEdgeService().findEdgeById(tenantId, edgeId);
+                    edgeCtx.getEdgeRpcService().updateEdge(tenantId, edge);
+                }
+                callback.onSuccess();
+            }
+        } catch (Exception e) {
+            log.error("Error processing edge notification message: {}", e.getMessage(), e);
+            callback.onFailure(e);
         }
+
         if (statsEnabled) {
-            stats.log(toEdgeNotificationMsg);
+            stats.log(msg.getValue());
         }
     }
 
@@ -293,11 +312,6 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
     private void callBackFailure(TenantId tenantId, EdgeNotificationMsgProto edgeNotificationMsg, TbCallback callback, Throwable throwable) {
         log.error("[{}] Can't push to edge updates, edgeNotificationMsg [{}]", tenantId, edgeNotificationMsg, throwable);
         callback.onFailure(throwable);
-    }
-
-    private void forwardToAppActor(UUID id, TbActorMsg actorMsg) {
-        log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg);
-        actorContext.tell(actorMsg);
     }
 
     @Scheduled(fixedDelayString = "${queue.edge.stats.print-interval-ms}")

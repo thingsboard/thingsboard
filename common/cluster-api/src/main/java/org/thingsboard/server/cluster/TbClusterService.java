@@ -30,8 +30,10 @@ import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
+import org.thingsboard.server.common.msg.edge.EdgeHighPriorityMsg;
 import org.thingsboard.server.common.msg.edge.FromEdgeSyncResponse;
 import org.thingsboard.server.common.msg.edge.ToEdgeSyncRequest;
+import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
@@ -93,7 +95,11 @@ public interface TbClusterService extends TbQueueClusterService {
 
     void onResourceDeleted(TbResourceInfo resource, TbQueueCallback callback);
 
+    void onEdgeHighPriorityMsg(EdgeHighPriorityMsg msg);
+
     void onEdgeEventUpdate(EdgeEventUpdateMsg msg);
+
+    void onEdgeStateChangeEvent(ComponentLifecycleMsg msg);
 
     void pushEdgeSyncRequestToEdge(ToEdgeSyncRequest request);
 

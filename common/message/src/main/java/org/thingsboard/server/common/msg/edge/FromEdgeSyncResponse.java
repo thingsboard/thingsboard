@@ -36,4 +36,5 @@ public class FromEdgeSyncResponse implements EdgeSessionMsg {
     public MsgType getMsgType() {
         return MsgType.EDGE_SYNC_RESPONSE_FROM_EDGE_SESSION_MSG;
     }
+
 }

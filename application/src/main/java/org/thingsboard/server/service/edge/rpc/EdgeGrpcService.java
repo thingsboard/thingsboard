@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.ResourceUtils;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
@@ -48,6 +49,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
+import org.thingsboard.server.common.msg.edge.EdgeHighPriorityMsg;
 import org.thingsboard.server.common.msg.edge.EdgeSessionMsg;
 import org.thingsboard.server.common.msg.edge.FromEdgeSyncResponse;
 import org.thingsboard.server.common.msg.edge.ToEdgeSyncRequest;
@@ -200,74 +202,89 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
     @Override
     public void onToEdgeSessionMsg(TenantId tenantId, EdgeSessionMsg msg) {
-        executorService.execute(() -> {
-            switch (msg.getMsgType()) {
-                case EDGE_EVENT_UPDATE_TO_EDGE_SESSION_MSG -> {
-                    EdgeEventUpdateMsg edgeEventUpdateMsg = (EdgeEventUpdateMsg) msg;
-                    log.trace("[{}] onToEdgeEventUpdateMsg [{}]", tenantId, msg);
-                    onEdgeEvent(tenantId, edgeEventUpdateMsg.getEdgeId());
-                }
-                case EDGE_SYNC_REQUEST_TO_EDGE_SESSION_MSG -> {
-                    ToEdgeSyncRequest toEdgeSyncRequest = (ToEdgeSyncRequest) msg;
-                    log.trace("[{}] toEdgeSyncRequest [{}]", tenantId, msg);
-                    startSyncProcess(tenantId, toEdgeSyncRequest.getEdgeId(), toEdgeSyncRequest.getId());
-                }
-                case EDGE_SYNC_RESPONSE_FROM_EDGE_SESSION_MSG -> {
-                    FromEdgeSyncResponse fromEdgeSyncResponse = (FromEdgeSyncResponse) msg;
-                    log.trace("[{}] fromEdgeSyncResponse [{}]", tenantId, msg);
-                    processSyncResponse(fromEdgeSyncResponse);
-                }
+        switch (msg.getMsgType()) {
+            case EDGE_HIGH_PRIORITY_TO_EDGE_SESSION_MSG -> {
+                EdgeHighPriorityMsg edgeHighPriorityMsg = (EdgeHighPriorityMsg) msg;
+                log.trace("[{}] edgeEventMsg [{}]", tenantId, msg);
+                onEdgeHighPriorityEvent(edgeHighPriorityMsg);
             }
-        });
+            case EDGE_EVENT_UPDATE_TO_EDGE_SESSION_MSG -> {
+                EdgeEventUpdateMsg edgeEventUpdateMsg = (EdgeEventUpdateMsg) msg;
+                log.trace("[{}] onToEdgeEventUpdateMsg [{}]", tenantId, msg);
+                onEdgeEventUpdate(tenantId, edgeEventUpdateMsg.getEdgeId());
+            }
+            case EDGE_SYNC_REQUEST_TO_EDGE_SESSION_MSG -> {
+                ToEdgeSyncRequest toEdgeSyncRequest = (ToEdgeSyncRequest) msg;
+                log.trace("[{}] toEdgeSyncRequest [{}]", tenantId, msg);
+                startSyncProcess(tenantId, toEdgeSyncRequest.getEdgeId(), toEdgeSyncRequest.getId());
+            }
+            case EDGE_SYNC_RESPONSE_FROM_EDGE_SESSION_MSG -> {
+                FromEdgeSyncResponse fromEdgeSyncResponse = (FromEdgeSyncResponse) msg;
+                log.trace("[{}] fromEdgeSyncResponse [{}]", tenantId, msg);
+                processSyncResponse(fromEdgeSyncResponse);
+            }
+        }
     }
 
     @Override
     public void updateEdge(TenantId tenantId, Edge edge) {
-        executorService.execute(() -> {
-            EdgeGrpcSession session = sessions.get(edge.getId());
-            if (session != null && session.isConnected()) {
-                log.debug("[{}] Updating configuration for edge [{}] [{}]", tenantId, edge.getName(), edge.getId());
-                session.onConfigurationUpdate(edge);
-            } else {
-                log.debug("[{}] Session doesn't exist for edge [{}] [{}]", tenantId, edge.getName(), edge.getId());
-            }
-        });
+        EdgeGrpcSession session = sessions.get(edge.getId());
+        if (session != null && session.isConnected()) {
+            log.debug("[{}] Updating configuration for edge [{}] [{}]", tenantId, edge.getName(), edge.getId());
+            session.onConfigurationUpdate(edge);
+        } else {
+            log.debug("[{}] Session doesn't exist for edge [{}] [{}]", tenantId, edge.getName(), edge.getId());
+        }
     }
 
     @Override
     public void deleteEdge(TenantId tenantId, EdgeId edgeId) {
-        executorService.execute(() -> {
-            EdgeGrpcSession session = sessions.get(edgeId);
-            if (session != null && session.isConnected()) {
-                log.info("[{}] Closing and removing session for edge [{}]", tenantId, edgeId);
-                session.close();
-                sessions.remove(edgeId);
-                final Lock newEventLock = sessionNewEventsLocks.computeIfAbsent(edgeId, id -> new ReentrantLock());
-                newEventLock.lock();
-                try {
-                    sessionNewEvents.remove(edgeId);
-                } finally {
-                    newEventLock.unlock();
-                }
-                cancelScheduleEdgeEventsCheck(edgeId);
-            }
-        });
-    }
-
-    private void onEdgeEvent(TenantId tenantId, EdgeId edgeId) {
         EdgeGrpcSession session = sessions.get(edgeId);
         if (session != null && session.isConnected()) {
-            log.trace("[{}] onEdgeEvent [{}]", tenantId, edgeId.getId());
+            log.info("[{}] Closing and removing session for edge [{}]", tenantId, edgeId);
+            session.close();
+            sessions.remove(edgeId);
             final Lock newEventLock = sessionNewEventsLocks.computeIfAbsent(edgeId, id -> new ReentrantLock());
             newEventLock.lock();
             try {
-                if (Boolean.FALSE.equals(sessionNewEvents.get(edgeId))) {
-                    log.trace("[{}] set session new events flag to true [{}]", tenantId, edgeId.getId());
-                    sessionNewEvents.put(edgeId, true);
-                }
+                sessionNewEvents.remove(edgeId);
             } finally {
                 newEventLock.unlock();
             }
+            cancelScheduleEdgeEventsCheck(edgeId);
+        }
+    }
+
+    private void onEdgeEventUpdate(TenantId tenantId, EdgeId edgeId) {
+        EdgeGrpcSession session = sessions.get(edgeId);
+        if (session != null && session.isConnected()) {
+            log.trace("[{}] onEdgeEventUpdate [{}]", tenantId, edgeId.getId());
+            updateSessionEventsFlag(tenantId, edgeId);
+        }
+    }
+
+    private void onEdgeHighPriorityEvent(EdgeHighPriorityMsg msg) {
+        TenantId tenantId = msg.getTenantId();
+        EdgeEvent edgeEvent = msg.getEdgeEvent();
+        EdgeId edgeId = edgeEvent.getEdgeId();
+        EdgeGrpcSession session = sessions.get(edgeId);
+        if (session != null && session.isConnected()) {
+            log.trace("[{}] onEdgeEvent [{}]", tenantId, edgeId);
+            session.addEventToHighPriorityQueue(edgeEvent);
+            updateSessionEventsFlag(tenantId, edgeId);
+        }
+    }
+
+    private void updateSessionEventsFlag(TenantId tenantId, EdgeId edgeId) {
+        final Lock newEventLock = sessionNewEventsLocks.computeIfAbsent(edgeId, id -> new ReentrantLock());
+        newEventLock.lock();
+        try {
+            if (Boolean.FALSE.equals(sessionNewEvents.get(edgeId))) {
+                log.trace("[{}] set session new events flag to true [{}]", tenantId, edgeId.getId());
+                sessionNewEvents.put(edgeId, true);
+            }
+        } finally {
+            newEventLock.unlock();
         }
     }
 

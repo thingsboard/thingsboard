@@ -51,7 +51,6 @@ import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
-import org.thingsboard.server.service.queue.processing.IdMsgPair;
 import org.thingsboard.server.service.queue.ruleengine.TbRuleEngineConsumerContext;
 import org.thingsboard.server.service.queue.ruleengine.TbRuleEngineQueueConsumerManager;
 import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
@@ -166,11 +165,6 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     @Override
     protected long getNotificationPackProcessingTimeout() {
         return ctx.getPackProcessingTimeout();
-    }
-
-    @Override
-    protected List<IdMsgPair<ToRuleEngineNotificationMsg>> getOrderedMsgList(List<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> msgs) {
-        return msgs.stream().map(msg -> new IdMsgPair<>(UUID.randomUUID(), msg)).toList();
     }
 
     @Override

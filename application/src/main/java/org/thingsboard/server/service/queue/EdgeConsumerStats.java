@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge.stats;
+package org.thingsboard.server.service.queue;
 
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.stats.StatsCounter;
@@ -27,28 +27,35 @@ import java.util.List;
 
 @Slf4j
 public class EdgeConsumerStats {
+
     public static final String TOTAL_MSGS = "totalMsgs";
     public static final String EDGE_NOTIFICATIONS = "edgeNfs";
+    public static final String TO_CORE_NF_EDGE_EVENT = "coreNfEdgeHPUpd";
     public static final String TO_CORE_NF_EDGE_EVENT_UPDATE = "coreNfEdgeUpd";
     public static final String TO_CORE_NF_EDGE_SYNC_REQUEST = "coreNfEdgeSyncReq";
     public static final String TO_CORE_NF_EDGE_SYNC_RESPONSE = "coreNfEdgeSyncResp";
+    public static final String TO_CORE_NF_EDGE_COMPONENT_LIFECYCLE = "coreNfEdgeCompLfcl";
 
     private final StatsCounter totalCounter;
     private final StatsCounter edgeNotificationsCounter;
+    private final StatsCounter edgeHighPriorityCounter;
     private final StatsCounter edgeEventUpdateCounter;
     private final StatsCounter edgeSyncRequestCounter;
     private final StatsCounter edgeSyncResponseCounter;
+    private final StatsCounter edgeComponentLifecycle;
 
-    private final List<StatsCounter> counters = new ArrayList<>(5);
+    private final List<StatsCounter> counters = new ArrayList<>(7);
 
     public EdgeConsumerStats(StatsFactory statsFactory) {
         String statsKey = StatsType.EDGE.getName();
 
         this.totalCounter = register(statsFactory.createStatsCounter(statsKey, TOTAL_MSGS));
         this.edgeNotificationsCounter = register(statsFactory.createStatsCounter(statsKey, EDGE_NOTIFICATIONS));
+        this.edgeHighPriorityCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_EDGE_EVENT));
         this.edgeEventUpdateCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_EDGE_EVENT_UPDATE));
         this.edgeSyncRequestCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_EDGE_SYNC_REQUEST));
         this.edgeSyncResponseCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_EDGE_SYNC_RESPONSE));
+        this.edgeComponentLifecycle = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_EDGE_COMPONENT_LIFECYCLE));
     }
 
     private StatsCounter register(StatsCounter counter) {
@@ -58,12 +65,16 @@ public class EdgeConsumerStats {
 
     public void log(ToEdgeNotificationMsg msg) {
         totalCounter.increment();
-        if (msg.hasEdgeEventUpdate()) {
+        if (msg.hasEdgeHighPriority()) {
+            edgeHighPriorityCounter.increment();
+        } else if (msg.hasEdgeEventUpdate()) {
             edgeEventUpdateCounter.increment();
         } else if (msg.hasToEdgeSyncRequest()) {
             edgeSyncRequestCounter.increment();
         } else if (msg.hasFromEdgeSyncResponse()) {
             edgeSyncResponseCounter.increment();
+        } else if (msg.hasComponentLifecycle()) {
+            edgeComponentLifecycle.increment();
         }
     }
 
@@ -84,4 +95,5 @@ public class EdgeConsumerStats {
     public void reset() {
         counters.forEach(StatsCounter::clear);
     }
+
 }

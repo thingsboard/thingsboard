@@ -35,4 +35,5 @@ public class ToEdgeSyncRequest implements EdgeSessionMsg {
     public MsgType getMsgType() {
         return MsgType.EDGE_SYNC_REQUEST_TO_EDGE_SESSION_MSG;
     }
+
 }

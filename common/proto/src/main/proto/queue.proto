@@ -1104,12 +1104,23 @@ message EdgeNotificationMsgProto {
   int64 originatorEdgeIdLSB = 14;
 }
 
+message EdgeHighPriorityMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  optional int64 edgeIdMSB = 3;
+  optional int64 edgeIdLSB = 4;
+  string type = 5;
+  string action = 6;
+  optional string body = 7;
+  optional int64 entityIdMSB = 8;
+  optional int64 entityIdLSB = 9;
+}
+
 message EdgeEventUpdateMsgProto {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
   int64 edgeIdMSB = 3;
   int64 edgeIdLSB = 4;
-  bool highPriority = 5;
 }
 
 message ToEdgeSyncRequestMsgProto {
@@ -1475,10 +1486,11 @@ message ToEdgeMsg {
 }
 
 message ToEdgeNotificationMsg {
-  bool highPriority = 1;
+  EdgeHighPriorityMsgProto edgeHighPriority = 1;
   EdgeEventUpdateMsgProto edgeEventUpdate = 2;
   ToEdgeSyncRequestMsgProto toEdgeSyncRequest = 3;
   FromEdgeSyncResponseMsgProto fromEdgeSyncResponse = 4;
+  ComponentLifecycleMsgProto componentLifecycle = 5;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */

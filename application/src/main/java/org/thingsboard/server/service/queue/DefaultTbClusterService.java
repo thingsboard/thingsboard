@@ -52,6 +52,7 @@ import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
+import org.thingsboard.server.common.msg.edge.EdgeHighPriorityMsg;
 import org.thingsboard.server.common.msg.edge.FromEdgeSyncResponse;
 import org.thingsboard.server.common.msg.edge.ToEdgeSyncRequest;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
@@ -417,12 +418,25 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     @Override
+    public void onEdgeHighPriorityMsg(EdgeHighPriorityMsg msg) {
+        log.trace("[{}] Processing edge event for edgeId: {}", msg.getTenantId(), msg.getEdgeEvent().getEdgeId());
+        ToEdgeNotificationMsg toEdgeNotificationMsg = ToEdgeNotificationMsg.newBuilder().setEdgeHighPriority(toProto(msg)).build();
+        processEdgeNotification(msg.getEdgeEvent().getEdgeId(), toEdgeNotificationMsg);
+    }
+
+    @Override
     public void onEdgeEventUpdate(EdgeEventUpdateMsg msg) {
         log.trace("[{}] Processing edge event update for edgeId: {}", msg.getTenantId(), msg.getEdgeId());
-        ToEdgeNotificationMsg toEdgeNotificationMsg = ToEdgeNotificationMsg.newBuilder()
-                .setHighPriority(msg.isHighPriority())
-                .setEdgeEventUpdate(toProto(msg)).build();
+        ToEdgeNotificationMsg toEdgeNotificationMsg = ToEdgeNotificationMsg.newBuilder().setEdgeEventUpdate(toProto(msg)).build();
         processEdgeNotification(msg.getEdgeId(), toEdgeNotificationMsg);
+    }
+
+    @Override
+    public void onEdgeStateChangeEvent(ComponentLifecycleMsg msg) {
+        log.trace("[{}] Processing {} state change event: {}", msg.getTenantId(), EntityType.EDGE, msg.getEvent());
+        ComponentLifecycleMsgProto componentLifecycleMsgProto = toProto(msg);
+        ToEdgeNotificationMsg toEdgeNotificationMsg = ToEdgeNotificationMsg.newBuilder().setComponentLifecycle(componentLifecycleMsgProto).build();
+        processEdgeNotification((EdgeId) msg.getEntityId(), toEdgeNotificationMsg);
     }
 
     @Override
@@ -477,7 +491,6 @@ public class DefaultTbClusterService implements TbClusterService {
                 || entityType.equals(EntityType.API_USAGE_STATE)
                 || (entityType.equals(EntityType.DEVICE) && msg.getEvent() == ComponentLifecycleEvent.UPDATED)
                 || entityType.equals(EntityType.ENTITY_VIEW)
-                || entityType.equals(EntityType.EDGE)
                 || entityType.equals(EntityType.NOTIFICATION_RULE)) {
             TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> toCoreNfProducer = producerProvider.getTbCoreNotificationsMsgProducer();
             Set<String> tbCoreServices = partitionService.getAllServiceIds(ServiceType.TB_CORE);

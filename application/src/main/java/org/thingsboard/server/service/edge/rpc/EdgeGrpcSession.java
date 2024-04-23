@@ -97,6 +97,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
@@ -107,6 +108,7 @@ import java.util.function.BiConsumer;
 public final class EdgeGrpcSession implements Closeable {
 
     private static final ReentrantLock downlinkMsgLock = new ReentrantLock();
+    private static final ConcurrentLinkedQueue<EdgeEvent> highPriorityQueue = new ConcurrentLinkedQueue<>();
 
     private static final int MAX_DOWNLINK_ATTEMPTS = 10; // max number of attemps to send downlink message if edge connected
 
@@ -256,7 +258,7 @@ public final class EdgeGrpcSession implements Closeable {
                 @Override
                 public void onSuccess(Boolean isInterrupted) {
                     syncCompleted = true;
-                    ctx.getClusterService().onEdgeEventUpdate(new EdgeEventUpdateMsg(edge.getTenantId(), edge.getId(), false));
+                    ctx.getClusterService().onEdgeEventUpdate(new EdgeEventUpdateMsg(edge.getTenantId(), edge.getId()));
                 }
 
                 @Override
@@ -425,6 +427,11 @@ public final class EdgeGrpcSession implements Closeable {
 
     private void processEdgeEvents(EdgeEventFetcher fetcher, PageLink pageLink, SettableFuture<Pair<Long, Long>> result) {
         try {
+            // Process high priority events:
+            if (!highPriorityQueue.isEmpty()) {
+                processHighPriorityEvent(result);
+            }
+            // Continue regular event fetching
             PageData<EdgeEvent> pageData = fetcher.fetchEdgeEvents(edge.getTenantId(), edge, pageLink);
             if (isConnected() && !pageData.getData().isEmpty()) {
                 log.trace("[{}][{}][{}] event(s) are going to be processed.", this.tenantId, this.sessionId, pageData.getData().size());
@@ -466,6 +473,34 @@ public final class EdgeGrpcSession implements Closeable {
             log.error("[{}] Failed to fetch edge events", this.sessionId, e);
             result.setException(e);
         }
+    }
+
+    private void processHighPriorityEvent(SettableFuture<Pair<Long, Long>> result) {
+        List<EdgeEvent> highPriorityEvents = new ArrayList<>();
+        EdgeEvent event;
+        do {
+            event = highPriorityQueue.poll();
+            if (event != null) {
+                highPriorityEvents.add(event);
+            }
+        } while (event != null);
+
+        List<DownlinkMsg> downlinkMsgsPack = convertToDownlinkMsgsPack(highPriorityEvents);
+        Futures.addCallback(sendDownlinkMsgsPack(downlinkMsgsPack), new FutureCallback<>() {
+            @Override
+            public void onSuccess(@Nullable Boolean isInterrupted) {
+                if (Boolean.TRUE.equals(isInterrupted)) {
+                    log.debug("[{}][{}][{}] Send downlink messages task was interrupted", tenantId, edge.getId(), sessionId);
+                    result.set(null);
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.error("[{}] Failed to send downlink msgs pack", sessionId, t);
+                result.setException(t);
+            }
+        }, ctx.getGrpcCallbackExecutorService());
     }
 
     private ListenableFuture<Boolean> sendDownlinkMsgsPack(List<DownlinkMsg> downlinkMsgsPack) {
@@ -552,7 +587,9 @@ public final class EdgeGrpcSession implements Closeable {
             DownlinkMsg downlinkMsg = null;
             try {
                 switch (edgeEvent.getAction()) {
-                    case UPDATED, ADDED, DELETED, ASSIGNED_TO_EDGE, UNASSIGNED_FROM_EDGE, ALARM_ACK, ALARM_CLEAR, ALARM_DELETE, CREDENTIALS_UPDATED, RELATION_ADD_OR_UPDATE, RELATION_DELETED, CREDENTIALS_REQUEST, RPC_CALL, ASSIGNED_TO_CUSTOMER, UNASSIGNED_FROM_CUSTOMER, ADDED_COMMENT, UPDATED_COMMENT, DELETED_COMMENT -> {
+                    case UPDATED, ADDED, DELETED, ASSIGNED_TO_EDGE, UNASSIGNED_FROM_EDGE, ALARM_ACK, ALARM_CLEAR, ALARM_DELETE,
+                            CREDENTIALS_UPDATED, RELATION_ADD_OR_UPDATE, RELATION_DELETED, CREDENTIALS_REQUEST, RPC_CALL,
+                            ASSIGNED_TO_CUSTOMER, UNASSIGNED_FROM_CUSTOMER, ADDED_COMMENT, UPDATED_COMMENT, DELETED_COMMENT -> {
                         downlinkMsg = convertEntityEventToDownlink(edgeEvent);
                         log.trace("[{}][{}] entity message processed [{}]", this.tenantId, this.sessionId, downlinkMsg);
                     }
@@ -902,6 +939,10 @@ public final class EdgeGrpcSession implements Closeable {
         if (sessionState.getScheduledSendDownlinkTask() != null) {
             sessionState.getScheduledSendDownlinkTask().cancel(true);
         }
+    }
+
+    public void addEventToHighPriorityQueue(EdgeEvent edgeEvent) {
+        highPriorityQueue.add(edgeEvent);
     }
 
 }
