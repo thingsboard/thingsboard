@@ -73,8 +73,8 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
     private final MqttTransportHandler parent;
 
     public SparkplugNodeSessionHandler(MqttTransportHandler parent, DeviceSessionCtx deviceSessionCtx, UUID sessionId,
-                                       SparkplugTopic sparkplugTopicNode) {
-        super(deviceSessionCtx, sessionId);
+                                       boolean overwriteDevicesActivity, SparkplugTopic sparkplugTopicNode) {
+        super(deviceSessionCtx, sessionId, overwriteDevicesActivity);
         this.parent = parent;
         this.sparkplugTopicNode = sparkplugTopicNode;
         this.nodeBirthMetrics = new ConcurrentHashMap<>();
