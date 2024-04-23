@@ -21,7 +21,8 @@ import {
   FormBuilder,
   FormControl,
   FormGroup,
-  FormGroupDirective, NgForm,
+  FormGroupDirective,
+  NgForm,
   UntypedFormControl,
   ValidatorFn,
   Validators
@@ -165,18 +166,17 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     this.serverDataSource = new AttributeDatasource(this.attributeService, this.telemetryWsService, this.zone, this.translate);
     this.dataSource = new MatTableDataSource<AttributeData>([]);
     this.connectorForm = this.fb.group({
-        mode: [ConnectorConfigurationModes.BASIC, []],
-        name: ['', [Validators.required, this.uniqNameRequired(), Validators.pattern(noLeadTrailSpacesRegex)]],
-        type: ['', [Validators.required]],
-        enableRemoteLogging: [false, []],
-        logLevel: ['', [Validators.required]],
-        sendDataOnlyOnChange: [false, []],
-        key: ['auto'],
-        class: [''],
-        configuration: [''],
-        configurationJson: [{}, [Validators.required]],
-        basicConfig: this.fb.group({
-      })
+      mode: [ConnectorConfigurationModes.BASIC, []],
+      name: ['', [Validators.required, this.uniqNameRequired(), Validators.pattern(noLeadTrailSpacesRegex)]],
+      type: ['', [Validators.required]],
+      enableRemoteLogging: [false, []],
+      logLevel: ['', [Validators.required]],
+      sendDataOnlyOnChange: [false, []],
+      key: ['auto'],
+      class: [''],
+      configuration: [''],
+      configurationJson: [{}, [Validators.required]],
+      basicConfig: this.fb.group({})
     });
     this.connectorForm.disable();
   }
