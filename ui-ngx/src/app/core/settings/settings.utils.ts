@@ -18,7 +18,7 @@ import { environment as env } from '@env/environment';
 import { TranslateService } from '@ngx-translate/core';
 import * as _moment from 'moment';
 
-export function updateUserLang(translate: TranslateService, userLang: string) {
+export function updateUserLang(translate: TranslateService, userLang: string, translations = env.supportedLangs) {
   let targetLang = userLang;
   if (!env.production) {
     console.log(`User lang: ${targetLang}`);
@@ -29,7 +29,7 @@ export function updateUserLang(translate: TranslateService, userLang: string) {
       console.log(`Fallback to browser lang: ${targetLang}`);
     }
   }
-  const detectedSupportedLang = detectSupportedLang(targetLang);
+  const detectedSupportedLang = detectSupportedLang(targetLang, translations);
   if (!env.production) {
     console.log(`Detected supported lang: ${detectedSupportedLang}`);
   }
@@ -37,10 +37,10 @@ export function updateUserLang(translate: TranslateService, userLang: string) {
   _moment.locale([detectedSupportedLang]);
 }
 
-function detectSupportedLang(targetLang: string): string {
+function detectSupportedLang(targetLang: string, translations: string[]): string {
   const langTag = (targetLang || '').split('-').join('_');
   if (langTag.length) {
-    if (env.supportedLangs.indexOf(langTag) > -1) {
+    if (translations.indexOf(langTag) > -1) {
       return langTag;
     } else {
       const parts = langTag.split('_');
@@ -50,7 +50,7 @@ function detectSupportedLang(targetLang: string): string {
       } else {
         lang = langTag;
       }
-      const foundLangs = env.supportedLangs.filter(
+      const foundLangs = translations.filter(
         (supportedLang: string) => {
           const supportedLangParts = supportedLang.split('_');
           return supportedLangParts[0] === lang;
