@@ -9,13 +9,6 @@
 
     <logger name="org.thingsboard.server.dao" level="WARN"/>
     <logger name="org.testcontainers" level="INFO" />
-    <logger name="org.thingsboard.server.dao.sql.user" level="TRACE" />
-
-    <logger name="org.hibernate.type.descriptor" level="TRACE"/>
-    <logger name="org.hibernate.orm.jdbc.bind" level="TRACE"/>
-    <logger name="org.hibernate.orm.jdbc" level="TRACE"/>
-<!--    <logger name="org.hibernate" level="TRACE"/>-->
-
 
     <!-- Log Hibernate SQL queries -->
     <!-- <logger name="org.hibernate.SQL" level="DEBUG"/> -->
