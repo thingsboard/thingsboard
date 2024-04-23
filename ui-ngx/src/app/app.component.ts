@@ -27,10 +27,13 @@ import { LocalStorageService } from '@core/local-storage/local-storage.service';
 import { DomSanitizer } from '@angular/platform-browser';
 import { MatIconRegistry } from '@angular/material/icon';
 import { combineLatest } from 'rxjs';
-import { selectIsAuthenticated, selectIsUserLoaded } from '@core/auth/auth.selectors';
-import { distinctUntilChanged, filter, map, skip } from 'rxjs/operators';
+import { getCurrentAuthState, selectIsAuthenticated, selectIsUserLoaded } from '@core/auth/auth.selectors';
+import { distinctUntilChanged, filter, map, skip, tap } from 'rxjs/operators';
 import { AuthService } from '@core/auth/auth.service';
 import { svgIcons, svgIconsUrl } from '@shared/models/icon.models';
+import { isEqual } from '@core/utils';
+import { ActionSettingsChangeLanguage } from '@core/settings/settings.actions';
+import { SETTINGS_KEY } from '@core/settings/settings.effects';
 
 @Component({
   selector: 'tb-root',
@@ -92,8 +95,16 @@ export class AppComponent implements OnInit {
       this.store.pipe(select(selectIsUserLoaded))]
     ).pipe(
       map(results => ({isAuthenticated: results[0], isUserLoaded: results[1]})),
-      distinctUntilChanged(),
-      filter((data) => data.isUserLoaded ),
+      filter((data) => data.isUserLoaded),
+      distinctUntilChanged((a, b) => isEqual(a, b)),
+      tap((data) => {
+        let userLang = getCurrentAuthState(this.store).userDetails?.additionalInfo?.lang ?? null;
+        if (!userLang && !data.isAuthenticated) {
+          const settings = this.storageService.getItem(SETTINGS_KEY);
+          userLang = settings?.userLang ?? null;
+        }
+        this.notifyUserLang(userLang);
+      }),
       skip(1),
     ).subscribe((data) => {
       this.authService.gotoDefaultPlace(data.isAuthenticated);
@@ -109,6 +120,10 @@ export class AppComponent implements OnInit {
     if (loadingElement.length) {
       loadingElement.remove();
     }
+  }
+
+  private notifyUserLang(userLang: string) {
+    this.store.dispatch(new ActionSettingsChangeLanguage({userLang}));
   }
 
 }
