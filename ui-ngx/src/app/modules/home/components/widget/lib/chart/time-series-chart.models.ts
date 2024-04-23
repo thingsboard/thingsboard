@@ -16,6 +16,8 @@
 
 import {
   ECharts,
+  echartsAnimationDefaultSettings,
+  EChartsAnimationSettings,
   EChartsOption,
   EChartsSeriesItem,
   EChartsShape,
@@ -571,64 +573,6 @@ export interface TimeSeriesChartBarWidthSettings {
   intervalGap: number;
 }
 
-export enum TimeSeriesChartAnimationEasing {
-  linear = 'linear',
-  quadraticIn = 'quadraticIn',
-  quadraticOut = 'quadraticOut',
-  quadraticInOut = 'quadraticInOut',
-  cubicIn = 'cubicIn',
-  cubicOut = 'cubicOut',
-  cubicInOut = 'cubicInOut',
-  quarticIn = 'quarticIn',
-  quarticOut = 'quarticOut',
-  quarticInOut = 'quarticInOut',
-  quinticIn = 'quinticIn',
-  quinticOut = 'quinticOut',
-  quinticInOut = 'quinticInOut',
-  sinusoidalIn = 'sinusoidalIn',
-  sinusoidalOut = 'sinusoidalOut',
-  sinusoidalInOut = 'sinusoidalInOut',
-  exponentialIn = 'exponentialIn',
-  exponentialOut = 'exponentialOut',
-  exponentialInOut = 'exponentialInOut',
-  circularIn = 'circularIn',
-  circularOut = 'circularOut',
-  circularInOut = 'circularInOut',
-  elasticIn = 'elasticIn',
-  elasticOut = 'elasticOut',
-  elasticInOut = 'elasticInOut',
-  backIn = 'backIn',
-  backOut = 'backOut',
-  backInOut = 'backInOut',
-  bounceIn = 'bounceIn',
-  bounceOut = 'bounceOut',
-  bounceInOut = 'bounceInOut'
-}
-
-export const timeSeriesChartAnimationEasings = Object.keys(TimeSeriesChartAnimationEasing) as TimeSeriesChartAnimationEasing[];
-
-export interface TimeSeriesChartAnimationSettings {
-  animation: boolean;
-  animationThreshold: number;
-  animationDuration: number;
-  animationEasing: TimeSeriesChartAnimationEasing;
-  animationDelay: number;
-  animationDurationUpdate: number;
-  animationEasingUpdate: TimeSeriesChartAnimationEasing;
-  animationDelayUpdate: number;
-}
-
-export const timeSeriesChartAnimationDefaultSettings: TimeSeriesChartAnimationSettings = {
-  animation: true,
-  animationThreshold: 2000,
-  animationDuration: 500,
-  animationEasing: TimeSeriesChartAnimationEasing.cubicOut,
-  animationDelay: 0,
-  animationDurationUpdate: 300,
-  animationEasingUpdate: TimeSeriesChartAnimationEasing.cubicOut,
-  animationDelayUpdate: 0
-};
-
 export interface TimeSeriesChartVisualMapPiece {
   lt?: number;
   gt?: number;
@@ -721,7 +665,7 @@ export interface TimeSeriesChartSettings extends EChartsTooltipWidgetSettings, T
   grid: TimeSeriesChartGridSettings;
   yAxes: TimeSeriesChartYAxes;
   xAxis: TimeSeriesChartXAxisSettings;
-  animation: TimeSeriesChartAnimationSettings;
+  animation: EChartsAnimationSettings;
   barWidthSettings: TimeSeriesChartBarWidthSettings;
   noAggregationBarWidthSettings: TimeSeriesChartNoAggregationBarWidthSettings;
   visualMapSettings?: TimeSeriesChartVisualMapSettings;
@@ -742,8 +686,8 @@ export const timeSeriesChartDefaultSettings: TimeSeriesChartSettings = {
   },
   xAxis: mergeDeep({} as TimeSeriesChartXAxisSettings,
     defaultTimeSeriesChartXAxisSettings),
-  animation: mergeDeep({} as TimeSeriesChartAnimationSettings,
-    timeSeriesChartAnimationDefaultSettings),
+  animation: mergeDeep({} as EChartsAnimationSettings,
+    echartsAnimationDefaultSettings),
   barWidthSettings: {
     barGap: 0.3,
     intervalGap: 0.6

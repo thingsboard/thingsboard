@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.tb-doughnut-panel {
+.tb-latest-chart-panel {
   width: 100%;
   height: 100%;
   position: relative;
@@ -21,10 +21,10 @@
   flex-direction: column;
   gap: 16px;
   padding: 20px 24px 24px 24px;
-  > div:not(.tb-doughnut-overlay) {
+  > div:not(.tb-latest-chart-overlay) {
     z-index: 1;
   }
-  .tb-doughnut-overlay {
+  .tb-latest-chart-overlay {
     position: absolute;
     top: 12px;
     left: 12px;
@@ -34,7 +34,7 @@
   div.tb-widget-title {
     padding: 0;
   }
-  .tb-doughnut-content {
+  .tb-latest-chart-content {
     flex: 1;
     min-width: 0;
     min-height: 0;
@@ -50,22 +50,22 @@
     &.legend-left {
       flex-direction: row-reverse;
     }
-    .tb-doughnut-shape {
+    .tb-latest-chart-shape {
       flex: 1;
-      min-width: 0;
-      min-height: 0;
+      min-width: 10px;
+      min-height: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
     }
-    .tb-doughnut-legend {
+    .tb-latest-chart-legend {
       display: flex;
       justify-content: space-around;
       align-items: center;
       align-self: stretch;
       flex-wrap: wrap;
       gap: 8px;
-      .tb-doughnut-legend-item {
+      .tb-latest-chart-legend-item {
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -74,19 +74,19 @@
         &.pointer {
           cursor: pointer;
         }
-        .tb-doughnut-legend-item-label {
+        .tb-latest-chart-legend-item-label {
           display: flex;
           align-items: center;
           gap: 4px;
           color: #ccc;
-          .tb-doughnut-legend-item-label-circle {
+          .tb-latest-chart-legend-item-label-circle {
             width: 8px;
             height: 8px;
             border-radius: 50%;
             background-color: #ccc;
           }
         }
-        .tb-doughnut-legend-item-value {
+        .tb-latest-chart-legend-item-value {
           padding-left: 12px;
           color: #ccc;
         }
@@ -94,11 +94,11 @@
     }
     &.legend-right, &.legend-left {
       gap: 24px;
-      .tb-doughnut-legend {
+      .tb-latest-chart-legend {
         flex-direction: column;
         justify-content: center;
         align-items: stretch;
-        .tb-doughnut-legend-item {
+        .tb-latest-chart-legend-item {
           flex-direction: row;
           justify-content: space-between;
           align-items: center;

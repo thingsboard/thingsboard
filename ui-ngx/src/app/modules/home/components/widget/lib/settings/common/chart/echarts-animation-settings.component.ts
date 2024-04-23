@@ -22,34 +22,34 @@ import {
   UntypedFormGroup,
   Validators
 } from '@angular/forms';
-import {
-  timeSeriesChartAnimationEasings,
-  TimeSeriesChartAnimationSettings
-} from '@home/components/widget/lib/chart/time-series-chart.models';
 import { WidgetService } from '@core/http/widget.service';
+import {
+  echartsAnimationEasings,
+  EChartsAnimationSettings
+} from '@home/components/widget/lib/chart/echarts-widget.models';
 
 @Component({
-  selector: 'tb-time-series-chart-animation-settings',
-  templateUrl: './time-series-chart-animation-settings.component.html',
+  selector: 'tb-echarts-animation-settings',
+  templateUrl: './echarts-animation-settings.component.html',
   styleUrls: ['./../../widget-settings.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TimeSeriesChartAnimationSettingsComponent),
+      useExisting: forwardRef(() => EchartsAnimationSettingsComponent),
       multi: true
     }
   ]
 })
-export class TimeSeriesChartAnimationSettingsComponent implements OnInit, ControlValueAccessor {
+export class EchartsAnimationSettingsComponent implements OnInit, ControlValueAccessor {
 
   settingsExpanded = false;
 
-  timeSeriesChartAnimationEasings = timeSeriesChartAnimationEasings;
+  echartsAnimationEasings = echartsAnimationEasings;
 
   @Input()
   disabled: boolean;
 
-  private modelValue: TimeSeriesChartAnimationSettings;
+  private modelValue: EChartsAnimationSettings;
 
   private propagateChange = null;
 
@@ -96,7 +96,7 @@ export class TimeSeriesChartAnimationSettingsComponent implements OnInit, Contro
     }
   }
 
-  writeValue(value: TimeSeriesChartAnimationSettings): void {
+  writeValue(value: EChartsAnimationSettings): void {
     this.modelValue = value;
     this.animationSettingsFormGroup.patchValue(
       value, {emitEvent: false}

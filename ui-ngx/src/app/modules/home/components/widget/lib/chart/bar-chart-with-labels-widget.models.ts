@@ -23,15 +23,17 @@ import {
   textStyle
 } from '@shared/models/widget-settings.models';
 import { LegendPosition } from '@shared/models/widget.models';
-import { EChartsTooltipWidgetSettings } from '@home/components/widget/lib/chart/echarts-widget.models';
+import {
+  echartsAnimationDefaultSettings,
+  EChartsAnimationSettings,
+  EChartsTooltipWidgetSettings
+} from '@home/components/widget/lib/chart/echarts-widget.models';
 import { DeepPartial } from '@shared/models/common';
 import {
   defaultTimeSeriesChartXAxisSettings,
   defaultTimeSeriesChartYAxisSettings,
   SeriesFillSettings,
   SeriesFillType,
-  timeSeriesChartAnimationDefaultSettings,
-  TimeSeriesChartAnimationSettings,
   timeSeriesChartGridDefaultSettings,
   TimeSeriesChartGridSettings,
   TimeSeriesChartKeySettings,
@@ -63,7 +65,7 @@ export interface BarChartWithLabelsWidgetSettings extends EChartsTooltipWidgetSe
   grid: TimeSeriesChartGridSettings;
   yAxis: TimeSeriesChartYAxisSettings;
   xAxis: TimeSeriesChartXAxisSettings;
-  animation: TimeSeriesChartAnimationSettings;
+  animation: EChartsAnimationSettings;
   thresholds: TimeSeriesChartThreshold[];
   showLegend: boolean;
   legendPosition: LegendPosition;
@@ -116,8 +118,8 @@ export const barChartWithLabelsDefaultSettings: BarChartWithLabelsWidgetSettings
   xAxis: mergeDeep({} as TimeSeriesChartXAxisSettings,
     defaultTimeSeriesChartXAxisSettings,
     {showTicks: false, showSplitLines: false} as TimeSeriesChartXAxisSettings),
-  animation: mergeDeep({} as TimeSeriesChartAnimationSettings,
-    timeSeriesChartAnimationDefaultSettings),
+  animation: mergeDeep({} as EChartsAnimationSettings,
+    echartsAnimationDefaultSettings),
   thresholds: [],
   showLegend: true,
   legendPosition: LegendPosition.top,

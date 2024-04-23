@@ -23,61 +23,61 @@
         <mat-panel-title>
           <mat-slide-toggle class="mat-slide" formControlName="animation" (click)="$event.stopPropagation()"
                             fxLayoutAlign="center">
-            {{ 'widgets.time-series-chart.animation.animation' | translate }}
+            {{ 'widgets.echarts.animation.animation' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
         <div class="tb-form-row space-between column-xs">
-          <div>{{ 'widgets.time-series-chart.animation.animation-threshold' | translate }}</div>
+          <div>{{ 'widgets.echarts.animation.animation-threshold' | translate }}</div>
           <mat-form-field appearance="outline" class="medium-width number" subscriptSizing="dynamic">
             <input matInput formControlName="animationThreshold" type="number" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
             <div matSuffix>ms</div>
           </mat-form-field>
         </div>
         <div class="tb-form-row space-between column-xs">
-          <div>{{ 'widgets.time-series-chart.animation.animation-duration' | translate }}</div>
+          <div>{{ 'widgets.echarts.animation.animation-duration' | translate }}</div>
           <mat-form-field appearance="outline" class="medium-width number" subscriptSizing="dynamic">
             <input matInput formControlName="animationDuration" type="number" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
             <div matSuffix>ms</div>
           </mat-form-field>
         </div>
         <div class="tb-form-row space-between column-xs">
-          <div translate>widgets.time-series-chart.animation.animation-easing</div>
+          <div translate>widgets.echarts.animation.animation-easing</div>
           <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="animationEasing">
-              <mat-option *ngFor="let easing of timeSeriesChartAnimationEasings" [value]="easing">
+              <mat-option *ngFor="let easing of echartsAnimationEasings" [value]="easing">
                 {{ easing }}
               </mat-option>
             </mat-select>
           </mat-form-field>
         </div>
         <div class="tb-form-row space-between column-xs">
-          <div>{{ 'widgets.time-series-chart.animation.animation-delay' | translate }}</div>
+          <div>{{ 'widgets.echarts.animation.animation-delay' | translate }}</div>
           <mat-form-field appearance="outline" class="medium-width number" subscriptSizing="dynamic">
             <input matInput formControlName="animationDelay" type="number" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
             <div matSuffix>ms</div>
           </mat-form-field>
         </div>
         <div class="tb-form-row space-between column-xs">
-          <div>{{ 'widgets.time-series-chart.animation.update-animation-duration' | translate }}</div>
+          <div>{{ 'widgets.echarts.animation.update-animation-duration' | translate }}</div>
           <mat-form-field appearance="outline" class="medium-width number" subscriptSizing="dynamic">
             <input matInput formControlName="animationDurationUpdate" type="number" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
             <div matSuffix>ms</div>
           </mat-form-field>
         </div>
         <div class="tb-form-row space-between column-xs">
-          <div translate>widgets.time-series-chart.animation.update-animation-easing</div>
+          <div translate>widgets.echarts.animation.update-animation-easing</div>
           <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="animationEasingUpdate">
-              <mat-option *ngFor="let easing of timeSeriesChartAnimationEasings" [value]="easing">
+              <mat-option *ngFor="let easing of echartsAnimationEasings" [value]="easing">
                 {{ easing }}
               </mat-option>
             </mat-select>
           </mat-form-field>
         </div>
         <div class="tb-form-row space-between column-xs">
-          <div>{{ 'widgets.time-series-chart.animation.update-animation-delay' | translate }}</div>
+          <div>{{ 'widgets.echarts.animation.update-animation-delay' | translate }}</div>
           <mat-form-field appearance="outline" class="medium-width number" subscriptSizing="dynamic">
             <input matInput formControlName="animationDelayUpdate" type="number" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
             <div matSuffix>ms</div>
