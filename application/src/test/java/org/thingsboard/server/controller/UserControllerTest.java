@@ -422,8 +422,7 @@ public class UserControllerTest extends AbstractControllerTest {
         assertThat(tenantAdmins).as("admins list size").hasSameSizeAs(loadedTenantAdmins);
         assertThat(tenantAdmins).as("admins list content").isEqualTo(loadedTenantAdmins);
 
-        doDelete("/api/tenant/" + tenantId.getId().toString())
-                .andExpect(status().isOk());
+        deleteTenant(tenantId);
 
         pageLink = new PageLink(33);
         pageData = doGetTypedWithPageLink("/api/tenant/" + tenantId.getId().toString() + "/users?",

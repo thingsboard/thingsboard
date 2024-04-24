@@ -25,7 +25,6 @@ import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpStatus;
 import org.awaitility.Awaitility;
 import org.hamcrest.Matcher;
 import org.hibernate.exception.ConstraintViolationException;
@@ -367,21 +366,11 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         assertThat(loadedTenants).as("All tenants expected to be deleted, but some tenants left in the database").isEmpty();
     }
 
-    private void deleteTenant(TenantId tenantId) {
-        int status = 0;
-        int retries = 0;
-        while (status != HttpStatus.SC_OK && retries < CLEANUP_TENANT_RETRIES_COUNT) {
-            retries++;
-            try {
-                status = doDelete("/api/tenant/" + tenantId.getId().toString())
-                        .andReturn().getResponse().getStatus();
-                if (status != HttpStatus.SC_OK) {
-                    log.warn("Tenant deletion failed, tenantId: {}", tenantId.getId().toString());
-                    Thread.sleep(1000L);
-                }
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+    protected void deleteTenant(TenantId tenantId) {
+        try {
+            doDelete("/api/tenant/" + tenantId.getId()).andExpect(status().isOk());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
         Awaitility.await("tenant cleanup finish").atMost(30, TimeUnit.SECONDS)
                 .until(() -> attributesService.find(TenantId.SYS_TENANT_ID, tenantId, AttributeScope.SERVER_SCOPE, "test").get().isEmpty());

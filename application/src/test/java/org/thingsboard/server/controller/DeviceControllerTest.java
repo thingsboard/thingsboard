@@ -151,8 +151,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
 
         loginSysAdmin();
 
-        doDelete("/api/tenant/" + savedTenant.getId().getId())
-                .andExpect(status().isOk());
+        deleteTenant(savedTenant.getId());
     }
 
     @Test
@@ -721,9 +720,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
         testNotificationUpdateGatewayNever();
 
         loginSysAdmin();
-
-        doDelete("/api/tenant/" + savedTenant2.getId().getId())
-                .andExpect(status().isOk());
+        deleteTenant(savedTenant2.getId());
     }
 
     @Test
@@ -1380,8 +1377,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
                 .andExpect(statusReason(containsString(msgErrorNoFound("Device", savedAnotherDevice.getId().getId().toString()))));
 
         loginSysAdmin();
-        doDelete("/api/tenant/" + savedDifferentTenant.getId().getId())
-                .andExpect(status().isOk());
+        deleteTenant(savedDifferentTenant.getId());
     }
 
     @Test

@@ -121,7 +121,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
     public void afterTest() throws Exception {
         loginSysAdmin();
         if (savedTenant != null) {
-            doDelete("/api/tenant/" + savedTenant.getId().getId().toString()).andExpect(status().isOk());
+            deleteTenant(savedTenant.getId());
         }
     }
 

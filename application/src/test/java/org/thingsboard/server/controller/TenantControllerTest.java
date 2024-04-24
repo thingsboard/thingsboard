@@ -155,8 +155,7 @@ public class TenantControllerTest extends AbstractControllerTest {
 
         testBroadcastEntityStateChangeEventTimeManyTimeTenant(savedTenant, ComponentLifecycleEvent.UPDATED, 1);
 
-        doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
-                .andExpect(status().isOk());
+        deleteTenant(savedTenant.getId());
 
         testBroadcastEntityStateChangeEventTimeManyTimeTenant(savedTenant, ComponentLifecycleEvent.DELETED, 1);
     }
@@ -185,8 +184,7 @@ public class TenantControllerTest extends AbstractControllerTest {
         Tenant foundTenant = doGet("/api/tenant/" + savedTenant.getId().getId().toString(), Tenant.class);
         Assert.assertNotNull(foundTenant);
         Assert.assertEquals(savedTenant, foundTenant);
-        doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
-                .andExpect(status().isOk());
+        deleteTenant(savedTenant.getId());
     }
 
     @Test
@@ -198,8 +196,7 @@ public class TenantControllerTest extends AbstractControllerTest {
         TenantInfo foundTenant = doGet("/api/tenant/info/" + savedTenant.getId().getId().toString(), TenantInfo.class);
         Assert.assertNotNull(foundTenant);
         Assert.assertEquals(new TenantInfo(savedTenant, "Default"), foundTenant);
-        doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
-                .andExpect(status().isOk());
+        deleteTenant(savedTenant.getId());
     }
 
     @Test
@@ -240,8 +237,7 @@ public class TenantControllerTest extends AbstractControllerTest {
         Tenant savedTenant = doPost("/api/tenant", tenant, Tenant.class);
 
         String tenantIdStr = savedTenant.getId().getId().toString();
-        doDelete("/api/tenant/" + tenantIdStr)
-                .andExpect(status().isOk());
+        deleteTenant(savedTenant.getId());
         doGet("/api/tenant/" + tenantIdStr)
                 .andExpect(status().isNotFound())
                 .andExpect(statusReason(containsString(msgErrorNoFound("Tenant", tenantIdStr))));
@@ -559,7 +555,7 @@ public class TenantControllerTest extends AbstractControllerTest {
         }
 
         loginSysAdmin();
-        doDelete("/api/tenant/" + tenant.getId().getId().toString()).andExpect(status().isOk());
+        deleteTenant(tenant.getId());
     }
 
     @Test

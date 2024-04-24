@@ -115,7 +115,7 @@ public class HomePageApiTest extends AbstractControllerTest {
         Assert.assertEquals(initialCount + 100, update.getCount());
 
         for (Tenant tenant : tenants) {
-            doDelete("/api/tenant/" + tenant.getId().toString());
+            deleteTenant(tenant.getId());
         }
     }
 
