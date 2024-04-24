@@ -474,16 +474,28 @@ public class MqttClientTest extends AbstractContainerTest {
 
         MqttMessageListener listener = new MqttMessageListener();
         MqttClient mqttClient = getMqttClient(deviceCredentials, listener, MqttVersion.MQTT_5);
-        final byte[] returnCodeByteValue = new byte[1];
+        final byte[] returnCodeByteValue = new byte[]{MqttReturnCode.DUMMY.byteValue()};
         MqttClientCallback callbackForDisconnectWithReturnCode = getCallbackWrapperForDisconnectWithReturnCode(returnCodeByteValue);
         mqttClient.setCallback(callbackForDisconnectWithReturnCode);
 
-        MqttClient dummyMqttClient = getMqttClient(deviceCredentials, listener, MqttVersion.MQTT_5);
         Thread.sleep(1000);
+
+        MqttMessageListener dummyListener = new MqttMessageListener();
+        MqttClient dummyMqttClient = getMqttClient(deviceCredentials, dummyListener, MqttVersion.MQTT_5);
+        final byte[] returnCodeByteValueDummy = new byte[]{MqttReturnCode.DUMMY.byteValue()};
+        MqttClientCallback callbackForDisconnectWithReturnCodeDummy = getCallbackWrapperForDisconnectWithReturnCode(returnCodeByteValueDummy);
+        dummyMqttClient.setCallback(callbackForDisconnectWithReturnCodeDummy);
+
+        Thread.sleep(1000);
+
+        MqttReturnCode returnCodeDummy = MqttReturnCode.valueOf(returnCodeByteValueDummy[0]);
         MqttReturnCode returnCode = MqttReturnCode.valueOf(returnCodeByteValue[0]);
-        assertThat(returnCode).isEqualTo(MqttReturnCode.SESSION_TAKEN_OVER);
+
         mqttClient.disconnect();
         dummyMqttClient.disconnect();
+
+        assertThat(returnCode).isEqualTo(MqttReturnCode.SESSION_TAKEN_OVER);
+        assertThat(returnCodeDummy).isEqualTo(MqttReturnCode.DUMMY);
     }
 
     @Test

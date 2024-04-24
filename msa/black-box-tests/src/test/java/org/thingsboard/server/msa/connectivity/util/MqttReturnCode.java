@@ -62,13 +62,14 @@ public enum MqttReturnCode {
     CONNECTION_RATE_EXCEEDED((byte) 0x9F),
     MAXIMUM_CONNECT_TIME((byte) 0xA0),
     SUBSCRIPTION_IDENTIFIERS_NOT_SUPPORTED((byte) 0xA1),
-    WILDCARD_SUBSCRIPTION_NOT_SUPPORTED((byte) 0xA2);
+    WILDCARD_SUBSCRIPTION_NOT_SUPPORTED((byte) 0xA2),
+    DUMMY((byte) 0xA3);
 
     private static final MqttReturnCode[] VALUES;
 
     static {
         MqttReturnCode[] values = values();
-        VALUES = new MqttReturnCode[163];
+        VALUES = new MqttReturnCode[164];
         for (MqttReturnCode code : values) {
             final int unsignedByte = code.byteValue & 0xFF;
             // Suppress a warning about out of bounds access since the enum contains only correct values
