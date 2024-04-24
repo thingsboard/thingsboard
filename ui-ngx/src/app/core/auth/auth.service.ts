@@ -546,14 +546,14 @@ export class AuthService {
         this.notifyUserLoaded(false);
         this.loadUser(false).subscribe(
           (authPayload) => {
-            this.notifyUserLoaded(true);
             this.notifyAuthenticated(authPayload);
+            this.notifyUserLoaded(true);
             authenticatedSubject.next(true);
             authenticatedSubject.complete();
           },
           () => {
-            this.notifyUserLoaded(true);
             this.notifyUnauthenticated();
+            this.notifyUserLoaded(true);
             authenticatedSubject.next(false);
             authenticatedSubject.complete();
           }

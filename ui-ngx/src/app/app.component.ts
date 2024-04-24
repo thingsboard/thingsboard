@@ -21,14 +21,13 @@ import { Component, OnInit } from '@angular/core';
 import { environment as env } from '@env/environment';
 
 import { TranslateService } from '@ngx-translate/core';
-import { select, Store } from '@ngrx/store';
+import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { LocalStorageService } from '@core/local-storage/local-storage.service';
 import { DomSanitizer } from '@angular/platform-browser';
 import { MatIconRegistry } from '@angular/material/icon';
-import { combineLatest } from 'rxjs';
-import { getCurrentAuthState, selectIsAuthenticated, selectIsUserLoaded } from '@core/auth/auth.selectors';
-import { debounceTime, filter, map, skip, tap } from 'rxjs/operators';
+import { getCurrentAuthState, selectUserReady } from '@core/auth/auth.selectors';
+import { filter, skip, tap } from 'rxjs/operators';
 import { AuthService } from '@core/auth/auth.service';
 import { svgIcons, svgIconsUrl } from '@shared/models/icon.models';
 import { ActionSettingsChangeLanguage } from '@core/settings/settings.actions';
@@ -89,12 +88,7 @@ export class AppComponent implements OnInit {
   }
 
   setupAuth() {
-    combineLatest([
-      this.store.pipe(select(selectIsAuthenticated)),
-      this.store.pipe(select(selectIsUserLoaded))]
-    ).pipe(
-      debounceTime(1),
-      map(results => ({isAuthenticated: results[0], isUserLoaded: results[1]})),
+    this.store.select(selectUserReady).pipe(
       filter((data) => data.isUserLoaded),
       tap((data) => {
         let userLang = getCurrentAuthState(this.store).userDetails?.additionalInfo?.lang ?? null;
