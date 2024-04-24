@@ -159,7 +159,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertEquals(NULL_UUID, savedEdge.getCustomerId().getId());
         Assert.assertEquals(edge.getName(), savedEdge.getName());
 
-        testNotifyEntityBroadcastEntityStateChangeEventManyTimeMsgToEdgeServiceNever(savedEdge, savedEdge.getId(), savedEdge.getId(),
+        testNotifyEdgeStateChangeEventManyTimeMsgToEdgeServiceNever(savedEdge, savedEdge.getId(), savedEdge.getId(),
                 tenantId, tenantAdminUser.getCustomerId(), tenantAdminUser.getId(), tenantAdminUser.getEmail(),
                 ActionType.ADDED, 2);
 
@@ -169,7 +169,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Edge foundEdge = doGet("/api/edge/" + savedEdge.getId().getId().toString(), Edge.class);
         Assert.assertEquals(foundEdge.getName(), savedEdge.getName());
 
-        testNotifyEntityBroadcastEntityStateChangeEventManyTimeMsgToEdgeServiceNever(foundEdge, foundEdge.getId(), foundEdge.getId(),
+        testNotifyEdgeStateChangeEventManyTimeMsgToEdgeServiceNever(foundEdge, foundEdge.getId(), foundEdge.getId(),
                 tenantId, tenantAdminUser.getCustomerId(), tenantAdminUser.getId(), tenantAdminUser.getEmail(),
                 ActionType.UPDATED, 1);
     }
