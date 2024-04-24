@@ -28,10 +28,9 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { MatIconRegistry } from '@angular/material/icon';
 import { combineLatest } from 'rxjs';
 import { getCurrentAuthState, selectIsAuthenticated, selectIsUserLoaded } from '@core/auth/auth.selectors';
-import { distinctUntilChanged, filter, map, skip, tap } from 'rxjs/operators';
+import { debounceTime, filter, map, skip, tap } from 'rxjs/operators';
 import { AuthService } from '@core/auth/auth.service';
 import { svgIcons, svgIconsUrl } from '@shared/models/icon.models';
-import { isEqual } from '@core/utils';
 import { ActionSettingsChangeLanguage } from '@core/settings/settings.actions';
 import { SETTINGS_KEY } from '@core/settings/settings.effects';
 
@@ -94,9 +93,9 @@ export class AppComponent implements OnInit {
       this.store.pipe(select(selectIsAuthenticated)),
       this.store.pipe(select(selectIsUserLoaded))]
     ).pipe(
+      debounceTime(1),
       map(results => ({isAuthenticated: results[0], isUserLoaded: results[1]})),
       filter((data) => data.isUserLoaded),
-      distinctUntilChanged((a, b) => isEqual(a, b)),
       tap((data) => {
         let userLang = getCurrentAuthState(this.store).userDetails?.additionalInfo?.lang ?? null;
         if (!userLang && !data.isAuthenticated) {
