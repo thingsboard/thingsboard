@@ -719,7 +719,10 @@ public class TenantControllerTest extends AbstractControllerTest {
         savedDifferentTenant = doPost("/api/tenant", savedDifferentTenant, Tenant.class);
         TenantId tenantId = differentTenantId;
         await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
-            assertThat(partitionService.getMyPartitions(new QueueKey(ServiceType.TB_RULE_ENGINE, tenantId))).isNotNull();
+            QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, tenantId);
+            List<Integer> partitions = partitionService.getMyPartitions(queueKey);
+            log.error("[{}] partitions: {}", queueKey, partitions);
+            assertThat(partitions).isNotNull();
         });
         TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, tenantId, tenantId);
         assertThat(tpi.getTenantId()).hasValue(tenantId);
