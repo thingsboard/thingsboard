@@ -87,6 +87,8 @@ import { SliderWidgetComponent } from '@home/components/widget/lib/rpc/slider-wi
 import { ToggleButtonWidgetComponent } from '@home/components/widget/lib/button/toggle-button-widget.component';
 import { TimeSeriesChartWidgetComponent } from '@home/components/widget/lib/chart/time-series-chart-widget.component';
 import { StatusWidgetComponent } from '@home/components/widget/lib/indicator/status-widget.component';
+import { LatestChartComponent } from '@home/components/widget/lib/chart/latest-chart.component';
+import { PieChartWidgetComponent } from '@home/components/widget/lib/chart/pie-chart-widget.component';
 
 @NgModule({
   declarations:
@@ -140,7 +142,9 @@ import { StatusWidgetComponent } from '@home/components/widget/lib/indicator/sta
       SliderWidgetComponent,
       ToggleButtonWidgetComponent,
       TimeSeriesChartWidgetComponent,
-      StatusWidgetComponent
+      StatusWidgetComponent,
+      LatestChartComponent,
+      PieChartWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -198,7 +202,8 @@ import { StatusWidgetComponent } from '@home/components/widget/lib/indicator/sta
         SliderWidgetComponent,
         ToggleButtonWidgetComponent,
         TimeSeriesChartWidgetComponent,
-        StatusWidgetComponent
+        StatusWidgetComponent,
+        PieChartWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }

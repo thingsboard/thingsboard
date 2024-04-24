@@ -805,7 +805,6 @@
         "email-messages": "Email messages",
         "email-messages-daily-activity": "Email messages daily activity",
         "email-messages-monthly-activity": "Email messages monthly activity",
-        "exceptions": "Exceptions",
         "executions": "Executions",
         "scripts": "Scripts",
         "scripts-hourly-activity": "Scripts hourly activity",
@@ -823,9 +822,7 @@
         "permanent-failures": "${entityName} Permanent Failures",
         "permanent-timeouts": "${entityName} Permanent Timeouts",
         "processing-failures": "${entityName} Processing Failures",
-        "processing-failures-and-timeouts": "Processing Failures and Timeouts",
         "processing-timeouts": "${entityName} Processing Timeouts",
-        "queue-stats": "Queue Stats",
         "rule-chain": "Rule Chain",
         "rule-engine": "Rule Engine",
         "rule-engine-daily-activity": "Rule Engine daily activity",
@@ -5713,16 +5710,10 @@
             }
         },
         "doughnut": {
-            "total": "Total",
             "layout": "Layout",
             "layout-default": "Default",
             "layout-with-total": "With total",
-            "auto-scale": "Auto scale",
-            "clockwise-layout": "Clockwise layout",
-            "sort-series": "Sort series by label",
             "central-total-value": "Central total value",
-            "tooltip-value-type-absolute": "Absolute",
-            "tooltip-value-type-percentage": "Percentage",
             "doughnut-card-style": "Doughnut card style"
         },
         "entities-hierarchy": {
@@ -6739,6 +6730,34 @@
             "table-tabs": "Table tabs",
             "show-cell-actions-menu-mobile": "Show cell actions dropdown menu in mobile mode"
         },
+        "echarts": {
+            "animation": {
+              "animation": "Animation",
+              "animation-threshold": "Animation threshold",
+              "animation-duration": "Animation duration",
+              "animation-easing": "Animation easing",
+              "animation-delay": "Animation delay",
+              "update-animation-duration": "Update animation duration",
+              "update-animation-easing": "Update animation easing",
+              "update-animation-delay": "Update animation delay"
+            }
+        },
+        "latest-chart": {
+            "total": "Total",
+            "auto-scale": "Auto scale",
+            "clockwise-layout": "Clockwise layout",
+            "sort-series": "Sort series by label",
+            "tooltip-value-type-absolute": "Absolute",
+            "tooltip-value-type-percentage": "Percentage"
+        },
+        "pie-chart": {
+            "label": "Label",
+            "label-position-outside": "Outside",
+            "label-position-inside": "Inside",
+            "border": "Border",
+            "radius": "Radius",
+            "pie-chart-card-style": "Pie chart card style"
+        },
         "time-series-chart": {
             "chart": "Chart",
             "chart-style": "Chart style",
@@ -6867,16 +6886,6 @@
               "max": "Max",
               "show": "Show",
               "add-y-axis": "Add Y axis"
-            },
-            "animation": {
-              "animation": "Animation",
-              "animation-threshold": "Animation threshold",
-              "animation-duration": "Animation duration",
-              "animation-easing": "Animation easing",
-              "animation-delay": "Animation delay",
-              "update-animation-duration": "Update animation duration",
-              "update-animation-easing": "Update animation easing",
-              "update-animation-delay": "Update animation delay"
             },
             "series": {
               "legend-settings": "Legend settings",

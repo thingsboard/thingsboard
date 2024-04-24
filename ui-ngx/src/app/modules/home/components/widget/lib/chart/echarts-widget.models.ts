@@ -162,6 +162,63 @@ export const timeSeriesChartShapeOffsetFunctions = new Map<EChartsShape, ECharts
   ]
 );
 
+export enum EChartsAnimationEasing {
+  linear = 'linear',
+  quadraticIn = 'quadraticIn',
+  quadraticOut = 'quadraticOut',
+  quadraticInOut = 'quadraticInOut',
+  cubicIn = 'cubicIn',
+  cubicOut = 'cubicOut',
+  cubicInOut = 'cubicInOut',
+  quarticIn = 'quarticIn',
+  quarticOut = 'quarticOut',
+  quarticInOut = 'quarticInOut',
+  quinticIn = 'quinticIn',
+  quinticOut = 'quinticOut',
+  quinticInOut = 'quinticInOut',
+  sinusoidalIn = 'sinusoidalIn',
+  sinusoidalOut = 'sinusoidalOut',
+  sinusoidalInOut = 'sinusoidalInOut',
+  exponentialIn = 'exponentialIn',
+  exponentialOut = 'exponentialOut',
+  exponentialInOut = 'exponentialInOut',
+  circularIn = 'circularIn',
+  circularOut = 'circularOut',
+  circularInOut = 'circularInOut',
+  elasticIn = 'elasticIn',
+  elasticOut = 'elasticOut',
+  elasticInOut = 'elasticInOut',
+  backIn = 'backIn',
+  backOut = 'backOut',
+  backInOut = 'backInOut',
+  bounceIn = 'bounceIn',
+  bounceOut = 'bounceOut',
+  bounceInOut = 'bounceInOut'
+}
+
+export const echartsAnimationEasings = Object.keys(EChartsAnimationEasing) as EChartsAnimationEasing[];
+
+export interface EChartsAnimationSettings {
+  animation: boolean;
+  animationThreshold: number;
+  animationDuration: number;
+  animationEasing: EChartsAnimationEasing;
+  animationDelay: number;
+  animationDurationUpdate: number;
+  animationEasingUpdate: EChartsAnimationEasing;
+  animationDelayUpdate: number;
+}
+
+export const echartsAnimationDefaultSettings: EChartsAnimationSettings = {
+  animation: true,
+  animationThreshold: 2000,
+  animationDuration: 500,
+  animationEasing: EChartsAnimationEasing.cubicOut,
+  animationDelay: 0,
+  animationDurationUpdate: 300,
+  animationEasingUpdate: EChartsAnimationEasing.cubicOut,
+  animationDelayUpdate: 0
+};
 
 export const timeAxisBandWidthCalculator: TimeAxisBandWidthCalculator = (model) => {
   let interval: number;

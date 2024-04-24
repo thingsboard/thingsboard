@@ -14,70 +14,53 @@
 /// limitations under the License.
 ///
 
-import { BackgroundType, ColorSettings, constantColor, Font } from '@shared/models/widget-settings.models';
-import { LegendPosition } from '@shared/models/widget.models';
-import { pieChartAnimationDefaultSettings, PieChartSettings } from '@home/components/widget/lib/chart/pie-chart.models';
-import { DeepPartial } from '@shared/models/common';
 import {
   LatestChartTooltipValueType,
   LatestChartWidgetSettings
 } from '@home/components/widget/lib/chart/latest-chart.models';
-import { mergeDeep } from '@core/utils';
+import { BackgroundType, Font } from '@shared/models/widget-settings.models';
+import { LegendPosition } from '@shared/models/widget.models';
+import { DeepPartial } from '@shared/models/common';
+import {
+  pieChartAnimationDefaultSettings,
+  PieChartLabelPosition,
+  PieChartSettings
+} from '@home/components/widget/lib/chart/pie-chart.models';
+import { isDefinedAndNotNull, mergeDeep } from '@core/utils';
 import { EChartsAnimationSettings } from '@home/components/widget/lib/chart/echarts-widget.models';
 
-export enum DoughnutLayout {
-  default = 'default',
-  with_total = 'with_total'
-}
-
-export const doughnutLayouts = Object.keys(DoughnutLayout) as DoughnutLayout[];
-
-export const doughnutLayoutTranslations = new Map<DoughnutLayout, string>(
-  [
-    [DoughnutLayout.default, 'widgets.doughnut.layout-default'],
-    [DoughnutLayout.with_total, 'widgets.doughnut.layout-with-total']
-  ]
-);
-
-export const doughnutLayoutImages = new Map<DoughnutLayout, string>(
-  [
-    [DoughnutLayout.default, 'assets/widget/doughnut/default-layout.svg'],
-    [DoughnutLayout.with_total, 'assets/widget/doughnut/with-total-layout.svg']
-  ]
-);
-
-export const horizontalDoughnutLayoutImages = new Map<DoughnutLayout, string>(
-  [
-    [DoughnutLayout.default, 'assets/widget/doughnut/horizontal-default-layout.svg'],
-    [DoughnutLayout.with_total, 'assets/widget/doughnut/horizontal-with-total-layout.svg']
-  ]
-);
-
-export interface DoughnutWidgetSettings extends LatestChartWidgetSettings {
-  layout: DoughnutLayout;
+export interface PieChartWidgetSettings extends LatestChartWidgetSettings {
+  showLabel: boolean;
+  labelPosition: PieChartLabelPosition;
+  labelFont: Font;
+  labelColor: string;
+  borderWidth: number;
+  borderColor: string;
+  radius: number;
   clockwise: boolean;
-  totalValueFont: Font;
-  totalValueColor: ColorSettings;
 }
 
-export const doughnutDefaultSettings = (horizontal: boolean): DoughnutWidgetSettings => ({
-  layout: DoughnutLayout.default,
-  autoScale: true,
-  clockwise: false,
-  sortSeries: false,
-  totalValueFont: {
+export const pieChartWidgetDefaultSettings: PieChartWidgetSettings = {
+  showLabel: true,
+  labelPosition: PieChartLabelPosition.outside,
+  labelFont: {
     family: 'Roboto',
-    size: 24,
+    size: 12,
     sizeUnit: 'px',
     style: 'normal',
-    weight: '500',
-    lineHeight: '1'
+    weight: 'normal',
+    lineHeight: '1.2'
   },
-  totalValueColor: constantColor('rgba(0, 0, 0, 0.87)'),
+  labelColor: '#000',
+  borderWidth: 0,
+  borderColor: '#000',
+  radius: 80,
+  clockwise: false,
+  sortSeries: false,
   animation: mergeDeep({} as EChartsAnimationSettings,
     pieChartAnimationDefaultSettings),
   showLegend: true,
-  legendPosition: horizontal ? LegendPosition.right : LegendPosition.bottom,
+  legendPosition: LegendPosition.bottom,
   legendLabelFont: {
     family: 'Roboto',
     size: 12,
@@ -119,27 +102,25 @@ export const doughnutDefaultSettings = (horizontal: boolean): DoughnutWidgetSett
       blur: 3
     }
   }
-});
+};
 
-export const doughnutPieChartSettings = (settings: DoughnutWidgetSettings): DeepPartial<PieChartSettings> => ({
-  autoScale: settings.autoScale,
-  doughnut: true,
+export const pieChartWidgetPieChartSettings = (settings: PieChartWidgetSettings): DeepPartial<PieChartSettings> => ({
+  autoScale: false,
+  doughnut: false,
   clockwise: settings.clockwise,
   sortSeries: settings.sortSeries,
-  showTotal: settings.layout === DoughnutLayout.with_total,
+  showTotal: false,
   animation: settings.animation,
   showLegend: settings.showLegend,
-  totalValueFont: settings.totalValueFont,
-  totalValueColor: settings.totalValueColor,
-  showLabel: false,
-  borderWidth: 0,
-  borderColor: '#fff',
-  borderRadius: '50%',
-  emphasisScale: false,
-  emphasisBorderWidth: 2,
-  emphasisBorderColor: '#fff',
-  emphasisShadowColor: 'rgba(0, 0, 0, 0.24)',
-  emphasisShadowBlur: 8,
+  showLabel: settings.showLabel,
+  labelPosition: settings.labelPosition,
+  labelFont: settings.labelFont,
+  labelColor: settings.labelColor,
+  borderWidth: settings.borderWidth,
+  borderColor: settings.borderColor,
+  radius: isDefinedAndNotNull(settings.radius) ? settings.radius + '%' : undefined,
+  emphasisBorderWidth: settings.borderWidth,
+  emphasisBorderColor: settings.borderColor,
   showTooltip: settings.showTooltip,
   tooltipValueType: settings.tooltipValueType,
   tooltipValueDecimals: settings.tooltipValueDecimals,
