@@ -1291,11 +1291,17 @@ edges:
   rpc:
     # RPC port bind
     port: "${EDGES_RPC_PORT:7070}"
-    # Maximum time of keeping alive client RPC connection. Time in seconds
+    # Specifies the minimum amount of time that should elapse between keepalive pings sent by the client
+    # This prevents clients from sending pings too frequently, which can be a nuisance to the server (potentially even a denial-of-service attack vector if abused)
+    # If a client sends pings more frequently than this interval, the server may terminate the connection.
     client_max_keep_alive_time_sec: "${EDGES_RPC_CLIENT_MAX_KEEP_ALIVE_TIME_SEC:1}"
-    # Maximum time of keep-alive connection. Time in seconds
+    # Sets the time of inactivity (no read operations on the connection) after which the server will send a keepalive ping to the client.
+    # This is used to ensure that the connection is still alive and to prevent network intermediaries from dropping connections due to inactivity.
+    # It's a way for the server to proactively check if the client is still responsive.
     keep_alive_time_sec: "${EDGES_RPC_KEEP_ALIVE_TIME_SEC:10}"
-    # Timeout of keep alive RPC connection. Time in seconds
+    # Specifies the maximum amount of time the server waits for a response to its keepalive ping.
+    # If the ping is not acknowledged within this time frame, the server considers the connection dead and may close it.
+    # This timeout helps detect unresponsive clients.
     keep_alive_timeout_sec: "${EDGES_RPC_KEEP_ALIVE_TIMEOUT_SEC:5}"
     ssl:
       # Enable/disable SSL support

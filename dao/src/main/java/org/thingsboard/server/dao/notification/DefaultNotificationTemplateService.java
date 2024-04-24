@@ -29,6 +29,8 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityDaoService;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 
 import java.util.List;
 import java.util.Map;
@@ -55,7 +57,10 @@ public class DefaultNotificationTemplateService extends AbstractEntityService im
             }
         }
         try {
-            return notificationTemplateDao.saveAndFlush(tenantId, notificationTemplate);
+            NotificationTemplate savedTemplate = notificationTemplateDao.saveAndFlush(tenantId, notificationTemplate);
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(savedTemplate.getId())
+                    .created(notificationTemplate.getId() == null).build());
+            return savedTemplate;
         } catch (Exception e) {
             checkConstraintViolation(e, Map.of(
                     "uq_notification_template_name", "Notification template with such name already exists"
@@ -92,6 +97,7 @@ public class DefaultNotificationTemplateService extends AbstractEntityService im
             ));
             throw e;
         }
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(id).build());
     }
 
     @Override

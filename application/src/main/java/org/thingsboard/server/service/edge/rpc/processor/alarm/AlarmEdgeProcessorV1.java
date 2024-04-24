@@ -58,15 +58,12 @@ public class AlarmEdgeProcessorV1 extends AlarmEdgeProcessor {
     }
 
     private EntityId getAlarmOriginator(TenantId tenantId, String entityName, EntityType entityType) {
-        switch (entityType) {
-            case DEVICE:
-                return deviceService.findDeviceByTenantIdAndName(tenantId, entityName).getId();
-            case ASSET:
-                return assetService.findAssetByTenantIdAndName(tenantId, entityName).getId();
-            case ENTITY_VIEW:
-                return entityViewService.findEntityViewByTenantIdAndName(tenantId, entityName).getId();
-            default:
-                return null;
-        }
+        return switch (entityType) {
+            case DEVICE -> deviceService.findDeviceByTenantIdAndName(tenantId, entityName).getId();
+            case ASSET -> assetService.findAssetByTenantIdAndName(tenantId, entityName).getId();
+            case ENTITY_VIEW -> entityViewService.findEntityViewByTenantIdAndName(tenantId, entityName).getId();
+            default -> null;
+        };
     }
+
 }

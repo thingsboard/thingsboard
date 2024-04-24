@@ -128,7 +128,8 @@ export const renderTimeSeriesBar = (params: CustomSeriesRenderItemParams, api: C
     height: coordSys.height
   });
 
-  const zeroPos = api.coord([0, offset]);
+  const zeroCoord = api.coord([0, offset]);
+  const zeroPos = Math.min(zeroCoord[1], coordSys.y + coordSys.height);
 
   let style: any = {
     fill: renderCtx.visualSettings.color,
@@ -176,7 +177,7 @@ export const renderTimeSeriesBar = (params: CustomSeriesRenderItemParams, api: C
     transition: 'all',
     enterFrom: {
       style: { opacity: 0 },
-      shape: { height: 0, y: zeroPos[1] }
+      shape: { height: 0, y: zeroPos }
     }
   };
 };

@@ -72,4 +72,5 @@ public abstract class BaseResourceProcessor extends BaseEdgeProcessor {
     }
 
     protected abstract TbResource constructResourceFromUpdateMsg(TenantId tenantId, TbResourceId tbResourceId, ResourceUpdateMsg resourceUpdateMsg);
+
 }
