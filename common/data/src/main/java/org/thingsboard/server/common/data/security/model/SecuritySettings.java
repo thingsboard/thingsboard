@@ -32,6 +32,6 @@ public class SecuritySettings implements Serializable {
     private Integer maxFailedLoginAttempts;
     @Schema(description = "Email to use for notifications about locked users." )
     private String userLockoutNotificationEmail;
-    @Schema(description = "QR secret key length" )
-    private Integer qrSecretKeyLength;
+    @Schema(description = "Mobile secret key length" )
+    private Integer mobileSecretKeyLength;
 }

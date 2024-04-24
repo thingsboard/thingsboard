@@ -23,7 +23,6 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
-import org.thingsboard.server.common.data.mobile.MobileAppSettings;
 import org.thingsboard.server.common.data.security.model.JwtSettings;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
@@ -180,29 +179,6 @@ public class AdminControllerTest extends AbstractControllerTest {
         assertThat(jwtSettings).isEqualTo(newJwtSettings);
 
         resetJwtSettingsToDefault();
-    }
-
-    @Test
-    public void testSaveMobileAppSettings() throws Exception {
-        loginSysAdmin();
-        MobileAppSettings mobileAppSettings = doGet("/api/admin/mobileAppSettings", MobileAppSettings.class);
-        assertThat(mobileAppSettings.getSettings().get("qrSecretKeyRefreshRateInMin").asInt()).isEqualTo(1);
-
-        JsonNode jsonValue = mobileAppSettings.getSettings();
-        ((ObjectNode) jsonValue).put("useDefault", false);
-
-        doPost("/api/admin/mobileAppSettings", mobileAppSettings)
-                .andExpect(status().isOk());
-
-        doGet("/api/admin/mobileAppSettings")
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(contentType))
-                .andExpect(jsonPath("$.settings.useDefault", is(false)));
-
-        // check refresh rate should be less than secret ttl (5 min)
-        ((ObjectNode) jsonValue).put("qrSecretKeyRefreshRateInMin", 6);
-        doPost("/api/admin/mobileAppSettings", mobileAppSettings)
-                .andExpect(status().isBadRequest());
     }
 
 }

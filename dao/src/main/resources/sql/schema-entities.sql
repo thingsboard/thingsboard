@@ -897,8 +897,8 @@ CREATE TABLE IF NOT EXISTS queue_stats (
 
 CREATE TABLE IF NOT EXISTS mobile_app_settings (
     tenant_id UUID NOT NULL,
-    app_package VARCHAR(100) UNIQUE,
-    sha256_cert_fingerprints VARCHAR(10000),
-    app_id VARCHAR(100) UNIQUE,
-    settings VARCHAR(100000)
+    use_default boolean,
+    android_config VARCHAR(1000),
+    ios_config VARCHAR(1000),
+    qr_code_config VARCHAR(100000)
 );

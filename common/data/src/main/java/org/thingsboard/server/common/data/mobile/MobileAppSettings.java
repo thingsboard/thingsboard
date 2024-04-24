@@ -15,17 +15,11 @@
  */
 package org.thingsboard.server.common.data.mobile;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.validation.Valid;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.validation.Length;
-import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.io.Serializable;
-
-import static org.thingsboard.server.common.data.BaseDataWithAdditionalInfo.getJson;
-import static org.thingsboard.server.common.data.BaseDataWithAdditionalInfo.setJson;
 
 @Data
 public class MobileAppSettings implements Serializable {
@@ -33,31 +27,12 @@ public class MobileAppSettings implements Serializable {
     private static final long serialVersionUID = 2628323657987010348L;
 
     private TenantId tenantId;
+    boolean useDefault;
+    @Valid
+    private AndroidConfig androidConfig;
+    @Valid
+    private IosConfig iosConfig;
+    @Valid
+    private QRCodeConfig qrCodeConfig;
 
-    @NoXss
-    @Length(fieldName = "appPackage")
-    private String appPackage;
-
-    @NoXss
-    @Length(fieldName = "sha256CertFingerprints")
-    private String sha256CertFingerprints;
-
-    @NoXss
-    @Length(fieldName = "appId")
-    private String appId;
-
-    @NoXss
-    @Length(fieldName = "settings", max = 10000000)
-    private transient JsonNode settings;
-
-    @JsonIgnore
-    private byte[] settingsBytes;
-
-    public JsonNode getSettings() {
-        return getJson(() -> settings, () -> settingsBytes);
-    }
-
-    public void setSettings(JsonNode settings) {
-        setJson(settings, json -> this.settings = json, bytes -> this.settingsBytes = bytes);
-    }
 }

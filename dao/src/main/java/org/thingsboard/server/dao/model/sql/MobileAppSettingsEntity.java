@@ -23,8 +23,12 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.mobile.AndroidConfig;
+import org.thingsboard.server.common.data.mobile.IosConfig;
 import org.thingsboard.server.common.data.mobile.MobileAppSettings;
+import org.thingsboard.server.common.data.mobile.QRCodeConfig;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.ToData;
 import org.thingsboard.server.dao.util.mapping.JsonConverter;
@@ -42,32 +46,32 @@ public class MobileAppSettingsEntity implements ToData<MobileAppSettings>, Seria
     @Column(name = ModelConstants.TENANT_ID_COLUMN, columnDefinition = "uuid")
     protected UUID tenantId;
 
-    @Column(name = ModelConstants.MOBILE_APP_SETTINGS_APP_PACKAGE_PROPERTY)
-    private String appPackage;
-
-    @Column(name = ModelConstants.MOBILE_APP_SETTINGS_SHA256_CERT_FINGERPRINTS_PROPERTY)
-    private String sha256CertFingerprints;
-
-    @Column(name = ModelConstants.MOBILE_APP_APP_ID_PROPERTY)
-    private String appId;
+    @Column(name = ModelConstants.MOBILE_APP_SETTINGS_USE_DEFAULT_PROPERTY)
+    private boolean useDefault;
 
     @Convert(converter = JsonConverter.class)
-    @Column(name = ModelConstants.MOBILE_APP_SETTINGS_PROPERTY)
-    private JsonNode settings;
+    @Column(name = ModelConstants.MOBILE_APP_SETTINGS_ANDROID_CONFIG_PROPERTY)
+    private JsonNode androidConfig;
+
+    @Convert(converter = JsonConverter.class)
+    @Column(name = ModelConstants.MOBILE_APP_IOS_CONFIG_PROPERTY)
+    private JsonNode iosConfig;
+
+    @Convert(converter = JsonConverter.class)
+    @Column(name = ModelConstants.MOBILE_APP_QR_CODE_CONFIG_PROPERTY)
+    private JsonNode qrCodeConfig;
 
     public MobileAppSettingsEntity(MobileAppSettings mobileAppSettings) {
         this.tenantId = mobileAppSettings.getTenantId().getId();
-        if (mobileAppSettings.getAppPackage() != null) {
-            this.appPackage = mobileAppSettings.getAppPackage();
+        this.useDefault = mobileAppSettings.isUseDefault();
+        if (mobileAppSettings.getAndroidConfig() != null) {
+            this.androidConfig = JacksonUtil.valueToTree(mobileAppSettings.getAndroidConfig());
         }
-        if (mobileAppSettings.getSha256CertFingerprints() != null) {
-            this.sha256CertFingerprints = mobileAppSettings.getSha256CertFingerprints();
+        if (mobileAppSettings.getIosConfig() != null) {
+            this.iosConfig = JacksonUtil.valueToTree(mobileAppSettings.getIosConfig());
         }
-        if (mobileAppSettings.getAppId() != null) {
-            this.appId = mobileAppSettings.getAppId();
-        }
-        if (mobileAppSettings.getSettings() != null) {
-            this.settings = mobileAppSettings.getSettings();
+        if (mobileAppSettings.getQrCodeConfig() != null) {
+            this.qrCodeConfig = JacksonUtil.valueToTree(mobileAppSettings.getQrCodeConfig());
         }
    }
 
@@ -75,17 +79,15 @@ public class MobileAppSettingsEntity implements ToData<MobileAppSettings>, Seria
     public MobileAppSettings toData() {
         MobileAppSettings mobileAppSettings = new MobileAppSettings();
         mobileAppSettings.setTenantId(TenantId.fromUUID(tenantId));
-        if (appPackage != null) {
-            mobileAppSettings.setAppPackage(appPackage);
+        mobileAppSettings.setUseDefault(useDefault);
+        if (qrCodeConfig != null) {
+            mobileAppSettings.setAndroidConfig(JacksonUtil.convertValue(androidConfig, AndroidConfig.class));
         }
-        if (sha256CertFingerprints != null) {
-            mobileAppSettings.setSha256CertFingerprints(sha256CertFingerprints);
+        if (qrCodeConfig != null) {
+            mobileAppSettings.setIosConfig(JacksonUtil.convertValue(iosConfig, IosConfig.class));
         }
-        if (appId != null) {
-            mobileAppSettings.setAppId(appId);
-        }
-        if (settings != null) {
-            mobileAppSettings.setSettings(settings);
+        if (qrCodeConfig != null) {
+            mobileAppSettings.setQrCodeConfig(JacksonUtil.convertValue(qrCodeConfig, QRCodeConfig.class));
         }
         return mobileAppSettings;
     }

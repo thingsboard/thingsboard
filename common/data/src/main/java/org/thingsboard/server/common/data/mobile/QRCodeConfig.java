@@ -13,13 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.qr;
+package org.thingsboard.server.common.data.mobile;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 @Data
-public class QRSecretEvictEvent {
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
+public class QRCodeConfig {
 
-    private final String secret;
+    private boolean showOnHomePage;
+    private boolean badgeEnabled;
+    private boolean labelEnabled;
+    private BadgePosition badgePosition;
+    private BadgeStyle badgeStyle;
+    @NoXss
+    private String qrCodeLabel;
 
 }

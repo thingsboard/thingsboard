@@ -15,35 +15,27 @@
  */
 package org.thingsboard.server.dao.mobile;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.mobile.BadgePosition;
+import org.thingsboard.server.common.data.mobile.BadgeStyle;
 import org.thingsboard.server.common.data.mobile.MobileAppSettings;
+import org.thingsboard.server.common.data.mobile.QRCodeConfig;
 import org.thingsboard.server.dao.entity.AbstractCachedService;
-import org.thingsboard.server.dao.exception.DataValidationException;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class BaseMobileAppSettingsService extends AbstractCachedService<TenantId, MobileAppSettings, MobileAppSettingsEvictEvent> implements MobileAppSettingsService {
 
-    @Value("${cache.specs.qrSecretKey.timeToLiveInMinutes:2}")
-    private int secretKeyTtl;
-
-    private static final int MIN_TIME_TO_DOWNLOAD_MOBILE_APP_IN_MIN = 1;
+    private static final String DEFAULT_QR_CODE_LABEL = "Scan to connect or download mobile app";
     private final MobileAppSettingsDao mobileAppSettingsDao;
 
     @Override
     public MobileAppSettings saveMobileAppSettings(TenantId tenantId, MobileAppSettings settings) {
-        if (settings.getSettings() != null && settings.getSettings().get("qrSecretKeyRefreshRateInMin") != null
-                && (settings.getSettings().get("qrSecretKeyRefreshRateInMin").asInt() + MIN_TIME_TO_DOWNLOAD_MOBILE_APP_IN_MIN > secretKeyTtl)) {
-            throw new DataValidationException("Refresh rate should be less than server secret key ttl");
-        }
         MobileAppSettings mobileAppSettings = mobileAppSettingsDao.save(tenantId, settings);
         publishEvictEvent(new MobileAppSettingsEvictEvent(tenantId));
         return mobileAppSettings;
@@ -66,27 +58,18 @@ public class BaseMobileAppSettingsService extends AbstractCachedService<TenantId
     private MobileAppSettings constructMobileAppSettings(MobileAppSettings mobileAppSettings) {
         if (mobileAppSettings == null) {
             mobileAppSettings = new MobileAppSettings();
+            mobileAppSettings.setUseDefault(true);
 
-            ObjectNode settings = JacksonUtil.newObjectNode();
-            settings.put("useDefault", true);
-            settings.put("showOnHomePage", true);
-            settings.put("qrLabel", "Scan to connect or download mobile app");
-            settings.put("qrSecretKeyRefreshRateInMin", 1);
-
-            ObjectNode androidSettings = JacksonUtil.newObjectNode();
-            androidSettings.put("badge", "original");
-            androidSettings.put("badgePosition", "Right");
-            settings.set("android", androidSettings);
-
-            ObjectNode iOSSettings = JacksonUtil.newObjectNode();
-            iOSSettings.put("badge", "original");
-            iOSSettings.put("badgePosition", "Right");
-            settings.set("iOS", iOSSettings);
-
-            mobileAppSettings.setSettings(settings);
+            QRCodeConfig qrCodeConfig = new QRCodeConfig();
+            qrCodeConfig.setQrCodeLabel(DEFAULT_QR_CODE_LABEL);
+            qrCodeConfig.setShowOnHomePage(true);
+            qrCodeConfig.setBadgeEnabled(true);
+            qrCodeConfig.setLabelEnabled(true);
+            qrCodeConfig.setBadgePosition(BadgePosition.RIGHT);
+            qrCodeConfig.setBadgeStyle(BadgeStyle.ORIGINAL);
+            mobileAppSettings.setQrCodeConfig(qrCodeConfig);
         }
         return mobileAppSettings;
     }
-
 
 }

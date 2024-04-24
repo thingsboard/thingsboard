@@ -28,9 +28,9 @@ import org.thingsboard.server.common.data.security.model.JwtPair;
 
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
 @Service("QRSecretCache")
-public class QRSecretRedisCache extends RedisTbTransactionalCache<UserId, JwtPair> {
+public class MobileSecretRedisCache extends RedisTbTransactionalCache<UserId, JwtPair> {
 
-    public QRSecretRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
-        super(CacheConstants.QR_SECRET_KEY_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbJsonRedisSerializer<>(JwtPair.class));
+    public MobileSecretRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
+        super(CacheConstants.MOBILE_SECRET_KEY_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbJsonRedisSerializer<>(JwtPair.class));
     }
 }

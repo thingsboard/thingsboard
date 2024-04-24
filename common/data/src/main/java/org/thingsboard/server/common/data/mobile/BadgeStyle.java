@@ -13,17 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.mobile;
-
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.mobile.MobileAppSettings;
+package org.thingsboard.server.common.data.mobile;
 
 
-public interface MobileAppSettingsDao {
+public enum BadgeStyle {
 
-    MobileAppSettings save(TenantId tenantId, MobileAppSettings appSettings);
+    ORIGINAL,
+    WHITE;
 
-    MobileAppSettings findByTenantId(TenantId tenantId);
-
-    void removeByTenantId(TenantId tenantId);
 }

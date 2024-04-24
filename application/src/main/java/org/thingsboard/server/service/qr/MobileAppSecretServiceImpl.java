@@ -29,21 +29,21 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
-import static org.thingsboard.server.service.security.system.DefaultSystemSecurityService.DEFAULT_QR_SECRET_KEY_LENGTH;
+import static org.thingsboard.server.service.security.system.DefaultSystemSecurityService.DEFAULT_MOBILE_SECRET_KEY_LENGTH;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class QRServiceImpl extends AbstractCachedService<String, JwtPair, QRSecretEvictEvent> implements QRService {
+public class MobileAppSecretServiceImpl extends AbstractCachedService<String, JwtPair, MobileSecretEvictEvent> implements MobileAppSecretService {
 
     private final JwtTokenFactory tokenFactory;
     private final SystemSecurityService systemSecurityService;
 
     @Override
-    public String generateSecret(SecurityUser securityUser) {
+    public String generateMobileAppSecret(SecurityUser securityUser) {
         log.trace("Executing generateSecret for user [{}]", securityUser.getId());
-        Integer qrSecretKeyLength = systemSecurityService.getSecuritySettings().getQrSecretKeyLength();
-        String secret = StringUtils.generateSafeToken(qrSecretKeyLength == null ? DEFAULT_QR_SECRET_KEY_LENGTH : qrSecretKeyLength);
+        Integer mobileSecretKeyLength = systemSecurityService.getSecuritySettings().getMobileSecretKeyLength();
+        String secret = StringUtils.generateSafeToken(mobileSecretKeyLength == null ? DEFAULT_MOBILE_SECRET_KEY_LENGTH : mobileSecretKeyLength);
         cache.put(secret, tokenFactory.createTokenPair(securityUser));
         return secret;
     }
@@ -58,9 +58,9 @@ public class QRServiceImpl extends AbstractCachedService<String, JwtPair, QRSecr
         }
     }
 
-    @TransactionalEventListener(classes = QRSecretEvictEvent.class)
+    @TransactionalEventListener(classes = MobileSecretEvictEvent.class)
     @Override
-    public void handleEvictEvent(QRSecretEvictEvent event) {
+    public void handleEvictEvent(MobileSecretEvictEvent event) {
         cache.evict(event.getSecret());
     }
 }

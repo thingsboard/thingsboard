@@ -15,19 +15,14 @@
  */
 package org.thingsboard.server.service.qr;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.cache.CacheManager;
-import org.springframework.stereotype.Service;
-import org.thingsboard.server.cache.CaffeineTbTransactionalCache;
-import org.thingsboard.server.common.data.CacheConstants;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.security.model.JwtPair;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
-@ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "caffeine", matchIfMissing = true)
-@Service("QRSecretCache")
-public class QRSecretCaffeineCache extends CaffeineTbTransactionalCache<String, JwtPair> {
+public interface MobileAppSecretService {
 
-    public QRSecretCaffeineCache(CacheManager cacheManager) {
-        super(cacheManager, CacheConstants.QR_SECRET_KEY_CACHE);
-    }
+    String generateMobileAppSecret(SecurityUser securityUser);
+
+    JwtPair getJwtPair(String secret) throws ThingsboardException;
 
 }

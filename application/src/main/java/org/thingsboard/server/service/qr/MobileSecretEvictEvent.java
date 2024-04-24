@@ -15,14 +15,11 @@
  */
 package org.thingsboard.server.service.qr;
 
-import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.security.model.JwtPair;
-import org.thingsboard.server.service.security.model.SecurityUser;
+import lombok.Data;
 
-public interface QRService {
+@Data
+public class MobileSecretEvictEvent {
 
-    String generateSecret(SecurityUser securityUser);
-
-    JwtPair getJwtPair(String secret) throws ThingsboardException;
+    private final String secret;
 
 }

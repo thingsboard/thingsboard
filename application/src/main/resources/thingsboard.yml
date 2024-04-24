@@ -582,9 +582,9 @@ cache:
     mobileAppSettings:
       timeToLiveInMinutes: "${CACHE_SPECS_MOBILE_APP_SETTINGS_TTL:1440}" # Mobile application cache TTL
       maxSize: "${CACHE_SPECS_MOBILE_APP_SETTINGS_MAX_SIZE:10000}" # 0 means the cache is disabled
-    qrSecretKey:
-      timeToLiveInMinutes: "${CACHE_QR_SECRET_KEY_TTL:2}" # QR secret key cache TTL
-      maxSize: "${CACHE_QR_SECRET_KEY_MAX_SIZE:10000}" # 0 means the cache is disabled
+    mobileSecretKey:
+      timeToLiveInMinutes: "${CACHE_MOBILE_SECRET_KEY_TTL:2}" # QR secret key cache TTL
+      maxSize: "${CACHE_MOBILE_SECRET_KEY_MAX_SIZE:10000}" # 0 means the cache is disabled
 
   # Deliberately placed outside the 'specs' group above
   notificationRules:

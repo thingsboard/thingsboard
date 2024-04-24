@@ -74,7 +74,7 @@ import static org.thingsboard.server.common.data.CacheConstants.SECURITY_SETTING
 @Slf4j
 public class DefaultSystemSecurityService implements SystemSecurityService {
 
-    public static final int DEFAULT_QR_SECRET_KEY_LENGTH = 64;
+    public static final int DEFAULT_MOBILE_SECRET_KEY_LENGTH = 64;
 
     @Autowired
     private AdminSettingsService adminSettingsService;
@@ -110,7 +110,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
             securitySettings.setPasswordPolicy(new UserPasswordPolicy());
             securitySettings.getPasswordPolicy().setMinimumLength(6);
             securitySettings.getPasswordPolicy().setMaximumLength(72);
-            securitySettings.setQrSecretKeyLength(DEFAULT_QR_SECRET_KEY_LENGTH);
+            securitySettings.setMobileSecretKeyLength(DEFAULT_MOBILE_SECRET_KEY_LENGTH);
         }
         return securitySettings;
     }

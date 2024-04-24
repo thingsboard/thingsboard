@@ -36,8 +36,8 @@ public class JpaMobileAppDao extends JpaAbstractDaoListeningExecutorService impl
     private MobileAppSettingsRepository mobileAppSettingsRepository;
 
     @Override
-    public MobileAppSettings save(TenantId tenantId, MobileAppSettings whiteLabeling) {
-        return DaoUtil.getData(mobileAppSettingsRepository.save(new MobileAppSettingsEntity(whiteLabeling)));
+    public MobileAppSettings save(TenantId tenantId, MobileAppSettings mobileAppSettings) {
+        return DaoUtil.getData(mobileAppSettingsRepository.save(new MobileAppSettingsEntity(mobileAppSettings)));
     }
 
     @Override

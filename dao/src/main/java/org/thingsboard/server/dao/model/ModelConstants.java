@@ -663,10 +663,10 @@ public class ModelConstants {
      * Mobile application settings constants.
      */
     public static final String MOBILE_APP_SETTINGS_TABLE_NAME = "mobile_app_settings";
-    public static final String MOBILE_APP_SETTINGS_APP_PACKAGE_PROPERTY = "app_package";
-    public static final String MOBILE_APP_SETTINGS_SHA256_CERT_FINGERPRINTS_PROPERTY = "sha256_cert_fingerprints";
-    public static final String MOBILE_APP_APP_ID_PROPERTY = "app_id";
-    public static final String MOBILE_APP_SETTINGS_PROPERTY = "settings";
+    public static final String MOBILE_APP_SETTINGS_USE_DEFAULT_PROPERTY = "use_default";
+    public static final String MOBILE_APP_SETTINGS_ANDROID_CONFIG_PROPERTY = "android_config";
+    public static final String MOBILE_APP_IOS_CONFIG_PROPERTY = "ios_config";
+    public static final String MOBILE_APP_QR_CODE_CONFIG_PROPERTY = "qr_code_config";
 
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 
