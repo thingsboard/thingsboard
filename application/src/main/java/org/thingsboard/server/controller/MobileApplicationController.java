@@ -135,7 +135,7 @@ public class MobileApplicationController extends BaseController {
         SecurityUser currentUser = getCurrentUser();
         accessControlService.checkPermission(currentUser, Resource.MOBILE_APP_SETTINGS, Operation.READ);
 
-        return mobileAppSettingsService.getMobileAppSettings(currentUser.getTenantId());
+        return mobileAppSettingsService.getMobileAppSettings(TenantId.SYS_TENANT_ID);
     }
 
     @ApiOperation(value = "Get the deep link to the associated mobile application (getMobileAppDeepLink)",

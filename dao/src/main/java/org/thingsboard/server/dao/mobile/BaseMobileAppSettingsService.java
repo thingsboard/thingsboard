@@ -20,8 +20,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.mobile.AndroidConfig;
 import org.thingsboard.server.common.data.mobile.BadgePosition;
 import org.thingsboard.server.common.data.mobile.BadgeStyle;
+import org.thingsboard.server.common.data.mobile.IosConfig;
 import org.thingsboard.server.common.data.mobile.MobileAppSettings;
 import org.thingsboard.server.common.data.mobile.QRCodeConfig;
 import org.thingsboard.server.dao.entity.AbstractCachedService;
@@ -45,7 +47,7 @@ public class BaseMobileAppSettingsService extends AbstractCachedService<TenantId
     public MobileAppSettings getMobileAppSettings(TenantId tenantId) {
         log.trace("Executing getMobileAppSettings for tenant [{}] ", tenantId);
         MobileAppSettings mobileAppSettings = cache.getAndPutInTransaction(tenantId,
-                () -> mobileAppSettingsDao.findByTenantId(tenantId), false);
+                () -> mobileAppSettingsDao.findByTenantId(tenantId), true);
         return constructMobileAppSettings(mobileAppSettings);
     }
 
@@ -60,14 +62,25 @@ public class BaseMobileAppSettingsService extends AbstractCachedService<TenantId
             mobileAppSettings = new MobileAppSettings();
             mobileAppSettings.setUseDefault(true);
 
-            QRCodeConfig qrCodeConfig = new QRCodeConfig();
-            qrCodeConfig.setQrCodeLabel(DEFAULT_QR_CODE_LABEL);
-            qrCodeConfig.setShowOnHomePage(true);
-            qrCodeConfig.setBadgeEnabled(true);
-            qrCodeConfig.setLabelEnabled(true);
-            qrCodeConfig.setBadgePosition(BadgePosition.RIGHT);
-            qrCodeConfig.setBadgeStyle(BadgeStyle.ORIGINAL);
+            AndroidConfig androidConfig = AndroidConfig.builder()
+                    .enabled(true)
+                    .build();
+            IosConfig iosConfig = IosConfig.builder()
+                    .enabled(true)
+                    .build();
+            QRCodeConfig qrCodeConfig = QRCodeConfig.builder()
+                    .showOnHomePage(true)
+                    .qrCodeLabelEnabled(true)
+                    .qrCodeLabel(DEFAULT_QR_CODE_LABEL)
+                    .badgeEnabled(true)
+                    .badgePosition(BadgePosition.RIGHT)
+                    .badgeStyle(BadgeStyle.ORIGINAL)
+                    .badgeEnabled(true)
+                    .build();
+
             mobileAppSettings.setQrCodeConfig(qrCodeConfig);
+            mobileAppSettings.setAndroidConfig(androidConfig);
+            mobileAppSettings.setIosConfig(iosConfig);
         }
         return mobileAppSettings;
     }

@@ -104,8 +104,10 @@ public class MobileApplicationControllerTest extends AbstractControllerTest {
         Pattern expectedPattern = Pattern.compile("https://([^/]+)/api/noauth/qr\\?secret=([^&]+)&ttl=([^&]+)&host=([^&]+)");
         Matcher parsedDeepLink = expectedPattern.matcher(deepLink);
         assertThat(parsedDeepLink.matches()).isTrue();
+        String appHost = parsedDeepLink.group(1);
         String secret = parsedDeepLink.group(2);
         String ttl = parsedDeepLink.group(3);
+        assertThat(appHost).isEqualTo("demo.thingsboard.io");
         assertThat(ttl).isEqualTo(String.valueOf(mobileSecretKeyTtl));
 
         JwtPair jwtPair = doGet("/api/noauth/qr/" + secret, JwtPair.class);
@@ -128,5 +130,31 @@ public class MobileApplicationControllerTest extends AbstractControllerTest {
 
         JwtPair customerJwtPair = doGet("/api/noauth/qr/" + customerSecret, JwtPair.class);
         assertThat(customerJwtPair).isNotNull();
+
+        // update mobile setting to use custom one
+        loginSysAdmin();
+        MobileAppSettings mobileAppSettings = doGet("/api/mobile/app/settings", MobileAppSettings.class);
+        mobileAppSettings.setUseDefault(false);
+        doPost("/api/mobile/app/settings", mobileAppSettings);
+
+        String customAppDeepLink = doGet("/api/mobile/deepLink", String.class);
+        Pattern customAppExpectedPattern = Pattern.compile("https://([^/]+)/api/noauth/qr\\?secret=([^&]+)&ttl=([^&]+)");
+        Matcher customAppParsedDeepLink = customAppExpectedPattern.matcher(customAppDeepLink);
+        assertThat(customAppParsedDeepLink.matches()).isTrue();
+        assertThat(customAppParsedDeepLink.group(1)).isEqualTo("localhost");
+
+        loginTenantAdmin();
+        String tenantCustomAppDeepLink = doGet("/api/mobile/deepLink", String.class);
+        Matcher tenantCustomAppParsedDeepLink = customAppExpectedPattern.matcher(tenantCustomAppDeepLink);
+        assertThat(tenantCustomAppParsedDeepLink.matches()).isTrue();
+        assertThat(tenantCustomAppParsedDeepLink.group(1)).isEqualTo("localhost");
+
+        loginCustomerUser();
+        String customerCustomAppDeepLink = doGet("/api/mobile/deepLink", String.class);
+        Matcher customerCustomAppParsedDeepLink = customAppExpectedPattern.matcher(customerCustomAppDeepLink);
+        assertThat(customerCustomAppParsedDeepLink.matches()).isTrue();
+        assertThat(customerCustomAppParsedDeepLink.group(1)).isEqualTo("localhost");
+
+
     }
 }

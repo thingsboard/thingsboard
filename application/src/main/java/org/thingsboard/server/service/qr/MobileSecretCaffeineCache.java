@@ -23,7 +23,7 @@ import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.security.model.JwtPair;
 
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "caffeine", matchIfMissing = true)
-@Service("QRSecretCache")
+@Service("MobileSecretCache")
 public class MobileSecretCaffeineCache extends CaffeineTbTransactionalCache<String, JwtPair> {
 
     public MobileSecretCaffeineCache(CacheManager cacheManager) {

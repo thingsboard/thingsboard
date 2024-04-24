@@ -16,12 +16,14 @@
 package org.thingsboard.server.common.data.mobile;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
@@ -29,7 +31,7 @@ public class QRCodeConfig {
 
     private boolean showOnHomePage;
     private boolean badgeEnabled;
-    private boolean labelEnabled;
+    private boolean qrCodeLabelEnabled;
     private BadgePosition badgePosition;
     private BadgeStyle badgeStyle;
     @NoXss
