@@ -208,7 +208,7 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
           retain: [true, []]
         }),
         serverSideRpc: this.fb.group({
-          type: [ServerSideRPCType.ONE_WAY, []],
+          type: [ServerSideRPCType.TWO_WAY, []],
           deviceNameFilter: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           methodFilter: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           requestTopicExpression: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
@@ -218,7 +218,6 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
           responseTimeout: [10000, [Validators.required]],
         })
       }));
-      this.mappingForm.patchValue(this.prepareFormValueData());
       this.mappingForm.get('requestType').valueChanges.pipe(
         startWith(this.mappingForm.get('requestType').value),
         takeUntil(this.destroy$)
@@ -246,6 +245,7 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
           requestValueGroup.get('responseTimeout').enable({emitEvent: false});
         }
       });
+      this.mappingForm.patchValue(this.prepareFormValueData());
     }
   }
 

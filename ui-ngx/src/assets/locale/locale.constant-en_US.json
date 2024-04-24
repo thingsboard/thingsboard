@@ -3074,7 +3074,7 @@
         "statistics": {
             "statistic": "Statistic",
             "statistics": "Statistics",
-            "statistic-commands-empty": "No statistics available",
+            "statistic-commands-empty": "No configured statistic keys found. You can configure them in \"Statistics\" tab in general configuration.",
             "commands": "Commands",
             "send-period": "Statistic send period (in sec)",
             "send-period-required": "Statistic send period is required",
@@ -3219,7 +3219,10 @@
             "grpc-min-time-between-pings": "Minimum amount of time the server should wait between sending keepalive ping messages",
             "grpc-max-pings-without-data": "Maximum number of keepalive ping messages that the server can send without receiving any data before it considers the connection dead.",
             "grpc-min-ping-interval-without-data": "Minimum amount of time the server should wait between sending keepalive ping messages when there is no data being sent or received.",
-            "permit-without-calls": "Allow server to keep the GRPC connection alive even when there are no active RPC calls."
+            "permit-without-calls": "Allow server to keep the GRPC connection alive even when there are no active RPC calls.",
+            "memory": "Your data will be stored in the in-memory queue, it is a fastest but no persistence guarantee.",
+            "file": "Your data will be stored in separated files and will be saved even after the gateway restart.",
+            "sqlite": "Your data will be stored in file based database. And will be saved even after the gateway restart."
         }
     },
     "grid": {

@@ -614,7 +614,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   }
 
   generate(formControlName: string): void {
-    this.connectorForm.get(formControlName).patchValue('tb_gw_' + generateSecret(5));
+    this.connectorForm.get(formControlName)?.patchValue('tb_gw_' + generateSecret(5));
   }
 
   private onDataUpdateError(e: any): void {
