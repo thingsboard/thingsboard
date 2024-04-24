@@ -19,11 +19,11 @@
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widgets.pie-chart.pie-chart-card-style</div>
     <div class="tb-form-row space-between column-xs">
-      <mat-slide-toggle class="mat-slide"  formControlName="showLabel">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showLabel">
         {{ 'widgets.pie-chart.label' | translate }}
       </mat-slide-toggle>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-        <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
           <mat-select formControlName="labelPosition">
             <mat-option *ngFor="let position of pieChartLabelPositions" [value]="position">
               {{ pieChartLabelPositionTranslationMap.get(position) | translate }}
