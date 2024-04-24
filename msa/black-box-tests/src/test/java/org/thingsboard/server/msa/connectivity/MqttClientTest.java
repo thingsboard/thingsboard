@@ -486,7 +486,11 @@ public class MqttClientTest extends AbstractContainerTest {
         MqttClientCallback callbackForDisconnectWithReturnCodeDummy = getCallbackWrapperForDisconnectWithReturnCode(returnCodeByteValueDummy);
         dummyMqttClient.setCallback(callbackForDisconnectWithReturnCodeDummy);
 
-        Thread.sleep(1000);
+        Awaitility
+                .await()
+                .alias("Check device disconnect.")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> returnCodeByteValueDummy[0] == MqttReturnCode.DUMMY.byteValue());
 
         MqttReturnCode returnCodeDummy = MqttReturnCode.valueOf(returnCodeByteValueDummy[0]);
         MqttReturnCode returnCode = MqttReturnCode.valueOf(returnCodeByteValue[0]);
