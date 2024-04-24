@@ -98,7 +98,7 @@ public class EdgeContextComponent {
     @Autowired
     private EdgeService edgeService;
 
-    @Autowired
+    @Autowired(required = false)
     private EdgeRpcService edgeRpcService;
 
     @Autowired

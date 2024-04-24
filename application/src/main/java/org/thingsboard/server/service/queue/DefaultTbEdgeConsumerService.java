@@ -51,7 +51,6 @@ import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
-import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
 import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
 import org.thingsboard.server.service.queue.processing.IdMsgPair;
 
@@ -86,18 +85,16 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
 
     private final TbQueueConsumer<TbProtoQueueMsg<ToEdgeMsg>> mainConsumer;
     private final EdgeContextComponent edgeCtx;
-    private final EdgeRpcService edgeRpcService;
     private final EdgeConsumerStats stats;
 
     protected volatile ExecutorService consumersExecutor;
 
     public DefaultTbEdgeConsumerService(TbCoreQueueFactory tbCoreQueueFactory, ActorSystemContext actorContext,
-                                        StatsFactory statsFactory, EdgeContextComponent edgeCtx, EdgeRpcService edgeRpcService) {
+                                        StatsFactory statsFactory, EdgeContextComponent edgeCtx) {
         super(actorContext, null, null, null, null, null,
                 null, tbCoreQueueFactory.createToEdgeNotificationsMsgConsumer(), null);
         this.mainConsumer = tbCoreQueueFactory.createEdgeMsgConsumer();
         this.edgeCtx = edgeCtx;
-        this.edgeRpcService = edgeRpcService;
         this.stats = new EdgeConsumerStats(statsFactory);
     }
 
@@ -215,29 +212,29 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
         try {
             if (toEdgeNotificationMsg.hasEdgeHighPriority()) {
                 EdgeSessionMsg edgeSessionMsg = ProtoUtils.fromProto(toEdgeNotificationMsg.getEdgeHighPriority());
-                edgeRpcService.onToEdgeSessionMsg(edgeSessionMsg.getTenantId(), edgeSessionMsg);
+                edgeCtx.getEdgeRpcService().onToEdgeSessionMsg(edgeSessionMsg.getTenantId(), edgeSessionMsg);
                 callback.onSuccess();
             } else if (toEdgeNotificationMsg.hasEdgeEventUpdate()) {
                 EdgeSessionMsg edgeSessionMsg = ProtoUtils.fromProto(toEdgeNotificationMsg.getEdgeEventUpdate());
-                edgeRpcService.onToEdgeSessionMsg(edgeSessionMsg.getTenantId(), edgeSessionMsg);
+                edgeCtx.getEdgeRpcService().onToEdgeSessionMsg(edgeSessionMsg.getTenantId(), edgeSessionMsg);
                 callback.onSuccess();
             } else if (toEdgeNotificationMsg.hasToEdgeSyncRequest()) {
                 EdgeSessionMsg edgeSessionMsg = ProtoUtils.fromProto(toEdgeNotificationMsg.getToEdgeSyncRequest());
-                edgeRpcService.onToEdgeSessionMsg(edgeSessionMsg.getTenantId(), edgeSessionMsg);
+                edgeCtx.getEdgeRpcService().onToEdgeSessionMsg(edgeSessionMsg.getTenantId(), edgeSessionMsg);
                 callback.onSuccess();
             } else if (toEdgeNotificationMsg.hasFromEdgeSyncResponse()) {
                 EdgeSessionMsg edgeSessionMsg = ProtoUtils.fromProto(toEdgeNotificationMsg.getFromEdgeSyncResponse());
-                edgeRpcService.onToEdgeSessionMsg(edgeSessionMsg.getTenantId(), edgeSessionMsg);
+                edgeCtx.getEdgeRpcService().onToEdgeSessionMsg(edgeSessionMsg.getTenantId(), edgeSessionMsg);
                 callback.onSuccess();
             } else if (toEdgeNotificationMsg.hasComponentLifecycle()) {
                 ComponentLifecycleMsg componentLifecycle = ProtoUtils.fromProto(toEdgeNotificationMsg.getComponentLifecycle());
                 TenantId tenantId = componentLifecycle.getTenantId();
                 EdgeId edgeId = new EdgeId(componentLifecycle.getEntityId().getId());
                 if (ComponentLifecycleEvent.DELETED.equals(componentLifecycle.getEvent())) {
-                    edgeRpcService.deleteEdge(tenantId, edgeId);
+                    edgeCtx.getEdgeRpcService().deleteEdge(tenantId, edgeId);
                 } else if (ComponentLifecycleEvent.UPDATED.equals(componentLifecycle.getEvent())) {
                     Edge edge = edgeCtx.getEdgeService().findEdgeById(tenantId, edgeId);
-                    edgeRpcService.updateEdge(tenantId, edge);
+                    edgeCtx.getEdgeRpcService().updateEdge(tenantId, edge);
                 }
                 callback.onSuccess();
             }
