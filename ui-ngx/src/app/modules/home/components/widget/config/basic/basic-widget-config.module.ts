@@ -114,6 +114,9 @@ import { ComparisonKeyRowComponent } from '@home/components/widget/config/basic/
 import {
   ComparisonKeysTableComponent
 } from '@home/components/widget/config/basic/chart/comparison-keys-table.component';
+import {
+  StatusWidgetBasicConfigComponent
+} from '@home/components/widget/config/basic/indicator/status-widget-basic-config.component';
 
 @NgModule({
   declarations: [
@@ -151,7 +154,8 @@ import {
     ToggleButtonBasicConfigComponent,
     TimeSeriesChartBasicConfigComponent,
     ComparisonKeyRowComponent,
-    ComparisonKeysTableComponent
+    ComparisonKeysTableComponent,
+    StatusWidgetBasicConfigComponent
   ],
   imports: [
     CommonModule,
@@ -191,7 +195,8 @@ import {
     PowerButtonBasicConfigComponent,
     SliderBasicConfigComponent,
     ToggleButtonBasicConfigComponent,
-    TimeSeriesChartBasicConfigComponent
+    TimeSeriesChartBasicConfigComponent,
+    StatusWidgetBasicConfigComponent
   ]
 })
 export class BasicWidgetConfigModule {
@@ -225,5 +230,6 @@ export const basicWidgetConfigComponentsMap: {[key: string]: Type<IBasicWidgetCo
   'tb-power-button-basic-config': PowerButtonBasicConfigComponent,
   'tb-slider-basic-config': SliderBasicConfigComponent,
   'tb-toggle-button-basic-config': ToggleButtonBasicConfigComponent,
-  'tb-time-series-chart-basic-config': TimeSeriesChartBasicConfigComponent
+  'tb-time-series-chart-basic-config': TimeSeriesChartBasicConfigComponent,
+  'tb-status-widget-basic-config': StatusWidgetBasicConfigComponent
 };

@@ -93,6 +93,7 @@ import { DeviceInfoTableComponent } from '@home/components/widget/lib/gateway/co
 import { MappingDataKeysPanelComponent } from '@home/components/widget/lib/gateway/connectors-configuration/mapping-data-keys-panel.component';
 import { BrokerSecurityComponent } from '@home/components/widget/lib/gateway/connectors-configuration/broker-security.component';
 import { EllipsisChipListDirective } from '@home/components/widget/lib/gateway/connectors-configuration/ellipsis-chip-list.directive';
+import { StatusWidgetComponent } from '@home/components/widget/lib/indicator/status-widget.component';
 
 @NgModule({
   declarations:
@@ -152,7 +153,8 @@ import { EllipsisChipListDirective } from '@home/components/widget/lib/gateway/c
       PowerButtonWidgetComponent,
       SliderWidgetComponent,
       ToggleButtonWidgetComponent,
-      TimeSeriesChartWidgetComponent
+      TimeSeriesChartWidgetComponent,
+      StatusWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -216,7 +218,8 @@ import { EllipsisChipListDirective } from '@home/components/widget/lib/gateway/c
         PowerButtonWidgetComponent,
         SliderWidgetComponent,
         ToggleButtonWidgetComponent,
-        TimeSeriesChartWidgetComponent
+        TimeSeriesChartWidgetComponent,
+        StatusWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }

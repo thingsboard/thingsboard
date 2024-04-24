@@ -46,7 +46,7 @@
               <input id="username-input" matInput type="email" autofocus formControlName="username" email required/>
               <mat-icon matPrefix>email</mat-icon>
               <mat-error *ngIf="loginFormGroup.get('username').invalid">
-                {{ 'user.invalid-email-format' | translate }}
+                {{ 'login.invalid-email-format' | translate }}
               </mat-error>
             </mat-form-field>
             <mat-form-field class="tb-appearance-transparent">
