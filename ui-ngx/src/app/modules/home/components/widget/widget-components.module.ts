@@ -86,6 +86,7 @@ import { PowerButtonWidgetComponent } from '@home/components/widget/lib/rpc/powe
 import { SliderWidgetComponent } from '@home/components/widget/lib/rpc/slider-widget.component';
 import { ToggleButtonWidgetComponent } from '@home/components/widget/lib/button/toggle-button-widget.component';
 import { TimeSeriesChartWidgetComponent } from '@home/components/widget/lib/chart/time-series-chart-widget.component';
+import { StatusWidgetComponent } from '@home/components/widget/lib/indicator/status-widget.component';
 
 @NgModule({
   declarations:
@@ -138,7 +139,8 @@ import { TimeSeriesChartWidgetComponent } from '@home/components/widget/lib/char
       PowerButtonWidgetComponent,
       SliderWidgetComponent,
       ToggleButtonWidgetComponent,
-      TimeSeriesChartWidgetComponent
+      TimeSeriesChartWidgetComponent,
+      StatusWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -195,7 +197,8 @@ import { TimeSeriesChartWidgetComponent } from '@home/components/widget/lib/char
         PowerButtonWidgetComponent,
         SliderWidgetComponent,
         ToggleButtonWidgetComponent,
-        TimeSeriesChartWidgetComponent
+        TimeSeriesChartWidgetComponent,
+        StatusWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }

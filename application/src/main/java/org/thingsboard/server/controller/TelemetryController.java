@@ -647,7 +647,7 @@ public class TelemetryController extends BaseController {
         Map<Long, List<KvEntry>> telemetryRequest;
         JsonElement telemetryJson;
         try {
-            telemetryJson = new JsonParser().parse(requestBody);
+            telemetryJson = JsonParser.parseString(requestBody);
         } catch (Exception e) {
             return getImmediateDeferredResult("Unable to parse timeseries payload: Invalid JSON body!", HttpStatus.BAD_REQUEST);
         }

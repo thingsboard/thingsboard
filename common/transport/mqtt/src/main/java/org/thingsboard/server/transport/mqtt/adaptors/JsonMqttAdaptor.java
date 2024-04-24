@@ -59,7 +59,7 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
     public TransportProtos.PostTelemetryMsg convertToPostTelemetry(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
         String payload = validatePayload(ctx.getSessionId(), inbound.payload(), false);
         try {
-            return JsonConverter.convertToTelemetryProto(new JsonParser().parse(payload));
+            return JsonConverter.convertToTelemetryProto(JsonParser.parseString(payload));
         } catch (IllegalStateException | JsonSyntaxException ex) {
             log.debug("Failed to decode post telemetry request", ex);
             throw new AdaptorException(ex);
@@ -70,7 +70,7 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
     public TransportProtos.PostAttributeMsg convertToPostAttributes(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
         String payload = validatePayload(ctx.getSessionId(), inbound.payload(), false);
         try {
-            return JsonConverter.convertToAttributesProto(new JsonParser().parse(payload));
+            return JsonConverter.convertToAttributesProto(JsonParser.parseString(payload));
         } catch (IllegalStateException | JsonSyntaxException ex) {
             log.debug("Failed to decode post attributes request", ex);
             throw new AdaptorException(ex);
@@ -167,7 +167,7 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
     public static JsonElement validateJsonPayload(UUID sessionId, ByteBuf payloadData) throws AdaptorException {
         String payload = validatePayload(sessionId, payloadData, false);
         try {
-            return new JsonParser().parse(payload);
+            return JsonParser.parseString(payload);
         } catch (JsonSyntaxException ex) {
             log.debug("Payload is in incorrect format: {}", payload);
             throw new AdaptorException(ex);
@@ -180,7 +180,7 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
             TransportProtos.GetAttributeRequestMsg.Builder result = TransportProtos.GetAttributeRequestMsg.newBuilder();
             result.setRequestId(getRequestId(topicName, topicBase));
             String payload = inbound.payload().toString(UTF8);
-            JsonElement requestBody = new JsonParser().parse(payload);
+            JsonElement requestBody = JsonParser.parseString(payload);
             Set<String> clientKeys = toStringSet(requestBody, "clientKeys");
             Set<String> sharedKeys = toStringSet(requestBody, "sharedKeys");
             if (clientKeys != null) {
@@ -213,7 +213,7 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
         String payload = validatePayload(ctx.getSessionId(), inbound.payload(), false);
         try {
             int requestId = getRequestId(topicName, topicBase);
-            return JsonConverter.convertToServerRpcRequest(new JsonParser().parse(payload), requestId);
+            return JsonConverter.convertToServerRpcRequest(JsonParser.parseString(payload), requestId);
         } catch (IllegalStateException | JsonSyntaxException ex) {
             log.debug("Failed to decode to server rpc request", ex);
             throw new AdaptorException(ex);
