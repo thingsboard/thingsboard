@@ -199,7 +199,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
     @Override
     @Transactional
     public Tenant saveTenant(Tenant tenant, Consumer<TenantId> defaultEntitiesCreator) {
-        log.trace("Executing saveTenant [{}]", tenant);
+        log.error("Executing saveTenant [{}]", tenant);
         tenant.setRegion(DEFAULT_TENANT_REGION);
         if (tenant.getTenantProfileId() == null) {
             TenantProfile tenantProfile = this.tenantProfileService.findOrCreateDefaultTenantProfile(TenantId.SYS_TENANT_ID);

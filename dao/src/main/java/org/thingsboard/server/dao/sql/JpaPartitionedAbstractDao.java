@@ -15,25 +15,42 @@
  */
 package org.thingsboard.server.dao.sql;
 
-import org.thingsboard.server.dao.model.BaseEntity;
-import org.thingsboard.server.dao.util.SqlDao;
-
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.dao.model.BaseEntity;
+import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
+import org.thingsboard.server.dao.util.SqlDao;
 
 @SqlDao
+@Slf4j
 public abstract class JpaPartitionedAbstractDao<E extends BaseEntity<D>, D> extends JpaAbstractDao<E, D> {
 
     @PersistenceContext
     private EntityManager entityManager;
 
+    @Autowired
+    private SqlPartitioningRepository partitioningRepository;
+
     @Override
     protected E doSave(E entity, boolean isNew) {
         createPartition(entity);
-        if (isNew) {
-            entityManager.persist(entity);
-        } else {
-            entity = entityManager.merge(entity);
+        if (getEntityType() == EntityType.NOTIFICATION) {
+            log.trace("Created partition for entity {}. available partitions: {}", entity, partitioningRepository.fetchPartitions("notification"));
+        }
+        try {
+            if (isNew) {
+                entityManager.persist(entity);
+            } else {
+                entity = entityManager.merge(entity);
+            }
+        } catch (Throwable t) {
+            if (getEntityType() == EntityType.NOTIFICATION) {
+                log.trace("Failed to save {} (isNew {})", entity, isNew, t);
+            }
+            throw t;
         }
         return entity;
     }
