@@ -85,7 +85,7 @@ public class CustomerControllerTest extends AbstractControllerTest {
 
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
-        savedTenant = doPost("/api/tenant", tenant, Tenant.class);
+        savedTenant = saveTenant(tenant);
         Assert.assertNotNull(savedTenant);
 
         tenantAdmin = new User();
@@ -153,7 +153,7 @@ public class CustomerControllerTest extends AbstractControllerTest {
                 .andExpect(statusReason(containsString(msgError)));
 
         customer.setTenantId(savedTenant.getId());
-        testNotifyEntityEqualsOneTimeServiceNeverError(customer,savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -164,7 +164,7 @@ public class CustomerControllerTest extends AbstractControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeServiceNeverError(customer,savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -175,7 +175,7 @@ public class CustomerControllerTest extends AbstractControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeServiceNeverError(customer,savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -186,7 +186,7 @@ public class CustomerControllerTest extends AbstractControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeServiceNeverError(customer,savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -197,7 +197,7 @@ public class CustomerControllerTest extends AbstractControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeServiceNeverError(customer,savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -208,7 +208,7 @@ public class CustomerControllerTest extends AbstractControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeServiceNeverError(customer,savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
     }
 
@@ -292,7 +292,7 @@ public class CustomerControllerTest extends AbstractControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString(msgError)));
 
-        testNotifyEntityEqualsOneTimeServiceNeverError(customer,savedTenant.getId(),
+        testNotifyEntityEqualsOneTimeServiceNeverError(customer, savedTenant.getId(),
                 tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED, new DataValidationException(msgError));
     }
 

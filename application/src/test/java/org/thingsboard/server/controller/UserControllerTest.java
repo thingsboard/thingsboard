@@ -380,7 +380,7 @@ public class UserControllerTest extends AbstractControllerTest {
         //here created a new tenant despite already created on AbstractWebTest and then delete the tenant properly on the last line
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant with many admins");
-        Tenant savedTenant = doPost("/api/tenant", tenant, Tenant.class);
+        Tenant savedTenant = saveTenant(tenant);
         Assert.assertNotNull(savedTenant);
 
         TenantId tenantId = savedTenant.getId();
@@ -668,7 +668,7 @@ public class UserControllerTest extends AbstractControllerTest {
         List<UserId> expectedCustomerUserIds = new ArrayList<>();
         expectedCustomerUserIds.add(customerUserId);
         for (int i = 0; i < 45; i++) {
-            User customerUser = createCustomerUser( customerId);
+            User customerUser = createCustomerUser(customerId);
             customerUser.setEmail(email + StringUtils.randomAlphanumeric((int) (5 + Math.random() * 10)) + "@thingsboard.org");
             User user = doPost("/api/user", customerUser, User.class);
             expectedCustomerUserIds.add(user.getId());
@@ -749,7 +749,7 @@ public class UserControllerTest extends AbstractControllerTest {
 
         String email = "testEmail1";
         for (int i = 0; i < 45; i++) {
-            User customerUser = createCustomerUser( customerId);
+            User customerUser = createCustomerUser(customerId);
             customerUser.setEmail(email + StringUtils.randomAlphanumeric((int) (5 + Math.random() * 10)) + "@thingsboard.org");
             doPost("/api/user", customerUser, User.class);
         }
@@ -992,8 +992,8 @@ public class UserControllerTest extends AbstractControllerTest {
         List<UserEmailInfo> usersInfo = getUsersInfo(pageLink);
 
         List<UserEmailInfo> expectedUserInfos = customerUsersContainingWord.stream().map(customerUser -> new UserEmailInfo(customerUser.getId(),
-                customerUser.getEmail(), customerUser.getFirstName() == null ? "" : customerUser.getFirstName(),
-                customerUser.getLastName() == null ? "" : customerUser.getLastName()))
+                        customerUser.getEmail(), customerUser.getFirstName() == null ? "" : customerUser.getFirstName(),
+                        customerUser.getLastName() == null ? "" : customerUser.getLastName()))
                 .sorted(userDataIdComparator).collect(Collectors.toList());
         usersInfo.sort(userDataIdComparator);
 
@@ -1045,8 +1045,8 @@ public class UserControllerTest extends AbstractControllerTest {
         List<UserEmailInfo> usersInfo = getUsersInfo(pageLink);
 
         List<UserEmailInfo> expectedUserInfos = usersContainingWord.stream().map(customerUser -> new UserEmailInfo(customerUser.getId(),
-                customerUser.getEmail(), customerUser.getFirstName() == null ? "" : customerUser.getFirstName(),
-                customerUser.getLastName() == null ? "" : customerUser.getLastName()))
+                        customerUser.getEmail(), customerUser.getFirstName() == null ? "" : customerUser.getFirstName(),
+                        customerUser.getLastName() == null ? "" : customerUser.getLastName()))
                 .sorted(userDataIdComparator).collect(Collectors.toList());
         usersInfo.sort(userDataIdComparator);
 

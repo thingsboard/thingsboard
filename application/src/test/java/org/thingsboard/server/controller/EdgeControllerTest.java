@@ -361,7 +361,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
 
         Tenant tenant2 = new Tenant();
         tenant2.setTitle("Different tenant");
-        Tenant savedTenant2 = doPost("/api/tenant", tenant2, Tenant.class);
+        Tenant savedTenant2 = saveTenant(tenant2);
         Assert.assertNotNull(savedTenant2);
 
         User tenantAdmin2 = new User();

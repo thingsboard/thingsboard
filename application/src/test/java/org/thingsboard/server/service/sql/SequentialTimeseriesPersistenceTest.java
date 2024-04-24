@@ -50,8 +50,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 @DaoSqlTest
 public class SequentialTimeseriesPersistenceTest extends AbstractControllerTest {
 
@@ -77,7 +75,7 @@ public class SequentialTimeseriesPersistenceTest extends AbstractControllerTest 
 
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
-        savedTenant = doPost("/api/tenant", tenant, Tenant.class);
+        savedTenant = saveTenant(tenant);
         Assert.assertNotNull(savedTenant);
 
         tenantAdmin = new User();

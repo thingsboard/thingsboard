@@ -132,7 +132,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
 
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
-        savedTenant = doPost("/api/tenant", tenant, Tenant.class);
+        savedTenant = saveTenant(tenant);
         Assert.assertNotNull(savedTenant);
 
         tenantAdmin = new User();
@@ -686,7 +686,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
 
         Tenant tenant2 = new Tenant();
         tenant2.setTitle("Different tenant");
-        Tenant savedTenant2 = doPost("/api/tenant", tenant2, Tenant.class);
+        Tenant savedTenant2 = saveTenant(tenant2);
         Assert.assertNotNull(savedTenant2);
 
         User tenantAdmin2 = new User();
@@ -911,7 +911,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAnyAdditionalInfoAny(new Device(), new Device(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.DELETED, ActionType.DELETED, cntEntity, cntEntity,1);
+                ActionType.DELETED, ActionType.DELETED, cntEntity, cntEntity, 1);
         testNotificationUpdateGatewayNever();
     }
 
@@ -1316,7 +1316,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
         loginSysAdmin();
         Tenant tenant = new Tenant();
         tenant.setTitle("Different tenant");
-        Tenant savedDifferentTenant = doPost("/api/tenant", tenant, Tenant.class);
+        Tenant savedDifferentTenant = saveTenant(tenant);
         Assert.assertNotNull(savedDifferentTenant);
 
         User user = new User();
