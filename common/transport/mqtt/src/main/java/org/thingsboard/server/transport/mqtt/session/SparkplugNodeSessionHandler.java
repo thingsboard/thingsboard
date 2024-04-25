@@ -94,7 +94,7 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
         byte[] bytes = getBytes(inbound.payload());
         Descriptors.Descriptor telemetryDynamicMsgDescriptor = ProtoConverter.validateDescriptor(deviceSessionCtx.getTelemetryDynamicMsgDescriptor());
         try {
-            return JsonConverter.convertToTelemetryProto(new JsonParser().parse(ProtoConverter.dynamicMsgToJson(bytes, telemetryDynamicMsgDescriptor)));
+            return JsonConverter.convertToTelemetryProto(JsonParser.parseString(ProtoConverter.dynamicMsgToJson(bytes, telemetryDynamicMsgDescriptor)));
         } catch (Exception e) {
             log.debug("Failed to decode post telemetry request", e);
             throw new AdaptorException(e);

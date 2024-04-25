@@ -31,13 +31,11 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Random;
 
 @Slf4j
-
 public class TbUtilsTest {
 
     private ExecutionContext ctx;
@@ -474,7 +472,16 @@ public class TbUtilsTest {
         }
     }
 
+    @Test
+    public void encodeDecodeUri_Test() {
+        String uriOriginal = "-_.!~*'();/?:@&=+$,#ht://example.ж д a/path with spaces/?param1=Київ 1&param2=Україна2";
+        String uriEncodeExpected = "-_.!~*'();/?:@&=+$,#ht://example.%D0%B6%20%D0%B4%20a/path%20with%20spaces/?param1=%D0%9A%D0%B8%D1%97%D0%B2%201&param2=%D0%A3%D0%BA%D1%80%D0%B0%D1%97%D0%BD%D0%B02";
+        String uriEncodeActual = TbUtils.encodeURI(uriOriginal);
+        Assert.assertEquals(uriEncodeExpected, uriEncodeActual);
 
+        String uriDecodeActual = TbUtils.decodeURI(uriEncodeActual);
+        Assert.assertEquals(uriOriginal, uriDecodeActual);
+    }
     private static List<Byte> toList(byte[] data) {
         List<Byte> result = new ArrayList<>(data.length);
         for (Byte b : data) {

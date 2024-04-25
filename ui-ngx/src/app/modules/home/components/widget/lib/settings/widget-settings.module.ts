@@ -341,6 +341,12 @@ import {
 import {
   TimeSeriesChartWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/chart/time-series-chart-widget-settings.component';
+import {
+  StatusWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/indicator/status-widget-settings.component';
+import {
+  PieChartWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/chart/pie-chart-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -462,7 +468,9 @@ import {
     TimeSeriesChartKeySettingsComponent,
     TimeSeriesChartLineSettingsComponent,
     TimeSeriesChartBarSettingsComponent,
-    TimeSeriesChartWidgetSettingsComponent
+    TimeSeriesChartWidgetSettingsComponent,
+    StatusWidgetSettingsComponent,
+    PieChartWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -589,7 +597,9 @@ import {
     TimeSeriesChartKeySettingsComponent,
     TimeSeriesChartLineSettingsComponent,
     TimeSeriesChartBarSettingsComponent,
-    TimeSeriesChartWidgetSettingsComponent
+    TimeSeriesChartWidgetSettingsComponent,
+    StatusWidgetSettingsComponent,
+    PieChartWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -682,5 +692,7 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-slider-widget-settings': SliderWidgetSettingsComponent,
   'tb-toggle-button-widget-settings': ToggleButtonWidgetSettingsComponent,
   'tb-time-series-chart-key-settings': TimeSeriesChartKeySettingsComponent,
-  'tb-time-series-chart-widget-settings': TimeSeriesChartWidgetSettingsComponent
+  'tb-time-series-chart-widget-settings': TimeSeriesChartWidgetSettingsComponent,
+  'tb-status-widget-settings': StatusWidgetSettingsComponent,
+  'tb-pie-chart-widget-settings': PieChartWidgetSettingsComponent
 };

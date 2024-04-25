@@ -110,6 +110,16 @@ import {
 import {
   TimeSeriesChartBasicConfigComponent
 } from '@home/components/widget/config/basic/chart/time-series-chart-basic-config.component';
+import { ComparisonKeyRowComponent } from '@home/components/widget/config/basic/chart/comparison-key-row.component';
+import {
+  ComparisonKeysTableComponent
+} from '@home/components/widget/config/basic/chart/comparison-keys-table.component';
+import {
+  StatusWidgetBasicConfigComponent
+} from '@home/components/widget/config/basic/indicator/status-widget-basic-config.component';
+import {
+  PieChartBasicConfigComponent
+} from '@home/components/widget/config/basic/chart/pie-chart-basic-config.component';
 import {
   DigitalSimpleGaugeBasicConfigComponent
 } from '@home/components/widget/config/basic/gauge/digital-simple-gauge-basic-config.component';
@@ -149,6 +159,10 @@ import {
     SliderBasicConfigComponent,
     ToggleButtonBasicConfigComponent,
     TimeSeriesChartBasicConfigComponent,
+    ComparisonKeyRowComponent,
+    ComparisonKeysTableComponent,
+    StatusWidgetBasicConfigComponent,
+    PieChartBasicConfigComponent,
     DigitalSimpleGaugeBasicConfigComponent
   ],
   imports: [
@@ -190,6 +204,8 @@ import {
     SliderBasicConfigComponent,
     ToggleButtonBasicConfigComponent,
     TimeSeriesChartBasicConfigComponent,
+    StatusWidgetBasicConfigComponent,
+    PieChartBasicConfigComponent,
     DigitalSimpleGaugeBasicConfigComponent
   ]
 })
@@ -225,5 +241,7 @@ export const basicWidgetConfigComponentsMap: {[key: string]: Type<IBasicWidgetCo
   'tb-slider-basic-config': SliderBasicConfigComponent,
   'tb-toggle-button-basic-config': ToggleButtonBasicConfigComponent,
   'tb-time-series-chart-basic-config': TimeSeriesChartBasicConfigComponent,
+  'tb-status-widget-basic-config': StatusWidgetBasicConfigComponent,
+  'tb-pie-chart-basic-config': PieChartBasicConfigComponent,
   'tb-digital-simple-gauge-basic-config': DigitalSimpleGaugeBasicConfigComponent
 };

@@ -115,6 +115,7 @@ export type EChartsSeriesItem = {
   decimals?: number;
   latestData?: FormattedData;
   tooltipValueFormatFunction?: EChartsTooltipValueFormatFunction;
+  comparisonItem?: boolean;
 };
 
 export enum EChartsShape {
@@ -161,6 +162,63 @@ export const timeSeriesChartShapeOffsetFunctions = new Map<EChartsShape, ECharts
   ]
 );
 
+export enum EChartsAnimationEasing {
+  linear = 'linear',
+  quadraticIn = 'quadraticIn',
+  quadraticOut = 'quadraticOut',
+  quadraticInOut = 'quadraticInOut',
+  cubicIn = 'cubicIn',
+  cubicOut = 'cubicOut',
+  cubicInOut = 'cubicInOut',
+  quarticIn = 'quarticIn',
+  quarticOut = 'quarticOut',
+  quarticInOut = 'quarticInOut',
+  quinticIn = 'quinticIn',
+  quinticOut = 'quinticOut',
+  quinticInOut = 'quinticInOut',
+  sinusoidalIn = 'sinusoidalIn',
+  sinusoidalOut = 'sinusoidalOut',
+  sinusoidalInOut = 'sinusoidalInOut',
+  exponentialIn = 'exponentialIn',
+  exponentialOut = 'exponentialOut',
+  exponentialInOut = 'exponentialInOut',
+  circularIn = 'circularIn',
+  circularOut = 'circularOut',
+  circularInOut = 'circularInOut',
+  elasticIn = 'elasticIn',
+  elasticOut = 'elasticOut',
+  elasticInOut = 'elasticInOut',
+  backIn = 'backIn',
+  backOut = 'backOut',
+  backInOut = 'backInOut',
+  bounceIn = 'bounceIn',
+  bounceOut = 'bounceOut',
+  bounceInOut = 'bounceInOut'
+}
+
+export const echartsAnimationEasings = Object.keys(EChartsAnimationEasing) as EChartsAnimationEasing[];
+
+export interface EChartsAnimationSettings {
+  animation: boolean;
+  animationThreshold: number;
+  animationDuration: number;
+  animationEasing: EChartsAnimationEasing;
+  animationDelay: number;
+  animationDurationUpdate: number;
+  animationEasingUpdate: EChartsAnimationEasing;
+  animationDelayUpdate: number;
+}
+
+export const echartsAnimationDefaultSettings: EChartsAnimationSettings = {
+  animation: true,
+  animationThreshold: 2000,
+  animationDuration: 500,
+  animationEasing: EChartsAnimationEasing.cubicOut,
+  animationDelay: 0,
+  animationDurationUpdate: 300,
+  animationEasingUpdate: EChartsAnimationEasing.cubicOut,
+  animationDelayUpdate: 0
+};
 
 export const timeAxisBandWidthCalculator: TimeAxisBandWidthCalculator = (model) => {
   let interval: number;
@@ -200,9 +258,9 @@ export const timeAxisBandWidthCalculator: TimeAxisBandWidthCalculator = (model) 
   }
 };
 
-export const getXAxis = (chart: ECharts): Axis2D => {
+export const getAxis = (chart: ECharts, mainType: string, axisId: string): Axis2D => {
   const model: GlobalModel = (chart as any).getModel();
-  const models = model.queryComponents({mainType: 'xAxis'});
+  const models = model.queryComponents({mainType, id: axisId});
   if (models?.length) {
     const axisModel = models[0] as AxisModel;
     return axisModel.axis;
@@ -210,27 +268,20 @@ export const getXAxis = (chart: ECharts): Axis2D => {
   return null;
 };
 
-export const getYAxis = (chart: ECharts, axisId: string): Axis2D => {
-  const model: GlobalModel = (chart as any).getModel();
-  const models = model.queryComponents({mainType: 'yAxis', id: axisId});
-  if (models?.length) {
-    const axisModel = models[0] as AxisModel;
-    return axisModel.axis;
+export const calculateAxisSize = (chart: ECharts, mainType: string, axisId: string): number => {
+  const axis = getAxis(chart, mainType, axisId);
+  return _calculateAxisSize(axis);
+};
+
+export const measureAxisNameSize = (chart: ECharts, mainType: string, axisId: string, name: string): number => {
+  const axis = getAxis(chart, mainType, axisId);
+  if (axis) {
+    return axis.model.getModel('nameTextStyle').getTextRect(name).height;
   }
-  return null;
+  return 0;
 };
 
-export const calculateYAxisWidth = (chart: ECharts, axisId: string): number => {
-  const axis = getYAxis(chart, axisId);
-  return calculateAxisSize(axis);
-};
-
-export const calculateXAxisHeight = (chart: ECharts): number => {
-  const axis = getXAxis(chart);
-  return calculateAxisSize(axis);
-};
-
-const calculateAxisSize = (axis: Axis2D): number => {
+const _calculateAxisSize = (axis: Axis2D): number => {
   let size = 0;
   if (axis && axis.model.option.show) {
     const labelUnionRect = estimateLabelUnionRect(axis);
@@ -245,22 +296,6 @@ const calculateAxisSize = (axis: Axis2D): number => {
     }
   }
   return size;
-};
-
-export const measureYAxisNameWidth = (chart: ECharts, axisId: string, name: string): number => {
-  const axis = getYAxis(chart, axisId);
-  if (axis) {
-    return axis.model.getModel('nameTextStyle').getTextRect(name).height;
-  }
-  return 0;
-};
-
-export const measureXAxisNameHeight = (chart: ECharts, name: string): number => {
-  const axis = getXAxis(chart);
-  if (axis) {
-    return axis.model.getModel('nameTextStyle').getTextRect(name).height;
-  }
-  return 0;
 };
 
 const measureSymbolOffset = (symbol: string, symbolSize: any): number => {
@@ -280,7 +315,7 @@ const measureSymbolOffset = (symbol: string, symbolSize: any): number => {
 
 export const measureThresholdOffset = (chart: ECharts, axisId: string, thresholdId: string, value: any): [number, number] => {
   const offset: [number, number] = [0,0];
-  const axis = getYAxis(chart, axisId);
+  const axis = getAxis(chart, 'yAxis', axisId);
   if (axis && !axis.scale.isBlank()) {
     const extent = axis.scale.getExtent();
     const model: GlobalModel = (chart as any).getModel();
@@ -352,7 +387,7 @@ export const measureThresholdOffset = (chart: ECharts, axisId: string, threshold
 };
 
 export const getAxisExtent = (chart: ECharts, axisId: string): [number, number] => {
-  const axis = getYAxis(chart, axisId);
+  const axis = getAxis(chart, 'yAxis', axisId);
   if (axis) {
     return axis.scale.getExtent();
   }
@@ -439,8 +474,8 @@ export const adjustTimeAxisExtentToData = (timeAxisOption: TimeAxisBaseOption,
       }
     }
   }
-  timeAxisOption.min = (typeof min !== 'undefined') ? min : defaultMin;
-  timeAxisOption.max = (typeof max !== 'undefined') ? max : defaultMax;
+  timeAxisOption.min = (typeof min !== 'undefined' && Math.abs(min - defaultMin) < 1000) ? min : defaultMin;
+  timeAxisOption.max = (typeof max !== 'undefined' && Math.abs(max - defaultMax) < 1000) ? max : defaultMax;
 };
 
 const toEChartsDataItem = (entry: DataEntry, valueConverter?: (value: any) => any): EChartsDataItem => {
@@ -469,6 +504,8 @@ export interface EChartsTooltipWidgetSettings {
   showTooltip: boolean;
   tooltipTrigger?: EChartsTooltipTrigger;
   tooltipShowFocusedSeries?: boolean;
+  tooltipLabelFont: Font;
+  tooltipLabelColor: string;
   tooltipValueFont: Font;
   tooltipValueColor: string;
   tooltipValueFormatter?: string | EChartsTooltipValueFormatFunction;
@@ -503,43 +540,72 @@ export const echartsTooltipFormatter = (renderer: Renderer2,
                                         focusedSeriesIndex: number,
                                         series?: EChartsSeriesItem[],
                                         interval?: Interval): null | HTMLElement => {
-  if (!params || Array.isArray(params) && !params[0]) {
+
+  const tooltipParams = mapTooltipParams(params, series, focusedSeriesIndex);
+  if (!tooltipParams.items.length && !tooltipParams.comparisonItems.length) {
     return null;
   }
-  const firstParam = Array.isArray(params) ? params[0] : params;
-  if (!firstParam.value) {
-    return null;
-  }
+
   const tooltipElement: HTMLElement = renderer.createElement('div');
   renderer.setStyle(tooltipElement, 'display', 'flex');
   renderer.setStyle(tooltipElement, 'flex-direction', 'column');
   renderer.setStyle(tooltipElement, 'align-items', 'flex-start');
-  renderer.setStyle(tooltipElement, 'gap', '4px');
-  if (settings.tooltipShowDate) {
-    const dateElement: HTMLElement = renderer.createElement('div');
-    let dateText: string;
-    const startTs = firstParam.value[2];
-    const endTs = firstParam.value[3];
-    if (settings.tooltipDateInterval && startTs && endTs && (endTs - 1) > startTs) {
-      const startDateText = tooltipDateFormat.update(startTs, interval);
-      const endDateText = tooltipDateFormat.update(endTs - 1, interval);
-      if (startDateText === endDateText) {
-        dateText = startDateText;
-      } else {
-        dateText = startDateText + ' - ' + endDateText;
-      }
-    } else {
-      const ts = firstParam.value[0];
-      dateText = tooltipDateFormat.update(ts, interval);
+  renderer.setStyle(tooltipElement, 'gap', '16px');
+
+  buildItemsTooltip(tooltipElement, tooltipParams.items, renderer, tooltipDateFormat, settings, valueFormatFunction, interval);
+  buildItemsTooltip(tooltipElement, tooltipParams.comparisonItems, renderer, tooltipDateFormat, settings, valueFormatFunction, interval);
+
+  return tooltipElement;
+};
+
+interface TooltipItem {
+  param: CallbackDataParams;
+  dataItem: EChartsSeriesItem;
+}
+
+interface TooltipParams {
+  items: TooltipItem[];
+  comparisonItems: TooltipItem[];
+}
+
+const buildItemsTooltip = (tooltipElement: HTMLElement,
+                           items: TooltipItem[],
+                           renderer: Renderer2,
+                           tooltipDateFormat: DateFormatProcessor,
+                           settings: EChartsTooltipWidgetSettings,
+                           valueFormatFunction: EChartsTooltipValueFormatFunction,
+                           interval?: Interval) => {
+  if (items.length) {
+    const tooltipItemsElement: HTMLElement = renderer.createElement('div');
+    renderer.setStyle(tooltipItemsElement, 'display', 'flex');
+    renderer.setStyle(tooltipItemsElement, 'flex-direction', 'column');
+    renderer.setStyle(tooltipItemsElement, 'align-items', 'flex-start');
+    renderer.setStyle(tooltipItemsElement, 'gap', '4px');
+    renderer.appendChild(tooltipElement, tooltipItemsElement);
+    if (settings.tooltipShowDate) {
+      renderer.appendChild(tooltipItemsElement,
+        constructEchartsTooltipDateElement(renderer, tooltipDateFormat, settings, items[0].param, interval));
     }
-    renderer.appendChild(dateElement, renderer.createText(dateText));
-    renderer.setStyle(dateElement, 'font-family', settings.tooltipDateFont.family);
-    renderer.setStyle(dateElement, 'font-size', settings.tooltipDateFont.size + settings.tooltipDateFont.sizeUnit);
-    renderer.setStyle(dateElement, 'font-style', settings.tooltipDateFont.style);
-    renderer.setStyle(dateElement, 'font-weight', settings.tooltipDateFont.weight);
-    renderer.setStyle(dateElement, 'line-height', settings.tooltipDateFont.lineHeight);
-    renderer.setStyle(dateElement, 'color', settings.tooltipDateColor);
-    renderer.appendChild(tooltipElement, dateElement);
+    for (const item of items) {
+      renderer.appendChild(tooltipItemsElement,
+        constructEchartsTooltipSeriesElement(renderer, settings, item, valueFormatFunction));
+    }
+  }
+};
+
+const mapTooltipParams = (params: CallbackDataParams[] | CallbackDataParams,
+                          series?: EChartsSeriesItem[],
+                          focusedSeriesIndex?: number): TooltipParams => {
+  const result: TooltipParams = {
+    items: [],
+    comparisonItems: []
+  };
+  if (!params || Array.isArray(params) && !params[0]) {
+    return result;
+  }
+  const firstParam = Array.isArray(params) ? params[0] : params;
+  if (!firstParam.value) {
+    return result;
   }
   let seriesParams: CallbackDataParams = null;
   if (Array.isArray(params) && focusedSeriesIndex > -1) {
@@ -548,22 +614,63 @@ export const echartsTooltipFormatter = (renderer: Renderer2,
     seriesParams = params;
   }
   if (seriesParams) {
-    renderer.appendChild(tooltipElement,
-      constructEchartsTooltipSeriesElement(renderer, settings, seriesParams, valueFormatFunction, series));
+    appendTooltipItem(result, seriesParams, series);
   } else if (Array.isArray(params)) {
     for (seriesParams of params) {
-      renderer.appendChild(tooltipElement,
-        constructEchartsTooltipSeriesElement(renderer, settings, seriesParams, valueFormatFunction, series));
+      appendTooltipItem(result, seriesParams, series);
     }
   }
-  return tooltipElement;
+  return result;
+};
+
+const appendTooltipItem = (tooltipParams: TooltipParams, seriesParams: CallbackDataParams, series?: EChartsSeriesItem[]) => {
+  const dataItem = series?.find(s => s.id === seriesParams.seriesId);
+  const tooltipItem: TooltipItem = {
+    param: seriesParams,
+    dataItem
+  };
+  if (dataItem?.comparisonItem) {
+    tooltipParams.comparisonItems.push(tooltipItem);
+  } else {
+    tooltipParams.items.push(tooltipItem);
+  }
+};
+
+const constructEchartsTooltipDateElement = (renderer: Renderer2,
+                                            tooltipDateFormat: DateFormatProcessor,
+                                            settings: EChartsTooltipWidgetSettings,
+                                            param: CallbackDataParams,
+                                            interval?: Interval): HTMLElement => {
+  const dateElement: HTMLElement = renderer.createElement('div');
+  let dateText: string;
+  const startTs = param.value[2];
+  const endTs = param.value[3];
+  if (settings.tooltipDateInterval && startTs && endTs && (endTs - 1) > startTs) {
+    const startDateText = tooltipDateFormat.update(startTs, interval);
+    const endDateText = tooltipDateFormat.update(endTs - 1, interval);
+    if (startDateText === endDateText) {
+      dateText = startDateText;
+    } else {
+      dateText = startDateText + ' - ' + endDateText;
+    }
+  } else {
+    const ts = param.value[0];
+    dateText = tooltipDateFormat.update(ts, interval);
+  }
+  renderer.appendChild(dateElement, renderer.createText(dateText));
+  renderer.setStyle(dateElement, 'font-family', settings.tooltipDateFont.family);
+  renderer.setStyle(dateElement, 'font-size', settings.tooltipDateFont.size + settings.tooltipDateFont.sizeUnit);
+  renderer.setStyle(dateElement, 'font-style', settings.tooltipDateFont.style);
+  renderer.setStyle(dateElement, 'font-weight', settings.tooltipDateFont.weight);
+  renderer.setStyle(dateElement, 'line-height', settings.tooltipDateFont.lineHeight);
+  renderer.setStyle(dateElement, 'color', settings.tooltipDateColor);
+  return dateElement;
 };
 
 const constructEchartsTooltipSeriesElement = (renderer: Renderer2,
                                               settings: EChartsTooltipWidgetSettings,
-                                              seriesParams: CallbackDataParams,
-                                              valueFormatFunction: EChartsTooltipValueFormatFunction,
-                                              series?: EChartsSeriesItem[]): HTMLElement => {
+                                              item: TooltipItem,
+                                              valueFormatFunction: EChartsTooltipValueFormatFunction): HTMLElement => {
   const labelValueElement: HTMLElement = renderer.createElement('div');
   renderer.setStyle(labelValueElement, 'display', 'flex');
   renderer.setStyle(labelValueElement, 'flex-direction', 'row');
@@ -579,38 +686,34 @@ const constructEchartsTooltipSeriesElement = (renderer: Renderer2,
   renderer.setStyle(circleElement, 'width', '8px');
   renderer.setStyle(circleElement, 'height', '8px');
   renderer.setStyle(circleElement, 'border-radius', '50%');
-  renderer.setStyle(circleElement, 'background', seriesParams.color);
+  renderer.setStyle(circleElement, 'background', item.param.color);
   renderer.appendChild(labelElement, circleElement);
   const labelTextElement: HTMLElement = renderer.createElement('div');
-  renderer.appendChild(labelTextElement, renderer.createText(seriesParams.seriesName));
-  renderer.setStyle(labelTextElement, 'font-family', 'Roboto');
-  renderer.setStyle(labelTextElement, 'font-size', '12px');
-  renderer.setStyle(labelTextElement, 'font-style', 'normal');
-  renderer.setStyle(labelTextElement, 'font-weight', '400');
-  renderer.setStyle(labelTextElement, 'line-height', '16px');
-  renderer.setStyle(labelTextElement, 'letter-spacing', '0.4px');
-  renderer.setStyle(labelTextElement, 'color', 'rgba(0, 0, 0, 0.76)');
+  renderer.appendChild(labelTextElement, renderer.createText(item.param.seriesName));
+  renderer.setStyle(labelTextElement, 'font-family', settings.tooltipLabelFont.family);
+  renderer.setStyle(labelTextElement, 'font-size', settings.tooltipLabelFont.size + settings.tooltipLabelFont.sizeUnit);
+  renderer.setStyle(labelTextElement, 'font-style', settings.tooltipLabelFont.style);
+  renderer.setStyle(labelTextElement, 'font-weight', settings.tooltipLabelFont.weight);
+  renderer.setStyle(labelTextElement, 'line-height', settings.tooltipLabelFont.lineHeight);
+  renderer.setStyle(labelTextElement, 'color', settings.tooltipLabelColor);
   renderer.appendChild(labelElement, labelTextElement);
   const valueElement: HTMLElement = renderer.createElement('div');
   let formatFunction = valueFormatFunction;
   let latestData: FormattedData;
   let units = '';
   let decimals = 0;
-  if (series) {
-    const item = series.find(s => s.id === seriesParams.seriesId);
-    if (item) {
-      if (item.tooltipValueFormatFunction) {
-        formatFunction = item.tooltipValueFormatFunction;
-      }
-      latestData = item.latestData;
-      units = item.units;
-      decimals = item.decimals;
+  if (item.dataItem) {
+    if (item.dataItem.tooltipValueFormatFunction) {
+      formatFunction = item.dataItem.tooltipValueFormatFunction;
     }
+    latestData = item.dataItem.latestData;
+    units = item.dataItem.units;
+    decimals = item.dataItem.decimals;
   }
   if (!latestData) {
     latestData = {} as FormattedData;
   }
-  const value = formatFunction(seriesParams.value[1], latestData, units, decimals);
+  const value = formatFunction(item.param.value[1], latestData, units, decimals);
   renderer.appendChild(valueElement, renderer.createText(value));
   renderer.setStyle(valueElement, 'flex', '1');
   renderer.setStyle(valueElement, 'text-align', 'end');

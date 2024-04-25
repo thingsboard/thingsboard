@@ -91,6 +91,9 @@
         {{ 'widgets.time-series-chart.data-zoom' | translate }}
       </mat-slide-toggle>
     </div>
+    <tb-time-series-chart-grid-settings
+        formControlName="grid">
+    </tb-time-series-chart-grid-settings>
   </div>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widgets.bar-chart.bar-appearance</div>
@@ -237,9 +240,23 @@
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
         <div class="tb-form-row space-between">
+          <div>{{ 'tooltip.label' | translate }}</div>
+          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <tb-font-settings formControlName="tooltipLabelFont"
+                              [initialPreviewStyle]="{ color: barChartWidgetConfigForm.get('tooltipLabelColor').value }"
+                              previewText="Temperature">
+            </tb-font-settings>
+            <tb-color-input asBoxInput
+                            colorClearButton
+                            formControlName="tooltipLabelColor">
+            </tb-color-input>
+          </div>
+        </div>
+        <div class="tb-form-row space-between">
           <div>{{ 'tooltip.value' | translate }}</div>
           <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
             <tb-font-settings formControlName="tooltipValueFont"
+                              [initialPreviewStyle]="{ color: barChartWidgetConfigForm.get('tooltipValueColor').value }"
                               [previewText]="tooltipValuePreviewFn">
             </tb-font-settings>
             <tb-color-input asBoxInput
@@ -256,6 +273,7 @@
             <tb-date-format-select fxFlex excludeLastUpdateAgo includeAuto
                                    formControlName="tooltipDateFormat"></tb-date-format-select>
             <tb-font-settings formControlName="tooltipDateFont"
+                              [initialPreviewStyle]="{ color: barChartWidgetConfigForm.get('tooltipDateColor').value }"
                               [previewText]="tooltipDatePreviewFn">
             </tb-font-settings>
             <tb-color-input asBoxInput
@@ -288,9 +306,9 @@
       </ng-template>
     </mat-expansion-panel>
   </div>
-  <tb-time-series-chart-animation-settings
+  <tb-echarts-animation-settings
       formControlName="animation">
-  </tb-time-series-chart-animation-settings>
+  </tb-echarts-animation-settings>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widget-config.card-appearance</div>
     <div class="tb-form-row space-between">

@@ -30,6 +30,9 @@ import org.thingsboard.server.service.edge.rpc.fetch.DeviceProfilesEdgeEventFetc
 import org.thingsboard.server.service.edge.rpc.fetch.DevicesEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.EdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.EntityViewsEdgeEventFetcher;
+import org.thingsboard.server.service.edge.rpc.fetch.NotificationRuleEdgeEventFetcher;
+import org.thingsboard.server.service.edge.rpc.fetch.NotificationTargetEdgeEventFetcher;
+import org.thingsboard.server.service.edge.rpc.fetch.NotificationTemplateEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.OAuth2EdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.OtaPackagesEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.QueuesEdgeEventFetcher;
@@ -74,6 +77,9 @@ public class EdgeSyncCursor {
         fetchers.add(new AssetsEdgeEventFetcher(ctx.getAssetService()));
         fetchers.add(new EntityViewsEdgeEventFetcher(ctx.getEntityViewService()));
         if (fullSync) {
+            fetchers.add(new NotificationTemplateEdgeEventFetcher(ctx.getNotificationTemplateService()));
+            fetchers.add(new NotificationTargetEdgeEventFetcher(ctx.getNotificationTargetService()));
+            fetchers.add(new NotificationRuleEdgeEventFetcher(ctx.getNotificationRuleService()));
             fetchers.add(new SystemWidgetTypesEdgeEventFetcher(ctx.getWidgetTypeService()));
             fetchers.add(new TenantWidgetTypesEdgeEventFetcher(ctx.getWidgetTypeService()));
             fetchers.add(new SystemWidgetsBundlesEdgeEventFetcher(ctx.getWidgetsBundleService()));
@@ -100,4 +106,5 @@ public class EdgeSyncCursor {
     public int getCurrentIdx() {
         return currentIdx;
     }
+
 }

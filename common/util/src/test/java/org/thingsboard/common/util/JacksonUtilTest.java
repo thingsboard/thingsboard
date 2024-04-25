@@ -25,7 +25,12 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class JacksonUtilTest {
 
@@ -69,4 +74,13 @@ public class JacksonUtilTest {
         Assertions.assertNotNull(serialized);
         Assertions.assertEquals(original, JacksonUtil.toPlainText(serialized));
     }
+
+    @Test
+    public void optionalMappingJDK8ModuleTest() {
+        // To address the issue: Java 8 optional type `java.util.Optional` not supported by default: add Module "com.fasterxml.jackson.datatype:jackson-datatype-jdk8" to enable handling
+        assertThat(JacksonUtil.writeValueAsString(Optional.of("hello"))).isEqualTo("\"hello\"");
+        assertThat(JacksonUtil.writeValueAsString(List.of(Optional.of("abc")))).isEqualTo("[\"abc\"]");
+        assertThat(JacksonUtil.writeValueAsString(Set.of(Optional.empty()))).isEqualTo("[null]");
+    }
+
 }
