@@ -167,6 +167,11 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
     }
 
     @Override
+    public ListenableFuture<Alarm> findLatestActiveByOriginatorAndTypeAsync(TenantId tenantId, EntityId originator, String type) {
+        return alarmDao.findLatestActiveByOriginatorAndTypeAsync(tenantId, originator, type);
+    }
+
+    @Override
     public PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId,
                                                                AlarmDataQuery query, Collection<EntityId> orderedEntityIds) {
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);

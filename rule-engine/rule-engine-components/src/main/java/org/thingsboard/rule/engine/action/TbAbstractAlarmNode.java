@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.action;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.ScriptEngine;
@@ -68,7 +69,7 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
                         ctx.tellSuccess(msg);
                     }
                 },
-                t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
+                t -> ctx.tellFailure(msg, t), MoreExecutors.directExecutor());
     }
 
     protected abstract ListenableFuture<TbAlarmResult> processAlarm(TbContext ctx, TbMsg msg);

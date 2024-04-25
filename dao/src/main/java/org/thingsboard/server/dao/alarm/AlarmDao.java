@@ -54,6 +54,8 @@ public interface AlarmDao extends Dao<Alarm> {
 
     Alarm findLatestActiveByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
 
+    ListenableFuture<Alarm> findLatestActiveByOriginatorAndTypeAsync(TenantId tenantId, EntityId originator, String type);
+
     ListenableFuture<Alarm> findLatestByOriginatorAndTypeAsync(TenantId tenantId, EntityId originator, String type);
 
     Alarm findAlarmById(TenantId tenantId, UUID key);

@@ -90,16 +90,14 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
             }
         }
 
-        ListenableFuture<Alarm> existingAlarmFuture = ctx.getDbCallbackExecutor().submit(
-                () -> ctx.getAlarmService().findLatestActiveByOriginatorAndType(ctx.getTenantId(), msg.getOriginator(), alarmType)
-        );
+        ListenableFuture<Alarm> existingAlarmFuture = ctx.getAlarmService().findLatestActiveByOriginatorAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), alarmType);
         return Futures.transformAsync(existingAlarmFuture, existingAlarm -> {
             if (existingAlarm == null || existingAlarm.isCleared()) {
                 return createNewAlarm(ctx, msg, msgAlarm);
             } else {
                 return updateAlarm(ctx, msg, existingAlarm, msgAlarm);
             }
-        }, MoreExecutors.directExecutor());
+        }, ctx.getDbCallbackExecutor());
     }
 
     private Alarm getAlarmFromMessage(TenantId tenantId, TbMsg msg) throws IllegalArgumentException {
@@ -128,9 +126,9 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
                 newAlarm = buildAlarm(msg, details, ctx.getTenantId());
             }
             return newAlarm;
-        }, MoreExecutors.directExecutor());
+            }, ctx.getDbCallbackExecutor());
         ListenableFuture<AlarmApiCallResult> asyncCreated = Futures.transform(asyncAlarm,
-                alarm -> ctx.getAlarmService().createAlarm(AlarmCreateOrUpdateActiveRequest.fromAlarm(alarm)), ctx.getDbCallbackExecutor());
+                alarm -> ctx.getAlarmService().createAlarm(AlarmCreateOrUpdateActiveRequest.fromAlarm(alarm)), MoreExecutors.directExecutor());
         return Futures.transform(asyncCreated, TbAlarmResult::fromAlarmResult, MoreExecutors.directExecutor());
     }
 

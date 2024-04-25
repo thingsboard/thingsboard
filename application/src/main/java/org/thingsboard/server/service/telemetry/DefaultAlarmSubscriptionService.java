@@ -172,6 +172,11 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     }
 
     @Override
+    public ListenableFuture<Alarm> findLatestActiveByOriginatorAndTypeAsync(TenantId tenantId, EntityId originator, String type) {
+        return alarmService.findLatestActiveByOriginatorAndTypeAsync(tenantId, originator, type);
+    }
+
+    @Override
     public Alarm findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
         return alarmService.findLatestActiveByOriginatorAndType(tenantId, originator, type);
     }

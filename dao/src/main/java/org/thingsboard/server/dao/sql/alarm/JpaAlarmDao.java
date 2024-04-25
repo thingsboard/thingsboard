@@ -118,6 +118,11 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
+    public ListenableFuture<Alarm> findLatestActiveByOriginatorAndTypeAsync(TenantId tenantId, EntityId originator, String type) {
+        return service.submit(() -> findLatestActiveByOriginatorAndType(tenantId, originator, type));
+    }
+
+    @Override
     public ListenableFuture<Alarm> findLatestByOriginatorAndTypeAsync(TenantId tenantId, EntityId originator, String type) {
         return service.submit(() -> findLatestByOriginatorAndType(tenantId, originator, type));
     }
