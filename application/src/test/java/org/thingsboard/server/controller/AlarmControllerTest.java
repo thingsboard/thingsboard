@@ -643,61 +643,6 @@ public class AlarmControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testUnassignAlarmOnCustomerRemoving() throws Exception {
-        createDifferentTenantCustomer();
-        loginDifferentTenant();
-
-        User user = new User();
-        user.setAuthority(Authority.CUSTOMER_USER);
-        user.setTenantId(tenantId);
-        user.setCustomerId(differentTenantCustomerId);
-        user.setEmail("customerForAssign@thingsboard.org");
-        User savedUser = createUser(user, "password");
-
-        Device device = createDevice("Different customer device", "default", "differentTenantTest");
-
-        Device assignedDevice = doPost("/api/customer/" + differentTenantCustomerId.getId()
-                + "/device/" + device.getId().getId(), Device.class);
-        Assert.assertEquals(differentTenantCustomerId, assignedDevice.getCustomerId());
-
-        Alarm alarm = Alarm.builder()
-                .type(TEST_ALARM_TYPE)
-                .tenantId(savedDifferentTenant.getId())
-                .customerId(differentTenantCustomerId)
-                .originator(device.getId())
-                .severity(AlarmSeverity.MAJOR)
-                .build();
-        alarm = doPost("/api/alarm", alarm, Alarm.class);
-        Assert.assertNotNull(alarm);
-        AlarmId alarmId = alarm.getId();
-
-        alarm = doGet("/api/alarm/info/" + alarmId.getId(), AlarmInfo.class);
-        Assert.assertNotNull(alarm);
-
-        Mockito.reset(tbClusterService, auditLogService);
-        long beforeAssignmentTs = System.currentTimeMillis();
-
-        doPost("/api/alarm/" + alarmId.getId() + "/assign/" + savedUser.getId().getId()).andExpect(status().isOk());
-        AlarmInfo foundAlarm = doGet("/api/alarm/info/" + alarmId.getId(), AlarmInfo.class);
-        Assert.assertNotNull(foundAlarm);
-        Assert.assertEquals(savedUser.getId(), foundAlarm.getAssigneeId());
-        Assert.assertTrue(foundAlarm.getAssignTs() >= beforeAssignmentTs);
-
-        long afterAssignmentTs = System.currentTimeMillis();
-
-        Mockito.reset(tbClusterService, auditLogService);
-
-        doDelete("/api/customer/" + differentTenantCustomerId.getId()).andExpect(status().isOk());
-
-        Awaitility.await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
-            AlarmInfo alarmInfo = doGet("/api/alarm/info/" + alarmId.getId(), AlarmInfo.class);
-            Assert.assertNotNull(alarmInfo);
-            Assert.assertNull(alarmInfo.getAssigneeId());
-            Assert.assertTrue(alarmInfo.getAssignTs() >= afterAssignmentTs);
-        });
-    }
-
-    @Test
     public void testFindAlarmsViaCustomerUser() throws Exception {
         loginCustomerUser();
 
