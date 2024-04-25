@@ -162,6 +162,63 @@ export const timeSeriesChartShapeOffsetFunctions = new Map<EChartsShape, ECharts
   ]
 );
 
+export enum EChartsAnimationEasing {
+  linear = 'linear',
+  quadraticIn = 'quadraticIn',
+  quadraticOut = 'quadraticOut',
+  quadraticInOut = 'quadraticInOut',
+  cubicIn = 'cubicIn',
+  cubicOut = 'cubicOut',
+  cubicInOut = 'cubicInOut',
+  quarticIn = 'quarticIn',
+  quarticOut = 'quarticOut',
+  quarticInOut = 'quarticInOut',
+  quinticIn = 'quinticIn',
+  quinticOut = 'quinticOut',
+  quinticInOut = 'quinticInOut',
+  sinusoidalIn = 'sinusoidalIn',
+  sinusoidalOut = 'sinusoidalOut',
+  sinusoidalInOut = 'sinusoidalInOut',
+  exponentialIn = 'exponentialIn',
+  exponentialOut = 'exponentialOut',
+  exponentialInOut = 'exponentialInOut',
+  circularIn = 'circularIn',
+  circularOut = 'circularOut',
+  circularInOut = 'circularInOut',
+  elasticIn = 'elasticIn',
+  elasticOut = 'elasticOut',
+  elasticInOut = 'elasticInOut',
+  backIn = 'backIn',
+  backOut = 'backOut',
+  backInOut = 'backInOut',
+  bounceIn = 'bounceIn',
+  bounceOut = 'bounceOut',
+  bounceInOut = 'bounceInOut'
+}
+
+export const echartsAnimationEasings = Object.keys(EChartsAnimationEasing) as EChartsAnimationEasing[];
+
+export interface EChartsAnimationSettings {
+  animation: boolean;
+  animationThreshold: number;
+  animationDuration: number;
+  animationEasing: EChartsAnimationEasing;
+  animationDelay: number;
+  animationDurationUpdate: number;
+  animationEasingUpdate: EChartsAnimationEasing;
+  animationDelayUpdate: number;
+}
+
+export const echartsAnimationDefaultSettings: EChartsAnimationSettings = {
+  animation: true,
+  animationThreshold: 2000,
+  animationDuration: 500,
+  animationEasing: EChartsAnimationEasing.cubicOut,
+  animationDelay: 0,
+  animationDurationUpdate: 300,
+  animationEasingUpdate: EChartsAnimationEasing.cubicOut,
+  animationDelayUpdate: 0
+};
 
 export const timeAxisBandWidthCalculator: TimeAxisBandWidthCalculator = (model) => {
   let interval: number;
@@ -417,8 +474,8 @@ export const adjustTimeAxisExtentToData = (timeAxisOption: TimeAxisBaseOption,
       }
     }
   }
-  timeAxisOption.min = (typeof min !== 'undefined') ? min : defaultMin;
-  timeAxisOption.max = (typeof max !== 'undefined') ? max : defaultMax;
+  timeAxisOption.min = (typeof min !== 'undefined' && Math.abs(min - defaultMin) < 1000) ? min : defaultMin;
+  timeAxisOption.max = (typeof max !== 'undefined' && Math.abs(max - defaultMax) < 1000) ? max : defaultMax;
 };
 
 const toEChartsDataItem = (entry: DataEntry, valueConverter?: (value: any) => any): EChartsDataItem => {
@@ -447,6 +504,8 @@ export interface EChartsTooltipWidgetSettings {
   showTooltip: boolean;
   tooltipTrigger?: EChartsTooltipTrigger;
   tooltipShowFocusedSeries?: boolean;
+  tooltipLabelFont: Font;
+  tooltipLabelColor: string;
   tooltipValueFont: Font;
   tooltipValueColor: string;
   tooltipValueFormatter?: string | EChartsTooltipValueFormatFunction;
@@ -631,13 +690,12 @@ const constructEchartsTooltipSeriesElement = (renderer: Renderer2,
   renderer.appendChild(labelElement, circleElement);
   const labelTextElement: HTMLElement = renderer.createElement('div');
   renderer.appendChild(labelTextElement, renderer.createText(item.param.seriesName));
-  renderer.setStyle(labelTextElement, 'font-family', 'Roboto');
-  renderer.setStyle(labelTextElement, 'font-size', '12px');
-  renderer.setStyle(labelTextElement, 'font-style', 'normal');
-  renderer.setStyle(labelTextElement, 'font-weight', '400');
-  renderer.setStyle(labelTextElement, 'line-height', '16px');
-  renderer.setStyle(labelTextElement, 'letter-spacing', '0.4px');
-  renderer.setStyle(labelTextElement, 'color', 'rgba(0, 0, 0, 0.76)');
+  renderer.setStyle(labelTextElement, 'font-family', settings.tooltipLabelFont.family);
+  renderer.setStyle(labelTextElement, 'font-size', settings.tooltipLabelFont.size + settings.tooltipLabelFont.sizeUnit);
+  renderer.setStyle(labelTextElement, 'font-style', settings.tooltipLabelFont.style);
+  renderer.setStyle(labelTextElement, 'font-weight', settings.tooltipLabelFont.weight);
+  renderer.setStyle(labelTextElement, 'line-height', settings.tooltipLabelFont.lineHeight);
+  renderer.setStyle(labelTextElement, 'color', settings.tooltipLabelColor);
   renderer.appendChild(labelElement, labelTextElement);
   const valueElement: HTMLElement = renderer.createElement('div');
   let formatFunction = valueFormatFunction;

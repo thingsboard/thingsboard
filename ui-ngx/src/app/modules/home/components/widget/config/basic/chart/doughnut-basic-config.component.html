@@ -59,7 +59,7 @@
     </tb-image-cards-select>
     <div class="tb-form-row">
       <mat-slide-toggle class="mat-slide" formControlName="autoScale">
-        {{ 'widgets.doughnut.auto-scale' | translate }}
+        {{ 'widgets.latest-chart.auto-scale' | translate }}
       </mat-slide-toggle>
     </div>
     <div class="tb-form-row column-xs">
@@ -99,12 +99,12 @@
     </div>
     <div class="tb-form-row">
       <mat-slide-toggle class="mat-slide" formControlName="clockwise">
-        {{ 'widgets.doughnut.clockwise-layout' | translate }}
+        {{ 'widgets.latest-chart.clockwise-layout' | translate }}
       </mat-slide-toggle>
     </div>
     <div class="tb-form-row">
       <mat-slide-toggle class="mat-slide" formControlName="sortSeries">
-        {{ 'widgets.doughnut.sort-series' | translate }}
+        {{ 'widgets.latest-chart.sort-series' | translate }}
       </mat-slide-toggle>
     </div>
     <div [fxShow]="totalEnabled" class="tb-form-row space-between">
@@ -194,8 +194,8 @@
           <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
             <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
               <mat-select formControlName="tooltipValueType">
-                <mat-option *ngFor="let type of doughnutTooltipValueTypes" [value]="type">
-                  {{ doughnutTooltipValueTypeTranslationMap.get(type) | translate }}
+                <mat-option *ngFor="let type of latestChartTooltipValueTypes" [value]="type">
+                  {{ latestChartTooltipValueTypeTranslationMap.get(type) | translate }}
                 </mat-option>
               </mat-select>
             </mat-form-field>
@@ -229,6 +229,9 @@
       </ng-template>
     </mat-expansion-panel>
   </div>
+  <tb-echarts-animation-settings
+      formControlName="animation">
+  </tb-echarts-animation-settings>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widget-config.card-appearance</div>
     <div class="tb-form-row space-between">

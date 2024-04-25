@@ -138,41 +138,39 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
         TbMsgMetaData metaData = new TbMsgMetaData();
         CustomerId customerId = null;
         switch (entityId.getEntityType()) {
-            case DEVICE:
+            case DEVICE -> {
                 Device device = deviceService.findDeviceById(tenantId, new DeviceId(entityId.getId()));
                 if (device != null) {
                     customerId = device.getCustomerId();
                     metaData.putValue("deviceName", device.getName());
                     metaData.putValue("deviceType", device.getType());
                 }
-                break;
-            case ASSET:
+            }
+            case ASSET -> {
                 Asset asset = assetService.findAssetById(tenantId, new AssetId(entityId.getId()));
                 if (asset != null) {
                     customerId = asset.getCustomerId();
                     metaData.putValue("assetName", asset.getName());
                     metaData.putValue("assetType", asset.getType());
                 }
-                break;
-            case ENTITY_VIEW:
+            }
+            case ENTITY_VIEW -> {
                 EntityView entityView = entityViewService.findEntityViewById(tenantId, new EntityViewId(entityId.getId()));
                 if (entityView != null) {
                     customerId = entityView.getCustomerId();
                     metaData.putValue("entityViewName", entityView.getName());
                     metaData.putValue("entityViewType", entityView.getType());
                 }
-                break;
-            case EDGE:
+            }
+            case EDGE -> {
                 Edge edge = edgeService.findEdgeById(tenantId, new EdgeId(entityId.getId()));
                 if (edge != null) {
                     customerId = edge.getCustomerId();
                     metaData.putValue("edgeName", edge.getName());
                     metaData.putValue("edgeType", edge.getType());
                 }
-                break;
-            default:
-                log.debug("[{}] Using empty metadata for entityId [{}]", tenantId, entityId);
-                break;
+            }
+            default -> log.debug("[{}] Using empty metadata for entityId [{}]", tenantId, entityId);
         }
         return new ImmutablePair<>(metaData, customerId != null ? customerId : new CustomerId(ModelConstants.NULL_UUID));
     }

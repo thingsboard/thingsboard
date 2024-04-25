@@ -805,7 +805,6 @@
         "email-messages": "Email messages",
         "email-messages-daily-activity": "Email messages daily activity",
         "email-messages-monthly-activity": "Email messages monthly activity",
-        "exceptions": "Exceptions",
         "executions": "Executions",
         "scripts": "Scripts",
         "scripts-hourly-activity": "Scripts hourly activity",
@@ -823,9 +822,7 @@
         "permanent-failures": "${entityName} Permanent Failures",
         "permanent-timeouts": "${entityName} Permanent Timeouts",
         "processing-failures": "${entityName} Processing Failures",
-        "processing-failures-and-timeouts": "Processing Failures and Timeouts",
         "processing-timeouts": "${entityName} Processing Timeouts",
-        "queue-stats": "Queue Stats",
         "rule-chain": "Rule Chain",
         "rule-engine": "Rule Engine",
         "rule-engine-daily-activity": "Rule Engine daily activity",
@@ -3292,6 +3289,7 @@
             "months": "(month ago)",
             "years": "(year ago)"
         },
+        "column-title": "Column title",
         "label": "Label",
         "value": "Value"
     },
@@ -3313,6 +3311,7 @@
         "new-password-again": "Confirm new password",
         "password-link-sent-message": "Reset link has been sent",
         "email": "Email",
+        "invalid-email-format": "Invalid email format.",
         "login-with": "Login with {{name}}",
         "or": "or",
         "error": "Login error",
@@ -4461,6 +4460,7 @@
         "trigger": "Trigger",
         "trigger-point": "Point",
         "trigger-axis": "Axis",
+        "label": "Label",
         "value": "Value",
         "date": "Date",
         "show-date-time-interval": "Show date time interval",
@@ -5468,6 +5468,25 @@
             "signal-strength-card-style": "Signal strength card style",
             "no-signal-rssi-value": "\"No signal\" rssi value"
         },
+        "status-widget": {
+            "behavior": "Behavior",
+            "layout": "Layout",
+            "layout-default": "Default",
+            "layout-center": "Center",
+            "layout-icon": "Icon",
+            "on": "On",
+            "off": "Off",
+            "label": "Label",
+            "status": "Status",
+            "icon": "Icon",
+            "color-palette": "Color palette",
+            "disabled-color-palette": "Disabled color palette",
+            "primary": "Primary",
+            "primary-color-hint": "Color of icon and label",
+            "secondary": "Secondary",
+            "secondary-color-hint": "Color of status",
+            "background": "Background"
+        },
         "chart": {
             "common-settings": "Common settings",
             "enable-stacking-mode": "Enable stacking mode",
@@ -5700,16 +5719,10 @@
             }
         },
         "doughnut": {
-            "total": "Total",
             "layout": "Layout",
             "layout-default": "Default",
             "layout-with-total": "With total",
-            "auto-scale": "Auto scale",
-            "clockwise-layout": "Clockwise layout",
-            "sort-series": "Sort series by label",
             "central-total-value": "Central total value",
-            "tooltip-value-type-absolute": "Absolute",
-            "tooltip-value-type-percentage": "Percentage",
             "doughnut-card-style": "Doughnut card style"
         },
         "entities-hierarchy": {
@@ -6726,6 +6739,34 @@
             "table-tabs": "Table tabs",
             "show-cell-actions-menu-mobile": "Show cell actions dropdown menu in mobile mode"
         },
+        "echarts": {
+            "animation": {
+              "animation": "Animation",
+              "animation-threshold": "Animation threshold",
+              "animation-duration": "Animation duration",
+              "animation-easing": "Animation easing",
+              "animation-delay": "Animation delay",
+              "update-animation-duration": "Update animation duration",
+              "update-animation-easing": "Update animation easing",
+              "update-animation-delay": "Update animation delay"
+            }
+        },
+        "latest-chart": {
+            "total": "Total",
+            "auto-scale": "Auto scale",
+            "clockwise-layout": "Clockwise layout",
+            "sort-series": "Sort series by label",
+            "tooltip-value-type-absolute": "Absolute",
+            "tooltip-value-type-percentage": "Percentage"
+        },
+        "pie-chart": {
+            "label": "Label",
+            "label-position-outside": "Outside",
+            "label-position-inside": "Inside",
+            "border": "Border",
+            "radius": "Radius",
+            "pie-chart-card-style": "Pie chart card style"
+        },
         "time-series-chart": {
             "chart": "Chart",
             "chart-style": "Chart style",
@@ -6815,6 +6856,11 @@
               "to": "To",
               "remove-state": "Remove state"
             },
+            "grid": {
+              "grid": "Grid",
+              "background-color": "Background color",
+              "border": "Border"
+            },
             "axis": {
               "axes": "Axes",
               "x-axis": "X axis",
@@ -6849,16 +6895,6 @@
               "max": "Max",
               "show": "Show",
               "add-y-axis": "Add Y axis"
-            },
-            "animation": {
-              "animation": "Animation",
-              "animation-threshold": "Animation threshold",
-              "animation-duration": "Animation duration",
-              "animation-easing": "Animation easing",
-              "animation-delay": "Animation delay",
-              "update-animation-duration": "Update animation duration",
-              "update-animation-easing": "Update animation easing",
-              "update-animation-delay": "Update animation delay"
             },
             "series": {
               "legend-settings": "Legend settings",
@@ -7264,6 +7300,7 @@
     "language": {
         "language": "Language",
         "locales": {
+            "ar_AR": "اَلْعَرَبِيَّةُ",
             "ca_ES": "Catalan",
             "cs_CZ": "Česky",
             "da_DK": "Dansk",

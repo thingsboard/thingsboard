@@ -49,4 +49,5 @@ public class CustomerEdgeEventFetcher implements EdgeEventFetcher {
         // returns PageData object to be in sync with other fetchers
         return new PageData<>(result, 1, result.size(), false);
     }
+
 }
