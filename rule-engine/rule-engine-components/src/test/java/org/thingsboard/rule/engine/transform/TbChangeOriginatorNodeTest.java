@@ -17,12 +17,12 @@ package org.thingsboard.rule.engine.transform;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.util.concurrent.Futures;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.TestDbCallbackExecutor;
@@ -43,14 +43,15 @@ import org.thingsboard.server.dao.asset.AssetService;
 
 import java.util.NoSuchElementException;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
+//@ExtendWith(MockitoExtension.class)
+@ExtendWith(MockitoExtension.class)
 public class TbChangeOriginatorNodeTest {
 
     private static final String CUSTOMER_SOURCE = "CUSTOMER";
@@ -64,7 +65,7 @@ public class TbChangeOriginatorNodeTest {
 
     private ListeningExecutor dbExecutor;
 
-    @Before
+    @BeforeEach
     public void before() {
         dbExecutor = new TestDbCallbackExecutor();
     }
