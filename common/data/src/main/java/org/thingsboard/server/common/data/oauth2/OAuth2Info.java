@@ -35,6 +35,8 @@ import java.util.List;
 public class OAuth2Info {
     @Schema(description = "Whether OAuth2 settings are enabled or not")
     private boolean enabled;
-    @Schema(description = "List of configured OAuth2 clients. Cannot contain null values", required = true)
+    @Schema(description = "Whether OAuth2 settings are enabled on Edge or not")
+    private boolean edgeEnabled;
+    @Schema(description = "List of configured OAuth2 clients. Cannot contain null values", requiredMode = Schema.RequiredMode.REQUIRED)
     private List<OAuth2ParamsInfo> oauth2ParamsInfos;
 }

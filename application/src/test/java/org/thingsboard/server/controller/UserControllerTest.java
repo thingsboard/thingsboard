@@ -1109,13 +1109,14 @@ public class UserControllerTest extends AbstractControllerTest {
 
     private List<UserEmailInfo> getUsersInfo(PageLink pageLink) throws Exception {
         List<UserEmailInfo> loadedCustomerUsers = new ArrayList<>();
-        PageData<UserEmailInfo> pageData = null;
+        PageData<UserEmailInfo> pageData;
         do {
             pageData = doGetTypedWithPageLink("/api/users/info?", new TypeReference<>() {
             }, pageLink);
             loadedCustomerUsers.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
+                Assert.assertEquals(pageLink.getPageSize(), pageData.getData().size());
             }
         } while (pageData.hasNext());
         return loadedCustomerUsers;

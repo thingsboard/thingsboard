@@ -94,7 +94,7 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
         TenantId tenantId = device.getTenantId();
         DeviceId deviceId = device.getId();
         try {
-            removeAlarmsByEntityId(tenantId, deviceId);
+            removeAlarmsByOriginatorId(tenantId, deviceId);
             deviceService.deleteDevice(tenantId, deviceId);
             logEntityActionService.logEntityAction(tenantId, deviceId, device, device.getCustomerId(), actionType,
                     user, deviceId.toString());

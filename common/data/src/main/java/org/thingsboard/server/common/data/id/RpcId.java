@@ -31,7 +31,7 @@ public final class RpcId extends UUIDBased implements EntityId {
         super(id);
     }
 
-    @Schema(required = true, description = "string", example = "RPC", allowableValues = "RPC")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "RPC", allowableValues = "RPC")
     @Override
     public EntityType getEntityType() {
         return EntityType.RPC;

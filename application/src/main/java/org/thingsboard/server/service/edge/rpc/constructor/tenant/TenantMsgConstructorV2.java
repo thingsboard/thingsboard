@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.TenantProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.TenantUpdateMsg;
@@ -36,6 +37,23 @@ public class TenantMsgConstructorV2 implements TenantMsgConstructor {
 
     @Override
     public TenantProfileUpdateMsg constructTenantProfileUpdateMsg(UpdateMsgType msgType, TenantProfile tenantProfile, EdgeVersion edgeVersion) {
+        tenantProfile = JacksonUtil.clone(tenantProfile);
+        // clear all config
+        var configuration = tenantProfile.getDefaultProfileConfiguration();
+        configuration.setRpcTtlDays(0);
+        configuration.setMaxJSExecutions(0);
+        configuration.setMaxREExecutions(0);
+        configuration.setMaxDPStorageDays(0);
+        configuration.setMaxTbelExecutions(0);
+        configuration.setQueueStatsTtlDays(0);
+        configuration.setMaxTransportMessages(0);
+        configuration.setDefaultStorageTtlDays(0);
+        configuration.setMaxTransportDataPoints(0);
+        configuration.setRuleEngineExceptionsTtlDays(0);
+        configuration.setMaxRuleNodeExecutionsPerMessage(0);
+        tenantProfile.getProfileData().setConfiguration(configuration);
+
         return TenantProfileUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(tenantProfile)).build();
     }
+
 }

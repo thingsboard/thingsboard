@@ -82,14 +82,14 @@ public class BaseAlarmCommentService extends AbstractEntityService implements Al
     @Override
     public ListenableFuture<AlarmComment> findAlarmCommentByIdAsync(TenantId tenantId, AlarmCommentId alarmCommentId) {
         log.trace("Executing findAlarmCommentByIdAsync by alarmCommentId [{}]", alarmCommentId);
-        validateId(alarmCommentId, "Incorrect alarmCommentId " + alarmCommentId);
+        validateId(alarmCommentId, id -> "Incorrect alarmCommentId " + id);
         return alarmCommentDao.findAlarmCommentByIdAsync(tenantId, alarmCommentId.getId());
     }
 
     @Override
     public AlarmComment findAlarmCommentById(TenantId tenantId, AlarmCommentId alarmCommentId) {
         log.trace("Executing findAlarmCommentByIdAsync by alarmCommentId [{}]", alarmCommentId);
-        validateId(alarmCommentId, "Incorrect alarmCommentId " + alarmCommentId);
+        validateId(alarmCommentId, id -> "Incorrect alarmCommentId " + id);
         return alarmCommentDao.findById(tenantId, alarmCommentId.getId());
     }
 

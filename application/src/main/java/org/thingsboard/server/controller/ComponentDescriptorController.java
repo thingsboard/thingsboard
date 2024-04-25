@@ -68,7 +68,7 @@ public class ComponentDescriptorController extends BaseController {
     @RequestMapping(value = "/components/{componentType}", method = RequestMethod.GET)
     @ResponseBody
     public List<ComponentDescriptor> getComponentDescriptorsByType(
-            @Parameter(description = "Type of the Rule Node", schema = @Schema(allowableValues = "ENRICHMENT,FILTER,TRANSFORMATION,ACTION,EXTERNAL", required = true))
+            @Parameter(description = "Type of the Rule Node", schema = @Schema(allowableValues = "ENRICHMENT,FILTER,TRANSFORMATION,ACTION,EXTERNAL", requiredMode = Schema.RequiredMode.REQUIRED))
             @PathVariable("componentType") String strComponentType,
             @Parameter(description = "Type of the Rule Chain", schema = @Schema(allowableValues = "CORE,EDGE"))
             @RequestParam(value = "ruleChainType", required = false) String strRuleChainType) throws ThingsboardException {

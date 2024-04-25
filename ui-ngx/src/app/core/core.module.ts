@@ -31,7 +31,6 @@ import {
   TranslateModule,
   TranslateParser
 } from '@ngx-translate/core';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { TbMissingTranslationHandler } from './translate/missing-translate-handler';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DEFAULT_OPTIONS, MatDialogConfig, MatDialogModule } from '@angular/material/dialog';
@@ -41,9 +40,10 @@ import { TranslateDefaultCompiler } from '@core/translate/translate-default-comp
 import { WINDOW_PROVIDERS } from '@core/services/window.service';
 import { HotkeyModule } from 'angular2-hotkeys';
 import { TranslateDefaultParser } from '@core/translate/translate-default-parser';
+import { TranslateDefaultLoader } from '@core/translate/translate-default-loader';
 
 export function HttpLoaderFactory(http: HttpClient) {
-  return new TranslateHttpLoader(http, './assets/locale/locale.constant-', '.json');
+  return new TranslateDefaultLoader(http);
 }
 
 @NgModule({

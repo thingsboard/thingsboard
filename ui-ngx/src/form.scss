@@ -216,6 +216,18 @@
         flex: 1;
         width: auto;
       }
+      &.flex-xs {
+        @media #{$mat-xs} {
+          width: auto;
+          flex: 1;
+        }
+      }
+      &.flex-lt-md {
+        @media #{$mat-lt-md} {
+          width: auto;
+          flex: 1;
+        }
+      }
     }
     .fixed-title-width {
       min-width: 200px;
@@ -588,9 +600,13 @@
       bottom: 0;
       background: $tb-primary-color;
       mask-image: url(/assets/home/no_data_folder_bg.svg);
+      -webkit-mask-image: url(/assets/home/no_data_folder_bg.svg);
       mask-repeat: no-repeat;
+      -webkit-mask-repeat: no-repeat;
       mask-size: contain;
+      -webkit-mask-size: contain;
       mask-position: center;
+      -webkit-mask-position: center;
     }
   }
 

@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 public interface TenantService extends EntityDaoService {
 
@@ -36,7 +37,7 @@ public interface TenantService extends EntityDaoService {
 
     Tenant saveTenant(Tenant tenant);
 
-    Tenant saveTenant(Tenant tenant, boolean publishSaveEvent);
+    Tenant saveTenant(Tenant tenant, Consumer<TenantId> defaultEntitiesCreator);
 
     boolean tenantExists(TenantId tenantId);
 

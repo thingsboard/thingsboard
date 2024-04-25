@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, forwardRef, Input, OnDestroy, Renderer2, ViewContainerRef } from '@angular/core';
+import { ChangeDetectorRef, Component, forwardRef, Input, OnDestroy } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -24,10 +24,13 @@ import { DndDropEvent } from 'ngx-drag-drop';
 import { isUndefined } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { ImageLinkType } from '@shared/components/image/gallery-image-input.component';
-import { TbPopoverService } from '@shared/components/popover.service';
-import { MatButton } from '@angular/material/button';
-import { ImageGalleryComponent } from '@shared/components/image/image-gallery.component';
-import { prependTbImagePrefixToUrls, removeTbImagePrefixFromUrls } from '@shared/models/resource.models';
+import {
+  ImageResourceInfo,
+  prependTbImagePrefixToUrls,
+  removeTbImagePrefixFromUrls
+} from '@shared/models/resource.models';
+import { MatDialog } from '@angular/material/dialog';
+import { ImageGalleryDialogComponent } from '@shared/components/image/image-gallery-dialog.component';
 
 @Component({
   selector: 'tb-multiple-gallery-image-input',
@@ -66,10 +69,8 @@ export class MultipleGalleryImageInputComponent extends PageComponent implements
   private propagateChange = null;
 
   constructor(protected store: Store<AppState>,
-              private cd: ChangeDetectorRef,
-              private renderer: Renderer2,
-              private viewContainerRef: ViewContainerRef,
-              private popoverService: TbPopoverService) {
+              private dialog: MatDialog,
+              private cd: ChangeDetectorRef) {
     super(store);
   }
 
@@ -130,31 +131,21 @@ export class MultipleGalleryImageInputComponent extends PageComponent implements
     this.updateModel();
   }
 
-  toggleGallery($event: Event, browseGalleryButton: MatButton) {
+  toggleGallery($event: Event) {
     if ($event) {
       $event.stopPropagation();
     }
-    const trigger = browseGalleryButton._elementRef.nativeElement;
-    if (this.popoverService.hasPopover(trigger)) {
-      this.popoverService.hidePopover(trigger);
-    } else {
-      const ctx: any = {
-        pageMode: false,
-        popoverMode: true,
-        mode: 'grid',
-        selectionMode: true
-      };
-      const imageGalleryPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, ImageGalleryComponent, 'top', true, null,
-        ctx,
-        {},
-        {}, {}, true);
-      imageGalleryPopover.tbComponentRef.instance.imageSelected.subscribe((image) => {
-        imageGalleryPopover.hide();
+    this.dialog.open<ImageGalleryDialogComponent, any,
+      ImageResourceInfo>(ImageGalleryDialogComponent, {
+      autoFocus: false,
+      disableClose: false,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog']
+    }).afterClosed().subscribe((image) => {
+      if (image) {
         this.imageUrls.push(image.link);
         this.updateModel();
-      });
-    }
+      }
+    });
   }
 
   imageDragStart(index: number) {

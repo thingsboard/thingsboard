@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-form-panel" [formGroup]="barWidthSettingsFormGroup">
+<div class="tb-form-panel" [class.stroked]="stroked" [formGroup]="barWidthSettingsFormGroup">
   <div fxLayout="row" fxLayoutAlign="space-between center">
     <div fxFlex translate>widgets.time-series-chart.no-aggregation-bar-width-strategy</div>
     <tb-toggle-select formControlName="strategy" selectMediaBreakpoint="xs">

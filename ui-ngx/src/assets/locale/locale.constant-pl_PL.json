@@ -6517,18 +6517,23 @@
         },
         "base-url-required": "Podstawowy adres URL jest wymagany."
     },
-    "widgets": {
-        "background": {
-            "background": "Background",
-            "background-settings": "Background settings",
-            "background-type-image": "Upload image",
-            "background-type-image-url": "Image URL",
-            "background-type-color": "Solid color",
-            "image-url": "Image URL",
-            "overlay": "Overlay",
-            "enable-overlay": "Enable overlay",
-            "blur": "Blur",
-            "preview": "Preview"
+    "widgets":{
+        "background":{
+            "background":"Tło",
+            "background-settings":"Ustawienia tła",
+            "background-type-image":"Obraz",
+            "background-type-color":"Kolor",
+            "image-url":"URL obrazu",
+            "overlay":"Nakładka",
+            "enable-overlay":"Włącz nakładkę",
+            "blur":"Rozmycie",
+            "preview":"Podgląd"
+        },
+        "bar-chart":{
+            "bar-appearance":"Wygląd słupka",
+            "label-on-bar":"Etykieta na słupku",
+            "value-on-bar":"Wartość na słupku",
+            "bar-chart-style":"Styl wykresu słupkowego"
         },
         "battery-level": {
             "layout": "Layout",
@@ -7211,18 +7216,26 @@
                 "false": "Dwukierunkowe",
                 "true": "Jednokierunkowa"
             },
-            "general-settings": "Ustawienia główne",
-            "enable-filter": "Włącz filtr",
-            "enable-sticky-header": "Wyświetlaj nagłówek podczas przewijania",
-            "enable-sticky-action": "Wyświetlaj kolumnę działań podczas przewijania",
-            "display-request-details": "Wyświetl szczegóły żądania",
-            "allow-send-request": "Zezwalaj na wysyłanie żądania RPC",
-            "allow-delete-request": "Zezwól na żądanie usunięcia",
-            "columns-settings": "Ustawienia kolumn",
-            "display-columns": "Kolumny do wyświetlenia",
-            "column": "Kolumna",
-            "no-columns-found": "Nie znaleziono kolumn",
-            "no-columns-matching": "Nie znaleziono kolumny '{{column}}'."
+            "general-settings":"Ustawienia ogólne",
+            "enable-filter":"Włącz filtr",
+            "enable-sticky-header":"Wyświetl nagłówek podczas przewijania",
+            "enable-sticky-action":"Wyświetl kolumnę akcji podczas przewijania",
+            "display-request-details":"Wyświetl szczegóły żądania",
+            "allow-send-request":"Zezwalaj na wysyłanie żądań RPC",
+            "allow-delete-request":"Zezwalaj na usuwanie żądań",
+            "columns-settings":"Ustawienia kolumn",
+            "display-columns":"Wyświetlane kolumny",
+            "column":"Kolumna",
+            "no-columns-found":"Nie znaleziono kolumn",
+            "no-columns-matching":"'{{column}}' nie znaleziono."
+        },
+        "range-chart":{
+            "chart":"Wykres",
+            "data-zoom":"Powiększenie danych",
+            "range-colors":"Kolory zakresu",
+            "out-of-range-color":"Kolor poza zakresem",
+            "fill-area":"Wypełnij obszar",
+            "range-chart-style":"Styl wykresu zakresu"
         },
         "rpc": {
             "value-settings": "Ustawienia wartości",

@@ -15,23 +15,29 @@
  */
 package org.thingsboard.server.service.script;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.TestPropertySource;
-import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.TbStopWatch;
 import org.thingsboard.script.api.ScriptType;
 import org.thingsboard.script.api.js.NashornJsInvokeService;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
 
@@ -41,8 +47,9 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_RE
         "js.max_script_body_size=50",
         "js.max_total_args_size=50",
         "js.max_result_size=50",
-        "js.local.max_errors=2"
+        "js.local.max_errors=2",
 })
+@Slf4j
 class NashornJsInvokeServiceTest extends AbstractControllerTest {
 
     @Autowired
@@ -56,23 +63,64 @@ class NashornJsInvokeServiceTest extends AbstractControllerTest {
         int iterations = 1000;
         UUID scriptId = evalScript("return msg.temperature > 20");
         // warmup
-        ObjectNode msg = JacksonUtil.newObjectNode();
-        for (int i = 0; i < 100; i++) {
-            msg.put("temperature", i);
+        log.info("Warming up 1000 times...");
+        var warmupWatch = TbStopWatch.create();
+        for (int i = 0; i < 1000; i++) {
             boolean expected = i > 20;
-            boolean result = Boolean.valueOf(invokeScript(scriptId, JacksonUtil.toString(msg)));
+            boolean result = Boolean.parseBoolean(invokeScript(scriptId, "{\"temperature\":" + i + "}"));
             Assert.assertEquals(expected, result);
         }
-        long startTs = System.currentTimeMillis();
+        log.info("Warming up finished in {} ms", warmupWatch.stopAndGetTotalTimeMillis());
+        log.info("Starting performance test...");
+        var watch = TbStopWatch.create();
         for (int i = 0; i < iterations; i++) {
-            msg.put("temperature", i);
             boolean expected = i > 20;
-            boolean result = Boolean.valueOf(invokeScript(scriptId, JacksonUtil.toString(msg)));
+            boolean result = Boolean.parseBoolean(invokeScript(scriptId, "{\"temperature\":" + i + "}"));
+            log.debug("asserting result");
             Assert.assertEquals(expected, result);
         }
-        long duration = System.currentTimeMillis() - startTs;
-        System.out.println(iterations + " invocations took: " + duration + "ms");
-        Assert.assertTrue(duration < TimeUnit.MINUTES.toMillis(4));
+        long duration = watch.stopAndGetTotalTimeMillis();
+        log.info("Performance test with {} invocations took: {} ms", iterations, duration);
+        assertThat(duration).as("duration ms")
+                .isLessThan(TimeUnit.MINUTES.toMillis(1)); // effective exec time is about 500ms
+    }
+
+    @Test
+    void givenSimpleScriptMultiThreadTestPerformance() throws ExecutionException, InterruptedException, TimeoutException {
+        int iterations = 1000*4;
+        List<ListenableFuture<Object>> futures = new ArrayList<>(iterations);
+        UUID scriptId = evalScript("return msg.temperature > 20 ;");
+        // warmup
+        log.info("Warming up 1000 times...");
+
+        var warmupWatch = TbStopWatch.create();
+        for (int i = 0; i < 1000; i++) {
+            futures.add(invokeScriptAsync(scriptId, "{\"temperature\":" + i + "}"));
+        }
+        List<Object> results = Futures.allAsList(futures).get(1, TimeUnit.MINUTES);
+        for (int i = 0; i < 1000; i++) {
+            boolean expected = i > 20;
+            boolean result = Boolean.parseBoolean(results.get(i).toString());
+            Assert.assertEquals(expected, result);
+        }
+        log.info("Warming up finished in {} ms", warmupWatch.stopAndGetTotalTimeMillis());
+        futures.clear();
+
+        log.info("Starting performance test...");
+        var watch = TbStopWatch.create();
+        for (int i = 0; i < iterations; i++) {
+            futures.add(invokeScriptAsync(scriptId, "{\"temperature\":" + i + "}"));
+        }
+        results = Futures.allAsList(futures).get(1, TimeUnit.MINUTES);
+        for (int i = 0; i < iterations; i++) {
+            boolean expected = i > 20;
+            boolean result = Boolean.parseBoolean(results.get(i).toString());
+            Assert.assertEquals(expected, result);
+        }
+        long duration = watch.stopAndGetTotalTimeMillis();
+        log.info("Performance test with {} invocations took: {} ms", iterations, duration);
+        assertThat(duration).as("duration ms")
+                .isLessThan(TimeUnit.MINUTES.toMillis(1)); // effective exec time is about 500ms
     }
 
     @Test
@@ -122,7 +170,11 @@ class NashornJsInvokeServiceTest extends AbstractControllerTest {
     }
 
     private String invokeScript(UUID scriptId, String msg) throws ExecutionException, InterruptedException {
-        return invokeService.invokeScript(TenantId.SYS_TENANT_ID, null, scriptId, msg, "{}", POST_TELEMETRY_REQUEST.name()).get().toString();
+        return invokeScriptAsync(scriptId, msg).get().toString();
+    }
+
+    private ListenableFuture<Object> invokeScriptAsync(UUID scriptId, String msg) {
+        return invokeService.invokeScript(TenantId.SYS_TENANT_ID, null, scriptId, msg, "{}", POST_TELEMETRY_REQUEST.name());
     }
 
 }

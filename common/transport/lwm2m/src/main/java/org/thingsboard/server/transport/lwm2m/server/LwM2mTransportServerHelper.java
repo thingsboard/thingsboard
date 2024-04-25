@@ -50,7 +50,6 @@ import static org.thingsboard.server.gen.transport.TransportProtos.KeyValueType.
 public class LwM2mTransportServerHelper {
 
     private final LwM2mTransportContext context;
-    private final static JsonParser JSON_PARSER = new JsonParser();
 
     public void sendParametersOnThingsboardAttribute(List<TransportProtos.KeyValueProto> result, SessionInfoProto sessionInfo) {
         PostAttributeMsg.Builder request = PostAttributeMsg.newBuilder();
@@ -231,7 +230,7 @@ public class LwM2mTransportServerHelper {
                 return kv.getStringV();
             case JSON_V:
                 try {
-                    return JSON_PARSER.parse(kv.getJsonV());
+                    return JsonParser.parseString(kv.getJsonV());
                 } catch (Exception e) {
                     return null;
                 }
