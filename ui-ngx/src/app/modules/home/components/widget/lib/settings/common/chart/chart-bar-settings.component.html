@@ -18,32 +18,39 @@
 <ng-container [formGroup]="barSettingsFormGroup">
   <div class="tb-form-row">
     <mat-slide-toggle class="mat-slide" formControlName="showBorder">
-      {{ 'widgets.time-series-chart.series.bar.show-border' | translate }}
+      {{ 'widgets.chart.bar.show-border' | translate }}
     </mat-slide-toggle>
   </div>
   <div class="tb-form-row space-between column-xs">
-    <div translate>widgets.time-series-chart.series.bar.border-width</div>
+    <div translate>widgets.chart.bar.border-width</div>
     <mat-form-field class="medium-width number" appearance="outline" subscriptSizing="dynamic">
       <input matInput type="number" formControlName="borderWidth" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}"/>
     </mat-form-field>
   </div>
   <div class="tb-form-row space-between column-xs">
-    <div translate>widgets.time-series-chart.series.bar.border-radius</div>
+    <div translate>widgets.chart.bar.border-radius</div>
     <mat-form-field class="medium-width number" appearance="outline" subscriptSizing="dynamic">
       <input matInput type="number" formControlName="borderRadius" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}"/>
     </mat-form-field>
   </div>
+  <div *ngIf="!series" class="tb-form-row space-between column-xs">
+    <div translate>widgets.chart.bar.bar-width</div>
+    <mat-form-field class="medium-width number" appearance="outline" subscriptSizing="dynamic">
+      <input matInput type="number" formControlName="barWidth" min="0" max="100" placeholder="{{ 'widget-config.set' | translate }}"/>
+      <div matSuffix>%</div>
+    </mat-form-field>
+  </div>
   <div class="tb-form-row space-between column-lt-md">
     <mat-slide-toggle class="mat-slide" formControlName="showLabel">
-      <div tb-hint-tooltip-icon="{{'widgets.time-series-chart.series.bar.label-hint' | translate}}">
-        {{ 'widgets.time-series-chart.series.bar.label' | translate }}
+      <div tb-hint-tooltip-icon="{{(series ? 'widgets.chart.bar.series-label-hint' : 'widgets.chart.bar.label-hint') | translate}}">
+        {{ 'widgets.chart.bar.label' | translate }}
       </div>
     </mat-slide-toggle>
     <div fxLayout="row" fxFlex.lt-md fxLayoutAlign="start center" fxLayoutGap="8px">
       <mat-form-field class="medium-width" fxFlex.lt-md appearance="outline" subscriptSizing="dynamic">
         <mat-select formControlName="labelPosition">
-          <mat-option *ngFor="let position of seriesLabelPositions" [value]="position">
-            {{ seriesLabelPositionTranslations.get(position) | translate }}
+          <mat-option *ngFor="let position of chartLabelPositions" [value]="position">
+            {{ chartLabelPositionTranslations.get(position) | translate }}
           </mat-option>
         </mat-select>
       </mat-form-field>
@@ -61,16 +68,16 @@
   </div>
   <div class="tb-form-row space-between">
     <mat-slide-toggle class="mat-slide" formControlName="enableLabelBackground">
-      {{ 'widgets.time-series-chart.series.bar.label-background' | translate }}
+      {{ 'widgets.chart.bar.label-background' | translate }}
     </mat-slide-toggle>
     <tb-color-input asBoxInput
                     colorClearButton
                     formControlName="labelBackground">
     </tb-color-input>
   </div>
-  <tb-time-series-chart-fill-settings
+  <tb-chart-fill-settings
     formControlName="backgroundSettings"
-    title="widgets.time-series-chart.series.background"
-    fillNoneTitle="widgets.time-series-chart.series.fill-type-solid">
-  </tb-time-series-chart-fill-settings>
+    title="widgets.chart.background"
+    fillNoneTitle="widgets.chart.fill-type-solid">
+  </tb-chart-fill-settings>
 </ng-container>

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, forwardRef, Input, OnInit, Optional } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALUE_ACCESSOR,
@@ -22,52 +22,72 @@ import {
   UntypedFormGroup,
   Validators
 } from '@angular/forms';
-import {
-  BarSeriesSettings,
-  seriesLabelPositions,
-  seriesLabelPositionTranslations
-} from '@home/components/widget/lib/chart/time-series-chart.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { merge } from 'rxjs';
 import { formatValue, isDefinedAndNotNull } from '@core/utils';
 import { DataKeyConfigComponent } from '@home/components/widget/config/data-key-config.component';
+import {
+  ChartBarSettings,
+  ChartLabelPosition,
+  chartLabelPositions,
+  chartLabelPositionTranslations,
+  PieChartLabelPosition,
+  pieChartLabelPositions,
+  pieChartLabelPositionTranslations
+} from '@home/components/widget/lib/chart/chart.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-time-series-chart-bar-settings',
-  templateUrl: './time-series-chart-bar-settings.component.html',
-  styleUrls: ['./../widget-settings.scss'],
+  selector: 'tb-chart-bar-settings',
+  templateUrl: './chart-bar-settings.component.html',
+  styleUrls: ['./../../widget-settings.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TimeSeriesChartBarSettingsComponent),
+      useExisting: forwardRef(() => ChartBarSettingsComponent),
       multi: true
     }
   ]
 })
-export class TimeSeriesChartBarSettingsComponent implements OnInit, ControlValueAccessor {
+export class ChartBarSettingsComponent implements OnInit, ControlValueAccessor {
 
-  seriesLabelPositions = seriesLabelPositions;
+  chartLabelPositions: (ChartLabelPosition | PieChartLabelPosition)[];
 
-  seriesLabelPositionTranslations = seriesLabelPositionTranslations;
+  chartLabelPositionTranslations: Map<ChartLabelPosition | PieChartLabelPosition, string>;
 
   labelPreviewFn = this._labelPreviewFn.bind(this);
 
   @Input()
   disabled: boolean;
 
-  private modelValue: BarSeriesSettings;
+  @Input()
+  @coerceBoolean()
+  series = true;
+
+  @Input()
+  @coerceBoolean()
+  pieLabelPosition = false;
+
+  private modelValue: ChartBarSettings;
 
   private propagateChange = null;
 
   public barSettingsFormGroup: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
-              private dataKeyConfigComponent: DataKeyConfigComponent,
+              @Optional() private dataKeyConfigComponent: DataKeyConfigComponent,
               private fb: UntypedFormBuilder) {
   }
 
   ngOnInit(): void {
+    if (this.pieLabelPosition) {
+      this.chartLabelPositions = pieChartLabelPositions;
+      this.chartLabelPositionTranslations = pieChartLabelPositionTranslations;
+    } else {
+      this.chartLabelPositions = chartLabelPositions;
+      this.chartLabelPositionTranslations = chartLabelPositionTranslations;
+    }
     this.barSettingsFormGroup = this.fb.group({
       showBorder: [null, []],
       borderWidth: [null, [Validators.min(0)]],
@@ -80,6 +100,10 @@ export class TimeSeriesChartBarSettingsComponent implements OnInit, ControlValue
       labelBackground: [null, []],
       backgroundSettings: [null, []]
     });
+    if (!this.series) {
+      this.barSettingsFormGroup.addControl('barWidth', this.fb.control(null,
+        [Validators.min(0), Validators.max(100)]));
+    }
     this.barSettingsFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
     });
@@ -108,7 +132,7 @@ export class TimeSeriesChartBarSettingsComponent implements OnInit, ControlValue
     }
   }
 
-  writeValue(value: BarSeriesSettings): void {
+  writeValue(value: ChartBarSettings): void {
     this.modelValue = value;
     this.barSettingsFormGroup.patchValue(
       value, {emitEvent: false}
@@ -150,11 +174,15 @@ export class TimeSeriesChartBarSettingsComponent implements OnInit, ControlValue
   }
 
   private _labelPreviewFn(): string {
-    const dataKey = this.dataKeyConfigComponent.modelValue;
-    const widgetConfig = this.dataKeyConfigComponent.widgetConfig;
-    const units = dataKey.units && dataKey.units.length ? dataKey.units : widgetConfig.config.units;
-    const decimals = isDefinedAndNotNull(dataKey.decimals) ? dataKey.decimals :
-      (isDefinedAndNotNull(widgetConfig.config.decimals) ? widgetConfig.config.decimals : 2);
-    return formatValue(22, decimals, units, false);
+    if (this.series) {
+      const dataKey = this.dataKeyConfigComponent.modelValue;
+      const widgetConfig = this.dataKeyConfigComponent.widgetConfig;
+      const units = dataKey.units && dataKey.units.length ? dataKey.units : widgetConfig.config.units;
+      const decimals = isDefinedAndNotNull(dataKey.decimals) ? dataKey.decimals :
+        (isDefinedAndNotNull(widgetConfig.config.decimals) ? widgetConfig.config.decimals : 2);
+      return formatValue(22, decimals, units, false);
+    } else {
+      return 'Wind';
+    }
   }
 }

@@ -103,8 +103,8 @@
         <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
           <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="startSymbol">
-              <mat-option *ngFor="let shape of echartsShapes" [value]="shape">
-                {{ echartsShapeTranslations.get(shape) | translate }}
+              <mat-option *ngFor="let shape of chartShapes" [value]="shape">
+                {{ chartShapeTranslations.get(shape) | translate }}
               </mat-option>
             </mat-select>
           </mat-form-field>
@@ -120,8 +120,8 @@
         <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
           <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="endSymbol">
-              <mat-option *ngFor="let shape of echartsShapes" [value]="shape">
-                {{ echartsShapeTranslations.get(shape) | translate }}
+              <mat-option *ngFor="let shape of chartShapes" [value]="shape">
+                {{ chartShapeTranslations.get(shape) | translate }}
               </mat-option>
             </mat-select>
           </mat-form-field>

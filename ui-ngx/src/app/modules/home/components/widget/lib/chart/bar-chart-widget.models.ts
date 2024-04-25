@@ -18,61 +18,56 @@ import {
   latestChartWidgetDefaultSettings,
   LatestChartWidgetSettings
 } from '@home/components/widget/lib/chart/latest-chart.models';
+import { mergeDeep } from '@core/utils';
+import {
+  barsChartAnimationDefaultSettings,
+  BarsChartSettings
+} from '@home/components/widget/lib/chart/bars-chart.models';
 import { Font } from '@shared/models/widget-settings.models';
 import { DeepPartial } from '@shared/models/common';
-import { pieChartAnimationDefaultSettings, PieChartSettings } from '@home/components/widget/lib/chart/pie-chart.models';
-import { isDefinedAndNotNull, mergeDeep } from '@core/utils';
-import { ChartAnimationSettings, PieChartLabelPosition } from '@home/components/widget/lib/chart/chart.models';
+import {
+  ChartAnimationSettings,
+  chartBarDefaultSettings,
+  ChartBarSettings,
+  chartColorScheme
+} from '@home/components/widget/lib/chart/chart.models';
 
-export interface PieChartWidgetSettings extends LatestChartWidgetSettings {
-  showLabel: boolean;
-  labelPosition: PieChartLabelPosition;
-  labelFont: Font;
-  labelColor: string;
-  borderWidth: number;
-  borderColor: string;
-  radius: number;
-  clockwise: boolean;
+export interface BarChartWidgetSettings extends LatestChartWidgetSettings {
+  axisMin?: number;
+  axisMax?: number;
+  axisTickLabelFont: Font;
+  axisTickLabelColor: string;
+  barSettings: ChartBarSettings;
 }
 
-export const pieChartWidgetDefaultSettings: PieChartWidgetSettings = {
+export const barChartWidgetDefaultSettings: BarChartWidgetSettings = {
   ...latestChartWidgetDefaultSettings,
   animation: mergeDeep({} as ChartAnimationSettings,
-    pieChartAnimationDefaultSettings),
-  showLabel: true,
-  labelPosition: PieChartLabelPosition.outside,
-  labelFont: {
+    barsChartAnimationDefaultSettings),
+  axisTickLabelFont: {
     family: 'Roboto',
     size: 12,
     sizeUnit: 'px',
     style: 'normal',
-    weight: 'normal',
-    lineHeight: '1.2'
+    weight: '400',
+    lineHeight: '1'
   },
-  labelColor: '#000',
-  borderWidth: 0,
-  borderColor: '#000',
-  radius: 80,
-  clockwise: false
+  axisTickLabelColor: chartColorScheme['axis.tickLabel'].light,
+  barSettings: mergeDeep({} as ChartBarSettings, chartBarDefaultSettings,
+    {barWidth: 80, showLabel: true} as ChartBarSettings)
 };
 
-export const pieChartWidgetPieChartSettings = (settings: PieChartWidgetSettings): DeepPartial<PieChartSettings> => ({
-  autoScale: false,
-  doughnut: false,
-  clockwise: settings.clockwise,
+export const barChartWidgetBarsChartSettings = (settings: BarChartWidgetSettings): DeepPartial<BarsChartSettings> => ({
+  polar: false,
+  axisMin: settings.axisMin,
+  axisMax: settings.axisMax,
+  axisTickLabelFont: settings.axisTickLabelFont,
+  axisTickLabelColor: settings.axisTickLabelColor,
+  barSettings: settings.barSettings,
   sortSeries: settings.sortSeries,
   showTotal: false,
   animation: settings.animation,
   showLegend: settings.showLegend,
-  showLabel: settings.showLabel,
-  labelPosition: settings.labelPosition,
-  labelFont: settings.labelFont,
-  labelColor: settings.labelColor,
-  borderWidth: settings.borderWidth,
-  borderColor: settings.borderColor,
-  radius: isDefinedAndNotNull(settings.radius) ? settings.radius + '%' : undefined,
-  emphasisBorderWidth: settings.borderWidth,
-  emphasisBorderColor: settings.borderColor,
   showTooltip: settings.showTooltip,
   tooltipValueType: settings.tooltipValueType,
   tooltipValueDecimals: settings.tooltipValueDecimals,

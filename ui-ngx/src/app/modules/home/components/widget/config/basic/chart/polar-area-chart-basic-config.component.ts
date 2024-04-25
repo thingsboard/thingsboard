@@ -42,23 +42,19 @@ import {
   latestChartTooltipValueTypeTranslations
 } from '@home/components/widget/lib/chart/latest-chart.models';
 import {
-  pieChartWidgetDefaultSettings,
-  PieChartWidgetSettings
-} from '@home/components/widget/lib/chart/pie-chart-widget.models';
-import {
-  pieChartLabelPositions,
-  pieChartLabelPositionTranslations
-} from '@home/components/widget/lib/chart/chart.models';
+  polarAreaChartWidgetDefaultSettings,
+  PolarAreaChartWidgetSettings
+} from '@home/components/widget/lib/chart/polar-area-widget.models';
 
 @Component({
-  selector: 'tb-pie-chart-basic-config',
-  templateUrl: './pie-chart-basic-config.component.html',
+  selector: 'tb-polar-area-chart-basic-config',
+  templateUrl: './polar-area-chart-basic-config.component.html',
   styleUrls: ['../basic-config.scss']
 })
-export class PieChartBasicConfigComponent extends BasicWidgetConfigComponent {
+export class PolarAreaChartBasicConfigComponent extends BasicWidgetConfigComponent {
 
   public get datasource(): Datasource {
-    const datasources: Datasource[] = this.pieChartWidgetConfigForm.get('datasources').value;
+    const datasources: Datasource[] = this.polarAreaChartWidgetConfigForm.get('datasources').value;
     if (datasources && datasources.length) {
       return datasources[0];
     } else {
@@ -67,18 +63,14 @@ export class PieChartBasicConfigComponent extends BasicWidgetConfigComponent {
   }
 
   public get displayTimewindowConfig(): boolean {
-    const datasources = this.pieChartWidgetConfigForm.get('datasources').value;
+    const datasources = this.polarAreaChartWidgetConfigForm.get('datasources').value;
     return datasourcesHasAggregation(datasources);
   }
 
   public onlyHistoryTimewindow(): boolean {
-    const datasources = this.pieChartWidgetConfigForm.get('datasources').value;
+    const datasources = this.polarAreaChartWidgetConfigForm.get('datasources').value;
     return datasourcesHasOnlyComparisonAggregation(datasources);
   }
-
-  pieChartLabelPositions = pieChartLabelPositions;
-
-  pieChartLabelPositionTranslationMap = pieChartLabelPositionTranslations;
 
   legendPositions = legendPositions;
 
@@ -88,7 +80,7 @@ export class PieChartBasicConfigComponent extends BasicWidgetConfigComponent {
 
   latestChartTooltipValueTypeTranslationMap = latestChartTooltipValueTypeTranslations;
 
-  pieChartWidgetConfigForm: UntypedFormGroup;
+  polarAreaChartWidgetConfigForm: UntypedFormGroup;
 
   valuePreviewFn = this._valuePreviewFn.bind(this);
 
@@ -101,36 +93,23 @@ export class PieChartBasicConfigComponent extends BasicWidgetConfigComponent {
   }
 
   protected configForm(): UntypedFormGroup {
-    return this.pieChartWidgetConfigForm;
+    return this.polarAreaChartWidgetConfigForm;
   }
 
   protected defaultDataKeys(configData: WidgetConfigComponentData): DataKey[] {
     return [{ name: 'windPower', label: 'Wind', type: DataKeyType.timeseries, units: '', decimals: 0, color: '#08872B' },
-            { name: 'solarPower', label: 'Solar', type: DataKeyType.timeseries, units: '', decimals: 0, color: '#FF4D5A' },
-            { name: 'hydroelectricPower', label: 'Hydroelectric', type: DataKeyType.timeseries, units: '', decimals: 0, color: '#FFDE30' }];
+      { name: 'solarPower', label: 'Solar', type: DataKeyType.timeseries, units: '', decimals: 0, color: '#FF4D5A' },
+      { name: 'hydroelectricPower', label: 'Hydroelectric', type: DataKeyType.timeseries, units: '', decimals: 0, color: '#FFDE30' }];
   }
 
   protected onConfigSet(configData: WidgetConfigComponentData) {
-    const settings: PieChartWidgetSettings = mergeDeep<PieChartWidgetSettings>({} as PieChartWidgetSettings,
-      pieChartWidgetDefaultSettings, configData.config.settings as PieChartWidgetSettings);
-    this.pieChartWidgetConfigForm = this.fb.group({
+    const settings: PolarAreaChartWidgetSettings = mergeDeep<PolarAreaChartWidgetSettings>({} as PolarAreaChartWidgetSettings,
+      polarAreaChartWidgetDefaultSettings, configData.config.settings as PolarAreaChartWidgetSettings);
+    this.polarAreaChartWidgetConfigForm = this.fb.group({
       timewindowConfig: [getTimewindowConfig(configData.config), []],
       datasources: [configData.config.datasources, []],
 
       series: [this.getSeries(configData.config.datasources), []],
-
-      showLabel: [settings.showLabel, []],
-      labelPosition: [settings.labelPosition, []],
-      labelFont: [settings.labelFont, []],
-      labelColor: [settings.labelColor, []],
-
-      borderWidth: [settings.borderWidth, [Validators.min(0)]],
-      borderColor: [settings.borderColor, []],
-
-      radius: [settings.radius, [Validators.min(0), Validators.max(100)]],
-
-      clockwise: [settings.clockwise, []],
-      sortSeries: [settings.sortSeries, []],
 
       showTitle: [configData.config.showTitle, []],
       title: [configData.config.title, []],
@@ -140,8 +119,18 @@ export class PieChartBasicConfigComponent extends BasicWidgetConfigComponent {
       titleIcon: [configData.config.titleIcon, []],
       iconColor: [configData.config.iconColor, []],
 
+      sortSeries: [settings.sortSeries, []],
+
       units: [configData.config.units, []],
       decimals: [configData.config.decimals, []],
+
+      barSettings: [settings.barSettings, []],
+
+      axisMin: [settings.axisMin, []],
+      axisMax: [settings.axisMax, []],
+      axisTickLabelFont: [settings.axisTickLabelFont, []],
+      axisTickLabelColor: [settings.axisTickLabelColor, []],
+      angleAxisStartAngle: [settings.angleAxisStartAngle, [Validators.min(0), Validators.max(360)]],
 
       animation: [settings.animation, []],
 
@@ -185,21 +174,18 @@ export class PieChartBasicConfigComponent extends BasicWidgetConfigComponent {
 
     this.widgetConfig.config.settings = this.widgetConfig.config.settings || {};
 
-    this.widgetConfig.config.settings.showLabel = config.showLabel;
-    this.widgetConfig.config.settings.labelPosition = config.labelPosition;
-    this.widgetConfig.config.settings.labelFont = config.labelFont;
-    this.widgetConfig.config.settings.labelColor = config.labelColor;
-
-    this.widgetConfig.config.settings.borderWidth = config.borderWidth;
-    this.widgetConfig.config.settings.borderColor = config.borderColor;
-
-    this.widgetConfig.config.settings.radius = config.radius;
-
-    this.widgetConfig.config.settings.clockwise = config.clockwise;
     this.widgetConfig.config.settings.sortSeries = config.sortSeries;
 
     this.widgetConfig.config.units = config.units;
     this.widgetConfig.config.decimals = config.decimals;
+
+    this.widgetConfig.config.settings.barSettings = config.barSettings;
+
+    this.widgetConfig.config.settings.axisMin = config.axisMin;
+    this.widgetConfig.config.settings.axisMax = config.axisMax;
+    this.widgetConfig.config.settings.axisTickLabelFont = config.axisTickLabelFont;
+    this.widgetConfig.config.settings.axisTickLabelColor = config.axisTickLabelColor;
+    this.widgetConfig.config.settings.angleAxisStartAngle = config.angleAxisStartAngle;
 
     this.widgetConfig.config.settings.animation = config.animation;
 
@@ -229,73 +215,62 @@ export class PieChartBasicConfigComponent extends BasicWidgetConfigComponent {
   }
 
   protected validatorTriggers(): string[] {
-    return ['showLabel', 'showTitle', 'showTitleIcon', 'showLegend', 'showTooltip'];
+    return ['showTitle', 'showTitleIcon', 'showLegend', 'showTooltip'];
   }
 
   protected updateValidators(emitEvent: boolean, trigger?: string) {
-    const showLabel: boolean = this.pieChartWidgetConfigForm.get('showLabel').value;
-    const showTitle: boolean = this.pieChartWidgetConfigForm.get('showTitle').value;
-    const showTitleIcon: boolean = this.pieChartWidgetConfigForm.get('showTitleIcon').value;
-    const showLegend: boolean = this.pieChartWidgetConfigForm.get('showLegend').value;
-    const showTooltip: boolean = this.pieChartWidgetConfigForm.get('showTooltip').value;
-
-    if (showLabel) {
-      this.pieChartWidgetConfigForm.get('labelPosition').enable();
-      this.pieChartWidgetConfigForm.get('labelFont').enable();
-      this.pieChartWidgetConfigForm.get('labelColor').enable();
-    } else {
-      this.pieChartWidgetConfigForm.get('labelPosition').disable();
-      this.pieChartWidgetConfigForm.get('labelFont').disable();
-      this.pieChartWidgetConfigForm.get('labelColor').disable();
-    }
+    const showTitle: boolean = this.polarAreaChartWidgetConfigForm.get('showTitle').value;
+    const showTitleIcon: boolean = this.polarAreaChartWidgetConfigForm.get('showTitleIcon').value;
+    const showLegend: boolean = this.polarAreaChartWidgetConfigForm.get('showLegend').value;
+    const showTooltip: boolean = this.polarAreaChartWidgetConfigForm.get('showTooltip').value;
 
     if (showTitle) {
-      this.pieChartWidgetConfigForm.get('title').enable();
-      this.pieChartWidgetConfigForm.get('titleFont').enable();
-      this.pieChartWidgetConfigForm.get('titleColor').enable();
-      this.pieChartWidgetConfigForm.get('showTitleIcon').enable({emitEvent: false});
+      this.polarAreaChartWidgetConfigForm.get('title').enable();
+      this.polarAreaChartWidgetConfigForm.get('titleFont').enable();
+      this.polarAreaChartWidgetConfigForm.get('titleColor').enable();
+      this.polarAreaChartWidgetConfigForm.get('showTitleIcon').enable({emitEvent: false});
       if (showTitleIcon) {
-        this.pieChartWidgetConfigForm.get('titleIcon').enable();
-        this.pieChartWidgetConfigForm.get('iconColor').enable();
+        this.polarAreaChartWidgetConfigForm.get('titleIcon').enable();
+        this.polarAreaChartWidgetConfigForm.get('iconColor').enable();
       } else {
-        this.pieChartWidgetConfigForm.get('titleIcon').disable();
-        this.pieChartWidgetConfigForm.get('iconColor').disable();
+        this.polarAreaChartWidgetConfigForm.get('titleIcon').disable();
+        this.polarAreaChartWidgetConfigForm.get('iconColor').disable();
       }
     } else {
-      this.pieChartWidgetConfigForm.get('title').disable();
-      this.pieChartWidgetConfigForm.get('titleFont').disable();
-      this.pieChartWidgetConfigForm.get('titleColor').disable();
-      this.pieChartWidgetConfigForm.get('showTitleIcon').disable({emitEvent: false});
-      this.pieChartWidgetConfigForm.get('titleIcon').disable();
-      this.pieChartWidgetConfigForm.get('iconColor').disable();
+      this.polarAreaChartWidgetConfigForm.get('title').disable();
+      this.polarAreaChartWidgetConfigForm.get('titleFont').disable();
+      this.polarAreaChartWidgetConfigForm.get('titleColor').disable();
+      this.polarAreaChartWidgetConfigForm.get('showTitleIcon').disable({emitEvent: false});
+      this.polarAreaChartWidgetConfigForm.get('titleIcon').disable();
+      this.polarAreaChartWidgetConfigForm.get('iconColor').disable();
     }
     if (showLegend) {
-      this.pieChartWidgetConfigForm.get('legendPosition').enable();
-      this.pieChartWidgetConfigForm.get('legendLabelFont').enable();
-      this.pieChartWidgetConfigForm.get('legendLabelColor').enable();
-      this.pieChartWidgetConfigForm.get('legendValueFont').enable();
-      this.pieChartWidgetConfigForm.get('legendValueColor').enable();
+      this.polarAreaChartWidgetConfigForm.get('legendPosition').enable();
+      this.polarAreaChartWidgetConfigForm.get('legendLabelFont').enable();
+      this.polarAreaChartWidgetConfigForm.get('legendLabelColor').enable();
+      this.polarAreaChartWidgetConfigForm.get('legendValueFont').enable();
+      this.polarAreaChartWidgetConfigForm.get('legendValueColor').enable();
     } else {
-      this.pieChartWidgetConfigForm.get('legendPosition').disable();
-      this.pieChartWidgetConfigForm.get('legendLabelFont').disable();
-      this.pieChartWidgetConfigForm.get('legendLabelColor').disable();
-      this.pieChartWidgetConfigForm.get('legendValueFont').disable();
-      this.pieChartWidgetConfigForm.get('legendValueColor').disable();
+      this.polarAreaChartWidgetConfigForm.get('legendPosition').disable();
+      this.polarAreaChartWidgetConfigForm.get('legendLabelFont').disable();
+      this.polarAreaChartWidgetConfigForm.get('legendLabelColor').disable();
+      this.polarAreaChartWidgetConfigForm.get('legendValueFont').disable();
+      this.polarAreaChartWidgetConfigForm.get('legendValueColor').disable();
     }
     if (showTooltip) {
-      this.pieChartWidgetConfigForm.get('tooltipValueType').enable();
-      this.pieChartWidgetConfigForm.get('tooltipValueDecimals').enable();
-      this.pieChartWidgetConfigForm.get('tooltipValueFont').enable();
-      this.pieChartWidgetConfigForm.get('tooltipValueColor').enable();
-      this.pieChartWidgetConfigForm.get('tooltipBackgroundColor').enable();
-      this.pieChartWidgetConfigForm.get('tooltipBackgroundBlur').enable();
+      this.polarAreaChartWidgetConfigForm.get('tooltipValueType').enable();
+      this.polarAreaChartWidgetConfigForm.get('tooltipValueDecimals').enable();
+      this.polarAreaChartWidgetConfigForm.get('tooltipValueFont').enable();
+      this.polarAreaChartWidgetConfigForm.get('tooltipValueColor').enable();
+      this.polarAreaChartWidgetConfigForm.get('tooltipBackgroundColor').enable();
+      this.polarAreaChartWidgetConfigForm.get('tooltipBackgroundBlur').enable();
     } else {
-      this.pieChartWidgetConfigForm.get('tooltipValueType').disable();
-      this.pieChartWidgetConfigForm.get('tooltipValueDecimals').disable();
-      this.pieChartWidgetConfigForm.get('tooltipValueFont').disable();
-      this.pieChartWidgetConfigForm.get('tooltipValueColor').disable();
-      this.pieChartWidgetConfigForm.get('tooltipBackgroundColor').disable();
-      this.pieChartWidgetConfigForm.get('tooltipBackgroundBlur').disable();
+      this.polarAreaChartWidgetConfigForm.get('tooltipValueType').disable();
+      this.polarAreaChartWidgetConfigForm.get('tooltipValueDecimals').disable();
+      this.polarAreaChartWidgetConfigForm.get('tooltipValueFont').disable();
+      this.polarAreaChartWidgetConfigForm.get('tooltipValueColor').disable();
+      this.polarAreaChartWidgetConfigForm.get('tooltipBackgroundColor').disable();
+      this.polarAreaChartWidgetConfigForm.get('tooltipBackgroundBlur').disable();
     }
   }
 
@@ -325,18 +300,18 @@ export class PieChartBasicConfigComponent extends BasicWidgetConfigComponent {
   }
 
   private _valuePreviewFn(): string {
-    const units: string = this.pieChartWidgetConfigForm.get('units').value;
-    const decimals: number = this.pieChartWidgetConfigForm.get('decimals').value;
+    const units: string = this.polarAreaChartWidgetConfigForm.get('units').value;
+    const decimals: number = this.polarAreaChartWidgetConfigForm.get('decimals').value;
     return formatValue(110, decimals, units, false);
   }
 
   private _tooltipValuePreviewFn(): string {
-    const tooltipValueType: LatestChartTooltipValueType = this.pieChartWidgetConfigForm.get('tooltipValueType').value;
-    const decimals: number = this.pieChartWidgetConfigForm.get('tooltipValueDecimals').value;
+    const tooltipValueType: LatestChartTooltipValueType = this.polarAreaChartWidgetConfigForm.get('tooltipValueType').value;
+    const decimals: number = this.polarAreaChartWidgetConfigForm.get('tooltipValueDecimals').value;
     if (tooltipValueType === LatestChartTooltipValueType.percentage) {
       return formatValue(35, decimals, '%', false);
     } else {
-      const units: string = this.pieChartWidgetConfigForm.get('units').value;
+      const units: string = this.polarAreaChartWidgetConfigForm.get('units').value;
       return formatValue(110, decimals, units, false);
     }
   }
