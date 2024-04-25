@@ -209,7 +209,7 @@ public class ThingsboardSecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .exceptionHandling(config -> {})
                 .sessionManagement(config -> config.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeRequests(config -> config
+                .authorizeHttpRequests(config -> config
                         .requestMatchers(WEBJARS_ENTRY_POINT).permitAll() // Webjars
                         .requestMatchers(DEVICE_API_ENTRY_POINT).permitAll() // Device HTTP Transport API
                         .requestMatchers(FORM_BASED_LOGIN_ENTRY_POINT).permitAll() // Login end-point
@@ -218,7 +218,7 @@ public class ThingsboardSecurityConfiguration {
                         .requestMatchers(MAIL_OAUTH2_PROCESSING_ENTRY_POINT).permitAll() // Mail oauth2 code processing url
                         .requestMatchers(DEVICE_CONNECTIVITY_CERTIFICATE_DOWNLOAD_ENTRY_POINT).permitAll() // Device connectivity certificate (public)
                         .requestMatchers(NON_TOKEN_BASED_AUTH_ENTRY_POINTS).permitAll()) // static resources, user activation and password reset end-points
-                .authorizeRequests(config -> config
+                .authorizeHttpRequests(config -> config
                         .requestMatchers(WS_ENTRY_POINT).permitAll() // Protected WebSocket API End-points
                         .requestMatchers(TOKEN_BASED_AUTH_ENTRY_POINT).authenticated()) // Protected API End-points
                 .exceptionHandling(config -> config.accessDeniedHandler(restAccessDeniedHandler))

@@ -40,9 +40,10 @@ public class TbRuleEngineSecurityConfiguration {
                         .frameOptions(config -> {}).disable())
                 .cors(cors -> {})
                 .csrf(AbstractHttpConfigurer::disable)
-                .authorizeRequests()
-                .requestMatchers("/actuator/prometheus").permitAll()
-                .anyRequest().authenticated();
+                .authorizeHttpRequests(config -> config
+                        .requestMatchers("/actuator/prometheus").permitAll())
+                .authorizeHttpRequests(config -> config
+                        .anyRequest().authenticated());
         return http.build();
     }
 }
