@@ -50,7 +50,6 @@ import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-//@ExtendWith(MockitoExtension.class)
 @ExtendWith(MockitoExtension.class)
 public class TbChangeOriginatorNodeTest {
 
@@ -66,13 +65,13 @@ public class TbChangeOriginatorNodeTest {
     private ListeningExecutor dbExecutor;
 
     @BeforeEach
-    public void before() {
+    public void before() throws TbNodeException {
         dbExecutor = new TestDbCallbackExecutor();
+        init();
     }
 
     @Test
-    public void originatorCanBeChangedToCustomerId() throws TbNodeException {
-        init();
+    public void originatorCanBeChangedToCustomerId() {
         AssetId assetId = new AssetId(Uuids.timeBased());
         CustomerId customerId = new CustomerId(Uuids.timeBased());
         Asset asset = new Asset();
@@ -96,8 +95,7 @@ public class TbChangeOriginatorNodeTest {
     }
 
     @Test
-    public void newChainCanBeStarted() throws TbNodeException {
-        init();
+    public void newChainCanBeStarted() {
         AssetId assetId = new AssetId(Uuids.timeBased());
         CustomerId customerId = new CustomerId(Uuids.timeBased());
         Asset asset = new Asset();
@@ -120,8 +118,7 @@ public class TbChangeOriginatorNodeTest {
     }
 
     @Test
-    public void exceptionThrownIfCannotFindNewOriginator() throws TbNodeException {
-        init();
+    public void exceptionThrownIfCannotFindNewOriginator() {
         AssetId assetId = new AssetId(Uuids.timeBased());
         CustomerId customerId = new CustomerId(Uuids.timeBased());
         Asset asset = new Asset();
