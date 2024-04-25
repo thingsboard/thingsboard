@@ -18,13 +18,11 @@ import {
   ChangeDetectorRef,
   Component,
   ElementRef,
-  EventEmitter,
   forwardRef,
   Input,
   OnChanges,
   OnDestroy,
   OnInit,
-  Output,
   SimpleChanges,
   ViewChild,
   ViewEncapsulation
@@ -104,9 +102,6 @@ export class JsonContentComponent implements OnInit, ControlValueAccessor, Valid
   @coerceBoolean()
   required: boolean;
 
-  @Output()
-  blur: EventEmitter<void> = new EventEmitter<void>();
-
   fullscreen = false;
 
   contentBody: string;
@@ -116,7 +111,6 @@ export class JsonContentComponent implements OnInit, ControlValueAccessor, Valid
   errorShowed = false;
 
   private propagateChange = null;
-  private onTouched = () => {};
 
   constructor(public elementRef: ElementRef,
               protected store: Store<AppState>,
@@ -156,14 +150,12 @@ export class JsonContentComponent implements OnInit, ControlValueAccessor, Valid
             this.updateView();
           }
         });
-        this.jsonEditor.on('blur', () => {
-          if (this.validateContent) {
+        if (this.validateContent) {
+          this.jsonEditor.on('blur', () => {
             this.contentValid = this.doValidate(true);
             this.cd.markForCheck();
-          }
-          this.onTouched();
-          this.blur.next();
-        });
+          });
+        }
 
         if (this.tbPlaceholder && this.tbPlaceholder.length) {
           this.createPlaceholder();
@@ -251,7 +243,6 @@ export class JsonContentComponent implements OnInit, ControlValueAccessor, Valid
   }
 
   registerOnTouched(fn: any): void {
-    this.onTouched = fn;
   }
 
   setDisabledState(isDisabled: boolean): void {

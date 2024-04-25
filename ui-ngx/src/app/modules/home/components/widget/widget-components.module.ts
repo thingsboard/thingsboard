@@ -94,6 +94,8 @@ import { MappingDataKeysPanelComponent } from '@home/components/widget/lib/gatew
 import { BrokerSecurityComponent } from '@home/components/widget/lib/gateway/connectors-configuration/broker-security.component';
 import { EllipsisChipListDirective } from '@home/components/widget/lib/gateway/connectors-configuration/ellipsis-chip-list.directive';
 import { StatusWidgetComponent } from '@home/components/widget/lib/indicator/status-widget.component';
+import { LatestChartComponent } from '@home/components/widget/lib/chart/latest-chart.component';
+import { PieChartWidgetComponent } from '@home/components/widget/lib/chart/pie-chart-widget.component';
 
 @NgModule({
   declarations:
@@ -154,7 +156,9 @@ import { StatusWidgetComponent } from '@home/components/widget/lib/indicator/sta
       SliderWidgetComponent,
       ToggleButtonWidgetComponent,
       TimeSeriesChartWidgetComponent,
-      StatusWidgetComponent
+      StatusWidgetComponent,
+      LatestChartComponent,
+      PieChartWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -219,7 +223,8 @@ import { StatusWidgetComponent } from '@home/components/widget/lib/indicator/sta
         SliderWidgetComponent,
         ToggleButtonWidgetComponent,
         TimeSeriesChartWidgetComponent,
-        StatusWidgetComponent
+        StatusWidgetComponent,
+        PieChartWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }

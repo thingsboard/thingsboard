@@ -20,6 +20,7 @@
     "charts.timeseries_bars_flot",
     "cards.aggregated_value_card",
     "charts.bars",
+    "pie",
     "charts.pie",
     "charts.pie_chart_js",
     "doughnut",
