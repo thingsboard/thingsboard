@@ -376,7 +376,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        Awaitility.await("all tasks processed").atMost(TIMEOUT, TimeUnit.SECONDS).during(300, TimeUnit.MILLISECONDS)
+        Awaitility.await("all tasks processed").atMost(60, TimeUnit.SECONDS).during(300, TimeUnit.MILLISECONDS)
                 .until(() -> storage.getLag("tb_housekeeper") == 0);
     }
 
