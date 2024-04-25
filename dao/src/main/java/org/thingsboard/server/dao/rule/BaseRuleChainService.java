@@ -653,7 +653,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
     @Override
     public RuleChain getEdgeTemplateRootRuleChain(TenantId tenantId) {
-        Validator.validateId(tenantId, "Incorrect tenant id for search request.");
+        Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         return ruleChainDao.findRootRuleChainByTenantIdAndType(tenantId.getId(), RuleChainType.EDGE);
     }
 
