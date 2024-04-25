@@ -228,10 +228,9 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
         requestValueGroup.get('attributeRequests').disable({emitEvent: false});
         requestValueGroup.get('attributeUpdates').disable({emitEvent: false});
         requestValueGroup.get('serverSideRpc').disable({emitEvent: false});
-        requestValueGroup.get(value).enable({emitEvent: false});
+        requestValueGroup.get(value).enable();
       });
       this.mappingForm.get('requestValue.serverSideRpc.type').valueChanges.pipe(
-        startWith(this.mappingForm.get('requestValue.serverSideRpc.type').value),
         takeUntil(this.destroy$)
       ).subscribe((value) => {
         const requestValueGroup = this.mappingForm.get('requestValue.serverSideRpc');
