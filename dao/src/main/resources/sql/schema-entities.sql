@@ -855,7 +855,7 @@ CREATE TABLE IF NOT EXISTS notification_request (
     originator_entity_type VARCHAR(32),
     rule_id UUID NULL,
     status VARCHAR(32),
-    stats VARCHAR(100000)
+    stats VARCHAR(10000)
 );
 
 CREATE TABLE IF NOT EXISTS notification (
