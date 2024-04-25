@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
@@ -118,7 +119,10 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
     private Alarm getAlarmFromMessage(TenantId tenantId, TbMsg msg) throws IllegalArgumentException {
         Alarm msgAlarm = JacksonUtil.fromString(msg.getData(), Alarm.class);
         msgAlarm.setTenantId(tenantId);
-        msgAlarm.setOriginator(msg.getOriginator());
+        EntityId msgAlarmOriginator = msgAlarm.getOriginator();
+        if (msgAlarmOriginator == null || msgAlarmOriginator.isNullUid()) {
+            msgAlarm.setOriginator(msg.getOriginator());
+        }
         return msgAlarm;
     }
 
