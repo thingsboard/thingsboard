@@ -42,6 +42,7 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
+import org.thingsboard.server.dao.mobile.MobileAppSettingsService;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationRuleService;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
@@ -136,6 +137,10 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
     @Lazy
     @Autowired
     private QueueStatsService queueStatsService;
+
+    @Lazy
+    @Autowired
+    private MobileAppSettingsService mobileAppSettingsService;
 
     @Autowired
     private AdminSettingsService adminSettingsService;
@@ -266,6 +271,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         relationService.deleteEntityRelations(tenantId, tenantId);
         alarmService.deleteEntityAlarmRecordsByTenantId(tenantId);
         queueStatsService.deleteByTenantId(tenantId);
+        mobileAppSettingsService.deleteByTenantId(tenantId);
     }
 
     @Override

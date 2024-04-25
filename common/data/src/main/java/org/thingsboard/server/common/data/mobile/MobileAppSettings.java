@@ -27,7 +27,7 @@ public class MobileAppSettings implements Serializable {
     private static final long serialVersionUID = 2628323657987010348L;
 
     private TenantId tenantId;
-    boolean useDefault;
+    private boolean useDefaultApp;
     @Valid
     private AndroidConfig androidConfig;
     @Valid

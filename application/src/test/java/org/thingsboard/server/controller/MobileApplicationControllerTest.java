@@ -52,7 +52,7 @@ public class MobileApplicationControllerTest extends AbstractControllerTest {
         qrCodeConfig.setQrCodeLabel(TEST_LABEL);
 
         MobileAppSettings mobileAppSettings = new MobileAppSettings();
-        mobileAppSettings.setUseDefault(true);
+        mobileAppSettings.setUseDefaultApp(true);
         AndroidConfig androidConfig = AndroidConfig.builder()
                 .appPackage(ANDROID_PACKAGE_NAME)
                 .sha256CertFingerprints(ANDROID_APP_SHA256)
@@ -75,15 +75,15 @@ public class MobileApplicationControllerTest extends AbstractControllerTest {
         loginSysAdmin();
         MobileAppSettings mobileAppSettings = doGet("/api/mobile/app/settings", MobileAppSettings.class);
         assertThat(mobileAppSettings.getQrCodeConfig().getQrCodeLabel()).isEqualTo(TEST_LABEL);
-        assertThat(mobileAppSettings.isUseDefault()).isTrue();
+        assertThat(mobileAppSettings.isUseDefaultApp()).isTrue();
 
-        mobileAppSettings.setUseDefault(false);
+        mobileAppSettings.setUseDefaultApp(false);
 
         doPost("/api/mobile/app/settings", mobileAppSettings)
                 .andExpect(status().isOk());
 
         MobileAppSettings updatedMobileAppSettings = doGet("/api/mobile/app/settings", MobileAppSettings.class);
-        assertThat(updatedMobileAppSettings.isUseDefault()).isFalse();
+        assertThat(updatedMobileAppSettings.isUseDefaultApp()).isFalse();
     }
 
     @Test
@@ -134,7 +134,7 @@ public class MobileApplicationControllerTest extends AbstractControllerTest {
         // update mobile setting to use custom one
         loginSysAdmin();
         MobileAppSettings mobileAppSettings = doGet("/api/mobile/app/settings", MobileAppSettings.class);
-        mobileAppSettings.setUseDefault(false);
+        mobileAppSettings.setUseDefaultApp(false);
         doPost("/api/mobile/app/settings", mobileAppSettings);
 
         String customAppDeepLink = doGet("/api/mobile/deepLink", String.class);

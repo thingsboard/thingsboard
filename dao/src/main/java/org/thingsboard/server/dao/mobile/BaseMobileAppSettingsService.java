@@ -28,11 +28,14 @@ import org.thingsboard.server.common.data.mobile.MobileAppSettings;
 import org.thingsboard.server.common.data.mobile.QRCodeConfig;
 import org.thingsboard.server.dao.entity.AbstractCachedService;
 
+import static org.thingsboard.server.dao.service.Validator.validateId;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class BaseMobileAppSettingsService extends AbstractCachedService<TenantId, MobileAppSettings, MobileAppSettingsEvictEvent> implements MobileAppSettingsService {
 
+    public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     private static final String DEFAULT_QR_CODE_LABEL = "Scan to connect or download mobile app";
     private final MobileAppSettingsDao mobileAppSettingsDao;
 
@@ -51,6 +54,13 @@ public class BaseMobileAppSettingsService extends AbstractCachedService<TenantId
         return constructMobileAppSettings(mobileAppSettings);
     }
 
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        log.trace("Executing deleteByTenantId, tenantId [{}]", tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        mobileAppSettingsDao.removeByTenantId(tenantId);
+    }
+
     @TransactionalEventListener(classes = MobileAppSettingsEvictEvent.class)
     @Override
     public void handleEvictEvent(MobileAppSettingsEvictEvent event) {
@@ -60,7 +70,7 @@ public class BaseMobileAppSettingsService extends AbstractCachedService<TenantId
     private MobileAppSettings constructMobileAppSettings(MobileAppSettings mobileAppSettings) {
         if (mobileAppSettings == null) {
             mobileAppSettings = new MobileAppSettings();
-            mobileAppSettings.setUseDefault(true);
+            mobileAppSettings.setUseDefaultApp(true);
 
             AndroidConfig androidConfig = AndroidConfig.builder()
                     .enabled(true)

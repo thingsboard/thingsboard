@@ -135,14 +135,14 @@ DELETE FROM asset_profile WHERE name ='TbServiceQueue';
 
 -- QUEUE STATS UPDATE END
 
--- MOBILE APPS TABLE CREATE START
+-- MOBILE APP SETTINGS TABLE CREATE START
 
 CREATE TABLE IF NOT EXISTS mobile_app_settings (
     tenant_id UUID NOT NULL,
-    use_default boolean,
+    use_default_app boolean,
     android_config VARCHAR(1000),
     ios_config VARCHAR(1000),
     qr_code_config VARCHAR(100000)
 );
 
--- MOBILE APPS TABLE CREATE END
+-- MOBILE APP SETTINGS TABLE CREATE END

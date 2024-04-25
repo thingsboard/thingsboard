@@ -46,8 +46,8 @@ public class MobileAppSettingsEntity implements ToData<MobileAppSettings>, Seria
     @Column(name = ModelConstants.TENANT_ID_COLUMN, columnDefinition = "uuid")
     protected UUID tenantId;
 
-    @Column(name = ModelConstants.MOBILE_APP_SETTINGS_USE_DEFAULT_PROPERTY)
-    private boolean useDefault;
+    @Column(name = ModelConstants.MOBILE_APP_SETTINGS_USE_DEFAULT_APP_PROPERTY)
+    private boolean useDefaultApp;
 
     @Convert(converter = JsonConverter.class)
     @Column(name = ModelConstants.MOBILE_APP_SETTINGS_ANDROID_CONFIG_PROPERTY)
@@ -63,7 +63,7 @@ public class MobileAppSettingsEntity implements ToData<MobileAppSettings>, Seria
 
     public MobileAppSettingsEntity(MobileAppSettings mobileAppSettings) {
         this.tenantId = mobileAppSettings.getTenantId().getId();
-        this.useDefault = mobileAppSettings.isUseDefault();
+        this.useDefaultApp = mobileAppSettings.isUseDefaultApp();
         if (mobileAppSettings.getAndroidConfig() != null) {
             this.androidConfig = JacksonUtil.valueToTree(mobileAppSettings.getAndroidConfig());
         }
@@ -79,7 +79,7 @@ public class MobileAppSettingsEntity implements ToData<MobileAppSettings>, Seria
     public MobileAppSettings toData() {
         MobileAppSettings mobileAppSettings = new MobileAppSettings();
         mobileAppSettings.setTenantId(TenantId.fromUUID(tenantId));
-        mobileAppSettings.setUseDefault(useDefault);
+        mobileAppSettings.setUseDefaultApp(useDefaultApp);
         if (qrCodeConfig != null) {
             mobileAppSettings.setAndroidConfig(JacksonUtil.convertValue(androidConfig, AndroidConfig.class));
         }

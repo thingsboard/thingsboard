@@ -24,4 +24,6 @@ public interface MobileAppSettingsService {
 
     MobileAppSettings getMobileAppSettings(TenantId tenantId);
 
+    void deleteByTenantId(TenantId tenantId);
+
 }

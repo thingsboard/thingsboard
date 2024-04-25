@@ -106,7 +106,6 @@ public class MobileApplicationController extends BaseController {
     public ResponseEntity<JsonNode> getAppleAppSiteAssociation() {
         MobileAppSettings mobileAppSettings = mobileAppSettingsService.getMobileAppSettings(TenantId.SYS_TENANT_ID);
         IosConfig iosConfig = mobileAppSettings.getIosConfig();
-
         if (iosConfig != null && iosConfig.isEnabled() && !iosConfig.getAppId().isBlank()) {
             return ResponseEntity.ok(JacksonUtil.toJsonNode(String.format(APPLE_APP_SITE_ASSOCIATION_PATTERN, iosConfig.getAppId())));
         } else {
@@ -115,7 +114,7 @@ public class MobileApplicationController extends BaseController {
     }
 
     @ApiOperation(value = "Create Or Update the Mobile application settings (saveMobileAppSettings)",
-            notes = "The payload contains associated android and iOS applications and platform qr code widget settings." + SYSTEM_AUTHORITY_PARAGRAPH)
+            notes = "The request payload contains configuration for android/iOS applications and platform qr code widget settings." + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @PostMapping(value = "/api/mobile/app/settings")
     public MobileAppSettings saveMobileAppSettings(@Parameter(description = "A JSON value representing the mobile apps configuration")
@@ -128,7 +127,7 @@ public class MobileApplicationController extends BaseController {
     }
 
     @ApiOperation(value = "Get Mobile application settings (getMobileAppSettings)",
-            notes = "The payload contains associated android and iOS applications and platform qr code widget settings." + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
+            notes = "The response payload contains configuration for android/iOS applications and platform qr code widget settings." + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/api/mobile/app/settings")
     public MobileAppSettings getMobileAppSettings() throws ThingsboardException {
@@ -139,18 +138,16 @@ public class MobileApplicationController extends BaseController {
     }
 
     @ApiOperation(value = "Get the deep link to the associated mobile application (getMobileAppDeepLink)",
-            notes = "Fetch the url that takes user to associated mobile application " + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
+            notes = "Fetch the url that takes user to linked mobile application " + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/api/mobile/deepLink", produces = "text/plain")
     public String getMobileAppDeepLink(HttpServletRequest request) throws ThingsboardException, URISyntaxException {
-        SecurityUser currentUser = getCurrentUser();
-        String secret = mobileAppSecretService.generateMobileAppSecret(currentUser);
-
+        String secret = mobileAppSecretService.generateMobileAppSecret(getCurrentUser());
         String baseUrl = systemSecurityService.getBaseUrl(TenantId.SYS_TENANT_ID, new CustomerId(EntityId.NULL_UUID), request);
         String platformDomain = new URI(baseUrl).getHost();
         MobileAppSettings mobileAppSettings = mobileAppSettingsService.getMobileAppSettings(TenantId.SYS_TENANT_ID);
         String appDomain;
-        if (!mobileAppSettings.isUseDefault()) {
+        if (!mobileAppSettings.isUseDefaultApp()) {
             appDomain = platformDomain;
         } else {
             appDomain = DEFAULT_APP_DOMAIN;
