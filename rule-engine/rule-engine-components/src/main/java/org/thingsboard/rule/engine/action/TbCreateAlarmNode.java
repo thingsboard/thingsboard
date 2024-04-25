@@ -34,7 +34,10 @@ import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbMsg;
+
+import java.util.Objects;
 
 @Slf4j
 @RuleNode(
@@ -67,10 +70,22 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
         }
     }
 
-
     @Override
     protected TbCreateAlarmNodeConfiguration loadAlarmNodeConfig(TbNodeConfiguration configuration) throws TbNodeException {
         return TbNodeUtils.convert(configuration, TbCreateAlarmNodeConfiguration.class);
+    }
+
+    @Override
+    protected boolean isUsingDefaultScriptFunction(TbAbstractAlarmNodeConfiguration config) {
+        var defaultConfig = new TbCreateAlarmNodeConfiguration().defaultConfiguration();
+        var scriptLang = Objects.requireNonNullElse(config.getScriptLang(), ScriptLanguage.JS);
+        if (scriptLang == ScriptLanguage.JS && config.getAlarmDetailsBuildJs().equals(defaultConfig.getAlarmDetailsBuildJs())) {
+            return true;
+        }
+        if (scriptLang == ScriptLanguage.TBEL && config.getAlarmDetailsBuildTbel().equals(defaultConfig.getAlarmDetailsBuildTbel())) {
+            return true;
+        }
+        return false;
     }
 
     @Override

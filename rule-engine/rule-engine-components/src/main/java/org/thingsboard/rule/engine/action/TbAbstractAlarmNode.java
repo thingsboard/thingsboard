@@ -43,15 +43,26 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
 
     protected C config;
     private ScriptEngine scriptEngine;
+    private boolean isUsingDefaultScriptFunction;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
+        if (configuration == null || configuration.getData() == null || configuration.getData().isNull()) {
+            throw new TbNodeException("Node configuration cannot be null", true);
+        }
         config = loadAlarmNodeConfig(configuration);
-        scriptEngine = ctx.createScriptEngine(config.getScriptLang(),
-                ScriptLanguage.TBEL.equals(config.getScriptLang()) ? config.getAlarmDetailsBuildTbel() : config.getAlarmDetailsBuildJs());
+        isUsingDefaultScriptFunction = isUsingDefaultScriptFunction(config);
+        if (isUsingDefaultScriptFunction) {
+            scriptEngine = null;
+        } else {
+            scriptEngine = ctx.createScriptEngine(config.getScriptLang(),
+                    ScriptLanguage.TBEL.equals(config.getScriptLang()) ? config.getAlarmDetailsBuildTbel() : config.getAlarmDetailsBuildJs());
+        }
     }
 
     protected abstract C loadAlarmNodeConfig(TbNodeConfiguration configuration) throws TbNodeException;
+
+    protected abstract boolean isUsingDefaultScriptFunction(TbAbstractAlarmNodeConfiguration configuration);
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
@@ -76,19 +87,41 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
 
     protected ListenableFuture<JsonNode> buildAlarmDetails(TbContext ctx, TbMsg msg, JsonNode previousDetails) {
         try {
-            TbMsg dummyMsg = msg;
-            if (previousDetails != null) {
-                TbMsgMetaData metaData = msg.getMetaData().copy();
-                metaData.putValue(PREV_ALARM_DETAILS, JacksonUtil.toString(previousDetails));
-                dummyMsg = TbMsg.transformMsgMetadata(msg, metaData);
+            ListenableFuture<JsonNode> alarmDetailsFuture;
+            if (isUsingDefaultScriptFunction) {
+                alarmDetailsFuture = Futures.immediateFuture(executeDefaultScriptUsingJava(previousDetails));
+            } else {
+                alarmDetailsFuture = executeCustomScriptUsingScriptEngine(ctx, msg, previousDetails);
             }
-            ctx.logJsEvalRequest();
-            ListenableFuture<JsonNode> alarmDetailsFuture = scriptEngine.executeJsonAsync(dummyMsg);
-            withCallback(alarmDetailsFuture, alarmDetails -> ctx.logJsEvalResponse(), t -> ctx.logJsEvalFailure());
             return alarmDetailsFuture;
         } catch (Exception e) {
             return Futures.immediateFailedFuture(e);
         }
+    }
+
+    private JsonNode executeDefaultScriptUsingJava(JsonNode previousDetails) {
+        if (previousDetails != null) {
+            return previousDetails;
+        }
+        return JacksonUtil.newObjectNode();
+    }
+
+    private ListenableFuture<JsonNode> executeCustomScriptUsingScriptEngine(TbContext ctx, TbMsg msg, JsonNode previousDetails) {
+        TbMsg dummyMsg = prepareDummyMsg(msg, previousDetails);
+        ctx.logJsEvalRequest();
+        ListenableFuture<JsonNode> alarmDetailsFuture = scriptEngine.executeJsonAsync(dummyMsg);
+        withCallback(alarmDetailsFuture, alarmDetails -> ctx.logJsEvalResponse(), t -> ctx.logJsEvalFailure());
+        return alarmDetailsFuture;
+    }
+
+    private TbMsg prepareDummyMsg(TbMsg msg, JsonNode previousDetails) {
+        TbMsg dummyMsg = msg;
+        if (previousDetails != null) {
+            TbMsgMetaData metaData = msg.getMetaData().copy();
+            metaData.putValue(PREV_ALARM_DETAILS, JacksonUtil.toString(previousDetails));
+            dummyMsg = TbMsg.transformMsgMetadata(msg, metaData);
+        }
+        return dummyMsg;
     }
 
     public static TbMsg toAlarmMsg(TbContext ctx, TbAlarmResult alarmResult, TbMsg originalMsg) {

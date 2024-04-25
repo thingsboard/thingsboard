@@ -21,6 +21,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -104,7 +107,7 @@ class TbCreateAlarmNodeTest {
 
     @Test
     @DisplayName("When defaultConfiguration() is called, then correct values are set.")
-    void whenDefaultConfiguration_thenShouldSetCorrectValues() {
+    void whenDefaultConfiguration_thenShouldSetCorrectDefaults() {
         // GIVEN-WHEN
         config = config.defaultConfiguration();
 
@@ -143,6 +146,22 @@ class TbCreateAlarmNodeTest {
         assertThat(config.isOverwriteAlarmDetails()).isFalse();
         assertThat(config.isDynamicSeverity()).isFalse();
         assertThat(config.getRelationTypes()).isEmpty();
+    }
+
+    @ParameterizedTest
+    @EnumSource(ScriptLanguage.class)
+    @NullSource
+    @DisplayName("When default configuration is used, then should detect that script functions are default")
+    void whenDefaultConfigWithDifferentScriptLanguages_thenShouldDetectThatScriptFunctionIsDefault(ScriptLanguage scriptLanguage) {
+        // GIVEN
+        config = config.defaultConfiguration();
+        config.setScriptLang(scriptLanguage);
+
+        // WHEN
+        boolean actualIsDefaultScript = nodeSpy.isUsingDefaultScriptFunction(config);
+
+        // THEN
+        assertThat(actualIsDefaultScript).isTrue();
     }
 
     @Test
@@ -211,7 +230,6 @@ class TbCreateAlarmNodeTest {
         given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
         given(ctxMock.getSelfId()).willReturn(ruleNodeSelfId);
         given(alarmServiceMock.findLatestActiveByOriginatorAndTypeAsync(tenantId, msgOriginator, alarmType)).willReturn(immediateFuture(existingAlarm));
-        given(alarmDetailsScriptMock.executeJsonAsync(incomingMsg)).willReturn(immediateFuture(alarmDetails));
         var apiCallResult = AlarmApiCallResult.builder()
                 .successful(true)
                 .created(true)
@@ -232,7 +250,6 @@ class TbCreateAlarmNodeTest {
                         answer.getArgument(3, TbMsgMetaData.class),
                         answer.getArgument(4, String.class))
                 );
-        given(ctxMock.createScriptEngine(ScriptLanguage.TBEL, TbAbstractAlarmNodeConfiguration.ALARM_DETAILS_BUILD_TBEL_TEMPLATE)).willReturn(alarmDetailsScriptMock);
 
         // node initialization
         nodeSpy.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
@@ -242,10 +259,10 @@ class TbCreateAlarmNodeTest {
 
         // THEN
 
-        // verify alarm details script evaluation
-        then(ctxMock).should().logJsEvalRequest();
-        then(alarmDetailsScriptMock).should().executeJsonAsync(incomingMsg);
-        then(ctxMock).should().logJsEvalResponse();
+        // verify script engine was not used for an alarm details script
+        then(ctxMock).should(never()).logJsEvalRequest();
+        then(alarmDetailsScriptMock).should(never()).executeJsonAsync(any());
+        then(ctxMock).should(never()).logJsEvalResponse();
         then(ctxMock).should(never()).logJsEvalFailure();
 
         // verify we called createAlarm() with correct AlarmCreateOrUpdateActiveRequest
@@ -754,7 +771,6 @@ class TbCreateAlarmNodeTest {
                         answer.getArgument(3, TbMsgMetaData.class),
                         answer.getArgument(4, String.class))
                 );
-        given(ctxMock.createScriptEngine(ScriptLanguage.TBEL, config.getAlarmDetailsBuildTbel())).willReturn(alarmDetailsScriptMock);
 
         // node initialization
         nodeSpy.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
@@ -922,7 +938,6 @@ class TbCreateAlarmNodeTest {
                         answer.getArgument(3, TbMsgMetaData.class),
                         answer.getArgument(4, String.class))
                 );
-        given(ctxMock.createScriptEngine(ScriptLanguage.TBEL, config.getAlarmDetailsBuildTbel())).willReturn(alarmDetailsScriptMock);
 
         // node initialization
         nodeSpy.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
@@ -1001,6 +1016,11 @@ class TbCreateAlarmNodeTest {
         config = config.defaultConfiguration();
         config.setUseMessageAlarmData(true);
         config.setOverwriteAlarmDetails(true);
+        config.setAlarmDetailsBuildTbel("""
+                return {
+                    oldAlarmDetails: JSON.parse(metadata.prevAlarmDetails),
+                    newAlarmDetails: "Some alarm details TBEL"
+                };""");
 
         // other values
         String alarmType = "High Temperature";
@@ -1270,7 +1290,6 @@ class TbCreateAlarmNodeTest {
         given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
         given(ctxMock.getSelfId()).willReturn(ruleNodeSelfId);
         given(alarmServiceMock.findLatestActiveByOriginatorAndTypeAsync(tenantId, msgOriginator, alarmType)).willReturn(immediateFuture(existingActiveAlarm));
-        given(alarmDetailsScriptMock.executeJsonAsync(any())).willReturn(immediateFuture(alarmDetails));
         doReturn(endTs).when(nodeSpy).currentTimeMillis();
         var apiCallResult = AlarmApiCallResult.builder()
                 .successful(true)
@@ -1292,7 +1311,6 @@ class TbCreateAlarmNodeTest {
                         answer.getArgument(3, TbMsgMetaData.class),
                         answer.getArgument(4, String.class))
                 );
-        given(ctxMock.createScriptEngine(ScriptLanguage.TBEL, config.getAlarmDetailsBuildTbel())).willReturn(alarmDetailsScriptMock);
 
         // node initialization
         nodeSpy.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
@@ -1302,15 +1320,10 @@ class TbCreateAlarmNodeTest {
 
         // THEN
 
-        // verify alarm details script evaluation
-        then(ctxMock).should().logJsEvalRequest();
-        var dummyMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        then(alarmDetailsScriptMock).should().executeJsonAsync(dummyMsgCaptor.capture());
-        TbMsg actualDummyMsg = dummyMsgCaptor.getValue();
-        assertThat(actualDummyMsg.getType()).isEqualTo(incomingMsg.getType());
-        assertThat(actualDummyMsg.getData()).isEqualTo(incomingMsg.getData());
-        assertThat(actualDummyMsg.getMetaData().getData()).containsEntry(TbAbstractAlarmNode.PREV_ALARM_DETAILS, JacksonUtil.toString(alarmDetails));
-        then(ctxMock).should().logJsEvalResponse();
+        // verify script engine was not used for an alarm details script
+        then(ctxMock).should(never()).logJsEvalRequest();
+        then(alarmDetailsScriptMock).should(never()).executeJsonAsync(any());
+        then(ctxMock).should(never()).logJsEvalResponse();
         then(ctxMock).should(never()).logJsEvalFailure();
 
         // verify we called updateAlarm() with correct AlarmUpdateRequest
@@ -1351,6 +1364,8 @@ class TbCreateAlarmNodeTest {
     void whenAlarmDetailsScriptThrowsException_thenShouldTellFailureAndNoOtherActions() throws Exception {
         // GIVEN
         config = config.defaultConfiguration();
+        config.setScriptLang(ScriptLanguage.TBEL);
+        config.setAlarmDetailsBuildTbel("return null.test;");
 
         var incomingMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, msgOriginator, metadata, "{\"temperature\": 50}");
 

@@ -42,6 +42,7 @@ public class TbCreateAlarmNodeConfiguration extends TbAbstractAlarmNodeConfigura
     public TbCreateAlarmNodeConfiguration defaultConfiguration() {
         TbCreateAlarmNodeConfiguration configuration = new TbCreateAlarmNodeConfiguration();
         configuration.setScriptLang(ScriptLanguage.TBEL);
+        // If you change default script functions, update optimization code that detects default scripts and executes them using Java instead of script engine
         configuration.setAlarmDetailsBuildJs(ALARM_DETAILS_BUILD_JS_TEMPLATE);
         configuration.setAlarmDetailsBuildTbel(ALARM_DETAILS_BUILD_TBEL_TEMPLATE);
         configuration.setAlarmType("General Alarm");
