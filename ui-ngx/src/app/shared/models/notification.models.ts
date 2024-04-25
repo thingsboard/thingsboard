@@ -81,7 +81,7 @@ export interface NotificationRequestPreview {
 export interface NotificationRequestStats {
   sent: Map<NotificationDeliveryMethod, any>;
   errors: { [key in NotificationDeliveryMethod]: {[errorKey in string]: string}};
-  processedRecipients: Map<NotificationDeliveryMethod, Set<UserId>>;
+  totalErrors: number;
 }
 
 export interface NotificationRequestConfig {
