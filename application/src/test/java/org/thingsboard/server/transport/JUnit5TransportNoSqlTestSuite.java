@@ -22,18 +22,20 @@ import org.junit.platform.suite.api.Suite;
 import org.junit.platform.suite.api.SuiteDisplayName;
 
 @Suite
-@SuiteDisplayName("JUnit5 test suite")
-@SelectPackages("org.thingsboard.server.transport.mqtt.mqttv3.telemetry.timeseries.nosql")
+@SuiteDisplayName("JUnit5 NoSQL test suite")
+@SelectPackages({
+        "org.thingsboard.server.transport.mqtt.mqttv3.telemetry.timeseries.nosql",
+})
 @ExcludeClassNamePatterns({"^.*Abstract.*$"})
 @Slf4j
-public class JUnit5NoSqlTestSuite {
+public class JUnit5TransportNoSqlTestSuite {
 
     static {
-        log.warn("JUnit5NoSqlTestSuite constructor static"); //no static instance created
+        log.warn("JUnit5TransportNoSqlTestSuite constructor static"); //no static instance created
     }
 
-    public JUnit5NoSqlTestSuite() {
-        log.warn("JUnit5NoSqlTestSuite constructor");  //no instance created
+    public JUnit5TransportNoSqlTestSuite() {
+        log.warn("JUnit5TransportNoSqlTestSuite constructor");  //no instance created
     }
 
 }
