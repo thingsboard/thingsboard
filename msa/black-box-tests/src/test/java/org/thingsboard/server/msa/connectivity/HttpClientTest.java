@@ -21,16 +21,20 @@ import io.restassured.path.json.JsonPath;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
+import org.thingsboard.server.common.data.query.SingleEntityFilter;
+import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.msa.AbstractContainerTest;
 import org.thingsboard.server.msa.DisableUIListeners;
-import org.thingsboard.server.msa.WsClient;
-import org.thingsboard.server.msa.mapper.WsTelemetryResponse;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -55,19 +59,34 @@ public class HttpClientTest extends AbstractContainerTest {
     @Test
     public void telemetryUpload() throws Exception {
         DeviceCredentials deviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
+        List<String> expectedKeys = Arrays.asList("booleanKey", "stringKey", "doubleKey", "longKey");
 
-        WsClient wsClient = subscribeToWebSocket(device.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
+        SingleEntityFilter filter = new SingleEntityFilter();
+        filter.setSingleEntity(device.getId());
+
+        long now = System.currentTimeMillis();
+
+        EntityDataUpdate entityDataUpdate = getWsClient().subscribeTsUpdate(expectedKeys, now, TimeUnit.SECONDS.toMillis(1), filter);
+        assertThat(entityDataUpdate.getData().getData().size()).isEqualTo(1);
+        Map<String, TsValue[]> timeseries = entityDataUpdate.getData().getData().get(0).getTimeseries();
+        assertThat(timeseries.keySet()).containsOnlyOnceElementsOf(expectedKeys);
+
+        getWsClient().registerWaitForUpdate();
+
         testRestClient.postTelemetry(deviceCredentials.getCredentialsId(), mapper.readTree(createPayload().toString()));
 
-        WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
-        wsClient.closeBlocking();
+        String updateString = getWsClient().waitForUpdate(3000, true);
+        EntityDataUpdate update = JacksonUtil.fromString(updateString, EntityDataUpdate.class);
+        assertThat(update).isNotNull();
+        assertThat(update.getUpdate()).isNotNull();
+        assertThat(update.getUpdate().size()).isEqualTo(1);
+        Map<String, TsValue[]> actualLatestTelemetry = update.getUpdate().get(0).getTimeseries();
 
-        assertThat(actualLatestTelemetry.getLatestValues().keySet()).containsOnlyOnceElementsOf(Arrays.asList("booleanKey", "stringKey", "doubleKey", "longKey"));
-
-        assertThat(actualLatestTelemetry.getDataValuesByKey("booleanKey").get(1)).isEqualTo(Boolean.TRUE.toString());
-        assertThat(actualLatestTelemetry.getDataValuesByKey("stringKey").get(1)).isEqualTo("value1");
-        assertThat(actualLatestTelemetry.getDataValuesByKey("doubleKey").get(1)).isEqualTo(Double.toString(42.0));
-        assertThat(actualLatestTelemetry.getDataValuesByKey("longKey").get(1)).isEqualTo(Long.toString(73));
+        assertThat(actualLatestTelemetry.keySet()).containsOnlyOnceElementsOf(expectedKeys);
+        assertThat(actualLatestTelemetry.get("booleanKey")[0].getValue()).isEqualTo(Boolean.TRUE.toString());
+        assertThat(actualLatestTelemetry.get("stringKey")[0].getValue()).isEqualTo("value1");
+        assertThat(actualLatestTelemetry.get("doubleKey")[0].getValue()).isEqualTo(Double.toString(42.0));
+        assertThat(actualLatestTelemetry.get("longKey")[0].getValue()).isEqualTo(Long.toString(73));
     }
 
     @Test

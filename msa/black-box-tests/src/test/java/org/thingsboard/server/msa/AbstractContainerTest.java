@@ -28,7 +28,6 @@ import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Listeners;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.device.profile.AllowCreateNewDevicesDeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.device.profile.CheckPreProvisionedDevicesDeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
@@ -37,9 +36,7 @@ import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfilePr
 import org.thingsboard.server.common.data.id.DeviceId;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -49,10 +46,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Listeners(TestListener.class)
 public abstract class AbstractContainerTest {
 
-    public static final int TIMEOUT = 120;
+    public static final int TIMEOUT = 30;
 
-    protected static final String WS_URL = "ws://localhost:8080";
-    protected volatile ContainerWsClient containerWsClient;
+    protected volatile WsClient wsClient;
 
     protected final static String TEST_PROVISION_DEVICE_KEY = "test_provision_key";
     protected final static String TEST_PROVISION_DEVICE_SECRET = "test_provision_secret";
@@ -62,7 +58,7 @@ public abstract class AbstractContainerTest {
     protected static TestRestClient testRestClient;
 
     @BeforeSuite
-    public void beforeSuite() throws URISyntaxException {
+    public void beforeSuite() {
         if ("false".equals(System.getProperty("runLocal", "false"))) {
             containerTestSuite.start();
         }
@@ -77,34 +73,16 @@ public abstract class AbstractContainerTest {
         if (containerTestSuite.isActive()) {
             containerTestSuite.stop();
         }
-        if (containerWsClient != null && containerWsClient.isOpen()) {
-            containerWsClient.markAllNotificationsAsRead();
-            containerWsClient.close();
+        if (wsClient != null && wsClient.isOpen()) {
+            wsClient.markAllNotificationsAsRead();
+            wsClient.close();
         }
     }
 
+    @Deprecated
     protected WsClient subscribeToWebSocket(DeviceId deviceId, String scope, CmdsType property) throws Exception {
-        String webSocketUrl = TestProperties.getWebSocketUrl();
-        WsClient wsClient = new WsClient(new URI(webSocketUrl + "/api/ws/plugins/telemetry?token=" + testRestClient.getToken()), timeoutMultiplier);
-        if (webSocketUrl.matches("^(wss)://.*$")) {
-            SSLContextBuilder builder = SSLContexts.custom();
-            builder.loadTrustMaterial(null, (TrustStrategy) (chain, authType) -> true);
-            wsClient.setSocketFactory(builder.build().getSocketFactory());
-        }
-        wsClient.connectBlocking();
-
-        JsonObject cmdsObject = new JsonObject();
-        cmdsObject.addProperty("entityType", EntityType.DEVICE.name());
-        cmdsObject.addProperty("entityId", deviceId.toString());
-        cmdsObject.addProperty("scope", scope);
-        cmdsObject.addProperty("cmdId", new Random().nextInt(100));
-
-        JsonArray cmd = new JsonArray();
-        cmd.add(cmdsObject);
-        JsonObject wsRequest = new JsonObject();
-        wsRequest.add(property.toString(), cmd);
-        wsClient.send(wsRequest.toString());
-        wsClient.waitForFirstReply();
+        WsClient wsClient = getWsClient();
+        wsClient.registerWaitForUpdate();
         return wsClient;
     }
 
@@ -117,19 +95,19 @@ public abstract class AbstractContainerTest {
                 .build();
     }
 
-    protected JsonObject createGatewayConnectPayload(String deviceName){
+    protected JsonObject createGatewayConnectPayload(String deviceName) {
         JsonObject payload = new JsonObject();
         payload.addProperty("device", deviceName);
         return payload;
     }
 
-    protected JsonObject createGatewayPayload(String deviceName, long ts){
+    protected JsonObject createGatewayPayload(String deviceName, long ts) {
         JsonObject payload = new JsonObject();
         payload.add(deviceName, createGatewayTelemetryArray(ts));
         return payload;
     }
 
-    protected JsonArray createGatewayTelemetryArray(long ts){
+    protected JsonArray createGatewayTelemetryArray(long ts) {
         JsonArray telemetryArray = new JsonArray();
         if (ts > 0)
             telemetryArray.add(createPayload(ts));
@@ -177,7 +155,7 @@ public abstract class AbstractContainerTest {
         DeviceProfileProvisionConfiguration provisionConfiguration;
         String testProvisionDeviceKey = TEST_PROVISION_DEVICE_KEY;
         deviceProfile.setProvisionType(provisionType);
-        switch(provisionType) {
+        switch (provisionType) {
             case ALLOW_CREATE_NEW_DEVICES:
                 provisionConfiguration = new AllowCreateNewDevicesDeviceProfileProvisionConfiguration(TEST_PROVISION_DEVICE_SECRET);
                 break;
@@ -197,28 +175,34 @@ public abstract class AbstractContainerTest {
         return testRestClient.postDeviceProfile(deviceProfile);
     }
 
-    protected ContainerWsClient getContainerWsClient() {
-        if (containerWsClient == null) {
+    protected WsClient getWsClient() {
+        if (wsClient == null || !wsClient.isOpen()) {
             synchronized (this) {
                 try {
-                    if (containerWsClient == null) {
-                        containerWsClient = buildAndConnectWebSocketClient();
+                    if (wsClient == null || !wsClient.isOpen()) {
+                        wsClient = buildAndConnectWebSocketClient();
                     }
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
             }
         }
-        return containerWsClient;
+        return wsClient;
     }
 
-    protected ContainerWsClient buildAndConnectWebSocketClient() throws URISyntaxException, InterruptedException {
+    protected WsClient buildAndConnectWebSocketClient() throws Exception {
         return buildAndConnectWebSocketClient("/api/ws");
     }
 
-    protected ContainerWsClient buildAndConnectWebSocketClient(String path) throws URISyntaxException, InterruptedException {
-        ContainerWsClient wsClient = new ContainerWsClient(new URI(WS_URL + path));
-        wsClient.connectBlocking(TIMEOUT, TimeUnit.SECONDS);
+    protected WsClient buildAndConnectWebSocketClient(String path) throws Exception {
+        String webSocketUrl = TestProperties.getWebSocketUrl();
+        WsClient wsClient = new WsClient(new URI(webSocketUrl + path), timeoutMultiplier);
+        if (webSocketUrl.matches("^(wss)://.*$")) {
+            SSLContextBuilder builder = SSLContexts.custom();
+            builder.loadTrustMaterial(null, (TrustStrategy) (chain, authType) -> true);
+            wsClient.setSocketFactory(builder.build().getSocketFactory());
+        }
+        assertThat(wsClient.connectBlocking(TIMEOUT, TimeUnit.SECONDS)).isTrue();
         if (!path.contains("token=")) {
             wsClient.authenticate(testRestClient.getToken());
         }

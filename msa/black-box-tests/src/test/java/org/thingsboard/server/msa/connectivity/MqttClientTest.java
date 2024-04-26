@@ -31,6 +31,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.thingsboard.common.util.AbstractListeningExecutor;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.mqtt.MqttClient;
 import org.thingsboard.mqtt.MqttClientConfig;
@@ -43,6 +44,8 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.query.SingleEntityFilter;
+import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
@@ -50,13 +53,16 @@ import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.msa.AbstractContainerTest;
 import org.thingsboard.server.msa.DisableUIListeners;
-import org.thingsboard.server.msa.WsClient;
 import org.thingsboard.server.msa.mapper.AttributesResponse;
 import org.thingsboard.server.msa.mapper.WsTelemetryResponse;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
@@ -102,61 +108,107 @@ public class MqttClientTest extends AbstractContainerTest {
     }
     @Test
     public void telemetryUpload() throws Exception {
-        DeviceCredentials deviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
 
-        WsClient wsClient = subscribeToWebSocket(device.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
+        DeviceCredentials deviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
+        List<String> expectedKeys = Arrays.asList("booleanKey", "stringKey", "doubleKey", "longKey");
+
+        SingleEntityFilter filter = new SingleEntityFilter();
+        filter.setSingleEntity(device.getId());
+
+        long now = System.currentTimeMillis();
+
+        EntityDataUpdate entityDataUpdate = getWsClient().subscribeTsUpdate(expectedKeys, now, TimeUnit.SECONDS.toMillis(1), filter);
+        assertThat(entityDataUpdate.getData().getData().size()).isEqualTo(1);
+        Map<String, TsValue[]> timeseries = entityDataUpdate.getData().getData().get(0).getTimeseries();
+        assertThat(timeseries.keySet()).containsOnlyOnceElementsOf(expectedKeys);
+
+        getWsClient().registerWaitForUpdate();
+
         MqttClient mqttClient = getMqttClient(deviceCredentials, null);
         mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer(createPayload().toString().getBytes())).get();
-        WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
+
+        String updateString = getWsClient().waitForUpdate(3000, true);
+        EntityDataUpdate update = JacksonUtil.fromString(updateString, EntityDataUpdate.class);
+        assertThat(update).isNotNull();
+        assertThat(update.getUpdate()).isNotNull();
+        assertThat(update.getUpdate().size()).isEqualTo(1);
+        Map<String, TsValue[]> actualLatestTelemetry = update.getUpdate().get(0).getTimeseries();
+
         log.info("Received telemetry: {}", actualLatestTelemetry);
-        wsClient.closeBlocking();
 
-        assertThat(actualLatestTelemetry.getData()).hasSize(4);
-        assertThat(actualLatestTelemetry.getLatestValues().keySet()).containsOnlyOnceElementsOf(Arrays.asList("booleanKey", "stringKey", "doubleKey", "longKey"));
-
-        assertThat(actualLatestTelemetry.getDataValuesByKey("booleanKey").get(1)).isEqualTo(Boolean.TRUE.toString());
-        assertThat(actualLatestTelemetry.getDataValuesByKey("stringKey").get(1)).isEqualTo("value1");
-        assertThat(actualLatestTelemetry.getDataValuesByKey("doubleKey").get(1)).isEqualTo(Double.toString(42.0));
-        assertThat(actualLatestTelemetry.getDataValuesByKey("longKey").get(1)).isEqualTo(Long.toString(73));
+        assertThat(actualLatestTelemetry.keySet()).containsOnlyOnceElementsOf(expectedKeys);
+        assertThat(actualLatestTelemetry.get("booleanKey")[0].getValue()).isEqualTo(Boolean.TRUE.toString());
+        assertThat(actualLatestTelemetry.get("stringKey")[0].getValue()).isEqualTo("value1");
+        assertThat(actualLatestTelemetry.get("doubleKey")[0].getValue()).isEqualTo(Double.toString(42.0));
+        assertThat(actualLatestTelemetry.get("longKey")[0].getValue()).isEqualTo(Long.toString(73));
     }
 
     @Test
     public void telemetryUploadWithTs() throws Exception {
-        long ts = 1451649600512L;
         DeviceCredentials deviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
 
-        WsClient wsClient = subscribeToWebSocket(device.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
+        List<String> expectedKeys = Arrays.asList("booleanKey", "stringKey", "doubleKey", "longKey");
+
+        SingleEntityFilter filter = new SingleEntityFilter();
+        filter.setSingleEntity(device.getId());
+
+        long ts = 1451649600512L;
+
+        EntityDataUpdate entityDataUpdate = getWsClient().subscribeTsUpdate(expectedKeys, ts - 1, TimeUnit.SECONDS.toMillis(1), filter);
+        assertThat(entityDataUpdate.getUpdate().size()).isEqualTo(1);
+        Map<String, TsValue[]> timeseries = entityDataUpdate.getUpdate().get(0).getTimeseries();
+        assertThat(timeseries.keySet()).containsOnlyOnceElementsOf(expectedKeys);
+
+        getWsClient().registerWaitForUpdate();
+
         MqttClient mqttClient = getMqttClient(deviceCredentials, null);
         mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer(createPayload(ts).toString().getBytes())).get();
-        WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
+
+        String updateString = getWsClient().waitForUpdate(3000, true);
+        EntityDataUpdate update = JacksonUtil.fromString(updateString, EntityDataUpdate.class);
+        assertThat(update).isNotNull();
+        assertThat(update.getUpdate()).isNotNull();
+        assertThat(update.getUpdate().size()).isEqualTo(1);
+        Map<String, TsValue[]> actualLatestTelemetry = update.getUpdate().get(0).getTimeseries();
+
         log.info("Received telemetry: {}", actualLatestTelemetry);
-        wsClient.closeBlocking();
 
-        assertThat(actualLatestTelemetry.getData()).hasSize(4);
-        assertThat(getExpectedLatestValues(ts)).isEqualTo(actualLatestTelemetry.getLatestValues());
-
-        assertThat(actualLatestTelemetry.getDataValuesByKey("booleanKey").get(1)).isEqualTo(Boolean.TRUE.toString());
-        assertThat(actualLatestTelemetry.getDataValuesByKey("stringKey").get(1)).isEqualTo("value1");
-        assertThat(actualLatestTelemetry.getDataValuesByKey("doubleKey").get(1)).isEqualTo(Double.toString(42.0));
-        assertThat(actualLatestTelemetry.getDataValuesByKey("longKey").get(1)).isEqualTo(Long.toString(73));
+        assertThat(actualLatestTelemetry.keySet()).containsOnlyOnceElementsOf(expectedKeys);
+        assertThat(actualLatestTelemetry.get("booleanKey")[0].getTs()).isEqualTo(ts);
+        assertThat(actualLatestTelemetry.get("booleanKey")[0].getValue()).isEqualTo(Boolean.TRUE.toString());
+        assertThat(actualLatestTelemetry.get("stringKey")[0].getTs()).isEqualTo(ts);
+        assertThat(actualLatestTelemetry.get("stringKey")[0].getValue()).isEqualTo("value1");
+        assertThat(actualLatestTelemetry.get("doubleKey")[0].getTs()).isEqualTo(ts);
+        assertThat(actualLatestTelemetry.get("doubleKey")[0].getValue()).isEqualTo(Double.toString(42.0));
+        assertThat(actualLatestTelemetry.get("longKey")[0].getTs()).isEqualTo(ts);
+        assertThat(actualLatestTelemetry.get("longKey")[0].getValue()).isEqualTo(Long.toString(73));
     }
 
     @Test
     public void publishAttributeUpdateToServer() throws Exception {
         DeviceCredentials deviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
 
-        WsClient wsClient = subscribeToWebSocket(device.getId(), "CLIENT_SCOPE", CmdsType.ATTR_SUB_CMDS);
-        MqttMessageListener listener = new MqttMessageListener();
-        MqttClient mqttClient = getMqttClient(deviceCredentials, listener);
+        List<String> expectedKeys = Arrays.asList("attr1", "attr2", "attr3", "attr4");
+
+        SingleEntityFilter filter = new SingleEntityFilter();
+        filter.setSingleEntity(device.getId());
+
+        getWsClient().subscribeForAttributes(device.getId(), "CLIENT_SCOPE", expectedKeys);
         JsonObject clientAttributes = new JsonObject();
         clientAttributes.addProperty("attr1", "value1");
         clientAttributes.addProperty("attr2", true);
         clientAttributes.addProperty("attr3", 42.0);
         clientAttributes.addProperty("attr4", 73);
+        JsonObject gatewayClientAttributes = new JsonObject();
+        gatewayClientAttributes.add(device.getName(), clientAttributes);
+        getWsClient().registerWaitForUpdate();
+        
+        MqttClient mqttClient = getMqttClient(deviceCredentials, null);
         mqttClient.publish("v1/devices/me/attributes", Unpooled.wrappedBuffer(clientAttributes.toString().getBytes())).get();
-        WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
-        log.info("Received telemetry: {}", actualLatestTelemetry);
-        wsClient.closeBlocking();
+
+        String updateString = getWsClient().waitForUpdate(3000, true);
+        WsTelemetryResponse actualLatestTelemetry = JacksonUtil.fromString(updateString, WsTelemetryResponse.class);
+        log.info("Received attributes: {}", actualLatestTelemetry);
 
         assertThat(actualLatestTelemetry.getData()).hasSize(4);
         assertThat(actualLatestTelemetry.getLatestValues().keySet()).containsOnlyOnceElementsOf(Arrays.asList("attr1", "attr2", "attr3", "attr4"));
@@ -171,19 +223,27 @@ public class MqttClientTest extends AbstractContainerTest {
     public void requestAttributeValuesFromServer() throws Exception {
         DeviceCredentials deviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
 
-        WsClient wsClient = subscribeToWebSocket(device.getId(), "CLIENT_SCOPE", CmdsType.ATTR_SUB_CMDS);
-        MqttMessageListener listener = new MqttMessageListener();
-        MqttClient mqttClient = getMqttClient(deviceCredentials, listener);
+        SingleEntityFilter filter = new SingleEntityFilter();
+        filter.setSingleEntity(device.getId());
 
+        getWsClient().subscribeForAttributes(device.getId(), "CLIENT_SCOPE", Collections.singletonList("clientAttr"));
         // Add a new client attribute
         JsonObject clientAttributes = new JsonObject();
         String clientAttributeValue = StringUtils.randomAlphanumeric(8);
         clientAttributes.addProperty("clientAttr", clientAttributeValue);
+
+        JsonObject gatewayClientAttributes = new JsonObject();
+        gatewayClientAttributes.add(device.getName(), clientAttributes);
+
+        getWsClient().registerWaitForUpdate();
+
+        MqttMessageListener listener = new MqttMessageListener();
+        MqttClient mqttClient = getMqttClient(deviceCredentials, listener);
         mqttClient.publish("v1/devices/me/attributes", Unpooled.wrappedBuffer(clientAttributes.toString().getBytes())).get();
 
-        WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
+        String update = getWsClient().waitForUpdate(3000, true);
+        WsTelemetryResponse actualLatestTelemetry = JacksonUtil.fromString(update, WsTelemetryResponse.class);
         log.info("Received ws telemetry: {}", actualLatestTelemetry);
-        wsClient.closeBlocking();
 
         assertThat(actualLatestTelemetry.getData()).hasSize(1);
         assertThat(actualLatestTelemetry.getLatestValues().keySet()).containsOnly("clientAttr");

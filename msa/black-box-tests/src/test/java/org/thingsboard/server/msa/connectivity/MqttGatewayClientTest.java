@@ -45,12 +45,13 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.info.RateLimitsNotificationInfo;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.query.SingleEntityFilter;
+import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -58,14 +59,16 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.msa.AbstractContainerTest;
 import org.thingsboard.server.msa.DisableUIListeners;
-import org.thingsboard.server.msa.WsClient;
 import org.thingsboard.server.msa.mapper.WsTelemetryResponse;
 import org.thingsboard.server.service.ws.notification.cmd.UnreadNotificationsUpdate;
+import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
@@ -92,7 +95,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
     AbstractListeningExecutor handlerExecutor;
 
     @BeforeMethod
-    public void createGateway() throws Exception {
+    public void beforeTest() throws Exception {
         this.handlerExecutor = new AbstractListeningExecutor() {
             @Override
             protected int getThreadPollSize() {
@@ -108,11 +111,11 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         this.listener = new MqttMessageListener();
         this.mqttClient = getMqttClient(gatewayDeviceCredentials, listener);
         this.createdDevice = createDeviceThroughGateway(mqttClient, gatewayDevice);
-        containerWsClient = getContainerWsClient();
+        wsClient = getWsClient();
     }
 
     @AfterMethod
-    public void removeGateway() {
+    public void afterTest() throws Exception {
         updateTenantProfileWithGatewayTransportLimits("", "", "");
         testRestClient.deleteDeviceIfExists(this.gatewayDevice.getId());
         testRestClient.deleteDeviceIfExists(this.createdDevice.getId());
@@ -122,49 +125,91 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         if (handlerExecutor != null) {
             handlerExecutor.destroy();
         }
+        getWsClient().markAllNotificationsAsRead();
+        getWsClient().closeBlocking();
     }
 
     @Test
     public void telemetryUpload() throws Exception {
-        WsClient wsClient = subscribeToWebSocket(createdDevice.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
+
+        List<String> expectedKeys = Arrays.asList("booleanKey", "stringKey", "doubleKey", "longKey");
+
+        SingleEntityFilter filter = new SingleEntityFilter();
+        filter.setSingleEntity(createdDevice.getId());
+
+        long now = System.currentTimeMillis();
+
+        EntityDataUpdate entityDataUpdate = getWsClient().subscribeTsUpdate(expectedKeys, now, TimeUnit.SECONDS.toMillis(1), filter);
+        assertThat(entityDataUpdate.getData().getData().size()).isEqualTo(1);
+        Map<String, TsValue[]> timeseries = entityDataUpdate.getData().getData().get(0).getTimeseries();
+        assertThat(timeseries.keySet()).containsOnlyOnceElementsOf(expectedKeys);
+
+        getWsClient().registerWaitForUpdate();
+
         mqttClient.publish("v1/gateway/telemetry", Unpooled.wrappedBuffer(createGatewayPayload(createdDevice.getName(), -1).toString().getBytes())).get();
-        WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
-        log.info("Received telemetry: {}", actualLatestTelemetry);
-        wsClient.closeBlocking();
 
-        assertThat(actualLatestTelemetry.getData()).hasSize(4);
-        assertThat(actualLatestTelemetry.getLatestValues().keySet()).containsOnlyOnceElementsOf(Arrays.asList("booleanKey", "stringKey", "doubleKey", "longKey"));
+        String updateString = getWsClient().waitForUpdate(3000, true);
+        EntityDataUpdate update = JacksonUtil.fromString(updateString, EntityDataUpdate.class);
+        assertThat(update).isNotNull();
+        assertThat(update.getUpdate()).isNotNull();
+        assertThat(update.getUpdate().size()).isEqualTo(1);
+        Map<String, TsValue[]> actualLatestTelemetry = update.getUpdate().get(0).getTimeseries();
 
-        assertThat(actualLatestTelemetry.getDataValuesByKey("booleanKey").get(1)).isEqualTo(Boolean.TRUE.toString());
-        assertThat(actualLatestTelemetry.getDataValuesByKey("stringKey").get(1)).isEqualTo("value1");
-        assertThat(actualLatestTelemetry.getDataValuesByKey("doubleKey").get(1)).isEqualTo(Double.toString(42.0));
-        assertThat(actualLatestTelemetry.getDataValuesByKey("longKey").get(1)).isEqualTo(Long.toString(73));
+        assertThat(actualLatestTelemetry.keySet()).containsOnlyOnceElementsOf(expectedKeys);
+        assertThat(actualLatestTelemetry.get("booleanKey")[0].getValue()).isEqualTo(Boolean.TRUE.toString());
+        assertThat(actualLatestTelemetry.get("stringKey")[0].getValue()).isEqualTo("value1");
+        assertThat(actualLatestTelemetry.get("doubleKey")[0].getValue()).isEqualTo(Double.toString(42.0));
+        assertThat(actualLatestTelemetry.get("longKey")[0].getValue()).isEqualTo(Long.toString(73));
     }
 
     @Test
     public void telemetryUploadWithTs() throws Exception {
+
+        List<String> expectedKeys = Arrays.asList("booleanKey", "stringKey", "doubleKey", "longKey");
+
+        SingleEntityFilter filter = new SingleEntityFilter();
+        filter.setSingleEntity(createdDevice.getId());
+
         long ts = 1451649600512L;
 
-        WsClient wsClient = subscribeToWebSocket(createdDevice.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
+        EntityDataUpdate entityDataUpdate = getWsClient().subscribeTsUpdate(expectedKeys, ts - 1, TimeUnit.SECONDS.toMillis(1), filter);
+        assertThat(entityDataUpdate.getData().getData().size()).isEqualTo(1);
+        Map<String, TsValue[]> timeseries = entityDataUpdate.getData().getData().get(0).getTimeseries();
+        assertThat(timeseries.keySet()).containsOnlyOnceElementsOf(expectedKeys);
+
+        getWsClient().registerWaitForUpdate();
+
         mqttClient.publish("v1/gateway/telemetry", Unpooled.wrappedBuffer(createGatewayPayload(createdDevice.getName(), ts).toString().getBytes())).get();
-        WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
+
+        String updateString = getWsClient().waitForUpdate(3000, true);
+        EntityDataUpdate update = JacksonUtil.fromString(updateString, EntityDataUpdate.class);
+        assertThat(update).isNotNull();
+        assertThat(update.getUpdate()).isNotNull();
+        assertThat(update.getUpdate().size()).isEqualTo(1);
+        Map<String, TsValue[]> actualLatestTelemetry = update.getUpdate().get(0).getTimeseries();
         log.info("Received telemetry: {}", actualLatestTelemetry);
-        wsClient.closeBlocking();
 
-        assertThat(actualLatestTelemetry.getData()).hasSize(4);
-        assertThat(actualLatestTelemetry.getLatestValues().keySet()).containsOnlyOnceElementsOf(Arrays.asList("booleanKey", "stringKey", "doubleKey", "longKey"));
-
-        assertThat(actualLatestTelemetry.getDataValuesByKey("booleanKey").get(1)).isEqualTo(Boolean.TRUE.toString());
-        assertThat(actualLatestTelemetry.getDataValuesByKey("stringKey").get(1)).isEqualTo("value1");
-        assertThat(actualLatestTelemetry.getDataValuesByKey("doubleKey").get(1)).isEqualTo(Double.toString(42.0));
-        assertThat(actualLatestTelemetry.getDataValuesByKey("longKey").get(1)).isEqualTo(Long.toString(73));
+        assertThat(actualLatestTelemetry.keySet()).containsOnlyOnceElementsOf(expectedKeys);
+        assertThat(actualLatestTelemetry.get("booleanKey")[0].getTs()).isEqualTo(ts);
+        assertThat(actualLatestTelemetry.get("booleanKey")[0].getValue()).isEqualTo(Boolean.TRUE.toString());
+        assertThat(actualLatestTelemetry.get("stringKey")[0].getTs()).isEqualTo(ts);
+        assertThat(actualLatestTelemetry.get("stringKey")[0].getValue()).isEqualTo("value1");
+        assertThat(actualLatestTelemetry.get("doubleKey")[0].getTs()).isEqualTo(ts);
+        assertThat(actualLatestTelemetry.get("doubleKey")[0].getValue()).isEqualTo(Double.toString(42.0));
+        assertThat(actualLatestTelemetry.get("longKey")[0].getTs()).isEqualTo(ts);
+        assertThat(actualLatestTelemetry.get("longKey")[0].getValue()).isEqualTo(Long.toString(73));
     }
 
     @Test
     public void publishAttributeUpdateToServer() throws Exception {
         testRestClient.getDeviceCredentialsByDeviceId(createdDevice.getId());
 
-        WsClient wsClient = subscribeToWebSocket(createdDevice.getId(), "CLIENT_SCOPE", CmdsType.ATTR_SUB_CMDS);
+        List<String> expectedKeys = Arrays.asList("attr1", "attr2", "attr3", "attr4");
+
+        SingleEntityFilter filter = new SingleEntityFilter();
+        filter.setSingleEntity(createdDevice.getId());
+
+        getWsClient().subscribeForAttributes(createdDevice.getId(), "CLIENT_SCOPE", expectedKeys);
         JsonObject clientAttributes = new JsonObject();
         clientAttributes.addProperty("attr1", "value1");
         clientAttributes.addProperty("attr2", true);
@@ -172,10 +217,12 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         clientAttributes.addProperty("attr4", 73);
         JsonObject gatewayClientAttributes = new JsonObject();
         gatewayClientAttributes.add(createdDevice.getName(), clientAttributes);
+        getWsClient().registerWaitForUpdate();
         mqttClient.publish("v1/gateway/attributes", Unpooled.wrappedBuffer(gatewayClientAttributes.toString().getBytes())).get();
-        WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
+
+        String updateString = getWsClient().waitForUpdate(3000, true);
+        WsTelemetryResponse actualLatestTelemetry = JacksonUtil.fromString(updateString, WsTelemetryResponse.class);
         log.info("Received attributes: {}", actualLatestTelemetry);
-        wsClient.closeBlocking();
 
         assertThat(actualLatestTelemetry.getData()).hasSize(4);
         assertThat(actualLatestTelemetry.getLatestValues().keySet()).containsOnlyOnceElementsOf(Arrays.asList("attr1", "attr2", "attr3", "attr4"));
@@ -253,7 +300,11 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
 
     @Test
     public void requestAttributeValuesFromServer() throws Exception {
-        WsClient wsClient = subscribeToWebSocket(createdDevice.getId(), "CLIENT_SCOPE", CmdsType.ATTR_SUB_CMDS);
+
+        SingleEntityFilter filter = new SingleEntityFilter();
+        filter.setSingleEntity(createdDevice.getId());
+
+        getWsClient().subscribeForAttributes(createdDevice.getId(), "CLIENT_SCOPE", Collections.singletonList("clientAttr"));
         // Add a new client attribute
         JsonObject clientAttributes = new JsonObject();
         String clientAttributeValue = StringUtils.randomAlphanumeric(8);
@@ -261,11 +312,13 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
 
         JsonObject gatewayClientAttributes = new JsonObject();
         gatewayClientAttributes.add(createdDevice.getName(), clientAttributes);
+
+        getWsClient().registerWaitForUpdate();
         mqttClient.publish("v1/gateway/attributes", Unpooled.wrappedBuffer(gatewayClientAttributes.toString().getBytes())).get();
 
-        WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
+        String update = getWsClient().waitForUpdate(3000, true);
+        WsTelemetryResponse actualLatestTelemetry = JacksonUtil.fromString(update, WsTelemetryResponse.class);
         log.info("Received ws telemetry: {}", actualLatestTelemetry);
-        wsClient.closeBlocking();
 
         assertThat(actualLatestTelemetry.getData()).hasSize(1);
         assertThat(actualLatestTelemetry.getLatestValues().keySet()).containsOnly("clientAttr");
@@ -279,6 +332,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
         // Subscribe for attribute update event
         mqttClient.on("v1/gateway/attributes", listener, MqttQoS.AT_LEAST_ONCE).get();
 
+        Thread.sleep(500);
         testRestClient.postTelemetryAttribute(DEVICE, createdDevice.getId(), SHARED_SCOPE, mapper.readTree(sharedAttributes.toString()));
         MqttEvent sharedAttributeEvent = listener.getEvents().poll(10 * timeoutMultiplier, TimeUnit.SECONDS);
 
@@ -389,17 +443,19 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
 
     @Test
     public void testMsgRateLimitsForGatewayDevice() throws Exception {
+        getWsClient().markAllNotificationsAsRead();
         updateTenantProfileWithGatewayTransportLimits("1:30", "", "");
-        containerWsClient.subscribeForUnreadNotifications(10);
-        Thread.sleep(500);
+        getWsClient().subscribeForUnreadNotifications(10);
+        getWsClient().registerWaitForUpdate();
+        Thread.sleep(1000);
         mqttClient = getMqttClient(testRestClient.getDeviceCredentialsByDeviceId(gatewayDevice.getId()), listener);
-        Thread.sleep(500);
-        mqttClient.disconnect();
-        Thread.sleep(500);
-        mqttClient = getMqttClient(testRestClient.getDeviceCredentialsByDeviceId(gatewayDevice.getId()), listener);
-        Thread.sleep(500);
+        Thread.sleep(1000);
+        mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer(createPayload().toString().getBytes())).get(3, TimeUnit.SECONDS);
+        Thread.sleep(1000);
 
-        UnreadNotificationsUpdate unreadNotificationsUpdate = JacksonUtil.fromString(containerWsClient.getLastMsg(), UnreadNotificationsUpdate.class);
+        String notificationUpdate = getWsClient().waitForUpdate(3000, true);
+
+        UnreadNotificationsUpdate unreadNotificationsUpdate = JacksonUtil.fromString(notificationUpdate, UnreadNotificationsUpdate.class);
         assertThat(unreadNotificationsUpdate).isNotNull();
         Notification update = unreadNotificationsUpdate.getUpdate();
         assertThat(update).isNotNull();
@@ -412,139 +468,120 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
 
     @Test
     public void testTelemetryMsgRateLimitsForGatewayDevice() throws Exception {
-        updateTenantProfileWithGatewayTransportLimits("", "1:5", "");
-        containerWsClient.subscribeForUnreadNotifications(10);
-        Thread.sleep(100);
+        getWsClient().markAllNotificationsAsRead();
+        updateTenantProfileWithGatewayTransportLimits("", "1:30", "");
+        Thread.sleep(500);
 
-        WsClient wsClient = subscribeToWebSocket(gatewayDevice.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
+        List<String> expectedKeys = Arrays.asList("booleanKey", "stringKey", "doubleKey", "longKey");
+
+        SingleEntityFilter filter = new SingleEntityFilter();
+        filter.setSingleEntity(gatewayDevice.getId());
+
+        long now = System.currentTimeMillis();
+
+        EntityDataUpdate entityDataUpdate = getWsClient().subscribeTsUpdate(expectedKeys, now, TimeUnit.SECONDS.toMillis(1), filter);
+        assertThat(entityDataUpdate.getData().getData().size()).isEqualTo(1);
+        Map<String, TsValue[]> timeseries = entityDataUpdate.getData().getData().get(0).getTimeseries();
+        assertThat(timeseries.keySet()).containsOnlyOnceElementsOf(expectedKeys);
+
+        getWsClient().registerWaitForUpdate();
+
         mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer(createPayload().toString().getBytes())).get(3, TimeUnit.SECONDS);
-        WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
-        log.info("Received telemetry: {}", actualLatestTelemetry);
-        wsClient.closeBlocking();
 
-        assertThat(actualLatestTelemetry.getData()).hasSize(4);
-        assertThat(actualLatestTelemetry.getLatestValues().keySet()).containsOnlyOnceElementsOf(Arrays.asList("booleanKey", "stringKey", "doubleKey", "longKey"));
-
-        assertThat(actualLatestTelemetry.getDataValuesByKey("booleanKey").get(1)).isEqualTo(Boolean.TRUE.toString());
-        assertThat(actualLatestTelemetry.getDataValuesByKey("stringKey").get(1)).isEqualTo("value1");
-        assertThat(actualLatestTelemetry.getDataValuesByKey("doubleKey").get(1)).isEqualTo(Double.toString(42.0));
-        assertThat(actualLatestTelemetry.getDataValuesByKey("longKey").get(1)).isEqualTo(Long.toString(73));
-
-        Thread.sleep(100);
-
-        wsClient = subscribeToWebSocket(gatewayDevice.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
-        mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer(createAltPayload().toString().getBytes())).get(3, TimeUnit.SECONDS);
-        Exception exception = null;
-        try {
-            wsClient.getLastMessage();
-        } catch (RuntimeException e) {
-            exception = e;
-            log.info("Rate limit is working as expected");
-        } finally {
-            wsClient.closeBlocking();
-            if (exception == null) {
-                throw new RuntimeException("Rate limit is not working as expected");
-            }
-        }
-
-        UnreadNotificationsUpdate unreadNotificationsUpdate = JacksonUtil.fromString(containerWsClient.getLastMsg(), UnreadNotificationsUpdate.class);
-        assertThat(unreadNotificationsUpdate).isNotNull();
-        Notification update = unreadNotificationsUpdate.getUpdate();
+        String updateString = getWsClient().waitForUpdate(3000, true);
+        EntityDataUpdate update = JacksonUtil.fromString(updateString, EntityDataUpdate.class);
         assertThat(update).isNotNull();
-        assertThat(update.getSubject()).isEqualTo("Rate limits exceeded");
-        assertThat(update.getInfo()).isInstanceOf(RateLimitsNotificationInfo.class);
-        RateLimitsNotificationInfo info = (RateLimitsNotificationInfo) update.getInfo();
+        assertThat(update.getUpdate()).isNotNull();
+        assertThat(update.getUpdate().size()).isEqualTo(1);
+        Map<String, TsValue[]> actualLatestTelemetry = update.getUpdate().get(0).getTimeseries();
+        log.info("Received telemetry: {}", actualLatestTelemetry);
+
+        assertThat(actualLatestTelemetry.keySet()).containsOnlyOnceElementsOf(expectedKeys);
+        assertThat(actualLatestTelemetry.get("booleanKey")[0].getValue()).isEqualTo(Boolean.TRUE.toString());
+        assertThat(actualLatestTelemetry.get("stringKey")[0].getValue()).isEqualTo("value1");
+        assertThat(actualLatestTelemetry.get("doubleKey")[0].getValue()).isEqualTo(Double.toString(42.0));
+        assertThat(actualLatestTelemetry.get("longKey")[0].getValue()).isEqualTo(Long.toString(73));
+
+        Thread.sleep(500);
+
+        getWsClient().markAllNotificationsAsRead();
+        getWsClient().subscribeForUnreadNotifications(10);
+        getWsClient().registerWaitForUpdate();
+
+        mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer(createAltPayload().toString().getBytes())).get(3, TimeUnit.SECONDS);
+
+        Thread.sleep(500);
+
+        String notificaitonsUpdateString = getWsClient().waitForUpdate(3000, true);
+
+        UnreadNotificationsUpdate unreadNotificationsUpdate = JacksonUtil.fromString(notificaitonsUpdateString, UnreadNotificationsUpdate.class);
+        assertThat(unreadNotificationsUpdate).isNotNull();
+        Notification notificationsUpdate = unreadNotificationsUpdate.getUpdate();
+        assertThat(notificationsUpdate).isNotNull();
+        assertThat(notificationsUpdate.getSubject()).isEqualTo("Rate limits exceeded");
+        assertThat(notificationsUpdate.getInfo()).isInstanceOf(RateLimitsNotificationInfo.class);
+        RateLimitsNotificationInfo info = (RateLimitsNotificationInfo) notificationsUpdate.getInfo();
         assertThat(info.getApi()).isEqualTo(LimitedApi.TRANSPORT_MESSAGES_PER_GATEWAY);
         assertThat(info.getLimitLevel()).isEqualTo(gatewayDevice.getId());
-
     }
 
     @Test
     public void testTelemetryDataPointsRateLimitsForGatewayDevice() throws Exception {
-        updateTenantProfileWithGatewayTransportLimits("", "", "4:5");
-        containerWsClient.subscribeForUnreadNotifications(10);
-        Thread.sleep(100);
+        getWsClient().markAllNotificationsAsRead();
+        updateTenantProfileWithGatewayTransportLimits("", "", "4:30");
+        Thread.sleep(500);
 
-        WsClient wsClient = subscribeToWebSocket(gatewayDevice.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
+        List<String> expectedKeys = Arrays.asList("booleanKey", "stringKey", "doubleKey", "longKey");
+
+        SingleEntityFilter filter = new SingleEntityFilter();
+        filter.setSingleEntity(gatewayDevice.getId());
+
+        long now = System.currentTimeMillis();
+
+        EntityDataUpdate entityDataUpdate = getWsClient().subscribeTsUpdate(expectedKeys, now, TimeUnit.SECONDS.toMillis(1), filter);
+        assertThat(entityDataUpdate.getData().getData().size()).isEqualTo(1);
+        Map<String, TsValue[]> timeseries = entityDataUpdate.getData().getData().get(0).getTimeseries();
+        assertThat(timeseries.keySet()).containsOnlyOnceElementsOf(expectedKeys);
+
+        getWsClient().registerWaitForUpdate();
+
         mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer(createPayload().toString().getBytes())).get(3, TimeUnit.SECONDS);
-        WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
-        log.info("Received telemetry: {}", actualLatestTelemetry);
-        wsClient.closeBlocking();
 
-        assertThat(actualLatestTelemetry.getData()).hasSize(4);
-        assertThat(actualLatestTelemetry.getLatestValues().keySet()).containsOnlyOnceElementsOf(Arrays.asList("booleanKey", "stringKey", "doubleKey", "longKey"));
-
-        assertThat(actualLatestTelemetry.getDataValuesByKey("booleanKey").get(1)).isEqualTo(Boolean.TRUE.toString());
-        assertThat(actualLatestTelemetry.getDataValuesByKey("stringKey").get(1)).isEqualTo("value1");
-        assertThat(actualLatestTelemetry.getDataValuesByKey("doubleKey").get(1)).isEqualTo(Double.toString(42.0));
-        assertThat(actualLatestTelemetry.getDataValuesByKey("longKey").get(1)).isEqualTo(Long.toString(73));
-
-        Thread.sleep(100);
-
-        wsClient = subscribeToWebSocket(gatewayDevice.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
-        mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer(createAltPayload().toString().getBytes())).get(3, TimeUnit.SECONDS);
-        Exception exception = null;
-        try {
-            wsClient.getLastMessage();
-        } catch (RuntimeException e) {
-            exception = e;
-            log.info("Rate limit is working as expected");
-        } finally {
-            wsClient.closeBlocking();
-            if (exception == null) {
-                throw new RuntimeException("Rate limit is not working as expected");
-            }
-        }
-
-        UnreadNotificationsUpdate unreadNotificationsUpdate = JacksonUtil.fromString(containerWsClient.getLastMsg(), UnreadNotificationsUpdate.class);
-        assertThat(unreadNotificationsUpdate).isNotNull();
-        Notification update = unreadNotificationsUpdate.getUpdate();
+        String updateString = getWsClient().waitForUpdate(3000, true);
+        EntityDataUpdate update = JacksonUtil.fromString(updateString, EntityDataUpdate.class);
         assertThat(update).isNotNull();
-        assertThat(update.getSubject()).isEqualTo("Rate limits exceeded");
-        assertThat(update.getInfo()).isInstanceOf(RateLimitsNotificationInfo.class);
-        RateLimitsNotificationInfo info = (RateLimitsNotificationInfo) update.getInfo();
+        assertThat(update.getUpdate()).isNotNull();
+        assertThat(update.getUpdate().size()).isEqualTo(1);
+        Map<String, TsValue[]> actualLatestTelemetry = update.getUpdate().get(0).getTimeseries();
+        log.info("Received telemetry: {}", actualLatestTelemetry);
+
+        assertThat(actualLatestTelemetry.keySet()).containsOnlyOnceElementsOf(expectedKeys);
+        assertThat(actualLatestTelemetry.get("booleanKey")[0].getValue()).isEqualTo(Boolean.TRUE.toString());
+        assertThat(actualLatestTelemetry.get("stringKey")[0].getValue()).isEqualTo("value1");
+        assertThat(actualLatestTelemetry.get("doubleKey")[0].getValue()).isEqualTo(Double.toString(42.0));
+        assertThat(actualLatestTelemetry.get("longKey")[0].getValue()).isEqualTo(Long.toString(73));
+
+        Thread.sleep(500);
+
+        getWsClient().markAllNotificationsAsRead();
+        getWsClient().subscribeForUnreadNotifications(10);
+        getWsClient().registerWaitForUpdate();
+
+        mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer(createAltPayload().toString().getBytes())).get(3, TimeUnit.SECONDS);
+
+        Thread.sleep(500);
+
+        String notificaitonsUpdateString = getWsClient().waitForUpdate(3000, true);
+
+        UnreadNotificationsUpdate unreadNotificationsUpdate = JacksonUtil.fromString(notificaitonsUpdateString, UnreadNotificationsUpdate.class);
+        assertThat(unreadNotificationsUpdate).isNotNull();
+        Notification notificationsUpdate = unreadNotificationsUpdate.getUpdate();
+        assertThat(notificationsUpdate).isNotNull();
+        assertThat(notificationsUpdate.getSubject()).isEqualTo("Rate limits exceeded");
+        assertThat(notificationsUpdate.getInfo()).isInstanceOf(RateLimitsNotificationInfo.class);
+        RateLimitsNotificationInfo info = (RateLimitsNotificationInfo) notificationsUpdate.getInfo();
         assertThat(info.getApi()).isEqualTo(LimitedApi.TRANSPORT_MESSAGES_PER_GATEWAY);
         assertThat(info.getLimitLevel()).isEqualTo(gatewayDevice.getId());
-    }
-
-    @Test
-    public void testNoRateLimitsForGatewayDevice() throws Exception {
-
-        updateTenantProfileWithGatewayTransportLimits("", "", "");
-
-        Thread.sleep(100);
-
-        WsClient wsClient = subscribeToWebSocket(gatewayDevice.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
-        mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer(createPayload().toString().getBytes())).get();
-        WsTelemetryResponse actualLatestTelemetry = wsClient.getLastMessage();
-
-        log.info("Received telemetry: {}", actualLatestTelemetry);
-
-        assertThat(actualLatestTelemetry.getData()).hasSize(4);
-        assertThat(actualLatestTelemetry.getLatestValues().keySet()).containsOnlyOnceElementsOf(Arrays.asList("booleanKey", "stringKey", "doubleKey", "longKey"));
-
-        assertThat(actualLatestTelemetry.getDataValuesByKey("booleanKey").get(1)).isEqualTo(Boolean.TRUE.toString());
-        assertThat(actualLatestTelemetry.getDataValuesByKey("stringKey").get(1)).isEqualTo("value1");
-        assertThat(actualLatestTelemetry.getDataValuesByKey("doubleKey").get(1)).isEqualTo(Double.toString(42.0));
-        assertThat(actualLatestTelemetry.getDataValuesByKey("longKey").get(1)).isEqualTo(Long.toString(73));
-
-        wsClient.closeBlocking();
-
-        wsClient = subscribeToWebSocket(gatewayDevice.getId(), "LATEST_TELEMETRY", CmdsType.TS_SUB_CMDS);
-        mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer(createAltPayload().toString().getBytes())).get();
-        actualLatestTelemetry = wsClient.getLastMessage();
-
-        log.info("Received telemetry: {}", actualLatestTelemetry);
-
-        wsClient.closeBlocking();
-
-        assertThat(actualLatestTelemetry.getData()).hasSize(4);
-        assertThat(actualLatestTelemetry.getLatestValues().keySet()).containsOnlyOnceElementsOf(Arrays.asList("booleanAltKey", "stringAltKey", "doubleAltKey", "longAltKey"));
-
-        assertThat(actualLatestTelemetry.getDataValuesByKey("booleanAltKey").get(1)).isEqualTo(Boolean.FALSE.toString());
-        assertThat(actualLatestTelemetry.getDataValuesByKey("stringAltKey").get(1)).isEqualTo("value2");
-        assertThat(actualLatestTelemetry.getDataValuesByKey("doubleAltKey").get(1)).isEqualTo(Double.toString(45.0));
-        assertThat(actualLatestTelemetry.getDataValuesByKey("longAltKey").get(1)).isEqualTo(Long.toString(78));
     }
 
     private void checkAttribute(boolean client, String expectedValue) throws Exception {
