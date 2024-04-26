@@ -15,53 +15,36 @@
     limitations under the License.
 
 -->
-<ng-container [formGroup]="doughnutWidgetConfigForm">
+<ng-container [formGroup]="barChartWidgetConfigForm">
   <tb-timewindow-config-panel *ngIf="displayTimewindowConfig"
                               [onlyHistoryTimewindow]="onlyHistoryTimewindow()"
                               formControlName="timewindowConfig">
   </tb-timewindow-config-panel>
   <tb-datasources
-    [configMode]="basicMode"
-    hideDatasourceLabel
-    hideDataKeys
-    forceSingleDatasource
-    formControlName="datasources">
+      [configMode]="basicMode"
+      hideDatasourceLabel
+      hideDataKeys
+      forceSingleDatasource
+      formControlName="datasources">
   </tb-datasources>
   <tb-data-keys-panel
-    panelTitle="{{ 'widgets.chart.series' | translate }}"
-    addKeyTitle="{{ 'widgets.chart.add-series' | translate }}"
-    keySettingsTitle="{{ 'widgets.chart.series-settings' | translate }}"
-    removeKeyTitle="{{ 'widgets.chart.remove-series' | translate }}"
-    noKeysText="{{ 'widgets.chart.no-series' | translate }}"
-    requiredKeysText="{{ 'widgets.chart.no-series-error' | translate }}"
-    hideUnits
-    hideDecimals
-    hideDataKeyUnits
-    hideDataKeyDecimals
-    [datasourceType]="datasource?.type"
-    [deviceId]="datasource?.deviceId"
-    [entityAliasId]="datasource?.entityAliasId"
-    formControlName="series">
+      panelTitle="{{ 'widgets.chart.series' | translate }}"
+      addKeyTitle="{{ 'widgets.chart.add-series' | translate }}"
+      keySettingsTitle="{{ 'widgets.chart.series-settings' | translate }}"
+      removeKeyTitle="{{ 'widgets.chart.remove-series' | translate }}"
+      noKeysText="{{ 'widgets.chart.no-series' | translate }}"
+      requiredKeysText="{{ 'widgets.chart.no-series-error' | translate }}"
+      hideUnits
+      hideDecimals
+      hideDataKeyUnits
+      hideDataKeyDecimals
+      [datasourceType]="datasource?.type"
+      [deviceId]="datasource?.deviceId"
+      [entityAliasId]="datasource?.entityAliasId"
+      formControlName="series">
   </tb-data-keys-panel>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widget-config.card-appearance</div>
-    <tb-image-cards-select rowHeight="{{ horizontal ? '8:5' : '5:4' }}"
-                           [cols]="{columns: 2,
-                                    breakpoints: {
-                                      'lt-sm': 1
-                                    }}"
-                           label="{{ 'widgets.doughnut.layout' | translate }}" formControlName="layout">
-      <tb-image-cards-select-option *ngFor="let layout of doughnutLayouts"
-                                    [value]="layout"
-                                    [image]="doughnutLayoutImageMap.get(layout)">
-        {{ doughnutLayoutTranslationMap.get(layout) | translate }}
-      </tb-image-cards-select-option>
-    </tb-image-cards-select>
-    <div class="tb-form-row">
-      <mat-slide-toggle class="mat-slide" formControlName="autoScale">
-        {{ 'widgets.latest-chart.auto-scale' | translate }}
-      </mat-slide-toggle>
-    </div>
     <div class="tb-form-row column-xs">
       <mat-slide-toggle class="mat-slide fixed-title-width"  formControlName="showTitle">
         {{ 'widget-config.card-title' | translate }}
@@ -72,7 +55,7 @@
         </mat-form-field>
         <tb-font-settings formControlName="titleFont"
                           clearButton
-                          [previewText]="doughnutWidgetConfigForm.get('title').value"
+                          [previewText]="barChartWidgetConfigForm.get('title').value"
                           [initialPreviewStyle]="widgetConfig.config.titleStyle">
         </tb-font-settings>
         <tb-color-input asBoxInput
@@ -88,7 +71,7 @@
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
         <tb-material-icon-select asBoxInput
                                  iconClearButton
-                                 [color]="doughnutWidgetConfigForm.get('iconColor').value"
+                                 [color]="barChartWidgetConfigForm.get('iconColor').value"
                                  formControlName="titleIcon">
         </tb-material-icon-select>
         <tb-color-input asBoxInput
@@ -98,29 +81,14 @@
       </div>
     </div>
     <div class="tb-form-row">
-      <mat-slide-toggle class="mat-slide" formControlName="clockwise">
-        {{ 'widgets.latest-chart.clockwise-layout' | translate }}
-      </mat-slide-toggle>
-    </div>
-    <div class="tb-form-row">
       <mat-slide-toggle class="mat-slide" formControlName="sortSeries">
         {{ 'widgets.latest-chart.sort-series' | translate }}
       </mat-slide-toggle>
     </div>
-    <div [fxShow]="totalEnabled" class="tb-form-row space-between">
-      <div>{{ 'widgets.doughnut.central-total-value' | translate }}</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-        <tb-font-settings formControlName="totalValueFont"
-                          [previewText]="valuePreviewFn">
-        </tb-font-settings>
-        <tb-color-settings formControlName="totalValueColor" settingsKey="{{'widgets.doughnut.central-total-value' | translate }}">
-        </tb-color-settings>
-      </div>
-    </div>
     <div class="tb-form-row space-between">
       <div translate>widget-config.units-short</div>
       <tb-unit-input
-        formControlName="units">
+          formControlName="units">
       </tb-unit-input>
     </div>
     <div class="tb-form-row space-between">
@@ -130,8 +98,43 @@
       </mat-form-field>
     </div>
   </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.bar-chart.bar-appearance</div>
+    <tb-chart-bar-settings
+        formControlName="barSettings"
+        [series]="false">
+    </tb-chart-bar-settings>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.bar-chart.bar-axis</div>
+    <div class="tb-form-row space-between column-xs">
+      <div translate>widgets.chart.chart-axis.scale</div>
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <div class="tb-small-label" translate>widgets.chart.chart-axis.scale-min</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="axisMin"
+                 type="number" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
+        </mat-form-field>
+        <div class="tb-small-label" translate>widgets.chart.chart-axis.scale-max</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="axisMax"
+                 type="number" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
+        </mat-form-field>
+        <tb-font-settings formControlName="axisTickLabelFont"
+                          clearButton
+                          disabledLineHeight
+                          forceSizeUnit="px"
+                          previewText="100">
+        </tb-font-settings>
+        <tb-color-input asBoxInput
+                        colorClearButton
+                        formControlName="axisTickLabelColor">
+        </tb-color-input>
+      </div>
+    </div>
+  </div>
   <div class="tb-form-panel tb-slide-toggle">
-    <mat-expansion-panel class="tb-settings" [expanded]="doughnutWidgetConfigForm.get('showLegend').value" [disabled]="!doughnutWidgetConfigForm.get('showLegend').value">
+    <mat-expansion-panel class="tb-settings" [expanded]="barChartWidgetConfigForm.get('showLegend').value" [disabled]="!barChartWidgetConfigForm.get('showLegend').value">
       <mat-expansion-panel-header fxLayout="row wrap">
         <mat-panel-title>
           <mat-slide-toggle class="mat-slide" formControlName="showLegend" (click)="$event.stopPropagation()"
@@ -155,7 +158,7 @@
           <div>{{ 'legend.label' | translate }}</div>
           <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
             <tb-font-settings formControlName="legendLabelFont"
-                              previewText="Wind power">
+                              previewText="Wind">
             </tb-font-settings>
             <tb-color-input asBoxInput
                             colorClearButton
@@ -179,7 +182,7 @@
     </mat-expansion-panel>
   </div>
   <div class="tb-form-panel tb-slide-toggle">
-    <mat-expansion-panel class="tb-settings" [expanded]="doughnutWidgetConfigForm.get('showTooltip').value" [disabled]="!doughnutWidgetConfigForm.get('showTooltip').value">
+    <mat-expansion-panel class="tb-settings" [expanded]="barChartWidgetConfigForm.get('showTooltip').value" [disabled]="!barChartWidgetConfigForm.get('showTooltip').value">
       <mat-expansion-panel-header fxLayout="row wrap">
         <mat-panel-title>
           <mat-slide-toggle class="mat-slide" formControlName="showTooltip" (click)="$event.stopPropagation()"
@@ -253,6 +256,6 @@
     </div>
   </div>
   <tb-widget-actions-panel
-    formControlName="actions">
+      formControlName="actions">
   </tb-widget-actions-panel>
 </ng-container>

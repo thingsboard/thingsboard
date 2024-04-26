@@ -5429,7 +5429,13 @@
             "bar-appearance": "Bar appearance",
             "label-on-bar": "Label on bar",
             "value-on-bar": "Value on bar",
-            "bar-chart-style": "Bar chart style"
+            "bar-chart-style": "Bar chart style",
+            "bar-axis": "Bar axis"
+        },
+        "polar-area-chart": {
+            "polar-axis": "Polar axis",
+            "start-angle": "Start angle",
+            "polar-area-chart-style": "Polar area chart style"
         },
         "battery-level": {
             "layout": "Layout",
@@ -5609,7 +5615,56 @@
             "axis": "Axis",
             "vertical-axis": "Vertical axis",
             "ticks": "Ticks",
-            "horizontal-axis": "Horizontal axis"
+            "horizontal-axis": "Horizontal axis",
+            "shape-empty-circle": "Empty circle",
+            "shape-circle": "Circle",
+            "shape-rect": "Rectangle",
+            "shape-round-rect": "Rounded rectangle",
+            "shape-triangle": "Triangle",
+            "shape-diamond": "Diamond",
+            "shape-pin": "Pin",
+            "shape-arrow": "Arrow",
+            "shape-none": "None",
+            "label-position-top": "Top",
+            "label-position-bottom": "Bottom",
+            "label-position-outside": "Outside",
+            "label-position-inside": "Inside",
+            "fill": "Fill",
+            "fill-type-none": "None",
+            "fill-type-solid": "Solid",
+            "fill-type-opacity": "Opacity",
+            "fill-type-gradient": "Gradient",
+            "background": "Background",
+            "opacity": "Opacity",
+            "gradient-stops": "Gradient stops",
+            "gradient-start": "start",
+            "gradient-end": "end",
+            "animation": {
+              "animation": "Animation",
+              "animation-threshold": "Animation threshold",
+              "animation-duration": "Animation duration",
+              "animation-easing": "Animation easing",
+              "animation-delay": "Animation delay",
+              "update-animation-duration": "Update animation duration",
+              "update-animation-easing": "Update animation easing",
+              "update-animation-delay": "Update animation delay"
+            },
+            "chart-axis": {
+              "scale": "Scale",
+              "scale-min": "min",
+              "scale-max": "max",
+              "scale-auto": "Auto"
+            },
+            "bar": {
+              "show-border": "Show border",
+              "border-width": "Border width",
+              "border-radius": "Border radius",
+              "bar-width": "Bar width",
+              "label": "Label",
+              "label-hint": "Display label over the bar.",
+              "series-label-hint": "Display label with value over the bar.",
+              "label-background": "Label background"
+            }
         },
         "color": {
             "color-settings": "Color settings",
@@ -6730,18 +6785,6 @@
             "table-tabs": "Table tabs",
             "show-cell-actions-menu-mobile": "Show cell actions dropdown menu in mobile mode"
         },
-        "echarts": {
-            "animation": {
-              "animation": "Animation",
-              "animation-threshold": "Animation threshold",
-              "animation-duration": "Animation duration",
-              "animation-easing": "Animation easing",
-              "animation-delay": "Animation delay",
-              "update-animation-duration": "Update animation duration",
-              "update-animation-easing": "Update animation easing",
-              "update-animation-delay": "Update animation delay"
-            }
-        },
         "latest-chart": {
             "total": "Total",
             "auto-scale": "Auto scale",
@@ -6752,8 +6795,6 @@
         },
         "pie-chart": {
             "label": "Label",
-            "label-position-outside": "Outside",
-            "label-position-inside": "Inside",
             "border": "Border",
             "radius": "Radius",
             "pie-chart-card-style": "Pie chart card style"
@@ -6771,15 +6812,6 @@
             "line-type-dashed": "Dashed",
             "line-type-dotted": "Dotted",
             "line-width": "Line width",
-            "shape-empty-circle": "Empty circle",
-            "shape-circle": "Circle",
-            "shape-rect": "Rectangle",
-            "shape-round-rect": "Rounded rectangle",
-            "shape-triangle": "Triangle",
-            "shape-diamond": "Diamond",
-            "shape-pin": "Pin",
-            "shape-arrow": "Arrow",
-            "shape-none": "None",
             "type-line": "Line",
             "type-bar": "Bar",
             "type-point": "Point",
@@ -6878,10 +6910,6 @@
               "ticks-interval-hint": "Compulsively set segmentation interval for axis.",
               "split-number": "Split number",
               "split-number-hint": "Number of segments that the axis is split into.",
-              "scale": "Scale",
-              "scale-min": "min",
-              "scale-max": "max",
-              "scale-auto": "Auto",
               "min": "Min",
               "max": "Max",
               "show": "Show",
@@ -6897,18 +6925,6 @@
               "type": "Type",
               "type-line": "Line",
               "type-bar": "Bar",
-              "label-position-top": "Top",
-              "label-position-bottom": "Bottom",
-              "fill": "Fill",
-              "background": "Background",
-              "fill-type-none": "None",
-              "fill-type-solid": "Solid",
-              "fill-type-opacity": "Opacity",
-              "fill-type-gradient": "Gradient",
-              "opacity": "Opacity",
-              "gradient-stops": "Gradient stops",
-              "gradient-start": "start",
-              "gradient-end": "end",
               "line": {
                 "line": "Line",
                 "show-line": "Show line",
@@ -6926,14 +6942,6 @@
                 "point-label-background": "Point label background",
                 "point-shape": "Point shape",
                 "point-size": "Point size"
-              },
-              "bar": {
-                "show-border": "Show border",
-                "border-width": "Border width",
-                "border-radius": "Border radius",
-                "label": "Label",
-                "label-hint": "Display label with value over the bar.",
-                "label-background": "Label background"
               }
             }
         },
