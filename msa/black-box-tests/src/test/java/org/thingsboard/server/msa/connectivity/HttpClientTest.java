@@ -21,16 +21,13 @@ import io.restassured.path.json.JsonPath;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
-import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.msa.AbstractContainerTest;
 import org.thingsboard.server.msa.DisableUIListeners;
-import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
 
 import java.util.Arrays;
 import java.util.List;

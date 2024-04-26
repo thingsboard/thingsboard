@@ -55,7 +55,6 @@ import org.thingsboard.server.msa.AbstractContainerTest;
 import org.thingsboard.server.msa.DisableUIListeners;
 import org.thingsboard.server.msa.mapper.AttributesResponse;
 import org.thingsboard.server.msa.mapper.WsTelemetryResponse;
-import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
