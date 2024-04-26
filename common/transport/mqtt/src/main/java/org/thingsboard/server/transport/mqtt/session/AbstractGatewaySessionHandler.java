@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.mqtt.session;
 
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -34,6 +35,8 @@ import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import io.netty.handler.codec.mqtt.MqttVersion;
 import jakarta.annotation.Nullable;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ConcurrentReferenceHashMap;
@@ -41,6 +44,8 @@ import org.thingsboard.server.common.adaptor.AdaptorException;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.adaptor.ProtoConverter;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
@@ -105,7 +110,11 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     protected final ChannelHandlerContext channel;
     protected final DeviceSessionCtx deviceSessionCtx;
 
-    public AbstractGatewaySessionHandler(DeviceSessionCtx deviceSessionCtx, UUID sessionId) {
+    @Getter
+    @Setter
+    private boolean overwriteDevicesActivity = false;
+
+    public AbstractGatewaySessionHandler(DeviceSessionCtx deviceSessionCtx, UUID sessionId, boolean overwriteDevicesActivity) {
         this.context = deviceSessionCtx.getContext();
         this.transportService = context.getTransportService();
         this.deviceSessionCtx = deviceSessionCtx;
@@ -116,6 +125,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         this.deviceCreationLockMap = createWeakMap();
         this.mqttQoSMap = deviceSessionCtx.getMqttQoSMap();
         this.channel = deviceSessionCtx.getChannel();
+        this.overwriteDevicesActivity = overwriteDevicesActivity;
     }
 
     ConcurrentReferenceHashMap<String, Lock> createWeakMap() {
@@ -165,6 +175,12 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
             onDeviceRpcResponseJson(msgId, payload);
         } else {
             onDeviceRpcResponseProto(msgId, payload);
+        }
+    }
+
+    public void onGatewayPing() {
+        if (overwriteDevicesActivity) {
+            devices.forEach((deviceName, deviceSessionCtx) -> transportService.recordActivity(deviceSessionCtx.getSessionInfo()));
         }
     }
 
@@ -223,6 +239,14 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
                 logDeviceCreationError(t, deviceName);
             }
         }, context.getExecutor());
+    }
+
+    public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
+        log.trace("[{}][{}] onDeviceUpdate: [{}]", gateway.getTenantId(), gateway.getDeviceId(), device);
+        JsonNode deviceAdditionalInfo = device.getAdditionalInfo();
+        if (deviceAdditionalInfo.has(DataConstants.GATEWAY_PARAMETER) && deviceAdditionalInfo.has(DataConstants.OVERWRITE_ACTIVITY_TIME_PARAMETER)) {
+            overwriteDevicesActivity = deviceAdditionalInfo.get(DataConstants.OVERWRITE_ACTIVITY_TIME_PARAMETER).asBoolean();
+        }
     }
 
     ListenableFuture<T> onDeviceConnect(String deviceName, String deviceType) {
