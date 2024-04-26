@@ -113,7 +113,8 @@ export interface GatewayConnector {
   name: string;
   type: ConnectorType;
   configuration?: string;
-  configurationJson: string;
+  configurationJson: string | {[key: string]: any};
+  basicConfig?: string | {[key: string]: any};
   logLevel: string;
   key?: string;
   class?: string;

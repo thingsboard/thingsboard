@@ -136,7 +136,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
   private subscriptionOptions: WidgetSubscriptionOptions = {
     callbacks: {
-      onDataUpdated: () => this.ctx.ngZone.run(() => {
+      onDataUpdated: (data) => this.ctx.ngZone.run(() => {
         this.onDataUpdated();
       }),
       onDataUpdateError: (subscription, e) => this.ctx.ngZone.run(() => {
@@ -363,6 +363,17 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       this.activeData = data.data.filter(value => this.activeConnectors.includes(value.key));
       this.combineData();
       this.generateSubscription();
+      if (this.initialConnector) {
+        const clientConnectorData = data.data.find(attr => attr.key === this.initialConnector.name);
+        if (clientConnectorData) {
+          clientConnectorData.value = typeof clientConnectorData.value === 'string' ?
+            JSON.parse(clientConnectorData.value) : clientConnectorData.value;
+
+          if (this.isConnectorSynced(clientConnectorData) && clientConnectorData.value.configurationJson) {
+            this.setFormValue(clientConnectorData.value);
+          }
+        }
+      }
     });
     this.inactiveConnectorsDataSource.loadAttributes(this.device, AttributeScope.SHARED_SCOPE, this.pageLink, reload).subscribe(data => {
       this.sharedAttributeData = data.data.filter(value => this.activeConnectors.includes(value.key));
@@ -429,30 +440,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     if (connector?.name !== this.initialConnector?.name) {
       this.confirmConnectorChange().subscribe((result) => {
         if (result) {
-          if (this.connectorForm.disabled) {
-            this.connectorForm.enable();
-          }
-          if (!connector.configuration) {
-            connector.configuration = '';
-          }
-          if (!connector.key) {
-            connector.key = 'auto';
-          }
-          if (!connector.configurationJson) {
-            connector.configurationJson = {};
-          }
-          connector.basicConfig = connector.configurationJson;
-
-          this.initialConnector = connector;
-
-          if (connector.type === ConnectorType.MQTT) {
-            this.addMQTTConfigControls();
-          } else {
-            this.connectorForm.setControl('basicConfig', this.fb.group({}), {emitEvent: false});
-          }
-
-          this.connectorForm.patchValue(connector, {emitEvent: false});
-          this.connectorForm.markAsPristine();
+          this.setFormValue(connector);
         }
       });
     }
@@ -690,7 +678,8 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
         type === ConnectorType.MQTT &&
         mode === ConnectorConfigurationModes.BASIC
       ) {
-        this.connectorForm.get('configurationJson').patchValue(config, {emitEvent: false});
+        const newConfig = { ...configJson.value, ...config };
+        this.connectorForm.get('configurationJson').patchValue(newConfig, {emitEvent: false});
       }
     });
   }
@@ -706,5 +695,32 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       );
     }
     return of(true);
+  }
+
+  private setFormValue(connector: GatewayConnector): void {
+    if (this.connectorForm.disabled) {
+      this.connectorForm.enable();
+    }
+    if (!connector.configuration) {
+      connector.configuration = '';
+    }
+    if (!connector.key) {
+      connector.key = 'auto';
+    }
+    if (!connector.configurationJson) {
+      connector.configurationJson = {};
+    }
+    connector.basicConfig = connector.configurationJson;
+
+    this.initialConnector = connector;
+
+    if (connector.type === ConnectorType.MQTT) {
+      this.addMQTTConfigControls();
+    } else {
+      this.connectorForm.setControl('basicConfig', this.fb.group({}), {emitEvent: false});
+    }
+
+    this.connectorForm.patchValue(connector, {emitEvent: false});
+    this.connectorForm.markAsPristine();
   }
 }
