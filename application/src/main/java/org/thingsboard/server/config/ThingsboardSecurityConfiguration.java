@@ -217,10 +217,11 @@ public class ThingsboardSecurityConfiguration {
                         .requestMatchers(TOKEN_REFRESH_ENTRY_POINT).permitAll() // Token refresh end-point
                         .requestMatchers(MAIL_OAUTH2_PROCESSING_ENTRY_POINT).permitAll() // Mail oauth2 code processing url
                         .requestMatchers(DEVICE_CONNECTIVITY_CERTIFICATE_DOWNLOAD_ENTRY_POINT).permitAll() // Device connectivity certificate (public)
-                        .requestMatchers(NON_TOKEN_BASED_AUTH_ENTRY_POINTS).permitAll()) // static resources, user activation and password reset end-points
-                .authorizeHttpRequests(config -> config
+                        .requestMatchers(NON_TOKEN_BASED_AUTH_ENTRY_POINTS).permitAll() // static resources, user activation and password reset end-points
                         .requestMatchers(WS_ENTRY_POINT).permitAll() // Protected WebSocket API End-points
                         .requestMatchers(TOKEN_BASED_AUTH_ENTRY_POINT).authenticated()) // Protected API End-points
+                .formLogin(form -> form
+                        .loginPage("/login").permitAll())
                 .exceptionHandling(config -> config.accessDeniedHandler(restAccessDeniedHandler))
                 .addFilterBefore(buildRestLoginProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(buildRestPublicLoginProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
@@ -243,7 +244,7 @@ public class ThingsboardSecurityConfiguration {
     @Bean
     @ConditionalOnMissingBean(CorsFilter.class)
     public CorsFilter corsFilter(@Autowired MvcCorsProperties mvcCorsProperties) {
-        if (mvcCorsProperties.getMappings().size() == 0) {
+        if (mvcCorsProperties.getMappings().isEmpty()) {
             return new CorsFilter(new UrlBasedCorsConfigurationSource());
         } else {
             UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

@@ -41,8 +41,7 @@ public class TbRuleEngineSecurityConfiguration {
                 .cors(cors -> {})
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(config -> config
-                        .requestMatchers("/actuator/prometheus").permitAll())
-                .authorizeHttpRequests(config -> config
+                        .requestMatchers("/actuator/prometheus").permitAll()
                         .anyRequest().authenticated());
         return http.build();
     }
