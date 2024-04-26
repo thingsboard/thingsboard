@@ -69,7 +69,6 @@ import org.thingsboard.server.actors.device.DeviceActorMessageProcessor;
 import org.thingsboard.server.actors.device.SessionInfo;
 import org.thingsboard.server.actors.device.ToDeviceRpcRequestMetadata;
 import org.thingsboard.server.actors.service.DefaultActorService;
-import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -102,8 +101,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
-import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -441,11 +438,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     protected Tenant saveTenant(Tenant tenant) throws Exception {
-        tenant = doPost("/api/tenant", tenant, Tenant.class);
-        if (tenant.getId() == null) {
-            attributesService.save(TenantId.SYS_TENANT_ID, tenant.getId(), AttributeScope.SERVER_SCOPE, new BaseAttributeKvEntry(System.currentTimeMillis(), new StringDataEntry("test", "test"))).get(); // creating marker attr to later know when Housekeeper finishes tenant cleanup
-        }
-        return tenant;
+        return doPost("/api/tenant", tenant, Tenant.class);
     }
 
     protected void loginDifferentCustomer() throws Exception {
