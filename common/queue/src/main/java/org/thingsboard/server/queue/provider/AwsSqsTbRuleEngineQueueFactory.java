@@ -25,6 +25,7 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToOtaPackageStateServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
@@ -163,7 +164,7 @@ public class AwsSqsTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory 
     }
 
     @Override
-    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToHousekeeperServiceMsg>> createHousekeeperMsgProducer() {
+    public TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> createHousekeeperMsgProducer() {
         return new TbAwsSqsProducerTemplate<>(coreAdmin, sqsSettings, topicService.buildTopicName(coreSettings.getHousekeeperTopic()));
     }
 

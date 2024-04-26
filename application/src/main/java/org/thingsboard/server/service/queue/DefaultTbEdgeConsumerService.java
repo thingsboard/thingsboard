@@ -112,17 +112,18 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
         }
     }
 
+    @AfterStartUp(order = AfterStartUp.REGULAR_SERVICE)
+    public void onApplicationEvent(ApplicationReadyEvent event) {
+        super.onApplicationEvent(event);
+    }
+
+
     @Override
     public void onTbApplicationEvent(PartitionChangeEvent event) {
         if (ServiceType.TB_CORE.equals(event.getServiceType())) {
             log.info("Subscribing to partitions: {}", event.getEdgePartitions());
             this.mainConsumer.subscribe(event.getEdgePartitions());
         }
-    }
-
-    @AfterStartUp(order = AfterStartUp.REGULAR_SERVICE)
-    public void onApplicationEvent(ApplicationReadyEvent event) {
-        super.onApplicationEvent(event);
     }
 
     @Override
