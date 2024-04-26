@@ -549,7 +549,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         } else {
             ListenableFuture<List<String>> saveFuture = attributesService.save(TenantId.SYS_TENANT_ID, deviceId, AttributeScope.SERVER_SCOPE,
                     Collections.singletonList(new BaseAttributeKvEntry(new BooleanDataEntry(key, value)
-                    , System.currentTimeMillis())));
+                            , System.currentTimeMillis())));
             addTsCallback(saveFuture, new TelemetrySaveCallback<>(deviceId, key, value));
         }
     }
@@ -693,23 +693,26 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     @Override
     @SneakyThrows
-    public void updateDefaultNotificationConfigs() {
-        PageDataIterable<TenantId> tenants = new PageDataIterable<>(tenantService::findTenantsIds, 500);
-        ExecutorService executor = Executors.newFixedThreadPool(Math.max(Runtime.getRuntime().availableProcessors(), 4));
-        log.info("Updating default edge failure notification configs for all tenants");
-        AtomicInteger count = new AtomicInteger();
-        for (TenantId tenantId : tenants) {
-            executor.submit(() -> {
-                notificationSettingsService.updateDefaultNotificationConfigs(tenantId);
-                int n = count.incrementAndGet();
-                if (n % 500 == 0) {
-                    log.info("{} tenants processed", n);
-                }
-            });
-        }
-        executor.shutdown();
-        executor.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
+    public void updateDefaultNotificationConfigs(boolean updateTenants) {
+        log.info("Updating notification configs...");
         notificationSettingsService.updateDefaultNotificationConfigs(TenantId.SYS_TENANT_ID);
+
+        if (updateTenants) {
+            PageDataIterable<TenantId> tenants = new PageDataIterable<>(tenantService::findTenantsIds, 500);
+            ExecutorService executor = Executors.newFixedThreadPool(Math.max(Runtime.getRuntime().availableProcessors(), 4));
+            AtomicInteger count = new AtomicInteger();
+            for (TenantId tenantId : tenants) {
+                executor.submit(() -> {
+                    notificationSettingsService.updateDefaultNotificationConfigs(tenantId);
+                    int n = count.incrementAndGet();
+                    if (n % 500 == 0) {
+                        log.info("{} tenants processed", n);
+                    }
+                });
+            }
+            executor.shutdown();
+            executor.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
+        }
     }
 
 }

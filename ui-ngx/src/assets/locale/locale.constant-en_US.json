@@ -3355,6 +3355,7 @@
         "api-usage-trigger-settings": "API usage trigger settings",
         "new-platform-version-trigger-settings": "New platform version trigger settings",
         "rate-limits-trigger-settings": "Exceeded rate limits trigger settings",
+        "task-processing-failure-trigger-settings": "Task processing failure trigger settings",
         "at-least-one-should-be-selected": "At least one should be selected",
         "basic-settings": "Basic settings",
         "button-text": "Button text",
@@ -3565,7 +3566,8 @@
             "new-platform-version": "New platform version",
             "rate-limits": "Exceeded rate limits",
             "edge-communication-failure": "Edge communication failure",
-            "edge-connection": "Edge connection"
+            "edge-connection": "Edge connection",
+            "task-processing-failure": "Task processing failure"
         },
         "templates": "Templates",
         "notification-templates": "Notifications / Templates",
@@ -3588,6 +3590,7 @@
             "rate-limits": "Exceeded rate limits",
             "edge-connection": "Edge connection",
             "edge-communication-failure": "Edge communication failure",
+            "task-processing-failure": "Task processing failure",
             "trigger": "Trigger",
             "trigger-required": "Trigger is required"
         },
