@@ -20,12 +20,11 @@
        xsi:noNamespaceSchemaLocation="http://www.openmobilealliance.org/tech/profiles/LWM2M-v1_1.xsd">
     <Object ObjectType="MODefinition">
         <Name>LwM2M Monitoring</Name>
-        <Description1>
-            <![CDATA[]]></Description1>
+        <Description1><![CDATA[]]></Description1>
         <ObjectID>3</ObjectID>
         <ObjectURN>urn:oma:lwm2m:oma:3:1.0</ObjectURN>
         <LWM2MVersion>1.1</LWM2MVersion>
-        <ObjectVersion>1.0</ObjectVersion>
+        <ObjectVersion>1.2</ObjectVersion>
         <MultipleInstances>Single</MultipleInstances>
         <Mandatory>Mandatory</Mandatory>
         <Resources>
@@ -38,6 +37,16 @@
                 <RangeEnumeration></RangeEnumeration>
                 <Units></Units>
                 <Description><![CDATA[Test data]]></Description>
+            </Item>
+            <Item ID="16">
+                <Name>Supported Binding and Modes</Name>
+                <Operations>R</Operations>
+                <MultipleInstances>Single</MultipleInstances>
+                <Mandatory>Mandatory</Mandatory>
+                <Type>String</Type>
+                <RangeEnumeration>U,T,S</RangeEnumeration>
+                <Units></Units>
+                <Description><![CDATA[Indicates which bindings and modes are supported in the LwM2M Client. The possible values are those listed in the LwM2M Core Specification.]]></Description>
             </Item>
         </Resources>
         <Description2></Description2>

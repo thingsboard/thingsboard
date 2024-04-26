@@ -20,6 +20,9 @@ import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
+import org.eclipse.californium.core.config.CoapConfig;
+import org.eclipse.californium.core.network.CoapEndpoint;
+import org.eclipse.californium.elements.config.Configuration;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -48,6 +51,11 @@ public class CoapTransportHealthChecker extends TransportHealthChecker<CoapTrans
             String uri = target.getBaseUrl() + "/api/v1/" + accessToken + "/telemetry";
             coapClient = new CoapClient(uri);
             coapClient.setTimeout((long) config.getRequestTimeoutMs());
+            Configuration config = new Configuration();
+            config.set(CoapConfig.COAP_PORT, 5683);
+            coapClient.setEndpoint(CoapEndpoint.builder()
+                    .setConfiguration(config)
+                    .build());
             log.debug("Initialized CoAP client for URI {}", uri);
         }
     }

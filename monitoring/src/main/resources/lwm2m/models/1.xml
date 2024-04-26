@@ -148,7 +148,7 @@ If the LwM2M Client supports the binding specified in this Resource, the LwM2M C
 				<Operations>R</Operations>
 				<MultipleInstances>Single</MultipleInstances>
 				<Mandatory>Optional</Mandatory>
-				<Type>Integer</Type>
+				<Type>Unsigned Integer</Type>
 				<RangeEnumeration>0..255</RangeEnumeration>
 				<Units></Units>
 				<Description><![CDATA[If this resource is defined, it contains the most recent TLS / DTLS alert message received from the LwM2M Server respective represented by the AlertDescription defined in Section 7.2 of RFC 5246. This resource set by the LwM2M Client may help the LwM2M Bootstrap-Server to determine the cause of TLS/DTLS connection failure with the respective LwM2M Server.]]></Description>
@@ -168,7 +168,7 @@ If the LwM2M Client supports the binding specified in this Resource, the LwM2M C
 			  <Operations>R</Operations>
 				<MultipleInstances>Single</MultipleInstances>
 				<Mandatory>Optional</Mandatory>
-				<Type>Integer</Type>
+				<Type>Unsigned Integer</Type>
 				<RangeEnumeration></RangeEnumeration>
 				<Units></Units>
 				<Description><![CDATA[The LwM2M Client sequences the LwM2M Server registrations in increasing order of this value. If this value is not defined, registration attempts to this server are not impacted by other server registrations.]]></Description>
@@ -178,7 +178,7 @@ If the LwM2M Client supports the binding specified in this Resource, the LwM2M C
 			  <Operations>RW</Operations>
 				<MultipleInstances>Single</MultipleInstances>
 				<Mandatory>Optional</Mandatory>
-				<Type>Integer</Type>
+				<Type>Unsigned Integer</Type>
 				<RangeEnumeration></RangeEnumeration>
 				<Units>s</Units>
 				<Description><![CDATA[The delay, in seconds, before registration is attempted for this LwM2M Server based upon the completion of registration of the previous LwM2M Server in the registration order. This is only applied until the first successful registration after a successful bootstrapping sequence.]]></Description>
@@ -208,7 +208,7 @@ If the LwM2M Client supports the binding specified in this Resource, the LwM2M C
 			  <Operations>RW</Operations>
 				<MultipleInstances>Single</MultipleInstances>
 				<Mandatory>Optional</Mandatory>
-				<Type>Integer</Type>
+				<Type>Unsigned Integer</Type>
 				<RangeEnumeration></RangeEnumeration>
 				<Units></Units>
 				<Description><![CDATA[The number of successive communication attempts before which a communication sequence is considered as failed.]]></Description>
@@ -218,7 +218,7 @@ If the LwM2M Client supports the binding specified in this Resource, the LwM2M C
 			  <Operations>RW</Operations>
 				<MultipleInstances>Single</MultipleInstances>
 				<Mandatory>Optional</Mandatory>
-				<Type>Integer</Type>
+				<Type>Unsigned Integer</Type>
 				<RangeEnumeration></RangeEnumeration>
 				<Units>s</Units>
 				<Description><![CDATA[The delay, in seconds, between successive communication attempts in a communication sequence. This value is multiplied by two to the power of the communication retry attempt minus one (2**(retry attempt-1)) to create an exponential back-off.]]></Description>
@@ -228,7 +228,7 @@ If the LwM2M Client supports the binding specified in this Resource, the LwM2M C
 			  <Operations>RW</Operations>
 				<MultipleInstances>Single</MultipleInstances>
 				<Mandatory>Optional</Mandatory>
-				<Type>Integer</Type>
+				<Type>Unsigned Integer</Type>
 				<RangeEnumeration></RangeEnumeration>
 				<Units>s</Units>
 				<Description><![CDATA[The delay, in seconds, between successive communication sequences. A communication sequence is defined as the exhaustion of the Communication Retry Count and Communication Retry Timer values. A communication sequence can be applied to server registrations or bootstrapping attempts. MAX_VALUE means do not perform another communication sequence.]]></Description>
@@ -238,7 +238,7 @@ If the LwM2M Client supports the binding specified in this Resource, the LwM2M C
 			  <Operations>RW</Operations>
 				<MultipleInstances>Single</MultipleInstances>
 				<Mandatory>Optional</Mandatory>
-				<Type>Integer</Type>
+				<Type>Unsigned Integer</Type>
 				<RangeEnumeration></RangeEnumeration>
 				<Units></Units>
 				<Description><![CDATA[The number of successive communication sequences before which a registration attempt is considered as failed.]]></Description>
@@ -308,7 +308,7 @@ If false, the LwM2M Client Send Command capability is activated.]]></Description
 				<Operations>RW</Operations>
 				<MultipleInstances>Single</MultipleInstances>
 				<Mandatory>Optional</Mandatory>
-				<Type>Integer</Type>
+				<Type>Unsigned Integer</Type>
 				<RangeEnumeration>0..255</RangeEnumeration>
 				<Units/>
 				<Description><![CDATA[If this resource is defined, it contains the hash algorithm the LwM2M Server would prefer the LwM2M Client to use with the dynamically generated mode of creating Profile IDs. The numerical ID value of the 'Suite Identifiers' registered by RFC 6920 is used in this Resource.]]></Description>

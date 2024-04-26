@@ -17,24 +17,25 @@ package org.thingsboard.monitoring.client;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.eclipse.californium.core.network.CoapEndpoint;
-import org.eclipse.californium.core.network.config.NetworkConfig;
-import org.eclipse.californium.core.observe.ObservationStore;
-import org.eclipse.californium.scandium.DTLSConnector;
-import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
-import org.eclipse.leshan.client.californium.LeshanClient;
-import org.eclipse.leshan.client.californium.LeshanClientBuilder;
+import org.eclipse.californium.core.config.CoapConfig;
+import org.eclipse.californium.elements.config.Configuration;
+import org.eclipse.californium.scandium.config.DtlsConfig;
+import org.eclipse.leshan.client.LeshanClient;
+import org.eclipse.leshan.client.LeshanClientBuilder;
+import org.eclipse.leshan.client.californium.endpoint.CaliforniumClientEndpointsProvider;
+import org.eclipse.leshan.client.californium.endpoint.ClientProtocolProvider;
+import org.eclipse.leshan.client.californium.endpoint.coap.CoapOscoreProtocolProvider;
+import org.eclipse.leshan.client.endpoint.LwM2mClientEndpointsProvider;
 import org.eclipse.leshan.client.engine.DefaultRegistrationEngineFactory;
-import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.client.object.Server;
 import org.eclipse.leshan.client.resource.BaseInstanceEnabler;
+import org.eclipse.leshan.client.resource.BaseInstanceEnablerFactory;
 import org.eclipse.leshan.client.resource.DummyInstanceEnabler;
+import org.eclipse.leshan.client.resource.LwM2mInstanceEnabler;
 import org.eclipse.leshan.client.resource.ObjectsInitializer;
-import org.eclipse.leshan.client.servers.ServerIdentity;
-import org.eclipse.leshan.core.californium.EndpointFactory;
+import org.eclipse.leshan.client.send.ManualDataSender;
+import org.eclipse.leshan.client.servers.LwM2mServer;
 import org.eclipse.leshan.core.model.InvalidDDFFileException;
 import org.eclipse.leshan.core.model.LwM2mModel;
 import org.eclipse.leshan.core.model.ObjectLoader;
@@ -48,8 +49,8 @@ import org.thingsboard.monitoring.util.ResourceUtils;
 import javax.security.auth.Destroyable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.URI;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -66,7 +67,7 @@ public class Lwm2mClient extends BaseInstanceEnabler implements Destroyable {
     @Setter
     private LeshanClient leshanClient;
 
-    private static final List<Integer> supportedResources = Collections.singletonList(0);
+    private static final List<Integer> supportedResources = List.of(0, 16);
 
     private String data = "";
 
@@ -78,63 +79,55 @@ public class Lwm2mClient extends BaseInstanceEnabler implements Destroyable {
         this.endpoint = endpoint;
     }
 
-    public Lwm2mClient() {
-    }
-
     public void initClient() throws InvalidDDFFileException, IOException {
         String[] resources = new String[]{"0.xml", "1.xml", "2.xml", "test-model.xml"};
         List<ObjectModel> models = new ArrayList<>();
         for (String resourceName : resources) {
             models.addAll(ObjectLoader.loadDdfFile(ResourceUtils.getResourceAsStream("lwm2m/models/" + resourceName), resourceName));
         }
+        URI uri = URI.create(serverUri);
+        int port = uri.getPort();
+        String host = uri.getHost();
 
-        Security security = noSec(serverUri, 123);
-        NetworkConfig coapConfig = new NetworkConfig().setString(NetworkConfig.Keys.COAP_PORT, StringUtils.substringAfterLast(serverUri, ":"));
-
+        Configuration coapConfig = new Configuration();
+        coapConfig.set(CoapConfig.COAP_PORT, port);
+        coapConfig.set(DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY, true);
+        coapConfig.set(DtlsConfig.DTLS_ROLE, DtlsConfig.DtlsRole.CLIENT_ONLY);
         LeshanClient leshanClient;
 
         LwM2mModel model = new StaticModel(models);
         ObjectsInitializer initializer = new ObjectsInitializer(model);
-        initializer.setInstancesForObject(SECURITY, security);
+        initializer.setInstancesForObject(SECURITY, noSec(serverUri, 123));
         initializer.setInstancesForObject(SERVER, new Server(123, TimeUnit.MINUTES.toSeconds(60)));
         initializer.setInstancesForObject(DEVICE, this);
         initializer.setClassForObject(ACCESS_CONTROL, DummyInstanceEnabler.class);
-        DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
-        dtlsConfig.setRecommendedCipherSuitesOnly(true);
-        dtlsConfig.setClientOnly();
+        initializer.setFactoryForObject(3, new BaseInstanceEnablerFactory() {
+            @Override
+            public LwM2mInstanceEnabler create() {
+                return new DummyInstanceEnabler();
+            }
+        });
 
         DefaultRegistrationEngineFactory engineFactory = new DefaultRegistrationEngineFactory();
         engineFactory.setReconnectOnUpdate(false);
         engineFactory.setResumeOnConnect(true);
 
-        EndpointFactory endpointFactory = new EndpointFactory() {
+        List<ClientProtocolProvider> protocolProvider = new ArrayList<>();
+        protocolProvider.add(new CoapOscoreProtocolProvider());
+        CaliforniumClientEndpointsProvider.Builder endpointsBuilder = new CaliforniumClientEndpointsProvider.Builder(
+                protocolProvider.toArray(new ClientProtocolProvider[protocolProvider.size()]));
 
-            @Override
-            public CoapEndpoint createUnsecuredEndpoint(InetSocketAddress address, NetworkConfig coapConfig,
-                                                        ObservationStore store) {
-                CoapEndpoint.Builder builder = new CoapEndpoint.Builder();
-                builder.setInetSocketAddress(address);
-                builder.setNetworkConfig(coapConfig);
-                return builder.build();
-            }
+        endpointsBuilder.setConfiguration(coapConfig);
+        endpointsBuilder.setClientAddress(new InetSocketAddress(host, port).getAddress());
 
-            @Override
-            public CoapEndpoint createSecuredEndpoint(DtlsConnectorConfig dtlsConfig, NetworkConfig coapConfig,
-                                                      ObservationStore store) {
-                CoapEndpoint.Builder builder = new CoapEndpoint.Builder();
-                DtlsConnectorConfig.Builder dtlsConfigBuilder = new DtlsConnectorConfig.Builder(dtlsConfig);
-                builder.setConnector(new DTLSConnector(dtlsConfigBuilder.build()));
-                builder.setNetworkConfig(coapConfig);
-                return builder.build();
-            }
-        };
+        List<LwM2mClientEndpointsProvider> endpointsProvider = new ArrayList<>();
+        endpointsProvider.add(endpointsBuilder.build());
 
         LeshanClientBuilder builder = new LeshanClientBuilder(endpoint);
         builder.setObjects(initializer.createAll());
-        builder.setCoapConfig(coapConfig);
-        builder.setDtlsConfig(dtlsConfig);
+        builder.setEndpointsProviders(endpointsProvider);
+        builder.setDataSenders(new ManualDataSender());
         builder.setRegistrationEngineFactory(engineFactory);
-        builder.setEndpointFactory(endpointFactory);
         builder.setDecoder(new DefaultLwM2mDecoder(false));
         builder.setEncoder(new DefaultLwM2mEncoder(false));
         leshanClient = builder.build();
@@ -150,17 +143,17 @@ public class Lwm2mClient extends BaseInstanceEnabler implements Destroyable {
     }
 
     @Override
-    public ReadResponse read(ServerIdentity identity, int resourceId) {
-        if (supportedResources.contains(resourceId)) {
-            return ReadResponse.success(resourceId, data);
-        }
-        return super.read(identity, resourceId);
+    public ReadResponse read(LwM2mServer identity, int resourceId) {
+        return switch (resourceId) {
+            case 0 -> ReadResponse.success(resourceId, data);
+            case 16 -> ReadResponse.success(resourceId, "U");
+            default -> super.read(identity, resourceId);
+        };
     }
 
-    @SneakyThrows
-    public void send(String data, int resource) {
+    public void send(String data) {
         this.data = data;
-        fireResourcesChange(resource);
+        fireResourceChange(0);
     }
 
     @Override
