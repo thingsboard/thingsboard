@@ -154,3 +154,13 @@ SET profile_data =
 WHERE jsonb_typeof(tp.profile_data #> '{configuration,transportGatewayMsgRateLimit}') IS NULL;
 
 -- TENANT PROFILE UPDATE END
+
+-- NOTIFICATION RULE UPDATE START
+UPDATE notification_rule
+SET trigger_config =
+        CASE
+            WHEN trigger_config::jsonb->'apis' ? 'TRANSPORT_MESSAGES_PER_GATEWAY' THEN trigger_config
+            ELSE jsonb_set(trigger_config::jsonb, '{apis}', (trigger_config::jsonb->'apis') || '"TRANSPORT_MESSAGES_PER_GATEWAY"', false)::text
+            END
+WHERE trigger_config LIKE '%TRANSPORT_MESSAGES_PER_DEVICE%';
+-- NOTIFICATION RULE UPDATE END
