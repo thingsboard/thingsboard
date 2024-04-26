@@ -27,7 +27,6 @@ import org.springframework.stereotype.Service;
 import java.util.Objects;
 import java.util.Optional;
 
-import static org.thingsboard.server.common.data.CacheConstants.CUSTOMER_CACHE;
 import static org.thingsboard.server.common.data.CacheConstants.RESOURCE_INFO_CACHE;
 import static org.thingsboard.server.common.data.CacheConstants.SECURITY_SETTINGS_CACHE;
 
