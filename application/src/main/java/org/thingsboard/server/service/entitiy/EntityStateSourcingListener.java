@@ -73,6 +73,9 @@ public class EntityStateSourcingListener {
     public void handleEvent(SaveEntityEvent<?> event) {
         TenantId tenantId = event.getTenantId();
         EntityId entityId = event.getEntityId();
+        if (entityId == null) {
+            return;
+        }
         EntityType entityType = entityId.getEntityType();
         log.debug("[{}][{}][{}] Handling entity save event: {}", tenantId, entityType, entityId, event);
         boolean isCreated = event.getCreated() != null && event.getCreated();
