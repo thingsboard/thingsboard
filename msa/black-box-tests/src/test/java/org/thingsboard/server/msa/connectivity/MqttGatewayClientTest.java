@@ -134,26 +134,13 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
 
         List<String> expectedKeys = Arrays.asList("booleanKey", "stringKey", "doubleKey", "longKey");
 
-        SingleEntityFilter filter = new SingleEntityFilter();
-        filter.setSingleEntity(createdDevice.getId());
-
-        long now = System.currentTimeMillis();
-
-        EntityDataUpdate entityDataUpdate = getWsClient().subscribeTsUpdate(expectedKeys, now, TimeUnit.SECONDS.toMillis(1), filter);
-        assertThat(entityDataUpdate.getData().getData().size()).isEqualTo(1);
-        Map<String, TsValue[]> timeseries = entityDataUpdate.getData().getData().get(0).getTimeseries();
-        assertThat(timeseries.keySet()).containsOnlyOnceElementsOf(expectedKeys);
+        getWsClient().subscribeForTsUpdates(createdDevice.getId(), expectedKeys);
 
         getWsClient().registerWaitForUpdate();
 
         mqttClient.publish("v1/gateway/telemetry", Unpooled.wrappedBuffer(createGatewayPayload(createdDevice.getName(), -1).toString().getBytes())).get();
 
-        String updateString = getWsClient().waitForUpdate(3000, true);
-        EntityDataUpdate update = JacksonUtil.fromString(updateString, EntityDataUpdate.class);
-        assertThat(update).isNotNull();
-        assertThat(update.getUpdate()).isNotNull();
-        assertThat(update.getUpdate().size()).isEqualTo(1);
-        Map<String, TsValue[]> actualLatestTelemetry = update.getUpdate().get(0).getTimeseries();
+        Map<String, TsValue[]> actualLatestTelemetry = getWsClient().getLatestTsValuesFromSubscription();
 
         assertThat(actualLatestTelemetry.keySet()).containsOnlyOnceElementsOf(expectedKeys);
         assertThat(actualLatestTelemetry.get("booleanKey")[0].getValue()).isEqualTo(Boolean.TRUE.toString());
@@ -167,26 +154,15 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
 
         List<String> expectedKeys = Arrays.asList("booleanKey", "stringKey", "doubleKey", "longKey");
 
-        SingleEntityFilter filter = new SingleEntityFilter();
-        filter.setSingleEntity(createdDevice.getId());
-
         long ts = 1451649600512L;
 
-        EntityDataUpdate entityDataUpdate = getWsClient().subscribeTsUpdate(expectedKeys, ts - 1, TimeUnit.SECONDS.toMillis(1), filter);
-        assertThat(entityDataUpdate.getData().getData().size()).isEqualTo(1);
-        Map<String, TsValue[]> timeseries = entityDataUpdate.getData().getData().get(0).getTimeseries();
-        assertThat(timeseries.keySet()).containsOnlyOnceElementsOf(expectedKeys);
+        getWsClient().subscribeForTsUpdates(createdDevice.getId(), expectedKeys);
 
         getWsClient().registerWaitForUpdate();
 
         mqttClient.publish("v1/gateway/telemetry", Unpooled.wrappedBuffer(createGatewayPayload(createdDevice.getName(), ts).toString().getBytes())).get();
 
-        String updateString = getWsClient().waitForUpdate(3000, true);
-        EntityDataUpdate update = JacksonUtil.fromString(updateString, EntityDataUpdate.class);
-        assertThat(update).isNotNull();
-        assertThat(update.getUpdate()).isNotNull();
-        assertThat(update.getUpdate().size()).isEqualTo(1);
-        Map<String, TsValue[]> actualLatestTelemetry = update.getUpdate().get(0).getTimeseries();
+        Map<String, TsValue[]> actualLatestTelemetry = getWsClient().getLatestTsValuesFromSubscription();
         log.info("Received telemetry: {}", actualLatestTelemetry);
 
         assertThat(actualLatestTelemetry.keySet()).containsOnlyOnceElementsOf(expectedKeys);
@@ -474,15 +450,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
 
         List<String> expectedKeys = Arrays.asList("booleanKey", "stringKey", "doubleKey", "longKey");
 
-        SingleEntityFilter filter = new SingleEntityFilter();
-        filter.setSingleEntity(gatewayDevice.getId());
-
-        long now = System.currentTimeMillis();
-
-        EntityDataUpdate entityDataUpdate = getWsClient().subscribeTsUpdate(expectedKeys, now, TimeUnit.SECONDS.toMillis(1), filter);
-        assertThat(entityDataUpdate.getData().getData().size()).isEqualTo(1);
-        Map<String, TsValue[]> timeseries = entityDataUpdate.getData().getData().get(0).getTimeseries();
-        assertThat(timeseries.keySet()).containsOnlyOnceElementsOf(expectedKeys);
+        getWsClient().subscribeForTsUpdates(gatewayDevice.getId(), expectedKeys);
 
         getWsClient().registerWaitForUpdate();
 
@@ -533,15 +501,7 @@ public class MqttGatewayClientTest extends AbstractContainerTest {
 
         List<String> expectedKeys = Arrays.asList("booleanKey", "stringKey", "doubleKey", "longKey");
 
-        SingleEntityFilter filter = new SingleEntityFilter();
-        filter.setSingleEntity(gatewayDevice.getId());
-
-        long now = System.currentTimeMillis();
-
-        EntityDataUpdate entityDataUpdate = getWsClient().subscribeTsUpdate(expectedKeys, now, TimeUnit.SECONDS.toMillis(1), filter);
-        assertThat(entityDataUpdate.getData().getData().size()).isEqualTo(1);
-        Map<String, TsValue[]> timeseries = entityDataUpdate.getData().getData().get(0).getTimeseries();
-        assertThat(timeseries.keySet()).containsOnlyOnceElementsOf(expectedKeys);
+        getWsClient().subscribeForTsUpdates(gatewayDevice.getId(), expectedKeys);
 
         getWsClient().registerWaitForUpdate();
 

@@ -29,7 +29,8 @@ import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityFilter;
 import org.thingsboard.server.common.data.query.EntityKey;
-import org.thingsboard.server.msa.mapper.WsTelemetryResponse;
+import org.thingsboard.server.common.data.query.SingleEntityFilter;
+import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.service.ws.AuthCmd;
 import org.thingsboard.server.service.ws.WsCmd;
 import org.thingsboard.server.service.ws.WsCommandsWrapper;
@@ -56,9 +57,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 
 @Slf4j
@@ -230,6 +234,33 @@ public class WsClient extends WebSocketClient {
 
         send(cmd);
         return parseDataReply(waitForReply());
+    }
+
+    public void subscribeForTsUpdates(EntityId entityId, List<String> keys) {
+        subscribeForTsUpdates(entityId, keys, System.currentTimeMillis());
+    }
+
+    public void subscribeForTsUpdates(EntityId entityId, List<String> keys, long startTs) {
+        subscribeForTsUpdates(entityId, keys, startTs, TimeUnit.HOURS.toMillis(1));
+    }
+
+    public void subscribeForTsUpdates(EntityId entityId, List<String> keys, long startTs, long timeWindow) {
+        SingleEntityFilter filter = new SingleEntityFilter();
+        filter.setSingleEntity(entityId);
+        EntityDataUpdate entityDataUpdate = this.subscribeTsUpdate(keys, startTs, timeWindow, filter);
+        assertThat(entityDataUpdate.getData().getData().size()).isEqualTo(1);
+        Map<String, TsValue[]> timeseries = entityDataUpdate.getData().getData().get(0).getTimeseries();
+        assertThat(timeseries.keySet()).containsOnlyOnceElementsOf(keys);
+    }
+
+    public Map<String, TsValue[]> getLatestTsValuesFromSubscription() {
+        String updateString = this.waitForUpdate(3000, true);
+        EntityDataUpdate update = JacksonUtil.fromString(updateString, EntityDataUpdate.class);
+        assertThat(update).isNotNull();
+        assertThat(update.getUpdate()).isNotNull();
+        assertThat(update.getUpdate().size()).isEqualTo(1);
+        assertThat(update.getUpdate().get(0).getTimeseries()).isNotNull();
+        return update.getUpdate().get(0).getTimeseries();
     }
 
     public JsonNode subscribeForAttributes(EntityId entityId, String scope, List<String> keys) {
