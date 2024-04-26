@@ -15,28 +15,27 @@
 ///
 
 import { Component, Input, OnInit, TemplateRef, ViewChild, ViewEncapsulation } from '@angular/core';
-import {
-  doughnutDefaultSettings,
-  doughnutPieChartSettings,
-  DoughnutWidgetSettings
-} from '@home/components/widget/lib/chart/doughnut-widget.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { WidgetComponent } from '@home/components/widget/widget.component';
 import { TranslateService } from '@ngx-translate/core';
-import { isDefinedAndNotNull } from '@core/utils';
 import { TbPieChart } from '@home/components/widget/lib/chart/pie-chart';
 import {
   LatestChartComponent,
   LatestChartComponentCallbacks
 } from '@home/components/widget/lib/chart/latest-chart.component';
+import {
+  pieChartWidgetDefaultSettings,
+  pieChartWidgetPieChartSettings,
+  PieChartWidgetSettings
+} from '@home/components/widget/lib/chart/pie-chart-widget.models';
 
 @Component({
-  selector: 'tb-doughnut-widget',
+  selector: 'tb-pie-chart-widget',
   templateUrl: './latest-chart-widget.component.html',
   styleUrls: [],
   encapsulation: ViewEncapsulation.None
 })
-export class DoughnutWidgetComponent implements OnInit {
+export class PieChartWidgetComponent implements OnInit {
 
   @ViewChild('latestChart')
   latestChart: LatestChartComponent;
@@ -47,7 +46,7 @@ export class DoughnutWidgetComponent implements OnInit {
   @Input()
   widgetTitlePanel: TemplateRef<any>;
 
-  settings: DoughnutWidgetSettings;
+  settings: PieChartWidgetSettings;
 
   callbacks: LatestChartComponentCallbacks;
 
@@ -56,14 +55,23 @@ export class DoughnutWidgetComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const params = this.widgetComponent.typeParameters as any;
-    const horizontal  = isDefinedAndNotNull(params.horizontal) ? params.horizontal : false;
-    this.ctx.$scope.doughnutWidget = this;
-    this.settings = {...doughnutDefaultSettings(horizontal), ...this.ctx.settings};
+    this.ctx.$scope.pieChartWidget = this;
+    this.settings = {...pieChartWidgetDefaultSettings, ...this.ctx.settings};
     this.callbacks = {
       createChart: (chartShape, renderer) => {
-        const settings = doughnutPieChartSettings(this.settings);
+        const settings = pieChartWidgetPieChartSettings(this.settings);
         return new TbPieChart(this.ctx, settings, chartShape.nativeElement, renderer, this.translate, true);
+      },
+      onItemClick: ($event: Event, item) => {
+        const descriptors = this.ctx.actionsApi.getActionDescriptors('sliceClick');
+        if ($event && descriptors.length) {
+          $event.stopPropagation();
+          const datasource = item.datasource;
+          const entityId = datasource ? datasource.entity?.id : null;
+          const entityName = datasource ? datasource.entityName : null;
+          const entityLabel = datasource ? datasource.entityLabel : null;
+          this.ctx.actionsApi.handleWidgetAction($event, descriptors[0], entityId, entityName, item, entityLabel);
+        }
       }
     };
   }
