@@ -87,7 +87,6 @@ public class Lwm2mClient extends BaseInstanceEnabler implements Destroyable {
         }
         URI uri = URI.create(serverUri);
         int port = uri.getPort();
-        String host = uri.getHost();
 
         Configuration coapConfig = new Configuration();
         coapConfig.set(CoapConfig.COAP_PORT, port);
@@ -118,7 +117,7 @@ public class Lwm2mClient extends BaseInstanceEnabler implements Destroyable {
                 protocolProvider.toArray(new ClientProtocolProvider[protocolProvider.size()]));
 
         endpointsBuilder.setConfiguration(coapConfig);
-        endpointsBuilder.setClientAddress(new InetSocketAddress(host, port).getAddress());
+        endpointsBuilder.setClientAddress(new InetSocketAddress(port).getAddress());
 
         List<LwM2mClientEndpointsProvider> endpointsProvider = new ArrayList<>();
         endpointsProvider.add(endpointsBuilder.build());
