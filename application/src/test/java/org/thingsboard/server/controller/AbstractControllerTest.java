@@ -120,7 +120,7 @@ public abstract class AbstractControllerTest extends AbstractNotifyEntityTest {
     }
 
     //placeholder to not fire issue when no tests found for junit4 during migration period (possibly to set a general setting to suppress that warning)
-    @Ignore
+    @Ignore("Temporary workaround during JUnit4 to JUnit5 transition - Ignore this test")
     @Test
     public void initJunit4WorkaroundIgnoredTest(){}
 
