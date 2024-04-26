@@ -86,6 +86,11 @@ import { PowerButtonWidgetComponent } from '@home/components/widget/lib/rpc/powe
 import { SliderWidgetComponent } from '@home/components/widget/lib/rpc/slider-widget.component';
 import { ToggleButtonWidgetComponent } from '@home/components/widget/lib/button/toggle-button-widget.component';
 import { TimeSeriesChartWidgetComponent } from '@home/components/widget/lib/chart/time-series-chart-widget.component';
+import { StatusWidgetComponent } from '@home/components/widget/lib/indicator/status-widget.component';
+import { LatestChartComponent } from '@home/components/widget/lib/chart/latest-chart.component';
+import { PieChartWidgetComponent } from '@home/components/widget/lib/chart/pie-chart-widget.component';
+import { BarChartWidgetComponent } from '@home/components/widget/lib/chart/bar-chart-widget.component';
+import { PolarAreaWidgetComponent } from '@home/components/widget/lib/chart/polar-area-widget.component';
 
 @NgModule({
   declarations:
@@ -138,7 +143,12 @@ import { TimeSeriesChartWidgetComponent } from '@home/components/widget/lib/char
       PowerButtonWidgetComponent,
       SliderWidgetComponent,
       ToggleButtonWidgetComponent,
-      TimeSeriesChartWidgetComponent
+      TimeSeriesChartWidgetComponent,
+      StatusWidgetComponent,
+      LatestChartComponent,
+      PieChartWidgetComponent,
+      BarChartWidgetComponent,
+      PolarAreaWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -195,7 +205,11 @@ import { TimeSeriesChartWidgetComponent } from '@home/components/widget/lib/char
         PowerButtonWidgetComponent,
         SliderWidgetComponent,
         ToggleButtonWidgetComponent,
-        TimeSeriesChartWidgetComponent
+        TimeSeriesChartWidgetComponent,
+        StatusWidgetComponent,
+        PieChartWidgetComponent,
+        BarChartWidgetComponent,
+        PolarAreaWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }

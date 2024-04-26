@@ -299,9 +299,8 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
         validateId(userId, id -> INCORRECT_USER_ID + id);
         userCredentialsDao.removeByUserId(tenantId, userId);
         userAuthSettingsDao.removeByUserId(userId);
-        deleteEntityRelations(tenantId, userId);
         publishEvictEvent(new UserCacheEvictEvent(user.getTenantId(), user.getEmail(), null));
-
+        userSettingsDao.removeByUserId(tenantId, userId);
         userDao.removeById(tenantId, userId.getId());
         eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(userId));
         countService.publishCountEntityEvictEvent(tenantId, EntityType.USER);
@@ -357,6 +356,17 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
         log.trace("Executing deleteTenantAdmins, tenantId [{}]", tenantId);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         tenantAdminsRemover.removeEntities(tenantId, tenantId);
+    }
+
+    @Override
+    public void deleteAllByTenantId(TenantId tenantId) {
+        log.trace("Executing deleteByTenantId, tenantId [{}]", tenantId);
+        usersRemover.removeEntities(tenantId, tenantId);
+    }
+
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteAllByTenantId(tenantId);
     }
 
     @Override
@@ -543,6 +553,18 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
         @Override
         protected void removeEntity(TenantId tenantId, User entity) {
             deleteUser(tenantId, entity);
+        }
+    };
+
+    private final PaginatedRemover<TenantId, User> usersRemover = new PaginatedRemover<>() {
+        @Override
+        protected PageData<User> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+            return findUsersByTenantId(tenantId, pageLink);
+        }
+
+        @Override
+        protected void removeEntity(TenantId tenantId, User user) {
+            deleteUser(tenantId, user);
         }
     };
 

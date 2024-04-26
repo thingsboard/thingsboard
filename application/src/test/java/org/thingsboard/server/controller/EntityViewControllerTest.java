@@ -369,7 +369,7 @@ public class EntityViewControllerTest extends AbstractControllerTest {
         loginSysAdmin();
 
         Tenant tenant2 = getNewTenant("Different tenant");
-        Tenant savedTenant2 = doPost("/api/tenant", tenant2, Tenant.class);
+        Tenant savedTenant2 = saveTenant(tenant2);
         Assert.assertNotNull(savedTenant2);
 
         User tenantAdmin2 = new User();
@@ -397,8 +397,7 @@ public class EntityViewControllerTest extends AbstractControllerTest {
 
         loginSysAdmin();
 
-        doDelete("/api/tenant/" + savedTenant2.getId().getId().toString())
-                .andExpect(status().isOk());
+        deleteTenant(savedTenant2.getId());
     }
 
     @Test
@@ -430,7 +429,7 @@ public class EntityViewControllerTest extends AbstractControllerTest {
         testNotifyEntityBroadcastEntityStateChangeEventMany(new EntityView(), new EntityView(),
                 tenantId, customerId, tenantAdminUserId, TENANT_ADMIN_EMAIL,
                 ActionType.ASSIGNED_TO_CUSTOMER, ActionType.UPDATED, cntEntity, cntEntity,
-                cntEntity*2, 3);
+                cntEntity * 2, 3);
     }
 
     @Test

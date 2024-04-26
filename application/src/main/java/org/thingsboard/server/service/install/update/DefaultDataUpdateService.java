@@ -117,12 +117,12 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 try {
                     Optional<Customer> customerOpt = customerService.findCustomerByTenantIdAndTitle(tenantIdToDeduplicate, newTitle);
                     if (customerOpt.isPresent()) {
-                        // fallback logic: customer with title {currentTitle + duplicateCounter} already exists
+                        // fallback logic: customer with title 'currentTitle + " " + duplicateCounter;' might be another duplicate.
                         newTitle = currentTitle + "_" + currentCustomer.getId();
                     }
                 } catch (Exception e) {
-                    log.debug("Failed to find customer with title due to: ", e);
-                    // fallback logic: customer with title {currentTitle + duplicateCounter} might be another duplicate.
+                    log.trace("Failed to find customer with title due to: ", e);
+                    // fallback logic: customer with title 'currentTitle + " " + duplicateCounter;' might be another duplicate.
                     newTitle = currentTitle + "_" + currentCustomer.getId();
                 }
                 currentCustomer.setTitle(newTitle);
