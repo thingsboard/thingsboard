@@ -17,16 +17,25 @@ package org.thingsboard.server.common.adaptor;
 
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Isolated;
 
 import java.util.ArrayList;
 
+@Isolated("JsonConverter static settings being modified")
 public class JsonConverterTest {
 
     @BeforeEach
     public void before() {
+        JsonConverter.setTypeCastEnabled(true);
+    }
+
+    @AfterEach
+    public void after() {
+        //restore default state for a static class
         JsonConverter.setTypeCastEnabled(true);
     }
 
