@@ -25,6 +25,7 @@ import org.apache.http.client.CredentialsProvider;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.nio.entity.NStringEntity;
+import org.elasticsearch.client.Request;
 import org.elasticsearch.client.Response;
 import org.elasticsearch.client.ResponseListener;
 import org.elasticsearch.client.RestClient;
@@ -124,12 +125,10 @@ public class ElasticsearchAuditLogSink implements AuditLogSink {
                 jsonContent,
                 ContentType.APPLICATION_JSON);
 
-        restClient.performRequestAsync(
-                HttpMethod.POST.name(),
-                String.format("/%s/%s", getIndexName(auditLogEntry.getTenantId()), INDEX_TYPE),
-                Collections.emptyMap(),
-                entity,
-                responseListener);
+        Request request = new Request(HttpMethod.POST.name(),String.format("/%s/%s", getIndexName(auditLogEntry.getTenantId()), INDEX_TYPE));
+        request.setEntity(entity);
+
+        restClient.performRequestAsync(request, responseListener);
     }
 
     private String createElasticJsonRecord(AuditLog auditLog) {

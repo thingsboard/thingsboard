@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.transport.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -131,7 +132,6 @@ import java.util.stream.Collectors;
 @TbTransportComponent
 public class DefaultTransportService extends TransportActivityManager implements TransportService {
 
-    public static final String OVERWRITE_ACTIVITY_TIME = "overwriteActivityTime";
     public static final TransportProtos.SessionEventMsg SESSION_EVENT_MSG_OPEN = TransportProtos.SessionEventMsg.newBuilder()
             .setSessionType(TransportProtos.SessionType.ASYNC)
             .setEvent(TransportProtos.SessionEvent.OPEN).build();
@@ -1047,12 +1047,10 @@ public class DefaultTransportService extends TransportActivityManager implements
                     newDeviceProfile = null;
                 }
                 boolean isGateway = false;
-                if (device.getAdditionalInfo().has("gateway")
-                        && device.getAdditionalInfo().get("gateway").asBoolean()
-                        && device.getAdditionalInfo().has(OVERWRITE_ACTIVITY_TIME)
-                        && device.getAdditionalInfo().get(OVERWRITE_ACTIVITY_TIME).isBoolean()) {
-                    isGateway = true;
-                    md.setOverwriteActivityTime(device.getAdditionalInfo().get(OVERWRITE_ACTIVITY_TIME).asBoolean());
+                JsonNode deviceAdditionalInfo = device.getAdditionalInfo();
+                if (device.getAdditionalInfo().has(DataConstants.GATEWAY_PARAMETER)
+                        && deviceAdditionalInfo.get(DataConstants.GATEWAY_PARAMETER).isBoolean()) {
+                    isGateway = deviceAdditionalInfo.get(DataConstants.GATEWAY_PARAMETER).asBoolean();
                 }
                 TransportProtos.SessionInfoProto newSessionInfo = TransportProtos.SessionInfoProto.newBuilder()
                         .mergeFrom(md.getSessionInfo())
@@ -1062,11 +1060,9 @@ public class DefaultTransportService extends TransportActivityManager implements
                         .setDeviceType(device.getType())
                         .setGateway(isGateway)
                         .build();
-                if (device.getAdditionalInfo().has("gateway")
-                        && device.getAdditionalInfo().get("gateway").asBoolean()
-                        && device.getAdditionalInfo().has(OVERWRITE_ACTIVITY_TIME)
-                        && device.getAdditionalInfo().get(OVERWRITE_ACTIVITY_TIME).isBoolean()) {
-                    md.setOverwriteActivityTime(device.getAdditionalInfo().get(OVERWRITE_ACTIVITY_TIME).asBoolean());
+                if (isGateway && deviceAdditionalInfo.has(DataConstants.OVERWRITE_ACTIVITY_TIME_PARAMETER)
+                        && deviceAdditionalInfo.get(DataConstants.OVERWRITE_ACTIVITY_TIME_PARAMETER).isBoolean()) {
+                    md.setOverwriteActivityTime(deviceAdditionalInfo.get(DataConstants.OVERWRITE_ACTIVITY_TIME_PARAMETER).asBoolean());
                 }
                 md.setSessionInfo(newSessionInfo);
                 transportCallbackExecutor.submit(() -> md.getListener().onDeviceUpdate(newSessionInfo, device, Optional.ofNullable(newDeviceProfile)));
