@@ -164,6 +164,7 @@ public class InMemoryMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
         return new InMemoryTbQueueProducer<>(storage, topicService.buildTopicName(vcSettings.getTopic()));
     }
 
+    @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToHousekeeperServiceMsg>> createHousekeeperMsgProducer() {
         return new InMemoryTbQueueProducer<>(storage, topicService.buildTopicName(coreSettings.getHousekeeperTopic()));
     }
