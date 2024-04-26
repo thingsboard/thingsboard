@@ -16,8 +16,7 @@
 package org.thingsboard.rule.engine.credentials;
 
 import org.apache.commons.io.FileUtils;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -49,14 +48,14 @@ public class CertPemCredentialsTest {
 
         List<X509Certificate> x509Certificates = SslUtil.readCertFile(fileContent);
 
-        Assert.assertEquals(4, x509Certificates.size());
-        Assert.assertEquals("CN=*.thingsboard.cloud, O=\"ThingsBoard, Inc.\", ST=New York, C=US",
+        Assertions.assertEquals(4, x509Certificates.size());
+        Assertions.assertEquals("CN=*.thingsboard.cloud, O=\"ThingsBoard, Inc.\", ST=New York, C=US",
                 x509Certificates.get(0).getSubjectDN().getName());
-        Assert.assertEquals("CN=Sectigo ECC Organization Validation Secure Server CA, O=Sectigo Limited, L=Salford, ST=Greater Manchester, C=GB",
+        Assertions.assertEquals("CN=Sectigo ECC Organization Validation Secure Server CA, O=Sectigo Limited, L=Salford, ST=Greater Manchester, C=GB",
                 x509Certificates.get(1).getSubjectDN().getName());
-        Assert.assertEquals("CN=USERTrust ECC Certification Authority, O=The USERTRUST Network, L=Jersey City, ST=New Jersey, C=US",
+        Assertions.assertEquals("CN=USERTrust ECC Certification Authority, O=The USERTRUST Network, L=Jersey City, ST=New Jersey, C=US",
                 x509Certificates.get(2).getSubjectDN().getName());
-        Assert.assertEquals("CN=AAA Certificate Services, O=Comodo CA Limited, L=Salford, ST=Greater Manchester, C=GB",
+        Assertions.assertEquals("CN=AAA Certificate Services, O=Comodo CA Limited, L=Salford, ST=Greater Manchester, C=GB",
                 x509Certificates.get(3).getSubjectDN().getName());
     }
 
@@ -66,8 +65,8 @@ public class CertPemCredentialsTest {
 
         List<X509Certificate> x509Certificates = SslUtil.readCertFile(fileContent);
 
-        Assert.assertEquals(1, x509Certificates.size());
-        Assert.assertEquals("CN=*.thingsboard.cloud, O=\"ThingsBoard, Inc.\", ST=New York, C=US",
+        Assertions.assertEquals(1, x509Certificates.size());
+        Assertions.assertEquals("CN=*.thingsboard.cloud, O=\"ThingsBoard, Inc.\", ST=New York, C=US",
                 x509Certificates.get(0).getSubjectDN().getName());
     }
 
@@ -77,7 +76,7 @@ public class CertPemCredentialsTest {
 
         List<X509Certificate> x509Certificates = SslUtil.readCertFile(fileContent);
 
-        Assert.assertEquals(0, x509Certificates.size());
+        Assertions.assertEquals(0, x509Certificates.size());
     }
 
     private static Stream<Arguments> testLoadKeyStore() {
