@@ -160,6 +160,11 @@ public class RabbitMqTbRuleEngineQueueFactory implements TbRuleEngineQueueFactor
         return new TbRabbitMqProducerTemplate<>(coreAdmin, rabbitMqSettings, topicService.buildTopicName(coreSettings.getOtaPackageTopic()));
     }
 
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToHousekeeperServiceMsg>> createHousekeeperMsgProducer() {
+        return new TbRabbitMqProducerTemplate<>(coreAdmin, rabbitMqSettings, topicService.buildTopicName(coreSettings.getHousekeeperTopic()));
+    }
+
     @PreDestroy
     private void destroy() {
         if (coreAdmin != null) {

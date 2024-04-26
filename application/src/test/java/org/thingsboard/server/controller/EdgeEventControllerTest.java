@@ -98,7 +98,7 @@ public class EdgeEventControllerTest extends AbstractControllerTest {
 
         final EdgeId edgeId = edge.getId();
 
-        awaitForRuleChainToInit(edgeId);
+        awaitForEdgeTemplateRootRuleChainToAssignToEdge(edgeId);
 
         // simulate edge activation
         ObjectNode attributes = JacksonUtil.newObjectNode();
@@ -181,7 +181,7 @@ public class EdgeEventControllerTest extends AbstractControllerTest {
                 }, new TimePageLink(10)).getData();
     }
 
-    private void awaitForRuleChainToInit(EdgeId edgeId) {
+    private void awaitForEdgeTemplateRootRuleChainToAssignToEdge(EdgeId edgeId) {
         Awaitility.await()
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> {

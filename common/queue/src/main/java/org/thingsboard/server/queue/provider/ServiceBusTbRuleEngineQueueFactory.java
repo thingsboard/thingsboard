@@ -160,6 +160,11 @@ public class ServiceBusTbRuleEngineQueueFactory implements TbRuleEngineQueueFact
         return new TbServiceBusProducerTemplate<>(coreAdmin, serviceBusSettings, topicService.buildTopicName(coreSettings.getOtaPackageTopic()));
     }
 
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToHousekeeperServiceMsg>> createHousekeeperMsgProducer() {
+        return new TbServiceBusProducerTemplate<>(coreAdmin, serviceBusSettings, topicService.buildTopicName(coreSettings.getHousekeeperTopic()));
+    }
+
     @PreDestroy
     private void destroy() {
         if (coreAdmin != null) {

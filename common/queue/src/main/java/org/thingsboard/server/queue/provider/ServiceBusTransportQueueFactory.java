@@ -131,6 +131,11 @@ public class ServiceBusTransportQueueFactory implements TbTransportQueueFactory 
         return new TbServiceBusProducerTemplate<>(coreAdmin, serviceBusSettings, topicService.buildTopicName(coreSettings.getUsageStatsTopic()));
     }
 
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToHousekeeperServiceMsg>> createHousekeeperMsgProducer() {
+        return new TbServiceBusProducerTemplate<>(coreAdmin, serviceBusSettings, topicService.buildTopicName(coreSettings.getHousekeeperTopic()));
+    }
+
     @PreDestroy
     private void destroy() {
         if (coreAdmin != null) {

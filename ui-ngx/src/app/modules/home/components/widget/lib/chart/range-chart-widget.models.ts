@@ -24,28 +24,36 @@ import {
   sortedColorRange
 } from '@shared/models/widget-settings.models';
 import { LegendPosition } from '@shared/models/widget.models';
-import { EChartsShape, EChartsTooltipWidgetSettings } from '@home/components/widget/lib/chart/echarts-widget.models';
 import {
   createTimeSeriesChartVisualMapPiece,
   defaultTimeSeriesChartXAxisSettings,
   defaultTimeSeriesChartYAxisSettings,
   LineSeriesStepType,
-  SeriesFillType,
-  SeriesLabelPosition, ThresholdLabelPosition, timeSeriesChartAnimationDefaultSettings,
-  TimeSeriesChartAnimationSettings,
-  timeSeriesChartColorScheme, timeSeriesChartGridDefaultSettings, TimeSeriesChartGridSettings,
+  ThresholdLabelPosition,
+  timeSeriesChartGridDefaultSettings,
+  TimeSeriesChartGridSettings,
   TimeSeriesChartKeySettings,
   TimeSeriesChartLineType,
   TimeSeriesChartSeriesType,
   TimeSeriesChartSettings,
-  TimeSeriesChartThreshold, timeSeriesChartThresholdDefaultSettings,
+  TimeSeriesChartThreshold,
+  timeSeriesChartThresholdDefaultSettings,
   TimeSeriesChartThresholdType,
+  TimeSeriesChartTooltipWidgetSettings,
   TimeSeriesChartVisualMapPiece,
   TimeSeriesChartXAxisSettings,
   TimeSeriesChartYAxisSettings
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { isNumber, mergeDeep } from '@core/utils';
 import { DeepPartial } from '@shared/models/common';
+import {
+  chartAnimationDefaultSettings,
+  ChartAnimationSettings,
+  chartColorScheme,
+  ChartFillType,
+  ChartLabelPosition,
+  ChartShape
+} from '@home/components/widget/lib/chart/chart.models';
 
 export interface RangeItem {
   index: number;
@@ -58,7 +66,7 @@ export interface RangeItem {
   piece: TimeSeriesChartVisualMapPiece;
 }
 
-export interface RangeChartWidgetSettings extends EChartsTooltipWidgetSettings {
+export interface RangeChartWidgetSettings extends TimeSeriesChartTooltipWidgetSettings {
   dataZoom: boolean;
   rangeColors: Array<ColorRange>;
   outOfRangeColor: string;
@@ -74,17 +82,17 @@ export interface RangeChartWidgetSettings extends EChartsTooltipWidgetSettings {
   lineWidth: number;
   showPoints: boolean;
   showPointLabel: boolean;
-  pointLabelPosition: SeriesLabelPosition;
+  pointLabelPosition: ChartLabelPosition;
   pointLabelFont: Font;
   pointLabelColor: string;
   enablePointLabelBackground: boolean;
   pointLabelBackground: string;
-  pointShape: EChartsShape;
+  pointShape: ChartShape;
   pointSize: number;
   grid: TimeSeriesChartGridSettings;
   yAxis: TimeSeriesChartYAxisSettings;
   xAxis: TimeSeriesChartXAxisSettings;
-  animation: TimeSeriesChartAnimationSettings;
+  animation: ChartAnimationSettings;
   thresholds: TimeSeriesChartThreshold[];
   showLegend: boolean;
   legendPosition: LegendPosition;
@@ -111,9 +119,9 @@ export const rangeChartDefaultSettings: RangeChartWidgetSettings = {
     timeSeriesChartThresholdDefaultSettings,
     { lineColor: '#37383b',
       lineType: TimeSeriesChartLineType.dashed,
-      startSymbol: EChartsShape.circle,
+      startSymbol: ChartShape.circle,
       startSymbolSize: 5,
-      endSymbol: EChartsShape.arrow,
+      endSymbol: ChartShape.arrow,
       endSymbolSize: 7,
       labelPosition: ThresholdLabelPosition.insideEndTop,
       labelColor: '#37383b',
@@ -128,7 +136,7 @@ export const rangeChartDefaultSettings: RangeChartWidgetSettings = {
   lineWidth: 2,
   showPoints: false,
   showPointLabel: false,
-  pointLabelPosition: SeriesLabelPosition.top,
+  pointLabelPosition: ChartLabelPosition.top,
   pointLabelFont: {
     family: 'Roboto',
     size: 11,
@@ -137,10 +145,10 @@ export const rangeChartDefaultSettings: RangeChartWidgetSettings = {
     weight: '400',
     lineHeight: '1'
   },
-  pointLabelColor: timeSeriesChartColorScheme['series.label'].light,
+  pointLabelColor: chartColorScheme['series.label'].light,
   enablePointLabelBackground: false,
   pointLabelBackground: 'rgba(255,255,255,0.56)',
-  pointShape: EChartsShape.emptyCircle,
+  pointShape: ChartShape.emptyCircle,
   pointSize: 4,
   grid: mergeDeep({} as TimeSeriesChartGridSettings,
     timeSeriesChartGridDefaultSettings),
@@ -150,8 +158,8 @@ export const rangeChartDefaultSettings: RangeChartWidgetSettings = {
   xAxis: mergeDeep({} as TimeSeriesChartXAxisSettings,
     defaultTimeSeriesChartXAxisSettings,
     {showSplitLines: false} as TimeSeriesChartXAxisSettings),
-  animation: mergeDeep({} as TimeSeriesChartAnimationSettings,
-    timeSeriesChartAnimationDefaultSettings),
+  animation: mergeDeep({} as ChartAnimationSettings,
+    chartAnimationDefaultSettings),
   thresholds: [],
   showLegend: true,
   legendPosition: LegendPosition.top,
@@ -165,6 +173,15 @@ export const rangeChartDefaultSettings: RangeChartWidgetSettings = {
   },
   legendLabelColor: 'rgba(0, 0, 0, 0.76)',
   showTooltip: true,
+  tooltipLabelFont: {
+    family: 'Roboto',
+    size: 12,
+    sizeUnit: 'px',
+    style: 'normal',
+    weight: '400',
+    lineHeight: '16px'
+  },
+  tooltipLabelColor: 'rgba(0, 0, 0, 0.76)',
   tooltipValueFont: {
     family: 'Roboto',
     size: 12,
@@ -233,6 +250,8 @@ export const rangeChartTimeSeriesSettings = (settings: RangeChartWidgetSettings,
       pieces: rangeItems.map(item => item.piece)
     },
     showTooltip: settings.showTooltip,
+    tooltipLabelFont: settings.tooltipLabelFont,
+    tooltipLabelColor: settings.tooltipLabelColor,
     tooltipValueFont: settings.tooltipValueFont,
     tooltipValueColor: settings.tooltipValueColor,
     tooltipShowDate: settings.tooltipShowDate,
@@ -264,7 +283,7 @@ export const rangeChartTimeSeriesKeySettings = (settings: RangeChartWidgetSettin
       pointShape: settings.pointShape,
       pointSize: settings.pointSize,
       fillAreaSettings: {
-        type: settings.fillArea ? SeriesFillType.opacity : SeriesFillType.none,
+        type: settings.fillArea ? ChartFillType.opacity : ChartFillType.none,
         opacity: settings.fillAreaOpacity
       }
     }

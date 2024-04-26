@@ -23,7 +23,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.LinkedHashMapRemoveEldest;
 import org.thingsboard.server.actors.ActorSystemContext;

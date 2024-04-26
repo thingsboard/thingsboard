@@ -125,11 +125,6 @@ public class InMemoryMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToEdgeNotificationMsg>> createToEdgeNotificationsMsgConsumer() {
-        return new InMemoryTbQueueConsumer<>(storage, topicService.getEdgeNotificationsTopic(ServiceType.TB_CORE, serviceInfoProvider.getServiceId()).getFullTopicName());
-    }
-
-    @Override
     public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.TransportApiRequestMsg>> createTransportApiRequestConsumer() {
         return new InMemoryTbQueueConsumer<>(storage, topicService.buildTopicName(transportApiSettings.getRequestsTopic()));
     }
@@ -169,6 +164,25 @@ public class InMemoryMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
         return new InMemoryTbQueueProducer<>(storage, topicService.buildTopicName(vcSettings.getTopic()));
     }
 
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToHousekeeperServiceMsg>> createHousekeeperMsgProducer() {
+        return new InMemoryTbQueueProducer<>(storage, topicService.buildTopicName(coreSettings.getHousekeeperTopic()));
+    }
+
+    @Override
+    public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToHousekeeperServiceMsg>> createHousekeeperMsgConsumer() {
+        return new InMemoryTbQueueConsumer<>(storage, topicService.buildTopicName(coreSettings.getHousekeeperTopic()));
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToHousekeeperServiceMsg>> createHousekeeperReprocessingMsgProducer() {
+        return new InMemoryTbQueueProducer<>(storage, topicService.buildTopicName(coreSettings.getHousekeeperReprocessingTopic()));
+    }
+
+    @Override
+    public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToHousekeeperServiceMsg>> createHousekeeperReprocessingMsgConsumer() {
+        return new InMemoryTbQueueConsumer<>(storage, topicService.buildTopicName(coreSettings.getHousekeeperReprocessingTopic()));
+    }
+
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToEdgeMsg>> createEdgeMsgConsumer() {
         return new InMemoryTbQueueConsumer<>(storage, topicService.buildTopicName(edgeSettings.getTopic()));
@@ -177,6 +191,11 @@ public class InMemoryMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
     @Override
     public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToEdgeMsg>> createEdgeMsgProducer() {
         return new InMemoryTbQueueProducer<>(storage, topicService.buildTopicName(edgeSettings.getTopic()));
+    }
+
+    @Override
+    public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToEdgeNotificationMsg>> createToEdgeNotificationsMsgConsumer() {
+        return new InMemoryTbQueueConsumer<>(storage, topicService.getEdgeNotificationsTopic(ServiceType.TB_CORE, serviceInfoProvider.getServiceId()).getFullTopicName());
     }
 
     @Override

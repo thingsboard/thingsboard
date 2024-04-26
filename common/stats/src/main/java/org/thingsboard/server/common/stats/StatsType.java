@@ -16,7 +16,13 @@
 package org.thingsboard.server.common.stats;
 
 public enum StatsType {
-    RULE_ENGINE("ruleEngine"), CORE("core"), TRANSPORT("transport"), JS_INVOKE("jsInvoke"), RATE_EXECUTOR("rateExecutor"), EDGE("edge");
+    RULE_ENGINE("ruleEngine"),
+    CORE("core"),
+    TRANSPORT("transport"),
+    JS_INVOKE("jsInvoke"),
+    RATE_EXECUTOR("rateExecutor"),
+    HOUSEKEEPER("housekeeper"),
+    EDGE("edge");
 
     private final String name;
 

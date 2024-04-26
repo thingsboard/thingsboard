@@ -34,12 +34,10 @@ import { DateFormatProcessor, DateFormatSettings } from '@shared/models/widget-s
 import {
   lineSeriesStepTypes,
   lineSeriesStepTypeTranslations,
-  seriesLabelPositions,
-  seriesLabelPositionTranslations,
   timeSeriesLineTypes,
   timeSeriesLineTypeTranslations
 } from '@home/components/widget/lib/chart/time-series-chart.models';
-import { echartsShapes, echartsShapeTranslations } from '@home/components/widget/lib/chart/echarts-widget.models';
+import { chartLabelPositions, chartLabelPositionTranslations, chartShapes, chartShapeTranslations } from '@home/components/widget/lib/chart/chart.models';
 
 @Component({
   selector: 'tb-range-chart-widget-settings',
@@ -65,13 +63,13 @@ export class RangeChartWidgetSettingsComponent extends WidgetSettingsComponent {
 
   timeSeriesLineTypeTranslations = timeSeriesLineTypeTranslations;
 
-  seriesLabelPositions = seriesLabelPositions;
+  chartLabelPositions = chartLabelPositions;
 
-  seriesLabelPositionTranslations = seriesLabelPositionTranslations;
+  chartLabelPositionTranslations = chartLabelPositionTranslations;
 
-  echartsShapes = echartsShapes;
+  chartShapes = chartShapes;
 
-  echartsShapeTranslations = echartsShapeTranslations;
+  chartShapeTranslations = chartShapeTranslations;
 
   legendPositions = legendPositions;
 
@@ -141,6 +139,8 @@ export class RangeChartWidgetSettingsComponent extends WidgetSettingsComponent {
       legendLabelColor: [settings.legendLabelColor, []],
 
       showTooltip: [settings.showTooltip, []],
+      tooltipLabelFont: [settings.tooltipLabelFont, []],
+      tooltipLabelColor: [settings.tooltipLabelColor, []],
       tooltipValueFont: [settings.tooltipValueFont, []],
       tooltipValueColor: [settings.tooltipValueColor, []],
       tooltipShowDate: [settings.tooltipShowDate, []],
@@ -162,7 +162,7 @@ export class RangeChartWidgetSettingsComponent extends WidgetSettingsComponent {
       'showLegend', 'showTooltip', 'tooltipShowDate'];
   }
 
-  protected updateValidators(emitEvent: boolean) {
+  protected updateValidators() {
     const showRangeThresholds: boolean = this.rangeChartWidgetSettingsForm.get('showRangeThresholds').value;
     const fillArea: boolean = this.rangeChartWidgetSettingsForm.get('fillArea').value;
     const showLine: boolean = this.rangeChartWidgetSettingsForm.get('showLine').value;
@@ -232,6 +232,8 @@ export class RangeChartWidgetSettingsComponent extends WidgetSettingsComponent {
     }
 
     if (showTooltip) {
+      this.rangeChartWidgetSettingsForm.get('tooltipLabelFont').enable();
+      this.rangeChartWidgetSettingsForm.get('tooltipLabelColor').enable();
       this.rangeChartWidgetSettingsForm.get('tooltipValueFont').enable();
       this.rangeChartWidgetSettingsForm.get('tooltipValueColor').enable();
       this.rangeChartWidgetSettingsForm.get('tooltipShowDate').enable({emitEvent: false});
@@ -249,6 +251,8 @@ export class RangeChartWidgetSettingsComponent extends WidgetSettingsComponent {
         this.rangeChartWidgetSettingsForm.get('tooltipDateInterval').disable();
       }
     } else {
+      this.rangeChartWidgetSettingsForm.get('tooltipLabelFont').disable();
+      this.rangeChartWidgetSettingsForm.get('tooltipLabelColor').disable();
       this.rangeChartWidgetSettingsForm.get('tooltipValueFont').disable();
       this.rangeChartWidgetSettingsForm.get('tooltipValueColor').disable();
       this.rangeChartWidgetSettingsForm.get('tooltipShowDate').disable({emitEvent: false});

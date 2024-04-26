@@ -222,13 +222,19 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
         validateId(edgeId, id -> INCORRECT_EDGE_ID + id);
 
         Edge edge = edgeDao.findById(tenantId, edgeId.getId());
-
-        deleteEntityRelations(tenantId, edgeId);
-
+        if (edge == null) {
+            return;
+        }
         edgeDao.removeById(tenantId, edgeId.getId());
 
         eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(edgeId).build());
         publishEvictEvent(new EdgeCacheEvictEvent(edge.getTenantId(), edge.getName(), null));
+    }
+
+    @Override
+    @Transactional
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        deleteEdge(tenantId, (EdgeId) id);
     }
 
     @Override
@@ -278,6 +284,11 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
         log.trace("Executing deleteEdgesByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         tenantEdgesRemover.removeEntities(tenantId, tenantId);
+    }
+
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteEdgesByTenantId(tenantId);
     }
 
     @Override

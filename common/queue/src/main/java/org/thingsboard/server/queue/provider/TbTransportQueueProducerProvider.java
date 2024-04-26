@@ -22,6 +22,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
@@ -39,6 +40,7 @@ public class TbTransportQueueProducerProvider implements TbQueueProducerProvider
     private TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> toTbCore;
     private TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> toTbCoreNotifications;
     private TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> toUsageStats;
+    private TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> toHousekeeper;
 
     public TbTransportQueueProducerProvider(TbTransportQueueFactory tbQueueProvider) {
         this.tbQueueProvider = tbQueueProvider;
@@ -50,6 +52,7 @@ public class TbTransportQueueProducerProvider implements TbQueueProducerProvider
         this.toRuleEngine = tbQueueProvider.createRuleEngineMsgProducer();
         this.toUsageStats = tbQueueProvider.createToUsageStatsServiceMsgProducer();
         this.toTbCoreNotifications = tbQueueProvider.createTbCoreNotificationsMsgProducer();
+        this.toHousekeeper = tbQueueProvider.createHousekeeperMsgProducer();
     }
 
     @Override
@@ -95,6 +98,11 @@ public class TbTransportQueueProducerProvider implements TbQueueProducerProvider
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> getTbUsageStatsMsgProducer() {
         return toUsageStats;
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> getHousekeeperMsgProducer() {
+        return toHousekeeper;
     }
 
 }

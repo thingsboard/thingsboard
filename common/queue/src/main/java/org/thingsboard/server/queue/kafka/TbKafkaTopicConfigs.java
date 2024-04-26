@@ -46,6 +46,10 @@ public class TbKafkaTopicConfigs {
     private String vcProperties;
     @Value("${queue.kafka.topic-properties.edge:}")
     private String edgeProperties;
+    @Value("${queue.kafka.topic-properties.housekeeper:}")
+    private String housekeeperProperties;
+    @Value("${queue.kafka.topic-properties.housekeeper-reprocessing:}")
+    private String housekeeperReprocessingProperties;
 
     @Getter
     private Map<String, String> coreConfigs;
@@ -66,6 +70,10 @@ public class TbKafkaTopicConfigs {
     @Getter
     private Map<String, String> vcConfigs;
     @Getter
+    private Map<String, String> housekeeperConfigs;
+    @Getter
+    private Map<String, String> housekeeperReprocessingConfigs;
+    @Getter
     private Map<String, String> edgeConfigs;
 
     @PostConstruct
@@ -81,6 +89,8 @@ public class TbKafkaTopicConfigs {
         jsExecutorResponseConfigs.put(NUM_PARTITIONS_SETTING, "1");
         fwUpdatesConfigs = PropertyUtils.getProps(fwUpdatesProperties);
         vcConfigs = PropertyUtils.getProps(vcProperties);
+        housekeeperConfigs = PropertyUtils.getProps(housekeeperProperties);
+        housekeeperReprocessingConfigs = PropertyUtils.getProps(housekeeperReprocessingProperties);
         edgeConfigs = PropertyUtils.getProps(edgeProperties);
     }
 

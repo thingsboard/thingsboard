@@ -186,8 +186,8 @@
         <div fxLayout="row" fxFlex.lt-md fxLayoutAlign="start center" fxLayoutGap="8px">
           <mat-form-field class="medium-width" fxFlex.lt-md appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="pointLabelPosition">
-              <mat-option *ngFor="let position of seriesLabelPositions" [value]="position">
-                {{ seriesLabelPositionTranslations.get(position) | translate }}
+              <mat-option *ngFor="let position of chartLabelPositions" [value]="position">
+                {{ chartLabelPositionTranslations.get(position) | translate }}
               </mat-option>
             </mat-select>
           </mat-form-field>
@@ -216,8 +216,8 @@
         <div translate>widgets.time-series-chart.series.point.point-shape</div>
         <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
           <mat-select formControlName="pointShape">
-            <mat-option *ngFor="let shape of echartsShapes" [value]="shape">
-              {{ echartsShapeTranslations.get(shape) | translate }}
+            <mat-option *ngFor="let shape of chartShapes" [value]="shape">
+              {{ chartShapeTranslations.get(shape) | translate }}
             </mat-option>
           </mat-select>
         </mat-form-field>
@@ -302,9 +302,23 @@
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
         <div class="tb-form-row space-between">
+          <div>{{ 'tooltip.label' | translate }}</div>
+          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <tb-font-settings formControlName="tooltipLabelFont"
+                              [initialPreviewStyle]="{ color: rangeChartWidgetConfigForm.get('tooltipLabelColor').value }"
+                              previewText="Temperature">
+            </tb-font-settings>
+            <tb-color-input asBoxInput
+                            colorClearButton
+                            formControlName="tooltipLabelColor">
+            </tb-color-input>
+          </div>
+        </div>
+        <div class="tb-form-row space-between">
           <div>{{ 'tooltip.value' | translate }}</div>
           <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
             <tb-font-settings formControlName="tooltipValueFont"
+                              [initialPreviewStyle]="{ color: rangeChartWidgetConfigForm.get('tooltipValueColor').value }"
                               [previewText]="tooltipValuePreviewFn">
             </tb-font-settings>
             <tb-color-input asBoxInput
@@ -312,8 +326,7 @@
                             formControlName="tooltipValueColor">
             </tb-color-input>
           </div>
-        </div>
-        <div class="tb-form-row column-xs">
+        </div>        <div class="tb-form-row column-xs">
           <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="tooltipShowDate">
             {{ 'tooltip.date' | translate }}
           </mat-slide-toggle>
@@ -321,6 +334,7 @@
             <tb-date-format-select fxFlex excludeLastUpdateAgo includeAuto
                                    formControlName="tooltipDateFormat"></tb-date-format-select>
             <tb-font-settings formControlName="tooltipDateFont"
+                              [initialPreviewStyle]="{ color: rangeChartWidgetConfigForm.get('tooltipDateColor').value }"
                               [previewText]="tooltipDatePreviewFn">
             </tb-font-settings>
             <tb-color-input asBoxInput
@@ -353,9 +367,9 @@
       </ng-template>
     </mat-expansion-panel>
   </div>
-  <tb-time-series-chart-animation-settings
+  <tb-chart-animation-settings
       formControlName="animation">
-  </tb-time-series-chart-animation-settings>
+  </tb-chart-animation-settings>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widget-config.card-appearance</div>
     <div class="tb-form-row space-between">

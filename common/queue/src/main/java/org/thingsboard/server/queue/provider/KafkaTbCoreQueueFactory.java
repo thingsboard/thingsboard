@@ -26,6 +26,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToOtaPackageStateServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
@@ -84,6 +85,8 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
     private final TbQueueAdmin notificationAdmin;
     private final TbQueueAdmin fwUpdatesAdmin;
     private final TbQueueAdmin vcAdmin;
+    private final TbQueueAdmin housekeeperAdmin;
+    private final TbQueueAdmin housekeeperReprocessingAdmin;
     private final TbQueueAdmin edgeAdmin;
 
     public KafkaTbCoreQueueFactory(TopicService topicService,
@@ -119,6 +122,8 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
         this.notificationAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getNotificationsConfigs());
         this.fwUpdatesAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getFwUpdatesConfigs());
         this.vcAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getVcConfigs());
+        this.housekeeperAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getHousekeeperConfigs());
+        this.housekeeperReprocessingAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getHousekeeperReprocessingConfigs());
         this.edgeAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getEdgeConfigs());
     }
 
@@ -269,19 +274,6 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
     }
 
     @Override
-    public TbQueueConsumer<TbProtoQueueMsg<ToEdgeMsg>> createEdgeMsgConsumer() {
-        TbKafkaConsumerTemplate.TbKafkaConsumerTemplateBuilder<TbProtoQueueMsg<ToEdgeMsg>> consumerBuilder = TbKafkaConsumerTemplate.builder();
-        consumerBuilder.settings(kafkaSettings);
-        consumerBuilder.topic(topicService.buildTopicName(edgeSettings.getTopic()));
-        consumerBuilder.clientId("tb-core-edge-consumer-" + serviceInfoProvider.getServiceId());
-        consumerBuilder.groupId(topicService.buildTopicName("tb-core-edge-consumer"));
-        consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToEdgeMsg.parseFrom(msg.getData()), msg.getHeaders()));
-        consumerBuilder.admin(edgeAdmin);
-        consumerBuilder.statsService(consumerStatsService);
-        return consumerBuilder.build();
-    }
-
-    @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>> createToOtaPackageStateServiceMsgConsumer() {
         TbKafkaConsumerTemplate.TbKafkaConsumerTemplateBuilder<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>> consumerBuilder = TbKafkaConsumerTemplate.builder();
         consumerBuilder.settings(kafkaSettings);
@@ -322,6 +314,65 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
         requestBuilder.defaultTopic(topicService.buildTopicName(vcSettings.getTopic()));
         requestBuilder.admin(vcAdmin);
         return requestBuilder.build();
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> createHousekeeperMsgProducer() {
+        return TbKafkaProducerTemplate.<TbProtoQueueMsg<ToHousekeeperServiceMsg>>builder()
+                .settings(kafkaSettings)
+                .clientId("tb-core-housekeeper-producer-" + serviceInfoProvider.getServiceId())
+                .defaultTopic(topicService.buildTopicName(coreSettings.getHousekeeperTopic()))
+                .admin(housekeeperAdmin)
+                .build();
+    }
+
+    @Override
+    public TbQueueConsumer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> createHousekeeperMsgConsumer() {
+        return TbKafkaConsumerTemplate.<TbProtoQueueMsg<ToHousekeeperServiceMsg>>builder()
+                .settings(kafkaSettings)
+                .topic(topicService.buildTopicName(coreSettings.getHousekeeperTopic()))
+                .clientId("tb-core-housekeeper-consumer-" + serviceInfoProvider.getServiceId())
+                .groupId(topicService.buildTopicName("tb-core-housekeeper-consumer"))
+                .decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToHousekeeperServiceMsg.parseFrom(msg.getData()), msg.getHeaders()))
+                .admin(housekeeperAdmin)
+                .statsService(consumerStatsService)
+                .build();
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> createHousekeeperReprocessingMsgProducer() {
+        return TbKafkaProducerTemplate.<TbProtoQueueMsg<ToHousekeeperServiceMsg>>builder()
+                .settings(kafkaSettings)
+                .clientId("tb-core-housekeeper-reprocessing-producer-" + serviceInfoProvider.getServiceId())
+                .defaultTopic(topicService.buildTopicName(coreSettings.getHousekeeperReprocessingTopic()))
+                .admin(housekeeperReprocessingAdmin)
+                .build();
+    }
+
+    @Override
+    public TbQueueConsumer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> createHousekeeperReprocessingMsgConsumer() {
+        return TbKafkaConsumerTemplate.<TbProtoQueueMsg<ToHousekeeperServiceMsg>>builder()
+                .settings(kafkaSettings)
+                .topic(topicService.buildTopicName(coreSettings.getHousekeeperReprocessingTopic()))
+                .clientId("tb-core-housekeeper-reprocessing-consumer-" + serviceInfoProvider.getServiceId())
+                .groupId(topicService.buildTopicName("tb-core-housekeeper-reprocessing-consumer"))
+                .decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToHousekeeperServiceMsg.parseFrom(msg.getData()), msg.getHeaders()))
+                .admin(housekeeperReprocessingAdmin)
+                .statsService(consumerStatsService)
+                .build();
+    }
+
+    @Override
+    public TbQueueConsumer<TbProtoQueueMsg<ToEdgeMsg>> createEdgeMsgConsumer() {
+        TbKafkaConsumerTemplate.TbKafkaConsumerTemplateBuilder<TbProtoQueueMsg<ToEdgeMsg>> consumerBuilder = TbKafkaConsumerTemplate.builder();
+        consumerBuilder.settings(kafkaSettings);
+        consumerBuilder.topic(topicService.buildTopicName(edgeSettings.getTopic()));
+        consumerBuilder.clientId("tb-core-edge-consumer-" + serviceInfoProvider.getServiceId());
+        consumerBuilder.groupId(topicService.buildTopicName("tb-core-edge-consumer"));
+        consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToEdgeMsg.parseFrom(msg.getData()), msg.getHeaders()));
+        consumerBuilder.admin(edgeAdmin);
+        consumerBuilder.statsService(consumerStatsService);
+        return consumerBuilder.build();
     }
 
     @Override
