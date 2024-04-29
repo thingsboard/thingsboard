@@ -395,7 +395,7 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
         ArgumentCaptor<Throwable> captor = ArgumentCaptor.forClass(Throwable.class);
         verify(ctxMock).tellFailure(eq(msg), captor.capture());
         assertThat(captor.getValue()).isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Forwarding messages to the current rule chain is not allowed!");
+                .hasMessage("Forwarding messages to the current rule chain is not allowed!");
     }
 
     private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
