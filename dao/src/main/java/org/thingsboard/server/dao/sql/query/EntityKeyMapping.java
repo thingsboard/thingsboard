@@ -344,8 +344,7 @@ public class EntityKeyMapping {
                 .collect(Collectors.joining(" AND "));
     }
 
-    public static List<EntityKeyMapping> prepareKeyMapping(EntityDataQuery query) {
-        EntityType entityType = resolveEntityType(query.getEntityFilter());
+    public static List<EntityKeyMapping> prepareKeyMapping(EntityType entityType, EntityDataQuery query) {
         EntityFilterType entityFilterType = query.getEntityFilter().getType();
 
         List<EntityKey> entityFields = query.getEntityFields() != null ? query.getEntityFields() : Collections.emptyList();
