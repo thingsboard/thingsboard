@@ -115,7 +115,6 @@ public class DefaultJwtSettingsService implements JwtSettingsService {
         return this.jwtSettings;
     }
 
-    @Deprecated(since = "3.7.0", forRemoval = true)
     private JwtSettings getJwtSettingsFromYml() {
         return new JwtSettings(this.tokenExpirationTime, this.refreshTokenExpTime, this.tokenIssuer, this.tokenSigningKey);
     }
