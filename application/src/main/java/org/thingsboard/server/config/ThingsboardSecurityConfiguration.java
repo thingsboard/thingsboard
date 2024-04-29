@@ -202,12 +202,7 @@ public class ThingsboardSecurityConfiguration {
     @Bean
     @Order(1)
     public SecurityFilterChain noAuthFilterChain(HttpSecurity http) throws Exception {
-        http.headers(headers -> headers
-                        .cacheControl(config -> {})
-                        .frameOptions(config -> {}).disable())
-                .cors(cors -> {})
-                .csrf(AbstractHttpConfigurer::disable)
-                .exceptionHandling(config -> {})
+        configureCommonHttpSecurity(http)
                 .securityMatchers(config -> config
                         .requestMatchers(
                                 DEVICE_API_ENTRY_POINT, // Device HTTP Transport API
@@ -225,21 +220,8 @@ public class ThingsboardSecurityConfiguration {
     @Bean
     @Order(2)
     SecurityFilterChain authFilterChain(HttpSecurity http) throws Exception {
-        http.headers(headers -> headers
-                        .cacheControl(config -> {})
-                        .frameOptions(config -> {}).disable())
-                .cors(cors -> {})
-                .csrf(AbstractHttpConfigurer::disable)
-                .exceptionHandling(config -> {})
-                .sessionManagement(config -> config.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .securityMatcher(TOKEN_BASED_AUTH_ENTRY_POINT) // Protected API End-points
-                .authorizeHttpRequests(config -> config.anyRequest().authenticated())
-                .exceptionHandling(config -> config.accessDeniedHandler(restAccessDeniedHandler))
-                .addFilterBefore(buildRestLoginProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(buildRestPublicLoginProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(buildJwtTokenAuthenticationProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(buildRefreshTokenProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(rateLimitProcessingFilter, UsernamePasswordAuthenticationFilter.class);
+        configureCommonHttpSecurity(http)
+                .securityMatcher(TOKEN_BASED_AUTH_ENTRY_POINT); // Protected API End-points
         if (oauth2Configuration != null) {
             http.oauth2Login(login -> login
                     .authorizationEndpoint(config -> config
@@ -251,6 +233,21 @@ public class ThingsboardSecurityConfiguration {
                     .failureHandler(oauth2AuthenticationFailureHandler));
         }
         return http.build();
+    }
+
+    private HttpSecurity configureCommonHttpSecurity(HttpSecurity http) throws Exception {
+        return http.headers(headers -> headers
+                        .cacheControl(config -> {})
+                        .frameOptions(config -> {}).disable())
+                .cors(cors -> {})
+                .csrf(AbstractHttpConfigurer::disable)
+                .exceptionHandling(config -> {})
+                .sessionManagement(config -> config.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(buildRestLoginProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(buildRestPublicLoginProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(buildJwtTokenAuthenticationProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(buildRefreshTokenProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(rateLimitProcessingFilter, UsernamePasswordAuthenticationFilter.class);
     }
 
     @Bean
