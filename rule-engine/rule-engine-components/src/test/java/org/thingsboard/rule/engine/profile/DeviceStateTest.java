@@ -16,8 +16,8 @@
 package org.thingsboard.rule.engine.profile;
 
 import com.google.common.util.concurrent.Futures;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
@@ -69,7 +69,7 @@ public class DeviceStateTest {
 
     private TbContext ctx;
 
-    @Before
+    @BeforeEach
     public void beforeEach() {
         ctx = mock(TbContext.class);
 

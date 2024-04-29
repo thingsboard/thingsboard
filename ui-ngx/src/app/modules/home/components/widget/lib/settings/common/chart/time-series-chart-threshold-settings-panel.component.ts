@@ -25,15 +25,11 @@ import {
   timeSeriesThresholdLabelPositions,
   timeSeriesThresholdLabelPositionTranslations
 } from '@home/components/widget/lib/chart/time-series-chart.models';
-import {
-  EChartsShape,
-  echartsShapes,
-  echartsShapeTranslations
-} from '@home/components/widget/lib/chart/echarts-widget.models';
 import { merge } from 'rxjs';
 import { WidgetConfig } from '@shared/models/widget.models';
 import { formatValue, isDefinedAndNotNull } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { ChartShape, chartShapes, chartShapeTranslations } from '@home/components/widget/lib/chart/chart.models';
 
 @Component({
   selector: 'tb-time-series-chart-threshold-settings-panel',
@@ -48,9 +44,9 @@ export class TimeSeriesChartThresholdSettingsPanelComponent implements OnInit {
 
   timeSeriesLineTypeTranslations = timeSeriesLineTypeTranslations;
 
-  echartsShapes = echartsShapes;
+  chartShapes = chartShapes;
 
-  echartsShapeTranslations = echartsShapeTranslations;
+  chartShapeTranslations = chartShapeTranslations;
 
   timeSeriesThresholdLabelPositions = timeSeriesThresholdLabelPositions;
 
@@ -127,8 +123,8 @@ export class TimeSeriesChartThresholdSettingsPanelComponent implements OnInit {
   private updateValidators() {
     const showLabel: boolean = this.thresholdSettingsFormGroup.get('showLabel').value;
     const enableLabelBackground: boolean = this.thresholdSettingsFormGroup.get('enableLabelBackground').value;
-    const startSymbol: EChartsShape = this.thresholdSettingsFormGroup.get('startSymbol').value;
-    const endSymbol: EChartsShape = this.thresholdSettingsFormGroup.get('endSymbol').value;
+    const startSymbol: ChartShape = this.thresholdSettingsFormGroup.get('startSymbol').value;
+    const endSymbol: ChartShape = this.thresholdSettingsFormGroup.get('endSymbol').value;
     if (showLabel) {
       this.thresholdSettingsFormGroup.get('labelPosition').enable({emitEvent: false});
       this.thresholdSettingsFormGroup.get('labelFont').enable({emitEvent: false});
@@ -146,12 +142,12 @@ export class TimeSeriesChartThresholdSettingsPanelComponent implements OnInit {
       this.thresholdSettingsFormGroup.get('enableLabelBackground').disable({emitEvent: false});
       this.thresholdSettingsFormGroup.get('labelBackground').disable({emitEvent: false});
     }
-    if (startSymbol === EChartsShape.none) {
+    if (startSymbol === ChartShape.none) {
       this.thresholdSettingsFormGroup.get('startSymbolSize').disable({emitEvent: false});
     } else {
       this.thresholdSettingsFormGroup.get('startSymbolSize').enable({emitEvent: false});
     }
-    if (endSymbol === EChartsShape.none) {
+    if (endSymbol === ChartShape.none) {
       this.thresholdSettingsFormGroup.get('endSymbolSize').disable({emitEvent: false});
     } else {
       this.thresholdSettingsFormGroup.get('endSymbolSize').enable({emitEvent: false});

@@ -1562,3 +1562,16 @@ message LifecycleEventProto {
   bool success = 7;
   string error = 8;
 }
+
+message ToHousekeeperServiceMsg {
+  HousekeeperTaskProto task = 1;
+}
+
+message HousekeeperTaskProto {
+  string value = 1;
+  int64 ts = 2;
+
+  // reprocessing
+  int32 attempt = 50;
+  repeated string errors = 51;
+}

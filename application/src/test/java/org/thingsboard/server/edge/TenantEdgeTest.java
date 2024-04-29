@@ -40,7 +40,7 @@ public class TenantEdgeTest extends AbstractEdgeTest {
         // updated edge tenant
         savedTenant.setTitle("Updated Title for Tenant Edge Test");
         edgeImitator.expectMessageAmount(2); // expect tenant and tenant profile update msg
-        savedTenant = doPost("/api/tenant", savedTenant, Tenant.class);
+        savedTenant = saveTenant(savedTenant);
         Assert.assertTrue(edgeImitator.waitForMessages());
         Optional<TenantUpdateMsg> tenantUpdateMsgOpt = edgeImitator.findMessageByType(TenantUpdateMsg.class);
         Assert.assertTrue(tenantUpdateMsgOpt.isPresent());
@@ -61,7 +61,7 @@ public class TenantEdgeTest extends AbstractEdgeTest {
         TenantProfile tenantProfile = createTenantProfile();
         savedTenant.setTenantProfileId(tenantProfile.getId());
         edgeImitator.expectMessageAmount(2); // expect tenant and tenant profile update msg
-        savedTenant = doPost("/api/tenant", savedTenant, Tenant.class);
+        savedTenant = saveTenant(savedTenant);
         Assert.assertTrue(edgeImitator.waitForMessages());
         tenantUpdateMsgOpt = edgeImitator.findMessageByType(TenantUpdateMsg.class);
         Assert.assertTrue(tenantUpdateMsgOpt.isPresent());

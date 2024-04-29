@@ -61,7 +61,7 @@ public class TbCoapDtlsSettings {
     @Value("${transport.coap.dtls.retransmission_timeout:9000}")
     private int dtlsRetransmissionTimeout;
 
-    @Value("${transport.coap.dtls.connection_id_length}")
+    @Value("${transport.coap.dtls.connection_id_length:}")
     private Integer cIdLength;
 
     @Bean
