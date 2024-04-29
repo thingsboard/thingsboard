@@ -125,6 +125,9 @@ public class EntityStateSourcingListener {
     public void handleEvent(DeleteEntityEvent<?> event) {
         TenantId tenantId = event.getTenantId();
         EntityId entityId = event.getEntityId();
+        if (entityId == null) {
+            return;
+        }
         EntityType entityType = entityId.getEntityType();
         if (!tenantId.isSysTenantId() && entityType != EntityType.TENANT  && !tenantService.tenantExists(tenantId)) {
             log.debug("[{}] Ignoring DeleteEntityEvent because tenant does not exist: {}", tenantId, event);
