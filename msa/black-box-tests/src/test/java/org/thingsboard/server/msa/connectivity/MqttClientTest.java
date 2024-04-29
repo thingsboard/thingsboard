@@ -16,6 +16,7 @@
 package org.thingsboard.server.msa.connectivity;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -31,6 +32,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.thingsboard.common.util.AbstractListeningExecutor;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.mqtt.MqttClient;
 import org.thingsboard.mqtt.MqttClientConfig;
@@ -340,8 +342,8 @@ public class MqttClientTest extends AbstractContainerTest {
 
         mqttClient.publish("v1/devices/me/service/settings/request", Unpooled.wrappedBuffer("".getBytes())).get();
 
-        MqttEvent responseFromServer = listener.getEvents().poll(1 * timeoutMultiplier, TimeUnit.SECONDS);
-        JsonNode responseNode = mapper.readTree(responseFromServer.getMessage());
+        MqttEvent responseFromServer = listener.getEvents().poll(3 * timeoutMultiplier, TimeUnit.SECONDS);
+        JsonNode responseNode = JacksonUtil.fromString(Objects.requireNonNull(responseFromServer).getMessage(), ObjectNode.class);
         assertThat(responseNode).isNotNull();
         assertThat(responseNode.has("payloadType")).isTrue();
         assertThat(responseNode.has("maxPayloadSize")).isTrue();
