@@ -16,7 +16,7 @@
     <logger name="org.testcontainers" level="INFO" />
     <logger name="org.eclipse.leshan" level="INFO"/>
     <logger name="org.thingsboard.server.controller.AbstractWebTest" level="INFO"/>
-
+    <logger name="org.thingsboard.server.service.script" level="INFO"/>
 
     <!-- mute TelemetryEdgeSqlTest that causes a lot of randomly generated errors -->
     <logger name="org.thingsboard.server.service.edge.rpc.EdgeGrpcSession" level="OFF"/>
@@ -31,12 +31,16 @@
     <!--    To reduce logs -->
     <logger name="org.apache.catalina.loader.WebappClassLoaderBase" level="ERROR" />
     <logger name="org.thingsboard.server.service.queue.DefaultTbClusterService" level="ERROR" />
+    <logger name="org.thingsboard.server.service.security.auth.jwt.settings.DefaultJwtSettingsService" level="ERROR" />
 
     <!-- Coap client context debug for the test scope -->
     <!--    <logger name="org.thingsboard.server.transport.coap.client.DefaultCoapClientContext" level="TRACE" />-->
 
     <!-- Device actor message processor debug for the test scope -->
     <!--    <logger name="org.thingsboard.server.actors.device.DeviceActorMessageProcessor" level="DEBUG" />-->
+    <!--    <logger name="org.thingsboard.server.transport.lwm2m.server.store.TbInMemoryRegistrationStore" level="TRACE"/>-->
+    <!--    <logger name="org.thingsboard.server.transport.lwm2m.server.store.TbLwM2mRedisRegistrationStore" level="TRACE"/>-->
+    <!--    <logger name="org.thingsboard.server.transport.lwm2m.security.diffPort" level="TRACE"/>-->
 
     <root level="WARN">
         <appender-ref ref="console"/>

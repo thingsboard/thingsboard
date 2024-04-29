@@ -31,9 +31,9 @@ import java.util.List;
 @NoArgsConstructor
 public class TelemetryEntityView implements Serializable {
 
-    @Schema(required = true, description = "List of time-series data keys to expose", example = "temperature, humidity")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of time-series data keys to expose", example = "temperature, humidity")
     private List<String> timeseries;
-    @Schema(required = true, description = "JSON object with attributes to expose")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "JSON object with attributes to expose")
     private AttributesEntityView attributes;
 
     public TelemetryEntityView(List<String> timeseries, AttributesEntityView attributes) {

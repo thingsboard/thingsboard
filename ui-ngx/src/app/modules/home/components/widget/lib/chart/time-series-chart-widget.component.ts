@@ -27,7 +27,10 @@ import {
   ViewChild,
   ViewEncapsulation
 } from '@angular/core';
-import { timeSeriesChartKeyDefaultSettings, TimeSeriesChartKeySettings } from '@home/components/widget/lib/chart/time-series-chart.models';
+import {
+  timeSeriesChartKeyDefaultSettings,
+  TimeSeriesChartKeySettings
+} from '@home/components/widget/lib/chart/time-series-chart.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { Observable } from 'rxjs';
 import { backgroundStyle, ComponentStyle, overlayStyle, textStyle } from '@shared/models/widget-settings.models';
@@ -73,8 +76,10 @@ export class TimeSeriesChartWidgetComponent implements OnInit, OnDestroy, AfterV
   overlayEnabled: boolean;
   padding: string;
 
+  legendColumnTitleStyle: ComponentStyle;
   legendLabelStyle: ComponentStyle;
   disabledLegendLabelStyle: ComponentStyle;
+  legendValueStyle: ComponentStyle;
 
   displayLegendValues = false;
 
@@ -117,9 +122,13 @@ export class TimeSeriesChartWidgetComponent implements OnInit, OnDestroy, AfterV
     if (this.showLegend) {
       this.horizontalLegendPosition = [LegendPosition.left, LegendPosition.right].includes(this.legendConfig.position);
       this.legendClass = `legend-${this.legendConfig.position}`;
+      this.legendColumnTitleStyle = textStyle(this.settings.legendColumnTitleFont);
+      this.legendColumnTitleStyle.color = this.settings.legendColumnTitleColor;
       this.legendLabelStyle = textStyle(this.settings.legendLabelFont);
       this.disabledLegendLabelStyle = textStyle(this.settings.legendLabelFont);
       this.legendLabelStyle.color = this.settings.legendLabelColor;
+      this.legendValueStyle = textStyle(this.settings.legendValueFont);
+      this.legendValueStyle.color = this.settings.legendValueColor;
       this.displayLegendValues = this.legendConfig.showMin || this.legendConfig.showMax ||
         this.legendConfig.showAvg || this.legendConfig.showTotal || this.legendConfig.showLatest;
     }

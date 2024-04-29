@@ -50,7 +50,7 @@ public final class TenantId extends UUIDBased implements EntityId {
         return this.equals(SYS_TENANT_ID);
     }
 
-    @Schema(required = true, description = "string", example = "TENANT", allowableValues = "TENANT")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "TENANT", allowableValues = "TENANT")
     @Override
     public EntityType getEntityType() {
         return EntityType.TENANT;

@@ -1,0 +1,37 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div [formGroup]="keyRowFormGroup" class="tb-form-table-row tb-comparison-key-row">
+  <mat-checkbox class="tb-show-field" formControlName="showValuesForComparison"></mat-checkbox>
+  <tb-data-key-input
+      [editable]="false"
+      [removable]="false"
+      [datasourceType]="datasourceType"
+      [formControl]="keyFormControl">
+  </tb-data-key-input>
+  <div class="tb-label-field">
+    <mat-form-field class="tb-inline-field" appearance="outline" subscriptSizing="dynamic">
+      <input matInput formControlName="comparisonValuesLabel" placeholder="{{ 'widgets.time-series-chart.comparison.comparison-values-label-auto' | translate }}">
+    </mat-form-field>
+  </div>
+  <div class="tb-color-field">
+    <tb-color-input asBoxInput
+                    colorClearButton
+                    formControlName="color">
+    </tb-color-input>
+  </div>
+</div>

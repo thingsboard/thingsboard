@@ -28,8 +28,11 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.type.CollectionType;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.collect.Lists;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.KvEntry;
 
@@ -37,6 +40,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -50,24 +55,33 @@ import java.util.regex.Pattern;
 /**
  * Created by Valerii Sosliuk on 5/12/2017.
  */
+@Slf4j
 public class JacksonUtil {
 
-    public static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    public static final ObjectMapper OBJECT_MAPPER = JsonMapper.builder()
+            .addModule(new Jdk8Module())
+            .build();
     public static final ObjectMapper PRETTY_SORTED_JSON_MAPPER = JsonMapper.builder()
+            .addModule(new Jdk8Module())
             .enable(SerializationFeature.INDENT_OUTPUT)
             .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
             .configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)
             .build();
     public static ObjectMapper ALLOW_UNQUOTED_FIELD_NAMES_MAPPER = JsonMapper.builder()
+            .addModule(new Jdk8Module())
             .configure(JsonWriteFeature.QUOTE_FIELD_NAMES.mappedFeature(), false)
             .configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true)
             .build();
     public static final ObjectMapper IGNORE_UNKNOWN_PROPERTIES_JSON_MAPPER = JsonMapper.builder()
+            .addModule(new Jdk8Module())
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .build();
 
     public static ObjectMapper getObjectMapperWithJavaTimeModule() {
-        return new ObjectMapper().registerModule(new JavaTimeModule());
+        return JsonMapper.builder()
+                .addModule(new Jdk8Module())
+                .addModule(new JavaTimeModule())
+                .build();
     }
 
     public static <T> T convertValue(Object fromValue, Class<T> toValueType) {
@@ -122,7 +136,7 @@ public class JacksonUtil {
         try {
             return bytes != null ? OBJECT_MAPPER.readValue(bytes, clazz) : null;
         } catch (IOException e) {
-            throw new IllegalArgumentException("The given string value cannot be transformed to Json object: " + Arrays.toString(bytes), e);
+            throw new IllegalArgumentException("The given byte[] value cannot be transformed to Json object:" + Arrays.toString(bytes), e);
         }
     }
 
@@ -150,12 +164,35 @@ public class JacksonUtil {
         }
     }
 
+    public static String writeValueAsString(Object value) {
+        try {
+            return OBJECT_MAPPER.writeValueAsString(value);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("The given Json object value: "
+                    + value + " cannot be transformed to a String", e);
+        }
+    }
+
     public static String toPrettyString(Object o) {
         try {
             return PRETTY_SORTED_JSON_MAPPER.writeValueAsString(o);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static String toPlainText(String data) {
+        if (data == null) {
+            return null;
+        }
+        if (data.startsWith("\"") && data.endsWith("\"") && data.length() >= 2) {
+            final String dataBefore = data;
+            try {
+                data = JacksonUtil.fromString(data, String.class);
+            } catch (Exception ignored) {}
+            log.trace("Trimming double quotes. Before trim: [{}], after trim: [{}]", dataBefore, data);
+        }
+        return data;
     }
 
     public static <T> T treeToValue(JsonNode node, Class<T> clazz) {
@@ -178,6 +215,38 @@ public class JacksonUtil {
             return mapper.readTree(value);
         } catch (IOException e) {
             throw new IllegalArgumentException(e);
+        }
+    }
+
+    public static <T> T readValue(String file, CollectionType clazz) {
+        try {
+            return OBJECT_MAPPER.readValue(file, clazz);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Can't read file: " + file, e);
+        }
+    }
+
+    public static <T> T readValue(File file, TypeReference<T> clazz) {
+        try {
+            return OBJECT_MAPPER.readValue(file, clazz);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Can't read file: " + file, e);
+        }
+    }
+
+    public static <T> T readValue(File file, Class<T> clazz) {
+        try {
+            return OBJECT_MAPPER.readValue(file, clazz);
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Can't read file: " + file, e);
+        }
+    }
+
+    public static JsonNode toJsonNode(Path file) {
+        try {
+            return OBJECT_MAPPER.readTree(Files.readAllBytes(file));
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Can't read file: " + file, e);
         }
     }
 
@@ -224,7 +293,6 @@ public class JacksonUtil {
         }
     }
 
-
     public static JsonNode getSafely(JsonNode node, String... path) {
         if (node == null) {
             return null;
@@ -237,6 +305,10 @@ public class JacksonUtil {
             }
         }
         return node;
+    }
+
+    public static ObjectNode asObject(JsonNode node) {
+        return node != null && node.isObject() ? ((ObjectNode) node) : newObjectNode();
     }
 
     public static void replaceUuidsRecursively(JsonNode node, Set<String> skippedRootFields, Pattern includedFieldsPattern, UnaryOperator<UUID> replacer, boolean root) {

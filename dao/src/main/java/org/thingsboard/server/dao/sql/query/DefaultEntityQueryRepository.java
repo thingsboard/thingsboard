@@ -244,6 +244,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         entityTableMap.put(EntityType.DEVICE_PROFILE, "device_profile");
         entityTableMap.put(EntityType.ASSET_PROFILE, "asset_profile");
         entityTableMap.put(EntityType.TENANT_PROFILE, "tenant_profile");
+        entityTableMap.put(EntityType.QUEUE_STATS, "queue_stats");
 
         entityNameColumns.put(EntityType.DEVICE, "name");
         entityNameColumns.put(EntityType.CUSTOMER, "title");
@@ -262,6 +263,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         entityNameColumns.put(EntityType.TB_RESOURCE, "search_text");
         entityNameColumns.put(EntityType.EDGE, "name");
         entityNameColumns.put(EntityType.QUEUE, "name");
+        entityNameColumns.put(EntityType.QUEUE_STATS, "queue_name");
     }
 
     public static EntityType[] RELATION_QUERY_ENTITY_TYPES = new EntityType[]{

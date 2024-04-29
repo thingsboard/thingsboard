@@ -16,12 +16,11 @@
 package org.thingsboard.server.transport.http;
 
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +30,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -56,6 +56,7 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.GetOtaPackageResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionCloseNotificationProto;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
@@ -184,7 +185,7 @@ public class DeviceApiController implements TbTransportService {
         transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
                     TransportService transportService = transportContext.getTransportService();
-                    transportService.process(sessionInfo, JsonConverter.convertToAttributesProto(new JsonParser().parse(json)),
+                    transportService.process(sessionInfo, JsonConverter.convertToAttributesProto(JsonParser.parseString(json)),
                             new HttpOkCallback(responseWriter));
                 }));
         return responseWriter;
@@ -204,7 +205,7 @@ public class DeviceApiController implements TbTransportService {
         transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
                     TransportService transportService = transportContext.getTransportService();
-                    transportService.process(sessionInfo, JsonConverter.convertToTelemetryProto(new JsonParser().parse(json)),
+                    transportService.process(sessionInfo, JsonConverter.convertToTelemetryProto(JsonParser.parseString(json)),
                             new HttpOkCallback(responseWriter));
                 }));
         return responseWriter;
@@ -300,7 +301,7 @@ public class DeviceApiController implements TbTransportService {
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<ResponseEntity>();
         transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
-                    JsonObject request = new JsonParser().parse(json).getAsJsonObject();
+                    JsonObject request = JsonParser.parseString(json).getAsJsonObject();
                     TransportService transportService = transportContext.getTransportService();
                     transportService.registerSyncSession(sessionInfo,
                             new HttpSessionListener(responseWriter, transportContext.getTransportService(), sessionInfo),
@@ -429,21 +430,16 @@ public class DeviceApiController implements TbTransportService {
                             .setDeviceIdMSB(sessionInfo.getDeviceIdMSB())
                             .setDeviceIdLSB(sessionInfo.getDeviceIdLSB())
                             .setType(firmwareType.name()).build();
-                    transportContext.getTransportService().process(sessionInfo, requestMsg, new GetOtaPackageCallback(responseWriter, title, version, size, chunk));
+                    transportContext.getTransportService().process(sessionInfo, requestMsg, new GetOtaPackageCallback(transportContext, responseWriter, title, version, size, chunk));
                 }));
         return responseWriter;
     }
 
-    private static class DeviceAuthCallback implements TransportServiceCallback<ValidateDeviceCredentialsResponse> {
+    @RequiredArgsConstructor
+    static class DeviceAuthCallback implements TransportServiceCallback<ValidateDeviceCredentialsResponse> {
         private final TransportContext transportContext;
         private final DeferredResult<ResponseEntity> responseWriter;
         private final Consumer<SessionInfoProto> onSuccess;
-
-        DeviceAuthCallback(TransportContext transportContext, DeferredResult<ResponseEntity> responseWriter, Consumer<SessionInfoProto> onSuccess) {
-            this.transportContext = transportContext;
-            this.responseWriter = responseWriter;
-            this.onSuccess = onSuccess;
-        }
 
         @Override
         public void onSuccess(ValidateDeviceCredentialsResponse msg) {
@@ -456,17 +452,20 @@ public class DeviceApiController implements TbTransportService {
 
         @Override
         public void onError(Throwable e) {
-            log.warn("Failed to process request", e);
-            responseWriter.setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
+            String body = null;
+            if (e instanceof HttpMessageNotReadableException || e instanceof JsonParseException) {
+                body = e.getMessage();
+                log.debug("Failed to process request in DeviceAuthCallback: {}", body);
+            } else {
+                log.warn("Failed to process request in DeviceAuthCallback", e);
+            }
+            responseWriter.setResult(new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR));
         }
     }
 
-    private static class DeviceProvisionCallback implements TransportServiceCallback<ProvisionDeviceResponseMsg> {
+    @RequiredArgsConstructor
+    static class DeviceProvisionCallback implements TransportServiceCallback<ProvisionDeviceResponseMsg> {
         private final DeferredResult<ResponseEntity> responseWriter;
-
-        DeviceProvisionCallback(DeferredResult<ResponseEntity> responseWriter) {
-            this.responseWriter = responseWriter;
-        }
 
         @Override
         public void onSuccess(ProvisionDeviceResponseMsg msg) {
@@ -475,25 +474,25 @@ public class DeviceApiController implements TbTransportService {
 
         @Override
         public void onError(Throwable e) {
-            log.warn("Failed to process request", e);
-            responseWriter.setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
+            String body = null;
+            if (e instanceof HttpMessageNotReadableException || e instanceof JsonParseException) {
+                body = e.getMessage();
+                log.debug("Failed to process request in DeviceProvisionCallback: {}", body);
+            } else {
+                log.warn("Failed to process request in DeviceProvisionCallback", e);
+            }
+            responseWriter.setResult(new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR));
         }
     }
 
-    private class GetOtaPackageCallback implements TransportServiceCallback<TransportProtos.GetOtaPackageResponseMsg> {
+    @RequiredArgsConstructor
+    static class GetOtaPackageCallback implements TransportServiceCallback<GetOtaPackageResponseMsg> {
+        private final TransportContext transportContext;
         private final DeferredResult<ResponseEntity> responseWriter;
         private final String title;
         private final String version;
-        private final int chuckSize;
-        private final int chuck;
-
-        GetOtaPackageCallback(DeferredResult<ResponseEntity> responseWriter, String title, String version, int chuckSize, int chuck) {
-            this.responseWriter = responseWriter;
-            this.title = title;
-            this.version = version;
-            this.chuckSize = chuckSize;
-            this.chuck = chuck;
-        }
+        private final int chunkSize;
+        private final int chunk;
 
         @Override
         public void onSuccess(TransportProtos.GetOtaPackageResponseMsg otaPackageResponseMsg) {
@@ -501,7 +500,7 @@ public class DeviceApiController implements TbTransportService {
                 responseWriter.setResult(new ResponseEntity<>(HttpStatus.NOT_FOUND));
             } else if (title.equals(otaPackageResponseMsg.getTitle()) && version.equals(otaPackageResponseMsg.getVersion())) {
                 String otaPackageId = new UUID(otaPackageResponseMsg.getOtaPackageIdMSB(), otaPackageResponseMsg.getOtaPackageIdLSB()).toString();
-                ByteArrayResource resource = new ByteArrayResource(transportContext.getOtaPackageDataCache().get(otaPackageId, chuckSize, chuck));
+                ByteArrayResource resource = new ByteArrayResource(transportContext.getOtaPackageDataCache().get(otaPackageId, chunkSize, chunk));
                 ResponseEntity<ByteArrayResource> response = ResponseEntity.ok()
                         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + otaPackageResponseMsg.getFileName())
                         .header("x-filename", otaPackageResponseMsg.getFileName())
@@ -516,8 +515,14 @@ public class DeviceApiController implements TbTransportService {
 
         @Override
         public void onError(Throwable e) {
-            log.warn("Failed to process request", e);
-            responseWriter.setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
+            String body = null;
+            if (e instanceof HttpMessageNotReadableException || e instanceof JsonParseException) {
+                body = e.getMessage();
+                log.debug("Failed to process request in GetOtaPackageCallback: {}", body);
+            } else {
+                log.warn("Failed to process request in GetOtaPackageCallback", e);
+            }
+            responseWriter.setResult(new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR));
         }
     }
 

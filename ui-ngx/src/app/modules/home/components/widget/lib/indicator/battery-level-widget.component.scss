@@ -65,6 +65,8 @@
     .tb-battery-level-box {
       display: flex;
       align-items: center;
+      min-height: 0;
+      max-height: 100%;
       .tb-battery-level-rectangle {
         width: 100%;
         height: 100%;

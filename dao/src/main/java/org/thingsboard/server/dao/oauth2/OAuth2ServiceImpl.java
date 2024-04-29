@@ -16,7 +16,7 @@
 package org.thingsboard.server.dao.oauth2;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.BaseData;
@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.oauth2.SchemeType;
 import org.thingsboard.server.common.data.oauth2.TenantNameStrategyType;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 
@@ -58,6 +59,7 @@ import static org.thingsboard.server.dao.service.Validator.validateString;
 @Slf4j
 @Service
 public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Service {
+
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String INCORRECT_CLIENT_REGISTRATION_ID = "Incorrect clientRegistrationId ";
     public static final String INCORRECT_DOMAIN_NAME = "Incorrect domainName ";
@@ -84,7 +86,7 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
         } catch (IllegalArgumentException e){
             throw new IncorrectParameterException(INCORRECT_DOMAIN_SCHEME);
         }
-        validateString(domainName, INCORRECT_DOMAIN_NAME + domainName);
+        validateString(domainName, dn -> INCORRECT_DOMAIN_NAME + dn);
         return oauth2RegistrationDao.findEnabledByDomainSchemesDomainNameAndPkgNameAndPlatformType(
                 Arrays.asList(domainScheme, SchemeType.MIXED), domainName, pkgName, platformType)
                 .stream()
@@ -116,6 +118,7 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
                 });
             }
         });
+        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(TenantId.SYS_TENANT_ID).entity(oauth2Info).build());
     }
 
     @Override
@@ -123,7 +126,8 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
         log.trace("Executing findOAuth2Info");
         OAuth2Info oauth2Info = new OAuth2Info();
         List<OAuth2Params> oauth2ParamsList = oauth2ParamsDao.find(TenantId.SYS_TENANT_ID);
-        oauth2Info.setEnabled(oauth2ParamsList.stream().anyMatch(param -> param.isEnabled()));
+        oauth2Info.setEnabled(oauth2ParamsList.stream().anyMatch(OAuth2Params::isEnabled));
+        oauth2Info.setEdgeEnabled(oauth2ParamsList.stream().anyMatch(OAuth2Params::isEdgeEnabled));
         List<OAuth2ParamsInfo> oauth2ParamsInfos = new ArrayList<>();
         oauth2Info.setOauth2ParamsInfos(oauth2ParamsInfos);
         oauth2ParamsList.stream().sorted(Comparator.comparing(BaseData::getUuidId)).forEach(oauth2Params -> {
@@ -138,14 +142,14 @@ public class OAuth2ServiceImpl extends AbstractEntityService implements OAuth2Se
     @Override
     public OAuth2Registration findRegistration(UUID id) {
         log.trace("Executing findRegistration [{}]", id);
-        validateId(id, INCORRECT_CLIENT_REGISTRATION_ID + id);
+        validateId(id, uuid -> INCORRECT_CLIENT_REGISTRATION_ID + uuid);
         return oauth2RegistrationDao.findById(null, id);
     }
 
     @Override
     public String findAppSecret(UUID id, String pkgName) {
         log.trace("Executing findAppSecret [{}][{}]", id, pkgName);
-        validateId(id, INCORRECT_CLIENT_REGISTRATION_ID + id);
+        validateId(id, uuid -> INCORRECT_CLIENT_REGISTRATION_ID + uuid);
         validateString(pkgName, "Incorrect package name");
         return oauth2RegistrationDao.findAppSecret(id, pkgName);
     }

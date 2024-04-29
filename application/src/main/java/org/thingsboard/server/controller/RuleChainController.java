@@ -21,14 +21,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -47,7 +44,6 @@ import org.thingsboard.server.actors.tenant.DebugTbRateLimits;
 import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -56,7 +52,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageDataIterableByTenant;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.rule.DefaultRuleChainCreateRequest;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainData;
@@ -80,6 +75,7 @@ import org.thingsboard.server.service.security.permission.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -340,18 +336,8 @@ public class RuleChainController extends BaseController {
         RuleNodeId ruleNodeId = new RuleNodeId(toUUID(strRuleNodeId));
         checkRuleNode(ruleNodeId, Operation.READ);
         TenantId tenantId = getCurrentUser().getTenantId();
-        List<EventInfo> events = eventService.findLatestEvents(tenantId, ruleNodeId, EventType.DEBUG_RULE_NODE, 2);
-        JsonNode result = null;
-        if (events != null) {
-            for (EventInfo event : events) {
-                JsonNode body = event.getBody();
-                if (body.has("type") && body.get("type").asText().equals("IN")) {
-                    result = body;
-                    break;
-                }
-            }
-        }
-        return result;
+        return Optional.ofNullable(eventService.findLatestDebugRuleNodeInEvent(tenantId, ruleNodeId))
+                .map(EventInfo::getBody).orElse(null);
     }
 
     @ApiOperation(value = "Is TBEL script executor enabled",

@@ -17,39 +17,102 @@
 -->
 <ng-container [formGroup]="barChartWidgetSettingsForm">
   <div class="tb-form-panel">
-    <div class="tb-form-panel-title" translate>widgets.bar-chart.bar-chart-card-style</div>
-    <div class="tb-form-row space-between">
-      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showBarLabel">
-        {{ 'widgets.bar-chart.label-on-bar' | translate }}
+    <div class="tb-form-panel-title" translate>widgets.bar-chart.bar-chart-style</div>
+    <div class="tb-form-row">
+      <mat-slide-toggle class="mat-slide" formControlName="dataZoom">
+        {{ 'widgets.time-series-chart.data-zoom' | translate }}
       </mat-slide-toggle>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-        <tb-font-settings formControlName="barLabelFont"
-                          disabledLineHeight
-                          forceSizeUnit="px"
-                          previewText="Humidity">
-        </tb-font-settings>
-        <tb-color-input asBoxInput
-                        colorClearButton
-                        formControlName="barLabelColor">
-        </tb-color-input>
-      </div>
     </div>
-    <div class="tb-form-row space-between">
-      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showBarValue">
-        {{ 'widgets.bar-chart.value-on-bar' | translate }}
-      </mat-slide-toggle>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-        <tb-font-settings formControlName="barValueFont"
-                          disabledLineHeight
-                          forceSizeUnit="px"
-                          previewText="45">
-        </tb-font-settings>
-        <tb-color-input asBoxInput
-                        colorClearButton
-                        formControlName="barValueColor">
-        </tb-color-input>
+    <tb-time-series-chart-grid-settings
+        formControlName="grid">
+    </tb-time-series-chart-grid-settings>
+    <div class="tb-form-panel">
+      <div class="tb-form-panel-title" translate>widgets.bar-chart.bar-appearance</div>
+      <div class="tb-form-row space-between">
+        <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showBarLabel">
+          {{ 'widgets.bar-chart.label-on-bar' | translate }}
+        </mat-slide-toggle>
+        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <tb-font-settings formControlName="barLabelFont"
+                            disabledLineHeight
+                            forceSizeUnit="px"
+                            previewText="Humidity">
+          </tb-font-settings>
+          <tb-color-input asBoxInput
+                          colorClearButton
+                          formControlName="barLabelColor">
+          </tb-color-input>
+        </div>
       </div>
+      <div class="tb-form-row space-between">
+        <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showBarValue">
+          {{ 'widgets.bar-chart.value-on-bar' | translate }}
+        </mat-slide-toggle>
+        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <tb-font-settings formControlName="barValueFont"
+                            disabledLineHeight
+                            forceSizeUnit="px"
+                            previewText="45">
+          </tb-font-settings>
+          <tb-color-input asBoxInput
+                          colorClearButton
+                          formControlName="barValueColor">
+          </tb-color-input>
+        </div>
+      </div>
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide" formControlName="showBarBorder">
+          {{ 'widgets.chart.bar.show-border' | translate }}
+        </mat-slide-toggle>
+      </div>
+      <div class="tb-form-row space-between column-xs">
+        <div translate>widgets.chart.bar.border-width</div>
+        <mat-form-field class="medium-width number" appearance="outline" subscriptSizing="dynamic">
+          <input matInput type="number" formControlName="barBorderWidth" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}"/>
+        </mat-form-field>
+      </div>
+      <div class="tb-form-row space-between column-xs">
+        <div translate>widgets.chart.bar.border-radius</div>
+        <mat-form-field class="medium-width number" appearance="outline" subscriptSizing="dynamic">
+          <input matInput type="number" formControlName="barBorderRadius" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}"/>
+        </mat-form-field>
+      </div>
+      <tb-chart-fill-settings
+          formControlName="barBackgroundSettings"
+          title="widgets.chart.background"
+          fillNoneTitle="widgets.chart.fill-type-solid">
+      </tb-chart-fill-settings>
+      <tb-time-series-no-aggregation-bar-width-settings
+          stroked
+          formControlName="noAggregationBarWidthSettings">
+      </tb-time-series-no-aggregation-bar-width-settings>
     </div>
+    <div class="tb-form-panel">
+      <div class="tb-form-panel-title" translate>widgets.time-series-chart.axis.y-axis</div>
+      <tb-time-series-chart-axis-settings
+          formControlName="yAxis"
+          axisType="yAxis"
+          advanced
+          hideUnits
+          hideDecimals>
+      </tb-time-series-chart-axis-settings>
+    </div>
+    <div class="tb-form-panel">
+      <div class="tb-form-panel-title" translate>widgets.time-series-chart.axis.x-axis</div>
+      <tb-time-series-chart-axis-settings
+          formControlName="xAxis"
+          axisType="xAxis"
+          advanced>
+      </tb-time-series-chart-axis-settings>
+    </div>
+    <tb-time-series-chart-thresholds-panel
+        formControlName="thresholds"
+        [aliasController]="aliasController"
+        [dataKeyCallbacks]="dataKeyCallbacks"
+        [datasource]="datasource"
+        [widgetConfig]="widgetConfig?.config"
+        hideYAxis>
+    </tb-time-series-chart-thresholds-panel>
     <div class="tb-form-panel tb-slide-toggle">
       <mat-expansion-panel class="tb-settings" [expanded]="barChartWidgetSettingsForm.get('showLegend').value" [disabled]="!barChartWidgetSettingsForm.get('showLegend').value">
         <mat-expansion-panel-header fxLayout="row wrap">
@@ -98,9 +161,23 @@
         </mat-expansion-panel-header>
         <ng-template matExpansionPanelContent>
           <div class="tb-form-row space-between">
+            <div>{{ 'tooltip.label' | translate }}</div>
+            <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+              <tb-font-settings formControlName="tooltipLabelFont"
+                                [initialPreviewStyle]="{ color: barChartWidgetSettingsForm.get('tooltipLabelColor').value }"
+                                previewText="Temperature">
+              </tb-font-settings>
+              <tb-color-input asBoxInput
+                              colorClearButton
+                              formControlName="tooltipLabelColor">
+              </tb-color-input>
+            </div>
+          </div>
+          <div class="tb-form-row space-between">
             <div>{{ 'tooltip.value' | translate }}</div>
             <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
               <tb-font-settings formControlName="tooltipValueFont"
+                                [initialPreviewStyle]="{ color: barChartWidgetSettingsForm.get('tooltipValueColor').value }"
                                 [previewText]="tooltipValuePreviewFn">
               </tb-font-settings>
               <tb-color-input asBoxInput
@@ -117,6 +194,7 @@
               <tb-date-format-select fxFlex excludeLastUpdateAgo includeAuto
                                      formControlName="tooltipDateFormat"></tb-date-format-select>
               <tb-font-settings formControlName="tooltipDateFont"
+                                [initialPreviewStyle]="{ color: barChartWidgetSettingsForm.get('tooltipDateColor').value }"
                                 [previewText]="tooltipDatePreviewFn">
               </tb-font-settings>
               <tb-color-input asBoxInput
@@ -149,10 +227,22 @@
         </ng-template>
       </mat-expansion-panel>
     </div>
-    <div class="tb-form-row space-between">
-      <div>{{ 'widgets.background.background' | translate }}</div>
-      <tb-background-settings formControlName="background">
-      </tb-background-settings>
+    <tb-chart-animation-settings
+        formControlName="animation">
+    </tb-chart-animation-settings>
+    <div class="tb-form-panel">
+      <div class="tb-form-panel-title" translate>widget-config.card-appearance</div>
+      <div class="tb-form-row space-between">
+        <div>{{ 'widgets.background.background' | translate }}</div>
+        <tb-background-settings formControlName="background">
+        </tb-background-settings>
+      </div>
+      <div class="tb-form-row space-between">
+        <div>{{ 'widget-config.card-padding' | translate }}</div>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <input matInput formControlName="padding" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+      </div>
     </div>
   </div>
 </ng-container>

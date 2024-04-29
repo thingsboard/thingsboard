@@ -43,4 +43,5 @@ public interface DeviceMsgConstructor extends MsgConstructor {
     DeviceProfileUpdateMsg constructDeviceProfileDeleteMsg(DeviceProfileId deviceProfileId);
 
     DeviceRpcCallMsg constructDeviceRpcCallMsg(UUID deviceId, JsonNode body);
+
 }

@@ -216,6 +216,18 @@
         flex: 1;
         width: auto;
       }
+      &.flex-xs {
+        @media #{$mat-xs} {
+          width: auto;
+          flex: 1;
+        }
+      }
+      &.flex-lt-md {
+        @media #{$mat-lt-md} {
+          width: auto;
+          flex: 1;
+        }
+      }
     }
     .fixed-title-width {
       min-width: 200px;
