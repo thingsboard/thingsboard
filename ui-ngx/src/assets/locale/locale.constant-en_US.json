@@ -2274,7 +2274,6 @@
         "label": "Label",
         "queue-name": "Queue name",
         "service-id": "Service Id",
-        "label": "Label",
         "owner-name": "Owner name",
         "owner-type": "Owner type"
     },

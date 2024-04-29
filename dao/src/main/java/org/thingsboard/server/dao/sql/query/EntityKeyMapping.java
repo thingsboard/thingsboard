@@ -84,11 +84,11 @@ public class EntityKeyMapping {
     public static final String OWNER_NAME = "ownerName";
     public static final String OWNER_TYPE = "ownerType";
     public static final String OWNER_NAME_SELECT_QUERY = "case when e.customer_id = '" + NULL_UUID + "' " +
-            "THEN (select title from tenant where id = e.tenant_id) " +
-            "ELSE (select title from customer where id = e.customer_id) END";
+            "then (select title from tenant where id = e.tenant_id) " +
+            "else (select title from customer where id = e.customer_id) end";
     public static final String OWNER_TYPE_SELECT_QUERY = "case when e.customer_id = '" + NULL_UUID + "' " +
-            "THEN 'TENANT' " +
-            "ELSE 'CUSTOMER' END";
+            "then 'TENANT' " +
+            "else 'CUSTOMER' end";
     public static final Map<String, String> ownerPropertiesFunctions = Map.of(
             OWNER_NAME, OWNER_NAME_SELECT_QUERY,
             OWNER_TYPE, OWNER_TYPE_SELECT_QUERY
