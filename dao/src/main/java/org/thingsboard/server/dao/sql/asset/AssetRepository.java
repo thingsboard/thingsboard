@@ -129,7 +129,8 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
             "AND a.assetProfileId = :assetProfileId " +
             "AND (:textSearch IS NULL OR ilike(a.name, CONCAT('%', :textSearch, '%')) = true  " +
             "  OR ilike(a.label, CONCAT('%', :textSearch, '%')) = true " +
-            "  OR ilike(c.title, CONCAT('%', :textSearch, '%')) = true) ")
+            "  OR ilike(c.title, CONCAT('%', :textSearch, '%')) = true " +
+            "  OR ilike(a.type, CONCAT('%', :textSearch, '%')) = true) ")
     Page<AssetInfoEntity> findAssetInfosByTenantIdAndAssetProfileId(@Param("tenantId") UUID tenantId,
                                                                     @Param("assetProfileId") UUID assetProfileId,
                                                                     @Param("textSearch") String textSearch,
@@ -171,7 +172,8 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
             "AND a.assetProfileId = :assetProfileId " +
             "AND (:textSearch IS NULL OR ilike(a.name, CONCAT('%', :textSearch, '%')) = true " +
             "  OR ilike(a.label, CONCAT('%', :textSearch, '%')) = true " +
-            "  OR ilike(c.title, CONCAT('%', :textSearch, '%')) = true) ")
+            "  OR ilike(c.title, CONCAT('%', :textSearch, '%')) = true " +
+            "  OR ilike(a.type, CONCAT('%', :textSearch, '%')) = true) ")
     Page<AssetInfoEntity> findAssetInfosByTenantIdAndCustomerIdAndAssetProfileId(@Param("tenantId") UUID tenantId,
                                                                                  @Param("customerId") UUID customerId,
                                                                                  @Param("assetProfileId") UUID assetProfileId,
@@ -184,7 +186,8 @@ public interface AssetRepository extends JpaRepository<AssetEntity, UUID>, Expor
             "AND a.id = re.toId AND re.toType = 'ASSET' AND re.relationTypeGroup = 'EDGE' " +
             "AND re.relationType = 'Contains' AND re.fromId = :edgeId AND re.fromType = 'EDGE' " +
             "AND (:searchText IS NULL OR ilike(a.name, CONCAT('%', :searchText, '%')) = true " +
-            "  OR ilike(a.label, CONCAT('%', :searchText, '%')) = true) ")
+            "  OR ilike(a.label, CONCAT('%', :searchText, '%')) = true " +
+            "  OR ilike(a.type, CONCAT('%', :searchText, '%')) = true) ")
     Page<AssetEntity> findByTenantIdAndEdgeId(@Param("tenantId") UUID tenantId,
                                               @Param("edgeId") UUID edgeId,
                                               @Param("searchText") String searchText,
