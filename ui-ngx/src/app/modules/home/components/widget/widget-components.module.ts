@@ -89,6 +89,8 @@ import { TimeSeriesChartWidgetComponent } from '@home/components/widget/lib/char
 import { StatusWidgetComponent } from '@home/components/widget/lib/indicator/status-widget.component';
 import { LatestChartComponent } from '@home/components/widget/lib/chart/latest-chart.component';
 import { PieChartWidgetComponent } from '@home/components/widget/lib/chart/pie-chart-widget.component';
+import { BarChartWidgetComponent } from '@home/components/widget/lib/chart/bar-chart-widget.component';
+import { PolarAreaWidgetComponent } from '@home/components/widget/lib/chart/polar-area-widget.component';
 
 @NgModule({
   declarations:
@@ -144,7 +146,9 @@ import { PieChartWidgetComponent } from '@home/components/widget/lib/chart/pie-c
       TimeSeriesChartWidgetComponent,
       StatusWidgetComponent,
       LatestChartComponent,
-      PieChartWidgetComponent
+      PieChartWidgetComponent,
+      BarChartWidgetComponent,
+      PolarAreaWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -203,7 +207,9 @@ import { PieChartWidgetComponent } from '@home/components/widget/lib/chart/pie-c
         ToggleButtonWidgetComponent,
         TimeSeriesChartWidgetComponent,
         StatusWidgetComponent,
-        PieChartWidgetComponent
+        PieChartWidgetComponent,
+        BarChartWidgetComponent,
+        PolarAreaWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }

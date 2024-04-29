@@ -33,7 +33,7 @@ import {
 import {
   pieChartLabelPositions,
   pieChartLabelPositionTranslations
-} from '@home/components/widget/lib/chart/pie-chart.models';
+} from '@home/components/widget/lib/chart/chart.models';
 import {
   pieChartWidgetDefaultSettings,
   PieChartWidgetSettings

@@ -13,17 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.housekeeper;
+package org.thingsboard.server.common.data.housekeeper;
 
-import com.google.common.util.concurrent.ListenableFuture;
+import lombok.AccessLevel;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.id.AlarmId;
-import org.thingsboard.server.common.data.id.TenantId;
 
-import java.util.List;
+@Data
+@ToString(callSuper = true)
+@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class AlarmsUnassignHousekeeperTask extends HousekeeperTask {
 
-public interface HouseKeeperService {
+    private String userTitle;
 
-    ListenableFuture<List<AlarmId>> unassignDeletedUserAlarms(TenantId tenantId, User user, long unassignTs);
+    protected AlarmsUnassignHousekeeperTask(User user) {
+        super(user.getTenantId(), user.getId(), HousekeeperTaskType.UNASSIGN_ALARMS);
+        this.userTitle = user.getTitle();
+    }
 
 }

@@ -22,45 +22,45 @@ import {
   UntypedFormGroup,
   Validators
 } from '@angular/forms';
-import {
-  SeriesFillSettings,
-  SeriesFillType,
-  seriesFillTypes,
-  seriesFillTypeTranslations
-} from '@home/components/widget/lib/chart/time-series-chart.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
+import {
+  ChartFillSettings,
+  ChartFillType,
+  chartFillTypes,
+  chartFillTypeTranslations
+} from '@home/components/widget/lib/chart/chart.models';
 
 @Component({
-  selector: 'tb-time-series-chart-fill-settings',
-  templateUrl: './time-series-chart-fill-settings.component.html',
+  selector: 'tb-chart-fill-settings',
+  templateUrl: './chart-fill-settings.component.html',
   styleUrls: ['./../../widget-settings.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TimeSeriesChartFillSettingsComponent),
+      useExisting: forwardRef(() => ChartFillSettingsComponent),
       multi: true
     }
   ]
 })
-export class TimeSeriesChartFillSettingsComponent implements OnInit, ControlValueAccessor {
+export class ChartFillSettingsComponent implements OnInit, ControlValueAccessor {
 
-  seriesFillTypes = seriesFillTypes;
+  chartFillTypes = chartFillTypes;
 
-  seriesFillTypeTranslationMap: Map<SeriesFillType, string> = new Map<SeriesFillType, string>([]);
+  chartFillTypeTranslationMap: Map<ChartFillType, string> = new Map<ChartFillType, string>([]);
 
-  SeriesFillType = SeriesFillType;
+  ChartFillType = ChartFillType;
 
   @Input()
   disabled: boolean;
 
   @Input()
-  title = 'widgets.time-series-chart.series.fill';
+  title = 'widgets.chart.fill';
 
   @Input()
-  fillNoneTitle = 'widgets.time-series-chart.series.fill-type-none';
+  fillNoneTitle = 'widgets.chart.fill-type-none';
 
-  private modelValue: SeriesFillSettings;
+  private modelValue: ChartFillSettings;
 
   private propagateChange = null;
 
@@ -85,14 +85,14 @@ export class TimeSeriesChartFillSettingsComponent implements OnInit, ControlValu
     this.fillSettingsFormGroup.get('type').valueChanges.subscribe(() => {
       this.updateValidators();
     });
-    for (const type of seriesFillTypes) {
+    for (const type of chartFillTypes) {
       let translation: string;
-      if (type === SeriesFillType.none) {
+      if (type === ChartFillType.none) {
         translation = this.fillNoneTitle;
       } else {
-        translation = seriesFillTypeTranslations.get(type);
+        translation = chartFillTypeTranslations.get(type);
       }
-      this.seriesFillTypeTranslationMap.set(type, translation);
+      this.chartFillTypeTranslationMap.set(type, translation);
     }
   }
 
@@ -113,7 +113,7 @@ export class TimeSeriesChartFillSettingsComponent implements OnInit, ControlValu
     }
   }
 
-  writeValue(value: SeriesFillSettings): void {
+  writeValue(value: ChartFillSettings): void {
     this.modelValue = value;
     this.fillSettingsFormGroup.patchValue(
       value, {emitEvent: false}
@@ -122,21 +122,21 @@ export class TimeSeriesChartFillSettingsComponent implements OnInit, ControlValu
   }
 
   private updateValidators() {
-    const type: SeriesFillType = this.fillSettingsFormGroup.get('type').value;
-    if (type === SeriesFillType.none) {
+    const type: ChartFillType = this.fillSettingsFormGroup.get('type').value;
+    if (type === ChartFillType.none) {
       this.fillSettingsFormGroup.get('opacity').disable({emitEvent: false});
       this.fillSettingsFormGroup.get('gradient').disable({emitEvent: false});
-    } else if (type === SeriesFillType.opacity) {
+    } else if (type === ChartFillType.opacity) {
       this.fillSettingsFormGroup.get('opacity').enable({emitEvent: false});
       this.fillSettingsFormGroup.get('gradient').disable({emitEvent: false});
-    } else if (type === SeriesFillType.gradient) {
+    } else if (type === ChartFillType.gradient) {
       this.fillSettingsFormGroup.get('opacity').disable({emitEvent: false});
       this.fillSettingsFormGroup.get('gradient').enable({emitEvent: false});
     }
   }
 
   private updateModel() {
-    const value: SeriesFillSettings = this.fillSettingsFormGroup.getRawValue();
+    const value: ChartFillSettings = this.fillSettingsFormGroup.getRawValue();
     this.modelValue = value;
     this.propagateChange(this.modelValue);
   }

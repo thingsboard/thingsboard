@@ -120,6 +120,12 @@ import {
 import {
   PieChartBasicConfigComponent
 } from '@home/components/widget/config/basic/chart/pie-chart-basic-config.component';
+import {
+  BarChartBasicConfigComponent
+} from '@home/components/widget/config/basic/chart/bar-chart-basic-config.component';
+import {
+  PolarAreaChartBasicConfigComponent
+} from '@home/components/widget/config/basic/chart/polar-area-chart-basic-config.component';
 
 @NgModule({
   declarations: [
@@ -159,7 +165,9 @@ import {
     ComparisonKeyRowComponent,
     ComparisonKeysTableComponent,
     StatusWidgetBasicConfigComponent,
-    PieChartBasicConfigComponent
+    PieChartBasicConfigComponent,
+    BarChartBasicConfigComponent,
+    PolarAreaChartBasicConfigComponent
   ],
   imports: [
     CommonModule,
@@ -201,7 +209,9 @@ import {
     ToggleButtonBasicConfigComponent,
     TimeSeriesChartBasicConfigComponent,
     StatusWidgetBasicConfigComponent,
-    PieChartBasicConfigComponent
+    PieChartBasicConfigComponent,
+    BarChartBasicConfigComponent,
+    PolarAreaChartBasicConfigComponent
   ]
 })
 export class BasicWidgetConfigModule {
@@ -237,5 +247,7 @@ export const basicWidgetConfigComponentsMap: {[key: string]: Type<IBasicWidgetCo
   'tb-toggle-button-basic-config': ToggleButtonBasicConfigComponent,
   'tb-time-series-chart-basic-config': TimeSeriesChartBasicConfigComponent,
   'tb-status-widget-basic-config': StatusWidgetBasicConfigComponent,
-  'tb-pie-chart-basic-config': PieChartBasicConfigComponent
+  'tb-pie-chart-basic-config': PieChartBasicConfigComponent,
+  'tb-bar-chart-basic-config': BarChartBasicConfigComponent,
+  'tb-polar-area-chart-basic-config': PolarAreaChartBasicConfigComponent
 };
