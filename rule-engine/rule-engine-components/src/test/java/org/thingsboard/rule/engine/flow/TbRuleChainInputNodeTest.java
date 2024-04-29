@@ -173,7 +173,7 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @Test
-    void givenRuleChainIdEqualsCurrentRuleChainId_whenInit_thenThrowsException() {
+    public void givenRuleChainIdEqualsCurrentRuleChainId_whenInit_thenThrowsException() {
         //GIVEN
         String currentRuleChainIdStr = "752b70c2-20e6-4a37-b7f7-4271249fc643";
         RuleChainId currentRuleChainId = new RuleChainId(UUID.fromString(currentRuleChainIdStr));
@@ -370,8 +370,7 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
         RuleChainId currentRuleChainId = new RuleChainId(UUID.fromString(currentRuleChainIdStr));
         RuleNode currentRuleNode = new RuleNode(new RuleNodeId(UUID.fromString("09184b16-f176-4eee-987e-1b0501b38d6e")));
         currentRuleNode.setRuleChainId(currentRuleChainId);
-        RuleChain rootRuleChain = new RuleChain(
-                new RuleChainId(UUID.fromString(currentRuleChainIdStr)));
+        RuleChain rootRuleChain = new RuleChain(currentRuleChainId);
 
         AssetProfile assetProfile = new AssetProfile();
 
@@ -395,8 +394,8 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
         //THEN
         ArgumentCaptor<Throwable> captor = ArgumentCaptor.forClass(Throwable.class);
         verify(ctxMock).tellFailure(eq(msg), captor.capture());
-        assertThat(captor.getValue().toString())
-                .isEqualTo("java.lang.RuntimeException: Forwarding messages to the current rule chain is not allowed!");
+        assertThat(captor.getValue()).isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Forwarding messages to the current rule chain is not allowed!");
     }
 
     private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
