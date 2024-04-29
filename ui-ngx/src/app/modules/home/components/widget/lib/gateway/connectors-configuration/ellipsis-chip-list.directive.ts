@@ -63,33 +63,52 @@ export class EllipsisChipListDirective implements OnDestroy {
 
   private adjustChips(): void {
     const chipListElement = this.el.nativeElement;
-    const ellipsisText = this.el.nativeElement.querySelector('.ellipsis-text');
-    const chipNodes = chipListElement.querySelectorAll('mat-chip:not(.ellipsis-chip)');
     const ellipsisChip = this.el.nativeElement.querySelector('.ellipsis-chip');
-    this.renderer.setStyle(ellipsisChip,'display', 'inline-flex');
-    ellipsisText.innerHTML = this.translate.instant('gateway.ellipsis-chips-text',
-      {count: (this.chipsValue.length)});
-
     const margin = parseFloat(this.window.getComputedStyle(ellipsisChip).marginLeft) || 0;
-    const availableWidth = chipListElement.offsetWidth - (ellipsisChip.offsetWidth + margin);
-    let usedWidth = 0;
-    let visibleChipsCount = 0;
+    const chipNodes = chipListElement.querySelectorAll('mat-chip:not(.ellipsis-chip)');
 
-    chipNodes.forEach((chip) => {
-      this.renderer.setStyle(chip, 'display', 'inline-flex');
-      if ((usedWidth + (chip.offsetWidth + margin) <= availableWidth) && (visibleChipsCount < this.chipsValue.length)) {
-        visibleChipsCount++;
-        usedWidth += chip.offsetWidth + margin;
-      } else {
-        this.renderer.setStyle(chip, 'display', 'none');
+    if (this.chipsValue.length > 1) {
+      const ellipsisText = this.el.nativeElement.querySelector('.ellipsis-text');
+      this.renderer.setStyle(ellipsisChip, 'display', 'inline-flex');
+      ellipsisText.innerHTML = this.translate.instant('gateway.ellipsis-chips-text',
+        {count: (this.chipsValue.length)});
+
+      const availableWidth = chipListElement.offsetWidth - (ellipsisChip.offsetWidth + margin);
+      let usedWidth = 0;
+      let visibleChipsCount = 0;
+
+      chipNodes.forEach((chip) => {
+        this.renderer.setStyle(chip, 'display', 'inline-flex');
+        if ((usedWidth + (chip.offsetWidth + margin) <= availableWidth) && (visibleChipsCount < this.chipsValue.length)) {
+          visibleChipsCount++;
+          usedWidth += chip.offsetWidth + margin;
+        } else {
+          this.renderer.setStyle(chip, 'display', 'none');
+        }
+      });
+
+      ellipsisText.innerHTML = this.translate.instant('gateway.ellipsis-chips-text',
+        {count: (this.chipsValue.length - visibleChipsCount)});
+
+      if (visibleChipsCount === this.chipsValue?.length) {
+        this.renderer.setStyle(ellipsisChip, 'display', 'none');
       }
-    });
+    } else if (this.chipsValue.length === 1) {
+      this.renderer.setStyle(ellipsisChip, 'display', 'none');
+      const chipLabelContainer = chipNodes[0].querySelector('.mdc-evolution-chip__action');
+      const textLabelContainer = chipLabelContainer.querySelector('.mdc-evolution-chip__text-label');
+      const leftPadding = parseFloat(this.window.getComputedStyle(chipLabelContainer).paddingLeft) || 0;
+      const rightPadding = parseFloat(this.window.getComputedStyle(chipLabelContainer).paddingRight) || 0;
 
-    ellipsisText.innerHTML = this.translate.instant('gateway.ellipsis-chips-text',
-      {count: (this.chipsValue.length - visibleChipsCount)});
+      const computedTextWidth = chipListElement.offsetWidth - margin -
+        (leftPadding + rightPadding);
 
-    if (visibleChipsCount === this.chipsValue?.length) {
-      this.renderer.setStyle(ellipsisChip,'display', 'none');
+      this.renderer.setStyle(textLabelContainer, 'max-width', computedTextWidth + 'px');
+      this.renderer.setStyle(textLabelContainer, 'overflow', 'hidden');
+      this.renderer.setStyle(textLabelContainer, 'text-overflow', 'ellipsis');
+      this.renderer.setStyle(textLabelContainer, 'white-space', 'nowrap');
+    } else {
+      this.renderer.setStyle(ellipsisChip, 'display', 'none');
     }
   }
 

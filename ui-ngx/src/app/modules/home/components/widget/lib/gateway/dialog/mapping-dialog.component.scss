@@ -36,6 +36,10 @@
     max-height: 670px;
     height: 670px;
   }
+
+  .ellipsis-chips-container {
+    max-width: 70%;
+  }
 }
 
 :host ::ng-deep {

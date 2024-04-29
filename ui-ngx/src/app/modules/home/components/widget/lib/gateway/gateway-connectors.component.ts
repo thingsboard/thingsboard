@@ -64,6 +64,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { AddConnectorDialogComponent } from '@home/components/widget/lib/gateway/dialog/add-connector-dialog.component';
 import { takeUntil } from 'rxjs/operators';
 import { ErrorStateMatcher } from '@angular/material/core';
+import { PageData } from '@shared/models/page/page-data';
 
 export class ForceErrorStateMatcher implements ErrorStateMatcher {
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
@@ -136,7 +137,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
   private subscriptionOptions: WidgetSubscriptionOptions = {
     callbacks: {
-      onDataUpdated: (data) => this.ctx.ngZone.run(() => {
+      onDataUpdated: () => this.ctx.ngZone.run(() => {
         this.onDataUpdated();
       }),
       onDataUpdateError: (subscription, e) => this.ctx.ngZone.run(() => {
@@ -363,17 +364,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       this.activeData = data.data.filter(value => this.activeConnectors.includes(value.key));
       this.combineData();
       this.generateSubscription();
-      if (this.initialConnector) {
-        const clientConnectorData = data.data.find(attr => attr.key === this.initialConnector.name);
-        if (clientConnectorData) {
-          clientConnectorData.value = typeof clientConnectorData.value === 'string' ?
-            JSON.parse(clientConnectorData.value) : clientConnectorData.value;
-
-          if (this.isConnectorSynced(clientConnectorData) && clientConnectorData.value.configurationJson) {
-            this.setFormValue(clientConnectorData.value);
-          }
-        }
-      }
+      this.setClientData(data);
     });
     this.inactiveConnectorsDataSource.loadAttributes(this.device, AttributeScope.SHARED_SCOPE, this.pageLink, reload).subscribe(data => {
       this.sharedAttributeData = data.data.filter(value => this.activeConnectors.includes(value.key));
@@ -722,5 +713,19 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
     this.connectorForm.patchValue(connector, {emitEvent: false});
     this.connectorForm.markAsPristine();
+  }
+
+  private setClientData(data: PageData<AttributeData>): void {
+    if (this.initialConnector) {
+      const clientConnectorData = data.data.find(attr => attr.key === this.initialConnector.name);
+      if (clientConnectorData) {
+        clientConnectorData.value = typeof clientConnectorData.value === 'string' ?
+          JSON.parse(clientConnectorData.value) : clientConnectorData.value;
+
+        if (this.isConnectorSynced(clientConnectorData) && clientConnectorData.value.configurationJson) {
+          this.setFormValue(clientConnectorData.value);
+        }
+      }
+    }
   }
 }

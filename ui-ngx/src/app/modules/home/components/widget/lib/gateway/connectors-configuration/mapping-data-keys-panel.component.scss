@@ -16,8 +16,15 @@
 
 :host {
   .tb-mapping-keys-panel {
-    min-width: 700px;
+    width: 77vw;
     max-width: 700px;
+
+    .title-container {
+      max-width: 14vw;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap
+    }
 
     .key-panel {
       height: 500px;

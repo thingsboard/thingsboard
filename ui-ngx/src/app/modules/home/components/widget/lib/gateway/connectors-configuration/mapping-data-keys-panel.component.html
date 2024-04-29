@@ -26,7 +26,9 @@
             <mat-expansion-panel class="tb-settings" [expanded]="last">
               <mat-expansion-panel-header fxLayout="row wrap">
                 <mat-panel-title>
-                  {{ keyControl.get('key').value + '-' + valueTitle(keyControl.get('value').value) }}
+                  <div class="title-container">{{ keyControl.get('key').value }}</div>
+                    {{ '-' }}
+                  <div class="title-container">{{ valueTitle(keyControl.get('value').value) }}</div>
                 </mat-panel-title>
               </mat-expansion-panel-header>
               <ng-template matExpansionPanelContent>

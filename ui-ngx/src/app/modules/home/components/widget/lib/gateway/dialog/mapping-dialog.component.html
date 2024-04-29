@@ -98,7 +98,7 @@
                      *ngIf="converterType === ConvertorTypeEnum.BYTES || converterType === ConvertorTypeEnum.JSON">
                   <div class="tb-form-row space-between tb-flex">
                     <div class="fixed-title-width" translate>gateway.attributes</div>
-                    <div class="tb-flex">
+                    <div class="tb-flex ellipsis-chips-container">
                       <mat-chip-listbox [tb-ellipsis-chip-list]="converterAttributes" class="tb-flex">
                           <mat-chip *ngFor="let attribute of converterAttributes">
                             {{ attribute }}
@@ -118,7 +118,7 @@
                   </div>
                   <div class="tb-form-row space-between tb-flex">
                     <div class="fixed-title-width" translate>gateway.timeseries</div>
-                    <div class="tb-flex">
+                    <div class="tb-flex ellipsis-chips-container">
                       <mat-chip-listbox class="tb-flex" [tb-ellipsis-chip-list]="converterTelemetry">
                         <mat-chip *ngFor="let telemetry of converterTelemetry">
                           {{ telemetry }}
@@ -163,7 +163,7 @@
                     <div class="tb-form-hint tb-primary-fill">{{ 'gateway.extension-configuration-hint' | translate }}</div>
                     <div class="tb-form-row space-between tb-flex">
                       <div class="fixed-title-width" translate>gateway.keys</div>
-                      <div class="tb-flex">
+                      <div class="tb-flex ellipsis-chips-container">
                         <mat-chip-listbox [tb-ellipsis-chip-list]="customKeys" class="tb-flex">
                           <mat-chip *ngFor="let telemetry of customKeys">
                             {{ telemetry }}
