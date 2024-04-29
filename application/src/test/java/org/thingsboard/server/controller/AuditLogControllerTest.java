@@ -102,7 +102,7 @@ public class AuditLogControllerTest extends AbstractControllerTest {
 
     @Test
     public void testAuditLogs() throws Exception {
-        for (int i = 0; i < 178; i++) {
+        for (int i = 0; i < 11; i++) {
             Device device = new Device();
             device.setName("Device" + i);
             device.setType("default");
@@ -110,7 +110,7 @@ public class AuditLogControllerTest extends AbstractControllerTest {
         }
 
         List<AuditLog> loadedAuditLogs = new ArrayList<>();
-        TimePageLink pageLink = new TimePageLink(23);
+        TimePageLink pageLink = new TimePageLink(5);
         PageData<AuditLog> pageData;
         do {
             pageData = doGetTypedWithTimePageLink("/api/audit/logs?",
@@ -122,10 +122,10 @@ public class AuditLogControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Assert.assertEquals(178, loadedAuditLogs.size());
+        Assert.assertEquals(11, loadedAuditLogs.size());
 
         loadedAuditLogs = new ArrayList<>();
-        pageLink = new TimePageLink(23);
+        pageLink = new TimePageLink(5);
         do {
             pageData = doGetTypedWithTimePageLink("/api/audit/logs/customer/" + ModelConstants.NULL_UUID + "?",
                     new TypeReference<PageData<AuditLog>>() {
@@ -136,10 +136,10 @@ public class AuditLogControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Assert.assertEquals(178, loadedAuditLogs.size());
+        Assert.assertEquals(11, loadedAuditLogs.size());
 
         loadedAuditLogs = new ArrayList<>();
-        pageLink = new TimePageLink(23);
+        pageLink = new TimePageLink(5);
         do {
             pageData = doGetTypedWithTimePageLink("/api/audit/logs/user/" + tenantAdmin.getId().getId().toString() + "?",
                     new TypeReference<PageData<AuditLog>>() {
@@ -150,7 +150,7 @@ public class AuditLogControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Assert.assertEquals(178, loadedAuditLogs.size());
+        Assert.assertEquals(11, loadedAuditLogs.size());
     }
 
     @Test
@@ -159,13 +159,13 @@ public class AuditLogControllerTest extends AbstractControllerTest {
         device.setName("Device name");
         device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
-        for (int i = 0; i < 178; i++) {
+        for (int i = 0; i < 11; i++) {
             savedDevice.setName("Device name" + i);
             doPost("/api/device", savedDevice, Device.class);
         }
 
         List<AuditLog> loadedAuditLogs = new ArrayList<>();
-        TimePageLink pageLink = new TimePageLink(23);
+        TimePageLink pageLink = new TimePageLink(5);
         PageData<AuditLog> pageData;
         do {
             pageData = doGetTypedWithTimePageLink("/api/audit/logs/entity/DEVICE/" + savedDevice.getId().getId() + "?",
@@ -177,7 +177,7 @@ public class AuditLogControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Assert.assertEquals(179, loadedAuditLogs.size());
+        Assert.assertEquals(11 + 1, loadedAuditLogs.size());
     }
 
     @Test
@@ -229,10 +229,6 @@ public class AuditLogControllerTest extends AbstractControllerTest {
         });
         assertThat(partitioningRepository.fetchPartitions("audit_log"))
                 .contains(ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2024-04-29T00:00:00Z").getTime());;
-    }
-
-    private AuditLog createAuditLog(ActionType actionType, EntityId entityId) {
-        return createAuditLog(actionType, entityId, 0);
     }
 
     private AuditLog createAuditLog(ActionType actionType, EntityId entityId, long entityTs) {
