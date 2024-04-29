@@ -28,8 +28,6 @@ public interface JwtSettingsService {
 
     void createRandomJwtSettings();
 
-    void saveLegacyYmlSettings();
-
     JwtSettings saveJwtSettings(JwtSettings jwtSettings);
 
 }

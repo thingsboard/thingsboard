@@ -59,8 +59,8 @@ public class DefaultJwtSettingsValidator implements JwtSettingsValidator {
         if (Arrays.isNullOrEmpty(decodedKey)) {
             throw new DataValidationException("JWT token signing key should be non-empty after Base64 decoding!");
         }
-        if (decodedKey.length * Byte.SIZE < 256 && !JwtSettingsService.TOKEN_SIGNING_KEY_DEFAULT.equals(jwtSettings.getTokenSigningKey())) {
-            throw new DataValidationException("JWT token signing key should be a Base64 encoded string representing at least 256 bits of data!");
+        if (decodedKey.length * Byte.SIZE < 512 && !JwtSettingsService.TOKEN_SIGNING_KEY_DEFAULT.equals(jwtSettings.getTokenSigningKey())) {
+            throw new DataValidationException("JWT token signing key should be a Base64 encoded string representing at least 512 bits of data!");
         }
 
         System.arraycopy(decodedKey, 0, RandomUtils.nextBytes(decodedKey.length), 0, decodedKey.length); //secure memory

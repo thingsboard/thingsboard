@@ -16,14 +16,15 @@
 package org.thingsboard.server.service.security.model.token;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ClaimsBuilder;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.SignatureException;
 import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -41,7 +42,10 @@ import org.thingsboard.server.service.security.exception.JwtExpiredTokenExceptio
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import java.time.ZonedDateTime;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -95,7 +99,7 @@ public class JwtTokenFactory {
 
     public SecurityUser parseAccessJwtToken(String token) {
         Jws<Claims> jwsClaims = parseTokenClaims(token);
-        Claims claims = jwsClaims.getBody();
+        Claims claims = jwsClaims.getPayload();
         String subject = claims.getSubject();
         @SuppressWarnings("unchecked")
         List<String> scopes = claims.get(SCOPES, List.class);
@@ -140,14 +144,14 @@ public class JwtTokenFactory {
 
         String token = setUpToken(securityUser, Collections.singletonList(Authority.REFRESH_TOKEN.name()), jwtSettingsService.getJwtSettings().getRefreshTokenExpTime())
                 .claim(IS_PUBLIC, principal.getType() == UserPrincipal.Type.PUBLIC_ID)
-                .setId(UUID.randomUUID().toString()).compact();
+                .id(UUID.randomUUID().toString()).compact();
 
         return new AccessJwtToken(token);
     }
 
     public SecurityUser parseRefreshToken(String token) {
         Jws<Claims> jwsClaims = parseTokenClaims(token);
-        Claims claims = jwsClaims.getBody();
+        Claims claims = jwsClaims.getPayload();
         String subject = claims.getSubject();
         @SuppressWarnings("unchecked")
         List<String> scopes = claims.get(SCOPES, List.class);
@@ -183,28 +187,29 @@ public class JwtTokenFactory {
 
         UserPrincipal principal = securityUser.getUserPrincipal();
 
-        Claims claims = Jwts.claims().setSubject(principal.getValue());
-        claims.put(USER_ID, securityUser.getId().getId().toString());
-        claims.put(SCOPES, scopes);
+        ClaimsBuilder claimsBuilder = Jwts.claims().subject(principal.getValue());
+        claimsBuilder.add(USER_ID, securityUser.getId().getId().toString());
+        claimsBuilder.add(SCOPES, scopes);
         if (securityUser.getSessionId() != null) {
-            claims.put(SESSION_ID, securityUser.getSessionId());
+            claimsBuilder.add(SESSION_ID, securityUser.getSessionId());
         }
 
         ZonedDateTime currentTime = ZonedDateTime.now();
 
         return Jwts.builder()
-                .setClaims(claims)
-                .setIssuer(jwtSettingsService.getJwtSettings().getTokenIssuer())
-                .setIssuedAt(Date.from(currentTime.toInstant()))
-                .setExpiration(Date.from(currentTime.plusSeconds(expirationTime).toInstant()))
-                .signWith(SignatureAlgorithm.HS512, jwtSettingsService.getJwtSettings().getTokenSigningKey());
+                .claims(claimsBuilder.build())
+                .issuer(jwtSettingsService.getJwtSettings().getTokenIssuer())
+                .issuedAt(Date.from(currentTime.toInstant()))
+                .expiration(Date.from(currentTime.plusSeconds(expirationTime).toInstant()))
+                .signWith(toSecretKey(jwtSettingsService.getJwtSettings().getTokenSigningKey()), Jwts.SIG.HS512);
     }
 
     public Jws<Claims> parseTokenClaims(String token) {
         try {
             return Jwts.parser()
-                    .setSigningKey(jwtSettingsService.getJwtSettings().getTokenSigningKey())
-                    .parseClaimsJws(token);
+                    .verifyWith(Keys.hmacShaKeyFor(Base64.getDecoder().decode(jwtSettingsService.getJwtSettings().getTokenSigningKey())))
+                    .build()
+                    .parseSignedClaims(token);
         } catch (UnsupportedJwtException | MalformedJwtException | IllegalArgumentException ex) {
             log.debug("Invalid JWT Token", ex);
             throw new BadCredentialsException("Invalid JWT token: ", ex);
@@ -218,6 +223,11 @@ public class JwtTokenFactory {
         JwtToken accessToken = createAccessJwtToken(securityUser);
         JwtToken refreshToken = createRefreshToken(securityUser);
         return new JwtPair(accessToken.getToken(), refreshToken.getToken());
+    }
+
+    private SecretKey toSecretKey(String base64Key) {
+        byte[] decodedToken = Base64.getDecoder().decode(base64Key);
+        return new SecretKeySpec(decodedToken, "HmacSHA512");
     }
 
 }

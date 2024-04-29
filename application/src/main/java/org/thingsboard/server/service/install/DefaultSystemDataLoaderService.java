@@ -19,13 +19,17 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -81,6 +85,7 @@ import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.UserCredentials;
+import org.thingsboard.server.common.data.security.model.JwtSettings;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
@@ -100,14 +105,11 @@ import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
-import org.thingsboard.server.dao.widget.WidgetTypeService;
-import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 
-import jakarta.annotation.Nullable;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.TreeMap;
@@ -117,79 +119,41 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.thingsboard.server.common.data.DataConstants.DEFAULT_DEVICE_TYPE;
+import static org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService.TOKEN_SIGNING_KEY_DEFAULT;
 
 @Service
 @Profile("install")
 @Slf4j
+@RequiredArgsConstructor
 public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     public static final String CUSTOMER_CRED = "customer";
     public static final String ACTIVITY_STATE = "active";
 
-    @Autowired
-    private InstallScripts installScripts;
+    private final InstallScripts installScripts;
+    private final UserService userService;
+    private final AdminSettingsService adminSettingsService;
+    private final TenantService tenantService;
+    private final TenantProfileService tenantProfileService;
+    private final CustomerService customerService;
+    private final DeviceService deviceService;
+    private final DeviceProfileService deviceProfileService;
+    private final AttributesService attributesService;
+    private final DeviceCredentialsService deviceCredentialsService;
+    private final RuleChainService ruleChainService;
+    private final TimeseriesService tsService;
+    private final DeviceConnectivityConfiguration connectivityConfiguration;
+    private final QueueService queueService;
+    private final JwtSettingsService jwtSettingsService;
+    private final NotificationSettingsService notificationSettingsService;
+    private final NotificationTargetService notificationTargetService;
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private AdminSettingsService adminSettingsService;
-
-    @Autowired
-    private WidgetTypeService widgetTypeService;
-
-    @Autowired
-    private WidgetsBundleService widgetsBundleService;
-
-    @Autowired
-    private TenantService tenantService;
-
-    @Autowired
-    private TenantProfileService tenantProfileService;
-
-    @Autowired
-    private CustomerService customerService;
-
-    @Autowired
-    private DeviceService deviceService;
-
-    @Autowired
-    private DeviceProfileService deviceProfileService;
-
-    @Autowired
-    private AttributesService attributesService;
-
-    @Autowired
-    private DeviceCredentialsService deviceCredentialsService;
-
-    @Autowired
-    private RuleChainService ruleChainService;
-
-    @Autowired
-    private TimeseriesService tsService;
-
-    @Autowired
-    private DeviceConnectivityConfiguration connectivityConfiguration;
-
     @Value("${state.persistToTelemetry:false}")
     @Getter
     private boolean persistActivityToTelemetry;
-
-    @Lazy
-    @Autowired
-    private QueueService queueService;
-
-    @Autowired
-    private JwtSettingsService jwtSettingsService;
-
-    @Autowired
-    private NotificationSettingsService notificationSettingsService;
-
-    @Autowired
-    private NotificationTargetService notificationTargetService;
 
     @Bean
     protected BCryptPasswordEncoder passwordEncoder() {
@@ -296,6 +260,33 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     @Override
     public void createRandomJwtSettings() throws Exception {
         jwtSettingsService.createRandomJwtSettings();
+    }
+
+    @Override
+    public void updateJwtSettings() {
+        JwtSettings jwtSettings = jwtSettingsService.getJwtSettings();
+
+        boolean invalidSignKey = false;
+
+        if (TOKEN_SIGNING_KEY_DEFAULT.equals(jwtSettings.getTokenSigningKey())) {
+            log.warn("WARNING: The platform is configured to use default JWT Signing Key. " +
+                    "Added new temporary JWT Signing Key. " +
+                    "This is a security issue that needs to be resolved. Please change the JWT Signing Key using the Web UI. " +
+                    "Navigate to \"System settings -> Security settings\" while logged in as a System Administrator.");
+            invalidSignKey = true;
+        } else if (Base64.getDecoder().decode(jwtSettings.getTokenSigningKey()).length * Byte.SIZE < 512) {
+            log.warn("WARNING: The platform is configured to use JWT Signing Key with length less then 512 bits of data. " +
+                    "Added new temporary JWT Signing Key. " +
+                    "This is a security issue that needs to be resolved. Please change the JWT Signing Key using the Web UI. " +
+                    "Navigate to \"System settings -> Security settings\" while logged in as a System Administrator.");
+            invalidSignKey = true;
+        }
+
+        if (invalidSignKey) {
+            jwtSettings.setTokenSigningKey(Base64.getEncoder().encodeToString(
+                    RandomStringUtils.randomAlphanumeric(64).getBytes(StandardCharsets.UTF_8)));
+            jwtSettingsService.saveJwtSettings(jwtSettings);
+        }
     }
 
     @Override

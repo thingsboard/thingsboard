@@ -358,15 +358,6 @@ public class DefaultNotifications {
                     .build())
             .build();
 
-    public static final DefaultNotification jwtSigningKeyIssue = DefaultNotification.builder()
-            .name("JWT Signing Key issue notification")
-            .type(NotificationType.GENERAL)
-            .subject("WARNING: security issue")
-            .text("The platform is configured to use default JWT Signing Key. Please change it on the security settings page")
-            .icon("warning").color(YELLOW_COLOR)
-            .button("Go to settings").link("/security-settings/general")
-            .build();
-
     private final NotificationTemplateService templateService;
     private final NotificationRuleService ruleService;
 

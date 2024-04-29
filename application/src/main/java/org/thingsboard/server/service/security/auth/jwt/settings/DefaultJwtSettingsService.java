@@ -21,14 +21,11 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.notification.targets.platform.SystemAdministratorsFilter;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.security.model.JwtSettings;
-import org.thingsboard.server.dao.notification.DefaultNotifications;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 
 import java.nio.charset.StandardCharsets;
@@ -43,7 +40,6 @@ public class DefaultJwtSettingsService implements JwtSettingsService {
 
     private final AdminSettingsService adminSettingsService;
     private final Optional<TbClusterService> tbClusterService;
-    private final Optional<NotificationCenter> notificationCenter;
     private final JwtSettingsValidator jwtSettingsValidator;
 
     @Value("${security.jwt.tokenExpirationTime:9000}")
@@ -72,17 +68,6 @@ public class DefaultJwtSettingsService implements JwtSettingsService {
             saveJwtSettings(jwtSettings);
         } else {
             log.info("Skip creating JWT admin settings because they already exist.");
-        }
-    }
-
-    /**
-     * Create JWT admin settings is intended to be called from Upgrade scripts only
-     */
-    @Override
-    public void saveLegacyYmlSettings() {
-        log.info("Saving legacy JWT admin settings from YML...");
-        if (getJwtSettingsFromDb() == null) {
-            saveJwtSettings(getJwtSettingsFromYml());
         }
     }
 
@@ -123,14 +108,6 @@ public class DefaultJwtSettingsService implements JwtSettingsService {
                         result = getJwtSettingsFromYml();
                         log.warn("Loading the JWT settings from YML since there are no settings in DB. Looks like the upgrade script was not applied.");
                     }
-                    if (isSigningKeyDefault(result)) {
-                        log.warn("WARNING: The platform is configured to use default JWT Signing Key. " +
-                                "This is a security issue that needs to be resolved. Please change the JWT Signing Key using the Web UI. " +
-                                "Navigate to \"System settings -> Security settings\" while logged in as a System Administrator.");
-                        notificationCenter.ifPresent(notificationCenter -> {
-                            notificationCenter.sendGeneralWebNotification(TenantId.SYS_TENANT_ID, new SystemAdministratorsFilter(), DefaultNotifications.jwtSigningKeyIssue.toTemplate());
-                        });
-                    }
                     this.jwtSettings = result;
                 }
             }
@@ -138,6 +115,7 @@ public class DefaultJwtSettingsService implements JwtSettingsService {
         return this.jwtSettings;
     }
 
+    @Deprecated(since = "3.7.0", forRemoval = true)
     private JwtSettings getJwtSettingsFromYml() {
         return new JwtSettings(this.tokenExpirationTime, this.refreshTokenExpTime, this.tokenIssuer, this.tokenSigningKey);
     }
