@@ -61,7 +61,7 @@ public class DefaultJwtSettingsService implements JwtSettingsService {
         if (getJwtSettingsFromDb() == null) {
             log.info("Creating JWT admin settings...");
             this.jwtSettings = getJwtSettingsFromYml();
-            if (isSigningKeyDefault(jwtSettings)) {
+            if (isSigningKeyDefault(jwtSettings) || Base64.getDecoder().decode(jwtSettings.getTokenSigningKey()).length * Byte.SIZE < 512) {
                 this.jwtSettings.setTokenSigningKey(Base64.getEncoder().encodeToString(
                         RandomStringUtils.randomAlphanumeric(64).getBytes(StandardCharsets.UTF_8)));
             }
