@@ -47,6 +47,7 @@ import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
 
 import java.util.UUID;
+import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -65,9 +66,9 @@ public class TbDeviceStateNodeTest {
     @Mock
     private TbContext ctxMock;
     @Mock
-    private static RuleEngineDeviceStateManager deviceStateManagerMock;
+    private RuleEngineDeviceStateManager deviceStateManagerMock;
     @Captor
-    private static ArgumentCaptor<TbCallback> callbackCaptor;
+    private ArgumentCaptor<TbCallback> callbackCaptor;
     private TbDeviceStateNode node;
     private TbDeviceStateNodeConfiguration config;
 
@@ -246,7 +247,7 @@ public class TbDeviceStateNodeTest {
 
     @ParameterizedTest
     @MethodSource
-    public void givenSupportedEventAndDeviceOriginator_whenOnMsg_thenCorrectEventIsSentWithCorrectCallback(TbMsgType supportedEventType, Runnable actionVerification) {
+    public void givenSupportedEventAndDeviceOriginator_whenOnMsg_thenCorrectEventIsSentWithCorrectCallback(TbMsgType supportedEventType, BiConsumer<RuleEngineDeviceStateManager, ArgumentCaptor<TbCallback>> actionVerification) {
         // GIVEN
         given(ctxMock.getTenantId()).willReturn(TENANT_ID);
         given(ctxMock.getDeviceStateNodeRateLimitConfig()).willReturn("1:1");
@@ -262,7 +263,7 @@ public class TbDeviceStateNodeTest {
         node.onMsg(ctxMock, msg);
 
         // THEN
-        actionVerification.run();
+        actionVerification.accept(this.deviceStateManagerMock, this.callbackCaptor);
 
         TbCallback actualCallback = callbackCaptor.getValue();
 
@@ -280,10 +281,10 @@ public class TbDeviceStateNodeTest {
 
     private static Stream<Arguments> givenSupportedEventAndDeviceOriginator_whenOnMsg_thenCorrectEventIsSentWithCorrectCallback() {
         return Stream.of(
-                Arguments.of(TbMsgType.CONNECT_EVENT, (Runnable) () -> then(deviceStateManagerMock).should().onDeviceConnect(eq(TENANT_ID), eq(DEVICE_ID), eq(METADATA_TS), callbackCaptor.capture())),
-                Arguments.of(TbMsgType.ACTIVITY_EVENT, (Runnable) () -> then(deviceStateManagerMock).should().onDeviceActivity(eq(TENANT_ID), eq(DEVICE_ID), eq(METADATA_TS), callbackCaptor.capture())),
-                Arguments.of(TbMsgType.DISCONNECT_EVENT, (Runnable) () -> then(deviceStateManagerMock).should().onDeviceDisconnect(eq(TENANT_ID), eq(DEVICE_ID), eq(METADATA_TS), callbackCaptor.capture())),
-                Arguments.of(TbMsgType.INACTIVITY_EVENT, (Runnable) () -> then(deviceStateManagerMock).should().onDeviceInactivity(eq(TENANT_ID), eq(DEVICE_ID), eq(METADATA_TS), callbackCaptor.capture()))
+                Arguments.of(TbMsgType.CONNECT_EVENT, (BiConsumer<RuleEngineDeviceStateManager, ArgumentCaptor<TbCallback>>) (deviceStateManagerMock, callbackCaptor) -> then(deviceStateManagerMock).should().onDeviceConnect(eq(TENANT_ID), eq(DEVICE_ID), eq(METADATA_TS), callbackCaptor.capture())),
+                Arguments.of(TbMsgType.ACTIVITY_EVENT, (BiConsumer<RuleEngineDeviceStateManager, ArgumentCaptor<TbCallback>>) (deviceStateManagerMock, callbackCaptor) -> then(deviceStateManagerMock).should().onDeviceActivity(eq(TENANT_ID), eq(DEVICE_ID), eq(METADATA_TS), callbackCaptor.capture())),
+                Arguments.of(TbMsgType.DISCONNECT_EVENT, (BiConsumer<RuleEngineDeviceStateManager, ArgumentCaptor<TbCallback>>) (deviceStateManagerMock, callbackCaptor) -> then(deviceStateManagerMock).should().onDeviceDisconnect(eq(TENANT_ID), eq(DEVICE_ID), eq(METADATA_TS), callbackCaptor.capture())),
+                Arguments.of(TbMsgType.INACTIVITY_EVENT, (BiConsumer<RuleEngineDeviceStateManager, ArgumentCaptor<TbCallback>>) (deviceStateManagerMock, callbackCaptor) -> then(deviceStateManagerMock).should().onDeviceInactivity(eq(TENANT_ID), eq(DEVICE_ID), eq(METADATA_TS), callbackCaptor.capture()))
         );
     }
 

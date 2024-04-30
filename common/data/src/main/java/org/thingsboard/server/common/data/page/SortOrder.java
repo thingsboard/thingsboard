@@ -32,6 +32,10 @@ public class SortOrder {
         this.direction = direction;
     }
 
+    public static SortOrder of(String property, Direction direction) {
+        return new SortOrder(property, direction);
+    }
+
     public static enum Direction {
         ASC, DESC
     }

@@ -262,9 +262,23 @@
           </mat-chip-listbox>
         </div>
         <div class="tb-form-row space-between">
+          <div>{{ 'tooltip.label' | translate }}</div>
+          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <tb-font-settings formControlName="tooltipLabelFont"
+                              [initialPreviewStyle]="{ color: timeSeriesChartWidgetConfigForm.get('tooltipLabelColor').value }"
+                              previewText="Temperature">
+            </tb-font-settings>
+            <tb-color-input asBoxInput
+                            colorClearButton
+                            formControlName="tooltipLabelColor">
+            </tb-color-input>
+          </div>
+        </div>
+        <div class="tb-form-row space-between">
           <div>{{ 'tooltip.value' | translate }}</div>
           <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
             <tb-font-settings formControlName="tooltipValueFont"
+                              [initialPreviewStyle]="{ color: timeSeriesChartWidgetConfigForm.get('tooltipValueColor').value }"
                               [previewText]="tooltipValuePreviewFn">
             </tb-font-settings>
             <tb-color-input asBoxInput
@@ -281,6 +295,7 @@
             <tb-date-format-select fxFlex excludeLastUpdateAgo includeAuto
                                    formControlName="tooltipDateFormat"></tb-date-format-select>
             <tb-font-settings formControlName="tooltipDateFont"
+                              [initialPreviewStyle]="{ color: timeSeriesChartWidgetConfigForm.get('tooltipDateColor').value }"
                               [previewText]="tooltipDatePreviewFn">
             </tb-font-settings>
             <tb-color-input asBoxInput
@@ -313,9 +328,9 @@
       </ng-template>
     </mat-expansion-panel>
   </div>
-  <tb-time-series-chart-animation-settings
+  <tb-chart-animation-settings
     formControlName="animation">
-  </tb-time-series-chart-animation-settings>
+  </tb-chart-animation-settings>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widget-config.card-appearance</div>
     <div class="tb-form-row space-between">

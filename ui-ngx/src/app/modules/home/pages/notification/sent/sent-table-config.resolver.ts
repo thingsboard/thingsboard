@@ -165,8 +165,7 @@ export class SentTableConfigResolver implements Resolve<EntityTableConfig<Notifi
     if (!stats?.errors) {
       return '';
     }
-    let countError = 0;
-    Object.keys(stats.errors).forEach(method => countError += Object.keys(stats.errors[method]).length);
+    const countError = stats.totalErrors;
     if (countError === 0) {
       return '';
     }

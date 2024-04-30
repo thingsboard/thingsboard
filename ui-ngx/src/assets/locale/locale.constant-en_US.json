@@ -805,7 +805,6 @@
         "email-messages": "Email messages",
         "email-messages-daily-activity": "Email messages daily activity",
         "email-messages-monthly-activity": "Email messages monthly activity",
-        "exceptions": "Exceptions",
         "executions": "Executions",
         "scripts": "Scripts",
         "scripts-hourly-activity": "Scripts hourly activity",
@@ -823,9 +822,7 @@
         "permanent-failures": "${entityName} Permanent Failures",
         "permanent-timeouts": "${entityName} Permanent Timeouts",
         "processing-failures": "${entityName} Processing Failures",
-        "processing-failures-and-timeouts": "Processing Failures and Timeouts",
         "processing-timeouts": "${entityName} Processing Timeouts",
-        "queue-stats": "Queue Stats",
         "rule-chain": "Rule Chain",
         "rule-engine": "Rule Engine",
         "rule-engine-daily-activity": "Rule Engine daily activity",
@@ -2276,7 +2273,9 @@
         "phone": "Phone",
         "label": "Label",
         "queue-name": "Queue name",
-        "service-id": "Service Id"
+        "service-id": "Service Id",
+        "owner-name": "Owner name",
+        "owner-type": "Owner type"
     },
     "entity-view": {
         "entity-view": "Entity view",
@@ -3314,6 +3313,7 @@
         "new-password-again": "Confirm new password",
         "password-link-sent-message": "Reset link has been sent",
         "email": "Email",
+        "invalid-email-format": "Invalid email format.",
         "login-with": "Login with {{name}}",
         "or": "or",
         "error": "Login error",
@@ -3357,6 +3357,7 @@
         "api-usage-trigger-settings": "API usage trigger settings",
         "new-platform-version-trigger-settings": "New platform version trigger settings",
         "rate-limits-trigger-settings": "Exceeded rate limits trigger settings",
+        "task-processing-failure-trigger-settings": "Task processing failure trigger settings",
         "at-least-one-should-be-selected": "At least one should be selected",
         "basic-settings": "Basic settings",
         "button-text": "Button text",
@@ -3567,7 +3568,8 @@
             "new-platform-version": "New platform version",
             "rate-limits": "Exceeded rate limits",
             "edge-communication-failure": "Edge communication failure",
-            "edge-connection": "Edge connection"
+            "edge-connection": "Edge connection",
+            "task-processing-failure": "Task processing failure"
         },
         "templates": "Templates",
         "notification-templates": "Notifications / Templates",
@@ -3590,6 +3592,7 @@
             "rate-limits": "Exceeded rate limits",
             "edge-connection": "Edge connection",
             "edge-communication-failure": "Edge communication failure",
+            "task-processing-failure": "Task processing failure",
             "trigger": "Trigger",
             "trigger-required": "Trigger is required"
         },
@@ -4453,6 +4456,7 @@
         "trigger": "Trigger",
         "trigger-point": "Point",
         "trigger-axis": "Axis",
+        "label": "Label",
         "value": "Value",
         "date": "Date",
         "show-date-time-interval": "Show date time interval",
@@ -5430,7 +5434,13 @@
             "bar-appearance": "Bar appearance",
             "label-on-bar": "Label on bar",
             "value-on-bar": "Value on bar",
-            "bar-chart-style": "Bar chart style"
+            "bar-chart-style": "Bar chart style",
+            "bar-axis": "Bar axis"
+        },
+        "polar-area-chart": {
+            "polar-axis": "Polar axis",
+            "start-angle": "Start angle",
+            "polar-area-chart-style": "Polar area chart style"
         },
         "battery-level": {
             "layout": "Layout",
@@ -5459,6 +5469,25 @@
             "inactive-bars-color": "Inactive signal bars color",
             "signal-strength-card-style": "Signal strength card style",
             "no-signal-rssi-value": "\"No signal\" rssi value"
+        },
+        "status-widget": {
+            "behavior": "Behavior",
+            "layout": "Layout",
+            "layout-default": "Default",
+            "layout-center": "Center",
+            "layout-icon": "Icon",
+            "on": "On",
+            "off": "Off",
+            "label": "Label",
+            "status": "Status",
+            "icon": "Icon",
+            "color-palette": "Color palette",
+            "disabled-color-palette": "Disabled color palette",
+            "primary": "Primary",
+            "primary-color-hint": "Color of icon and label",
+            "secondary": "Secondary",
+            "secondary-color-hint": "Color of status",
+            "background": "Background"
         },
         "chart": {
             "common-settings": "Common settings",
@@ -5591,7 +5620,59 @@
             "axis": "Axis",
             "vertical-axis": "Vertical axis",
             "ticks": "Ticks",
-            "horizontal-axis": "Horizontal axis"
+            "horizontal-axis": "Horizontal axis",
+            "shape-empty-circle": "Empty circle",
+            "shape-circle": "Circle",
+            "shape-rect": "Rectangle",
+            "shape-round-rect": "Rounded rectangle",
+            "shape-triangle": "Triangle",
+            "shape-diamond": "Diamond",
+            "shape-pin": "Pin",
+            "shape-arrow": "Arrow",
+            "shape-none": "None",
+            "line-type-solid": "Solid",
+            "line-type-dashed": "Dashed",
+            "line-type-dotted": "Dotted",
+            "label-position-top": "Top",
+            "label-position-bottom": "Bottom",
+            "label-position-outside": "Outside",
+            "label-position-inside": "Inside",
+            "fill": "Fill",
+            "fill-type-none": "None",
+            "fill-type-solid": "Solid",
+            "fill-type-opacity": "Opacity",
+            "fill-type-gradient": "Gradient",
+            "background": "Background",
+            "opacity": "Opacity",
+            "gradient-stops": "Gradient stops",
+            "gradient-start": "start",
+            "gradient-end": "end",
+            "animation": {
+              "animation": "Animation",
+              "animation-threshold": "Animation threshold",
+              "animation-duration": "Animation duration",
+              "animation-easing": "Animation easing",
+              "animation-delay": "Animation delay",
+              "update-animation-duration": "Update animation duration",
+              "update-animation-easing": "Update animation easing",
+              "update-animation-delay": "Update animation delay"
+            },
+            "chart-axis": {
+              "scale": "Scale",
+              "scale-min": "min",
+              "scale-max": "max",
+              "scale-auto": "Auto"
+            },
+            "bar": {
+              "show-border": "Show border",
+              "border-width": "Border width",
+              "border-radius": "Border radius",
+              "bar-width": "Bar width",
+              "label": "Label",
+              "label-hint": "Display label over the bar.",
+              "series-label-hint": "Display label with value over the bar.",
+              "label-background": "Label background"
+            }
         },
         "color": {
             "color-settings": "Color settings",
@@ -5692,16 +5773,10 @@
             }
         },
         "doughnut": {
-            "total": "Total",
             "layout": "Layout",
             "layout-default": "Default",
             "layout-with-total": "With total",
-            "auto-scale": "Auto scale",
-            "clockwise-layout": "Clockwise layout",
-            "sort-series": "Sort series by label",
             "central-total-value": "Central total value",
-            "tooltip-value-type-absolute": "Absolute",
-            "tooltip-value-type-percentage": "Percentage",
             "doughnut-card-style": "Doughnut card style"
         },
         "entities-hierarchy": {
@@ -6718,6 +6793,34 @@
             "table-tabs": "Table tabs",
             "show-cell-actions-menu-mobile": "Show cell actions dropdown menu in mobile mode"
         },
+        "latest-chart": {
+            "total": "Total",
+            "auto-scale": "Auto scale",
+            "clockwise-layout": "Clockwise layout",
+            "sort-series": "Sort series by label",
+            "tooltip-value-type-absolute": "Absolute",
+            "tooltip-value-type-percentage": "Percentage"
+        },
+        "pie-chart": {
+            "label": "Label",
+            "border": "Border",
+            "radius": "Radius",
+            "pie-chart-card-style": "Pie chart card style"
+        },
+        "radar-chart": {
+            "radar-appearance": "Radar appearance",
+            "shape": "Shape",
+            "shape-polygon": "Polygon",
+            "shape-circle": "Circle",
+            "color": "Color",
+            "line": "Line",
+            "points": "Points",
+            "points-label": "Points label",
+            "radar-axis": "Radar axis",
+            "axis-label": "Axis label",
+            "ticks-label": "Ticks label",
+            "radar-chart-style": "Radar chart style"
+        },
         "time-series-chart": {
             "chart": "Chart",
             "chart-style": "Chart style",
@@ -6727,19 +6830,7 @@
             "axes": "Axes",
             "y-axes": "Y axes",
             "line-type": "Line type",
-            "line-type-solid": "Solid",
-            "line-type-dashed": "Dashed",
-            "line-type-dotted": "Dotted",
             "line-width": "Line width",
-            "shape-empty-circle": "Empty circle",
-            "shape-circle": "Circle",
-            "shape-rect": "Rectangle",
-            "shape-round-rect": "Rounded rectangle",
-            "shape-triangle": "Triangle",
-            "shape-diamond": "Diamond",
-            "shape-pin": "Pin",
-            "shape-arrow": "Arrow",
-            "shape-none": "None",
             "type-line": "Line",
             "type-bar": "Bar",
             "type-point": "Point",
@@ -6838,24 +6929,10 @@
               "ticks-interval-hint": "Compulsively set segmentation interval for axis.",
               "split-number": "Split number",
               "split-number-hint": "Number of segments that the axis is split into.",
-              "scale": "Scale",
-              "scale-min": "min",
-              "scale-max": "max",
-              "scale-auto": "Auto",
               "min": "Min",
               "max": "Max",
               "show": "Show",
               "add-y-axis": "Add Y axis"
-            },
-            "animation": {
-              "animation": "Animation",
-              "animation-threshold": "Animation threshold",
-              "animation-duration": "Animation duration",
-              "animation-easing": "Animation easing",
-              "animation-delay": "Animation delay",
-              "update-animation-duration": "Update animation duration",
-              "update-animation-easing": "Update animation easing",
-              "update-animation-delay": "Update animation delay"
             },
             "series": {
               "legend-settings": "Legend settings",
@@ -6867,18 +6944,6 @@
               "type": "Type",
               "type-line": "Line",
               "type-bar": "Bar",
-              "label-position-top": "Top",
-              "label-position-bottom": "Bottom",
-              "fill": "Fill",
-              "background": "Background",
-              "fill-type-none": "None",
-              "fill-type-solid": "Solid",
-              "fill-type-opacity": "Opacity",
-              "fill-type-gradient": "Gradient",
-              "opacity": "Opacity",
-              "gradient-stops": "Gradient stops",
-              "gradient-start": "start",
-              "gradient-end": "end",
               "line": {
                 "line": "Line",
                 "show-line": "Show line",
@@ -6896,14 +6961,6 @@
                 "point-label-background": "Point label background",
                 "point-shape": "Point shape",
                 "point-size": "Point size"
-              },
-              "bar": {
-                "show-border": "Show border",
-                "border-width": "Border width",
-                "border-radius": "Border radius",
-                "label": "Label",
-                "label-hint": "Display label with value over the bar.",
-                "label-background": "Label background"
               }
             }
         },
@@ -7261,6 +7318,7 @@
     "language": {
         "language": "Language",
         "locales": {
+            "ar_AE": "اَلْعَرَبِيَّةُ",
             "ca_ES": "Catalan",
             "cs_CZ": "Česky",
             "da_DK": "Dansk",

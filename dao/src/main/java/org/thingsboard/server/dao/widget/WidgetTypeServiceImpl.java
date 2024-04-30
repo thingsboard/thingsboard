@@ -116,6 +116,11 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
     }
 
     @Override
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        deleteWidgetType(tenantId, (WidgetTypeId) id);
+    }
+
+    @Override
     public PageData<WidgetTypeInfo> findSystemWidgetTypesByPageLink(TenantId tenantId, boolean fullSearch, DeprecatedFilter deprecatedFilter, List<String> widgetTypes, PageLink pageLink) {
         log.trace("Executing findSystemWidgetTypesByPageLink, fullSearch [{}], deprecatedFilter [{}], widgetTypes [{}], pageLink [{}]", fullSearch, deprecatedFilter, widgetTypes, pageLink);
         Validator.validatePageLink(pageLink);
@@ -224,6 +229,11 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
         log.trace("Executing deleteWidgetTypesByTenantId, tenantId [{}]", tenantId);
         Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         tenantWidgetTypeRemover.removeEntities(tenantId, tenantId);
+    }
+
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteWidgetTypesByTenantId(tenantId);
     }
 
     @Override

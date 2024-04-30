@@ -50,6 +50,7 @@ import org.thingsboard.server.common.data.notification.rule.trigger.config.Notif
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.RateLimitsNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.TaskProcessingFailureNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
 import org.thingsboard.server.common.data.notification.template.WebDeliveryMethodNotificationTemplate;
@@ -355,6 +356,19 @@ public class DefaultNotifications {
                     .name("Edge communication failure")
                     .triggerConfig(EdgeCommunicationFailureNotificationRuleTriggerConfig.builder().edges(null).build())
                     .description("Send notification to tenant admins when communication failures occur")
+                    .build())
+            .build();
+
+    public static final DefaultNotification taskProcessingFailure = DefaultNotification.builder()
+            .name("Task processing failure notification")
+            .type(NotificationType.TASK_PROCESSING_FAILURE)
+            .subject("Failed to process ${taskType}")
+            .text("Failed to process ${taskDescription} for tenant ${tenantId}: ${error}")
+            .icon("warning").color(YELLOW_COLOR)
+            .rule(DefaultRule.builder()
+                    .name("Task processing failure")
+                    .triggerConfig(TaskProcessingFailureNotificationRuleTriggerConfig.builder().build())
+                    .description("Send notification to system admins when task processing fails")
                     .build())
             .build();
 
