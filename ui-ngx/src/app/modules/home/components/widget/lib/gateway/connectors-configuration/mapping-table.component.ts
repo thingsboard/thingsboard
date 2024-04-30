@@ -215,6 +215,7 @@ export class MappingTableComponent extends PageComponent implements ControlValue
   }
 
   exitFilterMode() {
+    this.updateTableData(this.mappingFormGroup.value);
     this.textSearchMode = false;
     this.textSearch.reset();
   }

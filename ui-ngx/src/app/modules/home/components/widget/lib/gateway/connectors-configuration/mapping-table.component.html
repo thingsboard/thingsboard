@@ -105,7 +105,7 @@
         <mat-header-row [ngClass]="{'mat-row-select': true}" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
         <mat-row *matRowDef="let mapping; columns: displayedColumns;"></mat-row>
       </table>
-      <section [fxShow]="dataSource.isEmpty() | async" fxLayoutAlign="center center"
+      <section [fxShow]="!textSearchMode && (dataSource.isEmpty() | async)" fxLayoutAlign="center center"
                class="mat-headline-5 tb-absolute-fill tb-add-new">
         <button mat-button class="connector"
                 (click)="manageMapping($event)">
@@ -114,5 +114,10 @@
         </button>
       </section>
     </div>
+    <span [fxShow]="textSearchMode && (dataSource.isEmpty() | async)"
+          fxLayoutAlign="center center"
+          class="no-data-found" translate>
+      widget.no-data-found
+    </span>
   </div>
 </div>

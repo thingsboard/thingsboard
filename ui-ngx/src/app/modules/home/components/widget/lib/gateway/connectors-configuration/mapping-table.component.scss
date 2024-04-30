@@ -71,6 +71,10 @@
     }
   }
 
+  .no-data-found {
+    height: calc(100% - 120px);
+  }
+
   @media #{$mat-xs} {
     .mat-toolbar {
       height: auto;

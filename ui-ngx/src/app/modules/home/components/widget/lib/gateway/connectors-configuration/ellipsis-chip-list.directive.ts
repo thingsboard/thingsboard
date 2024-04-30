@@ -94,14 +94,15 @@ export class EllipsisChipListDirective implements OnDestroy {
         this.renderer.setStyle(ellipsisChip, 'display', 'none');
       }
     } else if (this.chipsValue.length === 1) {
-      this.renderer.setStyle(ellipsisChip, 'display', 'none');
       const chipLabelContainer = chipNodes[0].querySelector('.mdc-evolution-chip__action');
       const textLabelContainer = chipLabelContainer.querySelector('.mdc-evolution-chip__text-label');
       const leftPadding = parseFloat(this.window.getComputedStyle(chipLabelContainer).paddingLeft) || 0;
       const rightPadding = parseFloat(this.window.getComputedStyle(chipLabelContainer).paddingRight) || 0;
-
       const computedTextWidth = chipListElement.offsetWidth - margin -
         (leftPadding + rightPadding);
+
+      this.renderer.setStyle(ellipsisChip, 'display', 'none');
+      this.renderer.setStyle(chipNodes[0], 'display', 'inline-flex');
 
       this.renderer.setStyle(textLabelContainer, 'max-width', computedTextWidth + 'px');
       this.renderer.setStyle(textLabelContainer, 'overflow', 'hidden');
