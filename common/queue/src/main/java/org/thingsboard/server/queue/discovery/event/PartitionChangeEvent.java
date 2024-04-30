@@ -17,14 +17,12 @@ package org.thingsboard.server.queue.discovery.event;
 
 import lombok.Getter;
 import lombok.ToString;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.discovery.QueueKey;
 
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @ToString(callSuper = true)
@@ -44,17 +42,9 @@ public class PartitionChangeEvent extends TbApplicationEvent {
     }
 
     public Set<TopicPartitionInfo> getCorePartitions() {
-        return getPartitions(entry -> !entry.getKey().getQueueName().equals(DataConstants.EDGE_QUEUE_NAME));
-    }
-
-    public Set<TopicPartitionInfo> getEdgePartitions() {
-        return getPartitions(entry -> entry.getKey().getQueueName().equals(DataConstants.EDGE_QUEUE_NAME));
-    }
-
-    private Set<TopicPartitionInfo> getPartitions(Predicate<Map.Entry<QueueKey, Set<TopicPartitionInfo>>> predicate) {
         return partitionsMap.entrySet()
                 .stream()
-                .filter(predicate)
+                .filter(entry -> !entry.getKey().isEdgeQueue())
                 .flatMap(entry -> entry.getValue().stream())
                 .collect(Collectors.toSet());
     }

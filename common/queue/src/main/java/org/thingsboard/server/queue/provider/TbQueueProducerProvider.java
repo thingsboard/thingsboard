@@ -82,21 +82,10 @@ public interface TbQueueProducerProvider {
      */
     TbQueueProducer<TbProtoQueueMsg<ToVersionControlServiceMsg>> getTbVersionControlMsgProducer();
 
-    /**
-     * Used to push Edge messages to instances of TB Core Service (Edge queue)
-     *
-     * @return
-     */
+    TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> getHousekeeperMsgProducer();
+
     TbQueueProducer<TbProtoQueueMsg<ToEdgeMsg>> getTbEdgeMsgProducer();
 
-
-    /**
-     * Used to push Edge messages to other instances of TB Core Service (Edge queue)
-     *
-     * @return
-     */
     TbQueueProducer<TbProtoQueueMsg<ToEdgeNotificationMsg>> getTbEdgeNotificationsMsgProducer();
-
-    TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> getHousekeeperMsgProducer();
 
 }

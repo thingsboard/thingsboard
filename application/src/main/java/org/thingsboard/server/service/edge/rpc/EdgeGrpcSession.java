@@ -478,12 +478,9 @@ public final class EdgeGrpcSession implements Closeable {
     private void processHighPriorityEvent(SettableFuture<Pair<Long, Long>> result) {
         List<EdgeEvent> highPriorityEvents = new ArrayList<>();
         EdgeEvent event;
-        do {
-            event = highPriorityQueue.poll();
-            if (event != null) {
-                highPriorityEvents.add(event);
-            }
-        } while (event != null);
+        while ((event = highPriorityQueue.poll()) != null) {
+            highPriorityEvents.add(event);
+        }
 
         List<DownlinkMsg> downlinkMsgsPack = convertToDownlinkMsgsPack(highPriorityEvents);
         Futures.addCallback(sendDownlinkMsgsPack(downlinkMsgsPack), new FutureCallback<>() {

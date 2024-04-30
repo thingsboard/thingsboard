@@ -140,34 +140,12 @@ public interface TbCoreQueueFactory extends TbUsageStatsClientQueueFactory, Hous
 
     TbQueueConsumer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> createHousekeeperReprocessingMsgConsumer();
 
-    /**
-     * Used to consume messages from TB Core Service (Edge queue)
-     *
-     * @return
-     */
     TbQueueConsumer<TbProtoQueueMsg<ToEdgeMsg>> createEdgeMsgConsumer();
 
-    /**
-     * Used to push Edge messages to instances of Tb Core Service (Edge queue)
-     *
-     * @return
-     */
     TbQueueProducer<TbProtoQueueMsg<ToEdgeMsg>> createEdgeMsgProducer();
 
-
-    /**
-     * Used to consume high priority Edge messages by TB Core Service (Edge queue)
-     *
-     * @return
-     */
     TbQueueConsumer<TbProtoQueueMsg<ToEdgeNotificationMsg>> createToEdgeNotificationsMsgConsumer();
 
-    /**
-     * Used to push notifications to other instances of TB Core Service (Edge queue)
-     *
-     * @return
-     */
     TbQueueProducer<TbProtoQueueMsg<ToEdgeNotificationMsg>> createEdgeNotificationsMsgProducer();
-
 
 }

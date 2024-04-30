@@ -117,12 +117,16 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
         super.onApplicationEvent(event);
     }
 
-
     @Override
     public void onTbApplicationEvent(PartitionChangeEvent event) {
         if (ServiceType.TB_CORE.equals(event.getServiceType())) {
-            log.info("Subscribing to partitions: {}", event.getEdgePartitions());
-            this.mainConsumer.subscribe(event.getEdgePartitions());
+            var partitions = event.getPartitionsMap().entrySet()
+                    .stream()
+                    .filter(entry -> entry.getKey().isEdgeQueue())
+                    .flatMap(entry -> entry.getValue().stream())
+                    .collect(Collectors.toSet());
+            log.info("Subscribing to partitions: {}", partitions);
+            this.mainConsumer.subscribe(partitions);
         }
     }
 

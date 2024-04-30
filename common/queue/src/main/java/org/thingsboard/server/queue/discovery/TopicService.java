@@ -51,12 +51,8 @@ public class TopicService {
         };
     }
 
-    public TopicPartitionInfo getEdgeNotificationsTopic(ServiceType serviceType, String serviceId) {
-        if (serviceType == ServiceType.TB_CORE) {
-            return tbEdgeNotificationTopics.computeIfAbsent(serviceId,
-                    id -> buildEdgeNotificationsTopicPartitionInfo(serviceId));
-        }
-        return buildEdgeNotificationsTopicPartitionInfo(serviceId);
+    public TopicPartitionInfo getEdgeNotificationsTopic(String serviceId) {
+        return tbEdgeNotificationTopics.computeIfAbsent(serviceId, id -> buildEdgeNotificationsTopicPartitionInfo(serviceId));
     }
 
     private TopicPartitionInfo buildNotificationsTopicPartitionInfo(ServiceType serviceType, String serviceId) {

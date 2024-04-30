@@ -462,7 +462,7 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     private void pushMsgToEdgeNotification(ToEdgeNotificationMsg toEdgeNotificationMsg, String serviceId) {
-        TopicPartitionInfo tpi = topicService.getEdgeNotificationsTopic(ServiceType.TB_CORE, serviceId);
+        TopicPartitionInfo tpi = topicService.getEdgeNotificationsTopic(serviceId);
         TbQueueProducer<TbProtoQueueMsg<ToEdgeNotificationMsg>> toEdgeNotificationProducer = producerProvider.getTbEdgeNotificationsMsgProducer();
         toEdgeNotificationProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), toEdgeNotificationMsg), null);
         toEdgeNfs.incrementAndGet();
@@ -472,7 +472,7 @@ public class DefaultTbClusterService implements TbClusterService {
         TbQueueProducer<TbProtoQueueMsg<ToEdgeNotificationMsg>> toEdgeNotificationProducer = producerProvider.getTbEdgeNotificationsMsgProducer();
         Set<String> serviceIds = partitionService.getAllServiceIds(ServiceType.TB_CORE);
         for (String serviceId : serviceIds) {
-            TopicPartitionInfo tpi = topicService.getEdgeNotificationsTopic(ServiceType.TB_CORE, serviceId);
+            TopicPartitionInfo tpi = topicService.getEdgeNotificationsTopic(serviceId);
             toEdgeNotificationProducer.send(tpi, new TbProtoQueueMsg<>(edgeId.getId(), toEdgeNotificationMsg), null);
             toEdgeNfs.incrementAndGet();
         }
