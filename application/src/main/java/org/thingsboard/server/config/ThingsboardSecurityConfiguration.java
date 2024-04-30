@@ -221,7 +221,8 @@ public class ThingsboardSecurityConfiguration {
     @Order(2)
     SecurityFilterChain authFilterChain(HttpSecurity http) throws Exception {
         configureCommonHttpSecurity(http)
-                .securityMatcher(TOKEN_BASED_AUTH_ENTRY_POINT); // Protected API End-points
+                .securityMatcher(TOKEN_BASED_AUTH_ENTRY_POINT) // Protected API End-points
+                .authorizeHttpRequests(config -> config.anyRequest().authenticated());
         if (oauth2Configuration != null) {
             http.oauth2Login(login -> login
                     .authorizationEndpoint(config -> config
@@ -241,8 +242,8 @@ public class ThingsboardSecurityConfiguration {
                         .frameOptions(config -> {}).disable())
                 .cors(cors -> {})
                 .csrf(AbstractHttpConfigurer::disable)
-                .exceptionHandling(config -> {})
                 .sessionManagement(config -> config.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(config -> config.accessDeniedHandler(restAccessDeniedHandler))
                 .addFilterBefore(buildRestLoginProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(buildRestPublicLoginProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(buildJwtTokenAuthenticationProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
