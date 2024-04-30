@@ -1011,7 +1011,6 @@ public class DefaultTransportService extends TransportActivityManager implements
                 break;
             case TENANT:
                 Tenant tenant = ProtoUtils.fromProto(msg.getTenant());
-                partitionService.removeTenant(tenant.getId());
                 boolean updated = tenantProfileCache.put(tenant.getId(), tenant.getTenantProfileId());
                 partitionService.evictTenantInfo(tenant.getId());
                 if (updated) {

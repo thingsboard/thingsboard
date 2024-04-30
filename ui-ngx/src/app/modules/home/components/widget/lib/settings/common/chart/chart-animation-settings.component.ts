@@ -22,41 +22,36 @@ import {
   UntypedFormGroup,
   Validators
 } from '@angular/forms';
-import { WidgetService } from '@core/http/widget.service';
-import {
-  echartsAnimationEasings,
-  EChartsAnimationSettings
-} from '@home/components/widget/lib/chart/echarts-widget.models';
+import { chartAnimationEasings, ChartAnimationSettings } from '@home/components/widget/lib/chart/chart.models';
 
 @Component({
-  selector: 'tb-echarts-animation-settings',
-  templateUrl: './echarts-animation-settings.component.html',
+  selector: 'tb-chart-animation-settings',
+  templateUrl: './chart-animation-settings.component.html',
   styleUrls: ['./../../widget-settings.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => EchartsAnimationSettingsComponent),
+      useExisting: forwardRef(() => ChartAnimationSettingsComponent),
       multi: true
     }
   ]
 })
-export class EchartsAnimationSettingsComponent implements OnInit, ControlValueAccessor {
+export class ChartAnimationSettingsComponent implements OnInit, ControlValueAccessor {
 
   settingsExpanded = false;
 
-  echartsAnimationEasings = echartsAnimationEasings;
+  chartAnimationEasings = chartAnimationEasings;
 
   @Input()
   disabled: boolean;
 
-  private modelValue: EChartsAnimationSettings;
+  private modelValue: ChartAnimationSettings;
 
   private propagateChange = null;
 
   public animationSettingsFormGroup: UntypedFormGroup;
 
-  constructor(private fb: UntypedFormBuilder,
-              private widgetService: WidgetService,) {
+  constructor(private fb: UntypedFormBuilder) {
   }
 
   ngOnInit(): void {
@@ -96,7 +91,7 @@ export class EchartsAnimationSettingsComponent implements OnInit, ControlValueAc
     }
   }
 
-  writeValue(value: EChartsAnimationSettings): void {
+  writeValue(value: ChartAnimationSettings): void {
     this.modelValue = value;
     this.animationSettingsFormGroup.patchValue(
       value, {emitEvent: false}

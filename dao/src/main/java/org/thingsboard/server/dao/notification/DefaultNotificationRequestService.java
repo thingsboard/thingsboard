@@ -94,6 +94,16 @@ public class DefaultNotificationRequestService implements NotificationRequestSer
     }
 
     @Override
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        if (force) {
+            notificationRequestDao.removeById(tenantId, id.getId());
+        } else {
+            NotificationRequest notificationRequest = findNotificationRequestById(tenantId, (NotificationRequestId) id);
+            deleteNotificationRequest(tenantId, notificationRequest);
+        }
+    }
+
+    @Override
     public PageData<NotificationRequest> findScheduledNotificationRequests(PageLink pageLink) {
         return notificationRequestDao.findAllByStatus(NotificationRequestStatus.SCHEDULED, pageLink);
     }
@@ -107,6 +117,11 @@ public class DefaultNotificationRequestService implements NotificationRequestSer
     @Override
     public void deleteNotificationRequestsByTenantId(TenantId tenantId) {
         notificationRequestDao.removeByTenantId(tenantId);
+    }
+
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteNotificationRequestsByTenantId(tenantId);
     }
 
     @Override
