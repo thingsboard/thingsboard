@@ -58,7 +58,7 @@ public class TbRuleEngineProducerProvider implements TbQueueProducerProvider {
         this.toTbCoreNotifications = tbQueueProvider.createTbCoreNotificationsMsgProducer();
         this.toUsageStats = tbQueueProvider.createToUsageStatsServiceMsgProducer();
         this.toHousekeeper = tbQueueProvider.createHousekeeperMsgProducer();
-        this.toEdge = tbQueueProvider.createTbEdgeMsgProducer();
+        this.toEdge = tbQueueProvider.createEdgeMsgProducer();
     }
 
     @Override
