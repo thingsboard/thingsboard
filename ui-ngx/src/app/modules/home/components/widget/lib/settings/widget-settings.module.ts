@@ -351,6 +351,9 @@ import {
 import {
   PolarAreaChartWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/chart/polar-area-chart-widget-settings.component';
+import {
+  RadarChartWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/chart/radar-chart-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -476,7 +479,8 @@ import {
     StatusWidgetSettingsComponent,
     PieChartWidgetSettingsComponent,
     BarChartWidgetSettingsComponent,
-    PolarAreaChartWidgetSettingsComponent
+    PolarAreaChartWidgetSettingsComponent,
+    RadarChartWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -607,7 +611,8 @@ import {
     StatusWidgetSettingsComponent,
     PieChartWidgetSettingsComponent,
     BarChartWidgetSettingsComponent,
-    PolarAreaChartWidgetSettingsComponent
+    PolarAreaChartWidgetSettingsComponent,
+    RadarChartWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -704,5 +709,6 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-status-widget-settings': StatusWidgetSettingsComponent,
   'tb-pie-chart-widget-settings': PieChartWidgetSettingsComponent,
   'tb-bar-chart-widget-settings': BarChartWidgetSettingsComponent,
-  'tb-polar-area-chart-widget-settings': PolarAreaChartWidgetSettingsComponent
+  'tb-polar-area-chart-widget-settings': PolarAreaChartWidgetSettingsComponent,
+  'tb-radar-chart-widget-settings': RadarChartWidgetSettingsComponent
 };
