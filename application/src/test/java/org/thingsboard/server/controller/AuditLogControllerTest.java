@@ -216,11 +216,12 @@ public class AuditLogControllerTest extends AbstractControllerTest {
     @Test
     public void whenSavingAuditLogAndPartitionSaveErrorOccurred_thenSaveAuditLogAnyway() throws Exception {
         // creating partition bigger than sql.audit_logs.partition_size
-        long entityTs = ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2024-04-29T07:43:11Z").getTime();
+        long entityTs = ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2022-04-29T07:43:11Z").getTime();
+        //the partition 7 days is overlapping default partition size 1 day, use in the far past to not affect other tests
         partitioningRepository.createPartitionIfNotExists("audit_log", entityTs, TimeUnit.DAYS.toMillis(7));
         List<Long> partitions = partitioningRepository.fetchPartitions("audit_log");
         log.warn("entityTs [{}], fetched partitions {}", entityTs, partitions);
-        assertThat(partitions).contains(ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2024-04-29T00:00:00Z").getTime());
+        assertThat(partitions).contains(ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2022-04-28T00:00:00Z").getTime());
         partitioningRepository.cleanupPartitionsCache("audit_log", entityTs, 0);
 
         assertDoesNotThrow(() -> {
@@ -228,7 +229,7 @@ public class AuditLogControllerTest extends AbstractControllerTest {
             createAuditLog(ActionType.LOGIN, tenantAdminUserId, entityTs);
         });
         assertThat(partitioningRepository.fetchPartitions("audit_log"))
-                .contains(ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2024-04-29T00:00:00Z").getTime());;
+                .contains(ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2022-04-28T00:00:00Z").getTime());;
     }
 
     private AuditLog createAuditLog(ActionType actionType, EntityId entityId, long entityTs) {
