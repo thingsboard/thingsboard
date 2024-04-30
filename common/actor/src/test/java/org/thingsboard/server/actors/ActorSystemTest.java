@@ -16,12 +16,12 @@
 package org.thingsboard.server.actors;
 
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.Test;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ActorSystemTest {
 
     public static final String ROOT_DISPATCHER = "root-dispatcher";
@@ -50,7 +50,7 @@ public class ActorSystemTest {
     private ExecutorService executor;
     private int parallelism;
 
-    @Before
+    @BeforeEach
     public void initActorSystem() {
         int cores = Runtime.getRuntime().availableProcessors();
         parallelism = Math.max(2, cores / 2);
@@ -59,7 +59,7 @@ public class ActorSystemTest {
         submitPool = Executors.newFixedThreadPool(parallelism, ThingsBoardThreadFactory.forName(getClass().getSimpleName() + "-submit-test-scope")); //order guaranteed
     }
 
-    @After
+    @AfterEach
     public void shutdownActorSystem() {
         actorSystem.stop();
         submitPool.shutdownNow();
@@ -126,8 +126,8 @@ public class ActorSystemTest {
         actorId2.tell(new IntTbActorMsg(42));
         actorSystem.stop(actorId1);
 
-        Assert.assertTrue(testCtx2.getLatch().await(1, TimeUnit.SECONDS));
-        Assert.assertFalse(testCtx1.getLatch().await(1, TimeUnit.SECONDS));
+        Assertions.assertTrue(testCtx2.getLatch().await(1, TimeUnit.SECONDS));
+        Assertions.assertFalse(testCtx1.getLatch().await(1, TimeUnit.SECONDS));
     }
 
     @Test
@@ -149,12 +149,12 @@ public class ActorSystemTest {
         });
 
         initLatch.countDown(); //replacement for Thread.wait(500) in the SlowCreateActorCreator
-        Assert.assertTrue(actorsReadyLatch.await(TIMEOUT_AWAIT_MAX_SEC, TimeUnit.SECONDS));
+        Assertions.assertTrue(actorsReadyLatch.await(TIMEOUT_AWAIT_MAX_SEC, TimeUnit.SECONDS));
 
         actorSystem.tell(actorId, new IntTbActorMsg(42));
 
-        Assert.assertTrue(testCtx1.getLatch().await(TIMEOUT_AWAIT_MAX_SEC, TimeUnit.SECONDS));
-        Assert.assertFalse(testCtx2.getLatch().await(1, TimeUnit.SECONDS));
+        Assertions.assertTrue(testCtx1.getLatch().await(TIMEOUT_AWAIT_MAX_SEC, TimeUnit.SECONDS));
+        Assertions.assertFalse(testCtx2.getLatch().await(1, TimeUnit.SECONDS));
     }
 
     @Test
@@ -173,13 +173,13 @@ public class ActorSystemTest {
             });
         }
         initLatch.countDown();
-        Assert.assertTrue(actorsReadyLatch.await(TIMEOUT_AWAIT_MAX_SEC, TimeUnit.SECONDS));
+        Assertions.assertTrue(actorsReadyLatch.await(TIMEOUT_AWAIT_MAX_SEC, TimeUnit.SECONDS));
 
         actorSystem.tell(actorId, new IntTbActorMsg(42));
 
-        Assert.assertTrue(testCtx.getLatch().await(TIMEOUT_AWAIT_MAX_SEC, TimeUnit.SECONDS));
+        Assertions.assertTrue(testCtx.getLatch().await(TIMEOUT_AWAIT_MAX_SEC, TimeUnit.SECONDS));
         //One for creation and one for message
-        Assert.assertEquals(2, testCtx.getInvocationCount().get());
+        Assertions.assertEquals(2, testCtx.getInvocationCount().get());
     }
 
     @Test
@@ -197,9 +197,9 @@ public class ActorSystemTest {
         actorId1.tell(new IntTbActorMsg(42));
         actorId2.tell(new IntTbActorMsg(42));
 
-        Assert.assertFalse(testCtx1.getLatch().await(2, TimeUnit.SECONDS));
-        Assert.assertTrue(testCtx2.getLatch().await(1, TimeUnit.SECONDS));
-        Assert.assertTrue(testCtx1.getLatch().await(3, TimeUnit.SECONDS));
+        Assertions.assertFalse(testCtx1.getLatch().await(2, TimeUnit.SECONDS));
+        Assertions.assertTrue(testCtx2.getLatch().await(1, TimeUnit.SECONDS));
+        Assertions.assertTrue(testCtx1.getLatch().await(3, TimeUnit.SECONDS));
     }
 
 
@@ -237,9 +237,9 @@ public class ActorSystemTest {
                     if (!success) {
                         log.warn("Failed: {}, {}", ctx.getActual().get(), ctx.getInvocationCount().get());
                     }
-                    Assert.assertTrue(success);
-                    Assert.assertEquals(expected, ctx.getActual().get());
-                    Assert.assertEquals(msgNumber, ctx.getInvocationCount().get());
+                    Assertions.assertTrue(success);
+                    Assertions.assertEquals(expected, ctx.getActual().get());
+                    Assertions.assertEquals(msgNumber, ctx.getInvocationCount().get());
                     ctx.clear();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
