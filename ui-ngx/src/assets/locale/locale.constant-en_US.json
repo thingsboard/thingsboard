@@ -2273,7 +2273,9 @@
         "phone": "Phone",
         "label": "Label",
         "queue-name": "Queue name",
-        "service-id": "Service Id"
+        "service-id": "Service Id",
+        "owner-name": "Owner name",
+        "owner-type": "Owner type"
     },
     "entity-view": {
         "entity-view": "Entity view",
@@ -7302,7 +7304,7 @@
     "language": {
         "language": "Language",
         "locales": {
-            "ar_AR": "اَلْعَرَبِيَّةُ",
+            "ar_AE": "اَلْعَرَبِيَّةُ",
             "ca_ES": "Catalan",
             "cs_CZ": "Česky",
             "da_DK": "Dansk",
