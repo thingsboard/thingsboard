@@ -31,6 +31,7 @@
     <!--    To reduce logs -->
     <logger name="org.apache.catalina.loader.WebappClassLoaderBase" level="ERROR" />
     <logger name="org.thingsboard.server.service.queue.DefaultTbClusterService" level="ERROR" />
+    <logger name="org.thingsboard.server.service.security.auth.jwt.settings.DefaultJwtSettingsService" level="ERROR" />
 
 
     <logger name="org.thingsboard.server.queue.discovery.HashPartitionService" level="TRACE" />

@@ -27,12 +27,8 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.edge.EdgeService;
@@ -70,13 +66,6 @@ public abstract class AbstractTbEntityService {
     @Autowired(required = false)
     @Lazy
     private EntitiesVersionControlService vcService;
-
-    protected void removeAlarmsByOriginatorId(TenantId tenantId, EntityId entityId) {
-        PageData<AlarmId> alarms =
-                alarmService.findAlarmIdsByOriginatorId(tenantId, entityId, new TimePageLink(Integer.MAX_VALUE));
-
-        alarms.getData().forEach(alarmId -> alarmService.delAlarm(tenantId, alarmId));
-    }
 
     protected <T> T checkNotNull(T reference) throws ThingsboardException {
         return checkNotNull(reference, "Requested item wasn't found!");

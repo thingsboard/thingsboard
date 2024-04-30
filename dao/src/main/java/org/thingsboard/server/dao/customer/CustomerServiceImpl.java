@@ -127,9 +127,20 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
     public void deleteCustomer(TenantId tenantId, CustomerId customerId) {
         log.trace("Executing deleteCustomer [{}]", customerId);
         Validator.validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
+        deleteEntity(tenantId, customerId, false);
+    }
+
+    @Transactional
+    @Override
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        CustomerId customerId = (CustomerId) id;
         Customer customer = findCustomerById(tenantId, customerId);
         if (customer == null) {
-            throw new IncorrectParameterException("Unable to delete non-existent customer.");
+            if (force) {
+                return;
+            } else {
+                throw new IncorrectParameterException("Unable to delete non-existent customer.");
+            }
         }
         dashboardService.unassignCustomerDashboards(tenantId, customerId);
         entityViewService.unassignCustomerEntityViews(customer.getTenantId(), customerId);
@@ -137,7 +148,6 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
         deviceService.unassignCustomerDevices(customer.getTenantId(), customerId);
         edgeService.unassignCustomerEdges(customer.getTenantId(), customerId);
         userService.deleteCustomerUsers(customer.getTenantId(), customerId);
-        deleteEntityRelations(tenantId, customerId);
         apiUsageStateService.deleteApiUsageStateByEntityId(customerId);
         customerDao.removeById(tenantId, customerId.getId());
         countService.publishCountEntityEvictEvent(tenantId, EntityType.CUSTOMER);
@@ -181,6 +191,11 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
         customersByTenantRemover.removeEntities(tenantId, tenantId);
     }
 
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteCustomersByTenantId(tenantId);
+    }
+
     private PaginatedRemover<TenantId, Customer> customersByTenantRemover =
             new PaginatedRemover<TenantId, Customer>() {
 
@@ -198,12 +213,6 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findCustomerById(tenantId, new CustomerId(entityId.getId())));
-    }
-
-    @Transactional
-    @Override
-    public void deleteEntity(TenantId tenantId, EntityId id) {
-        deleteCustomer(tenantId, (CustomerId) id);
     }
 
     @Override
