@@ -16,9 +16,10 @@
 package org.thingsboard.mqtt.integration;
 
 import org.junit.extensions.cpsuite.ClasspathSuite;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(ClasspathSuite.class)
+@ExtendWith(MockitoExtension.class)
 @ClasspathSuite.ClassnameFilters({
         "org.thingsboard.mqtt.integration.*Test",
 })
