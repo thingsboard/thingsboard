@@ -200,10 +200,16 @@ public class ThingsboardSecurityConfiguration {
     }
 
     @Bean
-    @Order(1)
-    public SecurityFilterChain noAuthFilterChain(HttpSecurity http) throws Exception {
-        configureCommonHttpSecurity(http)
-                .securityMatchers(config -> config
+    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http.headers(headers -> headers
+                        .cacheControl(config -> {})
+                        .frameOptions(config -> {}).disable())
+                .cors(cors -> {})
+                .csrf(AbstractHttpConfigurer::disable)
+                .exceptionHandling(config -> {})
+                .sessionManagement(config -> config.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(config -> config
+                        .requestMatchers(NON_TOKEN_BASED_AUTH_ENTRY_POINTS).permitAll() // static resources, user activation and password reset end-points (webjars included)
                         .requestMatchers(
                                 DEVICE_API_ENTRY_POINT, // Device HTTP Transport API
                                 FORM_BASED_LOGIN_ENTRY_POINT, // Login end-point
@@ -211,18 +217,15 @@ public class ThingsboardSecurityConfiguration {
                                 TOKEN_REFRESH_ENTRY_POINT, // Token refresh end-point
                                 MAIL_OAUTH2_PROCESSING_ENTRY_POINT, // Mail oauth2 code processing url
                                 DEVICE_CONNECTIVITY_CERTIFICATE_DOWNLOAD_ENTRY_POINT, // Device connectivity certificate (public)
-                                WS_ENTRY_POINT) // WebSocket API End-points
-                        .requestMatchers(NON_TOKEN_BASED_AUTH_ENTRY_POINTS)) // static resources, user activation and password reset end-points
-                .authorizeHttpRequests(config -> config.anyRequest().permitAll());
-        return http.build();
-    }
-
-    @Bean
-    @Order(2)
-    SecurityFilterChain authFilterChain(HttpSecurity http) throws Exception {
-        configureCommonHttpSecurity(http)
-                .securityMatcher(TOKEN_BASED_AUTH_ENTRY_POINT) // Protected API End-points
-                .authorizeHttpRequests(config -> config.anyRequest().authenticated());
+                                WS_ENTRY_POINT).permitAll() // Protected WebSocket API End-points
+                        .requestMatchers(TOKEN_BASED_AUTH_ENTRY_POINT).authenticated() // Protected API End-points
+                        .anyRequest().permitAll())
+                .exceptionHandling(config -> config.accessDeniedHandler(restAccessDeniedHandler))
+                .addFilterBefore(buildRestLoginProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(buildRestPublicLoginProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(buildJwtTokenAuthenticationProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(buildRefreshTokenProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(rateLimitProcessingFilter, UsernamePasswordAuthenticationFilter.class);
         if (oauth2Configuration != null) {
             http.oauth2Login(login -> login
                     .authorizationEndpoint(config -> config
@@ -234,21 +237,6 @@ public class ThingsboardSecurityConfiguration {
                     .failureHandler(oauth2AuthenticationFailureHandler));
         }
         return http.build();
-    }
-
-    private HttpSecurity configureCommonHttpSecurity(HttpSecurity http) throws Exception {
-        return http.headers(headers -> headers
-                        .cacheControl(config -> {})
-                        .frameOptions(config -> {}).disable())
-                .cors(cors -> {})
-                .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(config -> config.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(config -> config.accessDeniedHandler(restAccessDeniedHandler))
-                .addFilterBefore(buildRestLoginProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(buildRestPublicLoginProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(buildJwtTokenAuthenticationProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(buildRefreshTokenProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(rateLimitProcessingFilter, UsernamePasswordAuthenticationFilter.class);
     }
 
     @Bean
