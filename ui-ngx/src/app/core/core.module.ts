@@ -16,7 +16,7 @@
 
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HTTP_INTERCEPTORS, HttpClient, HttpClientModule } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
@@ -42,10 +42,6 @@ import { HotkeyModule } from 'angular2-hotkeys';
 import { TranslateDefaultParser } from '@core/translate/translate-default-parser';
 import { TranslateDefaultLoader } from '@core/translate/translate-default-loader';
 
-export function HttpLoaderFactory(http: HttpClient) {
-  return new TranslateDefaultLoader(http);
-}
-
 @NgModule({
   imports: [
     CommonModule,
@@ -59,8 +55,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,
-        useFactory: HttpLoaderFactory,
-        deps: [HttpClient]
+        useClass: TranslateDefaultLoader
       },
       missingTranslationHandler: {
         provide: MissingTranslationHandler,
