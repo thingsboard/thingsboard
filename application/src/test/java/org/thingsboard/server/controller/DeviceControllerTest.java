@@ -84,6 +84,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -1541,17 +1542,24 @@ public class DeviceControllerTest extends AbstractControllerTest {
         Device savedDevice = doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class);
 
         //check server attribute value
-        List<Map<String, Object>> values = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + savedDevice.getId() +
-                "/values/attributes/SERVER_SCOPE", new TypeReference<>() {
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Map<String, Object> actualAttribute = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + savedDevice.getId() +
+                    "/values/attributes/SERVER_SCOPE", new TypeReference<List<Map<String, Object>>>() {}).stream()
+                    .filter(att -> att.get("key").equals("DATA")).findFirst().get();
+            Assert.assertEquals(attributeValue, actualAttribute.get("value"));
         });
-        Map<String, Object> serverAttribute = values.stream().filter(att -> att.get("key").equals("DATA")).findFirst().get();
-        Assert.assertEquals(attributeValue, serverAttribute.get("value"));
 
         //update server attribute value
         String newAttributeValue = "testValue2";
         JsonNode content = JacksonUtil.toJsonNode("{\"DATA\": \"" + newAttributeValue + "\"}");
         doPost("/api/plugins/telemetry/" + EntityType.DEVICE.name() + "/" + savedDevice.getUuidId() + "/SERVER_SCOPE", content)
                 .andExpect(status().isOk());
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Map<String, Object> actualAttribute = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + savedDevice.getId() +
+                    "/values/attributes/SERVER_SCOPE", new TypeReference<List<Map<String, Object>>>() {}).stream()
+                    .filter(att -> att.get("key").equals("DATA")).findFirst().get();
+            Assert.assertEquals(newAttributeValue, actualAttribute.get("value"));
+        });
 
         //reimport devices
         String deviceName2 = "secondDevice";
@@ -1563,19 +1571,19 @@ public class DeviceControllerTest extends AbstractControllerTest {
         doPostWithTypedResponse("/api/device/bulk_import", request, new TypeReference<>() {});
         Device savedDevice2 = doGet("/api/tenant/devices?deviceName=" + deviceName2, Device.class);
 
-        //check attribute value was not changed after reimport
-        List<Map<String, Object>> values2 = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + savedDevice.getId() +
-                "/values/attributes/SERVER_SCOPE", new TypeReference<>() {
-        });
-        Map<String, Object> retrievedServerAttribute2 = values2.stream().filter(att -> att.get("key").equals("DATA")).findFirst().get();
-        Assert.assertEquals(newAttributeValue, retrievedServerAttribute2.get("value"));
-
         //check attribute for second device
-        List<Map<String, Object>> values3 = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + savedDevice2.getId() +
-                "/values/attributes/SERVER_SCOPE", new TypeReference<>() {
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Map<String, Object> actualAttribute = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + savedDevice2.getId() +
+                    "/values/attributes/SERVER_SCOPE", new TypeReference<List<Map<String, Object>>>() {}).stream()
+                    .filter(att -> att.get("key").equals("DATA")).findFirst().get();
+            Assert.assertEquals(attributeValue2, actualAttribute.get("value"));
         });
-        Map<String, Object> retrievedServerAttribute3 = values3.stream().filter(att -> att.get("key").equals("DATA")).findFirst().get();
-        Assert.assertEquals(attributeValue2, retrievedServerAttribute3.get("value"));
+
+        //check attribute value was not changed after reimport
+        Map<String, Object> actualAttribute = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + savedDevice.getId() +
+                "/values/attributes/SERVER_SCOPE", new TypeReference<List<Map<String, Object>>>() {}).stream()
+                .filter(att -> att.get("key").equals("DATA")).findFirst().get();
+        Assert.assertEquals(newAttributeValue, actualAttribute.get("value"));
     }
 
     private Device createDevice(String name) {
