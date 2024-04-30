@@ -20,17 +20,17 @@ import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.AndroidConfig;
 import org.thingsboard.server.common.data.mobile.IosConfig;
@@ -81,10 +81,13 @@ public class MobileApplicationController extends BaseController {
             "    }\n" +
             "}";
 
+    public static final String ANDROID_APPLICATION_STORE_LINK = "https://play.google.com/store/apps/details?id=org.thingsboard.demo.app";
+    public static final String APPLE_APPLICATION_STORE_LINK = "https://apps.apple.com/us/app/thingsboard-live/id1594355695";
     public static final String SECRET = "secret";
     public static final String SECRET_PARAM_DESCRIPTION = "A string value representing short-live secret key";
     public static final String DEFAULT_APP_DOMAIN = "demo.thingsboard.io";
     public static final String DEEP_LINK_PATTERN = "https://%s/api/noauth/qr?secret=%s&ttl=%s";
+
     private final SystemSecurityService systemSecurityService;
     private final MobileAppSecretService mobileAppSecretService;
     private final MobileAppSettingsService mobileAppSettingsService;
@@ -143,7 +146,7 @@ public class MobileApplicationController extends BaseController {
     @GetMapping(value = "/api/mobile/deepLink", produces = "text/plain")
     public String getMobileAppDeepLink(HttpServletRequest request) throws ThingsboardException, URISyntaxException {
         String secret = mobileAppSecretService.generateMobileAppSecret(getCurrentUser());
-        String baseUrl = systemSecurityService.getBaseUrl(TenantId.SYS_TENANT_ID, new CustomerId(EntityId.NULL_UUID), request);
+        String baseUrl = systemSecurityService.getBaseUrl(TenantId.SYS_TENANT_ID, null, request);
         String platformDomain = new URI(baseUrl).getHost();
         MobileAppSettings mobileAppSettings = mobileAppSettingsService.getMobileAppSettings(TenantId.SYS_TENANT_ID);
         String appDomain;
@@ -156,7 +159,7 @@ public class MobileApplicationController extends BaseController {
         if (!appDomain.equals(platformDomain)) {
             deepLink = deepLink + "&host=" + baseUrl;
         }
-        return deepLink;
+        return "\"" + deepLink + "\"";
     }
 
     @ApiOperation(value = "Get User Token (getUserTokenByMobileSecret)",
@@ -166,5 +169,21 @@ public class MobileApplicationController extends BaseController {
                                 @PathVariable(SECRET) String secret) throws ThingsboardException {
         checkParameter(SECRET, secret);
         return mobileAppSecretService.getJwtPair(secret);
+    }
+
+    @GetMapping(value = "/api/noauth/qr")
+    public ResponseEntity<?> getApplicationRedirect(@RequestHeader(value = "User-Agent") String userAgent) {
+        if (userAgent.contains("Android")) {
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .header("Location", ANDROID_APPLICATION_STORE_LINK)
+                    .build();
+        } else if (userAgent.contains("iPhone") || userAgent.contains("iPad")) {
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .header("Location", APPLE_APPLICATION_STORE_LINK)
+                    .build();
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .build();
+        }
     }
 }

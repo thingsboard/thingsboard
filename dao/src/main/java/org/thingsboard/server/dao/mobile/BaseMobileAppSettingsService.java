@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.mobile;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -26,24 +27,41 @@ import org.thingsboard.server.common.data.mobile.BadgeStyle;
 import org.thingsboard.server.common.data.mobile.IosConfig;
 import org.thingsboard.server.common.data.mobile.MobileAppSettings;
 import org.thingsboard.server.common.data.mobile.QRCodeConfig;
-import org.thingsboard.server.dao.entity.AbstractCachedService;
+import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
+import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.service.DataValidator;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class BaseMobileAppSettingsService extends AbstractCachedService<TenantId, MobileAppSettings, MobileAppSettingsEvictEvent> implements MobileAppSettingsService {
+public class BaseMobileAppSettingsService extends AbstractCachedEntityService<TenantId, MobileAppSettings, MobileAppSettingsEvictEvent> implements MobileAppSettingsService {
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     private static final String DEFAULT_QR_CODE_LABEL = "Scan to connect or download mobile app";
+
     private final MobileAppSettingsDao mobileAppSettingsDao;
+    private final DataValidator<MobileAppSettings> mobileAppSettingsDataValidator;
 
     @Override
-    public MobileAppSettings saveMobileAppSettings(TenantId tenantId, MobileAppSettings settings) {
-        MobileAppSettings mobileAppSettings = mobileAppSettingsDao.save(tenantId, settings);
-        publishEvictEvent(new MobileAppSettingsEvictEvent(tenantId));
-        return mobileAppSettings;
+    public MobileAppSettings saveMobileAppSettings(TenantId tenantId, MobileAppSettings mobileAppSettings) {
+        mobileAppSettingsDataValidator.validate(mobileAppSettings, s -> tenantId);
+        try {
+            MobileAppSettings savedMobileAppSettings = mobileAppSettingsDao.save(tenantId, mobileAppSettings);
+            publishEvictEvent(new MobileAppSettingsEvictEvent(tenantId));
+            return savedMobileAppSettings;
+        } catch (Exception exception) {
+            if (mobileAppSettings != null) {
+                handleEvictEvent(new MobileAppSettingsEvictEvent(tenantId));
+            }
+            ConstraintViolationException e = extractConstraintViolationException(exception).orElse(null);
+            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("mobile_app_settings_tenant_id_key")) {
+                throw new DataValidationException("Mobile application for specified tenant already exists!");
+            } else {
+                throw exception;
+            }
+        }
     }
 
     @Override

@@ -896,7 +896,9 @@ CREATE TABLE IF NOT EXISTS queue_stats (
 );
 
 CREATE TABLE IF NOT EXISTS mobile_app_settings (
-    tenant_id UUID NOT NULL,
+    id uuid NOT NULL CONSTRAINT mobile_app_settings_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid UNIQUE NOT NULL,
     use_default_app boolean,
     android_config VARCHAR(1000),
     ios_config VARCHAR(1000),

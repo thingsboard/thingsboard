@@ -17,12 +17,13 @@ package org.thingsboard.server.common.data.mobile;
 
 import jakarta.validation.Valid;
 import lombok.Data;
+import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.id.MobileAppSettingsId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-import java.io.Serializable;
-
 @Data
-public class MobileAppSettings implements Serializable {
+public class MobileAppSettings extends BaseData<MobileAppSettingsId> implements HasTenantId {
 
     private static final long serialVersionUID = 2628323657987010348L;
 
@@ -34,5 +35,11 @@ public class MobileAppSettings implements Serializable {
     private IosConfig iosConfig;
     @Valid
     private QRCodeConfig qrCodeConfig;
+
+    public MobileAppSettings() {
+    }
+    public MobileAppSettings(MobileAppSettingsId id) {
+        super(id);
+    }
 
 }

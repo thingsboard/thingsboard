@@ -27,6 +27,8 @@ import java.util.UUID;
 
 public interface MobileAppSettingsRepository extends JpaRepository<MobileAppSettingsEntity, UUID> {
 
+    MobileAppSettingsEntity findByTenantId(@Param("tenantId") UUID tenantId);
+
     @Transactional
     @Modifying
     @Query("DELETE FROM MobileAppSettingsEntity r WHERE r.tenantId = :tenantId")

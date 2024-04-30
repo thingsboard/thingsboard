@@ -17,32 +17,31 @@ package org.thingsboard.server.dao.sql.mobile;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.MobileAppSettings;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.mobile.MobileAppSettingsDao;
 import org.thingsboard.server.dao.model.sql.MobileAppSettingsEntity;
-import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
+import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
+
+import java.util.UUID;
 
 
 @Component
 @Slf4j
 @SqlDao
-public class JpaMobileAppDao extends JpaAbstractDaoListeningExecutorService implements MobileAppSettingsDao {
+public class JpaMobileAppSettingsDao extends JpaAbstractDao<MobileAppSettingsEntity, MobileAppSettings> implements MobileAppSettingsDao {
 
     @Autowired
     private MobileAppSettingsRepository mobileAppSettingsRepository;
 
-    @Override
-    public MobileAppSettings save(TenantId tenantId, MobileAppSettings mobileAppSettings) {
-        return DaoUtil.getData(mobileAppSettingsRepository.save(new MobileAppSettingsEntity(mobileAppSettings)));
-    }
 
     @Override
     public MobileAppSettings findByTenantId(TenantId tenantId) {
-        return DaoUtil.getData(mobileAppSettingsRepository.findById(tenantId.getId()));
+        return DaoUtil.getData(mobileAppSettingsRepository.findByTenantId(tenantId.getId()));
     }
 
     @Override
@@ -50,4 +49,13 @@ public class JpaMobileAppDao extends JpaAbstractDaoListeningExecutorService impl
         mobileAppSettingsRepository.deleteByTenantId(tenantId.getId());
     }
 
+    @Override
+    protected Class<MobileAppSettingsEntity> getEntityClass() {
+        return MobileAppSettingsEntity.class;
+    }
+
+    @Override
+    protected JpaRepository<MobileAppSettingsEntity, UUID> getRepository() {
+        return mobileAppSettingsRepository;
+    }
 }

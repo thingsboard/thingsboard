@@ -31,6 +31,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @Slf4j
@@ -48,10 +49,10 @@ public class MobileApplicationControllerTest extends AbstractControllerTest {
     public void setUp() throws Exception {
         loginSysAdmin();
 
+        MobileAppSettings mobileAppSettings = doGet("/api/mobile/app/settings", MobileAppSettings.class);
         QRCodeConfig qrCodeConfig = new QRCodeConfig();
         qrCodeConfig.setQrCodeLabel(TEST_LABEL);
 
-        MobileAppSettings mobileAppSettings = new MobileAppSettings();
         mobileAppSettings.setUseDefaultApp(true);
         AndroidConfig androidConfig = AndroidConfig.builder()
                 .appPackage(ANDROID_PACKAGE_NAME)
@@ -67,7 +68,8 @@ public class MobileApplicationControllerTest extends AbstractControllerTest {
         mobileAppSettings.setIosConfig(iosConfig);
         mobileAppSettings.setQrCodeConfig(qrCodeConfig);
 
-        doPost("/api/mobile/app/settings", mobileAppSettings);
+        doPost("/api/mobile/app/settings", mobileAppSettings)
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -87,6 +89,79 @@ public class MobileApplicationControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testShouldNotSaveMobileAppSettingsWithoutRequiredConfig() throws Exception {
+        loginSysAdmin();
+        MobileAppSettings mobileAppSettings = doGet("/api/mobile/app/settings", MobileAppSettings.class);
+
+        mobileAppSettings.setUseDefaultApp(false);
+        mobileAppSettings.setAndroidConfig(null);
+        mobileAppSettings.setIosConfig(null);
+        mobileAppSettings.setQrCodeConfig(null);
+
+        doPost("/api/mobile/app/settings", mobileAppSettings)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Android/ios settings are required to use custom application!")));
+
+        mobileAppSettings.setAndroidConfig(AndroidConfig.builder().enabled(false).build());
+        doPost("/api/mobile/app/settings", mobileAppSettings)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Android/ios settings are required to use custom application!")));
+
+        mobileAppSettings.setIosConfig(IosConfig.builder().enabled(false).build());
+        doPost("/api/mobile/app/settings", mobileAppSettings)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Qr code config is required!")));
+
+        mobileAppSettings.setQrCodeConfig(QRCodeConfig.builder().showOnHomePage(false).build());
+        doPost("/api/mobile/app/settings", mobileAppSettings)
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testShouldNotSaveMobileAppSettingsWithoutRequiredAndroidConf() throws Exception {
+        loginSysAdmin();
+        MobileAppSettings mobileAppSettings = doGet("/api/mobile/app/settings", MobileAppSettings.class);
+        AndroidConfig androidConfig = AndroidConfig.builder()
+                .enabled(true)
+                .appPackage(null)
+                .sha256CertFingerprints(null)
+                .build();
+        mobileAppSettings.setAndroidConfig(androidConfig);
+
+        doPost("/api/mobile/app/settings", mobileAppSettings)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Application package and sha256 cert fingerprints are required for enabled android settings!")));
+
+        androidConfig.setAppPackage("test_app_package");
+        doPost("/api/mobile/app/settings", mobileAppSettings)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Application package and sha256 cert fingerprints are required for enabled android settings!")));
+
+        androidConfig.setSha256CertFingerprints("test_sha_256");
+        doPost("/api/mobile/app/settings", mobileAppSettings)
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testShouldNotSaveMobileAppSettingsWithoutRequiredIosConf() throws Exception {
+        loginSysAdmin();
+        MobileAppSettings mobileAppSettings = doGet("/api/mobile/app/settings", MobileAppSettings.class);
+        IosConfig iosConfig = IosConfig.builder()
+                .enabled(true)
+                .appId(null)
+                .build();
+        mobileAppSettings.setIosConfig(iosConfig);
+
+        doPost("/api/mobile/app/settings", mobileAppSettings)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Application id is required for enabled ios settings!")));
+
+        iosConfig.setAppId("test_app_id");
+        doPost("/api/mobile/app/settings", mobileAppSettings)
+                .andExpect(status().isOk());
+    }
+
+    @Test
     public void testGetApplicationAssociations() throws Exception {
         JsonNode assetLinks = doGet("/.well-known/assetlinks.json", JsonNode.class);
         assertThat(assetLinks.get(0).get("target").get("package_name").asText()).isEqualTo(ANDROID_PACKAGE_NAME);
@@ -101,7 +176,7 @@ public class MobileApplicationControllerTest extends AbstractControllerTest {
         loginSysAdmin();
         String deepLink = doGet("/api/mobile/deepLink", String.class);
 
-        Pattern expectedPattern = Pattern.compile("https://([^/]+)/api/noauth/qr\\?secret=([^&]+)&ttl=([^&]+)&host=([^&]+)");
+        Pattern expectedPattern = Pattern.compile("\"https://([^/]+)/api/noauth/qr\\?secret=([^&]+)&ttl=([^&]+)&host=([^&]+)\"");
         Matcher parsedDeepLink = expectedPattern.matcher(deepLink);
         assertThat(parsedDeepLink.matches()).isTrue();
         String appHost = parsedDeepLink.group(1);
@@ -138,7 +213,7 @@ public class MobileApplicationControllerTest extends AbstractControllerTest {
         doPost("/api/mobile/app/settings", mobileAppSettings);
 
         String customAppDeepLink = doGet("/api/mobile/deepLink", String.class);
-        Pattern customAppExpectedPattern = Pattern.compile("https://([^/]+)/api/noauth/qr\\?secret=([^&]+)&ttl=([^&]+)");
+        Pattern customAppExpectedPattern = Pattern.compile("\"https://([^/]+)/api/noauth/qr\\?secret=([^&]+)&ttl=([^&]+)\"");
         Matcher customAppParsedDeepLink = customAppExpectedPattern.matcher(customAppDeepLink);
         assertThat(customAppParsedDeepLink.matches()).isTrue();
         assertThat(customAppParsedDeepLink.group(1)).isEqualTo("localhost");
@@ -154,7 +229,5 @@ public class MobileApplicationControllerTest extends AbstractControllerTest {
         Matcher customerCustomAppParsedDeepLink = customAppExpectedPattern.matcher(customerCustomAppDeepLink);
         assertThat(customerCustomAppParsedDeepLink.matches()).isTrue();
         assertThat(customerCustomAppParsedDeepLink.group(1)).isEqualTo("localhost");
-
-
     }
 }

@@ -19,30 +19,27 @@ import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.id.MobileAppSettingsId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.AndroidConfig;
 import org.thingsboard.server.common.data.mobile.IosConfig;
 import org.thingsboard.server.common.data.mobile.MobileAppSettings;
 import org.thingsboard.server.common.data.mobile.QRCodeConfig;
+import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.model.ToData;
 import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
-import java.io.Serializable;
 import java.util.UUID;
 
 @Data
 @NoArgsConstructor
 @Entity
 @Table(name = ModelConstants.MOBILE_APP_SETTINGS_TABLE_NAME)
-public class MobileAppSettingsEntity implements ToData<MobileAppSettings>, Serializable {
+public class MobileAppSettingsEntity extends BaseSqlEntity<MobileAppSettings> {
 
-    @Id
     @Column(name = ModelConstants.TENANT_ID_COLUMN, columnDefinition = "uuid")
     protected UUID tenantId;
 
@@ -54,41 +51,34 @@ public class MobileAppSettingsEntity implements ToData<MobileAppSettings>, Seria
     private JsonNode androidConfig;
 
     @Convert(converter = JsonConverter.class)
-    @Column(name = ModelConstants.MOBILE_APP_IOS_CONFIG_PROPERTY)
+    @Column(name = ModelConstants.MOBILE_APP_SETTINGS_IOS_CONFIG_PROPERTY)
     private JsonNode iosConfig;
 
     @Convert(converter = JsonConverter.class)
-    @Column(name = ModelConstants.MOBILE_APP_QR_CODE_CONFIG_PROPERTY)
+    @Column(name = ModelConstants.MOBILE_APP_SETTINGS_QR_CODE_CONFIG_PROPERTY)
     private JsonNode qrCodeConfig;
 
     public MobileAppSettingsEntity(MobileAppSettings mobileAppSettings) {
+        if (mobileAppSettings.getId() != null) {
+            this.setId(mobileAppSettings.getId().getId());
+        }
+        this.setCreatedTime(mobileAppSettings.getCreatedTime());
         this.tenantId = mobileAppSettings.getTenantId().getId();
         this.useDefaultApp = mobileAppSettings.isUseDefaultApp();
-        if (mobileAppSettings.getAndroidConfig() != null) {
-            this.androidConfig = JacksonUtil.valueToTree(mobileAppSettings.getAndroidConfig());
-        }
-        if (mobileAppSettings.getIosConfig() != null) {
-            this.iosConfig = JacksonUtil.valueToTree(mobileAppSettings.getIosConfig());
-        }
-        if (mobileAppSettings.getQrCodeConfig() != null) {
-            this.qrCodeConfig = JacksonUtil.valueToTree(mobileAppSettings.getQrCodeConfig());
-        }
+        this.androidConfig = toJson(mobileAppSettings.getAndroidConfig());
+        this.iosConfig = toJson(mobileAppSettings.getIosConfig());
+        this.qrCodeConfig = toJson(mobileAppSettings.getQrCodeConfig());
    }
 
     @Override
     public MobileAppSettings toData() {
-        MobileAppSettings mobileAppSettings = new MobileAppSettings();
+        MobileAppSettings mobileAppSettings = new MobileAppSettings(new MobileAppSettingsId(getUuid()));
+        mobileAppSettings.setCreatedTime(createdTime);
         mobileAppSettings.setTenantId(TenantId.fromUUID(tenantId));
         mobileAppSettings.setUseDefaultApp(useDefaultApp);
-        if (qrCodeConfig != null) {
-            mobileAppSettings.setAndroidConfig(JacksonUtil.convertValue(androidConfig, AndroidConfig.class));
-        }
-        if (qrCodeConfig != null) {
-            mobileAppSettings.setIosConfig(JacksonUtil.convertValue(iosConfig, IosConfig.class));
-        }
-        if (qrCodeConfig != null) {
-            mobileAppSettings.setQrCodeConfig(JacksonUtil.convertValue(qrCodeConfig, QRCodeConfig.class));
-        }
+        mobileAppSettings.setAndroidConfig(fromJson(androidConfig, AndroidConfig.class));
+        mobileAppSettings.setIosConfig(fromJson(iosConfig, IosConfig.class));
+        mobileAppSettings.setQrCodeConfig(fromJson(qrCodeConfig, QRCodeConfig.class));
         return mobileAppSettings;
     }
 }
