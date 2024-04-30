@@ -55,18 +55,14 @@ import java.util.UUID;
 )
 public class TbRuleChainInputNode implements TbNode {
 
-    private TbRuleChainInputNodeConfiguration config;
     private RuleChainId ruleChainId;
-    private RuleChainId currentRuleChainId;
     private boolean forwardMsgToDefaultRuleChain;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbRuleChainInputNodeConfiguration.class);
+        TbRuleChainInputNodeConfiguration config = TbNodeUtils.convert(configuration, TbRuleChainInputNodeConfiguration.class);
         this.forwardMsgToDefaultRuleChain = config.isForwardMsgToDefaultRuleChain();
-        this.currentRuleChainId = ctx.getSelf().getRuleChainId();
         if (forwardMsgToDefaultRuleChain) {
-            this.ruleChainId = getRootRuleChainId(ctx);
             return;
         }
         UUID ruleChainUUID;
@@ -75,7 +71,7 @@ public class TbRuleChainInputNode implements TbNode {
         } catch (Exception e) {
             throw new TbNodeException("Failed to parse rule chain id: " + config.getRuleChainId(), true);
         }
-        if (ruleChainUUID.equals(currentRuleChainId.getId())) {
+        if (ruleChainUUID.equals(ctx.getSelf().getRuleChainId().getId())) {
             throw new TbNodeException("Forwarding messages to the current rule chain is not allowed!", true);
         }
         this.ruleChainId = new RuleChainId(ruleChainUUID);
@@ -83,17 +79,16 @@ public class TbRuleChainInputNode implements TbNode {
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) {
-        if (!forwardMsgToDefaultRuleChain) {
-            ctx.input(msg, ruleChainId);
-            return;
+    public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
+        RuleChainId ruleChainId = this.ruleChainId;
+        if (forwardMsgToDefaultRuleChain) {
+            ruleChainId = getTargetRuleChainId(ctx, msg);
+            if (ruleChainId.equals(ctx.getSelf().getRuleChainId())) {
+                ctx.tellFailure(msg, new RuntimeException("Forwarding messages to the current rule chain is not allowed!"));
+                return;
+            }
         }
-        RuleChainId targetRuleChainId = getTargetRuleChainId(ctx, msg);
-        if (targetRuleChainId.equals(currentRuleChainId)) {
-            ctx.tellFailure(msg, new RuntimeException("Forwarding messages to the current rule chain is not allowed!"));
-            return;
-        }
-        ctx.input(msg, targetRuleChainId);
+        ctx.input(msg, ruleChainId);
     }
 
     @Override
@@ -112,7 +107,7 @@ public class TbRuleChainInputNode implements TbNode {
         return new TbPair<>(hasChanges, oldConfiguration);
     }
 
-    private RuleChainId getTargetRuleChainId(TbContext ctx, TbMsg msg) {
+    private RuleChainId getTargetRuleChainId(TbContext ctx, TbMsg msg) throws TbNodeException {
         RuleChainId targetRuleChainId = switch (msg.getOriginator().getEntityType()) {
             case DEVICE ->
                     ctx.getDeviceProfileCache().get(ctx.getTenantId(), (DeviceId) msg.getOriginator()).getDefaultRuleChainId();
@@ -120,7 +115,7 @@ public class TbRuleChainInputNode implements TbNode {
                     ctx.getAssetProfileCache().get(ctx.getTenantId(), (AssetId) msg.getOriginator()).getDefaultRuleChainId();
             default -> null;
         };
-        return Optional.ofNullable(targetRuleChainId).orElse(ruleChainId);
+        return Optional.ofNullable(targetRuleChainId).orElse(getRootRuleChainId(ctx));
     }
 
     private RuleChainId getRootRuleChainId(TbContext ctx) throws TbNodeException {

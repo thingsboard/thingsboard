@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -113,8 +114,6 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
         config.setRuleChainId(ruleChainId);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
-        when(ctxMock.getSelf()).thenReturn(currentRuleNode);
-
         //WHEN-THEN
         Assertions.assertThatThrownBy(() -> node.init(ctxMock, nodeConfiguration))
                 .isInstanceOf(TbNodeException.class)
@@ -124,9 +123,6 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
     @Test
     public void givenForwardMsgToDefaultIsTrue_whenInit_thenOk() {
         //GIVEN
-        RuleChain rootRuleChain = new RuleChain(
-                new RuleChainId(UUID.fromString("77124ff7-1ca2-4ad2-bc65-cf860de249ea")));
-
         String currentRuleChainIdStr = "752b70c2-20e6-4a37-b7f7-4271249fc643";
         RuleChainId currentRuleChainId = new RuleChainId(UUID.fromString(currentRuleChainIdStr));
         RuleNode currentRuleNode = new RuleNode(new RuleNodeId(UUID.fromString("09184b16-f176-4eee-987e-1b0501b38d6e")));
@@ -134,42 +130,9 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
         config.setForwardMsgToDefaultRuleChain(true);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
-        when(ctxMock.getSelf()).thenReturn(currentRuleNode);
-        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
-        when(ctxMock.getRuleChainService()).thenReturn(ruleChainServiceMock);
-        when(ruleChainServiceMock.getRootTenantRuleChain(any())).thenReturn(rootRuleChain);
-
-        //WHEN
+        //WHEN-THEN
         assertThatCode(() -> node.init(ctxMock, nodeConfiguration))
                 .doesNotThrowAnyException();
-
-        //THEN
-        verify(ctxMock).getTenantId();
-        verify(ruleChainServiceMock).getRootTenantRuleChain(eq(TENANT_ID));
-        verifyNoMoreInteractions(ctxMock, ruleChainServiceMock);
-    }
-
-    @Test
-    public void givenForwardMsgToDefaultIsTrueAndNoTenantRootRuleChain_whenInit_thenThrowsException() {
-        //GIVEN
-        RuleNode currentRuleNode = new RuleNode(new RuleNodeId(UUID.fromString("09184b16-f176-4eee-987e-1b0501b38d6e")));
-        config.setForwardMsgToDefaultRuleChain(true);
-        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-
-        when(ctxMock.getSelf()).thenReturn(currentRuleNode);
-        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
-        when(ctxMock.getRuleChainService()).thenReturn(ruleChainServiceMock);
-        when(ruleChainServiceMock.getRootTenantRuleChain(any())).thenReturn(null);
-
-        //WHEN
-        Assertions.assertThatThrownBy(() -> node.init(ctxMock, nodeConfiguration))
-                .isInstanceOf(TbNodeException.class)
-                .hasMessage("Failed to find root rule chain for tenant with id: " + TENANT_ID.getId());
-
-        //THEN
-        verify(ctxMock).getTenantId();
-        verify(ruleChainServiceMock).getRootTenantRuleChain(eq(TENANT_ID));
-        verifyNoMoreInteractions(ctxMock, ruleChainServiceMock);
     }
 
     @Test
@@ -188,6 +151,32 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
         Assertions.assertThatThrownBy(() -> node.init(ctxMock, nodeConfiguration))
                 .isInstanceOf(TbNodeException.class)
                 .hasMessage("Forwarding messages to the current rule chain is not allowed!");
+    }
+
+    @Test
+    public void givenForwardMsgToDefaultIsTrueAndNoTenantRootRuleChain_whenOnMsg_thenThrowsException() throws TbNodeException {
+        //GIVEN
+        RuleNode currentRuleNode = new RuleNode(new RuleNodeId(UUID.fromString("09184b16-f176-4eee-987e-1b0501b38d6e")));
+        config.setForwardMsgToDefaultRuleChain(true);
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+
+        TbMsg msg = getMsg(new EdgeId(UUID.fromString("d5d69d25-6a0b-43ff-b186-6355583b54c1")));
+
+        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
+        when(ctxMock.getRuleChainService()).thenReturn(ruleChainServiceMock);
+        when(ruleChainServiceMock.getRootTenantRuleChain(any())).thenReturn(null);
+
+        node.init(ctxMock, nodeConfiguration);
+
+        //WHEN
+        Assertions.assertThatThrownBy(() -> node.onMsg(ctxMock, msg))
+                .isInstanceOf(TbNodeException.class)
+                .hasMessage("Failed to find root rule chain for tenant with id: " + TENANT_ID.getId());
+
+        //THEN
+        verify(ctxMock).getTenantId();
+        verify(ruleChainServiceMock).getRootTenantRuleChain(eq(TENANT_ID));
+        verifyNoMoreInteractions(ctxMock, ruleChainServiceMock);
     }
 
     @Test
