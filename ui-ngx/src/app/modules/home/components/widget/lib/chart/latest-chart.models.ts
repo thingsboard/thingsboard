@@ -15,11 +15,11 @@
 ///
 
 import { DataKey, Datasource, LegendPosition } from '@shared/models/widget.models';
-import { BackgroundSettings, Font } from '@shared/models/widget-settings.models';
+import { BackgroundSettings, BackgroundType, Font } from '@shared/models/widget-settings.models';
 import { Renderer2 } from '@angular/core';
 import { CallbackDataParams } from 'echarts/types/dist/shared';
-import { formatValue, isDefinedAndNotNull } from '@core/utils';
-import { EChartsAnimationSettings } from '@home/components/widget/lib/chart/echarts-widget.models';
+import { formatValue, isDefinedAndNotNull, mergeDeep } from '@core/utils';
+import { chartAnimationDefaultSettings, ChartAnimationSettings } from '@home/components/widget/lib/chart/chart.models';
 
 export interface LatestChartDataItem {
   id: number;
@@ -63,13 +63,39 @@ export interface LatestChartTooltipSettings {
   tooltipBackgroundBlur: number;
 }
 
+export const latestChartTooltipDefaultSettings: LatestChartTooltipSettings = {
+  showTooltip: true,
+  tooltipValueType: LatestChartTooltipValueType.percentage,
+  tooltipValueDecimals: 0,
+  tooltipValueFont: {
+    family: 'Roboto',
+    size: 13,
+    sizeUnit: 'px',
+    style: 'normal',
+    weight: '500',
+    lineHeight: '16px'
+  },
+  tooltipValueColor: 'rgba(0, 0, 0, 0.76)',
+  tooltipBackgroundColor: 'rgba(255, 255, 255, 0.76)',
+  tooltipBackgroundBlur: 4
+};
+
 export interface LatestChartSettings extends LatestChartTooltipSettings {
   autoScale?: boolean;
   sortSeries: boolean;
   showTotal?: boolean;
   showLegend: boolean;
-  animation: EChartsAnimationSettings;
+  animation: ChartAnimationSettings;
 }
+
+export const latestChartDefaultSettings: LatestChartSettings = {
+  ...latestChartTooltipDefaultSettings,
+  autoScale: false,
+  sortSeries: false,
+  showTotal: false,
+  showLegend: true,
+  animation: mergeDeep({} as ChartAnimationSettings, chartAnimationDefaultSettings)
+};
 
 export interface LatestChartWidgetSettings extends LatestChartSettings {
   legendPosition: LegendPosition;
@@ -79,6 +105,39 @@ export interface LatestChartWidgetSettings extends LatestChartSettings {
   legendValueColor: string;
   background: BackgroundSettings;
 }
+
+export const latestChartWidgetDefaultSettings: LatestChartWidgetSettings = {
+  ...latestChartDefaultSettings,
+  showLegend: true,
+  legendPosition: LegendPosition.bottom,
+  legendLabelFont: {
+    family: 'Roboto',
+    size: 12,
+    sizeUnit: 'px',
+    style: 'normal',
+    weight: '400',
+    lineHeight: '16px'
+  },
+  legendLabelColor: 'rgba(0, 0, 0, 0.38)',
+  legendValueFont: {
+    family: 'Roboto',
+    size: 14,
+    sizeUnit: 'px',
+    style: 'normal',
+    weight: '500',
+    lineHeight: '20px'
+  },
+  legendValueColor: 'rgba(0, 0, 0, 0.87)',
+  background: {
+    type: BackgroundType.color,
+    color: '#fff',
+    overlay: {
+      enabled: false,
+      color: 'rgba(255,255,255,0.72)',
+      blur: 3
+    }
+  }
+};
 
 export const latestChartTooltipFormatter = (renderer: Renderer2,
                                             settings: LatestChartTooltipSettings,

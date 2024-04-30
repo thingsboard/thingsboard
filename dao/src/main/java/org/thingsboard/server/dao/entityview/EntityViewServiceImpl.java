@@ -327,11 +327,19 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
     public void deleteEntityView(TenantId tenantId, EntityViewId entityViewId) {
         log.trace("Executing deleteEntityView [{}]", entityViewId);
         validateId(entityViewId, id -> INCORRECT_ENTITY_VIEW_ID + id);
-        deleteEntityRelations(tenantId, entityViewId);
         EntityView entityView = entityViewDao.findById(tenantId, entityViewId.getId());
+        if (entityView == null) {
+            return;
+        }
         entityViewDao.removeById(tenantId, entityViewId.getId());
         publishEvictEvent(new EntityViewEvictEvent(entityView.getTenantId(), entityView.getId(), entityView.getEntityId(), null, entityView.getName(), null));
         eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(entityViewId).build());
+    }
+
+    @Override
+    @Transactional
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        deleteEntityView(tenantId, (EntityViewId) id);
     }
 
     @Override
@@ -339,6 +347,11 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
         log.trace("Executing deleteEntityViewsByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         tenantEntityViewRemover.removeEntities(tenantId, tenantId);
+    }
+
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteEntityViewsByTenantId(tenantId);
     }
 
     @Override

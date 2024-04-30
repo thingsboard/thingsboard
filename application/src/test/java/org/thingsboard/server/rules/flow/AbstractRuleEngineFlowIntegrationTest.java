@@ -27,9 +27,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNodeConfiguration;
-import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNode;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
@@ -62,7 +62,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.mockito.Mockito.spy;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * @author Valerii Sosliuk
@@ -103,7 +102,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
 
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
-        savedTenant = doPost("/api/tenant", tenant, Tenant.class);
+        savedTenant = saveTenant(tenant);
         Assert.assertNotNull(savedTenant);
         ruleChainService.deleteRuleChainsByTenantId(savedTenant.getId());
 
@@ -121,7 +120,7 @@ public abstract class AbstractRuleEngineFlowIntegrationTest extends AbstractRule
     public void afterTest() throws Exception {
         loginSysAdmin();
         if (savedTenant != null) {
-            doDelete("/api/tenant/" + savedTenant.getId().getId().toString()).andExpect(status().isOk());
+            deleteTenant(savedTenant.getId());
         }
     }
 

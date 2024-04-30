@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.io.Serializable;
 import java.util.Collections;
@@ -28,6 +29,7 @@ import java.util.stream.Collectors;
 
 @Schema
 @EqualsAndHashCode
+@ToString
 public class PageData<T> implements Serializable {
 
     public static final PageData EMPTY_PAGE_DATA = new PageData<>();

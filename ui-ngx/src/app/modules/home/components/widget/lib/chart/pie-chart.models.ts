@@ -15,29 +15,13 @@
 ///
 
 import { ColorSettings, constantColor, Font } from '@shared/models/widget-settings.models';
-import {
-  LatestChartSettings,
-  LatestChartTooltipValueType
-} from '@home/components/widget/lib/chart/latest-chart.models';
+import { latestChartDefaultSettings, LatestChartSettings } from '@home/components/widget/lib/chart/latest-chart.models';
 import { mergeDeep } from '@core/utils';
 import {
-  EChartsAnimationEasing,
-  EChartsAnimationSettings
-} from '@home/components/widget/lib/chart/echarts-widget.models';
-
-export enum PieChartLabelPosition {
-  outside = 'outside',
-  inside = 'inside'
-}
-
-export const pieChartLabelPositions = Object.keys(PieChartLabelPosition) as PieChartLabelPosition[];
-
-export const pieChartLabelPositionTranslations = new Map<PieChartLabelPosition, string>(
-  [
-    [PieChartLabelPosition.outside, 'widgets.pie-chart.label-position-outside'],
-    [PieChartLabelPosition.inside, 'widgets.pie-chart.label-position-inside']
-  ]
-);
+  chartAnimationDefaultSettings,
+  ChartAnimationSettings,
+  PieChartLabelPosition
+} from '@home/components/widget/lib/chart/chart.models';
 
 export interface PieChartSettings extends LatestChartSettings {
   doughnut: boolean;
@@ -59,27 +43,19 @@ export interface PieChartSettings extends LatestChartSettings {
   emphasisShadowColor: string;
 }
 
-export const pieChartAnimationDefaultSettings: EChartsAnimationSettings = {
-  animation: true,
-  animationThreshold: 2000,
-  animationDuration: 1000,
-  animationEasing: EChartsAnimationEasing.cubicOut,
-  animationDelay: 0,
-  animationDurationUpdate: 500,
-  animationEasingUpdate: EChartsAnimationEasing.cubicOut,
-  animationDelayUpdate: 0
-};
+export const pieChartAnimationDefaultSettings: ChartAnimationSettings =
+  mergeDeep({} as ChartAnimationSettings, chartAnimationDefaultSettings, {
+    animationDuration: 1000,
+    animationDurationUpdate: 500
+  } as ChartAnimationSettings);
 
 export const pieChartDefaultSettings: PieChartSettings = {
-  autoScale: false,
+  ...latestChartDefaultSettings,
+  animation: mergeDeep({} as ChartAnimationSettings,
+    pieChartAnimationDefaultSettings),
   doughnut: false,
   radius: '80%',
   clockwise: false,
-  sortSeries: false,
-  showTotal: false,
-  animation: mergeDeep({} as EChartsAnimationSettings,
-    pieChartAnimationDefaultSettings),
-  showLegend: true,
   totalValueFont: {
     family: 'Roboto',
     size: 24,
@@ -107,20 +83,5 @@ export const pieChartDefaultSettings: PieChartSettings = {
   emphasisBorderWidth: 0,
   emphasisBorderColor: '#000',
   emphasisShadowBlur: 10,
-  emphasisShadowColor: 'rgba(0, 0, 0, 0.5)',
-  showTooltip: true,
-  tooltipValueType: LatestChartTooltipValueType.percentage,
-  tooltipValueDecimals: 0,
-  tooltipValueFont: {
-    family: 'Roboto',
-    size: 13,
-    sizeUnit: 'px',
-    style: 'normal',
-    weight: '500',
-    lineHeight: '16px'
-  },
-  tooltipValueColor: 'rgba(0, 0, 0, 0.76)',
-  tooltipBackgroundColor: 'rgba(255, 255, 255, 0.76)',
-  tooltipBackgroundBlur: 4
+  emphasisShadowColor: 'rgba(0, 0, 0, 0.5)'
 };
-
