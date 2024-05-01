@@ -26,7 +26,7 @@ $$
             ALTER TABLE customer ADD COLUMN is_public boolean DEFAULT false;
             UPDATE customer SET is_public = true WHERE title = 'Public';
         END IF;
-    END
+    END;
 $$;
 
 -- UPDATE PUBLIC CUSTOMERS END
