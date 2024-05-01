@@ -30,143 +30,24 @@ import {
 import { WidgetContext } from '@home/models/widget-component.models';
 import {
   backgroundStyle,
-  ColorRange,
   ComponentStyle,
-  DateFormatProcessor,
-  filterIncludingColorRanges,
   getDataKey,
   overlayStyle,
-  sortedColorRange,
   textStyle
 } from '@shared/models/widget-settings.models';
-import { ResizeObserver } from '@juggle/resize-observer';
-import * as echarts from 'echarts/core';
-import { formatValue, isDefinedAndNotNull, isNumber } from '@core/utils';
-import { rangeChartDefaultSettings, RangeChartWidgetSettings } from './range-chart-widget.models';
+import { isDefinedAndNotNull } from '@core/utils';
+import {
+  rangeChartDefaultSettings,
+  rangeChartTimeSeriesKeySettings,
+  rangeChartTimeSeriesSettings,
+  RangeChartWidgetSettings,
+  RangeItem,
+  toRangeItems
+} from './range-chart-widget.models';
 import { Observable } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
-import {
-  ECharts,
-  echartsModule,
-  EChartsOption,
-  echartsTooltipFormatter,
-  toNamedData
-} from '@home/components/widget/lib/chart/echarts-widget.models';
-import { CallbackDataParams } from 'echarts/types/dist/shared';
-
-interface VisualPiece {
-  lt?: number;
-  gt?: number;
-  lte?: number;
-  gte?: number;
-  value?: number;
-  color?: string;
-}
-
-interface RangeItem {
-  index: number;
-  from?: number;
-  to?: number;
-  piece: VisualPiece;
-  color: string;
-  label: string;
-  visible: boolean;
-  enabled: boolean;
-}
-
-const rangeItemLabel = (from?: number, to?: number): string => {
-  if (isNumber(from) && isNumber(to)) {
-    if (from === to) {
-      return `${from}`;
-    } else {
-      return `${from} - ${to}`;
-    }
-  } else if (isNumber(from)) {
-    return `≥ ${from}`;
-  } else if (isNumber(to)) {
-    return `< ${to}`;
-  } else {
-    return null;
-  }
-};
-
-const toVisualPiece = (color: string, from?: number, to?: number): VisualPiece => {
-  const piece: VisualPiece = {
-    color
-  };
-  if (isNumber(from) && isNumber(to)) {
-    if (from === to) {
-      piece.value = from;
-    } else {
-      piece.gte = from;
-      piece.lt = to;
-    }
-  } else if (isNumber(from)) {
-    piece.gte = from;
-  } else if (isNumber(to)) {
-    piece.lt = to;
-  }
-  return piece;
-};
-
-const toRangeItems = (colorRanges: Array<ColorRange>): RangeItem[] => {
-  const rangeItems: RangeItem[] = [];
-  let counter = 0;
-  const ranges = sortedColorRange(filterIncludingColorRanges(colorRanges)).filter(r => isNumber(r.from) || isNumber(r.to));
-  for (let i = 0; i < ranges.length; i++) {
-    const range = ranges[i];
-    let from = range.from;
-    const to = range.to;
-    if (i > 0) {
-      const prevRange = ranges[i - 1];
-      if (isNumber(prevRange.to) && isNumber(from) && from < prevRange.to) {
-        from = prevRange.to;
-      }
-    }
-    rangeItems.push(
-      {
-        index: counter++,
-        color: range.color,
-        enabled: true,
-        visible: true,
-        from,
-        to,
-        label: rangeItemLabel(from, to),
-        piece: toVisualPiece(range.color, from, to)
-      }
-    );
-    if (!isNumber(from) || !isNumber(to)) {
-      const value = !isNumber(from) ? to : from;
-      rangeItems.push(
-        {
-          index: counter++,
-          color: 'transparent',
-          enabled: true,
-          visible: false,
-          label: '',
-          piece: { gt: value - 0.000000001, lt: value + 0.000000001, color: 'transparent'}
-        }
-      );
-    }
-  }
-  return rangeItems;
-};
-
-const getMarkPoints = (ranges: Array<RangeItem>): number[] => {
-  const points = new Set<number>();
-  for (const range of ranges) {
-    if (range.visible) {
-      if (isNumber(range.from)) {
-        points.add(range.from);
-      }
-      if (isNumber(range.to)) {
-        points.add(range.to);
-      }
-    }
-  }
-  return Array.from(points).sort();
-};
+import { TbTimeSeriesChart } from '@home/components/widget/lib/chart/time-series-chart';
 
 @Component({
   selector: 'tb-range-chart-widget',
@@ -192,24 +73,19 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
 
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
+  overlayEnabled: boolean;
+  padding: string;
 
   legendLabelStyle: ComponentStyle;
   disabledLegendLabelStyle: ComponentStyle;
   visibleRangeItems: RangeItem[];
 
-  private rangeItems: RangeItem[];
-
-  private shapeResize$: ResizeObserver;
-
   private decimals = 0;
   private units = '';
 
-  private drawChartPending = false;
-  private rangeChart: ECharts;
-  private rangeChartOptions: EChartsOption;
-  private selectedRanges: {[key: number]: boolean} = {};
+  private rangeItems: RangeItem[];
 
-  private tooltipDateFormat: DateFormatProcessor;
+  private timeSeriesChart: TbTimeSeriesChart;
 
   constructor(private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer,
@@ -230,16 +106,17 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
     if (dataKey?.units) {
       this.units = dataKey.units;
     }
-
+    if (dataKey) {
+      dataKey.settings = rangeChartTimeSeriesKeySettings(this.settings);
+    }
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
+    this.overlayEnabled = this.settings.background.overlay.enabled;
+    this.padding = this.overlayEnabled ? undefined : this.settings.padding;
 
     this.rangeItems = toRangeItems(this.settings.rangeColors);
     this.visibleRangeItems = this.rangeItems.filter(item => item.visible);
-    for (const range of this.rangeItems) {
-      this.selectedRanges[range.index] = true;
-    }
 
     this.showLegend = this.settings.showLegend && !!this.rangeItems.length;
 
@@ -249,191 +126,33 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
       this.disabledLegendLabelStyle = textStyle(this.settings.legendLabelFont);
       this.legendLabelStyle.color = this.settings.legendLabelColor;
     }
-
-    if (this.settings.showTooltip && this.settings.tooltipShowDate) {
-      this.tooltipDateFormat = DateFormatProcessor.fromSettings(this.ctx.$injector, this.settings.tooltipDateFormat);
-    }
   }
 
   ngAfterViewInit() {
-    if (this.drawChartPending) {
-      this.drawChart();
-    }
+    const settings = rangeChartTimeSeriesSettings(this.settings, this.rangeItems, this.decimals, this.units);
+    this.timeSeriesChart = new TbTimeSeriesChart(this.ctx, settings, this.chartShape.nativeElement, this.renderer);
   }
 
   ngOnDestroy() {
-    if (this.shapeResize$) {
-      this.shapeResize$.disconnect();
-    }
-    if (this.rangeChart) {
-      this.rangeChart.dispose();
+    if (this.timeSeriesChart) {
+      this.timeSeriesChart.destroy();
     }
   }
 
   public onInit() {
     const borderRadius = this.ctx.$widgetElement.css('borderRadius');
     this.overlayStyle = {...this.overlayStyle, ...{borderRadius}};
-    if (this.chartShape) {
-      this.drawChart();
-    } else {
-      this.drawChartPending = true;
-    }
     this.cd.detectChanges();
   }
 
   public onDataUpdated() {
-    if (this.rangeChart) {
-      this.rangeChart.setOption({
-        xAxis: {
-          min: this.ctx.defaultSubscription.timeWindow.minTime,
-          max: this.ctx.defaultSubscription.timeWindow.maxTime,
-          tbTimeWindow: this.ctx.defaultSubscription.timeWindow
-        },
-        series: [
-          {data: this.ctx.data?.length ? toNamedData(this.ctx.data[0].data) : []}
-        ],
-        visualMap: {
-          selected: this.selectedRanges
-        }
-      });
+    if (this.timeSeriesChart) {
+      this.timeSeriesChart.update();
     }
   }
 
   public toggleRangeItem(item: RangeItem) {
     item.enabled = !item.enabled;
-    this.selectedRanges[item.index] = item.enabled;
-    this.rangeChart.dispatchAction({
-      type: 'selectDataRange',
-      selected: this.selectedRanges
-    });
-  }
-
-  private drawChart() {
-    echartsModule.init();
-    const dataKey = getDataKey(this.ctx.datasources);
-    this.rangeChart = echarts.init(this.chartShape.nativeElement, null, {
-      renderer: 'canvas',
-    });
-    this.rangeChartOptions = {
-      tooltip: {
-        trigger: 'axis',
-        confine: true,
-        appendToBody: true,
-        axisPointer: {
-          type: 'shadow'
-        },
-        formatter: (params: CallbackDataParams[]) =>
-          this.settings.showTooltip ? echartsTooltipFormatter(this.renderer, this.tooltipDateFormat,
-            this.settings, params, this.decimals, this.units, 0) : undefined,
-        padding: [8, 12],
-        backgroundColor: this.settings.tooltipBackgroundColor,
-        borderWidth: 0,
-        extraCssText: `line-height: 1; backdrop-filter: blur(${this.settings.tooltipBackgroundBlur}px);`
-      },
-      grid: {
-        containLabel: true,
-        top: '30',
-        left: 0,
-        right: 0,
-        bottom: this.settings.dataZoom ? 60 : 0
-      },
-      xAxis: {
-        type: 'time',
-        axisTick: {
-          show: true
-        },
-        axisLabel: {
-          hideOverlap: true,
-          fontSize: 10
-        },
-        axisLine: {
-          onZero: false
-        },
-        min: this.ctx.defaultSubscription.timeWindow.minTime,
-        max: this.ctx.defaultSubscription.timeWindow.maxTime
-      },
-      yAxis: {
-        type: 'value',
-        axisLabel: {
-          formatter: (value: any) => formatValue(value, this.decimals, this.units, false)
-        }
-      },
-      series: [{
-        type: 'line',
-        name: dataKey?.label,
-        smooth: false,
-        showSymbol: false,
-        animation: true,
-        areaStyle: this.settings.fillArea ? {} : undefined,
-        data: this.ctx.data?.length ? toNamedData(this.ctx.data[0].data) : [],
-        markLine: this.rangeItems.length ? {
-          animation: true,
-          symbol: ['circle', 'arrow'],
-          symbolSize: [5, 7],
-          lineStyle: {
-            width: 1,
-            type: [3, 3],
-            color: '#37383b'
-          },
-          label: {
-            position: 'insideEndTop',
-            color: '#37383b',
-            backgroundColor: 'rgba(255,255,255,0.56)',
-            padding: [4, 5],
-            borderRadius: 4,
-            formatter: params => formatValue(params.value, this.decimals, this.units, false)
-          },
-          emphasis: {
-            disabled: true
-          },
-          data: getMarkPoints(this.rangeItems).map(point => ({ yAxis: point }))
-        } : undefined
-      }],
-      dataZoom: [
-        {
-          type: 'inside',
-          disabled: !this.settings.dataZoom
-        },
-        {
-          type: 'slider',
-          show: this.settings.dataZoom,
-          showDetail: false,
-          right: 10
-        }
-      ],
-      visualMap: {
-        show: false,
-        type: 'piecewise',
-        selected: this.selectedRanges,
-        dimension: 1,
-        pieces: this.rangeItems.map(item => item.piece),
-        outOfRange: {
-          color: this.settings.outOfRangeColor
-        },
-        inRange: !this.rangeItems.length ? {
-          color: this.settings.outOfRangeColor
-        } : undefined
-      }
-    };
-
-    (this.rangeChartOptions.xAxis as any).tbTimeWindow = this.ctx.defaultSubscription.timeWindow;
-
-    this.rangeChart.setOption(this.rangeChartOptions);
-
-    this.shapeResize$ = new ResizeObserver(() => {
-      this.onResize();
-    });
-    this.shapeResize$.observe(this.chartShape.nativeElement);
-    this.onResize();
-  }
-
-  private onResize() {
-    const width = this.rangeChart.getWidth();
-    const height = this.rangeChart.getHeight();
-    const shapeWidth = this.chartShape.nativeElement.offsetWidth;
-    const shapeHeight = this.chartShape.nativeElement.offsetHeight;
-    if (width !== shapeWidth || height !== shapeHeight) {
-      this.rangeChart.resize();
-    }
+    this.timeSeriesChart.toggleVisualMapRange(item.index);
   }
 }

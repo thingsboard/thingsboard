@@ -68,7 +68,6 @@ public class CoapClientIntegrationTest extends AbstractCoapIntegrationTest {
     private static final List<String> EXPECTED_KEYS = Arrays.asList("key1", "key2", "key3", "key4", "key5");
     private static final String DEVICE_RESPONSE = "{\"value1\":\"A\",\"value2\":\"B\"}";
 
-
     @Before
     public void beforeTest() throws Exception {
         CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()

@@ -16,13 +16,13 @@
 package org.thingsboard.server.common.data.notification.template;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 
-import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
 @Data

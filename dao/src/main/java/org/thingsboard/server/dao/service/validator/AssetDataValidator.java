@@ -47,9 +47,7 @@ public class AssetDataValidator extends DataValidator<Asset> {
 
     @Override
     protected void validateCreate(TenantId tenantId, Asset asset) {
-        if (!BaseAssetService.TB_SERVICE_QUEUE.equals(asset.getType())) {
-            validateNumberOfEntitiesPerTenant(tenantId, EntityType.ASSET);
-        }
+        validateNumberOfEntitiesPerTenant(tenantId, EntityType.ASSET);
     }
 
     @Override

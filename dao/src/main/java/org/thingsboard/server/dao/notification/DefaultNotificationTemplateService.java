@@ -29,6 +29,8 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityDaoService;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 
 import java.util.List;
 import java.util.Map;
@@ -55,7 +57,10 @@ public class DefaultNotificationTemplateService extends AbstractEntityService im
             }
         }
         try {
-            return notificationTemplateDao.saveAndFlush(tenantId, notificationTemplate);
+            NotificationTemplate savedTemplate = notificationTemplateDao.saveAndFlush(tenantId, notificationTemplate);
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(savedTemplate.getId())
+                    .created(notificationTemplate.getId() == null).build());
+            return savedTemplate;
         } catch (Exception e) {
             checkConstraintViolation(e, Map.of(
                     "uq_notification_template_name", "Notification template with such name already exists"
@@ -70,8 +75,18 @@ public class DefaultNotificationTemplateService extends AbstractEntityService im
     }
 
     @Override
+    public int countNotificationTemplatesByTenantIdAndNotificationTypes(TenantId tenantId, List<NotificationType> notificationTypes) {
+        return notificationTemplateDao.countByTenantIdAndNotificationTypes(tenantId, notificationTypes);
+    }
+
+    @Override
     public void deleteNotificationTemplateById(TenantId tenantId, NotificationTemplateId id) {
-        if (notificationRequestDao.existsByTenantIdAndStatusAndTemplateId(tenantId, NotificationRequestStatus.SCHEDULED, id)) {
+        deleteEntity(tenantId, id, false);
+    }
+
+    @Override
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        if (!force && notificationRequestDao.existsByTenantIdAndStatusAndTemplateId(tenantId, NotificationRequestStatus.SCHEDULED, (NotificationTemplateId) id)) {
             throw new IllegalArgumentException("Notification template is referenced by scheduled notification request");
         }
         try {
@@ -82,6 +97,7 @@ public class DefaultNotificationTemplateService extends AbstractEntityService im
             ));
             throw e;
         }
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(id).build());
     }
 
     @Override
@@ -90,13 +106,13 @@ public class DefaultNotificationTemplateService extends AbstractEntityService im
     }
 
     @Override
-    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
-        return Optional.ofNullable(findNotificationTemplateById(tenantId, new NotificationTemplateId(entityId.getId())));
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteNotificationTemplatesByTenantId(tenantId);
     }
 
     @Override
-    public void deleteEntity(TenantId tenantId, EntityId id) {
-        deleteNotificationTemplateById(tenantId, (NotificationTemplateId) id);
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.ofNullable(findNotificationTemplateById(tenantId, new NotificationTemplateId(entityId.getId())));
     }
 
     @Override

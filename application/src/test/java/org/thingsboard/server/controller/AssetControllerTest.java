@@ -29,6 +29,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.StringUtils;
@@ -41,20 +42,24 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.asset.AssetDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.service.stats.DefaultRuleEngineStatisticsService;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
@@ -85,7 +90,7 @@ public class AssetControllerTest extends AbstractControllerTest {
 
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
-        savedTenant = doPost("/api/tenant", tenant, Tenant.class);
+        savedTenant = saveTenant(tenant);
         Assert.assertNotNull(savedTenant);
 
         tenantAdmin = new User();
@@ -102,8 +107,7 @@ public class AssetControllerTest extends AbstractControllerTest {
     public void afterTest() throws Exception {
         loginSysAdmin();
 
-        doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
-                .andExpect(status().isOk());
+        deleteTenant(savedTenant.getId());
     }
 
     @Test
@@ -310,8 +314,9 @@ public class AssetControllerTest extends AbstractControllerTest {
 
         alarm = doPost("/api/alarm", alarm, Alarm.class);
         Assert.assertNotNull(alarm);
+        AlarmId alarmId = alarm.getId();
 
-        AlarmInfo foundAlarm = doGet("/api/alarm/info/" + alarm.getId(), AlarmInfo.class);
+        AlarmInfo foundAlarm = doGet("/api/alarm/info/" + alarmId, AlarmInfo.class);
         Assert.assertNotNull(foundAlarm);
 
         doDelete("/api/asset/" + savedAsset.getId().getId().toString())
@@ -322,9 +327,58 @@ public class AssetControllerTest extends AbstractControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(statusReason(containsString(msgErrorNoFound("Asset", assetIdStr))));
 
-        doGet("/api/alarm/info/" + alarm.getId())
-                .andExpect(status().isNotFound())
-                .andExpect(statusReason(containsString(msgErrorNoFound("Alarm", alarm.getId().getId().toString()))));
+        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
+            doGet("/api/alarm/info/" + alarmId)
+                    .andExpect(status().isNotFound())
+                    .andExpect(statusReason(containsString(msgErrorNoFound("Alarm", alarmId.getId().toString()))));
+        });
+    }
+
+    @Test
+    public void testDeleteAssetWithPropagatedAlarm() throws Exception {
+        Device device = new Device();
+        device.setTenantId(savedTenant.getTenantId());
+        device.setName("Test device");
+        device.setLabel("Label");
+        device.setType("default");
+        device = doPost("/api/device", device, Device.class);
+
+        Asset asset = new Asset();
+        asset.setName("My asset");
+        asset.setType("default");
+        asset = doPost("/api/asset", asset, Asset.class);
+
+        EntityRelation entityRelation = new EntityRelation(asset.getId(), device.getId(), "CONTAINS");
+        doPost("/api/relation", entityRelation);
+
+        //create alarm
+        Alarm alarm = Alarm.builder()
+                .tenantId(savedTenant.getTenantId())
+                .originator(device.getId())
+                .severity(AlarmSeverity.CRITICAL)
+                .type("test_type")
+                .propagate(true)
+                .build();
+
+        alarm = doPost("/api/alarm", alarm, Alarm.class);
+        Assert.assertNotNull(alarm);
+
+        PageData<AlarmInfo> deviceAlarms = doGetTyped("/api/alarm/DEVICE/" + device.getUuidId() + "?page=0&pageSize=10", new TypeReference<>() {
+        });
+        assertThat(deviceAlarms.getData()).hasSize(1);
+
+        PageData<AlarmInfo> assetAlarms = doGetTyped("/api/alarm/ASSET/" + asset.getUuidId() + "?page=0&pageSize=10", new TypeReference<>() {
+        });
+        assertThat(assetAlarms.getData()).hasSize(1);
+
+        //delete asset
+        doDelete("/api/asset/" + asset.getId().getId().toString())
+                .andExpect(status().isOk());
+
+        //check device alarms
+        PageData<AlarmInfo> deviceAlarmsAfterAssetDeletion = doGetTyped("/api/alarm/DEVICE/" + device.getUuidId() + "?page=0&pageSize=10", new TypeReference<PageData<AlarmInfo>>() {
+        });
+        assertThat(deviceAlarmsAfterAssetDeletion.getData()).hasSize(1);
     }
 
     @Test
@@ -499,7 +553,7 @@ public class AssetControllerTest extends AbstractControllerTest {
 
         Tenant tenant2 = new Tenant();
         tenant2.setTitle("Different tenant");
-        Tenant savedTenant2 = doPost("/api/tenant", tenant2, Tenant.class);
+        Tenant savedTenant2 = saveTenant(tenant2);
         Assert.assertNotNull(savedTenant2);
 
         User tenantAdmin2 = new User();
@@ -533,8 +587,7 @@ public class AssetControllerTest extends AbstractControllerTest {
 
         loginSysAdmin();
 
-        doDelete("/api/tenant/" + savedTenant2.getId().getId().toString())
-                .andExpect(status().isOk());
+        deleteTenant(savedTenant2.getId());
     }
 
     @Test
@@ -566,8 +619,6 @@ public class AssetControllerTest extends AbstractControllerTest {
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new Asset(), new Asset(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.ADDED, cntEntity, cntEntity, cntEntity);
-
-        loadedAssets.removeIf(asset -> asset.getType().equals(DefaultRuleEngineStatisticsService.TB_SERVICE_QUEUE));
 
         assets.sort(idComparator);
         loadedAssets.sort(idComparator);

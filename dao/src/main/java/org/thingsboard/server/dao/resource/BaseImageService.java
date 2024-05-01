@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Strings;
+import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +30,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.Base64Utils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DataConstants;
@@ -60,7 +60,6 @@ import org.thingsboard.server.dao.util.JsonPathProcessingTask;
 import org.thingsboard.server.dao.widget.WidgetTypeDao;
 import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 
-import javax.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Collections;
@@ -257,7 +256,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         var tenantId = imageInfo.getTenantId();
         var imageId = imageInfo.getId();
         log.trace("Executing deleteImage [{}] [{}]", tenantId, imageId);
-        Validator.validateId(imageId, INCORRECT_RESOURCE_ID + imageId);
+        Validator.validateId(imageId, id -> INCORRECT_RESOURCE_ID + id);
         TbImageDeleteResult.TbImageDeleteResultBuilder result = TbImageDeleteResult.builder();
         boolean success = true;
         if (!force) {
@@ -432,8 +431,8 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         String mdResourceName = null;
         String mdMediaType;
         if (matches) {
-            mdResourceKey = new String(Base64Utils.decodeFromString(matcher.group(1)), StandardCharsets.UTF_8);
-            mdResourceName = new String(Base64Utils.decodeFromString(matcher.group(2)), StandardCharsets.UTF_8);
+            mdResourceKey = new String(Base64.getDecoder().decode(matcher.group(1)), StandardCharsets.UTF_8);
+            mdResourceName = new String(Base64.getDecoder().decode(matcher.group(2)), StandardCharsets.UTF_8);
             mdMediaType = matcher.group(3);
         } else if (data.startsWith(DataConstants.TB_IMAGE_PREFIX + "data:image/") || (!strict && data.startsWith("data:image/"))) {
             mdMediaType = StringUtils.substringBetween(data, "data:", ";base64");
@@ -623,10 +622,10 @@ public class BaseImageService extends BaseResourceService implements ImageServic
                     ImageDescriptor descriptor = getImageDescriptor(imageInfo, key.isPreview());
                     String tbImagePrefix = "";
                     if (addTbImagePrefix) {
-                        tbImagePrefix = "tb-image:" + Base64Utils.encodeToString(imageInfo.getResourceKey().getBytes(StandardCharsets.UTF_8)) + ":"
-                                + Base64Utils.encodeToString(imageInfo.getName().getBytes(StandardCharsets.UTF_8)) + ";";
+                        tbImagePrefix = "tb-image:" + Base64.getEncoder().encodeToString(imageInfo.getResourceKey().getBytes(StandardCharsets.UTF_8)) + ":"
+                                + Base64.getEncoder().encodeToString(imageInfo.getName().getBytes(StandardCharsets.UTF_8)) + ";";
                     }
-                    return tbImagePrefix + "data:" + descriptor.getMediaType() + ";base64," + Base64Utils.encodeToString(data);
+                    return tbImagePrefix + "data:" + descriptor.getMediaType() + ";base64," + Base64.getEncoder().encodeToString(data);
                 }
             }
         } catch (Exception e) {

@@ -51,7 +51,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
 public class BaseTbResourceServiceTest extends AbstractControllerTest {
@@ -129,7 +128,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
 
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
-        savedTenant = doPost("/api/tenant", tenant, Tenant.class);
+        savedTenant = saveTenant(tenant);
         tenantId = savedTenant.getId();
         Assert.assertNotNull(savedTenant);
 
@@ -147,8 +146,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
     public void afterTest() throws Exception {
         loginSysAdmin();
 
-        doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
-                .andExpect(status().isOk());
+        deleteTenant(savedTenant.getId());
     }
 
     @Test
@@ -397,7 +395,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         loginSysAdmin();
         Tenant tenant = new Tenant();
         tenant.setTitle("Test tenant");
-        tenant = doPost("/api/tenant", tenant, Tenant.class);
+        tenant = saveTenant(tenant);
 
         TenantId tenantId = tenant.getId();
 
@@ -441,8 +439,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
 
-        doDelete("/api/tenant/" + tenantId.getId().toString())
-                .andExpect(status().isOk());
+        deleteTenant(tenantId);
     }
 
     @Test
@@ -451,7 +448,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
 
         Tenant tenant = new Tenant();
         tenant.setTitle("Test tenant");
-        tenant = doPost("/api/tenant", tenant, Tenant.class);
+        tenant = saveTenant(tenant);
 
         TenantId tenantId = tenant.getId();
 
@@ -518,8 +515,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         Assert.assertFalse(pageData.hasNext());
         Assert.assertTrue(pageData.getData().isEmpty());
 
-        doDelete("/api/tenant/" + tenantId.getId().toString())
-                .andExpect(status().isOk());
+        deleteTenant(tenantId);
     }
 
 }

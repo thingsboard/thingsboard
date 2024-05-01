@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.queue.processing;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationEventPublisher;
@@ -39,7 +40,6 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.util.AfterStartUp;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
@@ -47,9 +47,8 @@ import org.thingsboard.server.service.queue.TbPackCallback;
 import org.thingsboard.server.service.queue.TbPackProcessingContext;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PreDestroy;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -60,13 +59,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Slf4j
+@RequiredArgsConstructor
 public abstract class AbstractConsumerService<N extends com.google.protobuf.GeneratedMessageV3> extends TbApplicationEventListener<PartitionChangeEvent> {
 
     protected volatile ExecutorService notificationsConsumerExecutor;
     protected volatile boolean stopped = false;
     protected volatile boolean isReady = false;
     protected final ActorSystemContext actorContext;
-    protected final DataDecodingEncodingService encodingService;
     protected final TbTenantProfileCache tenantProfileCache;
     protected final TbDeviceProfileCache deviceProfileCache;
     protected final TbAssetProfileCache assetProfileCache;
@@ -75,25 +74,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     protected final ApplicationEventPublisher eventPublisher;
 
     protected final TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer;
-    protected final Optional<JwtSettingsService> jwtSettingsService;
-
-
-    public AbstractConsumerService(ActorSystemContext actorContext, DataDecodingEncodingService encodingService,
-                                   TbTenantProfileCache tenantProfileCache, TbDeviceProfileCache deviceProfileCache,
-                                   TbAssetProfileCache assetProfileCache, TbApiUsageStateService apiUsageStateService,
-                                   PartitionService partitionService, ApplicationEventPublisher eventPublisher,
-                                   TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer, Optional<JwtSettingsService> jwtSettingsService) {
-        this.actorContext = actorContext;
-        this.encodingService = encodingService;
-        this.tenantProfileCache = tenantProfileCache;
-        this.deviceProfileCache = deviceProfileCache;
-        this.assetProfileCache = assetProfileCache;
-        this.apiUsageStateService = apiUsageStateService;
-        this.partitionService = partitionService;
-        this.eventPublisher = eventPublisher;
-        this.nfConsumer = nfConsumer;
-        this.jwtSettingsService = jwtSettingsService;
-    }
+    protected final JwtSettingsService jwtSettingsService;
 
     public void init(String nfConsumerThreadName) {
         this.notificationsConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName(nfConsumerThreadName));
@@ -181,7 +162,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
             }
         } else if (EntityType.TENANT.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
             if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
-                jwtSettingsService.ifPresent(JwtSettingsService::reloadJwtSettings);
+                jwtSettingsService.reloadJwtSettings();
                 return;
             } else {
                 tenantProfileCache.evict(tenantId);

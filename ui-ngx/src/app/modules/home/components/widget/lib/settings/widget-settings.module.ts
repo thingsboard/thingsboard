@@ -330,6 +330,30 @@ import {
 import {
   ToggleButtonWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/button/toggle-button-widget-settings.component';
+import {
+  TimeSeriesChartKeySettingsComponent
+} from '@home/components/widget/lib/settings/chart/time-series-chart-key-settings.component';
+import {
+  TimeSeriesChartLineSettingsComponent
+} from '@home/components/widget/lib/settings/chart/time-series-chart-line-settings.component';
+import {
+  TimeSeriesChartWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/chart/time-series-chart-widget-settings.component';
+import {
+  StatusWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/indicator/status-widget-settings.component';
+import {
+  PieChartWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/chart/pie-chart-widget-settings.component';
+import {
+  BarChartWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/chart/bar-chart-widget-settings.component';
+import {
+  PolarAreaChartWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/chart/polar-area-chart-widget-settings.component';
+import {
+  RadarChartWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/chart/radar-chart-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -448,7 +472,15 @@ import {
     CommandButtonWidgetSettingsComponent,
     PowerButtonWidgetSettingsComponent,
     SliderWidgetSettingsComponent,
-    ToggleButtonWidgetSettingsComponent
+    ToggleButtonWidgetSettingsComponent,
+    TimeSeriesChartKeySettingsComponent,
+    TimeSeriesChartLineSettingsComponent,
+    TimeSeriesChartWidgetSettingsComponent,
+    StatusWidgetSettingsComponent,
+    PieChartWidgetSettingsComponent,
+    BarChartWidgetSettingsComponent,
+    PolarAreaChartWidgetSettingsComponent,
+    RadarChartWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -572,7 +604,15 @@ import {
     CommandButtonWidgetSettingsComponent,
     PowerButtonWidgetSettingsComponent,
     SliderWidgetSettingsComponent,
-    ToggleButtonWidgetSettingsComponent
+    ToggleButtonWidgetSettingsComponent,
+    TimeSeriesChartKeySettingsComponent,
+    TimeSeriesChartLineSettingsComponent,
+    TimeSeriesChartWidgetSettingsComponent,
+    StatusWidgetSettingsComponent,
+    PieChartWidgetSettingsComponent,
+    BarChartWidgetSettingsComponent,
+    PolarAreaChartWidgetSettingsComponent,
+    RadarChartWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -663,5 +703,12 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-command-button-widget-settings': CommandButtonWidgetSettingsComponent,
   'tb-power-button-widget-settings': PowerButtonWidgetSettingsComponent,
   'tb-slider-widget-settings': SliderWidgetSettingsComponent,
-  'tb-toggle-button-widget-settings': ToggleButtonWidgetSettingsComponent
+  'tb-toggle-button-widget-settings': ToggleButtonWidgetSettingsComponent,
+  'tb-time-series-chart-key-settings': TimeSeriesChartKeySettingsComponent,
+  'tb-time-series-chart-widget-settings': TimeSeriesChartWidgetSettingsComponent,
+  'tb-status-widget-settings': StatusWidgetSettingsComponent,
+  'tb-pie-chart-widget-settings': PieChartWidgetSettingsComponent,
+  'tb-bar-chart-widget-settings': BarChartWidgetSettingsComponent,
+  'tb-polar-area-chart-widget-settings': PolarAreaChartWidgetSettingsComponent,
+  'tb-radar-chart-widget-settings': RadarChartWidgetSettingsComponent
 };

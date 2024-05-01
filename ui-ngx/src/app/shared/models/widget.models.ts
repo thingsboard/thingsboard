@@ -21,7 +21,6 @@ import { AggregationType, ComparisonDuration, Timewindow } from '@shared/models/
 import { EntityType } from '@shared/models/entity-type.models';
 import { DataKeyType } from './telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
-import * as moment_ from 'moment';
 import {
   AlarmFilter,
   AlarmFilterConfig,
@@ -38,11 +37,12 @@ import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { IAliasController } from '@core/api/widget-api.models';
-import { isNotEmptyStr } from '@core/utils';
+import { isNotEmptyStr, mergeDeep } from '@core/utils';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 import { ComponentStyle, Font, TimewindowStyle } from '@shared/models/widget-settings.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { HasTenantId } from '@shared/models/entity.models';
+import { DataKeysCallbacks, DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 
 export enum widgetType {
   timeseries = 'timeseries',
@@ -184,6 +184,7 @@ export interface WidgetTypeParameters {
   hideDataSettings?: boolean;
   defaultDataKeysFunction?: (configComponent: any, configData: any) => DataKey[];
   defaultLatestDataKeysFunction?: (configComponent: any, configData: any) => DataKey[];
+  dataKeySettingsFunction?: DataKeySettingsFunction;
   displayRpcMessageToast?: boolean;
 }
 
@@ -553,6 +554,8 @@ export enum WidgetMobileActionType {
   takeScreenshot = 'takeScreenshot'
 }
 
+export const widgetActionTypes = Object.keys(WidgetActionType) as WidgetActionType[];
+
 export const widgetActionTypeTranslationMap = new Map<WidgetActionType, string>(
   [
     [ WidgetActionType.openDashboardState, 'widget-action.open-dashboard-state' ],
@@ -706,9 +709,22 @@ export const defaultWidgetAction = (setEntityId = true): WidgetAction => ({
 
 export interface WidgetComparisonSettings {
   comparisonEnabled?: boolean;
-  timeForComparison?: moment_.unitOfTime.DurationConstructor;
+  timeForComparison?: ComparisonDuration;
   comparisonCustomIntervalValue?: number;
 }
+
+export interface DataKeyComparisonSettings {
+  showValuesForComparison: boolean;
+  comparisonValuesLabel: string;
+  color: string;
+}
+
+export interface DataKeySettingsWithComparison {
+  comparisonSettings?: DataKeyComparisonSettings;
+}
+
+export const isDataKeySettingsWithComparison = (settings: any): settings is DataKeySettingsWithComparison =>
+  'comparisonSettings' in settings;
 
 export interface WidgetSettings {
   [key: string]: any;
@@ -813,6 +829,7 @@ export interface WidgetSize {
 
 export interface IWidgetSettingsComponent {
   aliasController: IAliasController;
+  dataKeyCallbacks: DataKeysCallbacks;
   dashboard: Dashboard;
   widget: Widget;
   widgetConfig: WidgetConfigComponentData;
@@ -829,6 +846,8 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
   IWidgetSettingsComponent, OnInit, AfterViewInit {
 
   aliasController: IAliasController;
+
+  dataKeyCallbacks: DataKeysCallbacks;
 
   dashboard: Dashboard;
 
@@ -855,7 +874,7 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
     if (!value) {
       this.settingsValue = this.defaultSettings();
     } else {
-      this.settingsValue = {...this.defaultSettings(), ...value};
+      this.settingsValue = mergeDeep(this.defaultSettings(), value);
     }
     if (!this.settingsSet) {
       this.settingsSet = true;

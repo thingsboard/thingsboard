@@ -31,7 +31,7 @@ import {
 } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { formatValue, isDefinedAndNotNull, isUndefined } from '@core/utils';
+import { formatValue, isDefinedAndNotNull, isUndefined, mergeDeep } from '@core/utils';
 import {
   getTimewindowConfig,
   setTimewindowConfig
@@ -42,12 +42,14 @@ import {
   doughnutLayoutImages,
   doughnutLayouts,
   doughnutLayoutTranslations,
-  DoughnutTooltipValueType,
-  doughnutTooltipValueTypes,
-  doughnutTooltipValueTypeTranslations,
   DoughnutWidgetSettings,
   horizontalDoughnutLayoutImages
 } from '@home/components/widget/lib/chart/doughnut-widget.models';
+import {
+  LatestChartTooltipValueType,
+  latestChartTooltipValueTypes,
+  latestChartTooltipValueTypeTranslations
+} from '@home/components/widget/lib/chart/latest-chart.models';
 
 @Component({
   selector: 'tb-doughnut-basic-config',
@@ -87,9 +89,9 @@ export class DoughnutBasicConfigComponent extends BasicWidgetConfigComponent {
 
   legendPositionTranslationMap = legendPositionTranslationMap;
 
-  doughnutTooltipValueTypes = doughnutTooltipValueTypes;
+  latestChartTooltipValueTypes = latestChartTooltipValueTypes;
 
-  doughnutTooltipValueTypeTranslationMap = doughnutTooltipValueTypeTranslations;
+  latestChartTooltipValueTypeTranslationMap = latestChartTooltipValueTypeTranslations;
 
   doughnutWidgetConfigForm: UntypedFormGroup;
 
@@ -125,7 +127,8 @@ export class DoughnutBasicConfigComponent extends BasicWidgetConfigComponent {
   }
 
   protected onConfigSet(configData: WidgetConfigComponentData) {
-    const settings: DoughnutWidgetSettings = {...doughnutDefaultSettings(this.horizontal), ...(configData.config.settings || {})};
+    const settings: DoughnutWidgetSettings = mergeDeep<DoughnutWidgetSettings>({} as DoughnutWidgetSettings,
+      doughnutDefaultSettings(this.horizontal), configData.config.settings as DoughnutWidgetSettings);
     this.doughnutWidgetConfigForm = this.fb.group({
       timewindowConfig: [getTimewindowConfig(configData.config), []],
       datasources: [configData.config.datasources, []],
@@ -150,6 +153,8 @@ export class DoughnutBasicConfigComponent extends BasicWidgetConfigComponent {
 
       units: [configData.config.units, []],
       decimals: [configData.config.decimals, []],
+
+      animation: [settings.animation, []],
 
       showLegend: [settings.showLegend, []],
       legendPosition: [settings.legendPosition, []],
@@ -201,6 +206,8 @@ export class DoughnutBasicConfigComponent extends BasicWidgetConfigComponent {
 
     this.widgetConfig.config.units = config.units;
     this.widgetConfig.config.decimals = config.decimals;
+
+    this.widgetConfig.config.settings.animation = config.animation;
 
     this.widgetConfig.config.settings.showLegend = config.showLegend;
     this.widgetConfig.config.settings.legendPosition = config.legendPosition;
@@ -329,9 +336,9 @@ export class DoughnutBasicConfigComponent extends BasicWidgetConfigComponent {
   }
 
   private _tooltipValuePreviewFn(): string {
-    const tooltipValueType: DoughnutTooltipValueType = this.doughnutWidgetConfigForm.get('tooltipValueType').value;
+    const tooltipValueType: LatestChartTooltipValueType = this.doughnutWidgetConfigForm.get('tooltipValueType').value;
     const decimals: number = this.doughnutWidgetConfigForm.get('tooltipValueDecimals').value;
-    if (tooltipValueType === DoughnutTooltipValueType.percentage) {
+    if (tooltipValueType === LatestChartTooltipValueType.percentage) {
       return formatValue(35, decimals, '%', false);
     } else {
       const units: string = this.doughnutWidgetConfigForm.get('units').value;

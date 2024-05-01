@@ -161,8 +161,8 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
         int resourceInstanceId25 = 25;
         String expectedValue0 = "00ad45675600";
         String expectedValue25 = "25ad45675600cdef";
-        String expectedValue = "{\"" + RESOURCE_ID_0 + "\":{\"" + resourceInstanceId0 + "\":\"" + expectedValue0 + "\", \"" + resourceInstanceId25 + "\":\"" + expectedValue25 + "\"}}";
-        String actualResult = sendRPCWriteObjectById("WriteUpdate", expectedPath, expectedValue);
+        String expectedValueResourcesObject19 = "{\"" + RESOURCE_ID_0 + "\":{\"" + resourceInstanceId0 + "\":\"" + expectedValue0 + "\", \"" + resourceInstanceId25 + "\":\"" + expectedValue25 + "\"}}";
+        String actualResult = sendRPCWriteObjectById("WriteUpdate", expectedPath, expectedValueResourcesObject19);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
         String expectedPath0 = expectedPath + "/" + RESOURCE_ID_0 + "/" + resourceInstanceId0;
@@ -181,29 +181,37 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
 
     /**
      * ResourceInstance + KeySingleResource + IdSingleResource
-     * WriteComposite {"nodes":{"/19/1/0/2":"00001234", "UtfOffset":"+04", "/3/0/15":"Kiyv/Europe"}}
+     * WriteComposite {"/19_1.1/0":{"0":{"0":"00ad45675600", "25":"25ad45675600cdef"}}, "UtfOffset":"+04", "/3_1.0/0/15":"Kiyv/Europe"}
      * {"result":"CHANGED"}
      */
     @Test
-    public void testWriteCompositeValueSingleResourceResourceInstanceByIdKey_Result_CHANGED() throws Exception {
-        int resourceInstanceId2 = 2;
-        String expectedPath19_1_0_2 = objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_1 + "/" + RESOURCE_ID_0 + "/" + resourceInstanceId2;
-        String expectedValue19_1_0_2 = "00001234";
+    public void testWriteCompositeValueSingleResourceWithMultiResourceInstanceByIdKey_Result_CHANGED() throws Exception {
+        String expectedPath_19_0 = objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_0;
+        int resourceInstanceId0 = 0;
+        int resourceInstanceId25 = 25;
+        String expectedValue0 = "00ad45675600";
+        String expectedValue25 = "25ad45675600cdef";
+        String expectedValue_19_Resources = "{\"" + RESOURCE_ID_0 + "\":{\"" + resourceInstanceId0 + "\":\"" + expectedValue0 + "\", \"" + resourceInstanceId25 + "\":\"" + expectedValue25 + "\"}}";
+
         String expectedKey3_0_14 = RESOURCE_ID_NAME_3_14;
         String expectedValue3_0_14 = "+04";
         String expectedPath3_0_15 = objectInstanceIdVer_3 + "/" + RESOURCE_ID_15;
         String expectedValue3_0_15 = "Kiyv/Europe";
-        String nodes = "{\"" + expectedPath19_1_0_2 + "\":\"" + expectedValue19_1_0_2 + "\", \"" + expectedKey3_0_14 +
+        String nodes = "{\"" + expectedPath_19_0 + "\":" + expectedValue_19_Resources + ", \"" + expectedKey3_0_14 +
                 "\":\"" + expectedValue3_0_14 + "\", \"" + expectedPath3_0_15 + "\":\"" + expectedValue3_0_15 + "\"}";
         String actualResult = sendCompositeRPC(nodes);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
-        actualResult = sendRPCReadById(expectedPath19_1_0_2);
+        actualResult = sendRPCReadById(expectedPath_19_0 + "/" + RESOURCE_ID_0 + "/" + resourceInstanceId0);
         rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         String actualValues = rpcActualResult.get("value").asText();
-        String expected = "LwM2mResourceInstance [id=" + resourceInstanceId2 + ", value=" + expectedValue19_1_0_2.length()/2 + "Bytes, type=OPAQUE]";
+        String expected = "LwM2mResourceInstance [id=" + resourceInstanceId0 + ", value=" + expectedValue0.length()/2 + "Bytes, type=OPAQUE]";
         assertTrue(actualValues.contains(expected));
-        actualResult = sendRPCReadByKey(expectedKey3_0_14);
+        actualResult = sendRPCReadById(expectedPath_19_0 + "/" + RESOURCE_ID_0 + "/" + resourceInstanceId25);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        actualValues = rpcActualResult.get("value").asText();
+        expected = "LwM2mResourceInstance [id=" + resourceInstanceId25 + ", value=" + expectedValue25.length()/2 + "Bytes, type=OPAQUE]";
+        assertTrue(actualValues.contains(expected));       actualResult = sendRPCReadByKey(expectedKey3_0_14);
         rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         actualValues = rpcActualResult.get("value").asText();
         expected = "LwM2mSingleResource [id=" + RESOURCE_ID_14 + ", value=" + expectedValue3_0_14 + ", type=STRING]";
@@ -217,29 +225,36 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
 
     /**
      * multipleResource == error
-     * bad - cannot be used for value Json, only primitive: SingleResource, ResourceInstance (for Json: WriteUpdate, WriteReplace)
-     * WriteComposite {"nodes":{"/19/0/0":{"0":"abcd5678", "10":"abcd5678"}}}
+     * WriteComposite {"/19_1.1/0/0":{"0":"00ad45675600", "25":"25ad45675600cdef"}}
+     * {"result":"CHANGED"}
      */
     @Test
-    public void testWriteCompositeValueSingleMultipleResourceByIdKey_Result_BAD_REQUEST_WriteComposite_operation_for_SingleResources_or_and_ResourceInstance() throws Exception {
-        String nodes = "{\"/19/0/0\":{\"0\":\"abcd5678\", \"10\":\"abcd5678\"}}";
+    public void testWriteCompositeValueSingleMultipleResourceOpaqueValueInputHexStringByIdKey_Result_CHANGED() throws Exception {
+        String expectedPath_19_0 = objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_0;
+        int resourceInstanceId0 = 0;
+        int resourceInstanceId25 = 25;
+        String expectedValue0 = "00ad45675600";
+        String expectedValue25 = "25ad45675600cdef";
+        String nodes = "{\"" + expectedPath_19_0 + "/" + RESOURCE_ID_0 + "\":{\"" + resourceInstanceId0 + "\":\"" + expectedValue0 + "\", \"" + resourceInstanceId25 + "\":\"" + expectedValue25 + "\"}}";
+
         String actualResult = sendCompositeRPC(nodes);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
-        assertEquals(ResponseCode.BAD_REQUEST.getName(), rpcActualResult.get("result").asText());
-        String actualValues = rpcActualResult.get("error").asText();
-        String expectedNodes = nodes.replaceAll("\"", "").replaceAll(":", "=");
-        String expected = String.format("nodes: %s is not validate value. " +
-                "The WriteComposite operation is only used for SingleResources or/and ResourceInstance.", expectedNodes);
-        assertEquals(expected, actualValues);
+        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
+        actualResult = sendRPCReadById(expectedPath_19_0 + "/" + RESOURCE_ID_0 + "/" + resourceInstanceId0);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        String actualValues = rpcActualResult.get("value").asText();
+        String expected = "LwM2mResourceInstance [id=" + resourceInstanceId0 + ", value=" + expectedValue0.length()/2 + "Bytes, type=OPAQUE]";
+        assertTrue(actualValues.contains(expected));
+        actualResult = sendRPCReadById(expectedPath_19_0 + "/" + RESOURCE_ID_0 + "/" + resourceInstanceId25);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        actualValues = rpcActualResult.get("value").asText();
+        expected = "LwM2mResourceInstance [id=" + resourceInstanceId25 + ", value=" + expectedValue25.length()/2 + "Bytes, type=OPAQUE]";
+        assertTrue(actualValues.contains(expected));
     }
 
 
     /**
      * update_resourceInstances&update_singleResource
-     * new ResourceInstance if Resource is Multiple & Resource Single
-     *  - WriteReplace  {"id":"/19_1.2/1/0","value":{"2":ddff12"}}
-     *  - WriteReplace {"key":"UtfOffset","value":"+04"}
-     *  - WriteReplace {"id":"/3/0/15","value":"Kiyv/Europe"}
      * WriteComposite {"nodes":{"/19_1.1/1/0/2":"00001234", "UtfOffset":"+04", "/3/0/15":"Kiyv/Europe"}}}
      * {"result":"CHANGED"}
      */

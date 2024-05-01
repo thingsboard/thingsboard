@@ -25,15 +25,10 @@ import org.springframework.context.annotation.Lazy;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.alarm.AlarmInfo;
-import org.thingsboard.server.common.data.alarm.AlarmQuery;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.edge.EdgeService;
@@ -56,7 +51,7 @@ public abstract class AbstractTbEntityService {
     @Autowired
     protected DbCallbackExecutorService dbExecutor;
     @Autowired(required = false)
-    protected TbNotificationEntityService notificationEntityService;
+    protected TbLogEntityActionService logEntityActionService;
     @Autowired(required = false)
     protected EdgeService edgeService;
     @Autowired
@@ -71,13 +66,6 @@ public abstract class AbstractTbEntityService {
     @Autowired(required = false)
     @Lazy
     private EntitiesVersionControlService vcService;
-
-    protected void removeAlarmsByEntityId(TenantId tenantId, EntityId entityId) {
-        PageData<AlarmInfo> alarms =
-                alarmService.findAlarms(tenantId, new AlarmQuery(entityId, new TimePageLink(Integer.MAX_VALUE), null, null, null, false));
-
-        alarms.getData().stream().map(AlarmInfo::getId).forEach(alarmId -> alarmService.delAlarm(tenantId, alarmId));
-    }
 
     protected <T> T checkNotNull(T reference) throws ThingsboardException {
         return checkNotNull(reference, "Requested item wasn't found!");

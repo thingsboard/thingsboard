@@ -84,21 +84,21 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
     @Override
     public Customer findCustomerById(TenantId tenantId, CustomerId customerId) {
         log.trace("Executing findCustomerById [{}]", customerId);
-        Validator.validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
+        Validator.validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
         return customerDao.findById(tenantId, customerId.getId());
     }
 
     @Override
     public Optional<Customer> findCustomerByTenantIdAndTitle(TenantId tenantId, String title) {
         log.trace("Executing findCustomerByTenantIdAndTitle [{}] [{}]", tenantId, title);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         return customerDao.findCustomersByTenantIdAndTitle(tenantId.getId(), title);
     }
 
     @Override
     public ListenableFuture<Customer> findCustomerByIdAsync(TenantId tenantId, CustomerId customerId) {
         log.trace("Executing findCustomerByIdAsync [{}]", customerId);
-        validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
+        validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
         return customerDao.findByIdAsync(tenantId, customerId.getId());
     }
 
@@ -126,10 +126,21 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
     @Transactional
     public void deleteCustomer(TenantId tenantId, CustomerId customerId) {
         log.trace("Executing deleteCustomer [{}]", customerId);
-        Validator.validateId(customerId, INCORRECT_CUSTOMER_ID + customerId);
+        Validator.validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
+        deleteEntity(tenantId, customerId, false);
+    }
+
+    @Transactional
+    @Override
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        CustomerId customerId = (CustomerId) id;
         Customer customer = findCustomerById(tenantId, customerId);
         if (customer == null) {
-            throw new IncorrectParameterException("Unable to delete non-existent customer.");
+            if (force) {
+                return;
+            } else {
+                throw new IncorrectParameterException("Unable to delete non-existent customer.");
+            }
         }
         dashboardService.unassignCustomerDashboards(tenantId, customerId);
         entityViewService.unassignCustomerEntityViews(customer.getTenantId(), customerId);
@@ -137,7 +148,6 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
         deviceService.unassignCustomerDevices(customer.getTenantId(), customerId);
         edgeService.unassignCustomerEdges(customer.getTenantId(), customerId);
         userService.deleteCustomerUsers(customer.getTenantId(), customerId);
-        deleteEntityRelations(tenantId, customerId);
         apiUsageStateService.deleteApiUsageStateByEntityId(customerId);
         customerDao.removeById(tenantId, customerId.getId());
         countService.publishCountEntityEvictEvent(tenantId, EntityType.CUSTOMER);
@@ -147,7 +157,7 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
     @Override
     public Customer findOrCreatePublicCustomer(TenantId tenantId) {
         log.trace("Executing findOrCreatePublicCustomer, tenantId [{}]", tenantId);
-        Validator.validateId(tenantId, INCORRECT_CUSTOMER_ID + tenantId);
+        Validator.validateId(tenantId, id -> INCORRECT_CUSTOMER_ID + id);
         Optional<Customer> publicCustomerOpt = customerDao.findCustomersByTenantIdAndTitle(tenantId.getId(), PUBLIC_CUSTOMER_TITLE);
         if (publicCustomerOpt.isPresent()) {
             return publicCustomerOpt.get();
@@ -169,7 +179,7 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
     @Override
     public PageData<Customer> findCustomersByTenantId(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findCustomersByTenantId, tenantId [{}], pageLink [{}]", tenantId, pageLink);
-        Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
+        Validator.validateId(tenantId, id -> "Incorrect tenantId " + id);
         Validator.validatePageLink(pageLink);
         return customerDao.findCustomersByTenantId(tenantId.getId(), pageLink);
     }
@@ -177,8 +187,13 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
     @Override
     public void deleteCustomersByTenantId(TenantId tenantId) {
         log.trace("Executing deleteCustomersByTenantId, tenantId [{}]", tenantId);
-        Validator.validateId(tenantId, "Incorrect tenantId " + tenantId);
+        Validator.validateId(tenantId, id -> "Incorrect tenantId " + id);
         customersByTenantRemover.removeEntities(tenantId, tenantId);
+    }
+
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteCustomersByTenantId(tenantId);
     }
 
     private PaginatedRemover<TenantId, Customer> customersByTenantRemover =
@@ -198,12 +213,6 @@ public class CustomerServiceImpl extends AbstractEntityService implements Custom
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findCustomerById(tenantId, new CustomerId(entityId.getId())));
-    }
-
-    @Transactional
-    @Override
-    public void deleteEntity(TenantId tenantId, EntityId id) {
-        deleteCustomer(tenantId, (CustomerId) id);
     }
 
     @Override

@@ -52,8 +52,8 @@ import org.thingsboard.server.dao.service.ConstraintValidator;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
 import org.thingsboard.server.dao.sql.relation.JpaRelationQueryExecutorService;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -513,7 +513,7 @@ public class BaseRelationService implements RelationService {
     @Override
     public List<EntityRelation> findRuleNodeToRuleChainRelations(TenantId tenantId, RuleChainType ruleChainType, int limit) {
         log.trace("Executing findRuleNodeToRuleChainRelations, tenantId [{}], ruleChainType {} and limit {}", tenantId, ruleChainType, limit);
-        validateId(tenantId, "Invalid tenant id: " + tenantId);
+        validateId(tenantId, id -> "Invalid tenant id: " + id);
         return relationDao.findRuleNodeToRuleChainRelations(ruleChainType, limit);
     }
 

@@ -72,14 +72,14 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
     @Override
     public DeviceCredentials findDeviceCredentialsByDeviceId(TenantId tenantId, DeviceId deviceId) {
         log.trace("Executing findDeviceCredentialsByDeviceId [{}]", deviceId);
-        validateId(deviceId, "Incorrect deviceId " + deviceId);
+        validateId(deviceId, id -> "Incorrect deviceId " + id);
         return deviceCredentialsDao.findByDeviceId(tenantId, deviceId.getId());
     }
 
     @Override
     public DeviceCredentials findDeviceCredentialsByCredentialsId(String credentialsId) {
         log.trace("Executing findDeviceCredentialsByCredentialsId [{}]", credentialsId);
-        validateString(credentialsId, "Incorrect credentialsId " + credentialsId);
+        validateString(credentialsId, id -> "Incorrect credentialsId " + id);
         return cache.getAndPutInTransaction(credentialsId,
                 () -> deviceCredentialsDao.findByCredentialsId(TenantId.SYS_TENANT_ID, credentialsId),
                 true); // caching null values is essential for permanently invalid requests
@@ -110,7 +110,7 @@ public class DeviceCredentialsServiceImpl extends AbstractCachedEntityService<St
             var value = deviceCredentialsDao.saveAndFlush(tenantId, deviceCredentials);
             publishEvictEvent(new DeviceCredentialsEvictEvent(value.getCredentialsId(), oldDeviceCredentials != null ? oldDeviceCredentials.getCredentialsId() : null));
             if (oldDeviceCredentials != null) {
-                eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(value.getDeviceId()).actionType(ActionType.CREDENTIALS_UPDATED).build());
+                eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entity(value).entityId(value.getDeviceId()).actionType(ActionType.CREDENTIALS_UPDATED).build());
             }
             return value;
         } catch (Exception t) {

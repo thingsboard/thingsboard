@@ -60,6 +60,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.notification.DefaultNotifications;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationRuleService;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
@@ -99,6 +100,8 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
     protected NotificationSettingsService notificationSettingsService;
     @Autowired
     protected SqlPartitioningRepository partitioningRepository;
+    @Autowired
+    protected DefaultNotifications defaultNotifications;
 
     public static final String DEFAULT_NOTIFICATION_SUBJECT = "Just a test";
     public static final NotificationType DEFAULT_NOTIFICATION_TYPE = NotificationType.GENERAL;
@@ -142,7 +145,7 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
 
     protected NotificationRequest submitNotificationRequest(List<NotificationTargetId> targets, String text, int delayInSec, NotificationDeliveryMethod... deliveryMethods) {
         if (deliveryMethods.length == 0) {
-            deliveryMethods = new NotificationDeliveryMethod[]{NotificationDeliveryMethod.WEB};
+            deliveryMethods = new NotificationDeliveryMethod[]{NotificationDeliveryMethod.WEB, NotificationDeliveryMethod.MOBILE_APP};
         }
         NotificationTemplate notificationTemplate = createNotificationTemplate(DEFAULT_NOTIFICATION_TYPE, DEFAULT_NOTIFICATION_SUBJECT, text, deliveryMethods);
         return submitNotificationRequest(targets, notificationTemplate.getId(), delayInSec);
@@ -244,15 +247,23 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
     }
 
     protected List<Notification> getMyNotifications(boolean unreadOnly, int limit) throws Exception {
-        return doGetTypedWithPageLink("/api/notifications?unreadOnly={unreadOnly}&", new TypeReference<PageData<Notification>>() {},
-                new PageLink(limit, 0), unreadOnly).getData();
+        return getMyNotifications(NotificationDeliveryMethod.WEB, unreadOnly, limit);
+    }
+
+    protected List<Notification> getMyNotifications(NotificationDeliveryMethod deliveryMethod, boolean unreadOnly, int limit) throws Exception {
+        return doGetTypedWithPageLink("/api/notifications?unreadOnly={unreadOnly}&deliveryMethod={deliveryMethod}&", new TypeReference<PageData<Notification>>() {},
+                new PageLink(limit, 0), unreadOnly, deliveryMethod).getData();
     }
 
     protected NotificationRule createNotificationRule(NotificationRuleTriggerConfig triggerConfig, String subject, String text, NotificationTargetId... targets) {
-        NotificationTemplate template = createNotificationTemplate(NotificationType.valueOf(triggerConfig.getTriggerType().toString()), subject, text, NotificationDeliveryMethod.WEB);
+        return createNotificationRule(triggerConfig, subject, text, List.of(targets), NotificationDeliveryMethod.WEB);
+    }
+
+    protected NotificationRule createNotificationRule(NotificationRuleTriggerConfig triggerConfig, String subject, String text, List<NotificationTargetId> targets, NotificationDeliveryMethod... deliveryMethods) {
+        NotificationTemplate template = createNotificationTemplate(NotificationType.valueOf(triggerConfig.getTriggerType().toString()), subject, text, deliveryMethods);
 
         NotificationRule rule = new NotificationRule();
-        rule.setName(triggerConfig.getTriggerType() + " " + Arrays.toString(targets));
+        rule.setName(triggerConfig.getTriggerType() + " " + targets);
         rule.setEnabled(true);
         rule.setTemplateId(template.getId());
         rule.setTriggerType(triggerConfig.getTriggerType());
@@ -260,7 +271,7 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
 
         DefaultNotificationRuleRecipientsConfig recipientsConfig = new DefaultNotificationRuleRecipientsConfig();
         recipientsConfig.setTriggerType(triggerConfig.getTriggerType());
-        recipientsConfig.setTargets(DaoUtil.toUUIDs(List.of(targets)));
+        recipientsConfig.setTargets(DaoUtil.toUUIDs(targets));
         rule.setRecipientsConfig(recipientsConfig);
 
         return saveNotificationRule(rule);

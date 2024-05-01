@@ -29,12 +29,17 @@ import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.openssl.jcajce.JcePEMDecryptorProviderBuilder;
 import org.bouncycastle.operator.InputDecryptorProvider;
 import org.bouncycastle.pkcs.PKCS8EncryptedPrivateKeyInfo;
+import org.bouncycastle.pkcs.PKCSException;
 import org.bouncycastle.pkcs.jcajce.JcePKCSPBEInputDecryptorProviderBuilder;
 import org.thingsboard.server.common.data.StringUtils;
 
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
 import java.io.StringReader;
 import java.security.PrivateKey;
 import java.security.Security;
+import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
@@ -57,9 +62,18 @@ public class SslUtil {
 
     @SneakyThrows
     public static List<X509Certificate> readCertFile(String fileContent) {
+        return readCertFile(new StringReader(fileContent));
+    }
+
+    @SneakyThrows
+    public static List<X509Certificate> readCertFileByPath(String filePath) {
+        return readCertFile( new FileReader(filePath));
+    }
+
+    private static List<X509Certificate> readCertFile(Reader reader) throws IOException, CertificateException {
         List<X509Certificate> certificates = new ArrayList<>();
         JcaX509CertificateConverter certConverter = new JcaX509CertificateConverter();
-        try (PEMParser pemParser = new PEMParser(new StringReader(fileContent))) {
+        try (PEMParser pemParser = new PEMParser(reader)) {
             Object object;
             while ((object = pemParser.readObject()) != null) {
                 if (object instanceof X509CertificateHolder) {
@@ -73,33 +87,51 @@ public class SslUtil {
 
     @SneakyThrows
     public static PrivateKey readPrivateKey(String fileContent, String passStr) {
-        char[] password = StringUtils.isEmpty(passStr) ? EMPTY_PASS : passStr.toCharArray();
+        if (StringUtils.isNotEmpty(fileContent)) {
+            StringReader reader = new StringReader(fileContent);
+            return readPrivateKey(reader, passStr);
+        }
+        return null;
+    }
 
+    @SneakyThrows
+    public static PrivateKey readPrivateKeyByFilePath(String filePath, String passStr) {
+        if (StringUtils.isNotEmpty(filePath)) {
+            FileReader fileReader = new FileReader(filePath);
+            return readPrivateKey(fileReader, passStr);
+        }
+        return null;
+    }
+
+    private static PrivateKey readPrivateKey(Reader reader, String passStr) throws IOException, PKCSException {
+        char[] password = getPassword(passStr);
         PrivateKey privateKey = null;
         JcaPEMKeyConverter keyConverter = new JcaPEMKeyConverter();
-        if (StringUtils.isNotEmpty(fileContent)) {
-            try (PEMParser pemParser = new PEMParser(new StringReader(fileContent))) {
-                Object object;
-                while ((object = pemParser.readObject()) != null) {
-                    if (object instanceof PEMEncryptedKeyPair) {
-                        PEMDecryptorProvider decProv = new JcePEMDecryptorProviderBuilder().build(password);
-                        privateKey = keyConverter.getKeyPair(((PEMEncryptedKeyPair) object).decryptKeyPair(decProv)).getPrivate();
-                        break;
-                    } else if (object instanceof PKCS8EncryptedPrivateKeyInfo) {
-                        InputDecryptorProvider decProv =
-                                new JcePKCSPBEInputDecryptorProviderBuilder().setProvider(DEFAULT_PROVIDER).build(password);
-                        privateKey = keyConverter.getPrivateKey(((PKCS8EncryptedPrivateKeyInfo) object).decryptPrivateKeyInfo(decProv));
-                        break;
-                    } else if (object instanceof PEMKeyPair) {
-                        privateKey = keyConverter.getKeyPair((PEMKeyPair) object).getPrivate();
-                        break;
-                    } else if (object instanceof PrivateKeyInfo) {
-                        privateKey = keyConverter.getPrivateKey((PrivateKeyInfo) object);
-                    }
+        try (PEMParser pemParser = new PEMParser(reader)) {
+            Object object;
+            while ((object = pemParser.readObject()) != null) {
+                if (object instanceof PEMEncryptedKeyPair) {
+                    PEMDecryptorProvider decProv = new JcePEMDecryptorProviderBuilder().build(password);
+                    privateKey = keyConverter.getKeyPair(((PEMEncryptedKeyPair) object).decryptKeyPair(decProv)).getPrivate();
+                    break;
+                } else if (object instanceof PKCS8EncryptedPrivateKeyInfo) {
+                    InputDecryptorProvider decProv =
+                            new JcePKCSPBEInputDecryptorProviderBuilder().setProvider(DEFAULT_PROVIDER).build(password);
+                    privateKey = keyConverter.getPrivateKey(((PKCS8EncryptedPrivateKeyInfo) object).decryptPrivateKeyInfo(decProv));
+                    break;
+                } else if (object instanceof PEMKeyPair) {
+                    privateKey = keyConverter.getKeyPair((PEMKeyPair) object).getPrivate();
+                    break;
+                } else if (object instanceof PrivateKeyInfo) {
+                    privateKey = keyConverter.getPrivateKey((PrivateKeyInfo) object);
                 }
             }
         }
         return privateKey;
+    }
+
+    public static char[] getPassword(String passStr) {
+        return StringUtils.isEmpty(passStr) ? EMPTY_PASS : passStr.toCharArray();
     }
 
 }

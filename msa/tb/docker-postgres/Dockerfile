@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM thingsboard/openjdk11:bullseye-slim
+FROM thingsboard/openjdk17:bookworm-slim
 
 ENV PG_MAJOR 12
 
@@ -69,6 +69,7 @@ EXPOSE 9090
 EXPOSE 1883
 EXPOSE 5683/udp
 EXPOSE 5685/udp
+EXPOSE 5686/udp
 
 VOLUME ["/data"]
 

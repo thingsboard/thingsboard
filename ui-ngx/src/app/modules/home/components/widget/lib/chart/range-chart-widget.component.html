@@ -15,7 +15,8 @@
     limitations under the License.
 
 -->
-<div class="tb-range-chart-panel" [style]="backgroundStyle$ | async">
+<div class="tb-range-chart-panel" [style.padding]="padding"
+     [class.overlay]="overlayEnabled" [style]="backgroundStyle$ | async">
   <div class="tb-range-chart-overlay" [style]="overlayStyle"></div>
   <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
   <div class="tb-range-chart-content" [class]="legendClass">

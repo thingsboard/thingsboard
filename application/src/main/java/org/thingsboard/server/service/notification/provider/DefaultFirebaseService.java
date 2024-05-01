@@ -22,6 +22,8 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.messaging.AndroidConfig;
+import com.google.firebase.messaging.ApnsConfig;
+import com.google.firebase.messaging.Aps;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
@@ -52,7 +54,8 @@ public class DefaultFirebaseService implements FirebaseService {
             .build();
 
     @Override
-    public void sendMessage(TenantId tenantId, String credentials, String fcmToken, String title, String body, Map<String, String> data) throws FirebaseMessagingException {
+    public void sendMessage(TenantId tenantId, String credentials, String fcmToken, String title, String body,
+                            Map<String, String> data, Integer badge) throws FirebaseMessagingException {
         FirebaseContext firebaseContext = contexts.asMap().compute(tenantId.toString(), (key, context) -> {
             if (context == null) {
                 return new FirebaseContext(key, credentials);
@@ -61,6 +64,12 @@ public class DefaultFirebaseService implements FirebaseService {
                 return context;
             }
         });
+
+        Aps.Builder apsConfig = Aps.builder()
+                .setSound("default");
+        if (badge != null) {
+            apsConfig.setBadge(badge);
+        }
 
         Message message = Message.builder()
                 .setToken(fcmToken)
@@ -71,10 +80,18 @@ public class DefaultFirebaseService implements FirebaseService {
                 .setAndroidConfig(AndroidConfig.builder()
                         .setPriority(AndroidConfig.Priority.HIGH)
                         .build())
+                .setApnsConfig(ApnsConfig.builder()
+                        .setAps(apsConfig.build())
+                        .build())
                 .putAllData(data)
                 .build();
-        firebaseContext.getMessaging().send(message);
-        log.trace("[{}] Sent message for FCM token {}", tenantId, fcmToken);
+        try {
+            firebaseContext.getMessaging().send(message);
+            log.trace("[{}] Sent message for FCM token {}", tenantId, fcmToken);
+        } catch (Throwable t) {
+            log.debug("[{}] Failed to send message for FCM token {}", tenantId, fcmToken, t);
+            throw t;
+        }
     }
 
     public static class FirebaseContext {
