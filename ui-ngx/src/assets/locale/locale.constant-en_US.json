@@ -5773,6 +5773,7 @@
             }
         },
         "doughnut": {
+            "doughnut-appearance": "Doughnut appearance",
             "layout": "Layout",
             "layout-default": "Default",
             "layout-with-total": "With total",
@@ -6802,6 +6803,7 @@
             "tooltip-value-type-percentage": "Percentage"
         },
         "pie-chart": {
+            "pie-chart-appearance": "Pie chart appearance",
             "label": "Label",
             "border": "Border",
             "radius": "Radius",

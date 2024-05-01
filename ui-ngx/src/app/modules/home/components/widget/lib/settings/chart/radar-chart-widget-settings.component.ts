@@ -14,231 +14,113 @@
 /// limitations under the License.
 ///
 
-import { Component } from '@angular/core';
-import {
-  legendPositions,
-  legendPositionTranslationMap,
-  WidgetSettings,
-  WidgetSettingsComponent
-} from '@shared/models/widget.models';
+import { Component, TemplateRef, ViewChild } from '@angular/core';
+import { WidgetSettings } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { formatValue, mergeDeep } from '@core/utils';
-import {
-  LatestChartTooltipValueType,
-  latestChartTooltipValueTypes,
-  latestChartTooltipValueTypeTranslations
-} from '@home/components/widget/lib/chart/latest-chart.models';
 import {
   radarChartWidgetDefaultSettings,
   RadarChartWidgetSettings
 } from '@home/components/widget/lib/chart/radar-chart-widget.models';
-import { radarChartShapes, radarChartShapeTranslations } from '@home/components/widget/lib/chart/radar-chart.models';
 import {
-  chartLabelPositions,
-  chartLabelPositionTranslations,
-  chartLineTypes,
-  chartLineTypeTranslations,
-  chartShapes,
-  chartShapeTranslations
-} from '@home/components/widget/lib/chart/chart.models';
+  LatestChartWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/chart/latest-chart-widget-settings.component';
 
 @Component({
   selector: 'tb-radar-chart-widget-settings',
-  templateUrl: './radar-chart-widget-settings.component.html',
-  styleUrls: []
+  templateUrl: './latest-chart-widget-settings.component.html',
+  styleUrls: ['./../widget-settings.scss']
 })
-export class RadarChartWidgetSettingsComponent extends WidgetSettingsComponent {
+export class RadarChartWidgetSettingsComponent extends LatestChartWidgetSettingsComponent<RadarChartWidgetSettings> {
 
-  radarChartShapes = radarChartShapes;
-
-  radarChartShapeTranslations = radarChartShapeTranslations;
-
-  chartLineTypes = chartLineTypes;
-
-  chartLineTypeTranslations = chartLineTypeTranslations;
-
-  chartShapes = chartShapes;
-
-  chartShapeTranslations = chartShapeTranslations;
-
-  chartLabelPositions = chartLabelPositions;
-
-  chartLabelPositionTranslations = chartLabelPositionTranslations;
-
-  legendPositions = legendPositions;
-
-  legendPositionTranslationMap = legendPositionTranslationMap;
-
-  latestChartTooltipValueTypes = latestChartTooltipValueTypes;
-
-  latestChartTooltipValueTypeTranslationMap = latestChartTooltipValueTypeTranslations;
-
-  radarChartWidgetSettingsForm: UntypedFormGroup;
-
-  valuePreviewFn = this._valuePreviewFn.bind(this);
-
-  tooltipValuePreviewFn = this._tooltipValuePreviewFn.bind(this);
+  @ViewChild('radarChart')
+  radarChartConfigTemplate: TemplateRef<any>;
 
   constructor(protected store: Store<AppState>,
-              private fb: UntypedFormBuilder) {
-    super(store);
+              protected fb: UntypedFormBuilder) {
+    super(store, fb);
   }
 
-  protected settingsForm(): UntypedFormGroup {
-    return this.radarChartWidgetSettingsForm;
+  protected defaultLatestChartSettings() {
+    return radarChartWidgetDefaultSettings;
   }
 
-  protected defaultSettings(): WidgetSettings {
-    return mergeDeep<RadarChartWidgetSettings>({} as RadarChartWidgetSettings, radarChartWidgetDefaultSettings);
+  public latestChartConfigTemplate(): TemplateRef<any> {
+    return this.radarChartConfigTemplate;
   }
 
-  protected onSettingsSet(settings: WidgetSettings) {
-    this.radarChartWidgetSettingsForm = this.fb.group({
+  protected setupLatestChartControls(latestChartWidgetSettingsForm: UntypedFormGroup, settings: WidgetSettings) {
+    latestChartWidgetSettingsForm.addControl('shape', this.fb.control(settings.shape, []));
+    latestChartWidgetSettingsForm.addControl('color', this.fb.control(settings.color, []));
+    latestChartWidgetSettingsForm.addControl('showLine', this.fb.control(settings.showLine, []));
+    latestChartWidgetSettingsForm.addControl('lineType', this.fb.control(settings.lineType, []));
+    latestChartWidgetSettingsForm.addControl('lineWidth', this.fb.control(settings.lineWidth, [Validators.min(0)]));
+    latestChartWidgetSettingsForm.addControl('showPoints', this.fb.control(settings.showPoints, []));
+    latestChartWidgetSettingsForm.addControl('pointShape', this.fb.control(settings.pointShape, []));
+    latestChartWidgetSettingsForm.addControl('pointSize', this.fb.control(settings.pointSize, [Validators.min(0)]));
+    latestChartWidgetSettingsForm.addControl('showLabel', this.fb.control(settings.showLabel, []));
+    latestChartWidgetSettingsForm.addControl('labelPosition', this.fb.control(settings.labelPosition, []));
+    latestChartWidgetSettingsForm.addControl('labelFont', this.fb.control(settings.labelFont, []));
+    latestChartWidgetSettingsForm.addControl('labelColor', this.fb.control(settings.labelColor, []));
+    latestChartWidgetSettingsForm.addControl('fillAreaSettings', this.fb.control(settings.fillAreaSettings, []));
 
-      sortSeries: [settings.sortSeries, []],
-
-      shape: [settings.shape, []],
-      color: [settings.color, []],
-      showLine: [settings.showLine, []],
-      lineType: [settings.lineType, []],
-      lineWidth: [settings.lineWidth, [Validators.min(0)]],
-      showPoints: [settings.showPoints, []],
-      pointShape: [settings.pointShape, []],
-      pointSize: [settings.pointSize, [Validators.min(0)]],
-      showLabel: [settings.showLabel, []],
-      labelPosition: [settings.labelPosition, []],
-      labelFont: [settings.labelFont, []],
-      labelColor: [settings.labelColor, []],
-      fillAreaSettings: [settings.fillAreaSettings, []],
-
-      axisShowLabel: [settings.axisShowLabel, []],
-      axisLabelFont: [settings.axisLabelFont, []],
-      axisShowTickLabels: [settings.axisShowTickLabels, []],
-      axisTickLabelFont: [settings.axisTickLabelFont, []],
-      axisTickLabelColor: [settings.axisTickLabelColor, []],
-
-      animation: [settings.animation, []],
-
-      showLegend: [settings.showLegend, []],
-      legendPosition: [settings.legendPosition, []],
-      legendLabelFont: [settings.legendLabelFont, []],
-      legendLabelColor: [settings.legendLabelColor, []],
-      legendValueFont: [settings.legendValueFont, []],
-      legendValueColor: [settings.legendValueColor, []],
-
-      showTooltip: [settings.showTooltip, []],
-      tooltipValueType: [settings.tooltipValueType, []],
-      tooltipValueDecimals: [settings.tooltipValueDecimals, []],
-      tooltipValueFont: [settings.tooltipValueFont, []],
-      tooltipValueColor: [settings.tooltipValueColor, []],
-      tooltipBackgroundColor: [settings.tooltipBackgroundColor, []],
-      tooltipBackgroundBlur: [settings.tooltipBackgroundBlur, []],
-
-      background: [settings.background, []]
-    });
+    latestChartWidgetSettingsForm.addControl('axisShowLabel', this.fb.control(settings.axisShowLabel, []));
+    latestChartWidgetSettingsForm.addControl('axisLabelFont', this.fb.control(settings.axisLabelFont, []));
+    latestChartWidgetSettingsForm.addControl('axisShowTickLabels', this.fb.control(settings.axisShowTickLabels, []));
+    latestChartWidgetSettingsForm.addControl('axisTickLabelFont', this.fb.control(settings.axisTickLabelFont, []));
+    latestChartWidgetSettingsForm.addControl('axisTickLabelColor', this.fb.control(settings.axisTickLabelColor, []));
   }
 
-  protected validatorTriggers(): string[] {
-    return ['showLine', 'showPoints', 'showLabel', 'axisShowLabel',
-      'axisShowTickLabels', 'showLegend', 'showTooltip'];
+  protected latestChartValidatorTriggers(): string[] {
+    return ['showLine', 'showPoints', 'showLabel', 'axisShowLabel', 'axisShowTickLabels'];
   }
 
-  protected updateValidators(emitEvent: boolean) {
-    const showLine: boolean = this.radarChartWidgetSettingsForm.get('showLine').value;
-    const showPoints: boolean = this.radarChartWidgetSettingsForm.get('showPoints').value;
-    const showLabel: boolean = this.radarChartWidgetSettingsForm.get('showLabel').value;
-    const axisShowLabel: boolean = this.radarChartWidgetSettingsForm.get('axisShowLabel').value;
-    const axisShowTickLabels: boolean = this.radarChartWidgetSettingsForm.get('axisShowTickLabels').value;
-    const showLegend: boolean = this.radarChartWidgetSettingsForm.get('showLegend').value;
-    const showTooltip: boolean = this.radarChartWidgetSettingsForm.get('showTooltip').value;
+  protected updateLatestChartValidators(latestChartWidgetSettingsForm: UntypedFormGroup, emitEvent: boolean, trigger?: string) {
+    const showLine: boolean = latestChartWidgetSettingsForm.get('showLine').value;
+    const showPoints: boolean = latestChartWidgetSettingsForm.get('showPoints').value;
+    const showLabel: boolean = latestChartWidgetSettingsForm.get('showLabel').value;
+    const axisShowLabel: boolean = latestChartWidgetSettingsForm.get('axisShowLabel').value;
+    const axisShowTickLabels: boolean = latestChartWidgetSettingsForm.get('axisShowTickLabels').value;
 
     if (showLine) {
-      this.radarChartWidgetSettingsForm.get('lineType').enable();
-      this.radarChartWidgetSettingsForm.get('lineWidth').enable();
+      latestChartWidgetSettingsForm.get('lineType').enable();
+      latestChartWidgetSettingsForm.get('lineWidth').enable();
     } else {
-      this.radarChartWidgetSettingsForm.get('lineType').disable();
-      this.radarChartWidgetSettingsForm.get('lineWidth').disable();
+      latestChartWidgetSettingsForm.get('lineType').disable();
+      latestChartWidgetSettingsForm.get('lineWidth').disable();
     }
 
     if (showPoints) {
-      this.radarChartWidgetSettingsForm.get('pointShape').enable();
-      this.radarChartWidgetSettingsForm.get('pointSize').enable();
+      latestChartWidgetSettingsForm.get('pointShape').enable();
+      latestChartWidgetSettingsForm.get('pointSize').enable();
     } else {
-      this.radarChartWidgetSettingsForm.get('pointShape').disable();
-      this.radarChartWidgetSettingsForm.get('pointSize').disable();
+      latestChartWidgetSettingsForm.get('pointShape').disable();
+      latestChartWidgetSettingsForm.get('pointSize').disable();
     }
 
     if (showLabel) {
-      this.radarChartWidgetSettingsForm.get('labelPosition').enable();
-      this.radarChartWidgetSettingsForm.get('labelFont').enable();
-      this.radarChartWidgetSettingsForm.get('labelColor').enable();
+      latestChartWidgetSettingsForm.get('labelPosition').enable();
+      latestChartWidgetSettingsForm.get('labelFont').enable();
+      latestChartWidgetSettingsForm.get('labelColor').enable();
     } else {
-      this.radarChartWidgetSettingsForm.get('labelPosition').disable();
-      this.radarChartWidgetSettingsForm.get('labelFont').disable();
-      this.radarChartWidgetSettingsForm.get('labelColor').disable();
+      latestChartWidgetSettingsForm.get('labelPosition').disable();
+      latestChartWidgetSettingsForm.get('labelFont').disable();
+      latestChartWidgetSettingsForm.get('labelColor').disable();
     }
 
     if (axisShowLabel) {
-      this.radarChartWidgetSettingsForm.get('axisLabelFont').enable();
+      latestChartWidgetSettingsForm.get('axisLabelFont').enable();
     } else {
-      this.radarChartWidgetSettingsForm.get('axisLabelFont').disable();
+      latestChartWidgetSettingsForm.get('axisLabelFont').disable();
     }
 
     if (axisShowTickLabels) {
-      this.radarChartWidgetSettingsForm.get('axisTickLabelFont').enable();
-      this.radarChartWidgetSettingsForm.get('axisTickLabelColor').enable();
+      latestChartWidgetSettingsForm.get('axisTickLabelFont').enable();
+      latestChartWidgetSettingsForm.get('axisTickLabelColor').enable();
     } else {
-      this.radarChartWidgetSettingsForm.get('axisTickLabelFont').disable();
-      this.radarChartWidgetSettingsForm.get('axisTickLabelColor').disable();
-    }
-
-    if (showLegend) {
-      this.radarChartWidgetSettingsForm.get('legendPosition').enable();
-      this.radarChartWidgetSettingsForm.get('legendLabelFont').enable();
-      this.radarChartWidgetSettingsForm.get('legendLabelColor').enable();
-      this.radarChartWidgetSettingsForm.get('legendValueFont').enable();
-      this.radarChartWidgetSettingsForm.get('legendValueColor').enable();
-    } else {
-      this.radarChartWidgetSettingsForm.get('legendPosition').disable();
-      this.radarChartWidgetSettingsForm.get('legendLabelFont').disable();
-      this.radarChartWidgetSettingsForm.get('legendLabelColor').disable();
-      this.radarChartWidgetSettingsForm.get('legendValueFont').disable();
-      this.radarChartWidgetSettingsForm.get('legendValueColor').disable();
-    }
-    if (showTooltip) {
-      this.radarChartWidgetSettingsForm.get('tooltipValueType').enable();
-      this.radarChartWidgetSettingsForm.get('tooltipValueDecimals').enable();
-      this.radarChartWidgetSettingsForm.get('tooltipValueFont').enable();
-      this.radarChartWidgetSettingsForm.get('tooltipValueColor').enable();
-      this.radarChartWidgetSettingsForm.get('tooltipBackgroundColor').enable();
-      this.radarChartWidgetSettingsForm.get('tooltipBackgroundBlur').enable();
-    } else {
-      this.radarChartWidgetSettingsForm.get('tooltipValueType').disable();
-      this.radarChartWidgetSettingsForm.get('tooltipValueDecimals').disable();
-      this.radarChartWidgetSettingsForm.get('tooltipValueFont').disable();
-      this.radarChartWidgetSettingsForm.get('tooltipValueColor').disable();
-      this.radarChartWidgetSettingsForm.get('tooltipBackgroundColor').disable();
-      this.radarChartWidgetSettingsForm.get('tooltipBackgroundBlur').disable();
+      latestChartWidgetSettingsForm.get('axisTickLabelFont').disable();
+      latestChartWidgetSettingsForm.get('axisTickLabelColor').disable();
     }
   }
-
-  private _valuePreviewFn(): string {
-    const units: string = this.widgetConfig.config.units;
-    const decimals: number = this.widgetConfig.config.decimals;
-    return formatValue(110, decimals, units, false);
-  }
-
-  private _tooltipValuePreviewFn(): string {
-    const tooltipValueType: LatestChartTooltipValueType = this.radarChartWidgetSettingsForm.get('tooltipValueType').value;
-    const decimals: number = this.radarChartWidgetSettingsForm.get('tooltipValueDecimals').value;
-    if (tooltipValueType === LatestChartTooltipValueType.percentage) {
-      return formatValue(35, decimals, '%', false);
-    } else {
-      const units: string = this.widgetConfig.config.units;
-      return formatValue(110, decimals, units, false);
-    }
-  }
-
 }
