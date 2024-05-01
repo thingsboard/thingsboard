@@ -1872,8 +1872,7 @@
                 "step":"Krok",
                 "min-evaluation-period":"Minimalny okres oceny",
                 "max-evaluation-period":"Maksymalny okres oceny"
-            },
-            "composite-operations-support":"Obsługuje operacje złożone Odczyt/Zapis/Obserwacja"
+            }
         },
         "snmp":{
             "add-communication-config":"Dodaj konfigurację komunikacji",

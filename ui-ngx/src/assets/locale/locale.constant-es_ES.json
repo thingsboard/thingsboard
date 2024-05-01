@@ -1835,8 +1835,7 @@
                 "step": "Paso",
                 "min-evaluation-period": "Período mínimo de evaluación",
                 "max-evaluation-period": "Período máximo de evaluación"
-            },
-            "composite-operations-support": "Soporta operaciones Lectura/Escritura/Observación Compuestas"
+            }
         },
         "snmp": {
             "add-communication-config": "Añadir configuración de comunicaciones",

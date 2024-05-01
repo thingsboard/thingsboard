@@ -1935,8 +1935,7 @@
                 "step": "Stap",
                 "min-evaluation-period": "Minimale evaluatieperiode",
                 "max-evaluation-period": "Maximale evaluatieperiode"
-            },
-            "composite-operations-support": "Ondersteunt samengestelde lees-/schrijf-/observatiebewerkingen"
+            }
         },
         "snmp": {
             "add-communication-config": "Communicatieconfiguratie toevoegen",
