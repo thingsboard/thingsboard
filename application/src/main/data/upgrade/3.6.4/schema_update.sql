@@ -90,13 +90,7 @@ BEGIN
         SELECT COUNT(*) INTO row_num_old FROM attribute_kv_old;
         SELECT COUNT(*) INTO row_num FROM attribute_kv;
         RAISE NOTICE 'Migrated % of % rows', row_num, row_num_old;
-
-        IF row_num != 0 THEN
-            DROP TABLE IF EXISTS attribute_kv_old;
-        ELSE
-           RAISE EXCEPTION 'Table attribute_kv is empty';
-        END IF;
-
+        DROP TABLE IF EXISTS attribute_kv_old;
         CREATE INDEX IF NOT EXISTS idx_attribute_kv_by_key_and_last_update_ts ON attribute_kv(entity_id, attribute_key, last_update_ts desc);
     END IF;
 EXCEPTION
