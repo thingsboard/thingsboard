@@ -53,6 +53,7 @@ public class JwtTokenFactoryTest {
     private JwtTokenFactory tokenFactory;
     private AdminSettingsService adminSettingsService;
     private JwtSettingsService jwtSettingsService;
+    private JwtTokenFactory jwtTokenFactory;
 
     private JwtSettings jwtSettings;
 
@@ -170,7 +171,7 @@ public class JwtTokenFactoryTest {
     }
 
     private DefaultJwtSettingsService mockJwtSettingsService() {
-        return new DefaultJwtSettingsService(adminSettingsService, Optional.empty(), new DefaultJwtSettingsValidator());
+        return new DefaultJwtSettingsService(adminSettingsService, Optional.empty(), new DefaultJwtSettingsValidator(), jwtTokenFactory);
     }
 
     private void checkExpirationTime(JwtToken jwtToken, int tokenLifetime) {

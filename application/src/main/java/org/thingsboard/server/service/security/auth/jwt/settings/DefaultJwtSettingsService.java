@@ -17,6 +17,7 @@ package org.thingsboard.server.service.security.auth.jwt.settings;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
@@ -25,6 +26,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.security.model.JwtSettings;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
+import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 
 import java.util.Base64;
 import java.util.Objects;
@@ -40,6 +42,8 @@ public class DefaultJwtSettingsService implements JwtSettingsService {
     private final AdminSettingsService adminSettingsService;
     private final Optional<TbClusterService> tbClusterService;
     private final JwtSettingsValidator jwtSettingsValidator;
+    @Lazy
+    private final JwtTokenFactory jwtTokenFactory;
 
     private volatile JwtSettings jwtSettings = null; //lazy init
 
@@ -62,7 +66,9 @@ public class DefaultJwtSettingsService implements JwtSettingsService {
     @Override
     public JwtSettings reloadJwtSettings() {
         log.trace("Executing reloadJwtSettings");
-        return getJwtSettings(true);
+        var settings = getJwtSettings(true);
+        jwtTokenFactory.reload();
+        return settings;
     }
 
     @Override
