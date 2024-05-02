@@ -92,6 +92,7 @@ import { PieChartWidgetComponent } from '@home/components/widget/lib/chart/pie-c
 import { BarChartWidgetComponent } from '@home/components/widget/lib/chart/bar-chart-widget.component';
 import { PolarAreaWidgetComponent } from '@home/components/widget/lib/chart/polar-area-widget.component';
 import { RadarChartWidgetComponent } from '@home/components/widget/lib/chart/radar-chart-widget.component';
+import { ScadaTestWidgetComponent } from '@home/components/widget/lib/scada/scada-test-widget.component';
 
 @NgModule({
   declarations:
@@ -150,7 +151,8 @@ import { RadarChartWidgetComponent } from '@home/components/widget/lib/chart/rad
       PieChartWidgetComponent,
       BarChartWidgetComponent,
       PolarAreaWidgetComponent,
-      RadarChartWidgetComponent
+      RadarChartWidgetComponent,
+      ScadaTestWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -212,7 +214,8 @@ import { RadarChartWidgetComponent } from '@home/components/widget/lib/chart/rad
         PieChartWidgetComponent,
         BarChartWidgetComponent,
         PolarAreaWidgetComponent,
-        RadarChartWidgetComponent
+        RadarChartWidgetComponent,
+        ScadaTestWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }

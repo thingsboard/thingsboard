@@ -1,0 +1,48 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ng-container [formGroup]="scadaObjectSettingsFormGroup">
+  <div>{{ metadata?.title }}</div>
+  <div *ngIf="metadata?.behavior?.length" class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.slider.behavior</div>
+    <div *ngFor="let behaviour of metadata.behavior" class="tb-form-row">
+      <div class="fixed-title-width">{{ behaviour.name }}</div>
+      <tb-get-value-action-settings *ngIf="behaviour.type === ScadaObjectBehaviorType.getValue"
+                                    fxFlex
+                                    panelTitle="{{ behaviour.name }}"
+                                    [valueType]="behaviour.valueType"
+                                    [aliasController]="aliasController"
+                                    [targetDevice]="targetDevice"
+                                    [widgetType]="widgetType"
+                                    formControlName="{{ behaviour.id }}">
+      </tb-get-value-action-settings>
+    </div>
+  </div>
+  <div *ngIf="metadata?.properties?.length" class="tb-form-panel">
+    <div *ngFor="let property of metadata.properties" class="tb-form-row space-between">
+      <div class="fixed-title-width">{{ property.name }}</div>
+      <tb-color-input *ngIf="property.type === 'color'"
+                      asBoxInput
+                      colorClearButton
+                      formControlName="{{ property.id }}">
+      </tb-color-input>
+      <mat-form-field  *ngIf="property.type === 'number'" appearance="outline" class="number" subscriptSizing="dynamic">
+        <input matInput formControlName="{{ property.id }}" [min]="property.min" [max]="property.max" type="number" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+  </div>
+</ng-container>
