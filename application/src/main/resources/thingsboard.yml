@@ -505,6 +505,12 @@ cache:
     assets:
       timeToLiveInMinutes: "${CACHE_SPECS_ASSETS_TTL:1440}" # Asset cache TTL
       maxSize: "${CACHE_SPECS_ASSETS_MAX_SIZE:10000}" # 0 means the cache is disabled
+    customers:
+      timeToLiveInMinutes: "${CACHE_SPECS_CUSTOMERS_TTL:1440}" # Customer cache TTL
+      maxSize: "${CACHE_SPECS_CUSTOMERS_MAX_SIZE:10000}" # 0 means the cache is disabled
+    users:
+      timeToLiveInMinutes: "${CACHE_SPECS_USERS_TTL:1440}" # User cache TTL
+      maxSize: "${CACHE_SPECS_USERS_MAX_SIZE:10000}" # 0 means the cache is disabled
     entityViews:
       timeToLiveInMinutes: "${CACHE_SPECS_ENTITY_VIEWS_TTL:1440}" # Entity view cache TTL
       maxSize: "${CACHE_SPECS_ENTITY_VIEWS_MAX_SIZE:10000}" # 0 means the cache is disabled
@@ -1767,3 +1773,7 @@ management:
       exposure:
         # Expose metrics endpoint (use value 'prometheus' to enable prometheus metrics).
         include: '${METRICS_ENDPOINTS_EXPOSE:info}'
+  health:
+    elasticsearch:
+      # Enable the org.springframework.boot.actuate.elasticsearch.ElasticsearchRestClientHealthIndicator.doHealthCheck
+      enabled: "false"

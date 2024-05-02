@@ -74,7 +74,7 @@ import { DataKeySettingsFunction } from '@home/components/widget/config/data-key
 import { DeepPartial } from '@shared/models/common';
 import { BarRenderSharedContext } from '@home/components/widget/lib/chart/time-series-chart-bar.models';
 import { TimeSeriesChartStateValueConverter } from '@home/components/widget/lib/chart/time-series-chart-state.models';
-import { ChartLabelPosition, ChartShape } from '@home/components/widget/lib/chart/chart.models';
+import { ChartLabelPosition, ChartShape, toAnimationOption } from '@home/components/widget/lib/chart/chart.models';
 
 export class TbTimeSeriesChart {
 
@@ -640,14 +640,7 @@ export class TbTimeSeriesChart {
           bottom: 10
         }
       ],
-      animation: this.settings.animation.animation,
-      animationThreshold: this.settings.animation.animationThreshold,
-      animationDuration: this.settings.animation.animationDuration,
-      animationEasing: this.settings.animation.animationEasing,
-      animationDelay: this.settings.animation.animationDelay,
-      animationDurationUpdate: this.settings.animation.animationDurationUpdate,
-      animationEasingUpdate: this.settings.animation.animationEasingUpdate,
-      animationDelayUpdate: this.settings.animation.animationDelayUpdate
+      ...toAnimationOption(this.ctx, this.settings.animation)
     };
     if (this.hasVisualMap) {
       this.timeSeriesChartOptions.visualMap =

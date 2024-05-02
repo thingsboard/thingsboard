@@ -1548,7 +1548,7 @@
                 <version>${json-schema-validator.version}</version>
                 <exclusions>
                     <exclusion>
-                        <groupId>javax.mail</groupId>
+                        <groupId>com.sun.mail</groupId>
                         <artifactId>mailapi</artifactId>
                     </exclusion>
                 </exclusions>

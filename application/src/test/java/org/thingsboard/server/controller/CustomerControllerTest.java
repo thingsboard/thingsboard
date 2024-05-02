@@ -352,7 +352,7 @@ public class CustomerControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testFindCustomersByTitle() throws Exception {
+    public void testFindCustomersWithTitleAsTextSearch() throws Exception {
         TenantId tenantId = savedTenant.getId();
 
         String title1 = "Customer title 1";
@@ -422,6 +422,31 @@ public class CustomerControllerTest extends AbstractControllerTest {
         pageData = doGetTypedWithPageLink("/api/customers?", PAGE_DATA_CUSTOMER_TYPE_REFERENCE, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(0, pageData.getData().size());
+    }
+
+    @Test
+    public void testFindCustomerByTitle() throws Exception {
+        Customer customer = new Customer();
+        customer.setTitle("My customer");
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
+
+        testNotifyEntityAllOneTime(savedCustomer, savedCustomer.getId(), savedCustomer.getId(), savedCustomer.getTenantId(),
+                new CustomerId(CustomerId.NULL_UUID), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                ActionType.ADDED);
+
+        Assert.assertNotNull(savedCustomer);
+        Assert.assertNotNull(savedCustomer.getId());
+        Assert.assertTrue(savedCustomer.getCreatedTime() > 0);
+        Assert.assertEquals(customer.getTitle(), savedCustomer.getTitle());
+
+        Customer foundCustomer = doGet("/api/tenant/customers?customerTitle=" + savedCustomer.getTitle(), Customer.class);
+        Assert.assertEquals(foundCustomer, savedCustomer);
+
+        doDelete("/api/customer/" + savedCustomer.getId().getId().toString())
+                .andExpect(status().isOk());
     }
 
     @Test

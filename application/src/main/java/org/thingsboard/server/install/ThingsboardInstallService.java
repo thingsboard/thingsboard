@@ -133,6 +133,8 @@ public class ThingsboardInstallService {
                         case "3.6.4":
                             log.info("Upgrading ThingsBoard from version 3.6.4 to 3.7.0 ...");
                             databaseEntitiesUpgradeService.upgradeDatabase("3.6.4");
+                            dataUpdateService.updateData("3.6.4");
+                            entityDatabaseSchemaService.createCustomerTitleUniqueConstraintIfNotExists();
                             systemDataLoaderService.updateDefaultNotificationConfigs(false);
                             systemDataLoaderService.updateJwtSettings();
                             //TODO DON'T FORGET to update switch statement in the CacheCleanupService if you need to clear the cache

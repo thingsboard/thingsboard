@@ -78,6 +78,7 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
+import org.thingsboard.server.dao.sql.JpaExecutorService;
 import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.util.ArrayList;
@@ -123,6 +124,9 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     @Autowired
     private EntityCountService countService;
 
+    @Autowired
+    private JpaExecutorService executor;
+
     @Override
     public DeviceInfo findDeviceInfoById(TenantId tenantId, DeviceId deviceId) {
         log.trace("Executing findDeviceInfoById [{}]", deviceId);
@@ -145,7 +149,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
 
     @Override
     public ListenableFuture<Device> findDeviceByIdAsync(TenantId tenantId, DeviceId deviceId) {
-        log.trace("Executing findDeviceById [{}]", deviceId);
+        log.trace("Executing findDeviceByIdAsync [{}]", deviceId);
         validateId(deviceId, id -> INCORRECT_DEVICE_ID + id);
         if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
             return deviceDao.findByIdAsync(tenantId, deviceId.getId());
@@ -160,6 +164,13 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         return cache.getAndPutInTransaction(new DeviceCacheKey(tenantId, name),
                 () -> deviceDao.findDeviceByTenantIdAndName(tenantId.getId(), name).orElse(null), true);
+    }
+
+    @Override
+    public ListenableFuture<Device> findDeviceByTenantIdAndNameAsync(TenantId tenantId, String name) {
+        log.trace("Executing findDeviceByTenantIdAndNameAsync [{}][{}]", tenantId, name);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        return executor.submit(() -> findDeviceByTenantIdAndName(tenantId, name));
     }
 
     @Transactional
@@ -306,6 +317,9 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     @Override
     public Device assignDeviceToCustomer(TenantId tenantId, DeviceId deviceId, CustomerId customerId) {
         Device device = findDeviceById(tenantId, deviceId);
+        if (customerId.equals(device.getCustomerId())) {
+            return device;
+        }
         device.setCustomerId(customerId);
         return saveDevice(device);
     }
@@ -314,6 +328,9 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
     @Override
     public Device unassignDeviceFromCustomer(TenantId tenantId, DeviceId deviceId) {
         Device device = findDeviceById(tenantId, deviceId);
+        if (device.getCustomerId() == null) {
+            return device;
+        }
         device.setCustomerId(null);
         return saveDevice(device);
     }
