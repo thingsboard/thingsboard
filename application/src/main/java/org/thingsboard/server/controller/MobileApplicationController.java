@@ -125,7 +125,6 @@ public class MobileApplicationController extends BaseController {
         SecurityUser currentUser = getCurrentUser();
         accessControlService.checkPermission(currentUser, Resource.MOBILE_APP_SETTINGS, Operation.WRITE);
         mobileAppSettings.setTenantId(getTenantId());
-
         return mobileAppSettingsService.saveMobileAppSettings(currentUser.getTenantId(), mobileAppSettings);
     }
 
@@ -136,7 +135,6 @@ public class MobileApplicationController extends BaseController {
     public MobileAppSettings getMobileAppSettings() throws ThingsboardException {
         SecurityUser currentUser = getCurrentUser();
         accessControlService.checkPermission(currentUser, Resource.MOBILE_APP_SETTINGS, Operation.READ);
-
         return mobileAppSettingsService.getMobileAppSettings(TenantId.SYS_TENANT_ID);
     }
 

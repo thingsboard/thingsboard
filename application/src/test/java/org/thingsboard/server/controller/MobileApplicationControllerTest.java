@@ -163,6 +163,12 @@ public class MobileApplicationControllerTest extends AbstractControllerTest {
 
     @Test
     public void testGetApplicationAssociations() throws Exception {
+        loginSysAdmin();
+        MobileAppSettings mobileAppSettings = doGet("/api/mobile/app/settings", MobileAppSettings.class);
+        mobileAppSettings.setUseDefaultApp(false);
+        doPost("/api/mobile/app/settings", mobileAppSettings)
+                .andExpect(status().isOk());
+
         JsonNode assetLinks = doGet("/.well-known/assetlinks.json", JsonNode.class);
         assertThat(assetLinks.get(0).get("target").get("package_name").asText()).isEqualTo(ANDROID_PACKAGE_NAME);
         assertThat(assetLinks.get(0).get("target").get("sha256_cert_fingerprints").get(0).asText()).isEqualTo(ANDROID_APP_SHA256);
