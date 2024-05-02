@@ -14,6 +14,23 @@
 -- limitations under the License.
 --
 
+-- UPDATE PUBLIC CUSTOMERS START
+
+DO
+$$
+    BEGIN
+        IF NOT EXISTS (
+            SELECT FROM information_schema.columns
+            WHERE table_name = 'customer' AND column_name = 'is_public'
+        ) THEN
+            ALTER TABLE customer ADD COLUMN is_public boolean DEFAULT false;
+            UPDATE customer SET is_public = true WHERE title = 'Public';
+        END IF;
+    END;
+$$;
+
+-- UPDATE PUBLIC CUSTOMERS END
+
 -- create new attribute_kv table schema
 DO
 $$

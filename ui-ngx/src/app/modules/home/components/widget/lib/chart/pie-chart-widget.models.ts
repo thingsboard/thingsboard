@@ -15,19 +15,14 @@
 ///
 
 import {
-  LatestChartTooltipValueType,
+  latestChartWidgetDefaultSettings,
   LatestChartWidgetSettings
 } from '@home/components/widget/lib/chart/latest-chart.models';
-import { BackgroundType, Font } from '@shared/models/widget-settings.models';
-import { LegendPosition } from '@shared/models/widget.models';
+import { Font } from '@shared/models/widget-settings.models';
 import { DeepPartial } from '@shared/models/common';
-import {
-  pieChartAnimationDefaultSettings,
-  PieChartLabelPosition,
-  PieChartSettings
-} from '@home/components/widget/lib/chart/pie-chart.models';
+import { pieChartAnimationDefaultSettings, PieChartSettings } from '@home/components/widget/lib/chart/pie-chart.models';
 import { isDefinedAndNotNull, mergeDeep } from '@core/utils';
-import { EChartsAnimationSettings } from '@home/components/widget/lib/chart/echarts-widget.models';
+import { ChartAnimationSettings, PieChartLabelPosition } from '@home/components/widget/lib/chart/chart.models';
 
 export interface PieChartWidgetSettings extends LatestChartWidgetSettings {
   showLabel: boolean;
@@ -41,6 +36,9 @@ export interface PieChartWidgetSettings extends LatestChartWidgetSettings {
 }
 
 export const pieChartWidgetDefaultSettings: PieChartWidgetSettings = {
+  ...latestChartWidgetDefaultSettings,
+  animation: mergeDeep({} as ChartAnimationSettings,
+    pieChartAnimationDefaultSettings),
   showLabel: true,
   labelPosition: PieChartLabelPosition.outside,
   labelFont: {
@@ -55,53 +53,7 @@ export const pieChartWidgetDefaultSettings: PieChartWidgetSettings = {
   borderWidth: 0,
   borderColor: '#000',
   radius: 80,
-  clockwise: false,
-  sortSeries: false,
-  animation: mergeDeep({} as EChartsAnimationSettings,
-    pieChartAnimationDefaultSettings),
-  showLegend: true,
-  legendPosition: LegendPosition.bottom,
-  legendLabelFont: {
-    family: 'Roboto',
-    size: 12,
-    sizeUnit: 'px',
-    style: 'normal',
-    weight: '400',
-    lineHeight: '16px'
-  },
-  legendLabelColor: 'rgba(0, 0, 0, 0.38)',
-  legendValueFont: {
-    family: 'Roboto',
-    size: 14,
-    sizeUnit: 'px',
-    style: 'normal',
-    weight: '500',
-    lineHeight: '20px'
-  },
-  legendValueColor: 'rgba(0, 0, 0, 0.87)',
-  showTooltip: true,
-  tooltipValueType: LatestChartTooltipValueType.percentage,
-  tooltipValueDecimals: 0,
-  tooltipValueFont: {
-    family: 'Roboto',
-    size: 13,
-    sizeUnit: 'px',
-    style: 'normal',
-    weight: '500',
-    lineHeight: '16px'
-  },
-  tooltipValueColor: 'rgba(0, 0, 0, 0.76)',
-  tooltipBackgroundColor: 'rgba(255, 255, 255, 0.76)',
-  tooltipBackgroundBlur: 4,
-  background: {
-    type: BackgroundType.color,
-    color: '#fff',
-    overlay: {
-      enabled: false,
-      color: 'rgba(255,255,255,0.72)',
-      blur: 3
-    }
-  }
+  clockwise: false
 };
 
 export const pieChartWidgetPieChartSettings = (settings: PieChartWidgetSettings): DeepPartial<PieChartSettings> => ({

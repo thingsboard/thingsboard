@@ -41,6 +41,8 @@ public interface UserService extends EntityDaoService {
 
     User findUserByTenantIdAndEmail(TenantId tenantId, String email);
 
+    ListenableFuture<User> findUserByTenantIdAndEmailAsync(TenantId tenantId, String email);
+
     User saveUser(TenantId tenantId, User user);
 
     UserCredentials findUserCredentialsByUserId(TenantId tenantId, UserId userId);
@@ -76,6 +78,8 @@ public interface UserService extends EntityDaoService {
     PageData<User> findAllUsers(PageLink pageLink);
 
     void deleteTenantAdmins(TenantId tenantId);
+
+    void deleteAllByTenantId(TenantId tenantId);
 
     PageData<User> findCustomerUsers(TenantId tenantId, CustomerId customerId, PageLink pageLink);
 

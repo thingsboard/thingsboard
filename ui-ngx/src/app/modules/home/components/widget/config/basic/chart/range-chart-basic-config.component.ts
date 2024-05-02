@@ -46,13 +46,16 @@ import {
 } from '@home/components/widget/lib/chart/range-chart-widget.models';
 import {
   lineSeriesStepTypes,
-  lineSeriesStepTypeTranslations,
-  seriesLabelPositions,
-  seriesLabelPositionTranslations,
-  timeSeriesLineTypes,
-  timeSeriesLineTypeTranslations
+  lineSeriesStepTypeTranslations
 } from '@home/components/widget/lib/chart/time-series-chart.models';
-import { echartsShapes, echartsShapeTranslations } from '@home/components/widget/lib/chart/echarts-widget.models';
+import {
+  chartLabelPositions,
+  chartLabelPositionTranslations,
+  chartLineTypes,
+  chartLineTypeTranslations,
+  chartShapes,
+  chartShapeTranslations
+} from '@home/components/widget/lib/chart/chart.models';
 
 @Component({
   selector: 'tb-range-chart-basic-config',
@@ -74,17 +77,17 @@ export class RangeChartBasicConfigComponent extends BasicWidgetConfigComponent {
 
   lineSeriesStepTypeTranslations = lineSeriesStepTypeTranslations;
 
-  timeSeriesLineTypes = timeSeriesLineTypes;
+  chartLineTypes = chartLineTypes;
 
-  timeSeriesLineTypeTranslations = timeSeriesLineTypeTranslations;
+  chartLineTypeTranslations = chartLineTypeTranslations;
 
-  seriesLabelPositions = seriesLabelPositions;
+  chartLabelPositions = chartLabelPositions;
 
-  seriesLabelPositionTranslations = seriesLabelPositionTranslations;
+  chartLabelPositionTranslations = chartLabelPositionTranslations;
 
-  echartsShapes = echartsShapes;
+  chartShapes = chartShapes;
 
-  echartsShapeTranslations = echartsShapeTranslations;
+  chartShapeTranslations = chartShapeTranslations;
 
   legendPositions = legendPositions;
 

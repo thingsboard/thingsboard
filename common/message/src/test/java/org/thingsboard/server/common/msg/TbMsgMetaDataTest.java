@@ -18,12 +18,12 @@ package org.thingsboard.server.common.msg;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TbMsgMetaDataTest {
 
@@ -32,7 +32,7 @@ public class TbMsgMetaDataTest {
     private JsonNode metadataJson;
     private Map<String, String> metadataExpected;
 
-    @Before
+    @BeforeEach
     public void startInit() throws Exception {
         metadataJson = objectMapper.readValue(metadataJsonStr, JsonNode.class);
         metadataExpected = objectMapper.convertValue(metadataJson, new TypeReference<>() {

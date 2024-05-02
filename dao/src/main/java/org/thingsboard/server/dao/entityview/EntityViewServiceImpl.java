@@ -131,6 +131,9 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
     @Override
     public EntityView assignEntityViewToCustomer(TenantId tenantId, EntityViewId entityViewId, CustomerId customerId) {
         EntityView entityView = findEntityViewById(tenantId, entityViewId);
+        if (customerId.equals(entityView.getCustomerId())) {
+            return entityView;
+        }
         entityView.setCustomerId(customerId);
         return saveEntityView(entityView);
     }
@@ -138,6 +141,9 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
     @Override
     public EntityView unassignEntityViewFromCustomer(TenantId tenantId, EntityViewId entityViewId) {
         EntityView entityView = findEntityViewById(tenantId, entityViewId);
+        if (entityView.getCustomerId() == null) {
+            return entityView;
+        }
         entityView.setCustomerId(null);
         return saveEntityView(entityView);
     }
@@ -179,6 +185,13 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
                 () -> entityViewDao.findEntityViewByTenantIdAndName(tenantId.getId(), name).orElse(null)
                 , EntityViewCacheValue::getEntityView, v -> new EntityViewCacheValue(v, null), true);
 
+    }
+
+    @Override
+    public ListenableFuture<EntityView> findEntityViewByTenantIdAndNameAsync(TenantId tenantId, String name) {
+        log.trace("Executing findEntityViewByTenantIdAndNameAsync [{}][{}]", tenantId, name);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        return service.submit(() -> findEntityViewByTenantIdAndName(tenantId, name));
     }
 
     @Override
@@ -290,7 +303,7 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
 
     @Override
     public ListenableFuture<EntityView> findEntityViewByIdAsync(TenantId tenantId, EntityViewId entityViewId) {
-        log.trace("Executing findEntityViewById [{}]", entityViewId);
+        log.trace("Executing findEntityViewByIdAsync [{}]", entityViewId);
         validateId(entityViewId, id -> INCORRECT_ENTITY_VIEW_ID + id);
         return entityViewDao.findByIdAsync(tenantId, entityViewId.getId());
     }
@@ -327,11 +340,19 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
     public void deleteEntityView(TenantId tenantId, EntityViewId entityViewId) {
         log.trace("Executing deleteEntityView [{}]", entityViewId);
         validateId(entityViewId, id -> INCORRECT_ENTITY_VIEW_ID + id);
-        deleteEntityRelations(tenantId, entityViewId);
         EntityView entityView = entityViewDao.findById(tenantId, entityViewId.getId());
+        if (entityView == null) {
+            return;
+        }
         entityViewDao.removeById(tenantId, entityViewId.getId());
         publishEvictEvent(new EntityViewEvictEvent(entityView.getTenantId(), entityView.getId(), entityView.getEntityId(), null, entityView.getName(), null));
         eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(entityViewId).build());
+    }
+
+    @Override
+    @Transactional
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        deleteEntityView(tenantId, (EntityViewId) id);
     }
 
     @Override
@@ -339,6 +360,11 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
         log.trace("Executing deleteEntityViewsByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         tenantEntityViewRemover.removeEntities(tenantId, tenantId);
+    }
+
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteEntityViewsByTenantId(tenantId);
     }
 
     @Override

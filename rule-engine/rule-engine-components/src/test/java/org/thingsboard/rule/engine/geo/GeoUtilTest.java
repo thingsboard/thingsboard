@@ -15,12 +15,12 @@
  */
 package org.thingsboard.rule.engine.geo;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class GeoUtilTest {
 
     public static final String SIMPLE_RECT = "[[51.903762928405555,23.642220786948297],[44.669801219635644,41.83345155830211]]";
@@ -47,117 +47,117 @@ public class GeoUtilTest {
 
     @Test
     public void testPointsInSimplePolygons() {
-        Assert.assertTrue("Polygon " + SIMPLE_RECT + " must contain the dot " + POINT_INSIDE_SIMPLE_RECT_CENTER,
-                GeoUtil.contains(SIMPLE_RECT, POINT_INSIDE_SIMPLE_RECT_CENTER)
-        );
-        Assert.assertTrue("Polygon " + SIMPLE_RECT + " must contain the dot " + POINT_INSIDE_SIMPLE_RECT_NEAR_BORDER,
-                GeoUtil.contains(SIMPLE_RECT, POINT_INSIDE_SIMPLE_RECT_NEAR_BORDER)
-        );
-        Assert.assertTrue("Polygon " + SIMPLE_RECT_WITH_HOLE_IN_CENTER + " must contain the dot "
-                        + POINT_INSIDE_SIMPLE_RECT_NEAR_BORDER,
-                GeoUtil.contains(SIMPLE_RECT_WITH_HOLE_IN_CENTER, POINT_INSIDE_SIMPLE_RECT_NEAR_BORDER)
-        );
+        Assertions.assertTrue(GeoUtil.contains(SIMPLE_RECT, POINT_INSIDE_SIMPLE_RECT_CENTER),
+                "Polygon " + SIMPLE_RECT + " must contain the dot " + POINT_INSIDE_SIMPLE_RECT_CENTER
+                );
+        Assertions.assertTrue(GeoUtil.contains(SIMPLE_RECT, POINT_INSIDE_SIMPLE_RECT_NEAR_BORDER),
+                "Polygon " + SIMPLE_RECT + " must contain the dot " + POINT_INSIDE_SIMPLE_RECT_NEAR_BORDER
+                );
+        Assertions.assertTrue(GeoUtil.contains(SIMPLE_RECT_WITH_HOLE_IN_CENTER, POINT_INSIDE_SIMPLE_RECT_NEAR_BORDER),
+                "Polygon " + SIMPLE_RECT_WITH_HOLE_IN_CENTER + " must contain the dot "
+                                + POINT_INSIDE_SIMPLE_RECT_NEAR_BORDER
+                );
 
-        Assert.assertFalse("Polygon " + SIMPLE_RECT + " must not contain the dot "
-                        + POINT_OUTSIDE_SIMPLE_RECT,
-                GeoUtil.contains(SIMPLE_RECT, POINT_OUTSIDE_SIMPLE_RECT)
-        );
-        Assert.assertFalse("Polygon " + SIMPLE_RECT_WITH_HOLE_IN_CENTER + " must not contain the dot "
-                        + POINT_OUTSIDE_SIMPLE_RECT,
-                GeoUtil.contains(SIMPLE_RECT_WITH_HOLE_IN_CENTER, POINT_OUTSIDE_SIMPLE_RECT)
-        );
-        Assert.assertFalse("Polygon " + SIMPLE_RECT_WITH_HOLE_IN_CENTER + " must not contain the dot "
-                        + POINT_INSIDE_SIMPLE_RECT_CENTER,
-                GeoUtil.contains(SIMPLE_RECT_WITH_HOLE_IN_CENTER, POINT_INSIDE_SIMPLE_RECT_CENTER)
-        );
+        Assertions.assertFalse(GeoUtil.contains(SIMPLE_RECT, POINT_OUTSIDE_SIMPLE_RECT),
+                "Polygon " + SIMPLE_RECT + " must not contain the dot "
+                                + POINT_OUTSIDE_SIMPLE_RECT
+                );
+        Assertions.assertFalse(GeoUtil.contains(SIMPLE_RECT_WITH_HOLE_IN_CENTER, POINT_OUTSIDE_SIMPLE_RECT),
+                "Polygon " + SIMPLE_RECT_WITH_HOLE_IN_CENTER + " must not contain the dot "
+                                + POINT_OUTSIDE_SIMPLE_RECT
+                );
+        Assertions.assertFalse(GeoUtil.contains(SIMPLE_RECT_WITH_HOLE_IN_CENTER, POINT_INSIDE_SIMPLE_RECT_CENTER),
+                "Polygon " + SIMPLE_RECT_WITH_HOLE_IN_CENTER + " must not contain the dot "
+                                + POINT_INSIDE_SIMPLE_RECT_CENTER
+                );
     }
 
     @Test
     public void testPointsInComplexPolygons() {
-        Assert.assertTrue("Polygon " + SAND_CLOCK + " must contain the dot " + POINT_INSIDE_SAND_CLOCK_CENTER,
-                GeoUtil.contains(SAND_CLOCK, POINT_INSIDE_SAND_CLOCK_CENTER)
-        );
-        Assert.assertTrue("Polygon " + SAND_CLOCK + " must contain the dot " + POINT_INSIDE_SAND_CLOCK_NEAR_BORDER,
-                GeoUtil.contains(SAND_CLOCK, POINT_INSIDE_SAND_CLOCK_NEAR_BORDER)
-        );
-        Assert.assertTrue("Polygon " + SAND_CLOCK_WITH_HOLE_IN_CENTER + " must contain the dot "
-                        + POINT_INSIDE_SAND_CLOCK_NEAR_BORDER,
-                GeoUtil.contains(SAND_CLOCK_WITH_HOLE_IN_CENTER, POINT_INSIDE_SAND_CLOCK_NEAR_BORDER)
-        );
+        Assertions.assertTrue(GeoUtil.contains(SAND_CLOCK, POINT_INSIDE_SAND_CLOCK_CENTER),
+                "Polygon " + SAND_CLOCK + " must contain the dot " + POINT_INSIDE_SAND_CLOCK_CENTER
+                );
+        Assertions.assertTrue(GeoUtil.contains(SAND_CLOCK, POINT_INSIDE_SAND_CLOCK_NEAR_BORDER),
+                "Polygon " + SAND_CLOCK + " must contain the dot " + POINT_INSIDE_SAND_CLOCK_NEAR_BORDER
+                );
+        Assertions.assertTrue(GeoUtil.contains(SAND_CLOCK_WITH_HOLE_IN_CENTER, POINT_INSIDE_SAND_CLOCK_NEAR_BORDER),
+                "Polygon " + SAND_CLOCK_WITH_HOLE_IN_CENTER + " must contain the dot "
+                                + POINT_INSIDE_SAND_CLOCK_NEAR_BORDER
+                );
 
-        Assert.assertFalse("Polygon " + SAND_CLOCK + " must not contain the dot "
-                        + POINT_OUTSIDE_SAND_CLOCK_1,
-                GeoUtil.contains(SAND_CLOCK, POINT_OUTSIDE_SAND_CLOCK_1)
-        );
-        Assert.assertFalse("Polygon " + SAND_CLOCK + " must not contain the dot "
-                        + POINT_OUTSIDE_SAND_CLOCK_2,
-                GeoUtil.contains(SAND_CLOCK, POINT_OUTSIDE_SAND_CLOCK_2)
-        );
-        Assert.assertFalse("Polygon " + SAND_CLOCK_WITH_HOLE_IN_CENTER + " must not contain the dot "
-                        + POINT_INSIDE_SAND_CLOCK_CENTER,
-                GeoUtil.contains(SAND_CLOCK_WITH_HOLE_IN_CENTER, POINT_INSIDE_SAND_CLOCK_CENTER)
-        );
-        Assert.assertFalse("Polygon " + SAND_CLOCK_WITH_HOLE_IN_CENTER + " must not contain the dot "
-                        + POINT_OUTSIDE_SAND_CLOCK_1,
-                GeoUtil.contains(SAND_CLOCK_WITH_HOLE_IN_CENTER, POINT_OUTSIDE_SAND_CLOCK_1)
-        );
-        Assert.assertFalse("Polygon " + SAND_CLOCK_WITH_HOLE_IN_CENTER + " must not contain the dot "
-                        + POINT_OUTSIDE_SAND_CLOCK_2,
-                GeoUtil.contains(SAND_CLOCK_WITH_HOLE_IN_CENTER, POINT_OUTSIDE_SAND_CLOCK_2)
-        );
+        Assertions.assertFalse(GeoUtil.contains(SAND_CLOCK, POINT_OUTSIDE_SAND_CLOCK_1),
+                "Polygon " + SAND_CLOCK + " must not contain the dot "
+                                + POINT_OUTSIDE_SAND_CLOCK_1
+                );
+        Assertions.assertFalse(GeoUtil.contains(SAND_CLOCK, POINT_OUTSIDE_SAND_CLOCK_2),
+                "Polygon " + SAND_CLOCK + " must not contain the dot "
+                                + POINT_OUTSIDE_SAND_CLOCK_2
+                );
+        Assertions.assertFalse(GeoUtil.contains(SAND_CLOCK_WITH_HOLE_IN_CENTER, POINT_INSIDE_SAND_CLOCK_CENTER),
+                "Polygon " + SAND_CLOCK_WITH_HOLE_IN_CENTER + " must not contain the dot "
+                                + POINT_INSIDE_SAND_CLOCK_CENTER
+                );
+        Assertions.assertFalse(GeoUtil.contains(SAND_CLOCK_WITH_HOLE_IN_CENTER, POINT_OUTSIDE_SAND_CLOCK_1),
+                "Polygon " + SAND_CLOCK_WITH_HOLE_IN_CENTER + " must not contain the dot "
+                                + POINT_OUTSIDE_SAND_CLOCK_1
+                );
+        Assertions.assertFalse(GeoUtil.contains(SAND_CLOCK_WITH_HOLE_IN_CENTER, POINT_OUTSIDE_SAND_CLOCK_2),
+                "Polygon " + SAND_CLOCK_WITH_HOLE_IN_CENTER + " must not contain the dot "
+                                + POINT_OUTSIDE_SAND_CLOCK_2
+                );
     }
 
     @Test
     public void testPointsInSelfIntersectingPolygons() {
-        Assert.assertTrue("Polygon " + SELF_INTERSECTING + " must contain the dot "
-                        + POINT_INSIDE_SELF_INTERSECTING_UPPER_CENTER,
-                GeoUtil.contains(SELF_INTERSECTING, POINT_INSIDE_SELF_INTERSECTING_UPPER_CENTER)
-        );
-        Assert.assertTrue("Polygon " + SELF_INTERSECTING + " must contain the dot "
-                        + POINT_INSIDE_SELF_INTERSECTING_LOWER_CENTER,
-                GeoUtil.contains(SELF_INTERSECTING, POINT_INSIDE_SELF_INTERSECTING_LOWER_CENTER)
-        );
-        Assert.assertTrue("Polygon " + SELF_INTERSECTING + " must contain the dot "
-                        + POINT_INSIDE_SELF_INTERSECTING_NEAR_BORDER,
-                GeoUtil.contains(SELF_INTERSECTING, POINT_INSIDE_SELF_INTERSECTING_NEAR_BORDER)
-        );
-        Assert.assertTrue("Polygon " + SELF_INTERSECTING_WITH_HOLES + " must contain the dot "
-                        + POINT_INSIDE_SAND_CLOCK_NEAR_BORDER,
-                GeoUtil.contains(SELF_INTERSECTING_WITH_HOLES, POINT_INSIDE_SELF_INTERSECTING_NEAR_BORDER)
-        );
+        Assertions.assertTrue(GeoUtil.contains(SELF_INTERSECTING, POINT_INSIDE_SELF_INTERSECTING_UPPER_CENTER),
+                "Polygon " + SELF_INTERSECTING + " must contain the dot "
+                                + POINT_INSIDE_SELF_INTERSECTING_UPPER_CENTER
+                );
+        Assertions.assertTrue(GeoUtil.contains(SELF_INTERSECTING, POINT_INSIDE_SELF_INTERSECTING_LOWER_CENTER),
+                "Polygon " + SELF_INTERSECTING + " must contain the dot "
+                                + POINT_INSIDE_SELF_INTERSECTING_LOWER_CENTER
+                );
+        Assertions.assertTrue(GeoUtil.contains(SELF_INTERSECTING, POINT_INSIDE_SELF_INTERSECTING_NEAR_BORDER),
+                "Polygon " + SELF_INTERSECTING + " must contain the dot "
+                                + POINT_INSIDE_SELF_INTERSECTING_NEAR_BORDER
+                );
+        Assertions.assertTrue(GeoUtil.contains(SELF_INTERSECTING_WITH_HOLES, POINT_INSIDE_SELF_INTERSECTING_NEAR_BORDER),
+                "Polygon " + SELF_INTERSECTING_WITH_HOLES + " must contain the dot "
+                                + POINT_INSIDE_SAND_CLOCK_NEAR_BORDER
+                );
 
-        Assert.assertFalse("Polygon " + SELF_INTERSECTING + " must not contain the dot "
-                        + POINT_OUTSIDE_SELF_INTERSECTING_1,
-                GeoUtil.contains(SELF_INTERSECTING, POINT_OUTSIDE_SELF_INTERSECTING_1)
-        );
-        Assert.assertFalse("Polygon " + SELF_INTERSECTING + " must not contain the dot "
-                        + POINT_OUTSIDE_SELF_INTERSECTING_2,
-                GeoUtil.contains(SELF_INTERSECTING, POINT_OUTSIDE_SELF_INTERSECTING_2)
-        );
-        Assert.assertFalse("Polygon " + SELF_INTERSECTING + " must not contain the dot "
-                        + POINT_OUTSIDE_SELF_INTERSECTING_3,
-                GeoUtil.contains(SELF_INTERSECTING, POINT_OUTSIDE_SELF_INTERSECTING_3)
-        );
-        Assert.assertFalse("Polygon " + SELF_INTERSECTING_WITH_HOLES + " must not contain the dot "
-                        + POINT_OUTSIDE_SELF_INTERSECTING_1,
-                GeoUtil.contains(SELF_INTERSECTING_WITH_HOLES, POINT_OUTSIDE_SELF_INTERSECTING_1)
-        );
-        Assert.assertFalse("Polygon " + SELF_INTERSECTING_WITH_HOLES + " must not contain the dot "
-                        + POINT_OUTSIDE_SELF_INTERSECTING_2,
-                GeoUtil.contains(SELF_INTERSECTING_WITH_HOLES, POINT_OUTSIDE_SELF_INTERSECTING_2)
-        );
-        Assert.assertFalse("Polygon " + SELF_INTERSECTING_WITH_HOLES + " must not contain the dot "
-                        + POINT_OUTSIDE_SELF_INTERSECTING_3,
-                GeoUtil.contains(SELF_INTERSECTING_WITH_HOLES, POINT_OUTSIDE_SELF_INTERSECTING_3)
-        );
-        Assert.assertFalse("Polygon " + SELF_INTERSECTING_WITH_HOLES + " must not contain the dot "
-                        + POINT_INSIDE_SELF_INTERSECTING_UPPER_CENTER,
-                GeoUtil.contains(SELF_INTERSECTING_WITH_HOLES, POINT_INSIDE_SELF_INTERSECTING_UPPER_CENTER)
-        );
-        Assert.assertFalse("Polygon " + SELF_INTERSECTING_WITH_HOLES + " must not contain the dot "
-                        + POINT_INSIDE_SELF_INTERSECTING_LOWER_CENTER,
-                GeoUtil.contains(SELF_INTERSECTING_WITH_HOLES, POINT_INSIDE_SELF_INTERSECTING_LOWER_CENTER)
-        );
+        Assertions.assertFalse(GeoUtil.contains(SELF_INTERSECTING, POINT_OUTSIDE_SELF_INTERSECTING_1),
+                "Polygon " + SELF_INTERSECTING + " must not contain the dot "
+                                + POINT_OUTSIDE_SELF_INTERSECTING_1
+                );
+        Assertions.assertFalse(GeoUtil.contains(SELF_INTERSECTING, POINT_OUTSIDE_SELF_INTERSECTING_2),
+                "Polygon " + SELF_INTERSECTING + " must not contain the dot "
+                                + POINT_OUTSIDE_SELF_INTERSECTING_2
+                );
+        Assertions.assertFalse(GeoUtil.contains(SELF_INTERSECTING, POINT_OUTSIDE_SELF_INTERSECTING_3),
+                "Polygon " + SELF_INTERSECTING + " must not contain the dot "
+                                + POINT_OUTSIDE_SELF_INTERSECTING_3
+                );
+        Assertions.assertFalse(GeoUtil.contains(SELF_INTERSECTING_WITH_HOLES, POINT_OUTSIDE_SELF_INTERSECTING_1),
+                "Polygon " + SELF_INTERSECTING_WITH_HOLES + " must not contain the dot "
+                                + POINT_OUTSIDE_SELF_INTERSECTING_1
+                );
+        Assertions.assertFalse(GeoUtil.contains(SELF_INTERSECTING_WITH_HOLES, POINT_OUTSIDE_SELF_INTERSECTING_2),
+                "Polygon " + SELF_INTERSECTING_WITH_HOLES + " must not contain the dot "
+                                + POINT_OUTSIDE_SELF_INTERSECTING_2
+                );
+        Assertions.assertFalse(GeoUtil.contains(SELF_INTERSECTING_WITH_HOLES, POINT_OUTSIDE_SELF_INTERSECTING_3),
+                "Polygon " + SELF_INTERSECTING_WITH_HOLES + " must not contain the dot "
+                                + POINT_OUTSIDE_SELF_INTERSECTING_3
+                );
+        Assertions.assertFalse(GeoUtil.contains(SELF_INTERSECTING_WITH_HOLES, POINT_INSIDE_SELF_INTERSECTING_UPPER_CENTER),
+                "Polygon " + SELF_INTERSECTING_WITH_HOLES + " must not contain the dot "
+                                + POINT_INSIDE_SELF_INTERSECTING_UPPER_CENTER
+                );
+        Assertions.assertFalse(GeoUtil.contains(SELF_INTERSECTING_WITH_HOLES, POINT_INSIDE_SELF_INTERSECTING_LOWER_CENTER),
+                "Polygon " + SELF_INTERSECTING_WITH_HOLES + " must not contain the dot "
+                                + POINT_INSIDE_SELF_INTERSECTING_LOWER_CENTER
+                );
     }
 
 }

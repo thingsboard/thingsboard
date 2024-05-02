@@ -45,6 +45,7 @@ import io.netty.util.concurrent.GenericFutureListener;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.ResponseCode;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.adaptor.AdaptorException;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -64,7 +65,6 @@ import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
-import org.thingsboard.server.common.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
@@ -323,6 +323,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 if (checkConnected(ctx, msg)) {
                     ctx.writeAndFlush(new MqttMessage(new MqttFixedHeader(PINGRESP, false, AT_MOST_ONCE, false, 0)));
                     transportService.recordActivity(deviceSessionCtx.getSessionInfo());
+                    if (gatewaySessionHandler != null) {
+                        gatewaySessionHandler.onGatewayPing();
+                    }
                 }
                 break;
             case DISCONNECT:
@@ -1080,12 +1083,15 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         try {
             JsonNode infoNode = context.getMapper().readTree(device.getAdditionalInfo());
             if (infoNode != null) {
-                JsonNode gatewayNode = infoNode.get("gateway");
+                JsonNode gatewayNode = infoNode.get(DataConstants.GATEWAY_PARAMETER);
                 if (gatewayNode != null && gatewayNode.asBoolean()) {
-                    gatewaySessionHandler = new GatewaySessionHandler(deviceSessionCtx, sessionId);
-                    if (infoNode.has(DefaultTransportService.OVERWRITE_ACTIVITY_TIME) && infoNode.get(DefaultTransportService.OVERWRITE_ACTIVITY_TIME).isBoolean()) {
-                        sessionMetaData.setOverwriteActivityTime(infoNode.get(DefaultTransportService.OVERWRITE_ACTIVITY_TIME).asBoolean());
+                    boolean overwriteDevicesActivity = false;
+                    if (infoNode.has(DataConstants.OVERWRITE_ACTIVITY_TIME_PARAMETER)
+                            && infoNode.get(DataConstants.OVERWRITE_ACTIVITY_TIME_PARAMETER).isBoolean()) {
+                        overwriteDevicesActivity = infoNode.get(DataConstants.OVERWRITE_ACTIVITY_TIME_PARAMETER).asBoolean();
+                        sessionMetaData.setOverwriteActivityTime(overwriteDevicesActivity);
                     }
+                    gatewaySessionHandler = new GatewaySessionHandler(deviceSessionCtx, sessionId, overwriteDevicesActivity);
                 }
             }
         } catch (IOException e) {
@@ -1099,7 +1105,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 SparkplugTopic sparkplugTopicNode = validatedSparkplugTopicConnectedNode(connectMessage);
                 if (sparkplugTopicNode != null) {
                     SparkplugBProto.Payload sparkplugBProtoNode = SparkplugBProto.Payload.parseFrom(connectMessage.payload().willMessageInBytes());
-                    sparkplugSessionHandler = new SparkplugNodeSessionHandler(this, deviceSessionCtx, sessionId, sparkplugTopicNode);
+                    sparkplugSessionHandler = new SparkplugNodeSessionHandler(this, deviceSessionCtx, sessionId, true, sparkplugTopicNode);
                     sparkplugSessionHandler.onAttributesTelemetryProto(0, sparkplugBProtoNode, sparkplugTopicNode);
                     sessionMetaData.setOverwriteActivityTime(true);
                 } else {
@@ -1354,6 +1360,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     @Override
     public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
         deviceSessionCtx.onDeviceUpdate(sessionInfo, device, deviceProfileOpt);
+        if (gatewaySessionHandler != null) {
+            gatewaySessionHandler.onDeviceUpdate(sessionInfo, device, deviceProfileOpt);
+        }
     }
 
     @Override

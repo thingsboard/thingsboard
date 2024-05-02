@@ -18,6 +18,9 @@ FROM thingsboard/openjdk17:bookworm-slim
 
 COPY start-tb-node.sh ${pkg.name}.deb /tmp/
 
+# Required for SWAGGER UI when reverse proxy is used
+ENV HTTP_FORWARD_HEADERS_STRATEGY=framework
+
 RUN chmod a+x /tmp/*.sh \
     && mv /tmp/start-tb-node.sh /usr/bin && \
     (yes | dpkg -i /tmp/${pkg.name}.deb) && \

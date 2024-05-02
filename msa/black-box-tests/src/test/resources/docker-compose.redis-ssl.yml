@@ -20,7 +20,7 @@ services:
 # Redis standalone
   redis:
     restart: always
-    image: bitnami/redis:7.0
+    image: bitnami/redis:7.2
     environment:
       # ALLOW_EMPTY_PASSWORD is recommended only for development.
       - 'ALLOW_EMPTY_PASSWORD=yes'

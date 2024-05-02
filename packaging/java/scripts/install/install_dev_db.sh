@@ -36,7 +36,7 @@ sudo -u "$run_user" -s /bin/sh -c "java -cp ${jarfile} $JAVA_OPTS -Dloader.main=
                     -Dspring.jpa.hibernate.ddl-auto=none \
                     -Dinstall.upgrade=false \
                     -Dlogging.config=logback.xml \
-                    org.springframework.boot.loader.PropertiesLauncher"
+                    org.springframework.boot.loader.launch.PropertiesLauncher"
 
 if [ $? -ne 0 ]; then
     echo "ThingsBoard DB installation failed!"

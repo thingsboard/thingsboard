@@ -19,7 +19,7 @@ version: '3.0'
 services:
 # Redis cluster
   redis-node-0:
-    image: bitnami/redis-cluster:7.0
+    image: bitnami/redis-cluster:7.2
     volumes:
       - ./tb-node/redis-cluster-data-0:/bitnami/redis/data
     environment:
@@ -28,7 +28,7 @@ services:
       - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
 
   redis-node-1:
-    image: bitnami/redis-cluster:7.0
+    image: bitnami/redis-cluster:7.2
     volumes:
       - ./tb-node/redis-cluster-data-1:/bitnami/redis/data
     depends_on:
@@ -39,7 +39,7 @@ services:
       - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
 
   redis-node-2:
-    image: bitnami/redis-cluster:7.0
+    image: bitnami/redis-cluster:7.2
     volumes:
       - ./tb-node/redis-cluster-data-2:/bitnami/redis/data
     depends_on:
@@ -50,7 +50,7 @@ services:
       - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
 
   redis-node-3:
-    image: bitnami/redis-cluster:7.0
+    image: bitnami/redis-cluster:7.2
     volumes:
       - ./tb-node/redis-cluster-data-3:/bitnami/redis/data
     depends_on:
@@ -61,7 +61,7 @@ services:
       - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
 
   redis-node-4:
-    image: bitnami/redis-cluster:7.0
+    image: bitnami/redis-cluster:7.2
     volumes:
       - ./tb-node/redis-cluster-data-4:/bitnami/redis/data
     depends_on:
@@ -72,7 +72,7 @@ services:
       - 'REDIS_NODES=redis-node-0 redis-node-1 redis-node-2 redis-node-3 redis-node-4 redis-node-5'
 
   redis-node-5:
-    image: bitnami/redis-cluster:7.0
+    image: bitnami/redis-cluster:7.2
     volumes:
       - ./tb-node/redis-cluster-data-5:/bitnami/redis/data
     depends_on:
