@@ -15,10 +15,9 @@
  */
 package org.thingsboard.server.service.security.auth.jwt.settings;
 
+import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
@@ -28,7 +27,6 @@ import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.security.model.JwtSettings;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Objects;
 import java.util.Optional;
@@ -42,34 +40,7 @@ public class DefaultJwtSettingsService implements JwtSettingsService {
     private final Optional<TbClusterService> tbClusterService;
     private final JwtSettingsValidator jwtSettingsValidator;
 
-    @Value("${security.jwt.tokenExpirationTime:9000}")
-    private Integer tokenExpirationTime;
-    @Value("${security.jwt.refreshTokenExpTime:604800}")
-    private Integer refreshTokenExpTime;
-    @Value("${security.jwt.tokenIssuer:thingsboard.io}")
-    private String tokenIssuer;
-    @Value("${security.jwt.tokenSigningKey:thingsboardDefaultSigningKey}")
-    private String tokenSigningKey;
-
     private volatile JwtSettings jwtSettings = null; //lazy init
-
-    /**
-     * Create JWT admin settings is intended to be called from Install scripts only
-     */
-    @Override
-    public void createRandomJwtSettings() {
-        if (getJwtSettingsFromDb() == null) {
-            log.info("Creating JWT admin settings...");
-            this.jwtSettings = getJwtSettingsFromYml();
-            if (isSigningKeyDefault(jwtSettings) || Base64.getDecoder().decode(jwtSettings.getTokenSigningKey()).length * Byte.SIZE < 512) {
-                this.jwtSettings.setTokenSigningKey(Base64.getEncoder().encodeToString(
-                        RandomStringUtils.randomAlphanumeric(64).getBytes(StandardCharsets.UTF_8)));
-            }
-            saveJwtSettings(jwtSettings);
-        } else {
-            log.info("Skip creating JWT admin settings because they already exist.");
-        }
-    }
 
     @Override
     public JwtSettings saveJwtSettings(JwtSettings jwtSettings) {
@@ -103,20 +74,11 @@ public class DefaultJwtSettingsService implements JwtSettingsService {
         if (this.jwtSettings == null || forceReload) {
             synchronized (this) {
                 if (this.jwtSettings == null || forceReload) {
-                    JwtSettings result = getJwtSettingsFromDb();
-                    if (result == null) {
-                        result = getJwtSettingsFromYml();
-                        log.warn("Loading the JWT settings from YML since there are no settings in DB. Looks like the upgrade script was not applied.");
-                    }
-                    this.jwtSettings = result;
+                    jwtSettings = getJwtSettingsFromDb();
                 }
             }
         }
         return this.jwtSettings;
-    }
-
-    private JwtSettings getJwtSettingsFromYml() {
-        return new JwtSettings(this.tokenExpirationTime, this.refreshTokenExpTime, this.tokenIssuer, this.tokenSigningKey);
     }
 
     private JwtSettings getJwtSettingsFromDb() {
@@ -138,8 +100,12 @@ public class DefaultJwtSettingsService implements JwtSettingsService {
         return adminJwtSettings;
     }
 
-    private boolean isSigningKeyDefault(JwtSettings settings) {
+    public static boolean isSigningKeyDefault(JwtSettings settings) {
         return TOKEN_SIGNING_KEY_DEFAULT.equals(settings.getTokenSigningKey());
+    }
+
+    public static boolean validateTokenSigningKeyLength(JwtSettings settings) {
+        return Base64.getDecoder().decode(settings.getTokenSigningKey()).length * Byte.SIZE >= Jwts.SIG.HS512.getKeyBitLength();
     }
 
 }

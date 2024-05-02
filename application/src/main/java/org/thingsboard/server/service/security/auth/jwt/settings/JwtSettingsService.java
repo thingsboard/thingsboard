@@ -26,8 +26,6 @@ public interface JwtSettingsService {
 
     JwtSettings reloadJwtSettings();
 
-    void createRandomJwtSettings();
-
     JwtSettings saveJwtSettings(JwtSettings jwtSettings);
 
 }

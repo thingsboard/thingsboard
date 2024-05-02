@@ -187,9 +187,10 @@ public class JwtTokenFactory {
 
         UserPrincipal principal = securityUser.getUserPrincipal();
 
-        ClaimsBuilder claimsBuilder = Jwts.claims().subject(principal.getValue());
-        claimsBuilder.add(USER_ID, securityUser.getId().getId().toString());
-        claimsBuilder.add(SCOPES, scopes);
+        ClaimsBuilder claimsBuilder = Jwts.claims()
+                .subject(principal.getValue())
+                .add(USER_ID, securityUser.getId().getId().toString())
+                .add(SCOPES, scopes);
         if (securityUser.getSessionId() != null) {
             claimsBuilder.add(SESSION_ID, securityUser.getSessionId());
         }

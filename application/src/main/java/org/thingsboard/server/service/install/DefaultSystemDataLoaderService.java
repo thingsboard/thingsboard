@@ -119,7 +119,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.thingsboard.server.common.data.DataConstants.DEFAULT_DEVICE_TYPE;
-import static org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService.TOKEN_SIGNING_KEY_DEFAULT;
+import static org.thingsboard.server.service.security.auth.jwt.settings.DefaultJwtSettingsService.isSigningKeyDefault;
+import static org.thingsboard.server.service.security.auth.jwt.settings.DefaultJwtSettingsService.validateTokenSigningKeyLength;
 
 @Service
 @Profile("install")
@@ -154,6 +155,15 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     @Value("${state.persistToTelemetry:false}")
     @Getter
     private boolean persistActivityToTelemetry;
+
+    @Value("${security.jwt.tokenExpirationTime:9000}")
+    private Integer tokenExpirationTime;
+    @Value("${security.jwt.refreshTokenExpTime:604800}")
+    private Integer refreshTokenExpTime;
+    @Value("${security.jwt.tokenIssuer:thingsboard.io}")
+    private String tokenIssuer;
+    @Value("${security.jwt.tokenSigningKey:thingsboardDefaultSigningKey}")
+    private String tokenSigningKey;
 
     @Bean
     protected BCryptPasswordEncoder passwordEncoder() {
@@ -259,7 +269,17 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     @Override
     public void createRandomJwtSettings() throws Exception {
-        jwtSettingsService.createRandomJwtSettings();
+            if (jwtSettingsService.getJwtSettings() == null) {
+                log.info("Creating JWT admin settings...");
+                var jwtSettings = new JwtSettings(this.tokenExpirationTime, this.refreshTokenExpTime, this.tokenIssuer, this.tokenSigningKey);
+                if (isSigningKeyDefault(jwtSettings) || !validateTokenSigningKeyLength(jwtSettings)) {
+                    jwtSettings.setTokenSigningKey(Base64.getEncoder().encodeToString(
+                            RandomStringUtils.randomAlphanumeric(64).getBytes(StandardCharsets.UTF_8)));
+                }
+                jwtSettingsService.saveJwtSettings(jwtSettings);
+            } else {
+                log.info("Skip creating JWT admin settings because they already exist.");
+            }
     }
 
     @Override
@@ -268,13 +288,13 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
         boolean invalidSignKey = false;
 
-        if (TOKEN_SIGNING_KEY_DEFAULT.equals(jwtSettings.getTokenSigningKey())) {
+        if (isSigningKeyDefault(jwtSettings)) {
             log.warn("WARNING: The platform is configured to use default JWT Signing Key. " +
                     "Added new temporary JWT Signing Key. " +
                     "This is a security issue that needs to be resolved. Please change the JWT Signing Key using the Web UI. " +
                     "Navigate to \"System settings -> Security settings\" while logged in as a System Administrator.");
             invalidSignKey = true;
-        } else if (Base64.getDecoder().decode(jwtSettings.getTokenSigningKey()).length * Byte.SIZE < 512) {
+        } else if (!validateTokenSigningKeyLength(jwtSettings)) {
             log.warn("WARNING: The platform is configured to use JWT Signing Key with length less then 512 bits of data. " +
                     "Added new temporary JWT Signing Key. " +
                     "This is a security issue that needs to be resolved. Please change the JWT Signing Key using the Web UI. " +
