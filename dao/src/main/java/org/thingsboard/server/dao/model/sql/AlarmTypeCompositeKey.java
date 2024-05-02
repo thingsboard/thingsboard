@@ -13,18 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao;
+package org.thingsboard.server.dao.model.sql;
 
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-public interface TenantEntityDao<T> {
+import java.io.Serializable;
+import java.util.UUID;
 
-    default Long countByTenantId(TenantId tenantId) {
-        throw new UnsupportedOperationException();
-    }
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class AlarmTypeCompositeKey implements Serializable {
 
-    PageData<T> findAllByTenantId(TenantId tenantId, PageLink pageLink);
+    private UUID tenantId;
+    private String type;
 
 }

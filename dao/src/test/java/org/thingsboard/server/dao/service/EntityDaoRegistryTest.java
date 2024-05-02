@@ -21,7 +21,9 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.entity.EntityDaoRegistry;
 
 import java.util.UUID;
@@ -70,6 +72,16 @@ public class EntityDaoRegistryTest extends AbstractServiceTest {
                     fail("findIdsByTenantIdAndIdOffset for " + entityType + " dao threw error: " + error);
                 }
             }
+        }
+    }
+
+    @Test
+    public void givenAllTenantEntityDaos_whenFindAllByTenantId_thenOk() {
+        for (TenantEntityDao<?> dao : entityDaoRegistry.getTenantEntityDaos()) {
+            System.err.println("Checking dao " + dao);
+            assertDoesNotThrow(() -> {
+                dao.findAllByTenantId(tenantId, new PageLink(100));
+            });
         }
     }
 

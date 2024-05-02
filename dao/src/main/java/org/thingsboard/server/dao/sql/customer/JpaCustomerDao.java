@@ -25,12 +25,12 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.model.sql.CustomerEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -92,6 +92,11 @@ public class JpaCustomerDao extends JpaAbstractDao<CustomerEntity, Customer> imp
     public CustomerId getExternalIdByInternal(CustomerId internalId) {
         return Optional.ofNullable(customerRepository.getExternalIdById(internalId.getId()))
                 .map(CustomerId::new).orElse(null);
+    }
+
+    @Override
+    public PageData<Customer> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        return findByTenantId(tenantId.getId(), pageLink);
     }
 
     @Override

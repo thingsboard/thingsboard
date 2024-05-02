@@ -44,4 +44,7 @@ public interface EdgeEventRepository extends JpaRepository<EdgeEventEntity, UUID
                                                             @Param("seqIdStart") Long seqIdStart,
                                                             @Param("seqIdEnd") Long seqIdEnd,
                                                             Pageable pageable);
+
+    Page<EdgeEventEntity> findByTenantId(UUID tenantId, Pageable pageable);
+
 }

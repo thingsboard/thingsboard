@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.asset.AssetProfileDao;
 import org.thingsboard.server.dao.model.sql.AssetProfileEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
@@ -38,7 +39,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Component
-public class JpaAssetProfileDao extends JpaAbstractDao<AssetProfileEntity, AssetProfile> implements AssetProfileDao {
+public class JpaAssetProfileDao extends JpaAbstractDao<AssetProfileEntity, AssetProfile> implements AssetProfileDao, TenantEntityDao<AssetProfile> {
 
     @Autowired
     private AssetProfileRepository assetProfileRepository;
@@ -145,6 +146,11 @@ public class JpaAssetProfileDao extends JpaAbstractDao<AssetProfileEntity, Asset
     @Override
     public List<AssetProfileInfo> findByImageLink(String imageLink, int limit) {
         return assetProfileRepository.findByImageLink(imageLink, PageRequest.of(0, limit));
+    }
+
+    @Override
+    public PageData<AssetProfile> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        return findByTenantId(tenantId.getId(), pageLink);
     }
 
     @Override

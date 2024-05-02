@@ -15,12 +15,16 @@
  */
 package org.thingsboard.server.common.data;
 
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 
 import java.nio.ByteBuffer;
+import java.util.Base64;
+import java.util.Optional;
 
 @Schema
 @Data
@@ -44,4 +48,21 @@ public class OtaPackage extends OtaPackageInfo {
         super(otaPackage);
         this.data = otaPackage.getData();
     }
+
+    @JsonGetter("data")
+    public String getEncodedData() {
+        return Optional.ofNullable(data)
+                .map(ByteBuffer::array)
+                .map(Base64.getEncoder()::encodeToString)
+                .orElse(null);
+    }
+
+    @JsonSetter("data")
+    public void setEncodedData(String data) {
+        this.data = Optional.ofNullable(data)
+                .map(Base64.getDecoder()::decode)
+                .map(ByteBuffer::wrap)
+                .orElse(null);
+    }
+
 }

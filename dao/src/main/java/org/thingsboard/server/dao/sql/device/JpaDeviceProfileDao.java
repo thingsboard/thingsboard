@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.device.DeviceProfileDao;
 import org.thingsboard.server.dao.model.sql.DeviceProfileEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
@@ -42,7 +43,7 @@ import java.util.UUID;
 
 @Component
 @SqlDao
-public class JpaDeviceProfileDao extends JpaAbstractDao<DeviceProfileEntity, DeviceProfile> implements DeviceProfileDao {
+public class JpaDeviceProfileDao extends JpaAbstractDao<DeviceProfileEntity, DeviceProfile> implements DeviceProfileDao, TenantEntityDao<DeviceProfile> {
 
     @Autowired
     private DeviceProfileRepository deviceProfileRepository;
@@ -163,6 +164,11 @@ public class JpaDeviceProfileDao extends JpaAbstractDao<DeviceProfileEntity, Dev
     @Override
     public List<DeviceProfileInfo> findByImageLink(String imageLink, int limit) {
         return deviceProfileRepository.findByImageLink(imageLink, PageRequest.of(0, limit));
+    }
+
+    @Override
+    public PageData<DeviceProfile> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        return findDeviceProfiles(tenantId, pageLink);
     }
 
     @Override

@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.dao.sql.settings;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.thingsboard.server.dao.model.sql.AdminSettingsEntity;
 
@@ -32,5 +34,7 @@ public interface AdminSettingsRepository extends JpaRepository<AdminSettingsEnti
     void deleteByTenantId(UUID tenantId);
 
     boolean existsByTenantIdAndKey(UUID tenantId, String key);
+
+    Page<AdminSettingsEntity> findByTenantId(UUID tenantId, Pageable pageable);
 
 }

@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.model.sql.QueueEntity;
 import org.thingsboard.server.dao.queue.QueueDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
@@ -39,7 +40,7 @@ import java.util.UUID;
 @Slf4j
 @Component
 @SqlDao
-public class JpaQueueDao extends JpaAbstractDao<QueueEntity, Queue> implements QueueDao {
+public class JpaQueueDao extends JpaAbstractDao<QueueEntity, Queue> implements QueueDao, TenantEntityDao<Queue> {
 
     @Autowired
     private QueueRepository queueRepository;
@@ -86,6 +87,11 @@ public class JpaQueueDao extends JpaAbstractDao<QueueEntity, Queue> implements Q
     public PageData<Queue> findQueuesByTenantId(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(queueRepository
                 .findByTenantId(tenantId.getId(), pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<Queue> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        return findQueuesByTenantId(tenantId, pageLink);
     }
 
     @Override

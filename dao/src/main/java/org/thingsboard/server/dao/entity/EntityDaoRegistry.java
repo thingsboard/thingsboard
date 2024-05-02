@@ -19,16 +19,20 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.dao.TenantEntityDao;
 
+import java.util.Collection;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 public class EntityDaoRegistry {
 
     private final Map<EntityType, Dao<?>> daos = new EnumMap<>(EntityType.class);
+    private final List<Dao<?>> all;
 
     private EntityDaoRegistry(List<Dao<?>> daos) {
         daos.forEach(dao -> {
@@ -37,6 +41,7 @@ public class EntityDaoRegistry {
                 this.daos.put(entityType, dao);
             }
         });
+        this.all = daos;
     }
 
     @SuppressWarnings("unchecked")
@@ -46,6 +51,10 @@ public class EntityDaoRegistry {
             throw new IllegalArgumentException("Missing dao for entity type " + entityType);
         }
         return dao;
+    }
+
+    public Collection<TenantEntityDao<?>> getTenantEntityDaos() {
+        return all.stream().filter(dao -> dao instanceof TenantEntityDao).map(dao -> (TenantEntityDao<?>) dao).collect(Collectors.toList());
     }
 
 }

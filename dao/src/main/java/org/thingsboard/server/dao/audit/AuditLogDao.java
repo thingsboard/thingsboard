@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.audit;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.id.CustomerId;

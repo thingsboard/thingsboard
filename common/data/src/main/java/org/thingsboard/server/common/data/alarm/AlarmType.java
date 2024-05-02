@@ -13,18 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao;
+package org.thingsboard.server.common.data.alarm;
 
+import lombok.Data;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
 
-public interface TenantEntityDao<T> {
+@Data
+public class AlarmType {
 
-    default Long countByTenantId(TenantId tenantId) {
-        throw new UnsupportedOperationException();
-    }
-
-    PageData<T> findAllByTenantId(TenantId tenantId, PageLink pageLink);
+    private TenantId tenantId;
+    private String type;
 
 }

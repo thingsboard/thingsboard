@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.user;
+package org.thingsboard.server.dao.sql.alarm;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,24 +21,17 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-import org.thingsboard.server.dao.model.sql.UserAuthSettingsEntity;
-import org.thingsboard.server.dao.model.sql.UserCredentialsEntity;
+import org.thingsboard.server.dao.model.sql.AlarmTypeCompositeKey;
+import org.thingsboard.server.dao.model.sql.AlarmTypeEntity;
+import org.thingsboard.server.dao.model.sql.EntityAlarmCompositeKey;
+import org.thingsboard.server.dao.model.sql.EntityAlarmEntity;
 
+import java.util.List;
 import java.util.UUID;
 
-@Repository
-public interface UserAuthSettingsRepository extends JpaRepository<UserAuthSettingsEntity, UUID> {
+public interface AlarmTypeRepository extends JpaRepository<AlarmTypeEntity, AlarmTypeCompositeKey> {
 
-    UserAuthSettingsEntity findByUserId(UUID userId);
-
-    @Transactional
-    @Modifying
-    @Query("DELETE FROM UserAuthSettingsEntity e WHERE e.userId = :userId")
-    void deleteByUserId(@Param("userId") UUID userId);
-
-    @Query("SELECT s FROM UserAuthSettingsEntity s WHERE s.userId IN (SELECT u.id FROM UserEntity u WHERE u.tenantId = :tenantId)")
-    Page<UserAuthSettingsEntity> findByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
+    Page<AlarmTypeEntity> findByTenantId(UUID tenantId, Pageable pageable);
 
 }
