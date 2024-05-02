@@ -495,7 +495,6 @@ public class MqttClientTest extends AbstractContainerTest {
         MqttReturnCode returnCodeDummy = MqttReturnCode.valueOf(returnCodeByteValueDummy[0]);
         MqttReturnCode returnCode = MqttReturnCode.valueOf(returnCodeByteValue[0]);
 
-        mqttClient.disconnect();
         dummyMqttClient.disconnect();
 
         assertThat(returnCode).isEqualTo(MqttReturnCode.SESSION_TAKEN_OVER);
