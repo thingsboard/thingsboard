@@ -595,13 +595,15 @@
                       <div class="fixed-title-width tb-required" translate>gateway.response-timeout</div>
                       <div class="tb-flex no-gap">
                         <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                          <input matInput name="value" type="number" formControlName="responseTimeout" placeholder="{{ 'gateway.set' | translate }}"/>
+                          <input matInput name="value" type="number" min="1" formControlName="responseTimeout"
+                                 placeholder="{{ 'gateway.set' | translate }}"/>
                           <mat-icon matSuffix
                                     matTooltipPosition="above"
                                     matTooltipClass="tb-error-tooltip"
-                                    [matTooltip]="('gateway.response-timeout-required') | translate"
-                                    *ngIf="mappingForm.get('requestValue.serverSideRpc.responseTimeout').hasError('required') &&
-                                           mappingForm.get('requestValue.serverSideRpc.responseTimeout').touched"
+                                    [matTooltip]="responseTimeoutErrorTooltip"
+                                    *ngIf="(mappingForm.get('requestValue.serverSideRpc.responseTimeout').hasError('required') ||
+                                            mappingForm.get('requestValue.serverSideRpc.responseTimeout').hasError('min')) &&
+                                            mappingForm.get('requestValue.serverSideRpc.responseTimeout').touched"
                                     class="tb-error">
                             warning
                           </mat-icon>

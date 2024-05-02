@@ -79,6 +79,10 @@ export class EllipsisChipListDirective implements OnDestroy {
 
       chipNodes.forEach((chip) => {
         this.renderer.setStyle(chip, 'display', 'inline-flex');
+        const textLabelContainer = chip.querySelector('.mdc-evolution-chip__text-label');
+
+        this.applyMaxChipTextWidth(textLabelContainer, (availableWidth / 3));
+
         if ((usedWidth + (chip.offsetWidth + margin) <= availableWidth) && (visibleChipsCount < this.chipsValue.length)) {
           visibleChipsCount++;
           usedWidth += chip.offsetWidth + margin;
@@ -104,13 +108,17 @@ export class EllipsisChipListDirective implements OnDestroy {
       this.renderer.setStyle(ellipsisChip, 'display', 'none');
       this.renderer.setStyle(chipNodes[0], 'display', 'inline-flex');
 
-      this.renderer.setStyle(textLabelContainer, 'max-width', computedTextWidth + 'px');
-      this.renderer.setStyle(textLabelContainer, 'overflow', 'hidden');
-      this.renderer.setStyle(textLabelContainer, 'text-overflow', 'ellipsis');
-      this.renderer.setStyle(textLabelContainer, 'white-space', 'nowrap');
+      this.applyMaxChipTextWidth(textLabelContainer, computedTextWidth);
     } else {
       this.renderer.setStyle(ellipsisChip, 'display', 'none');
     }
+  }
+
+  private applyMaxChipTextWidth(element: HTMLElement, widthLimit: number): void {
+    this.renderer.setStyle(element, 'max-width', widthLimit + 'px');
+    this.renderer.setStyle(element, 'overflow', 'hidden');
+    this.renderer.setStyle(element, 'text-overflow', 'ellipsis');
+    this.renderer.setStyle(element, 'white-space', 'nowrap');
   }
 
   ngOnDestroy(): void {

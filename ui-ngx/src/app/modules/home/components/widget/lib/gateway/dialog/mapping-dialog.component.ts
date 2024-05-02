@@ -50,6 +50,7 @@ import { startWith, takeUntil } from 'rxjs/operators';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { MappingDataKeysPanelComponent } from '@home/components/widget/lib/gateway/connectors-configuration/mapping-data-keys-panel.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'tb-mapping-dialog',
@@ -105,7 +106,8 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
               private fb: FormBuilder,
               private popoverService: TbPopoverService,
               private renderer: Renderer2,
-              private viewContainerRef: ViewContainerRef) {
+              private viewContainerRef: ViewContainerRef,
+              private translate: TranslateService) {
     super(store, router, dialogRef);
 
     this.createMappingForm();
@@ -134,6 +136,17 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
   get requestMappingType(): RequestType {
     return this.mappingForm.get('requestType').value;
   }
+
+  get responseTimeoutErrorTooltip(): string {
+    const control = this.mappingForm.get('requestValue.serverSideRpc.responseTimeout');
+    if (control.hasError('required')) {
+      return this.translate.instant('gateway.response-timeout-required');
+    } else if (control.hasError('min')) {
+      return this.translate.instant('gateway.response-timeout-limits-error', {min: 1});
+    }
+    return '';
+  }
+
 
   ngOnDestroy(): void {
     this.destroy$.next();
@@ -215,7 +228,7 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
           responseTopicExpression: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           valueExpression: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           responseTopicQoS: [0, []],
-          responseTimeout: [10000, [Validators.required]],
+          responseTimeout: [10000, [Validators.required, Validators.min(1)]],
         })
       }));
       this.mappingForm.get('requestType').valueChanges.pipe(
