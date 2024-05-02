@@ -20,6 +20,7 @@ import io.jsonwebtoken.ClaimsBuilder;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtBuilder;
+import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureException;
@@ -57,6 +58,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class JwtTokenFactory {
 
+    public static int KEY_LENGTH = Jwts.SIG.HS512.getKeyBitLength();
+
     private static final String SCOPES = "scopes";
     private static final String USER_ID = "userId";
     private static final String FIRST_NAME = "firstName";
@@ -68,6 +71,9 @@ public class JwtTokenFactory {
     private static final String SESSION_ID = "sessionId";
 
     private final JwtSettingsService jwtSettingsService;
+
+    private volatile JwtParser jwtParser;
+    private volatile SecretKey secretKey;
 
     /**
      * Factory method for issuing new JWT Tokens.
@@ -180,6 +186,11 @@ public class JwtTokenFactory {
         return new AccessJwtToken(jwtBuilder.compact());
     }
 
+    public void reload() {
+        getSecretKey(true);
+        getJwtParser(true);
+    }
+
     private JwtBuilder setUpToken(SecurityUser securityUser, List<String> scopes, long expirationTime) {
         if (StringUtils.isBlank(securityUser.getEmail())) {
             throw new IllegalArgumentException("Cannot create JWT Token without username/email");
@@ -202,15 +213,12 @@ public class JwtTokenFactory {
                 .issuer(jwtSettingsService.getJwtSettings().getTokenIssuer())
                 .issuedAt(Date.from(currentTime.toInstant()))
                 .expiration(Date.from(currentTime.plusSeconds(expirationTime).toInstant()))
-                .signWith(toSecretKey(jwtSettingsService.getJwtSettings().getTokenSigningKey()), Jwts.SIG.HS512);
+                .signWith(getSecretKey(false), Jwts.SIG.HS512);
     }
 
     public Jws<Claims> parseTokenClaims(String token) {
         try {
-            return Jwts.parser()
-                    .verifyWith(Keys.hmacShaKeyFor(Base64.getDecoder().decode(jwtSettingsService.getJwtSettings().getTokenSigningKey())))
-                    .build()
-                    .parseSignedClaims(token);
+            return getJwtParser(false).parseSignedClaims(token);
         } catch (UnsupportedJwtException | MalformedJwtException | IllegalArgumentException ex) {
             log.debug("Invalid JWT Token", ex);
             throw new BadCredentialsException("Invalid JWT token: ", ex);
@@ -226,9 +234,28 @@ public class JwtTokenFactory {
         return new JwtPair(accessToken.getToken(), refreshToken.getToken());
     }
 
-    private SecretKey toSecretKey(String base64Key) {
-        byte[] decodedToken = Base64.getDecoder().decode(base64Key);
-        return new SecretKeySpec(decodedToken, "HmacSHA512");
+    private SecretKey getSecretKey(boolean forceReload) {
+        if (secretKey == null || forceReload) {
+            synchronized (this) {
+                if (secretKey == null || forceReload) {
+                    byte[] decodedToken = Base64.getDecoder().decode(jwtSettingsService.getJwtSettings().getTokenSigningKey());
+                    secretKey = new SecretKeySpec(decodedToken, "HmacSHA512");
+                }
+            }
+        }
+        return secretKey;
     }
 
+    private JwtParser getJwtParser(boolean forceReload) {
+        if (jwtParser == null || forceReload) {
+            synchronized (this) {
+                if (jwtParser == null || forceReload) {
+                    jwtParser = Jwts.parser()
+                            .verifyWith(Keys.hmacShaKeyFor(Base64.getDecoder().decode(jwtSettingsService.getJwtSettings().getTokenSigningKey())))
+                            .build();
+                }
+            }
+        }
+        return jwtParser;
+    }
 }

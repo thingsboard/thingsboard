@@ -28,6 +28,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.server.service.security.auth.jwt.settings.DefaultJwtSettingsService.isSigningKeyDefault;
+import static org.thingsboard.server.service.security.model.token.JwtTokenFactory.KEY_LENGTH;
 
 @Component
 @RequiredArgsConstructor
@@ -61,7 +62,7 @@ public class DefaultJwtSettingsValidator implements JwtSettingsValidator {
         if (Arrays.isNullOrEmpty(decodedKey)) {
             throw new DataValidationException("JWT token signing key should be non-empty after Base64 decoding!");
         }
-        if (decodedKey.length * Byte.SIZE < 512 && !isSigningKeyDefault(jwtSettings)) {
+        if (decodedKey.length * Byte.SIZE < KEY_LENGTH && !isSigningKeyDefault(jwtSettings)) {
             throw new DataValidationException("JWT token signing key should be a Base64 encoded string representing at least 512 bits of data!");
         }
 

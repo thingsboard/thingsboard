@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.security.auth.jwt.settings;
 
-import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,6 +29,8 @@ import org.thingsboard.server.dao.settings.AdminSettingsService;
 import java.util.Base64;
 import java.util.Objects;
 import java.util.Optional;
+
+import static org.thingsboard.server.service.security.model.token.JwtTokenFactory.KEY_LENGTH;
 
 @Service
 @RequiredArgsConstructor
@@ -105,7 +106,7 @@ public class DefaultJwtSettingsService implements JwtSettingsService {
     }
 
     public static boolean validateTokenSigningKeyLength(JwtSettings settings) {
-        return Base64.getDecoder().decode(settings.getTokenSigningKey()).length * Byte.SIZE >= Jwts.SIG.HS512.getKeyBitLength();
+        return Base64.getDecoder().decode(settings.getTokenSigningKey()).length * Byte.SIZE >= KEY_LENGTH;
     }
 
 }
