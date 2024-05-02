@@ -596,11 +596,11 @@ public class JsonConverter {
         return GSON.fromJson(element, type);
     }
 
-    public static void setTypeCastEnabled(boolean enabled) {
+    static void setTypeCastEnabled(boolean enabled) {
         isTypeCastEnabled = enabled;
     }
 
-    public static void setMaxStringValueLength(int length) {
+    static void setMaxStringValueLength(int length) {
         maxStringValueLength = length;
     }
 

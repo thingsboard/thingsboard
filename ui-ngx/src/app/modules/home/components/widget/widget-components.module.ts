@@ -91,6 +91,7 @@ import { LatestChartComponent } from '@home/components/widget/lib/chart/latest-c
 import { PieChartWidgetComponent } from '@home/components/widget/lib/chart/pie-chart-widget.component';
 import { BarChartWidgetComponent } from '@home/components/widget/lib/chart/bar-chart-widget.component';
 import { PolarAreaWidgetComponent } from '@home/components/widget/lib/chart/polar-area-widget.component';
+import { RadarChartWidgetComponent } from '@home/components/widget/lib/chart/radar-chart-widget.component';
 
 @NgModule({
   declarations:
@@ -148,7 +149,8 @@ import { PolarAreaWidgetComponent } from '@home/components/widget/lib/chart/pola
       LatestChartComponent,
       PieChartWidgetComponent,
       BarChartWidgetComponent,
-      PolarAreaWidgetComponent
+      PolarAreaWidgetComponent,
+      RadarChartWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -209,7 +211,8 @@ import { PolarAreaWidgetComponent } from '@home/components/widget/lib/chart/pola
         StatusWidgetComponent,
         PieChartWidgetComponent,
         BarChartWidgetComponent,
-        PolarAreaWidgetComponent
+        PolarAreaWidgetComponent,
+        RadarChartWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }

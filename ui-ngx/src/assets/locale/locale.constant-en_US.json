@@ -2273,7 +2273,9 @@
         "phone": "Phone",
         "label": "Label",
         "queue-name": "Queue name",
-        "service-id": "Service Id"
+        "service-id": "Service Id",
+        "owner-name": "Owner name",
+        "owner-type": "Owner type"
     },
     "entity-view": {
         "entity-view": "Entity view",
@@ -5628,6 +5630,9 @@
             "shape-pin": "Pin",
             "shape-arrow": "Arrow",
             "shape-none": "None",
+            "line-type-solid": "Solid",
+            "line-type-dashed": "Dashed",
+            "line-type-dotted": "Dotted",
             "label-position-top": "Top",
             "label-position-bottom": "Bottom",
             "label-position-outside": "Outside",
@@ -6802,6 +6807,20 @@
             "radius": "Radius",
             "pie-chart-card-style": "Pie chart card style"
         },
+        "radar-chart": {
+            "radar-appearance": "Radar appearance",
+            "shape": "Shape",
+            "shape-polygon": "Polygon",
+            "shape-circle": "Circle",
+            "color": "Color",
+            "line": "Line",
+            "points": "Points",
+            "points-label": "Points label",
+            "radar-axis": "Radar axis",
+            "axis-label": "Axis label",
+            "ticks-label": "Ticks label",
+            "radar-chart-style": "Radar chart style"
+        },
         "time-series-chart": {
             "chart": "Chart",
             "chart-style": "Chart style",
@@ -6811,9 +6830,6 @@
             "axes": "Axes",
             "y-axes": "Y axes",
             "line-type": "Line type",
-            "line-type-solid": "Solid",
-            "line-type-dashed": "Dashed",
-            "line-type-dotted": "Dotted",
             "line-width": "Line width",
             "type-line": "Line",
             "type-bar": "Bar",
