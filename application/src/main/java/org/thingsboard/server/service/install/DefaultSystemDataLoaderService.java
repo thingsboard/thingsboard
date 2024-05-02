@@ -285,24 +285,22 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     @Override
     public void updateJwtSettings() {
         JwtSettings jwtSettings = jwtSettingsService.getJwtSettings();
-
         boolean invalidSignKey = false;
+        String warningMessage = null;
 
         if (isSigningKeyDefault(jwtSettings)) {
-            log.warn("WARNING: The platform is configured to use default JWT Signing Key. " +
-                    "Added new temporary JWT Signing Key. " +
-                    "This is a security issue that needs to be resolved. Please change the JWT Signing Key using the Web UI. " +
-                    "Navigate to \"System settings -> Security settings\" while logged in as a System Administrator.");
+            warningMessage = "The platform is using the default JWT Signing Key, which is a security risk.";
             invalidSignKey = true;
         } else if (!validateTokenSigningKeyLength(jwtSettings)) {
-            log.warn("WARNING: The platform is configured to use JWT Signing Key with length less then 512 bits of data. " +
-                    "Added new temporary JWT Signing Key. " +
-                    "This is a security issue that needs to be resolved. Please change the JWT Signing Key using the Web UI. " +
-                    "Navigate to \"System settings -> Security settings\" while logged in as a System Administrator.");
+            warningMessage = "The JWT Signing Key is shorter than 512 bits, which is a security risk.";
             invalidSignKey = true;
         }
 
         if (invalidSignKey) {
+            log.warn("WARNING: {}. A new JWT Signing Key has been added automatically. " +
+                    "You can change the JWT Signing Key using the Web UI: " +
+                    "Navigate to \"System settings -> Security settings\" while logged in as a System Administrator.", warningMessage);
+
             jwtSettings.setTokenSigningKey(Base64.getEncoder().encodeToString(
                     RandomStringUtils.randomAlphanumeric(64).getBytes(StandardCharsets.UTF_8)));
             jwtSettingsService.saveJwtSettings(jwtSettings);
