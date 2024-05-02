@@ -13,14 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.install;
+package org.thingsboard.server.cache.user;
 
-public interface EntityDatabaseSchemaService extends DatabaseSchemaService {
+import org.thingsboard.server.common.data.id.TenantId;
 
-    void createOrUpdateDeviceInfoView(boolean activityStateInTelemetry);
-
-    void createOrUpdateViewsAndFunctions() throws Exception;
-
-    void createCustomerTitleUniqueConstraintIfNotExists();
-
+public record UserCacheEvictEvent(TenantId tenantId, String newEmail, String oldEmail) {
 }

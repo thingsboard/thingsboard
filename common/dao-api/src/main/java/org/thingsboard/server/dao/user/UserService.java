@@ -41,6 +41,8 @@ public interface UserService extends EntityDaoService {
 
     User findUserByTenantIdAndEmail(TenantId tenantId, String email);
 
+    ListenableFuture<User> findUserByTenantIdAndEmailAsync(TenantId tenantId, String email);
+
     User saveUser(TenantId tenantId, User user);
 
     UserCredentials findUserCredentialsByUserId(TenantId tenantId, UserId userId);

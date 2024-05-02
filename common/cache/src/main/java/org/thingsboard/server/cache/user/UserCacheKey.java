@@ -13,20 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.action;
+package org.thingsboard.server.cache.user;
 
-import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.thingsboard.rule.engine.api.NodeConfiguration;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import org.thingsboard.server.common.data.id.TenantId;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class TbUnassignFromCustomerNodeConfiguration extends TbAbstractCustomerActionNodeConfiguration implements NodeConfiguration<TbUnassignFromCustomerNodeConfiguration> {
+import java.io.Serial;
+import java.io.Serializable;
+
+@EqualsAndHashCode
+@RequiredArgsConstructor
+public class UserCacheKey implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 7357353074893750678L;
+
+    @NonNull
+    private final TenantId tenantId;
+    private final String email;
 
     @Override
-    public TbUnassignFromCustomerNodeConfiguration defaultConfiguration() {
-        var configuration = new TbUnassignFromCustomerNodeConfiguration();
-        configuration.setCustomerNamePattern("");
-        return configuration;
+    public String toString() {
+        return tenantId.getId() + "_" + email;
     }
+
 }

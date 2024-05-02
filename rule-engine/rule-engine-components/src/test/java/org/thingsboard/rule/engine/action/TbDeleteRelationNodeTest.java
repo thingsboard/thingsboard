@@ -34,7 +34,6 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
@@ -52,7 +51,6 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.HasId;
-import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -77,7 +75,6 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -86,18 +83,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
+public class TbDeleteRelationNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private static final Set<EntityType> supportedEntityTypes = EnumSet.of(EntityType.TENANT, EntityType.DEVICE,
             EntityType.ASSET, EntityType.CUSTOMER, EntityType.ENTITY_VIEW, EntityType.DASHBOARD, EntityType.EDGE, EntityType.USER);
@@ -111,13 +108,13 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         return supportedEntityTypes.stream().filter(entityType -> !entityType.equals(EntityType.TENANT)).map(Arguments::of);
     }
 
-    private static final TenantId tenantId = new TenantId(UUID.fromString("6fc86fc9-b25c-4893-b340-51cf4e101ab2"));
-    private static final DeviceId deviceId = new DeviceId(UUID.fromString("191ab124-1d8d-4749-97c6-fc84c113c1f5"));
-    private static final AssetId assetId = new AssetId(UUID.fromString("a47a5867-deab-4333-b845-88cb1695990c"));
-    private static final CustomerId customerId = new CustomerId(UUID.fromString("4af69229-273d-40de-9fba-f49f87373d23"));
-    private static final EntityViewId entityViewId = new EntityViewId(UUID.fromString("d4c22c9c-07f5-474d-9d16-b63f0e71f914"));
-    private static final EdgeId edgeId = new EdgeId(UUID.fromString("7c653959-558d-4661-aac7-c1866eef286b"));
-    private static final DashboardId dashboardId = new DashboardId(UUID.fromString("6fcfbcb0-21e4-4b0b-a0d6-399ca6959cb2"));
+    private static final TenantId tenantId = new TenantId(UUID.fromString("6fdb457d-0910-401c-8880-abc251e6a1e2"));
+    private static final DeviceId deviceId = new DeviceId(UUID.fromString("4eef91a7-8865-4c3c-837d-ed6f6577508b"));
+    private static final AssetId assetId = new AssetId(UUID.fromString("f4fd3b10-3f36-4d46-a162-5e62050774cc"));
+    private static final CustomerId customerId = new CustomerId(UUID.fromString("ab890af2-3622-41e0-ac94-14d50af84348"));
+    private static final EntityViewId entityViewId = new EntityViewId(UUID.fromString("39ce8d03-52a3-4aa8-b561-267d1d9d68b5"));
+    private static final EdgeId edgeId = new EdgeId(UUID.fromString("dc4f9809-b6f9-48f9-8057-2737216cfdf7"));
+    private static final DashboardId dashboardId = new DashboardId(UUID.fromString("fda72baa-c882-4723-9693-25995dc37bc5"));
 
     private static Stream<Arguments> givenSupportedEntityType_whenOnMsg_thenVerifyConditions() {
         return Stream.of(
@@ -131,16 +128,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         );
     }
 
-    private static Stream<Arguments> givenSupportedEntityTypeToCreateEntityIfNotExists_whenOnMsg_thenVerifyConditions() {
-        return Stream.of(
-                Arguments.of(new Device(deviceId)),
-                Arguments.of(new Asset(assetId)),
-                Arguments.of(new Customer(customerId))
-        );
-    }
-
-    private final DeviceId originatorId = new DeviceId(UUID.fromString("860634b1-8a1e-4693-9ae8-e779c7f5f4da"));
-    private final RuleNodeId ruleNodeId = new RuleNodeId(UUID.fromString("d05a0491-ee7a-484a-8c1b-91111ef39287"));
+    private final DeviceId originatorId = new DeviceId(UUID.fromString("574c9840-0885-4d12-be69-f557d7471a78"));
 
     private final ListeningExecutor dbExecutor = new TestDbCallbackExecutor();
 
@@ -161,30 +149,27 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
     @Mock
     private DashboardService dashboardServiceMock;
     @Mock
-    private TbClusterService clusterServiceMock;
-    @Mock
     private RelationService relationServiceMock;
 
-    private TbCreateRelationNode node;
-    private TbCreateRelationNodeConfiguration config;
+
+    private TbDeleteRelationNode node;
+    private TbDeleteRelationNodeConfiguration config;
 
     @BeforeEach
     public void setUp() throws TbNodeException {
-        node = spy(new TbCreateRelationNode());
-        config = new TbCreateRelationNodeConfiguration().defaultConfiguration();
+        node = spy(new TbDeleteRelationNode());
+        config = new TbDeleteRelationNodeConfiguration().defaultConfiguration();
     }
 
     @Test
     void givenDefaultConfig_whenVerify_thenOK() {
-        var defaultConfig = new TbCreateRelationNodeConfiguration().defaultConfiguration();
+        var defaultConfig = new TbDeleteRelationNodeConfiguration().defaultConfiguration();
         assertThat(defaultConfig.getDirection()).isEqualTo(EntitySearchDirection.FROM);
         assertThat(defaultConfig.getRelationType()).isEqualTo(EntityRelation.CONTAINS_TYPE);
         assertThat(defaultConfig.getEntityNamePattern()).isEqualTo("");
         assertThat(defaultConfig.getEntityTypePattern()).isEqualTo(null);
         assertThat(defaultConfig.getEntityType()).isEqualTo(null);
-        assertThat(defaultConfig.isCreateEntityIfNotExists()).isFalse();
-        assertThat(defaultConfig.isRemoveCurrentRelations()).isFalse();
-        assertThat(defaultConfig.isChangeOriginatorToRelatedEntity()).isFalse();
+        assertThat(defaultConfig.isDeleteForSingleEntity()).isFalse();
     }
 
     @ParameterizedTest
@@ -192,6 +177,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
     void givenEntityType_whenInit_thenVerifyExceptionThrownIfTypeIsUnsupported(EntityType entityType) {
         // GIVEN
         config.setEntityType(entityType);
+        config.setDeleteForSingleEntity(true);
         var nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
         // WHEN-THEN
@@ -207,12 +193,13 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @ParameterizedTest
-    @MethodSource
-    void givenSupportedEntityType_whenOnMsg_thenVerifyEntityNotFoundExceptionThrown(EntityType entityType) throws TbNodeException {
+    @MethodSource("givenSupportedEntityType_whenOnMsg_thenVerifyEntityNotFoundExceptionThrown")
+    void givenSupportedEntityType_whenOnMsgAndDeleteForSingleEntityIsTrue_thenVerifyEntityNotFoundExceptionThrown(EntityType entityType) throws TbNodeException {
         // GIVEN
         config.setEntityType(entityType);
         config.setEntityNamePattern("${name}");
         config.setEntityTypePattern("${type}");
+        config.setDeleteForSingleEntity(true);
 
         var nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctxMock, nodeConfiguration);
@@ -224,7 +211,6 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
 
         var md = getMetadataWithNameTemplate();
         var msg = getTbMsg(originatorId, md);
-
 
         node.onMsg(ctxMock, msg);
         ArgumentCaptor<Throwable> throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
@@ -241,7 +227,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
 
     @ParameterizedTest
     @MethodSource("givenSupportedEntityType_whenOnMsg_thenVerifyConditions")
-    void givenSupportedEntityType_whenOnMsg_thenVerifyRelationCreatedAndOutMsgSuccess(HasId entity) throws TbNodeException {
+    void givenSupportedEntityType_whenOnMsgAndDeleteForSingleEntityIsTrue_thenVerifyRelationDeletedAndOutMsgSuccess(HasId entity) throws TbNodeException {
         // GIVEN
         var entityId = (EntityId) entity.getId();
         var entityType = entityId.getEntityType();
@@ -249,9 +235,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         config.setEntityType(entityType);
         config.setEntityNamePattern("${name}");
         config.setEntityTypePattern("${type}");
-        config.setCreateEntityIfNotExists(false);
-        config.setChangeOriginatorToRelatedEntity(false);
-        config.setRemoveCurrentRelations(false);
+        config.setDeleteForSingleEntity(true);
 
         var nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctxMock, nodeConfiguration);
@@ -262,11 +246,11 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         }
         when(ctxMock.getRelationService()).thenReturn(relationServiceMock);
 
-        var mockMethodCallsMap = mockEntityServiceCallsCreateEntityIfNotExistsDisabled();
+        var mockMethodCallsMap = mockEntityServiceCalls();
         mockMethodCallsMap.get(entityType).accept(entity);
 
-        when(relationServiceMock.checkRelationAsync(any(), any(), any(), any(), any())).thenReturn(Futures.immediateFuture(false));
-        when(relationServiceMock.saveRelationAsync(any(), any())).thenReturn(Futures.immediateFuture(true));
+        when(relationServiceMock.checkRelationAsync(any(), any(), any(), any(), any())).thenReturn(Futures.immediateFuture(true));
+        when(relationServiceMock.deleteRelationAsync(any(), any(), any(), any(), any())).thenReturn(Futures.immediateFuture(true));
 
         var md = getMetadataWithNameTemplate();
         var msg = getTbMsg(originatorId, md);
@@ -275,13 +259,15 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         node.onMsg(ctxMock, msg);
 
         // THEN
-        var verifyMethodCallsMap = verifyEntityServiceCallsCreateEntityIfNotExistsDisabled();
-        verifyMethodCallsMap.get(entityType).run();
+        var verifyMethodCallsMap = verifyEntityServiceCalls();
+        verifyMethodCallsMap.get(entityType).accept(entity);
 
         verify(relationServiceMock).checkRelationAsync(eq(tenantId), eq(originatorId), eq(entityId), eq(EntityRelation.CONTAINS_TYPE), eq(RelationTypeGroup.COMMON));
-        verify(relationServiceMock).saveRelationAsync(eq(tenantId), eq(new EntityRelation(originatorId, entityId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON)));
+        verify(relationServiceMock).deleteRelationAsync(eq(tenantId), eq(originatorId), eq(entityId), eq(EntityRelation.CONTAINS_TYPE), eq(RelationTypeGroup.COMMON));
 
         verify(ctxMock).tellSuccess(eq(msg));
+        verify(ctxMock, never()).tellNext(any(), anyString());
+        verify(ctxMock, never()).tellNext(any(), anySet());
         verify(ctxMock, never()).tellFailure(any(), any());
         if (entityType.equals(EntityType.TENANT)) {
             verify(ctxMock).getDbCallbackExecutor();
@@ -291,7 +277,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
 
     @ParameterizedTest
     @MethodSource("givenSupportedEntityType_whenOnMsg_thenVerifyConditions")
-    void givenSupportedEntityType_whenOnMsg_thenVerifyDeleteCurrentRelationCreateNewRelationAndOutMsgSuccess(HasId entity) throws TbNodeException {
+    void givenSupportedEntityType_whenOnMsgAndDeleteForSingleEntityIsTrue_thenVerifyRelationFailedToDeleteAndOutMsgFailure(HasId entity) throws TbNodeException {
         // GIVEN
         var entityId = (EntityId) entity.getId();
         var entityType = entityId.getEntityType();
@@ -299,9 +285,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         config.setEntityType(entityType);
         config.setEntityNamePattern("${name}");
         config.setEntityTypePattern("${type}");
-        config.setCreateEntityIfNotExists(false);
-        config.setChangeOriginatorToRelatedEntity(false);
-        config.setRemoveCurrentRelations(true);
+        config.setDeleteForSingleEntity(true);
 
         var nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctxMock, nodeConfiguration);
@@ -312,208 +296,192 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         }
         when(ctxMock.getRelationService()).thenReturn(relationServiceMock);
 
-        var mockMethodCallsMap = mockEntityServiceCallsCreateEntityIfNotExistsDisabled();
+        var mockMethodCallsMap = mockEntityServiceCalls();
         mockMethodCallsMap.get(entityType).accept(entity);
+
+        when(relationServiceMock.checkRelationAsync(any(), any(), any(), any(), any())).thenReturn(Futures.immediateFuture(true));
+        when(relationServiceMock.deleteRelationAsync(any(), any(), any(), any(), any())).thenReturn(Futures.immediateFuture(false));
+
+        var md = getMetadataWithNameTemplate();
+        var msg = getTbMsg(originatorId, md);
+
+        // WHEN
+        node.onMsg(ctxMock, msg);
+
+        // THEN
+        var verifyMethodCallsMap = verifyEntityServiceCalls();
+        verifyMethodCallsMap.get(entityType).accept(entity);
+
+        verify(relationServiceMock).checkRelationAsync(eq(tenantId), eq(originatorId), eq(entityId), eq(EntityRelation.CONTAINS_TYPE), eq(RelationTypeGroup.COMMON));
+        verify(relationServiceMock).deleteRelationAsync(eq(tenantId), eq(originatorId), eq(entityId), eq(EntityRelation.CONTAINS_TYPE), eq(RelationTypeGroup.COMMON));
+
+        var throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
+        verify(ctxMock).tellFailure(eq(msg), throwableCaptor.capture());
+        verify(ctxMock, never()).tellNext(any(), anyString());
+        verify(ctxMock, never()).tellNext(any(), anySet());
+        verify(ctxMock, never()).tellSuccess(any());
+        if (entityType.equals(EntityType.TENANT)) {
+            verify(ctxMock).getDbCallbackExecutor();
+        }
+        verifyNoMoreInteractions(ctxMock, relationServiceMock);
+        assertThat(throwableCaptor.getValue()).isInstanceOf(RuntimeException.class).hasMessage("Failed to delete relation(s) with originator!");
+    }
+
+    @ParameterizedTest
+    @MethodSource("givenSupportedEntityType_whenOnMsg_thenVerifyConditions")
+    void givenSupportedEntityType_whenOnMsgAndDeleteForSingleEntityIsTrue_thenVerifyRelationNotFoundAndOutMsgSuccess(HasId entity) throws TbNodeException {
+        // GIVEN
+        var entityId = (EntityId) entity.getId();
+        var entityType = entityId.getEntityType();
+
+        config.setEntityType(entityType);
+        config.setEntityNamePattern("${name}");
+        config.setEntityTypePattern("${type}");
+        config.setDeleteForSingleEntity(true);
+
+        var nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctxMock, nodeConfiguration);
+
+        when(ctxMock.getTenantId()).thenReturn(tenantId);
+        if (entityType.equals(EntityType.TENANT)) {
+            when(ctxMock.getDbCallbackExecutor()).thenReturn(dbExecutor);
+        }
+        when(ctxMock.getRelationService()).thenReturn(relationServiceMock);
+
+        var mockMethodCallsMap = mockEntityServiceCalls();
+        mockMethodCallsMap.get(entityType).accept(entity);
+
+        when(relationServiceMock.checkRelationAsync(any(), any(), any(), any(), any())).thenReturn(Futures.immediateFuture(false));
+
+        var md = getMetadataWithNameTemplate();
+        var msg = getTbMsg(originatorId, md);
+
+        // WHEN
+        node.onMsg(ctxMock, msg);
+
+        // THEN
+        var verifyMethodCallsMap = verifyEntityServiceCalls();
+        verifyMethodCallsMap.get(entityType).accept(entity);
+
+        verify(relationServiceMock).checkRelationAsync(eq(tenantId), eq(originatorId), eq(entityId), eq(EntityRelation.CONTAINS_TYPE), eq(RelationTypeGroup.COMMON));
+
+        verify(ctxMock).tellSuccess(eq(msg));
+        verify(ctxMock, never()).tellNext(any(), anyString());
+        verify(ctxMock, never()).tellNext(any(), anySet());
+        verify(ctxMock, never()).tellFailure(any(), any());
+        if (entityType.equals(EntityType.TENANT)) {
+            verify(ctxMock).getDbCallbackExecutor();
+        }
+        verifyNoMoreInteractions(ctxMock, relationServiceMock);
+    }
+
+    @Test
+    void givenSupportedEntityType_whenOnMsgAndDeleteForSingleEntityIsFalse_thenVerifyRelationsDeletedAndOutMsgSuccess() throws TbNodeException {
+        // GIVEN
+
+        config.setEntityType(EntityType.DEVICE);
+        config.setEntityNamePattern("${name}");
+        config.setEntityTypePattern("${type}");
+
+        var nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        node.init(ctxMock, nodeConfiguration);
+
+        when(ctxMock.getTenantId()).thenReturn(tenantId);
+        when(ctxMock.getRelationService()).thenReturn(relationServiceMock);
+        when(ctxMock.getDbCallbackExecutor()).thenReturn(dbExecutor);
 
         var relationToDelete = new EntityRelation();
         when(relationServiceMock.findByFromAndTypeAsync(any(), any(), any(), any())).thenReturn(Futures.immediateFuture(List.of(relationToDelete)));
         when(relationServiceMock.deleteRelationAsync(any(), any())).thenReturn(Futures.immediateFuture(true));
-        when(relationServiceMock.checkRelationAsync(any(), any(), any(), any(), any())).thenReturn(Futures.immediateFuture(false));
-        when(relationServiceMock.saveRelationAsync(any(), any())).thenReturn(Futures.immediateFuture(true));
 
         var md = getMetadataWithNameTemplate();
         var msg = getTbMsg(originatorId, md);
 
         // WHEN
         node.onMsg(ctxMock, msg);
-
-        // THEN
-        var verifyMethodCallsMap = verifyEntityServiceCallsCreateEntityIfNotExistsDisabled();
-        verifyMethodCallsMap.get(entityType).run();
 
         verify(relationServiceMock).findByFromAndTypeAsync(eq(tenantId), eq(originatorId), eq(EntityRelation.CONTAINS_TYPE), eq(RelationTypeGroup.COMMON));
         verify(relationServiceMock).deleteRelationAsync(eq(tenantId), eq(relationToDelete));
-        verify(relationServiceMock).checkRelationAsync(eq(tenantId), eq(originatorId), eq(entityId), eq(EntityRelation.CONTAINS_TYPE), eq(RelationTypeGroup.COMMON));
-        verify(relationServiceMock).saveRelationAsync(eq(tenantId), eq(new EntityRelation(originatorId, entityId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON)));
 
         verify(ctxMock).tellSuccess(eq(msg));
+        verify(ctxMock, never()).tellNext(any(), anyString());
+        verify(ctxMock, never()).tellNext(any(), anySet());
         verify(ctxMock, never()).tellFailure(any(), any());
-        if (entityType.equals(EntityType.TENANT)) {
-            verify(ctxMock).getDbCallbackExecutor();
-        }
         verifyNoMoreInteractions(ctxMock, relationServiceMock);
     }
 
-    @ParameterizedTest
-    @MethodSource("givenSupportedEntityType_whenOnMsg_thenVerifyConditions")
-    void givenSupportedEntityType_whenOnMsg_thenVerifyDeleteCurrentRelationsCreateNewRelationAndOutMsgSuccess(HasId entity) throws TbNodeException {
-        // GIVEN
-        var entityId = (EntityId) entity.getId();
-        var entityType = entityId.getEntityType();
 
-        config.setEntityType(entityType);
+    @Test
+    void givenSupportedEntityType_whenOnMsgAndDeleteForSingleEntityIsFalse_thenVerifyRelationFailedToDeleteAndOutMsgFailure() throws TbNodeException {
+        // GIVEN
+        config.setEntityType(EntityType.DEVICE);
         config.setEntityNamePattern("${name}");
         config.setEntityTypePattern("${type}");
-        config.setCreateEntityIfNotExists(false);
-        config.setChangeOriginatorToRelatedEntity(false);
-        config.setRemoveCurrentRelations(true);
 
         var nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         node.init(ctxMock, nodeConfiguration);
 
         when(ctxMock.getTenantId()).thenReturn(tenantId);
-        if (entityType.equals(EntityType.TENANT)) {
-            when(ctxMock.getDbCallbackExecutor()).thenReturn(dbExecutor);
-        }
         when(ctxMock.getRelationService()).thenReturn(relationServiceMock);
+        when(ctxMock.getDbCallbackExecutor()).thenReturn(dbExecutor);
 
-        var mockMethodCallsMap = mockEntityServiceCallsCreateEntityIfNotExistsDisabled();
-        mockMethodCallsMap.get(entityType).accept(entity);
-
-        var firstRelationToDelete = new EntityRelation();
-        var secondRelationToDelete = new EntityRelation();
-        var relationsToDelete = List.of(firstRelationToDelete, secondRelationToDelete);
-
-        when(relationServiceMock.findByFromAndTypeAsync(any(), any(), any(), any())).thenReturn(Futures.immediateFuture(relationsToDelete));
-        when(relationServiceMock.deleteRelationAsync(any(), any())).thenReturn(Futures.immediateFuture(true));
-        when(relationServiceMock.checkRelationAsync(any(), any(), any(), any(), any())).thenReturn(Futures.immediateFuture(false));
-        when(relationServiceMock.saveRelationAsync(any(), any())).thenReturn(Futures.immediateFuture(true));
+        var relationToDelete = new EntityRelation();
+        when(relationServiceMock.findByFromAndTypeAsync(any(), any(), any(), any())).thenReturn(Futures.immediateFuture(List.of(relationToDelete)));
+        when(relationServiceMock.deleteRelationAsync(any(), any())).thenReturn(Futures.immediateFuture(false));
 
         var md = getMetadataWithNameTemplate();
         var msg = getTbMsg(originatorId, md);
 
         // WHEN
         node.onMsg(ctxMock, msg);
-
-        // THEN
-        var verifyMethodCallsMap = verifyEntityServiceCallsCreateEntityIfNotExistsDisabled();
-        verifyMethodCallsMap.get(entityType).run();
 
         verify(relationServiceMock).findByFromAndTypeAsync(eq(tenantId), eq(originatorId), eq(EntityRelation.CONTAINS_TYPE), eq(RelationTypeGroup.COMMON));
+        verify(relationServiceMock).deleteRelationAsync(eq(tenantId), eq(relationToDelete));
 
-        var entityRelationCaptor = ArgumentCaptor.forClass(EntityRelation.class);
-
-        verify(relationServiceMock, times(2)).deleteRelationAsync(eq(tenantId), entityRelationCaptor.capture());
-        assertThat(relationsToDelete).containsExactlyInAnyOrderElementsOf(relationsToDelete);
-
-        verify(relationServiceMock).checkRelationAsync(eq(tenantId), eq(originatorId), eq(entityId), eq(EntityRelation.CONTAINS_TYPE), eq(RelationTypeGroup.COMMON));
-        verify(relationServiceMock).saveRelationAsync(eq(tenantId), eq(new EntityRelation(originatorId, entityId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON)));
-
-        verify(ctxMock).tellSuccess(eq(msg));
-        verify(ctxMock, never()).tellFailure(any(), any());
-        if (entityType.equals(EntityType.TENANT)) {
-            verify(ctxMock).getDbCallbackExecutor();
-        }
+        var throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
+        verify(ctxMock).tellFailure(eq(msg), throwableCaptor.capture());
+        verify(ctxMock, never()).tellNext(any(), anyString());
+        verify(ctxMock, never()).tellNext(any(), anySet());
+        verify(ctxMock, never()).tellSuccess(any());
         verifyNoMoreInteractions(ctxMock, relationServiceMock);
+        assertThat(throwableCaptor.getValue()).isInstanceOf(RuntimeException.class).hasMessage("Failed to delete relation(s) with originator!");
     }
 
-    @ParameterizedTest
-    @MethodSource("givenSupportedEntityType_whenOnMsg_thenVerifyConditions")
-    void givenSupportedEntityType_whenOnMsg_thenVerifyRelationCreatedAndOriginatorChanged(HasId entity) throws TbNodeException {
-        // GIVEN
-        var entityId = (EntityId) entity.getId();
-        var entityType = entityId.getEntityType();
 
-        config.setEntityType(entityType);
-        config.setEntityNamePattern("${name}");
-        config.setEntityTypePattern("${type}");
-        config.setCreateEntityIfNotExists(false);
-        config.setChangeOriginatorToRelatedEntity(true);
-        config.setRemoveCurrentRelations(false);
-
-        var nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-        node.init(ctxMock, nodeConfiguration);
-
-        when(ctxMock.getTenantId()).thenReturn(tenantId);
-        if (entityType.equals(EntityType.TENANT)) {
-            when(ctxMock.getDbCallbackExecutor()).thenReturn(dbExecutor);
-        }
-        when(ctxMock.getRelationService()).thenReturn(relationServiceMock);
-
-        var mockMethodCallsMap = mockEntityServiceCallsCreateEntityIfNotExistsDisabled();
-        mockMethodCallsMap.get(entityType).accept(entity);
-
-        when(relationServiceMock.checkRelationAsync(any(), any(), any(), any(), any())).thenReturn(Futures.immediateFuture(false));
-        when(relationServiceMock.saveRelationAsync(any(), any())).thenReturn(Futures.immediateFuture(true));
-
-        var md = getMetadataWithNameTemplate();
-        var msg = getTbMsg(originatorId, md);
-
-        var msgAfterOriginatorChanged = TbMsg.transformMsgOriginator(msg, originatorId);
-        when(ctxMock.transformMsgOriginator(any(), any())).thenReturn(msgAfterOriginatorChanged);
-
-        // WHEN
-        node.onMsg(ctxMock, msg);
-
-        // THEN
-        var verifyMethodCallsMap = verifyEntityServiceCallsCreateEntityIfNotExistsDisabled();
-        verifyMethodCallsMap.get(entityType).run();
-
-        verify(relationServiceMock).checkRelationAsync(eq(tenantId), eq(originatorId), eq(entityId), eq(EntityRelation.CONTAINS_TYPE), eq(RelationTypeGroup.COMMON));
-        verify(relationServiceMock).saveRelationAsync(eq(tenantId), eq(new EntityRelation(originatorId, entityId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON)));
-
-        verify(ctxMock).transformMsgOriginator(eq(msg), eq(entityId));
-        verify(ctxMock).tellSuccess(eq(msgAfterOriginatorChanged));
-        verify(ctxMock, never()).tellFailure(any(), any());
-        if (entityType.equals(EntityType.TENANT)) {
-            verify(ctxMock).getDbCallbackExecutor();
-        }
-        verifyNoMoreInteractions(ctxMock, relationServiceMock);
+    private Map<EntityType, Runnable> mockEntityServiceCallsEntityNotFound() {
+        return Map.of(
+                EntityType.DEVICE, () -> {
+                    when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
+                    when(deviceServiceMock.findDeviceByTenantIdAndNameAsync(any(), any())).thenReturn(Futures.immediateFuture(null));
+                },
+                EntityType.ASSET, () -> {
+                    when(ctxMock.getAssetService()).thenReturn(assetServiceMock);
+                    when(assetServiceMock.findAssetByTenantIdAndNameAsync(any(), any())).thenReturn(Futures.immediateFuture(null));
+                },
+                EntityType.CUSTOMER, () -> {
+                    when(ctxMock.getCustomerService()).thenReturn(customerServiceMock);
+                    when(customerServiceMock.findCustomerByTenantIdAndTitleAsync(any(), any())).thenReturn(Futures.immediateFuture(Optional.empty()));
+                },
+                EntityType.ENTITY_VIEW, () -> {
+                    when(ctxMock.getEntityViewService()).thenReturn(entityViewServiceMock);
+                    when(entityViewServiceMock.findEntityViewByTenantIdAndNameAsync(any(), any())).thenReturn(Futures.immediateFuture(null));
+                },
+                EntityType.EDGE, () -> {
+                    when(ctxMock.getEdgeService()).thenReturn(edgeServiceMock);
+                    when(edgeServiceMock.findEdgeByTenantIdAndNameAsync(any(), any())).thenReturn(Futures.immediateFuture(null));
+                },
+                EntityType.USER, () -> {
+                    when(ctxMock.getUserService()).thenReturn(userServiceMock);
+                    when(userServiceMock.findUserByTenantIdAndEmailAsync(any(), any())).thenReturn(Futures.immediateFuture(null));
+                },
+                EntityType.DASHBOARD, () -> {
+                    when(ctxMock.getDashboardService()).thenReturn(dashboardServiceMock);
+                    when(dashboardServiceMock.findFirstDashboardInfoByTenantIdAndNameAsync(any(), any())).thenReturn(Futures.immediateFuture(null));
+                }
+        );
     }
 
-    @ParameterizedTest
-    @MethodSource("givenSupportedEntityTypeToCreateEntityIfNotExists_whenOnMsg_thenVerifyConditions")
-    void givenSupportedEntityType_whenOnMsg_thenVerifyRelationAndEntityCreatedAndOutMsgSuccess(HasId entity) throws TbNodeException {
-        // GIVEN
-        var entityId = (EntityId) entity.getId();
-        var entityType = entityId.getEntityType();
-
-        config.setEntityType(entityType);
-        config.setEntityNamePattern("${name}");
-        config.setEntityTypePattern("${type}");
-        config.setCreateEntityIfNotExists(true);
-        config.setChangeOriginatorToRelatedEntity(false);
-        config.setRemoveCurrentRelations(false);
-
-        var nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-        node.init(ctxMock, nodeConfiguration);
-
-        when(ctxMock.getTenantId()).thenReturn(tenantId);
-        when(ctxMock.getSelfId()).thenReturn(ruleNodeId);
-        if (entityType.equals(EntityType.TENANT)) {
-            when(ctxMock.getDbCallbackExecutor()).thenReturn(dbExecutor);
-        }
-        when(ctxMock.getRelationService()).thenReturn(relationServiceMock);
-
-        var mockMethodCallsMap = mockEntityServiceCallsCreateEntityIfNotExistsEnabled();
-        var entityCreatedMsg = TbMsg.newMsg(TbMsgType.ENTITY_CREATED, entityId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
-        mockMethodCallsMap.get(entityType).accept(entity, entityCreatedMsg);
-
-        when(relationServiceMock.checkRelationAsync(any(), any(), any(), any(), any())).thenReturn(Futures.immediateFuture(false));
-        when(relationServiceMock.saveRelationAsync(any(), any())).thenReturn(Futures.immediateFuture(true));
-
-        var md = getMetadataWithNameTemplate();
-        var msg = getTbMsg(originatorId, md);
-
-        // WHEN
-        node.onMsg(ctxMock, msg);
-
-        // THEN
-        var verifyMethodCallsMap = verifyEntityServiceCallsCreateEntityIfNotExistsEnabled();
-        verifyMethodCallsMap.get(entityType).accept(entity, entityCreatedMsg);
-
-        verify(relationServiceMock).checkRelationAsync(eq(tenantId), eq(originatorId), eq(entityId), eq(EntityRelation.CONTAINS_TYPE), eq(RelationTypeGroup.COMMON));
-        verify(relationServiceMock).saveRelationAsync(eq(tenantId), eq(new EntityRelation(originatorId, entityId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.COMMON)));
-
-        verify(ctxMock).tellSuccess(eq(msg));
-        verify(ctxMock, never()).tellFailure(any(), any());
-        if (entityType.equals(EntityType.TENANT)) {
-            verify(ctxMock).getDbCallbackExecutor();
-        }
-        verifyNoMoreInteractions(ctxMock, relationServiceMock);
-    }
-
-    private Map<EntityType, Consumer<HasId>> mockEntityServiceCallsCreateEntityIfNotExistsDisabled() {
+    private Map<EntityType, Consumer<HasId>> mockEntityServiceCalls() {
         return Map.of(
                 EntityType.DEVICE, hasId -> {
                     var device = (Device) hasId;
@@ -551,126 +519,42 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
                     when(dashboardServiceMock.findFirstDashboardInfoByTenantIdAndNameAsync(any(), any())).thenReturn(Futures.immediateFuture(dashboard));
                 },
                 EntityType.TENANT, hasId -> {
+                    // do nothing. tenantId returned by ctxMock.
                 }
         );
     }
 
-    private Map<EntityType, Runnable> verifyEntityServiceCallsCreateEntityIfNotExistsDisabled() {
+    private Map<EntityType, Consumer<HasId>> verifyEntityServiceCalls() {
         return Map.of(
-                EntityType.DEVICE, () -> {
+                EntityType.DEVICE, hasId -> {
                     verify(deviceServiceMock).findDeviceByTenantIdAndNameAsync(eq(tenantId), eq("EntityName"));
                     verifyNoMoreInteractions(deviceServiceMock);
                 },
-                EntityType.ASSET, () -> {
+                EntityType.ASSET, hasId -> {
                     verify(assetServiceMock).findAssetByTenantIdAndNameAsync(eq(tenantId), eq("EntityName"));
                     verifyNoMoreInteractions(assetServiceMock);
                 },
-                EntityType.CUSTOMER, () -> {
+                EntityType.CUSTOMER, hasId -> {
                     verify(customerServiceMock).findCustomerByTenantIdAndTitleAsync(eq(tenantId), eq("EntityName"));
                     verifyNoMoreInteractions(customerServiceMock);
                 },
-                EntityType.ENTITY_VIEW, () -> {
+                EntityType.ENTITY_VIEW, hasId -> {
                     verify(entityViewServiceMock).findEntityViewByTenantIdAndNameAsync(eq(tenantId), eq("EntityName"));
                     verifyNoMoreInteractions(entityViewServiceMock);
                 },
-                EntityType.EDGE, () -> {
+                EntityType.EDGE, hasId -> {
                     verify(edgeServiceMock).findEdgeByTenantIdAndNameAsync(eq(tenantId), eq("EntityName"));
                     verifyNoMoreInteractions(edgeServiceMock);
                 },
-                EntityType.USER, () -> {
+                EntityType.USER, hasId -> {
                     verify(userServiceMock).findUserByTenantIdAndEmailAsync(eq(tenantId), eq("EntityName"));
                     verifyNoMoreInteractions(userServiceMock);
                 },
-                EntityType.DASHBOARD, () -> {
+                EntityType.DASHBOARD, hasId -> {
                     verify(dashboardServiceMock).findFirstDashboardInfoByTenantIdAndNameAsync(eq(tenantId), eq("EntityName"));
                     verifyNoMoreInteractions(dashboardServiceMock);
                 },
-                EntityType.TENANT, () -> {
-                }
-        );
-    }
-
-    private Map<EntityType, BiConsumer<HasId, TbMsg>> mockEntityServiceCallsCreateEntityIfNotExistsEnabled() {
-        return Map.of(
-                EntityType.DEVICE, (hasId, entityCreatedMsg) -> {
-                    var device = (Device) hasId;
-                    when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
-                    when(ctxMock.getClusterService()).thenReturn(clusterServiceMock);
-                    when(deviceServiceMock.findDeviceByTenantIdAndNameAsync(any(), any())).thenReturn(Futures.immediateFuture(null));
-                    when(deviceServiceMock.saveDevice(any())).thenReturn(device);
-                    doAnswer(invocation -> entityCreatedMsg).when(ctxMock).deviceCreatedMsg(any(), any());
-                },
-                EntityType.ASSET, (hasId, entityCreatedMsg) -> {
-                    var asset = (Asset) hasId;
-                    when(ctxMock.getAssetService()).thenReturn(assetServiceMock);
-                    when(assetServiceMock.findAssetByTenantIdAndNameAsync(any(), any())).thenReturn(Futures.immediateFuture(null));
-                    when(assetServiceMock.saveAsset(any())).thenReturn(asset);
-                    doAnswer(invocation -> entityCreatedMsg).when(ctxMock).assetCreatedMsg(any(), any());
-                },
-                EntityType.CUSTOMER, (hasId, entityCreatedMsg) -> {
-                    var customer = (Customer) hasId;
-                    when(ctxMock.getCustomerService()).thenReturn(customerServiceMock);
-                    when(customerServiceMock.findCustomerByTenantIdAndTitleAsync(any(), any())).thenReturn(Futures.immediateFuture(Optional.empty()));
-                    when(customerServiceMock.saveCustomer(any())).thenReturn(customer);
-                    doAnswer(invocation -> entityCreatedMsg).when(ctxMock).customerCreatedMsg(any(), any());
-                }
-        );
-    }
-
-    private Map<EntityType, BiConsumer<HasId, TbMsg>> verifyEntityServiceCallsCreateEntityIfNotExistsEnabled() {
-        return Map.of(
-                EntityType.DEVICE, (hasId, entityCreatedMsg) -> {
-                    var device = (Device) hasId;
-                    verify(deviceServiceMock, times(1)).findDeviceByTenantIdAndNameAsync(eq(tenantId), eq("EntityName"));
-                    verify(deviceServiceMock).saveDevice(any());
-                    verify(clusterServiceMock).onDeviceUpdated(eq(device), eq(null));
-                    verify(ctxMock).enqueue(eq(entityCreatedMsg), any(), any());
-                    verifyNoMoreInteractions(deviceServiceMock, clusterServiceMock);
-                },
-                EntityType.ASSET, (hasId, entityCreatedMsg) -> {
-                    verify(assetServiceMock, times(1)).findAssetByTenantIdAndNameAsync(eq(tenantId), eq("EntityName"));
-                    verify(assetServiceMock).saveAsset(any());
-                    verify(ctxMock).enqueue(eq(entityCreatedMsg), any(), any());
-                    verifyNoMoreInteractions(assetServiceMock);
-                },
-                EntityType.CUSTOMER, (hasId, entityCreatedMsg) -> {
-                    verify(customerServiceMock, times(1)).findCustomerByTenantIdAndTitleAsync(eq(tenantId), eq("EntityName"));
-                    verify(customerServiceMock).saveCustomer(any());
-                    verify(ctxMock).enqueue(eq(entityCreatedMsg), any(), any());
-                    verifyNoMoreInteractions(customerServiceMock);
-                }
-        );
-    }
-
-    private Map<EntityType, Runnable> mockEntityServiceCallsEntityNotFound() {
-        return Map.of(
-                EntityType.DEVICE, () -> {
-                    when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
-                    when(deviceServiceMock.findDeviceByTenantIdAndNameAsync(any(), any())).thenReturn(Futures.immediateFuture(null));
-                },
-                EntityType.ASSET, () -> {
-                    when(ctxMock.getAssetService()).thenReturn(assetServiceMock);
-                    when(assetServiceMock.findAssetByTenantIdAndNameAsync(any(), any())).thenReturn(Futures.immediateFuture(null));
-                },
-                EntityType.CUSTOMER, () -> {
-                    when(ctxMock.getCustomerService()).thenReturn(customerServiceMock);
-                    when(customerServiceMock.findCustomerByTenantIdAndTitleAsync(any(), any())).thenReturn(Futures.immediateFuture(Optional.empty()));
-                },
-                EntityType.ENTITY_VIEW, () -> {
-                    when(ctxMock.getEntityViewService()).thenReturn(entityViewServiceMock);
-                    when(entityViewServiceMock.findEntityViewByTenantIdAndNameAsync(any(), any())).thenReturn(Futures.immediateFuture(null));
-                },
-                EntityType.EDGE, () -> {
-                    when(ctxMock.getEdgeService()).thenReturn(edgeServiceMock);
-                    when(edgeServiceMock.findEdgeByTenantIdAndNameAsync(any(), any())).thenReturn(Futures.immediateFuture(null));
-                },
-                EntityType.USER, () -> {
-                    when(ctxMock.getUserService()).thenReturn(userServiceMock);
-                    when(userServiceMock.findUserByTenantIdAndEmailAsync(any(), any())).thenReturn(Futures.immediateFuture(null));
-                },
-                EntityType.DASHBOARD, () -> {
-                    when(ctxMock.getDashboardService()).thenReturn(dashboardServiceMock);
-                    when(dashboardServiceMock.findFirstDashboardInfoByTenantIdAndNameAsync(any(), any())).thenReturn(Futures.immediateFuture(null));
+                EntityType.TENANT, hasId -> {
                 }
         );
     }
@@ -685,6 +569,7 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         return metaData;
     }
 
+
     @Override
     protected TbNode getTestNode() {
         return node;
@@ -695,37 +580,25 @@ public class TbCreateRelationNodeTest extends AbstractRuleNodeUpgradeTest {
         return Stream.of(
                 // version 0 config, FROM direction.
                 Arguments.of(0,
-                        "{\"direction\":\"FROM\",\"entityType\":\"DEVICE\",\"entityNamePattern\":\"$[name]\"," +
-                                "\"entityTypePattern\":\"$[type]\",\"relationType\":\"Contains\"," +
-                                "\"createEntityIfNotExists\":false,\"removeCurrentRelations\":false," +
-                                "\"changeOriginatorToRelatedEntity\":false,\"entityCacheExpiration\":300}",
+                        "{\"deleteForSingleEntity\":true,\"direction\":\"FROM\",\"entityType\":\"DEVICE\"," +
+                                "\"entityNamePattern\":\"$[name]\",\"relationType\":\"Contains\",\"entityCacheExpiration\":300}",
                         true,
-                        "{\"direction\":\"TO\",\"entityType\":\"DEVICE\",\"entityNamePattern\":\"$[name]\"," +
-                                "\"entityTypePattern\":\"$[type]\",\"relationType\":\"Contains\"," +
-                                "\"createEntityIfNotExists\":false,\"removeCurrentRelations\":false," +
-                                "\"changeOriginatorToRelatedEntity\":false}"),
+                        "{\"deleteForSingleEntity\":true,\"direction\":\"TO\",\"entityType\":\"DEVICE\"," +
+                                "\"entityNamePattern\":\"$[name]\",\"relationType\":\"Contains\"}"),
                 // version 0 config, TO direction.
                 Arguments.of(0,
-                        "{\"direction\":\"TO\",\"entityType\":\"DEVICE\",\"entityNamePattern\":\"$[name]\"," +
-                                "\"entityTypePattern\":\"$[type]\",\"relationType\":\"Contains\"," +
-                                "\"createEntityIfNotExists\":false,\"removeCurrentRelations\":false," +
-                                "\"changeOriginatorToRelatedEntity\":false,\"entityCacheExpiration\":300}",
+                        "{\"deleteForSingleEntity\":true,\"direction\":\"TO\",\"entityType\":\"DEVICE\"," +
+                                "\"entityNamePattern\":\"$[name]\",\"relationType\":\"Contains\",\"entityCacheExpiration\":300}",
                         true,
-                        "{\"direction\":\"FROM\",\"entityType\":\"DEVICE\",\"entityNamePattern\":\"$[name]\"," +
-                                "\"entityTypePattern\":\"$[type]\",\"relationType\":\"Contains\"," +
-                                "\"createEntityIfNotExists\":false,\"removeCurrentRelations\":false," +
-                                "\"changeOriginatorToRelatedEntity\":false}"),
+                        "{\"deleteForSingleEntity\":true,\"direction\":\"FROM\",\"entityType\":\"DEVICE\"," +
+                                "\"entityNamePattern\":\"$[name]\",\"relationType\":\"Contains\"}"),
                 // config for version 1 with upgrade from version 0
                 Arguments.of(0,
-                        "{\"direction\":\"FROM\",\"entityType\":\"DEVICE\",\"entityNamePattern\":\"$[name]\"," +
-                                "\"entityTypePattern\":\"$[type]\",\"relationType\":\"Contains\"," +
-                                "\"createEntityIfNotExists\":false,\"removeCurrentRelations\":false," +
-                                "\"changeOriginatorToRelatedEntity\":false}",
+                        "{\"deleteForSingleEntity\":true,\"direction\":\"FROM\",\"entityType\":\"DEVICE\"," +
+                                "\"entityNamePattern\":\"$[name]\",\"relationType\":\"Contains\"}",
                         false,
-                        "{\"direction\":\"FROM\",\"entityType\":\"DEVICE\",\"entityNamePattern\":\"$[name]\"," +
-                                "\"entityTypePattern\":\"$[type]\",\"relationType\":\"Contains\"," +
-                                "\"createEntityIfNotExists\":false,\"removeCurrentRelations\":false," +
-                                "\"changeOriginatorToRelatedEntity\":false}")
+                        "{\"deleteForSingleEntity\":true,\"direction\":\"FROM\",\"entityType\":\"DEVICE\"," +
+                                "\"entityNamePattern\":\"$[name]\",\"relationType\":\"Contains\"}")
         );
     }
 
