@@ -30,7 +30,7 @@ import {
   guid,
   hashCode,
   isDefined,
-  isDefinedAndNotNull,
+  isDefinedAndNotNull, isNotEmptyStr,
   isString,
   isUndefined,
   objToBase64,
@@ -386,8 +386,7 @@ export class UtilsService {
       this.window.performance.now() : Date.now();
   }
 
-  public getQueryParam(name: string): string {
-    const url = this.window.location.href;
+  public getQueryParam(name: string, url = this.window.location.href): string {
     name = name.replace(/[\[\]]/g, '\\$&');
     const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)');
     const results = regex.exec(url);

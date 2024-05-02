@@ -257,8 +257,14 @@
     &.row {
       flex-direction: row;
     }
+    &.row-reverse {
+      flex-direction: row-reverse;
+    }
     &.column {
       flex-direction: column;
+    }
+    &.center {
+      justify-content: center;
     }
     &.flex-start {
       justify-content: flex-start;
@@ -277,6 +283,15 @@
     }
     &.fill-width {
       width: 100%;
+    }
+    &.fill-height {
+      height: 100%;
+    }
+    &.shrink {
+      flex: 0;
+    }
+    &.no-gap {
+      gap: 0;
     }
   }
 
