@@ -35,7 +35,6 @@ import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.customer.CustomerService;
-import org.thingsboard.server.dao.customer.CustomerServiceImpl;
 import org.thingsboard.server.dao.device.DeviceConnectivityConfiguration;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
@@ -126,20 +125,11 @@ public class DefaultDataUpdateService implements DataUpdateService {
                     newTitle = currentTitle + "_" + currentCustomer.getId();
                 }
                 currentCustomer.setTitle(newTitle);
-                if (currentTitle.equals(CustomerServiceImpl.PUBLIC_CUSTOMER_TITLE)) {
-                    try {
-                        customerDao.save(tenantIdToDeduplicate, currentCustomer);
-                    } catch (Exception e) {
-                        log.error("[{}] Failed to update public customer with id and title: {}, oldTitle: {}, due to: ",
-                                currentCustomer.getTenantId(), newTitle, currentTitle, e);
-                    }
-                } else {
-                    try {
-                        customerService.saveCustomer(currentCustomer);
-                    } catch (Exception e) {
-                        log.error("[{}] Failed to update customer with id and title: {}, oldTitle: {}, due to: ",
-                                currentCustomer.getTenantId(), newTitle, currentTitle, e);
-                    }
+                try {
+                    customerService.saveCustomer(currentCustomer);
+                } catch (Exception e) {
+                    log.error("[{}] Failed to update customer with id and title: {}, oldTitle: {}, due to: ",
+                            currentCustomer.getTenantId(), newTitle, currentTitle, e);
                 }
                 continue;
             }
