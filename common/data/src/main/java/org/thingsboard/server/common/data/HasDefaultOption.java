@@ -13,16 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.util;
+package org.thingsboard.server.common.data;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.EntityId;
+public interface HasDefaultOption {
 
-@Data
-public class EntityContainer {
-
-    private EntityId entityId;
-    private EntityType entityType;
+    boolean isDefault();
 
 }
