@@ -12,8 +12,8 @@ A clear and concise description of what the bug is.
 
 **Your Server Environment**
 <!-- 🔅🔅🔅🔅🔅🔅🔅 Choose one of the following or write your own 🔅🔅🔅🔅🔅🔅🔅-->
-* [https://demo.thingsboard.io](demo.thingsboard.io)
-* [https://thingsboard.cloud](thingsboard.cloud)
+* <a href=https://demo.thingsboard.io>Live Demo</a>
+* <a href=https://thingsboard.cloud> ThingsBoard  Cloud </a>
 * own setup
   * Deployment: monolith or microservices
   * Deployment type: deb, rpm, exe, docker-compose, k8s, ami
@@ -60,3 +60,8 @@ If applicable, please add screenshots to help explain your problem.
 
 **Additional context**
 Please feel free to add any other context about the problem here.
+
+________________________________________________________________
+**Disclaimer** 
+
+We appreciate your contribution whether it is a bug report, feature request, or pull request with improvement (hopefully). Please comply with the <a href="https://opensource.guide/building-community/">Community ethics policy</a>, and do not expect us to answer your requests immediately. Also, do not treat *GitHub issues* as a support channel. 
