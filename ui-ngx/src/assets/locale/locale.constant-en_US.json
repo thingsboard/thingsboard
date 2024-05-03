@@ -1147,6 +1147,7 @@
         "mobile-row-height-required": "Mobile row height value is required.",
         "min-mobile-row-height-message": "Only 5 pixels is allowed as minimum mobile row height value.",
         "max-mobile-row-height-message": "Only 200 pixels is allowed as maximum mobile row height value.",
+        "display-first-in-mobile-view": "Display first in mobile view",
         "title-settings": "Title settings",
         "display-title": "Display dashboard title",
         "title-color": "Title color",
