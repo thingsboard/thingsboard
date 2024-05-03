@@ -262,8 +262,11 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       tasks.push(this.attributeService.deleteEntityAttributes(this.device, scope, attributesToDelete));
     }
     forkJoin(tasks).subscribe(_ => {
+      this.showToast(!this.initialConnector
+                      ? this.translate.instant('gateway.connector-created')
+                      : this.translate.instant('gateway.connector-updated')
+      );
       this.initialConnector = value;
-      this.showToast('Update Successful');
       this.updateData(true);
     });
   }

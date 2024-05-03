@@ -135,8 +135,6 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         Tenant savedTenant = tenantDao.save(tenant.getId(), tenant);
         TenantId tenantId = savedTenant.getId();
         publishEvictEvent(new TenantEvictEvent(tenantId, create));
-        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId)
-                .entityId(tenantId).entity(savedTenant).created(create).build());
 
         if (create) {
             deviceProfileService.createDefaultDeviceProfile(tenantId);
@@ -147,6 +145,9 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
                 defaultEntitiesCreator.accept(tenantId);
             }
         }
+
+        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId)
+                .entityId(tenantId).entity(savedTenant).created(create).build());
         return savedTenant;
     }
 

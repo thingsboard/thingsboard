@@ -17,11 +17,13 @@ package org.thingsboard.server.dao.relation;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 
 @RequiredArgsConstructor
+@ToString
 public class EntityRelationEvent {
     @Getter
     private final EntityId from;
