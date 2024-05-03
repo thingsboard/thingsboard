@@ -28,6 +28,7 @@ import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
@@ -70,6 +71,7 @@ public class JwtTokenFactory {
     private static final String CUSTOMER_ID = "customerId";
     private static final String SESSION_ID = "sessionId";
 
+    @Lazy
     private final JwtSettingsService jwtSettingsService;
 
     private volatile JwtParser jwtParser;

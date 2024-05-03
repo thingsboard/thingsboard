@@ -17,6 +17,7 @@ package org.thingsboard.server.service.security.auth.jwt.settings;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
@@ -42,7 +43,6 @@ public class DefaultJwtSettingsService implements JwtSettingsService {
     private final AdminSettingsService adminSettingsService;
     private final Optional<TbClusterService> tbClusterService;
     private final JwtSettingsValidator jwtSettingsValidator;
-    @Lazy
     private final Optional<JwtTokenFactory> jwtTokenFactory;
 
     private volatile JwtSettings jwtSettings = null; //lazy init
