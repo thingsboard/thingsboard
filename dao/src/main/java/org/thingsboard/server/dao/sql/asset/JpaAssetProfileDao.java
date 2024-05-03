@@ -133,6 +133,11 @@ public class JpaAssetProfileDao extends JpaAbstractDao<AssetProfileEntity, Asset
     }
 
     @Override
+    public AssetProfile findDefaultEntityByTenantId(UUID tenantId) {
+        return findDefaultAssetProfile(TenantId.fromUUID(tenantId));
+    }
+
+    @Override
     public List<AssetProfileInfo> findByTenantAndImageLink(TenantId tenantId, String imageLink, int limit) {
         return assetProfileRepository.findByTenantAndImageLink(tenantId.getId(), imageLink, PageRequest.of(0, limit));
     }

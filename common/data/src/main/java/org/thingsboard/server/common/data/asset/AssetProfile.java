@@ -22,6 +22,7 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.HasDefaultOption;
 import org.thingsboard.server.common.data.HasImage;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasRuleEngineProfile;
@@ -38,7 +39,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 @ToString(exclude = {"image"})
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class AssetProfile extends BaseData<AssetProfileId> implements HasName, HasTenantId, HasRuleEngineProfile, ExportableEntity<AssetProfileId>, HasImage {
+public class AssetProfile extends BaseData<AssetProfileId> implements HasName, HasTenantId, HasRuleEngineProfile, ExportableEntity<AssetProfileId>, HasImage, HasDefaultOption {
 
     private static final long serialVersionUID = 6998485460273302018L;
 
