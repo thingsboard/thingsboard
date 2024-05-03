@@ -14,12 +14,15 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import {
   ControlValueAccessor,
+  NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   UntypedFormBuilder,
+  UntypedFormControl,
   UntypedFormGroup,
+  Validator,
   ValidatorFn,
   Validators
 } from '@angular/forms';
@@ -37,6 +40,11 @@ import { ValueType } from '@shared/models/constants';
 import { IAliasController } from '@core/api/widget-api.models';
 import { TargetDevice, widgetType } from '@shared/models/widget.models';
 import { isDefinedAndNotNull } from '@core/utils';
+import {
+  ScadaPropertyRow,
+  toPropertyRows
+} from '@home/components/widget/lib/settings/common/scada/scada-object-settings.models';
+import { merge, Observable, Subscription } from 'rxjs';
 
 @Component({
   selector: 'tb-scada-object-settings',
@@ -47,10 +55,15 @@ import { isDefinedAndNotNull } from '@core/utils';
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => ScadaObjectSettingsComponent),
       multi: true
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => ScadaObjectSettingsComponent),
+      multi: true
     }
   ]
 })
-export class ScadaObjectSettingsComponent implements OnInit, OnChanges, ControlValueAccessor {
+export class ScadaObjectSettingsComponent implements OnInit, OnChanges, ControlValueAccessor, Validator {
 
   ScadaObjectBehaviorType = ScadaObjectBehaviorType;
 
@@ -73,13 +86,18 @@ export class ScadaObjectSettingsComponent implements OnInit, OnChanges, ControlV
 
   private propagateChange = null;
 
+  private validatorTriggers: string[];
+  private validatorSubscription: Subscription;
+
   public scadaObjectSettingsFormGroup: UntypedFormGroup;
 
   metadata: ScadaObjectMetadata;
+  propertyRows: ScadaPropertyRow[];
 
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder,
-              private http: HttpClient) {
+              private http: HttpClient,
+              private cd: ChangeDetectorRef) {
   }
 
   ngOnInit(): void {
@@ -114,6 +132,7 @@ export class ScadaObjectSettingsComponent implements OnInit, OnChanges, ControlV
       this.scadaObjectSettingsFormGroup.disable({emitEvent: false});
     } else {
       this.scadaObjectSettingsFormGroup.enable({emitEvent: false});
+      this.updateValidators();
     }
   }
 
@@ -122,10 +141,25 @@ export class ScadaObjectSettingsComponent implements OnInit, OnChanges, ControlV
     this.setupValue();
   }
 
+  validate(c: UntypedFormControl) {
+    const valid = this.scadaObjectSettingsFormGroup.valid;
+    return valid ? null : {
+      scadaObject: {
+        valid: false,
+      },
+    };
+  }
+
   private loadMetadata() {
+    if (this.validatorSubscription) {
+      this.validatorSubscription.unsubscribe();
+      this.validatorSubscription = null;
+    }
+    this.validatorTriggers = [];
     this.http.get(this.svgPath, {responseType: 'text'}).subscribe(
       (svgContent) => {
         this.metadata = parseScadaObjectMetadataFromContent(svgContent);
+        this.propertyRows = toPropertyRows(this.metadata.properties);
         for (const control of Object.keys(this.scadaObjectSettingsFormGroup.controls)) {
           this.scadaObjectSettingsFormGroup.removeControl(control, {emitEvent: false});
         }
@@ -133,7 +167,15 @@ export class ScadaObjectSettingsComponent implements OnInit, OnChanges, ControlV
           this.scadaObjectSettingsFormGroup.addControl(behaviour.id, this.fb.control(null, []), {emitEvent: false});
         }
         for (const property of this.metadata.properties) {
+          if (property.disableOnProperty) {
+            if (!this.validatorTriggers.includes(property.disableOnProperty)) {
+              this.validatorTriggers.push(property.disableOnProperty);
+            }
+          }
           const validators: ValidatorFn[] = [];
+          if (property.required) {
+            validators.push(Validators.required);
+          }
           if (property.type === 'number') {
             if (isDefinedAndNotNull(property.min)) {
               validators.push(Validators.min(property.min));
@@ -144,9 +186,35 @@ export class ScadaObjectSettingsComponent implements OnInit, OnChanges, ControlV
           }
           this.scadaObjectSettingsFormGroup.addControl(property.id, this.fb.control(null, validators), {emitEvent: false});
         }
+        if (this.validatorTriggers.length) {
+          const observables: Observable<any>[] = [];
+          for (const trigger of this.validatorTriggers) {
+            observables.push(this.scadaObjectSettingsFormGroup.get(trigger).valueChanges);
+          }
+          this.validatorSubscription = merge(...observables).subscribe(() => {
+            this.updateValidators();
+          });
+        }
         this.setupValue();
+        this.cd.markForCheck();
       }
     );
+  }
+
+  private updateValidators() {
+    for (const trigger of this.validatorTriggers) {
+      const value: boolean = this.scadaObjectSettingsFormGroup.get(trigger).value;
+      this.metadata.properties.filter(p => p.disableOnProperty === trigger).forEach(
+        (p) => {
+          const control = this.scadaObjectSettingsFormGroup.get(p.id);
+          if (value) {
+            control.enable({emitEvent: false});
+          } else {
+            control.disable({emitEvent: false});
+          }
+        }
+      );
+    }
   }
 
   private setupValue() {
@@ -156,6 +224,7 @@ export class ScadaObjectSettingsComponent implements OnInit, OnChanges, ControlV
       this.scadaObjectSettingsFormGroup.patchValue(
         this.modelValue, {emitEvent: false}
       );
+      this.setDisabledState(this.disabled);
     }
   }
 

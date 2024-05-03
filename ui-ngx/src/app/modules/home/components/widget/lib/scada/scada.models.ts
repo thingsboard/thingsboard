@@ -15,13 +15,23 @@
 ///
 
 import { ValueType } from '@shared/models/constants';
-import { Box, Element, Runner, Svg, SVG, Timeline } from '@svgdotjs/svg.js';
+import { Box, Element, Runner, Svg, SVG, Timeline, Text } from '@svgdotjs/svg.js';
 import { DataToValueType, GetValueAction, GetValueSettings } from '@shared/models/action-widget-settings.models';
-import { insertVariable, isDefinedAndNotNull, isNumber, isNumeric, isUndefinedOrNull, mergeDeep } from '@core/utils';
+import {
+  formatValue,
+  insertVariable,
+  isDefinedAndNotNull,
+  isNumber,
+  isNumeric,
+  isUndefinedOrNull,
+  mergeDeep,
+  parseFunction
+} from '@core/utils';
 import { BehaviorSubject, forkJoin, Observable } from 'rxjs';
 import { map, share } from 'rxjs/operators';
 import { ValueAction, ValueGetter } from '@home/components/widget/lib/action/action-widget.models';
 import { WidgetContext } from '@home/models/widget-component.models';
+import { Font } from '@shared/models/widget-settings.models';
 
 export type ValueMatcherType = 'any' | 'constant' | 'range';
 
@@ -31,28 +41,84 @@ export interface ValueMatcher {
   range?: {from: number; to: number};
 }
 
-export type ScadaObjectAttributeValueType = 'input' | 'property';
+const valueMatches = (matcher: ValueMatcher, val: any): boolean => {
+  switch (matcher.type) {
+    case 'any':
+      return true;
+    case 'constant':
+      return matcher.value === val;
+    case 'range':
+      if (isDefinedAndNotNull(val) && isNumeric(val)) {
+        const num = Number(val);
+        const range = matcher.range;
+        return ((!isNumber(range.from) || num >= range.from) && (!isNumber(range.to) || num < range.to));
+      } else {
+        return false;
+      }
+  }
+};
 
-export interface ScadaObjectAttributeValue {
-  type: ScadaObjectAttributeValueType;
-  propertyId?: string;
+export type ScadaObjectValueType = 'input' | 'constant' | 'property' | 'function' | 'valueFormat';
+
+export interface ScadaObjectValueBase {
+  type: ScadaObjectValueType;
 }
 
-export interface ScadaObjectAttributeState {
+export interface ScadaObjectValueConstant extends ScadaObjectValueBase {
+  constantValue?: any;
+}
+
+export interface ScadaObjectValueProperty extends ScadaObjectValueBase {
+  propertyId?: string;
+  computedPropertyValue?: any;
+}
+
+export interface ScadaObjectValueFunction extends ScadaObjectValueBase {
+  valueConvertFunction?: string;
+  valueConverter?: (val: any) => any;
+}
+
+export interface ScadaObjectValueFormat extends ScadaObjectValueBase {
+  units?: ScadaObjectValue;
+  decimals?: ScadaObjectValue;
+  computedUnits?: string;
+  computedDecimals?: number;
+}
+
+export type ScadaObjectValue = ScadaObjectValueProperty & ScadaObjectValueConstant & ScadaObjectValueFunction & ScadaObjectValueFormat;
+
+export interface ScadaObjectAttribute {
   name: string;
-  value: ScadaObjectAttributeValue;
+  value: ScadaObjectValue;
+}
+
+export interface ScadaObjectText {
+  content?: ScadaObjectValue;
+  font?: ScadaObjectValue;
+  color?: ScadaObjectValue;
+}
+
+export interface ScadaObjectElementState {
+  tag: string;
+  show?: ScadaObjectValue;
+  text?: ScadaObjectText;
+  attributes?: ScadaObjectAttribute[];
+  animate?: number;
 }
 
 export interface ScadaObjectState {
-  tag: string;
-  attributes: ScadaObjectAttributeState[];
-  animate?: number;
+  initial?: boolean;
+  value?: any;
+  state: ScadaObjectElementState[];
 }
 
 export interface ScadaObjectUpdateState {
   matcher: ValueMatcher;
-  state: ScadaObjectState[];
+  stateId: string;
 }
+
+const filterUpdateStates = (states: ScadaObjectUpdateState[], val: any): ScadaObjectUpdateState[] =>
+  states.filter(s => valueMatches(s.matcher, val));
 
 export enum ScadaObjectBehaviorType {
   setValue = 'setValue',
@@ -77,32 +143,38 @@ export interface ScadaObjectBehaviorSet extends ScadaObjectBehaviorBase {
 
 export type ScadaObjectBehavior = ScadaObjectBehaviorGet | ScadaObjectBehaviorSet;
 
-export type ScadaObjectPropertyType = 'string' | 'number' | 'color';
+export type ScadaObjectPropertyType = 'string' | 'number' | 'color' | 'font' | 'units' | 'switch';
 
 export interface ScadaObjectPropertyBase {
   id: string;
   name: string;
   type: ScadaObjectPropertyType;
   default: any;
+  required?: boolean;
+  subLabel?: string;
+  divider?: boolean;
+  fieldSuffix?: string;
+  disableOnProperty?: string;
 }
 
 export interface ScadaObjectNumberProperty extends ScadaObjectPropertyBase {
   min?: number;
   max?: number;
+  step?: number;
 }
 
 export type ScadaObjectProperty = ScadaObjectPropertyBase & ScadaObjectNumberProperty;
 
 export interface ScadaObjectMetadata {
   title: string;
-  initial: ScadaObjectState[];
+  states: {[id: string]: ScadaObjectState};
   behavior: ScadaObjectBehavior[];
   properties: ScadaObjectProperty[];
 }
 
 export const emptyMetadata: ScadaObjectMetadata = {
   title: '',
-  initial: [],
+  states: {},
   behavior: [],
   properties: []
 };
@@ -126,6 +198,7 @@ const parseScadaObjectMetadataFromDom = (svgDoc: Document): ScadaObjectMetadata 
       return emptyMetadata;
     }
   } catch (_e) {
+    console.error(_e);
     return emptyMetadata;
   }
 };
@@ -201,8 +274,9 @@ export class ScadaObject {
         this.metadata = parseScadaObjectMetadataFromDom(doc);
         const defaults = defaultScadaObjectSettings(this.metadata);
         this.settings = mergeDeep<ScadaObjectSettings>({}, defaults, this.inputSettings || {});
+        this.prepareMetadata();
         this.prepareSvgShape(doc);
-        this.prepareStates();
+        this.initStates();
       })
     );
   }
@@ -228,17 +302,58 @@ export class ScadaObject {
     }
   }
 
+  private prepareMetadata() {
+    for (const stateId of Object.keys(this.metadata.states)) {
+      const state = this.metadata.states[stateId];
+      for (const elementState of state.state) {
+        this.prepareValue(elementState.show);
+        this.prepareValue(elementState.text?.content);
+        this.prepareValue(elementState.text?.font);
+        this.prepareValue(elementState.text?.color);
+        if (elementState.attributes) {
+          for (const attribute of elementState.attributes) {
+            this.prepareValue(attribute.value);
+          }
+        }
+      }
+    }
+  }
+
+  private prepareValue(value: ScadaObjectValue) {
+    if (value) {
+      if (value.type === 'function' && value.valueConvertFunction) {
+        try {
+          value.valueConverter = parseFunction(this.insertVariables(value.valueConvertFunction), ['value']);
+        } catch (e) {
+          value.valueConverter = (v) => v;
+        }
+      } else if (value.type === 'property') {
+        value.computedPropertyValue = this.getPropertyValue(value.propertyId);
+      } else if (value.type === 'valueFormat') {
+        if (value.units) {
+          this.prepareValue(value.units);
+        }
+        if (value.decimals) {
+          this.prepareValue(value.decimals);
+        }
+      }
+    }
+  }
+
+  private insertVariables(content: string): string {
+    for (const property of this.metadata.properties) {
+      const value = this.getPropertyValue(property.id);
+      content = insertVariable(content, property.id, value);
+    }
+    return content;
+  }
+
   private prepareSvgShape(doc: XMLDocument) {
     const elements = doc.getElementsByTagName('tb:metadata');
     for (let i=0;i<elements.length;i++) {
       elements.item(i).remove();
     }
-    let svgContent = doc.documentElement.innerHTML;
-    for (const property of this.metadata.properties) {
-      const value = this.settings[property.id] || '';
-      svgContent = insertVariable(svgContent, property.id, value);
-    }
-    this.svgShape = SVG().svg(svgContent);
+    this.svgShape = SVG().svg(doc.documentElement.innerHTML);
     this.svgShape.node.style.overflow = 'visible';
     this.svgShape.node.style['user-select'] = 'none';
     this.box = this.svgShape.bbox();
@@ -251,7 +366,7 @@ export class ScadaObject {
     }
   }
 
-  private prepareStates() {
+  private initStates() {
     for (const behavior of this.metadata.behavior) {
       if (behavior.type === ScadaObjectBehaviorType.getValue) {
         const getBehavior = behavior as ScadaObjectBehaviorGet;
@@ -266,8 +381,9 @@ export class ScadaObject {
         this.valueActions.push(valueGetter);
       }
     }
-    if (this.metadata.initial) {
-      this.updateState(this.metadata.initial);
+    const initialState = Object.values(this.metadata.states).find(s => s.initial);
+    if (initialState) {
+      this.updateState(initialState);
     }
     if (this.valueGetters.length) {
       const getValueObservables: Array<Observable<any>> = [];
@@ -301,23 +417,61 @@ export class ScadaObject {
   private onValue(id: string, value: any) {
     const getBehavior = this.metadata.behavior.find(b => b.id === id) as ScadaObjectBehaviorGet;
     value = this.normalizeValue(value, getBehavior.valueType);
-    const updateStates = this.filterUpdateStates(getBehavior.onUpdate, value);
+    const updateStates = filterUpdateStates(getBehavior.onUpdate, value);
     if (this.animationTimeline) {
       this.animationTimeline.finish();
     }
     for (const updateState of updateStates) {
-      this.updateState(updateState.state, value);
+      const state = this.metadata.states[updateState.stateId];
+      this.updateState(state, value);
     }
   }
 
-  private updateState(state: ScadaObjectState[], value?: any) {
-    for (const stateEntry of state) {
-      const tag = stateEntry.tag;
-      const elements = this.svgShape.find(`[tb\\:tag="${tag}"]`);
-      const attrs = this.computeAttributes(stateEntry.attributes, value);
-      elements.forEach(e => {
-        this.setElementAttributes(e, attrs, stateEntry.animate);
-      });
+  private updateState(state: ScadaObjectState, value?: any) {
+    if (state) {
+      for (const elementState of state.state) {
+        const tag = elementState.tag;
+        const elements = this.svgShape.find(`[tb\\:tag="${tag}"]`);
+        if (elements.length) {
+          if (elementState.show) {
+            const show: boolean = this.computeValue(elementState.show, value);
+            elements.forEach(e => {
+              if (show) {
+                e.show();
+              } else {
+                e.hide();
+              }
+            });
+          }
+          if (elementState.attributes) {
+            const attrs = this.computeAttributes(elementState.attributes, value);
+            elements.forEach(e => {
+              this.setElementAttributes(e, attrs, elementState.animate);
+            });
+          }
+          if (elementState.text) {
+            if (elementState.text.content) {
+              const text: string = this.computeValue(elementState.text.content, value);
+              elements.forEach(e => {
+                this.setElementText(e, text);
+              });
+            }
+            if (elementState.text.font || elementState.text.color) {
+              let font: Font = this.computeValue(elementState.text.font, value);
+              if (typeof font !== 'object') {
+                font = undefined;
+              }
+              let color: string = this.computeValue(elementState.text.color, value);
+              if (typeof color !== 'string') {
+                color = undefined;
+              }
+              elements.forEach(e => {
+                this.setElementFont(e, font, color);
+              });
+            }
+          }
+        }
+      }
     }
   }
 
@@ -339,11 +493,11 @@ export class ScadaObject {
     }
   }
 
-  private computeAttributes(attributes: ScadaObjectAttributeState[], value: any): {[attr: string]: any} {
+  private computeAttributes(attributes: ScadaObjectAttribute[], value: any): {[attr: string]: any} {
     const res: {[attr: string]: any} = {};
     for (const attribute of attributes) {
       const attr = attribute.name;
-      res[attr] = this.getAttributeValue(attribute, value);
+      res[attr] = this.computeValue(attribute.value, value);
     }
     return res;
   }
@@ -356,6 +510,41 @@ export class ScadaObject {
     }
   }
 
+  private setElementText(element: Element, text: string) {
+    let textElement: Text;
+    if (element.type === 'text') {
+      const children = element.children();
+      if (children.length && children[0].type === 'tspan') {
+        textElement = children[0] as Text;
+      } else {
+        textElement = element as Text;
+      }
+    } else if (element.type === 'tspan') {
+      textElement = element as Text;
+    }
+    if (textElement) {
+      textElement.text(text);
+    }
+  }
+
+  private setElementFont(element: Element, font: Font, color: string) {
+    if (element.type === 'text') {
+      const textElement = element as Text;
+      if (font) {
+        textElement.font({
+          family: font.family,
+          size: (isDefinedAndNotNull(font.size) && isDefinedAndNotNull(font.sizeUnit)) ?
+            font.size + font.sizeUnit : null,
+          weight: font.weight,
+          style: font.style
+        });
+      }
+      if (color) {
+        textElement.fill(color);
+      }
+    }
+  }
+
   private animation(element: Element, duration: number): Runner {
     if (!this.animationTimeline) {
       this.animationTimeline = new Timeline();
@@ -364,35 +553,55 @@ export class ScadaObject {
     return element.animate(duration, 0, 'now');
   }
 
-  private getAttributeValue(attribute: ScadaObjectAttributeState, value: any): any {
-    if (attribute.value.type === 'input') {
-      return value;
-    } else if (attribute.value.type === 'property') {
-      const id = attribute.value.propertyId;
-      return this.settings[id] || '';
+  private computeValue(objectValue: ScadaObjectValue, value: any): any {
+    if (objectValue) {
+      switch (objectValue.type) {
+        case 'input':
+          return value;
+        case 'constant':
+          return objectValue.constantValue;
+        case 'property':
+          return objectValue.computedPropertyValue;
+        case 'function':
+          try {
+            return objectValue.valueConverter(value);
+          } catch (_e) {
+            return value;
+          }
+        case 'valueFormat':
+          let units = '';
+          let decimals = 0;
+          if (objectValue.units) {
+            units = this.computeValue(objectValue.units, value);
+          }
+          if (objectValue.decimals) {
+            decimals = this.computeValue(objectValue.decimals, value);
+          }
+          return formatValue(value, decimals, units, false);
+      }
     } else {
       return '';
     }
   }
 
-  private filterUpdateStates(states: ScadaObjectUpdateState[], val: any): ScadaObjectUpdateState[] {
-    return states.filter(s => this.valueMatches(s.matcher, val));
-  }
-
-  private valueMatches(matcher: ValueMatcher, val: any): boolean {
-    switch (matcher.type) {
-      case 'any':
-        return true;
-      case 'constant':
-        return matcher.value === val;
-      case 'range':
-        if (isDefinedAndNotNull(val) && isNumeric(val)) {
-          const num = Number(val);
-          const range = matcher.range;
-          return ((!isNumber(range.from) || num >= range.from) && (!isNumber(range.to) || num < range.to));
-        } else {
-          return false;
+  private getPropertyValue(id: string): any {
+    const property = this.metadata.properties.find(p => p.id === id);
+    if (property) {
+      const value = this.settings[id];
+      if (isDefinedAndNotNull(value)) {
+        return value;
+      } else {
+        switch (property.type) {
+          case 'string':
+            return '';
+          case 'number':
+            return 0;
+          case 'color':
+            return '#000';
         }
+      }
+    } else {
+      return '';
     }
   }
 }

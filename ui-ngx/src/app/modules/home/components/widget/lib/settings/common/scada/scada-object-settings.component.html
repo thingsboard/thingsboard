@@ -32,17 +32,42 @@
       </tb-get-value-action-settings>
     </div>
   </div>
-  <div *ngIf="metadata?.properties?.length" class="tb-form-panel">
-    <div *ngFor="let property of metadata.properties" class="tb-form-row space-between">
-      <div class="fixed-title-width">{{ property.name }}</div>
-      <tb-color-input *ngIf="property.type === 'color'"
-                      asBoxInput
-                      colorClearButton
-                      formControlName="{{ property.id }}">
-      </tb-color-input>
-      <mat-form-field  *ngIf="property.type === 'number'" appearance="outline" class="number" subscriptSizing="dynamic">
-        <input matInput formControlName="{{ property.id }}" [min]="property.min" [max]="property.max" type="number" placeholder="{{ 'widget-config.set' | translate }}">
-      </mat-form-field>
+  <div *ngIf="propertyRows?.length" class="tb-form-panel">
+    <div *ngFor="let propertyRow of propertyRows" class="tb-form-row space-between">
+      <mat-slide-toggle *ngIf="propertyRow.switch" class="mat-slide fixed-title-width" formControlName="{{ propertyRow.switch.id }}">
+        {{ propertyRow.label }}
+      </mat-slide-toggle>
+      <div *ngIf="!propertyRow.switch" class="fixed-title-width">{{ propertyRow.label }}</div>
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <ng-container *ngFor="let property of propertyRow.properties">
+          <div *ngIf="property.subLabel" class="tb-small-label">{{ property.subLabel }}</div>
+          <mat-form-field  *ngIf="property.type === 'string'" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="{{ property.id }}" [required]="property.required" placeholder="{{ 'widget-config.set' | translate }}">
+            <div matSuffix *ngIf="property.fieldSuffix">{{ property.fieldSuffix }}</div>
+          </mat-form-field>
+          <tb-color-input *ngIf="property.type === 'color'"
+                          [required]="property.required"
+                          asBoxInput
+                          colorClearButton
+                          formControlName="{{ property.id }}">
+          </tb-color-input>
+          <mat-form-field  *ngIf="property.type === 'number'" appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="{{ property.id }}" [required]="property.required"
+                   [min]="property.min" [max]="property.max" [step]="property.step"
+                   type="number" placeholder="{{ 'widget-config.set' | translate }}">
+            <div matSuffix *ngIf="property.fieldSuffix">{{ property.fieldSuffix }}</div>
+          </mat-form-field>
+          <tb-font-settings *ngIf="property.type === 'font'"
+                            formControlName="{{ property.id }}"
+                            clearButton
+                            disabledLineHeight>
+          </tb-font-settings>
+          <tb-unit-input *ngIf="property.type === 'units'"
+                         [required]="property.required"
+                         formControlName="{{ property.id }}"></tb-unit-input>
+          <mat-divider *ngIf="property.divider" vertical></mat-divider>
+        </ng-container>
+      </div>
     </div>
   </div>
 </ng-container>
