@@ -22,4 +22,4 @@ Add any other context or screenshots about the feature request here.
 _____________________________________________________
 **Disclaimer** 
 
-We appreciate your contribution whether it is a bug report, feature request, or pull request with improvement (hopefully). Please comply with the <a href="https://opensource.guide/building-community/">Community ethics policy</a>, and do not expect us to answer your requests immediately. Also, do not treat *GitHub issues* as a support channel.
+We appreciate your contribution whether it is a bug report, feature request, or pull request with improvement (hopefully). Please comply with the [Community ethics policy](https://opensource.guide/building-community/), and do not expect us to answer your requests immediately. Also, do not treat *GitHub issues* as a support channel.
