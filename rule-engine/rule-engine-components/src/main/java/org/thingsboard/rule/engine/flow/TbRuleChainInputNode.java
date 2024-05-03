@@ -24,12 +24,12 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.RuleChainId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
@@ -57,52 +57,56 @@ public class TbRuleChainInputNode implements TbNode {
 
     private RuleChainId ruleChainId;
     private boolean forwardMsgToDefaultRuleChain;
+    private int tenantProfileMaxExecutionsPerMessage;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         TbRuleChainInputNodeConfiguration config = TbNodeUtils.convert(configuration, TbRuleChainInputNodeConfiguration.class);
-        this.forwardMsgToDefaultRuleChain = config.isForwardMsgToDefaultRuleChain();
-        if (forwardMsgToDefaultRuleChain) {
-            return;
+        if (config.getRuleChainId() == null) {
+            throw new TbNodeException("Rule chain must be set!", true);
         }
+        this.forwardMsgToDefaultRuleChain = config.isForwardMsgToDefaultRuleChain();
         UUID ruleChainUUID;
         try {
             ruleChainUUID = UUID.fromString(config.getRuleChainId());
         } catch (Exception e) {
             throw new TbNodeException("Failed to parse rule chain id: " + config.getRuleChainId(), true);
         }
-        if (ruleChainUUID.equals(ctx.getSelf().getRuleChainId().getId())) {
-            throw new TbNodeException("Forwarding messages to the current rule chain is not allowed!", true);
-        }
         this.ruleChainId = new RuleChainId(ruleChainUUID);
-        ctx.checkTenantEntity(ruleChainId);
+        ctx.checkTenantEntity(this.ruleChainId);
+        ctx.addTenantProfileListener(this::onTenantProfileUpdate);
+        onTenantProfileUpdate(ctx.getTenantProfile());
+    }
+
+    void onTenantProfileUpdate(TenantProfile tenantProfile) {
+        DefaultTenantProfileConfiguration configuration = (DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration();
+        tenantProfileMaxExecutionsPerMessage = configuration.getMaxRuleNodeExecutionsPerMessage();
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
-        RuleChainId ruleChainId = this.ruleChainId;
         if (forwardMsgToDefaultRuleChain) {
-            ruleChainId = getTargetRuleChainId(ctx, msg);
-            if (ruleChainId.equals(ctx.getSelf().getRuleChainId())) {
+            this.ruleChainId = getTargetRuleChainId(ctx, msg);
+            if (this.ruleChainId.equals(ctx.getSelf().getRuleChainId()) && tenantProfileMaxExecutionsPerMessage == 0) {
                 ctx.tellFailure(msg, new RuntimeException("Forwarding messages to the current rule chain is not allowed!"));
                 return;
             }
         }
-        ctx.input(msg, ruleChainId);
+        ctx.input(msg, this.ruleChainId);
     }
 
     @Override
     public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
         boolean hasChanges = false;
         switch (fromVersion) {
-            case 0:
+            case 0 -> {
                 if (!oldConfiguration.has("forwardMsgToDefaultRuleChain")) {
                     hasChanges = true;
                     ((ObjectNode) oldConfiguration).put("forwardMsgToDefaultRuleChain", false);
                 }
-                break;
-            default:
-                break;
+            }
+            default -> {
+            }
         }
         return new TbPair<>(hasChanges, oldConfiguration);
     }
@@ -115,15 +119,6 @@ public class TbRuleChainInputNode implements TbNode {
                     ctx.getAssetProfileCache().get(ctx.getTenantId(), (AssetId) msg.getOriginator()).getDefaultRuleChainId();
             default -> null;
         };
-        return Optional.ofNullable(targetRuleChainId).orElse(getRootRuleChainId(ctx));
-    }
-
-    private RuleChainId getRootRuleChainId(TbContext ctx) throws TbNodeException {
-        TenantId currentTenantId = ctx.getTenantId();
-        RuleChain rootTenantRuleChain = ctx.getRuleChainService().getRootTenantRuleChain(currentTenantId);
-        if (rootTenantRuleChain == null) {
-            throw new TbNodeException("Failed to find root rule chain for tenant with id: " + currentTenantId.getId(), true);
-        }
-        return rootTenantRuleChain.getId();
+        return Optional.ofNullable(targetRuleChainId).orElse(this.ruleChainId);
     }
 }
