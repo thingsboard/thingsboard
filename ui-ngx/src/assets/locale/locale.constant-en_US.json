@@ -1899,8 +1899,7 @@
                 "step": "Step",
                 "min-evaluation-period": "Minimum evaluation period",
                 "max-evaluation-period": "Maximum evaluation period"
-            },
-            "composite-operations-support": "Supports composite Read/Write/Observe operations"
+            }
         },
         "snmp": {
             "add-communication-config": "Add communication config",
