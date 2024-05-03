@@ -19,7 +19,8 @@ public enum CredentialsType {
     ANONYMOUS("anonymous"),
     BASIC("basic"),
     SAS("sas"),
-    CERT_PEM("cert.PEM");
+    CERT_PEM("cert.PEM"),
+    ACCESS_KEY("access.key"),;
 
     private final String label;
 

@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import org.thingsboard.rule.engine.mqtt.azure.AzureIotHubSasCredentials;
+import org.thingsboard.rule.engine.rest.AzureFunctionsCredentials;
 
 import javax.net.ssl.SSLException;
 
@@ -29,7 +30,8 @@ import javax.net.ssl.SSLException;
         @JsonSubTypes.Type(value = AnonymousCredentials.class, name = "anonymous"),
         @JsonSubTypes.Type(value = BasicCredentials.class, name = "basic"),
         @JsonSubTypes.Type(value = AzureIotHubSasCredentials.class, name = "sas"),
-        @JsonSubTypes.Type(value = CertPemCredentials.class, name = "cert.PEM")})
+        @JsonSubTypes.Type(value = CertPemCredentials.class, name = "cert.PEM"),
+        @JsonSubTypes.Type(value = AzureFunctionsCredentials.class, name = "access.key")})
 public interface ClientCredentials {
     @JsonIgnore
     CredentialsType getType();
