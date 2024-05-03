@@ -2730,6 +2730,8 @@
         "connectors-table-actions": "Actions",
         "connectors-table-key": "Key",
         "connectors-table-class": "Class",
+        "connector-created": "Connector created.",
+        "connector-updated": "Connector updated.",
         "rpc-command-save-template": "Save Template",
         "rpc-command-send": "Send",
         "rpc-command-result": "Response",
