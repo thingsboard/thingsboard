@@ -26,6 +26,7 @@ import org.springframework.cache.support.SimpleCacheManager;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.thingsboard.server.common.data.CacheConstants;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -53,8 +54,8 @@ public class CacheSpecsMapTest {
     @Test
     public void givenCacheConfig_whenCacheManagerReady_thenVerifyExistedCachesWithNoTransactionAwareCacheDecorator() {
         // We no longer use built-in transaction support for the caches, because we have our own cache cleanup and transaction logic that implements CAS.
-        assertThat(cacheManager.getCache("relations")).isInstanceOf(CaffeineCache.class);
-        assertThat(cacheManager.getCache("devices")).isInstanceOf(CaffeineCache.class);
+        assertThat(cacheManager.getCache(CacheConstants.RELATIONS_CACHE)).isInstanceOf(CaffeineCache.class);
+        assertThat(cacheManager.getCache(CacheConstants.DEVICE_CACHE)).isInstanceOf(CaffeineCache.class);
     }
 
     @Test

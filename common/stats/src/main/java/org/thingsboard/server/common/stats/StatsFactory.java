@@ -29,4 +29,6 @@ public interface StatsFactory {
 
     Timer createTimer(String key, String... tags);
 
+    StatsTimer createTimer(StatsType type, String name, String... tags);
+
 }

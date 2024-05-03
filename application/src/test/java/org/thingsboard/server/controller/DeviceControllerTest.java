@@ -84,6 +84,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -132,7 +133,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
 
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
-        savedTenant = doPost("/api/tenant", tenant, Tenant.class);
+        savedTenant = saveTenant(tenant);
         Assert.assertNotNull(savedTenant);
 
         tenantAdmin = new User();
@@ -151,8 +152,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
 
         loginSysAdmin();
 
-        doDelete("/api/tenant/" + savedTenant.getId().getId())
-                .andExpect(status().isOk());
+        deleteTenant(savedTenant.getId());
     }
 
     @Test
@@ -687,7 +687,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
 
         Tenant tenant2 = new Tenant();
         tenant2.setTitle("Different tenant");
-        Tenant savedTenant2 = doPost("/api/tenant", tenant2, Tenant.class);
+        Tenant savedTenant2 = saveTenant(tenant2);
         Assert.assertNotNull(savedTenant2);
 
         User tenantAdmin2 = new User();
@@ -721,9 +721,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
         testNotificationUpdateGatewayNever();
 
         loginSysAdmin();
-
-        doDelete("/api/tenant/" + savedTenant2.getId().getId())
-                .andExpect(status().isOk());
+        deleteTenant(savedTenant2.getId());
     }
 
     @Test
@@ -914,7 +912,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAnyAdditionalInfoAny(new Device(), new Device(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.DELETED, ActionType.DELETED, cntEntity, cntEntity,1);
+                ActionType.DELETED, ActionType.DELETED, cntEntity, cntEntity, 1);
         testNotificationUpdateGatewayNever();
     }
 
@@ -1319,7 +1317,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
         loginSysAdmin();
         Tenant tenant = new Tenant();
         tenant.setTitle("Different tenant");
-        Tenant savedDifferentTenant = doPost("/api/tenant", tenant, Tenant.class);
+        Tenant savedDifferentTenant = saveTenant(tenant);
         Assert.assertNotNull(savedDifferentTenant);
 
         User user = new User();
@@ -1380,8 +1378,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
                 .andExpect(statusReason(containsString(msgErrorNoFound("Device", savedAnotherDevice.getId().getId().toString()))));
 
         loginSysAdmin();
-        doDelete("/api/tenant/" + savedDifferentTenant.getId().getId())
-                .andExpect(status().isOk());
+        deleteTenant(savedDifferentTenant.getId());
     }
 
     @Test
@@ -1545,17 +1542,24 @@ public class DeviceControllerTest extends AbstractControllerTest {
         Device savedDevice = doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class);
 
         //check server attribute value
-        List<Map<String, Object>> values = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + savedDevice.getId() +
-                "/values/attributes/SERVER_SCOPE", new TypeReference<>() {
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Map<String, Object> actualAttribute = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + savedDevice.getId() +
+                    "/values/attributes/SERVER_SCOPE", new TypeReference<List<Map<String, Object>>>() {}).stream()
+                    .filter(att -> att.get("key").equals("DATA")).findFirst().get();
+            Assert.assertEquals(attributeValue, actualAttribute.get("value"));
         });
-        Map<String, Object> serverAttribute = values.stream().filter(att -> att.get("key").equals("DATA")).findFirst().get();
-        Assert.assertEquals(attributeValue, serverAttribute.get("value"));
 
         //update server attribute value
         String newAttributeValue = "testValue2";
         JsonNode content = JacksonUtil.toJsonNode("{\"DATA\": \"" + newAttributeValue + "\"}");
         doPost("/api/plugins/telemetry/" + EntityType.DEVICE.name() + "/" + savedDevice.getUuidId() + "/SERVER_SCOPE", content)
                 .andExpect(status().isOk());
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Map<String, Object> actualAttribute = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + savedDevice.getId() +
+                    "/values/attributes/SERVER_SCOPE", new TypeReference<List<Map<String, Object>>>() {}).stream()
+                    .filter(att -> att.get("key").equals("DATA")).findFirst().get();
+            Assert.assertEquals(newAttributeValue, actualAttribute.get("value"));
+        });
 
         //reimport devices
         String deviceName2 = "secondDevice";
@@ -1567,19 +1571,19 @@ public class DeviceControllerTest extends AbstractControllerTest {
         doPostWithTypedResponse("/api/device/bulk_import", request, new TypeReference<>() {});
         Device savedDevice2 = doGet("/api/tenant/devices?deviceName=" + deviceName2, Device.class);
 
-        //check attribute value was not changed after reimport
-        List<Map<String, Object>> values2 = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + savedDevice.getId() +
-                "/values/attributes/SERVER_SCOPE", new TypeReference<>() {
-        });
-        Map<String, Object> retrievedServerAttribute2 = values2.stream().filter(att -> att.get("key").equals("DATA")).findFirst().get();
-        Assert.assertEquals(newAttributeValue, retrievedServerAttribute2.get("value"));
-
         //check attribute for second device
-        List<Map<String, Object>> values3 = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + savedDevice2.getId() +
-                "/values/attributes/SERVER_SCOPE", new TypeReference<>() {
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Map<String, Object> actualAttribute = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + savedDevice2.getId() +
+                    "/values/attributes/SERVER_SCOPE", new TypeReference<List<Map<String, Object>>>() {}).stream()
+                    .filter(att -> att.get("key").equals("DATA")).findFirst().get();
+            Assert.assertEquals(attributeValue2, actualAttribute.get("value"));
         });
-        Map<String, Object> retrievedServerAttribute3 = values3.stream().filter(att -> att.get("key").equals("DATA")).findFirst().get();
-        Assert.assertEquals(attributeValue2, retrievedServerAttribute3.get("value"));
+
+        //check attribute value was not changed after reimport
+        Map<String, Object> actualAttribute = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + savedDevice.getId() +
+                "/values/attributes/SERVER_SCOPE", new TypeReference<List<Map<String, Object>>>() {}).stream()
+                .filter(att -> att.get("key").equals("DATA")).findFirst().get();
+        Assert.assertEquals(newAttributeValue, actualAttribute.get("value"));
     }
 
     private Device createDevice(String name) {

@@ -14,169 +14,67 @@
 /// limitations under the License.
 ///
 
-import { Component } from '@angular/core';
-import {
-  legendPositions,
-  legendPositionTranslationMap,
-  WidgetSettings,
-  WidgetSettingsComponent
-} from '@shared/models/widget.models';
+import { Component, TemplateRef, ViewChild } from '@angular/core';
+import { WidgetSettings } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { formatValue, mergeDeep } from '@core/utils';
-import {
-  LatestChartTooltipValueType,
-  latestChartTooltipValueTypes,
-  latestChartTooltipValueTypeTranslations
-} from '@home/components/widget/lib/chart/latest-chart.models';
-import {
-  pieChartLabelPositions,
-  pieChartLabelPositionTranslations
-} from '@home/components/widget/lib/chart/pie-chart.models';
 import {
   pieChartWidgetDefaultSettings,
   PieChartWidgetSettings
 } from '@home/components/widget/lib/chart/pie-chart-widget.models';
+import {
+  LatestChartWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/chart/latest-chart-widget-settings.component';
 
 @Component({
   selector: 'tb-pie-chart-widget-settings',
-  templateUrl: './pie-chart-widget-settings.component.html',
-  styleUrls: []
+  templateUrl: './latest-chart-widget-settings.component.html',
+  styleUrls: ['./../widget-settings.scss']
 })
-export class PieChartWidgetSettingsComponent extends WidgetSettingsComponent {
+export class PieChartWidgetSettingsComponent extends LatestChartWidgetSettingsComponent<PieChartWidgetSettings> {
 
-  pieChartLabelPositions = pieChartLabelPositions;
-
-  pieChartLabelPositionTranslationMap = pieChartLabelPositionTranslations;
-
-  legendPositions = legendPositions;
-
-  legendPositionTranslationMap = legendPositionTranslationMap;
-
-  latestChartTooltipValueTypes = latestChartTooltipValueTypes;
-
-  latestChartTooltipValueTypeTranslationMap = latestChartTooltipValueTypeTranslations;
-
-  pieChartWidgetSettingsForm: UntypedFormGroup;
-
-  valuePreviewFn = this._valuePreviewFn.bind(this);
-
-  tooltipValuePreviewFn = this._tooltipValuePreviewFn.bind(this);
+  @ViewChild('pieChart')
+  pieChartConfigTemplate: TemplateRef<any>;
 
   constructor(protected store: Store<AppState>,
-              private fb: UntypedFormBuilder) {
-    super(store);
+              protected fb: UntypedFormBuilder) {
+    super(store, fb);
   }
 
-  protected settingsForm(): UntypedFormGroup {
-    return this.pieChartWidgetSettingsForm;
+  protected defaultLatestChartSettings() {
+    return pieChartWidgetDefaultSettings;
   }
 
-  protected defaultSettings(): WidgetSettings {
-    return mergeDeep<PieChartWidgetSettings>({} as PieChartWidgetSettings, pieChartWidgetDefaultSettings);
+  public latestChartConfigTemplate(): TemplateRef<any> {
+    return this.pieChartConfigTemplate;
   }
 
-  protected onSettingsSet(settings: WidgetSettings) {
-    this.pieChartWidgetSettingsForm = this.fb.group({
-      showLabel: [settings.showLabel, []],
-      labelPosition: [settings.labelPosition, []],
-      labelFont: [settings.labelFont, []],
-      labelColor: [settings.labelColor, []],
-
-      borderWidth: [settings.borderWidth, [Validators.min(0)]],
-      borderColor: [settings.borderColor, []],
-
-      radius: [settings.radius, [Validators.min(0), Validators.max(100)]],
-
-      clockwise: [settings.clockwise, []],
-      sortSeries: [settings.sortSeries, []],
-
-      animation: [settings.animation, []],
-
-      showLegend: [settings.showLegend, []],
-      legendPosition: [settings.legendPosition, []],
-      legendLabelFont: [settings.legendLabelFont, []],
-      legendLabelColor: [settings.legendLabelColor, []],
-      legendValueFont: [settings.legendValueFont, []],
-      legendValueColor: [settings.legendValueColor, []],
-
-      showTooltip: [settings.showTooltip, []],
-      tooltipValueType: [settings.tooltipValueType, []],
-      tooltipValueDecimals: [settings.tooltipValueDecimals, []],
-      tooltipValueFont: [settings.tooltipValueFont, []],
-      tooltipValueColor: [settings.tooltipValueColor, []],
-      tooltipBackgroundColor: [settings.tooltipBackgroundColor, []],
-      tooltipBackgroundBlur: [settings.tooltipBackgroundBlur, []],
-
-      background: [settings.background, []]
-    });
+  protected setupLatestChartControls(latestChartWidgetSettingsForm: UntypedFormGroup, settings: WidgetSettings) {
+    latestChartWidgetSettingsForm.addControl('showLabel', this.fb.control(settings.showLabel, []));
+    latestChartWidgetSettingsForm.addControl('labelPosition', this.fb.control(settings.labelPosition, []));
+    latestChartWidgetSettingsForm.addControl('labelFont', this.fb.control(settings.labelFont, []));
+    latestChartWidgetSettingsForm.addControl('labelColor', this.fb.control(settings.labelColor, []));
+    latestChartWidgetSettingsForm.addControl('borderWidth', this.fb.control(settings.borderWidth, [Validators.min(0)]));
+    latestChartWidgetSettingsForm.addControl('borderColor', this.fb.control(settings.borderColor, []));
+    latestChartWidgetSettingsForm.addControl('radius', this.fb.control(settings.radius, []));
+    latestChartWidgetSettingsForm.addControl('clockwise', this.fb.control(settings.clockwise, []));
   }
 
-  protected validatorTriggers(): string[] {
-    return ['showLabel', 'showLegend', 'showTooltip'];
+  protected latestChartValidatorTriggers(): string[] {
+    return ['showLabel'];
   }
 
-  protected updateValidators(emitEvent: boolean) {
-    const showLabel: boolean = this.pieChartWidgetSettingsForm.get('showLabel').value;
-    const showLegend: boolean = this.pieChartWidgetSettingsForm.get('showLegend').value;
-    const showTooltip: boolean = this.pieChartWidgetSettingsForm.get('showTooltip').value;
-
+  protected updateLatestChartValidators(latestChartWidgetSettingsForm: UntypedFormGroup, emitEvent: boolean, trigger?: string) {
+    const showLabel: boolean = latestChartWidgetSettingsForm.get('showLabel').value;
     if (showLabel) {
-      this.pieChartWidgetSettingsForm.get('labelPosition').enable();
-      this.pieChartWidgetSettingsForm.get('labelFont').enable();
-      this.pieChartWidgetSettingsForm.get('labelColor').enable();
+      latestChartWidgetSettingsForm.get('labelPosition').enable();
+      latestChartWidgetSettingsForm.get('labelFont').enable();
+      latestChartWidgetSettingsForm.get('labelColor').enable();
     } else {
-      this.pieChartWidgetSettingsForm.get('labelPosition').disable();
-      this.pieChartWidgetSettingsForm.get('labelFont').disable();
-      this.pieChartWidgetSettingsForm.get('labelColor').disable();
-    }
-
-    if (showLegend) {
-      this.pieChartWidgetSettingsForm.get('legendPosition').enable();
-      this.pieChartWidgetSettingsForm.get('legendLabelFont').enable();
-      this.pieChartWidgetSettingsForm.get('legendLabelColor').enable();
-      this.pieChartWidgetSettingsForm.get('legendValueFont').enable();
-      this.pieChartWidgetSettingsForm.get('legendValueColor').enable();
-    } else {
-      this.pieChartWidgetSettingsForm.get('legendPosition').disable();
-      this.pieChartWidgetSettingsForm.get('legendLabelFont').disable();
-      this.pieChartWidgetSettingsForm.get('legendLabelColor').disable();
-      this.pieChartWidgetSettingsForm.get('legendValueFont').disable();
-      this.pieChartWidgetSettingsForm.get('legendValueColor').disable();
-    }
-    if (showTooltip) {
-      this.pieChartWidgetSettingsForm.get('tooltipValueType').enable();
-      this.pieChartWidgetSettingsForm.get('tooltipValueDecimals').enable();
-      this.pieChartWidgetSettingsForm.get('tooltipValueFont').enable();
-      this.pieChartWidgetSettingsForm.get('tooltipValueColor').enable();
-      this.pieChartWidgetSettingsForm.get('tooltipBackgroundColor').enable();
-      this.pieChartWidgetSettingsForm.get('tooltipBackgroundBlur').enable();
-    } else {
-      this.pieChartWidgetSettingsForm.get('tooltipValueType').disable();
-      this.pieChartWidgetSettingsForm.get('tooltipValueDecimals').disable();
-      this.pieChartWidgetSettingsForm.get('tooltipValueFont').disable();
-      this.pieChartWidgetSettingsForm.get('tooltipValueColor').disable();
-      this.pieChartWidgetSettingsForm.get('tooltipBackgroundColor').disable();
-      this.pieChartWidgetSettingsForm.get('tooltipBackgroundBlur').disable();
+      latestChartWidgetSettingsForm.get('labelPosition').disable();
+      latestChartWidgetSettingsForm.get('labelFont').disable();
+      latestChartWidgetSettingsForm.get('labelColor').disable();
     }
   }
-
-  private _valuePreviewFn(): string {
-    const units: string = this.widgetConfig.config.units;
-    const decimals: number = this.widgetConfig.config.decimals;
-    return formatValue(110, decimals, units, false);
-  }
-
-  private _tooltipValuePreviewFn(): string {
-    const tooltipValueType: LatestChartTooltipValueType = this.pieChartWidgetSettingsForm.get('tooltipValueType').value;
-    const decimals: number = this.pieChartWidgetSettingsForm.get('tooltipValueDecimals').value;
-    if (tooltipValueType === LatestChartTooltipValueType.percentage) {
-      return formatValue(35, decimals, '%', false);
-    } else {
-      const units: string = this.widgetConfig.config.units;
-      return formatValue(110, decimals, units, false);
-    }
-  }
-
 }

@@ -31,6 +31,7 @@ import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.housekeeper.CleanUpService;
 import org.thingsboard.server.dao.relation.RelationService;
 
 import java.util.Collections;
@@ -63,6 +64,10 @@ public abstract class AbstractEntityService {
     @Autowired(required = false)
     protected EdgeService edgeService;
 
+    @Autowired
+    @Lazy
+    protected CleanUpService cleanUpService;
+
     protected void createRelation(TenantId tenantId, EntityRelation relation) {
         log.debug("Creating relation: {}", relation);
         relationService.saveRelation(tenantId, relation);
@@ -71,11 +76,6 @@ public abstract class AbstractEntityService {
     protected void deleteRelation(TenantId tenantId, EntityRelation relation) {
         log.debug("Deleting relation: {}", relation);
         relationService.deleteRelation(tenantId, relation);
-    }
-
-    protected void deleteEntityRelations(TenantId tenantId, EntityId entityId) {
-        relationService.deleteEntityRelations(tenantId, entityId);
-        alarmService.deleteEntityAlarmRelations(tenantId, entityId);
     }
 
     protected static Optional<ConstraintViolationException> extractConstraintViolationException(Exception t) {

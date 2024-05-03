@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperServiceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
@@ -66,6 +67,7 @@ public class KafkaTbTransportQueueFactory implements TbTransportQueueFactory {
     private final TbQueueAdmin transportApiRequestAdmin;
     private final TbQueueAdmin transportApiResponseAdmin;
     private final TbQueueAdmin notificationAdmin;
+    private final TbQueueAdmin housekeeperAdmin;
 
     public KafkaTbTransportQueueFactory(TbKafkaSettings kafkaSettings,
                                         TbServiceInfoProvider serviceInfoProvider,
@@ -90,6 +92,7 @@ public class KafkaTbTransportQueueFactory implements TbTransportQueueFactory {
         this.transportApiRequestAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getTransportApiRequestConfigs());
         this.transportApiResponseAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getTransportApiResponseConfigs());
         this.notificationAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getNotificationsConfigs());
+        this.housekeeperAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getHousekeeperConfigs());
     }
 
     @Override
@@ -171,6 +174,16 @@ public class KafkaTbTransportQueueFactory implements TbTransportQueueFactory {
         requestBuilder.defaultTopic(topicService.buildTopicName(coreSettings.getUsageStatsTopic()));
         requestBuilder.admin(coreAdmin);
         return requestBuilder.build();
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> createHousekeeperMsgProducer() {
+        return TbKafkaProducerTemplate.<TbProtoQueueMsg<ToHousekeeperServiceMsg>>builder()
+                .settings(kafkaSettings)
+                .clientId("tb-transport-housekeeper-producer-" + serviceInfoProvider.getServiceId())
+                .defaultTopic(topicService.buildTopicName(coreSettings.getHousekeeperTopic()))
+                .admin(housekeeperAdmin)
+                .build();
     }
 
     @PreDestroy

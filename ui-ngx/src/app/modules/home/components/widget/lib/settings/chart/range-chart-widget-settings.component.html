@@ -92,8 +92,8 @@
           <div translate>widgets.time-series-chart.line-type</div>
           <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="lineType">
-              <mat-option *ngFor="let lineType of timeSeriesLineTypes" [value]="lineType">
-                {{ timeSeriesLineTypeTranslations.get(lineType) | translate }}
+              <mat-option *ngFor="let lineType of chartLineTypes" [value]="lineType">
+                {{ chartLineTypeTranslations.get(lineType) | translate }}
               </mat-option>
             </mat-select>
           </mat-form-field>
@@ -121,8 +121,8 @@
           <div fxLayout="row" fxFlex.lt-md fxLayoutAlign="start center" fxLayoutGap="8px">
             <mat-form-field class="medium-width" fxFlex.lt-md appearance="outline" subscriptSizing="dynamic">
               <mat-select formControlName="pointLabelPosition">
-                <mat-option *ngFor="let position of seriesLabelPositions" [value]="position">
-                  {{ seriesLabelPositionTranslations.get(position) | translate }}
+                <mat-option *ngFor="let position of chartLabelPositions" [value]="position">
+                  {{ chartLabelPositionTranslations.get(position) | translate }}
                 </mat-option>
               </mat-select>
             </mat-form-field>
@@ -151,8 +151,8 @@
           <div translate>widgets.time-series-chart.series.point.point-shape</div>
           <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="pointShape">
-              <mat-option *ngFor="let shape of echartsShapes" [value]="shape">
-                {{ echartsShapeTranslations.get(shape) | translate }}
+              <mat-option *ngFor="let shape of chartShapes" [value]="shape">
+                {{ chartShapeTranslations.get(shape) | translate }}
               </mat-option>
             </mat-select>
           </mat-form-field>
@@ -303,9 +303,9 @@
         </ng-template>
       </mat-expansion-panel>
     </div>
-    <tb-echarts-animation-settings
+    <tb-chart-animation-settings
         formControlName="animation">
-    </tb-echarts-animation-settings>
+    </tb-chart-animation-settings>
     <div class="tb-form-panel">
       <div class="tb-form-panel-title" translate>widget-config.card-appearance</div>
       <div class="tb-form-row space-between">

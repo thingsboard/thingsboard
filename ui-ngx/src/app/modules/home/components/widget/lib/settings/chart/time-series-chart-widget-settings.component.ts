@@ -28,12 +28,12 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { formatValue, isDefinedAndNotNull, mergeDeep } from '@core/utils';
 import { DateFormatProcessor, DateFormatSettings } from '@shared/models/widget-settings.models';
-import { EChartsTooltipTrigger } from '../../chart/echarts-widget.models';
 import {
   timeSeriesChartWidgetDefaultSettings,
   TimeSeriesChartWidgetSettings
 } from '@home/components/widget/lib/chart/time-series-chart-widget.models';
 import {
+  TimeSeriesChartTooltipTrigger,
   TimeSeriesChartKeySettings,
   TimeSeriesChartType,
   TimeSeriesChartYAxes,
@@ -65,7 +65,7 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
 
   TimeSeriesChartType = TimeSeriesChartType;
 
-  EChartsTooltipTrigger = EChartsTooltipTrigger;
+  EChartsTooltipTrigger = TimeSeriesChartTooltipTrigger;
 
   legendPositions = legendPositions;
 

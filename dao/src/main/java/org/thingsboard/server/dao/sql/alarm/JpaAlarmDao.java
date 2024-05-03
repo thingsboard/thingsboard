@@ -21,6 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -48,9 +50,11 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.alarm.AlarmDao;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -69,6 +73,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import static org.thingsboard.server.common.data.page.SortOrder.Direction.ASC;
 import static org.thingsboard.server.dao.DaoUtil.convertTenantEntityTypesToDto;
 import static org.thingsboard.server.dao.DaoUtil.toPageable;
 
@@ -297,9 +302,15 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
-    public PageData<AlarmId> findAlarmIdsByOriginatorId(TenantId tenantId, EntityId originatorId, PageLink pageLink) {
-        return DaoUtil.pageToPageData(alarmRepository.findAlarmIdsByOriginatorId(tenantId.getId(), originatorId.getId(), DaoUtil.toPageable(pageLink)))
-                .mapData(AlarmId::new);
+    public PageData<TbPair<UUID, Long>> findAlarmIdsByOriginatorId(TenantId tenantId, EntityId originatorId, long createdTimeOffset, AlarmId idOffset, int limit) {
+        Slice<TbPair<UUID, Long>> result;
+        Pageable pageRequest = toPageable(new PageLink(limit), List.of(SortOrder.of("createdTime", ASC), SortOrder.of("id", ASC)));
+        if (idOffset == null) {
+            result = alarmRepository.findAlarmIdsByOriginatorId(originatorId.getId(), pageRequest);
+        } else {
+            result = alarmRepository.findAlarmIdsByOriginatorId(originatorId.getId(), createdTimeOffset, idOffset.getId(), pageRequest);
+        }
+        return DaoUtil.pageToPageData(result);
     }
 
     @Override
@@ -315,8 +326,13 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
     }
 
     @Override
-    public void deleteEntityAlarmRecords(TenantId tenantId, EntityId entityId) {
-        entityAlarmRepository.deleteByEntityId(entityId.getId());
+    public List<EntityAlarm> findEntityAlarmRecordsByEntityId(TenantId tenantId, EntityId entityId) {
+        return DaoUtil.convertDataList(entityAlarmRepository.findAllByEntityId(entityId.getId()));
+    }
+
+    @Override
+    public int deleteEntityAlarmRecords(TenantId tenantId, EntityId entityId) {
+        return entityAlarmRepository.deleteByEntityId(entityId.getId());
     }
 
     @Override

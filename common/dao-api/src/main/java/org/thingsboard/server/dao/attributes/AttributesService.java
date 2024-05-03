@@ -71,4 +71,6 @@ public interface AttributesService {
 
     List<String> findAllKeysByEntityIds(TenantId tenantId, List<EntityId> entityIds, String scope);
 
+    int removeAllByEntityId(TenantId tenantId, EntityId entityId);
+
 }

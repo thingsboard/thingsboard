@@ -50,12 +50,17 @@ public class AuditLogsCleanUpService extends AbstractCleanUpService {
     @Scheduled(initialDelayString = "#{T(org.apache.commons.lang3.RandomUtils).nextLong(0, ${sql.ttl.audit_logs.checking_interval_ms})}",
             fixedDelayString = "${sql.ttl.audit_logs.checking_interval_ms}")
     public void cleanUp() {
-        long auditLogsExpTime = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(ttlInSec);
+        long auditLogsExpTime = getCurrentTimeMillis() - TimeUnit.SECONDS.toMillis(ttlInSec);
+        log.debug("cleanup {}", auditLogsExpTime);
         if (isSystemTenantPartitionMine()) {
             auditLogDao.cleanUpAuditLogs(auditLogsExpTime);
         } else {
             partitioningRepository.cleanupPartitionsCache(AUDIT_LOG_TABLE_NAME, auditLogsExpTime, TimeUnit.HOURS.toMillis(partitionSizeInHours));
         }
+    }
+
+    public long getCurrentTimeMillis() {
+        return System.currentTimeMillis();
     }
 
 }
