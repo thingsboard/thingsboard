@@ -193,7 +193,7 @@ ui:
   # Help parameters
   help:
     # Base URL for UI help assets
-    base-url: "${UI_HELP_BASE_URL:https://raw.githubusercontent.com/thingsboard/thingsboard-ui-help/release-3.6.3}"
+    base-url: "${UI_HELP_BASE_URL:https://raw.githubusercontent.com/thingsboard/thingsboard-ui-help/release-3.7}"
 
 # Database telemetry parameters
 database:
@@ -505,6 +505,12 @@ cache:
     assets:
       timeToLiveInMinutes: "${CACHE_SPECS_ASSETS_TTL:1440}" # Asset cache TTL
       maxSize: "${CACHE_SPECS_ASSETS_MAX_SIZE:10000}" # 0 means the cache is disabled
+    customers:
+      timeToLiveInMinutes: "${CACHE_SPECS_CUSTOMERS_TTL:1440}" # Customer cache TTL
+      maxSize: "${CACHE_SPECS_CUSTOMERS_MAX_SIZE:10000}" # 0 means the cache is disabled
+    users:
+      timeToLiveInMinutes: "${CACHE_SPECS_USERS_TTL:1440}" # User cache TTL
+      maxSize: "${CACHE_SPECS_USERS_MAX_SIZE:10000}" # 0 means the cache is disabled
     entityViews:
       timeToLiveInMinutes: "${CACHE_SPECS_ENTITY_VIEWS_TTL:1440}" # Entity view cache TTL
       maxSize: "${CACHE_SPECS_ENTITY_VIEWS_MAX_SIZE:10000}" # 0 means the cache is disabled
@@ -1445,6 +1451,16 @@ queue:
     #      tb_rule_engine.sq:
     #        - key: max.poll.records
     #          value: "${TB_QUEUE_KAFKA_SQ_MAX_POLL_RECORDS:1024}"
+      tb_housekeeper:
+        # Consumer properties for Housekeeper tasks topic
+        - key: max.poll.records
+          # Amount of records to be returned in a single poll. For Housekeeper tasks topic, we should consume messages (tasks) one by one
+          value: "${TB_QUEUE_KAFKA_HOUSEKEEPER_MAX_POLL_RECORDS:1}"
+      tb_housekeeper.reprocessing:
+        # Consumer properties for Housekeeper reprocessing topic
+        - key: max.poll.records
+          # Amount of records to be returned in a single poll. For Housekeeper reprocessing topic, we should consume messages (tasks) one by one
+          value: "${TB_QUEUE_KAFKA_HOUSEKEEPER_REPROCESSING_MAX_POLL_RECORDS:1}"
     other-inline: "${TB_QUEUE_KAFKA_OTHER_PROPERTIES:}" # In this section you can specify custom parameters (semicolon separated) for Kafka consumer/producer/admin # Example "metrics.recording.level:INFO;metrics.sample.window.ms:30000"
     other: # DEPRECATED. In this section, you can specify custom parameters for Kafka consumer/producer and expose the env variables to configure outside
     #  - key: "request.timeout.ms" # refer to https://docs.confluent.io/platform/current/installation/configuration/producer-configs.html#producerconfigs_request.timeout.ms
@@ -1466,6 +1482,10 @@ queue:
       ota-updates: "${TB_QUEUE_KAFKA_OTA_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
       # Kafka properties for Version Control topic
       version-control: "${TB_QUEUE_KAFKA_VC_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      # Kafka properties for Housekeeper tasks topic
+      housekeeper: "${TB_QUEUE_KAFKA_HOUSEKEEPER_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
+      # Kafka properties for Housekeeper reprocessing topic; retention.ms is set to 90 days; partitions is set to 1 since only one reprocessing service is running at a time
+      housekeeper-reprocessing: "${TB_QUEUE_KAFKA_HOUSEKEEPER_REPROCESSING_TOPIC_PROPERTIES:retention.ms:7776000000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
     consumer-stats:
       # Prints lag between consumer group offset and last messages offset in Kafka topics
       enabled: "${TB_QUEUE_KAFKA_CONSUMER_STATS_ENABLED:true}"
@@ -1621,6 +1641,29 @@ queue:
       enabled: "${TB_QUEUE_CORE_STATS_ENABLED:true}"
       # Statistics printing interval for Core microservices
       print-interval-ms: "${TB_QUEUE_CORE_STATS_PRINT_INTERVAL_MS:60000}"
+    housekeeper:
+      # Topic name for Housekeeper tasks
+      topic: "${TB_HOUSEKEEPER_TOPIC:tb_housekeeper}"
+      # Topic name for Housekeeper tasks to be reprocessed
+      reprocessing-topic: "${TB_HOUSEKEEPER_REPROCESSING_TOPIC:tb_housekeeper.reprocessing}"
+      # Poll interval for topics related to Housekeeper
+      poll-interval-ms: "${TB_HOUSEKEEPER_POLL_INTERVAL_MS:500}"
+      # Timeout in milliseconds for task processing. Tasks that fail to finish on time will be submitted for reprocessing
+      task-processing-timeout-ms: "${TB_HOUSEKEEPER_TASK_PROCESSING_TIMEOUT_MS:120000}"
+      # Comma-separated list of task types that shouldn't be processed. Available task types:
+      # DELETE_ATTRIBUTES, DELETE_TELEMETRY (both DELETE_LATEST_TS and DELETE_TS_HISTORY will be disabled),
+      # DELETE_LATEST_TS, DELETE_TS_HISTORY, DELETE_EVENTS, DELETE_ALARMS, UNASSIGN_ALARMS
+      disabled-task-types: "${TB_HOUSEKEEPER_DISABLED_TASK_TYPES:}"
+      # Delay in milliseconds between tasks reprocessing
+      task-reprocessing-delay-ms: "${TB_HOUSEKEEPER_TASK_REPROCESSING_DELAY_MS:3000}"
+      # Maximum amount of task reprocessing attempts. After exceeding, the task will be dropped
+      max-reprocessing-attempts: "${TB_HOUSEKEEPER_MAX_REPROCESSING_ATTEMPTS:10}"
+      stats:
+        # Enable/disable statistics for Housekeeper
+        enabled: "${TB_HOUSEKEEPER_STATS_ENABLED:true}"
+        # Statistics printing interval for Housekeeper
+        print-interval-ms: "${TB_HOUSEKEEPER_STATS_PRINT_INTERVAL_MS:60000}"
+
   vc:
     # Default topic name for Kafka, RabbitMQ, etc.
     topic: "${TB_QUEUE_VC_TOPIC:tb_version_control}"
@@ -1730,3 +1773,7 @@ management:
       exposure:
         # Expose metrics endpoint (use value 'prometheus' to enable prometheus metrics).
         include: '${METRICS_ENDPOINTS_EXPOSE:info}'
+  health:
+    elasticsearch:
+      # Enable the org.springframework.boot.actuate.elasticsearch.ElasticsearchRestClientHealthIndicator.doHealthCheck
+      enabled: "false"

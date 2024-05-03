@@ -18,10 +18,10 @@ package org.thingsboard.rule.engine.filter;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -38,7 +38,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class TbJsSwitchNodeTest {
 
     private TbJsSwitchNode node;

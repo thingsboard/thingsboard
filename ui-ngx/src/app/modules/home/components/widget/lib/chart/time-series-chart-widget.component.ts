@@ -27,7 +27,10 @@ import {
   ViewChild,
   ViewEncapsulation
 } from '@angular/core';
-import { timeSeriesChartKeyDefaultSettings, TimeSeriesChartKeySettings } from '@home/components/widget/lib/chart/time-series-chart.models';
+import {
+  timeSeriesChartKeyDefaultSettings,
+  TimeSeriesChartKeySettings
+} from '@home/components/widget/lib/chart/time-series-chart.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { Observable } from 'rxjs';
 import { backgroundStyle, ComponentStyle, overlayStyle, textStyle } from '@shared/models/widget-settings.models';

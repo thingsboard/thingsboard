@@ -42,6 +42,8 @@ public interface EdgeService extends EntityDaoService {
 
     Edge findEdgeByTenantIdAndName(TenantId tenantId, String name);
 
+    ListenableFuture<Edge> findEdgeByTenantIdAndNameAsync(TenantId tenantId, String name);
+
     Optional<Edge> findEdgeByRoutingKey(TenantId tenantId, String routingKey);
 
     Edge saveEdge(Edge edge);
