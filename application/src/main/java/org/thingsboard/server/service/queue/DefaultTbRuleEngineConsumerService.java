@@ -56,7 +56,6 @@ import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 
 import jakarta.annotation.PostConstruct;
-import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -88,10 +87,9 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                                               TbApiUsageStateService apiUsageStateService,
                                               PartitionService partitionService,
                                               ApplicationEventPublisher eventPublisher,
-                                              JwtSettingsService jwtSettingsService,
-                                              JwtTokenFactory jwtTokenFactory) {
+                                              JwtSettingsService jwtSettingsService) {
         super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, apiUsageStateService, partitionService,
-                eventPublisher, tbRuleEngineQueueFactory.createToRuleEngineNotificationsMsgConsumer(), jwtSettingsService, jwtTokenFactory);
+                eventPublisher, tbRuleEngineQueueFactory.createToRuleEngineNotificationsMsgConsumer(), jwtSettingsService);
         this.ctx = ctx;
         this.tbDeviceRpcService = tbDeviceRpcService;
         this.queueService = queueService;
