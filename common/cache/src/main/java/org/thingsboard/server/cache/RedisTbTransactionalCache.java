@@ -29,7 +29,6 @@ import org.springframework.data.redis.core.types.Expiration;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.thingsboard.server.common.data.FstStatsService;
-import redis.clients.jedis.Connection;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.util.JedisClusterCRC16;
@@ -69,9 +68,10 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
         this.evictExpiration = Expiration.from(configuration.getEvictTtlInMs(), TimeUnit.MILLISECONDS);
         this.cacheTtl = Optional.ofNullable(cacheSpecsMap)
                 .map(CacheSpecsMap::getSpecs)
-                .map(x -> x.get(cacheName))
+                .map(specs -> specs.get(cacheName))
                 .map(CacheSpecs::getTimeToLiveInMinutes)
-                .map(t -> Expiration.from(t, TimeUnit.MINUTES))
+                .filter(ttl -> !ttl.equals(0))
+                .map(ttl -> Expiration.from(ttl, TimeUnit.MINUTES))
                 .orElseGet(Expiration::persistent);
     }
 

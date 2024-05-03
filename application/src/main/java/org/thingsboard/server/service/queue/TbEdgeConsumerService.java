@@ -13,24 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.stats;
+package org.thingsboard.server.service.queue;
 
-public enum StatsType {
-    RULE_ENGINE("ruleEngine"),
-    CORE("core"),
-    TRANSPORT("transport"),
-    JS_INVOKE("jsInvoke"),
-    RATE_EXECUTOR("rateExecutor"),
-    HOUSEKEEPER("housekeeper"),
-    EDGE("edge");
+import org.springframework.context.ApplicationListener;
+import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 
-    private final String name;
+public interface TbEdgeConsumerService extends ApplicationListener<PartitionChangeEvent> {
 
-    StatsType(String name) {
-        this.name = name;
-    }
-
-    public String getName() {
-        return name;
-    }
 }

@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.msg;
 
 import lombok.Getter;
+import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 
@@ -36,7 +37,7 @@ public enum MsgType {
     /**
      * ADDED/UPDATED/DELETED events for main entities.
      *
-     * See {@link org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg}
+     * See {@link ComponentLifecycleMsg}
      */
     COMPONENT_LIFE_CYCLE_MSG,
 
@@ -126,6 +127,7 @@ public enum MsgType {
      * Message that is sent on Edge Event to Edge Session
      */
     EDGE_EVENT_UPDATE_TO_EDGE_SESSION_MSG,
+    EDGE_HIGH_PRIORITY_TO_EDGE_SESSION_MSG,
 
     /**
      * Messages that are sent to and from edge session to start edge synchronization process
@@ -143,4 +145,5 @@ public enum MsgType {
     MsgType(boolean ignoreOnStart) {
         this.ignoreOnStart = ignoreOnStart;
     }
+
 }

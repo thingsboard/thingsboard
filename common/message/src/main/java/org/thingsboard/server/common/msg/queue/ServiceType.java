@@ -22,4 +22,5 @@ public enum ServiceType {
     public static ServiceType of(String serviceType) {
         return ServiceType.valueOf(serviceType.replace("-", "_").toUpperCase());
     }
+
 }

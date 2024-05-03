@@ -23,8 +23,10 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.Queue;
@@ -77,6 +79,8 @@ public class DefaultTbClusterServiceTest {
     protected PartitionService partitionService;
     @MockBean
     protected TbQueueProducerProvider producerProvider;
+    @MockBean
+    protected TbTransactionalCache<EdgeId, String> edgeCache;
 
     @SpyBean
     protected TopicService topicService;
@@ -246,4 +250,5 @@ public class DefaultTbClusterServiceTest {
         queue.setPartitions(10);
         return queue;
     }
+
 }

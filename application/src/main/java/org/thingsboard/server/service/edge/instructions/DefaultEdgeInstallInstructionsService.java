@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.edge.instructions;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +28,6 @@ import org.thingsboard.server.dao.util.DeviceConnectivityUtil;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.install.InstallScripts;
 
-import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -58,16 +58,12 @@ public class DefaultEdgeInstallInstructionsService implements EdgeInstallInstruc
 
     @Override
     public EdgeInstructions getInstallInstructions(Edge edge, String installationMethod, HttpServletRequest request) {
-        switch (installationMethod.toLowerCase()) {
-            case "docker":
-                return getDockerInstallInstructions(edge, request);
-            case "ubuntu":
-                return getUbuntuInstallInstructions(edge, request);
-            case "centos":
-                return getCentosInstallInstructions(edge, request);
-            default:
-                throw new IllegalArgumentException("Unsupported installation method for Edge: " + installationMethod);
-        }
+        return switch (installationMethod.toLowerCase()) {
+            case "docker" -> getDockerInstallInstructions(edge, request);
+            case "ubuntu" -> getUbuntuInstallInstructions(edge, request);
+            case "centos" -> getCentosInstallInstructions(edge, request);
+            default -> throw new IllegalArgumentException("Unsupported installation method for Edge: " + installationMethod);
+        };
     }
 
     private EdgeInstructions getDockerInstallInstructions(Edge edge, HttpServletRequest request) {
@@ -131,4 +127,5 @@ public class DefaultEdgeInstallInstructionsService implements EdgeInstallInstruc
     private Path getEdgeInstallInstructionsDir() {
         return Paths.get(installScripts.getDataDir(), InstallScripts.JSON_DIR, EDGE_DIR, INSTRUCTIONS_DIR, INSTALL_DIR);
     }
+
 }

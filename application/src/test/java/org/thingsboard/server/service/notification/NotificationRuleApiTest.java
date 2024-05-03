@@ -780,7 +780,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
         assertThat(getMyNotifications(false, 100)).size().isZero();
         createDevice("Device 1", "default", "111");
-        await().atMost(30, TimeUnit.SECONDS)
+        await().atMost(TIMEOUT, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     assertThat(getMyNotifications(false, 100)).size().isEqualTo(1);
                 });
@@ -798,7 +798,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         notificationRulesCache.evict(tenantId);
 
         createDevice("Device 3", "default", "333");
-        await().atMost(30, TimeUnit.SECONDS)
+        await().atMost(TIMEOUT, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     assertThat(getMyNotifications(false, 100)).size().isEqualTo(2);
                 });

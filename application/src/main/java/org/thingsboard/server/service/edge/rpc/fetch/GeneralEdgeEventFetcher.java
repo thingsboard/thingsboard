@@ -63,8 +63,6 @@ public class GeneralEdgeEventFetcher implements EdgeEventFetcher {
                     this.seqIdStart = 0L;
                 } else {
                     edgeEvents = new PageData<>();
-                    log.warn("[{}] unexpected edge notification message received. " +
-                            "no new events found and seqId column of edge_event table doesn't started new cycle [{}]", tenantId, edge.getId());
                 }
             }
             return edgeEvents;
