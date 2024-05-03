@@ -17,6 +17,7 @@ package org.thingsboard.server.service.edge.rpc.processor.asset;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
@@ -36,6 +37,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.BDDMockito.willReturn;
 
+@ResourceLock("DefaultAssetProfile") // to run in parallel
 public abstract class AbstractAssetProcessorTest extends BaseEdgeProcessorTest {
 
 
