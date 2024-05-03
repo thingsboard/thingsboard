@@ -24,6 +24,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -78,9 +80,11 @@ public class TbLambdaNodeTest {
                 .hasMessage("At least one input key should be specified!");
     }
 
-    @Test
-    public void givenNothingThrownInsideFunction_whenOnMsg_thenTellSuccess() throws TbNodeException, ExecutionException, InterruptedException {
+    @ParameterizedTest
+    @ValueSource(strings = {"${msgKeyTemplate}", "msgKey", "10"})
+    public void givenNothingThrownInsideFunction_whenOnMsg_thenTellSuccess(String msgKey) throws TbNodeException, ExecutionException, InterruptedException {
         init();
+        config.setInputKeys(Map.of("${funcKeyTemplate}", msgKey));
         String data = """
                 {
                 "msgKey": 10
