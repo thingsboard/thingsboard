@@ -42,6 +42,11 @@ public interface NotificationTemplateRepository extends JpaRepository<Notificati
                                                                                      @Param("searchText") String searchText,
                                                                                      Pageable pageable);
 
+    @Query("SELECT count(t) FROM NotificationTemplateEntity t WHERE t.tenantId = :tenantId AND " +
+            "t.notificationType IN :notificationTypes")
+    int countByTenantIdAndNotificationTypes(@Param("tenantId") UUID tenantId,
+                                            @Param("notificationTypes") List<NotificationType> notificationTypes);
+
     @Transactional
     @Modifying
     @Query("DELETE FROM NotificationTemplateEntity t WHERE t.tenantId = :tenantId")

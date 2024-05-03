@@ -49,6 +49,8 @@ public interface DeviceService extends EntityDaoService {
 
     Device findDeviceByTenantIdAndName(TenantId tenantId, String name);
 
+    ListenableFuture<Device> findDeviceByTenantIdAndNameAsync(TenantId tenantId, String name);
+
     Device saveDevice(Device device);
 
     Device saveDevice(Device device, boolean doValidate);

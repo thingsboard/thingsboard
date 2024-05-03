@@ -27,7 +27,7 @@ import org.thingsboard.server.common.data.notification.rule.trigger.config.Alarm
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmAssignmentTrigger;
 
-import static org.apache.commons.collections.CollectionUtils.isEmpty;
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.thingsboard.server.common.data.util.CollectionsUtil.emptyOrContains;
 
 @Service
