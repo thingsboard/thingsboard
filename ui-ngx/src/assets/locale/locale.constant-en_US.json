@@ -1899,7 +1899,10 @@
                 "min-evaluation-period": "Minimum evaluation period",
                 "max-evaluation-period": "Maximum evaluation period"
             },
-            "composite-operations-support": "Supports composite Read/Write/Observe operations"
+            "default-object-id-ver": {
+                "v1-0": "\"1.0\" is the object's version value if the object's version is empty.",
+                "v1-1": "\"1.1\" is the object's version value if the object's version is empty."
+            }
         },
         "snmp": {
             "add-communication-config": "Add communication config",

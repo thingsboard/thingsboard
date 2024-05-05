@@ -1873,7 +1873,10 @@
                 "min-evaluation-period": "最小评估周期",
                 "max-evaluation-period": "最大评估周期"
             },
-            "composite-operations-support": "支持复合读取/写入/观察操作"
+            "default-object-id-ver": {
+                "v1-0": "如果对象版本为空，则“1.0”是对象版本的值。",
+                "v1-1": "如果对象版本为空，则“1.1”是对象版本的值。"
+            }
         },
         "snmp": {
             "add-communication-config": "添加通信配置",

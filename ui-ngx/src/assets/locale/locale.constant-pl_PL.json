@@ -1873,7 +1873,10 @@
                 "min-evaluation-period":"Minimalny okres oceny",
                 "max-evaluation-period":"Maksymalny okres oceny"
             },
-            "composite-operations-support":"Obsługuje operacje złożone Odczyt/Zapis/Obserwacja"
+            "default-object-id-ver": {
+                "v1-0": "\"1.0\" to wartość wersji obiektu, jeśli wersja obiektu jest pusta.",
+                "v1-1": "\"1.1\" to wartość wersji obiektu, jeśli wersja obiektu jest pusta."
+            }
         },
         "snmp":{
             "add-communication-config":"Dodaj konfigurację komunikacji",

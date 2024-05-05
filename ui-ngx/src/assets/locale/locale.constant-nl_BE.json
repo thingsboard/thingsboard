@@ -1936,7 +1936,10 @@
                 "min-evaluation-period": "Minimale evaluatieperiode",
                 "max-evaluation-period": "Maximale evaluatieperiode"
             },
-            "composite-operations-support": "Ondersteunt samengestelde lees-/schrijf-/observatiebewerkingen"
+            "default-object-id-ver": {
+                "v1-0": "\"1.0\" is de versiewaarde van het object als de versie van het object leeg is..",
+                "v1-1": "\"1.1\" is de versiewaarde van het object als de versie van het object leeg is."
+            }
         },
         "snmp": {
             "add-communication-config": "Communicatieconfiguratie toevoegen",
