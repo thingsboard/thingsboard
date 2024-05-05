@@ -91,11 +91,14 @@
             <tb-power-mode-settings [parentForm]="clientSettingsFormGroup">
             </tb-power-mode-settings>
           </fieldset>
-            <mat-select formControlName="defaultObjectIDVer">
-              <mat-option *ngFor="let objectIDVer of objectIDVers" [value]="objectIDVer">
-                {{ objectIDVerTranslationMap.get(objectIDVer) | translate}}
-              </mat-option>
-            </mat-select>
+          <fieldset class="fields-group">
+            <legend class="group-title" translate>device-profile.lwm2m.default-object-id</legend>
+              <mat-select formControlName="defaultObjectIDVer">
+                <mat-option *ngFor="let objectIDVer of objectIDVers" [value]="objectIDVer">
+                  {{ objectIDVerTranslationMap.get(objectIDVer) | translate}}
+                </mat-option>
+              </mat-select>
+          </fieldset>
         </section>
       </ng-template>
     </mat-tab>

@@ -1936,8 +1936,9 @@
                 "min-evaluation-period": "Minimale evaluatieperiode",
                 "max-evaluation-period": "Maximale evaluatieperiode"
             },
+            "default-object-id": "Standaard objectversie (attribuut)",
             "default-object-id-ver": {
-                "v1-0": "\"1.0\" is de versiewaarde van het object als de versie van het object leeg is..",
+                "v1-0": "\"1.0\" is de versiewaarde van het object als de versie van het object leeg is.",
                 "v1-1": "\"1.1\" is de versiewaarde van het object als de versie van het object leeg is."
             }
         },

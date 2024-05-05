@@ -1511,6 +1511,7 @@
                 "min-evaluation-period": "最小評估期間",
                 "max-evaluation-period": "最大評估期間"
             },
+            "default-object-id": "預設物件版本（屬性）",
             "default-object-id-ver": {
                 "v1-0": "如果物件的版本為空，則「1.0」是物件的版本值。",
                 "v1-1": "如果物件的版本為空，則「1.1」是物件的版本值。"

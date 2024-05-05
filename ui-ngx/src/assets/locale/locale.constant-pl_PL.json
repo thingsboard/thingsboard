@@ -1873,6 +1873,7 @@
                 "min-evaluation-period":"Minimalny okres oceny",
                 "max-evaluation-period":"Maksymalny okres oceny"
             },
+            "default-object-id": "Domyślna wersja obiektu (atrybut)",
             "default-object-id-ver": {
                 "v1-0": "\"1.0\" to wartość wersji obiektu, jeśli wersja obiektu jest pusta.",
                 "v1-1": "\"1.1\" to wartość wersji obiektu, jeśli wersja obiektu jest pusta."
