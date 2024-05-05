@@ -110,7 +110,7 @@ public class MobileApplicationControllerTest extends AbstractControllerTest {
         mobileAppSettings.setIosConfig(IosConfig.builder().enabled(false).build());
         doPost("/api/mobile/app/settings", mobileAppSettings)
                 .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Qr code config is required!")));
+                .andExpect(statusReason(containsString("Qr code configuration is required!")));
 
         mobileAppSettings.setQrCodeConfig(QRCodeConfig.builder().showOnHomePage(false).build());
         doPost("/api/mobile/app/settings", mobileAppSettings)
@@ -121,6 +121,7 @@ public class MobileApplicationControllerTest extends AbstractControllerTest {
     public void testShouldNotSaveMobileAppSettingsWithoutRequiredAndroidConf() throws Exception {
         loginSysAdmin();
         MobileAppSettings mobileAppSettings = doGet("/api/mobile/app/settings", MobileAppSettings.class);
+        mobileAppSettings.setUseDefaultApp(false);
         AndroidConfig androidConfig = AndroidConfig.builder()
                 .enabled(true)
                 .appPackage(null)
@@ -130,12 +131,12 @@ public class MobileApplicationControllerTest extends AbstractControllerTest {
 
         doPost("/api/mobile/app/settings", mobileAppSettings)
                 .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Application package and sha256 cert fingerprints are required for enabled android settings!")));
+                .andExpect(statusReason(containsString("Application package and sha256 cert fingerprints are required for custom android application!")));
 
         androidConfig.setAppPackage("test_app_package");
         doPost("/api/mobile/app/settings", mobileAppSettings)
                 .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Application package and sha256 cert fingerprints are required for enabled android settings!")));
+                .andExpect(statusReason(containsString("Application package and sha256 cert fingerprints are required for custom android application!")));
 
         androidConfig.setSha256CertFingerprints("test_sha_256");
         doPost("/api/mobile/app/settings", mobileAppSettings)
@@ -146,6 +147,7 @@ public class MobileApplicationControllerTest extends AbstractControllerTest {
     public void testShouldNotSaveMobileAppSettingsWithoutRequiredIosConf() throws Exception {
         loginSysAdmin();
         MobileAppSettings mobileAppSettings = doGet("/api/mobile/app/settings", MobileAppSettings.class);
+        mobileAppSettings.setUseDefaultApp(false);
         IosConfig iosConfig = IosConfig.builder()
                 .enabled(true)
                 .appId(null)
@@ -154,9 +156,21 @@ public class MobileApplicationControllerTest extends AbstractControllerTest {
 
         doPost("/api/mobile/app/settings", mobileAppSettings)
                 .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Application id is required for enabled ios settings!")));
+                .andExpect(statusReason(containsString("Application id is required for custom ios application!")));
 
         iosConfig.setAppId("test_app_id");
+        doPost("/api/mobile/app/settings", mobileAppSettings)
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testShouldSaveMobileAppSettingsForDefaultApp() throws Exception {
+        loginSysAdmin();
+        MobileAppSettings mobileAppSettings = doGet("/api/mobile/app/settings", MobileAppSettings.class);
+        mobileAppSettings.setUseDefaultApp(true);
+        mobileAppSettings.setIosConfig(null);
+        mobileAppSettings.setAndroidConfig(null);
+
         doPost("/api/mobile/app/settings", mobileAppSettings)
                 .andExpect(status().isOk());
     }

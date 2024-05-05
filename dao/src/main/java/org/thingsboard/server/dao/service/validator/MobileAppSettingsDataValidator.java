@@ -38,14 +38,14 @@ public class MobileAppSettingsDataValidator extends DataValidator<MobileAppSetti
             throw new DataValidationException("Android/ios settings are required to use custom application!");
         }
         if (qrCodeConfig == null) {
-            throw new DataValidationException("Qr code config is required!");
+            throw new DataValidationException("Qr code configuration is required!");
         }
-        if (androidConfig != null && androidConfig.isEnabled() &&
+        if (androidConfig != null && androidConfig.isEnabled() && !mobileAppSettings.isUseDefaultApp() &&
                 (androidConfig.getAppPackage() == null || androidConfig.getSha256CertFingerprints() == null)) {
-            throw new DataValidationException("Application package and sha256 cert fingerprints are required for enabled android settings!");
+            throw new DataValidationException("Application package and sha256 cert fingerprints are required for custom android application!");
         }
-        if (iosConfig != null && iosConfig.isEnabled() && iosConfig.getAppId() == null) {
-            throw new DataValidationException("Application id is required for enabled ios settings!");
+        if (iosConfig != null && iosConfig.isEnabled() && !mobileAppSettings.isUseDefaultApp() && iosConfig.getAppId() == null) {
+            throw new DataValidationException("Application id is required for custom ios application!");
         }
     }
 }
