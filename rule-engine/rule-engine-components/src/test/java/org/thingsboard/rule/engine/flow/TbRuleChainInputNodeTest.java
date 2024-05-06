@@ -96,13 +96,14 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
     @Test
     public void givenValidConfigWithRuleChainId_whenInit_thenOk() throws TbNodeException {
         //GIVEN
+        RuleChainId currentRuleChainId = new RuleChainId(UUID.fromString("9a4177a7-c178-48da-bce6-b338205779bd"));
+        RuleNode currentRuleNode = new RuleNode(new RuleNodeId(UUID.fromString("84e302d6-e37e-45f9-be65-29c1c610ff2c")));
+        currentRuleNode.setRuleChainId(currentRuleChainId);
         String ruleChainIdStr = "dfdebb47-c672-45ab-8795-97b6f9b3ce21";
         config.setRuleChainId(ruleChainIdStr);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
-        when(ctxMock.getTenantProfile()).thenReturn(tenantProfileMock);
-        when(tenantProfileMock.getProfileData()).thenReturn(tenantProfileDataMock);
-        when(tenantProfileDataMock.getConfiguration()).thenReturn(tenantProfileConfigurationMock);
+        when(ctxMock.getSelf()).thenReturn(currentRuleNode);
 
         //WHEN
         assertThatCode(() -> node.init(ctxMock, nodeConfiguration))
@@ -128,14 +129,15 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
     @Test
     public void givenForwardMsgToDefaultIsTrue_whenInit_thenOk() throws TbNodeException {
         //GIVEN
+        RuleChainId currentRuleChainId = new RuleChainId(UUID.fromString("36b32314-2d91-4d96-a785-54c1f6998cee"));
+        RuleNode currentRuleNode = new RuleNode(new RuleNodeId(UUID.fromString("123c0d71-0ce2-421d-a268-8ae9f1d167e0")));
+        currentRuleNode.setRuleChainId(currentRuleChainId);
         String ruleChainIdFromConfigStr = "e1771a4e-4457-44f0-97a0-f03fd25e50b9";
         config.setRuleChainId(ruleChainIdFromConfigStr);
         config.setForwardMsgToDefaultRuleChain(true);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
-        when(ctxMock.getTenantProfile()).thenReturn(tenantProfileMock);
-        when(tenantProfileMock.getProfileData()).thenReturn(tenantProfileDataMock);
-        when(tenantProfileDataMock.getConfiguration()).thenReturn(tenantProfileConfigurationMock);
+        when(ctxMock.getSelf()).thenReturn(currentRuleNode);
 
         //WHEN
         assertThatCode(() -> node.init(ctxMock, nodeConfiguration))
@@ -143,6 +145,24 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
 
         //THEN
         verify(ctxMock).checkTenantEntity(eq(new RuleChainId(UUID.fromString(ruleChainIdFromConfigStr))));
+    }
+
+    @Test
+    public void givenTargetRuleChainIsCurrentRuleChain_whenInit_thenThrowsException() {
+        //GIVEN
+        String currentRuleChainIdStr = "83ad1000-3303-4d52-97e0-b85c544c4ffa";
+        RuleChainId currentRuleChainId = new RuleChainId(UUID.fromString(currentRuleChainIdStr));
+        RuleNode currentRuleNode = new RuleNode(new RuleNodeId(UUID.fromString("84e302d6-e37e-45f9-be65-29c1c610ff2c")));
+        currentRuleNode.setRuleChainId(currentRuleChainId);
+        config.setRuleChainId(currentRuleChainIdStr);
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+
+        when(ctxMock.getSelf()).thenReturn(currentRuleNode);
+
+        //WHEN-THEN
+        Assertions.assertThatThrownBy(() -> node.init(ctxMock, nodeConfiguration))
+                .isInstanceOf(TbNodeException.class)
+                .hasMessage("Forwarding messages to the current rule chain is not allowed!");
     }
 
     @Test
@@ -172,13 +192,10 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
         config.setForwardMsgToDefaultRuleChain(true);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
-        when(ctxMock.getTenantProfile()).thenReturn(tenantProfileMock);
-        when(tenantProfileMock.getProfileData()).thenReturn(tenantProfileDataMock);
-        when(tenantProfileDataMock.getConfiguration()).thenReturn(tenantProfileConfigurationMock);
+        when(ctxMock.getSelf()).thenReturn(currentRuleNode);
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
         when(ctxMock.getDeviceProfileCache()).thenReturn(deviceProfileCacheMock);
         when(deviceProfileCacheMock.get(any(), any(DeviceId.class))).thenReturn(deviceProfile);
-        when(ctxMock.getSelf()).thenReturn(currentRuleNode);
 
         node.init(ctxMock, nodeConfiguration);
 
@@ -213,14 +230,10 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
         config.setForwardMsgToDefaultRuleChain(true);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
-        when(ctxMock.getTenantProfile()).thenReturn(tenantProfileMock);
-        when(tenantProfileMock.getProfileData()).thenReturn(tenantProfileDataMock);
-        when(tenantProfileDataMock.getConfiguration()).thenReturn(tenantProfileConfigurationMock);
+        when(ctxMock.getSelf()).thenReturn(currentRuleNode);
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
         when(ctxMock.getAssetProfileCache()).thenReturn(assetProfileCacheMock);
         when(assetProfileCacheMock.get(any(), any(AssetId.class))).thenReturn(assetProfile);
-        when(ctxMock.getSelf()).thenReturn(currentRuleNode);
-
 
         node.init(ctxMock, nodeConfiguration);
 
@@ -252,9 +265,7 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
         config.setForwardMsgToDefaultRuleChain(true);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
-        when(ctxMock.getTenantProfile()).thenReturn(tenantProfileMock);
-        when(tenantProfileMock.getProfileData()).thenReturn(tenantProfileDataMock);
-        when(tenantProfileDataMock.getConfiguration()).thenReturn(tenantProfileConfigurationMock);
+        when(ctxMock.getSelf()).thenReturn(currentRuleNode);
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
         when(ctxMock.getDeviceProfileCache()).thenReturn(deviceProfileCacheMock);
         when(deviceProfileCacheMock.get(any(), any(DeviceId.class))).thenReturn(deviceProfile);
@@ -288,9 +299,7 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
         config.setForwardMsgToDefaultRuleChain(true);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
-        when(ctxMock.getTenantProfile()).thenReturn(tenantProfileMock);
-        when(tenantProfileMock.getProfileData()).thenReturn(tenantProfileDataMock);
-        when(tenantProfileDataMock.getConfiguration()).thenReturn(tenantProfileConfigurationMock);
+        when(ctxMock.getSelf()).thenReturn(currentRuleNode);
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
         when(ctxMock.getAssetProfileCache()).thenReturn(assetProfileCacheMock);
         when(assetProfileCacheMock.get(any(), any(AssetId.class))).thenReturn(assetProfile);
@@ -310,6 +319,9 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
     @Test
     public void givenRuleChainInConfig_whenOnMsg_thenShouldTransferToRuleChainFromConfig() throws TbNodeException {
         //GIVEN
+        RuleChainId currentRuleChainId = new RuleChainId(UUID.fromString("97e7133c-2c20-414d-b2ce-923418bd25d6"));
+        RuleNode currentRuleNode = new RuleNode(new RuleNodeId(UUID.fromString("09184b16-f176-4eee-987e-1b0501b38d6e")));
+        currentRuleNode.setRuleChainId(currentRuleChainId);
         String ruleChainIdStr = "3c02c8b3-645c-4e67-aac5-f984f59471d1";
         RuleChainId targetRuleChainId = new RuleChainId(UUID.fromString(ruleChainIdStr));
 
@@ -318,9 +330,7 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
         config.setRuleChainId(ruleChainIdStr);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
-        when(ctxMock.getTenantProfile()).thenReturn(tenantProfileMock);
-        when(tenantProfileMock.getProfileData()).thenReturn(tenantProfileDataMock);
-        when(tenantProfileDataMock.getConfiguration()).thenReturn(tenantProfileConfigurationMock);
+        when(ctxMock.getSelf()).thenReturn(currentRuleNode);
         node.init(ctxMock, nodeConfiguration);
 
         //WHEN
@@ -333,27 +343,26 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @Test
-    public void givenForwardMsgToDefaultIsTrueWithoutAssetDefaultRuleChainAndRuleChainInConfigIsCurrentRuleChain_whenOnMsg_thenThrowsException() throws TbNodeException {
+    public void givenForwardMsgToDefaultIsTrueWithDeviceDefaultRuleChainIsCurrentRuleChain_whenOnMsg_thenThrowsException() throws TbNodeException {
         //GIVEN
-        String currentRuleChainIdStr = "752b70c2-20e6-4a37-b7f7-4271249fc643";
-        RuleChainId currentRuleChainId = new RuleChainId(UUID.fromString(currentRuleChainIdStr));
+        RuleChainId currentRuleChainId = new RuleChainId(UUID.fromString("97e7133c-2c20-414d-b2ce-923418bd25d6"));
         RuleNode currentRuleNode = new RuleNode(new RuleNodeId(UUID.fromString("09184b16-f176-4eee-987e-1b0501b38d6e")));
         currentRuleNode.setRuleChainId(currentRuleChainId);
 
-        AssetProfile assetProfile = new AssetProfile();
+        DeviceProfile deviceProfile = new DeviceProfile();
+        deviceProfile.setDefaultRuleChainId(currentRuleChainId);
 
-        TbMsg msg = getMsg(ASSET_ID);
+        TbMsg msg = getMsg(DEVICE_ID);
 
-        config.setRuleChainId(currentRuleChainIdStr);
+        String ruleChainIdFromConfigStr = "357c2785-e7cc-46a8-9797-957180dabdeb";
+        config.setRuleChainId(ruleChainIdFromConfigStr);
         config.setForwardMsgToDefaultRuleChain(true);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
-        when(ctxMock.getTenantProfile()).thenReturn(tenantProfileMock);
-        when(tenantProfileMock.getProfileData()).thenReturn(tenantProfileDataMock);
-        when(tenantProfileDataMock.getConfiguration()).thenReturn(tenantProfileConfigurationMock);
+        when(ctxMock.getSelf()).thenReturn(currentRuleNode);
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
-        when(ctxMock.getAssetProfileCache()).thenReturn(assetProfileCacheMock);
-        when(assetProfileCacheMock.get(any(), any(AssetId.class))).thenReturn(assetProfile);
+        when(ctxMock.getDeviceProfileCache()).thenReturn(deviceProfileCacheMock);
+        when(deviceProfileCacheMock.get(any(), any(DeviceId.class))).thenReturn(deviceProfile);
         when(ctxMock.getSelf()).thenReturn(currentRuleNode);
 
         node.init(ctxMock, nodeConfiguration);
@@ -364,45 +373,9 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
         //THEN
         ArgumentCaptor<Throwable> captor = ArgumentCaptor.forClass(Throwable.class);
         verify(ctxMock).tellFailure(eq(msg), captor.capture());
-        assertThat(captor.getValue()).isInstanceOf(RuntimeException.class)
-                .hasMessage("Forwarding messages to the current rule chain is blocked. " +
-                        "Rule node per message executions is unlimited, which could cause an infinite loop.");
-    }
-
-    @Test
-    public void givenRuleChainInConfigIsCurrentRuleChainAndTenantProfileMaxExecutionsPerMessageIs5_whenOnMsg_thenShouldTransferToRuleChain() throws TbNodeException {
-        //GIVEN
-        String currentRuleChainIdStr = "752b70c2-20e6-4a37-b7f7-4271249fc643";
-        RuleChainId currentRuleChainId = new RuleChainId(UUID.fromString(currentRuleChainIdStr));
-        RuleNode currentRuleNode = new RuleNode(new RuleNodeId(UUID.fromString("09184b16-f176-4eee-987e-1b0501b38d6e")));
-        currentRuleNode.setRuleChainId(currentRuleChainId);
-
-        AssetProfile assetProfile = new AssetProfile();
-
-        TbMsg msg = getMsg(ASSET_ID);
-
-        config.setRuleChainId(currentRuleChainIdStr);
-        config.setForwardMsgToDefaultRuleChain(true);
-        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-
-        when(ctxMock.getTenantProfile()).thenReturn(tenantProfileMock);
-        when(tenantProfileMock.getProfileData()).thenReturn(tenantProfileDataMock);
-        when(tenantProfileDataMock.getConfiguration()).thenReturn(tenantProfileConfigurationMock);
-        when(tenantProfileConfigurationMock.getMaxRuleNodeExecutionsPerMessage()).thenReturn(5);
-        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
-        when(ctxMock.getAssetProfileCache()).thenReturn(assetProfileCacheMock);
-        when(assetProfileCacheMock.get(any(), any(AssetId.class))).thenReturn(assetProfile);
-        when(ctxMock.getSelf()).thenReturn(currentRuleNode);
-
-        node.init(ctxMock, nodeConfiguration);
-
-        //WHEN
-        node.onMsg(ctxMock, msg);
-
-        //THEN
-        ArgumentCaptor<RuleChainId> ruleChainArgumentCaptor = ArgumentCaptor.forClass(RuleChainId.class);
-        verify(ctxMock).input(eq(msg), ruleChainArgumentCaptor.capture());
-        assertThat(ruleChainArgumentCaptor.getValue()).isEqualTo(currentRuleChainId);
+        Throwable throwable = captor.getValue();
+        assertThat(throwable).isInstanceOf(RuntimeException.class)
+                .hasMessage("Forwarding messages to the current rule chain is not allowed!");
     }
 
     private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {

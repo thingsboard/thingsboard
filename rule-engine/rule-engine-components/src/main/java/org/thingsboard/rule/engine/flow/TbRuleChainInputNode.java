@@ -55,7 +55,6 @@ public class TbRuleChainInputNode implements TbNode {
 
     private RuleChainId ruleChainId;
     private boolean forwardMsgToDefaultRuleChain;
-    private boolean unlimitedExecutionsPerMessage;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -69,25 +68,20 @@ public class TbRuleChainInputNode implements TbNode {
         } catch (Exception e) {
             throw new TbNodeException("Failed to parse rule chain id: " + config.getRuleChainId(), true);
         }
+        if (ruleChainUUID.equals(ctx.getSelf().getRuleChainId().getId())) {
+            throw new TbNodeException("Forwarding messages to the current rule chain is not allowed!", true);
+        }
         ruleChainId = new RuleChainId(ruleChainUUID);
         ctx.checkTenantEntity(ruleChainId);
         forwardMsgToDefaultRuleChain = config.isForwardMsgToDefaultRuleChain();
-        ctx.addTenantProfileListener(this::onTenantProfileUpdate);
-        onTenantProfileUpdate(ctx.getTenantProfile());
-    }
-
-    void onTenantProfileUpdate(TenantProfile tenantProfile) {
-        DefaultTenantProfileConfiguration configuration = (DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration();
-        unlimitedExecutionsPerMessage = configuration.getMaxRuleNodeExecutionsPerMessage() == 0;
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
         if (forwardMsgToDefaultRuleChain) {
             getOriginatorDefaultRuleChainId(ctx, msg).ifPresent(rcId -> ruleChainId = rcId);
-            if (ruleChainId.equals(ctx.getSelf().getRuleChainId()) && unlimitedExecutionsPerMessage) {
-                ctx.tellFailure(msg, new RuntimeException("Forwarding messages to the current rule chain is blocked. " +
-                        "Rule node per message executions is unlimited, which could cause an infinite loop."));
+            if (ruleChainId.equals(ctx.getSelf().getRuleChainId())) {
+                ctx.tellFailure(msg, new RuntimeException("Forwarding messages to the current rule chain is not allowed!"));
                 return;
             }
         }
