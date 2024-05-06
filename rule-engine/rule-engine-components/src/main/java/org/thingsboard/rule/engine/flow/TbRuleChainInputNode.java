@@ -57,7 +57,7 @@ public class TbRuleChainInputNode implements TbNode {
 
     private RuleChainId ruleChainId;
     private boolean forwardMsgToDefaultRuleChain;
-    private int tenantProfileMaxExecutionsPerMessage;
+    private boolean unlimitedExecutionsPerMessage;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -65,34 +65,35 @@ public class TbRuleChainInputNode implements TbNode {
         if (config.getRuleChainId() == null) {
             throw new TbNodeException("Rule chain must be set!", true);
         }
-        this.forwardMsgToDefaultRuleChain = config.isForwardMsgToDefaultRuleChain();
         UUID ruleChainUUID;
         try {
             ruleChainUUID = UUID.fromString(config.getRuleChainId());
         } catch (Exception e) {
             throw new TbNodeException("Failed to parse rule chain id: " + config.getRuleChainId(), true);
         }
-        this.ruleChainId = new RuleChainId(ruleChainUUID);
-        ctx.checkTenantEntity(this.ruleChainId);
+        ruleChainId = new RuleChainId(ruleChainUUID);
+        ctx.checkTenantEntity(ruleChainId);
+        forwardMsgToDefaultRuleChain = config.isForwardMsgToDefaultRuleChain();
         ctx.addTenantProfileListener(this::onTenantProfileUpdate);
         onTenantProfileUpdate(ctx.getTenantProfile());
     }
 
     void onTenantProfileUpdate(TenantProfile tenantProfile) {
         DefaultTenantProfileConfiguration configuration = (DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration();
-        tenantProfileMaxExecutionsPerMessage = configuration.getMaxRuleNodeExecutionsPerMessage();
+        unlimitedExecutionsPerMessage = configuration.getMaxRuleNodeExecutionsPerMessage() == 0;
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws TbNodeException {
         if (forwardMsgToDefaultRuleChain) {
-            this.ruleChainId = getTargetRuleChainId(ctx, msg);
-            if (this.ruleChainId.equals(ctx.getSelf().getRuleChainId()) && tenantProfileMaxExecutionsPerMessage == 0) {
-                ctx.tellFailure(msg, new RuntimeException("Forwarding messages to the current rule chain is not allowed!"));
+            getOriginatorDefaultRuleChainId(ctx, msg).ifPresent(rcId -> ruleChainId = rcId);
+            if (ruleChainId.equals(ctx.getSelf().getRuleChainId()) && unlimitedExecutionsPerMessage) {
+                ctx.tellFailure(msg, new RuntimeException("Forwarding messages to the current rule chain is blocked. " +
+                        "Rule node per message executions is unlimited, which could cause an infinite loop."));
                 return;
             }
         }
-        ctx.input(msg, this.ruleChainId);
+        ctx.input(msg, ruleChainId);
     }
 
     @Override
@@ -111,14 +112,14 @@ public class TbRuleChainInputNode implements TbNode {
         return new TbPair<>(hasChanges, oldConfiguration);
     }
 
-    private RuleChainId getTargetRuleChainId(TbContext ctx, TbMsg msg) throws TbNodeException {
-        RuleChainId targetRuleChainId = switch (msg.getOriginator().getEntityType()) {
-            case DEVICE ->
-                    ctx.getDeviceProfileCache().get(ctx.getTenantId(), (DeviceId) msg.getOriginator()).getDefaultRuleChainId();
-            case ASSET ->
-                    ctx.getAssetProfileCache().get(ctx.getTenantId(), (AssetId) msg.getOriginator()).getDefaultRuleChainId();
-            default -> null;
-        };
-        return Optional.ofNullable(targetRuleChainId).orElse(this.ruleChainId);
+    private Optional<RuleChainId> getOriginatorDefaultRuleChainId(TbContext ctx, TbMsg msg) {
+        return Optional.ofNullable(
+                switch (msg.getOriginator().getEntityType()) {
+                    case DEVICE ->
+                            ctx.getDeviceProfileCache().get(ctx.getTenantId(), (DeviceId) msg.getOriginator()).getDefaultRuleChainId();
+                    case ASSET ->
+                            ctx.getAssetProfileCache().get(ctx.getTenantId(), (AssetId) msg.getOriginator()).getDefaultRuleChainId();
+                    default -> null;
+                });
     }
 }
