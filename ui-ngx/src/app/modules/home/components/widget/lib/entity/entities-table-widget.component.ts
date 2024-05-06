@@ -273,6 +273,13 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     this.ctx.detectChanges();
   }
 
+  public onEditModeChanged() {
+    if (this.textSearchMode) {
+      this.ctx.hideTitlePanel = !this.ctx.isEdit;
+      this.ctx.detectChanges(true);
+    }
+  }
+
   public pageLinkSortDirection(): SortDirection {
     return entityDataPageLinkSortDirection(this.pageLink);
   }
