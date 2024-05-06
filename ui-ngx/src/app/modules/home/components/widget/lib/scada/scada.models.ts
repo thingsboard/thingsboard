@@ -16,7 +16,12 @@
 
 import { ValueType } from '@shared/models/constants';
 import { Box, Element, Runner, Svg, SVG, Timeline, Text } from '@svgdotjs/svg.js';
-import { DataToValueType, GetValueAction, GetValueSettings } from '@shared/models/action-widget-settings.models';
+import {
+  DataToValueType,
+  GetValueAction,
+  GetValueSettings, SetValueAction,
+  SetValueSettings, ValueToDataType
+} from '@shared/models/action-widget-settings.models';
 import {
   formatValue,
   insertVariable,
@@ -29,34 +34,10 @@ import {
 } from '@core/utils';
 import { BehaviorSubject, forkJoin, Observable } from 'rxjs';
 import { map, share } from 'rxjs/operators';
-import { ValueAction, ValueGetter } from '@home/components/widget/lib/action/action-widget.models';
+import { ValueAction, ValueGetter, ValueSetter } from '@home/components/widget/lib/action/action-widget.models';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { Font } from '@shared/models/widget-settings.models';
-
-export type ValueMatcherType = 'any' | 'constant' | 'range';
-
-export interface ValueMatcher {
-  type: ValueMatcherType;
-  value?: any;
-  range?: {from: number; to: number};
-}
-
-const valueMatches = (matcher: ValueMatcher, val: any): boolean => {
-  switch (matcher.type) {
-    case 'any':
-      return true;
-    case 'constant':
-      return matcher.value === val;
-    case 'range':
-      if (isDefinedAndNotNull(val) && isNumeric(val)) {
-        const num = Number(val);
-        const range = matcher.range;
-        return ((!isNumber(range.from) || num >= range.from) && (!isNumber(range.to) || num < range.to));
-      } else {
-        return false;
-      }
-  }
-};
+import { ColorProcessor, constantColor, Font } from '@shared/models/widget-settings.models';
+import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 
 export type ScadaObjectValueType = 'input' | 'constant' | 'property' | 'function' | 'valueFormat';
 
@@ -100,25 +81,27 @@ export interface ScadaObjectText {
 
 export interface ScadaObjectElementState {
   tag: string;
+  inputValue?: string;
   show?: ScadaObjectValue;
   text?: ScadaObjectText;
   attributes?: ScadaObjectAttribute[];
   animate?: number;
+  addClass?: string;
+  removeClass?: string;
+  animationTimeline?: Timeline;
 }
 
 export interface ScadaObjectState {
   initial?: boolean;
-  value?: any;
+  triggerValues?: string[];
+  conditionFunction?: string;
+  condition?: (values: {[key: string]: any}) => boolean;
   state: ScadaObjectElementState[];
 }
 
 export interface ScadaObjectUpdateState {
-  matcher: ValueMatcher;
-  stateId: string;
+  updateValue: string;
 }
-
-const filterUpdateStates = (states: ScadaObjectUpdateState[], val: any): ScadaObjectUpdateState[] =>
-  states.filter(s => valueMatches(s.matcher, val));
 
 export enum ScadaObjectBehaviorType {
   setValue = 'setValue',
@@ -138,12 +121,14 @@ export interface ScadaObjectBehaviorGet extends ScadaObjectBehaviorBase {
 }
 
 export interface ScadaObjectBehaviorSet extends ScadaObjectBehaviorBase {
-  todo: any;
+  valueToDataType: ValueToDataType;
+  constantValue: any;
+  valueToDataFunction: string;
 }
 
 export type ScadaObjectBehavior = ScadaObjectBehaviorGet | ScadaObjectBehaviorSet;
 
-export type ScadaObjectPropertyType = 'string' | 'number' | 'color' | 'font' | 'units' | 'switch';
+export type ScadaObjectPropertyType = 'string' | 'number' | 'color' | 'color-settings' | 'font' | 'units' | 'switch';
 
 export interface ScadaObjectPropertyBase {
   id: string;
@@ -155,6 +140,8 @@ export interface ScadaObjectPropertyBase {
   divider?: boolean;
   fieldSuffix?: string;
   disableOnProperty?: string;
+  rowClass?: string;
+  fieldClass?: string;
 }
 
 export interface ScadaObjectNumberProperty extends ScadaObjectPropertyBase {
@@ -165,8 +152,38 @@ export interface ScadaObjectNumberProperty extends ScadaObjectPropertyBase {
 
 export type ScadaObjectProperty = ScadaObjectPropertyBase & ScadaObjectNumberProperty;
 
+export interface ScadaObjectCallBehavior {
+  behaviorId: string;
+  conditionFunction?: string;
+  condition?: (value: any) => boolean;
+}
+
+export interface ScadaObjectStateValue {
+  initialValue: any;
+  callBehavior?: ScadaObjectCallBehavior[];
+}
+
+export type ScadaObjectElementActionTrigger = 'click';
+
+export type ScadaObjectActionType = 'updateValue';
+export type ScadaObjectActionUpdateValueType = 'toggle' | 'increment' | 'constant';
+
+export interface ScadaObjectElementAction {
+  trigger: ScadaObjectElementActionTrigger;
+  enabledTriggerValues?: string[];
+  enabledConditionFunction?: string;
+  enabledCondition?: (values: {[key: string]: any}) => boolean;
+  actionType: ScadaObjectActionType;
+  updateValueId?: string;
+  updateValueType?: ScadaObjectActionUpdateValueType;
+  updateValueConstant?: any;
+  updateValueInc?: number;
+}
+
 export interface ScadaObjectMetadata {
   title: string;
+  stateValues: {[id: string]: ScadaObjectStateValue};
+  actions: {[tag: string]: ScadaObjectElementAction};
   states: {[id: string]: ScadaObjectState};
   behavior: ScadaObjectBehavior[];
   properties: ScadaObjectProperty[];
@@ -174,6 +191,8 @@ export interface ScadaObjectMetadata {
 
 export const emptyMetadata: ScadaObjectMetadata = {
   title: '',
+  stateValues: {},
+  actions: {},
   states: {},
   behavior: [],
   properties: []
@@ -211,7 +230,7 @@ const defaultGetValueSettings = (get: ScadaObjectBehaviorGet): GetValueSettings<
       requestTimeout: 5000,
       requestPersistent: false,
       persistentPollingInterval: 1000
-  },
+    },
     getAttribute: {
       key: 'state',
         scope: null
@@ -221,19 +240,41 @@ const defaultGetValueSettings = (get: ScadaObjectBehaviorGet): GetValueSettings<
     },
     dataToValue: {
       type: DataToValueType.NONE,
-        compareToValue: true,
-        dataToValueFunction: '/* Should return boolean value */\nreturn data;'
+      compareToValue: true,
+      dataToValueFunction: '/* Should return boolean value */\nreturn data;'
     }
   });
 
+const defaultSetValueSettings = (set: ScadaObjectBehaviorSet): SetValueSettings => ({
+  action: SetValueAction.EXECUTE_RPC,
+  executeRpc: {
+    method: 'setState',
+    requestTimeout: 5000,
+    requestPersistent: false,
+    persistentPollingInterval: 1000
+  },
+  setAttribute: {
+    key: 'state',
+    scope: AttributeScope.SERVER_SCOPE
+  },
+  putTimeSeries: {
+    key: 'state'
+  },
+  valueToData: {
+    type: set.valueToDataType,
+    constantValue: set.constantValue,
+    valueToDataFunction: set.valueToDataFunction ? set.valueToDataFunction :
+      '/* Convert input boolean value to RPC parameters or attribute/time-series value */\nreturn value;'
+  }
+});
+
 export const defaultScadaObjectSettings = (metadata: ScadaObjectMetadata): ScadaObjectSettings => {
   const settings: ScadaObjectSettings = {};
-  for (const behaviour of metadata.behavior) {
-    //behaviour.id
-    if (behaviour.type === ScadaObjectBehaviorType.getValue) {
-      settings[behaviour.id] = defaultGetValueSettings(behaviour as ScadaObjectBehaviorGet);
-    } else if (behaviour.type === ScadaObjectBehaviorType.setValue) {
-      // TODO:
+  for (const behavior of metadata.behavior) {
+    if (behavior.type === ScadaObjectBehaviorType.getValue) {
+      settings[behavior.id] = defaultGetValueSettings(behavior as ScadaObjectBehaviorGet);
+    } else if (behavior.type === ScadaObjectBehaviorType.setValue) {
+      settings[behavior.id] = defaultSetValueSettings(behavior as ScadaObjectBehaviorSet);
     }
   }
   for (const property of metadata.properties) {
@@ -258,8 +299,10 @@ export class ScadaObject {
   private loadingSubject = new BehaviorSubject(false);
   private valueGetters: ValueGetter<any>[] = [];
   private valueActions: ValueAction[] = [];
+  private valueSetters: {[behaviorId: string]: ValueSetter<any>} = {};
 
-  private animationTimeline: Timeline;
+  private stateValueSubjects: {[id: string]: BehaviorSubject<any>} = {};
+  private stateValues: {[id: string]: any} = {};
 
   loading$ = this.loadingSubject.asObservable().pipe(share());
 
@@ -289,6 +332,10 @@ export class ScadaObject {
   }
 
   public destroy() {
+    for (const stateValueId of Object.keys(this.stateValueSubjects)) {
+      this.stateValueSubjects[stateValueId].complete();
+      this.stateValueSubjects[stateValueId].unsubscribe();
+    }
     this.valueActions.forEach(v => v.destroy());
     this.loadingSubject.complete();
     this.loadingSubject.unsubscribe();
@@ -303,8 +350,33 @@ export class ScadaObject {
   }
 
   private prepareMetadata() {
+    for (const stateValueId of Object.keys(this.metadata.stateValues)) {
+      const stateValue = this.metadata.stateValues[stateValueId];
+      if (stateValue.callBehavior) {
+        stateValue.callBehavior.forEach(callBehavior => {
+          let condition = () => true;
+          if (callBehavior.conditionFunction) {
+            try {
+              condition = parseFunction(this.insertVariables(callBehavior.conditionFunction), ['value']);
+            } catch (e) {
+              condition = () => false;
+            }
+          }
+          callBehavior.condition = condition;
+        });
+      }
+    }
     for (const stateId of Object.keys(this.metadata.states)) {
       const state = this.metadata.states[stateId];
+      let condition = () => true;
+      if (state.conditionFunction) {
+        try {
+          condition = parseFunction(this.insertVariables(state.conditionFunction), ['values']);
+        } catch (e) {
+          condition = () => false;
+        }
+      }
+      state.condition = condition;
       for (const elementState of state.state) {
         this.prepareValue(elementState.show);
         this.prepareValue(elementState.text?.content);
@@ -367,6 +439,35 @@ export class ScadaObject {
   }
 
   private initStates() {
+    for (const stateValueId of Object.keys(this.metadata.stateValues)) {
+      const stateValue = this.metadata.stateValues[stateValueId];
+      this.stateValueSubjects[stateValueId] = new BehaviorSubject<any>(stateValue.initialValue);
+      this.stateValues[stateValueId] = stateValue.initialValue;
+      this.stateValueSubjects[stateValueId].subscribe(val => {
+        this.stateValues[stateValueId] = val;
+        const states = Object.values(this.metadata.states);
+        const triggerStates = states.filter(s => s.triggerValues && s.triggerValues.includes(stateValueId));
+        for (const state of triggerStates) {
+          if (state.condition(this.stateValues)) {
+            this.updateState(state);
+          }
+        }
+      });
+    }
+    for (const tag of Object.keys(this.metadata.actions)) {
+      const action = this.metadata.actions[tag];
+      const elements = this.svgShape.find(`[tb\\:tag="${tag}"]`);
+      switch (action.trigger) {
+        case 'click':
+          elements.forEach(e => {
+            e.attr('cursor', 'pointer');
+            e.on('click', () => {
+              this.triggerAction(action);
+            });
+          });
+          break;
+      }
+    }
     for (const behavior of this.metadata.behavior) {
       if (behavior.type === ScadaObjectBehaviorType.getValue) {
         const getBehavior = behavior as ScadaObjectBehaviorGet;
@@ -379,6 +480,13 @@ export class ScadaObject {
           });
         this.valueGetters.push(valueGetter);
         this.valueActions.push(valueGetter);
+      } else if (behavior.type === ScadaObjectBehaviorType.setValue) {
+        const setBehavior = behavior as ScadaObjectBehaviorSet;
+        let setValueSettings: SetValueSettings = this.settings[setBehavior.id];
+        setValueSettings = {...setValueSettings, actionLabel: setBehavior.name};
+        const valueSetter = ValueSetter.fromSettings<any>(this.ctx, setValueSettings);
+        this.valueSetters[setBehavior.id] = valueSetter;
+        this.valueActions.push(valueSetter);
       }
     }
     const initialState = Object.values(this.metadata.states).find(s => s.initial);
@@ -404,6 +512,59 @@ export class ScadaObject {
     }
   }
 
+  private triggerAction(action: ScadaObjectElementAction) {
+    switch (action.actionType) {
+      case 'updateValue':
+        const targetValue = action.updateValueId;
+        const valueSubject = this.stateValueSubjects[targetValue];
+        if (valueSubject) {
+          const currentVal = valueSubject.value;
+          let newValue: any;
+          switch (action.updateValueType) {
+            case 'toggle':
+              newValue = !currentVal;
+              break;
+            case 'increment':
+              if (isNumber(currentVal)) {
+                newValue = currentVal + action.updateValueInc;
+              }
+              break;
+            case 'constant':
+              newValue = action.updateValueConstant;
+              break;
+          }
+          if (isDefinedAndNotNull(newValue)) {
+            valueSubject.next(newValue);
+            const stateValue = this.metadata.stateValues[targetValue];
+            if (stateValue.callBehavior) {
+              const observables: Observable<any>[] = [];
+              for (const behavior of stateValue.callBehavior) {
+                if (behavior.condition(newValue)) {
+                  const valueSetter = this.valueSetters[behavior.behaviorId];
+                  observables.push(valueSetter.setValue(newValue));
+                }
+              }
+              if (observables.length) {
+                this.loadingSubject.next(true);
+                forkJoin(observables).subscribe(
+                  {
+                    next: () => {
+                      this.loadingSubject.next(false);
+                    },
+                    error: (err) => {
+                      this.loadingSubject.next(false);
+                      valueSubject.next(currentVal);
+                    }
+                  }
+                );
+              }
+            }
+          }
+        }
+        break;
+    }
+  }
+
   private resize() {
     let scale: number;
     if (this.targetWidth < this.targetHeight) {
@@ -417,20 +578,23 @@ export class ScadaObject {
   private onValue(id: string, value: any) {
     const getBehavior = this.metadata.behavior.find(b => b.id === id) as ScadaObjectBehaviorGet;
     value = this.normalizeValue(value, getBehavior.valueType);
-    const updateStates = filterUpdateStates(getBehavior.onUpdate, value);
-    if (this.animationTimeline) {
-      this.animationTimeline.finish();
-    }
-    for (const updateState of updateStates) {
-      const state = this.metadata.states[updateState.stateId];
-      this.updateState(state, value);
+    for (const onUpdate of getBehavior.onUpdate) {
+      const targetStateValueId = onUpdate.updateValue;
+      this.stateValueSubjects[targetStateValueId].next(value);
     }
   }
 
-  private updateState(state: ScadaObjectState, value?: any) {
+  private updateState(state: ScadaObjectState) {
     if (state) {
       for (const elementState of state.state) {
         const tag = elementState.tag;
+        let value;
+        if (elementState.inputValue) {
+          value = this.stateValues[elementState.inputValue];
+        }
+        if (elementState.animationTimeline) {
+          elementState.animationTimeline.finish();
+        }
         const elements = this.svgShape.find(`[tb\\:tag="${tag}"]`);
         if (elements.length) {
           if (elementState.show) {
@@ -443,10 +607,20 @@ export class ScadaObject {
               }
             });
           }
+          if (elementState.addClass) {
+            elements.forEach(e => {
+              e.addClass(elementState.addClass);
+            });
+          }
+          if (elementState.removeClass) {
+            elements.forEach(e => {
+              e.removeClass(elementState.removeClass);
+            });
+          }
           if (elementState.attributes) {
             const attrs = this.computeAttributes(elementState.attributes, value);
             elements.forEach(e => {
-              this.setElementAttributes(e, attrs, elementState.animate);
+              this.setElementAttributes(elementState, e, attrs, elementState.animate);
             });
           }
           if (elementState.text) {
@@ -502,9 +676,9 @@ export class ScadaObject {
     return res;
   }
 
-  private setElementAttributes(element: Element, attrs: {[attr: string]: any}, animate?: number) {
+  private setElementAttributes(elementState: ScadaObjectElementState, element: Element, attrs: {[attr: string]: any}, animate?: number) {
     if (isDefinedAndNotNull(animate)) {
-      this.animation(element, animate).attr(attrs);
+      this.animation(elementState, element, animate).attr(attrs);
     } else {
       element.attr(attrs);
     }
@@ -545,11 +719,11 @@ export class ScadaObject {
     }
   }
 
-  private animation(element: Element, duration: number): Runner {
-    if (!this.animationTimeline) {
-      this.animationTimeline = new Timeline();
+  private animation(elementState: ScadaObjectElementState, element: Element, duration: number): Runner {
+    if (!elementState.animationTimeline) {
+      elementState.animationTimeline = new Timeline();
     }
-    element.timeline(this.animationTimeline);
+    element.timeline(elementState.animationTimeline);
     return element.animate(duration, 0, 'now');
   }
 
@@ -561,7 +735,14 @@ export class ScadaObject {
         case 'constant':
           return objectValue.constantValue;
         case 'property':
-          return objectValue.computedPropertyValue;
+          const property = this.getProperty(objectValue.propertyId);
+          if (property.type === 'color-settings') {
+            const colorProcessor: ColorProcessor = objectValue.computedPropertyValue;
+            colorProcessor.update(value);
+            return colorProcessor.color;
+          } else {
+            return objectValue.computedPropertyValue;
+          }
         case 'function':
           try {
             return objectValue.valueConverter(value);
@@ -584,11 +765,18 @@ export class ScadaObject {
     }
   }
 
+  private getProperty(id: string): ScadaObjectProperty {
+    return this.metadata.properties.find(p => p.id === id);
+  }
+
   private getPropertyValue(id: string): any {
-    const property = this.metadata.properties.find(p => p.id === id);
+    const property = this.getProperty(id);
     if (property) {
       const value = this.settings[id];
       if (isDefinedAndNotNull(value)) {
+        if (property.type === 'color-settings') {
+          return ColorProcessor.fromSettings(value);
+        }
         return value;
       } else {
         switch (property.type) {
@@ -598,6 +786,8 @@ export class ScadaObject {
             return 0;
           case 'color':
             return '#000';
+          case 'color-settings':
+            return constantColor('#000');
         }
       }
     } else {

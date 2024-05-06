@@ -1,12 +1,71 @@
 <svg width="100" height="100" version="1.1" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg">
  <tb:metadata>{
      "title": "My first SCADA Object",
+     "stateValues": {
+        "level": {
+           "initialValue": 0
+        },
+        "disabled": {
+           "initialValue": false
+        },
+        "on": {
+           "initialValue": false,
+           "callBehavior": [
+              {
+                 "behaviorId": "onUpdateState",
+                 "conditionFunction": "return value === true;"
+              },
+              {
+                  "behaviorId": "offUpdateState",
+                  "conditionFunction": "return value === false;"
+              }
+           ]
+        }
+     },
+     "actions": {
+        "onButton": {
+           "trigger": "click",
+           "actionType": "updateValue",
+           "updateValueId": "on",
+           "updateValueType": "constant",
+           "updateValueConstant": true
+        },
+        "offButton": {
+           "trigger": "click",
+           "actionType": "updateValue",
+           "updateValueId": "on",
+           "updateValueType": "constant",
+           "updateValueConstant": false
+        }
+     },
      "states": {
         "initialState": {
            "initial": true,
            "state": [
+             {
+                "tag": "levelTitle",
+                "show": {
+                      "type": "property",
+                      "propertyId": "showLevelTitle"
+                },
+                "text": {
+                  "content": {
+                      "type": "property",
+                      "propertyId": "levelTitle"
+                  },
+                  "font": {
+                      "type": "property",
+                      "propertyId": "levelTitleFont"
+                   },
+                   "color": {
+                      "type": "property",
+                      "propertyId": "levelTitleColor"
+                   }
+                }
+              },
               {
                 "tag": "level",
+                "inputValue": "level",
                 "attributes": [
                    {
                       "name": "fill",
@@ -86,9 +145,11 @@
            ]
         },
         "updateLevelState": {
+           "triggerValues": ["level"],
            "state": [
               {
                 "tag": "level",
+                "inputValue": "level",
                 "animate": 200,
                 "attributes": [
                    {
@@ -102,6 +163,7 @@
               },
               {
                 "tag": "levelValue",
+                "inputValue": "level",
                 "text": {
                   "content": {
                     "type": "valueFormat",
@@ -118,7 +180,28 @@
               }
            ]
         },
+        "updateLevelBackgroundState": {
+           "triggerValues": ["disabled", "level"],
+           "conditionFunction": "return values.disabled === false;",
+           "state": [
+           {
+                "tag": "level",
+                "inputValue": "level",
+                "attributes": [
+                   {
+                      "name": "fill",
+                      "value": {
+                          "type": "property",
+                          "propertyId": "levelBackground"
+                      }
+                   }
+                ]
+              }
+           ]
+        },
         "disabledState": {
+           "triggerValues": ["disabled"],
+           "conditionFunction": "return values.disabled === true;",
            "state": [
               {
                 "tag": "level",
@@ -134,16 +217,68 @@
               }
            ]
         },
-        "enabledState": {
+        "onState": {
+           "triggerValues": ["on"],
+           "conditionFunction": "return values.on === true;",
            "state": [
               {
-                "tag": "level",
+                "tag": "fan",
+                "addClass": "fan-rotate"
+              },
+              {
+                "tag": "onButtonBackground",
                 "attributes": [
                    {
                       "name": "fill",
                       "value": {
-                          "type": "property",
-                          "propertyId": "levelBackground"
+                          "type": "constant",
+                          "constantValue": "#777"
+                      }
+                   }
+                ]
+              },
+              {
+                "tag": "offButtonBackground",
+                "attributes": [
+                   {
+                      "name": "fill",
+                      "value": {
+                          "type": "constant",
+                          "constantValue": "#ed121f"
+                      }
+                   }
+                ]
+              }
+           ]
+        },
+        "offState": {
+           "triggerValues": ["on"],
+           "conditionFunction": "return values.on === false;",
+           "state": [
+              {
+                "tag": "fan",
+                "removeClass": "fan-rotate"
+              },
+              {
+                "tag": "onButtonBackground",
+                "attributes": [
+                   {
+                      "name": "fill",
+                      "value": {
+                          "type": "constant",
+                          "constantValue": "#12ed19"
+                      }
+                   }
+                ]
+              },
+              {
+                "tag": "offButtonBackground",
+                "attributes": [
+                   {
+                      "name": "fill",
+                      "value": {
+                          "type": "constant",
+                          "constantValue": "#777"
                       }
                    }
                 ]
@@ -160,10 +295,7 @@
           "defaultValue": 0,
           "onUpdate": [
              {
-                "matcher": {
-                  "type": "any"
-                },
-                "stateId": "updateLevelState"
+                "updateValue": "level"
              }
           ]
         },
@@ -175,35 +307,87 @@
            "defaultValue": false,
            "onUpdate": [
               {
-                "matcher": {
-                    "type": "constant",
-                    "value": true
-                 },
-                 "stateId": "disabledState"
-              },
-              {
-                "matcher": {
-                    "type": "constant",
-                    "value": false
-                 },
-                 "stateId": "enabledState"
+                "updateValue": "disabled"
               }
            ]
+        },
+        {
+           "id": "onState",
+           "name": "On/Off state",
+           "type": "getValue",
+           "valueType": "BOOLEAN",
+           "defaultValue": false,
+           "onUpdate": [
+              {
+                "updateValue": "on"
+              }
+           ]
+        },
+        {
+           "id": "onUpdateState",
+           "name": "Power On",
+           "type": "setValue",
+           "valueToDataType": "CONSTANT",
+           "constantValue": true
+        },
+        {
+           "id": "offUpdateState",
+           "name": "Power Off",
+           "type": "setValue",
+           "valueToDataType": "CONSTANT",
+           "constantValue": false
         }
      ],
      "properties": [
          {
+            "id": "showLevelTitle",
+            "name": "Level title",
+            "type": "switch",
+            "default": true,
+            "rowClass": "column-xs"
+         },
+         {
+            "id": "levelTitle",
+            "name": "Level title",
+            "type": "string",
+            "default": "Level",
+            "disableOnProperty": "showLevelTitle",
+            "fieldClass": "flex"
+         },
+         {
+            "id": "levelTitleFont",
+            "name": "Level title",
+            "type": "font",
+            "default": {
+               "size": 6,
+               "sizeUnit": "px",
+               "family": "Roboto",
+               "weight": "normal",
+               "style": "normal"
+            },
+            "disableOnProperty": "showLevelTitle"
+         },
+         {
+            "id": "levelTitleColor",
+            "name": "Level title",
+            "type": "color",
+            "default": "#000000",
+            "disableOnProperty": "showLevelTitle"
+         },
+         {
             "id": "showValue",
             "name": "Value",
             "type": "switch",
-            "default": true
+            "default": true,
+            "rowClass": "column-xs"
          },
          {
             "id": "valueUnits",
             "name": "Value",
             "type": "units",
             "default": "",
-            "disableOnProperty": "showValue"
+            "disableOnProperty": "showValue",
+            "fieldClass": "flex"
          },
          {
             "id": "valueDecimals",
@@ -214,7 +398,8 @@
             "max": 15,
             "step": 1,
             "fieldSuffix": "decimals",
-            "disableOnProperty": "showValue"
+            "disableOnProperty": "showValue",
+            "fieldClass": "flex"
          },
          {
             "id": "valueFont",
@@ -243,7 +428,9 @@
             "type": "number",
             "required": true,
             "default": 0,
-            "min": 0
+            "min": 0,
+            "rowClass": "column-xs",
+            "fieldClass": "flex-xs"
          },
          {
             "id": "maxLevel",
@@ -252,7 +439,8 @@
             "type": "number",
             "required": true,
             "default": 100,
-            "min": 0
+            "min": 0,
+            "fieldClass": "flex-xs"
          },
          {
             "id": "showMinMaxLevel",
@@ -284,9 +472,14 @@
            "id": "levelBackground",
            "name": "Level background",
            "subLabel": "Enabled",
-           "type": "color",
-           "default": "#1abb48",
-           "divider": true
+           "type": "color-settings",
+           "default": {
+              "type": "constant",
+              "color": "#1abb48",
+              "colorFunction": "return value &gt; 70 ? '#d5280d' : '#1abb48';"
+           },
+           "divider": true,
+           "rowClass": "column-xs"
          },
          {
            "id": "disabledLevelBackground",
@@ -297,11 +490,32 @@
          }
      ]
    }</tb:metadata>
+ <style>.fan-rotate {
+         animation: rotate 2s linear infinite;
+         transform-origin: 71.894px 39.787px;
+     }
+     @keyframes rotate {
+         0% { transform: rotate(0deg); }
+         100% { transform: rotate(360deg); }
+     }</style>
  <rect width="100" height="100" rx="0" fill="none" stroke="#ccc" stroke-width="2"/>
  <rect x="8" y="15" width="20" height="81" rx="2" fill="#ececec" stroke="#000" stroke-width="1.0359"/>
  <rect transform="scale(1 -1)" x="8.5" y="-95.5" width="19" height="40" rx="1.5" fill="#1abb48" tb:tag="level"/>
  <text x="32" y="95" fill="#666" font-family="Roboto" font-size="6px" tb:tag="minLevel" xml:space="preserve"><tspan x="31.354307" y="96.626251">min</tspan></text>
  <rect x="10.941" y="49.544" width="14.155" height="12" rx="2.8668" fill="#fff" fill-opacity=".45148" tb:tag="levelValueBackground"/>
- <text x="18" y="56" dominant-baseline="middle" fill="#000000" font-family="Roboto" font-size="6px" text-anchor="middle" tb:tag="levelValue" xml:space="preserve"><tspan>N/A</tspan></text>
- <text x="32" y="20" fill="#666" font-family="Roboto" font-size="6px" tb:tag="maxLevel" xml:space="preserve"><tspan x="29.865496" y="18.716127">max</tspan></text>
+ <g font-family="Roboto" font-size="6px">
+  <text x="18" y="56" dominant-baseline="middle" fill="#000000" text-anchor="middle" tb:tag="levelValue" xml:space="preserve"><tspan>N/A</tspan></text>
+  <text x="17.636805" y="10.347933" dominant-baseline="middle" fill="#000000" text-anchor="middle" tb:tag="levelTitle" xml:space="preserve"><tspan>Level</tspan></text>
+  <text x="32" y="20" fill="#666666" tb:tag="maxLevel" xml:space="preserve"><tspan x="29.865496" y="18.716127">max</tspan></text>
+ </g>
+ <path d="m82.143 27.538h-20.499c-1.1045 0-1.9999 0.8954-1.9999 1.9999v20.499c0 1.1045 0.8954 1.9999 1.9999 1.9999h20.499c1.1045 0 1.9999-0.8954 1.9999-1.9999v-20.499c0-1.1045-0.8954-1.9999-1.9999-1.9999zm-20.499 1.4999c0.27613 0 0.49998 0.22385 0.49998 0.49998s-0.22385 0.49998-0.49998 0.49998-0.49998-0.22385-0.49998-0.49998 0.22385-0.49998 0.49998-0.49998zm0 21.499c-0.27613 0-0.49998-0.22385-0.49998-0.49998s0.22385-0.49998 0.49998-0.49998 0.49998 0.22385 0.49998 0.49998-0.22385 0.49998-0.49998 0.49998zm10.249-0.79997c-5.495 0-9.9495-4.4545-9.9495-9.9495s4.4545-9.9495 9.9495-9.9495 9.9495 4.4545 9.9495 9.9495-4.4545 9.9495-9.9495 9.9495zm10.249 0.79997c-0.27613 0-0.49998-0.22385-0.49998-0.49998s0.22385-0.49998 0.49998-0.49998 0.49998 0.22385 0.49998 0.49998-0.22385 0.49998-0.49998 0.49998zm0-20.499c-0.27613 0-0.49998-0.22385-0.49998-0.49998s0.22385-0.49998 0.49998-0.49998 0.49998 0.22385 0.49998 0.49998-0.22385 0.49998-0.49998 0.49998z" fill="#080d7d" stroke-width=".040031"/>
+ <path class="fan-rotate" d="m80.66 37.983c-0.04956-0.24078-0.15288-0.4126-0.34242-0.56916-1.5148-1.2518-3.6154-1.1677-6.3021 0.25239-0.17533-0.17533-0.36512-0.32353-0.5778-0.45114 1.8517-1.6612 3.5396-2.3586 5.0637-2.0924 0.44934 0.0785 0.7605-0.43637 0.48209-0.79765-0.61795-0.80201-1.3212-1.455-2.1668-2.0119-0.20536-0.13522-0.39987-0.18358-0.64461-0.16032-1.9563 0.18594-3.3822 1.7308-4.2778 4.6347-0.24799 0-0.48697 0.02938-0.72756 0.08955 0.1347-2.484 0.83504-4.1707 2.101-5.0601 0.37324-0.2622 0.22918-0.84629-0.22313-0.90497-1.0041-0.13014-1.9631-0.09459-2.9548 0.10956-0.24078 0.04956-0.4126 0.15288-0.56916 0.34242-1.2518 1.5148-1.1677 3.6154 0.25239 6.3021-0.17533 0.17533-0.32353 0.36512-0.45114 0.5778-1.6612-1.8517-2.3586-3.5396-2.0924-5.0637 0.0785-0.44934-0.43637-0.7605-0.79765-0.48213-0.80201 0.61795-1.455 1.3212-2.0119 2.1668-0.13522 0.20536-0.18358 0.39986-0.16032 0.64461 0.18594 1.9563 1.7308 3.3822 4.6347 4.2778 0 0.24799 0.02938 0.48697 0.08955 0.72756-2.484-0.1347-4.1707-0.83504-5.0601-2.101-0.2622-0.37324-0.84629-0.22918-0.90497 0.22313-0.13014 1.0041-0.09459 1.9631 0.10956 2.9548 0.04956 0.24078 0.15288 0.4126 0.34242 0.56916 1.5148 1.2518 3.6154 1.1677 6.3021-0.25239 0.17533 0.17533 0.36512 0.32353 0.5778 0.45114-1.8517 1.6612-3.5396 2.3586-5.0637 2.0924-0.44934-0.0785-0.7605 0.43637-0.48209 0.79765 0.61795 0.80201 1.3212 1.455 2.1668 2.0119 0.20536 0.13522 0.39986 0.18358 0.64461 0.16032 1.9563-0.18594 3.3822-1.7308 4.2778-4.6347 0.24799 0 0.48697-0.02938 0.72756-0.08959-0.1347 2.484-0.83504 4.1707-2.101 5.0601-0.37324 0.2622-0.22918 0.84629 0.22313 0.90497 1.0041 0.13014 1.9631 0.09459 2.9548-0.10956 0.24078-0.04956 0.4126-0.15288 0.56916-0.34242 1.2518-1.5148 1.1677-3.6154-0.25239-6.3021 0.17533-0.17533 0.32353-0.36512 0.45114-0.5778 1.6612 1.8517 2.3586 3.5396 2.0924 5.0637-0.0785 0.44934 0.43637 0.7605 0.79765 0.48209 0.80201-0.61795 1.455-1.3212 2.0119-2.1668 0.13522-0.20536 0.18358-0.39987 0.16032-0.64461-0.18594-1.9563-1.7308-3.3822-4.6347-4.2778 0-0.24799-0.02938-0.48697-0.08955-0.72756 2.484 0.1347 4.1707 0.83504 5.0601 2.101 0.2622 0.37324 0.84629 0.22918 0.90497-0.22313 0.13014-1.004 0.09459-1.963-0.10956-2.9547zm-8.7657 4.3043c-1.3806 0-2.4999-1.1193-2.4999-2.4999s1.1193-2.4999 2.4999-2.4999 2.4999 1.1193 2.4999 2.4999-1.1193 2.4999-2.4999 2.4999z" fill="#7d081e" stroke-width=".040031" tb:tag="fan"/>
+ <g tb:tag="onButton">
+  <rect x="54.702" y="60.372" width="14.263" height="7.4261" rx="1.5" fill="#12ed19" stroke="#000" tb:tag="onButtonBackground"/>
+  <text x="61.855518" y="64.49128" dominant-baseline="middle" fill="#000000" font-family="Roboto" font-size="4.4461px" stroke-width=".74101" text-anchor="middle" xml:space="preserve"><tspan stroke-width=".74101">On</tspan></text>
+ </g>
+ <g tb:tag="offButton">
+  <rect x="74.367" y="60.311" width="14.263" height="7.4261" rx="1.5" fill="#ed121f" stroke="#000" tb:tag="offButtonBackground"/>
+  <text x="81.365944" y="64.518349" dominant-baseline="middle" fill="#000000" font-family="Roboto" font-size="4.4461px" stroke-width=".74101" text-anchor="middle" xml:space="preserve"><tspan stroke-width=".74101">Off</tspan></text>
+ </g>
 </svg>

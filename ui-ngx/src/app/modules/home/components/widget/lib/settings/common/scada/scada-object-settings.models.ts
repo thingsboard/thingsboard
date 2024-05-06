@@ -20,6 +20,7 @@ export interface ScadaPropertyRow {
   label: string;
   properties: ScadaObjectProperty[];
   switch?: ScadaObjectProperty;
+  rowClass?: string;
 }
 
 export const toPropertyRows = (properties: ScadaObjectProperty[]): ScadaPropertyRow[] => {
@@ -29,7 +30,8 @@ export const toPropertyRows = (properties: ScadaObjectProperty[]): ScadaProperty
     if (!propertyRow) {
       propertyRow = {
         label: property.name,
-        properties: []
+        properties: [],
+        rowClass: property.rowClass
       };
       result.push(propertyRow);
     }
