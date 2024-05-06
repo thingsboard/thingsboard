@@ -175,7 +175,7 @@ export interface ClientLwM2mSettings {
   edrxCycle?: number;
   pagingTransmissionWindow?: number;
   psmActivityTimer?: number;
-  defaultObjectIDVer: string;
+  defaultObjectIDVer: ObjectIDVer;
 }
 
 export interface ObservableAttributes {
