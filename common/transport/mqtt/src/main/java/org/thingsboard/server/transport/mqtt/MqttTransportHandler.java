@@ -1039,9 +1039,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     private MqttConnAckMessage createMqttConnAckMsg(MqttConnectReturnCode returnCode, MqttConnectMessage msg) {
         MqttMessageBuilders.ConnAckBuilder connAckBuilder = MqttMessageBuilders.connAck();
         connAckBuilder.sessionPresent(!msg.variableHeader().isCleanSession());
-        if (MqttVersion.MQTT_5.equals(deviceSessionCtx.getMqttVersion())) {
-            connAckBuilder.returnCode(returnCode);
-        }
+        MqttConnectReturnCode finalReturnCode = ReturnCodeResolver.getConnectionReturnCode(deviceSessionCtx.getMqttVersion(), returnCode);
+        connAckBuilder.returnCode(finalReturnCode);
         return connAckBuilder.build();
     }
 
