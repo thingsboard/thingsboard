@@ -42,11 +42,9 @@ import java.util.UUID;
         name = "rule chain",
         configClazz = TbRuleChainInputNodeConfiguration.class,
         version = 1,
-        nodeDescription = "transfers the message to another rule chain",
-        nodeDetails = "Allows to nest the rule chain similar to single rule node. " +
-                "The incoming message is forwarded to the input node of the specified target rule chain. " +
-                "The target rule chain may produce multiple labeled outputs. " +
-                "You may use the outputs to forward the results of processing to other rule nodes.",
+        nodeDescription = "Transfers the message to another rule chain",
+        nodeDetails = "The incoming message is forwarded to the input node of the specified target rule chain.<br><br>" +
+                "Output connections: <i>Any connection(s) produced by output node(s) in the target rule chain.</i>",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbFlowNodeRuleChainInputConfig",
         relationTypes = {},
