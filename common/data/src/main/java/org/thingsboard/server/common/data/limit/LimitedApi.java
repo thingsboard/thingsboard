@@ -40,7 +40,7 @@ public enum LimitedApi {
     TWO_FA_VERIFICATION_CODE_CHECK(false, true),
     TRANSPORT_MESSAGES_PER_TENANT("transport messages", true),
     TRANSPORT_MESSAGES_PER_DEVICE("transport messages per device", false),
-    EMAILS("emails", true);
+    EMAILS("emails sending", true);
 
     private Function<DefaultTenantProfileConfiguration, String> configExtractor;
     @Getter

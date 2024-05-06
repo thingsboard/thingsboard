@@ -41,6 +41,7 @@ import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.ApiUsageRecordState;
 import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.exception.RateLimitExceededException;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -225,7 +226,7 @@ public class DefaultMailService implements MailService {
         if (apiUsageStateService.getApiUsageState(tenantId).isEmailSendEnabled()) {
             if (tenantId != null && !tenantId.isSysTenantId() && StringUtils.isNotEmpty(perTenantRateLimitConfig) &&
                     !rateLimitService.checkRateLimit(LimitedApi.EMAILS, (Object) tenantId, perTenantRateLimitConfig)) {
-                throw new ThingsboardException("Rate limit for emails sending is exceeded", ThingsboardErrorCode.TOO_MANY_REQUESTS);
+                throw new RateLimitExceededException(LimitedApi.EMAILS);
             }
             try {
                 MimeMessage mailMsg = javaMailSender.createMimeMessage();
