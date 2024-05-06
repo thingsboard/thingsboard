@@ -164,7 +164,7 @@ mail:
   oauth2:
     # Interval for checking refresh token expiration in seconds(by default, 1 day).
     refreshTokenCheckingInterval: "${REFRESH_TOKEN_EXPIRATION_CHECKING_INTERVAL:86400}"
-  # Rate limits for sending mails per tenant
+  # Rate limits for sending mails per tenant. As example for 1000 per minute and 10000 per hour is "1000:60,10000:3600"
   per_tenant_rate_limits: "${MAIL_PER_TENANT_RATE_LIMITS:}"
 
 # Usage statistics parameters
