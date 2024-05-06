@@ -34,7 +34,6 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -45,8 +44,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleNode;
-import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
-import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -79,12 +76,6 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
     private RuleEngineDeviceProfileCache deviceProfileCacheMock;
     @Mock
     private RuleEngineAssetProfileCache assetProfileCacheMock;
-    @Mock
-    private TenantProfile tenantProfileMock;
-    @Mock
-    private TenantProfileData tenantProfileDataMock;
-    @Mock
-    private DefaultTenantProfileConfiguration tenantProfileConfigurationMock;
 
     @BeforeEach
     public void setUp() {
