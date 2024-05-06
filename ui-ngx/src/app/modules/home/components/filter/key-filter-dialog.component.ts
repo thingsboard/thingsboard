@@ -35,7 +35,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { entityFields } from '@shared/models/entity.models';
 import { Observable, of, Subject } from 'rxjs';
 import { filter, map, mergeMap, publishReplay, refCount, startWith, takeUntil } from 'rxjs/operators';
-import { isDefined } from '@core/utils';
+import { isBoolean, isDefined } from '@core/utils';
 import { EntityId } from '@shared/models/id/entity-id';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 
@@ -121,22 +121,30 @@ export class KeyFilterDialogComponent extends
       this.keyFilterFormGroup.get('valueType').valueChanges.pipe(
         takeUntil(this.destroy$)
       ).subscribe((valueType: EntityKeyValueType) => {
-        const prevValue: EntityKeyValueType = this.keyFilterFormGroup.value.valueType;
+        const prevValueType: EntityKeyValueType = this.keyFilterFormGroup.value.valueType;
         const predicates: KeyFilterPredicate[] = this.keyFilterFormGroup.get('predicates').value;
-        if (prevValue && prevValue !== valueType && predicates && predicates.length) {
-          this.dialogs.confirm(this.translate.instant('filter.key-value-type-change-title'),
-            this.translate.instant('filter.key-value-type-change-message')).subscribe(
-            (result) => {
-              if (result) {
-                this.keyFilterFormGroup.get('predicates').setValue([]);
-              } else {
-                this.keyFilterFormGroup.get('valueType').setValue(prevValue, {emitEvent: false});
+        const value = this.keyFilterFormGroup.get('value')?.value;
+        if (prevValueType && prevValueType !== valueType) {
+          if (this.isConstantKeyType && this.data.telemetryKeysOnly) {
+            this.keyFilterFormGroup.get('value').setValue(null);
+          }
+          if (predicates && predicates.length) {
+            this.dialogs.confirm(this.translate.instant('filter.key-value-type-change-title'),
+              this.translate.instant('filter.key-value-type-change-message')).subscribe(
+              (result) => {
+                if (result) {
+                  this.keyFilterFormGroup.get('predicates').setValue([]);
+                } else {
+                  this.keyFilterFormGroup.get('valueType').setValue(prevValueType, {emitEvent: false});
+                  this.keyFilterFormGroup.get('value')?.setValue(value, {emitEvent: false});
+                }
               }
-            }
-          );
+            );
+          }
         }
-        if (valueType === EntityKeyValueType.BOOLEAN && this.isConstantKeyType) {
+        if (this.data.telemetryKeysOnly && this.isConstantKeyType && valueType === EntityKeyValueType.BOOLEAN) {
           this.keyFilterFormGroup.get('value').clearValidators();
+          this.keyFilterFormGroup.get('value').setValue(isBoolean(value) ? value : false);
           this.keyFilterFormGroup.get('value').updateValueAndValidity();
         }
       });
