@@ -27,6 +27,7 @@ import { WidgetConfigComponentData } from '../../models/widget-component.models'
 import { isDefined, isDefinedAndNotNull, isString } from '@core/utils';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
+import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 
 @Component({
   selector: 'tb-edit-widget',
@@ -133,6 +134,7 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
     const rawDataKeySettingsSchema = widgetInfo.typeDataKeySettingsSchema || widgetInfo.dataKeySettingsSchema;
     const rawLatestDataKeySettingsSchema = widgetInfo.typeLatestDataKeySettingsSchema || widgetInfo.latestDataKeySettingsSchema;
     const typeParameters = widgetInfo.typeParameters;
+    const dataKeySettingsFunction: DataKeySettingsFunction = typeParameters?.dataKeySettingsFunction;
     const actionSources = widgetInfo.actionSources;
     const isDataEnabled = isDefined(widgetInfo.typeParameters) ? !widgetInfo.typeParameters.useCustomDatasources : true;
     let settingsSchema;
@@ -165,6 +167,7 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
       settingsSchema,
       dataKeySettingsSchema,
       latestDataKeySettingsSchema,
+      dataKeySettingsFunction,
       settingsDirective: widgetInfo.settingsDirective,
       dataKeySettingsDirective: widgetInfo.dataKeySettingsDirective,
       latestDataKeySettingsDirective: widgetInfo.latestDataKeySettingsDirective,

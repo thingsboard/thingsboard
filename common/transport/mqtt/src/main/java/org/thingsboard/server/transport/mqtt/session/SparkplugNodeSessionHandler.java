@@ -43,7 +43,7 @@ import org.thingsboard.server.transport.mqtt.MqttTransportHandler;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopic;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -73,8 +73,8 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
     private final MqttTransportHandler parent;
 
     public SparkplugNodeSessionHandler(MqttTransportHandler parent, DeviceSessionCtx deviceSessionCtx, UUID sessionId,
-                                       SparkplugTopic sparkplugTopicNode) {
-        super(deviceSessionCtx, sessionId);
+                                       boolean overwriteDevicesActivity, SparkplugTopic sparkplugTopicNode) {
+        super(deviceSessionCtx, sessionId, overwriteDevicesActivity);
         this.parent = parent;
         this.sparkplugTopicNode = sparkplugTopicNode;
         this.nodeBirthMetrics = new ConcurrentHashMap<>();
@@ -94,7 +94,7 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
         byte[] bytes = getBytes(inbound.payload());
         Descriptors.Descriptor telemetryDynamicMsgDescriptor = ProtoConverter.validateDescriptor(deviceSessionCtx.getTelemetryDynamicMsgDescriptor());
         try {
-            return JsonConverter.convertToTelemetryProto(new JsonParser().parse(ProtoConverter.dynamicMsgToJson(bytes, telemetryDynamicMsgDescriptor)));
+            return JsonConverter.convertToTelemetryProto(JsonParser.parseString(ProtoConverter.dynamicMsgToJson(bytes, telemetryDynamicMsgDescriptor)));
         } catch (Exception e) {
             log.debug("Failed to decode post telemetry request", e);
             throw new AdaptorException(e);

@@ -1,0 +1,63 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-form-panel tb-y-axes-panel">
+  <div class="tb-form-panel-title">{{ 'widgets.time-series-chart.y-axes' | translate }}</div>
+  <div class="tb-form-table">
+    <div class="tb-form-table-header no-padding-right">
+      <div class="tb-form-table-header-cell tb-axis-id-header" translate>widgets.time-series-chart.axis.id</div>
+      <div class="tb-form-table-header-cell tb-show-header" translate>widgets.time-series-chart.axis.show</div>
+      <div class="tb-form-table-header-cell tb-label-header" translate>widgets.time-series-chart.axis.label</div>
+      <div class="tb-form-table-header-cell tb-position-header" translate>widgets.time-series-chart.axis.position</div>
+      <div class="tb-form-table-header-cell tb-min-header" translate>widgets.time-series-chart.axis.min</div>
+      <div class="tb-form-table-header-cell tb-max-header" translate>widgets.time-series-chart.axis.max</div>
+      <div class="tb-form-table-header-cell tb-units-header" translate>widget-config.units-short</div>
+      <div class="tb-form-table-header-cell tb-decimals-header" translate>widget-config.decimals-short</div>
+      <div class="tb-form-table-header-cell tb-actions-header"></div>
+    </div>
+    <div class="tb-form-table-body tb-drop-list"
+         cdkDropList cdkDropListOrientation="vertical"
+         [cdkDropListDisabled]="!dragEnabled"
+         (cdkDropListDropped)="axisDrop($event)">
+      <div cdkDrag [cdkDragDisabled]="!dragEnabled"
+           class="tb-draggable-form-table-row"
+           *ngFor="let axisControl of axesFormArray().controls; trackBy: trackByAxis; let $index = index;">
+        <tb-time-series-chart-y-axis-row fxFlex
+                                            [formControl]="axisControl"
+                                            [advanced]="advanced"
+                                            (axisRemoved)="removeAxis($index)">
+        </tb-time-series-chart-y-axis-row>
+        <div class="tb-form-table-row-cell-buttons">
+          <button fxHide.lt-lg
+                  mat-icon-button
+                  type="button"
+                  cdkDragHandle
+                  [ngClass]="{'tb-hidden': !dragEnabled}"
+                  matTooltip="{{ 'action.drag' | translate }}"
+                  matTooltipPosition="above">
+            <mat-icon>drag_indicator</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div>
+    <button type="button" mat-stroked-button color="primary" (click)="addAxis()">
+      {{ 'widgets.time-series-chart.axis.add-y-axis' | translate }}
+    </button>
+  </div>
+</div>

@@ -103,7 +103,7 @@ public class HomePageApiTest extends AbstractControllerTest {
         for (int i = 0; i < 100; i++) {
             Tenant tenant = new Tenant();
             tenant.setTitle("tenant" + i);
-            tenants.add(doPost("/api/tenant", tenant, Tenant.class));
+            tenants.add(saveTenant(tenant));
         }
 
         EntityTypeFilter ef = new EntityTypeFilter();
@@ -115,7 +115,7 @@ public class HomePageApiTest extends AbstractControllerTest {
         Assert.assertEquals(initialCount + 100, update.getCount());
 
         for (Tenant tenant : tenants) {
-            doDelete("/api/tenant/" + tenant.getId().toString());
+            deleteTenant(tenant.getId());
         }
     }
 
@@ -494,7 +494,7 @@ public class HomePageApiTest extends AbstractControllerTest {
     }
 
     private OAuth2Info createDefaultOAuth2Info() {
-        return new OAuth2Info(true, Lists.newArrayList(
+        return new OAuth2Info(true, false, Lists.newArrayList(
                 OAuth2ParamsInfo.builder()
                         .domainInfos(Lists.newArrayList(
                                 OAuth2DomainInfo.builder().name("domain").scheme(SchemeType.MIXED).build()

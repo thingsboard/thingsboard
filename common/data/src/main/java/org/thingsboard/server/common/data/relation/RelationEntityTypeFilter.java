@@ -15,8 +15,7 @@
  */
 package org.thingsboard.server.common.data.relation;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.EntityType;
 
@@ -26,7 +25,7 @@ import java.util.List;
  * Created by ashvayka on 02.05.17.
  */
 @Data
-@ApiModel
+@Schema
 public class RelationEntityTypeFilter {
 
     public RelationEntityTypeFilter() {}
@@ -41,12 +40,12 @@ public class RelationEntityTypeFilter {
         this.negate = negate;
     }
 
-    @ApiModelProperty(position = 1, value = "Type of the relation between root entity and other entity (e.g. 'Contains' or 'Manages').", example = "Contains")
+    @Schema(description = "Type of the relation between root entity and other entity (e.g. 'Contains' or 'Manages').", example = "Contains")
     private String relationType;
 
-    @ApiModelProperty(position = 2, value = "Array of entity types to filter the related entities (e.g. 'DEVICE', 'ASSET').")
+    @Schema(description = "Array of entity types to filter the related entities (e.g. 'DEVICE', 'ASSET').")
     private List<EntityType> entityTypes;
 
-    @ApiModelProperty(position = 3, value = "Negate relation type between root entity and other entity.")
+    @Schema(description = "Negate relation type between root entity and other entity.")
     private boolean negate;
 }

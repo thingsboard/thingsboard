@@ -1,7 +1,7 @@
 {
   "name": "thingsboard-js-executor",
   "private": true,
-  "version": "3.6.3",
+  "version": "3.7.0",
   "description": "ThingsBoard JavaScript Executor Microservice",
   "main": "server.ts",
   "bin": "server.js",
@@ -15,7 +15,7 @@
   "dependencies": {
     "@aws-sdk/client-sqs": "^3.121.0",
     "@azure/service-bus": "^7.5.1",
-    "@google-cloud/pubsub": "^3.0.1",
+    "@google-cloud/pubsub": "^4.3.3",
     "amqplib": "^0.10.0",
     "config": "^3.3.7",
     "express": "^4.18.1",

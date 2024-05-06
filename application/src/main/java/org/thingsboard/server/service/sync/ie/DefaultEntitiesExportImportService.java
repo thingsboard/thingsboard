@@ -34,7 +34,7 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
+import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
 import org.thingsboard.server.service.sync.ie.exporting.EntityExportService;
 import org.thingsboard.server.service.sync.ie.exporting.impl.BaseEntityExportService;
 import org.thingsboard.server.service.sync.ie.exporting.impl.DefaultEntityExportService;
@@ -62,7 +62,7 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
 
     private final RelationService relationService;
     private final RateLimitService rateLimitService;
-    private final TbNotificationEntityService entityNotificationService;
+    private final TbLogEntityActionService logEntityActionService;
 
     protected static final List<EntityType> SUPPORTED_ENTITY_TYPES = List.of(
             EntityType.CUSTOMER, EntityType.RULE_CHAIN, EntityType.TB_RESOURCE,
@@ -101,7 +101,11 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
         ctx.putInternalId(exportData.getExternalId(), importResult.getSavedEntity().getId());
 
         ctx.addReferenceCallback(exportData.getExternalId(), importResult.getSaveReferencesCallback());
-        ctx.addEventCallback(importResult.getSendEventsCallback());
+        if (ctx.isRollbackOnError()) {
+            ctx.addEventCallback(importResult.getSendEventsCallback());
+        } else {
+            importResult.getSendEventsCallback().run();
+        }
         return importResult;
     }
 
@@ -120,7 +124,7 @@ public class DefaultEntitiesExportImportService implements EntitiesExportImportS
         relationService.saveRelations(ctx.getTenantId(), new ArrayList<>(ctx.getRelations()));
 
         for (EntityRelation relation : ctx.getRelations()) {
-            entityNotificationService.logEntityRelationAction(ctx.getTenantId(), null,
+            logEntityActionService.logEntityRelationAction(ctx.getTenantId(), null,
                     relation, ctx.getUser(), ActionType.RELATION_ADD_OR_UPDATE, null, relation);
         }
     }

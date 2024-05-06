@@ -126,20 +126,20 @@ public interface DeviceRepository extends JpaRepository<DeviceEntity, UUID>, Exp
 
     @Query("SELECT d FROM DeviceInfoEntity d " +
             "WHERE d.tenantId = :tenantId " +
-            "AND (:customerId IS NULL OR d.customerId = uuid(:customerId)) " +
-            "AND (:edgeId IS NULL OR d.id IN (SELECT re.toId FROM RelationEntity re WHERE re.toType = 'DEVICE' AND re.relationTypeGroup = 'EDGE' AND re.relationType = 'Contains' AND re.fromType = 'EDGE' AND re.fromId = uuid(:edgeId))) " +
+            "AND (:customerId IS NULL OR d.customerId = :customerId) " +
+            "AND (:edgeId IS NULL OR d.id IN (SELECT re.toId FROM RelationEntity re WHERE re.toType = 'DEVICE' AND re.relationTypeGroup = 'EDGE' AND re.relationType = 'Contains' AND re.fromType = 'EDGE' AND re.fromId = :edgeId)) " +
             "AND ((:deviceType) IS NULL OR d.type = :deviceType) " +
-            "AND (:deviceProfileId IS NULL OR d.deviceProfileId = uuid(:deviceProfileId)) " +
-            "AND ((:filterByActive) IS FALSE OR d.active = :deviceActive) " +
+            "AND (:deviceProfileId IS NULL OR d.deviceProfileId = :deviceProfileId) " +
+            "AND ((:filterByActive) = FALSE OR d.active = :deviceActive) " +
             "AND (:textSearch IS NULL OR ilike(d.name, CONCAT('%', :textSearch, '%')) = true " +
             "OR ilike(d.label, CONCAT('%', :textSearch, '%')) = true " +
             "OR ilike(d.type, CONCAT('%', :textSearch, '%')) = true " +
             "OR ilike(d.customerTitle, CONCAT('%', :textSearch, '%')) = true)")
     Page<DeviceInfoEntity> findDeviceInfosByFilter(@Param("tenantId") UUID tenantId,
-                                                   @Param("customerId") String customerId,
-                                                   @Param("edgeId") String edgeId,
+                                                   @Param("customerId") UUID customerId,
+                                                   @Param("edgeId") UUID edgeId,
                                                    @Param("deviceType") String type,
-                                                   @Param("deviceProfileId") String deviceProfileId,
+                                                   @Param("deviceProfileId") UUID deviceProfileId,
                                                    @Param("filterByActive") boolean filterByActive,
                                                    @Param("deviceActive") boolean active,
                                                    @Param("textSearch") String textSearch,

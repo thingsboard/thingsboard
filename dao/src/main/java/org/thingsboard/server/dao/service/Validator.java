@@ -27,6 +27,7 @@ import org.thingsboard.server.dao.exception.IncorrectParameterException;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
 public class Validator {
@@ -37,11 +38,38 @@ public class Validator {
      * This method validate <code>EntityId</code> entity id. If entity id is invalid than throw
      * <code>IncorrectParameterException</code> exception
      *
-     * @param entityId          the entityId
-     * @param errorMessage the error message for exception
+     * @param entityId      the entityId
+     * @param errorMessage  the error message for exception
      */
+    @Deprecated
     public static void validateEntityId(EntityId entityId, String errorMessage) {
         if (entityId == null || entityId.getId() == null) {
+            throw new IncorrectParameterException(errorMessage);
+        }
+    }
+
+    /**
+     * This method validate <code>EntityId</code> entity id. If entity id is invalid than throw
+     * <code>IncorrectParameterException</code> exception
+     *
+     * @param entityId              the entityId
+     * @param errorMessageFunction  the error message function for exception that applies entityId
+     */
+    public static void validateEntityId(EntityId entityId, Function<EntityId, String> errorMessageFunction) {
+        if (entityId == null || entityId.getId() == null) {
+            throw new IncorrectParameterException(errorMessageFunction.apply(entityId));
+        }
+    }
+
+    /**
+     * This method validate <code>String</code> string. If string is invalid than throw
+     * <code>IncorrectParameterException</code> exception
+     *
+     * @param val           the val
+     * @param errorMessage  the error message for exception
+     */
+    public static void validateString(String val, String errorMessage) {
+        if (val == null || val.isEmpty()) {
             throw new IncorrectParameterException(errorMessage);
         }
     }
@@ -50,22 +78,21 @@ public class Validator {
      * This method validate <code>String</code> string. If string is invalid than throw
      * <code>IncorrectParameterException</code> exception
      *
-     * @param val          the val
-     * @param errorMessage the error message for exception
+     * @param val                   the value
+     * @param errorMessageFunction  the error message function that applies value
      */
-    public static void validateString(String val, String errorMessage) {
+    public static void validateString(String val, Function<String, String> errorMessageFunction) {
         if (val == null || val.isEmpty()) {
-            throw new IncorrectParameterException(errorMessage);
+            throw new IncorrectParameterException(errorMessageFunction.apply(val));
         }
     }
-
 
     /**
      * This method validate <code>long</code> value. If value isn't positive than throw
      * <code>IncorrectParameterException</code> exception
      *
-     * @param val          the val
-     * @param errorMessage the error message for exception
+     * @param val           the val
+     * @param errorMessage  the error message for exception
      */
     public static void validatePositiveNumber(long val, String errorMessage) {
         if (val <= 0) {
@@ -77,23 +104,37 @@ public class Validator {
      * This method validate <code>UUID</code> id. If id is null than throw
      * <code>IncorrectParameterException</code> exception
      *
-     * @param id           the id
-     * @param errorMessage the error message for exception
+     * @param id            the id
+     * @param errorMessage  the error message for exception
      */
+    @Deprecated
     public static void validateId(UUID id, String errorMessage) {
         if (id == null) {
             throw new IncorrectParameterException(errorMessage);
         }
     }
 
+    /**
+     * This method validate <code>UUID</code> id. If id is null than throw
+     * <code>IncorrectParameterException</code> exception
+     *
+     * @param id                    the id
+     * @param errorMessageFunction  the error message function for exception that applies id
+     */
+    public static void validateId(UUID id, Function<UUID, String> errorMessageFunction) {
+        if (id == null) {
+            throw new IncorrectParameterException(errorMessageFunction.apply(id));
+        }
+    }
 
     /**
      * This method validate <code>UUIDBased</code> id. If id is null than throw
      * <code>IncorrectParameterException</code> exception
      *
-     * @param id           the id
-     * @param errorMessage the error message for exception
+     * @param id            the id
+     * @param errorMessage  the error message for exception
      */
+    @Deprecated
     public static void validateId(UUIDBased id, String errorMessage) {
         if (id == null || id.getId() == null) {
             throw new IncorrectParameterException(errorMessage);
@@ -101,12 +142,40 @@ public class Validator {
     }
 
     /**
+     * This method validate <code>UUIDBased</code> id. If id is null than throw
+     * <code>IncorrectParameterException</code> exception
+     *
+     * @param id                    the id
+     * @param errorMessageFunction  the error message function for exception that applies id
+     */
+    public static void validateId(UUIDBased id, Function<UUIDBased, String> errorMessageFunction) {
+        if (id == null || id.getId() == null) {
+            throw new IncorrectParameterException(errorMessageFunction.apply(id));
+        }
+    }
+
+    /**
+     * This method validate <code>UUIDBased</code> id. If id is null than throw
+     * <code>IncorrectParameterException</code> exception
+     *
+     * @param id                    the id
+     * @param ids                   the list of ids
+     * @param errorMessageFunction  the error message function for exception that applies ids
+     */
+    static void validateId(UUIDBased id, List<? extends UUIDBased> ids, Function<List<? extends UUIDBased>, String> errorMessageFunction) {
+        if (id == null) {
+            throw new IncorrectParameterException(errorMessageFunction.apply(ids));
+        }
+    }
+
+    /**
      * This method validate list of <code>UUIDBased</code> ids. If at least one of the ids is null than throw
      * <code>IncorrectParameterException</code> exception
      *
-     * @param ids          the list of ids
-     * @param errorMessage the error message for exception
+     * @param ids           the list of ids
+     * @param errorMessage  the error message for exception
      */
+    @Deprecated
     public static void validateIds(List<? extends UUIDBased> ids, String errorMessage) {
         if (ids == null || ids.isEmpty()) {
             throw new IncorrectParameterException(errorMessage);
@@ -118,10 +187,27 @@ public class Validator {
     }
 
     /**
+     * This method validate list of <code>UUIDBased</code> ids. If at least one of the ids is null than throw
+     * <code>IncorrectParameterException</code> exception
+     *
+     * @param ids                   the list of ids
+     * @param errorMessageFunction  the error message function for exception that applies ids
+     */
+    public static void validateIds(List<? extends UUIDBased> ids, Function<List<? extends UUIDBased>, String> errorMessageFunction) {
+        if (ids == null || ids.isEmpty()) {
+            throw new IncorrectParameterException(errorMessageFunction.apply(ids));
+        } else {
+            for (UUIDBased id : ids) {
+                validateId(id, ids, errorMessageFunction);
+            }
+        }
+    }
+
+    /**
      * This method validate <code>PageLink</code> page link. If pageLink is invalid than throw
      * <code>IncorrectParameterException</code> exception
      *
-     * @param pageLink     the page link
+     * @param pageLink           the page link
      */
     public static void validatePageLink(PageLink pageLink) {
         if (pageLink == null) {

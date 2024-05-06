@@ -40,8 +40,7 @@ public class WidgetBundleEdgeProcessor extends BaseEdgeProcessor {
         WidgetsBundleId widgetsBundleId = new WidgetsBundleId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
-            case ADDED:
-            case UPDATED:
+            case ADDED, UPDATED -> {
                 WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleById(edgeEvent.getTenantId(), widgetsBundleId);
                 if (widgetsBundle != null) {
                     List<String> widgets = widgetTypeService.findWidgetFqnsByWidgetsBundleId(edgeEvent.getTenantId(), widgetsBundleId);
@@ -53,16 +52,17 @@ public class WidgetBundleEdgeProcessor extends BaseEdgeProcessor {
                             .addWidgetsBundleUpdateMsg(widgetsBundleUpdateMsg)
                             .build();
                 }
-                break;
-            case DELETED:
+            }
+            case DELETED -> {
                 WidgetsBundleUpdateMsg widgetsBundleUpdateMsg =
                         ((WidgetMsgConstructor) widgetMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructWidgetsBundleDeleteMsg(widgetsBundleId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addWidgetsBundleUpdateMsg(widgetsBundleUpdateMsg)
                         .build();
-                break;
+            }
         }
         return downlinkMsg;
     }
+
 }

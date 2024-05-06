@@ -1510,8 +1510,7 @@
                 "step": "步",
                 "min-evaluation-period": "最小評估期間",
                 "max-evaluation-period": "最大評估期間"
-            },
-            "composite-operations-support": "支持複合讀/寫/觀察 操作"
+            }
         },
         "snmp": {
             "add-communication-config": "新增通訊配置",

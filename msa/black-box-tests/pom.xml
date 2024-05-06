@@ -21,7 +21,7 @@
 
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>3.6.3-SNAPSHOT</version>
+        <version>3.7.0-SNAPSHOT</version>
         <artifactId>msa</artifactId>
     </parent>
     <groupId>org.thingsboard.msa</groupId>
@@ -85,7 +85,7 @@
         </dependency>
         <dependency>
             <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-all</artifactId>
+            <artifactId>hamcrest</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -185,6 +185,10 @@
             <groupId>io.qameta.allure</groupId>
             <artifactId>allure-testng</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.leshan</groupId>
+            <artifactId>leshan-client-cf</artifactId>
         </dependency>
     </dependencies>
     <build>

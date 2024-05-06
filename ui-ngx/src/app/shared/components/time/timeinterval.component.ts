@@ -21,6 +21,7 @@ import { coerceNumberProperty } from '@angular/cdk/coercion';
 import { SubscriptSizing } from '@angular/material/form-field';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { Interval, IntervalMath, TimeInterval } from '@shared/models/time/time.models';
+import { isDefined } from '@core/utils';
 
 @Component({
   selector: 'tb-timeinterval',
@@ -90,14 +91,17 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
   secs = 0;
 
   interval: Interval = 0;
-  modelValue: Interval;
-
-  advanced = false;
-  rendered = false;
-
   intervals: Array<TimeInterval>;
 
-  private propagateChange = (_: any) => {};
+  advanced = false;
+
+  private modelValue: Interval;
+  private rendered = false;
+  private propagateChangeValue: any;
+
+  private propagateChange = (value: any) => {
+    this.propagateChangeValue = value;
+  };
 
   constructor(private timeService: TimeService) {
   }
@@ -108,6 +112,9 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
 
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
+    if (isDefined(this.propagateChangeValue)) {
+      this.propagateChange(this.propagateChangeValue);
+    }
   }
 
   registerOnTouched(fn: any): void {
@@ -132,7 +139,7 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
     }
   }
 
-  setInterval(interval: Interval) {
+  private setInterval(interval: Interval) {
     if (!this.advanced) {
       this.interval = interval;
     }
@@ -143,7 +150,7 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
     this.secs = intervalSeconds % 60;
   }
 
-  boundInterval(updateToPreferred = false) {
+  private boundInterval(updateToPreferred = false) {
     const min = this.timeService.boundMinInterval(this.minValue);
     const max = this.timeService.boundMaxInterval(this.maxValue);
     this.intervals = this.timeService.getIntervals(this.minValue, this.maxValue, this.useCalendarIntervals);
@@ -165,7 +172,7 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
     }
   }
 
-  updateView(updateToPreferred = false) {
+  private updateView(updateToPreferred = false) {
     if (!this.rendered) {
       return;
     }
@@ -187,7 +194,7 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
     this.boundInterval(updateToPreferred);
   }
 
-  calculateIntervalMs(): number {
+  private calculateIntervalMs(): number {
     return (this.days * 86400 +
       this.hours * 3600 +
       this.mins * 60 +
@@ -232,7 +239,7 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
     }
   }
 
-  onSecsChange() {
+  private onSecsChange() {
     if (typeof this.secs === 'undefined') {
       return;
     }
@@ -252,7 +259,7 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
     this.updateView();
   }
 
-  onMinsChange() {
+  private onMinsChange() {
     if (typeof this.mins === 'undefined') {
       return;
     }
@@ -272,7 +279,7 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
     this.updateView();
   }
 
-  onHoursChange() {
+  private onHoursChange() {
     if (typeof this.hours === 'undefined') {
       return;
     }
@@ -292,7 +299,7 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
     this.updateView();
   }
 
-  onDaysChange() {
+  private onDaysChange() {
     if (typeof this.days === 'undefined') {
       return;
     }

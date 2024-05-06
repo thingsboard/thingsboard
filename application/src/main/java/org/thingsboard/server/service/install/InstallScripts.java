@@ -151,17 +151,18 @@ public class InstallScripts {
         }
     }
 
-    public void createDefaultRuleChains(TenantId tenantId) throws IOException {
+    public void createDefaultRuleChains(TenantId tenantId) {
         Path tenantChainsDir = getTenantRuleChainsDir();
         loadRuleChainsFromPath(tenantId, tenantChainsDir);
     }
 
-    public void createDefaultEdgeRuleChains(TenantId tenantId) throws IOException {
+    public void createDefaultEdgeRuleChains(TenantId tenantId) {
         Path edgeChainsDir = getEdgeRuleChainsDir();
         loadRuleChainsFromPath(tenantId, edgeChainsDir);
     }
 
-    private void loadRuleChainsFromPath(TenantId tenantId, Path ruleChainsPath) throws IOException {
+    @SneakyThrows
+    private void loadRuleChainsFromPath(TenantId tenantId, Path ruleChainsPath) {
         findRuleChainsFromPath(ruleChainsPath).forEach(path -> {
             try {
                 createRuleChainFromFile(tenantId, path, null);
@@ -180,11 +181,11 @@ public class InstallScripts {
         return paths;
     }
 
-    public RuleChain createDefaultRuleChain(TenantId tenantId, String ruleChainName) throws IOException {
+    public RuleChain createDefaultRuleChain(TenantId tenantId, String ruleChainName) {
         return createRuleChainFromFile(tenantId, getDeviceProfileDefaultRuleChainTemplateFilePath(), ruleChainName);
     }
 
-    public RuleChain createRuleChainFromFile(TenantId tenantId, Path templateFilePath, String newRuleChainName) throws IOException {
+    public RuleChain createRuleChainFromFile(TenantId tenantId, Path templateFilePath, String newRuleChainName) {
         JsonNode ruleChainJson = JacksonUtil.toJsonNode(templateFilePath.toFile());
         RuleChain ruleChain = JacksonUtil.treeToValue(ruleChainJson.get("ruleChain"), RuleChain.class);
         RuleChainMetaData ruleChainMetaData = JacksonUtil.treeToValue(ruleChainJson.get("metadata"), RuleChainMetaData.class);
@@ -193,10 +194,10 @@ public class InstallScripts {
         if (!StringUtils.isEmpty(newRuleChainName)) {
             ruleChain.setName(newRuleChainName);
         }
-        ruleChain = ruleChainService.saveRuleChain(ruleChain);
+        ruleChain = ruleChainService.saveRuleChain(ruleChain, false);
 
         ruleChainMetaData.setRuleChainId(ruleChain.getId());
-        ruleChainService.saveRuleChainMetaData(TenantId.SYS_TENANT_ID, ruleChainMetaData, Function.identity());
+        ruleChainService.saveRuleChainMetaData(TenantId.SYS_TENANT_ID, ruleChainMetaData, Function.identity(), false);
 
         return ruleChain;
     }
@@ -329,17 +330,18 @@ public class InstallScripts {
         }
     }
 
-    public void loadDashboards(TenantId tenantId, CustomerId customerId) throws Exception {
+    public void loadDashboards(TenantId tenantId, CustomerId customerId) {
         Path dashboardsDir = Paths.get(getDataDir(), JSON_DIR, DEMO_DIR, DASHBOARDS_DIR);
         loadDashboardsFromDir(tenantId, customerId, dashboardsDir);
     }
 
-    public void createDefaultTenantDashboards(TenantId tenantId, CustomerId customerId) throws Exception {
+    public void createDefaultTenantDashboards(TenantId tenantId, CustomerId customerId) {
         Path dashboardsDir = Paths.get(getDataDir(), JSON_DIR, TENANT_DIR, DASHBOARDS_DIR);
         loadDashboardsFromDir(tenantId, customerId, dashboardsDir);
     }
 
-    private void loadDashboardsFromDir(TenantId tenantId, CustomerId customerId, Path dashboardsDir) throws IOException {
+    @SneakyThrows
+    private void loadDashboardsFromDir(TenantId tenantId, CustomerId customerId, Path dashboardsDir) {
         try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(dashboardsDir, path -> path.toString().endsWith(JSON_EXT))) {
             dirStream.forEach(
                     path -> {
@@ -414,7 +416,7 @@ public class InstallScripts {
                     }
             );
         } catch (Exception e) {
-            log.error("Unable to load resources lwm2m object model from file: [{}]", resourceLwm2mPath.toString());
+            log.error("Unable to load resources lwm2m object model from file: [{}]", resourceLwm2mPath);
             throw new RuntimeException("resource lwm2m object model from file", e);
         }
     }

@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
@@ -38,7 +37,6 @@ import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeC
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.dao.notification.NotificationRuleService;
 import org.thingsboard.server.dao.service.ConstraintValidator;
@@ -143,11 +141,9 @@ public class NotificationRuleImportService extends BaseEntityImportService<Notif
     }
 
     @Override
-    protected void onEntitySaved(User user, NotificationRule savedEntity, NotificationRule oldEntity) throws ThingsboardException {
+    protected void onEntitySaved(User user, NotificationRule savedEntity, NotificationRule oldEntity) {
         entityActionService.logEntityAction(user, savedEntity.getId(), savedEntity, null,
                 oldEntity == null ? ActionType.ADDED : ActionType.UPDATED, null);
-        clusterService.broadcastEntityStateChangeEvent(user.getTenantId(), savedEntity.getId(),
-                oldEntity == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
     }
 
     @Override

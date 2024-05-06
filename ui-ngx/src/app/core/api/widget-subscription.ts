@@ -23,13 +23,13 @@ import {
   WidgetSubscriptionOptions
 } from '@core/api/widget-api.models';
 import {
-  DataKey,
+  DataKey, DataKeySettingsWithComparison,
   DataSet,
   DataSetHolder,
   Datasource,
   DatasourceData,
   datasourcesHasAggregation,
-  DatasourceType,
+  DatasourceType, isDataKeySettingsWithComparison,
   LegendConfig,
   LegendData,
   LegendKey,
@@ -61,9 +61,8 @@ import {
   deepClone,
   flatFormattedData,
   formattedDataFormDatasourceData,
-  isDefined,
   isDefinedAndNotNull,
-  isEqual,
+  isEqual, isUndefined,
   parseHttpErrorMessage
 } from '@core/utils';
 import { EntityId } from '@app/shared/models/id/entity-id';
@@ -355,7 +354,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       }
 
       this.units = options.units || '';
-      this.decimals = isDefined(options.decimals) ? options.decimals : 2;
+      this.decimals = isDefinedAndNotNull(options.decimals) ? options.decimals : 2;
 
       this.loadingData = false;
 
@@ -514,7 +513,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.configuredDatasources.forEach((datasource, datasourceIndex) => {
         const additionalDataKeys: DataKey[] = [];
         datasource.dataKeys.forEach((dataKey, dataKeyIndex) => {
-          if (dataKey.settings.comparisonSettings && dataKey.settings.comparisonSettings.showValuesForComparison) {
+          if (isDataKeySettingsWithComparison(dataKey.settings) && dataKey.settings.comparisonSettings.showValuesForComparison) {
             const additionalDataKey = deepClone(dataKey);
             additionalDataKey.isAdditional = true;
             additionalDataKey.origDataKeyIndex = dataKeyIndex;
@@ -1469,11 +1468,12 @@ export class WidgetSubscription implements IWidgetSubscription {
           if (datasource.isAdditional) {
             const origDatasource = this.datasourcePages[datasource.origDatasourceIndex].data[dIndex];
             datasource.dataKeys.forEach((dataKey) => {
-              if (dataKey.settings.comparisonSettings.color) {
+              const settings: DataKeySettingsWithComparison = dataKey.settings;
+              if (settings.comparisonSettings.color) {
                 dataKey.color = dataKey.settings.comparisonSettings.color;
               }
               const origDataKey = origDatasource.dataKeys[dataKey.origDataKeyIndex];
-              origDataKey.settings.comparisonSettings.color = dataKey.color;
+              (origDataKey.settings as DataKeySettingsWithComparison).comparisonSettings.color = dataKey.color;
             });
           }
         });
@@ -1491,7 +1491,8 @@ export class WidgetSubscription implements IWidgetSubscription {
     let datasourceDataArray: Array<DatasourceData> = [];
     datasourceDataArray = datasourceDataArray.concat(datasource.dataKeys.map((dataKey, keyIndex) => {
       dataKey.hidden = !!dataKey.settings.hideDataByDefault;
-      dataKey.inLegend = !dataKey.settings.removeFromLegend;
+      dataKey.inLegend = dataKey.settings.showInLegend ||
+        (isUndefined(dataKey.settings.showInLegend) && !dataKey.settings.removeFromLegend);
       dataKey.label = this.ctx.utils.customTranslation(dataKey.label, dataKey.label);
       const datasourceData: DatasourceData = {
         datasource,
@@ -1523,7 +1524,8 @@ export class WidgetSubscription implements IWidgetSubscription {
     const formattedData = flatFormattedData(formattedDataArray);
 
     datasource.dataKeys.forEach((dataKey) => {
-      if (this.comparisonEnabled && dataKey.isAdditional && dataKey.settings.comparisonSettings.comparisonValuesLabel) {
+      if (this.comparisonEnabled && dataKey.isAdditional && isDataKeySettingsWithComparison(dataKey.settings) &&
+        dataKey.settings.comparisonSettings.comparisonValuesLabel) {
         dataKey.label = createLabelFromPattern(dataKey.settings.comparisonSettings.comparisonValuesLabel, formattedData);
       } else {
         if (this.comparisonEnabled && dataKey.isAdditional) {

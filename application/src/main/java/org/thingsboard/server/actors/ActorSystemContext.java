@@ -19,6 +19,8 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -79,6 +81,7 @@ import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
+import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -93,7 +96,6 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.queue.discovery.DiscoveryService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
@@ -116,8 +118,6 @@ import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.service.transport.TbCoreToTransportService;
 
-import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.concurrent.ConcurrentHashMap;
@@ -183,10 +183,6 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private DiscoveryService discoveryService;
-
-    @Autowired
-    @Getter
-    private DataDecodingEncodingService encodingService;
 
     @Autowired
     @Getter
@@ -450,6 +446,11 @@ public class ActorSystemContext {
     @Autowired(required = false)
     @Getter
     private QueueService queueService;
+
+    @Lazy
+    @Autowired(required = false)
+    @Getter
+    private QueueStatsService queueStatsService;
 
     @Lazy
     @Autowired(required = false)

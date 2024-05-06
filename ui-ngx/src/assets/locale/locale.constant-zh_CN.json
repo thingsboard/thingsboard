@@ -1872,8 +1872,7 @@
                 "step": "步长",
                 "min-evaluation-period": "最小评估周期",
                 "max-evaluation-period": "最大评估周期"
-            },
-            "composite-operations-support": "支持复合读取/写入/观察操作"
+            }
         },
         "snmp": {
             "add-communication-config": "添加通信配置",
@@ -5491,7 +5490,7 @@
             "range-colors": "范围颜色",
             "out-of-range-color": "超出范围颜色",
             "fill-area": "填充区域",
-            "range-chart-card-style": "范围图表卡片样式"
+            "range-chart-style": "范围图样式"
         },
         "rpc": {
             "value-settings": "值设置",

@@ -60,4 +60,5 @@ public class TenantEdgeProcessor extends BaseEdgeProcessor {
         }
         return downlinkMsg;
     }
+
 }

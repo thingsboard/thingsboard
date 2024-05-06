@@ -95,6 +95,17 @@ redis:
   db: "${REDIS_DB:0}"
   # db password
   password: "${REDIS_PASSWORD:}"
+  ssl:
+    # Enable/disable secure connection
+    enabled: "${TB_REDIS_SSL_ENABLED:false}"
+    # Server SSL credentials (only PEM format is supported)
+    credentials:
+      # Path redis server (CA) certificate
+      cert_file: "${TB_REDIS_SSL_PEM_CERT:}"
+      # Path to user certificate file. This is optional for the client and can be used for two-way authentication for the client
+      user_cert_file: "${TB_REDIS_SSL_PEM_KEY:}"
+      # Path to user private key file. This is optional for the client and only needed if ‘user_cert_file’ is configured.
+      user_key_file: "${TB_REDIS_SSL_PEM_KEY_PASSWORD:}"
   # pool config
   pool_config:
     # Maximum number of connections that can be allocated by the connection pool
@@ -293,6 +304,8 @@ queue:
       transport-api: "${TB_QUEUE_KAFKA_TA_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
       # Kafka properties for Notifications topics
       notifications: "${TB_QUEUE_KAFKA_NOTIFICATIONS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      # Kafka properties for Housekeeper tasks topic
+      housekeeper: "${TB_QUEUE_KAFKA_HOUSEKEEPER_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
   aws_sqs:
     # Use the default credentials provider for AWS SQS
     use_default_credential_provider_chain: "${TB_QUEUE_AWS_SQS_USE_DEFAULT_CREDENTIAL_PROVIDER_CHAIN:false}"
@@ -414,6 +427,9 @@ queue:
       enabled: "${TB_QUEUE_CORE_STATS_ENABLED:false}"
       # Statistics printing interval for Core microservices
       print-interval-ms: "${TB_QUEUE_CORE_STATS_PRINT_INTERVAL_MS:10000}"
+    housekeeper:
+      # Topic name for Housekeeper tasks
+      topic: "${TB_HOUSEKEEPER_TOPIC:tb_housekeeper}"
   js:
     # JS Eval request topic
     request_topic: "${REMOTE_JS_EVAL_REQUEST_TOPIC:js_eval.requests}"

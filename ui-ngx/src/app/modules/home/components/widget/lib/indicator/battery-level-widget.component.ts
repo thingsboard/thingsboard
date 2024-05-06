@@ -307,7 +307,7 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
         const newWidth = height * horizontalBatteryDimensions.shapeAspectRatio;
         this.renderer.setStyle(this.batteryLevelRectangle.nativeElement, 'width', newWidth + 'px');
       } else {
-        this.renderer.setStyle(this.batteryLevelRectangle.nativeElement, 'width', null);
+        this.renderer.setStyle(this.batteryLevelRectangle.nativeElement, 'width', width + 'px');
       }
       if (this.batteryLevelValue) {
         const ratios = horizontalBatteryDimensions.heightRatio;

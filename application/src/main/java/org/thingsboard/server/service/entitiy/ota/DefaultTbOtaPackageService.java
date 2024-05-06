@@ -50,12 +50,12 @@ public class DefaultTbOtaPackageService extends AbstractTbEntityService implemen
         try {
             OtaPackageInfo savedOtaPackageInfo = otaPackageService.saveOtaPackageInfo(new OtaPackageInfo(saveOtaPackageInfoRequest), saveOtaPackageInfoRequest.isUsesUrl());
 
-            notificationEntityService.logEntityAction(tenantId, savedOtaPackageInfo.getId(), savedOtaPackageInfo,
+            logEntityActionService.logEntityAction(tenantId, savedOtaPackageInfo.getId(), savedOtaPackageInfo,
                     null, actionType, user);
 
             return savedOtaPackageInfo;
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.OTA_PACKAGE), saveOtaPackageInfoRequest,
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.OTA_PACKAGE), saveOtaPackageInfoRequest,
                     actionType, user, e);
             throw e;
         }
@@ -87,10 +87,10 @@ public class DefaultTbOtaPackageService extends AbstractTbEntityService implemen
             otaPackage.setData(ByteBuffer.wrap(data));
             otaPackage.setDataSize((long) data.length);
             OtaPackageInfo savedOtaPackage = otaPackageService.saveOtaPackage(otaPackage);
-            notificationEntityService.logEntityAction(tenantId, savedOtaPackage.getId(), savedOtaPackage, null, actionType, user);
+            logEntityActionService.logEntityAction(tenantId, savedOtaPackage.getId(), savedOtaPackage, null, actionType, user);
             return savedOtaPackage;
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.OTA_PACKAGE), actionType, user, e, otaPackageId.toString());
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.OTA_PACKAGE), actionType, user, e, otaPackageId.toString());
             throw e;
         }
     }
@@ -102,10 +102,10 @@ public class DefaultTbOtaPackageService extends AbstractTbEntityService implemen
         OtaPackageId otaPackageId = otaPackageInfo.getId();
         try {
             otaPackageService.deleteOtaPackage(tenantId, otaPackageId);
-            notificationEntityService.logEntityAction(tenantId, otaPackageId, otaPackageInfo, null,
+            logEntityActionService.logEntityAction(tenantId, otaPackageId, otaPackageInfo, null,
                     actionType, user, otaPackageInfo.getId().toString());
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.OTA_PACKAGE),
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.OTA_PACKAGE),
                     actionType, user, e, otaPackageId.toString());
             throw e;
         }

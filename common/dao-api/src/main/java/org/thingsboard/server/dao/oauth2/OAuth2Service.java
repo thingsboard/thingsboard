@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.UUID;
 
 public interface OAuth2Service {
+
     List<OAuth2ClientInfo> getOAuth2Clients(String domainScheme, String domainName, String pkgName, PlatformType platformType);
 
     void saveOAuth2Info(OAuth2Info oauth2Info);

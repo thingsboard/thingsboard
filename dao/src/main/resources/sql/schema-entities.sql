@@ -25,7 +25,7 @@ CREATE OR REPLACE PROCEDURE insert_tb_schema_settings()
 $$
 BEGIN
     IF (SELECT COUNT(*) FROM tb_schema_settings) = 0 THEN
-        INSERT INTO tb_schema_settings (schema_version) VALUES (3006000);
+        INSERT INTO tb_schema_settings (schema_version) VALUES (3006004);
     END IF;
 END;
 $$;
@@ -103,17 +103,16 @@ CREATE TABLE IF NOT EXISTS audit_log (
 ) PARTITION BY RANGE (created_time);
 
 CREATE TABLE IF NOT EXISTS attribute_kv (
-  entity_type varchar(255),
   entity_id uuid,
-  attribute_type varchar(255),
-  attribute_key varchar(255),
+  attribute_type int,
+  attribute_key int,
   bool_v boolean,
   str_v varchar(10000000),
   long_v bigint,
   dbl_v double precision,
   json_v json,
   last_update_ts bigint,
-  CONSTRAINT attribute_kv_pkey PRIMARY KEY (entity_type, entity_id, attribute_type, attribute_key)
+  CONSTRAINT attribute_kv_pkey PRIMARY KEY (entity_id, attribute_type, attribute_key)
 );
 
 CREATE TABLE IF NOT EXISTS component_descriptor (
@@ -145,6 +144,8 @@ CREATE TABLE IF NOT EXISTS customer (
     title varchar(255),
     zip varchar(255),
     external_id uuid,
+    is_public boolean,
+    CONSTRAINT customer_title_unq_key UNIQUE (tenant_id, title),
     CONSTRAINT customer_external_id_unq_key UNIQUE (tenant_id, external_id)
 );
 
@@ -550,16 +551,17 @@ CREATE TABLE IF NOT EXISTS ts_kv_latest
     CONSTRAINT ts_kv_latest_pkey PRIMARY KEY (entity_id, key)
 );
 
-CREATE TABLE IF NOT EXISTS ts_kv_dictionary
+CREATE TABLE IF NOT EXISTS key_dictionary
 (
     key    varchar(255) NOT NULL,
     key_id serial UNIQUE,
-    CONSTRAINT ts_key_id_pkey PRIMARY KEY (key)
+    CONSTRAINT key_dictionary_id_pkey PRIMARY KEY (key)
 );
 
 CREATE TABLE IF NOT EXISTS oauth2_params (
     id uuid NOT NULL CONSTRAINT oauth2_params_pkey PRIMARY KEY,
     enabled boolean,
+    edge_enabled boolean,
     tenant_id uuid,
     created_time bigint NOT NULL
 );
@@ -864,6 +866,7 @@ CREATE TABLE IF NOT EXISTS notification (
     request_id UUID,
     recipient_id UUID NOT NULL,
     type VARCHAR(50) NOT NULL,
+    delivery_method VARCHAR(50) NOT NULL,
     subject VARCHAR(255),
     body VARCHAR(1000) NOT NULL,
     additional_config VARCHAR(1000),
@@ -883,4 +886,13 @@ CREATE TABLE IF NOT EXISTS alarm_types (
     type varchar(255) NOT NULL,
     CONSTRAINT tenant_id_type_unq_key UNIQUE (tenant_id, type),
     CONSTRAINT fk_entity_tenant_id FOREIGN KEY (tenant_id) REFERENCES tenant(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS queue_stats (
+    id uuid NOT NULL CONSTRAINT queue_stats_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid NOT NULL,
+    queue_name varchar(255) NOT NULL,
+    service_id varchar(255) NOT NULL,
+    CONSTRAINT queue_stats_name_unq_key UNIQUE (tenant_id, queue_name, service_id)
 );

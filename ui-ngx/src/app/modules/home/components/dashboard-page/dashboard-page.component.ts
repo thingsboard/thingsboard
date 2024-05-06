@@ -320,6 +320,13 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   set rightLayoutOpened(rightLayoutOpened: boolean) {
   }
 
+  get mobileDisplayRightLayoutFirst(): boolean {
+    return this.isMobile && this.layouts.right.layoutCtx.gridSettings?.mobileDisplayLayoutFirst;
+  }
+
+  set mobileDisplayRightLayoutFirst(mobileDisplayRightLayoutFirst: boolean) {
+  }
+
   @ViewChild('tbEditWidget') editWidgetComponent: EditWidgetComponent;
 
   @ViewChild('dashboardWidgetSelect') dashboardWidgetSelectComponent: DashboardWidgetSelectComponent;
