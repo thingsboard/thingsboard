@@ -97,7 +97,7 @@ public class TbCopyAttributesToEntityViewNodeTest {
         EntityViewId entityViewId = entityView.getId();
 
         TbMsg msg = TbMsg.newMsg(
-                TbMsgType.POST_ATTRIBUTES_REQUEST, DEVICE_ID, new TbMsgMetaData(Map.of("scope", "CLIENT_SCOPE")),
+                TbMsgType.POST_ATTRIBUTES_REQUEST, DEVICE_ID, new TbMsgMetaData(Map.of("scope", AttributeScope.CLIENT_SCOPE.name())),
                 "{\"attribute1\": 100, \"attribute2\": \"value2\"}");
 
         when(ctxMock.getEntityViewService()).thenReturn(entityViewServiceMock);
@@ -127,7 +127,7 @@ public class TbCopyAttributesToEntityViewNodeTest {
         EntityViewId entityViewId = entityView.getId();
 
         TbMsg msg = TbMsg.newMsg(
-                ATTRIBUTES_DELETED, DEVICE_ID, new TbMsgMetaData(Map.of("scope", "CLIENT_SCOPE")),
+                ATTRIBUTES_DELETED, DEVICE_ID, new TbMsgMetaData(Map.of("scope", AttributeScope.CLIENT_SCOPE.name())),
                 "{\"attributes\": [\"attribute1\"]}");
 
         when(ctxMock.getEntityViewService()).thenReturn(entityViewServiceMock);
@@ -156,7 +156,7 @@ public class TbCopyAttributesToEntityViewNodeTest {
         EntityView entityView = getEntityView();
 
         TbMsg msg = TbMsg.newMsg(
-                TbMsgType.ATTRIBUTES_DELETED, DEVICE_ID, new TbMsgMetaData(Map.of("scope", "CLIENT_SCOPE")),
+                TbMsgType.ATTRIBUTES_DELETED, DEVICE_ID, new TbMsgMetaData(Map.of("scope", AttributeScope.CLIENT_SCOPE.name())),
                 "{\"attributes\": [\"anotherAttribute\"]}");
 
         when(ctxMock.getEntityViewService()).thenReturn(entityViewServiceMock);
@@ -177,7 +177,7 @@ public class TbCopyAttributesToEntityViewNodeTest {
         EntityViewId entityViewId = entityView.getId();
 
         TbMsg msg = TbMsg.newMsg(
-                TbMsgType.POST_ATTRIBUTES_REQUEST, DEVICE_ID, new TbMsgMetaData(Map.of("scope", "CLIENT_SCOPE")),
+                TbMsgType.POST_ATTRIBUTES_REQUEST, DEVICE_ID, new TbMsgMetaData(Map.of("scope", AttributeScope.CLIENT_SCOPE.name())),
                 "{\"attribute2\": \"value2\"}");
 
         when(ctxMock.getEntityViewService()).thenReturn(entityViewServiceMock);
@@ -214,7 +214,7 @@ public class TbCopyAttributesToEntityViewNodeTest {
                 .thenReturn(Futures.immediateFuture(List.of(entityView)));
 
         TbMsg msg = TbMsg.newMsg(
-                ATTRIBUTES_DELETED, DEVICE_ID, new TbMsgMetaData(Map.of("scope", "CLIENT_SCOPE")),
+                ATTRIBUTES_DELETED, DEVICE_ID, new TbMsgMetaData(Map.of("scope", AttributeScope.CLIENT_SCOPE.name())),
                 "{\"attributes\": [\"attribute1\"]}");
 
         node.onMsg(ctxMock, msg);
