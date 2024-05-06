@@ -83,7 +83,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   lwm2mDeviceProfileFormGroup: UntypedFormGroup;
   configurationValue: Lwm2mProfileConfigModels;
 
-  objectIDVers = Object.values(ObjectIDVer);
+  objectIDVers = Object.values(ObjectIDVer) as ObjectIDVer[];
   objectIDVerTranslationMap = ObjectIDVerTranslationMap;
 
   sortFunction: (key: string, value: object) => object;

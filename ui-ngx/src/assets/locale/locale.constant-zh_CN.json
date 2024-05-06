@@ -1872,11 +1872,6 @@
                 "step": "步长",
                 "min-evaluation-period": "最小评估周期",
                 "max-evaluation-period": "最大评估周期"
-            },
-            "default-object-id": "默认对象版本（属性",
-            "default-object-id-ver": {
-                "v1-0": "如果对象版本为空，则“1.0”是对象版本的值。",
-                "v1-1": "如果对象版本为空，则“1.1”是对象版本的值。"
             }
         },
         "snmp": {

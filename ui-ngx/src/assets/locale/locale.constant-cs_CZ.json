@@ -1301,13 +1301,8 @@
               "step": "Krok",
               "min-evaluation-period": "Minimální interval evaluace",
               "max-evaluation-period": "Maximální interval evaluace"
-          },
-          "default-object-id": "VVýchozí verze objektu (atribut)",
-          "default-object-id-ver": {
-              "v1-0": "\"1.0\" je hodnota verze objektu, pokud je verze objektu prázdná.",
-              "v1-1": "\"1.1\" je hodnota verze objektu, pokud je verze objektu prázdná."
           }
-        },
+      },
       "snmp": {
           "add-communication-config": "Přidat konfiguraci komunikace",
           "add-mapping": "Přidat mapování",

@@ -1835,11 +1835,6 @@
                 "step": "Paso",
                 "min-evaluation-period": "Período mínimo de evaluación",
                 "max-evaluation-period": "Período máximo de evaluación"
-            },
-            "default-object-id": "Versión de objeto predeterminada (atributo)",
-            "default-object-id-ver": {
-                "v1-0": "\"1.0\" es el valor de la versión del objeto si la versión del objeto está vacía.",
-                "v1-1": "\"1.1\" es el valor de la versión del objeto si la versión del objeto está vacía."
             }
         },
         "snmp": {

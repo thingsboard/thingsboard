@@ -93,11 +93,13 @@
           </fieldset>
           <fieldset class="fields-group">
             <legend class="group-title" translate>device-profile.lwm2m.default-object-id</legend>
+            <mat-form-field fxFlex>
               <mat-select formControlName="defaultObjectIDVer">
                 <mat-option *ngFor="let objectIDVer of objectIDVers" [value]="objectIDVer">
-                  {{ objectIDVerTranslationMap.get(objectIDVer) | translate}}
+                  {{ objectIDVerTranslationMap.get(objectIDVer) | translate }}
                 </mat-option>
               </mat-select>
+            </mat-form-field>
           </fieldset>
         </section>
       </ng-template>
