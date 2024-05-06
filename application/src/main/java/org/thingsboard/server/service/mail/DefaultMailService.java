@@ -90,7 +90,7 @@ public class DefaultMailService implements MailService {
     private PasswordResetExecutorService passwordResetExecutorService;
 
     @Autowired
-    private TbMailContextComponent tbMailContextComponent;
+    private TbMailContextComponent ctx;
 
     @Autowired
     private RateLimitService rateLimitService;
@@ -131,7 +131,7 @@ public class DefaultMailService implements MailService {
         AdminSettings settings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
         if (settings != null) {
             JsonNode jsonConfig = settings.getJsonValue();
-            mailSender = new TbMailSender(tbMailContextComponent, jsonConfig);
+            mailSender = new TbMailSender(ctx, jsonConfig);
             mailFrom = jsonConfig.get("mailFrom").asText();
             timeout = jsonConfig.get("timeout").asLong(DEFAULT_TIMEOUT);
         } else {
@@ -146,7 +146,7 @@ public class DefaultMailService implements MailService {
 
     @Override
     public void sendTestMail(JsonNode jsonConfig, String email) throws ThingsboardException {
-        TbMailSender testMailSender = new TbMailSender(tbMailContextComponent, jsonConfig);
+        TbMailSender testMailSender = new TbMailSender(ctx, jsonConfig);
         String mailFrom = jsonConfig.get("mailFrom").asText();
         String subject = messages.getMessage("test.message.subject", null, Locale.US);
         long timeout = jsonConfig.get("timeout").asLong(DEFAULT_TIMEOUT);
