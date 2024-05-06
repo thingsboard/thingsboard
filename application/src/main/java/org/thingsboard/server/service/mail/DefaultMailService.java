@@ -19,7 +19,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
-import jakarta.xml.bind.DatatypeConverter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -99,7 +98,7 @@ public class DefaultMailService implements MailService {
     @Value("${mail.per_tenant_rate_limits:}")
     private String perTenantRateLimitConfig;
 
-    private final ScheduledExecutorService scheduler;
+    private final ScheduledExecutorService timeoutScheduler;
 
     private TbMailSender mailSender;
 
@@ -112,7 +111,7 @@ public class DefaultMailService implements MailService {
         this.freemarkerConfig = freemarkerConfig;
         this.adminSettingsService = adminSettingsService;
         this.apiUsageClient = apiUsageClient;
-        this.scheduler = Executors.newScheduledThreadPool(1, ThingsBoardThreadFactory.forName("mail-service-watchdog"));
+        this.timeoutScheduler = Executors.newScheduledThreadPool(1, ThingsBoardThreadFactory.forName("mail-service-watchdog"));
     }
 
     @PostConstruct
@@ -122,8 +121,8 @@ public class DefaultMailService implements MailService {
 
     @PreDestroy
     public void destroy() {
-        if (scheduler != null) {
-            scheduler.shutdownNow();
+        if (timeoutScheduler != null) {
+            timeoutScheduler.shutdownNow();
         }
     }
 
@@ -446,7 +445,7 @@ public class DefaultMailService implements MailService {
     private void sendMailWithTimeout(JavaMailSender mailSender, MimeMessage msg, long timeout) {
         var submittedMail = Futures.withTimeout(
                 mailExecutorService.submit(() -> mailSender.send(msg)),
-                timeout, TimeUnit.MILLISECONDS, scheduler);
+                timeout, TimeUnit.MILLISECONDS, timeoutScheduler);
         try {
             submittedMail.get(timeout, TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {

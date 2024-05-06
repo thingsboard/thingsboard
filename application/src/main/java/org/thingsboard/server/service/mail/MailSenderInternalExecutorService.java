@@ -19,6 +19,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.AbstractListeningExecutor;
 
+/**
+ * Executor have the sole purpose to send mails. It should be used only by Mail Service.
+ * For other purposes please use the MailExecutorService component
+ * */
 @Component
 public class MailSenderInternalExecutorService extends AbstractListeningExecutor {
 
