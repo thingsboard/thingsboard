@@ -18,7 +18,6 @@ import { AggKey, IndexedSubscriptionData, } from '@app/shared/models/telemetry/t
 import {
   AggregationType,
   calculateAggIntervalWithSubscriptionTimeWindow,
-  calculateInterval,
   calculateIntervalComparisonEndTime,
   calculateIntervalEndTime,
   calculateIntervalStartEndTime,
@@ -28,7 +27,7 @@ import {
   SubscriptionTimewindow
 } from '@shared/models/time/time.models';
 import { UtilsService } from '@core/services/utils.service';
-import { deepClone, isDefined, isDefinedAndNotNull, isNumber, isNumeric } from '@core/utils';
+import { deepClone, isDefinedAndNotNull, isNumber, isNumeric } from '@core/utils';
 import { DataEntry, DataSet, IndexedData } from '@shared/models/widget.models';
 import BTree from 'sorted-btree';
 import Timeout = NodeJS.Timeout;
@@ -49,7 +48,8 @@ class AggDataMap {
 
   constructor(
     private subsTw: SubscriptionTimewindow,
-    private endTs: number
+    private endTs: number,
+    private aggType: AggregationType
   ){};
 
   set(ts: number, data: AggData) {
@@ -64,9 +64,9 @@ class AggDataMap {
     this.map.delete(ts);
   }
 
-  findDataForTs(ts: number, noAggregation: boolean): AggData | undefined {
+  findDataForTs(ts: number): AggData | undefined {
     if (ts >= this.endTs) {
-      this.updateLastInterval(ts + 1, noAggregation);
+      this.updateLastInterval(ts + 1);
     }
     const pair = this.map.getPairOrNextLower(ts, this.reusePair);
     if (pair) {
@@ -79,17 +79,16 @@ class AggDataMap {
   }
 
   calculateAggInterval(timestamp: number): [number, number] {
-    return calculateInterval(this.subsTw.startTs, this.endTs, this.subsTw.aggregation.interval, this.subsTw.tsOffset, this.subsTw.timezone, timestamp);
+    return calculateAggIntervalWithSubscriptionTimeWindow(this.subsTw, this.endTs, timestamp, this.aggType);
   }
 
-  updateLastInterval(endTs: number, noAggregation?: boolean) {
+  updateLastInterval(endTs: number) {
     if (endTs > this.endTs) {
       this.endTs = endTs;
       const lastTs = this.map.maxKey();
       if (lastTs) {
         const data = this.map.get(lastTs);
-        const interval = isDefined(noAggregation) && !noAggregation ? this.calculateAggInterval(data.ts) :
-          calculateAggIntervalWithSubscriptionTimeWindow(this.subsTw, endTs, data.ts);
+        const interval = calculateAggIntervalWithSubscriptionTimeWindow(this.subsTw, endTs, data.ts, this.aggType);
         data.interval = interval;
         data.ts = interval[0] + Math.floor((interval[1] - interval[0]) / 2);
       }
@@ -417,7 +416,7 @@ export class DataAggregator {
       const noAggregation = aggType === AggregationType.NONE;
       let aggKeyData = aggregationMap.aggMap[id];
       if (!aggKeyData) {
-        aggKeyData = new AggDataMap(this.subsTw, this.endTs);
+        aggKeyData = new AggDataMap(this.subsTw, this.endTs, aggType);
         aggregationMap.aggMap[id] = aggKeyData;
       }
       const keyData = data[id];
@@ -451,14 +450,14 @@ export class DataAggregator {
       const noAggregation = aggType === AggregationType.NONE;
       let aggKeyData = this.aggregationMap.aggMap[id];
       if (!aggKeyData) {
-        aggKeyData = new AggDataMap(this.subsTw, this.endTs);
+        aggKeyData = new AggDataMap(this.subsTw, this.endTs, aggType);
         this.aggregationMap.aggMap[id] = aggKeyData;
       }
       const keyData = data[id];
       keyData.forEach((kvPair) => {
         const timestamp = kvPair[0];
         const value = DataAggregator.convertValue(kvPair[1], noAggregation);
-        let aggData = aggKeyData.findDataForTs(timestamp, noAggregation);
+        let aggData = aggKeyData.findDataForTs(timestamp);
         if (!aggData) {
           let interval: [number, number] = [timestamp, timestamp];
           if (!noAggregation) {
