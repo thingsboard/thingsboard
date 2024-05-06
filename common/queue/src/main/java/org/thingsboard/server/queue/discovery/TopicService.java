@@ -64,4 +64,9 @@ public class TopicService {
     public String buildTopicName(String topic) {
         return prefix.isBlank() ? topic : prefix + "." + topic;
     }
+
+    public String suffix(Integer partitionId) {
+        return partitionId == null ? "" : "-" + partitionId;
+    }
+
 }

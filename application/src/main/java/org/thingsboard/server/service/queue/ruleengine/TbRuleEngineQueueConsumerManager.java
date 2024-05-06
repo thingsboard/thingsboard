@@ -438,8 +438,9 @@ public class TbRuleEngineQueueConsumerManager {
             });
 
             addedPartitions.forEach((tpi) -> {
-                String key = queueKey + "-" + tpi.getPartition().orElse(-999999);
-                TbQueueConsumerTask consumer = new TbQueueConsumerTask(key, ctx.getQueueFactory().createToRuleEngineMsgConsumer(queue));
+                int partitionId = tpi.getPartition().orElse(-999999);
+                String key = queueKey + "-" + partitionId;
+                TbQueueConsumerTask consumer = new TbQueueConsumerTask(key, ctx.getQueueFactory().createToRuleEngineMsgConsumer(queue, partitionId));
                 consumers.put(tpi, consumer);
                 consumer.subscribe(Set.of(tpi));
                 launchConsumer(consumer);
@@ -468,7 +469,7 @@ public class TbRuleEngineQueueConsumerManager {
             }
 
             if (consumer == null) {
-                consumer = new TbQueueConsumerTask(queueKey, ctx.getQueueFactory().createToRuleEngineMsgConsumer(queue));
+                consumer = new TbQueueConsumerTask(queueKey, ctx.getQueueFactory().createToRuleEngineMsgConsumer(queue, null));
             }
             consumer.subscribe(partitions);
             if (!consumer.isRunning()) {
