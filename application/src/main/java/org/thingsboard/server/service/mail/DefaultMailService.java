@@ -80,7 +80,7 @@ public class DefaultMailService implements MailService {
     private TbApiUsageStateService apiUsageStateService;
 
     @Autowired
-    private MailExecutorService mailExecutorService;
+    private MailSenderInternalExecutorService mailExecutorService;
 
     @Autowired
     private PasswordResetExecutorService passwordResetExecutorService;
