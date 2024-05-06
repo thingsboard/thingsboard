@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.mail;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.Futures;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import jakarta.xml.bind.DatatypeConverter;
@@ -32,6 +33,7 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.TbEmail;
 import org.thingsboard.server.cache.limits.RateLimitService;
@@ -53,11 +55,14 @@ import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import jakarta.mail.internet.MimeMessage;
 import java.io.ByteArrayInputStream;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -94,6 +99,8 @@ public class DefaultMailService implements MailService {
     @Value("${mail.per_tenant_rate_limits:}")
     private String perTenantRateLimitConfig;
 
+    private final ScheduledExecutorService scheduler;
+
     private TbMailSender mailSender;
 
     private String mailFrom;
@@ -105,11 +112,19 @@ public class DefaultMailService implements MailService {
         this.freemarkerConfig = freemarkerConfig;
         this.adminSettingsService = adminSettingsService;
         this.apiUsageClient = apiUsageClient;
+        this.scheduler = Executors.newScheduledThreadPool(1, ThingsBoardThreadFactory.forName("mail-service-watchdog"));
     }
 
     @PostConstruct
     private void init() {
         updateMailConfiguration();
+    }
+
+    @PreDestroy
+    public void destroy() {
+        if (scheduler != null) {
+            scheduler.shutdownNow();
+        }
     }
 
     @Override
@@ -429,8 +444,11 @@ public class DefaultMailService implements MailService {
     }
 
     private void sendMailWithTimeout(JavaMailSender mailSender, MimeMessage msg, long timeout) {
+        var submittedMail = Futures.withTimeout(
+                mailExecutorService.submit(() -> mailSender.send(msg)),
+                timeout, TimeUnit.MILLISECONDS, scheduler);
         try {
-            mailExecutorService.submit(() -> mailSender.send(msg)).get(timeout, TimeUnit.MILLISECONDS);
+            submittedMail.get(timeout, TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
             log.debug("Error during mail submission", e);
             throw new RuntimeException("Timeout!");
