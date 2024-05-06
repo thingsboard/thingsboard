@@ -307,7 +307,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     closeCtx(ctx, MqttReasonCodes.Disconnect.IMPLEMENTATION_SPECIFIC_ERROR);
                 } catch (AdaptorException e) {
                     log.debug("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
-                    sendResponseForAdapterErrorOrCloseContext(ctx, topicName, msgId);
+                    sendResponseForAdaptorErrorOrCloseContext(ctx, topicName, msgId);
                 }
                 break;
             case PINGREQ:
@@ -429,7 +429,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             closeCtx(ctx, MqttReasonCodes.Disconnect.IMPLEMENTATION_SPECIFIC_ERROR);
         } catch (AdaptorException e) {
             log.debug("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
-            sendResponseForAdapterErrorOrCloseContext(ctx, topicName, msgId);
+            sendResponseForAdaptorErrorOrCloseContext(ctx, topicName, msgId);
         }
     }
 
@@ -469,7 +469,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             closeCtx(ctx, MqttReasonCodes.Disconnect.IMPLEMENTATION_SPECIFIC_ERROR);
         } catch (AdaptorException | ThingsboardException | InvalidProtocolBufferException e) {
             log.error("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
-            sendResponseForAdapterErrorOrCloseContext(ctx, topicName, msgId);
+            sendResponseForAdaptorErrorOrCloseContext(ctx, topicName, msgId);
         }
     }
 
@@ -566,7 +566,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             }
         } catch (AdaptorException e) {
             log.debug("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
-            sendResponseForAdapterErrorOrCloseContext(ctx, topicName, msgId);
+            sendResponseForAdaptorErrorOrCloseContext(ctx, topicName, msgId);
         }
     }
 
@@ -580,7 +580,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
-    private void sendResponseForAdapterErrorOrCloseContext(ChannelHandlerContext ctx, String topicName, int msgId) {
+    private void sendResponseForAdaptorErrorOrCloseContext(ChannelHandlerContext ctx, String topicName, int msgId) {
         if ((deviceSessionCtx.isSendAckOnValidationException() || MqttVersion.MQTT_5.equals(deviceSessionCtx.getMqttVersion())) && msgId > 0) {
             log.debug("[{}] Send pub ack on invalid publish msg [{}][{}]", sessionId, topicName, msgId);
             ctx.writeAndFlush(createMqttPubAckMsg(deviceSessionCtx, msgId, MqttReasonCodes.PubAck.PAYLOAD_FORMAT_INVALID.byteValue()));
