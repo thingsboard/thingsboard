@@ -137,21 +137,16 @@ DELETE FROM asset_profile WHERE name ='TbServiceQueue';
 -- TENANT PROFILE UPDATE START
 
 UPDATE tenant_profile tp
-SET profile_data =
-        jsonb_set(
-                jsonb_set(
-                        jsonb_set(
-                                profile_data,
-                                '{configuration,transportGatewayMsgRateLimit}',
-                                profile_data->'configuration'->'transportDeviceMsgRateLimit'
-                        ),
-                        '{configuration,transportGatewayTelemetryMsgRateLimit}',
-                        profile_data->'configuration'->'transportDeviceTelemetryMsgRateLimit'
-                ),
-                '{configuration,transportGatewayTelemetryDataPointsRateLimit}',
-                profile_data->'configuration'->'transportDeviceTelemetryDataPointsRateLimit'
-        )
+SET profile_data = jsonb_set(profile_data, '{configuration,transportGatewayMsgRateLimit}', profile_data->'configuration'->'transportDeviceMsgRateLimit')
 WHERE jsonb_typeof(tp.profile_data #> '{configuration,transportGatewayMsgRateLimit}') IS NULL;
+
+UPDATE tenant_profile tp
+SET profile_data = jsonb_set(profile_data, '{configuration,transportGatewayTelemetryMsgRateLimit}', profile_data->'configuration'->'transportDeviceTelemetryMsgRateLimit')
+WHERE jsonb_typeof(tp.profile_data #> '{configuration,transportGatewayTelemetryMsgRateLimit}') IS NULL;
+
+UPDATE tenant_profile tp
+SET profile_data = jsonb_set(profile_data, '{configuration,transportGatewayTelemetryDataPointsRateLimit}', profile_data->'configuration'->'transportDeviceTelemetryDataPointsRateLimit')
+WHERE jsonb_typeof(tp.profile_data #> '{configuration,transportGatewayTelemetryDataPointsRateLimit}') IS NULL;
 
 -- TENANT PROFILE UPDATE END
 
