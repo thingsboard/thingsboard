@@ -45,6 +45,8 @@ import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.Promise;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.ListeningExecutor;
 
@@ -87,7 +89,8 @@ final class MqttClientImpl implements MqttClient {
     private volatile boolean reconnect = false;
     private String host;
     private int port;
-    public MqttClientCallback callback;
+    @Getter
+    private MqttClientCallback callback;
 
     private final ListeningExecutor handlerExecutor;
 
@@ -431,7 +434,7 @@ final class MqttClientImpl implements MqttClient {
                 if (!channelFuture.isDone()) {
                     this.channel.close();
                 }
-            }, 50, TimeUnit.MILLISECONDS);
+            }, 500, TimeUnit.MILLISECONDS);
         }
     }
 

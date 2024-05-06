@@ -207,8 +207,8 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
                 // Don't start reconnect logic here
                 break;
         }
-        if (this.client.callback != null) {
-            this.client.callback.onConnAck(message);
+        if (this.client.getCallback() != null) {
+            this.client.getCallback().onConnAck(message);
         }
     }
 
@@ -230,8 +230,8 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
         if (!pendingSubscription.getFuture().isDone()) {
             pendingSubscription.getFuture().setSuccess(null);
         }
-        if (this.client.callback != null) {
-            this.client.callback.onSubAck(message);
+        if (this.client.getCallback() != null) {
+            this.client.getCallback().onSubAck(message);
         }
     }
 
@@ -276,8 +276,8 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
         this.client.getServerSubscriptions().remove(unsubscription.getTopic());
         unsubscription.getFuture().setSuccess(null);
         this.client.getPendingServerUnsubscribes().remove(message.variableHeader().messageId());
-        if (this.client.callback != null) {
-            this.client.callback.onUnsubAck(message);
+        if (this.client.getCallback() != null) {
+            this.client.getCallback().onUnsubAck(message);
         }
     }
 
@@ -290,8 +290,8 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
         pendingPublish.onPubackReceived();
         this.client.getPendingPublishes().remove(message.variableHeader().messageId());
         pendingPublish.getPayload().release();
-        if (this.client.callback != null) {
-            this.client.callback.onPubAck(message);
+        if (this.client.getCallback() != null) {
+            this.client.getCallback().onPubAck(message);
         }
     }
 
@@ -335,8 +335,8 @@ final class MqttChannelHandler extends SimpleChannelInboundHandler<MqttMessage> 
     }
 
     private void handleDisconnect(MqttMessage message) {
-        if (this.client.callback != null) {
-            this.client.callback.onDisconnect(message);
+        if (this.client.getCallback() != null) {
+            this.client.getCallback().onDisconnect(message);
         }
     }
 

@@ -23,9 +23,11 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.JsonObject;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.mqtt.MqttConnectReturnCode;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.codec.mqtt.MqttReasonCodeAndPropertiesVariableHeader;
+import io.netty.handler.codec.mqtt.MqttReasonCodes;
 import io.netty.handler.codec.mqtt.MqttVersion;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -54,13 +56,14 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.msa.AbstractContainerTest;
 import org.thingsboard.server.msa.DisableUIListeners;
 import org.thingsboard.server.msa.WsClient;
-import org.thingsboard.server.msa.connectivity.util.MqttReturnCode;
 import org.thingsboard.server.msa.mapper.AttributesResponse;
 import org.thingsboard.server.msa.mapper.WsTelemetryResponse;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
@@ -459,13 +462,14 @@ public class MqttClientTest extends AbstractContainerTest {
 
         MqttMessageListener listener = new MqttMessageListener();
         MqttClient mqttClient = getMqttClient(deviceCredentials, listener, MqttVersion.MQTT_5);
-        final byte[] returnCodeByteValue = new byte[1];
+        final List<Byte> returnCodeByteValue = new ArrayList<>();
         MqttClientCallback callbackForDisconnectWithReturnCode = getCallbackWrapperForDisconnectWithReturnCode(returnCodeByteValue);
         mqttClient.setCallback(callbackForDisconnectWithReturnCode);
         mqttClient.disconnect();
         Thread.sleep(1000);
-        MqttReturnCode returnCode = MqttReturnCode.valueOf(returnCodeByteValue[0]);
-        assertThat(returnCode).isEqualTo(MqttReturnCode.SUCCESS);
+        assertThat(returnCodeByteValue.size()).isEqualTo(1);
+        MqttReasonCodes.Disconnect returnCode = MqttReasonCodes.Disconnect.valueOf(returnCodeByteValue.get(0));
+        assertThat(returnCode).isEqualTo(MqttReasonCodes.Disconnect.NORMAL_DISCONNECT);
     }
 
     @Test
@@ -474,7 +478,7 @@ public class MqttClientTest extends AbstractContainerTest {
 
         MqttMessageListener listener = new MqttMessageListener();
         MqttClient mqttClient = getMqttClient(deviceCredentials, listener, MqttVersion.MQTT_5);
-        final byte[] returnCodeByteValue = new byte[]{MqttReturnCode.DUMMY.byteValue()};
+        final List<Byte> returnCodeByteValue = new ArrayList<>();
         MqttClientCallback callbackForDisconnectWithReturnCode = getCallbackWrapperForDisconnectWithReturnCode(returnCodeByteValue);
         mqttClient.setCallback(callbackForDisconnectWithReturnCode);
 
@@ -482,49 +486,52 @@ public class MqttClientTest extends AbstractContainerTest {
 
         MqttMessageListener dummyListener = new MqttMessageListener();
         MqttClient dummyMqttClient = getMqttClient(deviceCredentials, dummyListener, MqttVersion.MQTT_5);
-        final byte[] returnCodeByteValueDummy = new byte[]{MqttReturnCode.DUMMY.byteValue()};
-        MqttClientCallback callbackForDisconnectWithReturnCodeDummy = getCallbackWrapperForDisconnectWithReturnCode(returnCodeByteValueDummy);
+        final List<Byte> returnCodeByteValueSecondClient = new ArrayList<>();
+        MqttClientCallback callbackForDisconnectWithReturnCodeDummy = getCallbackWrapperForDisconnectWithReturnCode(returnCodeByteValueSecondClient);
         dummyMqttClient.setCallback(callbackForDisconnectWithReturnCodeDummy);
 
         Awaitility
                 .await()
                 .alias("Check device disconnect.")
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
-                .until(() -> returnCodeByteValueDummy[0] == MqttReturnCode.DUMMY.byteValue());
+                .until(returnCodeByteValue::isEmpty);
 
-        MqttReturnCode returnCodeDummy = MqttReturnCode.valueOf(returnCodeByteValueDummy[0]);
-        MqttReturnCode returnCode = MqttReturnCode.valueOf(returnCodeByteValue[0]);
+        assertThat(returnCodeByteValueSecondClient).isEmpty();
+        assertThat(returnCodeByteValue).isNotEmpty();
+
+        MqttReasonCodes.Disconnect returnCode = MqttReasonCodes.Disconnect.valueOf(returnCodeByteValue.get(0));
 
         dummyMqttClient.disconnect();
 
-        assertThat(returnCode).isEqualTo(MqttReturnCode.SESSION_TAKEN_OVER);
-        assertThat(returnCodeDummy).isEqualTo(MqttReturnCode.DUMMY);
+        assertThat(returnCode).isEqualTo(MqttReasonCodes.Disconnect.SESSION_TAKEN_OVER);
     }
 
     @Test
     public void clientPublishForRegularTopicByProvisionClient() throws Exception {
         MqttClient mqttClient = getMqttClient("provision", new MqttMessageListener(), MqttVersion.MQTT_5);
-        final byte[] returnCodeByteValue = new byte[1];
+        final List<Byte> returnCodeByteValue = new ArrayList<>();
         MqttClientCallback callbackForDisconnectWithReturnCode = getCallbackWrapperForDisconnectWithReturnCode(returnCodeByteValue);
         mqttClient.setCallback(callbackForDisconnectWithReturnCode);
         mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer("test".getBytes()), MqttQoS.AT_LEAST_ONCE).get();
         Thread.sleep(1000);
-        MqttReturnCode returnCode = MqttReturnCode.valueOf(returnCodeByteValue[0]);
-        assertThat(returnCode).isEqualTo(MqttReturnCode.TOPIC_NAME_INVALID);
+        assertThat(returnCodeByteValue).isNotEmpty();
+        MqttReasonCodes.Disconnect returnCode = MqttReasonCodes.Disconnect.valueOf(returnCodeByteValue.get(0));
+        assertThat(returnCode).isEqualTo(MqttReasonCodes.Disconnect.TOPIC_NAME_INVALID);
     }
 
     @Test
     public void clientConnectWithBadCredentials() throws Exception {
         MqttClient mqttClient = getMqttClient("unknownAccessToken", new MqttMessageListener(), MqttVersion.MQTT_5, false);
-        final byte[] returnCodeByteValue = new byte[1];
+        final List<Byte> returnCodeByteValue = new ArrayList<>();
         MqttClientCallback callbackForDisconnectWithReturnCode = getCallbackWrapperForDisconnectWithReturnCode(returnCodeByteValue);
         mqttClient.setCallback(callbackForDisconnectWithReturnCode);
         try {
             mqttClient.connect(TRANSPORT_HOST, TRANSPORT_PORT).get(1, TimeUnit.SECONDS);
         } catch (TimeoutException ignored) {
         }
-        MqttReturnCode returnCode = MqttReturnCode.valueOf(returnCodeByteValue[0]);
-        assertThat(returnCode).isEqualTo(MqttReturnCode.BAD_USERNAME_OR_PASSWORD);
+        assertThat(returnCodeByteValue).isNotEmpty();
+        MqttConnectReturnCode returnCode = MqttConnectReturnCode.valueOf(returnCodeByteValue.get(0));
+        assertThat(returnCode).isIn(MqttConnectReturnCode.CONNECTION_REFUSED_BAD_USER_NAME_OR_PASSWORD, MqttConnectReturnCode.CONNECTION_REFUSED_BAD_USERNAME_OR_PASSWORD);
     }
 
     private RuleChainId createRootRuleChainForRpcResponse() throws Exception {
@@ -560,7 +567,7 @@ public class MqttClientTest extends AbstractContainerTest {
         return defaultRuleChain.get().getId();
     }
 
-    private MqttClientCallback getCallbackWrapperForDisconnectWithReturnCode(byte[] returnCodeByteValueWrapper) {
+    private MqttClientCallback getCallbackWrapperForDisconnectWithReturnCode(List<Byte> returnCodeByteValueWrapper) {
         return new MqttClientCallback() {
             @Override
             public void connectionLost(Throwable cause) {
@@ -573,7 +580,7 @@ public class MqttClientTest extends AbstractContainerTest {
             @Override
             public void onDisconnect(MqttMessage mqttDisconnectMessage) {
                 log.info("Disconnected with reason: {}", mqttDisconnectMessage);
-                returnCodeByteValueWrapper[0] = ((MqttReasonCodeAndPropertiesVariableHeader) mqttDisconnectMessage.variableHeader()).reasonCode();
+                returnCodeByteValueWrapper.add(((MqttReasonCodeAndPropertiesVariableHeader) mqttDisconnectMessage.variableHeader()).reasonCode());
             }
         };
     }
