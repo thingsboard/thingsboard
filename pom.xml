@@ -148,6 +148,7 @@
         <rest-assured.version>5.4.0</rest-assured.version>
         <hamcrest.version>2.2</hamcrest.version>
         <testcontainers.version>1.19.7</testcontainers.version>
+        <testcontainers-junit4-mock.version>1.0.1</testcontainers-junit4-mock.version>
         <zeroturnaround.version>1.12</zeroturnaround.version>
         <selenium.version>4.19.1</selenium.version>
         <webdrivermanager.version>5.8.0</webdrivermanager.version>
@@ -2124,6 +2125,14 @@
                         <artifactId>junit</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+            <!-- Mocks the few JUnit 4 classes that testcontainers needs so that JUnit 4 can be excluded.
+            Fixes/Works around https://github.com/testcontainers/testcontainers-java/issues/970 -->
+            <dependency>
+                <groupId>software.xdev</groupId>
+                <artifactId>testcontainers-junit4-mock</artifactId>
+                <version>${testcontainers-junit4-mock.version}</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.zeroturnaround</groupId>
