@@ -45,6 +45,7 @@ import io.netty.util.concurrent.GenericFutureListener;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.ResponseCode;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.adaptor.AdaptorException;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -64,11 +65,9 @@ import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
-import org.thingsboard.server.common.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
-import org.thingsboard.server.common.transport.limits.EntityTransportRateLimits;
 import org.thingsboard.server.common.transport.service.DefaultTransportService;
 import org.thingsboard.server.common.transport.service.SessionMetaData;
 import org.thingsboard.server.common.transport.util.SslUtil;
@@ -528,14 +527,14 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 attrReqTopicType = TopicType.V2;
             } else if (topicName.equals(MqttTopics.DEVICE_SERVICE_SETTINGS_REQUEST_TOPIC)) {
                 TransportProtos.SessionInfoProto sessionInfo = deviceSessionCtx.getSessionInfo();
-                TransportProtos.DeviceTransportSettingsRequestMsg deviceTransportSettingsRequestMsg = TransportProtos.DeviceTransportSettingsRequestMsg.newBuilder()
+                TransportProtos.DeviceCoreSettingsRequestToDeviceActorMsg GetDeviceSettingsRequest = TransportProtos.DeviceCoreSettingsRequestToDeviceActorMsg.newBuilder()
                         .setTenantIdMSB(sessionInfo.getTenantIdMSB())
                         .setTenantIdLSB(sessionInfo.getTenantIdLSB())
                         .setDeviceIdMSB(sessionInfo.getDeviceIdMSB())
                         .setDeviceIdLSB(sessionInfo.getDeviceIdLSB())
                         .build();
 
-                transportService.process(deviceSessionCtx.getSessionInfo(), deviceTransportSettingsRequestMsg, getPubAckCallback(ctx, msgId, deviceTransportSettingsRequestMsg));
+                transportService.process(deviceSessionCtx.getSessionInfo(), GetDeviceSettingsRequest, getPubAckCallback(ctx, msgId, GetDeviceSettingsRequest));
             } else {
                 transportService.recordActivity(deviceSessionCtx.getSessionInfo());
                 ack(ctx, msgId, ReturnCode.TOPIC_NAME_INVALID);
@@ -1254,13 +1253,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     }
 
     @Override
-    public void onDeviceTransportSettings(UUID sessionId, TransportProtos.DeviceTransportSettingsMsg response, EntityTransportRateLimits deviceRateLimits) {
+    public void onDeviceTransportSettings(TransportProtos.DeviceTransportSettingsMsg response) {
         log.trace("[{}] Received device transport settings response", sessionId);
-        TransportProtos.DeviceTransportSettingsMsg.Builder responseBuilder =
-                response.toBuilder();
-        responseBuilder.setRegularMsgRateLimits(deviceRateLimits.getRegularMsgRateLimit().getConfiguration());
-        responseBuilder.setTelemetryMsgRateLimits(deviceRateLimits.getTelemetryMsgRateLimit().getConfiguration());
-        responseBuilder.setTelemetryDataPointsRateLimit(deviceRateLimits.getTelemetryDataPointsRateLimit().getConfiguration());
+        TransportProtos.DeviceTransportSettingsMsg.Builder responseBuilder = response.toBuilder();
         responseBuilder.setMaxPayloadSize(context.getMaxPayloadSize());
         try {
             Optional<MqttMessage> responseMessage = deviceSessionCtx.getPayloadAdaptor().convertToPublish(deviceSessionCtx, responseBuilder.build());

@@ -400,7 +400,7 @@ enum PayloadType {
   PROTOBUF = 1;
 }
 
-message DeviceTransportSettingsRequestMsg {
+message DeviceCoreSettingsRequestToDeviceActorMsg {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
   int64 deviceIdMSB = 3;
@@ -783,7 +783,7 @@ message TransportToDeviceActorMsg {
   ToDeviceRpcResponseStatusMsg rpcResponseStatusMsg = 10;
   SendPendingRPCMsg sendPendingRPC = 11;
   UplinkNotificationMsg uplinkNotificationMsg = 12;
-  DeviceTransportSettingsRequestMsg deviceTransportSettingsRequest = 13;
+  DeviceCoreSettingsRequestToDeviceActorMsg deviceCoreSettingsRequestToDeviceActorMsg = 13;
 }
 
 message TransportToRuleEngineMsg {
@@ -1438,7 +1438,6 @@ message TransportApiRequestMsg {
   GetDeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 13;
   GetAllQueueRoutingInfoRequestMsg getAllQueueRoutingInfoRequestMsg = 14;
   ValidateOrCreateDeviceX509CertRequestMsg validateOrCreateX509CertRequestMsg = 15;
-  DeviceTransportSettingsRequestMsg deviceTransportSettingsRequestMsg = 16;
 }
 
 /* Response from ThingsBoard Core Service to Transport Service */

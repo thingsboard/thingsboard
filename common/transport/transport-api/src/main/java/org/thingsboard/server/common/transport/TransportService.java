@@ -27,6 +27,7 @@ import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsRes
 import org.thingsboard.server.common.transport.service.SessionMetaData;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.DeviceCoreSettingsRequestToDeviceActorMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceCredentialsRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetDeviceCredentialsResponseMsg;
@@ -141,7 +142,7 @@ public interface TransportService {
 
     void process(SessionInfoProto sessionInfoProto, GetOtaPackageRequestMsg msg, TransportServiceCallback<GetOtaPackageResponseMsg> callback);
 
-    void process(SessionInfoProto sessionInfo, TransportProtos.DeviceTransportSettingsRequestMsg msg, TransportServiceCallback<Void> callback);
+    void process(SessionInfoProto sessionInfo, DeviceCoreSettingsRequestToDeviceActorMsg msg, TransportServiceCallback<Void> callback);
 
     SessionMetaData registerAsyncSession(SessionInfoProto sessionInfo, SessionMsgListener listener);
 

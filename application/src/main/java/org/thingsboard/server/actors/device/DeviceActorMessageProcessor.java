@@ -71,6 +71,7 @@ import org.thingsboard.server.common.util.KvProtoUtil;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceSessionsCacheEntry;
+import org.thingsboard.server.gen.transport.TransportProtos.DeviceTransportSettingsMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeRequestMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionCloseNotificationProto;
@@ -90,8 +91,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToTransportUpdateCre
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.gen.transport.TransportProtos.UplinkNotificationMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.DeviceTransportSettingsRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.DeviceTransportSettingsMsg;
 import org.thingsboard.server.service.rpc.RpcSubmitStrategy;
 import org.thingsboard.server.service.state.DefaultDeviceStateService;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
@@ -470,8 +469,8 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         if (msg.hasUplinkNotificationMsg()) {
             processUplinkNotificationMsg(sessionInfo, msg.getUplinkNotificationMsg());
         }
-        if (msg.hasDeviceTransportSettingsRequest()) {
-            processDeviceTransportSettingsRequest(sessionInfo, msg.getDeviceTransportSettingsRequest());
+        if (msg.hasDeviceCoreSettingsRequestToDeviceActorMsg()) {
+            processDeviceCoreSettingsRequest(sessionInfo);
         }
         callback.onSuccess();
     }
@@ -858,7 +857,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         }
     }
 
-    private void processDeviceTransportSettingsRequest(SessionInfoProto sessionInfo, DeviceTransportSettingsRequestMsg deviceTransportSettingsRequest) {
+    private void processDeviceCoreSettingsRequest(SessionInfoProto sessionInfo) {
         UUID sessionId = getSessionId(sessionInfo);
         ToTransportMsg msg = ToTransportMsg.newBuilder()
                 .setSessionIdMSB(sessionId.getMostSignificantBits())

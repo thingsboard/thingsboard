@@ -20,6 +20,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +43,6 @@ import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.data.PowerMode;
-import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -107,8 +108,6 @@ import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbTransportComponent;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -191,6 +190,8 @@ public class DefaultTransportService extends TransportActivityManager implements
     private ExecutorService mainConsumerExecutor;
 
     private final Map<String, RpcRequestMetadata> toServerRpcPendingMap = new ConcurrentHashMap<>();
+
+    private volatile Long maxAllowedSessionsPerDevice;
 
     private volatile boolean stopped = false;
 
@@ -762,12 +763,32 @@ public class DefaultTransportService extends TransportActivityManager implements
     }
 
     @Override
-    public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.DeviceTransportSettingsRequestMsg msg, TransportServiceCallback<Void> callback) {
+    public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.DeviceCoreSettingsRequestToDeviceActorMsg msg, TransportServiceCallback<Void> callback) {
         if (checkLimits(sessionInfo, msg, callback)) {
             recordActivityInternal(sessionInfo);
-            sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
-                    .setDeviceTransportSettingsRequest(msg).build(), callback);
+            if (maxAllowedSessionsPerDevice == null) {
+                sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo)
+                        .setDeviceCoreSettingsRequestToDeviceActorMsg(msg).build(), callback);
+            } else {
+                callback.onSuccess(null);
+                processDeviceSettingsResponse(sessionInfo);
+            }
         }
+    }
+
+    private void processDeviceSettingsResponse(TransportProtos.SessionInfoProto sessionInfo) {
+        EntityTransportRateLimits deviceRateLimits = rateLimitService.getDeviceRateLimits(getTenantId(sessionInfo), getDeviceId(sessionInfo));
+
+        TransportProtos.DeviceTransportSettingsMsg settingsMsg = TransportProtos.DeviceTransportSettingsMsg
+                .newBuilder()
+                .setMaxSessionsPerDevice(maxAllowedSessionsPerDevice)
+                .setRegularMsgRateLimits(deviceRateLimits.getRegularMsgRateLimit().getConfiguration())
+                .setTelemetryMsgRateLimits(deviceRateLimits.getTelemetryMsgRateLimit().getConfiguration())
+                .setTelemetryDataPointsRateLimit(deviceRateLimits.getTelemetryDataPointsRateLimit().getConfiguration())
+                .build();
+
+        SessionMsgListener listener = sessions.get(toSessionId(sessionInfo)).getListener();
+        listener.onDeviceTransportSettings(settingsMsg);
     }
 
     @Override
@@ -923,9 +944,8 @@ public class DefaultTransportService extends TransportActivityManager implements
                     listener.onToServerRpcResponse(toSessionMsg.getToServerResponse());
                 }
                 if (toSessionMsg.hasDeviceTransportSettingsMsg()) {
-                    TransportProtos.SessionInfoProto sessionInfo = md.getSessionInfo();
-                    EntityTransportRateLimits deviceRateLimits = rateLimitService.getDeviceRateLimits(getTenantId(sessionInfo), getDeviceId(sessionInfo));
-                    listener.onDeviceTransportSettings(sessionId, toSessionMsg.getDeviceTransportSettingsMsg(), deviceRateLimits);
+                    maxAllowedSessionsPerDevice = toSessionMsg.getDeviceTransportSettingsMsg().getMaxSessionsPerDevice();
+                    processDeviceSettingsResponse(md.getSessionInfo());
                 }
             });
             if (md.getSessionType() == TransportProtos.SessionType.SYNC) {
