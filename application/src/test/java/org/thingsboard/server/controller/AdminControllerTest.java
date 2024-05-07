@@ -42,7 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Slf4j
 @DaoSqlTest
 public class AdminControllerTest extends AbstractControllerTest {
-    final JwtSettings defaultJwtSettings = new JwtSettings(9000, 604800, "thingsboard.io", "thingsboardDefaultSigningKey");
+    final JwtSettings defaultJwtSettings = new JwtSettings(9000, 604800, "thingsboard.io", "QmlicmJkZk9tSzZPVFozcWY0Sm94UVhybmtBWXZ5YmZMOUZSZzZvcUFiOVhsb3VHUThhUWJGaXp3UHhtcGZ6Tw==");
 
     @Test
     public void testFindAdminSettingsByKey() throws Exception {
@@ -168,7 +168,7 @@ public class AdminControllerTest extends AbstractControllerTest {
         assertThat(jwtSettings).isEqualTo(defaultJwtSettings);
 
         jwtSettings.setTokenSigningKey(Base64.getEncoder().encodeToString(
-                RandomStringUtils.randomAlphanumeric(256 / Byte.SIZE).getBytes(StandardCharsets.UTF_8)));
+                RandomStringUtils.randomAlphanumeric(512 / Byte.SIZE).getBytes(StandardCharsets.UTF_8)));
 
         doPost("/api/admin/jwtSettings", jwtSettings).andExpect(status().isOk());
 

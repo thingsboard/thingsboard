@@ -103,7 +103,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
             RuleChain ruleChain = service.findRuleChainById(tenantId, entityId);
             if (ruleChain != null && RuleChainType.CORE.equals(ruleChain.getType())) {
                 List<RuleNode> ruleNodeList = service.getRuleChainNodes(tenantId, entityId);
-                log.trace("[{}][{}] Starting rule chain with {} nodes", tenantId, entityId, ruleNodeList.size());
+                log.debug("[{}][{}] Starting rule chain with {} nodes", tenantId, entityId, ruleNodeList.size());
                 // Creating and starting the actors;
                 for (RuleNode ruleNode : ruleNodeList) {
                     log.trace("[{}][{}] Creating rule node [{}]: {}", entityId, ruleNode.getId(), ruleNode.getName(), ruleNode);
@@ -124,7 +124,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         if (ruleChain != null && RuleChainType.CORE.equals(ruleChain.getType())) {
             ruleChainName = ruleChain.getName();
             List<RuleNode> ruleNodeList = service.getRuleChainNodes(tenantId, entityId);
-            log.trace("[{}][{}] Updating rule chain with {} nodes", tenantId, entityId, ruleNodeList.size());
+            log.debug("[{}][{}] Updating rule chain with {} nodes", tenantId, entityId, ruleNodeList.size());
             for (RuleNode ruleNode : ruleNodeList) {
                 RuleNodeCtx existing = nodeActors.get(ruleNode.getId());
                 if (existing == null) {

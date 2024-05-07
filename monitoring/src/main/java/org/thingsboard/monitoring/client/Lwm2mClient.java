@@ -51,6 +51,7 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.eclipse.leshan.client.object.Security.noSec;
 import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
@@ -95,7 +96,7 @@ public class Lwm2mClient extends BaseInstanceEnabler implements Destroyable {
         LwM2mModel model = new StaticModel(models);
         ObjectsInitializer initializer = new ObjectsInitializer(model);
         initializer.setInstancesForObject(SECURITY, security);
-        initializer.setInstancesForObject(SERVER, new Server(123, 300));
+        initializer.setInstancesForObject(SERVER, new Server(123, TimeUnit.MINUTES.toSeconds(60)));
         initializer.setInstancesForObject(DEVICE, this);
         initializer.setClassForObject(ACCESS_CONTROL, DummyInstanceEnabler.class);
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();

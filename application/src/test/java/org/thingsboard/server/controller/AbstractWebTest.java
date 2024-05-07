@@ -21,11 +21,8 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Header;
-import io.jsonwebtoken.Jwt;
-import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.Jws;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpStatus;
 import org.awaitility.Awaitility;
 import org.hamcrest.Matcher;
 import org.hibernate.exception.ConstraintViolationException;
@@ -114,12 +111,15 @@ import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.msg.session.FeatureType;
 import org.thingsboard.server.config.ThingsboardSecurityConfiguration;
 import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.ClaimDevicesService;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
+import org.thingsboard.server.queue.memory.InMemoryStorage;
 import org.thingsboard.server.service.entitiy.tenant.profile.TbTenantProfileService;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
+import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
@@ -229,7 +229,10 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     private TbTenantProfileService tbTenantProfileService;
 
     @Autowired
-    public TimeseriesService tsService;
+    protected TimeseriesService tsService;
+
+    @Autowired
+    protected AttributesService attributesService;
 
     @Autowired
     protected DefaultActorService actorService;
@@ -237,8 +240,14 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     @Autowired
     protected ClaimDevicesService claimDevicesService;
 
+    @Autowired
+    private JwtTokenFactory jwtTokenFactory;
+
     @SpyBean
     protected MailService mailService;
+
+    @Autowired
+    protected InMemoryStorage storage;
 
     @Rule
     public TestRule watcher = new TestWatcher() {
@@ -282,7 +291,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
         Tenant tenant = new Tenant();
         tenant.setTitle(TEST_TENANT_NAME);
-        Tenant savedTenant = doPost("/api/tenant", tenant, Tenant.class);
+        Tenant savedTenant = saveTenant(tenant);
         Assert.assertNotNull(savedTenant);
         tenantId = savedTenant.getId();
         tenantProfileId = savedTenant.getTenantProfileId();
@@ -360,22 +369,14 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         assertThat(loadedTenants).as("All tenants expected to be deleted, but some tenants left in the database").isEmpty();
     }
 
-    private void deleteTenant(TenantId tenantId) {
-        int status = 0;
-        int retries = 0;
-        while (status != HttpStatus.SC_OK && retries < CLEANUP_TENANT_RETRIES_COUNT) {
-            retries++;
-            try {
-                status = doDelete("/api/tenant/" + tenantId.getId().toString())
-                        .andReturn().getResponse().getStatus();
-                if (status != HttpStatus.SC_OK) {
-                    log.warn("Tenant deletion failed, tenantId: {}", tenantId.getId().toString());
-                    Thread.sleep(1000L);
-                }
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+    protected void deleteTenant(TenantId tenantId) {
+        try {
+            doDelete("/api/tenant/" + tenantId.getId()).andExpect(status().isOk());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
+        Awaitility.await("all tasks processed").atMost(60, TimeUnit.SECONDS).during(300, TimeUnit.MILLISECONDS)
+                .until(() -> storage.getLag("tb_housekeeper") == 0);
     }
 
     private List<Tenant> getAllTenants() throws Exception {
@@ -428,7 +429,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         loginSysAdmin();
         Tenant tenant = new Tenant();
         tenant.setTitle(TEST_DIFFERENT_TENANT_NAME);
-        savedDifferentTenant = doPost("/api/tenant", tenant, Tenant.class);
+        savedDifferentTenant = saveTenant(tenant);
         differentTenantId = savedDifferentTenant.getId();
         Assert.assertNotNull(savedDifferentTenant);
         User differentTenantAdmin = new User();
@@ -436,6 +437,10 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         differentTenantAdmin.setTenantId(savedDifferentTenant.getId());
         differentTenantAdmin.setEmail(DIFFERENT_TENANT_ADMIN_EMAIL);
         savedDifferentTenantUser = createUserAndLogin(differentTenantAdmin, DIFFERENT_TENANT_ADMIN_PASSWORD);
+    }
+
+    protected Tenant saveTenant(Tenant tenant) throws Exception {
+        return doPost("/api/tenant", tenant, Tenant.class);
     }
 
     protected void loginDifferentCustomer() throws Exception {
@@ -558,13 +563,8 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     protected void validateJwtToken(String token, String username) {
-        Assert.assertNotNull(token);
-        Assert.assertFalse(token.isEmpty());
-        int i = token.lastIndexOf('.');
-        Assert.assertTrue(i > 0);
-        String withoutSignature = token.substring(0, i + 1);
-        Jwt<Header, Claims> jwsClaims = Jwts.parser().parseClaimsJwt(withoutSignature);
-        Claims claims = jwsClaims.getBody();
+        Jws<Claims> jwsClaims = jwtTokenFactory.parseTokenClaims(token);
+        Claims claims = jwsClaims.getPayload();
         String subject = claims.getSubject();
         Assert.assertEquals(username, subject);
     }
