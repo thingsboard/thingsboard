@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileCon
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
+import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.X509CertificateChainProvisionConfiguration;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -64,6 +65,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static org.eclipse.leshan.core.LwM2m.Version.V1_0;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateString;
 
@@ -172,6 +174,15 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
             oldDeviceProfile = deviceProfileValidator.validate(deviceProfile, DeviceProfile::getTenantId);
         } else if (deviceProfile.getId() != null) {
             oldDeviceProfile = findDeviceProfileById(deviceProfile.getTenantId(), deviceProfile.getId(), false);
+        }
+
+        if (deviceProfile.getTransportType().equals(DeviceTransportType.LWM2M) &&
+                ((Lwm2mDeviceProfileTransportConfiguration)deviceProfile.getProfileData().getTransportConfiguration())
+                        .getClientLwM2mSettings()
+                        .getDefaultObjectIDVer() == null) {
+            ((Lwm2mDeviceProfileTransportConfiguration)deviceProfile.getProfileData().getTransportConfiguration())
+                    .getClientLwM2mSettings()
+                    .setDefaultObjectIDVer(V1_0.toString());
         }
         DeviceProfile savedDeviceProfile;
         try {

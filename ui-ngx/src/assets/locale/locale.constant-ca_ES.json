@@ -1710,6 +1710,11 @@
                 "step": "Pas",
                 "min-evaluation-period": "Període mínim d'avaluació",
                 "max-evaluation-period": "Període màxim d'avaluació"
+            },
+            "default-object-id": "Versió de l'objecte predeterminat (atribut)",
+            "default-object-id-ver": {
+                "v1-0": "\"1.0\" és el valor de la versió de l'objecte si la versió de l'objecte està buida.",
+                "v1-1": "\"1.1\" és el valor de la versió de l'objecte si la versió de l'objecte està buida."
             }
         },
         "snmp": {
