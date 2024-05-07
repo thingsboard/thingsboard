@@ -624,7 +624,7 @@ export class IotSvgObject {
           case 'color':
             return '#000';
           case 'color-settings':
-            return constantColor('#000');
+            return ColorProcessor.fromSettings(constantColor('#000'));
         }
       }
     } else {
