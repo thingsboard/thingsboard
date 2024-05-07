@@ -16,17 +16,17 @@
 package org.thingsboard.rule.engine.action;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 
 @Data
 public abstract class TbAbstractRelationActionNodeConfiguration {
 
-    private String direction;
+    private EntitySearchDirection direction;
     private String relationType;
 
-    private String entityType;
+    private EntityType entityType;
     private String entityNamePattern;
     private String entityTypePattern;
-
-    private long entityCacheExpiration;
 
 }

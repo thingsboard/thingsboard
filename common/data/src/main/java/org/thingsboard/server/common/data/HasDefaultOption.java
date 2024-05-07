@@ -13,15 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.mqtt.integration;
+package org.thingsboard.server.common.data;
 
-import org.junit.extensions.cpsuite.ClasspathSuite;
-import org.junit.runner.RunWith;
+public interface HasDefaultOption {
 
-@RunWith(ClasspathSuite.class)
-@ClasspathSuite.ClassnameFilters({
-        "org.thingsboard.mqtt.integration.*Test",
-})
-public class IntegrationTestSuite {
+    boolean isDefault();
 
 }

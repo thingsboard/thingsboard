@@ -56,6 +56,7 @@ import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 
 import jakarta.annotation.PostConstruct;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
