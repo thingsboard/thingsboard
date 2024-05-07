@@ -824,7 +824,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                             break;
                         default:
                             log.warn("[{}] Failed to subscribe to [{}][{}]", sessionId, topic, reqQoS);
-                            grantedQoSList.add(MqttReasonCodes.PubAck.TOPIC_NAME_INVALID.byteValue() & 0xFF);
+                            grantedQoSList.add(ReturnCodeResolver.getSubscriptionReturnCode(deviceSessionCtx.getMqttVersion(), MqttReasonCodes.SubAck.TOPIC_FILTER_INVALID));
                             break;
                     }
                 }

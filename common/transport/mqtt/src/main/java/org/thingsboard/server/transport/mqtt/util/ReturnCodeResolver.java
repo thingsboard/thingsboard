@@ -28,7 +28,6 @@ public class ReturnCodeResolver {
         if (!MqttVersion.MQTT_5.equals(mqttVersion) && !MqttConnectReturnCode.CONNECTION_ACCEPTED.equals(returnCode)) {
             switch (returnCode) {
                 case CONNECTION_REFUSED_BAD_USERNAME_OR_PASSWORD:
-                    return MqttConnectReturnCode.CONNECTION_REFUSED_BAD_USER_NAME_OR_PASSWORD;
                 case CONNECTION_REFUSED_NOT_AUTHORIZED_5:
                     return MqttConnectReturnCode.CONNECTION_REFUSED_NOT_AUTHORIZED;
                 case CONNECTION_REFUSED_CLIENT_IDENTIFIER_NOT_VALID:
