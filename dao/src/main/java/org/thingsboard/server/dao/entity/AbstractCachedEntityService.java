@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,25 +15,22 @@
  */
 package org.thingsboard.server.dao.entity;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.thingsboard.server.cache.TbTransactionalCache;
+import org.thingsboard.server.dao.eventsourcing.TbEvictEvent;
 
 import java.io.Serializable;
 
-public abstract class AbstractCachedEntityService<K extends Serializable, V extends Serializable, E> extends AbstractEntityService {
+@Slf4j
+public abstract class AbstractCachedEntityService<K extends Serializable, V extends Serializable, E extends TbEvictEvent> extends AbstractEntityService {
 
     @Autowired
     protected TbTransactionalCache<K, V> cache;
 
     protected void publishEvictEvent(E event) {
-        if (TransactionSynchronizationManager.isActualTransactionActive()) {
-            eventPublisher.publishEvent(event);
-        } else {
-            handleEvictEvent(event);
-        }
+        eventPublisher.publishEvictEvent(event);
     }
-
-    public abstract void handleEvictEvent(E event);
 
 }

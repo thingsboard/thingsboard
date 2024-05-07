@@ -84,15 +84,15 @@ public class EdgeEventSourcingListener {
             if (!isValidSaveEntityEventForEdgeProcessing(event)) {
                 return;
             }
-            log.trace("[{}] SaveEntityEvent called: {}", event.getTenantId(), event);
+            log.debug("[{}][{}] SaveEntityEvent called: {}", event.getTenantId(), event.getId(), event);
             boolean isCreated = Boolean.TRUE.equals(event.getCreated());
             String body = getBodyMsgForEntityEvent(event.getEntity());
             EdgeEventType type = getEdgeEventTypeForEntityEvent(event.getEntity());
             EdgeEventActionType action = getActionForEntityEvent(event.getEntity(), isCreated);
             tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), null, event.getEntityId(),
                     body, type, action, edgeSynchronizationManager.getEdgeId().get());
-        } catch (Exception e) {
-            log.error("[{}] failed to process SaveEntityEvent: {}", event.getTenantId(), event, e);
+        } catch (Throwable e) {
+            log.error("[{}][{}] failed to process SaveEntityEvent: {}", event.getTenantId(), event.getId(), event, e);
         }
     }
 
@@ -101,21 +101,21 @@ public class EdgeEventSourcingListener {
         TenantId tenantId = event.getTenantId();
         EntityType entityType = event.getEntityId().getEntityType();
         if (!tenantId.isSysTenantId() && !tenantService.tenantExists(tenantId)) {
-            log.debug("[{}] Ignoring DeleteEntityEvent because tenant does not exist: {}", tenantId, event);
+            log.debug("[{}][{}] Ignoring DeleteEntityEvent because tenant does not exist: {}", tenantId, event.getId(), event);
             return;
         }
         try {
             if (EntityType.EDGE.equals(entityType) || EntityType.TENANT.equals(entityType)) {
                 return;
             }
-            log.trace("[{}] DeleteEntityEvent called: {}", tenantId, event);
+            log.debug("[{}][{}] DeleteEntityEvent called: {}", tenantId, event.getId(), event);
             EdgeEventType type = getEdgeEventTypeForEntityEvent(event.getEntity());
             EdgeEventActionType actionType = getEdgeEventActionTypeForEntityEvent(event.getEntity());
             tbClusterService.sendNotificationMsgToEdge(tenantId, null, event.getEntityId(),
                     JacksonUtil.toString(event.getEntity()), type, actionType,
                     edgeSynchronizationManager.getEdgeId().get());
-        } catch (Exception e) {
-            log.error("[{}] failed to process DeleteEntityEvent: {}", tenantId, event, e);
+        } catch (Throwable e) {
+            log.error("[{}][{}] failed to process DeleteEntityEvent: {}", tenantId, event.getId(), event, e);
         }
     }
 
@@ -135,12 +135,12 @@ public class EdgeEventSourcingListener {
             return;
         }
         try {
-            log.trace("[{}] ActionEntityEvent called: {}", event.getTenantId(), event);
+            log.trace("[{}][{}] ActionEntityEvent called: {}", event.getTenantId(), event.getId(), event);
             tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), event.getEdgeId(), event.getEntityId(),
                     event.getBody(), null, EdgeUtils.getEdgeEventActionTypeByActionType(event.getActionType()),
                     edgeSynchronizationManager.getEdgeId().get());
-        } catch (Exception e) {
-            log.error("[{}] failed to process ActionEntityEvent: {}", event.getTenantId(), event, e);
+        } catch (Throwable e) {
+            log.error("[{}][{}] failed to process ActionEntityEvent: {}", event.getTenantId(), event.getId(), event, e);
         }
     }
 
@@ -160,8 +160,8 @@ public class EdgeEventSourcingListener {
             tbClusterService.sendNotificationMsgToEdge(event.getTenantId(), null, null,
                     JacksonUtil.toString(relation), EdgeEventType.RELATION, EdgeUtils.getEdgeEventActionTypeByActionType(event.getActionType()),
                     edgeSynchronizationManager.getEdgeId().get());
-        } catch (Exception e) {
-            log.error("[{}] failed to process RelationActionEvent: {}", event.getTenantId(), event, e);
+        } catch (Throwable e) {
+            log.error("[{}][{}] failed to process RelationActionEvent: {}", event.getTenantId(), event.getId(), event, e);
         }
     }
 
@@ -170,12 +170,12 @@ public class EdgeEventSourcingListener {
         Object oldEntity = event.getOldEntity();
         if (event.getEntityId() != null) {
             switch (event.getEntityId().getEntityType()) {
-                case RULE_CHAIN:
+                case RULE_CHAIN -> {
                     if (entity instanceof RuleChain ruleChain) {
                         return RuleChainType.EDGE.equals(ruleChain.getType());
                     }
-                    break;
-                case USER:
+                }
+                case USER -> {
                     if (entity instanceof User user) {
                         if (Authority.SYS_ADMIN.equals(user.getAuthority())) {
                             return false;
@@ -187,21 +187,23 @@ public class EdgeEventSourcingListener {
                             return !user.equals(oldUser);
                         }
                     }
-                    break;
-                case OTA_PACKAGE:
+                }
+                case OTA_PACKAGE -> {
                     if (entity instanceof OtaPackageInfo otaPackageInfo) {
                         return otaPackageInfo.hasUrl() || otaPackageInfo.isHasData();
                     }
-                    break;
-                case ALARM:
+                }
+                case ALARM -> {
                     if (entity instanceof AlarmApiCallResult || entity instanceof Alarm) {
                         return false;
                     }
-                    break;
-                case TENANT:
+                }
+                case TENANT -> {
                     return !event.getCreated();
-                case API_USAGE_STATE, EDGE:
+                }
+                case API_USAGE_STATE, EDGE -> {
                     return false;
+                }
             }
         }
         // Default: If the entity doesn't match any of the conditions, consider it as valid.

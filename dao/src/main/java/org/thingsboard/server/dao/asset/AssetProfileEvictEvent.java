@@ -18,10 +18,14 @@ package org.thingsboard.server.dao.asset;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.eventsourcing.TbEvictEvent;
+
+import java.util.UUID;
 
 @Data
-public class AssetProfileEvictEvent {
+public class AssetProfileEvictEvent implements TbEvictEvent {
 
+    private final UUID uuid = UUID.randomUUID();
     private final TenantId tenantId;
     private final String newName;
     private final String oldName;

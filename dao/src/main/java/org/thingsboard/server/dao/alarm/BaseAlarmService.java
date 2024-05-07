@@ -98,8 +98,7 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
     private final EntityService entityService;
     private final DataValidator<Alarm> alarmDataValidator;
 
-    @TransactionalEventListener(classes = AlarmTypesCacheEvictEvent.class)
-    @Override
+    @TransactionalEventListener(classes = AlarmTypesCacheEvictEvent.class, fallbackExecution = true)
     public void handleEvictEvent(AlarmTypesCacheEvictEvent event) {
         TenantId tenantId = event.getTenantId();
         cache.evict(tenantId);

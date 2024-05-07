@@ -22,9 +22,13 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.util.UUID;
+
 @Data
 @Builder
-public class ActionEntityEvent<T> {
+public class ActionEntityEvent<T> implements TbSourcingEvent {
+    @Builder.Default
+    private final UUID uuid = UUID.randomUUID();
     private final TenantId tenantId;
     private final T entity;
     private final EntityId entityId;

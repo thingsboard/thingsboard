@@ -18,9 +18,13 @@ package org.thingsboard.server.dao.alarm;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.eventsourcing.TbEvictEvent;
+
+import java.util.UUID;
 
 @Data
 @RequiredArgsConstructor
-class AlarmTypesCacheEvictEvent {
+class AlarmTypesCacheEvictEvent implements TbEvictEvent {
+    private final UUID uuid = UUID.randomUUID();
     private final TenantId tenantId;
 }

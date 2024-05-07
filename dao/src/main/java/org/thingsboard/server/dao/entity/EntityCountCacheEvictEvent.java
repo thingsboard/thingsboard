@@ -19,10 +19,15 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.eventsourcing.TbEvictEvent;
+
+import java.util.UUID;
 
 @Data
 @RequiredArgsConstructor
-class EntityCountCacheEvictEvent {
+class EntityCountCacheEvictEvent implements TbEvictEvent {
+
+    private final UUID uuid = UUID.randomUUID();
     private final TenantId tenantId;
     private final EntityType entityType;
 }

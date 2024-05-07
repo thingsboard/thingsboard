@@ -17,9 +17,14 @@ package org.thingsboard.server.dao.tenant;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.eventsourcing.TbEvictEvent;
+
+import java.util.UUID;
 
 @Data
-public class TenantEvictEvent {
+public class TenantEvictEvent implements TbEvictEvent {
+
+    private final UUID id = UUID.randomUUID();
     private final TenantId tenantId;
     private final boolean invalidateExists;
 }

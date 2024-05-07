@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.eventsourcing.TbApplicationEventPublisher;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.housekeeper.CleanUpService;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -46,7 +47,7 @@ public abstract class AbstractEntityService {
     public static final String INCORRECT_PAGE_LINK = "Incorrect page link ";
 
     @Autowired
-    protected ApplicationEventPublisher eventPublisher;
+    protected TbApplicationEventPublisher eventPublisher;
 
     @Lazy
     @Autowired

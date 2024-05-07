@@ -18,10 +18,13 @@ package org.thingsboard.server.dao.ota;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.thingsboard.server.common.data.id.OtaPackageId;
+import org.thingsboard.server.dao.eventsourcing.TbEvictEvent;
 
 @Data
 @RequiredArgsConstructor
-class OtaPackageCacheEvictEvent {
+class OtaPackageCacheEvictEvent implements TbEvictEvent {
+
+    p
 
     private final OtaPackageId id;
 

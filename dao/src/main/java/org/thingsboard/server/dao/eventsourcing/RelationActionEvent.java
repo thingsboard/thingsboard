@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,13 +15,19 @@
  */
 package org.thingsboard.server.dao.eventsourcing;
 
+import lombok.Builder;
 import lombok.Data;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 
+import java.util.UUID;
+
 @Data
-public class RelationActionEvent {
+@Builder
+public class RelationActionEvent implements TbSourcingEvent {
+    @Builder.Default
+    private final UUID uuid = UUID.randomUUID();
     private final TenantId tenantId;
     private final EntityRelation relation;
     private final ActionType actionType;

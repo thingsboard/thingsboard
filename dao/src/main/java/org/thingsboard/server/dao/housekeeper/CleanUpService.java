@@ -55,7 +55,7 @@ public class CleanUpService {
         EntityId entityId = event.getEntityId();
         EntityType entityType = entityId.getEntityType();
         try {
-            log.trace("[{}][{}][{}] Handling entity deletion event", tenantId, entityType, entityId.getId());
+            log.trace("[{}][{}][{}][{}] Handling entity deletion event", tenantId, event.getId(), entityType, entityId.getId());
             if (!skippedEntities.contains(entityType)) {
                 cleanUpRelatedData(tenantId, entityId);
             }

@@ -21,10 +21,14 @@ import lombok.ToString;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.dao.eventsourcing.TbEvictEvent;
 
 @RequiredArgsConstructor
 @ToString
-public class EntityRelationEvent {
+public class EntityRelationEvent implements TbEvictEvent {
+
+
+
     @Getter
     private final EntityId from;
     @Getter

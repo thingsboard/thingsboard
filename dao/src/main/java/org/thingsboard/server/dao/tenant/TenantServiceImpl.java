@@ -48,6 +48,7 @@ import org.thingsboard.server.dao.user.UserService;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -171,7 +172,8 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
                 EntityType.NOTIFICATION_REQUEST, EntityType.NOTIFICATION_RULE, EntityType.NOTIFICATION_TEMPLATE,
                 EntityType.NOTIFICATION_TARGET, EntityType.QUEUE_STATS, EntityType.CUSTOMER
         );
-        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(tenantId).entity(tenant).build());
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId)
+                .entityId(tenantId).entity(tenant).build());
     }
 
     @Override
@@ -212,7 +214,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         return existsTenantCache.getAndPutInTransaction(tenantId, () -> tenantDao.existsById(tenantId, tenantId.getId()), false);
     }
 
-    private PaginatedRemover<TenantId, Tenant> tenantsRemover = new PaginatedRemover<>() {
+    private final PaginatedRemover<TenantId, Tenant> tenantsRemover = new PaginatedRemover<>() {
 
         @Override
         protected PageData<Tenant> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {

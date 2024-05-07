@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -71,129 +71,144 @@ public class EntityStateSourcingListener {
 
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(SaveEntityEvent<?> event) {
-        TenantId tenantId = event.getTenantId();
-        EntityId entityId = event.getEntityId();
-        if (entityId == null) {
-            return;
-        }
-        EntityType entityType = entityId.getEntityType();
-        log.debug("[{}][{}][{}] Handling entity save event: {}", tenantId, entityType, entityId, event);
-        boolean isCreated = event.getCreated() != null && event.getCreated();
-        ComponentLifecycleEvent lifecycleEvent = isCreated ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED;
-
-        switch (entityType) {
-            case ASSET, ASSET_PROFILE, ENTITY_VIEW, NOTIFICATION_RULE -> {
-                tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, lifecycleEvent);
+        try {
+            TenantId tenantId = event.getTenantId();
+            EntityId entityId = event.getEntityId();
+            if (entityId == null) {
+                return;
             }
-            case RULE_CHAIN -> {
-                RuleChain ruleChain = (RuleChain) event.getEntity();
-                if (RuleChainType.CORE.equals(ruleChain.getType())) {
-                    tbClusterService.broadcastEntityStateChangeEvent(ruleChain.getTenantId(), ruleChain.getId(), lifecycleEvent);
+            EntityType entityType = entityId.getEntityType();
+            log.debug("[{}][{}][{}][{}] Handling entity save event: {}", tenantId, event.getId(), entityType, entityId, event);
+            boolean isCreated = event.getCreated() != null && event.getCreated();
+            ComponentLifecycleEvent lifecycleEvent = isCreated ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED;
+
+            switch (entityType) {
+                case ASSET, ASSET_PROFILE, ENTITY_VIEW, NOTIFICATION_RULE -> {
+                    tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, lifecycleEvent);
+                }
+                case RULE_CHAIN -> {
+                    RuleChain ruleChain = (RuleChain) event.getEntity();
+                    if (RuleChainType.CORE.equals(ruleChain.getType())) {
+                        tbClusterService.broadcastEntityStateChangeEvent(ruleChain.getTenantId(), ruleChain.getId(), lifecycleEvent);
+                    }
+                }
+                case TENANT -> {
+                    Tenant tenant = (Tenant) event.getEntity();
+                    onTenantUpdate(tenant, lifecycleEvent);
+                }
+                case TENANT_PROFILE -> {
+                    TenantProfile tenantProfile = (TenantProfile) event.getEntity();
+                    onTenantProfileUpdate(tenantProfile, lifecycleEvent);
+                }
+                case DEVICE -> {
+                    onDeviceUpdate(event.getEntity(), event.getOldEntity());
+                }
+                case DEVICE_PROFILE -> {
+                    DeviceProfile deviceProfile = (DeviceProfile) event.getEntity();
+                    onDeviceProfileUpdate(deviceProfile, event.getOldEntity(), isCreated);
+                }
+                case EDGE -> {
+                    handleEdgeEvent(tenantId, entityId, event.getEntity(), lifecycleEvent);
+                }
+                case TB_RESOURCE -> {
+                    TbResource tbResource = (TbResource) event.getEntity();
+                    tbClusterService.onResourceChange(tbResource, null);
+                }
+                case API_USAGE_STATE -> {
+                    ApiUsageState apiUsageState = (ApiUsageState) event.getEntity();
+                    tbClusterService.onApiStateChange(apiUsageState, null);
+                }
+                default -> {
                 }
             }
-            case TENANT -> {
-                Tenant tenant = (Tenant) event.getEntity();
-                onTenantUpdate(tenant, lifecycleEvent);
-            }
-            case TENANT_PROFILE -> {
-                TenantProfile tenantProfile = (TenantProfile) event.getEntity();
-                onTenantProfileUpdate(tenantProfile, lifecycleEvent);
-            }
-            case DEVICE -> {
-                onDeviceUpdate(event.getEntity(), event.getOldEntity());
-            }
-            case DEVICE_PROFILE -> {
-                DeviceProfile deviceProfile = (DeviceProfile) event.getEntity();
-                onDeviceProfileUpdate(deviceProfile, event.getOldEntity(), isCreated);
-            }
-            case EDGE -> {
-                handleEdgeEvent(tenantId, entityId, event.getEntity(), lifecycleEvent);
-            }
-            case TB_RESOURCE -> {
-                TbResource tbResource = (TbResource) event.getEntity();
-                tbClusterService.onResourceChange(tbResource, null);
-            }
-            case API_USAGE_STATE -> {
-                ApiUsageState apiUsageState = (ApiUsageState) event.getEntity();
-                tbClusterService.onApiStateChange(apiUsageState, null);
-            }
-            default -> {}
+        } catch (Throwable e) {
+            log.error("[{}][{}] failed to process entity save event: {}", event.getTenantId(), event.getId(), event, e);
         }
     }
 
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(DeleteEntityEvent<?> event) {
-        TenantId tenantId = event.getTenantId();
-        EntityId entityId = event.getEntityId();
-        if (entityId == null) {
-            return;
-        }
-        EntityType entityType = entityId.getEntityType();
-        if (!tenantId.isSysTenantId() && entityType != EntityType.TENANT  && !tenantService.tenantExists(tenantId)) {
-            log.debug("[{}] Ignoring DeleteEntityEvent because tenant does not exist: {}", tenantId, event);
-            return;
-        }
-        log.debug("[{}][{}][{}] Handling entity deletion event: {}", tenantId, entityType, entityId, event);
-
-        switch (entityType) {
-            case ASSET, ASSET_PROFILE, ENTITY_VIEW, CUSTOMER, EDGE, NOTIFICATION_RULE -> {
-                tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, ComponentLifecycleEvent.DELETED);
+        try {
+            TenantId tenantId = event.getTenantId();
+            EntityId entityId = event.getEntityId();
+            if (entityId == null) {
+                return;
             }
-            case NOTIFICATION_REQUEST -> {
-                NotificationRequest request = (NotificationRequest) event.getEntity();
-                if (request.isScheduled()) {
+            EntityType entityType = entityId.getEntityType();
+            if (!tenantId.isSysTenantId() && entityType != EntityType.TENANT && !tenantService.tenantExists(tenantId)) {
+                log.debug("[{}] Ignoring DeleteEntityEvent because tenant does not exist: {}", tenantId, event);
+                return;
+            }
+            log.debug("[{}][{}][{}][{}] Handling entity deletion event: {}", tenantId, event.getId(), entityType, entityId, event);
+
+            switch (entityType) {
+                case ASSET, ASSET_PROFILE, ENTITY_VIEW, CUSTOMER, EDGE, NOTIFICATION_RULE -> {
                     tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, ComponentLifecycleEvent.DELETED);
                 }
-            }
-            case RULE_CHAIN -> {
-                RuleChain ruleChain = (RuleChain) event.getEntity();
-                if (RuleChainType.CORE.equals(ruleChain.getType())) {
-                    Set<RuleChainId> referencingRuleChainIds = JacksonUtil.fromString(event.getBody(), new TypeReference<>() {});
-                    if (referencingRuleChainIds != null) {
-                        referencingRuleChainIds.forEach(referencingRuleChainId ->
-                                tbClusterService.broadcastEntityStateChangeEvent(tenantId, referencingRuleChainId, ComponentLifecycleEvent.UPDATED));
+                case NOTIFICATION_REQUEST -> {
+                    NotificationRequest request = (NotificationRequest) event.getEntity();
+                    if (request.isScheduled()) {
+                        tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, ComponentLifecycleEvent.DELETED);
                     }
-                    tbClusterService.broadcastEntityStateChangeEvent(tenantId, ruleChain.getId(), ComponentLifecycleEvent.DELETED);
+                }
+                case RULE_CHAIN -> {
+                    RuleChain ruleChain = (RuleChain) event.getEntity();
+                    if (RuleChainType.CORE.equals(ruleChain.getType())) {
+                        Set<RuleChainId> referencingRuleChainIds = JacksonUtil.fromString(event.getBody(), new TypeReference<>() {
+                        });
+                        if (referencingRuleChainIds != null) {
+                            referencingRuleChainIds.forEach(referencingRuleChainId ->
+                                    tbClusterService.broadcastEntityStateChangeEvent(tenantId, referencingRuleChainId, ComponentLifecycleEvent.UPDATED));
+                        }
+                        tbClusterService.broadcastEntityStateChangeEvent(tenantId, ruleChain.getId(), ComponentLifecycleEvent.DELETED);
+                    }
+                }
+                case TENANT -> {
+                    Tenant tenant = (Tenant) event.getEntity();
+                    onTenantDeleted(tenant);
+                }
+                case TENANT_PROFILE -> {
+                    TenantProfile tenantProfile = (TenantProfile) event.getEntity();
+                    tbClusterService.onTenantProfileDelete(tenantProfile, null);
+                }
+                case DEVICE -> {
+                    Device device = (Device) event.getEntity();
+                    tbClusterService.onDeviceDeleted(tenantId, device, null);
+                }
+                case DEVICE_PROFILE -> {
+                    DeviceProfile deviceProfile = (DeviceProfile) event.getEntity();
+                    onDeviceProfileDelete(event.getTenantId(), event.getEntityId(), deviceProfile);
+                }
+                case TB_RESOURCE -> {
+                    TbResourceInfo tbResource = (TbResourceInfo) event.getEntity();
+                    tbClusterService.onResourceDeleted(tbResource, null);
+                }
+                default -> {
                 }
             }
-            case TENANT -> {
-                Tenant tenant = (Tenant) event.getEntity();
-                onTenantDeleted(tenant);
-            }
-            case TENANT_PROFILE -> {
-                TenantProfile tenantProfile = (TenantProfile) event.getEntity();
-                tbClusterService.onTenantProfileDelete(tenantProfile, null);
-            }
-            case DEVICE -> {
-                Device device = (Device) event.getEntity();
-                tbClusterService.onDeviceDeleted(tenantId, device, null);
-            }
-            case DEVICE_PROFILE -> {
-                DeviceProfile deviceProfile = (DeviceProfile) event.getEntity();
-                onDeviceProfileDelete(event.getTenantId(), event.getEntityId(), deviceProfile);
-            }
-            case TB_RESOURCE -> {
-                TbResourceInfo tbResource = (TbResourceInfo) event.getEntity();
-                tbClusterService.onResourceDeleted(tbResource, null);
-            }
-            default -> {}
+        } catch (Throwable e) {
+            log.error("[{}][{}] failed to process entity delete event: {}", event.getTenantId(), event.getId(), event, e);
         }
     }
 
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(ActionEntityEvent<?> event) {
-        log.trace("[{}] ActionEntityEvent called: {}", event.getTenantId(), event);
-        if (ActionType.CREDENTIALS_UPDATED.equals(event.getActionType()) &&
-                EntityType.DEVICE.equals(event.getEntityId().getEntityType())
-                && event.getEntity() instanceof DeviceCredentials) {
-            tbClusterService.pushMsgToCore(new DeviceCredentialsUpdateNotificationMsg(event.getTenantId(),
-                    (DeviceId) event.getEntityId(), (DeviceCredentials) event.getEntity()), null);
-        } else if (ActionType.ASSIGNED_TO_TENANT.equals(event.getActionType()) && event.getEntity() instanceof Device device) {
-            Tenant tenant = JacksonUtil.fromString(event.getBody(), Tenant.class);
-            if (tenant != null) {
-                tbClusterService.onDeviceAssignedToTenant(tenant.getId(), device);
+        try {
+            log.trace("[{}][{}] ActionEntityEvent called: {}", event.getTenantId(), event.getId(), event);
+            if (ActionType.CREDENTIALS_UPDATED.equals(event.getActionType()) &&
+                    EntityType.DEVICE.equals(event.getEntityId().getEntityType())
+                    && event.getEntity() instanceof DeviceCredentials) {
+                tbClusterService.pushMsgToCore(new DeviceCredentialsUpdateNotificationMsg(event.getTenantId(),
+                        (DeviceId) event.getEntityId(), (DeviceCredentials) event.getEntity()), null);
+            } else if (ActionType.ASSIGNED_TO_TENANT.equals(event.getActionType()) && event.getEntity() instanceof Device device) {
+                Tenant tenant = JacksonUtil.fromString(event.getBody(), Tenant.class);
+                if (tenant != null) {
+                    tbClusterService.onDeviceAssignedToTenant(tenant.getId(), device);
+                }
+                pushAssignedFromNotification(tenant, event.getTenantId(), device);
             }
-            pushAssignedFromNotification(tenant, event.getTenantId(), device);
+        } catch (Throwable e) {
+            log.error("[{}][{}] failed to process entity action event: {}", event.getTenantId(), event.getId(), event, e);
         }
     }
 

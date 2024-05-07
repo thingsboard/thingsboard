@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,18 +17,20 @@ package org.thingsboard.server.dao.eventsourcing;
 
 import lombok.Builder;
 import lombok.Data;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-@Builder
+import java.util.UUID;
+
 @Data
-public class DeleteEntityEvent<T> {
+@Builder
+public class DeleteEntityEvent<T> implements TbSourcingEvent {
+    @Builder.Default
+    private final UUID uuid = UUID.randomUUID();
+    @Builder.Default
+    private final long ts = System.currentTimeMillis();
     private final TenantId tenantId;
     private final EntityId entityId;
     private final T entity;
     private final String body;
-
-    @Builder.Default
-    private final long ts = System.currentTimeMillis();
 }

@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -78,21 +78,25 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
     @Autowired
     private ImageService imageService;
 
-    @TransactionalEventListener(classes = AssetProfileEvictEvent.class)
-    @Override
+    @TransactionalEventListener(classes = AssetProfileEvictEvent.class, fallbackExecution = true)
     public void handleEvictEvent(AssetProfileEvictEvent event) {
-        List<AssetProfileCacheKey> keys = new ArrayList<>(2);
-        keys.add(AssetProfileCacheKey.fromName(event.getTenantId(), event.getNewName()));
-        if (event.getAssetProfileId() != null) {
-            keys.add(AssetProfileCacheKey.fromId(event.getAssetProfileId()));
+        log.debug("[{}] Processing: {}", event.getUuid(), event);
+        try {
+            List<AssetProfileCacheKey> keys = new ArrayList<>(2);
+            keys.add(AssetProfileCacheKey.fromName(event.getTenantId(), event.getNewName()));
+            if (event.getAssetProfileId() != null) {
+                keys.add(AssetProfileCacheKey.fromId(event.getAssetProfileId()));
+            }
+            if (event.isDefaultProfile()) {
+                keys.add(AssetProfileCacheKey.defaultProfile(event.getTenantId()));
+            }
+            if (StringUtils.isNotEmpty(event.getOldName()) && !event.getOldName().equals(event.getNewName())) {
+                keys.add(AssetProfileCacheKey.fromName(event.getTenantId(), event.getOldName()));
+            }
+            cache.evict(keys);
+        } catch (Throwable e) {
+            log.error("[{}] Failed to handle evict event {}", event.getUuid(), event, e);
         }
-        if (event.isDefaultProfile()) {
-            keys.add(AssetProfileCacheKey.defaultProfile(event.getTenantId()));
-        }
-        if (StringUtils.isNotEmpty(event.getOldName()) && !event.getOldName().equals(event.getNewName())) {
-            keys.add(AssetProfileCacheKey.fromName(event.getTenantId(), event.getOldName()));
-        }
-        cache.evict(keys);
     }
 
     @Override

@@ -20,9 +20,13 @@ import lombok.Data;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-@Builder
+import java.util.UUID;
+
 @Data
-public class SaveEntityEvent<T> {
+@Builder
+public class SaveEntityEvent<T> implements TbSourcingEvent {
+    @Builder.Default
+    private final UUID uuid = UUID.randomUUID();
     private final TenantId tenantId;
     private final T entity;
     private final T oldEntity;
