@@ -18,13 +18,14 @@ import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, Input, OnDestr
 import { PageComponent } from '@shared/components/page.component';
 import { AppState } from '@core/core.state';
 import { Store } from '@ngrx/store';
-import { BadgePosition, BadgeStyle, badgeStyleURLMap, MobileAppSettings } from '@shared/models/mobile-app.models';
+import { BadgePosition, BadgeStyle, badgeStyleURLMap, MobileAppQRCodeSettings } from '@shared/models/mobile-app.models';
 import { MobileAppService } from '@core/http/mobile-app.service';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { UtilsService } from '@core/services/utils.service';
 import { interval, mergeMap, Observable, Subject, takeUntil } from 'rxjs';
 import { MINUTE } from '@shared/models/time/time.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { MobileAppQrCodeWidgetSettings } from '@home/components/widget/lib/cards/mobile-app-qr-code-widge.models';
 
 @Component({
   selector: 'tb-mobile-app-qrcode-widget',
@@ -41,7 +42,7 @@ export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnI
   previewMode: boolean;
 
   @Input()
-  set mobileAppSettings(settings: MobileAppSettings) {
+  set mobileAppSettings(settings: MobileAppQRCodeSettings | MobileAppQrCodeWidgetSettings) {
     if (settings) {
       this.mobileAppSettingsValue = settings;
     }
@@ -59,7 +60,7 @@ export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnI
   badgePosition = BadgePosition;
   badgeStyleURLMap = badgeStyleURLMap;
 
-  private mobileAppSettingsValue: MobileAppSettings;
+  private mobileAppSettingsValue: MobileAppQRCodeSettings | MobileAppQrCodeWidgetSettings;
   private deepLinkTTL: number;
 
   constructor(protected store: Store<AppState>,
@@ -71,9 +72,8 @@ export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnI
 
   ngOnInit(): void {
     if (this.ctx) {
-      this.ctx.$scope.mobileAppQrcodeWidget = this;
-    }
-    if (!this.mobileAppSettings) {
+      this.mobileAppSettings = this.ctx.settings;
+    } else {
       this.mobileAppService.getMobileAppSettings().subscribe((settings => {
         this.mobileAppSettings = settings;
         this.cd.detectChanges();
@@ -104,7 +104,7 @@ export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnI
 
   updateQRCode(link: string) {
     import('qrcode').then((QRCode) => {
-      QRCode.toCanvas(this.canvasRef.nativeElement, link, { width: 125});
+      QRCode.toCanvas(this.canvasRef.nativeElement, link, { width: 90 });
     });
   }
 

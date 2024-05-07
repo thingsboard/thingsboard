@@ -17,6 +17,7 @@
     "cards.label_widget",
     "cards.dashboard_state_widget",
     "cards.qr_code",
+    "cards.mobile_app_qr_code",
     "cards.attributes_card",
     "cards.html_card",
     "cards.html_value_card",

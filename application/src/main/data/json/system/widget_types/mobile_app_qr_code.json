@@ -1,21 +1,21 @@
 {
-  "fqn": "home_page_widgets.mobile_app_qr_code",
+  "fqn": "cards.mobile_app_qr_code",
   "name": "Mobile app QR code",
   "deprecated": false,
   "image": null,
   "description": null,
   "descriptor": {
     "type": "static",
-    "sizeX": 6,
+    "sizeX": 7.5,
     "sizeY": 3,
     "resources": [],
     "templateHtml": "<tb-mobile-app-qrcode-widget\n    [ctx]=\"ctx\">\n</tb-mobile-app-qrcode-widget>",
     "templateCss": "",
-    "controllerScript": "self.onInit = function() {\n   self.ctx.$scope.mobileAppQrcodeWidget.ngOnInit();\n}\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.mobileAppQrcodeWidget.ngOnDestroy();\n}",
+    "controllerScript": "self.onInit = function() {\n}\n",
     "settingsSchema": "",
     "dataKeySettingsSchema": "",
-    "settingsDirective": "",
-    "defaultConfig": "{\"datasources\":[{\"type\":\"static\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Random\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.15479322438769105,\"funcBody\":\"var value = prevValue + Math.random() * 100 - 50;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < -1000) {\\n\\tvalue = -1000;\\n} else if (value > 1000) {\\n\\tvalue = 1000;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"rgb(255, 255, 255)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"8px\",\"settings\":{\"cardHtml\":\"<div class='card'>HTML code here</div>\",\"cardCss\":\".card {\\n    font-weight: bold;\\n    font-size: 32px;\\n    color: #999;\\n    width: 100%;\\n    height: 100%;\\n    display: flex;\\n    align-items: center;\\n    justify-content: center;\\n}\"},\"title\":\"HTML Card\",\"dropShadow\":true}"
+    "settingsDirective": "tb-mobile-app-qr-code-widget-settings",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"static\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Random\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.15479322438769105,\"funcBody\":\"var value = prevValue + Math.random() * 100 - 50;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < -1000) {\\n\\tvalue = -1000;\\n} else if (value > 1000) {\\n\\tvalue = 1000;\\n}\\nreturn value;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":true,\"backgroundColor\":\"rgb(255, 255, 255)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"8px\",\"settings\":{\"useDefaultApp\":true,\"androidConfig\":{\"enabled\":true,\"appPackage\":\"\",\"sha256CertFingerprints\":\"\"},\"iosConfig\":{\"enabled\":true,\"appId\":\"\"},\"qrCodeConfig\":{\"badgeEnabled\":true,\"badgeStyle\":\"ORIGINAL\",\"badgePosition\":\"RIGHT\",\"qrCodeLabelEnabled\":true,\"qrCodeLabel\":\"Scan to connect or download mobile app\"}},\"title\":\"Mobile app QR code\",\"dropShadow\":true,\"enableFullscreen\":false,\"widgetStyle\":{},\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showTitleIcon\":false,\"titleTooltip\":\"\",\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400}}"
   },
   "tags": null
 }
