@@ -22,10 +22,13 @@ import org.thingsboard.rule.engine.api.NodeConfiguration;
 public class TbRuleChainInputNodeConfiguration implements NodeConfiguration<TbRuleChainInputNodeConfiguration> {
 
     private String ruleChainId;
+    private boolean forwardMsgToDefaultRuleChain;
 
     @Override
     public TbRuleChainInputNodeConfiguration defaultConfiguration() {
-        return new TbRuleChainInputNodeConfiguration();
+        TbRuleChainInputNodeConfiguration configuration = new TbRuleChainInputNodeConfiguration();
+        configuration.setForwardMsgToDefaultRuleChain(false);
+        return configuration;
     }
 
 }
