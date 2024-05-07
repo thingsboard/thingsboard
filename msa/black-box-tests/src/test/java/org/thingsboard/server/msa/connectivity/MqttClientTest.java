@@ -354,6 +354,22 @@ public class MqttClientTest extends AbstractContainerTest {
         assertThat(responseNode.has("regularMsgRateLimit")).isTrue();
         assertThat(responseNode.has("telemetryMsgRateLimit")).isTrue();
         assertThat(responseNode.has("telemetryDataPointsRateLimit")).isTrue();
+
+        mqttClient.publish("v1/devices/me/service/settings/request", Unpooled.wrappedBuffer("".getBytes())).get();
+
+        responseFromServer = listener.getEvents().poll(3 * timeoutMultiplier, TimeUnit.SECONDS);
+        assertThat(responseFromServer).isNotNull();
+        responseNode = JacksonUtil.fromString(Objects.requireNonNull(responseFromServer).getMessage(), ObjectNode.class);
+        assertThat(responseNode).isNotNull();
+        assertThat(responseNode.has("payloadType")).isTrue();
+        assertThat(responseNode.has("maxPayloadSize")).isTrue();
+        assertThat(responseNode.has("maxSessionsPerDevice")).isTrue();
+        assertThat(responseNode.get("payloadType").asText()).isEqualTo("JSON");
+        assertThat(responseNode.get("maxPayloadSize").asInt()).isEqualTo(65536);
+        assertThat(responseNode.get("maxSessionsPerDevice").asInt()).isEqualTo(1);
+        assertThat(responseNode.has("regularMsgRateLimit")).isTrue();
+        assertThat(responseNode.has("telemetryMsgRateLimit")).isTrue();
+        assertThat(responseNode.has("telemetryDataPointsRateLimit")).isTrue();
     }
 
     @Test
