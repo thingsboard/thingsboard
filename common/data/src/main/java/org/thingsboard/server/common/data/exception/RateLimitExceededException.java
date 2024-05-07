@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.mail;
+package org.thingsboard.server.common.data.exception;
 
-import lombok.Data;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Component;
-import org.thingsboard.server.dao.settings.AdminSettingsService;
+import org.thingsboard.server.common.data.limit.LimitedApi;
 
-@Component
-@Data
-@Lazy
-public class TbMailContextComponent {
+public class RateLimitExceededException extends AbstractRateLimitException {
 
-    @Autowired
-    private AdminSettingsService adminSettingsService;
+    public RateLimitExceededException(String message) {
+        super(message);
+    }
+
+    public RateLimitExceededException(LimitedApi api) {
+        super("Rate limit for " + api.getLabel() + " is exceeded");
+    }
+
 }

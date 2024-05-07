@@ -15,17 +15,23 @@
  */
 package org.thingsboard.server.service.mail;
 
-import lombok.Data;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.dao.settings.AdminSettingsService;
+import org.thingsboard.common.util.AbstractListeningExecutor;
 
+/**
+ * Executor have the sole purpose to send mails. It should be used only by Mail Service.
+ * For other purposes please use the MailExecutorService component
+ * */
 @Component
-@Data
-@Lazy
-public class TbMailContextComponent {
+public class MailSenderInternalExecutorService extends AbstractListeningExecutor {
 
-    @Autowired
-    private AdminSettingsService adminSettingsService;
+    @Value("${actors.rule.mail_thread_pool_size}")
+    private int mailExecutorThreadPoolSize;
+
+    @Override
+    protected int getThreadPollSize() {
+        return mailExecutorThreadPoolSize;
+    }
+
 }
