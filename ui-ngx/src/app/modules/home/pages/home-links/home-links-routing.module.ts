@@ -25,7 +25,7 @@ import { DashboardService } from '@core/http/dashboard.service';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { map } from 'rxjs/operators';
-import { getCurrentAuthUser, selectPersistDeviceStateToTelemetry } from '@core/auth/auth.selectors';
+import { getCurrentAuthUser, selectPersistDeviceStateToTelemetryAndMobileQrEnabled } from '@core/auth/auth.selectors';
 import { EntityKeyType } from '@shared/models/query/query.models';
 import { ResourcesService } from '@core/services/resources.service';
 
@@ -35,13 +35,22 @@ const customerUserHomePageJson = '/assets/dashboard/customer_user_home_page.json
 
 const updateDeviceActivityKeyFilterIfNeeded = (store: Store<AppState>,
                                                dashboard$: Observable<HomeDashboard>): Observable<HomeDashboard> =>
-  store.pipe(select(selectPersistDeviceStateToTelemetry)).pipe(
-    mergeMap((persistToTelemetry) => dashboard$.pipe(
+  store.pipe(select(selectPersistDeviceStateToTelemetryAndMobileQrEnabled)).pipe(
+    mergeMap((params) => dashboard$.pipe(
       map((dashboard) => {
-        if (persistToTelemetry) {
+        if (params.persistDeviceStateToTelemetry) {
           for (const filterId of Object.keys(dashboard.configuration.filters)) {
             if (['Active Devices', 'Inactive Devices'].includes(dashboard.configuration.filters[filterId].filter)) {
               dashboard.configuration.filters[filterId].keyFilters[0].key.type = EntityKeyType.TIME_SERIES;
+            }
+          }
+        }
+        if (params.mobileQrEnabled) {
+          for (const widgetId of Object.keys(dashboard.configuration.widgets)) {
+            if (dashboard.configuration.widgets[widgetId].config.title === 'Select show mobile QR code') {
+              dashboard.configuration.widgets[widgetId].config.settings.markdownTextFunction =
+                (dashboard.configuration.widgets[widgetId].config.settings.markdownTextFunction as string)
+                  .replace('\'${mobileQrEnabled}\'', String(params.mobileQrEnabled));
             }
           }
         }
