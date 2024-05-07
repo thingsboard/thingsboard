@@ -1316,11 +1316,6 @@
         "step": "Adım",
         "min-evaluation-period": "Minimum değerlendirme süresi",
         "max-evaluation-period": "Maksimum değerlendirme süresi"
-      },
-      "default-object-id": "Varsayılan Nesne Sürümü (Öznitelik)",
-      "default-object-id-ver": {
-          "v1-0": "\"1.0\", nesnenin sürümü boşsa nesnenin sürüm değeridir.",
-          "v1-1": "\"1.1\", nesnenin sürümü boşsa nesnenin sürüm değeridir."
       }
     },
     "snmp": {
