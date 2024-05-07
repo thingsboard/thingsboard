@@ -202,7 +202,7 @@ export function getDefaultProfileClientLwM2mSettingsConfig(): ClientLwM2mSetting
     fwUpdateStrategy: 1,
     swUpdateStrategy: 1,
     powerMode: PowerMode.DRX,
-    defaultObjectIDVer: ObjectIDVer.V1_1
+    defaultObjectIDVer: ObjectIDVer.V1_0
   };
 }
 
