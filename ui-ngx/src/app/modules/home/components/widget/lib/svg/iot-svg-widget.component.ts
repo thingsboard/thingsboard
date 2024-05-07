@@ -28,28 +28,35 @@ import {
 import { BasicActionWidgetComponent } from '@home/components/widget/lib/action/action-widget.models';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
-import { SVG, Svg } from '@svgdotjs/svg.js';
 import { HttpClient } from '@angular/common/http';
-import { ScadaObject, ScadaObjectSettings } from '@home/components/widget/lib/scada/scada.models';
+import { IotSvgObject } from '@home/components/widget/lib/svg/iot-svg.models';
 import { ResizeObserver } from '@juggle/resize-observer';
-import { ScadaTestWidgetSettings } from '@home/components/widget/lib/scada/scada-test-widget.models';
+import {
+  iotSvgWidgetDefaultSettings,
+  IotSvgWidgetSettings
+} from '@home/components/widget/lib/svg/iot-svg-widget.models';
+import { Observable } from 'rxjs';
+import { backgroundStyle, ComponentStyle, overlayStyle } from '@shared/models/widget-settings.models';
 
 @Component({
-  selector: 'tb-scada-test-widget',
-  templateUrl: './scada-test-widget.component.html',
-  styleUrls: ['../action/action-widget.scss', './scada-test-widget.component.scss'],
+  selector: 'tb-iot-svg-widget',
+  templateUrl: './iot-svg-widget.component.html',
+  styleUrls: ['../action/action-widget.scss', './iot-svg-widget.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
-export class ScadaTestWidgetComponent extends
+export class IotSvgWidgetComponent extends
   BasicActionWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
 
-  @ViewChild('scadaShape', {static: false})
-  scadaShape: ElementRef<HTMLElement>;
+  @ViewChild('iotSvgShape', {static: false})
+  iotSvgShape: ElementRef<HTMLElement>;
 
-  private settings: ScadaTestWidgetSettings;
+  private settings: IotSvgWidgetSettings;
+
+  backgroundStyle$: Observable<ComponentStyle>;
+  overlayStyle: ComponentStyle = {};
+  iotSvgObject: IotSvgObject;
 
   private autoScale = true;
-  private scadaObject: ScadaObject;
 
   private shapeResize$: ResizeObserver;
 
@@ -63,18 +70,25 @@ export class ScadaTestWidgetComponent extends
 
   ngOnInit(): void {
     super.ngOnInit();
-    this.settings = {...this.ctx.settings};
-    this.scadaObject = new ScadaObject(this.ctx, '/assets/widget/scada/drawing.svg', this.settings.scadaObject);
-    this.scadaObject.init().subscribe();
+    this.settings = {...iotSvgWidgetDefaultSettings, ...this.ctx.settings};
+
+    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
+    this.overlayStyle = overlayStyle(this.settings.background.overlay);
+
+    this.iotSvgObject = new IotSvgObject(this.ctx, this.settings.iotSvg, this.settings.iotSvgObject);
+    this.iotSvgObject.onError((error) => {
+      this.ctx.showErrorToast(error, 'bottom', 'center', this.ctx.toastTargetId, true);
+    });
+    this.iotSvgObject.init().subscribe();
   }
 
   ngAfterViewInit(): void {
-    this.scadaObject.addTo(this.scadaShape.nativeElement);
+    this.iotSvgObject.addTo(this.iotSvgShape.nativeElement);
     if (this.autoScale) {
       this.shapeResize$ = new ResizeObserver(() => {
         this.onResize();
       });
-      this.shapeResize$.observe(this.scadaShape.nativeElement);
+      this.shapeResize$.observe(this.iotSvgShape.nativeElement);
       this.onResize();
     }
     super.ngAfterViewInit();
@@ -84,19 +98,22 @@ export class ScadaTestWidgetComponent extends
     if (this.shapeResize$) {
       this.shapeResize$.disconnect();
     }
-    if (this.scadaObject) {
-      this.scadaObject.destroy();
+    if (this.iotSvgObject) {
+      this.iotSvgObject.destroy();
     }
     super.ngOnDestroy();
   }
 
   public onInit() {
     super.onInit();
+    const borderRadius = this.ctx.$widgetElement.css('borderRadius');
+    this.overlayStyle = {...this.overlayStyle, ...{borderRadius}};
+    this.cd.detectChanges();
   }
 
   private onResize() {
-    const shapeWidth = this.scadaShape.nativeElement.getBoundingClientRect().width;
-    const shapeHeight = this.scadaShape.nativeElement.getBoundingClientRect().height;
-    this.scadaObject.setSize(shapeWidth, shapeHeight);
+    const shapeWidth = this.iotSvgShape.nativeElement.getBoundingClientRect().width;
+    const shapeHeight = this.iotSvgShape.nativeElement.getBoundingClientRect().height;
+    this.iotSvgObject.setSize(shapeWidth, shapeHeight);
   }
 }

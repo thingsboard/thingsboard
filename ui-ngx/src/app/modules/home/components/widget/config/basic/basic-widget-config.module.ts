@@ -129,9 +129,7 @@ import {
 import {
   RadarChartBasicConfigComponent
 } from '@home/components/widget/config/basic/chart/radar-chart-basic-config.component';
-import {
-  ScadaTestBasicConfigComponent
-} from '@home/components/widget/config/basic/scada/scada-test-basic-config.component';
+import { IotSvgBasicConfigComponent } from '@home/components/widget/config/basic/svg/iot-svg-basic-config.component';
 
 @NgModule({
   declarations: [
@@ -175,7 +173,7 @@ import {
     BarChartBasicConfigComponent,
     PolarAreaChartBasicConfigComponent,
     RadarChartBasicConfigComponent,
-    ScadaTestBasicConfigComponent
+    IotSvgBasicConfigComponent
   ],
   imports: [
     CommonModule,
@@ -221,7 +219,7 @@ import {
     BarChartBasicConfigComponent,
     PolarAreaChartBasicConfigComponent,
     RadarChartBasicConfigComponent,
-    ScadaTestBasicConfigComponent
+    IotSvgBasicConfigComponent
   ]
 })
 export class BasicWidgetConfigModule {
@@ -261,5 +259,5 @@ export const basicWidgetConfigComponentsMap: {[key: string]: Type<IBasicWidgetCo
   'tb-bar-chart-basic-config': BarChartBasicConfigComponent,
   'tb-polar-area-chart-basic-config': PolarAreaChartBasicConfigComponent,
   'tb-radar-chart-basic-config': RadarChartBasicConfigComponent,
-  'tb-scada-test-basic-config': ScadaTestBasicConfigComponent
+  'tb-iot-svg-basic-config': IotSvgBasicConfigComponent
 };

@@ -14,16 +14,16 @@
 /// limitations under the License.
 ///
 
-import { ScadaObjectProperty } from '@home/components/widget/lib/scada/scada.models';
+import { IotSvgProperty } from '@home/components/widget/lib/svg/iot-svg.models';
 
 export interface ScadaPropertyRow {
   label: string;
-  properties: ScadaObjectProperty[];
-  switch?: ScadaObjectProperty;
+  properties: IotSvgProperty[];
+  switch?: IotSvgProperty;
   rowClass?: string;
 }
 
-export const toPropertyRows = (properties: ScadaObjectProperty[]): ScadaPropertyRow[] => {
+export const toPropertyRows = (properties: IotSvgProperty[]): ScadaPropertyRow[] => {
   const result: ScadaPropertyRow[] = [];
   for (const property of properties) {
     let propertyRow = result.find(r => r.label === property.name);

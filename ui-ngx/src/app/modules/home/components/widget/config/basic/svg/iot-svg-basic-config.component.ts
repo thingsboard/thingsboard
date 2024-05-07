@@ -20,22 +20,26 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { BasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
-import { TargetDevice, } from '@shared/models/widget.models';
+import { TargetDevice, WidgetConfig, } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
-import { ScadaTestWidgetSettings } from '@home/components/widget/lib/scada/scada-test-widget.models';
+import {
+  iotSvgWidgetDefaultSettings,
+  IotSvgWidgetSettings
+} from '@home/components/widget/lib/svg/iot-svg-widget.models';
+import { isUndefined } from '@core/utils';
 
 @Component({
-  selector: 'tb-scada-test-basic-config',
-  templateUrl: './scada-test-basic-config.component.html',
+  selector: 'tb-iot-svg-basic-config',
+  templateUrl: './iot-svg-basic-config.component.html',
   styleUrls: ['../basic-config.scss']
 })
-export class ScadaTestBasicConfigComponent extends BasicWidgetConfigComponent {
+export class IotSvgBasicConfigComponent extends BasicWidgetConfigComponent {
 
   get targetDevice(): TargetDevice {
-    return this.scadaTestWidgetConfigForm.get('targetDevice').value;
+    return this.iotSvgWidgetConfigForm.get('targetDevice').value;
   }
 
-  scadaTestWidgetConfigForm: UntypedFormGroup;
+  iotSvgWidgetConfigForm: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
@@ -44,21 +48,48 @@ export class ScadaTestBasicConfigComponent extends BasicWidgetConfigComponent {
   }
 
   protected configForm(): UntypedFormGroup {
-    return this.scadaTestWidgetConfigForm;
+    return this.iotSvgWidgetConfigForm;
   }
 
   protected onConfigSet(configData: WidgetConfigComponentData) {
-    const settings: ScadaTestWidgetSettings = {...(configData.config.settings as ScadaTestWidgetSettings || { scadaObject: {}})};
-    this.scadaTestWidgetConfigForm = this.fb.group({
+    const settings: IotSvgWidgetSettings = {...iotSvgWidgetDefaultSettings, ...(configData.config.settings || {})};
+    this.iotSvgWidgetConfigForm = this.fb.group({
       targetDevice: [configData.config.targetDevice, []],
-      scadaObject: [settings.scadaObject, []]
+      iotSvg: [settings.iotSvg, []],
+      iotSvgObject: [settings.iotSvgObject, []],
+
+      background: [settings.background, []],
+
+      cardButtons: [this.getCardButtons(configData.config), []],
+      borderRadius: [configData.config.borderRadius, []],
+
+      actions: [configData.config.actions || {}, []]
     });
   }
 
   protected prepareOutputConfig(config: any): WidgetConfigComponentData {
     this.widgetConfig.config.targetDevice = config.targetDevice;
     this.widgetConfig.config.settings = this.widgetConfig.config.settings || {};
-    this.widgetConfig.config.settings.scadaObject = config.scadaObject;
+    this.widgetConfig.config.settings.iotSvg = config.iotSvg;
+    this.widgetConfig.config.settings.iotSvgObject = config.iotSvgObject;
+    this.widgetConfig.config.settings.background = config.background;
+
+    this.setCardButtons(config.cardButtons, this.widgetConfig.config);
+    this.widgetConfig.config.borderRadius = config.borderRadius;
+
+    this.widgetConfig.config.actions = config.actions;
     return this.widgetConfig;
+  }
+
+  private getCardButtons(config: WidgetConfig): string[] {
+    const buttons: string[] = [];
+    if (isUndefined(config.enableFullscreen) || config.enableFullscreen) {
+      buttons.push('fullscreen');
+    }
+    return buttons;
+  }
+
+  private setCardButtons(buttons: string[], config: WidgetConfig) {
+    config.enableFullscreen = buttons.includes('fullscreen');
   }
 }

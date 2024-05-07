@@ -31,10 +31,10 @@ import { AppState } from '@core/core.state';
 import {
   defaultScadaObjectSettings,
   parseScadaObjectMetadataFromContent,
-  ScadaObjectBehaviorType,
-  ScadaObjectMetadata,
-  ScadaObjectSettings
-} from '@home/components/widget/lib/scada/scada.models';
+  IotSvgBehaviorType,
+  IotSvgMetadata,
+  IotSvgObjectSettings
+} from '@home/components/widget/lib/svg/iot-svg.models';
 import { HttpClient } from '@angular/common/http';
 import { ValueType } from '@shared/models/constants';
 import { IAliasController } from '@core/api/widget-api.models';
@@ -43,35 +43,36 @@ import { isDefinedAndNotNull } from '@core/utils';
 import {
   ScadaPropertyRow,
   toPropertyRows
-} from '@home/components/widget/lib/settings/common/scada/scada-object-settings.models';
+} from '@home/components/widget/lib/settings/common/svg/iot-svg-object-settings.models';
 import { merge, Observable, Subscription } from 'rxjs';
+import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
 
 @Component({
-  selector: 'tb-scada-object-settings',
-  templateUrl: './scada-object-settings.component.html',
+  selector: 'tb-iot-svg-object-settings',
+  templateUrl: './iot-svg-object-settings.component.html',
   styleUrls: ['./../../widget-settings.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ScadaObjectSettingsComponent),
+      useExisting: forwardRef(() => IotSvgObjectSettingsComponent),
       multi: true
     },
     {
       provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => ScadaObjectSettingsComponent),
+      useExisting: forwardRef(() => IotSvgObjectSettingsComponent),
       multi: true
     }
   ]
 })
-export class ScadaObjectSettingsComponent implements OnInit, OnChanges, ControlValueAccessor, Validator {
+export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, ControlValueAccessor, Validator {
 
-  ScadaObjectBehaviorType = ScadaObjectBehaviorType;
+  IotSvgBehaviorType = IotSvgBehaviorType;
 
   @Input()
   disabled: boolean;
 
   @Input()
-  svgPath = '/assets/widget/scada/drawing.svg';
+  svgPath = 'drawing.svg';
 
   @Input()
   aliasController: IAliasController;
@@ -80,9 +81,12 @@ export class ScadaObjectSettingsComponent implements OnInit, OnChanges, ControlV
   targetDevice: TargetDevice;
 
   @Input()
+  callbacks: WidgetActionCallbacks;
+
+  @Input()
   widgetType: widgetType;
 
-  private modelValue: ScadaObjectSettings;
+  private modelValue: IotSvgObjectSettings;
 
   private propagateChange = null;
 
@@ -91,7 +95,7 @@ export class ScadaObjectSettingsComponent implements OnInit, OnChanges, ControlV
 
   public scadaObjectSettingsFormGroup: UntypedFormGroup;
 
-  metadata: ScadaObjectMetadata;
+  metadata: IotSvgMetadata;
   propertyRows: ScadaPropertyRow[];
 
   constructor(protected store: Store<AppState>,
@@ -136,7 +140,7 @@ export class ScadaObjectSettingsComponent implements OnInit, OnChanges, ControlV
     }
   }
 
-  writeValue(value: ScadaObjectSettings): void {
+  writeValue(value: IotSvgObjectSettings): void {
     this.modelValue = value || {};
     this.setupValue();
   }

@@ -1,341 +1,115 @@
 <svg width="100" height="100" version="1.1" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg">
- <tb:metadata>{
-     "title": "My first SCADA Object",
-     "stateValues": {
-        "level": {
-           "initialValue": 0
+ <tb:metadata><![CDATA[{
+     "title": "My first IoT SVG Object",
+     "stateRenderFunction": "var showMinMaxLevel = ctx.properties.showMinMaxLevel;\nvar minLevelElement = ctx.tags.minLevel[0];\nvar maxLevelElement = ctx.tags.maxLevel[0];\nvar minLevel = ctx.properties.minLevel; \nvar maxLevel = ctx.properties.maxLevel;\n\nif (showMinMaxLevel) {\n   \n   var minMaxLevelFont = ctx.properties.minMaxLevelFont;\n   var minMaxLevelColor = ctx.properties.minMaxLevelColor;\n   \n   ctx.api.text(minLevelElement, minLevel);\n   ctx.api.text(maxLevelElement, maxLevel);\n   \n   ctx.api.font(minLevelElement, minMaxLevelFont, minMaxLevelColor);\n   ctx.api.font(maxLevelElement, minMaxLevelFont, minMaxLevelColor);\n      \n} else {\n   minLevelElement.hide();\n   maxLevelElement.hide();\n}\n\nvar disabled = ctx.values.disabled;\nvar on = ctx.values.on;\nvar level = ctx.values.level;\n\nvar onButton = ctx.tags.onButton;\nvar offButton = ctx.tags.offButton;\nvar levelUpButton = ctx.tags.levelUpButton;\nvar levelDownButton = ctx.tags.levelDownButton;\n\nvar onButtonEnabled = !disabled && !on;\nvar offButtonEnabled = !disabled && on;\nvar levelUpEnabled = !disabled && level < maxLevel;\nvar levelDownEnabled = !disabled && level > minLevel;\n\nif (onButtonEnabled) {\n    ctx.api.enable(onButton);\n    onButton[0].findOne('rect').attr({fill: '#12ed19'});\n} else {\n    ctx.api.disable(onButton);\n    onButton[0].findOne('rect').attr({fill: '#777'});\n}\n   \nif (offButtonEnabled) {\n    ctx.api.enable(offButton);\n    offButton[0].findOne('rect').attr({fill: '#ed121f'});\n} else {\n    ctx.api.disable(offButton);\n    offButton[0].findOne('rect').attr({fill: '#777'});\n}    \n\n\nif (levelUpEnabled) {\n    ctx.api.enable(levelUpButton);\n    levelUpButton[0].findOne('rect').attr({fill: '#fff'});\n} else {\n    ctx.api.disable(levelUpButton);\n    levelUpButton[0].findOne('rect').attr({fill: '#777'});\n}\n   \nif (levelDownEnabled) {\n    ctx.api.enable(levelDownButton);\n    levelDownButton[0].findOne('rect').attr({fill: '#fff'});\n} else {\n    ctx.api.disable(levelDownButton);\n    levelDownButton[0].findOne('rect').attr({fill: '#777'});\n}",
+     "tags": [
+        {
+           "tag": "level",
+           "stateRenderFunction": "var level = ctx.values.level; \nvar disabled = ctx.values.disabled;\nvar minLevel = ctx.properties.minLevel; \nvar maxLevel = ctx.properties.maxLevel;\n\nvar height = (level - minLevel) / (maxLevel - minLevel);\nheight = Math.max(0, Math.min(1, height))*80; \n\nctx.api.animate(element, 200).attr({height: height});\n\nvar fill;\nif (disabled) {\n  fill = ctx.properties.disabledLevelBackground;\n} else {\n  var colorProcessor = ctx.properties.levelBackground;\n  colorProcessor.update(level);\n  fill = colorProcessor.color;\n}\n\nelement.attr({fill: fill});"
         },
-        "disabled": {
-           "initialValue": false
+        {
+           "tag": "levelTitle",
+           "stateRenderFunction": "var showLevelTitle = ctx.properties.showLevelTitle;\n\nif (showLevelTitle) {\n   var levelTitle = ctx.properties.levelTitle;\n   var levelTitleFont = ctx.properties.levelTitleFont;\n   var levelTitleColor = ctx.properties.levelTitleColor;\n   \n   ctx.api.text(element, levelTitle);\n   ctx.api.font(element, levelTitleFont, levelTitleColor);\n   \n} else {\n   element.hide();\n}"
         },
-        "on": {
-           "initialValue": false,
-           "callBehavior": [
-              {
-                 "behaviorId": "onUpdateState",
-                 "conditionFunction": "return value === true;"
-              },
-              {
-                  "behaviorId": "offUpdateState",
-                  "conditionFunction": "return value === false;"
-              }
-           ]
+        {
+           "tag": "levelValue",
+           "stateRenderFunction": "var showValue = ctx.properties.showValue;\n\nif (showValue) {\n  var valueFont = ctx.properties.valueFont;\n  var valueColor = ctx.properties.valueColor;\n  var level = ctx.values.level; \n  \n  var levelText = ctx.api.formatValue(level, ctx.properties.valueDecimals, ctx.properties.valueUnits, false);\n\n  ctx.api.font(element, valueFont, valueColor);\n  ctx.api.text(element, levelText);\n\n} else {\n  element.hide();\n  ctx.tags.levelValueBackground[0].hide();\n}",
+           "actions": {
+               "click": {
+                   "actionFunction": "ctx.api.callAction(event, 'levelValueClick');"
+               }
+           }
+        },
+        {
+           "tag": "fan",
+           "stateRenderFunction": "var on = ctx.values.on;\nif (on) {\n   element.addClass('fan-rotate');\n} else {\n   element.removeClass('fan-rotate');\n}\n"
+        },
+        {
+           "tag": "onButton",
+           "actions": {
+               "click": {
+                   "actionFunction": "ctx.api.callAction(event, 'onUpdateState');"
+               }
+           }
+        },
+        {
+           "tag": "offButton",
+           "actions": {
+               "click": {
+                   "actionFunction": "ctx.api.callAction(event, 'offUpdateState');"
+               }
+           }
+        },
+        {
+           "tag": "levelUpButton",
+           "actions": {
+               "click": {
+                   "actionFunction": "var level = ctx.values.level; \nvar maxLevel = ctx.properties.maxLevel;\n\nvar newLevel = Math.min(maxLevel, level + 5);\nctx.api.setValue('level', newLevel);\nctx.api.callAction(event, 'levelUpdateState', newLevel, {\n  error: () => {\n     ctx.api.setValue('level', level);\n  }\n});"
+               }
+           }
+        },
+        {
+           "tag": "levelDownButton",
+           "actions": {
+               "click": {
+                   "actionFunction": "var level = ctx.values.level; \nvar minLevel = ctx.properties.minLevel;\n\nvar newLevel = Math.max(minLevel, level - 5);\nctx.api.setValue('level', newLevel);\nctx.api.callAction(event, 'levelUpdateState', newLevel, {\n  error: () => {\n     ctx.api.setValue('level', level);\n  }\n});"
+               }
+           }
         }
-     },
-     "actions": {
-        "onButton": {
-           "trigger": "click",
-           "actionType": "updateValue",
-           "updateValueId": "on",
-           "updateValueType": "constant",
-           "updateValueConstant": true
-        },
-        "offButton": {
-           "trigger": "click",
-           "actionType": "updateValue",
-           "updateValueId": "on",
-           "updateValueType": "constant",
-           "updateValueConstant": false
-        }
-     },
-     "states": {
-        "initialState": {
-           "initial": true,
-           "state": [
-             {
-                "tag": "levelTitle",
-                "show": {
-                      "type": "property",
-                      "propertyId": "showLevelTitle"
-                },
-                "text": {
-                  "content": {
-                      "type": "property",
-                      "propertyId": "levelTitle"
-                  },
-                  "font": {
-                      "type": "property",
-                      "propertyId": "levelTitleFont"
-                   },
-                   "color": {
-                      "type": "property",
-                      "propertyId": "levelTitleColor"
-                   }
-                }
-              },
-              {
-                "tag": "level",
-                "inputValue": "level",
-                "attributes": [
-                   {
-                      "name": "fill",
-                      "value": {
-                          "type": "property",
-                          "propertyId": "levelBackground"
-                      }
-                   }
-                ]
-              },
-              {
-                "tag": "levelValueBackground",
-                "show": {
-                     "type": "property",
-                     "propertyId": "showValue"
-                }
-              },
-              {
-                "tag": "levelValue",
-                "show": {
-                      "type": "property",
-                      "propertyId": "showValue"
-                },
-                "text": {
-                  "font": {
-                      "type": "property",
-                      "propertyId": "valueFont"
-                   },
-                   "color": {
-                      "type": "property",
-                      "propertyId": "valueColor"
-                   }
-                }
-              },
-              {
-                "tag": "minLevel",
-                "show": {
-                      "type": "property",
-                      "propertyId": "showMinMaxLevel"
-                },
-                "text": {
-                   "content": {
-                      "type": "property",
-                      "propertyId": "minLevel"
-                   },
-                   "font": {
-                      "type": "property",
-                      "propertyId": "minMaxLevelFont"
-                   },
-                   "color": {
-                      "type": "property",
-                      "propertyId": "minMaxLevelColor"
-                   }
-                }
-              },
-              {
-                "tag": "maxLevel",
-                "show": {
-                      "type": "property",
-                      "propertyId": "showMinMaxLevel"
-                },
-                "text": {
-                   "content": {
-                      "type": "property",
-                      "propertyId": "maxLevel"
-                   },
-                   "font": {
-                      "type": "property",
-                      "propertyId": "minMaxLevelFont"
-                   },
-                   "color": {
-                      "type": "property",
-                      "propertyId": "minMaxLevelColor"
-                   }
-                }
-              }
-           ]
-        },
-        "updateLevelState": {
-           "triggerValues": ["level"],
-           "state": [
-              {
-                "tag": "level",
-                "inputValue": "level",
-                "animate": 200,
-                "attributes": [
-                   {
-                      "name": "height",
-                      "value": {
-                          "type": "function",
-                          "valueConvertFunction": "var level = (value - ${minLevel}) / (${maxLevel} - ${minLevel});\nlevel = Math.max(0, Math.min(1, level));\nreturn level*80;"
-                      }
-                   }
-                ]
-              },
-              {
-                "tag": "levelValue",
-                "inputValue": "level",
-                "text": {
-                  "content": {
-                    "type": "valueFormat",
-                    "units": {
-                      "type": "property",
-                      "propertyId": "valueUnits"
-                    },
-                    "decimals": {
-                      "type": "property",
-                      "propertyId": "valueDecimals"
-                    }
-                  }
-                }
-              }
-           ]
-        },
-        "updateLevelBackgroundState": {
-           "triggerValues": ["disabled", "level"],
-           "conditionFunction": "return values.disabled === false;",
-           "state": [
-           {
-                "tag": "level",
-                "inputValue": "level",
-                "attributes": [
-                   {
-                      "name": "fill",
-                      "value": {
-                          "type": "property",
-                          "propertyId": "levelBackground"
-                      }
-                   }
-                ]
-              }
-           ]
-        },
-        "disabledState": {
-           "triggerValues": ["disabled"],
-           "conditionFunction": "return values.disabled === true;",
-           "state": [
-              {
-                "tag": "level",
-                "attributes": [
-                   {
-                      "name": "fill",
-                      "value": {
-                          "type": "property",
-                          "propertyId": "disabledLevelBackground"
-                      }
-                   }
-                ]
-              }
-           ]
-        },
-        "onState": {
-           "triggerValues": ["on"],
-           "conditionFunction": "return values.on === true;",
-           "state": [
-              {
-                "tag": "fan",
-                "addClass": "fan-rotate"
-              },
-              {
-                "tag": "onButtonBackground",
-                "attributes": [
-                   {
-                      "name": "fill",
-                      "value": {
-                          "type": "constant",
-                          "constantValue": "#777"
-                      }
-                   }
-                ]
-              },
-              {
-                "tag": "offButtonBackground",
-                "attributes": [
-                   {
-                      "name": "fill",
-                      "value": {
-                          "type": "constant",
-                          "constantValue": "#ed121f"
-                      }
-                   }
-                ]
-              }
-           ]
-        },
-        "offState": {
-           "triggerValues": ["on"],
-           "conditionFunction": "return values.on === false;",
-           "state": [
-              {
-                "tag": "fan",
-                "removeClass": "fan-rotate"
-              },
-              {
-                "tag": "onButtonBackground",
-                "attributes": [
-                   {
-                      "name": "fill",
-                      "value": {
-                          "type": "constant",
-                          "constantValue": "#12ed19"
-                      }
-                   }
-                ]
-              },
-              {
-                "tag": "offButtonBackground",
-                "attributes": [
-                   {
-                      "name": "fill",
-                      "value": {
-                          "type": "constant",
-                          "constantValue": "#777"
-                      }
-                   }
-                ]
-              }
-           ]
-        }
-     },
+     ],
      "behavior": [
         {
           "id": "levelState",
           "name": "Level",
-          "type": "getValue",
+          "type": "value",
           "valueType": "DOUBLE",
           "defaultValue": 0,
-          "onUpdate": [
-             {
-                "updateValue": "level"
-             }
-          ]
+          "valueId": "level"
         },
         {
            "id": "disabledState",
            "name": "Disabled state",
-           "type": "getValue",
+           "type": "value",
            "valueType": "BOOLEAN",
            "defaultValue": false,
-           "onUpdate": [
-              {
-                "updateValue": "disabled"
-              }
-           ]
+           "valueId": "disabled"
         },
         {
            "id": "onState",
            "name": "On/Off state",
-           "type": "getValue",
+           "type": "value",
            "valueType": "BOOLEAN",
            "defaultValue": false,
-           "onUpdate": [
-              {
-                "updateValue": "on"
-              }
-           ]
+           "valueId": "on"
         },
         {
            "id": "onUpdateState",
            "name": "Power On",
-           "type": "setValue",
+           "type": "action",
+           "valueType": "BOOLEAN",
            "valueToDataType": "CONSTANT",
            "constantValue": true
         },
         {
            "id": "offUpdateState",
            "name": "Power Off",
-           "type": "setValue",
+           "type": "action",
+           "valueType": "BOOLEAN",
            "valueToDataType": "CONSTANT",
            "constantValue": false
+        },
+        {
+           "id": "levelUpdateState",
+           "name": "Update level",
+           "type": "action",
+           "valueType": "DOUBLE",
+           "valueToDataType": "VALUE",
+           "constantValue": 0
+        },
+        {
+           "id": "levelValueClick",
+           "name": "On level value click",
+           "type": "widgetAction"
         }
      ],
      "properties": [
@@ -489,7 +263,7 @@
            "default": "#ccc"
          }
      ]
-   }</tb:metadata>
+   }]]></tb:metadata>
  <style>.fan-rotate {
          animation: rotate 2s linear infinite;
          transform-origin: 71.894px 39.787px;
@@ -517,5 +291,13 @@
  <g tb:tag="offButton">
   <rect x="74.367" y="60.311" width="14.263" height="7.4261" rx="1.5" fill="#ed121f" stroke="#000" tb:tag="offButtonBackground"/>
   <text x="81.365944" y="64.518349" dominant-baseline="middle" fill="#000000" font-family="Roboto" font-size="4.4461px" stroke-width=".74101" text-anchor="middle" xml:space="preserve"><tspan stroke-width=".74101">Off</tspan></text>
+ </g>
+ <g stroke="#000" stroke-miterlimit="1" tb:tag="levelUpButton">
+  <rect x="34.97" y="39.377" width="9.5005" height="12.584" rx=".75" fill="none"/>
+  <path transform="matrix(.4753 -.2938 .2938 .4753 4.8821 31.04)" d="m41.544 60.24-7.893-4.9762 8.256-4.3474-0.18153 4.6618z" fill="#12ed19"/>
+ </g>
+ <g stroke="#000" stroke-miterlimit="1" tb:tag="levelDownButton">
+  <rect x="34.97" y="59.039" width="9.5005" height="12.584" rx=".75" fill="none"/>
+  <path transform="matrix(-.47514 .29405 -.29405 -.47514 74.568 79.771)" d="m41.544 60.24-7.893-4.9762 8.256-4.3474-0.18153 4.6618z" fill="#12ed19"/>
  </g>
 </svg>

@@ -14,8 +14,25 @@
 /// limitations under the License.
 ///
 
-import { ScadaObjectSettings } from '@home/components/widget/lib/scada/scada.models';
+import { IotSvgObjectSettings } from '@home/components/widget/lib/svg/iot-svg.models';
+import { BackgroundSettings, BackgroundType } from '@shared/models/widget-settings.models';
 
-export interface ScadaTestWidgetSettings {
-  scadaObject: ScadaObjectSettings;
+export interface IotSvgWidgetSettings {
+  iotSvg: string;
+  iotSvgObject: IotSvgObjectSettings;
+  background: BackgroundSettings;
 }
+
+export const iotSvgWidgetDefaultSettings: IotSvgWidgetSettings = {
+  iotSvg: '/assets/widget/svg/drawing.svg',
+  iotSvgObject: {},
+  background: {
+    type: BackgroundType.color,
+    color: '#fff',
+    overlay: {
+      enabled: false,
+      color: 'rgba(255,255,255,0.72)',
+      blur: 3
+    }
+  }
+};

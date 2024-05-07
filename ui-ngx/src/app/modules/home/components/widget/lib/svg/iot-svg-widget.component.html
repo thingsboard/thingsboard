@@ -15,12 +15,12 @@
     limitations under the License.
 
 -->
-<ng-container [formGroup]="scadaTestWidgetConfigForm">
-  <tb-target-device formControlName="targetDevice"></tb-target-device>
-  <tb-scada-object-settings
-      formControlName="scadaObject"
-      [aliasController]="aliasController"
-      [targetDevice]="targetDevice"
-      [widgetType]="widgetType">
-  </tb-scada-object-settings>
-</ng-container>
+<div class="tb-iot-svg-panel" [style]="backgroundStyle$ | async">
+  <div class="tb-iot-svg-overlay" [style]="overlayStyle"></div>
+  <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
+  <div class="tb-iot-svg-content">
+    <div #iotSvgShape class="tb-iot-svg-shape">
+    </div>
+  </div>
+  <mat-progress-bar class="tb-action-widget-progress" style="height: 4px;" color="accent" mode="indeterminate" *ngIf="iotSvgObject.loading$ | async"></mat-progress-bar>
+</div>

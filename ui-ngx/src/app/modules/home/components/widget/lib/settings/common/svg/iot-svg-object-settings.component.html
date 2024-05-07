@@ -21,7 +21,7 @@
     <div class="tb-form-panel-title" translate>widgets.slider.behavior</div>
     <div *ngFor="let behaviour of metadata.behavior" class="tb-form-row">
       <div class="fixed-title-width">{{ behaviour.name }}</div>
-      <tb-get-value-action-settings *ngIf="behaviour.type === ScadaObjectBehaviorType.getValue"
+      <tb-get-value-action-settings *ngIf="behaviour.type === IotSvgBehaviorType.value"
                                     fxFlex
                                     panelTitle="{{ behaviour.name }}"
                                     [valueType]="behaviour.valueType"
@@ -30,13 +30,22 @@
                                     [widgetType]="widgetType"
                                     formControlName="{{ behaviour.id }}">
       </tb-get-value-action-settings>
-      <tb-set-value-action-settings *ngIf="behaviour.type === ScadaObjectBehaviorType.setValue"
+      <tb-set-value-action-settings *ngIf="behaviour.type === IotSvgBehaviorType.action"
                                     fxFlex
                                     panelTitle="{{ behaviour.name }}"
+                                    [valueType]="behaviour.valueType"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
-                                    formControlName="{{ behaviour.id }}"></tb-set-value-action-settings>
+                                    formControlName="{{ behaviour.id }}">
+      </tb-set-value-action-settings>
+      <tb-widget-action-settings *ngIf="behaviour.type === IotSvgBehaviorType.widgetAction"
+                                 fxFlex
+                                 panelTitle="{{ behaviour.name }}"
+                                 [callbacks]="callbacks"
+                                 [widgetType]="widgetType"
+                                 formControlName="{{ behaviour.id }}">
+      </tb-widget-action-settings>
     </div>
   </div>
   <div *ngIf="propertyRows?.length" class="tb-form-panel">
