@@ -1258,7 +1258,9 @@
                 "sizeX": 35,
                 "sizeY": 16,
                 "row": 42,
-                "col": 85
+                "col": 85,
+                "mobileOrder": 5,
+                "mobileHeight": 7
               }
             },
             "gridSettings": {

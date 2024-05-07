@@ -51,7 +51,7 @@
 }
 
 .tb-badge-container {
-  @media #{$mat-lt-lg} {
+  @media #{$mat-md} {
     display: none;
   }
 }

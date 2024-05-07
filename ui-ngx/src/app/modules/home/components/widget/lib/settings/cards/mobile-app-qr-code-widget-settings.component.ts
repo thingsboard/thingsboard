@@ -20,7 +20,7 @@ import { WidgetSettings, WidgetSettingsComponent } from "@shared/models/widget.m
 import { AppState } from '@core/core.state';
 import { Store } from "@ngrx/store";
 import { badgePositionTranslationsMap, badgeStyleTranslationsMap } from '@shared/models/mobile-app.models';
-import { mobileAppQrCodeWidgetDefaultSettings } from '@home/components/widget/lib/cards/mobile-app-qr-code-widge.models';
+import { mobileAppQrCodeWidgetDefaultSettings } from '@home/components/widget/lib/cards/mobile-app-qr-code-widget.models';
 
 @Component({
   selector: 'tb-mobile-app-qr-code-widget-settings',

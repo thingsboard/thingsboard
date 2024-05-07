@@ -25,7 +25,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { interval, mergeMap, Observable, Subject, takeUntil } from 'rxjs';
 import { MINUTE } from '@shared/models/time/time.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import { MobileAppQrCodeWidgetSettings } from '@home/components/widget/lib/cards/mobile-app-qr-code-widge.models';
+import { MobileAppQrCodeWidgetSettings } from '@home/components/widget/lib/cards/mobile-app-qr-code-widget.models';
 
 @Component({
   selector: 'tb-mobile-app-qrcode-widget',
@@ -104,7 +104,10 @@ export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnI
 
   updateQRCode(link: string) {
     import('qrcode').then((QRCode) => {
-      QRCode.toCanvas(this.canvasRef.nativeElement, link, { width: 90 });
+      QRCode.toCanvas(this.canvasRef.nativeElement, link, { width: 100 });
+      // QRCode.toCanvas(this.canvasRef.nativeElement, link);
+      // this.canvasRef.nativeElement.style.width = '4.6vw';
+      // this.canvasRef.nativeElement.style.height = '4.6vw';
     });
   }
 
