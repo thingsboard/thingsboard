@@ -39,7 +39,7 @@ import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.mobile.MobileAppSettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.qr.MobileAppSecretService;
+import org.thingsboard.server.service.mobile.secret.MobileAppSecretService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
@@ -84,7 +84,7 @@ public class MobileApplicationController extends BaseController {
     public static final String ANDROID_APPLICATION_STORE_LINK = "https://play.google.com/store/apps/details?id=org.thingsboard.demo.app";
     public static final String APPLE_APPLICATION_STORE_LINK = "https://apps.apple.com/us/app/thingsboard-live/id1594355695";
     public static final String SECRET = "secret";
-    public static final String SECRET_PARAM_DESCRIPTION = "A string value representing short-live secret key";
+    public static final String SECRET_PARAM_DESCRIPTION = "A string value representing short-lived secret key";
     public static final String DEFAULT_APP_DOMAIN = "demo.thingsboard.io";
     public static final String DEEP_LINK_PATTERN = "https://%s/api/noauth/qr?secret=%s&ttl=%s";
 
@@ -164,7 +164,7 @@ public class MobileApplicationController extends BaseController {
             notes = "Returns the token of the User based on the provided secret key.")
     @GetMapping(value = "/api/noauth/qr/{secret}")
     public JwtPair getUserTokenByMobileSecret(@Parameter(description = SECRET_PARAM_DESCRIPTION)
-                                @PathVariable(SECRET) String secret) throws ThingsboardException {
+                                              @PathVariable(SECRET) String secret) throws ThingsboardException {
         checkParameter(SECRET, secret);
         return mobileAppSecretService.getJwtPair(secret);
     }
@@ -184,4 +184,5 @@ public class MobileApplicationController extends BaseController {
                     .build();
         }
     }
+
 }

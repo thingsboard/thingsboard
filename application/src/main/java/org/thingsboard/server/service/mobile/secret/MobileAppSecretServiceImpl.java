@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.qr;
+package org.thingsboard.server.service.mobile.secret;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

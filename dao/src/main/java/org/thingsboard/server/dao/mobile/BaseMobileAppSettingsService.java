@@ -17,7 +17,6 @@ package org.thingsboard.server.dao.mobile;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -28,8 +27,9 @@ import org.thingsboard.server.common.data.mobile.IosConfig;
 import org.thingsboard.server.common.data.mobile.MobileAppSettings;
 import org.thingsboard.server.common.data.mobile.QRCodeConfig;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
-import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
+
+import java.util.Map;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -51,16 +51,12 @@ public class BaseMobileAppSettingsService extends AbstractCachedEntityService<Te
             MobileAppSettings savedMobileAppSettings = mobileAppSettingsDao.save(tenantId, mobileAppSettings);
             publishEvictEvent(new MobileAppSettingsEvictEvent(tenantId));
             return savedMobileAppSettings;
-        } catch (Exception exception) {
-            if (mobileAppSettings != null) {
-                handleEvictEvent(new MobileAppSettingsEvictEvent(tenantId));
-            }
-            ConstraintViolationException e = extractConstraintViolationException(exception).orElse(null);
-            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("mobile_app_settings_tenant_id_key")) {
-                throw new DataValidationException("Mobile application for specified tenant already exists!");
-            } else {
-                throw exception;
-            }
+        } catch (Exception e) {
+            handleEvictEvent(new MobileAppSettingsEvictEvent(tenantId));
+            checkConstraintViolation(e, Map.of(
+                    "mobile_app_settings_tenant_id_unq_key", "Mobile application for specified tenant already exists!"
+            ));
+            throw e;
         }
     }
 

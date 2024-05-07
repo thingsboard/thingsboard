@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.qr;
+package org.thingsboard.server.service.mobile.secret;
 
-import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.security.model.JwtPair;
-import org.thingsboard.server.service.security.model.SecurityUser;
+import lombok.Data;
 
-public interface MobileAppSecretService {
+@Data
+public class MobileSecretEvictEvent {
 
-    String generateMobileAppSecret(SecurityUser securityUser);
-
-    JwtPair getJwtPair(String secret) throws ThingsboardException;
+    private final String secret;
 
 }
