@@ -132,14 +132,13 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
 
     @PostConstruct
     public void init() {
-        consumerExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("consumer"));
+        consumerExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("vc-consumer"));
         var threadFactory = ThingsBoardThreadFactory.forName("vc-io-thread");
         for (int i = 0; i < ioPoolSize; i++) {
             ioThreads.add(MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(threadFactory)));
         }
         producer = producerProvider.getTbCoreNotificationsMsgProducer();
         consumer = QueueConsumerManager.<TbProtoQueueMsg<ToVersionControlServiceMsg>>builder()
-                .key("vc")
                 .name("TB Version Control")
                 .msgPackProcessor(this::processMsgs)
                 .pollInterval(pollDuration)

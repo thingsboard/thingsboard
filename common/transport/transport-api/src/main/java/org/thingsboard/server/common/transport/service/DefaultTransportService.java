@@ -232,9 +232,8 @@ public class DefaultTransportService extends TransportActivityManager implements
         ruleEngineMsgProducer = producerProvider.getRuleEngineMsgProducer();
         tbCoreMsgProducer = producerProvider.getTbCoreMsgProducer();
         transportApiRequestTemplate.init();
-        consumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("consumer"));
+        consumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("transport-consumer"));
         transportNotificationsConsumer = QueueConsumerManager.<TbProtoQueueMsg<ToTransportMsg>>builder()
-                .key("transport")
                 .name("TB Transport")
                 .msgPackProcessor(this::processNotificationMsgs)
                 .pollInterval(notificationsPollDuration)

@@ -31,25 +31,25 @@ import java.util.function.Supplier;
 @Slf4j
 public class QueueConsumerManager<M extends TbQueueMsg> {
 
-    private final String key;
     private final String name;
     private final MsgPackProcessor<M> msgPackProcessor;
     private final long pollInterval;
     private final ExecutorService consumerExecutor;
+    private final String threadPrefix;
 
     @Getter
     private final TbQueueConsumer<M> consumer;
     private volatile boolean stopped;
 
     @Builder
-    public QueueConsumerManager(String key, String name, MsgPackProcessor<M> msgPackProcessor,
+    public QueueConsumerManager(String name, MsgPackProcessor<M> msgPackProcessor,
                                 long pollInterval, Supplier<TbQueueConsumer<M>> consumerCreator,
-                                ExecutorService consumerExecutor) {
-        this.key = key;
+                                ExecutorService consumerExecutor, String threadPrefix) {
         this.name = name;
         this.pollInterval = pollInterval;
         this.msgPackProcessor = msgPackProcessor;
         this.consumerExecutor = consumerExecutor;
+        this.threadPrefix = threadPrefix;
         this.consumer = consumerCreator.get();
     }
 
@@ -64,7 +64,9 @@ public class QueueConsumerManager<M extends TbQueueMsg> {
     public void launch() {
         log.info("[{}] Launching consumer", name);
         consumerExecutor.submit(() -> {
-            ThingsBoardThreadFactory.addThreadNamePrefix(key);
+            if (threadPrefix != null) {
+                ThingsBoardThreadFactory.addThreadNamePrefix(threadPrefix);
+            }
             try {
                 consumerLoop(consumer);
             } catch (Throwable e) {
@@ -104,4 +106,5 @@ public class QueueConsumerManager<M extends TbQueueMsg> {
     public interface MsgPackProcessor<M extends TbQueueMsg> {
         void process(List<M> msgs, TbQueueConsumer<M> consumer) throws Exception;
     }
+
 }

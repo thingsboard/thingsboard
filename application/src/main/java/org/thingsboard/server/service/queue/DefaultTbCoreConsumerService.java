@@ -210,20 +210,20 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                 .taskExecutor(mgmtExecutor)
                 .build();
         this.usageStatsConsumer = QueueConsumerManager.<TbProtoQueueMsg<ToUsageStatsServiceMsg>>builder()
-                .key("usage-stats")
                 .name("TB Usage Stats")
                 .msgPackProcessor(this::processUsageStatsMsg)
                 .pollInterval(pollInterval)
                 .consumerCreator(queueFactory::createToUsageStatsServiceMsgConsumer)
                 .consumerExecutor(consumersExecutor)
+                .threadPrefix("usage-stats")
                 .build();
         this.firmwareStatesConsumer = QueueConsumerManager.<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>>builder()
-                .key("firmware")
                 .name("TB Ota Package States")
                 .msgPackProcessor(this::processFirmwareMsgs)
                 .pollInterval(pollInterval)
                 .consumerCreator(queueFactory::createToOtaPackageStateServiceMsgConsumer)
                 .consumerExecutor(consumersExecutor)
+                .threadPrefix("firmware")
                 .build();
     }
 
