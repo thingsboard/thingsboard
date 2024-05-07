@@ -1302,8 +1302,8 @@
               "min-evaluation-period": "Minimální interval evaluace",
               "max-evaluation-period": "Maximální interval evaluace"
           }
-        },
-        "snmp": {
+      },
+      "snmp": {
           "add-communication-config": "Přidat konfiguraci komunikace",
           "add-mapping": "Přidat mapování",
           "authentication-passphrase": "Autentizační passphrase",
