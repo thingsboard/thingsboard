@@ -35,7 +35,7 @@ public class DeviceProfileId extends UUIDBased implements EntityId {
         return new DeviceProfileId(UUID.fromString(deviceProfileId));
     }
 
-    @Schema(required = true, description = "string", example = "DEVICE_PROFILE", allowableValues = "DEVICE_PROFILE")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "DEVICE_PROFILE", allowableValues = "DEVICE_PROFILE")
     @Override
     public EntityType getEntityType() {
         return EntityType.DEVICE_PROFILE;

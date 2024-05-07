@@ -40,17 +40,17 @@ public class EntityView extends BaseDataWithAdditionalInfo<EntityViewId>
 
     private static final long serialVersionUID = 5582010124562018986L;
 
-    @Schema(required = true, description = "JSON object with the referenced Entity Id (Device or Asset).")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "JSON object with the referenced Entity Id (Device or Asset).")
     private EntityId entityId;
     private TenantId tenantId;
     private CustomerId customerId;
     @NoXss
     @Length(fieldName = "name")
-    @Schema(required = true, description = "Entity View name", example = "A4B72CCDFF33")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Entity View name", example = "A4B72CCDFF33")
     private String name;
     @NoXss
     @Length(fieldName = "type")
-    @Schema(required = true, description = "Device Profile Name", example = "Temperature Sensor")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Device Profile Name", example = "Temperature Sensor")
     private String type;
     @Schema(description = "Set of telemetry and attribute keys to expose via Entity View.")
     private TelemetryEntityView keys;

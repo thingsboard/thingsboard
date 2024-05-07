@@ -14,15 +14,22 @@
 /// limitations under the License.
 ///
 
-import { timeSeriesChartDefaultSettings, TimeSeriesChartSettings } from '@home/components/widget/lib/chart/time-series-chart.models';
+import {
+  timeSeriesChartDefaultSettings,
+  TimeSeriesChartSettings
+} from '@home/components/widget/lib/chart/time-series-chart.models';
 import { BackgroundSettings, BackgroundType, Font } from '@shared/models/widget-settings.models';
 import { defaultLegendConfig, LegendConfig, LegendPosition, widgetType } from '@shared/models/widget.models';
 import { mergeDeep } from '@core/utils';
 
 export interface TimeSeriesChartWidgetSettings extends TimeSeriesChartSettings {
   showLegend: boolean;
+  legendColumnTitleFont: Font;
+  legendColumnTitleColor: string;
   legendLabelFont: Font;
   legendLabelColor: string;
+  legendValueFont: Font;
+  legendValueColor: string;
   legendConfig: LegendConfig;
   background: BackgroundSettings;
   padding: string;
@@ -31,6 +38,15 @@ export interface TimeSeriesChartWidgetSettings extends TimeSeriesChartSettings {
 export const timeSeriesChartWidgetDefaultSettings: TimeSeriesChartWidgetSettings =
   mergeDeep({} as TimeSeriesChartWidgetSettings, timeSeriesChartDefaultSettings as TimeSeriesChartWidgetSettings, {
     showLegend: true,
+    legendColumnTitleFont: {
+      family: 'Roboto',
+      size: 12,
+      sizeUnit: 'px',
+      style: 'normal',
+      weight: '400',
+      lineHeight: '16px'
+    },
+    legendColumnTitleColor: 'rgba(0, 0, 0, 0.38)',
     legendLabelFont: {
       family: 'Roboto',
       size: 12,
@@ -40,6 +56,15 @@ export const timeSeriesChartWidgetDefaultSettings: TimeSeriesChartWidgetSettings
       lineHeight: '16px'
     },
     legendLabelColor: 'rgba(0, 0, 0, 0.76)',
+    legendValueFont: {
+      family: 'Roboto',
+      size: 12,
+      sizeUnit: 'px',
+      style: 'normal',
+      weight: '500',
+      lineHeight: '16px'
+    },
+    legendValueColor: 'rgba(0, 0, 0, 0.87)',
     legendConfig: {...defaultLegendConfig(widgetType.timeseries), position: LegendPosition.top},
     background: {
       type: BackgroundType.color,

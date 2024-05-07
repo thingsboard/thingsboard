@@ -262,7 +262,7 @@
             <artifactId>opensmpp-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.springdoc</groupId>
+            <groupId>org.thingsboard</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
         </dependency>
         <dependency>

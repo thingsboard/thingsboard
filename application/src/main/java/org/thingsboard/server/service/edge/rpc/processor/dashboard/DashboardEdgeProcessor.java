@@ -101,11 +101,7 @@ public abstract class DashboardEdgeProcessor extends BaseDashboardProcessor impl
         DashboardId dashboardId = new DashboardId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
-            case ADDED:
-            case UPDATED:
-            case ASSIGNED_TO_EDGE:
-            case ASSIGNED_TO_CUSTOMER:
-            case UNASSIGNED_FROM_CUSTOMER:
+            case ADDED, UPDATED, ASSIGNED_TO_EDGE, ASSIGNED_TO_CUSTOMER, UNASSIGNED_FROM_CUSTOMER -> {
                 Dashboard dashboard = dashboardService.findDashboardById(edgeEvent.getTenantId(), dashboardId);
                 if (dashboard != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
@@ -116,16 +112,15 @@ public abstract class DashboardEdgeProcessor extends BaseDashboardProcessor impl
                             .addDashboardUpdateMsg(dashboardUpdateMsg)
                             .build();
                 }
-                break;
-            case DELETED:
-            case UNASSIGNED_FROM_EDGE:
+            }
+            case DELETED, UNASSIGNED_FROM_EDGE -> {
                 DashboardUpdateMsg dashboardUpdateMsg = ((DashboardMsgConstructor)
                         dashboardMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructDashboardDeleteMsg(dashboardId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addDashboardUpdateMsg(dashboardUpdateMsg)
                         .build();
-                break;
+            }
         }
         return downlinkMsg;
     }
@@ -135,4 +130,5 @@ public abstract class DashboardEdgeProcessor extends BaseDashboardProcessor impl
         // do nothing on cloud
         return assignedCustomers;
     }
+
 }

@@ -56,4 +56,5 @@ public class AssetEdgeProcessorV1 extends AssetEdgeProcessor {
         CustomerId customerUUID = safeGetCustomerId(assetUpdateMsg.getCustomerIdMSB(), assetUpdateMsg.getCustomerIdLSB());
         asset.setCustomerId(customerUUID != null ? customerUUID : customerId);
     }
+
 }

@@ -256,7 +256,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         var tenantId = imageInfo.getTenantId();
         var imageId = imageInfo.getId();
         log.trace("Executing deleteImage [{}] [{}]", tenantId, imageId);
-        Validator.validateId(imageId, INCORRECT_RESOURCE_ID + imageId);
+        Validator.validateId(imageId, id -> INCORRECT_RESOURCE_ID + id);
         TbImageDeleteResult.TbImageDeleteResultBuilder result = TbImageDeleteResult.builder();
         boolean success = true;
         if (!force) {

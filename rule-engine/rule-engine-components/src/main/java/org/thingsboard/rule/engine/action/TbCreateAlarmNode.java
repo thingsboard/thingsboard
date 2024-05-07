@@ -176,7 +176,7 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
                 existingAlarm.setPropagateRelationTypes(relationTypes);
                 existingAlarm.setDetails(details);
             }
-            existingAlarm.setEndTs(System.currentTimeMillis());
+            existingAlarm.setEndTs(currentTimeMillis());
             return ctx.getAlarmService().updateAlarm(AlarmUpdateRequest.fromAlarm(existingAlarm));
         }, ctx.getDbCallbackExecutor());
         return Futures.transform(asyncUpdated, TbAlarmResult::fromAlarmResult, MoreExecutors.directExecutor());
@@ -207,6 +207,10 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
             throw new RuntimeException("Used incorrect pattern or Alarm Severity not included in message");
         }
         return severity;
+    }
+
+    long currentTimeMillis() {
+        return System.currentTimeMillis();
     }
 
 }

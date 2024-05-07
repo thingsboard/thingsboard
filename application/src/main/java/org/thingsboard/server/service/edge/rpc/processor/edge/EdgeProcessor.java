@@ -50,8 +50,7 @@ public class EdgeProcessor extends BaseEdgeProcessor {
         EdgeId edgeId = new EdgeId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
-            case ASSIGNED_TO_CUSTOMER:
-            case UNASSIGNED_FROM_CUSTOMER:
+            case ASSIGNED_TO_CUSTOMER, UNASSIGNED_FROM_CUSTOMER -> {
                 Edge edge = edgeService.findEdgeById(edgeEvent.getTenantId(), edgeId);
                 if (edge != null) {
                     EdgeConfiguration edgeConfigMsg =
@@ -61,7 +60,7 @@ public class EdgeProcessor extends BaseEdgeProcessor {
                             .setEdgeConfiguration(edgeConfigMsg)
                             .build();
                 }
-                break;
+            }
         }
         return downlinkMsg;
     }
@@ -112,4 +111,5 @@ public class EdgeProcessor extends BaseEdgeProcessor {
             return Futures.immediateFailedFuture(e);
         }
     }
+
 }

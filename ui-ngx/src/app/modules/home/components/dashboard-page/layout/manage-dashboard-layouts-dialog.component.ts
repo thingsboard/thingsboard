@@ -217,7 +217,8 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         settings: null,
-        gridSettings
+        gridSettings,
+        isRightLayout: this.layoutsFormGroup.get('right').value && layoutId === 'right'
       }
     }).afterClosed().subscribe((data) => {
       if (data && data.gridSettings) {

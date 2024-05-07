@@ -19,6 +19,7 @@
                 [class.tb-suffix-absolute]="!keysFormControl.value?.length">
   <mat-chip-grid #chipList [formControl]="keysFormControl">
     <mat-chip-row class="tb-datakey-chip" *ngIf="modelValue?.type"
+                  [removable]="removable"
                   (removed)="removeKey()">
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="4px" class="tb-attribute-chip">
         <div class="tb-chip-labels">
@@ -49,7 +50,8 @@
                 (click)="editKey()" mat-icon-button class="tb-mat-24">
           <mat-icon class="tb-mat-18">edit</mat-icon>
         </button>
-        <button matChipRemove
+        <button *ngIf="removable"
+                matChipRemove
                 type="button"
                 mat-icon-button class="tb-mat-24">
           <mat-icon class="tb-mat-18">close</mat-icon>

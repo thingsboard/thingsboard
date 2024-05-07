@@ -35,7 +35,7 @@ public class TenantResourcesEdgeEventFetcher extends BasePageableEdgeEventFetche
     private final ResourceService resourceService;
 
     @Override
-    PageData<TbResource> fetchPageData(TenantId tenantId, Edge edge, PageLink pageLink) {
+    PageData<TbResource> fetchEntities(TenantId tenantId, Edge edge, PageLink pageLink) {
         return resourceService.findAllTenantResources(tenantId, pageLink);
     }
 
@@ -44,4 +44,5 @@ public class TenantResourcesEdgeEventFetcher extends BasePageableEdgeEventFetche
         return EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.TB_RESOURCE,
                 EdgeEventActionType.ADDED, tbResource.getId(), null);
     }
+
 }

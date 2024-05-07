@@ -451,9 +451,9 @@
             "issuer-name": "发行者名称",
             "issuer-name-required": "发行者名称必填。",
             "signings-key": "签名密钥",
-            "signings-key-hint": "Base64编码的字符串，至少256位数据。",
+            "signings-key-hint": "Base64编码的字符串，至少512位数据。",
             "signings-key-required": "签名密钥必填。",
-            "signings-key-min-length": "签名密钥必须至少为256位的数据。",
+            "signings-key-min-length": "签名密钥必须至少为512位的数据。",
             "signings-key-base64": "签名密钥必须是Base64格式。",
             "expiration-time": "令牌过期时间（秒）",
             "expiration-time-required": "令牌过期时间是必填。",
@@ -1872,8 +1872,7 @@
                 "step": "步长",
                 "min-evaluation-period": "最小评估周期",
                 "max-evaluation-period": "最大评估周期"
-            },
-            "composite-operations-support": "支持复合读取/写入/观察操作"
+            }
         },
         "snmp": {
             "add-communication-config": "添加通信配置",
@@ -5491,7 +5490,7 @@
             "range-colors": "范围颜色",
             "out-of-range-color": "超出范围颜色",
             "fill-area": "填充区域",
-            "range-chart-card-style": "范围图表卡片样式"
+            "range-chart-style": "范围图样式"
         },
         "rpc": {
             "value-settings": "值设置",

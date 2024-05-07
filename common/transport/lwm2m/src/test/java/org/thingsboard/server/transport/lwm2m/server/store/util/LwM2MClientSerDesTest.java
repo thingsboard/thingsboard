@@ -15,14 +15,17 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.store.util;
 
+import org.eclipse.leshan.core.LwM2m.LwM2mVersion;
+import org.eclipse.leshan.core.endpoint.EndpointUriUtil;
+import org.eclipse.leshan.core.link.Link;
 import org.eclipse.leshan.core.node.LwM2mMultipleResource;
+import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
+import org.eclipse.leshan.core.peer.IpPeer;
 import org.eclipse.leshan.core.request.WriteRequest;
 import org.eclipse.leshan.server.registration.Registration;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.device.data.PowerMode;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -41,14 +44,17 @@ import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import org.thingsboard.server.transport.lwm2m.server.client.ResourceValue;
 
+import java.net.Inet4Address;
+import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -56,10 +62,9 @@ import static org.mockito.Mockito.when;
 
 public class LwM2MClientSerDesTest {
 
-    @Ignore
     @Test
     public void serializeDeserialize() throws Exception {
-        LwM2mClient client = new LwM2mClient("nodeId", "testEndpoint");
+        LwM2mClient client = new LwM2mClient("nodeId", "endpoint");
 
         TransportDeviceInfo tdi = new TransportDeviceInfo();
         tdi.setPowerMode(PowerMode.PSM);
@@ -78,13 +83,13 @@ public class LwM2MClientSerDesTest {
 
         client.init(credentialsResponse, UUID.randomUUID());
 
-        Registration registration = null; // FIXME: nick
-//                new Registration.Builder("test", "testEndpoint", Identity
-//                        .unsecure(new InetSocketAddress(1000)))
-//                        .supportedContentFormats()
-//                        .supportedObjects(Map.of(15, "1.0", 17, "1.0"))
-//                        .objectLinks(new Link[]{new Link("/")})
-//                        .build();
+        Registration registration = new Registration
+                .Builder("test", "endpoint", new IpPeer(new InetSocketAddress(Inet4Address.getLoopbackAddress(), 1000)),
+                        EndpointUriUtil.createUri("coap://localhost:5685"))
+                .supportedContentFormats()
+                .supportedObjects(Map.of(15, LwM2mVersion.V1_0, 17, LwM2mVersion.V1_0))
+                .objectLinks(new Link[] { new Link("/15"),  new Link("/17") })
+                .build();
 
         client.setRegistration(registration);
         client.setState(LwM2MClientState.REGISTERED);
@@ -113,7 +118,7 @@ public class LwM2MClientSerDesTest {
         client.saveResourceValue("/17_1.0/0/0", multipleResource, provider, WriteRequest.Mode.UPDATE);
 
         byte[] bytes = LwM2MClientSerDes.serialize(client);
-        Assert.assertNotNull(bytes);
+        assertNotNull(bytes);
 
         LwM2mClient desClient = LwM2MClientSerDes.deserialize(bytes);
 
@@ -130,7 +135,12 @@ public class LwM2MClientSerDesTest {
         assertEquals(client.getPsmActivityTimer(), desClient.getPsmActivityTimer());
         assertEquals(client.getPagingTransmissionWindow(), desClient.getPagingTransmissionWindow());
         assertEquals(client.getEdrxCycle(), desClient.getEdrxCycle());
-        assertEquals(client.getRegistration(), desClient.getRegistration());
+        if (((IpPeer)desClient.getRegistration().getClientTransportData()).getSocketAddress().isUnresolved()) {
+            String actualReg = desClient.getRegistration().toString().replaceAll("/<unresolved>", "");
+            assertEquals(client.getRegistration().toString(), actualReg);
+        } else {
+            assertEquals(client.getRegistration(), desClient.getRegistration());
+        }
         assertEquals(client.isAsleep(), desClient.isAsleep());
         assertEquals(client.getLastUplinkTime(), desClient.getLastUplinkTime());
         assertEquals(client.getSleepTask(), desClient.getSleepTask());
@@ -143,7 +153,11 @@ public class LwM2MClientSerDesTest {
         Map<String, ResourceValue> actualResources = desClient.getResources();
         assertNotNull(actualResources);
         assertEquals(expectedResources.size(), actualResources.size());
-        expectedResources.forEach((key, value) -> assertEquals(value.toString(), actualResources.get(key).toString()));
+        for (Entry entry : expectedResources.entrySet()) {
+            LwM2mPath expectedPathId = client.getLwM2mPathFromString(entry.getKey().toString());
+            String actualOld = actualResources.get(String.valueOf(expectedPathId.getObjectId())).toString();
+            String actual = actualOld.replaceAll("\"", "");
+            assertEquals(entry.getValue().toString(), actual);
+        }
     }
-
 }

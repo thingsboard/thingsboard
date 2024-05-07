@@ -121,6 +121,7 @@ public class BaseRelationService implements RelationService {
         keys.add(new RelationCacheKey(null, event.getTo(), event.getType(), event.getTypeGroup(), EntitySearchDirection.TO));
         keys.add(new RelationCacheKey(null, event.getTo(), null, event.getTypeGroup(), EntitySearchDirection.TO));
         cache.evict(keys);
+        log.debug("Processed evict event: {}", event);
     }
 
     @Override
@@ -513,7 +514,7 @@ public class BaseRelationService implements RelationService {
     @Override
     public List<EntityRelation> findRuleNodeToRuleChainRelations(TenantId tenantId, RuleChainType ruleChainType, int limit) {
         log.trace("Executing findRuleNodeToRuleChainRelations, tenantId [{}], ruleChainType {} and limit {}", tenantId, ruleChainType, limit);
-        validateId(tenantId, "Invalid tenant id: " + tenantId);
+        validateId(tenantId, id -> "Invalid tenant id: " + id);
         return relationDao.findRuleNodeToRuleChainRelations(ruleChainType, limit);
     }
 

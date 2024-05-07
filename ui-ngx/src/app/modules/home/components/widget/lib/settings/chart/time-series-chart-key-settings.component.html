@@ -52,9 +52,48 @@
                                         [chartType]="chartType"
                                         formControlName="lineSettings">
     </tb-time-series-chart-line-settings>
-    <tb-time-series-chart-bar-settings [fxShow]="timeSeriesChartKeySettingsForm.get('type').value === TimeSeriesChartSeriesType.bar"
-                                        formControlName="barSettings">
-    </tb-time-series-chart-bar-settings>
+    <tb-chart-bar-settings [fxShow]="timeSeriesChartKeySettingsForm.get('type').value === TimeSeriesChartSeriesType.bar"
+                                     formControlName="barSettings">
+    </tb-chart-bar-settings>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.chart.tooltip-settings</div>
+    <tb-js-func
+        formControlName="tooltipValueFormatter"
+        [globalVariables]="functionScopeVariables"
+        [functionArgs]="['value', 'latestData']"
+        functionTitle="{{ 'widgets.chart.tooltip-value-format-function' | translate }}"
+        helpId="widget/lib/flot/tooltip_value_format_fn">
+    </tb-js-func>
+  </div>
+  <div *ngIf="comparisonEnabled" class="tb-form-panel tb-slide-toggle" formGroupName="comparisonSettings">
+    <div class="tb-form-panel-title" translate>widgets.time-series-chart.comparison.settings</div>
+    <mat-expansion-panel class="tb-settings" [expanded]="timeSeriesChartKeySettingsForm.get('comparisonSettings.showValuesForComparison').value"
+                         [disabled]="!timeSeriesChartKeySettingsForm.get('comparisonSettings.showValuesForComparison').value">
+      <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-panel-title>
+          <mat-slide-toggle class="mat-slide" formControlName="showValuesForComparison" (click)="$event.stopPropagation()"
+                            fxLayoutAlign="center">
+            {{ 'widgets.time-series-chart.comparison.show-values-for-comparison' | translate }}
+          </mat-slide-toggle>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <div class="tb-form-row">
+          <div class="fixed-title-width" translate>widgets.time-series-chart.comparison.comparison-values-label</div>
+          <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="comparisonValuesLabel" placeholder="{{ 'widgets.time-series-chart.comparison.comparison-values-label-auto' | translate }}">
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row space-between">
+          <div>{{ 'widgets.time-series-chart.comparison.comparison-data-color' | translate }}</div>
+          <tb-color-input asBoxInput
+                          colorClearButton
+                          formControlName="color">
+          </tb-color-input>
+        </div>
+      </ng-template>
+    </mat-expansion-panel>
   </div>
 </ng-container>
 <ng-template #chartTypeTitle>

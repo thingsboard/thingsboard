@@ -56,17 +56,26 @@
             </mat-select>
           </mat-form-field>
         </div>
-        <div *ngIf="axisType === 'yAxis'" class="tb-form-row space-between">
+        <div *ngIf="axisType === 'yAxis' && !hideUnits" class="tb-form-row space-between">
           <div translate>widget-config.units-short</div>
           <tb-unit-input
             formControlName="units">
           </tb-unit-input>
         </div>
-        <div *ngIf="axisType === 'yAxis'" class="tb-form-row space-between">
+        <div *ngIf="axisType === 'yAxis' && !hideDecimals" class="tb-form-row space-between">
           <div translate>widget-config.decimals-short</div>
           <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
+        </div>
+        <div *ngIf="axisType === 'yAxis' && advanced" class="tb-form-row">
+          <tb-js-func fxFlex
+                      formControlName="ticksGenerator"
+                      [globalVariables]="functionScopeVariables"
+                      [functionArgs]="['extent']"
+                      functionTitle="{{ 'widgets.time-series-chart.axis.ticks-generator-function' | translate }}"
+                      helpId="widget/lib/chart/ticks_generator_fn">
+          </tb-js-func>
         </div>
         <div class="tb-form-panel no-padding stroked">
           <div class="tb-form-row no-border space-between column-xs">
@@ -136,7 +145,7 @@
           </div>
           <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="interval"
-                   type="number" min="0" placeholder="{{ 'widgets.time-series-chart.axis.scale-auto' | translate }}">
+                   type="number" min="0" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
           </mat-form-field>
         </div>
         <div *ngIf="axisType === 'yAxis'" class="tb-form-row space-between">
@@ -145,24 +154,24 @@
           </div>
           <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="splitNumber"
-                   type="number" min="1" placeholder="{{ 'widgets.time-series-chart.axis.scale-auto' | translate }}">
+                   type="number" min="1" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
           </mat-form-field>
         </div>
       </ng-template>
     </mat-expansion-panel>
     <div *ngIf="axisType === 'yAxis'" class="tb-form-panel no-border no-padding-top">
       <div class="tb-form-row space-between column-xs">
-        <div translate>widgets.time-series-chart.axis.scale</div>
+        <div translate>widgets.chart.chart-axis.scale</div>
         <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-          <div class="tb-small-label" translate>widgets.time-series-chart.axis.scale-min</div>
+          <div class="tb-small-label" translate>widgets.chart.chart-axis.scale-min</div>
           <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="min"
-                   type="number" placeholder="{{ 'widgets.time-series-chart.axis.scale-auto' | translate }}">
+                   type="number" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
           </mat-form-field>
-          <div class="tb-small-label" translate>widgets.time-series-chart.axis.scale-max</div>
+          <div class="tb-small-label" translate>widgets.chart.chart-axis.scale-max</div>
           <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="max"
-                   type="number" placeholder="{{ 'widgets.time-series-chart.axis.scale-auto' | translate }}">
+                   type="number" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
           </mat-form-field>
         </div>
       </div>

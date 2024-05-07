@@ -33,4 +33,5 @@ public class ResourceEdgeProcessorV2 extends ResourceEdgeProcessor {
     protected TbResource constructResourceFromUpdateMsg(TenantId tenantId, TbResourceId tbResourceId, ResourceUpdateMsg resourceUpdateMsg) {
         return JacksonUtil.fromString(resourceUpdateMsg.getEntity(), TbResource.class, true);
     }
+
 }

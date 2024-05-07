@@ -38,7 +38,7 @@ import org.thingsboard.server.dao.service.AbstractServiceTest;
 import java.text.ParseException;
 import java.util.List;
 
-import static org.apache.commons.lang3.time.DateFormatUtils.ISO_DATETIME_TIME_ZONE_FORMAT;
+import static org.apache.commons.lang3.time.DateFormatUtils.ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT;
 
 public abstract class BaseEventServiceTest extends AbstractServiceTest {
 
@@ -53,11 +53,11 @@ public abstract class BaseEventServiceTest extends AbstractServiceTest {
 
     @Before
     public void before() throws ParseException {
-        timeBeforeStartTime = ISO_DATETIME_TIME_ZONE_FORMAT.parse("2016-11-01T11:30:00Z").getTime();
-        startTime = ISO_DATETIME_TIME_ZONE_FORMAT.parse("2016-11-01T12:00:00Z").getTime();
-        eventTime = ISO_DATETIME_TIME_ZONE_FORMAT.parse("2016-11-01T12:30:00Z").getTime();
-        endTime = ISO_DATETIME_TIME_ZONE_FORMAT.parse("2016-11-01T13:00:00Z").getTime();
-        timeAfterEndTime = ISO_DATETIME_TIME_ZONE_FORMAT.parse("2016-11-01T13:30:30Z").getTime();
+        timeBeforeStartTime = ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2016-11-01T11:30:00Z").getTime();
+        startTime = ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2016-11-01T12:00:00Z").getTime();
+        eventTime = ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2016-11-01T12:30:00Z").getTime();
+        endTime = ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2016-11-01T13:00:00Z").getTime();
+        timeAfterEndTime = ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2016-11-01T13:30:30Z").getTime();
     }
 
     @Test
@@ -132,8 +132,28 @@ public abstract class BaseEventServiceTest extends AbstractServiceTest {
         eventService.cleanupEvents(timeBeforeStartTime - 1, timeAfterEndTime + 1, true);
     }
 
+    @Test
+    public void findLatestDebugRuleNodeInEvent() throws Exception {
+        CustomerId customerId = new CustomerId(Uuids.timeBased());
+        TenantId tenantId = TenantId.fromUUID(Uuids.timeBased());
+
+        Event event1 = saveEventWithProvidedTimeAndEventType(eventTime, "IN", customerId, tenantId);
+        Event event2 = saveEventWithProvidedTimeAndEventType(eventTime + 1, "IN", customerId, tenantId);
+
+        EventInfo event = eventService.findLatestDebugRuleNodeInEvent(tenantId, customerId);
+
+        Assert.assertNotNull(event);
+        Assert.assertEquals(event2.getUuidId(), event.getUuidId());
+
+        eventService.cleanupEvents(timeBeforeStartTime - 1, timeAfterEndTime + 1, true);
+    }
+
     private Event saveEventWithProvidedTime(long time, EntityId entityId, TenantId tenantId) throws Exception {
-        RuleNodeDebugEvent event = generateEvent(tenantId, entityId);
+        return saveEventWithProvidedTimeAndEventType(time, null, entityId, tenantId);
+    }
+
+    private Event saveEventWithProvidedTimeAndEventType(long time, String eventType, EntityId entityId, TenantId tenantId) throws Exception {
+        RuleNodeDebugEvent event = generateEvent(tenantId, entityId, eventType);
         event.setId(new EventId(Uuids.timeBased()));
         event.setCreatedTime(time);
         eventService.saveAsync(event).get();

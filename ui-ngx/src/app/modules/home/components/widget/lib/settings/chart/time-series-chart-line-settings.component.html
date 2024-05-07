@@ -18,7 +18,7 @@
 <ng-container [formGroup]="lineSettingsFormGroup">
   <div *ngIf="chartType !== TimeSeriesChartType.point" class="tb-form-panel stroked">
     <div class="tb-form-panel-title" translate>widgets.time-series-chart.series.line.line</div>
-    <div class="tb-form-row">
+    <div *ngIf="chartType !== TimeSeriesChartType.state" class="tb-form-row">
       <mat-slide-toggle class="mat-slide" formControlName="showLine">
         {{ 'widgets.time-series-chart.series.line.show-line' | translate }}
       </mat-slide-toggle>
@@ -35,7 +35,7 @@
         </mat-select>
       </mat-form-field>
     </div>
-    <div class="tb-form-row">
+    <div *ngIf="chartType !== TimeSeriesChartType.state" class="tb-form-row">
       <mat-slide-toggle class="mat-slide" formControlName="smooth">
         {{ 'widgets.time-series-chart.series.line.smooth-line' | translate }}
       </mat-slide-toggle>
@@ -44,8 +44,8 @@
       <div translate>widgets.time-series-chart.line-type</div>
       <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
         <mat-select formControlName="lineType">
-          <mat-option *ngFor="let lineType of timeSeriesLineTypes" [value]="lineType">
-            {{ timeSeriesLineTypeTranslations.get(lineType) | translate }}
+          <mat-option *ngFor="let lineType of chartLineTypes" [value]="lineType">
+            {{ chartLineTypeTranslations.get(lineType) | translate }}
           </mat-option>
         </mat-select>
       </mat-form-field>
@@ -66,9 +66,9 @@
     </div>
     <ng-container *ngTemplateOutlet="pointSettings"></ng-container>
   </div>
-  <tb-time-series-chart-fill-settings
+  <tb-chart-fill-settings
     formControlName="fillAreaSettings">
-  </tb-time-series-chart-fill-settings>
+  </tb-chart-fill-settings>
 </ng-container>
 <ng-template #pointSettings [formGroup]="lineSettingsFormGroup">
   <div class="tb-form-row space-between column-lt-md">
@@ -80,8 +80,8 @@
     <div fxLayout="row" fxFlex.lt-md fxLayoutAlign="start center" fxLayoutGap="8px">
       <mat-form-field class="medium-width" fxFlex.lt-md appearance="outline" subscriptSizing="dynamic">
         <mat-select formControlName="pointLabelPosition">
-          <mat-option *ngFor="let position of seriesLabelPositions" [value]="position">
-            {{ seriesLabelPositionTranslations.get(position) | translate }}
+          <mat-option *ngFor="let position of chartLabelPositions" [value]="position">
+            {{ chartLabelPositionTranslations.get(position) | translate }}
           </mat-option>
         </mat-select>
       </mat-form-field>
@@ -97,12 +97,21 @@
       </tb-color-input>
     </div>
   </div>
+  <div class="tb-form-row space-between">
+    <mat-slide-toggle class="mat-slide" formControlName="enablePointLabelBackground">
+      {{ 'widgets.time-series-chart.series.point.point-label-background' | translate }}
+    </mat-slide-toggle>
+    <tb-color-input asBoxInput
+                    colorClearButton
+                    formControlName="pointLabelBackground">
+    </tb-color-input>
+  </div>
   <div class="tb-form-row space-between column-xs">
     <div translate>widgets.time-series-chart.series.point.point-shape</div>
     <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
       <mat-select formControlName="pointShape">
-        <mat-option *ngFor="let shape of timeSeriesChartShapes" [value]="shape">
-          {{ timeSeriesChartShapeTranslations.get(shape) | translate }}
+        <mat-option *ngFor="let shape of chartShapes" [value]="shape">
+          {{ chartShapeTranslations.get(shape) | translate }}
         </mat-option>
       </mat-select>
     </mat-form-field>
