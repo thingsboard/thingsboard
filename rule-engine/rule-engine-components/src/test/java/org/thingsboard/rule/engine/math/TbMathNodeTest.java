@@ -89,13 +89,13 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class TbMathNodeTest {
 
-    static final int RULE_DISPATCHER_POOL_SIZE = 2;
-    static final int DB_CALLBACK_POOL_SIZE = 3;
+    static final int RULE_DISPATCHER_POOL_SIZE = 3;
+    static final int DB_CALLBACK_POOL_SIZE = 4;
     static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
     private final EntityId originator = DeviceId.fromString("ccd71696-0586-422d-940e-755a41ec3b0d");
     private final TenantId tenantId = TenantId.fromUUID(UUID.fromString("e7f46b23-0c7d-42f5-9b06-fc35ab17af8a"));
 
-    @Mock(lenient = true)
+    @Mock(strictness = Mock.Strictness.LENIENT)
     private TbContext ctx;
     @Mock
     private AttributesService attributesService;
@@ -122,8 +122,9 @@ public class TbMathNodeTest {
 
     @AfterEach
     public void after() {
-        ruleEngineDispatcherExecutor.executor().shutdownNow();
-        dbCallbackExecutor.executor().shutdownNow();
+        // shutdownNow makes some tests flaky
+        ruleEngineDispatcherExecutor.destroy();
+        dbCallbackExecutor.destroy();
     }
 
     private TbMathNode initNode(TbRuleNodeMathFunctionType operation, TbMathResult result, TbMathArgument... arguments) {
@@ -538,7 +539,7 @@ public class TbMathNodeTest {
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<Throwable> tCaptor = ArgumentCaptor.forClass(Throwable.class);
-        Mockito.verify(ctx, Mockito.timeout(5000)).tellFailure(eq(msg), tCaptor.capture());
+        Mockito.verify(ctx, timeout(TIMEOUT)).tellFailure(eq(msg), tCaptor.capture());
         assertNotNull(tCaptor.getValue().getMessage());
     }
 
@@ -553,7 +554,7 @@ public class TbMathNodeTest {
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<Throwable> tCaptor = ArgumentCaptor.forClass(Throwable.class);
-        Mockito.verify(ctx, Mockito.timeout(5000)).tellFailure(eq(msg), tCaptor.capture());
+        Mockito.verify(ctx, timeout(TIMEOUT)).tellFailure(eq(msg), tCaptor.capture());
         assertNotNull(tCaptor.getValue().getMessage());
     }
 
@@ -669,11 +670,11 @@ public class TbMathNodeTest {
         // submit slow msg may block all rule engine dispatcher threads
         slowMsgList.forEach(msg -> ruleEngineDispatcherExecutor.executeAsync(() -> node.onMsg(ctx, msg)));
         // wait until dispatcher threads started with all slowMsg
-        verify(node, new Timeout(TimeUnit.SECONDS.toMillis(5), times(slowMsgList.size()))).onMsg(eq(ctx), argThat(slowMsgList::contains));
+        verify(node, new Timeout(TIMEOUT, times(slowMsgList.size()))).onMsg(eq(ctx), argThat(slowMsgList::contains));
 
         slowProcessingLatch.countDown();
 
-        verify(ctx, new Timeout(TimeUnit.SECONDS.toMillis(5), times(slowMsgList.size()))).tellFailure(any(), any());
+        verify(ctx, new Timeout(TIMEOUT, times(slowMsgList.size()))).tellFailure(any(), any());
         verify(ctx, never()).tellSuccess(any());
 
     }
@@ -713,7 +714,7 @@ public class TbMathNodeTest {
                 .toList();
         ctxNodes.forEach(ctxNode -> ruleEngineDispatcherExecutor.executeAsync(() -> ctxNode.getRight()
                 .onMsg(ctxNode.getLeft(), TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, TbMsgMetaData.EMPTY, "{\"a\":2,\"b\":2}"))));
-        ctxNodes.forEach(ctxNode -> verify(ctxNode.getRight(), timeout(5000)).onMsg(eq(ctxNode.getLeft()), any()));
+        ctxNodes.forEach(ctxNode -> verify(ctxNode.getRight(), timeout(TIMEOUT)).onMsg(eq(ctxNode.getLeft()), any()));
         processingLatch.countDown();
 
         SoftAssertions softly = new SoftAssertions();
@@ -721,7 +722,7 @@ public class TbMathNodeTest {
             final TbContext ctx = ctxNode.getLeft();
             final String resultKey = ctxNode.getMiddle();
             ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-            verify(ctx, timeout(5000)).tellSuccess(msgCaptor.capture());
+            verify(ctx, timeout(TIMEOUT)).tellSuccess(msgCaptor.capture());
 
             TbMsg resultMsg = msgCaptor.getValue();
             assertThat(resultMsg).as("result msg non null for result key " + resultKey).isNotNull();

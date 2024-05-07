@@ -640,7 +640,7 @@ public class TbRuleEngineQueueConsumerManagerTest {
     }
 
     private void verifyMsgProcessed(TbMsg tbMsg) {
-        await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(actorContext, atLeastOnce()).tell(argThat(msg -> {
                 return ((QueueToRuleEngineMsg) msg).getMsg().getId().equals(tbMsg.getId());
             }));

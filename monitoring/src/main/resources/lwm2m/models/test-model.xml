@@ -23,9 +23,9 @@
         <Description1>
             <![CDATA[]]></Description1>
         <ObjectID>3</ObjectID>
-        <ObjectURN>urn:oma:lwm2m:oma:3:1.0</ObjectURN>
+        <ObjectURN>urn:oma:lwm2m:oma:3:1.1</ObjectURN>
         <LWM2MVersion>1.1</LWM2MVersion>
-        <ObjectVersion>1.0</ObjectVersion>
+        <ObjectVersion>1.1</ObjectVersion>
         <MultipleInstances>Single</MultipleInstances>
         <Mandatory>Mandatory</Mandatory>
         <Resources>
