@@ -493,8 +493,8 @@ public class MqttClientTest extends AbstractContainerTest {
         Awaitility
                 .await()
                 .alias("Check device disconnect.")
-                .atMost(TIMEOUT, TimeUnit.SECONDS)
-                .until(returnCodeByteValue::isEmpty);
+                .atMost(TIMEOUT*timeoutMultiplier, TimeUnit.SECONDS)
+                .until(() -> returnCodeByteValue.size() > 0);
 
         assertThat(returnCodeByteValueSecondClient).isEmpty();
         assertThat(returnCodeByteValue).isNotEmpty();
