@@ -218,7 +218,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             case EDGE_SYNC_REQUEST_TO_EDGE_SESSION_MSG -> {
                 ToEdgeSyncRequest toEdgeSyncRequest = (ToEdgeSyncRequest) msg;
                 log.trace("[{}] toEdgeSyncRequest [{}]", tenantId, msg);
-                startSyncProcess(tenantId, toEdgeSyncRequest.getEdgeId(), toEdgeSyncRequest.getId());
+                startSyncProcess(tenantId, toEdgeSyncRequest.getEdgeId(), toEdgeSyncRequest.getId(), toEdgeSyncRequest.getServiceId());
             }
             case EDGE_SYNC_RESPONSE_FROM_EDGE_SESSION_MSG -> {
                 FromEdgeSyncResponse fromEdgeSyncResponse = (FromEdgeSyncResponse) msg;
@@ -311,7 +311,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         scheduleEdgeEventsCheck(edgeGrpcSession);
     }
 
-    private void startSyncProcess(TenantId tenantId, EdgeId edgeId, UUID requestId) {
+    private void startSyncProcess(TenantId tenantId, EdgeId edgeId, UUID requestId, String requestServiceId) {
         EdgeGrpcSession session = sessions.get(edgeId);
         if (session != null) {
             boolean success = false;
@@ -319,13 +319,14 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 session.startSyncProcess(true);
                 success = true;
             }
-            clusterService.pushEdgeSyncResponseToEdge(new FromEdgeSyncResponse(requestId, tenantId, edgeId, success));
+            clusterService.pushEdgeSyncResponseToCore(new FromEdgeSyncResponse(requestId, tenantId, edgeId, success), requestServiceId);
         }
     }
 
     @Override
-    public void processSyncRequest(ToEdgeSyncRequest request, Consumer<FromEdgeSyncResponse> responseConsumer) {
-        log.trace("[{}][{}] Processing sync edge request [{}]", request.getTenantId(), request.getId(), request.getEdgeId());
+    public void processSyncRequest(TenantId tenantId, EdgeId edgeId, Consumer<FromEdgeSyncResponse> responseConsumer) {
+        ToEdgeSyncRequest request = new ToEdgeSyncRequest(UUID.randomUUID(), tenantId, edgeId, serviceInfoProvider.getServiceId());
+        log.trace("[{}][{}] Processing sync edge request [{}], serviceId [{}]", request.getTenantId(), request.getId(), request.getEdgeId(), request.getServiceId());
         UUID requestId = request.getId();
         localSyncEdgeRequests.put(requestId, responseConsumer);
         clusterService.pushEdgeSyncRequestToEdge(request);

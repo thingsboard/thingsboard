@@ -1130,6 +1130,7 @@ message ToEdgeSyncRequestMsgProto {
   int64 requestIdLSB = 4;
   int64 edgeIdMSB = 5;
   int64 edgeIdLSB = 6;
+  string serviceId = 7;
 }
 
 message FromEdgeSyncResponseMsgProto {

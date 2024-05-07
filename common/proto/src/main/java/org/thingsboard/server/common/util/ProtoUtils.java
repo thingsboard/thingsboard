@@ -142,6 +142,7 @@ public class ProtoUtils {
                 .setRequestIdLSB(request.getId().getLeastSignificantBits())
                 .setEdgeIdMSB(request.getEdgeId().getId().getMostSignificantBits())
                 .setEdgeIdLSB(request.getEdgeId().getId().getLeastSignificantBits())
+                .setServiceId(request.getServiceId())
                 .build();
     }
 
@@ -149,7 +150,8 @@ public class ProtoUtils {
         return new ToEdgeSyncRequest(
                 new UUID(proto.getRequestIdMSB(), proto.getRequestIdLSB()),
                 TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
-                EdgeId.fromUUID(new UUID(proto.getEdgeIdMSB(), proto.getEdgeIdLSB()))
+                EdgeId.fromUUID(new UUID(proto.getEdgeIdMSB(), proto.getEdgeIdLSB())),
+                proto.getServiceId()
         );
     }
 

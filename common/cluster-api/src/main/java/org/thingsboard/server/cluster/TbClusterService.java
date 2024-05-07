@@ -103,7 +103,7 @@ public interface TbClusterService extends TbQueueClusterService {
 
     void pushEdgeSyncRequestToEdge(ToEdgeSyncRequest request);
 
-    void pushEdgeSyncResponseToEdge(FromEdgeSyncResponse response);
+    void pushEdgeSyncResponseToCore(FromEdgeSyncResponse response, String requestServiceId);
 
     void pushMsgToEdge(TenantId tenantId, EntityId entityId, ToEdgeMsg msg, TbQueueCallback callback);
 

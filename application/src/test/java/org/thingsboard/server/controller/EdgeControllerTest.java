@@ -901,7 +901,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertTrue(edgeImitator.getDownlinkMsgs().isEmpty());
 
         edgeImitator.expectMessageAmount(19);
-        doPost("/api/edge/sync/" + edge.getId());
+        doPost("/api/edge/sync/" + edge.getId()).andExpect(status().isOk());
         waitForMessages(edgeImitator);
 
         verifyFetchersMsgs(edgeImitator);

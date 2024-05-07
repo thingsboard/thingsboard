@@ -447,10 +447,10 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     @Override
-    public void pushEdgeSyncResponseToEdge(FromEdgeSyncResponse response) {
+    public void pushEdgeSyncResponseToCore(FromEdgeSyncResponse response, String requestServiceId) {
         log.trace("[{}] Processing edge sync response for edgeId: {}", response.getTenantId(), response.getEdgeId());
         ToEdgeNotificationMsg toEdgeNotificationMsg = ToEdgeNotificationMsg.newBuilder().setFromEdgeSyncResponse(toProto(response)).build();
-        processEdgeNotification(response.getEdgeId(), toEdgeNotificationMsg);
+        pushMsgToEdgeNotification(toEdgeNotificationMsg, requestServiceId);
     }
 
     private void processEdgeNotification(EdgeId edgeId, ToEdgeNotificationMsg toEdgeNotificationMsg) {
