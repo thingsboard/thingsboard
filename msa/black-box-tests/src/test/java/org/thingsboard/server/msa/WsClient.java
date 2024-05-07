@@ -139,6 +139,7 @@ public class WsClient extends WebSocketClient {
     }
 
     public String waitForUpdate(long ms, boolean throwExceptionOnTimeout) {
+        ms *= timeoutMultiplier;
         log.debug("waitForUpdate [{}]", ms);
         try {
             if (update.await(ms, TimeUnit.MILLISECONDS)) {
@@ -165,6 +166,7 @@ public class WsClient extends WebSocketClient {
     }
 
     public String waitForReply(long ms, boolean throwExceptionOnTimeout) {
+        ms *= timeoutMultiplier;
         log.debug("waitForReply [{}]", ms);
         try {
             if (reply.await(ms, TimeUnit.MILLISECONDS)) {
