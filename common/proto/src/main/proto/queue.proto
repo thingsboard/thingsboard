@@ -286,6 +286,7 @@ message TbResourceProto {
   optional int64 externalIdLSB = 16;
   optional bytes data = 17;
   optional bytes preview = 18;
+  optional string resourceSubType = 19;
 }
 
 message ApiUsageStateProto {

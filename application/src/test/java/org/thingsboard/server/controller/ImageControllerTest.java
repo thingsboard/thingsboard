@@ -23,11 +23,14 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.mock.web.MockPart;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.ImageDescriptor;
 import org.thingsboard.server.common.data.ImageExportData;
+import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.SystemParams;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.page.PageData;
@@ -35,6 +38,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.sql.resource.TbResourceRepository;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 
@@ -53,6 +57,7 @@ public class ImageControllerTest extends AbstractControllerTest {
 
     @Before
     public void beforeEach() throws Exception {
+        resourceRepository.deleteAll();
         loginTenantAdmin();
     }
 
@@ -65,6 +70,8 @@ public class ImageControllerTest extends AbstractControllerTest {
     public void testUploadPngImage() throws Exception {
         String filename = "my_png_image.png";
         TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", filename, "image/png", PNG_IMAGE);
+
+        assertThat(imageInfo.getResourceSubType()).isEqualTo(ResourceSubType.IMAGE);
 
         assertThat(imageInfo.getTitle()).isEqualTo(filename);
         assertThat(imageInfo.getResourceType()).isEqualTo(ResourceType.IMAGE);
@@ -85,6 +92,8 @@ public class ImageControllerTest extends AbstractControllerTest {
         String filename = "my_jpeg_image.jpg";
         TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", filename, "image/jpeg", JPEG_IMAGE);
 
+        assertThat(imageInfo.getResourceSubType()).isEqualTo(ResourceSubType.IMAGE);
+
         ImageDescriptor imageDescriptor = imageInfo.getDescriptor(ImageDescriptor.class);
         checkJpegImageDescriptor(imageDescriptor);
 
@@ -96,6 +105,22 @@ public class ImageControllerTest extends AbstractControllerTest {
     public void testUploadSvgImage() throws Exception {
         String filename = "my_svg_image.svg";
         TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", filename, "image/svg+xml", SVG_IMAGE);
+
+        assertThat(imageInfo.getResourceSubType()).isEqualTo(ResourceSubType.IMAGE);
+
+        ImageDescriptor imageDescriptor = imageInfo.getDescriptor(ImageDescriptor.class);
+        checkSvgImageDescriptor(imageDescriptor);
+
+        assertThat(downloadImage("tenant", filename)).containsExactly(SVG_IMAGE);
+        assertThat(downloadImagePreview("tenant", filename)).hasSize((int) imageDescriptor.getPreviewDescriptor().getSize());
+    }
+
+    @Test
+    public void testUploadIoTSvgImage() throws Exception {
+        String filename = "my_iot_svg_image.svg";
+        TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", ResourceSubType.IOT_SVG.name(), filename, "image/svg+xml", SVG_IMAGE);
+
+        assertThat(imageInfo.getResourceSubType()).isEqualTo(ResourceSubType.IOT_SVG);
 
         ImageDescriptor imageDescriptor = imageInfo.getDescriptor(ImageDescriptor.class);
         checkSvgImageDescriptor(imageDescriptor);
@@ -175,6 +200,7 @@ public class ImageControllerTest extends AbstractControllerTest {
         assertThat(exportData.getMediaType()).isEqualTo("image/png");
         assertThat(exportData.getFileName()).isEqualTo(filename);
         assertThat(exportData.getTitle()).isEqualTo(filename);
+        assertThat(exportData.getSubType()).isEqualTo(ResourceSubType.IMAGE.name());
         assertThat(exportData.getResourceKey()).isEqualTo(filename);
         assertThat(exportData.getData()).isEqualTo(Base64.getEncoder().encodeToString(PNG_IMAGE));
         assertThat(exportData.isPublic()).isTrue();
@@ -184,6 +210,7 @@ public class ImageControllerTest extends AbstractControllerTest {
 
         TbResourceInfo importedImageInfo = doPut("/api/image/import", exportData, TbResourceInfo.class);
         assertThat(importedImageInfo.getTitle()).isEqualTo(filename);
+        assertThat(exportData.getSubType()).isEqualTo(ResourceSubType.IMAGE.name());
         assertThat(importedImageInfo.getResourceKey()).isEqualTo(filename);
         assertThat(importedImageInfo.getFileName()).isEqualTo(filename);
         assertThat(importedImageInfo.isPublic()).isTrue();
@@ -198,20 +225,37 @@ public class ImageControllerTest extends AbstractControllerTest {
         String systemImageName = "my_system_png_image.png";
         TbResourceInfo systemImage = uploadImage(HttpMethod.POST, "/api/image", systemImageName, "image/png", PNG_IMAGE);
 
+        String systemIotSvgName  = "my_system_iot_svg_image.svg";
+        TbResourceInfo systemIotSvg = uploadImage(HttpMethod.POST, "/api/image", ResourceSubType.IOT_SVG.name(), systemIotSvgName, "image/svg+xml", SVG_IMAGE);
+
         loginTenantAdmin();
         String tenantImageName = "my_jpeg_image.jpg";
         TbResourceInfo tenantImage = uploadImage(HttpMethod.POST, "/api/image", tenantImageName, "image/jpeg", JPEG_IMAGE);
 
+        String tenantIotSvgName  = "my_iot_svg_image.svg";
+        TbResourceInfo tenantIotSvg = uploadImage(HttpMethod.POST, "/api/image", ResourceSubType.IOT_SVG.name(), tenantIotSvgName, "image/svg+xml", SVG_IMAGE);
+
         List<TbResourceInfo> tenantImages = getImages(null, false, 10);
         assertThat(tenantImages).containsOnly(tenantImage);
 
+        List<TbResourceInfo> tenantIotSvgs = getImages(null, ResourceSubType.IOT_SVG.name(), false, 10);
+        assertThat(tenantIotSvgs).containsOnly(tenantIotSvg);
+
         List<TbResourceInfo> allImages = getImages(null, true, 10);
         assertThat(allImages).containsOnly(tenantImage, systemImage);
+
+        List<TbResourceInfo> allIotSvgs = getImages(null, ResourceSubType.IOT_SVG.name(), true, 10);
+        assertThat(allIotSvgs).containsOnly(tenantIotSvg, systemIotSvg);
 
         assertThat(getImages("png", true, 10))
                 .containsOnly(systemImage);
         assertThat(getImages("jpg", true, 10))
                 .containsOnly(tenantImage);
+
+        assertThat(getImages("my_system_iot", ResourceSubType.IOT_SVG.name(), true, 10))
+                .containsOnly(systemIotSvg);
+        assertThat(getImages("my_iot_svg", ResourceSubType.IOT_SVG.name(),true, 10))
+                .containsOnly(tenantIotSvg);
     }
 
     @Test
@@ -312,7 +356,15 @@ public class ImageControllerTest extends AbstractControllerTest {
     }
 
     private List<TbResourceInfo> getImages(String searchText, boolean includeSystemImages, int limit) throws Exception {
-        PageData<TbResourceInfo> images = doGetTypedWithPageLink("/api/images?includeSystemImages=" + includeSystemImages + "&", new TypeReference<>() {}, new PageLink(limit, 0, searchText));
+        return this.getImages(searchText, null, includeSystemImages, limit);
+    }
+
+    private List<TbResourceInfo> getImages(String searchText, String imageSubType, boolean includeSystemImages, int limit) throws Exception {
+        var url = "/api/images?includeSystemImages=" + includeSystemImages + "&";
+        if (StringUtils.isNotEmpty(imageSubType)) {
+            url += "imageSubType=" + imageSubType+ "&";
+        }
+        PageData<TbResourceInfo> images = doGetTypedWithPageLink(url, new TypeReference<>() {}, new PageLink(limit, 0, searchText));
         return images.getData();
     }
 
@@ -332,8 +384,16 @@ public class ImageControllerTest extends AbstractControllerTest {
     }
 
     private <R> TbResourceInfo uploadImage(HttpMethod httpMethod, String url, String filename, String mediaType, byte[] content) throws Exception {
+        return this.uploadImage(httpMethod, url, null, filename, mediaType, content);
+    }
+
+    private <R> TbResourceInfo uploadImage(HttpMethod httpMethod, String url, String subType, String filename, String mediaType, byte[] content) throws Exception {
         MockMultipartFile file = new MockMultipartFile("file", filename, mediaType, content);
         var request = MockMvcRequestBuilders.multipart(httpMethod, url).file(file);
+        if (StringUtils.isNotEmpty(subType)) {
+            var imageSubTypePart = new MockPart("imageSubType", subType.getBytes(StandardCharsets.UTF_8));
+            request.part(imageSubTypePart);
+        }
         setJwtToken(request);
         return readResponse(mockMvc.perform(request).andExpect(status().isOk()), TbResourceInfo.class);
     }

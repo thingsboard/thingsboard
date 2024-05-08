@@ -715,6 +715,7 @@ CREATE TABLE IF NOT EXISTS resource (
     tenant_id uuid NOT NULL,
     title varchar(255) NOT NULL,
     resource_type varchar(32) NOT NULL,
+    resource_sub_type varchar(32),
     resource_key varchar(255) NOT NULL,
     search_text varchar(255),
     file_name varchar(255) NOT NULL,

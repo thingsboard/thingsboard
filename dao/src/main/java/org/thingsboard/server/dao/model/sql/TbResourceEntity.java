@@ -20,6 +20,7 @@ import jakarta.persistence.Convert;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
+import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.id.TbResourceId;
@@ -42,6 +43,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_IS_PUBLIC
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_KEY_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_PREVIEW_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.PUBLIC_RESOURCE_KEY_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_SUB_TYPE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TABLE_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TENANT_ID_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TITLE_COLUMN;
@@ -62,6 +64,9 @@ public class TbResourceEntity extends BaseSqlEntity<TbResource> {
 
     @Column(name = RESOURCE_TYPE_COLUMN)
     private String resourceType;
+
+    @Column(name = RESOURCE_SUB_TYPE_COLUMN)
+    private String resourceSubType;
 
     @Column(name = RESOURCE_KEY_COLUMN)
     private String resourceKey;
@@ -107,6 +112,9 @@ public class TbResourceEntity extends BaseSqlEntity<TbResource> {
         }
         this.title = resource.getTitle();
         this.resourceType = resource.getResourceType().name();
+        if (resource.getResourceSubType() != null) {
+            this.resourceSubType = resource.getResourceSubType().name();
+        }
         this.resourceKey = resource.getResourceKey();
         this.searchText = resource.getSearchText();
         this.fileName = resource.getFileName();
@@ -126,6 +134,7 @@ public class TbResourceEntity extends BaseSqlEntity<TbResource> {
         resource.setTenantId(TenantId.fromUUID(tenantId));
         resource.setTitle(title);
         resource.setResourceType(ResourceType.valueOf(resourceType));
+        resource.setResourceSubType(resourceSubType != null ? ResourceSubType.valueOf(resourceSubType) : null);
         resource.setResourceKey(resourceKey);
         resource.setSearchText(searchText);
         resource.setFileName(fileName);

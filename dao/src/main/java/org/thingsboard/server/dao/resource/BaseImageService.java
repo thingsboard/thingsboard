@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasImage;
 import org.thingsboard.server.common.data.ImageDescriptor;
+import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbImageDeleteResult;
 import org.thingsboard.server.common.data.TbResource;
@@ -140,6 +141,9 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         if (image.getId() == null) {
             image.setResourceKey(getUniqueKey(image.getTenantId(), StringUtils.defaultIfEmpty(image.getResourceKey(), image.getFileName())));
         }
+        if (image.getResourceSubType() == null) {
+            image.setResourceSubType(ResourceSubType.IMAGE);
+        }
         resourceValidator.validate(image, TbResourceInfo::getTenantId);
 
         ImageDescriptor descriptor = image.getDescriptor(ImageDescriptor.class);
@@ -220,21 +224,23 @@ public class BaseImageService extends BaseResourceService implements ImageServic
     }
 
     @Override
-    public PageData<TbResourceInfo> getImagesByTenantId(TenantId tenantId, PageLink pageLink) {
+    public PageData<TbResourceInfo> getImagesByTenantId(TenantId tenantId, ResourceSubType imageSubType, PageLink pageLink) {
         log.trace("Executing getImagesByTenantId [{}]", tenantId);
         TbResourceInfoFilter filter = TbResourceInfoFilter.builder()
                 .tenantId(tenantId)
                 .resourceTypes(Set.of(ResourceType.IMAGE))
+                .resourceSubTypes(Set.of(imageSubType))
                 .build();
         return findTenantResourcesByTenantId(filter, pageLink);
     }
 
     @Override
-    public PageData<TbResourceInfo> getAllImagesByTenantId(TenantId tenantId, PageLink pageLink) {
+    public PageData<TbResourceInfo> getAllImagesByTenantId(TenantId tenantId, ResourceSubType imageSubType, PageLink pageLink) {
         log.trace("Executing getAllImagesByTenantId [{}]", tenantId);
         TbResourceInfoFilter filter = TbResourceInfoFilter.builder()
                 .tenantId(tenantId)
                 .resourceTypes(Set.of(ResourceType.IMAGE))
+                .resourceSubTypes(Set.of(imageSubType))
                 .build();
         return findAllTenantResourcesByTenantId(filter, pageLink);
     }

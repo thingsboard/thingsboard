@@ -137,6 +137,10 @@ public class ThingsboardInstallService {
                             entityDatabaseSchemaService.createCustomerTitleUniqueConstraintIfNotExists();
                             systemDataLoaderService.updateDefaultNotificationConfigs(false);
                             systemDataLoaderService.updateJwtSettings();
+                            break;
+                        case "3.7.0":
+                            log.info("Upgrading ThingsBoard from version 3.7.0 to 3.7.1 ...");
+                            databaseEntitiesUpgradeService.upgradeDatabase("3.7.0");
                             //TODO DON'T FORGET to update switch statement in the CacheCleanupService if you need to clear the cache
                             break;
                         default:
