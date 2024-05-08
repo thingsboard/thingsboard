@@ -18,7 +18,10 @@ package org.thingsboard.server.queue.kafka;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
+import org.apache.kafka.clients.admin.ListConsumerGroupOffsetsResult;
 import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.TopicExistsException;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.util.PropertyUtils;
@@ -28,6 +31,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Created by ashvayka on 24.09.18.
@@ -109,6 +114,32 @@ public class TbKafkaAdmin implements TbQueueAdmin {
     }
 
     public CreateTopicsResult createTopic(NewTopic topic) {
+        client.listConsumerGroupOffsets("id1");
         return client.createTopics(Collections.singletonList(topic));
     }
+
+    public void syncOffsets(String oldGroupId, String newGroupId) throws ExecutionException, InterruptedException, TimeoutException {
+        ListConsumerGroupOffsetsResult fatOffsets = client.listConsumerGroupOffsets("id1");
+        Map<TopicPartition, OffsetAndMetadata> oldOffsets = new ConcurrentHashMap<>();
+        client.listConsumerGroupOffsets(oldGroupId).partitionsToOffsetAndMetadata().whenComplete((res, err) -> {
+            if (err != null) {
+                log.warn("Failed to list consumer group offsets [{}]", oldGroupId, err);
+            } else {
+                oldOffsets.putAll(res);
+            }
+        }).get(10, TimeUnit.SECONDS);
+
+        Map<TopicPartition, OffsetAndMetadata> newOffsets = new ConcurrentHashMap<>();
+        client.listConsumerGroupOffsets(newGroupId).partitionsToOffsetAndMetadata().whenComplete((res, err) -> {
+            if (err != null) {
+                log.warn("Failed to list consumer group offsets [{}]", newGroupId, err);
+            } else {
+                newOffsets.putAll(res);
+            }
+        }).get(10, TimeUnit.SECONDS);
+
+
+
+    }
+
 }
