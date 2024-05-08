@@ -173,7 +173,6 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
         } else if (deviceProfile.getId() != null) {
             oldDeviceProfile = findDeviceProfileById(deviceProfile.getTenantId(), deviceProfile.getId(), false);
         }
-
         DeviceProfile savedDeviceProfile;
         try {
             imageService.replaceBase64WithImageUrl(deviceProfile, "device profile");
