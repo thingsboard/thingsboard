@@ -85,7 +85,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
         this.scheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName(prefix + "-consumer-scheduler"));
 
         this.nfConsumer = QueueConsumerManager.<TbProtoQueueMsg<N>>builder()
-                .name("TB Notifications")
+                .name(getServiceType().getLabel() + " Notifications")
                 .msgPackProcessor(this::processNotifications)
                 .pollInterval(getNotificationPollDuration())
                 .consumerCreator(this::createNotificationsConsumer)
