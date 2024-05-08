@@ -210,13 +210,12 @@ public class LwM2mClient {
     }
 
     private LwM2m.Version getObjectIDVerFromDeviceProfile(DeviceProfile deviceProfile) {
-        return new Version(
-                ((Lwm2mDeviceProfileTransportConfiguration)deviceProfile
-                        .getProfileData()
-                        .getTransportConfiguration())
-                        .getClientLwM2mSettings()
-                        .getDefaultObjectIDVer()
-        );
+        String defaultObjectIdVer = ((Lwm2mDeviceProfileTransportConfiguration)deviceProfile
+                .getProfileData()
+                .getTransportConfiguration())
+                .getClientLwM2mSettings()
+                .getDefaultObjectIDVer();
+        return new Version(defaultObjectIdVer == null ? "1.0" : defaultObjectIdVer);
     }
 
     public void refreshSessionId(String nodeId) {
