@@ -65,6 +65,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LWM2M_OBJECT_VERSION_DEFAULT;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertMultiResourceValuesFromRpcBody;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.equalsResourceTypeGetSimpleName;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.fromVersionedIdToObjectId;
@@ -215,7 +216,7 @@ public class LwM2mClient {
                 .getTransportConfiguration())
                 .getClientLwM2mSettings()
                 .getDefaultObjectIDVer();
-        return new Version(defaultObjectIdVer == null ? "1.0" : defaultObjectIdVer);
+        return new Version(defaultObjectIdVer == null ? LWM2M_OBJECT_VERSION_DEFAULT : defaultObjectIdVer);
     }
 
     public void refreshSessionId(String nodeId) {
@@ -443,7 +444,7 @@ public class LwM2mClient {
     }
 
     public LwM2m.Version getDefaultObjectIDVer() {
-        return this.defaultObjectIDVer == null ? new Version("1.0") : this.defaultObjectIDVer;
+        return this.defaultObjectIDVer == null ? new Version(LWM2M_OBJECT_VERSION_DEFAULT) : this.defaultObjectIDVer;
     }
 
     public LwM2m.Version getSupportedObjectVersion(Integer objectid) {
