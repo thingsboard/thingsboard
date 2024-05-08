@@ -29,8 +29,8 @@ import {
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
-  defaultScadaObjectSettings,
-  parseScadaObjectMetadataFromContent,
+  defaultIotSvgObjectSettings,
+  parseIotSvgMetadataFromContent,
   IotSvgBehaviorType,
   IotSvgMetadata,
   IotSvgObjectSettings
@@ -41,7 +41,7 @@ import { IAliasController } from '@core/api/widget-api.models';
 import { TargetDevice, widgetType } from '@shared/models/widget.models';
 import { isDefinedAndNotNull } from '@core/utils';
 import {
-  ScadaPropertyRow,
+  IotSvgPropertyRow,
   toPropertyRows
 } from '@home/components/widget/lib/settings/common/svg/iot-svg-object-settings.models';
 import { merge, Observable, Subscription } from 'rxjs';
@@ -93,10 +93,10 @@ export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, Control
   private validatorTriggers: string[];
   private validatorSubscription: Subscription;
 
-  public scadaObjectSettingsFormGroup: UntypedFormGroup;
+  public iotSvgObjectSettingsFormGroup: UntypedFormGroup;
 
   metadata: IotSvgMetadata;
-  propertyRows: ScadaPropertyRow[];
+  propertyRows: IotSvgPropertyRow[];
 
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder,
@@ -105,8 +105,8 @@ export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, Control
   }
 
   ngOnInit(): void {
-    this.scadaObjectSettingsFormGroup = this.fb.group({});
-    this.scadaObjectSettingsFormGroup.valueChanges.subscribe(() => {
+    this.iotSvgObjectSettingsFormGroup = this.fb.group({});
+    this.iotSvgObjectSettingsFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
     });
     this.loadMetadata();
@@ -133,9 +133,9 @@ export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, Control
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (isDisabled) {
-      this.scadaObjectSettingsFormGroup.disable({emitEvent: false});
+      this.iotSvgObjectSettingsFormGroup.disable({emitEvent: false});
     } else {
-      this.scadaObjectSettingsFormGroup.enable({emitEvent: false});
+      this.iotSvgObjectSettingsFormGroup.enable({emitEvent: false});
       this.updateValidators();
     }
   }
@@ -146,9 +146,9 @@ export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, Control
   }
 
   validate(c: UntypedFormControl) {
-    const valid = this.scadaObjectSettingsFormGroup.valid;
+    const valid = this.iotSvgObjectSettingsFormGroup.valid;
     return valid ? null : {
-      scadaObject: {
+      iotSvgObject: {
         valid: false,
       },
     };
@@ -162,13 +162,13 @@ export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, Control
     this.validatorTriggers = [];
     this.http.get(this.svgPath, {responseType: 'text'}).subscribe(
       (svgContent) => {
-        this.metadata = parseScadaObjectMetadataFromContent(svgContent);
+        this.metadata = parseIotSvgMetadataFromContent(svgContent);
         this.propertyRows = toPropertyRows(this.metadata.properties);
-        for (const control of Object.keys(this.scadaObjectSettingsFormGroup.controls)) {
-          this.scadaObjectSettingsFormGroup.removeControl(control, {emitEvent: false});
+        for (const control of Object.keys(this.iotSvgObjectSettingsFormGroup.controls)) {
+          this.iotSvgObjectSettingsFormGroup.removeControl(control, {emitEvent: false});
         }
         for (const behaviour of this.metadata.behavior) {
-          this.scadaObjectSettingsFormGroup.addControl(behaviour.id, this.fb.control(null, []), {emitEvent: false});
+          this.iotSvgObjectSettingsFormGroup.addControl(behaviour.id, this.fb.control(null, []), {emitEvent: false});
         }
         for (const property of this.metadata.properties) {
           if (property.disableOnProperty) {
@@ -188,12 +188,12 @@ export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, Control
               validators.push(Validators.max(property.max));
             }
           }
-          this.scadaObjectSettingsFormGroup.addControl(property.id, this.fb.control(null, validators), {emitEvent: false});
+          this.iotSvgObjectSettingsFormGroup.addControl(property.id, this.fb.control(null, validators), {emitEvent: false});
         }
         if (this.validatorTriggers.length) {
           const observables: Observable<any>[] = [];
           for (const trigger of this.validatorTriggers) {
-            observables.push(this.scadaObjectSettingsFormGroup.get(trigger).valueChanges);
+            observables.push(this.iotSvgObjectSettingsFormGroup.get(trigger).valueChanges);
           }
           this.validatorSubscription = merge(...observables).subscribe(() => {
             this.updateValidators();
@@ -207,10 +207,10 @@ export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, Control
 
   private updateValidators() {
     for (const trigger of this.validatorTriggers) {
-      const value: boolean = this.scadaObjectSettingsFormGroup.get(trigger).value;
+      const value: boolean = this.iotSvgObjectSettingsFormGroup.get(trigger).value;
       this.metadata.properties.filter(p => p.disableOnProperty === trigger).forEach(
         (p) => {
-          const control = this.scadaObjectSettingsFormGroup.get(p.id);
+          const control = this.iotSvgObjectSettingsFormGroup.get(p.id);
           if (value) {
             control.enable({emitEvent: false});
           } else {
@@ -223,9 +223,9 @@ export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, Control
 
   private setupValue() {
     if (this.metadata) {
-      const defaults = defaultScadaObjectSettings(this.metadata);
+      const defaults = defaultIotSvgObjectSettings(this.metadata);
       this.modelValue = {...defaults, ...this.modelValue};
-      this.scadaObjectSettingsFormGroup.patchValue(
+      this.iotSvgObjectSettingsFormGroup.patchValue(
         this.modelValue, {emitEvent: false}
       );
       this.setDisabledState(this.disabled);
@@ -233,7 +233,7 @@ export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, Control
   }
 
   private updateModel() {
-    this.modelValue = this.scadaObjectSettingsFormGroup.getRawValue();
+    this.modelValue = this.iotSvgObjectSettingsFormGroup.getRawValue();
     this.propagateChange(this.modelValue);
   }
 

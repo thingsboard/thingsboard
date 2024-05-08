@@ -68,7 +68,9 @@
         },
         {
            "id": "disabledState",
-           "name": "Disabled state",
+           "name": "{i18n:widgets.rpc-state.disabled-state}",
+           "hint": "{i18n:widgets.rpc-state.disabled-state-hint}",
+           "stateLabel": "{i18n:widgets.rpc-state.disabled}",
            "type": "value",
            "valueType": "BOOLEAN",
            "defaultValue": false,
@@ -77,6 +79,9 @@
         {
            "id": "onState",
            "name": "On/Off state",
+           "trueLabel": "{i18n:widgets.rpc-state.on}",
+           "falseLabel": "{i18n:widgets.rpc-state.off}",
+           "stateLabel": "{i18n:widgets.rpc-state.on}",
            "type": "value",
            "valueType": "BOOLEAN",
            "defaultValue": false,
@@ -84,7 +89,8 @@
         },
         {
            "id": "onUpdateState",
-           "name": "Power On",
+           "name": "{i18n:widgets.rpc-state.turn-on}",
+           "hint": "{i18n:widgets.rpc-state.turn-on-hint}",
            "type": "action",
            "valueType": "BOOLEAN",
            "valueToDataType": "CONSTANT",
@@ -92,7 +98,8 @@
         },
         {
            "id": "offUpdateState",
-           "name": "Power Off",
+           "name": "{i18n:widgets.rpc-state.turn-off}",
+           "hint": "{i18n:widgets.rpc-state.turn-off-hint}",
            "type": "action",
            "valueType": "BOOLEAN",
            "valueToDataType": "CONSTANT",
@@ -124,7 +131,7 @@
             "id": "levelTitle",
             "name": "Level title",
             "type": "string",
-            "default": "Level",
+            "default": "{i18n:widgets.battery-level.value}",
             "disableOnProperty": "showLevelTitle",
             "fieldClass": "flex"
          },

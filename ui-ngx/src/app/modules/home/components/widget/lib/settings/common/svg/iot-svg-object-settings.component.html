@@ -15,16 +15,19 @@
     limitations under the License.
 
 -->
-<ng-container [formGroup]="scadaObjectSettingsFormGroup">
-  <div>{{ metadata?.title }}</div>
+<ng-container [formGroup]="iotSvgObjectSettingsFormGroup">
+  <div>{{ metadata?.title | customTranslate }}</div>
   <div *ngIf="metadata?.behavior?.length" class="tb-form-panel">
-    <div class="tb-form-panel-title" translate>widgets.slider.behavior</div>
+    <div class="tb-form-panel-title" translate>iot-svg.behavior</div>
     <div *ngFor="let behaviour of metadata.behavior" class="tb-form-row">
-      <div class="fixed-title-width">{{ behaviour.name }}</div>
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{ behaviour.hint | customTranslate }}">{{ behaviour.name | customTranslate }}</div>
       <tb-get-value-action-settings *ngIf="behaviour.type === IotSvgBehaviorType.value"
                                     fxFlex
-                                    panelTitle="{{ behaviour.name }}"
+                                    panelTitle="{{ behaviour.name | customTranslate }}"
                                     [valueType]="behaviour.valueType"
+                                    [trueLabel]="behaviour.trueLabel | customTranslate"
+                                    [falseLabel]="behaviour.falseLabel | customTranslate"
+                                    [stateLabel]="behaviour.stateLabel | customTranslate"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
@@ -32,7 +35,7 @@
       </tb-get-value-action-settings>
       <tb-set-value-action-settings *ngIf="behaviour.type === IotSvgBehaviorType.action"
                                     fxFlex
-                                    panelTitle="{{ behaviour.name }}"
+                                    panelTitle="{{ behaviour.name | customTranslate }}"
                                     [valueType]="behaviour.valueType"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
@@ -41,7 +44,7 @@
       </tb-set-value-action-settings>
       <tb-widget-action-settings *ngIf="behaviour.type === IotSvgBehaviorType.widgetAction"
                                  fxFlex
-                                 panelTitle="{{ behaviour.name }}"
+                                 panelTitle="{{ behaviour.name | customTranslate }}"
                                  [callbacks]="callbacks"
                                  [widgetType]="widgetType"
                                  formControlName="{{ behaviour.id }}">
@@ -51,15 +54,15 @@
   <div *ngIf="propertyRows?.length" class="tb-form-panel">
     <div *ngFor="let propertyRow of propertyRows" class="tb-form-row space-between" [class]="propertyRow.rowClass">
       <mat-slide-toggle *ngIf="propertyRow.switch" class="mat-slide fixed-title-width" formControlName="{{ propertyRow.switch.id }}">
-        {{ propertyRow.label }}
+        {{ propertyRow.label | customTranslate }}
       </mat-slide-toggle>
-      <div *ngIf="!propertyRow.switch" class="fixed-title-width">{{ propertyRow.label }}</div>
+      <div *ngIf="!propertyRow.switch" class="fixed-title-width">{{ propertyRow.label | customTranslate }}</div>
       <div fxLayout="row" fxFlex fxLayoutAlign="end center" fxLayoutGap="8px">
         <ng-container *ngFor="let property of propertyRow.properties">
-          <div *ngIf="property.subLabel" class="tb-small-label">{{ property.subLabel }}</div>
+          <div *ngIf="property.subLabel" class="tb-small-label">{{ property.subLabel | customTranslate }}</div>
           <mat-form-field  *ngIf="property.type === 'string'" [class]="property.fieldClass" appearance="outline" subscriptSizing="dynamic">
             <input matInput formControlName="{{ property.id }}" [required]="property.required" placeholder="{{ 'widget-config.set' | translate }}">
-            <div fxHide.lt-md matSuffix *ngIf="property.fieldSuffix">{{ property.fieldSuffix }}</div>
+            <div fxHide.lt-md matSuffix *ngIf="property.fieldSuffix">{{ property.fieldSuffix | customTranslate }}</div>
           </mat-form-field>
           <tb-color-input *ngIf="property.type === 'color'"
                           [required]="property.required"
@@ -71,13 +74,13 @@
           <tb-color-settings *ngIf="property.type === 'color-settings'"
                              [class]="property.fieldClass"
                              formControlName="{{ property.id }}"
-                             settingsKey="{{ property.name }}">
+                             settingsKey="{{ property.name | customTranslate }}">
           </tb-color-settings>
           <mat-form-field  *ngIf="property.type === 'number'" [class]="property.fieldClass" appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="{{ property.id }}" [required]="property.required"
                    [min]="property.min" [max]="property.max" [step]="property.step"
                    type="number" placeholder="{{ 'widget-config.set' | translate }}">
-            <div fxHide.lt-md matSuffix *ngIf="property.fieldSuffix">{{ property.fieldSuffix }}</div>
+            <div fxHide.lt-md matSuffix *ngIf="property.fieldSuffix">{{ property.fieldSuffix | customTranslate }}</div>
           </mat-form-field>
           <tb-font-settings *ngIf="property.type === 'font'"
                             [class]="property.fieldClass"

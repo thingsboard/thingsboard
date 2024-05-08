@@ -21,7 +21,7 @@
     <div class="tb-form-row">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.slider.initial-value-hint' | translate}}" translate>widgets.slider.initial-value</div>
       <tb-get-value-action-settings fxFlex
-                                    panelTitle="widgets.slider.initial-value"
+                                    panelTitle="{{ 'widgets.slider.initial-value' | translate }}"
                                     [valueType]="valueType.DOUBLE"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
@@ -31,7 +31,7 @@
     <div class="tb-form-row space-between">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.slider.on-value-change-hint' | translate}}" translate>widgets.slider.on-value-change</div>
       <tb-set-value-action-settings fxFlex
-                                    panelTitle="widgets.slider.on-value-change"
+                                    panelTitle="{{ 'widgets.slider.on-value-change' | translate }}"
                                     [valueType]="valueType.DOUBLE"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
@@ -41,9 +41,9 @@
     <div class="tb-form-row">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.disabled-state-hint' | translate}}" translate>widgets.rpc-state.disabled-state</div>
       <tb-get-value-action-settings fxFlex
-                                    panelTitle="widgets.rpc-state.disabled-state"
+                                    panelTitle="{{ 'widgets.rpc-state.disabled-state' | translate }}"
                                     [valueType]="valueType.BOOLEAN"
-                                    stateLabel="widgets.rpc-state.disabled"
+                                    stateLabel="{{ 'widgets.rpc-state.disabled' | translate }}"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"

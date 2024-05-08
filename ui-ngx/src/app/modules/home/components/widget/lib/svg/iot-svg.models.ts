@@ -24,7 +24,14 @@ import {
   SetValueSettings,
   ValueToDataType
 } from '@shared/models/action-widget-settings.models';
-import { formatValue, isDefinedAndNotNull, isUndefinedOrNull, mergeDeep, parseFunction } from '@core/utils';
+import {
+  createLabelFromSubscriptionEntityInfo,
+  formatValue,
+  isDefinedAndNotNull,
+  isUndefinedOrNull,
+  mergeDeep,
+  parseFunction
+} from '@core/utils';
 import { BehaviorSubject, forkJoin, Observable, Observer } from 'rxjs';
 import { map, share } from 'rxjs/operators';
 import { ValueAction, ValueGetter, ValueSetter } from '@home/components/widget/lib/action/action-widget.models';
@@ -80,6 +87,7 @@ export enum IotSvgBehaviorType {
 export interface IotSvgBehaviorBase {
   id: string;
   name: string;
+  hint?: string;
   type: IotSvgBehaviorType;
 }
 
@@ -87,6 +95,9 @@ export interface IotSvgBehaviorValue extends IotSvgBehaviorBase {
   valueType: ValueType;
   defaultValue: any;
   valueId: string;
+  trueLabel?: string;
+  falseLabel?: string;
+  stateLabel?: string;
 }
 
 export interface IotSvgBehaviorAction extends IotSvgBehaviorBase {
@@ -121,23 +132,6 @@ export interface IotSvgNumberProperty extends IotSvgPropertyBase {
 
 export type IotSvgProperty = IotSvgPropertyBase & IotSvgNumberProperty;
 
-export type ScadaObjectElementActionTrigger = 'click';
-
-export type ScadaObjectActionType = 'updateValue';
-export type ScadaObjectActionUpdateValueType = 'toggle' | 'increment' | 'constant';
-
-export interface ScadaObjectElementAction {
-  trigger: ScadaObjectElementActionTrigger;
-  enabledTriggerValues?: string[];
-  enabledConditionFunction?: string;
-  enabledCondition?: (values: {[key: string]: any}) => boolean;
-  actionType: ScadaObjectActionType;
-  updateValueId?: string;
-  updateValueType?: ScadaObjectActionUpdateValueType;
-  updateValueConstant?: any;
-  updateValueInc?: number;
-}
-
 export interface IotSvgMetadata {
   title: string;
   stateRenderFunction?: string;
@@ -155,16 +149,16 @@ export const emptyMetadata: IotSvgMetadata = {
 };
 
 
-export const parseScadaObjectMetadataFromContent = (svgContent: string): IotSvgMetadata => {
+export const parseIotSvgMetadataFromContent = (svgContent: string): IotSvgMetadata => {
   try {
     const svgDoc = new DOMParser().parseFromString(svgContent, 'image/svg+xml');
-    return parseScadaObjectMetadataFromDom(svgDoc);
+    return parseIotSvgMetadataFromDom(svgDoc);
   } catch (_e) {
     return emptyMetadata;
   }
 };
 
-const parseScadaObjectMetadataFromDom = (svgDoc: Document): IotSvgMetadata => {
+const parseIotSvgMetadataFromDom = (svgDoc: Document): IotSvgMetadata => {
   try {
     const elements = svgDoc.getElementsByTagName('tb:metadata');
     if (elements.length) {
@@ -232,7 +226,7 @@ const defaultWidgetActionSettings = (widgetAction: IotSvgBehavior): WidgetAction
   stateEntityParamName: null
 });
 
-export const defaultScadaObjectSettings = (metadata: IotSvgMetadata): IotSvgObjectSettings => {
+export const defaultIotSvgObjectSettings = (metadata: IotSvgMetadata): IotSvgObjectSettings => {
   const settings: IotSvgObjectSettings = {};
   for (const behavior of metadata.behavior) {
     if (behavior.type === IotSvgBehaviorType.value) {
@@ -285,8 +279,8 @@ export class IotSvgObject {
     return this.ctx.http.get(this.svgPath, {responseType: 'text'}).pipe(
       map((inputSvgContent) => {
         const doc: XMLDocument = new DOMParser().parseFromString(inputSvgContent, 'image/svg+xml');
-        this.metadata = parseScadaObjectMetadataFromDom(doc);
-        const defaults = defaultScadaObjectSettings(this.metadata);
+        this.metadata = parseIotSvgMetadataFromDom(doc);
+        const defaults = defaultIotSvgObjectSettings(this.metadata);
         this.settings = mergeDeep<IotSvgObjectSettings>({}, defaults, this.inputSettings || {});
         this.prepareMetadata();
         this.prepareSvgShape(doc);
@@ -613,6 +607,10 @@ export class IotSvgObject {
       if (isDefinedAndNotNull(value)) {
         if (property.type === 'color-settings') {
           return ColorProcessor.fromSettings(value);
+        } else if (property.type === 'string') {
+          const result =  this.ctx.utilsService.customTranslation(value, value);
+          const entityInfo = this.ctx.defaultSubscription.getFirstEntityInfo();
+          return createLabelFromSubscriptionEntityInfo(entityInfo, result);
         }
         return value;
       } else {

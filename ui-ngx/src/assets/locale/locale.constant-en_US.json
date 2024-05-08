@@ -3216,6 +3216,9 @@
             "error-entities": "There was an error creating {{count}} entities."
         }
     },
+    "iot-svg": {
+        "behavior": "Behavior"
+    },
     "item": {
         "selected": "Selected"
     },

@@ -218,6 +218,7 @@ import { EmbedImageDialogComponent } from '@shared/components/image/embed-image-
 import { ImageGalleryDialogComponent } from '@shared/components/image/image-gallery-dialog.component';
 import { RuleChainSelectPanelComponent } from '@shared/components/rule-chain/rule-chain-select-panel.component';
 import { WidgetButtonComponent } from '@shared/components/button/widget-button.component';
+import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -236,6 +237,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     SafePipe,
     ShortNumberPipe,
     ImagePipe,
+    CustomTranslatePipe,
     {
       provide: FlowInjectionToken,
       useValue: Flow
@@ -361,6 +363,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     FileSizePipe,
     DateAgoPipe,
     ImagePipe,
+    CustomTranslatePipe,
     SafePipe,
     ShortNumberPipe,
     SelectableColumnsPipe,
@@ -614,6 +617,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     FileSizePipe,
     DateAgoPipe,
     ImagePipe,
+    CustomTranslatePipe,
     SafePipe,
     ShortNumberPipe,
     SelectableColumnsPipe,

@@ -16,7 +16,7 @@
 
 -->
 <div class="tb-action-settings-panel" [formGroup]="getValueSettingsFormGroup">
-  <div class="tb-action-settings-title">{{ panelTitle | translate }}</div>
+  <div class="tb-action-settings-title">{{ panelTitle }}</div>
   <div class="tb-action-settings-panel-content">
     <div class="tb-form-row">
       <div class="fixed-title-width" >{{ 'widgets.value-action.action' | translate }}</div>
@@ -122,7 +122,7 @@
                   helpId="widget/lib/rpc/parse_value_fn">
       </tb-js-func>
       <div *ngIf="valueType === ValueType.BOOLEAN" class="tb-form-row align-start no-gap column-xs">
-        <div class="fixed-title-width fixed-title-height">{{ 'widgets.value-action.state-when-result-is' | translate:{state: (stateLabel | translate)} }}</div>
+        <div class="fixed-title-width fixed-title-height">{{ 'widgets.value-action.state-when-result-is' | translate:{state: stateLabel} }}</div>
         <tb-value-input
           fxFlex
           [valueType]="(getValueSettingsFormGroup.get('action').value === getValueAction.GET_DASHBOARD_STATE &&

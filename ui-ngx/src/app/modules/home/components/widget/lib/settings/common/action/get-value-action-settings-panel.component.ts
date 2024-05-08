@@ -53,10 +53,10 @@ export class GetValueActionSettingsPanelComponent extends PageComponent implemen
   valueType: ValueType;
 
   @Input()
-  trueLabel = 'value.true';
+  trueLabel: string;
 
   @Input()
-  falseLabel = 'value.false';
+  falseLabel: string;
 
   @Input()
   stateLabel: string;

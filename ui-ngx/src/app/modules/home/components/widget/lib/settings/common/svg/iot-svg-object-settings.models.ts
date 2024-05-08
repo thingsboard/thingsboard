@@ -16,15 +16,15 @@
 
 import { IotSvgProperty } from '@home/components/widget/lib/svg/iot-svg.models';
 
-export interface ScadaPropertyRow {
+export interface IotSvgPropertyRow {
   label: string;
   properties: IotSvgProperty[];
   switch?: IotSvgProperty;
   rowClass?: string;
 }
 
-export const toPropertyRows = (properties: IotSvgProperty[]): ScadaPropertyRow[] => {
-  const result: ScadaPropertyRow[] = [];
+export const toPropertyRows = (properties: IotSvgProperty[]): IotSvgPropertyRow[] => {
+  const result: IotSvgPropertyRow[] = [];
   for (const property of properties) {
     let propertyRow = result.find(r => r.label === property.name);
     if (!propertyRow) {
