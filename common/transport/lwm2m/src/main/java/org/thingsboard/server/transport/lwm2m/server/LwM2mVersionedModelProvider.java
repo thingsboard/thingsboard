@@ -27,10 +27,10 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
@@ -107,7 +107,8 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
 
         @Override
         public ObjectModel getObjectModel(int objectId) {
-            String version = String.valueOf(registration.getSupportedVersion(objectId));
+            LwM2mClient lwM2mClient = lwM2mClientContext.getClientByEndpoint(registration.getEndpoint());
+            String version = lwM2mClient.getSupportedObjectVersion(objectId).toString();
             if (version != null) {
                 return this.getObjectModelDynamic(objectId, version);
             }
@@ -116,7 +117,8 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
 
         @Override
         public Collection<ObjectModel> getObjectModels() {
-            Map<Integer, LwM2m.Version> supportedObjects = this.registration.getSupportedObject();
+            LwM2mClient lwM2mClient = lwM2mClientContext.getClientByEndpoint(registration.getEndpoint());
+            Map<Integer, LwM2m.Version> supportedObjects = lwM2mClient.getSupportedClientObjects();
             Collection<ObjectModel> result = new ArrayList<>(supportedObjects.size());
             for (Map.Entry<Integer, LwM2m.Version> supportedObject : supportedObjects.entrySet()) {
                 ObjectModel objectModel = this.getObjectModelDynamic(supportedObject.getKey(), String.valueOf(supportedObject.getValue()));
