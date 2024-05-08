@@ -465,7 +465,7 @@ public class LwM2mClient {
                     ver = getDefaultObjectIDVer();
                 }
                 this.supportedClientObjects.put(lwM2mPath.getObjectId(), ver);
-            } else if (this.supportedClientObjects.get(lwM2mPath.getObjectId()) == null){
+            } else if (lwM2mPath.getObjectId() != null && this.supportedClientObjects.get(lwM2mPath.getObjectId()) == null){
                 this.supportedClientObjects.put(lwM2mPath.getObjectId(), getDefaultObjectIDVer());
             }
         }
