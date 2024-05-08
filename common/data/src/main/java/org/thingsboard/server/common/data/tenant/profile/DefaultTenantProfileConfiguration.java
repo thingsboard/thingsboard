@@ -59,7 +59,7 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxJSExecutions;
     private long maxTbelExecutions;
     private long maxDPStorageDays;
-    private int maxRuleNodeExecutionsPerMessage = 1000;
+    private int maxRuleNodeExecutionsPerMessage;
     private long maxEmails;
     private Boolean smsEnabled;
     private long maxSms;
