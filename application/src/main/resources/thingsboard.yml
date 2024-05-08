@@ -490,7 +490,7 @@ cache:
     # make sure that if cache.type is 'redis' and cache.attributes.enabled is 'true' if you change 'maxmemory-policy' Redis config property to 'allkeys-lru', 'allkeys-lfu' or 'allkeys-random'
     enabled: "${CACHE_ATTRIBUTES_ENABLED:true}"
   specs:
-    relations: # no ttl if timeToLiveInMinutes is 0
+    relations:
       timeToLiveInMinutes: "${CACHE_SPECS_RELATIONS_TTL:1440}" # Relations cache TTL
       maxSize: "${CACHE_SPECS_RELATIONS_MAX_SIZE:10000}" # 0 means the cache is disabled
     deviceCredentials:
@@ -553,7 +553,7 @@ cache:
       timeToLiveInMinutes: "${CACHE_SPECS_EDGES_TTL:1440}" # Edges cache TTL
       maxSize: "${CACHE_SPECS_EDGES_MAX_SIZE:10000}" # 0 means the cache is disabled
     edgeSessions:
-      timeToLiveInMinutes: "${CACHE_SPECS_EDGE_SESSIONS_TTL:0}" # Edges cache TTL
+      timeToLiveInMinutes: "${CACHE_SPECS_EDGE_SESSIONS_TTL:0}" # Edge Sessions cache TTL; no expiration time if set to '0'
       maxSize: "${CACHE_SPECS_EDGE_SESSIONS_MAX_SIZE:10000}" # 0 means the cache is disabled
     repositorySettings:
       timeToLiveInMinutes: "${CACHE_SPECS_REPOSITORY_SETTINGS_TTL:1440}" # Repository settings cache TTL
@@ -1725,18 +1725,18 @@ queue:
   edge:
     # Default topic name for Kafka, RabbitMQ, etc.
     topic: "${TB_QUEUE_EDGE_TOPIC:tb_edge}"
-    # Amount of partitions used by Edge queue
+    # Amount of partitions used by Edge services
     partitions: "${TB_QUEUE_EDGE_PARTITIONS:10}"
-    # Interval in milliseconds to poll messages by Edge queue
+    # Poll interval for topics related to Edge services
     poll-interval: "${TB_QUEUE_EDGE_POLL_INTERVAL_MS:25}"
-    # Timeout for processing a message pack by Edge queue
+    # Timeout for processing a message pack by Edge services
     pack-processing-timeout: "${TB_QUEUE_EDGE_PACK_PROCESSING_TIMEOUT_MS:10000}"
-    # Retries for processing a failure message pack by Edge queue
+    # Retries for processing a failure message pack by Edge services
     pack-processing-retries: "${TB_QUEUE_EDGE_MESSAGE_PROCESSING_RETRIES:3}"
     stats:
-      # Enable/disable statistics for Edge
+      # Enable/disable statistics for Edge services
       enabled: "${TB_QUEUE_EDGE_STATS_ENABLED:true}"
-      # Statistics printing interval for Edge
+      # Statistics printing interval for Edge services
       print-interval-ms: "${TB_QUEUE_EDGE_STATS_PRINT_INTERVAL_MS:60000}"
 
 # Event configuration parameters

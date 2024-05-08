@@ -28,7 +28,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -44,7 +43,6 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.dao.edge.EdgeEventDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
-import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.service.ttl.EdgeEventsCleanUpService;
 
 import java.time.LocalDate;
@@ -72,10 +70,6 @@ public class EdgeEventControllerTest extends AbstractControllerTest {
     private SqlPartitioningRepository partitioningRepository;
     @Autowired
     private EdgeEventsCleanUpService edgeEventsCleanUpService;
-    @Autowired
-    private TbTransactionalCache<EdgeId, String> cache;
-    @Autowired
-    private TbServiceInfoProvider serviceInfoProvider;
 
     @Value("#{${sql.edge_events.partition_size} * 60 * 60 * 1000}")
     private long partitionDurationInMs;

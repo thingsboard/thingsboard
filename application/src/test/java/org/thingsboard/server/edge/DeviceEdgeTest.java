@@ -834,22 +834,6 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
         return deviceCredentials;
     }
 
-    private ObjectNode createDefaultRpc() {
-        ObjectNode rpc = JacksonUtil.newObjectNode();
-        rpc.put("method", "setGpio");
-
-        ObjectNode params = JacksonUtil.newObjectNode();
-
-        params.put("pin", 7);
-        params.put("value", 1);
-
-        rpc.set("params", params);
-        rpc.put("persistent", true);
-        rpc.put("timeout", 5000);
-
-        return rpc;
-    }
-
     private void simulateEdgeActivation(Edge edge) throws Exception {
         ObjectNode attributes = JacksonUtil.newObjectNode();
         attributes.put("active", true);

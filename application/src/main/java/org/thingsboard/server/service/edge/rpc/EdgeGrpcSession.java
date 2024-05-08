@@ -128,7 +128,7 @@ public final class EdgeGrpcSession implements Closeable {
     private StreamObserver<RequestMsg> inputStream;
     private StreamObserver<ResponseMsg> outputStream;
     private boolean connected;
-    private boolean syncCompleted;
+    private volatile boolean syncCompleted;
 
     private Long newStartTs;
     private Long previousStartTs;
@@ -226,7 +226,7 @@ public final class EdgeGrpcSession implements Closeable {
     }
 
     public void startSyncProcess(boolean fullSync) {
-        log.trace("[{}][{}][{}] Staring edge sync process", this.tenantId, edge.getId(), this.sessionId);
+        log.info("[{}][{}][{}] Staring edge sync process", this.tenantId, edge.getId(), this.sessionId);
         syncCompleted = false;
         interruptGeneralProcessingOnSync();
         doSync(new EdgeSyncCursor(ctx, edge, fullSync));
@@ -257,16 +257,21 @@ public final class EdgeGrpcSession implements Closeable {
             Futures.addCallback(sendDownlinkMsgsPack(Collections.singletonList(syncCompleteDownlinkMsg)), new FutureCallback<>() {
                 @Override
                 public void onSuccess(Boolean isInterrupted) {
-                    syncCompleted = true;
-                    ctx.getClusterService().onEdgeEventUpdate(new EdgeEventUpdateMsg(edge.getTenantId(), edge.getId()));
+                    markSyncCompletedSendEdgeEventUpdate();
                 }
 
                 @Override
                 public void onFailure(Throwable t) {
                     log.error("[{}][{}] Exception during sending sync complete", tenantId, edge.getId(), t);
+                    markSyncCompletedSendEdgeEventUpdate();
                 }
             }, ctx.getGrpcCallbackExecutorService());
         }
+    }
+
+    private void markSyncCompletedSendEdgeEventUpdate() {
+        syncCompleted = true;
+        ctx.getClusterService().onEdgeEventUpdate(new EdgeEventUpdateMsg(edge.getTenantId(), edge.getId()));
     }
 
     private void onUplinkMsg(UplinkMsg uplinkMsg) {
@@ -427,11 +432,9 @@ public final class EdgeGrpcSession implements Closeable {
 
     private void processEdgeEvents(EdgeEventFetcher fetcher, PageLink pageLink, SettableFuture<Pair<Long, Long>> result) {
         try {
-            // Process high priority events:
             if (!highPriorityQueue.isEmpty()) {
-                processHighPriorityEvent(result);
+                processHighPriorityEvents();
             }
-            // Continue regular event fetching
             PageData<EdgeEvent> pageData = fetcher.fetchEdgeEvents(edge.getTenantId(), edge, pageLink);
             if (isConnected() && !pageData.getData().isEmpty()) {
                 log.trace("[{}][{}][{}] event(s) are going to be processed.", this.tenantId, this.sessionId, pageData.getData().size());
@@ -475,29 +478,18 @@ public final class EdgeGrpcSession implements Closeable {
         }
     }
 
-    private void processHighPriorityEvent(SettableFuture<Pair<Long, Long>> result) {
-        List<EdgeEvent> highPriorityEvents = new ArrayList<>();
-        EdgeEvent event;
-        while ((event = highPriorityQueue.poll()) != null) {
-            highPriorityEvents.add(event);
+    private void processHighPriorityEvents() {
+        try {
+            List<EdgeEvent> highPriorityEvents = new ArrayList<>();
+            EdgeEvent event;
+            while ((event = highPriorityQueue.poll()) != null) {
+                highPriorityEvents.add(event);
+            }
+            List<DownlinkMsg> downlinkMsgsPack = convertToDownlinkMsgsPack(highPriorityEvents);
+            sendDownlinkMsgsPack(downlinkMsgsPack).get();
+        } catch (Exception e) {
+            log.error("[{}] Failed to process high priority events", this.sessionId, e);
         }
-
-        List<DownlinkMsg> downlinkMsgsPack = convertToDownlinkMsgsPack(highPriorityEvents);
-        Futures.addCallback(sendDownlinkMsgsPack(downlinkMsgsPack), new FutureCallback<>() {
-            @Override
-            public void onSuccess(@Nullable Boolean isInterrupted) {
-                if (Boolean.TRUE.equals(isInterrupted)) {
-                    log.debug("[{}][{}][{}] Send downlink messages task was interrupted", tenantId, edge.getId(), sessionId);
-                    result.set(null);
-                }
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                log.error("[{}] Failed to send downlink msgs pack", sessionId, t);
-                result.setException(t);
-            }
-        }, ctx.getGrpcCallbackExecutorService());
     }
 
     private ListenableFuture<Boolean> sendDownlinkMsgsPack(List<DownlinkMsg> downlinkMsgsPack) {
