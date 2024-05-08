@@ -15,7 +15,9 @@
  */
 package org.thingsboard.server.dao.service;
 
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.test.context.TestPropertySource;
+import org.thingsboard.server.dao.NoSqlContainerExtension;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -29,5 +31,6 @@ import java.lang.annotation.Target;
 @Inherited
 @Documented
 @TestPropertySource(locations = {"classpath:cassandra-test.properties", "classpath:application-test.properties", "classpath:nosql-test.properties"})
+@ExtendWith(NoSqlContainerExtension.class)
 public @interface DaoNoSqlTest {
 }

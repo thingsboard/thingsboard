@@ -16,6 +16,8 @@
 package org.thingsboard.server.transport;
 
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.platform.suite.api.ExcludeClassNamePatterns;
 import org.junit.platform.suite.api.SelectPackages;
 import org.junit.platform.suite.api.Suite;
@@ -36,6 +38,16 @@ public class JUnit5TransportNoSqlTestSuite {
 
     public JUnit5TransportNoSqlTestSuite() {
         log.warn("JUnit5TransportNoSqlTestSuite constructor");  //no instance created
+    }
+
+    @BeforeAll
+    static void setup() {
+        log.warn("Starting Tests Suite");
+    }
+
+    @AfterAll
+    static void teardown() {
+        log.warn("Completed Tests Suite");
     }
 
 }
