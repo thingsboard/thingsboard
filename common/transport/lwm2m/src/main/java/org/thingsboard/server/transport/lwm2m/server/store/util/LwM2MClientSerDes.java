@@ -107,6 +107,8 @@ public class LwM2MClientSerDes {
         if (client.getPagingTransmissionWindow() != null) {
             o.addProperty("pagingTransmissionWindow", client.getPagingTransmissionWindow());
         }
+        o.addProperty("defaultObjectIDVer", client.getDefaultObjectIDVer().toString());
+
         if (client.getRegistration() != null) {
             String registrationAddress = client.getRegistration().getAddress().toString();
             JsonNode registrationNode = registrationSerDes.jSerialize(client.getRegistration());
@@ -337,6 +339,13 @@ public class LwM2MClientSerDes {
             Field pagingTransmissionWindowField = lwM2mClientClass.getDeclaredField("pagingTransmissionWindow");
             pagingTransmissionWindowField.setAccessible(true);
             pagingTransmissionWindowField.set(lwM2mClient, pagingTransmissionWindow.getAsLong());
+        }
+
+        JsonElement defaultObjectIDVer = o.get("defaultObjectIDVer");
+        if (defaultObjectIDVer != null) {
+            Field defaultObjectIDVerField = lwM2mClientClass.getDeclaredField("defaultObjectIDVer");
+            defaultObjectIDVerField.setAccessible(true);
+            defaultObjectIDVerField.set(lwM2mClient, defaultObjectIDVer.getAsString());
         }
 
         JsonElement registration = o.get("registration");

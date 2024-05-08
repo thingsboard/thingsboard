@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.mqtt.integration;
+package org.thingsboard.server.common.data.exception;
 
-import org.junit.extensions.cpsuite.ClasspathSuite;
-import org.junit.runner.RunWith;
+import org.thingsboard.server.common.data.limit.LimitedApi;
 
-@RunWith(ClasspathSuite.class)
-@ClasspathSuite.ClassnameFilters({
-        "org.thingsboard.mqtt.integration.*Test",
-})
-public class IntegrationTestSuite {
+public class RateLimitExceededException extends AbstractRateLimitException {
+
+    public RateLimitExceededException(String message) {
+        super(message);
+    }
+
+    public RateLimitExceededException(LimitedApi api) {
+        super("Rate limit for " + api.getLabel() + " is exceeded");
+    }
 
 }

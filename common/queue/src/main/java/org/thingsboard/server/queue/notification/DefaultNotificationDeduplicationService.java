@@ -29,9 +29,8 @@ import org.thingsboard.server.common.data.notification.rule.trigger.Notification
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 import org.thingsboard.server.queue.util.PropertyUtils;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import static org.springframework.util.ConcurrentReferenceHashMap.ReferenceType.SOFT;
@@ -41,7 +40,7 @@ import static org.springframework.util.ConcurrentReferenceHashMap.ReferenceType.
 @Slf4j
 public class DefaultNotificationDeduplicationService implements NotificationDeduplicationService {
 
-    private Map<NotificationRuleTriggerType, Long> deduplicationDurations;
+    private ConcurrentMap<NotificationRuleTriggerType, Long> deduplicationDurations;
 
     @Autowired(required = false)
     private CacheManager cacheManager;
@@ -116,7 +115,7 @@ public class DefaultNotificationDeduplicationService implements NotificationDedu
     @Autowired
     public void setDeduplicationDurations(@Value("${notification_system.rules.deduplication_durations:}")
                                           String deduplicationDurationsStr) {
-        this.deduplicationDurations = new HashMap<>();
+        this.deduplicationDurations = new ConcurrentHashMap<>();
         PropertyUtils.getProps(deduplicationDurationsStr).forEach((triggerType, duration) -> {
             this.deduplicationDurations.put(NotificationRuleTriggerType.valueOf(triggerType), Long.parseLong(duration));
         });

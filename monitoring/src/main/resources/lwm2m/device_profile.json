@@ -44,8 +44,7 @@
         "clientOnlyObserveAfterConnect": 1,
         "fwUpdateStrategy": 1,
         "swUpdateStrategy": 1,
-        "powerMode": "DRX",
-        "compositeOperationsSupport": false
+        "powerMode": "DRX"
       },
       "bootstrapServerUpdateEnable": false,
       "type": "LWM2M"

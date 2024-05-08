@@ -86,6 +86,13 @@ import { PowerButtonWidgetComponent } from '@home/components/widget/lib/rpc/powe
 import { SliderWidgetComponent } from '@home/components/widget/lib/rpc/slider-widget.component';
 import { ToggleButtonWidgetComponent } from '@home/components/widget/lib/button/toggle-button-widget.component';
 import { TimeSeriesChartWidgetComponent } from '@home/components/widget/lib/chart/time-series-chart-widget.component';
+import { AddConnectorDialogComponent } from '@home/components/widget/lib/gateway/dialog/add-connector-dialog.component';
+import { MappingTableComponent } from '@home/components/widget/lib/gateway/connectors-configuration/mapping-table.component';
+import { MappingDialogComponent } from '@home/components/widget/lib/gateway/dialog/mapping-dialog.component';
+import { DeviceInfoTableComponent } from '@home/components/widget/lib/gateway/connectors-configuration/device-info-table.component';
+import { MappingDataKeysPanelComponent } from '@home/components/widget/lib/gateway/connectors-configuration/mapping-data-keys-panel.component';
+import { BrokerSecurityComponent } from '@home/components/widget/lib/gateway/connectors-configuration/broker-security.component';
+import { EllipsisChipListDirective } from '@home/components/widget/lib/gateway/connectors-configuration/ellipsis-chip-list.directive';
 import { StatusWidgetComponent } from '@home/components/widget/lib/indicator/status-widget.component';
 import { LatestChartComponent } from '@home/components/widget/lib/chart/latest-chart.component';
 import { PieChartWidgetComponent } from '@home/components/widget/lib/chart/pie-chart-widget.component';
@@ -118,6 +125,12 @@ import { IotSvgWidgetComponent } from '@home/components/widget/lib/svg/iot-svg-w
       LegendComponent,
       FlotWidgetComponent,
       GatewayConnectorComponent,
+      AddConnectorDialogComponent,
+      MappingTableComponent,
+      MappingDialogComponent,
+      DeviceInfoTableComponent,
+      MappingDataKeysPanelComponent,
+      BrokerSecurityComponent,
       GatewayLogsComponent,
       GatewayStatisticsComponent,
       GatewayServiceRPCComponent,
@@ -127,6 +140,7 @@ import { IotSvgWidgetComponent } from '@home/components/widget/lib/svg/iot-svg-w
       GatewayConfigurationComponent,
       GatewayRemoteConfigurationDialogComponent,
       GatewayServiceRPCConnectorTemplateDialogComponent,
+      EllipsisChipListDirective,
       ValueCardWidgetComponent,
       AggregatedValueCardWidgetComponent,
       CountWidgetComponent,
@@ -182,9 +196,16 @@ import { IotSvgWidgetComponent } from '@home/components/widget/lib/svg/iot-svg-w
         LegendComponent,
         FlotWidgetComponent,
         GatewayConnectorComponent,
+        AddConnectorDialogComponent,
+        MappingTableComponent,
+        MappingDialogComponent,
+        DeviceInfoTableComponent,
+        MappingDataKeysPanelComponent,
+        BrokerSecurityComponent,
         GatewayLogsComponent,
         GatewayServiceRPCConnectorComponent,
         GatewayServiceRPCConnectorTemplatesComponent,
+        EllipsisChipListDirective,
         GatewayStatisticsComponent,
         GatewayServiceRPCComponent,
         DeviceGatewayCommandComponent,
