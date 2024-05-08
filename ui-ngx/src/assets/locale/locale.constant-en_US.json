@@ -1899,6 +1899,11 @@
                 "step": "Step",
                 "min-evaluation-period": "Minimum evaluation period",
                 "max-evaluation-period": "Maximum evaluation period"
+            },
+            "default-object-id": "Default Object Version (Attribute)",
+            "default-object-id-ver": {
+                "v1-0": "1.0",
+                "v1-1": "1.1"
             }
         },
         "snmp": {
