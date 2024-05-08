@@ -13,25 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.queue;
+package org.thingsboard.server.common.data.queue;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+public interface QueueConfig {
 
-@RequiredArgsConstructor
-@Getter
-public enum ServiceType {
+    boolean isConsumerPerPartition();
 
-    TB_CORE("TB Core"),
-    TB_RULE_ENGINE("TB Rule Engine"),
-    TB_TRANSPORT("TB Transport"),
-    JS_EXECUTOR("JS Executor"),
-    TB_VC_EXECUTOR("TB VC Executor");
-
-    private final String label;
-
-    public static ServiceType of(String serviceType) {
-        return ServiceType.valueOf(serviceType.replace("-", "_").toUpperCase());
-    }
+    int getPollInterval();
 
 }
