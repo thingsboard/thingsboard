@@ -80,6 +80,15 @@
             <mat-error *ngIf="gatewayConfigGroup.get('thingsboard.security.accessToken').hasError('required')">
               {{ 'security.access-token-required' | translate }}
             </mat-error>
+            <tb-copy-button
+              matSuffix
+              miniButton="false"
+              *ngIf="gatewayConfigGroup.get('thingsboard.security.accessToken').value"
+              [copyText]="gatewayConfigGroup.get('thingsboard.security.accessToken').value"
+              tooltipText="{{ 'device.copy-access-token' | translate }}"
+              tooltipPosition="above"
+              icon="content_copy">
+            </tb-copy-button>
             <mat-icon matIconSuffix style="cursor:pointer;"
                       matTooltip="{{ 'gateway.hints.token' | translate }}">info_outlined
             </mat-icon>
@@ -92,6 +101,15 @@
               <mat-error *ngIf="gatewayConfigGroup.get('thingsboard.security.clientId').hasError('required')">
                 {{ 'security.clientId-required' | translate }}
               </mat-error>
+              <tb-copy-button
+                matSuffix
+                miniButton="false"
+                *ngIf="gatewayConfigGroup.get('thingsboard.security.clientId').value"
+                [copyText]="gatewayConfigGroup.get('thingsboard.security.clientId').value"
+                tooltipText="{{ 'gateway.copy-client-id' | translate }}"
+                tooltipPosition="above"
+                icon="content_copy">
+              </tb-copy-button>
               <mat-icon matIconSuffix style="cursor:pointer;"
                         matTooltip="{{ 'gateway.hints.client-id' | translate }}">info_outlined
               </mat-icon>
@@ -102,6 +120,15 @@
               <mat-error *ngIf="gatewayConfigGroup.get('thingsboard.security.username').hasError('required')">
                 {{ 'security.username-required' | translate }}
               </mat-error>
+              <tb-copy-button
+                matSuffix
+                miniButton="false"
+                *ngIf="gatewayConfigGroup.get('thingsboard.security.username').value"
+                [copyText]="gatewayConfigGroup.get('thingsboard.security.username').value"
+                tooltipText="{{ 'gateway.copy-username' | translate }}"
+                tooltipPosition="above"
+                icon="content_copy">
+              </tb-copy-button>
               <mat-icon matIconSuffix style="cursor:pointer;"
                         matTooltip="{{ 'gateway.hints.username' | translate }}">info_outlined
               </mat-icon>
@@ -109,8 +136,17 @@
           </div>
           <mat-form-field appearance="outline" subscriptSizing="dynamic"
                           *ngIf="gatewayConfigGroup.get('thingsboard.security.type').value === 'usernamePassword'">
-            <mat-label translate>security.password</mat-label>
+            <mat-label translate>gateway.password</mat-label>
             <input matInput formControlName="password"/>
+            <tb-copy-button
+              matSuffix
+              miniButton="false"
+              *ngIf="gatewayConfigGroup.get('thingsboard.security.password').value"
+              [copyText]="gatewayConfigGroup.get('thingsboard.security.password').value"
+              tooltipText="{{ 'gateway.copy-password' | translate }}"
+              tooltipPosition="above"
+              icon="content_copy">
+            </tb-copy-button>
             <mat-icon matIconSuffix style="cursor:pointer;"
                       matTooltip="{{ 'gateway.hints.password' | translate }}">info_outlined
             </mat-icon>
