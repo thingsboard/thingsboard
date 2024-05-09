@@ -23,7 +23,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.protobuf.util.JsonFormat;
 import lombok.SneakyThrows;
-import org.eclipse.leshan.core.LwM2m;
+import org.eclipse.leshan.core.LwM2m.Version;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 import org.eclipse.leshan.core.node.LwM2mNodeException;
@@ -346,7 +346,7 @@ public class LwM2MClientSerDes {
         if (defaultObjectIDVer != null) {
             Field defaultObjectIDVerField = lwM2mClientClass.getDeclaredField("defaultObjectIDVer");
             defaultObjectIDVerField.setAccessible(true);
-            defaultObjectIDVerField.set(lwM2mClient, new LwM2m.Version(defaultObjectIDVer.getAsString()));
+            defaultObjectIDVerField.set(lwM2mClient, new Version(defaultObjectIDVer.getAsString()));
         }
 
         JsonElement registration = o.get("registration");
