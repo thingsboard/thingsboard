@@ -15,10 +15,10 @@
  */
 package org.thingsboard.server.dao.service;
 
+import org.assertj.core.api.Assertions;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
@@ -72,7 +72,7 @@ public class UserServiceTest extends AbstractServiceTest {
         customerUser.setEmail("customer@thingsboard.org");
         customerUser = userService.saveUser(tenantId, customerUser);
 
-        userSettings = createUserSettings(customerUser.getId());
+        UserSettings userSettings = createUserSettings(customerUser.getId());
     }
 
     @Test
@@ -87,6 +87,21 @@ public class UserServiceTest extends AbstractServiceTest {
         Assert.assertNotNull(user);
         Assert.assertEquals(Authority.CUSTOMER_USER, user.getAuthority());
         user = userService.findUserByEmail(tenantId, "fake@thingsboard.org");
+        Assert.assertNull(user);
+    }
+
+    @Test
+    public void testFindUserByTenantIdAndEmail() {
+        User user = userService.findUserByTenantIdAndEmail(SYSTEM_TENANT_ID, "sysadmin@thingsboard.org");
+        Assert.assertNotNull(user);
+        Assert.assertEquals(Authority.SYS_ADMIN, user.getAuthority());
+        user = userService.findUserByTenantIdAndEmail(tenantId, "tenant@thingsboard.org");
+        Assert.assertNotNull(user);
+        Assert.assertEquals(Authority.TENANT_ADMIN, user.getAuthority());
+        user = userService.findUserByTenantIdAndEmail(tenantId, "customer@thingsboard.org");
+        Assert.assertNotNull(user);
+        Assert.assertEquals(Authority.CUSTOMER_USER, user.getAuthority());
+        user = userService.findUserByTenantIdAndEmail(tenantId, "fake@thingsboard.org");
         Assert.assertNull(user);
     }
 
@@ -142,36 +157,36 @@ public class UserServiceTest extends AbstractServiceTest {
     public void testSaveUserWithSameEmail() {
         User tenantAdminUser = userService.findUserByEmail(tenantId, "tenant@thingsboard.org");
         tenantAdminUser.setEmail("sysadmin@thingsboard.org");
-        Assertions.assertThrows(DataValidationException.class, () -> {
-            userService.saveUser(tenantId, tenantAdminUser);
-        });
+        Assertions.assertThatThrownBy(() -> userService.saveUser(tenantId, tenantAdminUser))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessage("User with email 'sysadmin@thingsboard.org' already present in database!");
     }
 
     @Test
     public void testSaveUserWithInvalidEmail() {
         User tenantAdminUser = userService.findUserByEmail(tenantId, "tenant@thingsboard.org");
         tenantAdminUser.setEmail("tenant_thingsboard.org");
-        Assertions.assertThrows(DataValidationException.class, () -> {
-            userService.saveUser(tenantId, tenantAdminUser);
-        });
+        Assertions.assertThatThrownBy(() -> userService.saveUser(tenantId, tenantAdminUser))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessage("Invalid email address format 'tenant_thingsboard.org'!");
     }
 
     @Test
     public void testSaveUserWithEmptyEmail() {
         User tenantAdminUser = userService.findUserByEmail(tenantId, "tenant@thingsboard.org");
         tenantAdminUser.setEmail(null);
-        Assertions.assertThrows(DataValidationException.class, () -> {
-            userService.saveUser(tenantId, tenantAdminUser);
-        });
+        Assertions.assertThatThrownBy(() -> userService.saveUser(tenantId, tenantAdminUser))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessage("User email should be specified!");
     }
 
     @Test
     public void testSaveUserWithoutTenant() {
         User tenantAdminUser = userService.findUserByEmail(tenantId, "tenant@thingsboard.org");
         tenantAdminUser.setTenantId(null);
-        Assertions.assertThrows(DataValidationException.class, () -> {
-            userService.saveUser(tenantId, tenantAdminUser);
-        });
+        Assertions.assertThatThrownBy(() -> userService.saveUser(tenantId, tenantAdminUser))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessage("Tenant administrator should be assigned to tenant!");
     }
 
     @Test

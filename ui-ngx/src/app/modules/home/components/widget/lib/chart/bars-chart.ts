@@ -30,7 +30,7 @@ import {
   ChartFillType,
   ChartLabelPosition,
   createChartTextStyle,
-  createLinearOpacityGradient
+  createLinearOpacityGradient, toAnimationOption
 } from '@home/components/widget/lib/chart/chart.models';
 import { ValueAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
 import { RadiusAxisOption, YAXisOption } from 'echarts/types/dist/shared';
@@ -82,14 +82,7 @@ export class TbBarsChart extends TbLatestChart<BarsChartSettings> {
         },
         coordinateSystem: this.settings.polar ? 'polar' : 'cartesian2d',
         label: labelOption,
-        animation: this.settings.animation.animation,
-        animationThreshold: this.settings.animation.animationThreshold,
-        animationDuration: this.settings.animation.animationDuration,
-        animationEasing: this.settings.animation.animationEasing,
-        animationDelay: this.settings.animation.animationDelay,
-        animationDurationUpdate: this.settings.animation.animationDurationUpdate,
-        animationEasingUpdate: this.settings.animation.animationEasingUpdate,
-        animationDelayUpdate: this.settings.animation.animationDelayUpdate
+        ...toAnimationOption(this.ctx, this.settings.animation)
       }
     ];
 

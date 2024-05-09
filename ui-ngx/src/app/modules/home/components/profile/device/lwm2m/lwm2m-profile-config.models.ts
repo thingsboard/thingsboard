@@ -122,6 +122,18 @@ export const PowerModeTranslationMap = new Map<PowerMode, string>(
   ]
 );
 
+export enum ObjectIDVer {
+  V1_0 = '1.0',
+  V1_1 = '1.1'
+}
+
+export const ObjectIDVerTranslationMap = new Map<ObjectIDVer, string>(
+  [
+    [ObjectIDVer.V1_0, 'device-profile.lwm2m.default-object-id-ver.v1-0'],
+    [ObjectIDVer.V1_1, 'device-profile.lwm2m.default-object-id-ver.v1-1']
+  ]
+);
+
 export interface ServerSecurityConfig {
   host?: string;
   port?: number;
@@ -163,7 +175,7 @@ export interface ClientLwM2mSettings {
   edrxCycle?: number;
   pagingTransmissionWindow?: number;
   psmActivityTimer?: number;
-  compositeOperationsSupport: boolean;
+  defaultObjectIDVer: ObjectIDVer;
 }
 
 export interface ObservableAttributes {
@@ -190,7 +202,7 @@ export function getDefaultProfileClientLwM2mSettingsConfig(): ClientLwM2mSetting
     fwUpdateStrategy: 1,
     swUpdateStrategy: 1,
     powerMode: PowerMode.DRX,
-    compositeOperationsSupport: false
+    defaultObjectIDVer: ObjectIDVer.V1_0
   };
 }
 

@@ -21,9 +21,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Header;
-import io.jsonwebtoken.Jwt;
-import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.Jws;
 import lombok.extern.slf4j.Slf4j;
 import org.awaitility.Awaitility;
 import org.hamcrest.Matcher;
@@ -121,6 +119,7 @@ import org.thingsboard.server.queue.memory.InMemoryStorage;
 import org.thingsboard.server.service.entitiy.tenant.profile.TbTenantProfileService;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
+import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
@@ -240,6 +239,9 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     @Autowired
     protected ClaimDevicesService claimDevicesService;
+
+    @Autowired
+    private JwtTokenFactory jwtTokenFactory;
 
     @SpyBean
     protected MailService mailService;
@@ -561,13 +563,8 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     protected void validateJwtToken(String token, String username) {
-        Assert.assertNotNull(token);
-        Assert.assertFalse(token.isEmpty());
-        int i = token.lastIndexOf('.');
-        Assert.assertTrue(i > 0);
-        String withoutSignature = token.substring(0, i + 1);
-        Jwt<Header, Claims> jwsClaims = Jwts.parser().parseClaimsJwt(withoutSignature);
-        Claims claims = jwsClaims.getBody();
+        Jws<Claims> jwsClaims = jwtTokenFactory.parseTokenClaims(token);
+        Claims claims = jwsClaims.getPayload();
         String subject = claims.getSubject();
         Assert.assertEquals(username, subject);
     }

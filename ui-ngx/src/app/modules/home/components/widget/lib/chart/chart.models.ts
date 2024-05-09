@@ -19,10 +19,11 @@ import { TbColorScheme } from '@shared/models/color.models';
 import { LinearGradientObject } from 'zrender/lib/graphic/LinearGradient';
 import tinycolor from 'tinycolor2';
 import { ComponentStyle, Font, textStyle } from '@shared/models/widget-settings.models';
-import { LabelFormatterCallback } from 'echarts';
-import { LabelLayoutOption } from 'echarts/types/src/util/types';
+import { LabelFormatterCallback, RadialGradientObject } from 'echarts';
+import { AnimationOptionMixin, LabelLayoutOption } from 'echarts/types/src/util/types';
 import { LabelLayoutOptionCallback } from 'echarts/types/dist/shared';
 import { BuiltinTextPosition } from 'zrender/src/core/types';
+import { WidgetContext } from '@home/models/widget-component.models';
 
 export const chartColorScheme: TbColorScheme = {
   'threshold.line': {
@@ -84,6 +85,22 @@ export const chartShapeTranslations = new Map<ChartShape, string>(
     [ChartShape.pin, 'widgets.chart.shape-pin'],
     [ChartShape.arrow, 'widgets.chart.shape-arrow'],
     [ChartShape.none, 'widgets.chart.shape-none']
+  ]
+);
+
+export enum ChartLineType {
+  solid = 'solid',
+  dashed = 'dashed',
+  dotted = 'dotted'
+}
+
+export const chartLineTypes = Object.keys(ChartLineType) as ChartLineType[];
+
+export const chartLineTypeTranslations = new Map<ChartLineType, string>(
+  [
+    [ChartLineType.solid, 'widgets.chart.line-type-solid'],
+    [ChartLineType.dashed, 'widgets.chart.line-type-dashed'],
+    [ChartLineType.dotted, 'widgets.chart.line-type-dotted']
   ]
 );
 
@@ -287,6 +304,19 @@ export const createLinearOpacityGradient = (color: string, gradient: {start: num
   global: false
 });
 
+export const createRadialOpacityGradient = (color: string, gradient: {start: number; end: number}): RadialGradientObject => ({
+  type: 'radial',
+  x: 0.5,
+  y: 0.5,
+  r: 0.5,
+  colorStops: [{
+    offset: 0, color: tinycolor(color).setAlpha(gradient.end / 100).toRgbString() // color at 0%
+  }, {
+    offset: 1, color: tinycolor(color).setAlpha(gradient.start / 100).toRgbString() // color at 100%
+  }],
+  global: false
+});
+
 export const createChartTextStyle = (font: Font, color: string, darkMode: boolean, colorKey?: string, fill = false): ComponentStyle => {
   const style = textStyle(font);
   delete style.lineHeight;
@@ -314,3 +344,14 @@ export const prepareChartThemeColor = (color: string, darkMode: boolean, colorKe
   }
   return color;
 };
+
+export const toAnimationOption = (ctx: WidgetContext, settings: ChartAnimationSettings): AnimationOptionMixin => ({
+  animation: settings.animation,
+  animationThreshold: settings.animationThreshold,
+  animationDuration: settings.animationDuration,
+  animationEasing: settings.animationEasing,
+  animationDelay: settings.animationDelay,
+  animationDurationUpdate: settings.animationDurationUpdate,
+  animationEasingUpdate: settings.animationEasingUpdate,
+  animationDelayUpdate: settings.animationDelayUpdate
+});
