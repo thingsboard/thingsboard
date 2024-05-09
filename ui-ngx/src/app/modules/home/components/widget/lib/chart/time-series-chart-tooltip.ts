@@ -189,7 +189,6 @@ export class TimeSeriesChartTooltip {
     renderer.appendChild(labelElement, circleElement);
     const labelTextElement: HTMLElement = renderer.createElement('div');
     labelTextElement.innerHTML = this.sanitizer.sanitize(1, item.param.seriesName);
-    // renderer.appendChild(labelTextElement, renderer.createText(ASCIIEncode(item.param.seriesName)));
     renderer.setStyle(labelTextElement, 'font-family', settings.tooltipLabelFont.family);
     renderer.setStyle(labelTextElement, 'font-size', settings.tooltipLabelFont.size + settings.tooltipLabelFont.sizeUnit);
     renderer.setStyle(labelTextElement, 'font-style', settings.tooltipLabelFont.style);
@@ -215,7 +214,6 @@ export class TimeSeriesChartTooltip {
     }
     const value = formatFunction(item.param.value[1], latestData, units, decimals);
     valueElement.innerHTML = this.sanitizer.sanitize(1, value);
-    // renderer.appendChild(valueElement, renderer.createText(ASCIIEncode(value)));
     renderer.setStyle(valueElement, 'flex', '1');
     renderer.setStyle(valueElement, 'text-align', 'end');
     renderer.setStyle(valueElement, 'font-family', settings.tooltipValueFont.family);

@@ -59,7 +59,6 @@ import {
   TimeSeriesChartSettings
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { DeepPartial } from '@shared/models/common';
-import { TimeSeriesChartTooltip } from '@home/components/widget/lib/chart/time-series-chart-tooltip';
 
 const valuesLayoutHeight = 66;
 const valuesLayoutVerticalPadding = 16;

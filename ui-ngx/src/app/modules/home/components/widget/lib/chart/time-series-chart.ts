@@ -594,7 +594,6 @@ export class TbTimeSeriesChart {
     this.timeSeriesChart = echarts.init(this.chartElement,  null, {
       renderer: 'canvas'
     });
-    // const timeSeriesChartTooltip = new TimeSeriesChartTooltip(this.sanitizer);
     this.timeSeriesChartOptions = {
       darkMode: this.darkMode,
       backgroundColor: 'transparent',

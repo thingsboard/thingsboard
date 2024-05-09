@@ -40,7 +40,6 @@ import {
 } from '@home/components/widget/lib/chart/bar-chart-with-labels-widget.models';
 import { TbTimeSeriesChart } from '@home/components/widget/lib/chart/time-series-chart';
 import { DataKey } from '@shared/models/widget.models';
-import { TimeSeriesChartTooltip } from '@home/components/widget/lib/chart/time-series-chart-tooltip';
 
 @Component({
   selector: 'tb-bar-chart-with-labels-widget',
