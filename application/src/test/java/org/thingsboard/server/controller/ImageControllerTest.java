@@ -57,7 +57,6 @@ public class ImageControllerTest extends AbstractControllerTest {
 
     @Before
     public void beforeEach() throws Exception {
-        resourceRepository.deleteAll();
         loginTenantAdmin();
     }
 
