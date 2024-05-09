@@ -74,11 +74,11 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
 
     public static final String EDGE_IS_ROOT_BODY_KEY = "isRoot";
 
-    @Value("${queue.edge.pool_interval:25}")
+    @Value("${queue.edge.pool-interval:25}")
     private int pollDuration;
-    @Value("${queue.edge.pack_processing_timeout:10000}")
+    @Value("${queue.edge.pack-processing-timeout:10000}")
     private int packProcessingTimeout;
-    @Value("${queue.edge.pack_processing_retries:3}")
+    @Value("${queue.edge.pack-processing-retries:3}")
     private int packProcessingRetries;
     @Value("${queue.edge.stats.enabled:false}")
     private boolean statsEnabled;
