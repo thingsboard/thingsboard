@@ -108,9 +108,9 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
         @Override
         public ObjectModel getObjectModel(int objectId) {
             LwM2mClient lwM2mClient = lwM2mClientContext.getClientByEndpoint(registration.getEndpoint());
-            String version = lwM2mClient.getSupportedObjectVersion(objectId).toString();
+            var version = lwM2mClient.getSupportedObjectVersion(objectId);
             if (version != null) {
-                return this.getObjectModelDynamic(objectId, version);
+                return this.getObjectModelDynamic(objectId, version.toString());
             }
             return null;
         }

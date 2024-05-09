@@ -211,11 +211,11 @@ public class LwM2mClient {
     }
 
     private LwM2m.Version getObjectIDVerFromDeviceProfile(DeviceProfile deviceProfile) {
-        String defaultObjectIdVer = ((Lwm2mDeviceProfileTransportConfiguration)deviceProfile
+        String defaultObjectIdVer = deviceProfile != null ? ((Lwm2mDeviceProfileTransportConfiguration)deviceProfile
                 .getProfileData()
                 .getTransportConfiguration())
                 .getClientLwM2mSettings()
-                .getDefaultObjectIDVer();
+                .getDefaultObjectIDVer() : null;
         return new Version(defaultObjectIdVer == null ? LWM2M_OBJECT_VERSION_DEFAULT : defaultObjectIdVer);
     }
 
@@ -454,19 +454,21 @@ public class LwM2mClient {
     private void setSupportedClientObjects(){
         this.supportedClientObjects = new ConcurrentHashMap<>();
         for (Link link: this.registration.getSortedObjectLinks()) {
-            MixedLwM2mLink mixedLwM2mLink = (MixedLwM2mLink)link;
-            if(!mixedLwM2mLink.getPath().isRoot()){
-                LwM2mPath lwM2mPath = mixedLwM2mLink.getPath();
-                if (lwM2mPath.isObject()) {
-                    LwM2m.Version ver;
-                    if (mixedLwM2mLink.getAttributes().get("ver")!= null) {
-                        ver = (Version) mixedLwM2mLink.getAttributes().get("ver").getValue();
-                    } else {
-                        ver = getDefaultObjectIDVer();
+            if (link instanceof MixedLwM2mLink) {
+                MixedLwM2mLink mixedLwM2mLink = (MixedLwM2mLink) link;
+                if (!mixedLwM2mLink.getPath().isRoot()) {
+                    LwM2mPath lwM2mPath = mixedLwM2mLink.getPath();
+                    if (lwM2mPath.isObject()) {
+                        LwM2m.Version ver;
+                        if (mixedLwM2mLink.getAttributes().get("ver") != null) {
+                            ver = (Version) mixedLwM2mLink.getAttributes().get("ver").getValue();
+                        } else {
+                            ver = getDefaultObjectIDVer();
+                        }
+                        this.supportedClientObjects.put(lwM2mPath.getObjectId(), ver);
+                    } else if (this.supportedClientObjects.get(lwM2mPath.getObjectId()) == null) {
+                        this.supportedClientObjects.put(lwM2mPath.getObjectId(), getDefaultObjectIDVer());
                     }
-                    this.supportedClientObjects.put(lwM2mPath.getObjectId(), ver);
-                } else if (this.supportedClientObjects.get(lwM2mPath.getObjectId()) == null){
-                    this.supportedClientObjects.put(lwM2mPath.getObjectId(), getDefaultObjectIDVer());
                 }
             }
         }
