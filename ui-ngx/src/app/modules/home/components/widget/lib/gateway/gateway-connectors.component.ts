@@ -237,14 +237,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     });
 
     this.dataSource.sort = this.sort;
-    this.dataSource.sortingDataAccessor = (data: AttributeData, sortHeaderId: string) => {
-      if (sortHeaderId === 'syncStatus') {
-        return this.isConnectorSynced(data) ? 1 : 0;
-      } else if (sortHeaderId === 'enabled') {
-        return this.activeConnectors.includes(data.key) ? 1 : 0;
-      }
-      return data[sortHeaderId] || data.value[sortHeaderId];
-    };
+    this.dataSource.sortingDataAccessor = this.connectorsDataSorting.bind(this);
 
     if (this.device) {
       if (this.device.id === NULL_UUID) {
@@ -270,6 +263,19 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       });
     }
   }
+
+  private connectorsDataSorting(data: AttributeData, sortHeaderId: string) {
+    switch (sortHeaderId) {
+      case  'syncStatus':
+        return this.isConnectorSynced(data) ? 1 : 0;
+      case 'enabled':
+        return this.activeConnectors.includes(data.key) ? 1 : 0;
+      case 'errors':
+        return this.getErrorsCount(data);
+      default:
+        return data[sortHeaderId] || data.value[sortHeaderId];
+    }
+  };
 
   private uniqNameRequired(): ValidatorFn {
     return (c: UntypedFormControl) => {
@@ -548,7 +554,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     });
   }
 
-  getErrorsCount(attribute: AttributeData): string {
+  getErrorsCount(attribute: AttributeData): string | number {
     const connectorName = attribute.key;
     const connector = this.subscription && this.subscription.data
       .find(data => data && data.dataKey.name === `${connectorName}_ERRORS_COUNT`);

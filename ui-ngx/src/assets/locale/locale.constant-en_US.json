@@ -5979,7 +5979,8 @@
             "connector-state-param-key": "Connector state parameter key",
             "status": "Status",
             "message": "Message",
-            "created-time": "Created time"
+            "created-time": "Created time",
+            "level": "Level"
         },
         "gauge": {
             "default-color": "Default color",
