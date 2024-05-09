@@ -25,7 +25,11 @@ import { DashboardService } from '@core/http/dashboard.service';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { map } from 'rxjs/operators';
-import { getCurrentAuthUser, selectPersistDeviceStateToTelemetryAndMobileQrEnabled } from '@core/auth/auth.selectors';
+import {
+  getCurrentAuthUser,
+  selectMobileQrEnabled,
+  selectPersistDeviceStateToTelemetryAndMobileQrEnabled
+} from '@core/auth/auth.selectors';
 import { EntityKeyType } from '@shared/models/query/query.models';
 import { ResourcesService } from '@core/services/resources.service';
 
@@ -45,19 +49,31 @@ const updateDeviceActivityKeyFilterIfNeeded = (store: Store<AppState>,
             }
           }
         }
-        if (params.mobileQrEnabled) {
-          for (const widgetId of Object.keys(dashboard.configuration.widgets)) {
-            if (dashboard.configuration.widgets[widgetId].config.title === 'Select show mobile QR code') {
-              dashboard.configuration.widgets[widgetId].config.settings.markdownTextFunction =
-                (dashboard.configuration.widgets[widgetId].config.settings.markdownTextFunction as string)
-                  .replace('\'${mobileQrEnabled}\'', String(params.mobileQrEnabled));
-            }
-          }
-        }
-        return dashboard;
+        return params.mobileQrEnabled ? toggleMobileQRCodeDisplay(dashboard) : dashboard;
       })
     ))
   );
+
+const toggleMobileQRCodeDisplayIfNeeded = (store: Store<AppState>,
+              dashboard$: Observable<HomeDashboard>): Observable<HomeDashboard> =>
+  store.pipe(select(selectMobileQrEnabled)).pipe(
+    mergeMap((mobileQrEnabled) => dashboard$.pipe(
+      map((dashboard) => {
+        return mobileQrEnabled ? toggleMobileQRCodeDisplay(dashboard) : dashboard;
+      })
+    ))
+  );
+
+const toggleMobileQRCodeDisplay = (dashboard: HomeDashboard) => {
+  for (const widgetId of Object.keys(dashboard.configuration.widgets)) {
+    if (dashboard.configuration.widgets[widgetId].config.title === 'Select show mobile QR code') {
+      dashboard.configuration.widgets[widgetId].config.settings.markdownTextFunction =
+        (dashboard.configuration.widgets[widgetId].config.settings.markdownTextFunction as string)
+          .replace('\'${mobileQrEnabled}\'', String(true));
+    }
+  }
+  return dashboard;
+}
 
 export const homeDashboardResolver: ResolveFn<HomeDashboard> = (
   route: ActivatedRouteSnapshot,
@@ -73,7 +89,7 @@ export const homeDashboardResolver: ResolveFn<HomeDashboard> = (
         const authority = getCurrentAuthUser(store).authority;
         switch (authority) {
           case Authority.SYS_ADMIN:
-            dashboard$ = resourcesService.loadJsonResource(sysAdminHomePageJson);
+            dashboard$ = toggleMobileQRCodeDisplayIfNeeded(store, resourcesService.loadJsonResource(sysAdminHomePageJson));
             break;
           case Authority.TENANT_ADMIN:
             dashboard$ = updateDeviceActivityKeyFilterIfNeeded(store, resourcesService.loadJsonResource(tenantAdminHomePageJson));

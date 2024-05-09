@@ -1150,7 +1150,7 @@
           "settings": {
             "useMarkdownTextFunction": true,
             "markdownTextPattern": "### Markdown/HTML card\n - **Current entity**: ${entityName}.\n - **Current value**: ${Random}.",
-            "markdownTextFunction": "let html = '<div style=\"width: 100%; height: 100%;\">';\nlet supportMobile = '${mobileQrEnabled}' || false;\nif (supportMobile && typeof supportMobile === 'boolean') {\n    html += '<tb-dashboard-state stateId=\"mobile_app_qr_code\" [ctx]=\"ctx\"></tb-dashboard-state>';\n} else {\n    html += '<tb-getting-started-widget style=\"padding: 16px;\"></tb-getting-started-widget>';\n}\nhtml += '</div>';\nreturn html;",
+            "markdownTextFunction": "let html = '<div style=\"width: 100%; height: 100%;\">';\nlet supportMobile = '${mobileQrEnabled}' || false;\nif (supportMobile && typeof supportMobile === 'boolean') {\n    ctx.dashboardWidget.widgetLayout.mobileHide = false;\n    html += '<tb-dashboard-state stateId=\"mobile_app_qr_code\" [ctx]=\"ctx\"></tb-dashboard-state>';\n} else {\n    ctx.dashboardWidget.widgetLayout.mobileHide = true;\n    html += '<tb-getting-started-widget style=\"padding: 16px;\"></tb-getting-started-widget>';\n}\nhtml += '</div>';\nreturn html;",
             "applyDefaultMarkdownStyle": false,
             "markdownCss": ""
           },
@@ -1214,7 +1214,7 @@
         "typeFullFqn": "system.home_page_widgets.getting_started"
       },
       "8c5207d8-7103-4dc2-db48-d61c0c8c61fd": {
-        "typeFullFqn": "system.home_page_widgets.home_mobile_app_qr_code",
+        "typeFullFqn": "system.home_page_widgets.home_page_mobile_app_qr_code",
         "type": "static",
         "sizeX": 6,
         "sizeY": 3,
@@ -1320,7 +1320,9 @@
                 "sizeX": 35,
                 "sizeY": 58,
                 "row": 0,
-                "col": 85
+                "col": 85,
+                "mobileHide": false,
+                "mobileHeight": 10
               }
             },
             "gridSettings": {
@@ -1401,7 +1403,8 @@
                 "sizeX": 120,
                 "sizeY": 45,
                 "row": 0,
-                "col": 0
+                "col": 0,
+                "mobileHide": true
               },
               "8c5207d8-7103-4dc2-db48-d61c0c8c61fd": {
                 "sizeX": 120,

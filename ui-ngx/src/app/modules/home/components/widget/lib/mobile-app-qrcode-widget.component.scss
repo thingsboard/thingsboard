@@ -33,6 +33,7 @@
   color: rgba(0, 0, 0, 0.76);
 
   @media #{$mat-md-lg} {
+    padding-bottom: 0;
     font-weight: 500;
     font-size: 14px;
     line-height: 20px;
@@ -43,6 +44,11 @@
 .tb-qrcode-label {
   font-size: 14px;
   color: rgba(0, 0, 0, 0.54);
+
+  @media #{$mat-md-lg} {
+    font-size: 11px;
+    line-height: 16px;
+  }
 }
 
 .tb-qrcode {
