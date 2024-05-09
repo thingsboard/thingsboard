@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.ota;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.node.codec.CodecException;
@@ -57,8 +59,6 @@ import org.thingsboard.server.transport.lwm2m.server.ota.software.SoftwareUpdate
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MClientOtaInfoStore;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -481,7 +481,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
     }
 
     private void startUpdateUsingUrl(LwM2mClient client, String id, String url) {
-        String targetIdVer = convertObjectIdToVersionedId(id, client.getRegistration());
+        String targetIdVer = convertObjectIdToVersionedId(id, client);
         TbLwM2MWriteReplaceRequest request = TbLwM2MWriteReplaceRequest.builder().versionedId(targetIdVer).value(url).timeout(clientContext.getRequestTimeout(client)).build();
         downlinkHandler.sendWriteReplaceRequest(client, request, new TbLwM2MWriteResponseCallback(uplinkHandler, logService, client, targetIdVer));
     }
@@ -512,10 +512,10 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
             }
             switch (strategy) {
                 case OBJ_5_BINARY:
-                    startUpdateUsingBinary(client, convertObjectIdToVersionedId(FW_PACKAGE_5_ID, client.getRegistration()), otaPackageId);
+                    startUpdateUsingBinary(client, convertObjectIdToVersionedId(FW_PACKAGE_5_ID, client), otaPackageId);
                     break;
                 case OBJ_19_BINARY:
-                    startUpdateUsingBinary(client, convertObjectIdToVersionedId(FW_PACKAGE_19_ID, client.getRegistration()), otaPackageId);
+                    startUpdateUsingBinary(client, convertObjectIdToVersionedId(FW_PACKAGE_19_ID, client), otaPackageId);
                     break;
                 case OBJ_5_TEMP_URL:
                     startUpdateUsingUrl(client, FW_URL_ID, info.getBaseUrl() + "/" + FIRMWARE_UPDATE_COAP_RESOURCE + "/" + otaPackageId.toString());
@@ -534,7 +534,7 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
             LwM2MSoftwareUpdateStrategy strategy = info.getStrategy();
             switch (strategy) {
                 case BINARY:
-                    startUpdateUsingBinary(client, convertObjectIdToVersionedId(SW_PACKAGE_ID, client.getRegistration()), otaPackageId);
+                    startUpdateUsingBinary(client, convertObjectIdToVersionedId(SW_PACKAGE_ID, client), otaPackageId);
                     break;
                 case TEMP_URL:
                     startUpdateUsingUrl(client, SW_PACKAGE_URI_ID, info.getBaseUrl() + "/" + FIRMWARE_UPDATE_COAP_RESOURCE + "/" + otaPackageId.toString());
@@ -566,19 +566,19 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
     }
 
     private void executeFwUpdate(LwM2mClient client) {
-        String fwExecuteVerId = convertObjectIdToVersionedId(FW_EXECUTE_ID, client.getRegistration());
+        String fwExecuteVerId = convertObjectIdToVersionedId(FW_EXECUTE_ID, client);
         TbLwM2MExecuteRequest request = TbLwM2MExecuteRequest.builder().versionedId(fwExecuteVerId).timeout(clientContext.getRequestTimeout(client)).build();
         downlinkHandler.sendExecuteRequest(client, request, new TbLwM2MExecuteCallback(logService, client, fwExecuteVerId));
     }
 
     private void executeSwInstall(LwM2mClient client) {
-        String swInstallVerId = convertObjectIdToVersionedId(SW_INSTALL_ID, client.getRegistration());
+        String swInstallVerId = convertObjectIdToVersionedId(SW_INSTALL_ID, client);
         TbLwM2MExecuteRequest request = TbLwM2MExecuteRequest.builder().versionedId(swInstallVerId).timeout(clientContext.getRequestTimeout(client)).build();
         downlinkHandler.sendExecuteRequest(client, request, new TbLwM2MExecuteCallback(logService, client, swInstallVerId));
     }
 
     private void executeSwUninstallForUpdate(LwM2mClient client) {
-        String swInInstallVerId = convertObjectIdToVersionedId(SW_UN_INSTALL_ID, client.getRegistration());
+        String swInInstallVerId = convertObjectIdToVersionedId(SW_UN_INSTALL_ID, client);
         TbLwM2MExecuteRequest request = TbLwM2MExecuteRequest.builder().versionedId(swInInstallVerId).params("1").timeout(clientContext.getRequestTimeout(client)).build();
         downlinkHandler.sendExecuteRequest(client, request, new TbLwM2MExecuteCallback(logService, client, swInInstallVerId));
     }
