@@ -2078,8 +2078,7 @@
                 "step": "خطوة",
                 "min-evaluation-period": "الفترة الدنيا للتقييم",
                 "max-evaluation-period": "الفترة القصوى للتقييم"
-            },
-            "composite-operations-support": "يدعم عمليات القراءة/الكتابة/المراقبة المركبة"
+            }
         },
         "snmp": {
             "add-communication-config": "إضافة تكوين الاتصال",

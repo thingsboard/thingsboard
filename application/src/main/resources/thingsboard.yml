@@ -1629,6 +1629,8 @@ queue:
     partitions: "${TB_QUEUE_CORE_PARTITIONS:10}"
     # Timeout for processing a message pack by Core microservices
     pack-processing-timeout: "${TB_QUEUE_CORE_PACK_PROCESSING_TIMEOUT_MS:2000}"
+    # Enable/disable a separate consumer per partition for Core queue
+    consumer-per-partition: "${TB_QUEUE_CORE_CONSUMER_PER_PARTITION:true}"
     ota:
       # Default topic name for OTA updates
       topic: "${TB_QUEUE_CORE_OTA_TOPIC:tb_ota_package}"
