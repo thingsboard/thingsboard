@@ -121,6 +121,7 @@ public class BaseRelationService implements RelationService {
         keys.add(new RelationCacheKey(null, event.getTo(), event.getType(), event.getTypeGroup(), EntitySearchDirection.TO));
         keys.add(new RelationCacheKey(null, event.getTo(), null, event.getTypeGroup(), EntitySearchDirection.TO));
         cache.evict(keys);
+        log.debug("Processed evict event: {}", event);
     }
 
     @Override

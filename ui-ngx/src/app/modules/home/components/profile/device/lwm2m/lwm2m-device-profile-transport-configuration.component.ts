@@ -40,9 +40,11 @@ import {
   ObjectLwM2M,
   OBSERVE,
   PowerMode,
+  ObjectIDVer,
   RESOURCES,
   ServerSecurityConfig,
-  TELEMETRY
+  TELEMETRY,
+  ObjectIDVerTranslationMap
 } from './lwm2m-profile-config.models';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { deepClone, isDefinedAndNotNull, isEmpty, isUndefined } from '@core/utils';
@@ -80,6 +82,10 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
 
   lwm2mDeviceProfileFormGroup: UntypedFormGroup;
   configurationValue: Lwm2mProfileConfigModels;
+
+  objectIDVers = Object.values(ObjectIDVer) as ObjectIDVer[];
+  objectIDVerTranslationMap = ObjectIDVerTranslationMap;
+
   sortFunction: (key: string, value: object) => object;
 
   get required(): boolean {
@@ -117,7 +123,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
         edrxCycle: [{disabled: true, value: 0}, Validators.required],
         psmActivityTimer: [{disabled: true, value: 0}, Validators.required],
         pagingTransmissionWindow: [{disabled: true, value: 0}, Validators.required],
-        compositeOperationsSupport: [false]
+        defaultObjectIDVer: [ObjectIDVer.V1_0, Validators.required]
       })
     });
 
@@ -276,7 +282,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
           pagingTransmissionWindow:
             this.configurationValue.clientLwM2mSettings.pagingTransmissionWindow || DEFAULT_PAGING_TRANSMISSION_WINDOW,
           psmActivityTimer: this.configurationValue.clientLwM2mSettings.psmActivityTimer || DEFAULT_PSM_ACTIVITY_TIMER,
-          compositeOperationsSupport: this.configurationValue.clientLwM2mSettings.compositeOperationsSupport || false
+          defaultObjectIDVer: this.configurationValue.clientLwM2mSettings.defaultObjectIDVer || ObjectIDVer.V1_0
         }
       },
       {emitEvent: false});

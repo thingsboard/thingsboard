@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.awaitility.Awaitility;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -46,6 +47,8 @@ import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Andrew Shvayka
@@ -219,6 +222,45 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
         Assert.assertEquals(2, value.size());
         Assert.assertEquals(NEW_VALUE, value.get(0));
         Assert.assertEquals(NEW_VALUE, value.get(1));
+    }
+
+    @Test
+    public void testFindAllKeysByEntityId() {
+        var tenantId = new TenantId(UUID.randomUUID());
+        var deviceId = new DeviceId(UUID.randomUUID());
+        saveAttribute(tenantId, deviceId, AttributeScope.SERVER_SCOPE, "key1", "123");
+        saveAttribute(tenantId, deviceId, AttributeScope.SERVER_SCOPE, "key2", "123");
+
+        Awaitility.await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<String> keys = attributesService.findAllKeysByEntityIds(tenantId, List.of(deviceId));
+            assertThat(keys).containsOnly("key1", "key2");
+        });
+    }
+
+    @Test
+    public void testFindAllKeysByEntityIdAndAttributeType() {
+        var tenantId = new TenantId(UUID.randomUUID());
+        var deviceId = new DeviceId(UUID.randomUUID());
+        saveAttribute(tenantId, deviceId, AttributeScope.SERVER_SCOPE, "key1", "123");
+        saveAttribute(tenantId, deviceId, AttributeScope.SERVER_SCOPE, "key2", "123");
+
+        Awaitility.await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<String> keys = attributesService.findAllKeysByEntityIds(tenantId, List.of(deviceId), AttributeScope.SERVER_SCOPE.name());
+            assertThat(keys).containsOnly("key1", "key2");
+        });
+    }
+
+    @Test
+    public void testFindAllByEntityIdAndAttributeType() {
+        var tenantId = new TenantId(UUID.randomUUID());
+        var deviceId = new DeviceId(UUID.randomUUID());
+        saveAttribute(tenantId, deviceId, AttributeScope.SERVER_SCOPE, "key1", "123");
+        saveAttribute(tenantId, deviceId, AttributeScope.SERVER_SCOPE, "key2", "123");
+
+        Awaitility.await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<AttributeKvEntry> attributes = attributesService.findAll(tenantId, deviceId, AttributeScope.SERVER_SCOPE).get();
+            assertThat(attributes).extracting(KvEntry::getKey).containsOnly("key1", "key2");
+        });
     }
 
     private void testConcurrentFetchAndUpdate(TenantId tenantId, DeviceId deviceId, ListeningExecutorService pool) throws Exception {
