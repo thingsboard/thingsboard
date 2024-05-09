@@ -25,11 +25,11 @@ import {
   ImageResourceInfo,
   imageResourceType,
   ImageResourceType,
-  IMAGES_URL_PREFIX, isImageResourceUrl, ImageExportData, removeTbImagePrefix
+  IMAGES_URL_PREFIX, isImageResourceUrl, ImageExportData, removeTbImagePrefix, ResourceSubType
 } from '@shared/models/resource.models';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import { blobToBase64 } from '@core/utils';
+import { blobToBase64, blobToText } from '@core/utils';
 import { ResourcesService } from '@core/services/resources.service';
 
 @Injectable({
@@ -46,13 +46,14 @@ export class ImageService {
   ) {
   }
 
-  public uploadImage(file: File, title: string, config?: RequestConfig): Observable<ImageResourceInfo> {
+  public uploadImage(file: File, title: string, imageSubType: ResourceSubType, config?: RequestConfig): Observable<ImageResourceInfo> {
     if (!config) {
       config = {};
     }
     const formData = new FormData();
     formData.append('file', file);
     formData.append('title', title);
+    formData.append('imageSubType', imageSubType);
     return this.http.post<ImageResourceInfo>('/api/image', formData,
       defaultHttpUploadOptions(config.ignoreLoading, config.ignoreErrors, config.resendRequest));
   }
@@ -81,9 +82,10 @@ export class ImageService {
       imageInfo, defaultHttpOptionsFromConfig(config));
   }
 
-  public getImages(pageLink: PageLink, includeSystemImages = false, config?: RequestConfig): Observable<PageData<ImageResourceInfo>> {
+  public getImages(pageLink: PageLink, imageSubType: ResourceSubType,
+                   includeSystemImages = false, config?: RequestConfig): Observable<PageData<ImageResourceInfo>> {
     return this.http.get<PageData<ImageResourceInfo>>(
-      `${IMAGES_URL_PREFIX}${pageLink.toQuery()}&includeSystemImages=${includeSystemImages}`,
+      `${IMAGES_URL_PREFIX}${pageLink.toQuery()}&imageSubType=${imageSubType}&includeSystemImages=${includeSystemImages}`,
       defaultHttpOptionsFromConfig(config));
   }
 
@@ -127,6 +129,33 @@ export class ImageService {
         map((dataUrl) => asString ? dataUrl : this.sanitizer.bypassSecurityTrustUrl(dataUrl))
       )),
       catchError(() => of(asString ? emptyUrl : this.sanitizer.bypassSecurityTrustUrl(emptyUrl)))
+    );
+  }
+
+  public getImageString(imageUrl: string): Observable<string> {
+    imageUrl = removeTbImagePrefix(imageUrl);
+    let request: ReplaySubject<Blob>;
+    if (this.imagesLoading[imageUrl]) {
+      request = this.imagesLoading[imageUrl];
+    } else {
+      request = new ReplaySubject<Blob>(1);
+      this.imagesLoading[imageUrl] = request;
+      const options = defaultHttpOptionsFromConfig({ignoreLoading: true, ignoreErrors: true});
+      this.http.get(imageUrl, {...options, ...{ responseType: 'blob' } }).subscribe({
+        next: (value) => {
+          request.next(value);
+          request.complete();
+        },
+        error: err => {
+          request.error(err);
+        },
+        complete: () => {
+          delete this.imagesLoading[imageUrl];
+        }
+      });
+    }
+    return request.pipe(
+      switchMap(val => blobToText(val))
     );
   }
 

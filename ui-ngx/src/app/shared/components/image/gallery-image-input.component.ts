@@ -26,11 +26,15 @@ import {
   isBase64DataImageUrl,
   isImageResourceUrl,
   prependTbImagePrefix,
-  removeTbImagePrefix
+  removeTbImagePrefix,
+  ResourceSubType
 } from '@shared/models/resource.models';
 import { ImageService } from '@core/http/image.service';
 import { MatDialog } from '@angular/material/dialog';
-import { ImageGalleryDialogComponent } from '@shared/components/image/image-gallery-dialog.component';
+import {
+  ImageGalleryDialogComponent,
+  ImageGalleryDialogData
+} from '@shared/components/image/image-gallery-dialog.component';
 
 export enum ImageLinkType {
   none = 'none',
@@ -188,11 +192,14 @@ export class GalleryImageInputComponent extends PageComponent implements OnInit,
     if ($event) {
       $event.stopPropagation();
     }
-    this.dialog.open<ImageGalleryDialogComponent, any,
+    this.dialog.open<ImageGalleryDialogComponent, ImageGalleryDialogData,
       ImageResourceInfo>(ImageGalleryDialogComponent, {
         autoFocus: false,
         disableClose: false,
-        panelClass: ['tb-dialog', 'tb-fullscreen-dialog']
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        data: {
+          imageSubType: ResourceSubType.IMAGE
+        }
     }).afterClosed().subscribe((image) => {
       if (image) {
         this.linkType = ImageLinkType.resource;

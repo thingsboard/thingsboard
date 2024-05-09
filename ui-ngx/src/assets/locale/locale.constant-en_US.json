@@ -3392,6 +3392,26 @@
     "iot-svg": {
         "behavior": "Behavior"
     },
+    "scada": {
+        "symbol": "SCADA symbol",
+        "symbols": "SCADA symbols",
+        "search": "Search symbol",
+        "selected-symbols": "{ count, plural, =1 {1 symbol} other {# symbols} } selected",
+        "download-symbol": "Download SCADA symbol",
+        "export-symbol": "Export SCADA symbol to JSON",
+        "import-symbol": "Import SCADA symbol from JSON",
+        "upload-symbol": "Upload SCADA symbol",
+        "edit-symbol": "Edit SCADA symbol",
+        "symbol-details": "SCADA symbol details",
+        "no-symbols": "No symbols found",
+        "delete-symbol": "Delete SCADA symbol",
+        "delete-symbol-title": "Are you sure you want to delete SCADA symbol '{{imageTitle}}'?",
+        "delete-symbol-text": "Be careful, after the confirmation SCADA symbol will become unrecoverable.",
+        "delete-symbols-title": "Are you sure you want to delete { count, plural, =1 {1 SCADA symbol} other {# SCADA symbols} }?",
+        "delete-symbols-text": "Be careful, after the confirmation all selected SCADA symbols will be removed and all related data will become unrecoverable.",
+        "include-system-symbols": "Include system symbols",
+        "symbol-preview": "Symbol preview"
+    },
     "item": {
         "selected": "Selected"
     },

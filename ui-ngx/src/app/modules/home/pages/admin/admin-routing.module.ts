@@ -14,8 +14,8 @@
 /// limitations under the License.
 ///
 
-import { Injectable, NgModule } from '@angular/core';
-import { Resolve, RouterModule, Routes } from '@angular/router';
+import { inject, Injectable, NgModule } from '@angular/core';
+import { ActivatedRouteSnapshot, Resolve, ResolveFn, RouterModule, RouterStateSnapshot, Routes } from '@angular/router';
 
 import { MailServerComponent } from '@modules/home/pages/admin/mail-server.component';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
@@ -23,7 +23,7 @@ import { Authority } from '@shared/models/authority.enum';
 import { GeneralSettingsComponent } from '@modules/home/pages/admin/general-settings.component';
 import { SecuritySettingsComponent } from '@modules/home/pages/admin/security-settings.component';
 import { OAuth2SettingsComponent } from '@home/pages/admin/oauth2-settings.component';
-import { Observable } from 'rxjs';
+import { forkJoin, Observable } from 'rxjs';
 import { OAuth2Service } from '@core/http/oauth2.service';
 import { SmsProviderComponent } from '@home/pages/admin/sms-provider.component';
 import { HomeSettingsComponent } from '@home/pages/admin/home-settings.component';
@@ -31,7 +31,7 @@ import { EntitiesTableComponent } from '@home/components/entity/entities-table.c
 import { ResourcesLibraryTableConfigResolver } from '@home/pages/admin/resource/resources-library-table-config.resolve';
 import { EntityDetailsPageComponent } from '@home/components/entity/entity-details-page.component';
 import { entityDetailsPageBreadcrumbLabelFunction } from '@home/pages/home-pages.models';
-import { BreadCrumbConfig } from '@shared/components/breadcrumb';
+import { BreadCrumbConfig, BreadCrumbLabelFunction } from '@shared/components/breadcrumb';
 import { QueuesTableConfigResolver } from '@home/pages/admin/queue/queues-table-config.resolver';
 import { RepositoryAdminSettingsComponent } from '@home/pages/admin/repository-admin-settings.component';
 import { AutoCommitAdminSettingsComponent } from '@home/pages/admin/auto-commit-admin-settings.component';
@@ -40,6 +40,10 @@ import { widgetsLibraryRoutes } from '@home/pages/widget/widget-library-routing.
 import { RouterTabsComponent } from '@home/components/router-tabs.component';
 import { auditLogsRoutes } from '@home/pages/audit-log/audit-log-routing.module';
 import { ImageGalleryComponent } from '@shared/components/image/image-gallery.component';
+import { ImageResourceType, IMAGES_URL_PREFIX, ResourceSubType } from '@shared/models/resource.models';
+import { ScadaSymbolComponent } from '@home/pages/scada-symbol/scada-symbol.component';
+import { ImageService } from '@core/http/image.service';
+import { ScadaSymbolData } from '@home/pages/scada-symbol/scada-symbol.models';
 
 @Injectable()
 export class OAuth2LoginProcessingUrlResolver implements Resolve<string> {
@@ -51,6 +55,22 @@ export class OAuth2LoginProcessingUrlResolver implements Resolve<string> {
     return this.oauth2Service.getLoginProcessingUrl();
   }
 }
+
+export const scadaSymbolResolver: ResolveFn<ScadaSymbolData> =
+  (route: ActivatedRouteSnapshot,
+   state: RouterStateSnapshot,
+   imageService = inject(ImageService)) => {
+    const type: ImageResourceType = route.params.type;
+    const key = decodeURIComponent(route.params.key);
+    return forkJoin({
+      imageResource: imageService.getImageInfo(type, key),
+      svgContent: imageService.getImageString(`${IMAGES_URL_PREFIX}/${type}/${encodeURIComponent(key)}`)
+    });
+};
+
+export const scadaSymbolBreadcumbLabelFunction: BreadCrumbLabelFunction<ScadaSymbolComponent>
+  = ((route, translate, component) =>
+  component.symbolData?.imageResource?.title);
 
 const routes: Routes = [
   {
@@ -87,8 +107,45 @@ const routes: Routes = [
             data: {
               auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
               title: 'image.gallery',
-            },
+              imageSubType: ResourceSubType.IMAGE
+            }
           }
+        ]
+      },
+      {
+        path: 'scada-symbols',
+        data: {
+          breadcrumb: {
+            label: 'scada.symbols',
+            icon: 'precision_manufacturing'
+          }
+        },
+        children: [
+          {
+            path: '',
+            component: ImageGalleryComponent,
+            data: {
+              auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
+              title: 'scada.symbols',
+              imageSubType: ResourceSubType.IOT_SVG
+            }
+          },
+          {
+            path: ':type/:key',
+            component: ScadaSymbolComponent,
+            canDeactivate: [ConfirmOnExitGuard],
+            data: {
+              breadcrumb: {
+                labelFunction: scadaSymbolBreadcumbLabelFunction,
+                icon: 'precision_manufacturing'
+              } as BreadCrumbConfig<ScadaSymbolComponent>,
+              auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
+              title: 'scada.symbol'
+            },
+            resolve: {
+              symbolData: scadaSymbolResolver
+            }
+          },
         ]
       },
       {

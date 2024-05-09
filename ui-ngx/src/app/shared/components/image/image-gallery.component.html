@@ -22,7 +22,7 @@
                  [fxShow]="!textSearchMode && (mode === 'grid' || dataSource?.selection.isEmpty())" [ngClass.lt-lg]="{'multi-row': !isSysAdmin}">
       <div fxFlex fxLayout="row" fxLayoutAlign="start center">
         <div class="mat-toolbar-tools">
-          <span fxHide fxShow.gt-sm class="tb-images-title" translate>image.gallery</span>
+          <span fxHide fxShow.gt-sm class="tb-images-title">{{ (isScada ? 'scada.symbols' : 'image.gallery') | translate }}</span>
           <div class="tb-images-view-type-toolbar"
                fxLayout="row"
                fxLayoutAlign="start center">
@@ -46,7 +46,7 @@
           <mat-slide-toggle *ngIf="!isSysAdmin"
                             fxHide fxShow.gt-md
                             [ngModel]="includeSystemImages"
-                            (ngModelChange)="includeSystemImagesChanged($event)">{{ 'image.include-system-images' | translate }}</mat-slide-toggle>
+                            (ngModelChange)="includeSystemImagesChanged($event)">{{ (isScada ? 'scada.include-system-symbols' : 'image.include-system-images') | translate }}</mat-slide-toggle>
         </div>
         <section fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap.gt-md="16px">
           <span fxFlex></span>
@@ -68,7 +68,7 @@
             <button [disabled]="isLoading$ | async"
                     mat-icon-button
                     (click)="importImage()"
-                    matTooltip="{{'image.import-image' | translate }}"
+                    matTooltip="{{ (isScada ? 'scada.import-symbol' : 'image.import-image' ) | translate }}"
                     matTooltipPosition="above">
               <tb-icon>mdi:file-import</tb-icon>
             </button>
@@ -77,7 +77,7 @@
                     mat-icon-button
                     color="primary"
                     (click)="uploadImage()"
-                    matTooltip="{{'image.upload-image' | translate }}"
+                    matTooltip="{{ (isScada ? 'scada.upload-symbol' : 'image.upload-image' ) | translate }}"
                     matTooltipPosition="above">
               <mat-icon>add</mat-icon>
             </button>
@@ -87,18 +87,18 @@
                   mat-flat-button
                   color="primary"
                   (click)="uploadImage()">
-            {{ 'image.upload-image' | translate }}
+            {{ (isScada ? 'scada.upload-symbol' : 'image.upload-image' ) | translate }}
           </button>
         </section>
       </div>
       <mat-slide-toggle *ngIf="!isSysAdmin" fxHide fxShow.lt-lg
                         [ngModel]="includeSystemImages"
-                        (ngModelChange)="includeSystemImagesChanged($event)">{{ 'image.include-system-images' | translate }}</mat-slide-toggle>
+                        (ngModelChange)="includeSystemImagesChanged($event)">{{ (isScada ? 'scada.include-system-symbols' : 'image.include-system-images') | translate }}</mat-slide-toggle>
     </mat-toolbar>
     <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="textSearchMode && (mode === 'grid' || dataSource?.selection.isEmpty())">
       <div class="mat-toolbar-tools">
         <button mat-icon-button
-                matTooltip="{{ 'image.search' | translate }}"
+                matTooltip="{{ (isScada ? 'scada.search' : 'image.search' ) | translate }}"
                 matTooltipPosition="above">
           <mat-icon>search</mat-icon>
         </button>
@@ -106,7 +106,7 @@
           <mat-label>&nbsp;</mat-label>
           <input #searchInput matInput
                  [formControl]="textSearch"
-                 placeholder="{{ 'image.search' | translate }}"/>
+                 placeholder="{{ (isScada ? 'scada.search' : 'image.search' ) | translate }}"/>
         </mat-form-field>
         <button mat-icon-button (click)="exitFilterMode()"
                 matTooltip="{{ 'action.close' | translate }}"
@@ -118,7 +118,7 @@
     <mat-toolbar class="mat-mdc-table-toolbar" color="primary" [fxShow]="mode === 'list' && !dataSource?.selection.isEmpty()">
       <div class="mat-toolbar-tools">
         <span>
-          {{ translate.get('image.selected-images', {count: dataSource?.selection.selected.length}) | async }}
+          {{ translate.get((isScada ? 'scada.selected-symbols' : 'image.selected-images' ), {count: dataSource?.selection.selected.length}) | async }}
         </span>
         <span fxFlex></span>
         <button mat-icon-button [disabled]="isLoading$ | async"
@@ -187,36 +187,36 @@
             </mat-cell>
           </ng-container>
           <ng-container matColumnDef="actions" stickyEnd>
-            <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: '240px', maxWidth: '240px', width: '240px' }">
+            <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: actionColumnWidth, maxWidth: actionColumnWidth, width: actionColumnWidth }">
             </mat-header-cell>
-            <mat-cell *matCellDef="let image" [ngStyle.gt-md]="{ minWidth: '240px', maxWidth: '240px', width: '240px' }">
+            <mat-cell *matCellDef="let image" [ngStyle.gt-md]="{ minWidth: actionColumnWidth, maxWidth: actionColumnWidth, width: actionColumnWidth }">
               <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
                 <button mat-icon-button [disabled]="isLoading$ | async"
-                        matTooltip="{{ 'image.download-image' | translate }}"
+                        matTooltip="{{ (isScada ? 'scada.download-symbol' : 'image.download-image' ) | translate }}"
                         matTooltipPosition="above"
                         (click)="downloadImage($event, image)">
                   <mat-icon>file_download</mat-icon>
                 </button>
                 <button mat-icon-button [disabled]="isLoading$ | async"
-                        matTooltip="{{ 'image.export-image' | translate }}"
+                        matTooltip="{{ (isScada ? 'scada.export-symbol' : 'image.export-image' ) | translate }}"
                         matTooltipPosition="above"
                         (click)="exportImage($event, image)">
                   <tb-icon>mdi:file-export</tb-icon>
                 </button>
-                <button mat-icon-button [disabled]="isLoading$ | async"
+                <button *ngIf="!isScada" mat-icon-button [disabled]="isLoading$ | async"
                         matTooltip="{{ 'image.embed-image' | translate }}"
                         matTooltipPosition="above"
                         (click)="embedImage($event, image)">
                   <mat-icon>code</mat-icon>
                 </button>
                 <button mat-icon-button [disabled]="isLoading$ | async"
-                        matTooltip="{{ (readonly(image) ? 'image.image-details' : 'image.edit-image') | translate }}"
+                        matTooltip="{{ (readonly(image) ? (isScada ? 'scada.symbol-details' : 'image.image-details') : (isScada ? 'scada.edit-symbol' : 'image.edit-image')) | translate }}"
                         matTooltipPosition="above"
                         (click)="editImage($event, image)">
                   <mat-icon>edit</mat-icon>
                 </button>
                 <button mat-icon-button [disabled]="(isLoading$ | async) || !deleteEnabled(image)"
-                        matTooltip="{{ 'image.delete-image' | translate }}"
+                        matTooltip="{{ (isScada ? 'scada.delete-symbol' : 'image.delete-image' ) | translate }}"
                         matTooltipPosition="above"
                         (click)="deleteImage($event, image)">
                   <mat-icon>delete</mat-icon>
@@ -233,15 +233,15 @@
                           [disabled]="isLoading$ | async"
                           (click)="downloadImage($event, image)">
                     <mat-icon>file_download</mat-icon>
-                    <span translate>image.download-image</span>
+                    <span>{{ (isScada ? 'scada.download-symbol' : 'image.download-image' ) | translate }}</span>
                   </button>
                   <button mat-menu-item
                           [disabled]="isLoading$ | async"
                           (click)="exportImage($event, image)">
                     <tb-icon matMenuItemIcon>mdi:file-export</tb-icon>
-                    <span translate>image.export-image</span>
+                    <span>{{ (isScada ? 'scada.export-symbol' : 'image.export-image' ) | translate }}</span>
                   </button>
-                  <button mat-menu-item
+                  <button *ngIf="!isScada" mat-menu-item
                           [disabled]="isLoading$ | async"
                           (click)="embedImage($event, image)">
                     <mat-icon>code</mat-icon>
@@ -251,14 +251,14 @@
                           [disabled]="isLoading$ | async"
                           (click)="editImage($event, image)">
                     <mat-icon>edit</mat-icon>
-                    <span>{{ (readonly(image) ? 'image.image-details' : 'image.edit-image') | translate }}</span>
+                    <span>{{ (readonly(image) ? (isScada ? 'scada.symbol-details' : 'image.image-details') : (isScada ? 'scada.edit-symbol' : 'image.edit-image')) | translate }}</span>
                   </button>
                   <button mat-menu-item
                           [disabled]="isLoading$ | async"
                           [fxShow]="deleteEnabled(image)"
                           (click)="deleteImage($event, image)">
                     <mat-icon>delete</mat-icon>
-                    <span translate>image.delete-image</span>
+                    <span>{{ (isScada ? 'scada.delete-symbol' : 'image.delete-image' ) | translate }}</span>
                   </button>
                 </mat-menu>
               </div>
@@ -318,7 +318,7 @@
 <ng-template #noImages>
   <div class="tb-no-images">
     <div class="tb-no-data-bg"></div>
-    <div class="tb-no-data-text" translate>image.no-images</div>
+    <div class="tb-no-data-text">{{ (isScada ? 'scada.no-symbols' : 'image.no-images') | translate }}</div>
   </div>
 </ng-template>
 <ng-template #imageCard let-item="item" let-itemIndex="itemIndex">
@@ -326,18 +326,18 @@
     <div class="tb-image-card-overlay">
       <div *ngIf="!selectionMode" class="tb-image-card-overlay-buttons">
         <button mat-icon-button [disabled]="isLoading$ | async"
-                matTooltip="{{ 'image.download-image' | translate }}"
+                matTooltip="{{ (isScada ? 'scada.download-symbol' : 'image.download-image' ) | translate }}"
                 matTooltipPosition="above"
                 (click)="downloadImage($event, item)">
           <mat-icon>file_download</mat-icon>
         </button>
         <button mat-icon-button [disabled]="isLoading$ | async"
-                matTooltip="{{ 'image.export-image' | translate }}"
+                matTooltip="{{ (isScada ? 'scada.export-symbol' : 'image.export-image' ) | translate }}"
                 matTooltipPosition="above"
                 (click)="exportImage($event, item)">
           <tb-icon>mdi:file-export</tb-icon>
         </button>
-        <button mat-icon-button [disabled]="isLoading$ | async"
+        <button *ngIf="!isScada" mat-icon-button [disabled]="isLoading$ | async"
                 matTooltip="{{ 'image.embed-image' | translate }}"
                 matTooltipPosition="above"
                 (click)="embedImage($event, item, itemIndex)">
@@ -345,7 +345,7 @@
         </button>
         <button *ngIf="deleteEnabled(item)"
                 mat-icon-button [disabled]="(isLoading$ | async)"
-                matTooltip="{{ 'image.delete-image' | translate }}"
+                matTooltip="{{ (isScada ? 'scada.delete-symbol' : 'image.delete-image' ) | translate }}"
                 matTooltipPosition="above"
                 (click)="deleteImage($event, item, itemIndex)">
           <mat-icon>delete</mat-icon>
@@ -359,7 +359,7 @@
           mat-flat-button
           color="primary"
           (click)="editImage($event, item, itemIndex)">
-          {{ (readonly(item) ? 'image.image-details' : 'image.edit-image') | translate }}
+          {{ (readonly(item) ? (isScada ? 'scada.symbol-details' : 'image.image-details') : (isScada ? 'scada.edit-symbol' : 'image.edit-image')) | translate }}
         </button>
         <button
           *ngIf="selectionMode"

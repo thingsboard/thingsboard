@@ -40,6 +40,7 @@ import { ColorProcessor, constantColor, Font } from '@shared/models/widget-setti
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetAction, WidgetActionType } from '@shared/models/widget.models';
+import { ResizeObserver } from '@juggle/resize-observer';
 
 export interface IotSvgApi {
   formatValue: (value: any, dec?: number, units?: string, showZeroDecimals?: boolean) => string | undefined;
@@ -247,6 +248,55 @@ export type IotSvgObjectSettings = {[id: string]: any};
 
 const parseError = (ctx: WidgetContext, err: any): string =>
   ctx.$injector.get(UtilsService).parseException(err).message || 'Unknown Error';
+
+export class IotSvgEditObject {
+
+  private svgShape: Svg;
+  private box: Box;
+
+  private shapeResize$: ResizeObserver;
+  constructor(private rootElement: HTMLElement) {
+    this.shapeResize$ = new ResizeObserver(() => {
+      this.resize();
+    });
+    this.shapeResize$.observe(this.rootElement);
+  }
+
+  public setContent(svgContent: string) {
+    if (this.svgShape) {
+      this.svgShape.remove();
+    }
+    const doc: XMLDocument = new DOMParser().parseFromString(svgContent, 'image/svg+xml');
+    this.svgShape = SVG().svg(doc.documentElement.innerHTML);
+    this.svgShape.node.style.overflow = 'visible';
+    this.svgShape.node.style['user-select'] = 'none';
+    this.box = this.svgShape.bbox();
+    this.svgShape.size(this.box.width, this.box.height);
+    this.svgShape.addTo(this.rootElement);
+    this.resize();
+  }
+
+  public destroy() {
+    if (this.shapeResize$) {
+      this.shapeResize$.disconnect();
+    }
+  }
+
+  private resize() {
+    if (this.svgShape) {
+      const targetWidth = this.rootElement.getBoundingClientRect().width;
+      const targetHeight = this.rootElement.getBoundingClientRect().height;
+      let scale: number;
+      if (targetWidth < targetHeight) {
+        scale = targetWidth / this.box.width;
+      } else {
+        scale = targetHeight / this.box.height;
+      }
+      this.svgShape.node.style.transform = `scale(${scale})`;
+    }
+  }
+
+}
 
 export class IotSvgObject {
 

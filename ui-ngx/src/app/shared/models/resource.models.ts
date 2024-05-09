@@ -27,6 +27,11 @@ export enum ResourceType {
   JS_MODULE = 'JS_MODULE'
 }
 
+export enum ResourceSubType {
+  IMAGE = 'IMAGE',
+  IOT_SVG = 'IOT_SVG'
+}
+
 export const ResourceTypeMIMETypes = new Map<ResourceType, string>(
   [
     [ResourceType.LWM2M_MODEL, 'application/xml,text/xml'],
@@ -59,6 +64,7 @@ export interface TbResourceInfo<D> extends Omit<BaseData<TbResourceId>, 'name' |
   resourceKey?: string;
   title?: string;
   resourceType: ResourceType;
+  resourceSubType?: ResourceSubType;
   fileName: string;
   public: boolean;
   publicResourceKey?: string;
@@ -94,6 +100,7 @@ export interface ImageExportData {
   mediaType: string;
   fileName: string;
   title: string;
+  subType: string;
   resourceKey: string;
   public: boolean;
   publicResourceKey: string;

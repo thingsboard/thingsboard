@@ -30,12 +30,13 @@ import {
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 import { ImageService } from '@core/http/image.service';
-import { ImageResource, ImageResourceInfo, imageResourceType } from '@shared/models/resource.models';
+import { ImageResource, ImageResourceInfo, imageResourceType, ResourceSubType } from '@shared/models/resource.models';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { forkJoin } from 'rxjs';
 import { blobToBase64 } from '@core/utils';
 
 export interface UploadImageDialogData {
+  imageSubType: ResourceSubType;
   image?: ImageResourceInfo;
 }
 
@@ -55,6 +56,10 @@ export class UploadImageDialogComponent extends
   submitted = false;
 
   maxResourceSize = getCurrentAuthState(this.store).maxResourceSize;
+
+  get isScada() {
+    return this.data.imageSubType === ResourceSubType.IOT_SVG;
+  }
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -101,7 +106,7 @@ export class UploadImageDialogComponent extends
     if (this.uploadImage) {
       const title: string = this.uploadImageFormGroup.get('title').value;
       forkJoin([
-        this.imageService.uploadImage(file, title),
+        this.imageService.uploadImage(file, title, this.data.imageSubType),
         blobToBase64(file)
       ]).subscribe(([imageInfo, base64]) => {
         this.dialogRef.close(Object.assign(imageInfo, {base64}));

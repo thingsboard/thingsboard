@@ -146,6 +146,7 @@ export class ImageDialogComponent extends
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
+        imageSubType: this.image.resourceSubType,
         image: this.image
       }
     }).afterClosed().subscribe((result) => {
