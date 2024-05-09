@@ -130,7 +130,7 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
 
   ngAfterViewInit() {
     const settings = rangeChartTimeSeriesSettings(this.settings, this.rangeItems, this.decimals, this.units);
-    this.timeSeriesChart = new TbTimeSeriesChart(this.ctx, settings, this.chartShape.nativeElement, this.renderer);
+    this.timeSeriesChart = new TbTimeSeriesChart(this.ctx, settings, this.chartShape.nativeElement, this.renderer, this.sanitizer);
   }
 
   ngOnDestroy() {

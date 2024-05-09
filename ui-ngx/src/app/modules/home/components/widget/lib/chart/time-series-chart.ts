@@ -21,7 +21,6 @@ import {
   createTimeSeriesVisualMapOption,
   createTimeSeriesXAxis,
   createTimeSeriesYAxis,
-  createTooltipValueFormatFunction,
   defaultTimeSeriesChartYAxisSettings,
   generateChartData,
   LineSeriesStepType,
@@ -38,7 +37,6 @@ import {
   timeSeriesChartThresholdDefaultSettings,
   TimeSeriesChartThresholdItem,
   TimeSeriesChartThresholdType,
-  timeSeriesChartTooltipFormatter,
   TimeSeriesChartTooltipTrigger,
   TimeSeriesChartTooltipValueFormatFunction,
   TimeSeriesChartType,
@@ -75,8 +73,11 @@ import { DeepPartial } from '@shared/models/common';
 import { BarRenderSharedContext } from '@home/components/widget/lib/chart/time-series-chart-bar.models';
 import { TimeSeriesChartStateValueConverter } from '@home/components/widget/lib/chart/time-series-chart-state.models';
 import { ChartLabelPosition, ChartShape, toAnimationOption } from '@home/components/widget/lib/chart/chart.models';
+import { TimeSeriesChartTooltip } from '@home/components/widget/lib/chart/time-series-chart-tooltip';
+import { DomSanitizer } from '@angular/platform-browser';
 
 export class TbTimeSeriesChart {
+  private timeSeriesChartTooltip: TimeSeriesChartTooltip;
 
   public static dataKeySettings(type = TimeSeriesChartType.default): DataKeySettingsFunction {
     return (_key, isLatestDataKey) => {
@@ -161,8 +162,9 @@ export class TbTimeSeriesChart {
               private readonly inputSettings: DeepPartial<TimeSeriesChartSettings>,
               private chartElement: HTMLElement,
               private renderer: Renderer2,
+              private sanitizer: DomSanitizer,
               private autoResize = true) {
-
+    this.timeSeriesChartTooltip = new TimeSeriesChartTooltip(this.sanitizer);
     this.settings = mergeDeep({} as TimeSeriesChartSettings,
       timeSeriesChartDefaultSettings,
       this.inputSettings as TimeSeriesChartSettings);
@@ -186,7 +188,7 @@ export class TbTimeSeriesChart {
       }
       if (!this.tooltipValueFormatFunction) {
         this.tooltipValueFormatFunction =
-          createTooltipValueFormatFunction(this.settings.tooltipValueFormatter);
+          this.timeSeriesChartTooltip.createTooltipValueFormatFunction(this.settings.tooltipValueFormatter);
         if (!this.tooltipValueFormatFunction) {
           this.tooltipValueFormatFunction = (value, _latestData, units, decimals) => formatValue(value, decimals, units, false);
         }
@@ -415,7 +417,7 @@ export class TbTimeSeriesChart {
             dataKey,
             data,
             enabled: !keySettings.dataHiddenByDefault,
-            tooltipValueFormatFunction: createTooltipValueFormatFunction(keySettings.tooltipValueFormatter)
+            tooltipValueFormatFunction: this.timeSeriesChartTooltip.createTooltipValueFormatFunction(keySettings.tooltipValueFormatter)
           });
         }
       }
@@ -592,6 +594,7 @@ export class TbTimeSeriesChart {
     this.timeSeriesChart = echarts.init(this.chartElement,  null, {
       renderer: 'canvas'
     });
+    // const timeSeriesChartTooltip = new TimeSeriesChartTooltip(this.sanitizer);
     this.timeSeriesChartOptions = {
       darkMode: this.darkMode,
       backgroundColor: 'transparent',
@@ -603,10 +606,10 @@ export class TbTimeSeriesChart {
           type: this.noAggregation ? 'line' : 'shadow'
         },
         formatter: (params: CallbackDataParams[]) =>
-          this.settings.showTooltip ? timeSeriesChartTooltipFormatter(this.renderer, this.tooltipDateFormat,
+          this.settings.showTooltip ? this.timeSeriesChartTooltip.timeSeriesChartTooltipFormatter(this.renderer, this.tooltipDateFormat,
             this.settings, params, this.tooltipValueFormatFunction,
             this.settings.tooltipShowFocusedSeries ? getFocusedSeriesIndex(this.timeSeriesChart) : -1,
-            this.dataItems,  this.noAggregation ? null : this.ctx.timeWindow.interval) : undefined,
+            this.dataItems, this.noAggregation ? null : this.ctx.timeWindow.interval) : undefined,
         padding: [8, 12],
         backgroundColor: this.settings.tooltipBackgroundColor,
         borderWidth: 0,

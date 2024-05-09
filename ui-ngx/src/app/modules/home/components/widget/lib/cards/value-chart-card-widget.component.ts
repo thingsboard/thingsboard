@@ -178,7 +178,8 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
       tooltipDateFormat: autoDateFormat()
     };
 
-    this.lineChart = new TbTimeSeriesChart(this.ctx, settings, this.chartElement.nativeElement, this.renderer, false);
+    this.lineChart = new TbTimeSeriesChart(this.ctx, settings, this.chartElement.nativeElement, this.renderer,
+      this.sanitizer, false);
 
     this.contentResize$ = new ResizeObserver(() => {
       this.onResize();

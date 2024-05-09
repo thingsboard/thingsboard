@@ -107,15 +107,15 @@
              (mouseleave)="onLegendKeyLeave(legendKey)"
              (click)="toggleLegendKey(legendKey)">
           <div class="tb-time-series-chart-legend-item-label-circle" [style]="{background: !legendKey.dataKey.hidden ? legendKey.dataKey.color : null}"></div>
-          <div [style]="!legendKey.dataKey.hidden ? legendLabelStyle : disabledLegendLabelStyle">{{ legendKey.dataKey.label }}</div>
+          <div [style]="!legendKey.dataKey.hidden ? legendLabelStyle : disabledLegendLabelStyle" [innerHTML]="legendKey.dataKey.label | safe: 'html'"></div>
         </div>
       </div>
     </ng-template>
     <ng-template #legendDataRow let-label="label" let-type="type">
       <tr>
         <th class="tb-time-series-chart-legend-type-label" [style]="legendColumnTitleStyle">{{ label | translate }}</th>
-        <td *ngFor="let legendKey of legendKeys" class="tb-time-series-chart-legend-value" [style]="legendValueStyle">
-          {{ legendData.data[legendKey.dataIndex][type] }}
+        <td *ngFor="let legendKey of legendKeys" class="tb-time-series-chart-legend-value" [style]="legendValueStyle"
+            [innerHTML]="legendData.data[legendKey.dataIndex][type] | safe: 'html'">
         </td>
       </tr>
     </ng-template>

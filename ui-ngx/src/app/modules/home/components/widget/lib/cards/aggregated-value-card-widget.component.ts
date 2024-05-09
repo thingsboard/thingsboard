@@ -59,6 +59,7 @@ import {
   TimeSeriesChartSettings
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { DeepPartial } from '@shared/models/common';
+import { TimeSeriesChartTooltip } from '@home/components/widget/lib/chart/time-series-chart-tooltip';
 
 const valuesLayoutHeight = 66;
 const valuesLayoutVerticalPadding = 16;
@@ -194,7 +195,8 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
           tooltipDateFormat: autoDateFormat()
       };
 
-      this.lineChart = new TbTimeSeriesChart(this.ctx, settings, this.chartElement.nativeElement, this.renderer, true);
+      this.lineChart = new TbTimeSeriesChart(this.ctx, settings, this.chartElement.nativeElement, this.renderer,
+        this.sanitizer, true);
 
       this.tickMin$ =this.lineChart.yMin$.pipe(
         map((value) => formatValue(value, (this.lineChartDataKey?.decimals || this.ctx.decimals))
