@@ -661,7 +661,13 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
         if (this.selectionMode) {
           this.imageSelected.next(result);
         } else {
-          this.updateData();
+          if (this.isScada) {
+            const type = imageResourceType(result);
+            const key = encodeURIComponent(result.resourceKey);
+            this.router.navigateByUrl(`resources/scada-symbols/${type}/${key}`);
+          } else {
+            this.updateData();
+          }
         }
       }
     });

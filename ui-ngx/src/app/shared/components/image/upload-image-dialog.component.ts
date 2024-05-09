@@ -33,7 +33,13 @@ import { ImageService } from '@core/http/image.service';
 import { ImageResource, ImageResourceInfo, imageResourceType, ResourceSubType } from '@shared/models/resource.models';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { forkJoin } from 'rxjs';
-import { blobToBase64 } from '@core/utils';
+import { blobToBase64, blobToText, updateFileContent } from '@core/utils';
+import {
+  emptyMetadata,
+  IotSvgMetadata,
+  parseIotSvgMetadataFromContent,
+  updateIotSvgMetadataInContent
+} from '@home/components/widget/lib/svg/iot-svg.models';
 
 export interface UploadImageDialogData {
   imageSubType: ResourceSubType;
@@ -61,6 +67,9 @@ export class UploadImageDialogComponent extends
     return this.data.imageSubType === ResourceSubType.IOT_SVG;
   }
 
+  private iotSvgContent: string;
+  private iotSvgMetadata: IotSvgMetadata;
+
   constructor(protected store: Store<AppState>,
               protected router: Router,
               private imageService: ImageService,
@@ -78,6 +87,20 @@ export class UploadImageDialogComponent extends
     });
     if (this.uploadImage) {
       this.uploadImageFormGroup.addControl('title', this.fb.control(null, [Validators.required]));
+      if (this.isScada) {
+        this.uploadImageFormGroup.get('file').valueChanges.subscribe((file: File) => {
+          if (file) {
+            blobToText(file).subscribe(content => {
+              this.iotSvgContent = content;
+              this.iotSvgMetadata = parseIotSvgMetadataFromContent(this.iotSvgContent);
+              const titleControl = this.uploadImageFormGroup.get('title');
+              if (this.iotSvgMetadata.title && (!titleControl.value || !titleControl.touched)) {
+                titleControl.setValue(this.iotSvgMetadata.title);
+              }
+            });
+          }
+        });
+      }
     }
   }
 
@@ -102,9 +125,19 @@ export class UploadImageDialogComponent extends
 
   upload(): void {
     this.submitted = true;
-    const file: File = this.uploadImageFormGroup.get('file').value;
+    let file: File = this.uploadImageFormGroup.get('file').value;
     if (this.uploadImage) {
       const title: string = this.uploadImageFormGroup.get('title').value;
+      if (this.isScada) {
+        if (!this.iotSvgMetadata) {
+          this.iotSvgMetadata = emptyMetadata();
+        }
+        if (this.iotSvgMetadata.title !== title) {
+          this.iotSvgMetadata.title = title;
+        }
+        const newContent = updateIotSvgMetadataInContent(this.iotSvgContent, this.iotSvgMetadata);
+        file = updateFileContent(file, newContent);
+      }
       forkJoin([
         this.imageService.uploadImage(file, title, this.data.imageSubType),
         blobToBase64(file)

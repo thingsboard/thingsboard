@@ -142,12 +142,12 @@ export interface IotSvgMetadata {
   properties: IotSvgProperty[];
 }
 
-export const emptyMetadata: IotSvgMetadata = {
+export const emptyMetadata = (): IotSvgMetadata => ({
   title: '',
   tags: [],
   behavior: [],
   properties: []
-};
+});
 
 
 export const parseIotSvgMetadataFromContent = (svgContent: string): IotSvgMetadata => {
@@ -155,7 +155,7 @@ export const parseIotSvgMetadataFromContent = (svgContent: string): IotSvgMetada
     const svgDoc = new DOMParser().parseFromString(svgContent, 'image/svg+xml');
     return parseIotSvgMetadataFromDom(svgDoc);
   } catch (_e) {
-    return emptyMetadata;
+    return emptyMetadata();
   }
 };
 
@@ -165,12 +165,34 @@ const parseIotSvgMetadataFromDom = (svgDoc: Document): IotSvgMetadata => {
     if (elements.length) {
       return JSON.parse(elements[0].textContent);
     } else {
-      return emptyMetadata;
+      return emptyMetadata();
     }
   } catch (_e) {
     console.error(_e);
-    return emptyMetadata;
+    return emptyMetadata();
   }
+};
+
+export const updateIotSvgMetadataInContent = (svgContent: string, metadata: IotSvgMetadata): string => {
+  const svgDoc = new DOMParser().parseFromString(svgContent, 'image/svg+xml');
+  updateIotSvgMetadataInDom(svgDoc, metadata);
+  return svgDoc.documentElement.outerHTML;
+};
+
+const updateIotSvgMetadataInDom = (svgDoc: Document, metadata: IotSvgMetadata) => {
+  svgDoc.documentElement.setAttribute('xmlns:tb', 'https://thingsboard.io/svg');
+  let metadataElement: Node;
+  const elements = svgDoc.getElementsByTagName('tb:metadata');
+  if (elements?.length) {
+    metadataElement = elements[0];
+    metadataElement.textContent = '';
+  } else {
+    metadataElement = svgDoc.createElement('tb:metadata');
+    svgDoc.documentElement.insertBefore(metadataElement, svgDoc.documentElement.firstChild);
+  }
+  const content = JSON.stringify(metadata, null, 2);
+  const cdata = svgDoc.createCDATASection(content);
+  metadataElement.appendChild(cdata);
 };
 
 const defaultGetValueSettings = (get: IotSvgBehaviorValue): GetValueSettings<any> => ({

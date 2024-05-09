@@ -224,6 +224,11 @@ export const blobToText = (blob: Blob): Observable<string> => from(new Promise<s
   }
 ));
 
+export const updateFileContent = (file: File, newContent: string): File => {
+  const blob = new Blob([newContent], { type: file.type });
+  return new File([blob], file.name, {type: file.type});
+};
+
 const scrollRegex = /(auto|scroll)/;
 
 function parentNodes(node: Node, nodes: Node[]): Node[] {
