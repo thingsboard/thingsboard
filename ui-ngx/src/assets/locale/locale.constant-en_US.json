@@ -5783,6 +5783,7 @@
             "display-legend": "Display legend",
             "labels-font-color": "Labels font color",
             "series": "Series",
+            "series-hint": "Comparison works only with historical data!",
             "add-series": "Add series",
             "series-settings": "Series settings",
             "remove-series": "Remove series",
