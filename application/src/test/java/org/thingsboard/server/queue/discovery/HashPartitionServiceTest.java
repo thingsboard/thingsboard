@@ -20,12 +20,12 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.server.common.data.DataConstants;
@@ -67,7 +67,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @Slf4j
-@RunWith(MockitoJUnitRunner.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class HashPartitionServiceTest {
 
     public static final int ITERATIONS = 1000000;
@@ -82,7 +82,7 @@ public class HashPartitionServiceTest {
 
     private String hashFunctionName = "murmur3_128";
 
-    @Before
+    @BeforeEach
     public void setup() throws Exception {
         serviceInfoProvider = mock(TbServiceInfoProvider.class);
         applicationEventPublisher = mock(ApplicationEventPublisher.class);
@@ -173,7 +173,7 @@ public class HashPartitionServiceTest {
         for (Map.Entry<T, Integer> entry : data) {
             System.out.println(entry.getKey() + ": " + entry.getValue());
         }
-        Assert.assertTrue(diffPercent < maxDiffPercent);
+        Assertions.assertTrue(diffPercent < maxDiffPercent);
     }
 
     @Test
