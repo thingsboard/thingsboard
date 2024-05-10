@@ -440,6 +440,7 @@
             "original": "Original",
             "white": "White",
             "label": "Label",
+            "label-required": "Label is required",
             "right": "Right",
             "left": "Left",
             "set": "Set",

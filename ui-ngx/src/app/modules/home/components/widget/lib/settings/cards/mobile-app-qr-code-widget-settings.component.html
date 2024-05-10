@@ -123,6 +123,15 @@
         </mat-slide-toggle>
         <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
           <input matInput formControlName="qrCodeLabel" maxlength="50" placeholder="{{'admin.mobile-app.set' | translate}}">
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="'admin.mobile-app.label-required' | translate"
+                    *ngIf="mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.qrCodeLabel').hasError('required')
+                            && mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.qrCodeLabel').touched"
+                    class="tb-error">
+            warning
+          </mat-icon>
         </mat-form-field>
       </div>
     </div>

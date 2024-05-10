@@ -49,22 +49,22 @@ export class MobileAppQrCodeWidgetSettingsComponent extends WidgetSettingsCompon
 
   protected onSettingsSet(settings: WidgetSettings) {
     this.mobileAppQRCodeWidgetSettingsForm = this.fb.group({
-      useDefaultApp: [settings.useDefaultApp, []],
+      useDefaultApp: [settings.useDefaultApp],
       androidConfig: this.fb.group({
-        enabled: [settings.androidConfig.enabled, []],
-        appPackage: [settings.androidConfig.appPackage, []],
-        sha256CertFingerprints: [settings.androidConfig.sha256CertFingerprints, []]
+        enabled: [settings.androidConfig.enabled],
+        appPackage: [settings.androidConfig.appPackage, [Validators.required]],
+        sha256CertFingerprints: [settings.androidConfig.sha256CertFingerprints, [Validators.required]]
       }),
       iosConfig: this.fb.group({
-        enabled: [settings.iosConfig.enabled, []],
-        appId: [settings.iosConfig.appId, []]
+        enabled: [settings.iosConfig.enabled],
+        appId: [settings.iosConfig.appId, [Validators.required]]
       }),
       qrCodeConfig: this.fb.group({
-        badgeEnabled: [settings.qrCodeConfig.badgeEnabled, []],
-        badgeStyle: [{value: settings.qrCodeConfig.badgeStyle, disabled: true}, []],
-        badgePosition: [{value: settings.qrCodeConfig.badgePosition, disabled: true}, []],
-        qrCodeLabelEnabled: [settings.qrCodeConfig.qrCodeLabelEnabled, []],
-        qrCodeLabel: [settings.qrCodeConfig.qrCodeLabel, []]
+        badgeEnabled: [settings.qrCodeConfig.badgeEnabled],
+        badgeStyle: [{value: settings.qrCodeConfig.badgeStyle, disabled: true}],
+        badgePosition: [{value: settings.qrCodeConfig.badgePosition, disabled: true}],
+        qrCodeLabelEnabled: [settings.qrCodeConfig.qrCodeLabelEnabled],
+        qrCodeLabel: [settings.qrCodeConfig.qrCodeLabel, [Validators.required]]
       })
     });
   }
@@ -81,76 +81,46 @@ export class MobileAppQrCodeWidgetSettingsComponent extends WidgetSettingsCompon
     const qrCodeLabelEnabled = this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.qrCodeLabelEnabled').value;
 
     if (useDefaultApp) {
-      this.mobileAppQRCodeWidgetSettingsForm.get('androidConfig.appPackage').clearValidators();
-      this.mobileAppQRCodeWidgetSettingsForm.get('androidConfig.sha256CertFingerprints').clearValidators();
-      this.mobileAppQRCodeWidgetSettingsForm.get('iosConfig.appId').clearValidators();
+      this.mobileAppQRCodeWidgetSettingsForm.get('androidConfig.appPackage').disable({emitEvent: false});
+      this.mobileAppQRCodeWidgetSettingsForm.get('androidConfig.sha256CertFingerprints').disable({emitEvent: false});
+      this.mobileAppQRCodeWidgetSettingsForm.get('iosConfig.appId').disable({emitEvent: false});
     } else {
-      this.mobileAppQRCodeWidgetSettingsForm.get('androidConfig.appPackage').setValidators([Validators.required]);
-      this.mobileAppQRCodeWidgetSettingsForm.get('androidConfig.sha256CertFingerprints').setValidators([Validators.required]);
-      this.mobileAppQRCodeWidgetSettingsForm.get('iosConfig.appId').setValidators([Validators.required]);
+      if (androidEnabled) {
+        this.mobileAppQRCodeWidgetSettingsForm.get('androidConfig.appPackage').enable({emitEvent: false});
+        this.mobileAppQRCodeWidgetSettingsForm.get('androidConfig.sha256CertFingerprints').enable({emitEvent: false});
+      } else {
+        this.mobileAppQRCodeWidgetSettingsForm.get('androidConfig.appPackage').disable({emitEvent: false});
+        this.mobileAppQRCodeWidgetSettingsForm.get('androidConfig.sha256CertFingerprints').disable({emitEvent: false});
+      }
+      if (iosEnabled) {
+        this.mobileAppQRCodeWidgetSettingsForm.get('iosConfig.appId').enable({emitEvent: false});
+      } else {
+        this.mobileAppQRCodeWidgetSettingsForm.get('iosConfig.appId').disable({emitEvent: false});
+      }
     }
 
-    if (androidEnabled) {
-      if (!useDefaultApp) {
-        this.mobileAppQRCodeWidgetSettingsForm.get('androidConfig.appPackage').setValidators([Validators.required]);
-        this.mobileAppQRCodeWidgetSettingsForm.get('androidConfig.sha256CertFingerprints').setValidators([Validators.required]);
-      }
+    if (!androidEnabled && !iosEnabled) {
+      this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgeEnabled').disable({emitEvent: false});
+      this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgeStyle').disable({emitEvent: false});
+      this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgePosition').disable({emitEvent: false});
+    }
+
+    if (androidEnabled || iosEnabled) {
       this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgeEnabled').enable({emitEvent: false});
       if (badgeEnabled) {
-        this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgeStyle').enable();
-        this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgePosition').enable();
+        this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgeStyle').enable({emitEvent: false});
+        this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgePosition').enable({emitEvent: false});
+      } else {
+        this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgeStyle').disable({emitEvent: false});
+        this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgePosition').disable({emitEvent: false});
       }
-    } else {
-      if (!useDefaultApp) {
-        this.mobileAppQRCodeWidgetSettingsForm.get('androidConfig.appPackage').clearValidators();
-        this.mobileAppQRCodeWidgetSettingsForm.get('androidConfig.sha256CertFingerprints').clearValidators();
-      }
-      if (!iosEnabled) {
-        this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgeEnabled').disable({emitEvent: false});
-        this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgeStyle').disable();
-        this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgePosition').disable();
-      }
-    }
-
-    if (iosEnabled) {
-      if (!useDefaultApp) {
-        this.mobileAppQRCodeWidgetSettingsForm.get('iosConfig.appId').setValidators([Validators.required]);
-      }
-      this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgeEnabled').enable({emitEvent: false});
-      if (badgeEnabled) {
-        this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgeStyle').enable();
-        this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgePosition').enable();
-      }
-    } else {
-      if (!useDefaultApp) {
-        this.mobileAppQRCodeWidgetSettingsForm.get('iosConfig.appId').clearValidators();
-      }
-      if (!androidEnabled) {
-        this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgeEnabled').disable({emitEvent: false});
-        this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgeStyle').disable();
-        this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgePosition').disable();
-      }
-    }
-
-    if (badgeEnabled) {
-      if (androidEnabled || iosEnabled) {
-        this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgeStyle').enable();
-        this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgePosition').enable();
-      }
-    } else {
-      this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgeStyle').disable();
-      this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgePosition').disable();
     }
 
     if (qrCodeLabelEnabled) {
-      this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.qrCodeLabel').enable();
+      this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.qrCodeLabel').enable({emitEvent: false});
     } else {
-      this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.qrCodeLabel').disable();
+      this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.qrCodeLabel').disable({emitEvent: false});
     }
-
-    this.mobileAppQRCodeWidgetSettingsForm.get('androidConfig.appPackage').updateValueAndValidity({emitEvent});
-    this.mobileAppQRCodeWidgetSettingsForm.get('androidConfig.sha256CertFingerprints').updateValueAndValidity({emitEvent});
-    this.mobileAppQRCodeWidgetSettingsForm.get('iosConfig.appId').updateValueAndValidity({emitEvent});
   }
 
 }
