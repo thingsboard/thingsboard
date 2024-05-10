@@ -460,7 +460,7 @@ public class LwM2mClient {
             if (lwM2mPath.isObject()) {
                 LwM2m.Version ver;
                 if (link.getAttributes().get("ver")!= null) {
-                    ver = (Version) link.getAttributes().get("ver").getValue();
+                    ver = new LwM2m.Version(link.getAttributes().get("ver").getValue().toString());
                 } else {
                     ver = getDefaultObjectIDVer();
                 }

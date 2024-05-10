@@ -145,7 +145,7 @@ public abstract class TransportHealthChecker<C extends TransportMonitoringConfig
             profileData.setTransportConfiguration(new DefaultDeviceProfileTransportConfiguration());
             deviceProfile.setProfileData(profileData);
         } else {
-            tbClient.getResources(new PageLink(1, 0, "lwm2m monitoring")).getData()
+            tbClient.getResources(new PageLink(1, 0, "LwM2M Monitoring id=3 v1.0")).getData()
                     .stream().findFirst()
                     .orElseGet(() -> {
                         TbResource newResource = ResourceUtils.getResource("lwm2m/resource.json", TbResource.class);
