@@ -396,7 +396,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
         Arrays.stream(client.getRegistration().getObjectLinks()).forEach(link -> {
             LwM2mPath pathIds = new LwM2mPath(link.getUriReference());
             if (!pathIds.isRoot()) {
-                clientObjects.add(convertObjectIdToVersionedId(link.getUriReference(), client.getRegistration()));
+                clientObjects.add(convertObjectIdToVersionedId(link.getUriReference(), client));
             }
         });
         return (clientObjects.size() > 0) ? clientObjects : null;

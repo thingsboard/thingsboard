@@ -92,7 +92,7 @@ public class HomePageApiTest extends AbstractControllerTest {
     @MockBean
     private SmsService smsService;
 
-    private static final int DEFAULT_DASHBOARDS_COUNT = 1;
+    private static final int DEFAULT_DASHBOARDS_COUNT = 0;
 
     //For system administrator
     @Test

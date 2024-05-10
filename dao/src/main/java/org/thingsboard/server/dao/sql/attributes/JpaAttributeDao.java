@@ -173,7 +173,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     @Override
     public List<String> findAllKeysByEntityIdsAndAttributeType(TenantId tenantId, List<EntityId> entityIds, String attributeType) {
         return attributeKvRepository
-                .findAllKeysByEntityIdsAndAttributeType(entityIds.stream().map(EntityId::getId).collect(Collectors.toList()), attributeType)
+                .findAllKeysByEntityIdsAndAttributeType(entityIds.stream().map(EntityId::getId).collect(Collectors.toList()), AttributeScope.valueOf(attributeType).getId())
                 .stream().map(id -> keyDictionaryDao.getKey(id)).collect(Collectors.toList());
     }
 
