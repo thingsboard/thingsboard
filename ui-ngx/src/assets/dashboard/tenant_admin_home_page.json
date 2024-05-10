@@ -1118,31 +1118,6 @@
         "sizeX": 5,
         "sizeY": 3.5,
         "config": {
-          "datasources": [],
-          "timewindow": {
-            "displayValue": "",
-            "selectedTab": 0,
-            "realtime": {
-              "realtimeType": 1,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "quickInterval": "CURRENT_DAY"
-            },
-            "history": {
-              "historyType": 0,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "fixedTimewindow": {
-                "startTimeMs": 1715005524783,
-                "endTimeMs": 1715091924783
-              },
-              "quickInterval": "CURRENT_DAY"
-            },
-            "aggregation": {
-              "type": "AVG",
-              "limit": 25000
-            }
-          },
           "showTitle": false,
           "backgroundColor": "#fff",
           "color": "rgba(0, 0, 0, 0.87)",
@@ -1170,11 +1145,7 @@
             "fontSize": "16px",
             "fontWeight": 400
           },
-          "showLegend": false,
-          "useDashboardTimewindow": true,
-          "displayTimewindow": true,
           "widgetCss": "",
-          "pageSize": 1024,
           "noDataDisplayMessage": ""
         },
         "row": 0,
@@ -1186,12 +1157,6 @@
         "sizeX": 7.5,
         "sizeY": 6.5,
         "config": {
-          "datasources": [],
-          "timewindow": {
-            "realtime": {
-              "timewindowMs": 60000
-            }
-          },
           "showTitle": false,
           "backgroundColor": "rgb(255, 255, 255)",
           "color": "rgba(0, 0, 0, 0.87)",
@@ -1204,9 +1169,7 @@
           "enableFullscreen": false,
           "widgetStyle": {},
           "widgetCss": "",
-          "pageSize": 1024,
-          "noDataDisplayMessage": "",
-          "showLegend": false
+          "noDataDisplayMessage": ""
         },
         "row": 0,
         "col": 0,
@@ -1219,28 +1182,6 @@
         "sizeX": 6,
         "sizeY": 3,
         "config": {
-          "datasources": [
-            {
-              "type": "static",
-              "name": "function",
-              "dataKeys": [
-                {
-                  "name": "f(x)",
-                  "type": "function",
-                  "label": "Random",
-                  "color": "#2196f3",
-                  "settings": {},
-                  "_hash": 0.15479322438769105,
-                  "funcBody": "var value = prevValue + Math.random() * 100 - 50;\nvar multiplier = Math.pow(10, 2 || 0);\nvar value = Math.round(value * multiplier) / multiplier;\nif (value < -1000) {\n\tvalue = -1000;\n} else if (value > 1000) {\n\tvalue = 1000;\n}\nreturn value;"
-                }
-              ]
-            }
-          ],
-          "timewindow": {
-            "realtime": {
-              "timewindowMs": 60000
-            }
-          },
           "showTitle": false,
           "backgroundColor": "rgb(255, 255, 255)",
           "color": "rgba(0, 0, 0, 0.87)",
