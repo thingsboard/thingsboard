@@ -71,13 +71,15 @@ export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnI
   }
 
   ngOnInit(): void {
-    if (this.ctx) {
-      this.mobileAppSettings = this.ctx.settings;
-    } else {
-      this.mobileAppService.getMobileAppSettings().subscribe((settings => {
-        this.mobileAppSettings = settings;
-        this.cd.detectChanges();
-      }));
+    if (!this.previewMode) {
+      if (this.ctx) {
+        this.mobileAppSettings = this.ctx.settings;
+      } else {
+        this.mobileAppService.getMobileAppSettings().subscribe((settings => {
+          this.mobileAppSettings = settings;
+          this.cd.detectChanges();
+        }));
+      }
     }
   }
 
@@ -105,9 +107,6 @@ export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnI
   updateQRCode(link: string) {
     import('qrcode').then((QRCode) => {
       QRCode.toCanvas(this.canvasRef.nativeElement, link, { width: 100 });
-      // QRCode.toCanvas(this.canvasRef.nativeElement, link);
-      // this.canvasRef.nativeElement.style.width = '4.6vw';
-      // this.canvasRef.nativeElement.style.height = '4.6vw';
     });
   }
 
