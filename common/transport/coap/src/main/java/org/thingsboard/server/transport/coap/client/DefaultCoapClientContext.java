@@ -81,7 +81,7 @@ import static org.eclipse.californium.core.coap.Message.NONE;
 
 @Slf4j
 @Service
-@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.coap.enabled}'=='true')")
+@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.coap.enabled}'=='true' && '${coap.enabled}'=='true')")
 public class DefaultCoapClientContext implements CoapClientContext {
 
     private final CoapServerContext config;

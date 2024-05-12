@@ -36,7 +36,7 @@ import java.util.concurrent.ConcurrentMap;
  * Created by ashvayka on 18.10.18.
  */
 @Slf4j
-@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.coap.enabled}'=='true')")
+@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.coap.enabled}'=='true' && '${coap.enabled}'=='true')")
 @Component
 @Getter
 public class CoapTransportContext extends TransportContext {

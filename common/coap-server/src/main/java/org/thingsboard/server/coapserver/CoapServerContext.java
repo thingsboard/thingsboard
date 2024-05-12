@@ -27,11 +27,11 @@ import org.springframework.stereotype.Component;
 public class CoapServerContext {
 
     @Getter
-    @Value("${transport.coap.bind_address}")
+    @Value("${coap.bind_address}")
     private String host;
 
     @Getter
-    @Value("${transport.coap.bind_port}")
+    @Value("${coap.bind_port}")
     private Integer port;
 
     @Getter
