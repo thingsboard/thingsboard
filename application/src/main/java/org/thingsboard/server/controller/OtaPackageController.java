@@ -198,7 +198,7 @@ public class OtaPackageController extends BaseController {
     @ResponseBody
     public PageData<OtaPackageInfo> getOtaPackages(@Parameter(description = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
                                                    @PathVariable("deviceProfileId") String strDeviceProfileId,
-                                                   @Parameter(description = "OTA Package type.", schema = @Schema(allowableValues = "FIRMWARE, SOFTWARE"))
+                                                   @Parameter(description = "OTA Package type.", schema = @Schema(allowableValues = {"FIRMWARE", "SOFTWARE"}))
                                                    @PathVariable("type") String strType,
                                                    @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
                                                    @RequestParam int pageSize,
