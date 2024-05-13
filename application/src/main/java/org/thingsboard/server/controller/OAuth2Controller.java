@@ -68,7 +68,7 @@ public class OAuth2Controller extends BaseController {
                                                    @Parameter(description = "Platform type to search OAuth2 clients for which " +
                                                            "the usage with this platform type is allowed in the settings. " +
                                                            "If platform type is not one of allowable values - it will just be ignored",
-                                                           schema = @Schema(allowableValues = "WEB, ANDROID, IOS"))
+                                                           schema = @Schema(allowableValues = {"WEB", "ANDROID", "IOS"}))
                                                    @RequestParam(required = false) String platform) throws ThingsboardException {
         if (log.isDebugEnabled()) {
             log.debug("Executing getOAuth2Clients: [{}][{}][{}]", request.getScheme(), request.getServerName(), request.getServerPort());
