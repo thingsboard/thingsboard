@@ -434,6 +434,8 @@ public class TbRuleEngineQueueConsumerManager {
                 consumers.get(tpi).initiateStop();
             });
 
+            List<TbQueueConsumerTask> removedTasks = removedPartitions.stream()
+                    .map(consumers::remove).toList();
 
 //            ctx.getQueueAdmin().createTopicIfNotExists();
             addedPartitions.forEach((tpi) -> {
@@ -444,6 +446,8 @@ public class TbRuleEngineQueueConsumerManager {
                 consumer.subscribe(Set.of(tpi));
                 launchConsumer(consumer);
             });
+
+            removedTasks.forEach(TbQueueConsumerTask::awaitCompletion);
         }
 
         @Override
