@@ -122,7 +122,7 @@ public class AuditLogControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Assert.assertEquals(11, loadedAuditLogs.size());
+        Assert.assertEquals(11 + 1, loadedAuditLogs.size());
 
         loadedAuditLogs = new ArrayList<>();
         pageLink = new TimePageLink(5);
@@ -136,7 +136,7 @@ public class AuditLogControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Assert.assertEquals(11, loadedAuditLogs.size());
+        Assert.assertEquals(11 + 1, loadedAuditLogs.size());
 
         loadedAuditLogs = new ArrayList<>();
         pageLink = new TimePageLink(5);
@@ -150,7 +150,7 @@ public class AuditLogControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Assert.assertEquals(11, loadedAuditLogs.size());
+        Assert.assertEquals(11 + 1, loadedAuditLogs.size());
     }
 
     @Test

@@ -256,7 +256,9 @@ public class AuthController extends BaseController {
             }
         }
 
-        return tokenFactory.createTokenPair(securityUser);
+        var tokenPair = tokenFactory.createTokenPair(securityUser);
+        systemSecurityService.logLoginAction(user, new RestAuthenticationDetails(request), ActionType.LOGIN, null);
+        return tokenPair;
     }
 
     @ApiOperation(value = "Reset password (resetPassword)",
