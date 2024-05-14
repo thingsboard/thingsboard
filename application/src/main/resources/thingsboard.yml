@@ -1244,12 +1244,12 @@ coap:
     x509:
       # Skip certificate validity check for client certificates.
       skip_validity_check_for_client_cert: "${TB_COAP_X509_DTLS_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
-      # Inactivity timeout of DTLS session. Used to clean cache
+      # Inactivity timeout of DTLS session. Used to cleanup cache
       dtls_session_inactivity_timeout: "${TB_COAP_X509_DTLS_SESSION_INACTIVITY_TIMEOUT:86400000}"
       # Interval of periodic eviction of the timed-out DTLS sessions
       dtls_session_report_timeout: "${TB_COAP_X509_DTLS_SESSION_REPORT_TIMEOUT:1800000}"
 
-# Device connectivity parameters
+# Device connectivity properties
 device:
   connectivity:
     http:
