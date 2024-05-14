@@ -48,6 +48,7 @@ import org.thingsboard.server.service.security.auth.mfa.provider.impl.TotpTwoFaP
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -325,7 +326,7 @@ public class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
         verify(smsService).sendSms(eq(tenantId), any(), argThat(phoneNumbers -> {
             return phoneNumbers[0].equals(smsTwoFaAccountConfig.getPhoneNumber());
-        }), eq("Here is your verification code: " + verificationCode));
+        }), eq("Here is your verification code: " + verificationCode)).get(30, TimeUnit.SECONDS);
     }
 
     @Test
@@ -363,7 +364,7 @@ public class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
         verify(smsService).sendSms(eq(tenantId), any(), argThat(phoneNumbers -> {
             return phoneNumbers[0].equals(smsTwoFaAccountConfig.getPhoneNumber());
-        }), verificationCodeCaptor.capture());
+        }), verificationCodeCaptor.capture()).get(30, TimeUnit.SECONDS);
 
         String correctVerificationCode = verificationCodeCaptor.getValue();
         doPost("/api/2fa/account/config?verificationCode=" + correctVerificationCode, smsTwoFaAccountConfig)
@@ -402,7 +403,7 @@ public class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
         verify(smsService).sendSms(eq(tenantId), any(), argThat(phoneNumbers -> {
             return phoneNumbers[0].equals(initialSmsTwoFaAccountConfig.getPhoneNumber());
-        }), verificationCodeCaptor.capture());
+        }), verificationCodeCaptor.capture()).get(30, TimeUnit.SECONDS);
 
         String correctVerificationCode = verificationCodeCaptor.getValue();
 
