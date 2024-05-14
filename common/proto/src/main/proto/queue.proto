@@ -98,6 +98,12 @@ message SessionInfoProto {
   int64 customerIdLSB = 15;
 }
 
+message RestApiCallResponseMsgProto {
+  int64 requestIdMSB = 1;
+  int64 requestIdLSB = 2;
+  bytes response = 5;
+}
+
 enum SessionEvent {
   OPEN = 0;
   CLOSED = 1;
@@ -1465,6 +1471,7 @@ message ToCoreNotificationMsg {
   ToEdgeSyncRequestMsgProto toEdgeSyncRequest = 11;
   FromEdgeSyncResponseMsgProto fromEdgeSyncResponse = 12;
   ResourceCacheInvalidateMsg resourceCacheInvalidateMsg = 13;
+  RestApiCallResponseMsgProto restApiCallResponseMsg = 50;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */

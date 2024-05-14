@@ -633,6 +633,12 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return doPost("/api/device?accessToken=" + accessToken, device, Device.class);
     }
 
+    protected Device assignDeviceToCustomer(String name, String accessToken, CustomerId customerId) throws Exception {
+        Device device = createDevice(name, accessToken);
+        String deviceIdStr = String.valueOf(device.getId().getId());
+        return doPost("/api/customer/" + customerId.getId() + "/device/" + deviceIdStr, device, Device.class);
+    }
+
     protected MqttDeviceProfileTransportConfiguration createMqttDeviceProfileTransportConfiguration(TransportPayloadTypeConfiguration transportPayloadTypeConfiguration, boolean sendAckOnValidationException) {
         MqttDeviceProfileTransportConfiguration mqttDeviceProfileTransportConfiguration = new MqttDeviceProfileTransportConfiguration();
         mqttDeviceProfileTransportConfiguration.setDeviceTelemetryTopic(MqttTopics.DEVICE_TELEMETRY_TOPIC);
@@ -801,6 +807,10 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected <T, R> R doPostWithTypedResponse(String urlTemplate, T content, TypeReference<R> responseType, ResultMatcher resultMatcher, String... params) throws Exception {
         return readResponse(doPost(urlTemplate, content, params).andExpect(resultMatcher), responseType);
+    }
+
+    protected <T, R> R doPostAsyncWithTypedResponse(String urlTemplate, T content, TypeReference<R> responseType, ResultMatcher resultMatcher, String... params) throws Exception {
+        return readResponse(doPostAsync(urlTemplate, content, DEFAULT_TIMEOUT, params).andExpect(resultMatcher), responseType);
     }
 
     protected <T> T doPostAsync(String urlTemplate, T content, Class<T> responseClass, ResultMatcher resultMatcher, String... params) throws Exception {

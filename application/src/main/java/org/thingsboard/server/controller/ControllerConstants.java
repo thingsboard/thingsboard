@@ -1710,4 +1710,6 @@ public class ControllerConstants {
             MARKDOWN_CODE_BLOCK_START +
             "[{\"ts\":1634712287000,\"values\":{\"temperature\":26, \"humidity\":87}}, {\"ts\":1634712588000,\"values\":{\"temperature\":25, \"humidity\":88}}]" +
             MARKDOWN_CODE_BLOCK_END ;
+
+    protected static final String SECURITY_WRITE_CHECK = " Security check is performed to verify that the user has 'WRITE' permission for the entity (entities).";
 }
