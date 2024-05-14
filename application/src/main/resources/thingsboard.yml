@@ -1207,7 +1207,6 @@ coap:
     bind_address: "${COAP_DTLS_BIND_ADDRESS:0.0.0.0}"
     # CoAP DTLS bind port
     bind_port: "${COAP_DTLS_BIND_PORT:5684}"
-    # Server DTLS credentials
     # CoAP DTLS connection ID length. RFC 9146, Connection Identifier for DTLS 1.2
     # Default: off
     # Control usage of DTLS connection ID length (CID).
@@ -1218,6 +1217,7 @@ coap:
     # - A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used
     # - A value that are > 4: MultiNodeConnectionIdGenerator is used
     connection_id_length: "${COAP_DTLS_CONNECTION_ID_LENGTH:}"
+    # Server DTLS credentials
     credentials:
       # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
       type: "${COAP_DTLS_CREDENTIALS_TYPE:PEM}"
