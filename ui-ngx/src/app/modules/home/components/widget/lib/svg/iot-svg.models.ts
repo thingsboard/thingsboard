@@ -15,7 +15,8 @@
 ///
 
 import { ValueType } from '@shared/models/constants';
-import { Box, Element, Runner, Svg, SVG, Text } from '@svgdotjs/svg.js';
+import * as svgjs from '@svgdotjs/svg.js';
+import { Box, Element, Rect, Runner, SVG, Svg, Text } from '@svgdotjs/svg.js';
 import {
   DataToValueType,
   GetValueAction,
@@ -32,7 +33,7 @@ import {
   mergeDeep,
   parseFunction
 } from '@core/utils';
-import { BehaviorSubject, forkJoin, Observable, Observer } from 'rxjs';
+import { BehaviorSubject, forkJoin, from, Observable, Observer } from 'rxjs';
 import { map, share } from 'rxjs/operators';
 import { ValueAction, ValueGetter, ValueSetter } from '@home/components/widget/lib/action/action-widget.models';
 import { WidgetContext } from '@home/models/widget-component.models';
@@ -41,6 +42,9 @@ import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetAction, WidgetActionType } from '@shared/models/widget.models';
 import { ResizeObserver } from '@juggle/resize-observer';
+import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
+import ITooltipPosition = JQueryTooltipster.ITooltipPosition;
+import ITooltipsterHelper = JQueryTooltipster.ITooltipsterHelper;
 
 export interface IotSvgApi {
   formatValue: (value: any, dec?: number, units?: string, showZeroDecimals?: boolean) => string | undefined;
@@ -273,10 +277,11 @@ const parseError = (ctx: WidgetContext, err: any): string =>
 
 export class IotSvgEditObject {
 
-  private svgShape: Svg;
+  public svgShape: Svg;
   private box: Box;
-
-  private shapeResize$: ResizeObserver;
+  private elements: IotSvgElement[] = [];
+  private readonly shapeResize$: ResizeObserver;
+  public scale = 1;
   constructor(private rootElement: HTMLElement) {
     this.shapeResize$ = new ResizeObserver(() => {
       this.resize();
@@ -296,6 +301,69 @@ export class IotSvgEditObject {
     this.svgShape.size(this.box.width, this.box.height);
     this.svgShape.addTo(this.rootElement);
     this.resize();
+    //this.svgShape.cre
+    this.svgShape.style().rule('.hovered', {filter: 'drop-shadow(0px 0px 1px #FFC107)'});
+    //this.svgShape.style().rule('.hovered', {filter: 'opacity(50%)'});
+    this.svgShape.style().rule('.tb-element', {cursor: 'pointer', transition: '0.2s filter ease-in-out'});
+    (window as any).SVG = svgjs;
+    forkJoin([
+      from(import('tooltipster')),
+      from(import('tooltipster/dist/js/plugins/tooltipster/SVG/tooltipster-SVG.min.js'))
+    ]).subscribe(() => {
+      this.setupElements();
+    });
+  }
+
+  private setupElements() {
+    this.svgShape.children().forEach(child => {
+      this.addElement(child);
+    });
+    const overlappingGroups: IotSvgElement[][] = [];
+    for (const el of this.elements) {
+      for (const other of this.elements) {
+        if (el !== other && el.overlappingCenters(other)) {
+          let overlappingGroup: IotSvgElement[];
+          for (const list of overlappingGroups) {
+            if (list.includes(other) || list.includes(el)) {
+              overlappingGroup = list;
+              break;
+            }
+          }
+          if (!overlappingGroup) {
+            overlappingGroup = [el, other];
+            overlappingGroups.push(overlappingGroup);
+          } else {
+            if (!overlappingGroup.includes(el)) {
+              overlappingGroup.push(el);
+            } else if (!overlappingGroup.includes(other)){
+              overlappingGroup.push(other);
+            }
+          }
+        }
+      }
+    }
+    for (const group of overlappingGroups) {
+      let offset = - (elementTooltipMinHeight * group.length) / 2 + elementTooltipMinHeight / 2;
+      for (const element of group) {
+        element.innerTooltipOffset = offset;
+        offset += elementTooltipMinHeight;
+      }
+    }
+    for (const el of this.elements) {
+      el.init();
+    }
+  }
+
+  private addElement(e: Element) {
+    if (hasBBox(e)) {
+      const iotSvgElement = new IotSvgElement(this, e);
+      this.elements.push(iotSvgElement);
+      e.children().forEach(child => {
+        if (!(child.type === 'tspan' && e.type === 'text')) {
+          this.addElement(child);
+        }
+      }, true);
+    }
   }
 
   public destroy() {
@@ -308,14 +376,338 @@ export class IotSvgEditObject {
     if (this.svgShape) {
       const targetWidth = this.rootElement.getBoundingClientRect().width;
       const targetHeight = this.rootElement.getBoundingClientRect().height;
-      let scale: number;
       if (targetWidth < targetHeight) {
-        scale = targetWidth / this.box.width;
+        this.scale = targetWidth / this.box.width;
       } else {
-        scale = targetHeight / this.box.height;
+        this.scale = targetHeight / this.box.height;
       }
-      this.svgShape.node.style.transform = `scale(${scale})`;
+      this.svgShape.node.style.transform = `scale(${this.scale})`;
     }
+  }
+
+}
+
+const hasBBox = (e: Element): boolean => {
+  try {
+    if (e.bbox) {
+      e.bbox();
+      return true;
+    } else {
+      return false;
+    }
+  } catch (_e) {
+    return false;
+  }
+};
+
+const textTooltip = (el: JQuery<any>, text: string) => {
+  el.tooltipster({
+    theme: ['tooltipster-tb'],
+    trigger: 'hover',
+    content: text
+  });
+};
+
+const elementTooltipMinHeight = 36 + 8;
+const elementTooltipMinWidth = 100;
+
+const groupRectStroke = 10;
+
+class IotSvgElement {
+
+  private highlightRect: Rect;
+
+  private tooltip: ITooltipsterInstance;
+
+  private tag: string;
+
+  public innerTooltipOffset = 0;
+
+  public readonly box: Box;
+
+  private highlighted = false;
+
+  constructor(private editObject: IotSvgEditObject,
+              private element: Element) {
+    this.tag = element.attr('tb:tag');
+    this.box = element.rbox(this.editObject.svgShape);
+  }
+
+  public init() {
+    if (this.isGroup()) {
+      this.highlightRect =
+        this.editObject.svgShape
+        .rect(this.box.width + this.unscaled(groupRectStroke * 4), this.box.height + this.unscaled(groupRectStroke * 4))
+        .x(this.box.x - this.unscaled(groupRectStroke * 2))
+        .y(this.box.y - this.unscaled(groupRectStroke * 2))
+        .attr({fill: 'none', stroke: '#ccc', 'stroke-width': this.unscaled(groupRectStroke), opacity: 0});
+      this.highlightRect.hide();
+    } else {
+      this.element.addClass('tb-element');
+    }
+    this.element.on('mouseenter', (event) => {
+      this.highlight();
+    });
+    this.element.on('mouseleave', (event) => {
+      this.unhighlight();
+    });
+    if (this.hasTag()) {
+      this.createTagTooltip();
+    } else {
+      this.createAddTagTooltip();
+    }
+  }
+
+  public overlappingCenters(otherElement: IotSvgElement): boolean {
+    if (this.isGroup() || otherElement.isGroup()) {
+      return false;
+    }
+    return Math.abs(this.box.cx - otherElement.box.cx) * this.editObject.scale < elementTooltipMinWidth &&
+      Math.abs(this.box.cy - otherElement.box.cy) * this.editObject.scale < elementTooltipMinHeight;
+  }
+
+  public highlight() {
+    if (!this.highlighted) {
+      this.highlighted = true;
+      if (this.isGroup()) {
+        this.highlightRect.width(this.box.width + this.unscaled(groupRectStroke * 4))
+        .height(this.box.height + this.unscaled(groupRectStroke * 4))
+        .x(this.box.x - this.unscaled(groupRectStroke * 2))
+        .y(this.box.y - this.unscaled(groupRectStroke * 2))
+        .attr({'stroke-width': this.unscaled(groupRectStroke)});
+        this.highlightRect.show();
+        this.highlightRect.animate(300).attr({opacity: 1});
+      } else {
+        this.element.addClass('hovered');
+      }
+      if (this.hasTag()) {
+        this.tooltip.reposition();
+      }
+    }
+  }
+
+  public unhighlight() {
+    if (this.highlighted) {
+      this.highlighted = false;
+      if (this.isGroup()) {
+        this.highlightRect.animate(300).attr({opacity: 0}).after(() => {
+          this.highlightRect.hide();
+        });
+      } else {
+        this.element.removeClass('hovered');
+      }
+    }
+  }
+
+  public clearTag() {
+    this.tooltip.destroy();
+    this.tag = null;
+    this.element.attr('tb:tag', null);
+    this.createAddTagTooltip();
+  }
+
+  public setTag(tag: string) {
+    this.tooltip.destroy();
+    this.tag = tag;
+    this.element.attr('tb:tag', tag);
+    this.createTagTooltip();
+  }
+
+  private unscaled(size: number): number {
+    return size / this.editObject.scale;
+  }
+
+  private createTagTooltip() {
+    const el = $(this.element.node);
+    el.tooltipster(
+      {
+        arrow: this.isGroup(),
+        distance: this.isGroup() ? 20 : 6,
+        theme: ['tooltipster-tb'],
+        delay: 0,
+        animationDuration: 0,
+        interactive: true,
+        trigger: 'custom',
+        side: 'top',
+        trackOrigin: true,
+        content: '',
+        functionPosition: (instance, helper, position) =>
+          this.innerTooltipPosition(instance, helper, position)
+      }
+    );
+    this.tooltip = el.tooltipster('instance');
+    this.setupTagPanel();
+  }
+
+  private setupTagPanel() {
+    const tagPanel =
+      $(`<div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
+           <span>${this.element.type}:</span>
+           <span><b>${this.tag}</b></span>
+           <span style="cursor: pointer;" class="edit-icon mat-icon tb-mat-18 material-icons">edit</span>
+           <span style="cursor: pointer;" class="delete-icon mat-icon tb-mat-18 material-icons">delete</span>
+         </div>`);
+    tagPanel.on('mouseenter', () => {
+      this.highlight();
+    });
+    tagPanel.on('mouseleave', () => {
+      this.unhighlight();
+    });
+    const updateTagButton = tagPanel.find('.edit-icon');
+    textTooltip(updateTagButton, 'Update tag');
+    updateTagButton.on('click', () => {
+      this.setupEditTagPanel();
+    });
+    const deleteButton = tagPanel.find('.delete-icon');
+    textTooltip(deleteButton, 'Remove tag');
+    deleteButton.on('click', () => {
+      this.clearTag();
+    });
+    this.tooltip.content(tagPanel);
+    this.tooltip.open();
+  }
+
+  private setupEditTagPanel() {
+    const editTagInputPanel =
+      $(`<div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
+          <span>Update tag:</span>
+          <input class="tag-input"/>
+          <span style="cursor: pointer;" class="apply-icon mat-icon tb-mat-18 material-icons">done</span>
+          <span style="cursor: pointer;" class="close-icon mat-icon tb-mat-18 material-icons">close</span>
+         </div>`);
+    const tagInput = editTagInputPanel.find('input.tag-input');
+    const applyTagButton = editTagInputPanel.find('span.apply-icon');
+    const closeButton = editTagInputPanel.find('span.close-icon');
+    textTooltip(applyTagButton, 'Apply');
+    textTooltip(closeButton, 'Cancel');
+    tagInput.val(this.tag);
+    let editPanelClosed = false;
+
+    tagInput.on('keypress', (event) => {
+      if (event.which === 13) {
+        const newTag: string = tagInput.val() as string;
+        if (newTag) {
+          editPanelClosed = true;
+          this.setTag(newTag);
+        }
+      }
+    });
+    applyTagButton.on('click', () => {
+      const newTag: string = tagInput.val() as string;
+      editPanelClosed = true;
+      if (newTag) {
+        this.setTag(newTag);
+      } else {
+        this.setupTagPanel();
+      }
+    });
+    closeButton.on('click', () => {
+      editPanelClosed = true;
+      this.setupTagPanel();
+    });
+    tagInput.on('blur', () => {
+      setTimeout(() => {
+        if (!editPanelClosed) {
+          editPanelClosed = true;
+          this.setupTagPanel();
+        }
+      });
+    });
+    this.tooltip.content(editTagInputPanel);
+    tagInput.trigger('focus');
+  }
+
+  private createAddTagTooltip() {
+    const el = $(this.element.node);
+    el.tooltipster(
+      {
+        arrow: this.isGroup(),
+        distance: this.isGroup() ? 20 : 6,
+        theme: ['tooltipster-tb'],
+        delay: 200,
+        interactive: true,
+        trigger: 'hover',
+        side: 'top',
+        trackOrigin: true,
+        content: '',
+        functionPosition: (instance, helper, position) =>
+          this.innerTooltipPosition(instance, helper, position)
+      }
+    );
+    this.tooltip = el.tooltipster('instance');
+    this.setupAddTagPanel();
+  }
+
+  private setupAddTagPanel() {
+    const addTagPanel =
+      $(`<div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
+          <span>${this.element.type}:</span>
+          <button class="add-tag-button" style="cursor: pointer;">Add tag</button>
+         </div>`);
+    const addTagButton = addTagPanel.find('.add-tag-button');
+    addTagButton.on('click', () => {
+      this.setupAddTagInputPanel();
+    });
+    this.tooltip.content(addTagPanel);
+    this.tooltip.off('closing');
+  }
+
+  private setupAddTagInputPanel() {
+    const addTagInputPanel =
+      $(`<div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
+          <span>Enter tag:</span>
+          <input class="tag-input"/>
+          <span style="cursor: pointer;" class="apply-icon mat-icon tb-mat-18 material-icons">done</span>
+          <span style="cursor: pointer;" class="close-icon mat-icon tb-mat-18 material-icons">close</span>
+         </div>`);
+    const tagInput = addTagInputPanel.find('input.tag-input');
+    const applyTagButton = addTagInputPanel.find('span.apply-icon');
+    const closeButton = addTagInputPanel.find('span.close-icon');
+    textTooltip(applyTagButton, 'Apply');
+    textTooltip(closeButton, 'Cancel');
+
+    tagInput.on('keypress', (event) => {
+      if (event.which === 13) {
+        const newTag: string = tagInput.val() as string;
+        if (newTag) {
+          this.setTag(newTag);
+        }
+      }
+    });
+    applyTagButton.on('click', () => {
+      const newTag: string = tagInput.val() as string;
+      if (newTag) {
+        this.setTag(newTag);
+      } else {
+        this.tooltip.close();
+      }
+    });
+    closeButton.on('click', () => {
+      this.tooltip.close();
+    });
+    this.tooltip.content(addTagInputPanel);
+    this.tooltip.on('closing', () => {
+      this.setupAddTagPanel();
+    });
+    tagInput.trigger('focus');
+  }
+
+  private innerTooltipPosition(instance: ITooltipsterInstance, helper: ITooltipsterHelper, position: ITooltipPosition): ITooltipPosition {
+    if (!this.isGroup()) {
+      const clientRect = helper.origin.getBoundingClientRect();
+      position.coord.top = clientRect.top + (clientRect.height - position.size.height) / 2
+        + this.innerTooltipOffset;
+      position.coord.left = clientRect.left + (clientRect.width - position.size.width) / 2;
+    }
+    return position;
+  }
+
+  private hasTag() {
+    return !!this.tag;
+  }
+
+  private isGroup() {
+    return this.element.type === 'g';
   }
 
 }
