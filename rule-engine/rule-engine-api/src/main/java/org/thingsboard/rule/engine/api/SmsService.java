@@ -15,7 +15,8 @@
  */
 package org.thingsboard.rule.engine.api;
 
-import org.thingsboard.server.common.data.exception.ThingsboardException;
+import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.rule.engine.api.sms.SmsSender;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.sms.config.TestSmsRequest;
@@ -24,10 +25,11 @@ public interface SmsService {
 
     void updateSmsConfiguration();
 
-    void sendSms(TenantId tenantId, CustomerId customerId, String[] numbersTo, String message) throws ThingsboardException;;
+    ListenableFuture<Void> sendSms(TenantId tenantId, CustomerId customerId, String[] numbersTo, String message);
 
-    void sendTestSms(TestSmsRequest testSmsRequest) throws ThingsboardException;
+    ListenableFuture<Void> sendTestSms(TestSmsRequest testSmsRequest);
 
     boolean isConfigured(TenantId tenantId);
 
+    ListenableFuture<Void> sendSms(SmsSender smsSender, String[] numbersToList, String message);
 }

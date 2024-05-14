@@ -32,6 +32,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @TbCoreComponent
@@ -53,7 +54,7 @@ public class SmsTwoFaProvider extends OtpBasedTwoFaProvider<SmsTwoFaProviderConf
     }
 
     @Override
-    protected void sendVerificationCode(SecurityUser user, String verificationCode, SmsTwoFaProviderConfig providerConfig, SmsTwoFaAccountConfig accountConfig) throws ThingsboardException {
+    protected void sendVerificationCode(SecurityUser user, String verificationCode, SmsTwoFaProviderConfig providerConfig, SmsTwoFaAccountConfig accountConfig) throws Exception {
         Map<String, String> messageData = Map.of(
                 "code", verificationCode,
                 "userEmail", user.getEmail()
@@ -61,9 +62,9 @@ public class SmsTwoFaProvider extends OtpBasedTwoFaProvider<SmsTwoFaProviderConf
         String message = TbNodeUtils.processTemplate(providerConfig.getSmsVerificationMessageTemplate(), messageData);
         String phoneNumber = accountConfig.getPhoneNumber();
         try {
-            smsService.sendSms(user.getTenantId(), user.getCustomerId(), new String[]{phoneNumber}, message);
+            smsService.sendSms(user.getTenantId(), user.getCustomerId(), new String[]{phoneNumber}, message).get(30, TimeUnit.SECONDS);
             auditLogService.logEntityAction(user.getTenantId(), user.getCustomerId(), user.getId(), user.getName(), user.getId(), user, ActionType.SMS_SENT, null, phoneNumber);
-        } catch (ThingsboardException e) {
+        } catch (Exception e) {
             auditLogService.logEntityAction(user.getTenantId(), user.getCustomerId(), user.getId(), user.getName(), user.getId(), user, ActionType.SMS_SENT, e, phoneNumber);
             throw e;
         }

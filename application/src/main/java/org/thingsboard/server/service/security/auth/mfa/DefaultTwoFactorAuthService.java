@@ -81,7 +81,7 @@ public class DefaultTwoFactorAuthService implements TwoFactorAuthService {
     }
 
     @Override
-    public void prepareVerificationCode(SecurityUser user, TwoFaAccountConfig accountConfig, boolean checkLimits) throws ThingsboardException {
+    public void prepareVerificationCode(SecurityUser user, TwoFaAccountConfig accountConfig, boolean checkLimits) throws Exception {
         PlatformTwoFaSettings twoFaSettings = configManager.getPlatformTwoFaSettings(user.getTenantId(), true)
                 .orElseThrow(() -> PROVIDER_NOT_CONFIGURED_ERROR);
         if (checkLimits) {

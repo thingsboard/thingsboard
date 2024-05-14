@@ -39,13 +39,13 @@ public abstract class OtpBasedTwoFaProvider<C extends OtpBasedTwoFaProviderConfi
 
 
     @Override
-    public final void prepareVerificationCode(SecurityUser user, C providerConfig, A accountConfig) throws ThingsboardException {
+    public final void prepareVerificationCode(SecurityUser user, C providerConfig, A accountConfig) throws Exception {
         String verificationCode = StringUtils.randomNumeric(6);
         sendVerificationCode(user, verificationCode, providerConfig, accountConfig);
         verificationCodesCache.put(user.getId(), new Otp(System.currentTimeMillis(), verificationCode, accountConfig));
     }
 
-    protected abstract void sendVerificationCode(SecurityUser user, String verificationCode, C providerConfig, A accountConfig) throws ThingsboardException;
+    protected abstract void sendVerificationCode(SecurityUser user, String verificationCode, C providerConfig, A accountConfig) throws Exception;
 
 
     @Override

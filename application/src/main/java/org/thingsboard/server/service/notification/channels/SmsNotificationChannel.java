@@ -25,6 +25,8 @@ import org.thingsboard.server.common.data.notification.NotificationDeliveryMetho
 import org.thingsboard.server.common.data.notification.template.SmsDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.service.notification.NotificationProcessingContext;
 
+import java.util.concurrent.TimeUnit;
+
 @Component
 @RequiredArgsConstructor
 public class SmsNotificationChannel implements NotificationChannel<User, SmsDeliveryMethodNotificationTemplate> {
@@ -38,7 +40,7 @@ public class SmsNotificationChannel implements NotificationChannel<User, SmsDeli
             throw new RuntimeException("User does not have phone number");
         }
 
-        smsService.sendSms(ctx.getTenantId(), null, new String[]{phone}, processedTemplate.getBody());
+        smsService.sendSms(ctx.getTenantId(), null, new String[]{phone}, processedTemplate.getBody()).get(30, TimeUnit.SECONDS);
     }
 
     @Override
