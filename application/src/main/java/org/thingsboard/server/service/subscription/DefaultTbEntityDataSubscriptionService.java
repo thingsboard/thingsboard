@@ -95,7 +95,8 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     private static final int DEFAULT_LIMIT = 100;
     private final Map<String, Map<Integer, TbAbstractSubCtx>> subscriptionsBySessionId = new ConcurrentHashMap<>();
 
-    @Autowired @Lazy
+    @Autowired
+    @Lazy
     private WebSocketService wsService;
 
     @Autowired
@@ -728,7 +729,14 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     public void cancelAllSessionSubscriptions(String sessionId) {
         Map<Integer, TbAbstractSubCtx> sessionSubs = subscriptionsBySessionId.remove(sessionId);
         if (sessionSubs != null) {
-            sessionSubs.values().forEach(this::cleanupAndCancel);
+            sessionSubs.values().forEach(sub -> {
+                        try {
+                            cleanupAndCancel(sub);
+                        } catch (Exception e) {
+                            log.warn("[{}] Failed to remove subscription {} due to ", sub.getTenantId(), sub, e);
+                        }
+                    }
+            );
         }
     }
 

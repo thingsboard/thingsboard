@@ -216,7 +216,11 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         Map<Integer, TbSubscription<?>> sessionSubscriptions = subscriptionsBySessionId.remove(sessionId);
         if (sessionSubscriptions != null) {
             for (TbSubscription<?> subscription : sessionSubscriptions.values()) {
-                modifySubscription(subscription.getTenantId(), subscription.getEntityId(), subscription, false);
+                try {
+                    modifySubscription(subscription.getTenantId(), subscription.getEntityId(), subscription, false);
+                } catch (Exception e) {
+                    log.warn("[{}][{}] Failed to remove subscription {} due to ", subscription.getTenantId(), subscription.getEntityId(), subscription, e);
+                }
             }
         } else {
             log.debug("[{}] No session subscriptions found!", sessionId);
