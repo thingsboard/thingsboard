@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,6 +88,7 @@ public class OAuth2Utils {
     public static OAuth2Params infoToOAuth2Params(OAuth2Info oauth2Info) {
         OAuth2Params oauth2Params = new OAuth2Params();
         oauth2Params.setEnabled(oauth2Info.isEnabled());
+        oauth2Params.setEdgeEnabled(oauth2Info.isEdgeEnabled());
         oauth2Params.setTenantId(TenantId.SYS_TENANT_ID);
         return oauth2Params;
     }

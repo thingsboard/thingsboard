@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -30,7 +30,8 @@ export const Constants = {
     badRequestParams: 31,
     itemNotFound: 32,
     tooManyRequests: 33,
-    tooManyUpdates: 34
+    tooManyUpdates: 34,
+    passwordViolation: 45
   },
   entryPoints: {
     login: '/api/auth/login',
@@ -69,6 +70,13 @@ export const MediaBreakpoints = {
   'gt-lg': 'screen and (min-width: 1920px)',
   'gt-xl': 'screen and (min-width: 5001px)',
   'md-lg': 'screen and (min-width: 960px) and (max-width: 1819px)'
+};
+
+export const resolveBreakpoint = (breakpoint: string): string => {
+  if (MediaBreakpoints[breakpoint]) {
+    return MediaBreakpoints[breakpoint];
+  }
+  return breakpoint;
 };
 
 export const helpBaseUrl = 'https://thingsboard.io';
@@ -151,12 +159,12 @@ export const HelpLinks = {
     otaUpdates: helpBaseUrl + '/docs/user-guide/ota-updates',
     widgetTypes: helpBaseUrl + '/docs/user-guide/ui/widget-library/#widget-types',
     widgetsBundles: helpBaseUrl + '/docs/user-guide/ui/widget-library/#widgets-library-bundles',
-    widgetsConfig:  helpBaseUrl + '/docs/user-guide/ui/dashboards#widget-configuration',
-    widgetsConfigTimeseries:  helpBaseUrl + '/docs/user-guide/ui/dashboards#timeseries',
-    widgetsConfigLatest: helpBaseUrl +  '/docs/user-guide/ui/dashboards#latest',
-    widgetsConfigRpc: helpBaseUrl +  '/docs/user-guide/ui/dashboards#rpc',
-    widgetsConfigAlarm: helpBaseUrl +  '/docs/user-guide/ui/dashboards#alarm',
-    widgetsConfigStatic: helpBaseUrl +  '/docs/user-guide/ui/dashboards#static',
+    widgetsConfig:  helpBaseUrl + '/docs/user-guide/ui/widget-library',
+    widgetsConfigTimeseries:  helpBaseUrl + '/docs/user-guide/ui/widget-library#time-series',
+    widgetsConfigLatest: helpBaseUrl +  '/docs/user-guide/ui/widget-library#latest-values',
+    widgetsConfigRpc: helpBaseUrl +  '/docs/user-guide/ui/widget-library#control-widget',
+    widgetsConfigAlarm: helpBaseUrl +  '/docs/user-guide/ui/widget-library#alarm-widget',
+    widgetsConfigStatic: helpBaseUrl +  '/docs/user-guide/ui/widget-library#static',
     ruleNodePushToCloud: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#push-to-cloud',
     ruleNodePushToEdge: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#push-to-edge',
     queue: helpBaseUrl + '/docs/user-guide/queue',
@@ -168,6 +176,7 @@ export const HelpLinks = {
     recipientNotifications: helpBaseUrl + '/docs/user-guide/notifications/#recipients',
     ruleNotifications: helpBaseUrl + '/docs/user-guide/notifications/#rules',
     jwtSecuritySettings: helpBaseUrl + '/docs/user-guide/ui/jwt-security-settings/',
+    gatewayInstall: helpBaseUrl + '/docs/iot-gateway/install/docker-installation/',
   }
 };
 

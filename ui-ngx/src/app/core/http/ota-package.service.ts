@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,12 +27,13 @@ import {
   OtaPagesIds,
   OtaUpdateType
 } from '@shared/models/ota-package.models';
-import { catchError, map, mergeMap } from 'rxjs/operators';
+import { catchError, mergeMap } from 'rxjs/operators';
 import { deepClone } from '@core/utils';
 import { BaseData } from '@shared/models/base-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from '@core/services/dialog.service';
+import { ResourcesService } from '@core/services/resources.service';
 
 @Injectable({
   providedIn: 'root'
@@ -41,7 +42,8 @@ export class OtaPackageService {
   constructor(
     private http: HttpClient,
     private translate: TranslateService,
-    private dialogService: DialogService
+    private dialogService: DialogService,
+    private resourcesService: ResourcesService
   ) {
 
   }
@@ -65,31 +67,7 @@ export class OtaPackageService {
   }
 
   public downloadOtaPackage(otaPackageId: string): Observable<any> {
-    return this.http.get(`/api/otaPackage/${otaPackageId}/download`, { responseType: 'arraybuffer', observe: 'response' }).pipe(
-      map((response) => {
-        const headers = response.headers;
-        const filename = headers.get('x-filename');
-        const contentType = headers.get('content-type');
-        const linkElement = document.createElement('a');
-        try {
-          const blob = new Blob([response.body], { type: contentType });
-          const url = URL.createObjectURL(blob);
-          linkElement.setAttribute('href', url);
-          linkElement.setAttribute('download', filename);
-          const clickEvent = new MouseEvent('click',
-            {
-              view: window,
-              bubbles: true,
-              cancelable: false
-            }
-          );
-          linkElement.dispatchEvent(clickEvent);
-          return null;
-        } catch (e) {
-          throw e;
-        }
-      })
-    );
+    return this.resourcesService.downloadResource(`/api/otaPackage/${otaPackageId}/download`);
   }
 
   public saveOtaPackage(otaPackage: OtaPackage, config?: RequestConfig): Observable<OtaPackage> {

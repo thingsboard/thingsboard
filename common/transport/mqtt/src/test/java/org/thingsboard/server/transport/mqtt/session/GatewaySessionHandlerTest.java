@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,47 +15,107 @@
  */
 package org.thingsboard.server.transport.mqtt.session;
 
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.util.ConcurrentReferenceHashMap;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.transport.TransportService;
+import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
+import org.thingsboard.server.transport.mqtt.MqttTransportContext;
 
-import java.util.WeakHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.lang.reflect.Field;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
-import static org.awaitility.Awaitility.await;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.willCallRealMethod;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
 
+@ExtendWith(MockitoExtension.class)
 public class GatewaySessionHandlerTest {
 
-    @Test
-    public void givenWeakHashMap_WhenGC_thenMapIsEmpty() {
-        WeakHashMap<String, Lock> map = new WeakHashMap<>();
+    @Mock
+    private TransportService transportService;
 
-        String deviceName = new String("device"); //constants are static and doesn't affected by GC, so use new instead
-        map.put(deviceName, new ReentrantLock());
-        assertTrue(map.containsKey(deviceName));
+    @Mock
+    private DeviceSessionCtx deviceSessionCtx;
 
-        deviceName = null;
-        System.gc();
+    @Mock
+    private MqttTransportContext transportContext;
 
-        await().atMost(10, TimeUnit.SECONDS).until(() -> !map.containsKey("device"));
+    private GatewaySessionHandler handler;
+
+    @BeforeEach
+    public void setup() {
+        lenient().when(deviceSessionCtx.getSessionId()).thenReturn(UUID.randomUUID());
+        lenient().doNothing().when(transportService).recordActivity(any());
+        lenient().when(transportContext.getTransportService()).thenReturn(transportService);
+        lenient().when(deviceSessionCtx.getContext()).thenReturn(transportContext);
+        handler = new GatewaySessionHandler(deviceSessionCtx, UUID.randomUUID(), true);
+        lenient().when(handler.getNodeId()).thenReturn("nodeId");
     }
 
     @Test
-    public void givenConcurrentReferenceHashMap_WhenGC_thenMapIsEmpty() {
+    public void shouldRecordActivityWhenOnGatewayPing() throws Exception {
+        // Given
+        ConcurrentHashMap<String, GatewayDeviceSessionContext> devices = new ConcurrentHashMap<>();
+        TransportDeviceInfo deviceInfo = new TransportDeviceInfo();
+        deviceInfo.setDeviceId(new DeviceId(UUID.randomUUID()));
+        deviceInfo.setTenantId(new TenantId(UUID.randomUUID()));
+        deviceInfo.setCustomerId(new CustomerId(UUID.randomUUID()));
+        deviceInfo.setDeviceName("device1");
+        deviceInfo.setDeviceType("default");
+        deviceInfo.setDeviceProfileId(new DeviceProfileId(UUID.randomUUID()));
+        deviceInfo.setAdditionalInfo("{\"gateway\": true, \"overwriteDeviceActivity\": true}");
+        lenient().when(deviceSessionCtx.getDeviceInfo()).thenReturn(deviceInfo);
+        GatewayDeviceSessionContext gatewayDeviceSessionContext = new GatewayDeviceSessionContext(handler, deviceInfo, null, null, transportService);
+        devices.put("device1", gatewayDeviceSessionContext);
+        lenient().when(handler.getNodeId()).thenReturn("nodeId");
+        Field devicesField = AbstractGatewaySessionHandler.class.getDeclaredField("devices");
+        devicesField.setAccessible(true);
+        devicesField.set(handler, devices);
+
+        // When
+        handler.onGatewayPing();
+
+        // Then
+        verify(transportService).recordActivity(gatewayDeviceSessionContext.getSessionInfo());
+    }
+
+    @Test
+    public void shouldNotRecordActivityWhenNoDevicesOnGatewayPing() throws Exception {
+        // Given
+        ConcurrentHashMap<String, GatewayDeviceSessionContext> devices = new ConcurrentHashMap<>();
+        Field devicesField = AbstractGatewaySessionHandler.class.getDeclaredField("devices");
+        devicesField.setAccessible(true);
+        devicesField.set(handler, devices);
+
+        // When
+        handler.onGatewayPing();
+
+        // Then
+        verify(transportService, never()).recordActivity(any());
+    }
+
+    @Test
+    public void givenGatewaySessionHandler_WhenCreateWeakMap_thenConcurrentReferenceHashMapClass() {
         GatewaySessionHandler gsh = mock(GatewaySessionHandler.class);
         willCallRealMethod().given(gsh).createWeakMap();
 
-        ConcurrentMap<String, Lock> map = gsh.createWeakMap();
-        map.put("device", new ReentrantLock());
-        assertTrue(map.containsKey("device"));
-
-        System.gc();
-
-        await().atMost(10, TimeUnit.SECONDS).until(() -> !map.containsKey("device"));
+        assertThat(gsh.createWeakMap()).isInstanceOf(ConcurrentReferenceHashMap.class);
     }
 
 }

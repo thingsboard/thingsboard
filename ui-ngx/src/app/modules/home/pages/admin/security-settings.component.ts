@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,7 +19,15 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
 import { Router } from '@angular/router';
-import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
+  ValidationErrors,
+  ValidatorFn,
+  Validators
+} from '@angular/forms';
 import { JwtSettings, SecuritySettings } from '@shared/models/settings.models';
 import { AdminService } from '@core/http/admin.service';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
@@ -39,6 +47,8 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
 
   securitySettingsFormGroup: UntypedFormGroup;
   jwtSecuritySettingsFormGroup: UntypedFormGroup;
+
+  showMainLoadingBar = false;
 
   private securitySettings: SecuritySettings;
   private jwtSettings: JwtSettings;
@@ -67,14 +77,16 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
       userLockoutNotificationEmail: ['', []],
       passwordPolicy: this.fb.group(
         {
-          minimumLength: [null, [Validators.required, Validators.min(5), Validators.max(50)]],
+          minimumLength: [null, [Validators.required, Validators.min(6), Validators.max(50)]],
+          maximumLength: [null, [Validators.min(6), this.maxPasswordValidation()]],
           minimumUppercaseLetters: [null, Validators.min(0)],
           minimumLowercaseLetters: [null, Validators.min(0)],
           minimumDigits: [null, Validators.min(0)],
           minimumSpecialCharacters: [null, Validators.min(0)],
           passwordExpirationPeriodDays: [null, Validators.min(0)],
           passwordReuseFrequencyDays: [null, Validators.min(0)],
-          allowWhitespaces: [true]
+          allowWhitespaces: [true],
+          forceUserToResetPasswordIfNotValid: [false]
         }
       )
     });
@@ -111,6 +123,18 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
       }
       return of(null);
     })).subscribe(() => {});
+  }
+
+  private maxPasswordValidation(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value: string = control.value;
+      if (value) {
+        if (value < control.parent.value?.minimumLength) {
+          return {lessMin: true};
+        }
+      }
+      return null;
+    };
   }
 
   discardSetting() {
@@ -189,5 +213,4 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
   confirmForm(): UntypedFormGroup {
     return this.securitySettingsFormGroup.dirty ? this.securitySettingsFormGroup : this.jwtSecuritySettingsFormGroup;
   }
-
 }

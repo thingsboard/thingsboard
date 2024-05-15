@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,8 +24,6 @@ import java.util.List;
 
 public class JsonUtils {
 
-    private static final JsonParser jsonParser = new JsonParser();
-
     public static JsonObject getJsonObject(List<KeyValueProto> tsKv) {
         JsonObject json = new JsonObject();
         for (KeyValueProto kv : tsKv) {
@@ -43,7 +41,7 @@ public class JsonUtils {
                     json.addProperty(kv.getKey(), kv.getStringV());
                     break;
                 case JSON_V:
-                    json.add(kv.getKey(), jsonParser.parse(kv.getJsonV()));
+                    json.add(kv.getKey(), JsonParser.parseString(kv.getJsonV()));
                     break;
             }
         }
@@ -51,7 +49,7 @@ public class JsonUtils {
     }
 
     public static JsonElement parse(String params) {
-        return jsonParser.parse(params);
+        return JsonParser.parseString(params);
     }
 
 }

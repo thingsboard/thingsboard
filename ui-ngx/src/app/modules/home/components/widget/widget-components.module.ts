@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -47,6 +47,12 @@ import { GatewayConnectorComponent } from '@home/components/widget/lib/gateway/g
 import { GatewayLogsComponent } from '@home/components/widget/lib/gateway/gateway-logs.component';
 import { GatewayStatisticsComponent } from '@home/components/widget/lib/gateway/gateway-statistics.component';
 import { GatewayServiceRPCComponent } from '@home/components/widget/lib/gateway/gateway-service-rpc.component';
+import {
+  GatewayServiceRPCConnectorComponent
+} from '@home/components/widget/lib/gateway/gateway-service-rpc-connector.component';
+import {
+  GatewayServiceRPCConnectorTemplatesComponent
+} from '@home/components/widget/lib/gateway/gateway-service-rpc-connector-templates.component';
 import { DeviceGatewayCommandComponent } from '@home/components/widget/lib/gateway/device-gateway-command.component';
 import { GatewayConfigurationComponent } from '@home/components/widget/lib/gateway/gateway-configuration.component';
 import {
@@ -65,6 +71,34 @@ import { SignalStrengthWidgetComponent } from '@home/components/widget/lib/indic
 import { ValueChartCardWidgetComponent } from '@home/components/widget/lib/cards/value-chart-card-widget.component';
 import { ProgressBarWidgetComponent } from '@home/components/widget/lib/cards/progress-bar-widget.component';
 import { LiquidLevelWidgetComponent } from '@home/components/widget/lib/indicator/liquid-level-widget.component';
+import { DoughnutWidgetComponent } from '@home/components/widget/lib/chart/doughnut-widget.component';
+import { RangeChartWidgetComponent } from '@home/components/widget/lib/chart/range-chart-widget.component';
+import {
+  BarChartWithLabelsWidgetComponent
+} from '@home/components/widget/lib/chart/bar-chart-with-labels-widget.component';
+import {
+  GatewayServiceRPCConnectorTemplateDialogComponent
+} from '@home/components/widget/lib/gateway/gateway-service-rpc-connector-template-dialog';
+import { SingleSwitchWidgetComponent } from '@home/components/widget/lib/rpc/single-switch-widget.component';
+import { ActionButtonWidgetComponent } from '@home/components/widget/lib/button/action-button-widget.component';
+import { CommandButtonWidgetComponent } from '@home/components/widget/lib/button/command-button-widget.component';
+import { PowerButtonWidgetComponent } from '@home/components/widget/lib/rpc/power-button-widget.component';
+import { SliderWidgetComponent } from '@home/components/widget/lib/rpc/slider-widget.component';
+import { ToggleButtonWidgetComponent } from '@home/components/widget/lib/button/toggle-button-widget.component';
+import { TimeSeriesChartWidgetComponent } from '@home/components/widget/lib/chart/time-series-chart-widget.component';
+import { AddConnectorDialogComponent } from '@home/components/widget/lib/gateway/dialog/add-connector-dialog.component';
+import { MappingTableComponent } from '@home/components/widget/lib/gateway/connectors-configuration/mapping-table.component';
+import { MappingDialogComponent } from '@home/components/widget/lib/gateway/dialog/mapping-dialog.component';
+import { DeviceInfoTableComponent } from '@home/components/widget/lib/gateway/connectors-configuration/device-info-table.component';
+import { MappingDataKeysPanelComponent } from '@home/components/widget/lib/gateway/connectors-configuration/mapping-data-keys-panel.component';
+import { BrokerSecurityComponent } from '@home/components/widget/lib/gateway/connectors-configuration/broker-security.component';
+import { EllipsisChipListDirective } from '@home/components/widget/lib/gateway/connectors-configuration/ellipsis-chip-list.directive';
+import { StatusWidgetComponent } from '@home/components/widget/lib/indicator/status-widget.component';
+import { LatestChartComponent } from '@home/components/widget/lib/chart/latest-chart.component';
+import { PieChartWidgetComponent } from '@home/components/widget/lib/chart/pie-chart-widget.component';
+import { BarChartWidgetComponent } from '@home/components/widget/lib/chart/bar-chart-widget.component';
+import { PolarAreaWidgetComponent } from '@home/components/widget/lib/chart/polar-area-widget.component';
+import { RadarChartWidgetComponent } from '@home/components/widget/lib/chart/radar-chart-widget.component';
 
 @NgModule({
   declarations:
@@ -90,12 +124,22 @@ import { LiquidLevelWidgetComponent } from '@home/components/widget/lib/indicato
       LegendComponent,
       FlotWidgetComponent,
       GatewayConnectorComponent,
+      AddConnectorDialogComponent,
+      MappingTableComponent,
+      MappingDialogComponent,
+      DeviceInfoTableComponent,
+      MappingDataKeysPanelComponent,
+      BrokerSecurityComponent,
       GatewayLogsComponent,
       GatewayStatisticsComponent,
       GatewayServiceRPCComponent,
+      GatewayServiceRPCConnectorComponent,
+      GatewayServiceRPCConnectorTemplatesComponent,
       DeviceGatewayCommandComponent,
       GatewayConfigurationComponent,
       GatewayRemoteConfigurationDialogComponent,
+      GatewayServiceRPCConnectorTemplateDialogComponent,
+      EllipsisChipListDirective,
       ValueCardWidgetComponent,
       AggregatedValueCardWidgetComponent,
       CountWidgetComponent,
@@ -104,7 +148,23 @@ import { LiquidLevelWidgetComponent } from '@home/components/widget/lib/indicato
       SignalStrengthWidgetComponent,
       ValueChartCardWidgetComponent,
       ProgressBarWidgetComponent,
-      LiquidLevelWidgetComponent
+      LiquidLevelWidgetComponent,
+      DoughnutWidgetComponent,
+      RangeChartWidgetComponent,
+      BarChartWithLabelsWidgetComponent,
+      SingleSwitchWidgetComponent,
+      ActionButtonWidgetComponent,
+      CommandButtonWidgetComponent,
+      PowerButtonWidgetComponent,
+      SliderWidgetComponent,
+      ToggleButtonWidgetComponent,
+      TimeSeriesChartWidgetComponent,
+      StatusWidgetComponent,
+      LatestChartComponent,
+      PieChartWidgetComponent,
+      BarChartWidgetComponent,
+      PolarAreaWidgetComponent,
+      RadarChartWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -134,12 +194,22 @@ import { LiquidLevelWidgetComponent } from '@home/components/widget/lib/indicato
         LegendComponent,
         FlotWidgetComponent,
         GatewayConnectorComponent,
+        AddConnectorDialogComponent,
+        MappingTableComponent,
+        MappingDialogComponent,
+        DeviceInfoTableComponent,
+        MappingDataKeysPanelComponent,
+        BrokerSecurityComponent,
         GatewayLogsComponent,
+        GatewayServiceRPCConnectorComponent,
+        GatewayServiceRPCConnectorTemplatesComponent,
+        EllipsisChipListDirective,
         GatewayStatisticsComponent,
         GatewayServiceRPCComponent,
         DeviceGatewayCommandComponent,
         GatewayConfigurationComponent,
         GatewayRemoteConfigurationDialogComponent,
+        GatewayServiceRPCConnectorTemplateDialogComponent,
         ValueCardWidgetComponent,
         AggregatedValueCardWidgetComponent,
         CountWidgetComponent,
@@ -148,7 +218,22 @@ import { LiquidLevelWidgetComponent } from '@home/components/widget/lib/indicato
         SignalStrengthWidgetComponent,
         ValueChartCardWidgetComponent,
         ProgressBarWidgetComponent,
-        LiquidLevelWidgetComponent
+        LiquidLevelWidgetComponent,
+        DoughnutWidgetComponent,
+        RangeChartWidgetComponent,
+        BarChartWithLabelsWidgetComponent,
+        SingleSwitchWidgetComponent,
+        ActionButtonWidgetComponent,
+        CommandButtonWidgetComponent,
+        PowerButtonWidgetComponent,
+        SliderWidgetComponent,
+        ToggleButtonWidgetComponent,
+        TimeSeriesChartWidgetComponent,
+        StatusWidgetComponent,
+        PieChartWidgetComponent,
+        BarChartWidgetComponent,
+        PolarAreaWidgetComponent,
+        RadarChartWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }

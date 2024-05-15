@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,9 +43,6 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
-/**
- * Created by Valerii Sosliuk on 4/23/2017.
- */
 public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
 
 
@@ -274,7 +271,7 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
             createSystemWidgetBundles(2, "WB_SYS_" + i + "_");
         }
         widgetsBundles = widgetsBundleDao.find(TenantId.SYS_TENANT_ID).stream().sorted(Comparator.comparing(WidgetsBundle::getTitle)).collect(Collectors.toList());;
-        assertEquals(100, widgetsBundleDao.find(TenantId.SYS_TENANT_ID).size());
+        assertEquals(100, widgetsBundles.size());
 
         var widgetType1 = createAndSaveWidgetType(new TenantId(tenantId1), 1, "Test widget type 1", "This is the widget type 1", new String[]{"tag1", "Tag2", "TEST_TAG"});
         var widgetType2 = createAndSaveWidgetType(new TenantId(tenantId2), 2, "Test widget type 2", "This is the widget type 2", new String[]{"tag3", "Tag5", "TEST_Tag2"});
@@ -359,6 +356,34 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
+    public void testOrderInFindAllWidgetsBundlesByTenantIdFullSearch() {
+        UUID tenantId1 = Uuids.timeBased();
+        for (int i = 0; i < 10; i++) {
+            createWidgetsBundle(TenantId.fromUUID(tenantId1), "WB1_" + i, "WB1_" + (10-i), i % 2 == 1 ? null : (int)(Math.random() * 1000));
+            createWidgetsBundle(TenantId.SYS_TENANT_ID, "WB_SYS_" + i, "WB_SYS_" + (10-i), i % 2 == 0 ? null : (int)(Math.random() * 1000));
+        }
+        widgetsBundles = widgetsBundleDao.find(TenantId.SYS_TENANT_ID).stream().sorted((o1, o2) -> {
+            int result = 0;
+            if (o1.getOrder() != null && o2.getOrder() != null) {
+                result = o1.getOrder() - o2.getOrder();
+            } else if (o1.getOrder() == null && o2.getOrder() != null) {
+                result = 1;
+            } else if (o1.getOrder() != null) {
+                result = -1;
+            }
+            if (result == 0) {
+                result = o1.getTitle().compareTo(o2.getTitle());
+            }
+            return result;
+        }).collect(Collectors.toList());;
+        assertEquals(20, widgetsBundles.size());
+        PageLink pageLink = new PageLink(100, 0, "", new SortOrder("title"));
+        PageData<WidgetsBundle> widgetsBundlesData = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId1, true,  pageLink);
+        assertEquals(20, widgetsBundlesData.getData().size());
+        assertEquals(widgetsBundles, widgetsBundlesData.getData());
+    }
+
+    @Test
     public void testSearchTextNotFound() {
         UUID tenantId = Uuids.timeBased();
         createWidgetBundles(5, tenantId, "ABC_");
@@ -372,32 +397,27 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
 
     private void createWidgetBundles(int count, UUID tenantId, String prefix) {
         for (int i = 0; i < count; i++) {
-            WidgetsBundle widgetsBundle = new WidgetsBundle();
-            widgetsBundle.setAlias(prefix + i);
-            widgetsBundle.setTitle(prefix + i);
-            widgetsBundle.setId(new WidgetsBundleId(Uuids.timeBased()));
-            widgetsBundle.setTenantId(TenantId.fromUUID(tenantId));
-            widgetsBundleDao.save(TenantId.SYS_TENANT_ID, widgetsBundle);
+            createWidgetsBundle(TenantId.fromUUID(tenantId), prefix + i, prefix + i, null);
         }
     }
 
     private void createSystemWidgetBundles(int count, String prefix) {
         for (int i = 0; i < count; i++) {
-            WidgetsBundle widgetsBundle = new WidgetsBundle();
-            widgetsBundle.setAlias(prefix + i);
-            widgetsBundle.setTitle(prefix + i);
-            widgetsBundle.setTenantId(TenantId.SYS_TENANT_ID);
-            widgetsBundle.setId(new WidgetsBundleId(Uuids.timeBased()));
-            widgetsBundleDao.save(TenantId.SYS_TENANT_ID, widgetsBundle);
+            createWidgetsBundle(TenantId.SYS_TENANT_ID, prefix + i, prefix + i, null);
         }
     }
 
     private WidgetsBundle createSystemWidgetBundle(String alias, String title) {
+        return createWidgetsBundle(TenantId.SYS_TENANT_ID, alias, title, null);
+    }
+
+    private WidgetsBundle createWidgetsBundle(TenantId tenantId, String alias, String title, Integer order) {
         WidgetsBundle widgetsBundle = new WidgetsBundle();
         widgetsBundle.setAlias(alias);
         widgetsBundle.setTitle(title);
-        widgetsBundle.setTenantId(TenantId.SYS_TENANT_ID);
+        widgetsBundle.setTenantId(tenantId);
         widgetsBundle.setId(new WidgetsBundleId(Uuids.timeBased()));
+        widgetsBundle.setOrder(order);
         return widgetsBundleDao.save(TenantId.SYS_TENANT_ID, widgetsBundle);
     }
 

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -178,15 +178,15 @@ import { TemplateAutocompleteComponent } from '@shared/components/notification/t
 import { SlackConversationAutocompleteComponent } from '@shared/components/slack-conversation-autocomplete.component';
 import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
 import {
-  TbBreakPointsProvider,
-  MdLgLayoutDirective,
+  GtMdLgLayoutAlignDirective,
+  GtMdLgLayoutDirective,
+  GtMdLgLayoutGapDirective,
+  GtMdLgShowHideDirective,
   MdLgLayoutAlignDirective,
+  MdLgLayoutDirective,
   MdLgLayoutGapDirective,
   MdLgShowHideDirective,
-  GtMdLgLayoutDirective,
-  GtMdLgLayoutAlignDirective,
-  GtMdLgLayoutGapDirective,
-  GtMdLgShowHideDirective
+  TbBreakPointsProvider
 } from '@shared/layout/layout.directives';
 import { ColorPickerComponent } from '@shared/components/color-picker/color-picker.component';
 import { ResourceAutocompleteComponent } from '@shared/components/resource/resource-autocomplete.component';
@@ -200,6 +200,25 @@ import { ColorPickerPanelComponent } from '@shared/components/color-picker/color
 import { TbIconComponent } from '@shared/components/icon.component';
 import { HintTooltipIconComponent } from '@shared/components/hint-tooltip-icon.component';
 import { StringAutocompleteComponent } from '@shared/components/string-autocomplete.component';
+import { ImagePipe } from '@shared/pipe/image.pipe';
+import { ImportExportService } from '@shared/import-export/import-export.service';
+import { ImportDialogComponent } from '@shared/import-export/import-dialog.component';
+import { ImportDialogCsvComponent } from '@shared/import-export/import-dialog-csv.component';
+import { ExportWidgetsBundleDialogComponent } from '@shared/import-export/export-widgets-bundle-dialog.component';
+import { TableColumnsAssignmentComponent } from '@shared/import-export/table-columns-assignment.component';
+import { ScrollGridComponent } from '@shared/components/grid/scroll-grid.component';
+import { ImageGalleryComponent } from '@shared/components/image/image-gallery.component';
+import { UploadImageDialogComponent } from '@shared/components/image/upload-image-dialog.component';
+import { ImageDialogComponent } from '@shared/components/image/image-dialog.component';
+import { ImageReferencesComponent } from '@shared/components/image/image-references.component';
+import { ImagesInUseDialogComponent } from '@shared/components/image/images-in-use-dialog.component';
+import { GalleryImageInputComponent } from '@shared/components/image/gallery-image-input.component';
+import { MultipleGalleryImageInputComponent } from '@shared/components/image/multiple-gallery-image-input.component';
+import { EmbedImageDialogComponent } from '@shared/components/image/embed-image-dialog.component';
+import { ImageGalleryDialogComponent } from '@shared/components/image/image-gallery-dialog.component';
+import { RuleChainSelectPanelComponent } from '@shared/components/rule-chain/rule-chain-select-panel.component';
+import { WidgetButtonComponent } from '@shared/components/button/widget-button.component';
+import { HexInputComponent } from '@shared/components/color-picker/hex-input.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -217,6 +236,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     DateAgoPipe,
     SafePipe,
     ShortNumberPipe,
+    ImagePipe,
     {
       provide: FlowInjectionToken,
       useValue: Flow
@@ -234,6 +254,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     { provide: SHARED_MODULE_TOKEN, useValue: SharedModule },
     { provide: MatPaginatorIntl, useClass: CustomPaginatorIntl },
     TbPopoverService,
+    ImportExportService,
     {
       provide: MAT_SELECT_CONFIG,
       useValue: {
@@ -340,6 +361,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TbJsonPipe,
     FileSizePipe,
     DateAgoPipe,
+    ImagePipe,
     SafePipe,
     ShortNumberPipe,
     SelectableColumnsPipe,
@@ -378,8 +400,25 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     StringAutocompleteComponent,
     MaterialIconsComponent,
     RuleChainSelectComponent,
+    RuleChainSelectPanelComponent,
     TbIconComponent,
-    HintTooltipIconComponent
+    HintTooltipIconComponent,
+    ImportDialogComponent,
+    ImportDialogCsvComponent,
+    ExportWidgetsBundleDialogComponent,
+    TableColumnsAssignmentComponent,
+    ScrollGridComponent,
+    ImageGalleryComponent,
+    UploadImageDialogComponent,
+    ImageDialogComponent,
+    ImageReferencesComponent,
+    ImagesInUseDialogComponent,
+    GalleryImageInputComponent,
+    MultipleGalleryImageInputComponent,
+    EmbedImageDialogComponent,
+    ImageGalleryDialogComponent,
+    WidgetButtonComponent,
+    HexInputComponent
   ],
   imports: [
     CommonModule,
@@ -576,6 +615,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     KeyboardShortcutPipe,
     FileSizePipe,
     DateAgoPipe,
+    ImagePipe,
     SafePipe,
     ShortNumberPipe,
     SelectableColumnsPipe,
@@ -614,8 +654,24 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     StringAutocompleteComponent,
     MaterialIconsComponent,
     RuleChainSelectComponent,
+    RuleChainSelectPanelComponent,
     TbIconComponent,
-    HintTooltipIconComponent
+    HintTooltipIconComponent,
+    ImportDialogComponent,
+    ImportDialogCsvComponent,
+    ExportWidgetsBundleDialogComponent,
+    TableColumnsAssignmentComponent,
+    ScrollGridComponent,
+    ImageGalleryComponent,
+    UploadImageDialogComponent,
+    ImageDialogComponent,
+    ImageReferencesComponent,
+    ImagesInUseDialogComponent,
+    GalleryImageInputComponent,
+    MultipleGalleryImageInputComponent,
+    EmbedImageDialogComponent,
+    ImageGalleryDialogComponent,
+    WidgetButtonComponent
   ]
 })
 export class SharedModule { }

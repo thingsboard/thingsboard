@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,53 +15,15 @@
  */
 package org.thingsboard.monitoring.data;
 
-import com.google.common.util.concurrent.AtomicDouble;
-import lombok.RequiredArgsConstructor;
+import lombok.Data;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
-@RequiredArgsConstructor
+@Data(staticConstructor = "of")
 public class Latency {
-
     private final String key;
-    private final AtomicDouble latencySum = new AtomicDouble();
-    private final AtomicInteger counter = new AtomicInteger();
+    private final double value;
 
-    public synchronized void report(double latencyInMs) {
-        latencySum.addAndGet(latencyInMs);
-        counter.incrementAndGet();
-    }
-
-    public synchronized double getAvg() {
-        return latencySum.get() / counter.get();
-    }
-
-    public boolean isNotEmpty() {
-        return counter.get() > 0;
-    }
-
-    public synchronized void reset() {
-        latencySum.set(0.0);
-        counter.set(0);
-    }
-
-    public String getKey() {
-        return key;
-    }
-
-    public synchronized Latency snapshot() {
-        Latency snapshot = new Latency(key);
-        snapshot.latencySum.set(latencySum.get());
-        snapshot.counter.set(counter.get());
-        return snapshot;
-    }
-
-    @Override
-    public String toString() {
-        return "Latency{" +
-                "key='" + key + '\'' +
-                ", avgLatency=" + getAvg() +
-                '}';
+    public String getFormattedValue() {
+        return String.format("%,.2f ms", value);
     }
 
 }

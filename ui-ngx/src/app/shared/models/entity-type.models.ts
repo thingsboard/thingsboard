@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ export enum EntityType {
   OTA_PACKAGE = 'OTA_PACKAGE',
   RPC = 'RPC',
   QUEUE = 'QUEUE',
+  QUEUE_STATS = 'QUEUE_STATS',
   NOTIFICATION = 'NOTIFICATION',
   NOTIFICATION_REQUEST = 'NOTIFICATION_REQUEST',
   NOTIFICATION_RULE = 'NOTIFICATION_RULE',
@@ -326,6 +327,8 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
       EntityType.TB_RESOURCE,
       {
         type: 'entity.type-tb-resource',
+        typePlural: 'entity.type-tb-resources',
+        list: 'entity.list-of-tb-resources',
         details: 'resource.resource-library-details',
         add: 'resource.add',
         noEntities: 'resource.no-resource-text',
@@ -358,6 +361,13 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
         search: 'queue.search',
         details: 'queue.details',
         selectedEntities: 'queue.selected-queues'
+      }
+    ],
+    [
+      EntityType.QUEUE_STATS,
+      {
+        type: 'entity.type-queue-stats',
+        typePlural: 'entity.type-queues-stats'
       }
     ],
     [
@@ -535,7 +545,9 @@ export const baseDetailsPageByEntityType = new Map<EntityType, string>([
   [EntityType.ENTITY_VIEW, '/entities/entityViews'],
   [EntityType.TB_RESOURCE, '/resources/resources-library'],
   [EntityType.OTA_PACKAGE, '/features/otaUpdates'],
-  [EntityType.QUEUE, '/settings/queues']
+  [EntityType.QUEUE, '/settings/queues'],
+  [EntityType.WIDGETS_BUNDLE, '/resources/widgets-library/widgets-bundles/details'],
+  [EntityType.WIDGET_TYPE, '/resources/widgets-library/widget-types/details']
 ]);
 
 export interface EntitySubtype {

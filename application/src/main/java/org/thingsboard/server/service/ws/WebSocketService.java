@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.ws;
 
 import org.springframework.web.socket.CloseStatus;
+import org.thingsboard.server.service.subscription.SubscriptionErrorCode;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.CmdUpdate;
 import org.thingsboard.server.service.ws.telemetry.sub.TelemetrySubscriptionUpdate;
 
@@ -24,13 +25,15 @@ import org.thingsboard.server.service.ws.telemetry.sub.TelemetrySubscriptionUpda
  */
 public interface WebSocketService {
 
-    void handleWebSocketSessionEvent(WebSocketSessionRef sessionRef, SessionEvent sessionEvent);
+    void handleSessionEvent(WebSocketSessionRef sessionRef, SessionEvent sessionEvent);
 
-    void handleWebSocketMsg(WebSocketSessionRef sessionRef, String msg);
+    void handleCommands(WebSocketSessionRef sessionRef, WsCommandsWrapper commandsWrapper);
 
-    void sendWsMsg(String sessionId, TelemetrySubscriptionUpdate update);
+    void sendUpdate(String sessionId, int cmdId, TelemetrySubscriptionUpdate update);
 
-    void sendWsMsg(String sessionId, CmdUpdate update);
+    void sendUpdate(String sessionId, CmdUpdate update);
+
+    void sendError(WebSocketSessionRef sessionRef, int subId, SubscriptionErrorCode errorCode, String errorMsg);
 
     void close(String sessionId, CloseStatus status);
 }

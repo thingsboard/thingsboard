@@ -1316,8 +1316,7 @@
         "step": "Adım",
         "min-evaluation-period": "Minimum değerlendirme süresi",
         "max-evaluation-period": "Maksimum değerlendirme süresi"
-      },
-      "composite-operations-support": "İç içe Okuma/Yazma/Gözlemleme işlemlerini destekler"
+      }
     },
     "snmp": {
       "add-communication-config": "İletişim yapılandırması ekle",
@@ -2430,7 +2429,6 @@
     "search": "Kural Ara",
     "selected-rulechains": "{ count, plural, =1 {1 kural} other {# kural} } seçildi",
     "open-rulechain": "Kuralı Aç",
-    "assign-new-rulechain": "Yeni kural zinciri atayın",
     "edge-template-root": "Şablon Kökü",
     "assign-to-edge": "Uca Ata",
     "edge-rulechain": "Uç kuralı zinciri",
@@ -2952,7 +2950,7 @@
     "action-source-required": "Eylem kaynağı gerekli.",
     "action-name": "İsim",
     "action-name-required": "Eylem ismi gerekli.",
-    "action-name-not-unique": "Aynı ada sahip başka bir işlem zaten var.<br/>Eylem adı, aynı eylem kaynağı içinde emsalsiz olmalıdır.",
+    "action-name-not-unique": "Aynı ada sahip başka bir işlem zaten var.\nEylem adı, aynı eylem kaynağı içinde emsalsiz olmalıdır.",
     "action-icon": "İkon",
     "action-type": "Tür",
     "action-type-required": "Eylem türü gerekli.",

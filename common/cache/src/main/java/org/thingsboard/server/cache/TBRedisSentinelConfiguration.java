@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisSentinelConfiguration;
+import org.springframework.data.redis.connection.jedis.JedisClientConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 
 @Configuration
@@ -42,6 +43,9 @@ public class TBRedisSentinelConfiguration extends TBRedisCacheConfiguration {
     @Value("${redis.db:}")
     private Integer database;
 
+    @Value("${redis.ssl.enabled:false}")
+    private boolean useSsl;
+
     @Value("${redis.password:}")
     private String password;
 
@@ -52,11 +56,21 @@ public class TBRedisSentinelConfiguration extends TBRedisCacheConfiguration {
         redisSentinelConfiguration.setSentinelPassword(sentinelPassword);
         redisSentinelConfiguration.setPassword(password);
         redisSentinelConfiguration.setDatabase(database);
-        if (useDefaultPoolConfig) {
-            return new JedisConnectionFactory(redisSentinelConfiguration);
-        } else {
-            return new JedisConnectionFactory(redisSentinelConfiguration, buildPoolConfig());
-        }
+        return new JedisConnectionFactory(redisSentinelConfiguration,  buildClientConfig());
     }
 
+    private JedisClientConfiguration buildClientConfig() {
+        JedisClientConfiguration.JedisClientConfigurationBuilder jedisClientConfigurationBuilder = JedisClientConfiguration.builder();
+        if (!useDefaultPoolConfig) {
+            jedisClientConfigurationBuilder
+                    .usePooling()
+                    .poolConfig(buildPoolConfig());
+        }
+        if (useSsl) {
+            jedisClientConfigurationBuilder
+                    .useSsl()
+                    .sslSocketFactory(createSslSocketFactory());
+        }
+        return jedisClientConfigurationBuilder.build();
+    }
 }

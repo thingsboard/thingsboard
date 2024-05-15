@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public class WidgetsBundleControllerTest extends AbstractControllerTest {
 
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
-        savedTenant = doPost("/api/tenant", tenant, Tenant.class);
+        savedTenant = saveTenant(tenant);
         Assert.assertNotNull(savedTenant);
 
         tenantAdmin = new User();
@@ -70,8 +70,7 @@ public class WidgetsBundleControllerTest extends AbstractControllerTest {
     public void afterTest() throws Exception {
         loginSysAdmin();
 
-        doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
-                .andExpect(status().isOk());
+        deleteTenant(savedTenant.getId());
     }
 
     @Test
@@ -268,6 +267,13 @@ public class WidgetsBundleControllerTest extends AbstractControllerTest {
         Collections.sort(loadedWidgetsBundles2, idComparator);
 
         Assert.assertEquals(tenantWidgetsBundles, loadedWidgetsBundles2);
+
+        // cleanup
+        loginSysAdmin();
+        for (WidgetsBundle sysWidgetsBundle : sysWidgetsBundles) {
+            doDelete("/api/widgetsBundle/" + sysWidgetsBundle.getId().getId().toString())
+                    .andExpect(status().isOk());
+        }
     }
 
     @Test

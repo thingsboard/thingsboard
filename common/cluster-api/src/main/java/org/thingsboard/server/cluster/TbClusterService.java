@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -67,7 +68,7 @@ public interface TbClusterService extends TbQueueClusterService {
 
     void broadcastEntityStateChangeEvent(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent state);
 
-    void onDeviceProfileChange(DeviceProfile deviceProfile, TbQueueCallback callback);
+    void onDeviceProfileChange(DeviceProfile deviceProfile, DeviceProfile oldDeviceProfile, TbQueueCallback callback);
 
     void onDeviceProfileDelete(DeviceProfile deviceProfile, TbQueueCallback callback);
 
@@ -83,11 +84,13 @@ public interface TbClusterService extends TbQueueClusterService {
 
     void onDeviceUpdated(Device device, Device old);
 
-    void onDeviceDeleted(Device device, TbQueueCallback callback);
+    void onDeviceDeleted(TenantId tenantId, Device device, TbQueueCallback callback);
 
-    void onResourceChange(TbResource resource, TbQueueCallback callback);
+    void onDeviceAssignedToTenant(TenantId oldTenantId, Device device);
 
-    void onResourceDeleted(TbResource resource, TbQueueCallback callback);
+    void onResourceChange(TbResourceInfo resource, TbQueueCallback callback);
+
+    void onResourceDeleted(TbResourceInfo resource, TbQueueCallback callback);
 
     void onEdgeEventUpdate(TenantId tenantId, EdgeId edgeId);
 
@@ -95,6 +98,6 @@ public interface TbClusterService extends TbQueueClusterService {
 
     void pushEdgeSyncResponseToCore(FromEdgeSyncResponse fromEdgeSyncResponse);
 
-    void sendNotificationMsgToEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, EdgeEventActionType action);
+    void sendNotificationMsgToEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, EdgeEventActionType action, EdgeId sourceEdgeId);
 
 }

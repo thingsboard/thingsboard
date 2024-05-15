@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao;
 
 import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -24,10 +25,10 @@ import org.thingsboard.server.dao.util.TbAutoConfiguration;
 
 @Configuration
 @TbAutoConfiguration
+@ComponentScan({"org.thingsboard.server.dao.sqlts.dictionary"})
 @EnableJpaRepositories({"org.thingsboard.server.dao.sqlts.dictionary"})
 @EntityScan({"org.thingsboard.server.dao.model.sqlts.dictionary"})
 @EnableTransactionManagement
-@SqlTsOrTsLatestAnyDao
 public class SqlTimeseriesDaoConfig {
 
 }

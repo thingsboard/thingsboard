@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -39,10 +39,17 @@ export class ColorPickerPanelComponent extends PageComponent implements OnInit {
   colorClearButton = false;
 
   @Input()
+  @coerceBoolean()
+  colorCancelButton = false;
+
+  @Input()
   popover: TbPopoverComponent<ColorPickerPanelComponent>;
 
   @Output()
   colorSelected = new EventEmitter<string>();
+
+  @Output()
+  colorCancelDialog = new EventEmitter();
 
   colorPickerControl: UntypedFormControl;
 
@@ -61,4 +68,11 @@ export class ColorPickerPanelComponent extends PageComponent implements OnInit {
   clearColor() {
     this.colorSelected.emit(null);
   }
-}
+
+  cancelColor() {
+    if (this.popover) {
+      this.popover.hide();
+    } else {
+      this.colorCancelDialog.emit();
+    }
+  }}

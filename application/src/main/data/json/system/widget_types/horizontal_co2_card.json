@@ -3,7 +3,7 @@
   "name": "Horizontal CO2 card",
   "deprecated": false,
   "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAAllBMVEUAAADf39/f39/g4ODg4ODf39/////k5OSAwyzg4OCQy0bQ6a/v9+Wv2XvIyMjf8Mqg0mD3+/LOzs6/4ZX09PT5+flYWFiIxznY7L3b29u3t7fV1dXCwsK8vLzx8fHn5+fn9NiQkJDH5aN0dHS43Yitra2YzlOenp6CgoJmZmY5OTnU1NS33Yio1m7t7e1KSkqn1m243YlPJUzgAAAABnRSTlMAIEDfv1C6kOEmAAADiElEQVR42u3a647aMBAFYNpuJyYX554QkkAId3ZZtu//cp1xUHoVpbS0gM4nYYaMf/jIGITIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOBfenf3BuL9B+veDT985BxWSncvsd4PnhJ6AOnTYEgPYYggNwZBbg2C3BoEuTUIcmvOC7KelUR6tpShltclfaXc0P93VpDNRh/0cqu3S70tdxOiuabJhCwiS551RhcJ29hxSfhtPKK+ul6Qw4RKK9Okt7zsLkidZevNWM+tw3Z9YZBYMbvpK7evwmsF2RHLSiozotmMJEg2Wx/0fDOeb5a7y4K4SvlNrGypbL95UQGRL9WbWlwrSKZppjdrWs4lhwmynWlNu4zm/HxZEEe98Zgrl15k5WGuQvKUw5XKyQjdMByNXFNR6Pgm/rEKfW6cCuI7js9THefraWWWZRNrlx0svcuyWoKU2XZNszm3OMqFQQITJKRAybFYqYYfslpbuccZ+1zxHhEH3Js3n/Q8qRqbx/ZUELUKchrlgf3t9k76oTfpny8T2qp1PymPOIhPZuwi8Ogfg6h45Kk8JB5iZ6UC6dmOwykW0jgZxCWXnIBij66tUWwVngryZq47HKQ1b76m67XHzXTPCxIodcU0siNvsa3iU0E8IjlB3dmhPY/SOzbs00GCVU6OeWuFbhvQ9bRmNbnyfxEk5rEL4v1OkJE57Dy69MkOWrqefb84eZjDLsfehAu/2ZG4myHdM4L8KPA4k5HQTySv319I6HwSYWFWM6JW7c2XCVEs1xqpjp9axxmeimWGci8KsgiCFzLGXZiEXgsy0pTSYSQXhpQS0XQ5pbQoukYqM3/NV8qLA2Wb0+J1pyXMTeUcg/QzPKl4Fl0URPRByjIqtI64qqgqqjodV1FZ6qh+jeqUKJomdV1QEplGpGv6tZF8FwSyGJerfEGskar98k3DL1euBHnhKgj/QpDn53Gio2nUBZk+F1zztWkRVdoEGRYFB9H1VCcct0roDKEb/lC5fSXr5ZfUnSSpTjgvyDIqqmhc6iqRHYnqohonYx3xtVdeeEQSJJUdmdZLaZRVRX/OBBEmyFV+WBXTE81nXfB4H0HS9FQzob+k6X+ajOIGP3XvDYLcGgS5NQhyax4oyNMD/M1OlDzxDQMP8Ed7yjcMDD5+GFr37sP7R7qpBgAAAAAAAAAAAAAAAAAAAAAAAAAAAOAf+QwerQBC9f0WmwAAAABJRU5ErkJggg==",
-  "description": "Displays a latest CO2 level telemetry data in a horizontal layout.",
+  "description": "Displays the latest CO2 level telemetry in a scalable horizontal layout.",
   "descriptor": {
     "type": "latest",
     "sizeX": 5,
@@ -23,6 +23,18 @@
   "tags": [
     "weather",
     "environment",
-    "co2"
+    "co2",
+    "carbon dioxide",
+    "carbon emission",
+    "carbon footprint",
+    "carbon output",
+    "carbon pollution",
+    "carbon capture",
+    "carbon offset",
+    "carbon reduction",
+    "carbon neutral",
+    "climate gas",
+    "fossil fuel emission",
+    "carbon cycle"
   ]
 }

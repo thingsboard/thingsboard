@@ -26,7 +26,10 @@
   "tags": [
     "weather",
     "environment",
-    "leaf",
-    "wetness"
+    "dew",
+    "leaf moisture",
+    "foliage dampness",
+    "leaf humidity",
+    "foliar moisture"
   ]
 }

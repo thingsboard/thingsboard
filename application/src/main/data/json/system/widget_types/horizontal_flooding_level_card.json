@@ -3,7 +3,7 @@
   "name": "Horizontal flooding level card",
   "deprecated": false,
   "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAAn1BMVEUAAADf39/f39/g4ODg4ODf39/////k5OQjTMfg4OCRpePk6fisrKzx8fHIyMg9PT11j9zOzs7y9PuQkJD09PT5+fmtvOqsvOpYWFjI0vHV1dXb29u3t7c+Ys4wV8vCwsK8vLy6x+5aedXn5+dohNlmZmaDmt+enp5aeNUrKyt0dHSfsedMbtGdnZ0/Ys6CgoJLS0vW3fTW3fUxV8pKSkpA7yNPAAAABnRSTlMAIEDfv1C6kOEmAAADcUlEQVR42u3a53KbQBSGYUV2DivKUgQSRTR1F9lOuf9ry9kVUkjGQyyT8WDN91iGBVx4h93xD3kEAAAAAAAAAAAAAAAAAAAAAAAAAAAA8JG+fHo6Y3xjfHaTm6/cYUT06YXGeHQb0hWIbkcTugoThAwMQoYGIUODkKFByNC8FmI9egm12dOpLW1quaep0z40qEV/aX/9Q3IhRD636CzeydSekqNu1+AAx3HpwCM11CddQ503+Ihf3E29BA9m67fXM+0dIVtxtJ6fQ2zDsadGvIlpunGl8bK5I5fce9dWQx0yjV0ZGwfbjn9WPUPmguXnkqXQLg8xxVn+0IRs7iVPrx3F6R3JDQ9c/WFPn3moQ+7s5/vDLjZeprtNvxBLiOS7KZbUeBLveyKJOFvu6yZEqnVyUCHuXyH2KWQhDeclJnehZmG/B+LxthAWHYmcfgusIEhqvvRtlnSHWHkrhKgdYvCD4an1M+XBXROihjrk4G4kxTbZbrzrF+IJNQ/WYk5aIPZktabLWt1grebbY1dI0HQUa978COhPjv7Um4ZRSfd0sbXvFzJvtto38aMQwgvO896crTli9lCIuiNkK/bNSit4n9C/OPZzSp36hxTbbS6W5yeiHpKw1K2aHSHW3BKM+z3ebamv/iEUBETWacmYegEJoYadIexJzUGimV4kvfUPYXrJXBaSLAuhrWvB5gF9uK1e7EuRnP4eWvqwvizkSazVItmrtV54efPTQnpF6Px9IqT/IRFLPZfUjNJd5numVh0QJbOEyJrNeFhbpCx0DL+cjLQoomjiqxMTivh4Za8oyrLjBT7RKykXnvmo1ue8SVKHHl0WQsGsJm6prSboFJKmfialz6OSyqysokXpp6n0K8evIiJ/FVZVRqGvL/iyovez1JzYBipkzYffczXTgwtDtoUQuae/dalWu/U7ZBFKf+UfQ1ZpxmM+t8r8UuqQSZZxiKxWMuTcMqQeAis47luHr+laI/t6novCTDxRbBOzSEix/az0F6ksQ/VE/CorF+FC+nzO4Rv3SYVE6omsKltdSMuSPpgOuVi26riYyozeYBAhUdR1MaS3GETIECFkaBAyNAgZGoQMzWR0ewVvsxOFt6OxcQVvtEfGeDT6ejMxPrub8TX9Uw0AAAAAAAAAAAAAAAAAAAAAAAAAAADAB/kFV7oA4xEmmqQAAAAASUVORK5CYII=",
-  "description": "Displays a latest flooding level telemetry data in a horizontal layout.",
+  "description": "Displays the latest flooding level telemetry in a scalable horizontal layout.",
   "descriptor": {
     "type": "latest",
     "sizeX": 5,
@@ -24,6 +24,14 @@
     "weather",
     "environment",
     "flood",
-    "flooding"
+    "flooding",
+    "water height",
+    "flood depth",
+    "flood stage",
+    "inundation level",
+    "water rise",
+    "overflow level",
+    "flood peak",
+    "high water mark"
   ]
 }

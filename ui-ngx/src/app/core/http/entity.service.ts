@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ import { AttributeScope, DataKeyType } from '@shared/models/telemetry/telemetry.
 import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-utils';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { AliasInfo, StateParams, SubscriptionInfo } from '@core/api/widget-api.models';
-import { DataKey, Datasource, DatasourceType, KeyInfo } from '@app/shared/models/widget.models';
+import { DataKey, Datasource, DatasourceType, DeprecatedFilter, KeyInfo } from '@app/shared/models/widget.models';
 import { UtilsService } from '@core/services/utils.service';
 import {
   AliasFilterType,
@@ -65,7 +65,9 @@ import { Device, DeviceCredentialsType } from '@shared/models/device.models';
 import { AttributeService } from '@core/http/attribute.service';
 import {
   AlarmData,
-  AlarmDataQuery, AlarmFilter, AlarmFilterConfig,
+  AlarmDataQuery,
+  AlarmFilter,
+  AlarmFilterConfig,
   createDefaultEntityDataPageLink,
   EntityData,
   EntityDataQuery,
@@ -93,6 +95,7 @@ import { TenantProfileService } from '@core/http/tenant-profile.service';
 import { NotificationType } from '@shared/models/notification.models';
 import { UserId } from '@shared/models/id/user-id';
 import { AlarmService } from '@core/http/alarm.service';
+import { ResourceService } from '@core/http/resource.service';
 
 @Injectable({
   providedIn: 'root'
@@ -121,7 +124,8 @@ export class EntityService {
     private utils: UtilsService,
     private queueService: QueueService,
     private notificationService: NotificationService,
-    private alarmService: AlarmService
+    private alarmService: AlarmService,
+    private resourceService: ResourceService
   ) { }
 
   private getEntityObservable(entityType: EntityType, entityId: string,
@@ -418,7 +422,11 @@ export class EntityService {
         break;
       case EntityType.WIDGETS_BUNDLE:
         pageLink.sortOrder.property = 'title';
-        entitiesObservable = this.widgetService.getWidgetBundles(pageLink, false, config);
+        entitiesObservable = this.widgetService.getWidgetBundles(pageLink, false, true, config);
+        break;
+      case EntityType.WIDGET_TYPE:
+        pageLink.sortOrder.property = 'name';
+        entitiesObservable = this.widgetService.getWidgetTypes(pageLink, true, false, DeprecatedFilter.ALL, null, config);
         break;
       case EntityType.NOTIFICATION_TARGET:
         pageLink.sortOrder.property = 'name';
@@ -431,6 +439,10 @@ export class EntityService {
       case EntityType.NOTIFICATION_RULE:
         pageLink.sortOrder.property = 'name';
         entitiesObservable = this.notificationService.getNotificationRules(pageLink, config);
+        break;
+      case EntityType.TB_RESOURCE:
+        pageLink.sortOrder.property = 'title';
+        entitiesObservable = this.resourceService.getTenantResources(pageLink, config);
         break;
     }
     return entitiesObservable;
@@ -489,9 +501,13 @@ export class EntityService {
   }
 
   public findEntityKeysByQuery(query: EntityDataQuery, attributes = true, timeseries = true,
-                               config?: RequestConfig): Observable<EntitiesKeysByQuery> {
+                               scope?: AttributeScope, config?: RequestConfig): Observable<EntitiesKeysByQuery> {
+    let url = `/api/entitiesQuery/find/keys?attributes=${attributes}&timeseries=${timeseries}`;
+    if (scope) {
+      url += `&scope=${scope}`;
+    }
     return this.http.post<EntitiesKeysByQuery>(
-      `/api/entitiesQuery/find/keys?attributes=${attributes}&timeseries=${timeseries}`,
+      url,
       query, defaultHttpOptionsFromConfig(config));
   }
 
@@ -700,6 +716,7 @@ export class EntityService {
         entityTypes.push(EntityType.CUSTOMER);
         entityTypes.push(EntityType.USER);
         entityTypes.push(EntityType.DASHBOARD);
+        entityTypes.push(EntityType.QUEUE_STATS);
         if (authState.edgesSupportEnabled) {
           entityTypes.push(EntityType.EDGE);
         }
@@ -749,6 +766,8 @@ export class EntityService {
         entityFieldKeys.push(entityFields.firstName.keyName);
         entityFieldKeys.push(entityFields.lastName.keyName);
         entityFieldKeys.push(entityFields.phone.keyName);
+        entityFieldKeys.push(entityFields.ownerName.keyName);
+        entityFieldKeys.push(entityFields.ownerType.keyName);
         break;
       case EntityType.TENANT:
       case EntityType.CUSTOMER:
@@ -765,6 +784,8 @@ export class EntityService {
       case EntityType.ENTITY_VIEW:
         entityFieldKeys.push(entityFields.name.keyName);
         entityFieldKeys.push(entityFields.type.keyName);
+        entityFieldKeys.push(entityFields.ownerName.keyName);
+        entityFieldKeys.push(entityFields.ownerType.keyName);
         break;
       case EntityType.DEVICE:
       case EntityType.EDGE:
@@ -772,12 +793,20 @@ export class EntityService {
         entityFieldKeys.push(entityFields.name.keyName);
         entityFieldKeys.push(entityFields.type.keyName);
         entityFieldKeys.push(entityFields.label.keyName);
+        entityFieldKeys.push(entityFields.ownerName.keyName);
+        entityFieldKeys.push(entityFields.ownerType.keyName);
         break;
       case EntityType.DASHBOARD:
         entityFieldKeys.push(entityFields.title.keyName);
+        entityFieldKeys.push(entityFields.ownerName.keyName);
+        entityFieldKeys.push(entityFields.ownerType.keyName);
         break;
       case EntityType.API_USAGE_STATE:
         entityFieldKeys.push(entityFields.name.keyName);
+        break;
+      case EntityType.QUEUE_STATS:
+        entityFieldKeys.push(entityFields.queueName.keyName);
+        entityFieldKeys.push(entityFields.serviceId.keyName);
         break;
     }
     return query ? entityFieldKeys.filter((entityField) => entityField.toLowerCase().indexOf(query) === 0) : entityFieldKeys;
@@ -819,7 +848,14 @@ export class EntityService {
   }
 
   public getEntityKeysByEntityFilter(filter: EntityFilter, types: DataKeyType[],
-                                     entityTypes?: EntityType[], config?: RequestConfig): Observable<Array<DataKey>> {
+                                     entityTypes?: EntityType[],
+                                     config?: RequestConfig): Observable<Array<DataKey>> {
+    return this.getEntityKeysByEntityFilterAndScope(filter, types, entityTypes, null, config);
+  }
+
+  public getEntityKeysByEntityFilterAndScope(filter: EntityFilter, types: DataKeyType[],
+                                             entityTypes?: EntityType[], scope?: AttributeScope,
+                                             config?: RequestConfig): Observable<Array<DataKey>> {
     if (!types.length) {
       return of([]);
     }
@@ -830,7 +866,7 @@ export class EntityService {
         pageLink: createDefaultEntityDataPageLink(100),
       };
       entitiesKeysByQuery$ = this.findEntityKeysByQuery(dataQuery, types.includes(DataKeyType.attribute),
-        types.includes(DataKeyType.timeseries), config);
+        types.includes(DataKeyType.timeseries), scope, config);
     } else {
       entitiesKeysByQuery$ = of({
         attribute: [],
@@ -1506,5 +1542,32 @@ export class EntityService {
         break;
     }
     return entityObservable;
+  }
+
+  public getEntitySubtypesObservable(entityType: EntityType): Observable<Array<string>> {
+    let observable: Observable<Array<string>>;
+    switch (entityType) {
+      case EntityType.ASSET:
+        observable = this.assetProfileService.getAssetProfileNames(false, {ignoreLoading: true}).pipe(
+          map(subTypes => subTypes.map(subType => subType.name))
+        );
+        break;
+      case EntityType.DEVICE:
+        observable = this.deviceProfileService.getDeviceProfileNames(false,{ignoreLoading: true}).pipe(
+          map(subTypes => subTypes.map(subType => subType.name))
+        );
+        break;
+      case EntityType.EDGE:
+        observable = this.edgeService.getEdgeTypes({ignoreLoading: true}).pipe(
+          map(subTypes => subTypes.map(subType => subType.type))
+        );
+        break;
+      case EntityType.ENTITY_VIEW:
+        observable = this.entityViewService.getEntityViewTypes({ignoreLoading: true}).pipe(
+          map(subTypes => subTypes.map(subType => subType.type))
+        );
+        break;
+    }
+    return observable;
   }
 }

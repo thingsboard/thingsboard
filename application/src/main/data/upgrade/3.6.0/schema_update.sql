@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2023 The Thingsboard Authors
+-- Copyright © 2016-2024 The Thingsboard Authors
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -16,6 +16,9 @@
 
 ALTER TABLE widget_type
     ADD COLUMN IF NOT EXISTS tags text[];
+
+ALTER TABLE widgets_bundle
+    ADD COLUMN IF NOT EXISTS widgets_bundle_order int;
 
 ALTER TABLE api_usage_state ADD COLUMN IF NOT EXISTS tbel_exec varchar(32);
 UPDATE api_usage_state SET tbel_exec = js_exec WHERE tbel_exec IS NULL;

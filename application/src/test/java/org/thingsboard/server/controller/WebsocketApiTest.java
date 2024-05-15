@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -648,7 +648,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testEntityCountCmd_filterTypeSingularCompatibilityTest() {
+    public void testEntityCountCmd_filterTypeSingularCompatibilityTest() throws Exception {
         ObjectNode oldFormatDeviceTypeFilterSingular = JacksonUtil.newObjectNode();
         oldFormatDeviceTypeFilterSingular.put("type", "deviceType");
         oldFormatDeviceTypeFilterSingular.put("deviceType", "default");
@@ -667,9 +667,10 @@ public class WebsocketApiTest extends AbstractControllerTest {
         ObjectNode wrapperNode = JacksonUtil.newObjectNode();
         wrapperNode.set("entityCountCmds", entityCountCmds);
 
-        getWsClient().send(JacksonUtil.toString(wrapperNode));
+        wsClient = buildAndConnectWebSocketClient("/api/ws/plugins/telemetry?token=" + token);
+        wsClient.send(JacksonUtil.toString(wrapperNode));
 
-        EntityCountUpdate update = getWsClient().parseCountReply(getWsClient().waitForReply());
+        EntityCountUpdate update = wsClient.parseCountReply(wsClient.waitForReply());
         Assert.assertEquals(1, update.getCmdId());
         Assert.assertEquals(1, update.getCount());
 
@@ -699,7 +700,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
     private void sendAttributes(TenantId tenantId, EntityId entityId, TbAttributeSubscriptionScope scope, List<AttributeKvEntry> attrData) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
-        tsService.saveAndNotify(tenantId, entityId, scope.name(), attrData, new FutureCallback<Void>() {
+        tsService.saveAndNotify(tenantId, entityId, scope.getAttributeScope(), attrData, new FutureCallback<Void>() {
             @Override
             public void onSuccess(@Nullable Void result) {
                 log.debug("sendAttributes callback onSuccess");

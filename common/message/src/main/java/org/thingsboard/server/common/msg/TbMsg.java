@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,6 +128,11 @@ public final class TbMsg implements Serializable {
 
     public static TbMsg newMsg(TbMsgType type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, String data) {
         return new TbMsg(null, UUID.randomUUID(), System.currentTimeMillis(), type, originator, customerId,
+                metaData.copy(), TbMsgDataType.JSON, data, null, null, null, TbMsgCallback.EMPTY);
+    }
+
+    public static TbMsg newMsg(TbMsgType type, EntityId originator, TbMsgMetaData metaData, String data, long ts) {
+        return new TbMsg(null, UUID.randomUUID(), ts, type, originator, null,
                 metaData.copy(), TbMsgDataType.JSON, data, null, null, null, TbMsgCallback.EMPTY);
     }
 
@@ -335,7 +340,7 @@ public final class TbMsg implements Serializable {
         this.originator = originator;
         if (customerId == null || customerId.isNullUid()) {
             if (originator != null && originator.getEntityType() == EntityType.CUSTOMER) {
-                this.customerId = (CustomerId) originator;
+                this.customerId = new CustomerId(originator.getId());
             } else {
                 this.customerId = null;
             }

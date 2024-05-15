@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -96,6 +96,9 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
 
   @Input()
   isEdit: boolean;
+
+  @Input()
+  isPreview: boolean;
 
   @Input()
   autofillHeight: boolean;
@@ -211,7 +214,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       disableAutoPositionOnConflict: false,
       pushItems: false,
       swap: false,
-      maxRows: 100,
+      maxRows: 3000,
       minCols: this.columns ? this.columns : 24,
       maxCols: 3000,
       maxItemCols: 1000,
@@ -290,11 +293,11 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       this.dashboardTimewindowChangedSubject.next(this.dashboardTimewindow);
     }
 
-    if (updateMobileOpts) {
-      this.updateMobileOpts();
-    }
     if (updateLayoutOpts) {
       this.updateLayoutOpts();
+    }
+    if (updateMobileOpts) {
+      this.updateMobileOpts();
     }
     if (updateEditingOpts) {
       this.updateEditingOpts();

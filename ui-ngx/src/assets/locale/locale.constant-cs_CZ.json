@@ -1301,8 +1301,7 @@
               "step": "Krok",
               "min-evaluation-period": "Minimální interval evaluace",
               "max-evaluation-period": "Maximální interval evaluace"
-          },
-          "composite-operations-support": "Podporuje kompozitní Read/Write/Observe operace"
+          }
       },
       "snmp": {
           "add-communication-config": "Přidat konfiguraci komunikace",
@@ -2411,7 +2410,6 @@
         "search": "Vyhledat řetězy pravidel",
         "selected-rulechains": "Vybráno { count, plural, =1 {1 řetězů pravidel} other {# řetězů pravidel} }",
         "open-rulechain": "Otevřít řetěz pravidel",
-        "assign-new-rulechain": "Přiřadit nový řetěz pravidel",
         "edge-template-root": "Hlavní šablona",
         "assign-to-edge": "Přiřadit k edge",
         "edge-rulechain": "Řetěz pravidel edge",
@@ -2932,7 +2930,7 @@
         "action-source-required": "Zdroj akce je povinný.",
         "action-name": "Název",
         "action-name-required": "Název akce je povinný.",
-        "action-name-not-unique": "Jiná akce s identickým názvem již existuje.<br/>Název akce by měl být v rámci zdroje akce unikátní.",
+        "action-name-not-unique": "Jiná akce s identickým názvem již existuje.\nNázev akce by měl být v rámci zdroje akce unikátní.",
         "action-icon": "Ikona",
         "action-type": "Typ",
         "action-type-required": "Typ akce je povinný.",

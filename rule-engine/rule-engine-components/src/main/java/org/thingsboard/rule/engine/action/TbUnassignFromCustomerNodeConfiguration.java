@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,17 @@
 package org.thingsboard.rule.engine.action;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class TbUnassignFromCustomerNodeConfiguration extends TbAbstractCustomerActionNodeConfiguration implements NodeConfiguration<TbUnassignFromCustomerNodeConfiguration> {
 
     @Override
     public TbUnassignFromCustomerNodeConfiguration defaultConfiguration() {
-        TbUnassignFromCustomerNodeConfiguration configuration = new TbUnassignFromCustomerNodeConfiguration();
+        var configuration = new TbUnassignFromCustomerNodeConfiguration();
         configuration.setCustomerNamePattern("");
-        configuration.setCustomerCacheExpiration(300);
         return configuration;
     }
 }

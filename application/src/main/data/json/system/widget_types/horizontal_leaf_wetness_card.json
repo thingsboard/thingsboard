@@ -3,7 +3,7 @@
   "name": "Horizontal leaf wetness card",
   "deprecated": false,
   "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAAk1BMVEUAAADf39/f39/g4ODg4ODf39/////k5ORLcN3g4ODy8vLIyMhYWFjOzs5hguHo7fv5+fm7yfK7u7v09v2Opurb29utra3CwsK2trZmZmbV1dWlt+7n5+c9PT2QkJB0dHTd5PmaruzS2/d4lOWwwPBWed+Dned4k+WCgoJKSkrt7e1ti+MsLCzH0vSenp6dnZ2DnOgFpIuiAAAABnRSTlMAIEDfv1C6kOEmAAADEklEQVR42u3aaW+iQBzHcde2f8Y5GOSUm3rbc9//q9sB7Wq3DfqAbUbz+6QYHEIyXwZsEzsCAAAAAAAAAAAAAAAAAAAAAAAAAAAA+Em/rl6XMb5zrt3k7sF0OB5dPe6MR/ecboB3P5rQTZggxDIIsQ1CbIMQ2yDENheFxA4d+buMTjhkh4tCpDAvnJvNIS7jbp+3Ce1bwc2o2eXHbWDNtBNQJ1jm+tKQZvkYGvn8JETI9M3Z1VK8pET+Vki+c3ap9F/qeJeWtE2lU9WleKtN6MBy1tnPRrurDZtfFDJ12UF4EpJu30oeV2X3hsut9LdxGpeOdOKKSv4S129V7fP31Oc0sDXLp4bez45pWvwmcl/PhYSMfRtSCRHXzj6EpIxL8Z4KQR8hQjiZSONM1BUNbMH06fIQhRvK3eBMyCP7JmQnt5msK1Gmh5Bqy1+Il2nN07oNoUqmWWXutHcpfRqYy+g461c2D9xQsyn1h8zZ15ADTl/w4zD/2DgNja2eGVvo45V2dRjSmZA16ywOITYIGFvnLvt7LzUNTVf6XMiKGavD8/5IVgga8/LMlvRBu0u9zJveEGa4et9hTrVHfnJZQzPD5zWbn1uRJmd7c7JBM20+h2imlyyg57AvZMFY/rEgbs9jbgaf/h3g9F9M2aK7taZ04D5S7pqpbvo/tVxzZud45qyLMT9PEXU8j7yJagcm5BFRERfkRdH+gBkYNClwzcO+OF7WZhPQK3vVpqf398jSrEpnQychWaYiIZTZSyiJEt+bJSrLhPKflO8RqYL7fkRcdQeU8GlAet3ORlPn9EO4N4QCYp0w+BSiZlyoQu1Diiwy+2asiFQiupBJFJkQMSsEN7kJpyEFOvg6dPZvrWC9YqvNnI5iFSVqlomEtyui/CiZ8ZlQZuzJL4SiNsRrV6Tw4/ZAliT0w05DLhcVPQczEdElbAjxvL6DnC5hRYiNEGIbhNgGIbZBiG0mo/sb+JqdiN+Pxs4NfNHuOePR6OFu4ly7u/Et/VMNAAAAAAAAAAAAAAAAAAAAAAAAAAAAwA/5A5Ee9c9zue74AAAAAElFTkSuQmCC",
-  "description": "Displays a latest leaf wetness telemetry data in a horizontal layout.",
+  "description": "Displays the latest leaf wetness telemetry in a scalable horizontal layout.",
   "descriptor": {
     "type": "latest",
     "sizeX": 5,
@@ -23,7 +23,10 @@
   "tags": [
     "weather",
     "environment",
-    "leaf",
-    "wetness"
+    "dew",
+    "leaf moisture",
+    "foliage dampness",
+    "leaf humidity",
+    "foliar moisture"
   ]
 }

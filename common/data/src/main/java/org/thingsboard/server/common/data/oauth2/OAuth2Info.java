@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
  */
 package org.thingsboard.server.common.data.oauth2;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -32,10 +31,12 @@ import java.util.List;
 @Builder(toBuilder = true)
 @NoArgsConstructor
 @AllArgsConstructor
-@ApiModel
+@Schema
 public class OAuth2Info {
-    @ApiModelProperty("Whether OAuth2 settings are enabled or not")
+    @Schema(description = "Whether OAuth2 settings are enabled or not")
     private boolean enabled;
-    @ApiModelProperty(value = "List of configured OAuth2 clients. Cannot contain null values", required = true)
+    @Schema(description = "Whether OAuth2 settings are enabled on Edge or not")
+    private boolean edgeEnabled;
+    @Schema(description = "List of configured OAuth2 clients. Cannot contain null values", requiredMode = Schema.RequiredMode.REQUIRED)
     private List<OAuth2ParamsInfo> oauth2ParamsInfos;
 }

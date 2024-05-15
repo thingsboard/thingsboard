@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import { AggregationType, ComparisonDuration, Timewindow } from '@shared/models/
 import { EntityType } from '@shared/models/entity-type.models';
 import { DataKeyType } from './telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
-import * as moment_ from 'moment';
 import {
   AlarmFilter,
   AlarmFilterConfig,
@@ -38,10 +37,12 @@ import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { IAliasController } from '@core/api/widget-api.models';
-import { isEmptyStr, isNotEmptyStr } from '@core/utils';
+import { isNotEmptyStr, mergeDeep } from '@core/utils';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 import { ComponentStyle, Font, TimewindowStyle } from '@shared/models/widget-settings.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
+import { HasTenantId } from '@shared/models/entity.models';
+import { DataKeysCallbacks, DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 
 export enum widgetType {
   timeseries = 'timeseries',
@@ -179,9 +180,12 @@ export interface WidgetTypeParameters {
   previewWidth?: string;
   previewHeight?: string;
   embedTitlePanel?: boolean;
+  overflowVisible?: boolean;
   hideDataSettings?: boolean;
   defaultDataKeysFunction?: (configComponent: any, configData: any) => DataKey[];
   defaultLatestDataKeysFunction?: (configComponent: any, configData: any) => DataKey[];
+  dataKeySettingsFunction?: DataKeySettingsFunction;
+  displayRpcMessageToast?: boolean;
 }
 
 export interface WidgetControllerDescriptor {
@@ -193,7 +197,7 @@ export interface WidgetControllerDescriptor {
   actionSources?: {[actionSourceId: string]: WidgetActionSource};
 }
 
-export interface BaseWidgetType extends BaseData<WidgetTypeId> {
+export interface BaseWidgetType extends BaseData<WidgetTypeId>, HasTenantId {
   tenantId: TenantId;
   fqn: string;
   name: string;
@@ -268,6 +272,8 @@ export enum LegendPosition {
   left = 'left',
   right = 'right'
 }
+
+export const legendPositions = Object.keys(LegendPosition) as LegendPosition[];
 
 export const legendPositionTranslationMap = new Map<LegendPosition, string>(
   [
@@ -353,6 +359,8 @@ export interface DataKey extends KeyInfo {
   _hash?: number;
 }
 
+export type CellClickColumnInfo = Pick<DataKey, 'name' | 'label'>
+
 export enum DataKeyConfigMode {
   general = 'general',
   advanced = 'advanced'
@@ -406,11 +414,44 @@ export interface Datasource {
   [key: string]: any;
 }
 
+export const datasourceValid = (datasource: Datasource): boolean => {
+  const type: DatasourceType = datasource?.type;
+  if (type) {
+    switch (type) {
+      case DatasourceType.function:
+      case DatasourceType.alarmCount:
+        return true;
+      case DatasourceType.device:
+        return !!datasource.deviceId;
+      case DatasourceType.entity:
+      case DatasourceType.entityCount:
+        return !!datasource.entityAliasId;
+    }
+  }
+  return false;
+};
+
+export enum TargetDeviceType {
+  device = 'device',
+  entity = 'entity'
+}
+
+export interface TargetDevice {
+  type?: TargetDeviceType;
+  deviceId?: string;
+  entityAliasId?: string;
+}
+
+export const targetDeviceValid = (targetDevice?: TargetDevice): boolean =>
+  !!targetDevice && !!targetDevice.type &&
+    ((targetDevice.type === TargetDeviceType.device && !!targetDevice.deviceId) ||
+      (targetDevice.type === TargetDeviceType.entity && !!targetDevice.entityAliasId));
+
 export const datasourcesHasAggregation = (datasources?: Array<Datasource>): boolean => {
   if (datasources) {
     const foundDatasource = datasources.find(datasource => {
-      const found = datasource.dataKeys && datasource.dataKeys.find(key => key.type === DataKeyType.timeseries &&
-        key.aggregationType && key.aggregationType !== AggregationType.NONE);
+      const found = datasource.dataKeys && datasource.dataKeys.find(key => key?.type === DataKeyType.timeseries &&
+        key?.aggregationType && key.aggregationType !== AggregationType.NONE);
       return !!found;
     });
     if (foundDatasource) {
@@ -426,8 +467,8 @@ export const datasourcesHasOnlyComparisonAggregation = (datasources?: Array<Data
   }
   if (datasources) {
     const foundDatasource = datasources.find(datasource => {
-      const found = datasource.dataKeys && datasource.dataKeys.find(key => key.type === DataKeyType.timeseries &&
-        key.aggregationType && key.aggregationType !== AggregationType.NONE && !key.comparisonEnabled);
+      const found = datasource.dataKeys && datasource.dataKeys.find(key => key?.type === DataKeyType.timeseries &&
+        key?.aggregationType && key.aggregationType !== AggregationType.NONE && !key.comparisonEnabled);
       return !!found;
     });
     if (foundDatasource) {
@@ -458,7 +499,13 @@ export interface ReplaceInfo {
   dataKeyName: string;
 }
 
-export type DataSet = [number, any][];
+export type DataEntry = [number, any, [number, number]?];
+
+export type DataSet = DataEntry[];
+
+export interface IndexedData {
+  [id: number]: DataSet;
+}
 
 export interface DataSetHolder {
   data: DataSet;
@@ -494,7 +541,8 @@ export enum WidgetActionType {
   openDashboard = 'openDashboard',
   custom = 'custom',
   customPretty = 'customPretty',
-  mobileAction = 'mobileAction'
+  mobileAction = 'mobileAction',
+  openURL = 'openURL'
 }
 
 export enum WidgetMobileActionType {
@@ -508,6 +556,8 @@ export enum WidgetMobileActionType {
   takeScreenshot = 'takeScreenshot'
 }
 
+export const widgetActionTypes = Object.keys(WidgetActionType) as WidgetActionType[];
+
 export const widgetActionTypeTranslationMap = new Map<WidgetActionType, string>(
   [
     [ WidgetActionType.openDashboardState, 'widget-action.open-dashboard-state' ],
@@ -515,7 +565,8 @@ export const widgetActionTypeTranslationMap = new Map<WidgetActionType, string>(
     [ WidgetActionType.openDashboard, 'widget-action.open-dashboard' ],
     [ WidgetActionType.custom, 'widget-action.custom' ],
     [ WidgetActionType.customPretty, 'widget-action.custom-pretty' ],
-    [ WidgetActionType.mobileAction, 'widget-action.mobile-action' ]
+    [ WidgetActionType.mobileAction, 'widget-action.mobile-action' ],
+    [ WidgetActionType.openURL, 'widget-action.open-URL' ]
   ]
 );
 
@@ -606,11 +657,7 @@ export interface CustomActionDescriptor {
   customModules?: Type<any>[];
 }
 
-export interface WidgetActionDescriptor extends CustomActionDescriptor {
-  id: string;
-  name: string;
-  icon: string;
-  displayName?: string;
+export interface WidgetAction extends CustomActionDescriptor {
   type: WidgetActionType;
   targetDashboardId?: string;
   targetDashboardStateId?: string;
@@ -631,15 +678,57 @@ export interface WidgetActionDescriptor extends CustomActionDescriptor {
   setEntityId?: boolean;
   stateEntityParamName?: string;
   mobileAction?: WidgetMobileActionDescriptor;
+  url?: string;
+}
+
+export interface WidgetActionDescriptor extends WidgetAction {
+  id: string;
+  name: string;
+  icon: string;
+  displayName?: string;
   useShowWidgetActionFunction?: boolean;
   showWidgetActionFunction?: string;
+  columnIndex?: number;
 }
+
+export const actionDescriptorToAction = (descriptor: WidgetActionDescriptor): WidgetAction => {
+  const result: WidgetActionDescriptor = {...descriptor};
+  delete result.id;
+  delete result.name;
+  delete result.icon;
+  delete result.displayName;
+  delete result.useShowWidgetActionFunction;
+  delete result.showWidgetActionFunction;
+  delete result.columnIndex;
+  return result;
+};
+
+export const defaultWidgetAction = (setEntityId = true): WidgetAction => ({
+    type: WidgetActionType.updateDashboardState,
+    targetDashboardStateId: null,
+    openRightLayout: false,
+    setEntityId,
+    stateEntityParamName: null
+  });
 
 export interface WidgetComparisonSettings {
   comparisonEnabled?: boolean;
-  timeForComparison?: moment_.unitOfTime.DurationConstructor;
+  timeForComparison?: ComparisonDuration;
   comparisonCustomIntervalValue?: number;
 }
+
+export interface DataKeyComparisonSettings {
+  showValuesForComparison: boolean;
+  comparisonValuesLabel: string;
+  color: string;
+}
+
+export interface DataKeySettingsWithComparison {
+  comparisonSettings?: DataKeyComparisonSettings;
+}
+
+export const isDataKeySettingsWithComparison = (settings: any): settings is DataKeySettingsWithComparison =>
+  'comparisonSettings' in settings;
 
 export interface WidgetSettings {
   [key: string]: any;
@@ -688,7 +777,7 @@ export interface WidgetConfig {
   alarmSource?: Datasource;
   alarmFilterConfig?: AlarmFilterConfig;
   datasources?: Array<Datasource>;
-  targetDeviceAliasIds?: Array<string>;
+  targetDevice?: TargetDevice;
   [key: string]: any;
 }
 
@@ -698,7 +787,7 @@ export interface BaseWidgetInfo {
   type: widgetType;
 }
 
-export interface Widget extends BaseWidgetInfo {
+export interface Widget extends BaseWidgetInfo, ExportableEntity<WidgetTypeId> {
   typeId?: WidgetTypeId;
   sizeX: number;
   sizeY: number;
@@ -744,28 +833,16 @@ export interface WidgetSize {
 
 export interface IWidgetSettingsComponent {
   aliasController: IAliasController;
+  dataKeyCallbacks: DataKeysCallbacks;
   dashboard: Dashboard;
   widget: Widget;
   widgetConfig: WidgetConfigComponentData;
   functionScopeVariables: string[];
   settings: WidgetSettings;
   settingsChanged: Observable<WidgetSettings>;
-  validate();
+  validateSettings(): boolean;
   [key: string]: any;
 }
-
-const removeEmptyWidgetSettings = (settings: WidgetSettings): WidgetSettings => {
-  if (settings) {
-    const keys = Object.keys(settings);
-    for (const key of keys) {
-      const val = settings[key];
-      if (val === null || isEmptyStr(val)) {
-        delete settings[key];
-      }
-    }
-  }
-  return settings;
-};
 
 @Directive()
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
@@ -773,6 +850,8 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
   IWidgetSettingsComponent, OnInit, AfterViewInit {
 
   aliasController: IAliasController;
+
+  dataKeyCallbacks: DataKeysCallbacks;
 
   dashboard: Dashboard;
 
@@ -799,7 +878,7 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
     if (!value) {
       this.settingsValue = this.defaultSettings();
     } else {
-      this.settingsValue = {...this.defaultSettings(), ...value};
+      this.settingsValue = mergeDeep(this.defaultSettings(), value);
     }
     if (!this.settingsSet) {
       this.settingsSet = true;
@@ -823,15 +902,15 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
   ngOnInit() {}
 
   ngAfterViewInit(): void {
-    setTimeout(() => {
-      if (!this.validateSettings()) {
-        this.settingsChangedEmitter.emit(null);
-      }
-    }, 0);
+    if (!this.validateSettings()) {
+      setTimeout(() => {
+        this.onSettingsChanged(this.prepareOutputSettings(this.settingsForm().getRawValue()));
+      }, 0);
+    }
   }
 
-  validate() {
-    this.onValidate();
+  public validateSettings(): boolean {
+    return this.settingsForm().valid;
   }
 
   protected setupSettings(settings: WidgetSettings) {
@@ -847,8 +926,8 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
         this.updateValidators(true, trigger);
       });
     }
-    this.settingsForm().valueChanges.subscribe((updated: any) => {
-      this.onSettingsChanged(this.prepareOutputSettings(updated));
+    this.settingsForm().valueChanges.subscribe(() => {
+      this.onSettingsChanged(this.prepareOutputSettings(this.settingsForm().getRawValue()));
     });
   }
 
@@ -867,12 +946,8 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
   }
 
   protected onSettingsChanged(updated: WidgetSettings) {
-    this.settingsValue = removeEmptyWidgetSettings(updated);
-    if (this.validateSettings()) {
-      this.settingsChangedEmitter.emit(this.settingsValue);
-    } else {
-      this.settingsChangedEmitter.emit(null);
-    }
+    this.settingsValue = updated;
+    this.settingsChangedEmitter.emit(this.settingsValue);
   }
 
   protected doUpdateSettings(settingsForm: UntypedFormGroup, settings: WidgetSettings) {
@@ -885,12 +960,6 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
   protected prepareOutputSettings(settings: any): WidgetSettings {
     return settings;
   }
-
-  protected validateSettings(): boolean {
-    return this.settingsForm().valid;
-  }
-
-  protected onValidate() {}
 
   protected abstract settingsForm(): UntypedFormGroup;
 

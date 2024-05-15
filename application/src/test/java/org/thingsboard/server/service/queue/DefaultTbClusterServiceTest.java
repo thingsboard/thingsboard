@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,17 +29,18 @@ import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -65,13 +66,13 @@ public class DefaultTbClusterServiceTest {
     public static final String TRANSPORT = "transport";
 
     @MockBean
-    protected DataDecodingEncodingService encodingService;
-    @MockBean
     protected TbDeviceProfileCache deviceProfileCache;
     @MockBean
     protected TbAssetProfileCache assetProfileCache;
     @MockBean
     protected GatewayNotificationsService gatewayNotificationsService;
+    @MockBean
+    protected EdgeService edgeService;
     @MockBean
     protected PartitionService partitionService;
     @MockBean
@@ -92,7 +93,7 @@ public class DefaultTbClusterServiceTest {
 
         when(producerProvider.getRuleEngineNotificationsMsgProducer()).thenReturn(tbQueueProducer);
 
-        clusterService.onQueueChange(createTestQueue());
+        clusterService.onQueuesUpdate(List.of(createTestQueue()));
 
         verify(topicService, times(1)).getNotificationsTopic(ServiceType.TB_RULE_ENGINE, MONOLITH);
         verify(topicService, never()).getNotificationsTopic(eq(ServiceType.TB_CORE), any());
@@ -117,7 +118,7 @@ public class DefaultTbClusterServiceTest {
 
         when(producerProvider.getRuleEngineNotificationsMsgProducer()).thenReturn(tbQueueProducer);
 
-        clusterService.onQueueChange(createTestQueue());
+        clusterService.onQueuesUpdate(List.of(createTestQueue()));
 
         verify(topicService, times(1)).getNotificationsTopic(ServiceType.TB_RULE_ENGINE, monolith1);
         verify(topicService, times(1)).getNotificationsTopic(ServiceType.TB_RULE_ENGINE, monolith2);
@@ -145,7 +146,7 @@ public class DefaultTbClusterServiceTest {
         when(producerProvider.getRuleEngineNotificationsMsgProducer()).thenReturn(tbREQueueProducer);
         when(producerProvider.getTransportNotificationsMsgProducer()).thenReturn(tbTransportQueueProducer);
 
-        clusterService.onQueueChange(createTestQueue());
+        clusterService.onQueuesUpdate(List.of(createTestQueue()));
 
         verify(topicService, times(1)).getNotificationsTopic(ServiceType.TB_RULE_ENGINE, MONOLITH);
         verify(topicService, times(1)).getNotificationsTopic(ServiceType.TB_TRANSPORT, TRANSPORT);
@@ -191,7 +192,7 @@ public class DefaultTbClusterServiceTest {
         when(producerProvider.getTbCoreNotificationsMsgProducer()).thenReturn(tbCoreQueueProducer);
         when(producerProvider.getTransportNotificationsMsgProducer()).thenReturn(tbTransportQueueProducer);
 
-        clusterService.onQueueChange(createTestQueue());
+        clusterService.onQueuesUpdate(List.of(createTestQueue()));
 
         verify(topicService, times(1)).getNotificationsTopic(ServiceType.TB_RULE_ENGINE, monolith1);
         verify(topicService, times(1)).getNotificationsTopic(ServiceType.TB_RULE_ENGINE, monolith2);

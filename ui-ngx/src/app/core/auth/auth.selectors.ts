@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -40,6 +40,12 @@ export const selectIsAuthenticated = createSelector(
 export const selectIsUserLoaded = createSelector(
   selectAuthState,
   (state: AuthState) => state.isUserLoaded
+);
+
+export const selectUserReady = createSelector(
+  selectIsAuthenticated,
+  selectIsUserLoaded,
+  (isAuthenticated, isUserLoaded) => ({isAuthenticated, isUserLoaded})
 );
 
 export const selectAuthUser = createSelector(

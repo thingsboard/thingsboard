@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,16 +18,13 @@ package org.thingsboard.server.service.edge.rpc.processor.device;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
+import org.thingsboard.server.service.edge.rpc.processor.device.profile.DeviceProfileEdgeProcessorV1;
 
 
-@SpringBootTest(classes = {DeviceProfileEdgeProcessor.class})
+@SpringBootTest(classes = {DeviceProfileEdgeProcessorV1.class})
 class DeviceProfileEdgeProcessorTest extends AbstractDeviceProcessorTest {
-
-    @SpyBean
-    DeviceProfileEdgeProcessor deviceProfileEdgeProcessor;
 
     @ParameterizedTest
     @MethodSource("provideParameters")
@@ -37,9 +34,8 @@ class DeviceProfileEdgeProcessorTest extends AbstractDeviceProcessorTest {
 
         edgeEvent.setEntityId(deviceProfileId.getId());
 
-        DownlinkMsg downlinkMsg = deviceProfileEdgeProcessor.convertDeviceProfileEventToDownlink(edgeEvent, edgeId, edgeVersion);
+        DownlinkMsg downlinkMsg = deviceProfileProcessorV1.convertDeviceProfileEventToDownlink(edgeEvent, edgeId, edgeVersion);
 
         verify(downlinkMsg, expectedDashboardIdMSB, expectedDashboardIdLSB, expectedRuleChainIdMSB, expectedRuleChainIdLSB);
     }
-
 }

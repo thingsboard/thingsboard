@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueConsumer;
-import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.TbQueueMsg;
 
 import java.util.Set;
 import java.util.concurrent.Future;
@@ -30,12 +29,12 @@ import java.util.concurrent.TimeUnit;
 
 @RequiredArgsConstructor
 @Slf4j
-public class TbQueueConsumerTask {
+public class TbQueueConsumerTask<M extends TbQueueMsg> {
 
     @Getter
     private final Object key;
     @Getter
-    private final TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> consumer;
+    private final TbQueueConsumer<M> consumer;
 
     @Setter
     private Future<?> task;

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,35 +34,21 @@ import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.asset.AssetProfileService;
-import org.thingsboard.server.dao.asset.AssetService;
-import org.thingsboard.server.dao.customer.CustomerService;
-import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
-import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
-import org.thingsboard.server.dao.notification.NotificationRequestService;
-import org.thingsboard.server.dao.notification.NotificationRuleService;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
-import org.thingsboard.server.dao.notification.NotificationTargetService;
-import org.thingsboard.server.dao.notification.NotificationTemplateService;
-import org.thingsboard.server.dao.ota.OtaPackageService;
-import org.thingsboard.server.dao.queue.QueueService;
-import org.thingsboard.server.dao.resource.ResourceService;
-import org.thingsboard.server.dao.rpc.RpcService;
-import org.thingsboard.server.dao.rule.RuleChainService;
-import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
+import org.thingsboard.server.dao.service.validator.TenantDataValidator;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.dao.user.UserService;
-import org.thingsboard.server.dao.widget.WidgetTypeService;
-import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -75,80 +61,24 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
 
     @Autowired
     private TenantDao tenantDao;
-
     @Autowired
     private TenantProfileService tenantProfileService;
-
     @Autowired
     @Lazy
     private UserService userService;
-
-    @Autowired
-    private CustomerService customerService;
-
-    @Autowired
-    private AssetService assetService;
-
     @Autowired
     private AssetProfileService assetProfileService;
-
-    @Autowired
-    private DeviceService deviceService;
-
     @Autowired
     private DeviceProfileService deviceProfileService;
-
     @Lazy
     @Autowired
     private ApiUsageStateService apiUsageStateService;
-
-    @Autowired
-    private WidgetsBundleService widgetsBundleService;
-
-    @Autowired
-    private WidgetTypeService widgetTypeService;
-
-    @Autowired
-    private DashboardService dashboardService;
-
-    @Autowired
-    private RuleChainService ruleChainService;
-
-    @Autowired
-    private ResourceService resourceService;
-
-    @Autowired
-    @Lazy
-    private OtaPackageService otaPackageService;
-
-    @Autowired
-    private RpcService rpcService;
-
-    @Autowired
-    private DataValidator<Tenant> tenantValidator;
-
-    @Lazy
-    @Autowired
-    private QueueService queueService;
-
     @Autowired
     private AdminSettingsService adminSettingsService;
-
     @Autowired
     private NotificationSettingsService notificationSettingsService;
-
     @Autowired
-    private NotificationRequestService notificationRequestService;
-
-    @Autowired
-    private NotificationRuleService notificationRuleService;
-
-    @Autowired
-    private NotificationTemplateService notificationTemplateService;
-
-    @Autowired
-    private NotificationTargetService notificationTargetService;
-
+    private TenantDataValidator tenantValidator;
     @Autowired
     protected TbTransactionalCache<TenantId, Boolean> existsTenantCache;
 
@@ -165,7 +95,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
     @Override
     public Tenant findTenantById(TenantId tenantId) {
         log.trace("Executing findTenantById [{}]", tenantId);
-        Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
 
         return cache.getAndPutInTransaction(tenantId, () -> tenantDao.findById(tenantId, tenantId.getId()), true);
     }
@@ -173,20 +103,26 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
     @Override
     public TenantInfo findTenantInfoById(TenantId tenantId) {
         log.trace("Executing findTenantInfoById [{}]", tenantId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         return tenantDao.findTenantInfoById(tenantId, tenantId.getId());
     }
 
     @Override
     public ListenableFuture<Tenant> findTenantByIdAsync(TenantId callerId, TenantId tenantId) {
         log.trace("Executing findTenantByIdAsync [{}]", tenantId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         return tenantDao.findByIdAsync(callerId, tenantId.getId());
     }
 
     @Override
     @Transactional
     public Tenant saveTenant(Tenant tenant) {
+        return saveTenant(tenant, null);
+    }
+
+    @Override
+    @Transactional
+    public Tenant saveTenant(Tenant tenant, Consumer<TenantId> defaultEntitiesCreator) {
         log.trace("Executing saveTenant [{}]", tenant);
         tenant.setRegion(DEFAULT_TENANT_REGION);
         if (tenant.getTenantProfileId() == null) {
@@ -195,58 +131,49 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         }
         tenantValidator.validate(tenant, Tenant::getId);
         boolean create = tenant.getId() == null;
+
         Tenant savedTenant = tenantDao.save(tenant.getId(), tenant);
-        publishEvictEvent(new TenantEvictEvent(savedTenant.getId(), create));
-        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedTenant.getId()).entityId(savedTenant.getId()).added(create).build());
-        if (tenant.getId() == null) {
-            deviceProfileService.createDefaultDeviceProfile(savedTenant.getId());
-            assetProfileService.createDefaultAssetProfile(savedTenant.getId());
-            apiUsageStateService.createDefaultApiUsageState(savedTenant.getId(), null);
-            try {
-                notificationSettingsService.createDefaultNotificationConfigs(savedTenant.getId());
-            } catch (Throwable e) {
-                log.error("Failed to create default notification configs for tenant {}", savedTenant.getId(), e);
-            }
+        TenantId tenantId = savedTenant.getId();
+        publishEvictEvent(new TenantEvictEvent(tenantId, create));
+
+        if (create && defaultEntitiesCreator != null) {
+            defaultEntitiesCreator.accept(tenantId);
         }
+
+        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId)
+                .entityId(tenantId).entity(savedTenant).created(create).build());
+
+        if (create) {
+            deviceProfileService.createDefaultDeviceProfile(tenantId);
+            assetProfileService.createDefaultAssetProfile(tenantId);
+            apiUsageStateService.createDefaultApiUsageState(tenantId, null);
+            notificationSettingsService.createDefaultNotificationConfigs(tenantId);
+        }
+
         return savedTenant;
     }
 
-    /**
-     * We intentionally leave this method without "Transactional" annotation due to complexity of the method.
-     * Ideally we should delete related entites without "paginatedRemover" logic. But in such a case we can't clear cache and send events.
-     * We will create separate task to make "deleteTenant" transactional.
-     */
     @Override
     public void deleteTenant(TenantId tenantId) {
         log.trace("Executing deleteTenant [{}]", tenantId);
-        Validator.validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
-        entityViewService.deleteEntityViewsByTenantId(tenantId);
-        widgetsBundleService.deleteWidgetsBundlesByTenantId(tenantId);
-        widgetTypeService.deleteWidgetTypesByTenantId(tenantId);
-        assetService.deleteAssetsByTenantId(tenantId);
-        assetProfileService.deleteAssetProfilesByTenantId(tenantId);
-        deviceService.deleteDevicesByTenantId(tenantId);
-        deviceProfileService.deleteDeviceProfilesByTenantId(tenantId);
-        dashboardService.deleteDashboardsByTenantId(tenantId);
-        customerService.deleteCustomersByTenantId(tenantId);
-        edgeService.deleteEdgesByTenantId(tenantId);
-        userService.deleteTenantAdmins(tenantId);
-        ruleChainService.deleteRuleChainsByTenantId(tenantId);
-        apiUsageStateService.deleteApiUsageStateByTenantId(tenantId);
-        resourceService.deleteResourcesByTenantId(tenantId);
-        otaPackageService.deleteOtaPackagesByTenantId(tenantId);
-        rpcService.deleteAllRpcByTenantId(tenantId);
-        queueService.deleteQueuesByTenantId(tenantId);
-        notificationRequestService.deleteNotificationRequestsByTenantId(tenantId);
-        notificationRuleService.deleteNotificationRulesByTenantId(tenantId);
-        notificationTemplateService.deleteNotificationTemplatesByTenantId(tenantId);
-        notificationTargetService.deleteNotificationTargetsByTenantId(tenantId);
+        Tenant tenant = findTenantById(tenantId);
+        Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+
+        userService.deleteAllByTenantId(tenantId);
         adminSettingsService.deleteAdminSettingsByTenantId(tenantId);
+        notificationSettingsService.deleteNotificationSettings(tenantId);
         tenantDao.removeById(tenantId, tenantId.getId());
         publishEvictEvent(new TenantEvictEvent(tenantId, true));
-        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(tenantId).build());
-        relationService.deleteEntityRelations(tenantId, tenantId);
-        alarmService.deleteEntityAlarmRecordsByTenantId(tenantId);
+
+        cleanUpService.removeTenantEntities(tenantId, // don't forget to implement deleteEntity from EntityDaoService when adding entity type to this list
+                EntityType.ENTITY_VIEW, EntityType.WIDGETS_BUNDLE, EntityType.WIDGET_TYPE,
+                EntityType.ASSET, EntityType.ASSET_PROFILE, EntityType.DEVICE, EntityType.DEVICE_PROFILE,
+                EntityType.DASHBOARD, EntityType.EDGE, EntityType.RULE_CHAIN, EntityType.API_USAGE_STATE,
+                EntityType.TB_RESOURCE, EntityType.OTA_PACKAGE, EntityType.RPC, EntityType.QUEUE,
+                EntityType.NOTIFICATION_REQUEST, EntityType.NOTIFICATION_RULE, EntityType.NOTIFICATION_TEMPLATE,
+                EntityType.NOTIFICATION_TARGET, EntityType.QUEUE_STATS, EntityType.CUSTOMER
+        );
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(tenantId).entity(tenant).build());
     }
 
     @Override

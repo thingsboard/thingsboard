@@ -3,7 +3,7 @@
   "name": "PM10 card",
   "deprecated": false,
   "image": "data:image/png;base64,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",
-  "description": "Displays a latest fine and coarse particulate matter (PM10) telemetry data in a box layout.",
+  "description": "Displays the latest fine and coarse particulate matter (PM10) telemetry in a scalable rectangle card.",
   "descriptor": {
     "type": "latest",
     "sizeX": 3,
@@ -22,9 +22,16 @@
   "externalId": null,
   "tags": [
     "environment",
+    "particulate",
     "matter",
     "air",
-    "particulate",
-    "pm10"
+    "pm10",
+    "coarse particulates",
+    "coarse particles",
+    "particulate matter 10",
+    "inhalable particles",
+    "larger particulates",
+    "dust",
+    "airborne coarse particles"
   ]
 }

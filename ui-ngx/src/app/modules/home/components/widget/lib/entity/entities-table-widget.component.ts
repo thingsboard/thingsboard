@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ import { deepClone, hashCode, isDefined, isNumber, isObject, isUndefined } from 
 import cssjs from '@core/css/css';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { BehaviorSubject, merge, Observable, Subject } from 'rxjs';
+import { BehaviorSubject, fromEvent, merge, Observable, Subject } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { entityTypeTranslations } from '@shared/models/entity-type.models';
@@ -83,16 +83,16 @@ import {
   TableWidgetSettings,
   widthStyle
 } from '@home/components/widget/lib/table-widget.models';
-import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
+import { Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
 import {
   DISPLAY_COLUMNS_PANEL_DATA,
   DisplayColumnsPanelComponent,
   DisplayColumnsPanelData
 } from '@home/components/widget/lib/display-columns-panel.component';
+import { Direction } from '@shared/models/page/sort-order';
 import {
   dataKeyToEntityKey,
-  Direction,
   EntityDataPageLink,
   entityDataPageLinkSortDirection,
   EntityKeyType,
@@ -106,6 +106,7 @@ import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import { AggregationType } from '@shared/models/time/time.models';
 import { FormBuilder } from '@angular/forms';
+import { DEFAULT_OVERLAY_POSITIONS } from '@shared/models/overlay.models';
 
 interface EntitiesTableWidgetSettings extends TableWidgetSettings {
   entitiesTitle: string;
@@ -168,6 +169,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   private columnWidth: {[key: string]: string} = {};
   private columnDefaultVisibility: {[key: string]: boolean} = {};
   private columnSelectionAvailability: {[key: string]: boolean} = {};
+  private columnsWithCellClick: Array<number> = [];
 
   private rowStylesInfo: RowStyleInfo;
 
@@ -229,6 +231,12 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     }
   }
 
+  private isActionsConfigured(actionSourceIds: Array<string>): boolean {
+    let configured = false;
+    actionSourceIds.forEach(id => configured = configured || this.ctx.actionsApi.getActionDescriptors(id).length > 0 );
+    return configured;
+  }
+
   ngOnDestroy(): void {
     if (this.widgetResize$) {
       this.widgetResize$.disconnect();
@@ -265,6 +273,13 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     this.ctx.detectChanges();
   }
 
+  public onEditModeChanged() {
+    if (this.textSearchMode) {
+      this.ctx.hideTitlePanel = !this.ctx.isEdit;
+      this.ctx.detectChanges(true);
+    }
+  }
+
   public pageLinkSortDirection(): SortDirection {
     return entityDataPageLinkSortDirection(this.pageLink);
   }
@@ -276,6 +291,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
 
     this.hasRowAction = !!this.ctx.actionsApi.getActionDescriptors('rowClick').length ||
       !!this.ctx.actionsApi.getActionDescriptors('rowDoubleClick').length;
+    this.columnsWithCellClick = this.ctx.actionsApi.getActionDescriptors('cellClick').map(action => action.columnIndex);
 
     if (this.settings.entitiesTitle && this.settings.entitiesTitle.length) {
       this.ctx.widgetTitle = this.settings.entitiesTitle;
@@ -462,18 +478,17 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     if ($event) {
       $event.stopPropagation();
     }
-    const target = $event.target || $event.currentTarget;
-    const config = new OverlayConfig();
-    config.backdropClass = 'cdk-overlay-transparent-backdrop';
-    config.hasBackdrop = true;
-    const connectedPosition: ConnectedPosition = {
-      originX: 'end',
-      originY: 'bottom',
-      overlayX: 'end',
-      overlayY: 'top'
-    };
-    config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
-      .withPositions([connectedPosition]);
+    const target = $event.target || $event.srcElement || $event.currentTarget;
+    const config = new OverlayConfig({
+      panelClass: 'tb-panel-container',
+      backdropClass: 'cdk-overlay-transparent-backdrop',
+      hasBackdrop: true,
+      height: 'fit-content',
+      maxHeight: '75vh'
+    });
+    config.positionStrategy = this.overlay.position()
+      .flexibleConnectedTo(target as HTMLElement)
+      .withPositions(DEFAULT_OVERLAY_POSITIONS);
 
     const overlayRef = this.overlay.create(config);
     overlayRef.backdropClick().subscribe(() => {
@@ -481,11 +496,11 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     });
 
     const columns: DisplayColumn[] = this.columns.map(column => ({
-        title: column.title,
-        def: column.def,
-        display: this.displayedColumns.indexOf(column.def) > -1,
-        selectable: this.columnSelectionAvailability[column.def]
-      }));
+      title: column.title,
+      def: column.def,
+      display: this.displayedColumns.indexOf(column.def) > -1,
+      selectable: this.columnSelectionAvailability[column.def]
+    }));
 
     const providers: StaticProvider[] = [
       {
@@ -506,9 +521,18 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         useValue: overlayRef
       }
     ];
+
     const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
-    overlayRef.attach(new ComponentPortal(DisplayColumnsPanelComponent,
+    const componentRef = overlayRef.attach(new ComponentPortal(DisplayColumnsPanelComponent,
       this.viewContainerRef, injector));
+
+    const resizeWindows$ = fromEvent(window, 'resize').subscribe(() => {
+      overlayRef.updatePosition();
+    });
+    componentRef.onDestroy(() => {
+      resizeWindows$.unsubscribe();
+    });
+
     this.ctx.detectChanges();
   }
 
@@ -675,6 +699,33 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
       return this.ctx.utils.formatValue(value, decimals, units, true);
     } else {
       return '';
+    }
+  }
+
+  public onCellClick($event: Event, entity: EntityData, key: EntityColumn, columnIndex: number) {
+    this.entityDatasource.toggleCurrentEntity(entity);
+    const descriptors = this.ctx.actionsApi.getActionDescriptors('cellClick');
+    let descriptor;
+    if (descriptors.length) {
+      descriptor = descriptors.find(desc => desc.columnIndex === columnIndex);
+    }
+    if ($event && descriptor) {
+      $event.stopPropagation();
+      let entityId;
+      let entityName;
+      let entityLabel;
+      if (entity) {
+        entityId = entity.id;
+        entityName = entity.entityName;
+        entityLabel = entity.entityLabel;
+      }
+      this.ctx.actionsApi.handleWidgetAction($event, descriptor, entityId, entityName, {entity, key}, entityLabel);
+    }
+  }
+
+  public columnHasCellClick(index: number) {
+    if (this.columnsWithCellClick.length) {
+      return this.columnsWithCellClick.includes(index);
     }
   }
 

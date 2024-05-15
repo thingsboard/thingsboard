@@ -22,6 +22,10 @@ As result, in REPOSITORY column, next images should be present:
 
         mvn clean install -DblackBoxTests.skip=false
 
+- Run the black box tests (without ui tests) in the [msa/black-box-tests](../black-box-tests) directory with Redis standalone with TLS:
+
+        mvn clean install -DblackBoxTests.skip=false -DblackBoxTests.redisSsl=true
+
 - Run the black box tests in the [msa/black-box-tests](../black-box-tests) directory with Redis cluster:
 
         mvn clean install -DblackBoxTests.skip=false -DblackBoxTests.redisCluster=true

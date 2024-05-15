@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -86,7 +86,7 @@
       </mat-slide-toggle>
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
         <mat-form-field class="number" appearance="outline" subscriptSizing="dynamic">
-          <input matInput min="0" formControlName="borderOuterWidth" placeholder="{{ 'widget-config.set' | translate }}">
+          <input matInput type="number" min="0" formControlName="borderOuterWidth" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
         <tb-color-input asBoxInput
                         colorClearButton
@@ -102,7 +102,7 @@
       <div translate>widgets.gauge.needle-circle</div>
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
         <mat-form-field class="number" appearance="outline" subscriptSizing="dynamic">
-          <input matInput min="0" formControlName="needleCircleSize" placeholder="{{ 'widget-config.set' | translate }}">
+          <input matInput type="number" min="0" formControlName="needleCircleSize" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
         <tb-color-input asBoxInput
                         colorClearButton

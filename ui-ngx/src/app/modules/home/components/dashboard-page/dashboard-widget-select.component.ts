@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -28,11 +28,11 @@ import {
 } from '@shared/models/widget.models';
 import { debounceTime, distinctUntilChanged, map, skip } from 'rxjs/operators';
 import { BehaviorSubject, combineLatest } from 'rxjs';
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import { isDefinedAndNotNull, isObject } from '@core/utils';
+import { isObject } from '@core/utils';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
-import { GridEntitiesFetchFunction, ScrollGridColumns } from '@home/models/datasource/scroll-grid-datasource';
+import { GridEntitiesFetchFunction, ScrollGridColumns } from '@shared/components/grid/scroll-grid-datasource';
+import { ItemSizeStrategy } from '@shared/components/grid/scroll-grid.component';
 
 type selectWidgetMode = 'bundles' | 'allWidgets';
 
@@ -139,11 +139,19 @@ export class DashboardWidgetSelectComponent implements OnInit {
   widgetSelected: EventEmitter<WidgetInfo> = new EventEmitter<WidgetInfo>();
 
   columns: ScrollGridColumns = {
-    columns: 1,
+    columns: 2,
     breakpoints: {
-      'screen and (min-width: 2000px)': 3,
-      'screen and (min-width: 600px)': 2
+      'screen and (min-width: 2000px)': 5,
+      'screen and (min-width: 1097px)': 4,
+      'gt-sm': 3,
+      'screen and (min-width: 721px)': 4,
+      'screen and (min-width: 485px)': 3
     }
+  };
+
+  gridWidgetsItemSizeStrategy: ItemSizeStrategy = {
+    defaultItemSize: 160,
+    itemSizeFunction: itemWidth => (itemWidth - 24) * 0.8 + 76
   };
 
   widgetBundlesFetchFunction: GridEntitiesFetchFunction<WidgetsBundle, string>;
@@ -155,8 +163,7 @@ export class DashboardWidgetSelectComponent implements OnInit {
   widgetsFilter: BundleWidgetsFilter = {search: '', filter: null, deprecatedFilter: DeprecatedFilter.ACTUAL, widgetsBundleId: null};
 
   constructor(private widgetsService: WidgetService,
-              private cd: ChangeDetectorRef,
-              private sanitizer: DomSanitizer) {
+              private cd: ChangeDetectorRef) {
 
     this.widgetBundlesFetchFunction = (pageSize, page, filter) => {
       const pageLink = new PageLink(pageSize, page, filter, {
@@ -236,13 +243,6 @@ export class DashboardWidgetSelectComponent implements OnInit {
       bundle.description?.toLowerCase().includes(this.search.toLowerCase())) {
       this.searchSubject.next('');
     }
-  }
-
-  getPreviewImage(imageUrl: string | null): SafeUrl | string {
-    if (isDefinedAndNotNull(imageUrl)) {
-      return this.sanitizer.bypassSecurityTrustUrl(imageUrl);
-    }
-    return '/assets/widget-preview-empty.svg';
   }
 
   isObject(value: any): boolean {

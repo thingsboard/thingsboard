@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,12 @@ public class TbQueueCoreSettings {
 
     @Value("${queue.core.usage-stats-topic:tb_usage_stats}")
     private String usageStatsTopic;
+
+    @Value("${queue.core.housekeeper.topic:tb_housekeeper}")
+    private String housekeeperTopic;
+
+    @Value("${queue.core.housekeeper.reprocessing-topic:tb_housekeeper.reprocessing}")
+    private String housekeeperReprocessingTopic;
 
     @Value("${queue.core.partitions}")
     private int partitions;

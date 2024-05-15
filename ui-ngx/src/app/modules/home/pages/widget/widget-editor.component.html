@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 -->
 <div fxFlex fxLayout="column">
-  <div fxFlex fxLayout="column" tb-fullscreen [fullscreen]="fullscreen" tb-hotkeys [hotkeys]="hotKeys" [cheatSheet]="cheatSheetComponent">
+  <div fxFlex fxLayout="column" tb-fullscreen [fullscreen]="fullscreen" [tb-hotkeys]="hotKeys" [cheatSheet]="cheatSheetComponent">
     <tb-hotkeys-cheatsheet #cheatSheetComponent></tb-hotkeys-cheatsheet>
     <mat-toolbar class="mat-elevation-z1 tb-edit-toolbar mat-hue-3" fxLayoutGap="16px" fxLayoutGap.lt-xl="8px">
       <mat-form-field class="tb-widget-title tb-appearance-transparent">
@@ -25,8 +25,8 @@
                placeholder="{{ 'widget.widget-title' | translate }}"/>
       </mat-form-field>
       <mat-form-field class="tb-appearance-transparent">
-        <mat-select [disabled]="isReadOnly" matInput placeholder="{{ 'widget.type' | translate }}"
-                    [(ngModel)]="widget.type" (ngModelChange)="widetTypeChanged()">
+        <mat-select [disabled]="isReadOnly" placeholder="{{ 'widget.type' | translate }}"
+                    [(ngModel)]="widget.type" (ngModelChange)="widgetTypeChanged()">
           <mat-option *ngFor="let type of allWidgetTypes" [value]="type">
             {{ widgetTypesDataMap.get(widgetTypes[type]).name | translate }}
           </mat-option>
@@ -240,11 +240,10 @@
               <mat-tab label="{{ 'widget.widget-settings' | translate }}">
                 <div class="tb-resize-container" style="background-color: #fff;">
                   <div class="mat-padding">
-                    <tb-image-input fxFlex label="{{'widget.image-preview' | translate}}"
-                                    maxSizeByte="524288"
+                    <tb-gallery-image-input fxFlex label="{{'widget.image-preview' | translate}}"
                                     [(ngModel)]="widget.image"
                                     (ngModelChange)="isDirty = true" >
-                    </tb-image-input>
+                    </tb-gallery-image-input>
                     <mat-form-field class="mat-block">
                       <mat-label translate>widget.description</mat-label>
                       <textarea matInput #descriptionInput
@@ -323,7 +322,7 @@
               <mat-spinner diameter="100" mode="indeterminate" color="warn"></mat-spinner>
             </div>
             <div tb-fullscreen [fullscreen]="iFrameFullscreen" style="width: 100%; height: 100%;">
-              <iframe #widgetIFrame frameborder="0" height="100%" width="100%"></iframe>
+              <iframe #widgetIFrame style="border: 0;" height="100%" width="100%"></iframe>
               <div style="position: absolute; top: 10px; left: 10px; bottom: initial;">
                 <button mat-icon-button
                         class="tb-fullscreen-button-style"

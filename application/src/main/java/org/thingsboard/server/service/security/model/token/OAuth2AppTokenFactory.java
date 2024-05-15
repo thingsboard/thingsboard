@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,12 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureException;
 import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
 
+import java.util.Base64;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
@@ -40,14 +42,14 @@ public class OAuth2AppTokenFactory {
     public String validateTokenAndGetCallbackUrlScheme(String appPackage, String appToken, String appSecret) {
         Jws<Claims> jwsClaims;
         try {
-            jwsClaims = Jwts.parser().setSigningKey(appSecret).parseClaimsJws(appToken);
+            jwsClaims = Jwts.parser().verifyWith(Keys.hmacShaKeyFor(Base64.getDecoder().decode(appSecret))).build().parseSignedClaims(appToken);
         }
         catch (UnsupportedJwtException | MalformedJwtException | IllegalArgumentException | SignatureException ex) {
             throw new IllegalArgumentException("Invalid Application token: ", ex);
         } catch (ExpiredJwtException expiredEx) {
             throw new IllegalArgumentException("Application token expired", expiredEx);
         }
-        Claims claims = jwsClaims.getBody();
+        Claims claims = jwsClaims.getPayload();
         Date expiration = claims.getExpiration();
         if (expiration == null) {
             throw new IllegalArgumentException("Application token must have expiration date");

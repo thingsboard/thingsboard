@@ -3,7 +3,7 @@
   "name": "Indoor PM2.5 card",
   "deprecated": false,
   "image": "data:image/png;base64,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",
-  "description": "Displays a latest indoor fine particulate matter (PM2.5) telemetry data in a box layout.",
+  "description": "Displays the latest indoor fine particulate matter (PM2.5) telemetry in a scalable rectangle card.",
   "descriptor": {
     "type": "latest",
     "sizeX": 3,
@@ -22,10 +22,17 @@
   "externalId": null,
   "tags": [
     "environment",
-    "indoor",
     "pm2.5",
+    "particulate",
     "matter",
     "air",
-    "particulate"
+    "fine particulates",
+    "fine particles",
+    "particulate matter 2.5",
+    "airborne particles",
+    "microscopic particles",
+    "respirable particles",
+    "aerosol particles",
+    "dust particles"
   ]
 }

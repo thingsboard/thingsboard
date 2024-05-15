@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package org.thingsboard.server.transport.lwm2m.server;
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.leshan.core.model.DefaultDDFFileValidator;
+import org.eclipse.leshan.core.LwM2m;
 import org.eclipse.leshan.core.model.LwM2mModel;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel;
@@ -27,10 +27,10 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
@@ -107,7 +107,8 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
 
         @Override
         public ObjectModel getObjectModel(int objectId) {
-            String version = registration.getSupportedVersion(objectId);
+            LwM2mClient lwM2mClient = lwM2mClientContext.getClientByEndpoint(registration.getEndpoint());
+            String version = lwM2mClient.getSupportedObjectVersion(objectId).toString();
             if (version != null) {
                 return this.getObjectModelDynamic(objectId, version);
             }
@@ -116,10 +117,11 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
 
         @Override
         public Collection<ObjectModel> getObjectModels() {
-            Map<Integer, String> supportedObjects = this.registration.getSupportedObject();
+            LwM2mClient lwM2mClient = lwM2mClientContext.getClientByEndpoint(registration.getEndpoint());
+            Map<Integer, LwM2m.Version> supportedObjects = lwM2mClient.getSupportedClientObjects();
             Collection<ObjectModel> result = new ArrayList<>(supportedObjects.size());
-            for (Map.Entry<Integer, String> supportedObject : supportedObjects.entrySet()) {
-                ObjectModel objectModel = this.getObjectModelDynamic(supportedObject.getKey(), supportedObject.getValue());
+            for (Map.Entry<Integer, LwM2m.Version> supportedObject : supportedObjects.entrySet()) {
+                ObjectModel objectModel = this.getObjectModelDynamic(supportedObject.getKey(), String.valueOf(supportedObject.getValue()));
                 if (objectModel != null) {
                     result.add(objectModel);
                 }
@@ -152,8 +154,7 @@ public class LwM2mVersionedModelProvider implements LwM2mModelProvider {
 
         private ObjectModel getObjectModel(String key) {
             Optional<TbResource> tbResource = context.getTransportResourceCache().get(this.tenantId, LWM2M_MODEL, key);
-            return tbResource.map(resource -> helper.parseFromXmlToObjectModel(
-                    Base64.getDecoder().decode(resource.getData()),
+            return tbResource.map(resource -> helper.parseFromXmlToObjectModel(resource.getData(),
                     key + ".xml")).orElse(null);
         }
     }

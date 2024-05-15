@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.server.common.data.device.profile.lwm2m;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
+import org.eclipse.leshan.core.LwM2m;
 
 import java.io.Serializable;
 
@@ -25,13 +26,25 @@ import java.io.Serializable;
 public class ObjectAttributes implements Serializable {
 
     private static final long serialVersionUID = 4765123984733721312L;
-
     private Long dim;
+    private Long ssid;
+    private String uri;
     private String ver;
+    private String lwm2m;
     private Long pmin;
     private Long pmax;
     private Double gt;
     private Double lt;
     private Double st;
+    private Long epmin;
+    private Long epmax;
+
+    public LwM2m.Version getVer(){
+        return  ver != null ? new LwM2m.Version(ver) : null;
+    }
+
+    public LwM2m.LwM2mVersion getLwm2m(){
+        return lwm2m != null ?  LwM2m.LwM2mVersion.get(lwm2m) : null;
+    }
 
 }

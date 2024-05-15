@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,14 @@
 ///
 
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
-import { AbstractControl, UntypedFormArray, UntypedFormBuilder, UntypedFormGroup, ValidationErrors, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormGroup,
+  ValidationErrors,
+  Validators
+} from '@angular/forms';
 import {
   ClientAuthenticationMethod,
   DomainSchema,
@@ -26,9 +33,11 @@ import {
   MapperConfigType,
   OAuth2ClientRegistrationTemplate,
   OAuth2DomainInfo,
-  OAuth2Info, OAuth2MobileInfo,
+  OAuth2Info,
+  OAuth2MobileInfo,
   OAuth2ParamsInfo,
-  OAuth2RegistrationInfo, PlatformType,
+  OAuth2RegistrationInfo,
+  PlatformType,
   platformTypeTranslations,
   TenantNameStrategy
 } from '@shared/models/oauth2.models';
@@ -104,6 +113,8 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
   platformTypeTranslations = platformTypeTranslations;
 
   templateProvider = ['Custom'];
+
+  showMainLoadingBar = false;
 
   private loginProcessingUrl: string = this.route.snapshot.data.loginProcessingUrl;
 
@@ -193,13 +204,23 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
   private buildOAuth2SettingsForm(): void {
     this.oauth2SettingsForm = this.fb.group({
       oauth2ParamsInfos: this.fb.array([]),
-      enabled: [false]
+      enabled: [false],
+      edgeEnabled: [{value: false, disabled: true}]
     });
+
+    this.subscriptions.push(this.oauth2SettingsForm.get('enabled').valueChanges.subscribe(enabled => {
+      if (enabled) {
+        this.oauth2SettingsForm.get('edgeEnabled').enable();
+      } else {
+        this.oauth2SettingsForm.get('edgeEnabled').patchValue(false);
+        this.oauth2SettingsForm.get('edgeEnabled').disable();
+      }
+    }))
   }
 
   private initOAuth2Settings(oauth2Info: OAuth2Info): void {
     if (oauth2Info) {
-      this.oauth2SettingsForm.patchValue({enabled: oauth2Info.enabled}, {emitEvent: false});
+      this.oauth2SettingsForm.patchValue({enabled: oauth2Info.enabled, edgeEnabled: oauth2Info.edgeEnabled});
       oauth2Info.oauth2ParamsInfos.forEach((oauth2ParamsInfo) => {
         this.oauth2ParamsInfos.push(this.buildOAuth2ParamsInfoForm(oauth2ParamsInfo));
       });

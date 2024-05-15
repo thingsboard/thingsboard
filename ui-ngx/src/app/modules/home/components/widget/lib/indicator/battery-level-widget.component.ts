@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -46,6 +46,9 @@ import {
   BatteryLevelWidgetSettings
 } from '@home/components/widget/lib/indicator/battery-level-widget.models';
 import { ResizeObserver } from '@juggle/resize-observer';
+import { Observable } from 'rxjs';
+import { ImagePipe } from '@shared/pipe/image.pipe';
+import { DomSanitizer } from '@angular/platform-browser';
 
 const verticalBatteryDimensions = {
   shapeAspectRatio: 64 / 113,
@@ -117,6 +120,8 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
 
   value: number;
 
+  batteryFillValue: number;
+
   batterySections: boolean[];
   dividedBorderRadius: string;
   dividedGap: string;
@@ -125,7 +130,7 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
 
   batteryShapeColor: ColorProcessor;
 
-  backgroundStyle: ComponentStyle = {};
+  backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
 
   batteryBoxResize$: ResizeObserver;
@@ -136,6 +141,8 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
   private units = '';
 
   constructor(private date: DatePipe,
+              private imagePipe: ImagePipe,
+              private sanitizer: DomSanitizer,
               private widgetComponent: WidgetComponent,
               private renderer: Renderer2,
               private cd: ChangeDetectorRef) {
@@ -190,7 +197,7 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
 
     this.batteryShapeColor = ColorProcessor.fromSettings(this.settings.batteryShapeColor);
 
-    this.backgroundStyle = backgroundStyle(this.settings.background);
+    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
 
     this.hasCardClickAction = this.ctx.actionsApi.getActionDescriptors('cardClick').length > 0;
@@ -221,9 +228,10 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
 
   public onDataUpdated() {
     const tsValue = getSingleTsValue(this.ctx.data);
-    this.value = 0;
+    this.batteryFillValue = 0;
     if (tsValue && isDefinedAndNotNull(tsValue[1]) && isNumeric(tsValue[1])) {
       this.value = tsValue[1];
+      this.batteryFillValue = this.parseBatteryFillValue(this.value);
       this.valueText = formatValue(this.value, this.decimals, this.units, false);
     } else {
       this.valueText = 'N/A';
@@ -238,6 +246,16 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
     this.batteryLevelColor.update(this.value);
     this.batteryShapeColor.update(this.value);
     this.cd.detectChanges();
+  }
+
+  parseBatteryFillValue(value: number) {
+    if (value < 0) {
+      return 0;
+    } else if (value > 100) {
+      return 100;
+    } else {
+      return value;
+    }
   }
 
   public trackBySection(index: number): number {
@@ -289,7 +307,7 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
         const newWidth = height * horizontalBatteryDimensions.shapeAspectRatio;
         this.renderer.setStyle(this.batteryLevelRectangle.nativeElement, 'width', newWidth + 'px');
       } else {
-        this.renderer.setStyle(this.batteryLevelRectangle.nativeElement, 'width', null);
+        this.renderer.setStyle(this.batteryLevelRectangle.nativeElement, 'width', width + 'px');
       }
       if (this.batteryLevelValue) {
         const ratios = horizontalBatteryDimensions.heightRatio;

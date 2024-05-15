@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2023 The Thingsboard Authors
+# Copyright © 2016-2024 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM thingsboard/node:16.17.0-bullseye-slim
+FROM thingsboard/node:16.20.2-bookworm-slim
 
 ENV NODE_ENV production
 ENV DOCKER_MODE true
@@ -34,7 +34,7 @@ COPY src/server.js ./
 RUN chmod a+x /tmp/*.sh \
     && mv /tmp/start-web-ui.sh /usr/bin \
     && chown -R node:node ${pkg.installFolder} \
-    && yarn install --production && yarn cache clean --all
+    && yarn install --production --non-interactive --network-concurrency 4 --network-timeout 100000 --mutex network && yarn cache clean --all
 
 USER node
 

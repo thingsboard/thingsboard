@@ -24,6 +24,6 @@
     "progress",
     "weather",
     "environment",
-    "pressure"
+    "barometry"
   ]
 }

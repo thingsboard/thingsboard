@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,19 +17,16 @@ package org.thingsboard.server.service.sync.vc;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.TbStopWatch;
-import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
@@ -42,6 +39,7 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityExportSettings;
@@ -71,7 +69,8 @@ import org.thingsboard.server.common.data.util.ThrowingRunnable;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
+import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
+import org.thingsboard.server.service.executors.VersionControlExecutor;
 import org.thingsboard.server.service.sync.ie.EntitiesExportImportService;
 import org.thingsboard.server.service.sync.ie.exporting.ExportableEntitiesService;
 import org.thingsboard.server.service.sync.ie.importing.impl.MissingEntityException;
@@ -85,14 +84,13 @@ import org.thingsboard.server.service.sync.vc.data.ReimportTask;
 import org.thingsboard.server.service.sync.vc.data.SimpleEntitiesExportCtx;
 import org.thingsboard.server.service.sync.vc.repository.TbRepositorySettingsService;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
@@ -112,26 +110,10 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     private final GitVersionControlQueueService gitServiceQueue;
     private final EntitiesExportImportService exportImportService;
     private final ExportableEntitiesService exportableEntitiesService;
-    private final TbNotificationEntityService entityNotificationService;
+    private final TbLogEntityActionService logEntityActionService;
     private final TransactionTemplate transactionTemplate;
     private final TbTransactionalCache<UUID, VersionControlTaskCacheEntry> taskCache;
-
-    private ListeningExecutorService executor;
-
-    @Value("${vc.thread_pool_size:4}")
-    private int threadPoolSize;
-
-    @PostConstruct
-    public void init() {
-        executor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(threadPoolSize, DefaultEntitiesVersionControlService.class));
-    }
-
-    @PreDestroy
-    public void shutdown() {
-        if (executor != null) {
-            executor.shutdownNow();
-        }
-    }
+    private final VersionControlExecutor executor;
 
     @SuppressWarnings("UnstableApiUsage")
     @Override
@@ -185,7 +167,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
             throw new ThingsboardException(ThingsboardErrorCode.ITEM_NOT_FOUND);
         } else {
             var entry = cacheEntry.get();
-            log.debug("[{}] Cache get: {}", requestId, entry);
+            log.trace("[{}] Cache get: {}", requestId, entry);
             var result = getter.apply(entry);
             if (result == null) {
                 throw new ThingsboardException(ThingsboardErrorCode.BAD_REQUEST_PARAMS);
@@ -208,10 +190,10 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
             }
 
             if (config.isAllEntities()) {
-                DaoUtil.processInBatches(pageLink -> exportableEntitiesService.findEntitiesByTenantId(ctx.getTenantId(), entityType, pageLink)
-                        , 100, entity -> {
+                DaoUtil.processInBatches(pageLink -> exportableEntitiesService.findEntitiesIdsByTenantId(ctx.getTenantId(), entityType, pageLink),
+                        100, entityId -> {
                             try {
-                                ctx.add(saveEntityData(ctx, entity.getId()));
+                                ctx.add(saveEntityData(ctx, entityId));
                             } catch (Exception e) {
                                 throw new RuntimeException(e);
                             }
@@ -266,16 +248,18 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         switch (request.getType()) {
             case SINGLE_ENTITY: {
                 SingleEntityVersionLoadRequest versionLoadRequest = (SingleEntityVersionLoadRequest) request;
+                ctx.setRollbackOnError(true);
                 VersionLoadConfig config = versionLoadRequest.getConfig();
                 ListenableFuture<EntityExportData> future = gitServiceQueue.getEntity(user.getTenantId(), request.getVersionId(), versionLoadRequest.getExternalEntityId());
                 DonAsynchron.withCallback(future,
-                        entityData -> doInTemplate(ctx, request, c -> loadSingleEntity(c, config, entityData)),
+                        entityData -> load(ctx, request, c -> loadSingleEntity(c, config, entityData)),
                         e -> processLoadError(ctx, e), executor);
                 break;
             }
             case ENTITY_TYPE: {
                 EntityTypeVersionLoadRequest versionLoadRequest = (EntityTypeVersionLoadRequest) request;
-                executor.submit(() -> doInTemplate(ctx, request, c -> loadMultipleEntities(c, versionLoadRequest)));
+                ctx.setRollbackOnError(versionLoadRequest.isRollbackOnError());
+                executor.submit(() -> load(ctx, request, c -> loadMultipleEntities(c, versionLoadRequest)));
                 break;
             }
             default:
@@ -285,17 +269,30 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         return ctx.getRequestId();
     }
 
-    private <R> VersionLoadResult doInTemplate(EntitiesImportCtx ctx, VersionLoadRequest request, Function<EntitiesImportCtx, VersionLoadResult> function) {
+    private <R> VersionLoadResult load(EntitiesImportCtx ctx, VersionLoadRequest request, Function<EntitiesImportCtx, VersionLoadResult> loadFunction) {
         try {
-            VersionLoadResult result = transactionTemplate.execute(status -> function.apply(ctx));
-            for (ThrowingRunnable throwingRunnable : ctx.getEventCallbacks()) {
-                throwingRunnable.run();
+            VersionLoadResult result;
+            if (ctx.isRollbackOnError()) {
+                result = transactionTemplate.execute(status -> {
+                    try {
+                        return loadFunction.apply(ctx);
+                    } catch (RuntimeException e) {
+                        throw e;
+                    } catch (Exception e) {
+                        throw new RuntimeException(e); // to prevent UndeclaredThrowableException
+                    }
+                });
+                for (ThrowingRunnable eventCallback : ctx.getEventCallbacks()) {
+                    eventCallback.run();
+                }
+            } else {
+                result = loadFunction.apply(ctx);
             }
             result.setDone(true);
             return cachePut(ctx.getRequestId(), result);
         } catch (LoadEntityException e) {
             return cachePut(ctx.getRequestId(), onError(e.getExternalId(), e.getCause()));
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.info("[{}] Failed to process request [{}] due to: ", ctx.getTenantId(), request, e);
             return cachePut(ctx.getRequestId(), VersionLoadResult.error(EntityLoadError.runtimeError(e)));
         }
@@ -336,7 +333,6 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
             sw.startNew("Entities " + entityType.name());
             ctx.setSettings(getEntityImportSettings(request, entityType));
             importEntities(ctx, entityType);
-            persistToCache(ctx);
         }
 
         sw.startNew("Reimport");
@@ -348,16 +344,15 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                 .filter(entityType -> request.getEntityTypes().get(entityType).isRemoveOtherEntities())
                 .sorted(exportImportService.getEntityTypeComparatorForImport().reversed())
                 .forEach(entityType -> removeOtherEntities(ctx, entityType));
-        persistToCache(ctx);
 
         sw.startNew("References and Relations");
         exportImportService.saveReferencesAndRelations(ctx);
 
         sw.stop();
         for (var task : sw.getTaskInfo()) {
-            log.info("[{}] Executed: {} in {}ms", ctx.getTenantId(), task.getTaskName(), task.getTimeMillis());
+            log.debug("[{}] Executed: {} in {}ms", ctx.getTenantId(), task.getTaskName(), task.getTimeMillis());
         }
-        log.info("[{}] Total time: {}ms", ctx.getTenantId(), sw.getTotalTimeMillis());
+        log.debug("[{}] Total time: {}ms", ctx.getTenantId(), sw.getTotalTimeMillis());
         return VersionLoadResult.success(new ArrayList<>(ctx.getResults().values()));
     }
 
@@ -380,8 +375,8 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         do {
             try {
                 entityDataList = gitServiceQueue.getEntities(ctx.getTenantId(), ctx.getVersionId(), entityType, offset, limit).get();
-            } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
+            } catch (ExecutionException e) {
+                throw e.getCause();
             }
             log.debug("[{}] Loading {} entities pack ({})", ctx.getTenantId(), entityType, entityDataList.size());
             for (EntityExportData entityData : entityDataList) {
@@ -401,6 +396,8 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                 ctx.getImportedEntities().computeIfAbsent(entityType, t -> new HashSet<>())
                         .add(importResult.getSavedEntity().getId());
             }
+
+            persistToCache(ctx);
             log.debug("Imported {} pack ({}) for tenant {}", entityType, entityDataList.size(), ctx.getTenantId());
             offset += limit;
         } while (entityDataList.size() == limit);
@@ -425,19 +422,34 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     }
 
     private void removeOtherEntities(EntitiesImportCtx ctx, EntityType entityType) {
-        DaoUtil.processInBatches(pageLink -> {
-            return exportableEntitiesService.findEntitiesByTenantId(ctx.getTenantId(), entityType, pageLink);
-        }, 100, entity -> {
-            if (ctx.getImportedEntities().get(entityType) == null || !ctx.getImportedEntities().get(entityType).contains(entity.getId())) {
-                exportableEntitiesService.removeById(ctx.getTenantId(), entity.getId());
-
-                ctx.addEventCallback(() -> {
-                    entityNotificationService.logEntityAction(ctx.getTenantId(), entity.getId(), entity, null,
-                            ActionType.DELETED, ctx.getUser());
-                });
-                ctx.registerDeleted(entityType);
+        var entities = new PageDataIterable<>(link -> exportableEntitiesService.findEntitiesIdsByTenantId(ctx.getTenantId(), entityType, link), 100);
+        Set<EntityId> toRemove = new HashSet<>();
+        for (EntityId entityId : entities) {
+            if (ctx.getImportedEntities().get(entityType) == null || !ctx.getImportedEntities().get(entityType).contains(entityId)) {
+                toRemove.add(entityId);
             }
-        });
+        }
+
+        for (EntityId entityId : toRemove) {
+            ExportableEntity<EntityId> entity = exportableEntitiesService.findEntityById(entityId);
+            exportableEntitiesService.removeById(ctx.getTenantId(), entityId);
+
+            ThrowingRunnable callback = () -> {
+                logEntityActionService.logEntityAction(ctx.getTenantId(), entity.getId(), entity, null,
+                        ActionType.DELETED, ctx.getUser());
+            };
+            if (ctx.isRollbackOnError()) {
+                ctx.addEventCallback(callback);
+            } else {
+                try {
+                    callback.run();
+                } catch (ThingsboardException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            ctx.registerDeleted(entityType);
+        }
+        persistToCache(ctx);
     }
 
     private VersionLoadResult onError(EntityId externalId, Throwable e) {
@@ -623,7 +635,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     }
 
     private VersionLoadResult cachePut(UUID requestId, VersionLoadResult result) {
-        log.debug("[{}] Cache put: {}", requestId, result);
+        log.trace("[{}] Cache put: {}", requestId, result);
         taskCache.put(requestId, VersionControlTaskCacheEntry.newForImport(result));
         return result;
     }
