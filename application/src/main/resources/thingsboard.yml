@@ -116,6 +116,10 @@ zk:
 
 # Cluster parameters
 cluster:
+  # The partitioning algorithm to use when assigning partitions to services:
+  # sticky - new one that guarantees an assignment that is as balanced as possible and preserves as many existing assignments as possible when a cluster topology event occurs.
+  # round-robin - old one. Uses simple round-robin algorithm.
+  partitioning: "${TB_CLUSTER_PARTITIONING_ALGORITHM:sticky}"
   stats:
     # Enable/Disable the cluster statistics. Calculates the number of messages sent between cluster nodes based on each type
     enabled: "${TB_CLUSTER_STATS_ENABLED:false}"
