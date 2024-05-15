@@ -197,7 +197,8 @@ public class DefaultWebSocketService implements WebSocketService {
                 wsSessionsMap.put(sessionId, new WsSessionMetaData(sessionRef));
                 break;
             case ERROR:
-                log.debug("[{}] Unknown websocket session error: {}. ", sessionId, event.getError().orElse(null));
+                log.debug("[{}] Unknown websocket session error: ", sessionId,
+                        event.getError().orElse(new RuntimeException("No error specified")));
                 break;
             case CLOSED:
                 wsSessionsMap.remove(sessionId);
