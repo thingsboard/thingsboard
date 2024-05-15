@@ -21,6 +21,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 @Retention(RetentionPolicy.RUNTIME)
-@ConditionalOnExpression("('${service.type:null}'=='tb-core' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true')) && '${coap.enabled}'=='true' || '${service.type:null}'=='tb-transport'")
+@ConditionalOnExpression("('${service.type:null}'=='tb-core' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true')) && '${coap.enabled:true}'=='true' || '${service.type:null}'=='tb-transport'")
 public @interface TbCoapServerComponent {
 }
