@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.queue.kafka;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
@@ -40,6 +41,7 @@ import java.util.concurrent.TimeoutException;
 @Slf4j
 public class TbKafkaAdmin implements TbQueueAdmin {
 
+    @Getter
     private final AdminClient client;
     private final Map<String, String> topicConfigs;
     private final Set<String> topics = ConcurrentHashMap.newKeySet();
@@ -118,27 +120,52 @@ public class TbKafkaAdmin implements TbQueueAdmin {
         return client.createTopics(Collections.singletonList(topic));
     }
 
-    public void syncOffsets(String oldGroupId, String newGroupId) throws ExecutionException, InterruptedException, TimeoutException {
-        ListConsumerGroupOffsetsResult fatOffsets = client.listConsumerGroupOffsets("id1");
-        Map<TopicPartition, OffsetAndMetadata> oldOffsets = new ConcurrentHashMap<>();
-        client.listConsumerGroupOffsets(oldGroupId).partitionsToOffsetAndMetadata().whenComplete((res, err) -> {
-            if (err != null) {
-                log.warn("Failed to list consumer group offsets [{}]", oldGroupId, err);
-            } else {
-                oldOffsets.putAll(res);
+    /**
+     * Sync offsets from a fat group to a single-partition group
+     * Migration back from single-partition consumer to a fat group is not supported
+     * TODO: The best possible approach to synchronize the offsets is to do the synchronization as a part of the save Queue parameters with stop all consumers
+     * */
+    public void syncOffsets(String fatGroupId, String newGroupId, Integer partitionId) {
+        try {
+            syncOffsetsUnsafe(fatGroupId, newGroupId, partitionId);
+        } catch (Exception e) {
+            log.warn("Failed to syncOffsets from {} to {} partitionId {}", fatGroupId, newGroupId, partitionId, e);
+        }
+    }
+
+    void syncOffsetsUnsafe(String fatGroupId, String newGroupId, Integer partitionId) throws ExecutionException, InterruptedException, TimeoutException {
+        log.info("syncOffsets [{}][{}][{}]", fatGroupId, newGroupId, partitionId);
+        if (partitionId == null) {
+            return;
+        }
+        Map<TopicPartition, OffsetAndMetadata> oldOffsets =
+                client.listConsumerGroupOffsets(fatGroupId).partitionsToOffsetAndMetadata().get(10, TimeUnit.SECONDS);
+        if (oldOffsets.isEmpty()) {
+            return;
+        }
+
+        for (var consumerOffset : oldOffsets.entrySet()) {
+            var tp = consumerOffset.getKey();
+            if (!tp.topic().endsWith("." + partitionId)) {
+                continue;
             }
-        }).get(10, TimeUnit.SECONDS);
+            var om = consumerOffset.getValue();
+            Map<TopicPartition, OffsetAndMetadata> newOffsets =
+                    client.listConsumerGroupOffsets(newGroupId).partitionsToOffsetAndMetadata().get(10, TimeUnit.SECONDS);
 
-        Map<TopicPartition, OffsetAndMetadata> newOffsets = new ConcurrentHashMap<>();
-        client.listConsumerGroupOffsets(newGroupId).partitionsToOffsetAndMetadata().whenComplete((res, err) -> {
-            if (err != null) {
-                log.warn("Failed to list consumer group offsets [{}]", newGroupId, err);
+            var existingOffset = newOffsets.get(tp);
+            if (existingOffset == null) {
+                log.info("[{}] topic offset does not exists in the new node group {}, all found offsets {}", tp, newGroupId, newOffsets);
+            } else if (existingOffset.offset() >= om.offset()) {
+                log.info("[{}] topic offset {} >= than old node group offset {}", tp, existingOffset.offset(), om.offset());
+                break;
             } else {
-                newOffsets.putAll(res);
+                log.info("[{}] SHOULD alter topic offset [{}] less than old node group offset [{}]", tp, existingOffset.offset(), om.offset());
             }
-        }).get(10, TimeUnit.SECONDS);
-
-
+            client.alterConsumerGroupOffsets(newGroupId, Map.of(tp, om)).all().get(10, TimeUnit.SECONDS);
+            log.info("[{}] altered new consumer groupId {}", tp, newGroupId);
+            break;
+        }
 
     }
 

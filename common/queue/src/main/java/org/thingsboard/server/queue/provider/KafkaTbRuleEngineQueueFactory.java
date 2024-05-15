@@ -68,7 +68,7 @@ public class KafkaTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
     private final TbQueueTransportNotificationSettings transportNotificationSettings;
 
     private final TbQueueAdmin coreAdmin;
-    private final TbQueueAdmin ruleEngineAdmin;
+    private final TbKafkaAdmin ruleEngineAdmin;
     private final TbQueueAdmin jsExecutorRequestAdmin;
     private final TbQueueAdmin jsExecutorResponseAdmin;
     private final TbQueueAdmin notificationAdmin;
@@ -170,14 +170,16 @@ public class KafkaTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
     @Override
     public TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> createToRuleEngineMsgConsumer(Queue configuration, Integer partitionId) {
         String queueName = configuration.getName();
+        String groupId = topicService.buildConsumerGroupId("re-", configuration.getTenantId(), queueName, partitionId);
+
+        ruleEngineAdmin.syncOffsets(topicService.buildConsumerGroupId("re-", configuration.getTenantId(), queueName, null), // the fat groupId
+                groupId, partitionId);
+
         TbKafkaConsumerTemplate.TbKafkaConsumerTemplateBuilder<TbProtoQueueMsg<ToRuleEngineMsg>> consumerBuilder = TbKafkaConsumerTemplate.builder();
         consumerBuilder.settings(kafkaSettings);
         consumerBuilder.topic(topicService.buildTopicName(configuration.getTopic()));
         consumerBuilder.clientId("re-" + queueName + "-consumer-" + serviceInfoProvider.getServiceId() + "-" + consumerCount.incrementAndGet());
-        consumerBuilder.groupId(topicService.buildTopicName("re-" + queueName
-                + (configuration.getTenantId().isSysTenantId() ? "" : ("-isolated-" + configuration.getTenantId()))
-                + "-consumer"
-                + topicService.suffix(partitionId)));
+        consumerBuilder.groupId(groupId);
         consumerBuilder.decoder(msg -> new TbProtoQueueMsg<>(msg.getKey(), ToRuleEngineMsg.parseFrom(msg.getData()), msg.getHeaders()));
         consumerBuilder.admin(ruleEngineAdmin);
         consumerBuilder.statsService(consumerStatsService);

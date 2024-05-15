@@ -82,7 +82,7 @@ class TbKafkaAdminTest {
                     Map<TopicPartition, OffsetAndMetadata> newConsumerOffsets = admin.listConsumerGroupOffsets(newGroupId)
                             .partitionsToOffsetAndMetadata().get();
 
-                    if (newConsumerOffsets.isEmpty()) {
+                    if (!newConsumerOffsets.isEmpty()) {
                         log.info("Found existing new group ConsumerOffsets {}", newConsumerOffsets);
                     }
 
