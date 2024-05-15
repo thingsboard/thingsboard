@@ -47,7 +47,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class TbSendRestApiCallReplyNodeTest {
 
-    private static final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("212445ad-9852-4bfd-819d-6b01ab6ee6b6"));
+    private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("212445ad-9852-4bfd-819d-6b01ab6ee6b6"));
 
     private TbSendRestApiCallReplyNode node;
     private TbSendRestApiCallReplyNodeConfiguration config;

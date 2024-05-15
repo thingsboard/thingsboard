@@ -212,6 +212,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected UserId differentCustomerUserId;
 
     protected UserId differentTenantCustomerUserId;
+    protected UserId currentUserId;
 
     @SuppressWarnings("rawtypes")
     private HttpMessageConverter mappingJackson2HttpMessageConverter;
@@ -567,6 +568,8 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         Claims claims = jwsClaims.getPayload();
         String subject = claims.getSubject();
         Assert.assertEquals(username, subject);
+        String userId = claims.get("userId", String.class);
+        this.currentUserId = UserId.fromString(userId);
     }
 
     protected void resetTokens() throws Exception {
@@ -633,10 +636,9 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return doPost("/api/device?accessToken=" + accessToken, device, Device.class);
     }
 
-    protected Device assignDeviceToCustomer(String name, String accessToken, CustomerId customerId) throws Exception {
-        Device device = createDevice(name, accessToken);
-        String deviceIdStr = String.valueOf(device.getId().getId());
-        return doPost("/api/customer/" + customerId.getId() + "/device/" + deviceIdStr, device, Device.class);
+    protected Device assignDeviceToCustomer(DeviceId deviceId, CustomerId customerId) {
+        String deviceIdStr = String.valueOf(deviceId.getId());
+        return doPost("/api/customer/" + customerId.getId() + "/device/" + deviceIdStr, Device.class);
     }
 
     protected MqttDeviceProfileTransportConfiguration createMqttDeviceProfileTransportConfiguration(TransportPayloadTypeConfiguration transportPayloadTypeConfiguration, boolean sendAckOnValidationException) {

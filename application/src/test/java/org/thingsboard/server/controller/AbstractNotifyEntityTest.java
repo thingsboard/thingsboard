@@ -386,13 +386,12 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
                 actionType, cntTime, extractMatcherAdditionalInfo(additionalInfo));
     }
 
-    protected void testLogEntityActionError(HasName entity, EntityId originatorId, TenantId tenantId,
+    protected void testLogEntityActionError(EntityId originatorId, TenantId tenantId,
                                             CustomerId customerId, UserId userId, String userName,
-                                            ActionType actionType, Exception exp, Object... additionalInfo) {
-        ArgumentMatcher<Exception> matcherError = argument -> argument.getMessage().contains(exp.getMessage())
-                & argument.getClass().equals(exp.getClass());
-        ArgumentMatcher<HasName> matcherEntityEquals = entity == null ? Objects::isNull : argument -> argument.toString().equals(entity.toString());
-        testLogEntityActionErrorAdditionalInfo(matcherEntityEquals, originatorId, tenantId, customerId, userId, userName,
+                                            ActionType actionType, Exception exception, Object... additionalInfo) {
+        ArgumentMatcher<Exception> matcherError = argument -> argument.getMessage().contains(exception.getMessage())
+                & argument.getClass().equals(exception.getClass());
+        testLogEntityActionErrorAdditionalInfo(Objects::isNull, originatorId, tenantId, customerId, userId, userName,
                 actionType, 1, matcherError, extractMatcherAdditionalInfo(additionalInfo));
     }
 

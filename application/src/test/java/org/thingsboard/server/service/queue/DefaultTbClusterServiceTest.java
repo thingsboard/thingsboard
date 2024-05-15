@@ -26,7 +26,10 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -37,7 +40,9 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueProducer;
+import org.thingsboard.server.queue.common.DefaultTbQueueMsgHeaders;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TopicService;
@@ -53,10 +58,12 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @Slf4j
@@ -246,46 +253,129 @@ public class DefaultTbClusterServiceTest {
 
     @Test
     public void testPushNotificationToCoreWithRestApiCallResponseMsgProto() {
+        TopicPartitionInfo tpi = mock(TopicPartitionInfo.class);
+        TbQueueCallback callbackMock = mock(TbQueueCallback.class);
         TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToCoreNotificationMsg>> tbCoreQueueProducer = mock(TbQueueProducer.class);
-        TopicPartitionInfo tpi = new TopicPartitionInfo(ServiceType.TB_CORE.name().toLowerCase() + ".notifications." + CORE, null, null, false);
 
+        doReturn(tpi).when(topicService).getNotificationsTopic(any(ServiceType.class), any(String.class));
         when(producerProvider.getTbCoreNotificationsMsgProducer()).thenReturn(tbCoreQueueProducer);
         TransportProtos.RestApiCallResponseMsgProto responseMsgProto = TransportProtos.RestApiCallResponseMsgProto.getDefaultInstance();
         TransportProtos.ToCoreNotificationMsg toCoreNotificationMsg = TransportProtos.ToCoreNotificationMsg.newBuilder().setRestApiCallResponseMsg(responseMsgProto).build();
 
-        clusterService.pushNotificationToCore(CORE, responseMsgProto, null);
+        clusterService.pushNotificationToCore(CORE, responseMsgProto, callbackMock);
 
         verify(topicService).getNotificationsTopic(ServiceType.TB_CORE, CORE);
         verify(producerProvider).getTbCoreNotificationsMsgProducer();
         ArgumentCaptor<TbProtoQueueMsg<TransportProtos.ToCoreNotificationMsg>> protoQueueMsgArgumentCaptor = ArgumentCaptor.forClass(TbProtoQueueMsg.class);
-        verify(tbCoreQueueProducer).send(eq(tpi), protoQueueMsgArgumentCaptor.capture(), isNull());
+        verify(tbCoreQueueProducer).send(eq(tpi), protoQueueMsgArgumentCaptor.capture(), eq(callbackMock));
         TbProtoQueueMsg<TransportProtos.ToCoreNotificationMsg> protoQueueMsgArgumentCaptorValue = protoQueueMsgArgumentCaptor.getValue();
+        assertThat(protoQueueMsgArgumentCaptorValue.getKey()).isNotNull();
         assertThat(protoQueueMsgArgumentCaptorValue.getValue()).isEqualTo(toCoreNotificationMsg);
+        assertThat(protoQueueMsgArgumentCaptorValue.getHeaders().getData()).isEqualTo(new DefaultTbQueueMsgHeaders().getData());
     }
 
     @Test
-    public void testPushMsgToRuleEngineUsingQueueFromMsg() {
-        TenantId tenantId = TenantId.SYS_TENANT_ID;
-        DeviceId deviceId = new DeviceId(UUID.randomUUID());
-        TbMsg tbMsg = TbMsg.newMsg("main", TbMsgType.REST_API_REQUEST, deviceId, null, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+    public void testPushMsgToRuleEngineWithTenantIdIsNullUuidAndEntityIsTenantUseQueueFromMsgIsTrue() {
         TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> tbREQueueProducer = mock(TbQueueProducer.class);
-        TopicPartitionInfo tpi = new TopicPartitionInfo(ServiceType.TB_RULE_ENGINE.name().toLowerCase() + ".notifications." + CORE, tenantId, null, false);
-        TransportProtos.ToRuleEngineMsg msg = TransportProtos.ToRuleEngineMsg.newBuilder()
+        TbQueueCallback callback = mock(TbQueueCallback.class);
+        TopicPartitionInfo tpi = mock(TopicPartitionInfo.class);
+
+        TenantId tenantId = TenantId.fromUUID(UUID.fromString("3c8bd350-1239-4a3b-b9c3-4dd76f8e20f1"));
+        TbMsg requestMsg = TbMsg.newMsg(DataConstants.HP_QUEUE_NAME, TbMsgType.REST_API_REQUEST, tenantId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        TransportProtos.ToRuleEngineMsg toRuleEngineMsg = TransportProtos.ToRuleEngineMsg.newBuilder()
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
-                .setTbMsg(TbMsg.toByteString(tbMsg)).build();
+                .setTbMsg(TbMsg.toByteString(requestMsg)).build();
 
+        when(partitionService.resolve(any(ServiceType.class), any(String.class), any(TenantId.class), any(EntityId.class))).thenReturn(tpi);
         when(producerProvider.getRuleEngineMsgProducer()).thenReturn(tbREQueueProducer);
-        when(partitionService.resolve(any(), any(), any(), any())).thenReturn(tpi);
 
-        clusterService.pushMsgToRuleEngine(tenantId, tenantId, tbMsg, true, null);
+        clusterService.pushMsgToRuleEngine(TenantId.SYS_TENANT_ID, tenantId, requestMsg, true, callback);
 
-        verify(partitionService).resolve(ServiceType.TB_RULE_ENGINE, "main", tenantId, tenantId);
+        verify(partitionService).resolve(ServiceType.TB_RULE_ENGINE, DataConstants.HP_QUEUE_NAME, tenantId, tenantId);
         verify(producerProvider).getRuleEngineMsgProducer();
         ArgumentCaptor<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> protoQueueMsgArgumentCaptor = ArgumentCaptor.forClass(TbProtoQueueMsg.class);
-        verify(tbREQueueProducer).send(eq(tpi), protoQueueMsgArgumentCaptor.capture(), isNull());
+        verify(tbREQueueProducer).send(eq(tpi), protoQueueMsgArgumentCaptor.capture(), eq(callback));
         TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg> protoQueueMsgArgumentCaptorValue = protoQueueMsgArgumentCaptor.getValue();
-        assertThat(protoQueueMsgArgumentCaptorValue.getValue()).isEqualTo(msg);
+        assertThat(protoQueueMsgArgumentCaptorValue.getKey()).isEqualTo(requestMsg.getId());
+        assertThat(protoQueueMsgArgumentCaptorValue.getValue()).isEqualTo(toRuleEngineMsg);
+        assertThat(protoQueueMsgArgumentCaptorValue.getHeaders().getData()).isEqualTo(new DefaultTbQueueMsgHeaders().getData());
+    }
+
+    @Test
+    public void testPushMsgToRuleEngineWithTenantIdIsNullUuidAndEntityIsDevice() {
+        TenantId tenantId = TenantId.SYS_TENANT_ID;
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        TbMsg requestMsg = TbMsg.newMsg(TbMsgType.REST_API_REQUEST, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        TbQueueCallback callback = mock(TbQueueCallback.class);
+
+        clusterService.pushMsgToRuleEngine(tenantId, deviceId, requestMsg, false, callback);
+
+        verifyNoMoreInteractions(partitionService, producerProvider);
+    }
+
+    @Test
+    public void testPushMsgToRuleEngineWithTenantIdIsNotNullUuidUseQueueFromMsgIsTrue() {
+        TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> tbREQueueProducer = mock(TbQueueProducer.class);
+        TbQueueCallback callback = mock(TbQueueCallback.class);
+        TopicPartitionInfo tpi = mock(TopicPartitionInfo.class);
+
+        TenantId tenantId = TenantId.fromUUID(UUID.fromString("3c8bd350-1239-4a3b-b9c3-4dd76f8e20f1"));
+        DeviceId deviceId = new DeviceId(UUID.fromString("adbb9d41-3367-40fd-9e74-7dd7cc5d30cf"));
+        DeviceProfile deviceProfile = new DeviceProfile(new DeviceProfileId(UUID.fromString("552f5d6d-0b2b-43e1-a7d2-a51cb2a96927")));
+        TbMsg requestMsg = TbMsg.newMsg(DataConstants.HP_QUEUE_NAME, TbMsgType.REST_API_REQUEST, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        TransportProtos.ToRuleEngineMsg toRuleEngineMsg = TransportProtos.ToRuleEngineMsg.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setTbMsg(TbMsg.toByteString(requestMsg)).build();
+
+        when(deviceProfileCache.get(any(TenantId.class), any(DeviceId.class))).thenReturn(deviceProfile);
+        when(partitionService.resolve(any(ServiceType.class), any(String.class), any(TenantId.class), any(EntityId.class))).thenReturn(tpi);
+        when(producerProvider.getRuleEngineMsgProducer()).thenReturn(tbREQueueProducer);
+
+        clusterService.pushMsgToRuleEngine(tenantId, deviceId, requestMsg, true, callback);
+
+        verify(partitionService).resolve(ServiceType.TB_RULE_ENGINE, DataConstants.HP_QUEUE_NAME, tenantId, deviceId);
+        verify(producerProvider).getRuleEngineMsgProducer();
+        ArgumentCaptor<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> protoQueueMsgArgumentCaptor = ArgumentCaptor.forClass(TbProtoQueueMsg.class);
+        verify(tbREQueueProducer).send(eq(tpi), protoQueueMsgArgumentCaptor.capture(), eq(callback));
+        TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg> protoQueueMsgArgumentCaptorValue = protoQueueMsgArgumentCaptor.getValue();
+        assertThat(protoQueueMsgArgumentCaptorValue.getKey()).isEqualTo(requestMsg.getId());
+        assertThat(protoQueueMsgArgumentCaptorValue.getValue()).isEqualTo(toRuleEngineMsg);
+        assertThat(protoQueueMsgArgumentCaptorValue.getHeaders().getData()).isEqualTo(new DefaultTbQueueMsgHeaders().getData());
+    }
+
+    @Test
+    public void testPushMsgToRuleEngineUseQueueFromMsgIsFalse() {
+        TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> tbREQueueProducer = mock(TbQueueProducer.class);
+        TbQueueCallback callback = mock(TbQueueCallback.class);
+        TopicPartitionInfo tpi = mock(TopicPartitionInfo.class);
+
+        TenantId tenantId = TenantId.fromUUID(UUID.fromString("5377c8d0-26e5-4d81-84c6-4344043973c8"));
+        DeviceId deviceId = new DeviceId(UUID.fromString("016c2abb-f46f-49f9-a83d-4d28b803cfe6"));
+        DeviceProfile deviceProfile = new DeviceProfile(new DeviceProfileId(UUID.fromString("dc5766e2-1a32-4022-859b-743050097ab7")));
+        deviceProfile.setDefaultQueueName(DataConstants.MAIN_QUEUE_NAME);
+        TbMsg requestMsg = TbMsg.newMsg(TbMsgType.REST_API_REQUEST, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+
+        TransportProtos.ToRuleEngineMsg toRuleEngineMsg = TransportProtos.ToRuleEngineMsg.newBuilder()
+                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setTbMsg(TbMsg.toByteString(requestMsg)).build();
+
+        when(deviceProfileCache.get(any(TenantId.class), any(DeviceId.class))).thenReturn(deviceProfile);
+        when(partitionService.resolve(any(ServiceType.class), any(String.class), any(TenantId.class), any(EntityId.class))).thenReturn(tpi);
+        when(producerProvider.getRuleEngineMsgProducer()).thenReturn(tbREQueueProducer);
+
+        clusterService.pushMsgToRuleEngine(tenantId, deviceId, requestMsg, false, callback);
+
+        verify(partitionService).resolve(ServiceType.TB_RULE_ENGINE, DataConstants.MAIN_QUEUE_NAME, tenantId, deviceId);
+        verify(producerProvider).getRuleEngineMsgProducer();
+        ArgumentCaptor<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> protoQueueMsgArgumentCaptor = ArgumentCaptor.forClass(TbProtoQueueMsg.class);
+        verify(tbREQueueProducer).send(eq(tpi), protoQueueMsgArgumentCaptor.capture(), eq(callback));
+        TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg> protoQueueMsgArgumentCaptorValue = protoQueueMsgArgumentCaptor.getValue();
+        assertThat(protoQueueMsgArgumentCaptorValue.getKey()).isEqualTo(requestMsg.getId());
+        assertThat(protoQueueMsgArgumentCaptorValue.getValue()).isEqualTo(toRuleEngineMsg);
+        assertThat(protoQueueMsgArgumentCaptorValue.getHeaders().getData()).isEqualTo(new DefaultTbQueueMsgHeaders().getData());
     }
 
     protected Queue createTestQueue() {
