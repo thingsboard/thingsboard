@@ -18,7 +18,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-utils';
 import { Observable } from 'rxjs';
-import { MobileAppQRCodeSettings } from '@shared/models/mobile-app.models';
+import { MobileAppSettings } from '@shared/models/mobile-app.models';
 
 @Injectable({
   providedIn: 'root'
@@ -30,15 +30,15 @@ export class MobileAppService {
   ) {
   }
 
-  public getMobileAppSettings(config?: RequestConfig): Observable<MobileAppQRCodeSettings> {
-    return this.http.get<MobileAppQRCodeSettings>(`/api/mobile/app/settings`, defaultHttpOptionsFromConfig(config));
+  public getMobileAppSettings(config?: RequestConfig): Observable<MobileAppSettings> {
+    return this.http.get<MobileAppSettings>(`/api/mobile/app/settings`, defaultHttpOptionsFromConfig(config));
   }
 
-  public saveMobileAppSettings(mobileAppSettings: MobileAppQRCodeSettings, config?: RequestConfig): Observable<MobileAppQRCodeSettings> {
-    return this.http.post<MobileAppQRCodeSettings>(`/api/mobile/app/settings`, mobileAppSettings, defaultHttpOptionsFromConfig(config));
+  public saveMobileAppSettings(mobileAppSettings: MobileAppSettings, config?: RequestConfig): Observable<MobileAppSettings> {
+    return this.http.post<MobileAppSettings>(`/api/mobile/app/settings`, mobileAppSettings, defaultHttpOptionsFromConfig(config));
   }
 
-  public getMobileAppDeepLink( config?: RequestConfig): Observable<string> {
+  public getMobileAppDeepLink(config?: RequestConfig): Observable<string> {
     return this.http.get<string>(`/api/mobile/deepLink`, defaultHttpOptionsFromConfig(config));
   }
 

@@ -13,7 +13,6 @@
     "home_page_widgets.quick_links",
     "home_page_widgets.documentation_links",
     "home_page_widgets.dashboards",
-    "home_page_widgets.usage_info",
-    "home_page_widgets.home_page_mobile_app_qr_code"
+    "home_page_widgets.usage_info"
   ]
 }

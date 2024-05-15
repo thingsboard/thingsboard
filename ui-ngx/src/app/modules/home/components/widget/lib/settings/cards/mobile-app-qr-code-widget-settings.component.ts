@@ -25,7 +25,7 @@ import { mobileAppQrCodeWidgetDefaultSettings } from '@home/components/widget/li
 @Component({
   selector: 'tb-mobile-app-qr-code-widget-settings',
   templateUrl: './mobile-app-qr-code-widget-settings.component.html',
-  styleUrls: ['/mobile-app-qr-code-widget-settings.component.scss', './../widget-settings.scss']
+  styleUrls: ['./../widget-settings.scss']
 })
 export class MobileAppQrCodeWidgetSettingsComponent extends WidgetSettingsComponent {
 
@@ -49,15 +49,12 @@ export class MobileAppQrCodeWidgetSettingsComponent extends WidgetSettingsCompon
 
   protected onSettingsSet(settings: WidgetSettings) {
     this.mobileAppQRCodeWidgetSettingsForm = this.fb.group({
-      useDefaultApp: [settings.useDefaultApp],
+      useSystemSettings: [settings.useSystemSettings],
       androidConfig: this.fb.group({
         enabled: [settings.androidConfig.enabled],
-        appPackage: [settings.androidConfig.appPackage, [Validators.required]],
-        sha256CertFingerprints: [settings.androidConfig.sha256CertFingerprints, [Validators.required]]
       }),
       iosConfig: this.fb.group({
         enabled: [settings.iosConfig.enabled],
-        appId: [settings.iosConfig.appId, [Validators.required]]
       }),
       qrCodeConfig: this.fb.group({
         badgeEnabled: [settings.qrCodeConfig.badgeEnabled],
@@ -70,34 +67,15 @@ export class MobileAppQrCodeWidgetSettingsComponent extends WidgetSettingsCompon
   }
 
   protected validatorTriggers(): string[] {
-    return ['useDefaultApp', 'androidConfig.enabled', 'iosConfig.enabled', 'qrCodeConfig.badgeEnabled', 'qrCodeConfig.qrCodeLabelEnabled'];
+    return ['useSystemSettings', 'androidConfig.enabled', 'iosConfig.enabled', 'qrCodeConfig.badgeEnabled', 'qrCodeConfig.qrCodeLabelEnabled'];
   }
 
   protected updateValidators(emitEvent: boolean) {
-    const useDefaultApp = this.mobileAppQRCodeWidgetSettingsForm.get('useDefaultApp').value;
+    const useSystemSettings = this.mobileAppQRCodeWidgetSettingsForm.get('useSystemSettings').value;
     const androidEnabled = this.mobileAppQRCodeWidgetSettingsForm.get('androidConfig.enabled').value;
     const iosEnabled = this.mobileAppQRCodeWidgetSettingsForm.get('iosConfig.enabled').value;
     const badgeEnabled = this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgeEnabled').value;
     const qrCodeLabelEnabled = this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.qrCodeLabelEnabled').value;
-
-    if (useDefaultApp) {
-      this.mobileAppQRCodeWidgetSettingsForm.get('androidConfig.appPackage').disable({emitEvent: false});
-      this.mobileAppQRCodeWidgetSettingsForm.get('androidConfig.sha256CertFingerprints').disable({emitEvent: false});
-      this.mobileAppQRCodeWidgetSettingsForm.get('iosConfig.appId').disable({emitEvent: false});
-    } else {
-      if (androidEnabled) {
-        this.mobileAppQRCodeWidgetSettingsForm.get('androidConfig.appPackage').enable({emitEvent: false});
-        this.mobileAppQRCodeWidgetSettingsForm.get('androidConfig.sha256CertFingerprints').enable({emitEvent: false});
-      } else {
-        this.mobileAppQRCodeWidgetSettingsForm.get('androidConfig.appPackage').disable({emitEvent: false});
-        this.mobileAppQRCodeWidgetSettingsForm.get('androidConfig.sha256CertFingerprints').disable({emitEvent: false});
-      }
-      if (iosEnabled) {
-        this.mobileAppQRCodeWidgetSettingsForm.get('iosConfig.appId').enable({emitEvent: false});
-      } else {
-        this.mobileAppQRCodeWidgetSettingsForm.get('iosConfig.appId').disable({emitEvent: false});
-      }
-    }
 
     if (!androidEnabled && !iosEnabled) {
       this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgeEnabled').disable({emitEvent: false});
@@ -116,7 +94,7 @@ export class MobileAppQrCodeWidgetSettingsComponent extends WidgetSettingsCompon
       }
     }
 
-    if (qrCodeLabelEnabled) {
+    if (qrCodeLabelEnabled && !useSystemSettings) {
       this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.qrCodeLabel').enable({emitEvent: false});
     } else {
       this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.qrCodeLabel').disable({emitEvent: false});

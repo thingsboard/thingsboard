@@ -14,10 +14,9 @@
 /// limitations under the License.
 ///
 
-import { TenantId } from '@shared/models/id/tenant-id';
+import { HasTenantId } from '@shared/models/entity.models';
 
-export interface MobileAppQRCodeSettings {
-  tenantId: TenantId;
+export interface MobileAppSettings extends HasTenantId {
   useDefaultApp: boolean;
   androidConfig: AndroidConfig;
   iosConfig: IosConfig;

@@ -234,6 +234,12 @@
     }
     .fixed-title-width {
       min-width: 200px;
+
+      &-230 {
+        min-width: 230px;
+      }
+    }
+    [class^="fixed-title-width"] {
       @media #{$mat-xs} {
         min-width: fit-content;
       }

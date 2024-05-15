@@ -83,7 +83,7 @@ export const selectMobileQrEnabled = createSelector(
   (state: AuthState) => state.mobileQrEnabled
 );
 
-export const selectPersistDeviceStateToTelemetryAndMobileQrEnabled = createSelector(
+export const selectHomeDashboardParams = createSelector(
   selectPersistDeviceStateToTelemetry,
   selectMobileQrEnabled,
   (persistDeviceStateToTelemetry, mobileQrEnabled) => ({persistDeviceStateToTelemetry, mobileQrEnabled})

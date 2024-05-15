@@ -15,16 +15,12 @@
     limitations under the License.
 
 -->
-<div *ngIf="!previewMode && !ctx" class="tb-title" translate>admin.mobile-app.connect-mobile-app</div>
 <div class="tb-flex column center align-center">
   <div class="tb-flex row align-center shrink"
        [class.row]="mobileAppSettings?.qrCodeConfig.badgePosition === badgePosition.RIGHT"
        [class.row-reverse]="mobileAppSettings?.qrCodeConfig.badgePosition === badgePosition.LEFT">
-<!--    <canvas #canvas class="tb-qrcode"></canvas>-->
     <canvas #canvas class="tb-qrcode"></canvas>
-    <div *ngIf="mobileAppSettings?.qrCodeConfig.badgeEnabled"
-         class="tb-flex column tb-badge-container"
-         [class.tb-badge-container]="!previewMode && !ctx">
+    <div class="tb-flex column" *ngIf="mobileAppSettings?.qrCodeConfig.badgeEnabled && showBadgeContainer">
       <ng-container *ngIf="mobileAppSettings.qrCodeConfig.badgeStyle === badgeStyle.ORIGINAL;else white">
         <img *ngIf="mobileAppSettings.iosConfig.enabled" [src]="badgeStyleURLMap.get(badgeStyle.ORIGINAL).iOS">
         <img *ngIf="mobileAppSettings.androidConfig.enabled" [src]="badgeStyleURLMap.get(badgeStyle.ORIGINAL).android">

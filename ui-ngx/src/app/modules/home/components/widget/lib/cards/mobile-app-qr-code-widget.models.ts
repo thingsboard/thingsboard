@@ -22,23 +22,20 @@ import {
   QRCodeConfig
 } from '@shared/models/mobile-app.models';
 
-export type MobileAppQrCodeWidgetSettings = {
-  useDefaultApp: boolean;
-  androidConfig: AndroidConfig;
-  iosConfig: IosConfig;
+export interface MobileAppQrCodeWidgetSettings {
+  useSystemSettings: boolean;
+  androidConfig: Pick<AndroidConfig, 'enabled'>;
+  iosConfig: Pick<IosConfig, 'enabled'>;
   qrCodeConfig: Omit<QRCodeConfig, 'showOnHomePage'>;
 }
 
 export const mobileAppQrCodeWidgetDefaultSettings: MobileAppQrCodeWidgetSettings = {
-  useDefaultApp: true,
+  useSystemSettings: true,
   androidConfig: {
-    enabled: true,
-    appPackage: '',
-    sha256CertFingerprints: ''
+    enabled: true
   },
   iosConfig: {
-    enabled: true,
-    appId: ''
+    enabled: true
   },
   qrCodeConfig: {
     badgeEnabled: true,

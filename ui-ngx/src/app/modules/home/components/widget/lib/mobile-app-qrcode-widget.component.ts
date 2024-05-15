@@ -14,97 +14,108 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { AppState } from '@core/core.state';
 import { Store } from '@ngrx/store';
-import { BadgePosition, BadgeStyle, badgeStyleURLMap, MobileAppQRCodeSettings } from '@shared/models/mobile-app.models';
+import { BadgePosition, BadgeStyle, badgeStyleURLMap, MobileAppSettings } from '@shared/models/mobile-app.models';
 import { MobileAppService } from '@core/http/mobile-app.service';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { UtilsService } from '@core/services/utils.service';
-import { interval, mergeMap, Observable, Subject, takeUntil } from 'rxjs';
+import { Subject } from 'rxjs';
 import { MINUTE } from '@shared/models/time/time.models';
-import { coerceBoolean } from '@shared/decorators/coercion';
 import { MobileAppQrCodeWidgetSettings } from '@home/components/widget/lib/cards/mobile-app-qr-code-widget.models';
+import { isDefinedAndNotNull } from '@core/utils';
+import { ResizeObserver } from '@juggle/resize-observer';
 
 @Component({
   selector: 'tb-mobile-app-qrcode-widget',
   templateUrl: './mobile-app-qrcode-widget.component.html',
   styleUrls: ['./mobile-app-qrcode-widget.component.scss']
 })
-export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnInit, AfterViewInit, OnDestroy {
+export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnInit, OnDestroy {
 
   @Input()
   ctx: WidgetContext;
 
   @Input()
-  @coerceBoolean()
-  previewMode: boolean;
-
-  @Input()
-  set mobileAppSettings(settings: MobileAppQRCodeSettings | MobileAppQrCodeWidgetSettings) {
+  set mobileAppSettings(settings: MobileAppSettings | MobileAppQrCodeWidgetSettings) {
     if (settings) {
       this.mobileAppSettingsValue = settings;
     }
   };
 
-  get mobileAppSettings() {
+  get mobileAppSettings(): MobileAppSettings | MobileAppQrCodeWidgetSettings {
     return this.mobileAppSettingsValue;
   }
 
-  @ViewChild('canvas', {static: false}) canvasRef: ElementRef<HTMLCanvasElement>;
+  @ViewChild('canvas', {static: true}) canvasRef: ElementRef<HTMLCanvasElement>;
 
   private readonly destroy$ = new Subject<void>();
+  private widgetResize$: ResizeObserver;
 
   badgeStyle = BadgeStyle;
   badgePosition = BadgePosition;
   badgeStyleURLMap = badgeStyleURLMap;
+  showBadgeContainer = true;
 
-  private mobileAppSettingsValue: MobileAppQRCodeSettings | MobileAppQrCodeWidgetSettings;
+  private mobileAppSettingsValue: MobileAppSettings | MobileAppQrCodeWidgetSettings;
   private deepLinkTTL: number;
+  private deepLinkTTLTimeoutID: NodeJS.Timeout;
 
   constructor(protected store: Store<AppState>,
               protected cd: ChangeDetectorRef,
               private mobileAppService: MobileAppService,
-              private utilsService: UtilsService) {
+              private utilsService: UtilsService,
+              private elementRef: ElementRef) {
     super(store);
   }
 
   ngOnInit(): void {
-    if (!this.previewMode) {
-      if (this.ctx) {
+    if (!this.mobileAppSettings) {
+      if (isDefinedAndNotNull(this.ctx.settings.useSystemSettings) && !this.ctx.settings.useSystemSettings) {
         this.mobileAppSettings = this.ctx.settings;
       } else {
         this.mobileAppService.getMobileAppSettings().subscribe((settings => {
           this.mobileAppSettings = settings;
-          this.cd.detectChanges();
+          this.cd.markForCheck();
         }));
       }
     }
-  }
-
-  ngAfterViewInit(): void {
-    this.getMobileAppDeepLink().subscribe(link => {
-      this.deepLinkTTL = Number(this.utilsService.getQueryParam('ttl', link)) * MINUTE;
-      this.updateQRCode(link);
-      interval(this.deepLinkTTL).pipe(
-        takeUntil(this.destroy$),
-        mergeMap(() => this.getMobileAppDeepLink())
-      ).subscribe(link => this.updateQRCode(link));
+    this.initMobileAppQRCode();
+    this.widgetResize$ = new ResizeObserver(() => {
+      const showHideBadgeContainer = this.elementRef.nativeElement.offsetWidth > 250;
+      if (showHideBadgeContainer !== this.showBadgeContainer) {
+        this.showBadgeContainer = showHideBadgeContainer;
+        this.cd.markForCheck();
+      }
     });
+    this.widgetResize$.observe(this.elementRef.nativeElement);
   }
 
   ngOnDestroy() {
+    if (this.widgetResize$) {
+      this.widgetResize$.disconnect();
+    }
     super.ngOnDestroy();
     this.destroy$.next();
     this.destroy$.complete();
+    clearTimeout(this.deepLinkTTLTimeoutID);
   }
 
-  getMobileAppDeepLink(): Observable<string> {
-    return this.mobileAppService.getMobileAppDeepLink();
+  private initMobileAppQRCode() {
+    if (this.deepLinkTTLTimeoutID) {
+      clearTimeout(this.deepLinkTTLTimeoutID);
+      this.deepLinkTTLTimeoutID = null;
+    }
+    this.mobileAppService.getMobileAppDeepLink().subscribe(link => {
+      this.deepLinkTTL = Number(this.utilsService.getQueryParam('ttl', link)) * MINUTE;
+      this.updateQRCode(link);
+      this.deepLinkTTLTimeoutID = setTimeout(() => this.initMobileAppQRCode(), this.deepLinkTTL);
+    });
   }
 
-  updateQRCode(link: string) {
+  private updateQRCode(link: string) {
     import('qrcode').then((QRCode) => {
       QRCode.toCanvas(this.canvasRef.nativeElement, link, { width: 100 });
     });

@@ -23,24 +23,6 @@
   background-color: transparent;
 }
 
-.tb-title {
-  padding-bottom: 12px;
-  align-self: start;
-  font-weight: 600;
-  font-size: 20px;
-  line-height: 24px;
-  letter-spacing: 0.1px;
-  color: rgba(0, 0, 0, 0.76);
-
-  @media #{$mat-md-lg} {
-    padding-bottom: 0;
-    font-weight: 500;
-    font-size: 14px;
-    line-height: 20px;
-    letter-spacing: 0.25px;
-  }
-}
-
 .tb-qrcode-label {
   font-size: 14px;
   color: rgba(0, 0, 0, 0.54);
@@ -56,8 +38,3 @@
   border-radius: 6px;
 }
 
-.tb-badge-container {
-  @media #{$mat-md} {
-    display: none;
-  }
-}

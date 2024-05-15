@@ -43,7 +43,7 @@
           <div class="tb-form-panel no-border no-padding-top"
                *ngIf="!mobileAppSettingsForm.get('useDefaultApp').value && mobileAppSettingsForm.get('androidConfig.enabled').value">
             <div class="tb-form-row column-xs">
-              <div class="tb-fixed-width">{{ 'admin.mobile-app.app-package-name' | translate }}</div>
+              <div class="fixed-title-width-230">{{ 'admin.mobile-app.app-package-name' | translate }}</div>
               <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
                 <input matInput formControlName="appPackage" placeholder="{{'admin.mobile-app.set' | translate}}">
                 <mat-icon matSuffix
@@ -61,7 +61,7 @@
           <div class="tb-form-panel no-border no-padding-top"
                *ngIf="!mobileAppSettingsForm.get('useDefaultApp').value && mobileAppSettingsForm.get('androidConfig.enabled').value">
             <div class="tb-form-row column-xs">
-              <div class="tb-fixed-width">{{ 'admin.mobile-app.sha256-certificate-fingerprints' | translate }}</div>
+              <div class="fixed-title-width-230">{{ 'admin.mobile-app.sha256-certificate-fingerprints' | translate }}</div>
               <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
                 <input matInput formControlName="sha256CertFingerprints" placeholder="{{'admin.mobile-app.set' | translate}}">
                 <mat-icon matSuffix
@@ -86,7 +86,7 @@
           <div class="tb-form-panel no-border no-padding-top"
                *ngIf="!mobileAppSettingsForm.get('useDefaultApp').value && mobileAppSettingsForm.get('iosConfig.enabled').value">
             <div class="tb-form-row column-xs">
-              <div class="tb-fixed-width">{{ 'admin.mobile-app.app-id' | translate }}</div>
+              <div class="fixed-title-width-230">{{ 'admin.mobile-app.app-id' | translate }}</div>
               <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
                 <input matInput formControlName="appId" placeholder="{{'admin.mobile-app.set' | translate}}">
                 <mat-icon matSuffix
@@ -113,7 +113,7 @@
         </div>
         <div class="tb-form-panel stroked no-padding no-gap" *ngIf="mobileAppSettingsForm.get('qrCodeConfig.showOnHomePage').value">
           <div class="tb-form-row space-between no-border no-padding-bottom column-xs">
-            <mat-slide-toggle class="mat-slide tb-fixed-width" formControlName="badgeEnabled"
+            <mat-slide-toggle class="mat-slide fixed-title-width-230" formControlName="badgeEnabled"
                               (click)="$event.stopPropagation()">
               {{ 'admin.mobile-app.badges' | translate }}
             </mat-slide-toggle>
@@ -135,7 +135,7 @@
         </div>
         <div class="tb-form-panel stroked no-padding no-gap" *ngIf="mobileAppSettingsForm.get('qrCodeConfig.showOnHomePage').value">
           <div class="tb-form-row space-between no-border no-padding-bottom column-xs">
-            <mat-slide-toggle class="mat-slide tb-fixed-width" formControlName="qrCodeLabelEnabled" (click)="$event.stopPropagation()">
+            <mat-slide-toggle class="mat-slide fixed-title-width-230" formControlName="qrCodeLabelEnabled" (click)="$event.stopPropagation()">
               {{ 'admin.mobile-app.label' | translate }}
             </mat-slide-toggle>
             <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
@@ -154,7 +154,7 @@
         </div>
         <div class="tb-form-panel tb-qrcode-preview" *ngIf="mobileAppSettingsForm.get('qrCodeConfig.showOnHomePage').value">
           <div class="tb-form-panel-title" translate>admin.mobile-app.preview</div>
-          <tb-mobile-app-qrcode-widget previewMode
+          <tb-mobile-app-qrcode-widget
             [mobileAppSettings]="mobileAppSettingsForm.getRawValue()">
           </tb-mobile-app-qrcode-widget>
         </div>

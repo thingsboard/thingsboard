@@ -433,6 +433,7 @@
             "ios": "iOS",
             "app-id": "App ID",
             "app-id-required": "App ID is required",
+            "appearance": "Appearance",
             "appearance-on-home-page": "Appearance on Home page",
             "enabled": "Enabled",
             "disabled": "Disabled",
@@ -445,7 +446,8 @@
             "left": "Left",
             "set": "Set",
             "preview": "Preview",
-            "connect-mobile-app": "Connect mobile app"
+            "connect-mobile-app": "Connect mobile app",
+            "use-system-settings": "Use system settings"
         },
         "2fa":  {
             "2fa": "Two-factor authentication",

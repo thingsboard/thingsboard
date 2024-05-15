@@ -27,7 +27,7 @@ import {
   badgePositionTranslationsMap,
   BadgeStyle,
   badgeStyleTranslationsMap,
-  MobileAppQRCodeSettings
+  MobileAppSettings
 } from '@shared/models/mobile-app.models';
 
 @Component({
@@ -39,7 +39,7 @@ export class MobileAppSettingsComponent extends PageComponent implements HasConf
 
   mobileAppSettingsForm: FormGroup;
 
-  mobileAppSettings: MobileAppQRCodeSettings;
+  mobileAppSettings: MobileAppSettings;
 
   private readonly destroy$ = new Subject<void>();
 
@@ -133,7 +133,7 @@ export class MobileAppSettingsComponent extends PageComponent implements HasConf
     });
   }
 
-  private processMobileAppSettings(mobileAppSettings: MobileAppQRCodeSettings): void {
+  private processMobileAppSettings(mobileAppSettings: MobileAppSettings): void {
     this.mobileAppSettings = {...mobileAppSettings};
     this.mobileAppSettingsForm.reset(this.mobileAppSettings);
   }
