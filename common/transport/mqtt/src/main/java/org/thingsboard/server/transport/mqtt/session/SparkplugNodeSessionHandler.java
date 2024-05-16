@@ -26,6 +26,7 @@ import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.codec.mqtt.MqttTopicSubscription;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.ResponseCode;
 import org.springframework.util.CollectionUtils;
@@ -44,6 +45,7 @@ import org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopic;
 
 import jakarta.annotation.Nullable;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -68,6 +70,7 @@ import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopi
 @Slf4j
 public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<SparkplugDeviceSessionContext> {
 
+    @Getter
     private final SparkplugTopic sparkplugTopicNode;
     private final Map<String, SparkplugBProto.Payload.Metric> nodeBirthMetrics;
     private final MqttTransportHandler parent;
@@ -136,41 +139,36 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
 
     public void onDeviceTelemetryProto(ListenableFuture<MqttDeviceAwareSessionContext> contextListenableFuture,
                                        int msgId, List<TransportProtos.PostTelemetryMsg> postTelemetryMsgList, String deviceName) throws AdaptorException {
-        try {
-            int finalMsgId = msgId;
-            postTelemetryMsgList.forEach(telemetryMsg -> {
-                Futures.addCallback(contextListenableFuture,
-                        new FutureCallback<>() {
-                            @Override
-                            public void onSuccess(@Nullable MqttDeviceAwareSessionContext deviceCtx) {
-                                try {
-                                    processPostTelemetryMsg(deviceCtx, telemetryMsg, deviceName, finalMsgId);
-                                } catch (Throwable e) {
-                                    log.warn("[{}][{}] Failed to convert telemetry: {}", gateway.getDeviceId(), deviceName, telemetryMsg, e);
-                                    channel.close();
-                                }
-                            }
+        Futures.addCallback(contextListenableFuture, new FutureCallback<>() {
+            @Override
+            public void onSuccess(@Nullable MqttDeviceAwareSessionContext deviceCtx) {
+                for (TransportProtos.PostTelemetryMsg telemetryMsg : postTelemetryMsgList) {
+                    try {
+                        processPostTelemetryMsg(deviceCtx, telemetryMsg, deviceName, msgId);
+                    } catch (Throwable e) {
+                        log.warn("[{}][{}] Failed to convert telemetry: {}", gateway.getDeviceId(), deviceName, telemetryMsg, e);
+                        channel.close();
+                        break;
+                    }
+                }
+            }
 
-                            @Override
-                            public void onFailure(Throwable t) {
-                                log.debug("[{}] Failed to process device telemetry command: {}", sessionId, deviceName, t);
-                            }
-                        }, context.getExecutor());
-            });
-        } catch (RuntimeException e) {
-            throw new AdaptorException(e);
-        }
+            @Override
+            public void onFailure(Throwable t) {
+                log.debug("[{}] Failed to process device telemetry command: {}", sessionId, deviceName, t);
+            }
+        }, context.getExecutor());
     }
 
     private void onDeviceAttributesProto(ListenableFuture<MqttDeviceAwareSessionContext> contextListenableFuture, int msgId,
                                          List<TransportApiProtos.AttributesMsg> attributesMsgList, String deviceName) throws AdaptorException {
         try {
             if (!CollectionUtils.isEmpty(attributesMsgList)) {
-                attributesMsgList.forEach(attributesMsg -> {
-                    Futures.addCallback(contextListenableFuture,
-                            new FutureCallback<>() {
-                                @Override
-                                public void onSuccess(@Nullable MqttDeviceAwareSessionContext deviceCtx) {
+                Futures.addCallback(contextListenableFuture,
+                        new FutureCallback<>() {
+                            @Override
+                            public void onSuccess(@Nullable MqttDeviceAwareSessionContext deviceCtx) {
+                                for (TransportApiProtos.AttributesMsg attributesMsg : attributesMsgList) {
                                     TransportProtos.PostAttributeMsg kvListProto = attributesMsg.getMsg();
                                     try {
                                         TransportProtos.PostAttributeMsg postAttributeMsg = ProtoConverter.validatePostAttributeMsg(kvListProto);
@@ -179,13 +177,13 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
                                         log.warn("[{}][{}] Failed to process device attributes command: {}", gateway.getDeviceId(), deviceName, kvListProto, e);
                                     }
                                 }
+                            }
 
-                                @Override
-                                public void onFailure(Throwable t) {
-                                    log.debug("[{}] Failed to process device attributes command: {}", sessionId, deviceName, t);
-                                }
-                            }, context.getExecutor());
-                });
+                            @Override
+                            public void onFailure(Throwable t) {
+                                log.debug("[{}] Failed to process device attributes command: {}", sessionId, deviceName, t);
+                            }
+                        }, context.getExecutor());
             } else {
                 log.debug("[{}] Devices attributes keys list is empty for: [{}]", sessionId, gateway.getDeviceId());
             }
@@ -195,9 +193,8 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
     }
 
     public void handleSparkplugSubscribeMsg(List<Integer> grantedQoSList, MqttTopicSubscription subscription,
-                                            MqttQoS reqQoS) throws ThingsboardException, AdaptorException,
-            ExecutionException, InterruptedException {
-        SparkplugTopic sparkplugTopic = parseTopicSubscribe(subscription.topicName());
+                                            MqttQoS reqQoS) throws ThingsboardException {
+        SparkplugTopic sparkplugTopic = parseTopicSubscribe(subscription.topicFilter());
         if (sparkplugTopic.getGroupId() == null) {
             // TODO SUBSCRIBE NameSpace
         } else if (sparkplugTopic.getType() == null) {
@@ -304,10 +301,6 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
         return Optional.empty();
     }
 
-    public SparkplugTopic getSparkplugTopicNode() {
-        return this.sparkplugTopicNode;
-    }
-
     public Optional<MqttPublishMessage> createSparkplugMqttPublishMsg(TransportProtos.TsKvProto tsKvProto,
                                                                       String sparkplugTopic,
                                                                       SparkplugBProto.Payload.Metric metricBirth) {
@@ -328,7 +321,6 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
         } catch (Exception e) {
             log.trace("DeviceId: [{}] tenantId: [{}] sessionId:[{}] Failed to convert device attributes response to MQTT sparkplug  msg",
                     deviceSessionCtx.getDeviceInfo().getDeviceId(), deviceSessionCtx.getDeviceInfo().getTenantId(), sessionId, e);
-            return Optional.empty();
         }
         return Optional.empty();
     }
@@ -349,6 +341,5 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
     protected void sendSuccessRpcResponse(TransportProtos.SessionInfoProto sessionInfo, int requestId, ResponseCode result, String successMsg) {
         parent.sendSuccessRpcResponse(sessionInfo, requestId, result, successMsg);
     }
-
 
 }
