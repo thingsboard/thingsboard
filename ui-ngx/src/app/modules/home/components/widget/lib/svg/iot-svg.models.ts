@@ -16,7 +16,8 @@
 
 import { ValueType } from '@shared/models/constants';
 import * as svgjs from '@svgdotjs/svg.js';
-import { Box, Element, Rect, Runner, SVG, Svg, Text } from '@svgdotjs/svg.js';
+import { Box, Element, Rect, Runner, SVG, Svg, Text, Timeline, Style } from '@svgdotjs/svg.js';
+import '@svgdotjs/svg.panzoom.js';
 import {
   DataToValueType,
   GetValueAction,
@@ -45,6 +46,7 @@ import { ResizeObserver } from '@juggle/resize-observer';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 import ITooltipPosition = JQueryTooltipster.ITooltipPosition;
 import ITooltipsterHelper = JQueryTooltipster.ITooltipsterHelper;
+import TooltipPositioningSide = JQueryTooltipster.TooltipPositioningSide;
 
 export interface IotSvgApi {
   formatValue: (value: any, dec?: number, units?: string, showZeroDecimals?: boolean) => string | undefined;
@@ -281,30 +283,36 @@ export class IotSvgEditObject {
   private box: Box;
   private elements: IotSvgElement[] = [];
   private readonly shapeResize$: ResizeObserver;
+  private performSetup = false;
+  private hoverFilterStyle: Style;
   public scale = 1;
   constructor(private rootElement: HTMLElement) {
     this.shapeResize$ = new ResizeObserver(() => {
       this.resize();
     });
-    this.shapeResize$.observe(this.rootElement);
   }
 
   public setContent(svgContent: string) {
+    this.shapeResize$.unobserve(this.rootElement);
     if (this.svgShape) {
+      this.elements.length = 0;
       this.svgShape.remove();
     }
     const doc: XMLDocument = new DOMParser().parseFromString(svgContent, 'image/svg+xml');
-    this.svgShape = SVG().svg(doc.documentElement.innerHTML);
+    this.svgShape = SVG().addTo(this.rootElement).svg(doc.documentElement.innerHTML);
     this.svgShape.node.style.overflow = 'visible';
     this.svgShape.node.style['user-select'] = 'none';
     this.box = this.svgShape.bbox();
     this.svgShape.size(this.box.width, this.box.height);
-    this.svgShape.addTo(this.rootElement);
-    this.resize();
-    //this.svgShape.cre
-    this.svgShape.style().rule('.hovered', {filter: 'drop-shadow(0px 0px 1px #FFC107)'});
-    //this.svgShape.style().rule('.hovered', {filter: 'opacity(50%)'});
+    this.svgShape.viewbox(`0 0 ${this.box.width} ${this.box.height}`);
     this.svgShape.style().rule('.tb-element', {cursor: 'pointer', transition: '0.2s filter ease-in-out'});
+    this.updateHoverFilterStyle();
+    this.performSetup = true;
+    this.shapeResize$.observe(this.rootElement);
+  }
+
+  private doSetup() {
+    this.setupZoomPan(0);
     (window as any).SVG = svgjs;
     forkJoin([
       from(import('tooltipster')),
@@ -312,6 +320,49 @@ export class IotSvgEditObject {
     ]).subscribe(() => {
       this.setupElements();
     });
+  }
+
+  private setupZoomPan(margin: number) {
+    this.svgShape.on('zoom', (e) => {
+      const {
+        detail: { level, focus }
+      } = e as any;
+      this.svgShape.zoom(level, focus);
+      const box = this.restrictToMargins(this.svgShape.viewbox(), margin);
+      this.svgShape.viewbox(box);
+      setTimeout(() => {
+        this.updateTooltipPositions();
+      });
+      e.preventDefault();
+    });
+    this.svgShape.on('panning', (e) => {
+      const box = (e as any).detail.box;
+      this.svgShape.viewbox(this.restrictToMargins(box, margin));
+      setTimeout(() => {
+        this.updateTooltipPositions();
+      });
+      e.preventDefault();
+    });
+    this.svgShape.on('panStart', (e) => {
+      this.svgShape.node.style.cursor = 'grab';
+    });
+    this.svgShape.on('panEnd', (e) => {
+      this.svgShape.node.style.cursor = 'default';
+    });
+  }
+
+  private restrictToMargins(box: Box, margin: number): Box {
+    if (box.x < -margin) {
+      box.x = -margin;
+    } else if ((box.x + box.width) > (this.box.width + margin)) {
+      box.x = this.box.width + margin - box.width;
+    }
+    if (box.y < -margin) {
+      box.y = -margin;
+    } else if ((box.y + box.height) > (this.box.height + margin)) {
+      box.y = this.box.height + margin - box.height;
+    }
+    return box;
   }
 
   private setupElements() {
@@ -343,9 +394,20 @@ export class IotSvgEditObject {
       }
     }
     for (const group of overlappingGroups) {
-      let offset = - (elementTooltipMinHeight * group.length) / 2 + elementTooltipMinHeight / 2;
+      const centers = group.map(e => e.box.cy);
+      const center = centers.reduce((a, b) => a + b, 0) / centers.length;
+      const textElement = group.find(e => e.isText());
+      const slots = textElement ? group.length % 2 === 0 ? (group.length + 1) : group.length : group.length;
+      if (textElement) {
+        textElement.setInnerTooltipOffset(0, center);
+        group.splice(group.indexOf(textElement), 1);
+      }
+      let offset = - (elementTooltipMinHeight * slots) / 2 + elementTooltipMinHeight / 2;
       for (const element of group) {
-        element.innerTooltipOffset = offset;
+        if (textElement && offset === 0) {
+          offset += elementTooltipMinHeight;
+        }
+        element.setInnerTooltipOffset(offset, center);
         offset += elementTooltipMinHeight;
       }
     }
@@ -376,12 +438,55 @@ export class IotSvgEditObject {
     if (this.svgShape) {
       const targetWidth = this.rootElement.getBoundingClientRect().width;
       const targetHeight = this.rootElement.getBoundingClientRect().height;
+      let scale: number;
       if (targetWidth < targetHeight) {
-        this.scale = targetWidth / this.box.width;
+        scale = targetWidth / this.box.width;
       } else {
-        this.scale = targetHeight / this.box.height;
+        scale = targetHeight / this.box.height;
       }
-      this.svgShape.node.style.transform = `scale(${this.scale})`;
+      if (this.scale !== scale) {
+        this.scale = scale;
+        this.svgShape.node.style.transform = `scale(${this.scale})`;
+        this.updateHoverFilterStyle();
+        this.updateZoomOptions();
+        this.updateTooltipPositions();
+      }
+      if (this.performSetup) {
+        this.performSetup = false;
+        this.doSetup();
+      }
+    }
+  }
+
+  private updateHoverFilterStyle() {
+    if (this.hoverFilterStyle) {
+      this.hoverFilterStyle.remove();
+    }
+    const whiteBlur = (2.8 / this.scale).toFixed(2);
+    const blackBlur = (1.2 / this.scale).toFixed(2);
+    this.hoverFilterStyle =
+      this.svgShape.style().rule('.hovered',
+        {
+          filter:
+            `drop-shadow(0px 0px ${whiteBlur}px white) drop-shadow(0px 0px ${whiteBlur}px white)
+             drop-shadow(0px 0px ${whiteBlur}px white) drop-shadow(0px 0px ${whiteBlur}px white)
+             drop-shadow(0px 0px ${blackBlur}px black)`
+        }
+      );
+  }
+
+  private updateZoomOptions() {
+    this.svgShape.panZoom({
+      zoomMin: 1,
+      zoomMax: 4,
+      zoomFactor: 2 / this.scale
+    });
+  }
+
+  private updateTooltipPositions() {
+    const container = this.rootElement.getBoundingClientRect();
+    for (const e of this.elements) {
+      e.updateTooltipPosition(container);
     }
   }
 
@@ -390,8 +495,8 @@ export class IotSvgEditObject {
 const hasBBox = (e: Element): boolean => {
   try {
     if (e.bbox) {
-      e.bbox();
-      return true;
+      const box = e.bbox();
+      return !!box.width || !!box.height;
     } else {
       return false;
     }
@@ -402,30 +507,44 @@ const hasBBox = (e: Element): boolean => {
 
 const textTooltip = (el: JQuery<any>, text: string) => {
   el.tooltipster({
-    theme: ['tooltipster-tb'],
+    theme: ['iot-svg'],
     trigger: 'hover',
     content: text
   });
 };
 
+const isDomRectContained = (target: DOMRect, container: DOMRect, horizontalGap = 0, verticalGap = 0): boolean => (
+  target.left >= container.left - horizontalGap &&
+  target.left + target.width <= container.left + container.width + horizontalGap &&
+  target.top >= container.top - verticalGap &&
+  target.top + target.height <= container.top + container.height + verticalGap
+);
+
 const elementTooltipMinHeight = 36 + 8;
 const elementTooltipMinWidth = 100;
 
-const groupRectStroke = 10;
+const groupRectStroke = 2;
+const groupRectPadding = 2;
 
 class IotSvgElement {
 
   private highlightRect: Rect;
+  private highlightRectTimeline: Timeline;
 
   private tooltip: ITooltipsterInstance;
 
   private tag: string;
 
-  public innerTooltipOffset = 0;
+  private isEditing = false;
+
+  private innerTooltipOffset = 0;
 
   public readonly box: Box;
 
   private highlighted = false;
+
+  private tooltipMouseX: number;
+  private tooltipMouseY: number;
 
   constructor(private editObject: IotSvgEditObject,
               private element: Element) {
@@ -437,10 +556,18 @@ class IotSvgElement {
     if (this.isGroup()) {
       this.highlightRect =
         this.editObject.svgShape
-        .rect(this.box.width + this.unscaled(groupRectStroke * 4), this.box.height + this.unscaled(groupRectStroke * 4))
-        .x(this.box.x - this.unscaled(groupRectStroke * 2))
-        .y(this.box.y - this.unscaled(groupRectStroke * 2))
-        .attr({fill: 'none', stroke: '#ccc', 'stroke-width': this.unscaled(groupRectStroke), opacity: 0});
+        .rect(this.box.width + groupRectPadding * 2, this.box.height + groupRectPadding * 2)
+        .x(this.box.x - groupRectPadding)
+        .y(this.box.y - groupRectPadding)
+        .attr({
+          fill: 'none',
+          rx: this.unscaled(6),
+          stroke: 'rgba(0, 0, 0, 0.38)',
+          'stroke-dasharray': '1',
+          'stroke-width': this.unscaled(groupRectStroke),
+          opacity: 0});
+      this.highlightRectTimeline = new Timeline();
+      this.highlightRect.timeline(this.highlightRectTimeline);
       this.highlightRect.hide();
     } else {
       this.element.addClass('tb-element');
@@ -470,18 +597,22 @@ class IotSvgElement {
     if (!this.highlighted) {
       this.highlighted = true;
       if (this.isGroup()) {
-        this.highlightRect.width(this.box.width + this.unscaled(groupRectStroke * 4))
-        .height(this.box.height + this.unscaled(groupRectStroke * 4))
-        .x(this.box.x - this.unscaled(groupRectStroke * 2))
-        .y(this.box.y - this.unscaled(groupRectStroke * 2))
-        .attr({'stroke-width': this.unscaled(groupRectStroke)});
+        this.highlightRectTimeline.finish();
+        this.highlightRect
+        .attr({
+          rx: this.unscaled(6),
+          'stroke-width': this.unscaled(groupRectStroke)
+        });
         this.highlightRect.show();
         this.highlightRect.animate(300).attr({opacity: 1});
       } else {
         this.element.addClass('hovered');
       }
       if (this.hasTag()) {
-        this.tooltip.reposition();
+        if (!this.isEditing) {
+          this.tooltip.reposition();
+        }
+        $(this.tooltip.elementTooltip()).addClass('tb-active');
       }
     }
   }
@@ -490,11 +621,15 @@ class IotSvgElement {
     if (this.highlighted) {
       this.highlighted = false;
       if (this.isGroup()) {
+        this.highlightRectTimeline.finish();
         this.highlightRect.animate(300).attr({opacity: 0}).after(() => {
           this.highlightRect.hide();
         });
       } else {
         this.element.removeClass('hovered');
+      }
+      if (this.hasTag()) {
+        $(this.tooltip.elementTooltip()).removeClass('tb-active');
       }
     }
   }
@@ -503,6 +638,7 @@ class IotSvgElement {
     this.tooltip.destroy();
     this.tag = null;
     this.element.attr('tb:tag', null);
+    this.unhighlight();
     this.createAddTagTooltip();
   }
 
@@ -513,8 +649,31 @@ class IotSvgElement {
     this.createTagTooltip();
   }
 
+  public updateTooltipPosition(container: DOMRect) {
+    if (this.tooltip && !this.tooltip.status().destroyed) {
+      this.tooltip.reposition();
+      const tooltipElement = this.tooltip.elementTooltip();
+      if (tooltipElement) {
+        if (isDomRectContained(tooltipElement.getBoundingClientRect(), container,
+          elementTooltipMinWidth, elementTooltipMinHeight)) {
+          tooltipElement.style.visibility = null;
+        } else {
+          tooltipElement.style.visibility = 'hidden';
+        }
+      }
+    }
+  }
+
+  public setInnerTooltipOffset(offset: number, center: number) {
+    this.innerTooltipOffset = offset + (center - this.box.cy) * this.editObject.scale;
+  }
+
   private unscaled(size: number): number {
-    return size / this.editObject.scale;
+    return size / (this.editObject.scale * this.editObject.svgShape.zoom());
+  }
+
+  private scaled(size: number): number {
+    return size * (this.editObject.scale * this.editObject.svgShape.zoom());
   }
 
   private createTagTooltip() {
@@ -522,17 +681,26 @@ class IotSvgElement {
     el.tooltipster(
       {
         arrow: this.isGroup(),
-        distance: this.isGroup() ? 20 : 6,
-        theme: ['tooltipster-tb'],
+        distance: this.isGroup() ? (this.scaled(groupRectPadding) + groupRectStroke) : 6,
+        theme: ['iot-svg'],
         delay: 0,
         animationDuration: 0,
         interactive: true,
         trigger: 'custom',
         side: 'top',
-        trackOrigin: true,
+        trackOrigin: false,
         content: '',
         functionPosition: (instance, helper, position) =>
-          this.innerTooltipPosition(instance, helper, position)
+          this.innerTagTooltipPosition(instance, helper, position),
+        functionReady: (instance, helper) => {
+          const tooltipEl = $(helper.tooltip);
+          tooltipEl.on('mouseenter', () => {
+            this.highlight();
+          });
+          tooltipEl.on('mouseleave', () => {
+            this.unhighlight();
+          });
+        }
       }
     );
     this.tooltip = el.tooltipster('instance');
@@ -540,6 +708,8 @@ class IotSvgElement {
   }
 
   private setupTagPanel() {
+    this.isEditing = false;
+    this.unhighlight();
     const tagPanel =
       $(`<div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
            <span>${this.element.type}:</span>
@@ -547,12 +717,6 @@ class IotSvgElement {
            <span style="cursor: pointer;" class="edit-icon mat-icon tb-mat-18 material-icons">edit</span>
            <span style="cursor: pointer;" class="delete-icon mat-icon tb-mat-18 material-icons">delete</span>
          </div>`);
-    tagPanel.on('mouseenter', () => {
-      this.highlight();
-    });
-    tagPanel.on('mouseleave', () => {
-      this.unhighlight();
-    });
     const updateTagButton = tagPanel.find('.edit-icon');
     textTooltip(updateTagButton, 'Update tag');
     updateTagButton.on('click', () => {
@@ -568,6 +732,7 @@ class IotSvgElement {
   }
 
   private setupEditTagPanel() {
+    this.isEditing = true;
     const editTagInputPanel =
       $(`<div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
           <span>Update tag:</span>
@@ -621,17 +786,38 @@ class IotSvgElement {
     const el = $(this.element.node);
     el.tooltipster(
       {
-        arrow: this.isGroup(),
-        distance: this.isGroup() ? 20 : 6,
-        theme: ['tooltipster-tb'],
-        delay: 200,
+        arrow: true,
+        theme: ['iot-svg', 'tb-active'],
+        delay: [0, 300],
         interactive: true,
         trigger: 'hover',
-        side: 'top',
-        trackOrigin: true,
+        side: ['top', 'left', 'bottom', 'right'],
+        trackOrigin: false,
         content: '',
+        functionBefore: (instance, helper) => {
+          const mouseEvent = (helper.event as MouseEvent);
+          this.tooltipMouseX = mouseEvent.clientX;
+          this.tooltipMouseY = mouseEvent.clientY;
+          let side: TooltipPositioningSide;
+          if (this.isGroup()) {
+            side = 'top';
+          } else {
+            side = this.calculateTooltipSide(helper.origin.getBoundingClientRect(),
+              mouseEvent.clientX, mouseEvent.clientY);
+          }
+          instance.option('side', side);
+        },
         functionPosition: (instance, helper, position) =>
-          this.innerTooltipPosition(instance, helper, position)
+          this.innerAddTagTooltipPosition(instance, helper, position),
+        functionReady: (instance, helper) => {
+          const tooltipEl = $(helper.tooltip);
+          tooltipEl.on('mouseenter', () => {
+            this.highlight();
+          });
+          tooltipEl.on('mouseleave', () => {
+            this.unhighlight();
+          });
+        }
       }
     );
     this.tooltip = el.tooltipster('instance');
@@ -639,6 +825,7 @@ class IotSvgElement {
   }
 
   private setupAddTagPanel() {
+    this.isEditing = false;
     const addTagPanel =
       $(`<div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
           <span>${this.element.type}:</span>
@@ -653,6 +840,7 @@ class IotSvgElement {
   }
 
   private setupAddTagInputPanel() {
+    this.isEditing = true;
     const addTagInputPanel =
       $(`<div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
           <span>Enter tag:</span>
@@ -666,48 +854,139 @@ class IotSvgElement {
     textTooltip(applyTagButton, 'Apply');
     textTooltip(closeButton, 'Cancel');
 
+    let addPanelClosed = false;
     tagInput.on('keypress', (event) => {
       if (event.which === 13) {
         const newTag: string = tagInput.val() as string;
         if (newTag) {
+          addPanelClosed = true;
           this.setTag(newTag);
         }
       }
     });
     applyTagButton.on('click', () => {
       const newTag: string = tagInput.val() as string;
+      addPanelClosed = true;
       if (newTag) {
         this.setTag(newTag);
       } else {
+        this.unhighlight();
         this.tooltip.close();
       }
     });
     closeButton.on('click', () => {
+      addPanelClosed = true;
+      this.unhighlight();
       this.tooltip.close();
     });
+    tagInput.on('blur', () => {
+      setTimeout(() => {
+        if (!addPanelClosed) {
+          addPanelClosed = true;
+          this.tooltip.close();
+        }
+      });
+    });
     this.tooltip.content(addTagInputPanel);
+    this.tooltip.option('delay', [0, 10000000]);
     this.tooltip.on('closing', () => {
+      this.tooltip.option('delay', [0, 300]);
       this.setupAddTagPanel();
     });
     tagInput.trigger('focus');
   }
 
-  private innerTooltipPosition(instance: ITooltipsterInstance, helper: ITooltipsterHelper, position: ITooltipPosition): ITooltipPosition {
+  private innerTagTooltipPosition(instance: ITooltipsterInstance, helper: ITooltipsterHelper,
+                                  position: ITooltipPosition): ITooltipPosition {
+    const clientRect = helper.origin.getBoundingClientRect();
     if (!this.isGroup()) {
-      const clientRect = helper.origin.getBoundingClientRect();
       position.coord.top = clientRect.top + (clientRect.height - position.size.height) / 2
-        + this.innerTooltipOffset;
+        + this.innerTooltipOffset * this.editObject.svgShape.zoom();
       position.coord.left = clientRect.left + (clientRect.width - position.size.width) / 2;
+    } else {
+      position.distance = this.scaled(groupRectPadding) + groupRectStroke;
+      position.coord.top = clientRect.top - position.size.height - (this.scaled(groupRectPadding) + groupRectStroke);
     }
     return position;
+  }
+
+  private innerAddTagTooltipPosition(instance: ITooltipsterInstance,
+                                     helper: ITooltipsterHelper, position: ITooltipPosition): ITooltipPosition {
+    const distance = 10;
+    switch (position.side) {
+      case 'right':
+        position.coord.top = this.tooltipMouseY - position.size.height / 2;
+        position.coord.left = this.tooltipMouseX + distance;
+        position.target = this.tooltipMouseY;
+        break;
+      case 'top':
+        position.coord.top = this.tooltipMouseY - position.size.height - distance;
+        position.coord.left = this.tooltipMouseX - position.size.width / 2;
+        position.target = this.tooltipMouseX;
+        if (this.isGroup()) {
+          position.coord.top -= elementTooltipMinHeight;
+        }
+        break;
+      case 'left':
+        position.coord.top = this.tooltipMouseY - position.size.height / 2;
+        position.coord.left = this.tooltipMouseX - position.size.width - distance;
+        position.target = this.tooltipMouseY;
+        break;
+      case 'bottom':
+        position.coord.top = this.tooltipMouseY + distance;
+        position.coord.left = this.tooltipMouseX - position.size.width / 2;
+        position.target = this.tooltipMouseX;
+        break;
+    }
+    return position;
+  }
+
+  private calculateTooltipSide(clientRect: DOMRect, mouseX: number, mouseY: number): TooltipPositioningSide {
+    let side: TooltipPositioningSide;
+    const cx = clientRect.left + clientRect.width / 2;
+    const cy = clientRect.top + clientRect.height / 2;
+    if (clientRect.width > clientRect.height) {
+      if (Math.abs(cx - mouseX) > clientRect.width / 4) {
+        if (mouseX < cx) {
+          side = 'left';
+        } else {
+          side = 'right';
+        }
+      } else {
+        if (mouseY < cy) {
+          side = 'top';
+        } else {
+          side = 'bottom';
+        }
+      }
+    } else {
+      if (Math.abs(cy - mouseY) > clientRect.height / 4) {
+        if (mouseY < cy) {
+          side = 'top';
+        } else {
+          side = 'bottom';
+        }
+      } else {
+        if (mouseX < cx) {
+          side = 'left';
+        } else {
+          side = 'right';
+        }
+      }
+    }
+    return side;
   }
 
   private hasTag() {
     return !!this.tag;
   }
 
-  private isGroup() {
+  public isGroup() {
     return this.element.type === 'g';
+  }
+
+  public isText() {
+    return this.element.type === 'text';
   }
 
 }
