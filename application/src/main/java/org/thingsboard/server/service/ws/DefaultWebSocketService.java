@@ -146,7 +146,6 @@ public class DefaultWebSocketService implements WebSocketService {
 
     private ExecutorService executor;
     private ScheduledExecutorService pingExecutor;
-    private ScheduledExecutorService staleSessionCleanupExecutor;
     private String serviceId;
 
     private Map<WsCmdType, WsCmdHandler<? extends WsCmd>> cmdsHandlers;
@@ -158,9 +157,6 @@ public class DefaultWebSocketService implements WebSocketService {
 
         pingExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("telemetry-web-socket-ping"));
         pingExecutor.scheduleWithFixedDelay(this::sendPing, pingTimeout / NUMBER_OF_PING_ATTEMPTS, pingTimeout / NUMBER_OF_PING_ATTEMPTS, TimeUnit.MILLISECONDS);
-
-        staleSessionCleanupExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("stale-session-cleanup"));
-        staleSessionCleanupExecutor.scheduleWithFixedDelay(this::cleanupStaleSessions, 0, 60000, TimeUnit.MILLISECONDS);
 
         cmdsHandlers = new EnumMap<>(WsCmdType.class);
         cmdsHandlers.put(WsCmdType.ATTRIBUTES, newCmdHandler(this::handleWsAttributesSubscriptionCmd));
@@ -189,10 +185,6 @@ public class DefaultWebSocketService implements WebSocketService {
 
         if (executor != null) {
             executor.shutdownNow();
-        }
-
-        if (staleSessionCleanupExecutor != null) {
-            staleSessionCleanupExecutor.shutdownNow();
         }
     }
 
@@ -300,6 +292,16 @@ public class DefaultWebSocketService implements WebSocketService {
             } catch (IOException e) {
                 log.warn("[{}] Failed to send session close", sessionId, e);
             }
+        }
+    }
+
+    @Override
+    public void cleanupIfStale(String sessionId) {
+        if (!msgEndpoint.isOpen(sessionId)) {
+            log.info("[{}] Cleaning up stale session ", sessionId);
+            wsSessionsMap.remove(sessionId);
+            oldSubService.cancelAllSessionSubscriptions(sessionId);
+            entityDataSubService.cancelAllSessionSubscriptions(sessionId);
         }
     }
 
@@ -849,19 +851,6 @@ public class DefaultWebSocketService implements WebSocketService {
                         log.warn("[{}] Failed to send ping:", md.getSessionRef().getSessionId(), e);
                     }
                 }));
-    }
-
-    private void cleanupStaleSessions() {
-        wsSessionsMap.values().forEach(md -> {
-            String sessionId = md.getSessionRef().getSessionId();
-            if (!msgEndpoint.isOpen(sessionId)) {
-                log.info("Cleaning up stale session [sessionId: {}, tenantId: {}, userId: {}] ", sessionId,
-                        md.getSessionRef().getSecurityCtx().getTenantId(), md.getSessionRef().getSecurityCtx().getId());
-                wsSessionsMap.remove(sessionId);
-                oldSubService.cancelAllSessionSubscriptions(sessionId);
-                entityDataSubService.cancelAllSessionSubscriptions(sessionId);
-            }
-        });
     }
 
     private static Optional<Set<String>> getKeys(TelemetryPluginCmd cmd) {

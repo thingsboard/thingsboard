@@ -44,6 +44,7 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.discovery.event.ClusterTopologyChangeEvent;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.ws.WebSocketService;
 import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpdate;
 import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscriptionUpdate;
 import org.thingsboard.server.service.ws.telemetry.sub.AlarmSubscriptionUpdate;
@@ -61,6 +62,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -83,18 +86,21 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     private final PartitionService partitionService;
     private final TbClusterService clusterService;
     private final SubscriptionManagerService subscriptionManagerService;
+    private final WebSocketService webSocketService;
 
     private ExecutorService tsCallBackExecutor;
+    private ScheduledExecutorService staleSessionCleanupExecutor;
 
     public DefaultTbLocalSubscriptionService(AttributesService attrService, TimeseriesService tsService, TbServiceInfoProvider serviceInfoProvider,
                                              PartitionService partitionService, TbClusterService clusterService,
-                                             @Lazy SubscriptionManagerService subscriptionManagerService) {
+                                             @Lazy SubscriptionManagerService subscriptionManagerService, @Lazy WebSocketService webSocketService) {
         this.attrService = attrService;
         this.tsService = tsService;
         this.serviceInfoProvider = serviceInfoProvider;
         this.partitionService = partitionService;
         this.clusterService = clusterService;
         this.subscriptionManagerService = subscriptionManagerService;
+        this.webSocketService = webSocketService;
     }
 
     private String serviceId;
@@ -107,6 +113,8 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         subscriptionUpdateExecutor = ThingsBoardExecutors.newWorkStealingPool(20, getClass());
         tsCallBackExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("ts-sub-callback"));
         serviceId = serviceInfoProvider.getServiceId();
+        staleSessionCleanupExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("stale-session-cleanup"));
+        staleSessionCleanupExecutor.scheduleWithFixedDelay(this::cleanupStaleSessions, 0, 60000, TimeUnit.MILLISECONDS);
     }
 
     @PreDestroy
@@ -116,6 +124,9 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         }
         if (tsCallBackExecutor != null) {
             tsCallBackExecutor.shutdownNow();
+        }
+        if (staleSessionCleanupExecutor != null) {
+            staleSessionCleanupExecutor.shutdownNow();
         }
     }
 
@@ -519,6 +530,12 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
                         tsCallBackExecutor);
             }
         }
+    }
+
+    private void cleanupStaleSessions() {
+        Set<String> sessionIds = new HashSet<>();
+        subscriptionsByEntityId.values().forEach(subsInfo -> subsInfo.getSubs().forEach(sub -> sessionIds.add(sub.getSessionId())));
+        sessionIds.forEach(webSocketService::cleanupIfStale);
     }
 
 }
