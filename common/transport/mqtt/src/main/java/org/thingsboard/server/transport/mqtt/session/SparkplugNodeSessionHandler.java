@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.transport.mqtt.session;
 
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -30,12 +29,12 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.ResponseCode;
 import org.springframework.util.CollectionUtils;
-import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.adaptor.AdaptorException;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.adaptor.ProtoConverter;
+import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
 import org.thingsboard.server.gen.transport.TransportApiProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -44,8 +43,6 @@ import org.thingsboard.server.transport.mqtt.MqttTransportHandler;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.MetricDataType;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopic;
 
-import jakarta.annotation.Nullable;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +50,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState.ONLINE;
@@ -72,6 +68,7 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
 
     @Getter
     private final SparkplugTopic sparkplugTopicNode;
+    @Getter
     private final Map<String, SparkplugBProto.Payload.Metric> nodeBirthMetrics;
     private final MqttTransportHandler parent;
 
@@ -86,10 +83,6 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
     public void setNodeBirthMetrics(java.util.List<org.thingsboard.server.gen.transport.mqtt.SparkplugBProto.Payload.Metric> metrics) {
         this.nodeBirthMetrics.putAll(metrics.stream()
                 .collect(Collectors.toMap(SparkplugBProto.Payload.Metric::getName, metric -> metric)));
-    }
-
-    public Map<String, SparkplugBProto.Payload.Metric> getNodeBirthMetrics() {
-        return this.nodeBirthMetrics;
     }
 
     public TransportProtos.PostTelemetryMsg convertToPostTelemetry(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
@@ -138,55 +131,38 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
     }
 
     public void onDeviceTelemetryProto(ListenableFuture<MqttDeviceAwareSessionContext> contextListenableFuture,
-                                       int msgId, List<TransportProtos.PostTelemetryMsg> postTelemetryMsgList, String deviceName) throws AdaptorException {
-        Futures.addCallback(contextListenableFuture, new FutureCallback<>() {
-            @Override
-            public void onSuccess(@Nullable MqttDeviceAwareSessionContext deviceCtx) {
-                for (TransportProtos.PostTelemetryMsg telemetryMsg : postTelemetryMsgList) {
-                    try {
-                        processPostTelemetryMsg(deviceCtx, telemetryMsg, deviceName, msgId);
-                    } catch (Throwable e) {
-                        log.warn("[{}][{}] Failed to convert telemetry: {}", gateway.getDeviceId(), deviceName, telemetryMsg, e);
-                        channel.close();
-                        break;
+                                       int msgId, List<TransportProtos.PostTelemetryMsg> postTelemetryMsgList, String deviceName) {
+        process(contextListenableFuture, deviceCtx -> {
+                    for (TransportProtos.PostTelemetryMsg telemetryMsg : postTelemetryMsgList) {
+                        try {
+                            processPostTelemetryMsg(deviceCtx, telemetryMsg, deviceName, msgId);
+                        } catch (Throwable e) {
+                            log.warn("[{}][{}] Failed to convert telemetry: {}", gateway.getDeviceId(), deviceName, telemetryMsg, e);
+                            ackOrClose(msgId);
+                        }
                     }
-                }
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                log.debug("[{}] Failed to process device telemetry command: {}", sessionId, deviceName, t);
-            }
-        }, context.getExecutor());
+                },
+                t -> log.debug("[{}] Failed to process device telemetry command: {}", sessionId, deviceName, t));
     }
 
     private void onDeviceAttributesProto(ListenableFuture<MqttDeviceAwareSessionContext> contextListenableFuture, int msgId,
                                          List<TransportApiProtos.AttributesMsg> attributesMsgList, String deviceName) throws AdaptorException {
         try {
-            if (!CollectionUtils.isEmpty(attributesMsgList)) {
-                Futures.addCallback(contextListenableFuture,
-                        new FutureCallback<>() {
-                            @Override
-                            public void onSuccess(@Nullable MqttDeviceAwareSessionContext deviceCtx) {
-                                for (TransportApiProtos.AttributesMsg attributesMsg : attributesMsgList) {
-                                    TransportProtos.PostAttributeMsg kvListProto = attributesMsg.getMsg();
-                                    try {
-                                        TransportProtos.PostAttributeMsg postAttributeMsg = ProtoConverter.validatePostAttributeMsg(kvListProto);
-                                        processPostAttributesMsg(deviceCtx, postAttributeMsg, deviceName, msgId);
-                                    } catch (Throwable e) {
-                                        log.warn("[{}][{}] Failed to process device attributes command: {}", gateway.getDeviceId(), deviceName, kvListProto, e);
-                                    }
-                                }
-                            }
-
-                            @Override
-                            public void onFailure(Throwable t) {
-                                log.debug("[{}] Failed to process device attributes command: {}", sessionId, deviceName, t);
-                            }
-                        }, context.getExecutor());
-            } else {
+            if (CollectionUtils.isEmpty(attributesMsgList)) {
                 log.debug("[{}] Devices attributes keys list is empty for: [{}]", sessionId, gateway.getDeviceId());
             }
+            process(contextListenableFuture, deviceCtx -> {
+                        for (TransportApiProtos.AttributesMsg attributesMsg : attributesMsgList) {
+                            TransportProtos.PostAttributeMsg kvListProto = attributesMsg.getMsg();
+                            try {
+                                TransportProtos.PostAttributeMsg postAttributeMsg = ProtoConverter.validatePostAttributeMsg(kvListProto);
+                                processPostAttributesMsg(deviceCtx, postAttributeMsg, deviceName, msgId);
+                            } catch (Throwable e) {
+                                log.warn("[{}][{}] Failed to process device attributes command: {}", gateway.getDeviceId(), deviceName, kvListProto, e);
+                            }
+                        }
+                    },
+                    t -> log.debug("[{}] Failed to process device attributes command: {}", sessionId, deviceName, t));
         } catch (RuntimeException e) {
             throw new AdaptorException(e);
         }
@@ -235,9 +211,7 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
                     String key = "bdSeq".equals(protoMetric.getName()) ?
                             topicTypeName + " " + protoMetric.getName() : protoMetric.getName();
                     Optional<TransportProtos.KeyValueProto> keyValueProtoOpt = fromSparkplugBMetricToKeyValueProto(key, protoMetric);
-                    if (keyValueProtoOpt.isPresent()) {
-                        msgs.add(postTelemetryMsgCreated(keyValueProtoOpt.get(), ts));
-                    }
+                    keyValueProtoOpt.ifPresent(kvProto -> msgs.add(postTelemetryMsgCreated(kvProto, ts)));
                 }
             }
 
