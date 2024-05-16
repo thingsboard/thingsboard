@@ -63,12 +63,12 @@ public class TbQueueConsumerTask {
 
     public void subscribe(Set<TopicPartitionInfo> partitions) {
         log.trace("[{}] Subscribing to partitions: {}", key, partitions);
-        consumer.subscribe(partitions);
+        getConsumer().subscribe(partitions);
     }
 
     public void initiateStop() {
         log.debug("[{}] Initiating stop", key);
-        consumer.stop();
+        getConsumer().stop();
     }
 
     public void awaitCompletion() {
