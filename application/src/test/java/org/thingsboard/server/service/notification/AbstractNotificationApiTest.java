@@ -112,7 +112,6 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
         notificationRuleService.deleteNotificationRulesByTenantId(TenantId.SYS_TENANT_ID);
         notificationTemplateService.deleteNotificationTemplatesByTenantId(TenantId.SYS_TENANT_ID);
         notificationTargetService.deleteNotificationTargetsByTenantId(TenantId.SYS_TENANT_ID);
-        partitioningRepository.dropPartitionsBefore("notification", Long.MAX_VALUE, 1);
         notificationSettingsService.deleteNotificationSettings(TenantId.SYS_TENANT_ID);
     }
 
