@@ -39,15 +39,14 @@ import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -185,7 +184,7 @@ public class RuleEngineControllerTest extends AbstractControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("Invalid request body")));
 
-        verifyNoMoreInteractions(ruleEngineCallService);
+        verifyNoInteractions(ruleEngineCallService);
     }
 
     @Test
@@ -225,8 +224,7 @@ public class RuleEngineControllerTest extends AbstractControllerTest {
                 .andExpect(status().isForbidden())
                 .andExpect(content().string("You don't have permission to perform this operation!"));
 
-        verify(ruleEngineCallService, never())
-                .processRestApiCallToRuleEngine(any(TenantId.class), any(UUID.class), any(TbMsg.class), anyBoolean(), any(Consumer.class));
+        verifyNoInteractions(ruleEngineCallService);
     }
 
     @Test
@@ -246,8 +244,6 @@ public class RuleEngineControllerTest extends AbstractControllerTest {
 
     public void checkMetadataProperties(TbMsgMetaData metaData) {
         Map<String, String> data = metaData.getData();
-        assertThat(data.containsKey("serviceId")).isTrue();
-        assertThat(data.containsKey("requestUUID")).isTrue();
-        assertThat(data.containsKey("expirationTime")).isTrue();
+        assertThat(data).containsKeys("serviceId", "requestUUID", "expirationTime");
     }
 }

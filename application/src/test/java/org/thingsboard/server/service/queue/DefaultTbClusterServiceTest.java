@@ -305,7 +305,7 @@ public class DefaultTbClusterServiceTest {
     @Test
     public void testPushMsgToRuleEngineWithTenantIdIsNullUuidAndEntityIsDevice() {
         TenantId tenantId = TenantId.SYS_TENANT_ID;
-        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        DeviceId deviceId = new DeviceId(UUID.fromString("aa6d112d-2914-4a22-a9e3-bee33edbdb14"));
         TbMsg requestMsg = TbMsg.newMsg(TbMsgType.REST_API_REQUEST, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
         TbQueueCallback callback = mock(TbQueueCallback.class);
 
