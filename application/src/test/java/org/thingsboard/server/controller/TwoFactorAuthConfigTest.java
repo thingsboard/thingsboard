@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.google.common.util.concurrent.Futures;
 import org.jboss.aerogear.security.otp.Totp;
 import org.jboss.aerogear.security.otp.api.Base32;
 import org.junit.After;
@@ -56,6 +57,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -76,6 +78,7 @@ public class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
     @Before
     public void beforeEach() throws Exception {
+        willReturn(Futures.immediateVoidFuture()).given(smsService).sendSms(any(), any(), any(), any());
         doNothing().when(twoFactorAuthService).checkProvider(any(), any());
         loginSysAdmin();
     }
@@ -326,7 +329,7 @@ public class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
         verify(smsService).sendSms(eq(tenantId), any(), argThat(phoneNumbers -> {
             return phoneNumbers[0].equals(smsTwoFaAccountConfig.getPhoneNumber());
-        }), eq("Here is your verification code: " + verificationCode)).get(30, TimeUnit.SECONDS);
+        }), eq("Here is your verification code: " + verificationCode));
     }
 
     @Test
@@ -364,7 +367,7 @@ public class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
         verify(smsService).sendSms(eq(tenantId), any(), argThat(phoneNumbers -> {
             return phoneNumbers[0].equals(smsTwoFaAccountConfig.getPhoneNumber());
-        }), verificationCodeCaptor.capture()).get(30, TimeUnit.SECONDS);
+        }), verificationCodeCaptor.capture());
 
         String correctVerificationCode = verificationCodeCaptor.getValue();
         doPost("/api/2fa/account/config?verificationCode=" + correctVerificationCode, smsTwoFaAccountConfig)
@@ -403,7 +406,7 @@ public class TwoFactorAuthConfigTest extends AbstractControllerTest {
 
         verify(smsService).sendSms(eq(tenantId), any(), argThat(phoneNumbers -> {
             return phoneNumbers[0].equals(initialSmsTwoFaAccountConfig.getPhoneNumber());
-        }), verificationCodeCaptor.capture()).get(30, TimeUnit.SECONDS);
+        }), verificationCodeCaptor.capture());
 
         String correctVerificationCode = verificationCodeCaptor.getValue();
 

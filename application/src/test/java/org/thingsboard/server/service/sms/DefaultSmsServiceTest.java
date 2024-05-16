@@ -88,7 +88,7 @@ public class DefaultSmsServiceTest extends AbstractControllerTest {
 
         //wait 1 sec so that api usage state is updated
         TimeUnit.SECONDS.sleep(1);
-        assertThrows(RuntimeException.class, () -> {
+        assertThrows(Exception.class, () -> {
             defaultSmsService.sendSms(tenantId, null, new String[]{RandomStringUtils.randomNumeric(10)}, "Message").get(30, TimeUnit.SECONDS);
         }, "SMS sending is disabled due to API limits!");
     }
@@ -101,7 +101,7 @@ public class DefaultSmsServiceTest extends AbstractControllerTest {
         saveTenantProfileWitConfiguration(tenantProfile, config);
 
         TimeUnit.SECONDS.sleep(1);
-        assertThrows(RuntimeException.class, () -> {
+        assertThrows(Exception.class, () -> {
             defaultSmsService.sendSms(tenantId, null, new String[]{RandomStringUtils.randomNumeric(10)}, "Message").get(30, TimeUnit.SECONDS);
         }, "SMS sending is disabled due to API limits!");
 
