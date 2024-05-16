@@ -228,7 +228,7 @@ public class TbKafkaSettings {
         return adminClient;
     }
 
-    private Properties toAdminProps() {
+    protected Properties toAdminProps() {
         Properties props = toProps();
         props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, servers);
         props.put(AdminClientConfig.RETRIES_CONFIG, retries);
