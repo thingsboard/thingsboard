@@ -539,6 +539,11 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
         }
     }
 
+    @Override
+    public boolean isOpen(String sessionId) {
+        return externalSessionMap.containsKey(sessionId);
+    }
+
     private boolean checkLimits(WebSocketSession session, WebSocketSessionRef sessionRef) throws IOException {
         var tenantProfileConfiguration = getTenantProfileConfiguration(sessionRef);
         if (tenantProfileConfiguration == null) {

@@ -146,6 +146,7 @@ public class DefaultWebSocketService implements WebSocketService {
 
     private ExecutorService executor;
     private ScheduledExecutorService pingExecutor;
+    private ScheduledExecutorService sessionCleanupExecutor;
     private String serviceId;
 
     private Map<WsCmdType, WsCmdHandler<? extends WsCmd>> cmdsHandlers;
@@ -157,6 +158,9 @@ public class DefaultWebSocketService implements WebSocketService {
 
         pingExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("telemetry-web-socket-ping"));
         pingExecutor.scheduleWithFixedDelay(this::sendPing, pingTimeout / NUMBER_OF_PING_ATTEMPTS, pingTimeout / NUMBER_OF_PING_ATTEMPTS, TimeUnit.MILLISECONDS);
+
+        sessionCleanupExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("session-cleanup"));
+        sessionCleanupExecutor.scheduleWithFixedDelay(this::cleanupClosedSessions, 0,60000, TimeUnit.MILLISECONDS);
 
         cmdsHandlers = new EnumMap<>(WsCmdType.class);
         cmdsHandlers.put(WsCmdType.ATTRIBUTES, newCmdHandler(this::handleWsAttributesSubscriptionCmd));
@@ -185,6 +189,10 @@ public class DefaultWebSocketService implements WebSocketService {
 
         if (executor != null) {
             executor.shutdownNow();
+        }
+
+        if (sessionCleanupExecutor != null) {
+            sessionCleanupExecutor.shutdownNow();
         }
     }
 
@@ -841,6 +849,17 @@ public class DefaultWebSocketService implements WebSocketService {
                         log.warn("[{}] Failed to send ping:", md.getSessionRef().getSessionId(), e);
                     }
                 }));
+    }
+
+    private void cleanupClosedSessions() {
+        wsSessionsMap.keySet().forEach(sessionId -> {
+            if (!msgEndpoint.isOpen(sessionId)) {
+                log.debug("[{}] Session does not exists, removing all subscriptions", sessionId);
+                wsSessionsMap.remove(sessionId);
+                oldSubService.cancelAllSessionSubscriptions(sessionId);
+                entityDataSubService.cancelAllSessionSubscriptions(sessionId);
+            }
+        });
     }
 
     private static Optional<Set<String>> getKeys(TelemetryPluginCmd cmd) {
