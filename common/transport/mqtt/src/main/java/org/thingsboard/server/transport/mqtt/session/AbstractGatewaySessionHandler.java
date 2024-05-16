@@ -97,6 +97,11 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
 
     private static final String CAN_T_PARSE_VALUE = "Can't parse value: ";
     private static final String DEVICE_PROPERTY = "device";
+    public static final String TELEMETRY = "telemetry";
+    public static final String CLAIMING = "claiming";
+    public static final String ATTRIBUTE = "attribute";
+    public static final String RPC_RESPONSE = "Rpc response";
+    public static final String ATTRIBUTES_REQUEST = "attributes request";
 
     protected final MqttTransportContext context;
     protected final TransportService transportService;
@@ -369,7 +374,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
             }
             String deviceName = deviceEntry.getKey();
             process(deviceName, deviceCtx -> processPostTelemetryMsg(deviceCtx, deviceEntry.getValue(), deviceName, msgId),
-                    t -> log.debug("[{}][{}][{}] Failed to process device telemetry command: [{}]", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName, t));
+                    t -> failedToProcessLog(deviceName, TELEMETRY, t));
         }
     }
 
@@ -395,7 +400,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
             deviceMsgList.forEach(telemetryMsg -> {
                 String deviceName = checkDeviceName(telemetryMsg.getDeviceName());
                 process(deviceName, deviceCtx -> processPostTelemetryMsg(deviceCtx, telemetryMsg.getMsg(), deviceName, msgId),
-                        t -> log.debug("[{}][{}][{}] Failed to process device telemetry command: [{}]", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName, t));
+                        t -> failedToProcessLog(deviceName, TELEMETRY, t));
             });
         } catch (RuntimeException | InvalidProtocolBufferException e) {
             throw new AdaptorException(e);
@@ -434,7 +439,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
 
             String deviceName = deviceEntry.getKey();
             process(deviceName, deviceCtx -> processClaimDeviceMsg(deviceCtx, deviceEntry.getValue(), deviceName, msgId),
-                    t -> log.debug("[{}][{}][{}] Failed to process device claiming command: [{}]", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName, t));
+                    t -> failedToProcessLog(deviceName, CLAIMING, t));
         }
     }
 
@@ -461,7 +466,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
             claimMsgList.forEach(claimDeviceMsg -> {
                 String deviceName = checkDeviceName(claimDeviceMsg.getDeviceName());
                 process(deviceName, deviceCtx -> processClaimDeviceMsg(deviceCtx, claimDeviceMsg.getClaimRequest(), deviceName, msgId),
-                        t -> log.debug("[{}][{}][{}] Failed to process device claiming command: [{}]", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName, t));
+                        t -> failedToProcessLog(deviceName, CLAIMING, t));
             });
         } catch (RuntimeException | InvalidProtocolBufferException e) {
             throw new AdaptorException(e);
@@ -490,7 +495,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
 
             String deviceName = deviceEntry.getKey();
             process(deviceName, deviceCtx -> processPostAttributesMsg(deviceCtx, deviceEntry.getValue(), deviceName, msgId),
-                    t -> log.debug("[{}][{}][{}] Failed to process device attributes command: [{}]", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName, t));
+                    t -> failedToProcessLog(deviceName, ATTRIBUTE, t));
         }
     }
 
@@ -516,7 +521,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
             attributesMsgList.forEach(attributesMsg -> {
                 String deviceName = checkDeviceName(attributesMsg.getDeviceName());
                 process(deviceName, deviceCtx -> processPostAttributesMsg(deviceCtx, attributesMsg.getMsg(), deviceName, msgId),
-                        t -> log.debug("[{}][{}][{}] Failed to process device attributes command: [{}]", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName, t));
+                        t -> failedToProcessLog(deviceName, ATTRIBUTE, t));
             });
         } catch (RuntimeException | InvalidProtocolBufferException e) {
             throw new AdaptorException(e);
@@ -599,7 +604,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
 
     private void onDeviceRpcResponse(Integer requestId, String data, String deviceName, int msgId) {
         process(deviceName, deviceCtx -> processRpcResponseMsg(deviceCtx, requestId, data, deviceName, msgId),
-                t -> log.debug("[{}][{}][{}] Failed to process device Rpc response command: [{}]", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName, t));
+                t -> failedToProcessLog(deviceName, RPC_RESPONSE, t));
     }
 
     private void processRpcResponseMsg(MqttDeviceAwareSessionContext deviceCtx, Integer requestId, String data, String deviceName, int msgId) {
@@ -612,8 +617,8 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         int msgId = getMsgId(mqttMsg);
         process(deviceName, deviceCtx -> processGetAttributeRequestMessage(deviceCtx, requestMsg, deviceName, msgId),
                 t -> {
+                    failedToProcessLog(deviceName, ATTRIBUTES_REQUEST, t);
                     ack(msgId, ReturnCode.IMPLEMENTATION_SPECIFIC);
-                    log.debug("[{}][{}][{}] Failed to process device attributes request command: [{}]", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName, t);
                 });
     }
 
@@ -726,6 +731,10 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         } else {
             DonAsynchron.withCallback(deviceCtxFuture, onSuccess, onFailure, context.getExecutor());
         }
+    }
+
+    protected void failedToProcessLog(String deviceName, String msgType, Throwable t) {
+        log.debug("[{}][{}][{}] Failed to process device {} command: [{}]", gateway.getTenantId(), gateway.getDeviceId(), sessionId, msgType, deviceName, t);
     }
 
 }
