@@ -146,7 +146,7 @@ public class DefaultWebSocketService implements WebSocketService {
 
     private ExecutorService executor;
     private ScheduledExecutorService pingExecutor;
-    private ScheduledExecutorService sessionCleanupExecutor;
+    private ScheduledExecutorService staleSessionCleanupExecutor;
     private String serviceId;
 
     private Map<WsCmdType, WsCmdHandler<? extends WsCmd>> cmdsHandlers;
@@ -159,8 +159,8 @@ public class DefaultWebSocketService implements WebSocketService {
         pingExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("telemetry-web-socket-ping"));
         pingExecutor.scheduleWithFixedDelay(this::sendPing, pingTimeout / NUMBER_OF_PING_ATTEMPTS, pingTimeout / NUMBER_OF_PING_ATTEMPTS, TimeUnit.MILLISECONDS);
 
-        sessionCleanupExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("session-cleanup"));
-        sessionCleanupExecutor.scheduleWithFixedDelay(this::cleanupClosedSessions, 0,60000, TimeUnit.MILLISECONDS);
+        staleSessionCleanupExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("stale-session-cleanup"));
+        staleSessionCleanupExecutor.scheduleWithFixedDelay(this::cleanupStaleSessions, 0, 60000, TimeUnit.MILLISECONDS);
 
         cmdsHandlers = new EnumMap<>(WsCmdType.class);
         cmdsHandlers.put(WsCmdType.ATTRIBUTES, newCmdHandler(this::handleWsAttributesSubscriptionCmd));
@@ -191,8 +191,8 @@ public class DefaultWebSocketService implements WebSocketService {
             executor.shutdownNow();
         }
 
-        if (sessionCleanupExecutor != null) {
-            sessionCleanupExecutor.shutdownNow();
+        if (staleSessionCleanupExecutor != null) {
+            staleSessionCleanupExecutor.shutdownNow();
         }
     }
 
@@ -851,10 +851,12 @@ public class DefaultWebSocketService implements WebSocketService {
                 }));
     }
 
-    private void cleanupClosedSessions() {
-        wsSessionsMap.keySet().forEach(sessionId -> {
+    private void cleanupStaleSessions() {
+        wsSessionsMap.values().forEach(md -> {
+            String sessionId = md.getSessionRef().getSessionId();
             if (!msgEndpoint.isOpen(sessionId)) {
-                log.debug("[{}] Session does not exists, removing all subscriptions", sessionId);
+                log.info("Cleaning up stale session [sessionId: {}, tenantId: {}, userId: {}] ", sessionId,
+                        md.getSessionRef().getSecurityCtx().getTenantId(), md.getSessionRef().getSecurityCtx().getId());
                 wsSessionsMap.remove(sessionId);
                 oldSubService.cancelAllSessionSubscriptions(sessionId);
                 entityDataSubService.cancelAllSessionSubscriptions(sessionId);

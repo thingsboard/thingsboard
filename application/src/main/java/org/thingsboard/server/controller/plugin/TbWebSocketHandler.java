@@ -540,8 +540,15 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
     }
 
     @Override
-    public boolean isOpen(String sessionId) {
-        return externalSessionMap.containsKey(sessionId);
+    public boolean isOpen(String externalId) {
+        String internalId = externalSessionMap.get(externalId);
+        if (internalId != null) {
+            SessionMetaData sessionMd = getSessionMd(internalId);
+            if (sessionMd != null) {
+                return sessionMd.session.isOpen();
+            }
+        }
+        return false;
     }
 
     private boolean checkLimits(WebSocketSession session, WebSocketSessionRef sessionRef) throws IOException {
