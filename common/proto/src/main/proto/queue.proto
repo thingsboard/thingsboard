@@ -280,6 +280,7 @@ message GetQueueRoutingInfoResponseMsg {
   string queueName = 5;
   string queueTopic = 6;
   int32 partitions = 7;
+  optional bool duplicateMsgToAllPartitions = 8;
 }
 
 message QueueUpdateMsg {
@@ -290,6 +291,7 @@ message QueueUpdateMsg {
   string queueName = 5;
   string queueTopic = 6;
   int32 partitions = 7;
+  optional bool duplicateMsgToAllPartitions = 8;
 }
 
 message QueueDeleteMsg {

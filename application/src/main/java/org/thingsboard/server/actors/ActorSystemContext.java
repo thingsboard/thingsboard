@@ -635,6 +635,10 @@ public class ActorSystemContext {
         return partitionService.resolve(serviceType, queueName, tenantId, entityId);
     }
 
+    public TopicPartitionInfo resolve(TenantId tenantId, EntityId entityId, TbMsg msg) {
+        return partitionService.resolve(ServiceType.TB_RULE_ENGINE, msg.getQueueName(), tenantId, entityId, msg.getPartition());
+    }
+
     public String getServiceId() {
         return serviceInfoProvider.getServiceId();
     }

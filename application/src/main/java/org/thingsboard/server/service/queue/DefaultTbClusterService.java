@@ -577,6 +577,7 @@ public class DefaultTbClusterService implements TbClusterService {
                         .setQueueName(queue.getName())
                         .setQueueTopic(queue.getTopic())
                         .setPartitions(queue.getPartitions())
+                        .setDuplicateMsgToAllPartitions(queue.isDuplicateMsgToAllPartitions())
                         .build())
                 .collect(Collectors.toList());
 
