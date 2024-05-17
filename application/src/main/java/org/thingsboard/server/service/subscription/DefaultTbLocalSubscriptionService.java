@@ -168,17 +168,17 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         TenantId tenantId = subscription.getTenantId();
         EntityId entityId = subscription.getEntityId();
         log.debug("[{}][{}] Register subscription: {}", tenantId, entityId, subscription);
-        ModifySubscriptionResult modifySubscriptionResult;
+        SubscriptionModificationResult result;
         subsLock.lock();
         try {
             Map<Integer, TbSubscription<?>> sessionSubscriptions = subscriptionsBySessionId.computeIfAbsent(subscription.getSessionId(), k -> new ConcurrentHashMap<>());
             sessionSubscriptions.put(subscription.getSubscriptionId(), subscription);
-            modifySubscriptionResult = modifySubscription(tenantId, entityId, subscription, true);
+            result = modifySubscription(tenantId, entityId, subscription, true);
         } finally {
             subsLock.unlock();
         }
-        if (modifySubscriptionResult.hasEvent()) {
-            pushSubscriptionEvent(modifySubscriptionResult);
+        if (result.hasEvent()) {
+            pushSubscriptionEvent(result);
         }
     }
 
@@ -215,7 +215,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     @Override
     public void cancelSubscription(String sessionId, int subscriptionId) {
         log.debug("[{}][{}] Going to remove subscription.", sessionId, subscriptionId);
-        ModifySubscriptionResult modifySubscriptionResult = null;
+        SubscriptionModificationResult result = null;
         subsLock.lock();
         try {
             Map<Integer, TbSubscription<?>> sessionSubscriptions = subscriptionsBySessionId.get(sessionId);
@@ -225,7 +225,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
                     if (sessionSubscriptions.isEmpty()) {
                         subscriptionsBySessionId.remove(sessionId);
                     }
-                    modifySubscriptionResult = modifySubscription(subscription.getTenantId(), subscription.getEntityId(), subscription, false);
+                    result = modifySubscription(subscription.getTenantId(), subscription.getEntityId(), subscription, false);
                 } else {
                     log.debug("[{}][{}] Subscription not found!", sessionId, subscriptionId);
                 }
@@ -235,21 +235,21 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         } finally {
             subsLock.unlock();
         }
-        if (modifySubscriptionResult != null && modifySubscriptionResult.hasEvent()) {
-            pushSubscriptionEvent(modifySubscriptionResult);
+        if (result != null && result.hasEvent()) {
+            pushSubscriptionEvent(result);
         }
     }
 
     @Override
     public void cancelAllSessionSubscriptions(String sessionId) {
         log.debug("[{}] Going to remove session subscriptions.", sessionId);
-        List<ModifySubscriptionResult> result = new ArrayList<>();
+        List<SubscriptionModificationResult> results = new ArrayList<>();
         subsLock.lock();
         try {
             Map<Integer, TbSubscription<?>> sessionSubscriptions = subscriptionsBySessionId.remove(sessionId);
             if (sessionSubscriptions != null) {
                 for (TbSubscription<?> subscription : sessionSubscriptions.values()) {
-                    result.add(modifySubscription(subscription.getTenantId(), subscription.getEntityId(), subscription, false));
+                    results.add(modifySubscription(subscription.getTenantId(), subscription.getEntityId(), subscription, false));
                 }
             } else {
                 log.debug("[{}] No session subscriptions found!", sessionId);
@@ -257,7 +257,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         } finally {
             subsLock.unlock();
         }
-        result.stream().filter(ModifySubscriptionResult::hasEvent).forEach(this::pushSubscriptionEvent);
+        results.stream().filter(SubscriptionModificationResult::hasEvent).forEach(this::pushSubscriptionEvent);
     }
 
     @Override
@@ -420,7 +420,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         callback.onSuccess();
     }
 
-    private ModifySubscriptionResult modifySubscription(TenantId tenantId, EntityId entityId, TbSubscription<?> subscription, boolean add) {
+    private SubscriptionModificationResult modifySubscription(TenantId tenantId, EntityId entityId, TbSubscription<?> subscription, boolean add) {
         TbSubscription<?> missedUpdatesCandidate = null;
         TbEntitySubEvent event = null;
         try {
@@ -435,20 +435,20 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         } catch (Exception e) {
             log.warn("[{}][{}] Failed to {} subscription {} due to ", tenantId, entityId, add ? "add" : "remove", subscription, e);
         }
-        return new ModifySubscriptionResult(tenantId, entityId, subscription, missedUpdatesCandidate, event);
+        return new SubscriptionModificationResult(tenantId, entityId, subscription, missedUpdatesCandidate, event);
     }
 
-    private void pushSubscriptionEvent(ModifySubscriptionResult modifySubResult) {
+    private void pushSubscriptionEvent(SubscriptionModificationResult modificationResult) {
         try {
-            TbEntitySubEvent event = modifySubResult.getEvent();
-            log.trace("[{}][{}][{}] Event: {}", modifySubResult.getTenantId(), modifySubResult.getEntityId(), modifySubResult.getSubscription().getSubscriptionId(), event);
-            pushSubEventToManagerService(modifySubResult.getTenantId(), modifySubResult.getEntityId(), event);
-            TbSubscription<?> missedUpdatesCandidate = modifySubResult.getMissedUpdatesCandidate();
+            TbEntitySubEvent event = modificationResult.getEvent();
+            log.trace("[{}][{}][{}] Event: {}", modificationResult.getTenantId(), modificationResult.getEntityId(), modificationResult.getSubscription().getSubscriptionId(), event);
+            pushSubEventToManagerService(modificationResult.getTenantId(), modificationResult.getEntityId(), event);
+            TbSubscription<?> missedUpdatesCandidate = modificationResult.getMissedUpdatesCandidate();
             if (missedUpdatesCandidate != null) {
                 checkMissedUpdates(missedUpdatesCandidate);
             }
         } catch (Exception e) {
-            log.warn("[{}][{}] Failed to push subscription event {} due to ", modifySubResult.getTenantId(), modifySubResult.getEntityId(), modifySubResult.getEvent(), e);
+            log.warn("[{}][{}] Failed to push subscription event {} due to ", modificationResult.getTenantId(), modificationResult.getEntityId(), modificationResult.getEvent(), e);
         }
     }
 

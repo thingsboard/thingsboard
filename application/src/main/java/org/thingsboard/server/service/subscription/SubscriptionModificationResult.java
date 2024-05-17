@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.id.TenantId;
  */
 @Builder
 @Data
-public class ModifySubscriptionResult {
+public class SubscriptionModificationResult {
 
     private TenantId tenantId;
     private EntityId entityId;
