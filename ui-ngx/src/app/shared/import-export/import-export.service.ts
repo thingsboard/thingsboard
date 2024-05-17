@@ -200,9 +200,11 @@ export class ImportExportService {
 
   public exportWidget(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget) {
     const widgetItem = this.itembuffer.prepareWidgetItem(dashboard, sourceState, sourceLayout, widget);
-    let name = widgetItem.widget.config.titleByPattern;
-    name = name.toLowerCase().replace(/\W/g, '_');
-    this.exportToPc(this.prepareExport(widgetItem), name);
+    const widgetDefaultName = this.widgetService.getWidgetInfoFromCache(widget.typeFullFqn)?.widgetName ||
+      widget.typeFullFqn.split('.').pop();
+    let fileName = widgetDefaultName + (isNotEmptyStr(widget.config.exportTitle) ? '_' + widget.config.exportTitle : '');
+    fileName = fileName.toLowerCase().replace(/\W/g, '_');
+    this.exportToPc(this.prepareExport(widgetItem), fileName);
   }
 
   public importWidget(dashboard: Dashboard, targetState: string,
