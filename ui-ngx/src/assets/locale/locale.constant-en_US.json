@@ -3974,6 +3974,7 @@
         "immediate-processing": "Immediate processing",
         "consumer-per-partition": "Send message poll for each consumer",
         "consumer-per-partition-hint": "Enable separate consumer(s) per each partition",
+        "duplicate-msg-to-all-partitions": "Duplicate message to all partitions",
         "processing-timeout": "Processing within, ms",
         "batch-size": "Batch size",
         "retries": "Number of retries (0 – unlimited)",
