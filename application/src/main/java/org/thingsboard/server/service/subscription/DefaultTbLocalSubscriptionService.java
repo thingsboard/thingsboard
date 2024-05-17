@@ -248,11 +248,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
             Map<Integer, TbSubscription<?>> sessionSubscriptions = subscriptionsBySessionId.remove(sessionId);
             if (sessionSubscriptions != null) {
                 for (TbSubscription<?> subscription : sessionSubscriptions.values()) {
-                    try {
-                        modifySubscriptionResults.add(modifySubscription(subscription.getTenantId(), subscription.getEntityId(), subscription, false));
-                    } catch (Exception e) {
-                        log.warn("[{}][{}] Failed to remove subscription {} due to ", subscription.getTenantId(), subscription.getEntityId(), subscription, e);
-                    }
+                    modifySubscriptionResults.add(modifySubscription(subscription.getTenantId(), subscription.getEntityId(), subscription, false));
                 }
             } else {
                 log.debug("[{}] No session subscriptions found!", sessionId);
@@ -440,7 +436,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
                 missedUpdatesCandidate = entitySubs.registerPendingSubscription(subscription, event);
             }
         } catch (Exception e) {
-            log.warn("[{}][{}] Failed to modify subscription {} due to ", tenantId, entityId, subscription, e);
+            log.warn("[{}][{}] Failed to {} subscription {} due to ", tenantId, entityId, add ? "add" : "remove", subscription, e);
         }
         return new ModifySubscriptionResult(tenantId, entityId, subscription, missedUpdatesCandidate, event);
     }
