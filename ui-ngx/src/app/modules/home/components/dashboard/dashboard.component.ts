@@ -438,8 +438,8 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     if (this.isExportActionEnabled && this.callbacks && this.callbacks.onExportWidget) {
       widget.title$.pipe(
         take(1)
-      ).subscribe((widgetExportTitle) => {
-        this.callbacks.onExportWidget($event, widget.widget, widgetExportTitle);
+      ).subscribe((widgetTitle) => {
+        this.callbacks.onExportWidget($event, widget.widget, widgetTitle);
       });
     }
   }
