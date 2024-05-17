@@ -16,6 +16,8 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Assert;
 import org.junit.Test;
@@ -25,6 +27,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -42,8 +46,10 @@ import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
+import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.service.queue.TbRuleEngineConsumerStats;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingResult;
@@ -60,17 +66,20 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
 @TestPropertySource(properties = {
-        "queue.rule-engine.stats.max-error-message-length=100"
+        "queue.rule-engine.stats.max-error-message-length=100",
+        "transport.http.enabled=true"
 })
 public class BaseQueueControllerTest extends AbstractControllerTest {
 
@@ -82,6 +91,10 @@ public class BaseQueueControllerTest extends AbstractControllerTest {
     private TimeseriesDao timeseriesDao;
     @Autowired
     private QueueStatsService queueStatsService;
+    @SpyBean
+    private PartitionService partitionService;
+    @SpyBean
+    private TimeseriesService timeseriesService;
 
     @Test
     public void testQueueWithServiceTypeRE() throws Exception {
@@ -234,6 +247,61 @@ public class BaseQueueControllerTest extends AbstractControllerTest {
 
         String finalErrorMessage = JacksonUtil.toJsonNode(reExceptionTsKvEntry.getJsonValue().get()).get("message").asText();
         assertThat(finalErrorMessage).isEqualTo(largeExceptionMessage.substring(0, 100) + "...[truncated 50 symbols]");
+    }
+
+    @Test
+    public void testMsgDuplicationToAllPartitions_fromTransport() throws Exception {
+        loginSysAdmin();
+        Queue queue = new Queue();
+        queue.setName("RealTime");
+        queue.setTopic("tb_rule_engine.real_time");
+        queue.setPollInterval(25);
+        int partitions = 12;
+        queue.setPartitions(partitions);
+        queue.setTenantId(TenantId.SYS_TENANT_ID);
+        queue.setConsumerPerPartition(true);
+        queue.setPackProcessingTimeout(2000);
+        SubmitStrategy submitStrategy = new SubmitStrategy();
+        submitStrategy.setType(SubmitStrategyType.BURST);
+        queue.setSubmitStrategy(submitStrategy);
+        ProcessingStrategy processingStrategy = new ProcessingStrategy();
+        processingStrategy.setType(ProcessingStrategyType.RETRY_ALL);
+        processingStrategy.setRetries(0);
+        processingStrategy.setPauseBetweenRetries(3);
+        processingStrategy.setMaxPauseBetweenRetries(5);
+        queue.setProcessingStrategy(processingStrategy);
+        queue.setAdditionalInfo(JacksonUtil.newObjectNode()
+                .put("duplicateMsgToAllPartitions", true));
+        queue = doPost("/api/queues?serviceType=TB_RULE_ENGINE", queue, Queue.class);
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(partitionService.resolveAll(ServiceType.TB_RULE_ENGINE, "RealTime", tenantId, tenantId)).hasSize(partitions);
+        });
+
+        loginTenantAdmin();
+        DeviceProfile deviceProfile = createDeviceProfile("realtime");
+        deviceProfile.setDefaultQueueName(queue.getName());
+        deviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+        Device device = createDevice("test", deviceProfile.getName(), "test-token");
+
+        JsonNode payload = JacksonUtil.newObjectNode()
+                .put("test", "test");
+        doPost("/api/v1/test-token/telemetry", payload).andExpect(status().isOk());
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            verify(timeseriesService, times(partitions)).save(eq(tenantId), eq(device.getId()),
+                    argThat(ts -> ts.size() == 1 && ts.get(0).getKey().equals("test")), anyLong());
+        });
+
+        loginSysAdmin();
+        ((ObjectNode) queue.getAdditionalInfo()).put("duplicateMsgToAllPartitions", false);
+        queue = doPost("/api/queues?serviceType=" + "TB_RULE_ENGINE", queue, Queue.class);
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(partitionService.resolveAll(ServiceType.TB_RULE_ENGINE, "RealTime", tenantId, tenantId)).hasSize(1);
+        });
+
+        doDelete("/api/queues/" + queue.getUuidId()).andExpect(status().isOk());
     }
 
 }
