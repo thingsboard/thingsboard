@@ -13,22 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.ws;
+package org.thingsboard.server.service.subscription;
 
-import org.springframework.web.socket.CloseStatus;
-
-import java.io.IOException;
+import lombok.Builder;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
 
 /**
- * Created by ashvayka on 27.03.18.
+ * The modification result of entity subscription
  */
-public interface WebSocketMsgEndpoint {
+@Builder
+@Data
+public class ModifySubscriptionResult {
 
-    void send(WebSocketSessionRef sessionRef, int subscriptionId, String msg) throws IOException;
+    private TenantId tenantId;
+    private EntityId entityId;
+    private TbSubscription<?> subscription;
+    private TbSubscription<?> missedUpdatesCandidate;
+    private TbEntitySubEvent event;
 
-    void sendPing(WebSocketSessionRef sessionRef, long currentTime) throws IOException;
-
-    void close(WebSocketSessionRef sessionRef, CloseStatus withReason) throws IOException;
-
-    boolean isOpen(String sessionId);
+    public boolean hasEvent() {
+        return event != null;
+    }
 }

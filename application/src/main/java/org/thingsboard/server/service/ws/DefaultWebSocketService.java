@@ -295,6 +295,16 @@ public class DefaultWebSocketService implements WebSocketService {
         }
     }
 
+    @Override
+    public void cleanupIfStale(String sessionId) {
+        if (!msgEndpoint.isOpen(sessionId)) {
+            log.info("[{}] Cleaning up stale session ", sessionId);
+            wsSessionsMap.remove(sessionId);
+            oldSubService.cancelAllSessionSubscriptions(sessionId);
+            entityDataSubService.cancelAllSessionSubscriptions(sessionId);
+        }
+    }
+
     private void processSessionClose(WebSocketSessionRef sessionRef) {
         var tenantProfileConfiguration = getTenantProfileConfiguration(sessionRef);
         if (tenantProfileConfiguration != null) {
