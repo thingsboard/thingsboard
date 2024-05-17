@@ -176,7 +176,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         } finally {
             subsLock.unlock();
         }
-        if (!modifySubscriptionResult.isEmpty()) {
+        if (modifySubscriptionResult.hasEvent()) {
             pushSubscriptionEvent(modifySubscriptionResult);
         }
     }
@@ -234,7 +234,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         } finally {
             subsLock.unlock();
         }
-        if (modifySubscriptionResult != null && !modifySubscriptionResult.isEmpty()) {
+        if (modifySubscriptionResult != null && modifySubscriptionResult.hasEvent()) {
             pushSubscriptionEvent(modifySubscriptionResult);
         }
     }
@@ -242,13 +242,13 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     @Override
     public void cancelAllSessionSubscriptions(String sessionId) {
         log.debug("[{}] Going to remove session subscriptions.", sessionId);
-        List<ModifySubscriptionResult> modifySubscriptionResults = new ArrayList<>();
+        List<ModifySubscriptionResult> result = new ArrayList<>();
         subsLock.lock();
         try {
             Map<Integer, TbSubscription<?>> sessionSubscriptions = subscriptionsBySessionId.remove(sessionId);
             if (sessionSubscriptions != null) {
                 for (TbSubscription<?> subscription : sessionSubscriptions.values()) {
-                    modifySubscriptionResults.add(modifySubscription(subscription.getTenantId(), subscription.getEntityId(), subscription, false));
+                    result.add(modifySubscription(subscription.getTenantId(), subscription.getEntityId(), subscription, false));
                 }
             } else {
                 log.debug("[{}] No session subscriptions found!", sessionId);
@@ -256,11 +256,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         } finally {
             subsLock.unlock();
         }
-        modifySubscriptionResults.forEach(modifySubResult -> {
-            if (!modifySubResult.isEmpty()) {
-                pushSubscriptionEvent(modifySubResult);
-            }
-        });
+        result.stream().filter(ModifySubscriptionResult::hasEvent).forEach(this::pushSubscriptionEvent);
     }
 
     @Override
