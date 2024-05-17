@@ -81,6 +81,13 @@ export const resolveBreakpoint = (breakpoint: string): string => {
 
 export const helpBaseUrl = 'https://thingsboard.io';
 
+enum DocPlatformPrefix {
+  CE = '',
+  PE = '/pe',
+  CLOUD = '/paas'
+}
+export const docPlatformPrefix = DocPlatformPrefix.CE;
+
 export const HelpLinks = {
   linksMap: {
     outgoingMailSettings: helpBaseUrl + '/docs/user-guide/ui/mail-settings',

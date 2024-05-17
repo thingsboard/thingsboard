@@ -36,7 +36,7 @@ return '# Some title\n - Entity name: ' + data[0]['entityName'];
 <ul>
 <li>
 Display greetings for currently logged-in user.<br>
-Let's assume widget has first datasource configured using <code>Current User</code> <a target="_blank" href="${siteBaseUrl}/docs/user-guide/ui/aliases/#single-entity">Single entity</a> alias<br>
+Let's assume widget has first datasource configured using <code>Current User</code> <a target="_blank" href="${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/aliases/#single-entity">Single entity</a> alias<br>
 and has data keys for <code>firstName</code>, <code>lastName</code> and <code>name</code> entity fields:
 </li>
 </ul>
