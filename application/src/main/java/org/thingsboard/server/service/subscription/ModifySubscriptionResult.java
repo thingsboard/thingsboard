@@ -32,4 +32,8 @@ public class ModifySubscriptionResult {
     private TbSubscription<?> subscription;
     private TbSubscription<?> missedUpdatesCandidate;
     private TbEntitySubEvent event;
+
+    public boolean isEmpty() {
+        return event == null;
+    }
 }
