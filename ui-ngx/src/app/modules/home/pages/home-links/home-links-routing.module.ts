@@ -89,6 +89,7 @@ const applySystemParametersToHomeDashboard = (store: Store<AppState>,
               dashboard.configuration.widgets[widgetId].config.settings.markdownTextFunction =
                 (dashboard.configuration.widgets[widgetId].config.settings.markdownTextFunction as string)
                   .replace('\'${mobileQrEnabled}\'', String(true));
+              break;
             }
           }
         }
