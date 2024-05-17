@@ -23,12 +23,11 @@ import org.thingsboard.server.cache.RedisTbTransactionalCache;
 import org.thingsboard.server.cache.TBRedisCacheConfiguration;
 import org.thingsboard.server.cache.TbJsonRedisSerializer;
 import org.thingsboard.server.common.data.CacheConstants;
-import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.model.JwtPair;
 
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
 @Service("MobileSecretCache")
-public class MobileSecretRedisCache extends RedisTbTransactionalCache<UserId, JwtPair> {
+public class MobileSecretRedisCache extends RedisTbTransactionalCache<String, JwtPair> {
 
     public MobileSecretRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
         super(CacheConstants.MOBILE_SECRET_KEY_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbJsonRedisSerializer<>(JwtPair.class));
