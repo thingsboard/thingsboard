@@ -78,25 +78,7 @@ public class DefaultRuleEngineCallServiceTest {
     }
 
     @Test
-    void givenRequest_whenProcessRestApiCallToRuleEngine_thenPushMsgToRuleEngine() {
-        long timeout = 100L;
-        long expTime = System.currentTimeMillis() + timeout;
-        HashMap<String, String> metaData = new HashMap<>();
-        UUID requestId = UUID.randomUUID();
-        metaData.put("serviceId", "core");
-        metaData.put("requestUUID", requestId.toString());
-        metaData.put("expirationTime", Long.toString(expTime));
-        TbMsg msg = TbMsg.newMsg(DataConstants.MAIN_QUEUE_NAME, TbMsgType.REST_API_REQUEST, TENANT_ID, new TbMsgMetaData(metaData), "{\"key\":\"value\"}");
-        Consumer<TbMsg> anyConsumer = TbMsg::getData;
-        ruleEngineCallService.processRestApiCallToRuleEngine(TENANT_ID, requestId, msg, true, anyConsumer);
-
-        assertThat(requests.size()).isEqualTo(1);
-        assertThat(requests.get(requestId)).isEqualTo(anyConsumer);
-        verify(tbClusterServiceMock).pushMsgToRuleEngine(TENANT_ID, TENANT_ID, msg, true, null);
-    }
-
-    @Test
-    void givenSmallTimeout_whenProcessRestApiCallToRuleEngine_thenDoesNotReturnResponse() {
+    void givenRequest_whenProcessRestApiCallToRuleEngine_thenPushMsgToRuleEngineAndCheckRemovedDueTimeout() {
         long timeout = 1L;
         long expTime = System.currentTimeMillis() + timeout;
         HashMap<String, String> metaData = new HashMap<>();

@@ -193,7 +193,7 @@ public class RuleEngineController extends BaseController {
     }
 
     private void reply(LocalRequestMetaData rpcRequest, TbMsg response) {
-        DeferredResult<ResponseEntity> responseWriter = rpcRequest.responseWriter;
+        DeferredResult<ResponseEntity> responseWriter = rpcRequest.responseWriter();
         if (response == null) {
             logRuleEngineCall(rpcRequest, null, new TimeoutException("Processing timeout detected!"));
             responseWriter.setResult(new ResponseEntity<>(HttpStatus.REQUEST_TIMEOUT));
@@ -216,7 +216,7 @@ public class RuleEngineController extends BaseController {
     }
 
     private void logRuleEngineCall(LocalRequestMetaData rpcRequest, TbMsg response, Throwable e) {
-        logRuleEngineCall(rpcRequest.user, rpcRequest.request.getOriginator(), rpcRequest.request.getData(), response, e);
+        logRuleEngineCall(rpcRequest.user(), rpcRequest.request().getOriginator(), rpcRequest.request().getData(), response, e);
     }
 
     private void logRuleEngineCall(SecurityUser user, EntityId entityId, String request, TbMsg response, Throwable e) {
