@@ -198,11 +198,10 @@ export class ImportExportService {
     );
   }
 
-  public exportWidget(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget) {
+  public exportWidget(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget, widgetExportTitle: string) {
     const widgetItem = this.itembuffer.prepareWidgetItem(dashboard, sourceState, sourceLayout, widget);
-    const widgetDefaultName = this.widgetService.getWidgetInfoFromCache(widget.typeFullFqn)?.widgetName ||
-      widget.typeFullFqn.split('.').pop();
-    let fileName = widgetDefaultName + (isNotEmptyStr(widget.config.exportTitle) ? '_' + widget.config.exportTitle : '');
+    const widgetDefaultName = this.widgetService.getWidgetInfoFromCache(widget.typeFullFqn).widgetName;
+    let fileName = widgetDefaultName + (isNotEmptyStr(widgetExportTitle) ? '_' + widgetExportTitle : '');
     fileName = fileName.toLowerCase().replace(/\W/g, '_');
     this.exportToPc(this.prepareExport(widgetItem), fileName);
   }
