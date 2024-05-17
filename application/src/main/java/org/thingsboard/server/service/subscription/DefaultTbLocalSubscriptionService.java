@@ -455,7 +455,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
                 checkMissedUpdates(missedUpdatesCandidate);
             }
         } catch (Exception e) {
-            log.warn("[{}][{}] Failed to push subscription event {} due to ", modifySubResult.getTenantId(), modifySubResult.getEntityId(), modifySubResult.getSubscription(), e);
+            log.warn("[{}][{}] Failed to push subscription event {} due to ", modifySubResult.getTenantId(), modifySubResult.getEntityId(), modifySubResult.getEvent(), e);
         }
     }
 
