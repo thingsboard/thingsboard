@@ -240,14 +240,14 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     @Override
     public void cancelAllSessionSubscriptions(String sessionId) {
         log.debug("[{}] Going to remove session subscriptions.", sessionId);
-        ModifySubscriptionResult modifySubscriptionResult = null;
+        List<ModifySubscriptionResult> modifySubscriptionResults = new ArrayList<>();
         subsLock.lock();
         try {
             Map<Integer, TbSubscription<?>> sessionSubscriptions = subscriptionsBySessionId.remove(sessionId);
             if (sessionSubscriptions != null) {
                 for (TbSubscription<?> subscription : sessionSubscriptions.values()) {
                     try {
-                        modifySubscriptionResult = modifySubscription(subscription.getTenantId(), subscription.getEntityId(), subscription, false);
+                        modifySubscriptionResults.add(modifySubscription(subscription.getTenantId(), subscription.getEntityId(), subscription, false));
                     } catch (Exception e) {
                         log.warn("[{}][{}] Failed to remove subscription {} due to ", subscription.getTenantId(), subscription.getEntityId(), subscription, e);
                     }
@@ -258,9 +258,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         } finally {
             subsLock.unlock();
         }
-        if (modifySubscriptionResult != null) {
-            pushSubscriptionEvent(modifySubscriptionResult);
-        }
+        modifySubscriptionResults.forEach(this::pushSubscriptionEvent);
     }
 
     @Override
