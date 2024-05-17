@@ -118,7 +118,7 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
   ngOnInit(): void {
     this.widgetActionFormGroup = this.fb.group({
       actionSourceId: [this.action.actionSourceId, Validators.required],
-      columnIndex: [this.checkColumnIndex(this.action.columnIndex), Validators.required],
+      columnIndex: [this.checkColumnIndex(this.action.columnIndex)],
       name: [this.action.name, [this.validateActionName(), Validators.required]],
       icon: [this.action.icon, Validators.required],
       useShowWidgetActionFunction: [this.action.useShowWidgetActionFunction],
@@ -147,6 +147,8 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
     setTimeout(() => {
       if (this.action?.actionSourceId === 'cellClick' && isDefinedAndNotNull(this.action.columnIndex) &&
         this.widgetActionFormGroup.get('columnIndex').value === null) {
+        this.widgetActionFormGroup.get('columnIndex').setValidators([Validators.required]);
+        this.widgetActionFormGroup.get('columnIndex').updateValueAndValidity();
         this.columnIndexPlaceholderText = `${this.action.columnIndex} (${this.translate.instant('widget-config.not-set')})`;
         this.columnIndexSelect.focus();
       }
