@@ -1102,16 +1102,24 @@ public class DefaultTransportService extends TransportActivityManager implements
     }
 
     private void sendToRuleEngine(TenantId tenantId, TbMsg tbMsg, TbQueueCallback callback) {
-        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, tbMsg.getQueueName(), tenantId, tbMsg.getOriginator());
-        if (log.isTraceEnabled()) {
-            log.trace("[{}][{}] Pushing to topic {} message {}", tenantId, tbMsg.getOriginator(), tpi.getFullTopicName(), tbMsg);
+        List<TopicPartitionInfo> tpis = partitionService.resolveAll(ServiceType.TB_RULE_ENGINE, tbMsg.getQueueName(), tenantId, tbMsg.getOriginator());
+        for (int i = 0; i < tpis.size(); i++) {
+            TopicPartitionInfo tpi = tpis.get(i);
+            tbMsg = tbMsg.withPartition(tpi.getPartition().orElse(null));
+            if (i > 0) {
+                tbMsg = tbMsg.withId(UUID.randomUUID());
+            }
+
+            if (log.isTraceEnabled()) {
+                log.trace("[{}][{}] Pushing to topic {} message {}", tenantId, tbMsg.getOriginator(), tpi.getFullTopicName(), tbMsg);
+            }
+            ToRuleEngineMsg msg = ToRuleEngineMsg.newBuilder().setTbMsg(TbMsg.toByteString(tbMsg))
+                    .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                    .setTenantIdLSB(tenantId.getId().getLeastSignificantBits()).build();
+            ruleEngineProducerStats.incrementTotal();
+            StatsCallback wrappedCallback = new StatsCallback(callback, ruleEngineProducerStats);
+            ruleEngineMsgProducer.send(tpi, new TbProtoQueueMsg<>(tbMsg.getId(), msg), wrappedCallback);
         }
-        ToRuleEngineMsg msg = ToRuleEngineMsg.newBuilder().setTbMsg(TbMsg.toByteString(tbMsg))
-                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
-                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits()).build();
-        ruleEngineProducerStats.incrementTotal();
-        StatsCallback wrappedCallback = new StatsCallback(callback, ruleEngineProducerStats);
-        ruleEngineMsgProducer.send(tpi, new TbProtoQueueMsg<>(tbMsg.getId(), msg), wrappedCallback);
     }
 
     private void sendToRuleEngine(TenantId tenantId, DeviceId deviceId, CustomerId customerId, TransportProtos.SessionInfoProto sessionInfo, JsonObject json,

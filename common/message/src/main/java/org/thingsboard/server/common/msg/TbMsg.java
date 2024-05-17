@@ -19,8 +19,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
+import lombok.With;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
@@ -42,6 +44,7 @@ import java.util.UUID;
  */
 @Data
 @Slf4j
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public final class TbMsg implements Serializable {
 
     public static final String EMPTY_JSON_OBJECT = "{}";
@@ -49,6 +52,7 @@ public final class TbMsg implements Serializable {
     public static final String EMPTY_STRING = "";
 
     private final String queueName;
+    @With
     private final UUID id;
     private final long ts;
     private final String type;
@@ -60,6 +64,9 @@ public final class TbMsg implements Serializable {
     private final String data;
     private final RuleChainId ruleChainId;
     private final RuleNodeId ruleNodeId;
+    @With
+    private final Integer partition;
+
     @Getter(value = AccessLevel.NONE)
     @JsonIgnore
     //This field is not serialized because we use queues and there is no need to do it
@@ -328,6 +335,11 @@ public final class TbMsg implements Serializable {
 
     private TbMsg(String queueName, UUID id, long ts, TbMsgType internalType, String type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, TbMsgDataType dataType, String data,
                   RuleChainId ruleChainId, RuleNodeId ruleNodeId, TbMsgProcessingCtx ctx, TbMsgCallback callback) {
+        this(queueName, id, ts, internalType, type, originator, customerId, metaData, dataType, data, ruleChainId, ruleNodeId, null, ctx, callback);
+    }
+
+    private TbMsg(String queueName, UUID id, long ts, TbMsgType internalType, String type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, TbMsgDataType dataType, String data,
+                  RuleChainId ruleChainId, RuleNodeId ruleNodeId, Integer partition, TbMsgProcessingCtx ctx, TbMsgCallback callback) {
         this.id = id;
         this.queueName = queueName;
         if (ts > 0) {
@@ -352,6 +364,7 @@ public final class TbMsg implements Serializable {
         this.data = data;
         this.ruleChainId = ruleChainId;
         this.ruleNodeId = ruleNodeId;
+        this.partition = partition;
         this.ctx = ctx != null ? ctx : new TbMsgProcessingCtx();
         this.callback = Objects.requireNonNullElse(callback, TbMsgCallback.EMPTY);
     }
@@ -391,6 +404,10 @@ public final class TbMsg implements Serializable {
         builder.setDataType(msg.getDataType().ordinal());
         builder.setData(msg.getData());
 
+        if (msg.getPartition() != null) {
+            builder.setPartition(msg.getPartition());
+        }
+
         builder.setCtx(msg.ctx.toProto());
         return builder.build().toByteArray();
     }
@@ -403,6 +420,7 @@ public final class TbMsg implements Serializable {
             CustomerId customerId = null;
             RuleChainId ruleChainId = null;
             RuleNodeId ruleNodeId = null;
+            Integer partition = null;
             if (proto.getCustomerIdMSB() != 0L && proto.getCustomerIdLSB() != 0L) {
                 customerId = new CustomerId(new UUID(proto.getCustomerIdMSB(), proto.getCustomerIdLSB()));
             }
@@ -411,6 +429,9 @@ public final class TbMsg implements Serializable {
             }
             if (proto.getRuleNodeIdMSB() != 0L && proto.getRuleNodeIdLSB() != 0L) {
                 ruleNodeId = new RuleNodeId(new UUID(proto.getRuleNodeIdMSB(), proto.getRuleNodeIdLSB()));
+            }
+            if (proto.hasPartition()) {
+                partition = proto.getPartition();
             }
 
             TbMsgProcessingCtx ctx;
@@ -423,7 +444,7 @@ public final class TbMsg implements Serializable {
 
             TbMsgDataType dataType = TbMsgDataType.values()[proto.getDataType()];
             return new TbMsg(queueName, UUID.fromString(proto.getId()), proto.getTs(), null, proto.getType(), entityId, customerId,
-                    metaData, dataType, proto.getData(), ruleChainId, ruleNodeId, ctx, callback);
+                    metaData, dataType, proto.getData(), ruleChainId, ruleNodeId, partition, ctx, callback);
         } catch (InvalidProtocolBufferException e) {
             throw new IllegalStateException("Could not parse protobuf for TbMsg", e);
         }
