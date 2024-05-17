@@ -22,7 +22,7 @@ import {
   ElementRef,
   EventEmitter,
   Input,
-  NgModule,
+  NgModule, OnDestroy,
   Output,
   Type,
   ViewChild,
@@ -33,6 +33,7 @@ import { ScadaSymbolElement } from '@home/pages/scada-symbol/scada-symbol.models
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
 import { ENTER } from '@angular/cdk/keycodes';
+import Timeout = NodeJS.Timeout;
 
 @Directive()
 abstract class ScadaSymbolPanelComponent implements AfterViewInit {
@@ -98,7 +99,7 @@ class ScadaSymbolAddTagPanelComponent extends ScadaSymbolPanelComponent {
   styleUrls: ['./scada-symbol-tooltip.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
-class ScadaSymbolTagInputPanelComponent extends ScadaSymbolPanelComponent implements AfterViewInit {
+class ScadaSymbolTagInputPanelComponent extends ScadaSymbolPanelComponent implements AfterViewInit, OnDestroy {
 
   @ViewChild('tagField')
   tagField: ElementRef<HTMLInputElement>;
@@ -117,6 +118,8 @@ class ScadaSymbolTagInputPanelComponent extends ScadaSymbolPanelComponent implem
 
   private closed = false;
 
+  private blurTimeout: Timeout;
+
   constructor(public element: ElementRef<HTMLElement>) {
     super(element);
   }
@@ -126,6 +129,13 @@ class ScadaSymbolTagInputPanelComponent extends ScadaSymbolPanelComponent implem
     setTimeout(() => {
       this.tagField.nativeElement.focus();
     });
+  }
+
+  ngOnDestroy() {
+    if (this.blurTimeout) {
+      clearTimeout(this.blurTimeout);
+      this.blurTimeout = null;
+    }
   }
 
   public tagEnter($event: KeyboardEvent) {
@@ -153,7 +163,7 @@ class ScadaSymbolTagInputPanelComponent extends ScadaSymbolPanelComponent implem
   }
 
   public onBlur() {
-    setTimeout(() => {
+    this.blurTimeout = setTimeout(() => {
       if (!this.closed) {
         this.closed = true;
         this.cancel.emit();
@@ -219,7 +229,7 @@ class ScadaSymbolTagPanelComponent extends ScadaSymbolPanelComponent implements 
 export class ScadaSymbolTooltipComponentsModule { }
 
 export const setupAddTagPanelTooltip = (symbolElement: ScadaSymbolElement, container: ViewContainerRef) => {
-  symbolElement.setEditing(false);
+  symbolElement.stopEdit();
   symbolElement.tooltip.off('close');
   const componentRef = setTooltipComponent(symbolElement, container, ScadaSymbolAddTagPanelComponent);
   componentRef.instance.addTag.subscribe(() => {
@@ -229,7 +239,7 @@ export const setupAddTagPanelTooltip = (symbolElement: ScadaSymbolElement, conta
 };
 
 export const setupTagPanelTooltip = (symbolElement: ScadaSymbolElement, container: ViewContainerRef) => {
-  symbolElement.setEditing(false);
+  symbolElement.stopEdit();
   symbolElement.unhighlight();
   const componentRef = setTooltipComponent(symbolElement, container, ScadaSymbolTagPanelComponent);
   componentRef.instance.updateTag.subscribe(() => {
@@ -244,7 +254,17 @@ export const setupTagPanelTooltip = (symbolElement: ScadaSymbolElement, containe
 };
 
 const setupTagInputPanelTooltip = (symbolElement: ScadaSymbolElement, container: ViewContainerRef, isAdd: boolean) => {
-  symbolElement.setEditing(true);
+
+  symbolElement.startEdit(() => {
+    if (isAdd) {
+      symbolElement.unhighlight();
+      symbolElement.tooltip.close();
+    } else {
+      componentRef.destroy();
+      setupTagPanelTooltip(symbolElement, container);
+    }
+  });
+
   const componentRef = setTooltipComponent(symbolElement, container, ScadaSymbolTagInputPanelComponent);
 
   componentRef.instance.isAdd = isAdd;
@@ -259,13 +279,7 @@ const setupTagInputPanelTooltip = (symbolElement: ScadaSymbolElement, container:
     symbolElement.setTag(newTag);
   });
   componentRef.instance.cancel.subscribe(() => {
-    if (isAdd) {
-      symbolElement.unhighlight();
-      symbolElement.tooltip.close();
-    } else {
-      componentRef.destroy();
-      setupTagPanelTooltip(symbolElement, container);
-    }
+    symbolElement.stopEdit(true);
   });
   if (isAdd) {
     symbolElement.tooltip.option('delay', [0, 10000000]);
@@ -283,7 +297,7 @@ const setTooltipComponent = <T extends ScadaSymbolPanelComponent>(symbolElement:
   componentRef.instance.symbolElement = symbolElement;
   componentRef.instance.viewInited.subscribe(() => {
     if (symbolElement.tooltip.status().open) {
-      symbolElement.repositionTooltip();
+      symbolElement.tooltip.reposition();
     }
   });
   const parentElement = componentRef.instance.element.nativeElement;

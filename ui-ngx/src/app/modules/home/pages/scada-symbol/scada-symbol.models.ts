@@ -71,8 +71,8 @@ export class ScadaSymbolEditObject {
     this.shapeResize$.observe(this.rootElement);
   }
 
-  public editingElement() {
-    return this.elements.find(e => e.isEditing());
+  public cancelEdit() {
+    this.elements.filter(e => e.isEditing()).forEach(e => e.stopEdit(true));
   }
 
   private doSetup() {
@@ -300,6 +300,7 @@ export class ScadaSymbolElement {
   public tag: string;
 
   private editing = false;
+  private onCancelEdit: () => void;
 
   private innerTooltipOffset = 0;
 
@@ -373,7 +374,7 @@ export class ScadaSymbolElement {
         this.element.addClass('hovered');
       }
       if (this.hasTag()) {
-        this.repositionTooltip();
+        this.tooltip.reposition();
         $(this.tooltip.elementTooltip()).addClass('tb-active');
       }
     }
@@ -396,13 +397,6 @@ export class ScadaSymbolElement {
     }
   }
 
-  public repositionTooltip() {
-    const editingElement = this.editObject.editingElement();
-    if (!editingElement || editingElement === this) {
-      this.tooltip.reposition();
-    }
-  }
-
   public clearTag() {
     this.tooltip.destroy();
     this.tag = null;
@@ -418,10 +412,24 @@ export class ScadaSymbolElement {
     this.createTagTooltip();
   }
 
-  public setEditing(editing: boolean) {
-    this.editing = editing;
-    if (this.hasTag() && !this.editing && !this.highlighted) {
-      $(this.tooltip.elementTooltip()).removeClass('tb-active');
+  public startEdit(onCancelEdit: () => void) {
+    if (!this.editing) {
+      this.editObject.cancelEdit();
+      this.editing = true;
+      this.onCancelEdit = onCancelEdit;
+    }
+  }
+
+  public stopEdit(cancel = false) {
+    if (this.editing) {
+      this.editing = false;
+      if (cancel && this.onCancelEdit) {
+        this.onCancelEdit();
+      }
+      this.onCancelEdit = null;
+      if (this.hasTag() && !this.highlighted) {
+        $(this.tooltip.elementTooltip()).removeClass('tb-active');
+      }
     }
   }
 
@@ -490,78 +498,6 @@ export class ScadaSymbolElement {
 
   private setupTagPanel() {
     setupTagPanelTooltip(this, this.editObject.viewContainerRef);
-    /*this.isEditing = false;
-    this.unhighlight();
-    const tagPanel =
-      $(`<div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
-           <span>${this.element.type}:</span>
-           <span><b>${this.tag}</b></span>
-           <span style="cursor: pointer;" class="edit-icon mat-icon tb-mat-18 material-icons">edit</span>
-           <span style="cursor: pointer;" class="delete-icon mat-icon tb-mat-18 material-icons">delete</span>
-         </div>`);
-    const updateTagButton = tagPanel.find('.edit-icon');
-    textTooltip(updateTagButton, 'Update tag');
-    updateTagButton.on('click', () => {
-      this.setupEditTagPanel();
-    });
-    const deleteButton = tagPanel.find('.delete-icon');
-    textTooltip(deleteButton, 'Remove tag');
-    deleteButton.on('click', () => {
-      this.clearTag();
-    });
-    this.tooltip.content(tagPanel);
-    this.tooltip.open();*/
-  }
-
-  private setupEditTagPanel() {
-    this.editing = true;
-    const editTagInputPanel =
-      $(`<div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
-          <span>Update tag:</span>
-          <input class="tag-input"/>
-          <span style="cursor: pointer;" class="apply-icon mat-icon tb-mat-18 material-icons">done</span>
-          <span style="cursor: pointer;" class="close-icon mat-icon tb-mat-18 material-icons">close</span>
-         </div>`);
-    const tagInput = editTagInputPanel.find('input.tag-input');
-    const applyTagButton = editTagInputPanel.find('span.apply-icon');
-    const closeButton = editTagInputPanel.find('span.close-icon');
-    textTooltip(applyTagButton, 'Apply');
-    textTooltip(closeButton, 'Cancel');
-    tagInput.val(this.tag);
-    let editPanelClosed = false;
-
-    tagInput.on('keypress', (event) => {
-      if (event.which === 13) {
-        const newTag: string = tagInput.val() as string;
-        if (newTag) {
-          editPanelClosed = true;
-          this.setTag(newTag);
-        }
-      }
-    });
-    applyTagButton.on('click', () => {
-      const newTag: string = tagInput.val() as string;
-      editPanelClosed = true;
-      if (newTag) {
-        this.setTag(newTag);
-      } else {
-        this.setupTagPanel();
-      }
-    });
-    closeButton.on('click', () => {
-      editPanelClosed = true;
-      this.setupTagPanel();
-    });
-    tagInput.on('blur', () => {
-      setTimeout(() => {
-        if (!editPanelClosed) {
-          editPanelClosed = true;
-          this.setupTagPanel();
-        }
-      });
-    });
-    this.tooltip.content(editTagInputPanel);
-    tagInput.trigger('focus');
   }
 
   private createAddTagTooltip() {
@@ -609,105 +545,6 @@ export class ScadaSymbolElement {
 
   private setupAddTagPanel() {
     setupAddTagPanelTooltip(this, this.editObject.viewContainerRef);
-    /*this.isEditing = false;
-    this.tooltip.off('close');
-    this.editObject.dynamicComponentFactoryService.createDynamicComponent(
-      class TbTooltipComponentInstance extends TbTooltipContent {},
-      `<div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
-          <span>${this.element.type}:</span>
-          <button mat-stroked-button color="primary" (click)="addTag.emit()">Add tag</button>
-         </div>`,
-      [this.editObject.sharedModule]
-    ).subscribe(componentData => {
-      const tooltipComponentRef =
-        this.editObject.viewContainerRef.createComponent(componentData.componentType,
-          {index: 0, ngModuleRef: componentData.componentModuleRef});
-      tooltipComponentRef.instance.componentType = componentData.componentType;
-      tooltipComponentRef.instance.dynamicComponentFactoryService = this.editObject.dynamicComponentFactoryService;
-      tooltipComponentRef.instance.addTag = new EventEmitter();
-      tooltipComponentRef.instance.addTag.subscribe(() => {
-        tooltipComponentRef.destroy();
-        this.setupAddTagInputPanel();
-      });
-      const parentElement = tooltipComponentRef.instance.element.nativeElement;
-      const content = parentElement.firstChild;
-      parentElement.removeChild(content);
-      parentElement.style.display = 'none';
-      this.tooltip.content(content);
-    });*/
-    /*
-    const addTagPanel =
-        $(`<div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
-            <span>${this.element.type}:</span>
-            <button class="add-tag-button mdc-button
-            mdc-button--outlined mat-mdc-outlined-button mat-primary mat-mdc-button-base">Add tag</button>
-           </div>`);
-      const addTagButton = addTagPanel.find('.add-tag-button');
-      addTagButton.on('click', () => {
-        this.setupAddTagInputPanel();
-      });
-      this.tooltip.content(addTagPanel);
-      */
-    // this.tooltip.off('closing');
-  }
-
-  private setupAddTagInputPanel() {
-    this.editing = true;
-    const addTagInputPanel =
-      $(`<div style="display: flex; flex-direction: row; align-items: center; gap: 8px;">
-          <span>Enter tag:</span>
-          <input class="tag-input"/>
-          <span style="cursor: pointer;" class="apply-icon mat-icon tb-mat-18 material-icons">done</span>
-          <span style="cursor: pointer;" class="close-icon mat-icon tb-mat-18 material-icons">close</span>
-         </div>`);
-    const tagInput = addTagInputPanel.find('input.tag-input');
-    const applyTagButton = addTagInputPanel.find('span.apply-icon');
-    const closeButton = addTagInputPanel.find('span.close-icon');
-    textTooltip(applyTagButton, 'Apply');
-    textTooltip(closeButton, 'Cancel');
-
-    let addPanelClosed = false;
-    tagInput.on('keypress', (event) => {
-      if (event.which === 13) {
-        const newTag: string = tagInput.val() as string;
-        if (newTag) {
-          addPanelClosed = true;
-          this.tooltip.off('close');
-          this.setTag(newTag);
-        }
-      }
-    });
-    applyTagButton.on('click', () => {
-      const newTag: string = tagInput.val() as string;
-      addPanelClosed = true;
-      if (newTag) {
-        this.tooltip.off('close');
-        this.setTag(newTag);
-      } else {
-        this.unhighlight();
-        this.tooltip.close();
-      }
-    });
-    closeButton.on('click', () => {
-      addPanelClosed = true;
-      this.unhighlight();
-      this.tooltip.close();
-    });
-    tagInput.on('blur', () => {
-      setTimeout(() => {
-        if (!addPanelClosed) {
-          addPanelClosed = true;
-          this.tooltip.close();
-        }
-      });
-    });
-    this.tooltip.content(addTagInputPanel);
-    this.tooltip.option('delay', [0, 10000000]);
-    this.tooltip.on('close', () => {
-      this.tooltip.option('delay', [0, 300]);
-      this.setupAddTagPanel();
-    });
-    tagInput.trigger('focus');
   }
 
   private innerTagTooltipPosition(instance: ITooltipsterInstance, helper: ITooltipsterHelper,
