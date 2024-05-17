@@ -466,6 +466,8 @@ mat-icon {
     background: rgba(0, 0, 0, 0.54);
     border: 1px solid rgba(0, 0, 0, 0);
     border-radius: 8px;
+    display: flex;
+    align-items: center;
     .tooltipster-content {
       padding: 4px 8px;
       font-size: 12px;
@@ -480,7 +482,7 @@ mat-icon {
       border: 1px solid rgba(0, 0, 0, 0.38);
       box-shadow: 0 0 10px 6px rgba(0, 0, 0, .2);
       .tooltipster-content {
-        color: #000;
+        color: rgba(0, 0, 0, 0.76);
       }
     }
     .tooltipster-arrow {
@@ -547,6 +549,11 @@ mat-icon {
           }
         }
       }
+    }
+  }
+  &.tooltipster-left, &.tooltipster-right {
+    .tooltipster-box {
+      min-height: 36px;
     }
   }
   &.tooltipster-top {

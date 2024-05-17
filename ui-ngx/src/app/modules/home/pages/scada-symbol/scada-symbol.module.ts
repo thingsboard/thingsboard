@@ -19,16 +19,20 @@ import { CommonModule } from '@angular/common';
 import { SharedModule } from '@app/shared/shared.module';
 import { HomeComponentsModule } from '@modules/home/components/home-components.module';
 import { ScadaSymbolComponent } from '@home/pages/scada-symbol/scada-symbol.component';
+import { ScadaSymbolEditorComponent } from '@home/pages/scada-symbol/scada-symbol-editor.component';
+import { ScadaSymbolTooltipComponentsModule } from '@home/pages/scada-symbol/scada-symbol-tooltip.components';
 
 @NgModule({
   declarations:
     [
+      ScadaSymbolEditorComponent,
       ScadaSymbolComponent
     ],
   imports: [
     CommonModule,
     SharedModule,
-    HomeComponentsModule
+    HomeComponentsModule,
+    ScadaSymbolTooltipComponentsModule
   ]
 })
 export class ScadaSymbolModule { }

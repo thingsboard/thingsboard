@@ -14,16 +14,7 @@
 /// limitations under the License.
 ///
 
-import {
-  AfterViewInit,
-  Component,
-  ElementRef,
-  HostBinding,
-  OnDestroy,
-  OnInit,
-  ViewChild,
-  ViewEncapsulation
-} from '@angular/core';
+import { AfterViewInit, Component, HostBinding, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -31,11 +22,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { ScadaSymbolData } from '@home/pages/scada-symbol/scada-symbol.models';
-import {
-  IotSvgEditObject,
-  IotSvgMetadata,
-  parseIotSvgMetadataFromContent
-} from '@home/components/widget/lib/svg/iot-svg.models';
+import { IotSvgMetadata, parseIotSvgMetadataFromContent } from '@home/components/widget/lib/svg/iot-svg.models';
 
 @Component({
   selector: 'tb-scada-symbol',
@@ -48,12 +35,7 @@ export class ScadaSymbolComponent extends PageComponent implements OnInit, OnDes
   @HostBinding('style.width') width = '100%';
   @HostBinding('style.height') height = '100%';
 
-  @ViewChild('iotSvgShape', {static: false})
-  iotSvgShape: ElementRef<HTMLElement>;
-
   symbolData: ScadaSymbolData;
-
-  iotSvgObjectEdit: IotSvgEditObject;
   metadata: IotSvgMetadata;
 
   private destroy$ = new Subject<void>();
@@ -76,10 +58,6 @@ export class ScadaSymbolComponent extends PageComponent implements OnInit, OnDes
   }
 
   ngAfterViewInit() {
-    this.iotSvgObjectEdit = new IotSvgEditObject(this.iotSvgShape.nativeElement);
-    if (this.symbolData) {
-      this.iotSvgObjectEdit.setContent(this.symbolData.svgContent);
-    }
   }
 
   ngOnDestroy() {
@@ -94,9 +72,6 @@ export class ScadaSymbolComponent extends PageComponent implements OnInit, OnDes
   private init() {
     this.symbolData = this.route.snapshot.data.symbolData;
     this.metadata = parseIotSvgMetadataFromContent(this.symbolData.svgContent);
-    if (this.iotSvgObjectEdit) {
-      this.iotSvgObjectEdit.setContent(this.symbolData.svgContent);
-    }
   }
 }
 

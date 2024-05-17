@@ -35,7 +35,7 @@
           </tb-details-panel>
         </mat-drawer>
         <mat-drawer-content class="tb-scada-symbol-content">
-          <div class="tb-scada-symbol-shape" #iotSvgShape></div>
+          <tb-scada-symbol-editor [svgContent]="symbolData?.svgContent"></tb-scada-symbol-editor>
         </mat-drawer-content>
       </mat-drawer-container>
     </div>
