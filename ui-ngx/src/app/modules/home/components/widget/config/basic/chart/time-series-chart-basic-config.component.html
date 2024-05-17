@@ -27,7 +27,7 @@
   </tb-datasources>
   <div class="tb-form-panel">
     <div fxLayout="row" fxLayoutAlign="space-between center">
-      <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ seriesMode === 'comparison' ? ('widgets.chart.series-hint' | translate) : null }}">
+      <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ seriesMode === 'comparison' ? ('widgets.time-series-chart.comparison.comparison-hint' | translate) : null }}">
         {{ 'widgets.chart.series' | translate }}
       </div>
       <tb-toggle-select [ngModel]="seriesMode" (ngModelChange)="seriesModeChange($event)"
