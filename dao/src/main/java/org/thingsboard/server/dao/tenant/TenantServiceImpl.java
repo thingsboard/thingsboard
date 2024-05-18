@@ -38,6 +38,9 @@ import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
+import org.thingsboard.server.dao.mobile.MobileAppSettingsService;
+import org.thingsboard.server.dao.notification.NotificationRequestService;
+import org.thingsboard.server.dao.notification.NotificationRuleService;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
@@ -77,6 +80,8 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
     private AdminSettingsService adminSettingsService;
     @Autowired
     private NotificationSettingsService notificationSettingsService;
+    @Autowired
+    private MobileAppSettingsService mobileAppSettingsService;
     @Autowired
     private TenantDataValidator tenantValidator;
     @Autowired
@@ -161,6 +166,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
 
         userService.deleteAllByTenantId(tenantId);
         adminSettingsService.deleteAdminSettingsByTenantId(tenantId);
+        mobileAppSettingsService.deleteByTenantId(tenantId);
         notificationSettingsService.deleteNotificationSettings(tenantId);
         tenantDao.removeById(tenantId, tenantId.getId());
         publishEvictEvent(new TenantEvictEvent(tenantId, true));

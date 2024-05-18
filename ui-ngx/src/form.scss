@@ -234,6 +234,12 @@
     }
     .fixed-title-width {
       min-width: 200px;
+
+      &-230 {
+        min-width: 230px;
+      }
+    }
+    [class^="fixed-title-width"] {
       @media #{$mat-xs} {
         min-width: fit-content;
       }
@@ -263,8 +269,14 @@
     &.row {
       flex-direction: row;
     }
+    &.row-reverse {
+      flex-direction: row-reverse;
+    }
     &.column {
       flex-direction: column;
+    }
+    &.center {
+      justify-content: center;
     }
     &.flex-start {
       justify-content: flex-start;
@@ -289,6 +301,9 @@
     }
     &.fill-height {
       height: 100%;
+    }
+    &.shrink {
+      flex: 0;
     }
   }
 
