@@ -26,9 +26,4 @@ public interface CoapServerService {
     CoapServer getCoapServer() throws UnknownHostException;
 
     ConcurrentMap<InetSocketAddress, TbCoapDtlsSessionInfo> getDtlsSessionsMap();
-
-    long getTimeout();
-
-    long getPiggybackTimeout();
-
 }
