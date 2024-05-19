@@ -50,7 +50,7 @@ import static org.eclipse.californium.scandium.config.DtlsConfig.DtlsRole.SERVER
 
 @Getter
 @Slf4j
-@ConditionalOnProperty(prefix = "coap.dtls", value = "enabled", havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(prefix = "coap.dtls", value = "enabled", havingValue = "true")
 @Component
 public class TbCoapDtlsSettings {
 
