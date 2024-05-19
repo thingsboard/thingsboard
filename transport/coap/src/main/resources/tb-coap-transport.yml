@@ -133,7 +133,7 @@ redis:
 transport:
   # Local CoAP transport parameters
   coap:
-    # Enable/disable coap protocol.
+    # Enable/disable coap transport protocol.
     enabled: "${COAP_ENABLED:true}"
     # CoaP processing timeout in milliseconds
     timeout: "${COAP_TIMEOUT:10000}"
