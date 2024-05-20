@@ -14,7 +14,16 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, HostBinding, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  HostBinding,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  ViewEncapsulation
+} from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -23,6 +32,12 @@ import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { ScadaSymbolData } from '@home/pages/scada-symbol/scada-symbol.models';
 import { IotSvgMetadata, parseIotSvgMetadataFromContent } from '@home/components/widget/lib/svg/iot-svg.models';
+import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
+import { deepClone } from '@core/utils';
+import {
+  ScadaSymbolEditorComponent,
+  ScadaSymbolEditorData
+} from '@home/pages/scada-symbol/scada-symbol-editor.component';
 
 @Component({
   selector: 'tb-scada-symbol',
@@ -35,26 +50,41 @@ export class ScadaSymbolComponent extends PageComponent implements OnInit, OnDes
   @HostBinding('style.width') width = '100%';
   @HostBinding('style.height') height = '100%';
 
+  @ViewChild('symbolEditor')
+  symbolEditor: ScadaSymbolEditorComponent;
+
   symbolData: ScadaSymbolData;
+  symbolEditorData: ScadaSymbolEditorData;
   metadata: IotSvgMetadata;
+
+  previewMode = false;
+
+  scadaSymbolFormGroup: UntypedFormGroup;
 
   private destroy$ = new Subject<void>();
 
+  private origSymbolData: ScadaSymbolData;
+
   constructor(protected store: Store<AppState>,
               private router: Router,
-              private route: ActivatedRoute) {
+              private route: ActivatedRoute,
+              private fb: UntypedFormBuilder,
+              private cd: ChangeDetectorRef) {
     super(store);
+  }
+
+  ngOnInit(): void {
+    this.scadaSymbolFormGroup = this.fb.group({
+      metadata: [null]
+    });
     this.route.data.pipe(
       takeUntil(this.destroy$)
     ).subscribe(
       () => {
         this.reset();
-        this.init();
+        this.init(this.route.snapshot.data.symbolData);
       }
     );
-  }
-
-  ngOnInit(): void {
   }
 
   ngAfterViewInit() {
@@ -66,12 +96,33 @@ export class ScadaSymbolComponent extends PageComponent implements OnInit, OnDes
     this.destroy$.complete();
   }
 
-  private reset(): void {
+  onApplyScadaSymbolConfig() {
+    if (this.scadaSymbolFormGroup.valid) {
+      const svgContent = this.symbolEditor.getContent();
+      console.log(svgContent);
+    }
   }
 
-  private init() {
-    this.symbolData = this.route.snapshot.data.symbolData;
+  onRevertScadaSymbolConfig() {
+    this.init(this.origSymbolData);
+  }
+
+  private reset(): void {
+    this.previewMode = false;
+  }
+
+  private init(data: ScadaSymbolData) {
+    this.origSymbolData = data;
+    this.symbolData = deepClone(data);
+    this.symbolEditorData = {
+      svgContent: this.symbolData.svgContent
+    };
     this.metadata = parseIotSvgMetadataFromContent(this.symbolData.svgContent);
+    this.scadaSymbolFormGroup.patchValue({
+      metadata: this.metadata
+    }, {emitEvent: false});
+    this.scadaSymbolFormGroup.markAsPristine();
+    this.cd.markForCheck();
   }
 }
 

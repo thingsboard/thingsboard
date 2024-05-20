@@ -21,12 +21,14 @@ import { HomeComponentsModule } from '@modules/home/components/home-components.m
 import { ScadaSymbolComponent } from '@home/pages/scada-symbol/scada-symbol.component';
 import { ScadaSymbolEditorComponent } from '@home/pages/scada-symbol/scada-symbol-editor.component';
 import { ScadaSymbolTooltipComponentsModule } from '@home/pages/scada-symbol/scada-symbol-tooltip.components';
+import { ScadaSymbolMetadataComponent } from '@home/pages/scada-symbol/scada-symbol-metadata.component';
 
 @NgModule({
   declarations:
     [
       ScadaSymbolEditorComponent,
-      ScadaSymbolComponent
+      ScadaSymbolComponent,
+      ScadaSymbolMetadataComponent
     ],
   imports: [
     CommonModule,

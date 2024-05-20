@@ -30,6 +30,12 @@ import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 import TooltipPositioningSide = JQueryTooltipster.TooltipPositioningSide;
 import ITooltipsterHelper = JQueryTooltipster.ITooltipsterHelper;
 import ITooltipPosition = JQueryTooltipster.ITooltipPosition;
+import {
+  innerSvgContent,
+  innerSvgContentFromSvgjs,
+  stripSvgMetadata,
+  svgRootNodePart
+} from '@home/components/widget/lib/svg/iot-svg.models';
 
 export interface ScadaSymbolData {
   imageResource: ImageResourceInfo;
@@ -39,12 +45,15 @@ export interface ScadaSymbolData {
 export class ScadaSymbolEditObject {
 
   public svgShape: Svg;
+  private svgRootNodePart: string;
   private box: Box;
   private elements: ScadaSymbolElement[] = [];
   private readonly shapeResize$: ResizeObserver;
   private performSetup = false;
   private hoverFilterStyle: Style;
   public scale = 1;
+
+  public dirty = false;
   constructor(private rootElement: HTMLElement,
               public viewContainerRef: ViewContainerRef) {
     this.shapeResize$ = new ResizeObserver(() => {
@@ -55,11 +64,17 @@ export class ScadaSymbolEditObject {
   public setContent(svgContent: string) {
     this.shapeResize$.unobserve(this.rootElement);
     if (this.svgShape) {
-      this.elements.length = 0;
+      this.destroyElements();
       this.svgShape.remove();
     }
-    const doc: XMLDocument = new DOMParser().parseFromString(svgContent, 'image/svg+xml');
-    this.svgShape = SVG().addTo(this.rootElement).svg(doc.documentElement.innerHTML);
+    this.scale = 1;
+    this.dirty = false;
+    this.svgRootNodePart = svgRootNodePart(svgContent);
+    svgContent = innerSvgContent(svgContent);
+    svgContent = stripSvgMetadata(svgContent);
+    console.log(svgContent);
+    // const doc: XMLDocument = new DOMParser().parseFromString(svgContent, 'image/svg+xml');
+    this.svgShape = SVG().addTo(this.rootElement).svg(svgContent);
     this.svgShape.node.style.overflow = 'visible';
     this.svgShape.node.style['user-select'] = 'none';
     this.box = this.svgShape.bbox();
@@ -69,6 +84,24 @@ export class ScadaSymbolEditObject {
     this.updateHoverFilterStyle();
     this.performSetup = true;
     this.shapeResize$.observe(this.rootElement);
+  }
+
+  public getContent(): string {
+    if (this.svgShape) {
+      let svgContent = innerSvgContentFromSvgjs(this.svgShape.svg());
+      console.log(svgContent);
+      svgContent = `${this.svgRootNodePart}\n${svgContent}\n</svg>`;
+      const doc: XMLDocument = new DOMParser().parseFromString(svgContent, 'image/svg+xml');
+      const root = $(doc.documentElement);
+      root.find('.tb-element').removeClass('tb-element').each((i, e) => {
+        //
+      });
+      root.find('.tooltipstered').removeClass('tooltipstered');
+      svgContent = doc.documentElement.outerHTML;
+      return svgContent;
+    } else {
+      return null;
+    }
   }
 
   public cancelEdit() {
@@ -196,6 +229,14 @@ export class ScadaSymbolEditObject {
     if (this.shapeResize$) {
       this.shapeResize$.disconnect();
     }
+    this.destroyElements();
+  }
+
+  private destroyElements() {
+    this.elements.forEach(e => {
+      e.destroy();
+    });
+    this.elements.length = 0;
   }
 
   private resize() {
@@ -267,14 +308,6 @@ const hasBBox = (e: Element): boolean => {
   } catch (_e) {
     return false;
   }
-};
-
-const textTooltip = (el: JQuery<any>, text: string) => {
-  el.tooltipster({
-    theme: ['iot-svg'],
-    trigger: 'hover',
-    content: text
-  });
 };
 
 const isDomRectContained = (target: DOMRect, container: DOMRect, horizontalGap = 0, verticalGap = 0): boolean => (
@@ -403,6 +436,7 @@ export class ScadaSymbolElement {
     this.element.attr('tb:tag', null);
     this.unhighlight();
     this.createAddTagTooltip();
+    this.editObject.dirty = true;
   }
 
   public setTag(tag: string) {
@@ -410,6 +444,7 @@ export class ScadaSymbolElement {
     this.tag = tag;
     this.element.attr('tb:tag', tag);
     this.createTagTooltip();
+    this.editObject.dirty = true;
   }
 
   public startEdit(onCancelEdit: () => void) {
@@ -454,6 +489,12 @@ export class ScadaSymbolElement {
 
   public setInnerTooltipOffset(offset: number, center: number) {
     this.innerTooltipOffset = offset + (center - this.box.cy) * this.editObject.scale;
+  }
+
+  public destroy() {
+    if (this.tooltip) {
+      this.tooltip.destroy();
+    }
   }
 
   private unscaled(size: number): number {

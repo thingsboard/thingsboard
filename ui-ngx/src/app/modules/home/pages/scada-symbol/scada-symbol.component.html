@@ -29,13 +29,54 @@
                             [showCloseDetails]="false"
                             headerHeightPx="64"
                             headerTitle="{{symbolData?.imageResource?.title}}">
-            <div>
-              {{ metadata | json }}
+            <div [formGroup]="scadaSymbolFormGroup">
+              <tb-scada-symbol-metadata formControlName="metadata">
+                <div class="tb-scada-symbol-metadata-header-prefix">
+                  <button mat-button
+                          *ngIf="previewMode"
+                          (click)="previewMode = false">
+                    <mat-icon>chevron_left</mat-icon>
+                    {{ 'action.back' | translate }}
+                  </button>
+                  <button *ngIf="!previewMode"
+                          fxHide.gt-sm
+                          [disabled]="!scadaSymbolFormGroup.valid"
+                          mat-button color="primary"
+                          (click)="previewMode = true">
+                    <mat-icon>visibility</mat-icon>
+                    {{ 'scada.preview' | translate }}
+                  </button>
+                </div>
+                <div fxFlex.lt-md class="tb-scada-symbol-metadata-header-suffix" fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="12px">
+                  <button *ngIf="!previewMode"
+                          fxHide.lt-md
+                          [disabled]="!scadaSymbolFormGroup.valid"
+                          mat-button color="primary"
+                          (click)="previewMode = true">
+                    <mat-icon>visibility</mat-icon>
+                    {{ 'widget-config.preview' | translate }}
+                  </button>
+                  <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="12px">
+                    <button [disabled]="!(scadaSymbolFormGroup.dirty || symbolEditor.dirty)"
+                            mat-stroked-button color="primary"
+                            (click)="onRevertScadaSymbolConfig()">
+                      <mat-icon>close</mat-icon>
+                      {{ 'action.decline' | translate }}
+                    </button>
+                    <button [disabled]="!scadaSymbolFormGroup.valid || !(scadaSymbolFormGroup.dirty || symbolEditor.dirty)"
+                            mat-flat-button color="primary"
+                            (click)="onApplyScadaSymbolConfig()">
+                      <mat-icon>done</mat-icon>
+                      {{ 'action.apply' | translate }}
+                    </button>
+                  </div>
+                </div>
+              </tb-scada-symbol-metadata>
             </div>
           </tb-details-panel>
         </mat-drawer>
         <mat-drawer-content class="tb-scada-symbol-content">
-          <tb-scada-symbol-editor [svgContent]="symbolData?.svgContent"></tb-scada-symbol-editor>
+          <tb-scada-symbol-editor #symbolEditor [data]="symbolEditorData"></tb-scada-symbol-editor>
         </mat-drawer-content>
       </mat-drawer-container>
     </div>

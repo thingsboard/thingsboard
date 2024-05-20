@@ -18,6 +18,16 @@
   flex-direction: row;
   align-items: center;
   gap: 8px;
+  &.column {
+    flex-direction: column;
+  }
+
+  .tb-confirm-text {
+    font-size: 14px;
+    line-height: 16px;
+    text-align: center;
+    font-weight: 400;
+  }
 
   .mdc-button {
     line-height: 20px;

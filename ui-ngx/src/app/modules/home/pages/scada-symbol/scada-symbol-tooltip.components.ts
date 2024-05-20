@@ -23,6 +23,7 @@ import {
   EventEmitter,
   Input,
   NgModule, OnDestroy,
+  OnInit,
   Output,
   Type,
   ViewChild,
@@ -34,6 +35,8 @@ import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
 import { ENTER } from '@angular/cdk/keycodes';
 import Timeout = NodeJS.Timeout;
+import { MatButton } from '@angular/material/button';
+import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 
 @Directive()
 abstract class ScadaSymbolPanelComponent implements AfterViewInit {
@@ -55,7 +58,10 @@ abstract class ScadaSymbolPanelComponent implements AfterViewInit {
 @Component({
   template: `<div class="tb-scada-symbol-tooltip-panel">
     <span>{{ symbolElement?.element?.type }}:</span>
-    <button mat-stroked-button color="primary" (click)="onAddTag()">Add tag</button>
+    <button mat-stroked-button color="primary" (click)="onAddTag()">
+      <mat-icon>add</mat-icon>
+      <span>Add tag</span>
+    </button>
   </div>`,
   styleUrls: ['./scada-symbol-tooltip.component.scss'],
   encapsulation: ViewEncapsulation.None
@@ -87,13 +93,13 @@ class ScadaSymbolAddTagPanelComponent extends ScadaSymbolPanelComponent {
             matTooltipPosition="above"
             [disabled]="!tag"
             (click)="onApply()">
-      <mat-icon class="material-icons">done</mat-icon>
+      <mat-icon>done</mat-icon>
     </button>
     <button type="button" mat-icon-button class="tb-mat-20"
             matTooltip="Cancel"
             matTooltipPosition="above"
             (click)="onCancel()">
-      <mat-icon class="material-icons">close</mat-icon>
+      <mat-icon>close</mat-icon>
     </button>
   </div>`,
   styleUrls: ['./scada-symbol-tooltip.component.scss'],
@@ -181,13 +187,13 @@ class ScadaSymbolTagInputPanelComponent extends ScadaSymbolPanelComponent implem
             matTooltip="Update tag"
             matTooltipPosition="above"
             (click)="onUpdateTag()">
-      <mat-icon class="material-icons">edit</mat-icon>
+      <mat-icon>edit</mat-icon>
     </button>
-    <button type="button" mat-icon-button class="tb-mat-20"
+    <button #removeTagButton type="button"
+            mat-icon-button class="tb-mat-20"
             matTooltip="Remove tag"
-            matTooltipPosition="above"
-            (click)="onRemoveTag()">
-      <mat-icon class="material-icons">delete</mat-icon>
+            matTooltipPosition="above">
+      <mat-icon>delete</mat-icon>
     </button>
   </div>`,
   styleUrls: ['./scada-symbol-tooltip.component.scss'],
@@ -195,8 +201,83 @@ class ScadaSymbolTagInputPanelComponent extends ScadaSymbolPanelComponent implem
 })
 class ScadaSymbolTagPanelComponent extends ScadaSymbolPanelComponent implements AfterViewInit {
 
+  @ViewChild('removeTagButton', {read: ElementRef})
+  removeTagButton: ElementRef<HTMLElement>;
+
   @Output()
   updateTag = new EventEmitter();
+
+  @Output()
+  removeTag = new EventEmitter();
+
+  constructor(public element: ElementRef<HTMLElement>,
+              private container: ViewContainerRef) {
+    super(element);
+  }
+
+  ngAfterViewInit() {
+    super.ngAfterViewInit();
+    setTimeout(() => {
+      const el = $(this.removeTagButton.nativeElement);
+      el.tooltipster(
+        {
+          zIndex: 200,
+          arrow: true,
+          theme: ['iot-svg', 'tb-active'],
+          interactive: true,
+          trigger: 'click',
+          side: 'top',
+          content: ''
+        }
+      );
+      const tooltip = el.tooltipster('instance');
+      const compRef =
+        setTooltipComponent(this.symbolElement, this.container, ScadaSymbolRemoveTagConfirmComponent, tooltip);
+      compRef.instance.removeTag.subscribe(() => {
+        tooltip.destroy();
+        this.removeTag.emit();
+      });
+      compRef.instance.cancel.subscribe(() => {
+        tooltip.close();
+      });
+      tooltip.on('ready', () => {
+        compRef.instance.yesButton.focus();
+      });
+    });
+  }
+
+  public onUpdateTag() {
+    this.updateTag.emit();
+  }
+}
+
+@Component({
+  template: `<div class="tooltipster-content tb-scada-symbol-tooltip-panel column">
+    <div class="tb-confirm-text" [innerHTML]="deleteText"></div>
+    <div class="tb-scada-symbol-tooltip-panel">
+      <button mat-stroked-button color="primary" (click)="onCancel()">
+        <mat-icon>close</mat-icon>
+        <span>No</span>
+      </button>
+      <button #yesButton
+              mat-stroked-button color="primary" (click)="onRemoveTag()">
+        <mat-icon>done</mat-icon>
+        <span>Yes</span>
+      </button>
+    </div>
+  </div>`,
+  styleUrls: ['./scada-symbol-tooltip.component.scss'],
+  encapsulation: ViewEncapsulation.None
+})
+class ScadaSymbolRemoveTagConfirmComponent extends ScadaSymbolPanelComponent implements OnInit, AfterViewInit {
+
+  @ViewChild('yesButton')
+  yesButton: MatButton;
+
+  deleteText: string;
+
+  @Output()
+  cancel = new EventEmitter();
 
   @Output()
   removeTag = new EventEmitter();
@@ -205,8 +286,13 @@ class ScadaSymbolTagPanelComponent extends ScadaSymbolPanelComponent implements 
     super(element);
   }
 
-  public onUpdateTag() {
-    this.updateTag.emit();
+  ngOnInit() {
+    this.deleteText = `Are you sure you want to delete tag<br/><b>${this.symbolElement?.tag}</b>
+                          from <b>${this.symbolElement?.element?.type}</b> element?`;
+  }
+
+  public onCancel() {
+    this.cancel.emit();
   }
 
   public onRemoveTag() {
@@ -219,7 +305,8 @@ class ScadaSymbolTagPanelComponent extends ScadaSymbolPanelComponent implements 
     [
       ScadaSymbolAddTagPanelComponent,
       ScadaSymbolTagInputPanelComponent,
-      ScadaSymbolTagPanelComponent
+      ScadaSymbolTagPanelComponent,
+      ScadaSymbolRemoveTagConfirmComponent
     ],
   imports: [
     CommonModule,
@@ -292,18 +379,26 @@ const setupTagInputPanelTooltip = (symbolElement: ScadaSymbolElement, container:
 };
 
 const setTooltipComponent = <T extends ScadaSymbolPanelComponent>(symbolElement: ScadaSymbolElement,
-                                                                  container: ViewContainerRef, componentType: Type<T>): ComponentRef<T> => {
+                                                                  container: ViewContainerRef,
+                                                                  componentType: Type<T>,
+                                                                  tooltip?: ITooltipsterInstance): ComponentRef<T> => {
+  if (!tooltip) {
+    tooltip = symbolElement.tooltip;
+  }
   const componentRef = container.createComponent(componentType);
   componentRef.instance.symbolElement = symbolElement;
   componentRef.instance.viewInited.subscribe(() => {
-    if (symbolElement.tooltip.status().open) {
-      symbolElement.tooltip.reposition();
+    if (tooltip.status().open) {
+      tooltip.reposition();
     }
+  });
+  tooltip.on('destroyed', () => {
+    componentRef.destroy();
   });
   const parentElement = componentRef.instance.element.nativeElement;
   const content = parentElement.firstChild;
   parentElement.removeChild(content);
   parentElement.style.display = 'none';
-  symbolElement.tooltip.content(content);
+  tooltip.content(content);
   return componentRef;
 };

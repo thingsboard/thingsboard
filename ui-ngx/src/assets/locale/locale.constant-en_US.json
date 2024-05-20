@@ -3410,7 +3410,14 @@
         "delete-symbols-title": "Are you sure you want to delete { count, plural, =1 {1 SCADA symbol} other {# SCADA symbols} }?",
         "delete-symbols-text": "Be careful, after the confirmation all selected SCADA symbols will be removed and all related data will become unrecoverable.",
         "include-system-symbols": "Include system symbols",
-        "symbol-preview": "Symbol preview"
+        "symbol-preview": "Symbol preview",
+        "general": "General",
+        "tags": "Tags",
+        "behavior": "Behavior",
+        "properties": "Properties",
+        "title": "Title",
+        "state-render-function": "State render function",
+        "preview": "Preview"
     },
     "item": {
         "selected": "Selected"

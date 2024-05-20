@@ -27,8 +27,11 @@ import {
   ViewContainerRef,
   ViewEncapsulation
 } from '@angular/core';
-import { Subject } from 'rxjs';
 import { ScadaSymbolEditObject } from '@home/pages/scada-symbol/scada-symbol.models';
+
+export interface ScadaSymbolEditorData {
+  svgContent: string;
+}
 
 @Component({
   selector: 'tb-scada-symbol-editor',
@@ -42,11 +45,9 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
   iotSvgShape: ElementRef<HTMLElement>;
 
   @Input()
-  svgContent: string;
+  data: ScadaSymbolEditorData;
 
   scadaSymbolEditObject: ScadaSymbolEditObject;
-
-  private destroy$ = new Subject<void>();
 
   constructor(private viewContainerRef: ViewContainerRef) {
   }
@@ -57,8 +58,8 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
   ngAfterViewInit() {
     this.scadaSymbolEditObject = new ScadaSymbolEditObject(this.iotSvgShape.nativeElement,
       this.viewContainerRef);
-    if (this.svgContent) {
-      this.scadaSymbolEditObject.setContent(this.svgContent);
+    if (this.data) {
+      this.scadaSymbolEditObject.setContent(this.data.svgContent);
     }
   }
 
@@ -66,9 +67,11 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
       if (!change.firstChange && change.currentValue !== change.previousValue) {
-        if (propName === 'svgContent') {
+        if (propName === 'data') {
           if (this.scadaSymbolEditObject) {
-            this.scadaSymbolEditObject.setContent(this.svgContent);
+            setTimeout(() => {
+              this.scadaSymbolEditObject.setContent(this.data.svgContent);
+            });
           }
         }
       }
@@ -77,6 +80,14 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
 
   ngOnDestroy() {
     this.scadaSymbolEditObject.destroy();
+  }
+
+  get dirty(): boolean {
+    return this.scadaSymbolEditObject?.dirty;
+  }
+
+  getContent(): string {
+    return this.scadaSymbolEditObject?.getContent();
   }
 
 }

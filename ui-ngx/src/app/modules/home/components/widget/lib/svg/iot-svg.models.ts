@@ -195,6 +195,46 @@ const updateIotSvgMetadataInDom = (svgDoc: Document, metadata: IotSvgMetadata) =
   metadataElement.appendChild(cdata);
 };
 
+const svgPartsRegex = /(<svg .*?>)(.*)<\/svg>/gms;
+
+const svgMetadataRegex = /<tb:metadata>.*<\/tb:metadata>/gs;
+
+export const svgRootNodePart = (svgContent: string): string => {
+  let result = svgContent;
+  svgPartsRegex.lastIndex = 0;
+  const match = svgPartsRegex.exec(svgContent);
+  if (match != null && match.length > 1) {
+    result = match[1];
+  }
+  return result;
+};
+
+export const innerSvgContent = (svgContent: string): string => {
+  let result = svgContent;
+  svgPartsRegex.lastIndex = 0;
+  const match = svgPartsRegex.exec(svgContent);
+  if (match != null && match.length > 2) {
+    result = match[2];
+  }
+  return result;
+};
+
+export const stripSvgMetadata = (svgContent: string) => {
+  let result = svgContent;
+  svgMetadataRegex.lastIndex = 0;
+  const match = svgMetadataRegex.exec(svgContent);
+  if (match !== null && match.length) {
+    const metadata = match[0];
+    result = result.replace(metadata, '');
+  }
+  return result;
+};
+
+export const innerSvgContentFromSvgjs = (svgContent: string): string => {
+  const result = innerSvgContent(svgContent);
+  return result.replace(/svgjs:.*?=".*?"/gs, '');
+};
+
 const defaultGetValueSettings = (get: IotSvgBehaviorValue): GetValueSettings<any> => ({
     action: GetValueAction.DO_NOTHING,
     defaultValue: get.defaultValue,
