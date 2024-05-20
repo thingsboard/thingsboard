@@ -105,12 +105,15 @@ export class HelpService {
   }
 
   private processVariables(helpData: HelpData): string {
-    const baseUrlReg = /\${siteBaseUrl}/g;
-    helpData.content = helpData.content.replace(baseUrlReg, this.siteBaseUrl);
-    const docPlatformPrefixUrlReg = /\${docPlatformPrefix}/g;
-    helpData.content = helpData.content.replace(docPlatformPrefixUrlReg, this.docPlatformPrefix);
-    const helpBaseUrlReg = /\${helpBaseUrl}/g;
-    return helpData.content.replace(helpBaseUrlReg, helpData.helpBaseUrl);
+    const variables = {
+      siteBaseUrl: this.siteBaseUrl,
+      docPlatformPrefix: this.docPlatformPrefix,
+      helpBaseUrl: helpData.helpBaseUrl
+    };
+
+    const regExp = new RegExp(Object.keys(variables).map(key => `\\\${${key}}`).join('|'), 'g');
+
+    return helpData.content.replace(regExp, (match) => variables[match.slice(2, -1)]);
   }
 
   private processIncludes(content: string): Observable<string> {
