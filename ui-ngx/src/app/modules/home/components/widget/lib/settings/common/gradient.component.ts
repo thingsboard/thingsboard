@@ -241,7 +241,9 @@ export class GradientComponent implements OnInit, ControlValueAccessor, OnDestro
 
   addGradient(advanced = false) {
     if (advanced) {
-      this.advancedGradientListFormArray.push(this.advancedGradientControl({source: null, color: 'rgba(0,0,0,0.87)'}));
+      this.advancedGradientListFormArray.push(
+        this.advancedGradientControl({source: {type: ValueSourceDataKeyType.constant}, color: 'rgba(0,0,0,0.87)'})
+      );
     } else {
       this.gradientListFormArray.push(this.colorGradientControl('rgba(0,0,0,0.87)'));
     }
