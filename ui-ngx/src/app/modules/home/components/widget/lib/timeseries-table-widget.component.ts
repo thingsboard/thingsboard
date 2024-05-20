@@ -309,8 +309,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
 
   public onEditModeChanged() {
     if (this.textSearchMode) {
-      this.ctx.hideTitlePanel = !this.ctx.isEdit;
-      this.ctx.detectChanges(true);
+      this.exitFilterMode();
     }
   }
 

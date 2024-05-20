@@ -323,9 +323,11 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   }
 
   public onEditModeChanged() {
-    if (this.textSearchMode || this.enableSelection && this.alarmsDatasource.selection.hasValue()) {
-      this.ctx.hideTitlePanel = !this.ctx.isEdit;
-      this.ctx.detectChanges(true);
+    if (this.textSearchMode) {
+      this.exitFilterMode();
+    }
+    if (this.enableSelection && this.alarmsDatasource.selection.hasValue()) {
+      this.alarmsDatasource.clearSelection();
     }
   }
 

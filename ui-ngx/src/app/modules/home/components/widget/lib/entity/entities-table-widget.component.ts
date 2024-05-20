@@ -275,8 +275,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
 
   public onEditModeChanged() {
     if (this.textSearchMode) {
-      this.ctx.hideTitlePanel = !this.ctx.isEdit;
-      this.ctx.detectChanges(true);
+      this.exitFilterMode();
     }
   }
 

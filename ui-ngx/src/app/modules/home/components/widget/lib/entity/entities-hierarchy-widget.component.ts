@@ -165,8 +165,7 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
 
   public onEditModeChanged() {
     if (this.textSearchMode) {
-      this.ctx.hideTitlePanel = !this.ctx.isEdit;
-      this.ctx.detectChanges(true);
+      this.exitFilterMode();
     }
   }
 
