@@ -152,6 +152,9 @@ import {
 import { ChartBarSettingsComponent } from '@home/components/widget/lib/settings/common/chart/chart-bar-settings.component';
 import { AdvancedRangeComponent } from '@home/components/widget/lib/settings/common/advanced-range.component';
 import { GradientComponent } from '@home/components/widget/lib/settings/common/gradient.component';
+import {
+  ValueSourceDataKeyComponent
+} from '@home/components/widget/lib/settings/common/value-source-data-key.component';
 
 @NgModule({
   declarations: [
@@ -170,6 +173,7 @@ import { GradientComponent } from '@home/components/widget/lib/settings/common/g
     BackgroundSettingsComponent,
     BackgroundSettingsPanelComponent,
     ValueSourceComponent,
+    ValueSourceDataKeyComponent,
     LegendConfigComponent,
     WidgetFontComponent,
     CountWidgetSettingsComponent,
@@ -233,6 +237,7 @@ import { GradientComponent } from '@home/components/widget/lib/settings/common/g
     BackgroundSettingsComponent,
     BackgroundSettingsPanelComponent,
     ValueSourceComponent,
+    ValueSourceDataKeyComponent,
     LegendConfigComponent,
     WidgetFontComponent,
     CountWidgetSettingsComponent,

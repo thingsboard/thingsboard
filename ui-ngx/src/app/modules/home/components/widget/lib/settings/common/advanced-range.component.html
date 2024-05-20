@@ -20,21 +20,21 @@
     <div class="range-input range-input-fields">
       <div fxFlex fxLayout="row" fxLayoutAlign="start center">
         <div class="range-text" translate>widgets.color.from</div>
-        <tb-value-source fxFlex
-                         formControlName="from"
-                         entityAliasPlaceholder="widgets.color.entity-alias"
-                         entityAttributePlaceholder="widgets.color.entity-attribute"
-                         [aliasController]="aliasController">
-        </tb-value-source>
+        <tb-value-source-data-key fxFlex
+                                  formControlName="from"
+                                  [aliasController]="aliasController"
+                                  [dataKeyCallbacks]="dataKeyCallbacks"
+                                  [datasource]="datasource">
+        </tb-value-source-data-key>
       </div>
       <div fxFlex fxLayout="row" fxLayoutAlign="start center">
         <div class="range-text" translate>widgets.color.to</div>
-        <tb-value-source fxFlex
-                         formControlName="to"
-                         entityAliasPlaceholder="widgets.color.entity-alias"
-                         entityAttributePlaceholder="widgets.color.entity-attribute"
-                         [aliasController]="aliasController">
-        </tb-value-source>
+        <tb-value-source-data-key fxFlex
+                                  formControlName="to"
+                                  [aliasController]="aliasController"
+                                  [dataKeyCallbacks]="dataKeyCallbacks"
+                                  [datasource]="datasource">
+        </tb-value-source-data-key>
       </div>
     </div>
     <tb-color-input asBoxInput

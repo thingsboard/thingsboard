@@ -18,7 +18,6 @@ import * as CanvasGauges from 'canvas-gauges';
 import { WidgetContext } from '@home/models/widget-component.models';
 import {
   attributesGaugeType,
-  AttributeSourceProperty,
   ColorLevelSetting,
   DigitalGaugeSettings,
   FixedLevelColors
@@ -32,7 +31,12 @@ import { DataKey, Datasource, DatasourceData, DatasourceType, widgetType } from 
 import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { EMPTY, Observable } from 'rxjs';
-import { ColorType } from '@shared/models/widget-settings.models';
+import {
+  ColorProcessor,
+  ColorType,
+  ValueSourceDataKeyType,
+  ValueSourceWithDataKey
+} from '@shared/models/widget-settings.models';
 import GenericOptions = CanvasGauges.GenericOptions;
 
 // @dynamic
@@ -212,9 +216,9 @@ export class TbCanvasDigitalGauge {
       throw new Error('Not valid entity aliase name ' + entityAlias);
     }
 
-    const datasource = datasources.find((datasourceIteration) => {
-      return datasourceIteration.entityAliasId === entityAliasId;
-    });
+    const datasource = datasources.find((datasourceIteration) =>
+      datasourceIteration.entityAliasId === entityAliasId
+    );
 
     const dataKey: DataKey = {
       type: DataKeyType.attribute,
@@ -225,9 +229,9 @@ export class TbCanvasDigitalGauge {
     };
 
     if (datasource) {
-      const findDataKey = datasource.dataKeys.find((dataKeyIteration) => {
-        return dataKeyIteration.name === attribute;
-      });
+      const findDataKey = datasource.dataKeys.find((dataKeyIteration) =>
+        dataKeyIteration.name === attribute
+      );
 
       if (findDataKey) {
         findDataKey.settings.push(settings);
@@ -278,15 +282,16 @@ export class TbCanvasDigitalGauge {
     });
 
     function setLevelColor(levelSetting, color: string) {
-      if (levelSetting.valueSource === 'predefinedValue' && isFinite(levelSetting.value)) {
+      if (levelSetting.type === ValueSourceDataKeyType.constant && isFinite(levelSetting.value)) {
         predefineLevelColors.push({
           value: levelSetting.value,
           color
         });
-      } else if (levelSetting.entityAlias && levelSetting.attribute) {
+      } else if (levelSetting.type === ValueSourceDataKeyType.latestKey || levelSetting.type === ValueSourceDataKeyType.entity) {
         try {
-          levelColorsDatasource = TbCanvasDigitalGauge.generateDatasource(this.ctx, levelColorsDatasource,
-            levelSetting.entityAlias, levelSetting.attribute, {color, index: predefineLevelColors.length});
+          levelColorsDatasource = ColorProcessor.generateDatasource(
+            this.ctx, levelColorsDatasource, levelSetting, {color, index: predefineLevelColors.length}
+          );
         } catch (e) {
           return;
         }
@@ -315,17 +320,18 @@ export class TbCanvasDigitalGauge {
     return predefineLevelColors;
   }
 
-  settingTicksSubscribe(options: AttributeSourceProperty[]): number[] {
+  settingTicksSubscribe(options: ValueSourceWithDataKey[]): number[] {
     let ticksDatasource: Datasource[] = [];
     const predefineTicks: number[] = [];
 
     for (const tick of options) {
-      if (tick.valueSource === 'predefinedValue' && isFinite(tick.value)) {
+      if (tick.type === ValueSourceDataKeyType.constant && isFinite(tick.value)) {
         predefineTicks.push(tick.value);
-      } else if (tick.entityAlias && tick.attribute) {
+      } else {
         try {
-          ticksDatasource = TbCanvasDigitalGauge
-            .generateDatasource(this.ctx, ticksDatasource, tick.entityAlias, tick.attribute, predefineTicks.length);
+          ticksDatasource = ColorProcessor.generateDatasource(
+            this.ctx, ticksDatasource, tick, {index: predefineTicks.length}
+          );
         } catch (e) {
           continue;
         }
@@ -364,7 +370,7 @@ export class TbCanvasDigitalGauge {
       if (keyData && keyData.data && keyData.data[0]) {
         const attrValue = keyData.data[0][1];
         if (isFinite(attrValue)) {
-          for (const setting of keyData.dataKey.settings) {
+          for (const setting of keyData.dataKey.settings.dataKeySettings) {
             switch (typeAttributes) {
               case 'levelColors':
                 this.localSettings.levelColors[setting.index] = {
@@ -373,7 +379,7 @@ export class TbCanvasDigitalGauge {
                 };
                 break;
               case 'ticks':
-                this.localSettings.ticks[setting] = attrValue;
+                this.localSettings.ticks[setting.index] = attrValue;
                 break;
             }
           }

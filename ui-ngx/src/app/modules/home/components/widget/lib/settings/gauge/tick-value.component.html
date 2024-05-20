@@ -17,7 +17,12 @@
 -->
 
 <div fxLayout="row" [formGroup]="tickValueFormGroup">
-  <tb-value-source fxFlex formControlName="tickValue" [aliasController]="aliasController"></tb-value-source>
+  <tb-value-source-data-key fxFlex
+                            formControlName="tickValue"
+                            [aliasController]="aliasController"
+                            [dataKeyCallbacks]="dataKeyCallbacks"
+                            [datasource]="datasource">
+  </tb-value-source-data-key>
   <button *ngIf="!disabled" mat-icon-button
           class="tb-box-button"
           type="button"

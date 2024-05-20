@@ -24,7 +24,7 @@ import {
   UntypedFormBuilder,
   UntypedFormGroup
 } from '@angular/forms';
-import { AdvancedGradient, ColorGradientSettings } from '@shared/models/widget-settings.models';
+import { AdvancedGradient, ColorGradientSettings, ValueSourceDataKeyType } from '@shared/models/widget-settings.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -33,6 +33,8 @@ import { IAliasController } from '@core/api/widget-api.models';
 import { DomSanitizer } from '@angular/platform-browser';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { isDefinedAndNotNull } from '@core/utils';
+import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
+import { Datasource } from '@shared/models/widget.models';
 
 @Component({
   selector: 'tb-gradient',
@@ -63,6 +65,12 @@ export class GradientComponent implements OnInit, ControlValueAccessor, OnDestro
   aliasController: IAliasController;
 
   @Input()
+  dataKeyCallbacks: DataKeysCallbacks;
+
+  @Input()
+  datasource: Datasource;
+
+  @Input()
   minValue: string;
 
   @Input()
@@ -84,6 +92,7 @@ export class GradientComponent implements OnInit, ControlValueAccessor, OnDestro
               private sanitizer: DomSanitizer) {}
 
   ngOnInit(): void {
+    console.log(this.minValue, this.maxValue);
     this.gradientFormGroup = this.fb.group({
       advancedMode: [false],
       gradient: this.fb.group({
@@ -93,12 +102,12 @@ export class GradientComponent implements OnInit, ControlValueAccessor, OnDestro
       }),
       gradientAdvanced: this.fb.group({
         start: this.fb.group({
-          source: [],
+          source: [{type: ValueSourceDataKeyType.constant}],
           color: ['rgba(0, 255, 0, 1)']
         }),
         gradientList: this.fb.array([]),
         end: this.fb.group({
-          source: [],
+          source: [{type: ValueSourceDataKeyType.constant}],
           color: ['rgba(255, 0, 0, 1)']
         })
       })
@@ -147,26 +156,27 @@ export class GradientComponent implements OnInit, ControlValueAccessor, OnDestro
 
   get generatePointers() {
     if (this.gradientFormGroup.get('advancedMode').value) {
-      const point = 100 / (this.advancedGradientListFormArray.value.length + 1);
+      const shift = 100 / (this.advancedGradientListFormArray.value.length + 1);
       return `<div class="pointer start"></div>` +
-        this.advancedGradientListFormArray.value.map((v, i) => this.pointer(point * (i + 1), true)).join('') +
+        this.advancedGradientListFormArray.value.map((v, i) => this.pointer(shift * (i + 1), i+1, null, true)).join('') +
         `<div class="pointer end"></div>`;
     } else {
-      const point = 100 / (this.gradientListFormArray.value.length + 1);
+      const point = (+this.maxValue - +this.minValue) / (this.gradientListFormArray.value.length + 1);
+      const shift = 100 / (this.gradientListFormArray.value.length + 1);
       const min = isDefinedAndNotNull(this.minValue) ? this.minValue : 0;
       const max = isDefinedAndNotNull(this.maxValue) ? this.maxValue : 100;
       return `<div class="pointer start"><div class="pointer-value"><span class="pointer-value-text">${min}</span></div></div>` +
-        this.gradientListFormArray.value.map((v, i) => this.pointer(point * (i + 1))).join('') +
+        this.gradientListFormArray.value.map((v, i) => this.pointer(shift * (i + 1), i+1, point)).join('') +
         `<div class="pointer end"><div class="pointer-value"><span class="pointer-value-text">${max}</span></div></div>`;
     }
   }
 
-  pointer(value?: number, advanced = false) {
+  pointer(shift: number, index?: number, value?: number, advanced = false) {
     if (advanced) {
-      return `<div class="pointer" style="left: ${value}%"></div>`;
+      return `<div class="pointer" style="left: ${shift}%"></div>`;
     } else {
-      return `<div class="pointer" style="left: ${value}%">` +
-        `<div class="pointer-value"><span class="pointer-value-text">${Math.floor((+this.maxValue*value)/100)}</span></div></div>`;
+      return `<div class="pointer" style="left: ${shift}%">` +
+        `<div class="pointer-value"><span class="pointer-value-text">${Math.floor(+this.minValue + (value * index))}</span></div></div>`;
     }
   }
 

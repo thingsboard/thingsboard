@@ -52,6 +52,8 @@
                            rangeAdvancedMode
                            gradientAdvancedMode
                            [aliasController]="aliasController"
+                           [dataKeyCallbacks]="dataKeyCallbacks"
+                           [datasource]="datasource"
                            settingsKey="{{'widgets.battery-level.value' | translate }}">
         </tb-color-settings>
       </div>
@@ -64,6 +66,8 @@
                          minValue="0"
                          maxValue="100"
                          [aliasController]="aliasController"
+                         [dataKeyCallbacks]="dataKeyCallbacks"
+                         [datasource]="datasource"
                          settingsKey="{{'widgets.battery-level.battery-level-color' | translate }}">
       </tb-color-settings>
     </div>
@@ -75,6 +79,8 @@
                          minValue="0"
                          maxValue="100"
                          [aliasController]="aliasController"
+                         [dataKeyCallbacks]="dataKeyCallbacks"
+                         [datasource]="datasource"
                          settingsKey="{{'widgets.battery-level.battery-shape-color' | translate }}">
       </tb-color-settings>
     </div>

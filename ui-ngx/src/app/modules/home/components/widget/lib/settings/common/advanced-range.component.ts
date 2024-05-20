@@ -27,6 +27,8 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { IAliasController } from '@core/api/widget-api.models';
 import { AdvancedColorRange } from '@shared/models/widget-settings.models';
+import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
+import { Datasource } from '@shared/models/widget.models';
 
 @Component({
   selector: 'tb-advanced-range',
@@ -47,6 +49,12 @@ export class AdvancedRangeComponent extends PageComponent implements OnInit, Con
 
   @Input()
   aliasController: IAliasController;
+
+  @Input()
+  dataKeyCallbacks: DataKeysCallbacks;
+
+  @Input()
+  datasource: Datasource;
 
   @Output()
   removeAdvancedRange = new EventEmitter();

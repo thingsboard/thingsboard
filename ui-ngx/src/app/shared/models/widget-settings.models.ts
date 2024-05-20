@@ -14,15 +14,7 @@
 /// limitations under the License.
 ///
 
-import {
-  isDefinedAndNotNull,
-  isNumber,
-  isNumeric,
-  isString,
-  isUndefinedOrNull,
-  mergeDeep,
-  parseFunction
-} from '@core/utils';
+import { isDefinedAndNotNull, isNumber, isNumeric, isUndefinedOrNull, mergeDeep, parseFunction } from '@core/utils';
 import {
   DataEntry,
   DataKey,
@@ -30,9 +22,10 @@ import {
   DatasourceData,
   DatasourceType,
   TargetDevice,
-  TargetDeviceType, widgetType
+  TargetDeviceType,
+  widgetType
 } from '@shared/models/widget.models';
-import { ChangeDetectorRef, Injector } from '@angular/core';
+import { ChangeDetectorRef, EventEmitter, Injector } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
 import { TranslateService } from '@ngx-translate/core';
@@ -44,17 +37,10 @@ import { map } from 'rxjs/operators';
 import { DomSanitizer } from '@angular/platform-browser';
 import { AVG_MONTH, DAY, HOUR, Interval, IntervalMath, MINUTE, SECOND, YEAR } from '@shared/models/time/time.models';
 import moment from 'moment';
-import {
-  attributesGaugeType,
-  ColorLevelSetting,
-  FixedLevelColors
-} from '@home/components/widget/lib/digital-gauge.models';
 import tinycolor from 'tinycolor2';
-import { DigitalGaugeColorRange } from '@home/components/widget/lib/canvas-digital-gauge';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
-import { ValueSourceProperty } from '@home/components/widget/lib/settings/common/value-source.component';
 
 export type ComponentStyle = {[klass: string]: any};
 
@@ -120,9 +106,35 @@ export interface ColorRange {
   color: string;
 }
 
+export enum ValueSourceDataKeyType {
+  constant = 'constant',
+  latestKey = 'latestKey',
+  entity = 'entity'
+}
+
+export const ValueSourceDataKeyTypes = Object.keys(ValueSourceDataKeyType) as ValueSourceDataKeyType[];
+
+export const ValueSourceDataKeyTypeTranslation = new Map<ValueSourceDataKeyType, string>(
+  [
+    [ValueSourceDataKeyType.constant, 'widgets.value-source.type-constant'],
+    [ValueSourceDataKeyType.latestKey, 'widgets.value-source.type-latest-key'],
+    [ValueSourceDataKeyType.entity, 'widgets.value-source.type-entity']
+  ]
+);
+
+export interface ValueSourceWithDataKey {
+  type: ValueSourceDataKeyType;
+  value?: number;
+  latestKeyType?: DataKeyType.attribute | DataKeyType.timeseries;
+  latestKey?: string;
+  entityKeyType?: DataKeyType.attribute | DataKeyType.timeseries;
+  entityAlias?: string;
+  entityKey?: string;
+}
+
 export interface AdvancedColorRange {
-  from?: ValueSourceProperty;
-  to?: ValueSourceProperty;
+  from?: ValueSourceWithDataKey;
+  to?: ValueSourceWithDataKey;
   color: string;
 }
 
@@ -214,7 +226,7 @@ export interface ColorRangeSettings {
 }
 
 export interface AdvancedGradient {
-  source: ValueSourceProperty;
+  source: ValueSourceWithDataKey;
   color: string;
 }
 
@@ -222,6 +234,11 @@ export interface ColorGradientSettings {
   advancedMode?: boolean;
   gradient?: Array<string>;
   gradientAdvanced?: Array<AdvancedGradient>;
+}
+
+export interface DataKeySettings {
+  color?: string;
+  index: number;
 }
 
 export interface TimewindowStyle {
@@ -246,6 +263,21 @@ export const constantColor = (color: string): ColorSettings => ({
   type: ColorType.constant,
   color,
   colorFunction: defaultColorFunction
+});
+
+export const defaultGradient = (): ColorGradientSettings => ({
+  advancedMode: false,
+  gradient: ['rgba(0, 255, 0, 1)', 'rgba(255, 0, 0, 1)'],
+  gradientAdvanced: [
+    {
+      source: {type: ValueSourceDataKeyType.constant},
+      color: 'rgba(0, 255, 0, 1)'
+    },
+    {
+      source: {type: ValueSourceDataKeyType.constant},
+      color: 'rgba(255, 0, 0, 1)'
+    }
+  ]
 });
 
 export const defaultColorFunction = 'var temperature = value;\n' +
@@ -293,7 +325,7 @@ type ValueColorFunction = (value: any) => string;
 
 export abstract class ColorProcessor {
 
-  static fromSettings(color: ColorSettings, ctx?: WidgetContext, cd?: ChangeDetectorRef): ColorProcessor {
+  static fromSettings(color: ColorSettings, ctx?: WidgetContext, cd?: ChangeDetectorRef, maxValue = 100): ColorProcessor {
     const settings = color || constantColor(null);
     switch (settings.type) {
       case ColorType.constant:
@@ -303,13 +335,15 @@ export abstract class ColorProcessor {
       case ColorType.function:
         return new FunctionColorProcessor(settings);
       case ColorType.gradient:
-        return new GradientColorProcessor(settings, ctx, cd);
+        return new GradientColorProcessor(settings, ctx, cd, maxValue);
       default:
         return new ConstantColorProcessor(settings);
     }
   }
 
   color: string;
+
+  colorUpdated: EventEmitter<void> = new EventEmitter<void>();
 
   protected constructor(protected settings: ColorSettings) {
     this.color = settings.color;
@@ -318,42 +352,70 @@ export abstract class ColorProcessor {
   abstract update(value: any): void;
   abstract destroy(): void;
 
-  generateDatasource(ctx: WidgetContext, datasources: Datasource[], entityAlias: string,
-                     attribute: string, settings: any): Datasource[]{
-    const entityAliasId = ctx.aliasController.getEntityAliasId(entityAlias);
-    if (!entityAliasId) {
-      throw new Error('Not valid entity aliase name ' + entityAlias);
+  static generateDatasource(
+    ctx: WidgetContext,
+    datasources: Datasource[],
+    valueSource: ValueSourceWithDataKey,
+    settings: DataKeySettings): Datasource[]{
+    if (valueSource.type === ValueSourceDataKeyType.latestKey) {
+      if (ctx.datasources.length) {
+        if (isDefinedAndNotNull(ctx.datasources[0].aliasName)) {
+          datasources = this.parseDatasource(ctx, valueSource, ctx.datasources[0].aliasName, settings, datasources, true);
+        } else {
+          datasources = this.parseDatasource(ctx, valueSource, '', settings, datasources, true);
+        }
+      }
+    } else if (valueSource.type === ValueSourceDataKeyType.entity) {
+      datasources = this.parseDatasource(ctx, valueSource, valueSource.entityAlias, settings, datasources, false);
     }
+    return datasources;
+  }
 
-    const datasource = datasources.find((datasourceIteration) => datasourceIteration.entityAliasId === entityAliasId);
-
-    const dataKey: DataKey = {
-      type: DataKeyType.attribute,
-      name: attribute,
-      label: attribute,
-      settings: [settings],
-      _hash: Math.random()
+  static parseDatasource(ctx: WidgetContext,
+                  valueSource: ValueSourceWithDataKey,
+                  entityAlias: string, settings: DataKeySettings,
+                  datasources: Datasource[],
+                  isLatest: boolean) {
+    let dataKey: DataKey = null;
+    const dataKeySettings = [settings];
+    const entityAliasId = ctx.aliasController.getEntityAliasId(entityAlias);
+    let datasource = datasources.find(d =>
+      entityAlias ? (d.entityAliasId === entityAliasId) : (d.deviceId === ctx.datasources[0].deviceId)
+    );
+    dataKey = {
+      type: isLatest ? valueSource.latestKeyType : valueSource.entityKeyType,
+      name: isLatest ? valueSource.latestKey : valueSource.entityKey,
+      label: isLatest ? valueSource.latestKey : valueSource.entityKey,
+      settings: {dataKeySettings}
     };
-
     if (datasource) {
-      const findDataKey = datasource.dataKeys.find((dataKeyIteration) => dataKeyIteration.name === attribute);
-
+      const findDataKey = datasource.dataKeys.find(dataKeyIteration =>
+        dataKeyIteration.name === (isLatest ? valueSource.latestKey : valueSource.entityKey));
       if (findDataKey) {
-        findDataKey.settings.push(settings);
+        findDataKey.settings.dataKeySettings.push(settings);
       } else {
         datasource.dataKeys.push(dataKey);
       }
     } else {
-      const datasourceAttribute: Datasource = {
-        type: DatasourceType.entity,
-        name: entityAlias,
-        aliasName: entityAlias,
-        entityAliasId,
-        dataKeys: [dataKey]
-      };
-      datasources.push(datasourceAttribute);
+      if (entityAlias) {
+        datasource = {
+          type: DatasourceType.entity,
+          name: entityAlias,
+          aliasName: entityAlias,
+          entityAliasId,
+          dataKeys: [ dataKey ]
+        };
+      } else {
+        datasource = {
+          type: DatasourceType.device,
+          name: ctx.datasources[0].name,
+          deviceName: ctx.datasources[0].name,
+          deviceId: ctx.datasources[0].deviceId,
+          dataKeys: [ dataKey ]
+        };
+      }
+      datasources.push(datasource);
     }
-
     return datasources;
   }
 
@@ -384,13 +446,13 @@ class RangeColorProcessor extends ColorProcessor {
     let advancedRangeDatasource: Datasource[] = [];
     let index = 0;
 
-    function setRangeColor(rangeSetting, color: string) {
-      if (rangeSetting.valueSource === 'predefinedValue' && isFinite(rangeSetting.value)) {
+    function setRangeColor(rangeSetting: ValueSourceWithDataKey, color: string) {
+      if (rangeSetting.type === ValueSourceDataKeyType.constant && isFinite(rangeSetting.value)) {
         index++;
-      } else if (rangeSetting.entityAlias && rangeSetting.attribute) {
+      } else {
         try {
           advancedRangeDatasource = this.generateDatasource(this.ctx, advancedRangeDatasource,
-            rangeSetting.entityAlias, rangeSetting.attribute, {color, index});
+            rangeSetting, {color, index});
         } catch (e) {
           return;
         }
@@ -413,7 +475,7 @@ class RangeColorProcessor extends ColorProcessor {
       });
     } else {
       this.color = this.computeFromRange(this.progress);
-      this.cd.markForCheck();
+      this.colorUpdated.emit();
     }
   }
 
@@ -430,7 +492,7 @@ class RangeColorProcessor extends ColorProcessor {
         onDataUpdated: (subscription) => {
           this.updateAttribute(subscription.data);
           this.color = this.computeFromRange(this.progress);
-          this.cd.markForCheck();
+          this.colorUpdated.emit();
         }
       }
     };
@@ -443,7 +505,7 @@ class RangeColorProcessor extends ColorProcessor {
       if (keyData && keyData.data && keyData.data[0]) {
         const attrValue = keyData.data[0][1];
         if (isFinite(attrValue)) {
-          for (const setting of keyData.dataKey.settings) {
+          for (const setting of keyData.dataKey.settings.dataKeySettings) {
             const index = Math.floor(setting.index/2);
             if (index === setting.index/2) {
               this.settings.rangeList.rangeAdvanced[index].from.value = attrValue;
@@ -535,12 +597,13 @@ class GradientColorProcessor extends ColorProcessor {
 
   constructor(protected settings: ColorSettings,
               protected ctx: WidgetContext,
-              protected cd: ChangeDetectorRef) {
+              protected cd: ChangeDetectorRef,
+              protected maxValue: number) {
     super(settings);
   }
 
   update(value: any): void {
-    this.progress = value / 100;
+    this.progress = value / this.maxValue;
     if(isDefinedAndNotNull(this.settings.gradient.advancedMode) && this.settings.gradient.advancedMode) {
       this.advancedRangeSubscribe(this.settings.gradient.gradientAdvanced);
     } else {
@@ -563,7 +626,7 @@ class GradientColorProcessor extends ColorProcessor {
       if (levelColor !== null) {
         const tColor = tinycolor(levelColor);
         colorsRange.push({
-          pct: this.settings.gradient.advancedMode ? levelColors[i].source.value / 100 : inc * i,
+          pct: this.settings.gradient.advancedMode ? levelColors[i].source.value / this.maxValue : inc * i,
           color: tColor.toRgb(),
           alpha: tColor.getAlpha(),
           rgbString: tColor.toRgbString()
@@ -599,13 +662,13 @@ class GradientColorProcessor extends ColorProcessor {
     let advancedGradientDatasource: Datasource[] = [];
     let index = 0;
 
-    function setGradientColor(gradientSetting: ValueSourceProperty) {
-      if (gradientSetting.valueSource === 'predefinedValue' && isFinite(gradientSetting.value)) {
+    function setGradientColor(gradientSetting: ValueSourceWithDataKey) {
+      if (gradientSetting.type === ValueSourceDataKeyType.constant && isFinite(gradientSetting.value)) {
         index++;
-      } else if (gradientSetting.entityAlias && gradientSetting.attribute) {
+      } else {
         try {
           advancedGradientDatasource = this.generateDatasource(this.ctx, advancedGradientDatasource,
-            gradientSetting.entityAlias, gradientSetting.attribute, {index});
+            gradientSetting, {index});
         } catch (e) {
           return;
         }
@@ -623,7 +686,7 @@ class GradientColorProcessor extends ColorProcessor {
       });
     } else {
       this.color = this.getProgressColor(this.progress, this.settings.gradient.gradientAdvanced);
-      this.cd.markForCheck();
+      this.colorUpdated.emit();
     }
   }
 
@@ -640,7 +703,7 @@ class GradientColorProcessor extends ColorProcessor {
         onDataUpdated: (subscription) => {
           this.updateAttribute(subscription.data);
           this.color = this.getProgressColor(this.progress, this.settings.gradient.gradientAdvanced);
-          this.cd.markForCheck();
+          this.colorUpdated.emit();
         }
       }
     };
@@ -653,7 +716,7 @@ class GradientColorProcessor extends ColorProcessor {
       if (keyData && keyData.data && keyData.data[0]) {
         const attrValue = keyData.data[0][1];
         if (isFinite(attrValue)) {
-          for (const setting of keyData.dataKey.settings) {
+          for (const setting of keyData.dataKey.settings.dataKeySettings) {
             this.settings.gradient.gradientAdvanced[setting.index].source.value = attrValue;
           }
         }

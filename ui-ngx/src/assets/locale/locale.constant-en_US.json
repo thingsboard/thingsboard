@@ -7019,8 +7019,14 @@
             "predefined-value": "Constant",
             "entity-attribute": "Entity attribute",
             "value": "Value",
+            "value-required": "Value is required.",
+            "key-required": "Key is required.",
+            "entity-key-required": "Entity key is required.",
             "source-entity-alias": "Source entity alias",
-            "source-entity-attribute": "Source entity attribute"
+            "source-entity-attribute": "Source entity attribute",
+            "type-constant": "Constant",
+            "type-latest-key": "Key",
+            "type-entity": "Entity"
         },
         "rpc-state": {
             "initial-state": "Initial state",

@@ -17,7 +17,14 @@
 import { GaugeType } from '@home/components/widget/lib/canvas-digital-gauge';
 import { AnimationRule } from '@home/components/widget/lib/analogue-gauge.models';
 import { FontSettings } from '@home/components/widget/lib/settings.models';
-import { ColorSettings } from '@shared/models/widget-settings.models';
+import {
+  AdvancedColorRange,
+  ColorSettings,
+  ValueSourceDataKeyType,
+  ValueSourceWithDataKey
+} from '@shared/models/widget-settings.models';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { isDefinedAndNotNull } from '@core/utils';
 
 export interface AttributeSourceProperty {
   valueSource: string;
@@ -27,8 +34,8 @@ export interface AttributeSourceProperty {
 }
 
 export interface FixedLevelColors {
-  from?: AttributeSourceProperty | number;
-  to?: AttributeSourceProperty | number;
+  from?: ValueSourceWithDataKey | number;
+  to?: ValueSourceWithDataKey | number;
   color: string;
 }
 
@@ -105,7 +112,7 @@ export interface DigitalGaugeSettings {
   hideValue?: boolean;
   hideMinMax?: boolean;
   showTicks?: boolean;
-  ticksValue?: AttributeSourceProperty[];
+  ticksValue?: ValueSourceWithDataKey[];
   ticks?: number[];
   colorTicks?: string;
   tickWidth?: number;
@@ -114,4 +121,42 @@ export interface DigitalGaugeSettings {
 export const defaultDigitalSimpleGaugeOptions: DigitalGaugeSettings = {
   gaugeType: DigitalGaugeType.donut,
   timestampFormat: 'yyyy-MM-dd HH:mm:ss',
+};
+
+export const backwardCompatibilityFixedLevelColors = (fixedLevelColors) => {
+  const valueSourceWithDataKey: AdvancedColorRange[] = [];
+  fixedLevelColors.forEach(fixedLevelColor => valueSourceWithDataKey.push({
+    from: {
+      type: fixedLevelColor?.from?.valueSource === 'predefinedValue' ? ValueSourceDataKeyType.constant : ValueSourceDataKeyType.entity,
+      value: fixedLevelColor?.from?.value || null,
+      entityAlias: fixedLevelColor?.from?.entityAlias || '',
+      entityKey: fixedLevelColor?.from?.attribute || '',
+      entityKeyType: DataKeyType.attribute
+    },
+    to: {
+      type: fixedLevelColor?.to?.valueSource === 'predefinedValue' ? ValueSourceDataKeyType.constant : ValueSourceDataKeyType.entity,
+      value: fixedLevelColor?.to?.value || null,
+      entityAlias: fixedLevelColor?.to?.entityAlias || '',
+      entityKey: fixedLevelColor?.to?.attribute || '',
+      entityKeyType: DataKeyType.attribute
+    },
+    color: fixedLevelColor.color
+  }) );
+  return valueSourceWithDataKey;
+};
+
+export const backwardCompatibilityTicks = (ticksValue) => {
+  const ticks: ValueSourceWithDataKey[] = [];
+  if (ticksValue?.length && isDefinedAndNotNull(ticksValue[0]?.valueSource)) {
+    ticksValue.forEach(tick => ticks.push({
+      type: tick?.valueSource === 'predefinedValue' ? ValueSourceDataKeyType.constant : ValueSourceDataKeyType.entity,
+      value: tick?.value || null,
+      entityAlias: tick?.entityAlias || '',
+      entityKey: tick?.attribute || '',
+      entityKeyType: DataKeyType.attribute
+    }) );
+  } else {
+    return ticksValue;
+  }
+  return ticks;
 };

@@ -28,8 +28,8 @@
       padding-right: 0;
 
       .mat-mdc-form-field-infix {
-        padding-top: 0;
-        padding-bottom: 6px;
+        padding-top: 0 !important;
+        padding-bottom: 6px !important;
 
         .mdc-evolution-chip-set .mdc-evolution-chip {
           margin: 0;

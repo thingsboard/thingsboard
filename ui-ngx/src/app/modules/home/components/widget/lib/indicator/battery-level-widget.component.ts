@@ -28,7 +28,7 @@ import {
   ViewEncapsulation
 } from '@angular/core';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { formatValue, isDefinedAndNotNull, isNumeric } from '@core/utils';
+import { formattedDataFormDatasourceData, formatValue, isDefinedAndNotNull, isNumeric } from '@core/utils';
 import { DatePipe } from '@angular/common';
 import {
   backgroundStyle,
@@ -46,9 +46,15 @@ import {
   BatteryLevelWidgetSettings
 } from '@home/components/widget/lib/indicator/battery-level-widget.models';
 import { ResizeObserver } from '@juggle/resize-observer';
-import { Observable } from 'rxjs';
+import { forkJoin, Observable } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
+import { FormattedData } from '@shared/models/widget.models';
+import {
+  parseThresholdData,
+  TimeSeriesChartThresholdType
+} from '@home/components/widget/lib/chart/time-series-chart.models';
+import { map } from 'rxjs/operators';
 
 const verticalBatteryDimensions = {
   shapeAspectRatio: 64 / 113,
@@ -201,6 +207,10 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
 
     this.hasCardClickAction = this.ctx.actionsApi.getActionDescriptors('cardClick').length > 0;
+
+    this.valueColor.colorUpdated.subscribe(() => this.cd.markForCheck());
+    this.batteryLevelColor.colorUpdated.subscribe(() => this.cd.markForCheck());
+    this.batteryShapeColor.colorUpdated.subscribe(() => this.cd.markForCheck());
   }
 
   ngAfterViewInit() {
@@ -218,6 +228,11 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
     if (this.batteryBoxResize$) {
       this.batteryBoxResize$.disconnect();
     }
+
+    this.valueColor.colorUpdated.unsubscribe();
+    this.batteryLevelColor.colorUpdated.unsubscribe();
+    this.batteryShapeColor.colorUpdated.unsubscribe();
+
     this.batteryLevelColor.destroy();
     this.valueColor.destroy();
     this.batteryShapeColor.destroy();

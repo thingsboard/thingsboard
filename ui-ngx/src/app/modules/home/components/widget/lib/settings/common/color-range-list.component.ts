@@ -26,7 +26,12 @@ import {
   UntypedFormGroup,
   ValidationErrors
 } from '@angular/forms';
-import { AdvancedColorRange, ColorRange, ColorRangeSettings } from '@shared/models/widget-settings.models';
+import {
+  AdvancedColorRange,
+  ColorRange,
+  ColorRangeSettings,
+  ValueSourceDataKeyType
+} from '@shared/models/widget-settings.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -34,6 +39,8 @@ import { deepClone, isDefinedAndNotNull, isUndefined } from '@core/utils';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { IAliasController } from '@core/api/widget-api.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
+import { Datasource } from '@shared/models/widget.models';
 
 export function advancedRangeValidator(control: AbstractControl): ValidationErrors | null {
   const range: AdvancedColorRange = control.value;
@@ -70,6 +77,12 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
 
   @Input()
   aliasController: IAliasController;
+
+  @Input()
+  dataKeyCallbacks: DataKeysCallbacks;
+
+  @Input()
+  datasource: Datasource;
 
   @Input()
   @coerceBoolean()
@@ -184,10 +197,10 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
   public addAdvancedRange() {
     const advancedRange: AdvancedColorRange = {
       from: {
-        valueSource: 'predefinedValue'
+        type: ValueSourceDataKeyType.constant
       },
       to: {
-        valueSource: 'predefinedValue'
+        type: ValueSourceDataKeyType.constant
       },
       color: null
     };

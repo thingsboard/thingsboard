@@ -16,7 +16,12 @@
 
 import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
-import { ColorSettings, ColorType, colorTypeTranslations } from '@shared/models/widget-settings.models';
+import {
+  ColorSettings,
+  ColorType,
+  colorTypeTranslations,
+  defaultGradient
+} from '@shared/models/widget-settings.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
@@ -26,6 +31,8 @@ import { WidgetService } from '@core/http/widget.service';
 import { ColorSettingsComponent } from '@home/components/widget/lib/settings/common/color-settings.component';
 import { IAliasController } from '@core/api/widget-api.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
+import { Datasource } from '@shared/models/widget.models';
 
 @Component({
   selector: 'tb-color-settings-panel',
@@ -50,6 +57,12 @@ export class ColorSettingsPanelComponent extends PageComponent implements OnInit
 
   @Input()
   aliasController: IAliasController;
+
+  @Input()
+  dataKeyCallbacks: DataKeysCallbacks;
+
+  @Input()
+  datasource: Datasource;
 
   @Input()
   @coerceBoolean()
@@ -86,7 +99,7 @@ export class ColorSettingsPanelComponent extends PageComponent implements OnInit
       {
         type: [this.colorSettings?.type || ColorType.constant, []],
         color: [this.colorSettings?.color, []],
-        gradient: [this.colorSettings?.gradient, []],
+        gradient: [this.colorSettings?.gradient || defaultGradient(), []],
         rangeList: [this.colorSettings?.rangeList, []],
         colorFunction: [this.colorSettings?.colorFunction, []]
       }

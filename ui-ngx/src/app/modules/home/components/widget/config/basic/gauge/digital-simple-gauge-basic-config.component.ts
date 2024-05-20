@@ -20,6 +20,7 @@ import { AppState } from '@core/core.state';
 import { BasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 import {
+  Datasource,
   datasourcesHasAggregation,
   datasourcesHasOnlyComparisonAggregation,
   WidgetConfig,
@@ -29,18 +30,18 @@ import {
   getTimewindowConfig,
   setTimewindowConfig
 } from '@home/components/widget/config/timewindow-config-panel.component';
-import { deepClone, formatValue, isUndefined } from '@core/utils';
+import { formatValue, isUndefined } from '@core/utils';
 import { Component } from '@angular/core';
 import {
-  colorLevel,
+  backwardCompatibilityFixedLevelColors,
   defaultDigitalSimpleGaugeOptions,
   digitalGaugeLayoutImages,
   digitalGaugeLayouts,
   digitalGaugeLayoutTranslations,
   DigitalGaugeSettings,
-  DigitalGaugeType, FixedLevelColors
+  DigitalGaugeType
 } from '@home/components/widget/lib/digital-gauge.models';
-import { AdvancedColorRange, ColorSettings, ColorType, constantColor } from '@shared/models/widget-settings.models';
+import { ColorSettings, ColorType, constantColor } from '@shared/models/widget-settings.models';
 
 @Component({
   selector: 'tb-digital-simple-gauge-basic-config',
@@ -58,6 +59,15 @@ export class DigitalSimpleGaugeBasicConfigComponent extends BasicWidgetConfigCom
   public onlyHistoryTimewindow(): boolean {
     const datasources = this.simpleGaugeWidgetConfigForm.get('datasources').value;
     return datasourcesHasOnlyComparisonAggregation(datasources);
+  }
+
+  public get datasource(): Datasource {
+    const datasources: Datasource[] = this.widgetConfig.config.datasources;
+    if (datasources && datasources.length) {
+      return datasources[0];
+    } else {
+      return null;
+    }
   }
 
   digitalGaugeType = DigitalGaugeType;
@@ -89,12 +99,12 @@ export class DigitalSimpleGaugeBasicConfigComponent extends BasicWidgetConfigCom
     const settings: DigitalGaugeSettings = {...defaultDigitalSimpleGaugeOptions, ...(configData.config.settings || {})};
 
     if (!settings.barColor) {
-      settings.barColor = constantColor(null);
+      settings.barColor = constantColor(settings.gaugeColor);
       if (settings.fixedLevelColors?.length) {
         settings.barColor.rangeList = {
           advancedMode: settings.useFixedLevelColor,
           range: null,
-          rangeAdvanced: deepClone(settings.fixedLevelColors) as AdvancedColorRange[]
+          rangeAdvanced: backwardCompatibilityFixedLevelColors(settings.fixedLevelColors)
         };
       }
       if (settings.levelColors?.length) {
@@ -205,8 +215,8 @@ export class DigitalSimpleGaugeBasicConfigComponent extends BasicWidgetConfigCom
     if (isDonut) {
       this.simpleGaugeWidgetConfigForm.get('donutStartAngle').enable();
       this.simpleGaugeWidgetConfigForm.get('showMinMax').disable({emitEvent: false});
-      this.simpleGaugeWidgetConfigForm.get('minValue').disable();
-      this.simpleGaugeWidgetConfigForm.get('maxValue').disable();
+      this.simpleGaugeWidgetConfigForm.get('minValue').enable();
+      this.simpleGaugeWidgetConfigForm.get('maxValue').enable();
       this.simpleGaugeWidgetConfigForm.get('minMaxFont').disable();
       this.simpleGaugeWidgetConfigForm.get('minMaxColor').disable();
     } else {

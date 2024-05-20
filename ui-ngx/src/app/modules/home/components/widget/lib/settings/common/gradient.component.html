@@ -40,7 +40,7 @@
         <div class="gradient-container gradient-container-start">
           <div translate>widgets.color.gradient-start</div>
           <div class="start-gradient-container">
-            <div class="tb-form-row no-border no-padding" fxHide.xs [fxHide]="!minValue?.length">
+            <div class="tb-form-row no-border no-padding" fxHide.xs [fxHide]="!minValue?.toString()?.length">
               <div class="gradient-text" translate>widgets.color.start-value</div>
               <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
                 <input matInput type="number" min="0" disabled [(ngModel)]="minValue" [ngModelOptions]="{standalone: true}" placeholder="{{ 'widget-config.set' | translate }}">
@@ -98,7 +98,7 @@
         <div class="gradient-container gradient-container-end">
           <div translate>widgets.color.gradient-end</div>
           <div class="end-gradient-container">
-            <div class="tb-form-row no-border no-padding" fxHide.xs [fxHide]="!maxValue?.length">
+            <div class="tb-form-row no-border no-padding" fxHide.xs [fxHide]="!maxValue?.toString()?.length">
               <div class="gradient-text" translate>widgets.color.end-value</div>
               <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
                 <input matInput type="number" min="0" disabled [(ngModel)]="maxValue" [ngModelOptions]="{standalone: true}" placeholder="{{ 'widget-config.set' | translate }}">
@@ -118,13 +118,13 @@
             <span fxHide.xs translate>widgets.color.gradient-start</span>
             <span fxHide fxShow.xs translate>widgets.color.gradient-start-min</span>
           </div>
-          <div class="start-gradient-container start-gradient-container-advanced">
-            <tb-value-source fxFlex
-                             formControlName="source"
-                             entityAliasPlaceholder="widgets.color.entity-alias"
-                             entityAttributePlaceholder="widgets.color.entity-attribute"
-                             [aliasController]="aliasController">
-            </tb-value-source>
+          <div class="tb-form-row no-border no-padding start-gradient-container start-gradient-container-advanced">
+            <tb-value-source-data-key fxFlex
+                                      formControlName="source"
+                                      [aliasController]="aliasController"
+                                      [dataKeyCallbacks]="dataKeyCallbacks"
+                                      [datasource]="datasource">
+            </tb-value-source-data-key>
             <tb-color-input asBoxInput
                             formControlName="color">
             </tb-color-input>
@@ -146,12 +146,12 @@
                   <span fxHide fxShow.xs translate>widgets.color.gradient-color-min</span>
                 </div>
                 <div class="list-gradient-container list-gradient-container-advanced">
-                  <tb-value-source fxFlex
-                                   formControlName="source"
-                                   entityAliasPlaceholder="widgets.color.entity-alias"
-                                   entityAttributePlaceholder="widgets.color.entity-attribute"
-                                   [aliasController]="aliasController">
-                  </tb-value-source>
+                  <tb-value-source-data-key fxFlex
+                                            formControlName="source"
+                                            [aliasController]="aliasController"
+                                            [dataKeyCallbacks]="dataKeyCallbacks"
+                                            [datasource]="datasource">
+                  </tb-value-source-data-key>
                   <tb-color-input asBoxInput
                                   formControlName="color">
                   </tb-color-input>
@@ -190,13 +190,13 @@
             <span fxHide.xs translate>widgets.color.gradient-end</span>
             <span fxHide fxShow.xs translate>widgets.color.gradient-end-min</span>
           </div>
-          <div class="end-gradient-container end-gradient-container-advanced">
-            <tb-value-source fxFlex
-                             formControlName="source"
-                             entityAliasPlaceholder="widgets.color.entity-alias"
-                             entityAttributePlaceholder="widgets.color.entity-attribute"
-                             [aliasController]="aliasController">
-            </tb-value-source>
+          <div class="tb-form-row no-border no-padding end-gradient-container end-gradient-container-advanced">
+            <tb-value-source-data-key fxFlex
+                                      formControlName="source"
+                                      [aliasController]="aliasController"
+                                      [dataKeyCallbacks]="dataKeyCallbacks"
+                                      [datasource]="datasource">
+            </tb-value-source-data-key>
             <tb-color-input asBoxInput
                             formControlName="color">
             </tb-color-input>
