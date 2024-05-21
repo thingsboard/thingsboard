@@ -6740,5 +6740,6 @@
       "dashboardCss": ""
     }
   },
-  "name": "ThingsBoard IoT Gateways"
+  "externalId": null,
+  "name": "Gateway"
 }
