@@ -33,7 +33,7 @@ public class WebSocketSessionRef {
     private static final long serialVersionUID = 1L;
 
     private final String sessionId;
-    private SecurityUser securityCtx;
+    private volatile SecurityUser securityCtx;
     private final InetSocketAddress localAddress;
     private final InetSocketAddress remoteAddress;
     private final WebSocketSessionType sessionType;

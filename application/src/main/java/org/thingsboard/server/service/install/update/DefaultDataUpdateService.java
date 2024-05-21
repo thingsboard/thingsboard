@@ -92,10 +92,40 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 log.info("Updating data from version 3.6.4 to 3.7.0 ...");
                 updateCustomersWithTheSameTitle();
                 updateMaxRuleNodeExecsPerMessage();
+                updateGatewayRateLimits();
                 break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
         }
+    }
+
+    private void updateGatewayRateLimits() {
+        var tenantProfiles = new PageDataIterable<>(link -> tenantProfileService.findTenantProfiles(TenantId.SYS_TENANT_ID, link), DEFAULT_PAGE_SIZE);
+        tenantProfiles.forEach(tenantProfile -> {
+            var configurationOpt = tenantProfile.getProfileConfiguration();
+            configurationOpt.ifPresent(configuration -> {
+                boolean updated = false;
+                if (configuration.getTransportDeviceMsgRateLimit() != null && configuration.getTransportGatewayMsgRateLimit() == null) {
+                    configuration.setTransportGatewayMsgRateLimit(configuration.getTransportDeviceMsgRateLimit());
+                    updated = true;
+                }
+                if (configuration.getTransportDeviceTelemetryMsgRateLimit() != null && configuration.getTransportGatewayTelemetryMsgRateLimit() == null) {
+                    configuration.setTransportGatewayTelemetryMsgRateLimit(configuration.getTransportDeviceTelemetryMsgRateLimit());
+                    updated = true;
+                }
+                if (configuration.getTransportDeviceTelemetryDataPointsRateLimit() != null && configuration.getTransportGatewayTelemetryDataPointsRateLimit() == null) {
+                    configuration.setTransportGatewayTelemetryDataPointsRateLimit(configuration.getTransportDeviceTelemetryDataPointsRateLimit());
+                    updated = true;
+                }
+                if (updated) {
+                    try {
+                        tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
+                    } catch (Exception e) {
+                        log.error("Failed to update tenant profile with id: {} due to: ", tenantProfile.getId(), e);
+                    }
+                }
+            });
+        });
     }
 
     private void updateMaxRuleNodeExecsPerMessage() {

@@ -36,4 +36,7 @@ public interface WebSocketService {
     void sendError(WebSocketSessionRef sessionRef, int subId, SubscriptionErrorCode errorCode, String errorMsg);
 
     void close(String sessionId, CloseStatus status);
+
+    void cleanupIfStale(String sessionId);
+
 }

@@ -852,18 +852,27 @@ public class DefaultTransportService extends TransportActivityManager implements
         }
         TenantId tenantId = TenantId.fromUUID(new UUID(sessionInfo.getTenantIdMSB(), sessionInfo.getTenantIdLSB()));
         DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
+        DeviceId gatewayId = null;
+        if (sessionInfo.hasGatewayIdMSB() && sessionInfo.hasGatewayIdLSB()) {
+            gatewayId = new DeviceId(new UUID(sessionInfo.getGatewayIdMSB(), sessionInfo.getGatewayIdLSB()));
+        }
 
-        EntityType rateLimitedEntityType = rateLimitService.checkLimits(tenantId, deviceId, dataPoints);
-        if (rateLimitedEntityType == null) {
+        var rateLimitedPair = rateLimitService.checkLimits(tenantId, gatewayId, deviceId, dataPoints);
+        if (rateLimitedPair == null) {
             return true;
         } else {
+            var rateLimitedEntityType = rateLimitedPair.getFirst();
             if (callback != null) {
                 callback.onError(new TbRateLimitsException(rateLimitedEntityType));
             }
+
             if (rateLimitedEntityType == EntityType.DEVICE || rateLimitedEntityType == EntityType.TENANT) {
+                LimitedApi limitedApi =
+                        rateLimitedEntityType == EntityType.TENANT ?  LimitedApi.TRANSPORT_MESSAGES_PER_TENANT :
+                                rateLimitedPair.getSecond() ? LimitedApi.TRANSPORT_MESSAGES_PER_GATEWAY : LimitedApi.TRANSPORT_MESSAGES_PER_DEVICE;
                 notificationRuleProcessor.process(RateLimitsTrigger.builder()
                         .tenantId(tenantId)
-                        .api(rateLimitedEntityType == EntityType.DEVICE ? LimitedApi.TRANSPORT_MESSAGES_PER_DEVICE : LimitedApi.TRANSPORT_MESSAGES_PER_TENANT)
+                        .api(limitedApi)
                         .limitLevel(rateLimitedEntityType == EntityType.DEVICE ? deviceId : tenantId)
                         .limitLevelEntityName(rateLimitedEntityType == EntityType.DEVICE ? sessionInfo.getDeviceName() : null)
                         .build());
@@ -933,7 +942,6 @@ public class DefaultTransportService extends TransportActivityManager implements
                     log.trace("ResourceUpdate - [{}] [{}]", id, mdRez);
                     transportCallbackExecutor.submit(() -> mdRez.getListener().onResourceUpdate(msg));
                 });
-
             } else if (toSessionMsg.hasResourceDeleteMsg()) {
                 TransportProtos.ResourceDeleteMsg msg = toSessionMsg.getResourceDeleteMsg();
                 TenantId tenantId = TenantId.fromUUID(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
