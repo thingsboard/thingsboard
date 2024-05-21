@@ -16,7 +16,6 @@
 package org.thingsboard.server.queue.kafka;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.errors.TopicExistsException;
@@ -35,22 +34,16 @@ import java.util.concurrent.ExecutionException;
 @Slf4j
 public class TbKafkaAdmin implements TbQueueAdmin {
 
-    private final AdminClient client;
+    private final TbKafkaSettings settings;
     private final Map<String, String> topicConfigs;
-    private final Set<String> topics = ConcurrentHashMap.newKeySet();
     private final int numPartitions;
+    private volatile Set<String> topics;
 
     private final short replicationFactor;
 
     public TbKafkaAdmin(TbKafkaSettings settings, Map<String, String> topicConfigs) {
-        client = AdminClient.create(settings.toAdminProps());
+        this.settings = settings;
         this.topicConfigs = topicConfigs;
-
-        try {
-            topics.addAll(client.listTopics().names().get());
-        } catch (InterruptedException | ExecutionException e) {
-            log.error("Failed to get all topics.", e);
-        }
 
         String numPartitionsStr = topicConfigs.get(TbKafkaTopicConfigs.NUM_PARTITIONS_SETTING);
         if (numPartitionsStr != null) {
@@ -64,6 +57,7 @@ public class TbKafkaAdmin implements TbQueueAdmin {
 
     @Override
     public void createTopicIfNotExists(String topic, String properties) {
+        Set<String> topics = getTopics();
         if (topics.contains(topic)) {
             return;
         }
@@ -86,12 +80,13 @@ public class TbKafkaAdmin implements TbQueueAdmin {
 
     @Override
     public void deleteTopic(String topic) {
+        Set<String> topics = getTopics();
         if (topics.contains(topic)) {
-            client.deleteTopics(Collections.singletonList(topic));
+            settings.getAdminClient().deleteTopics(Collections.singletonList(topic));
         } else {
             try {
-                if (client.listTopics().names().get().contains(topic)) {
-                    client.deleteTopics(Collections.singletonList(topic));
+                if (settings.getAdminClient().listTopics().names().get().contains(topic)) {
+                    settings.getAdminClient().deleteTopics(Collections.singletonList(topic));
                 } else {
                     log.warn("Kafka topic [{}] does not exist.", topic);
                 }
@@ -101,14 +96,28 @@ public class TbKafkaAdmin implements TbQueueAdmin {
         }
     }
 
-    @Override
-    public void destroy() {
-        if (client != null) {
-            client.close();
+    private Set<String> getTopics() {
+        if (topics == null) {
+            synchronized (this) {
+                if (topics == null) {
+                    topics = ConcurrentHashMap.newKeySet();
+                    try {
+                        topics.addAll(settings.getAdminClient().listTopics().names().get());
+                    } catch (InterruptedException | ExecutionException e) {
+                        log.error("Failed to get all topics.", e);
+                    }
+                }
+            }
         }
+        return topics;
     }
 
     public CreateTopicsResult createTopic(NewTopic topic) {
-        return client.createTopics(Collections.singletonList(topic));
+        return settings.getAdminClient().createTopics(Collections.singletonList(topic));
     }
+
+    @Override
+    public void destroy() {
+    }
+
 }
