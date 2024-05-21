@@ -13,18 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.util;
+package org.thingsboard.server.common.transport.limits;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-
-@Data
-@AllArgsConstructor
-public class TbPair<S, T> {
-    private S first;
-    private T second;
-
-    public static <S, T> TbPair<S, T> of(S first, T second) {
-        return new TbPair<>(first, second);
-    }
+public enum TransportLimitsType {
+    TENANT_LIMITS, DEVICE_LIMITS, GATEWAY_LIMITS
 }
