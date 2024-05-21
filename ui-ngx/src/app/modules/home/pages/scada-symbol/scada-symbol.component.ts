@@ -18,6 +18,7 @@ import {
   AfterViewInit,
   ChangeDetectorRef,
   Component,
+  EventEmitter,
   HostBinding,
   OnDestroy,
   OnInit,
@@ -28,16 +29,35 @@ import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ActivatedRoute, Router } from '@angular/router';
-import { takeUntil } from 'rxjs/operators';
+import { map, switchMap, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { ScadaSymbolData } from '@home/pages/scada-symbol/scada-symbol.models';
-import { IotSvgMetadata, parseIotSvgMetadataFromContent } from '@home/components/widget/lib/svg/iot-svg.models';
+import {
+  IotSvgMetadata, IotSvgObjectSettings,
+  parseIotSvgMetadataFromContent,
+  updateIotSvgMetadataInContent
+} from '@home/components/widget/lib/svg/iot-svg.models';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
-import { deepClone } from '@core/utils';
+import { createFileFromContent, deepClone } from '@core/utils';
 import {
   ScadaSymbolEditorComponent,
   ScadaSymbolEditorData
 } from '@home/pages/scada-symbol/scada-symbol-editor.component';
+import { ImageService } from '@core/http/image.service';
+import { imageResourceType, IMAGES_URL_PREFIX } from '@shared/models/resource.models';
+import { HasDirtyFlag } from '@core/guards/confirm-on-exit.guard';
+import { IAliasController, IStateController, StateParams } from '@core/api/widget-api.models';
+import { EntityAliases } from '@shared/models/alias.models';
+import { Filters } from '@shared/models/query/query.models';
+import { AliasController } from '@core/api/alias-controller';
+import { EntityService } from '@core/http/entity.service';
+import { UtilsService } from '@core/services/utils.service';
+import { TranslateService } from '@ngx-translate/core';
+import { Widget, widgetType } from '@shared/models/widget.models';
+import {
+  iotSvgWidgetDefaultSettings,
+  IotSvgWidgetSettings
+} from '@home/components/widget/lib/svg/iot-svg-widget.models';
 
 @Component({
   selector: 'tb-scada-symbol',
@@ -45,17 +65,16 @@ import {
   styleUrls: ['./scada-symbol.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
-export class ScadaSymbolComponent extends PageComponent implements OnInit, OnDestroy, AfterViewInit {
+export class ScadaSymbolComponent extends PageComponent implements OnInit, OnDestroy, AfterViewInit, HasDirtyFlag {
 
   @HostBinding('style.width') width = '100%';
   @HostBinding('style.height') height = '100%';
 
-  @ViewChild('symbolEditor')
+  @ViewChild('symbolEditor', {static: false})
   symbolEditor: ScadaSymbolEditorComponent;
 
   symbolData: ScadaSymbolData;
   symbolEditorData: ScadaSymbolEditorData;
-  metadata: IotSvgMetadata;
 
   previewMode = false;
 
@@ -65,11 +84,33 @@ export class ScadaSymbolComponent extends PageComponent implements OnInit, OnDes
 
   private origSymbolData: ScadaSymbolData;
 
+  updateBreadcrumbs = new EventEmitter();
+
+  aliasController: IAliasController;
+
+  previewWidgets: Array<Widget> = [];
+
+  private previewWidget: Widget;
+
+  private forcePristine = false;
+
+  get isDirty(): boolean {
+    return (this.scadaSymbolFormGroup.dirty || this.symbolEditor?.dirty) && !this.forcePristine;
+  }
+
+  set isDirty(value: boolean) {
+    this.forcePristine = !value;
+  }
+
   constructor(protected store: Store<AppState>,
               private router: Router,
               private route: ActivatedRoute,
               private fb: UntypedFormBuilder,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private entityService: EntityService,
+              private utils: UtilsService,
+              private translate: TranslateService,
+              private imageService: ImageService) {
     super(store);
   }
 
@@ -77,6 +118,21 @@ export class ScadaSymbolComponent extends PageComponent implements OnInit, OnDes
     this.scadaSymbolFormGroup = this.fb.group({
       metadata: [null]
     });
+
+    const entitiAliases: EntityAliases = {};
+
+    // @ts-ignore
+    const stateController: IStateController = {
+      getStateParams: (): StateParams => ({})
+    };
+
+    const filters: Filters = {};
+
+    this.aliasController = new AliasController(this.utils,
+      this.entityService,
+      this.translate,
+      () => stateController, entitiAliases, filters);
+
     this.route.data.pipe(
       takeUntil(this.destroy$)
     ).subscribe(
@@ -98,13 +154,85 @@ export class ScadaSymbolComponent extends PageComponent implements OnInit, OnDes
 
   onApplyScadaSymbolConfig() {
     if (this.scadaSymbolFormGroup.valid) {
-      const svgContent = this.symbolEditor.getContent();
-      console.log(svgContent);
+      const svgContent = this.prepareSvgContent();
+      const file = createFileFromContent(svgContent, this.symbolData.imageResource.fileName,
+        this.symbolData.imageResource.descriptor.mediaType);
+      const type = imageResourceType(this.symbolData.imageResource);
+      let imageInfoObservable =
+        this.imageService.updateImage(type, this.symbolData.imageResource.resourceKey, file);
+      const metadata: IotSvgMetadata = this.scadaSymbolFormGroup.get('metadata').value;
+      if (metadata.title !== this.symbolData.imageResource.title) {
+        imageInfoObservable = imageInfoObservable.pipe(
+          switchMap(imageInfo => {
+            imageInfo.title = metadata.title;
+            return this.imageService.updateImageInfo(imageInfo);
+          })
+        );
+      }
+      imageInfoObservable.pipe(
+        switchMap(imageInfo => this.imageService.getImageString(
+            `${IMAGES_URL_PREFIX}/${type}/${encodeURIComponent(imageInfo.resourceKey)}`).pipe(
+              map(content => ({
+                imageResource: imageInfo,
+                svgContent: content
+              }))
+          ))
+      ).subscribe(data => {
+        this.init(data);
+        this.updateBreadcrumbs.emit();
+      });
     }
   }
 
   onRevertScadaSymbolConfig() {
     this.init(this.origSymbolData);
+  }
+
+  enterPreviewMode() {
+    this.symbolData.svgContent = this.prepareSvgContent();
+    const iotSvgObject: IotSvgObjectSettings = {};
+    const settings: IotSvgWidgetSettings = {...iotSvgWidgetDefaultSettings,
+      ...{iotSvg: null, iotSvgContent: this.symbolData.svgContent, iotSvgObject}};
+    this.previewWidget = {
+      typeFullFqn: 'system.iot_svg',
+      type: widgetType.rpc,
+      sizeX: 24,
+      sizeY: 24,
+      row: 0,
+      col: 0,
+      config: {
+        settings,
+        dropShadow: false,
+        padding: '0',
+        margin: '0'
+      }
+    };
+    this.previewWidgets = [this.previewWidget];
+    this.previewMode = true;
+    /*setTimeout(() => {
+      this.updatePreviewWidgetSettings();
+    }, 2000);*/
+  }
+
+  exitPreviewMode() {
+    this.symbolEditorData = {
+      svgContent: this.symbolData.svgContent
+    };
+    this.previewMode = false;
+  }
+
+  private updatePreviewWidgetSettings() {
+    this.previewWidget = deepClone(this.previewWidget);
+    this.previewWidget.config.title = this.symbolData.imageResource.title;
+    this.previewWidget.config.showTitle = true;
+    this.previewWidget.config.padding = '48px';
+    this.previewWidgets = [this.previewWidget];
+  }
+
+  private prepareSvgContent(): string {
+    const svgContent = this.symbolEditor.getContent();
+    const metadata: IotSvgMetadata = this.scadaSymbolFormGroup.get('metadata').value;
+    return updateIotSvgMetadataInContent(svgContent, metadata);
   }
 
   private reset(): void {
@@ -117,9 +245,9 @@ export class ScadaSymbolComponent extends PageComponent implements OnInit, OnDes
     this.symbolEditorData = {
       svgContent: this.symbolData.svgContent
     };
-    this.metadata = parseIotSvgMetadataFromContent(this.symbolData.svgContent);
+    const metadata = parseIotSvgMetadataFromContent(this.symbolData.svgContent);
     this.scadaSymbolFormGroup.patchValue({
-      metadata: this.metadata
+      metadata
     }, {emitEvent: false});
     this.scadaSymbolFormGroup.markAsPristine();
     this.cd.markForCheck();

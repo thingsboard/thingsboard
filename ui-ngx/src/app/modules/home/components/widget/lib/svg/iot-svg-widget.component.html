@@ -22,5 +22,5 @@
     <div #iotSvgShape class="tb-iot-svg-shape">
     </div>
   </div>
-  <mat-progress-bar class="tb-action-widget-progress" style="height: 4px;" color="accent" mode="indeterminate" *ngIf="iotSvgObject.loading$ | async"></mat-progress-bar>
+  <mat-progress-bar class="tb-action-widget-progress" style="height: 4px;" color="accent" mode="indeterminate" *ngIf="iotSvgObject?.loading$ | async"></mat-progress-bar>
 </div>

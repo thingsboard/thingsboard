@@ -34,7 +34,7 @@ import {
   parseFunction
 } from '@core/utils';
 import { BehaviorSubject, forkJoin, Observable, Observer } from 'rxjs';
-import { map, share } from 'rxjs/operators';
+import { share } from 'rxjs/operators';
 import { ValueAction, ValueGetter, ValueSetter } from '@home/components/widget/lib/action/action-widget.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { ColorProcessor, constantColor, Font } from '@shared/models/widget-settings.models';
@@ -196,43 +196,36 @@ const updateIotSvgMetadataInDom = (svgDoc: Document, metadata: IotSvgMetadata) =
 };
 
 const svgPartsRegex = /(<svg .*?>)(.*)<\/svg>/gms;
+const tbMetadataRegex = /<tb:metadata>.*<\/tb:metadata>/gs;
 
-const svgMetadataRegex = /<tb:metadata>.*<\/tb:metadata>/gs;
+export interface IoTSvgContentData {
+  svgRootNode: string;
+  innerSvg: string;
+}
 
-export const svgRootNodePart = (svgContent: string): string => {
-  let result = svgContent;
+export const iotSvgContentData = (svgContent: string): IoTSvgContentData => {
+  const result: IoTSvgContentData = {
+    svgRootNode: '',
+    innerSvg: ''
+  };
   svgPartsRegex.lastIndex = 0;
   const match = svgPartsRegex.exec(svgContent);
-  if (match != null && match.length > 1) {
-    result = match[1];
+  if (match != null) {
+    if (match.length > 1) {
+      result.svgRootNode = match[1];
+    }
+    if (match.length > 2) {
+      let innerSvgContent = match[2];
+      tbMetadataRegex.lastIndex = 0;
+      const metadataMatch = tbMetadataRegex.exec(svgContent);
+      if (metadataMatch !== null && metadataMatch.length) {
+        const metadata = metadataMatch[0];
+        innerSvgContent = innerSvgContent.replace(metadata, '');
+      }
+      result.innerSvg = innerSvgContent;
+    }
   }
   return result;
-};
-
-export const innerSvgContent = (svgContent: string): string => {
-  let result = svgContent;
-  svgPartsRegex.lastIndex = 0;
-  const match = svgPartsRegex.exec(svgContent);
-  if (match != null && match.length > 2) {
-    result = match[2];
-  }
-  return result;
-};
-
-export const stripSvgMetadata = (svgContent: string) => {
-  let result = svgContent;
-  svgMetadataRegex.lastIndex = 0;
-  const match = svgMetadataRegex.exec(svgContent);
-  if (match !== null && match.length) {
-    const metadata = match[0];
-    result = result.replace(metadata, '');
-  }
-  return result;
-};
-
-export const innerSvgContentFromSvgjs = (svgContent: string): string => {
-  const result = innerSvgContent(svgContent);
-  return result.replace(/svgjs:.*?=".*?"/gs, '');
 };
 
 const defaultGetValueSettings = (get: IotSvgBehaviorValue): GetValueSettings<any> => ({
@@ -335,21 +328,18 @@ export class IotSvgObject {
   private _onError: (error: string) => void = () => {};
 
   constructor(private ctx: WidgetContext,
-              private svgPath: string,
-              private inputSettings: IotSvgObjectSettings) {}
+              private svgContent: string,
+              private inputSettings: IotSvgObjectSettings) {
+  }
 
-  public init(): Observable<any> {
-    return this.ctx.http.get(this.svgPath, {responseType: 'text'}).pipe(
-      map((inputSvgContent) => {
-        const doc: XMLDocument = new DOMParser().parseFromString(inputSvgContent, 'image/svg+xml');
-        this.metadata = parseIotSvgMetadataFromDom(doc);
-        const defaults = defaultIotSvgObjectSettings(this.metadata);
-        this.settings = mergeDeep<IotSvgObjectSettings>({}, defaults, this.inputSettings || {});
-        this.prepareMetadata();
-        this.prepareSvgShape(doc);
-        this.initialize();
-      })
-    );
+  public init() {
+    const doc: XMLDocument = new DOMParser().parseFromString(this.svgContent, 'image/svg+xml');
+    this.metadata = parseIotSvgMetadataFromDom(doc);
+    const defaults = defaultIotSvgObjectSettings(this.metadata);
+    this.settings = mergeDeep<IotSvgObjectSettings>({}, defaults, this.inputSettings || {});
+    this.prepareMetadata();
+    this.prepareSvgShape(doc);
+    this.initialize();
   }
 
   public onError(onError: (error: string) => void) {
@@ -371,6 +361,9 @@ export class IotSvgObject {
     this.valueActions.forEach(v => v.destroy());
     this.loadingSubject.complete();
     this.loadingSubject.unsubscribe();
+    if (this.svgShape) {
+      this.svgShape.remove();
+    }
   }
 
   public setSize(targetWidth: number, targetHeight: number) {

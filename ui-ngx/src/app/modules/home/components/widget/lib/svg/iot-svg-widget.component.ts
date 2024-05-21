@@ -35,8 +35,9 @@ import {
   iotSvgWidgetDefaultSettings,
   IotSvgWidgetSettings
 } from '@home/components/widget/lib/svg/iot-svg-widget.models';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { backgroundStyle, ComponentStyle, overlayStyle } from '@shared/models/widget-settings.models';
+import { ImageService } from '@core/http/image.service';
 
 @Component({
   selector: 'tb-iot-svg-widget',
@@ -63,6 +64,7 @@ export class IotSvgWidgetComponent extends
   constructor(protected imagePipe: ImagePipe,
               protected sanitizer: DomSanitizer,
               private renderer: Renderer2,
+              private imageService: ImageService,
               protected cd: ChangeDetectorRef,
               private http: HttpClient) {
     super(cd);
@@ -75,15 +77,40 @@ export class IotSvgWidgetComponent extends
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
 
-    this.iotSvgObject = new IotSvgObject(this.ctx, this.settings.iotSvg, this.settings.iotSvgObject);
+    let svgContent$: Observable<string>;
+    if (this.settings.iotSvgContent) {
+      svgContent$ = of(this.settings.iotSvgContent);
+    } else if (this.settings.iotSvgUrl) {
+      svgContent$ = this.imageService.getImageString(this.settings.iotSvgUrl);
+    } else {
+      svgContent$ = this.http.get(this.settings.iotSvg, {responseType: 'text'});
+    }
+
+    svgContent$.subscribe(
+      (content) => {
+        this.initObject(content);
+      }
+    );
+  }
+
+  private initObject(svgContent: string) {
+    this.iotSvgObject = new IotSvgObject(this.ctx, svgContent, this.settings.iotSvgObject);
     this.iotSvgObject.onError((error) => {
       this.ctx.showErrorToast(error, 'bottom', 'center', this.ctx.toastTargetId, true);
     });
-    this.iotSvgObject.init().subscribe();
+    this.iotSvgObject.init();
+    if (this.iotSvgShape) {
+      this.iotSvgObject.addTo(this.iotSvgShape.nativeElement);
+      if (this.autoScale) {
+        this.onResize();
+      }
+    }
   }
 
   ngAfterViewInit(): void {
-    this.iotSvgObject.addTo(this.iotSvgShape.nativeElement);
+    if (this.iotSvgObject) {
+      this.iotSvgObject.addTo(this.iotSvgShape.nativeElement);
+    }
     if (this.autoScale) {
       this.shapeResize$ = new ResizeObserver(() => {
         this.onResize();
@@ -114,6 +141,8 @@ export class IotSvgWidgetComponent extends
   private onResize() {
     const shapeWidth = this.iotSvgShape.nativeElement.getBoundingClientRect().width;
     const shapeHeight = this.iotSvgShape.nativeElement.getBoundingClientRect().height;
-    this.iotSvgObject.setSize(shapeWidth, shapeHeight);
+    if (this.iotSvgObject) {
+      this.iotSvgObject.setSize(shapeWidth, shapeHeight);
+    }
   }
 }

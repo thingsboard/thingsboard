@@ -18,24 +18,17 @@ import { ImageResourceInfo } from '@shared/models/resource.models';
 import * as svgjs from '@svgdotjs/svg.js';
 import { Box, Element, Rect, Style, SVG, Svg, Timeline } from '@svgdotjs/svg.js';
 import { ResizeObserver } from '@juggle/resize-observer';
-import { DynamicComponentFactoryService } from '@core/services/dynamic-component-factory.service';
-import { Directive, ElementRef, OnDestroy, Type, ViewContainerRef } from '@angular/core';
+import { ViewContainerRef } from '@angular/core';
 import { forkJoin, from } from 'rxjs';
-import { TbInject } from '@shared/decorators/tb-inject';
 import {
   setupAddTagPanelTooltip,
   setupTagPanelTooltip
 } from '@home/pages/scada-symbol/scada-symbol-tooltip.components';
+import { iotSvgContentData } from '@home/components/widget/lib/svg/iot-svg.models';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 import TooltipPositioningSide = JQueryTooltipster.TooltipPositioningSide;
 import ITooltipsterHelper = JQueryTooltipster.ITooltipsterHelper;
 import ITooltipPosition = JQueryTooltipster.ITooltipPosition;
-import {
-  innerSvgContent,
-  innerSvgContentFromSvgjs,
-  stripSvgMetadata,
-  svgRootNodePart
-} from '@home/components/widget/lib/svg/iot-svg.models';
 
 export interface ScadaSymbolData {
   imageResource: ImageResourceInfo;
@@ -69,18 +62,15 @@ export class ScadaSymbolEditObject {
     }
     this.scale = 1;
     this.dirty = false;
-    this.svgRootNodePart = svgRootNodePart(svgContent);
-    svgContent = innerSvgContent(svgContent);
-    svgContent = stripSvgMetadata(svgContent);
-    console.log(svgContent);
-    // const doc: XMLDocument = new DOMParser().parseFromString(svgContent, 'image/svg+xml');
-    this.svgShape = SVG().addTo(this.rootElement).svg(svgContent);
+    const contentData = iotSvgContentData(svgContent);
+    this.svgRootNodePart = contentData.svgRootNode;
+    this.svgShape = SVG().addTo(this.rootElement).svg(contentData.innerSvg);
     this.svgShape.node.style.overflow = 'visible';
     this.svgShape.node.style['user-select'] = 'none';
     this.box = this.svgShape.bbox();
     this.svgShape.size(this.box.width, this.box.height);
     this.svgShape.viewbox(`0 0 ${this.box.width} ${this.box.height}`);
-    this.svgShape.style().rule('.tb-element', {cursor: 'pointer', transition: '0.2s filter ease-in-out'});
+    this.svgShape.style().attr('tb:inner', true).rule('.tb-element', {cursor: 'pointer', transition: '0.2s filter ease-in-out'});
     this.updateHoverFilterStyle();
     this.performSetup = true;
     this.shapeResize$.observe(this.rootElement);
@@ -88,17 +78,18 @@ export class ScadaSymbolEditObject {
 
   public getContent(): string {
     if (this.svgShape) {
-      let svgContent = innerSvgContentFromSvgjs(this.svgShape.svg());
-      console.log(svgContent);
-      svgContent = `${this.svgRootNodePart}\n${svgContent}\n</svg>`;
-      const doc: XMLDocument = new DOMParser().parseFromString(svgContent, 'image/svg+xml');
-      const root = $(doc.documentElement);
-      root.find('.tb-element').removeClass('tb-element').each((i, e) => {
-        //
-      });
-      root.find('.tooltipstered').removeClass('tooltipstered');
-      svgContent = doc.documentElement.outerHTML;
-      return svgContent;
+      const svgContent = this.svgShape.svg((e: Element) => {
+        if (e.node.hasAttribute('tb:inner')) {
+          return false;
+        } else {
+          e.node.classList.remove('tb-element', 'tooltipstered');
+          if (!e.node.classList.length) {
+            e.node.removeAttribute('class');
+          }
+          e.attr('svgjs:data', null);
+        }
+      }, false);
+      return `${this.svgRootNodePart}\n${svgContent}\n</svg>`;
     } else {
       return null;
     }
@@ -270,7 +261,7 @@ export class ScadaSymbolEditObject {
     const whiteBlur = (2.8 / this.scale).toFixed(2);
     const blackBlur = (1.2 / this.scale).toFixed(2);
     this.hoverFilterStyle =
-      this.svgShape.style().rule('.hovered',
+      this.svgShape.style().attr('tb:inner', true).rule('.hovered',
         {
           filter:
             `drop-shadow(0px 0px ${whiteBlur}px white) drop-shadow(0px 0px ${whiteBlur}px white)
@@ -358,6 +349,7 @@ export class ScadaSymbolElement {
         .x(this.box.x - groupRectPadding)
         .y(this.box.y - groupRectPadding)
         .attr({
+          'tb:inner': true,
           fill: 'none',
           rx: this.unscaled(6),
           stroke: 'rgba(0, 0, 0, 0.38)',
@@ -681,19 +673,4 @@ export class ScadaSymbolElement {
     return this.element.type === 'text';
   }
 
-}
-
-@Directive()
-class TbTooltipContent implements OnDestroy {
-
-  componentType: Type<any>;
-  dynamicComponentFactoryService: DynamicComponentFactoryService;
-
-  [key: string]: any;
-  constructor(@TbInject(ElementRef<HTMLElement>) public element: ElementRef<HTMLElement>) {
-  }
-
-  ngOnDestroy(): void {
-    this.dynamicComponentFactoryService.destroyDynamicComponent(this.componentType);
-  }
 }

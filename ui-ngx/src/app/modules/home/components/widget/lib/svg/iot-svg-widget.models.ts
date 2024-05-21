@@ -18,7 +18,9 @@ import { IotSvgObjectSettings } from '@home/components/widget/lib/svg/iot-svg.mo
 import { BackgroundSettings, BackgroundType } from '@shared/models/widget-settings.models';
 
 export interface IotSvgWidgetSettings {
-  iotSvg: string;
+  iotSvg?: string;
+  iotSvgUrl?: string;
+  iotSvgContent?: string;
   iotSvgObject: IotSvgObjectSettings;
   background: BackgroundSettings;
 }
