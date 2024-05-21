@@ -25,8 +25,6 @@ import { MobileAppService } from '@core/http/mobile-app.service';
 import {
   BadgePosition,
   badgePositionTranslationsMap,
-  BadgeStyle,
-  badgeStyleTranslationsMap,
   MobileAppSettings
 } from '@shared/models/mobile-app.models';
 
@@ -44,7 +42,6 @@ export class MobileAppSettingsComponent extends PageComponent implements HasConf
   private readonly destroy$ = new Subject<void>();
 
   badgePositionTranslationsMap = badgePositionTranslationsMap;
-  badgeStyleTranslationsMap = badgeStyleTranslationsMap;
 
   constructor(protected store: Store<AppState>,
               private mobileAppService: MobileAppService,
@@ -85,22 +82,21 @@ export class MobileAppSettingsComponent extends PageComponent implements HasConf
     ).subscribe(value => {
       if (value) {
         if (this.mobileAppSettingsForm.get('androidConfig.enabled').value || this.mobileAppSettingsForm.get('iosConfig.enabled').value) {
-          this.mobileAppSettingsForm.get('qrCodeConfig.badgeStyle').enable({emitEvent: false});
           this.mobileAppSettingsForm.get('qrCodeConfig.badgePosition').enable({emitEvent: false});
         }
       } else {
-        this.mobileAppSettingsForm.get('qrCodeConfig.badgeStyle').disable({emitEvent: false});
         this.mobileAppSettingsForm.get('qrCodeConfig.badgePosition').disable({emitEvent: false});
       }
+    });
+    this.mobileAppSettingsForm.get('qrCodeConfig.showOnHomePage').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(value => {
+      this.updateLabelControl(value);
     });
     this.mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabelEnabled').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe(value => {
-      if (value) {
-        this.mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabel').enable({emitEvent: false});
-      } else {
-        this.mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabel').disable({emitEvent: false});
-      }
+      this.updateLabelControl(value);
     });
   }
 
@@ -125,10 +121,9 @@ export class MobileAppSettingsComponent extends PageComponent implements HasConf
       qrCodeConfig: this.fb.group({
         showOnHomePage: [true],
         badgeEnabled: [true],
-        badgeStyle: [{value: BadgeStyle.ORIGINAL, disabled: true}],
         badgePosition: [{value: BadgePosition.RIGHT, disabled: true}],
         qrCodeLabelEnabled: [true],
-        qrCodeLabel: ['', [Validators.required]]
+        qrCodeLabel: ['', [Validators.required, Validators.maxLength(50)]]
       })
     });
   }
@@ -167,16 +162,22 @@ export class MobileAppSettingsComponent extends PageComponent implements HasConf
       if (value) {
         this.mobileAppSettingsForm.get('qrCodeConfig.badgeEnabled').enable({emitEvent: false});
         if (this.mobileAppSettingsForm.get('qrCodeConfig.badgeEnabled').value) {
-          this.mobileAppSettingsForm.get('qrCodeConfig.badgeStyle').enable({emitEvent: false});
           this.mobileAppSettingsForm.get('qrCodeConfig.badgePosition').enable({emitEvent: false});
         }
       } else {
         if (!this.mobileAppSettingsForm.get('iosConfig.enabled').value && !this.mobileAppSettingsForm.get('androidConfig.enabled').value) {
           this.mobileAppSettingsForm.get('qrCodeConfig.badgeEnabled').disable({emitEvent: false});
-          this.mobileAppSettingsForm.get('qrCodeConfig.badgeStyle').disable({emitEvent: false});
           this.mobileAppSettingsForm.get('qrCodeConfig.badgePosition').disable({emitEvent: false});
         }
       }
+    }
+  }
+
+  private updateLabelControl(value: boolean) {
+    if (value) {
+      this.mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabel').enable({emitEvent: false});
+    } else {
+      this.mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabel').disable({emitEvent: false});
     }
   }
 

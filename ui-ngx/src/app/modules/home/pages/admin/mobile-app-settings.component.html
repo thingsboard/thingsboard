@@ -118,13 +118,6 @@
               {{ 'admin.mobile-app.badges' | translate }}
             </mat-slide-toggle>
             <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
-              <mat-select formControlName="badgeStyle" appearance="outline" subscriptSizing="dynamic">
-                <mat-option *ngFor="let badgeStyle of badgeStyleTranslationsMap | keyvalue" [value]="badgeStyle.key">
-                  {{ badgeStyle.value | translate }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
               <mat-select formControlName="badgePosition" appearance="outline" subscriptSizing="dynamic">
                 <mat-option *ngFor="let badgePosition of badgePositionTranslationsMap | keyvalue" [value]="badgePosition.key">
                   {{ badgePosition.value | translate }}
@@ -139,13 +132,15 @@
               {{ 'admin.mobile-app.label' | translate }}
             </mat-slide-toggle>
             <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
-              <input matInput formControlName="qrCodeLabel" maxlength="50" placeholder="{{'admin.mobile-app.set' | translate}}">
+              <input matInput formControlName="qrCodeLabel" placeholder="{{'admin.mobile-app.set' | translate}}">
               <mat-icon matSuffix
                         matTooltipPosition="above"
                         matTooltipClass="tb-error-tooltip"
-                        [matTooltip]="'admin.mobile-app.label-required' | translate"
-                        *ngIf="mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabel').hasError('required')
-                            && mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabel').touched"
+                        [matTooltip]="(mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabel').hasError('required') ?
+                         'admin.mobile-app.label-required' : 'admin.mobile-app.label-max-length') | translate"
+                        *ngIf="mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabel').touched &&
+                         mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabel').hasError('required') ||
+                         mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabel').hasError('maxlength')"
                         class="tb-error">
                 warning
               </mat-icon>

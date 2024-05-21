@@ -17,7 +17,6 @@
 import {
   AndroidConfig,
   BadgePosition,
-  BadgeStyle,
   IosConfig,
   QRCodeConfig
 } from '@shared/models/mobile-app.models';
@@ -39,7 +38,6 @@ export const mobileAppQrCodeWidgetDefaultSettings: MobileAppQrCodeWidgetSettings
   },
   qrCodeConfig: {
     badgeEnabled: true,
-    badgeStyle: BadgeStyle.ORIGINAL,
     badgePosition: BadgePosition.RIGHT,
     qrCodeLabelEnabled: true,
     qrCodeLabel: 'Scan to connect or download mobile app'

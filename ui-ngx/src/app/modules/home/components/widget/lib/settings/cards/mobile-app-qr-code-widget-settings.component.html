@@ -16,7 +16,7 @@
 
 -->
 <section class="tb-widget-settings tb-form-panel no-border no-padding" [formGroup]="mobileAppQRCodeWidgetSettingsForm">
-  <div class="tb-form-panel no-padding">
+  <div class="tb-form-panel no-border no-padding">
     <div class="tb-form-row no-border no-padding-bottom">
       <mat-slide-toggle class="mat-slide" formControlName="useSystemSettings" (click)="$event.stopPropagation()">
         {{ 'admin.mobile-app.use-system-settings' | translate }}
@@ -48,13 +48,6 @@
                           (click)="$event.stopPropagation()">
           {{ 'admin.mobile-app.badges' | translate }}
         </mat-slide-toggle>
-        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
-          <mat-select formControlName="badgeStyle" appearance="outline" subscriptSizing="dynamic">
-            <mat-option *ngFor="let badgeStyle of badgeStyleTranslationsMap | keyvalue" [value]="badgeStyle.key">
-              {{ badgeStyle.value | translate }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
         <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
           <mat-select formControlName="badgePosition" appearance="outline" subscriptSizing="dynamic">
             <mat-option *ngFor="let badgePosition of badgePositionTranslationsMap | keyvalue" [value]="badgePosition.key">

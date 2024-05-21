@@ -18,7 +18,7 @@ import { ChangeDetectorRef, Component, ElementRef, Input, OnDestroy, OnInit, Vie
 import { PageComponent } from '@shared/components/page.component';
 import { AppState } from '@core/core.state';
 import { Store } from '@ngrx/store';
-import { BadgePosition, BadgeStyle, badgeStyleURLMap, MobileAppSettings } from '@shared/models/mobile-app.models';
+import { BadgePosition, MobileAppSettings } from '@shared/models/mobile-app.models';
 import { MobileAppService } from '@core/http/mobile-app.service';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { UtilsService } from '@core/services/utils.service';
@@ -54,9 +54,7 @@ export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnI
   private readonly destroy$ = new Subject<void>();
   private widgetResize$: ResizeObserver;
 
-  badgeStyle = BadgeStyle;
   badgePosition = BadgePosition;
-  badgeStyleURLMap = badgeStyleURLMap;
   showBadgeContainer = true;
 
   private mobileAppSettingsValue: MobileAppSettings | MobileAppQrCodeWidgetSettings;
