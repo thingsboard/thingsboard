@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -40,28 +39,23 @@ public class TbRuleEngineProducerService {
 
     public void sendToRuleEngine(TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> producer,
                                  TenantId tenantId, TbMsg tbMsg, TbQueueCallback callback) {
-        if (tbMsg.getInternalType() == TbMsgType.POST_TELEMETRY_REQUEST || tbMsg.getInternalType() == TbMsgType.POST_ATTRIBUTES_REQUEST) {
-            List<TopicPartitionInfo> tpis = partitionService.resolveAll(ServiceType.TB_RULE_ENGINE, tbMsg.getQueueName(), tenantId, tbMsg.getOriginator());
-            if (tpis.size() > 1) {
-                UUID correlationId = UUID.randomUUID();
-                for (int i = 0; i < tpis.size(); i++) {
-                    TopicPartitionInfo tpi = tpis.get(i);
-                    Integer partition = tpi.getPartition().orElse(null);
-                    UUID id = i > 0 ? UUID.randomUUID() : tbMsg.getId();
+        List<TopicPartitionInfo> tpis = partitionService.resolveAll(ServiceType.TB_RULE_ENGINE, tbMsg.getQueueName(), tenantId, tbMsg.getOriginator());
+        if (tpis.size() > 1) {
+            UUID correlationId = UUID.randomUUID();
+            for (int i = 0; i < tpis.size(); i++) {
+                TopicPartitionInfo tpi = tpis.get(i);
+                Integer partition = tpi.getPartition().orElse(null);
+                UUID id = i > 0 ? UUID.randomUUID() : tbMsg.getId();
 
-                    tbMsg = tbMsg.toBuilder()
-                            .id(id)
-                            .correlationId(correlationId)
-                            .partition(partition)
-                            .build();
-                    sendToRuleEngine(producer, tpi, tenantId, tbMsg, i == tpis.size() - 1 ? callback : null);
-                }
-            } else {
-                sendToRuleEngine(producer, tpis.get(0), tenantId, tbMsg, callback);
+                tbMsg = tbMsg.toBuilder()
+                        .id(id)
+                        .correlationId(correlationId)
+                        .partition(partition)
+                        .build();
+                sendToRuleEngine(producer, tpi, tenantId, tbMsg, i == tpis.size() - 1 ? callback : null);
             }
         } else {
-            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, tbMsg.getQueueName(), tenantId, tbMsg.getOriginator());
-            sendToRuleEngine(producer, tpi, tenantId, tbMsg, callback);
+            sendToRuleEngine(producer, tpis.get(0), tenantId, tbMsg, callback);
         }
     }
 

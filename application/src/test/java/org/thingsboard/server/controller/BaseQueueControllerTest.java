@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.queue.ProcessingStrategy;
@@ -41,6 +42,7 @@ import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.queue.QueueStats;
 import org.thingsboard.server.common.data.queue.SubmitStrategy;
 import org.thingsboard.server.common.data.queue.SubmitStrategyType;
+import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
@@ -59,12 +61,10 @@ import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingRes
 import org.thingsboard.server.service.stats.DefaultRuleEngineStatisticsService;
 import org.thingsboard.server.service.stats.RuleEngineStatisticsService;
 
-import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -77,7 +77,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -293,14 +293,6 @@ public class BaseQueueControllerTest extends AbstractControllerTest {
         deviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
         Device device = createDevice("test", deviceProfile.getName(), "test-token");
 
-        Deque<TbMsg> tbMsgs = new ConcurrentLinkedDeque<>();
-        doAnswer(inv -> {
-            TbMsg tbMsg = ((QueueToRuleEngineMsg) inv.getArgument(0)).getMsg();
-            tbMsgs.add(tbMsg);
-            return inv.callRealMethod();
-        }).when(actorSystemContext).tell(argThat(actorMsg -> actorMsg instanceof QueueToRuleEngineMsg queueToRuleEngineMsg &&
-                queueToRuleEngineMsg.getMsg().getCorrelationId() != null));
-
         JsonNode payload = JacksonUtil.newObjectNode()
                 .put("test", "test");
         doPost("/api/v1/test-token/telemetry", payload).andExpect(status().isOk());
@@ -309,8 +301,14 @@ public class BaseQueueControllerTest extends AbstractControllerTest {
             verify(timeseriesService, times(partitions)).save(eq(tenantId), eq(device.getId()),
                     argThat(ts -> ts.size() == 1 && ts.get(0).getKey().equals("test")), anyLong());
 
+            ArgumentCaptor<TbActorMsg> msgCaptor = ArgumentCaptor.forClass(TbActorMsg.class);
+            verify(actorSystemContext, atLeastOnce()).tell(msgCaptor.capture());
+            List<TbMsg> tbMsgs = msgCaptor.getAllValues().stream()
+                    .map(actorMsg -> actorMsg instanceof QueueToRuleEngineMsg queueToRuleEngineMsg ? queueToRuleEngineMsg.getMsg() : null)
+                    .filter(tbMsg -> tbMsg != null && tbMsg.getCorrelationId() != null && tbMsg.getInternalType() == TbMsgType.POST_TELEMETRY_REQUEST)
+                    .toList();
             assertThat(tbMsgs).hasSize(partitions);
-            UUID correlationId = tbMsgs.getFirst().getCorrelationId();
+            UUID correlationId = tbMsgs.get(0).getCorrelationId();
             assertThat(tbMsgs).extracting(TbMsg::getCorrelationId).containsOnly(correlationId);
             assertThat(tbMsgs).extracting(TbMsg::getId).doesNotHaveDuplicates();
             assertThat(tbMsgs).extracting(TbMsg::getPartition).containsExactlyInAnyOrder(IntStream.range(0, partitions).boxed().toArray(Integer[]::new));
