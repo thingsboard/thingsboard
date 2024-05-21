@@ -437,10 +437,8 @@ public final class TbMsg implements Serializable {
             if (proto.getRuleNodeIdMSB() != 0L && proto.getRuleNodeIdLSB() != 0L) {
                 ruleNodeId = new RuleNodeId(new UUID(proto.getRuleNodeIdMSB(), proto.getRuleNodeIdLSB()));
             }
-            if (proto.hasCorrelationIdMSB() && proto.hasCorrelationIdLSB()) {
+            if (proto.getCorrelationIdMSB() != 0L && proto.getCorrelationIdLSB() != 0L) {
                 correlationId = new UUID(proto.getCorrelationIdMSB(), proto.getCorrelationIdLSB());
-            }
-            if (proto.hasPartition()) {
                 partition = proto.getPartition();
             }
 
