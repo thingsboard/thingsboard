@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -40,6 +41,8 @@ import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.queue.QueueStats;
 import org.thingsboard.server.common.data.queue.SubmitStrategy;
 import org.thingsboard.server.common.data.queue.SubmitStrategyType;
+import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.stats.StatsFactory;
@@ -56,13 +59,16 @@ import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingRes
 import org.thingsboard.server.service.stats.DefaultRuleEngineStatisticsService;
 import org.thingsboard.server.service.stats.RuleEngineStatisticsService;
 
+import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -71,6 +77,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -95,6 +102,8 @@ public class BaseQueueControllerTest extends AbstractControllerTest {
     private PartitionService partitionService;
     @SpyBean
     private TimeseriesService timeseriesService;
+    @SpyBean
+    private ActorSystemContext actorSystemContext;
 
     @Test
     public void testQueueWithServiceTypeRE() throws Exception {
@@ -272,7 +281,7 @@ public class BaseQueueControllerTest extends AbstractControllerTest {
         queue.setProcessingStrategy(processingStrategy);
         queue.setAdditionalInfo(JacksonUtil.newObjectNode()
                 .put("duplicateMsgToAllPartitions", true));
-        queue = doPost("/api/queues?serviceType=TB_RULE_ENGINE", queue, Queue.class);
+        queue = saveQueue(queue);
 
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
             assertThat(partitionService.resolveAll(ServiceType.TB_RULE_ENGINE, "RealTime", tenantId, tenantId)).hasSize(partitions);
@@ -284,6 +293,14 @@ public class BaseQueueControllerTest extends AbstractControllerTest {
         deviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
         Device device = createDevice("test", deviceProfile.getName(), "test-token");
 
+        Deque<TbMsg> tbMsgs = new ConcurrentLinkedDeque<>();
+        doAnswer(inv -> {
+            TbMsg tbMsg = ((QueueToRuleEngineMsg) inv.getArgument(0)).getMsg();
+            tbMsgs.add(tbMsg);
+            return inv.callRealMethod();
+        }).when(actorSystemContext).tell(argThat(actorMsg -> actorMsg instanceof QueueToRuleEngineMsg queueToRuleEngineMsg &&
+                queueToRuleEngineMsg.getMsg().getCorrelationId() != null));
+
         JsonNode payload = JacksonUtil.newObjectNode()
                 .put("test", "test");
         doPost("/api/v1/test-token/telemetry", payload).andExpect(status().isOk());
@@ -291,17 +308,27 @@ public class BaseQueueControllerTest extends AbstractControllerTest {
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
             verify(timeseriesService, times(partitions)).save(eq(tenantId), eq(device.getId()),
                     argThat(ts -> ts.size() == 1 && ts.get(0).getKey().equals("test")), anyLong());
+
+            assertThat(tbMsgs).hasSize(partitions);
+            UUID correlationId = tbMsgs.getFirst().getCorrelationId();
+            assertThat(tbMsgs).extracting(TbMsg::getCorrelationId).containsOnly(correlationId);
+            assertThat(tbMsgs).extracting(TbMsg::getId).doesNotHaveDuplicates();
+            assertThat(tbMsgs).extracting(TbMsg::getPartition).containsExactlyInAnyOrder(IntStream.range(0, partitions).boxed().toArray(Integer[]::new));
         });
 
         loginSysAdmin();
         ((ObjectNode) queue.getAdditionalInfo()).put("duplicateMsgToAllPartitions", false);
-        queue = doPost("/api/queues?serviceType=" + "TB_RULE_ENGINE", queue, Queue.class);
+        queue = saveQueue(queue);
 
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
             assertThat(partitionService.resolveAll(ServiceType.TB_RULE_ENGINE, "RealTime", tenantId, tenantId)).hasSize(1);
         });
 
         doDelete("/api/queues/" + queue.getUuidId()).andExpect(status().isOk());
+    }
+
+    private Queue saveQueue(Queue queue) {
+        return doPost("/api/queues?serviceType=TB_RULE_ENGINE", queue, Queue.class);
     }
 
 }

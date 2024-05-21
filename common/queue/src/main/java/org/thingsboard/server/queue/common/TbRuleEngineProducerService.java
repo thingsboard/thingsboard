@@ -43,12 +43,17 @@ public class TbRuleEngineProducerService {
         if (tbMsg.getInternalType() == TbMsgType.POST_TELEMETRY_REQUEST || tbMsg.getInternalType() == TbMsgType.POST_ATTRIBUTES_REQUEST) {
             List<TopicPartitionInfo> tpis = partitionService.resolveAll(ServiceType.TB_RULE_ENGINE, tbMsg.getQueueName(), tenantId, tbMsg.getOriginator());
             if (tpis.size() > 1) {
+                UUID correlationId = UUID.randomUUID();
                 for (int i = 0; i < tpis.size(); i++) {
                     TopicPartitionInfo tpi = tpis.get(i);
-                    tbMsg = tbMsg.withPartition(tpi.getPartition().orElse(null));
-                    if (i > 0) {
-                        tbMsg = tbMsg.withId(UUID.randomUUID());
-                    }
+                    Integer partition = tpi.getPartition().orElse(null);
+                    UUID id = i > 0 ? UUID.randomUUID() : tbMsg.getId();
+
+                    tbMsg = tbMsg.toBuilder()
+                            .id(id)
+                            .correlationId(correlationId)
+                            .partition(partition)
+                            .build();
                     sendToRuleEngine(producer, tpi, tenantId, tbMsg, i == tpis.size() - 1 ? callback : null);
                 }
             } else {
