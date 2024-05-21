@@ -37,7 +37,7 @@ import { map } from 'rxjs/operators';
 import { DomSanitizer } from '@angular/platform-browser';
 import { AVG_MONTH, DAY, HOUR, Interval, IntervalMath, MINUTE, SECOND, YEAR } from '@shared/models/time/time.models';
 import moment from 'moment';
-import tinycolor from 'tinycolor2';
+import tinycolor, { ColorInput } from 'tinycolor2';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
@@ -234,6 +234,8 @@ export interface ColorGradientSettings {
   advancedMode?: boolean;
   gradient?: Array<string>;
   gradientAdvanced?: Array<AdvancedGradient>;
+  minValue?: number;
+  maxValue?: number;
 }
 
 export interface DataKeySettings {
@@ -265,7 +267,7 @@ export const constantColor = (color: string): ColorSettings => ({
   colorFunction: defaultColorFunction
 });
 
-export const defaultGradient = (): ColorGradientSettings => ({
+export const defaultGradient = (minValue?: number, maxValue?: number): ColorGradientSettings => ({
   advancedMode: false,
   gradient: ['rgba(0, 255, 0, 1)', 'rgba(255, 0, 0, 1)'],
   gradientAdvanced: [
@@ -277,8 +279,20 @@ export const defaultGradient = (): ColorGradientSettings => ({
       source: {type: ValueSourceDataKeyType.constant},
       color: 'rgba(255, 0, 0, 1)'
     }
-  ]
+  ],
+  minValue: isDefinedAndNotNull(minValue) ? minValue : 0,
+  maxValue: isDefinedAndNotNull(maxValue) ? maxValue : 100
 });
+
+export const updateGradientMinMaxValues = (colorSettings: ColorSettings, minValue: number, maxValue: number): ColorSettings => {
+  if (isDefinedAndNotNull(colorSettings.gradient)) {
+    colorSettings.gradient.minValue = minValue;
+    colorSettings.gradient.maxValue = maxValue;
+  } else {
+    colorSettings.gradient = defaultGradient(minValue, maxValue);
+  }
+  return colorSettings;
+};
 
 export const defaultColorFunction = 'var temperature = value;\n' +
     'if (typeof temperature !== undefined) {\n' +
@@ -325,17 +339,17 @@ type ValueColorFunction = (value: any) => string;
 
 export abstract class ColorProcessor {
 
-  static fromSettings(color: ColorSettings, ctx?: WidgetContext, cd?: ChangeDetectorRef, maxValue = 100): ColorProcessor {
+  static fromSettings(color: ColorSettings, ctx?: WidgetContext): ColorProcessor {
     const settings = color || constantColor(null);
     switch (settings.type) {
       case ColorType.constant:
         return new ConstantColorProcessor(settings);
       case ColorType.range:
-        return new RangeColorProcessor(settings, ctx, cd);
+        return new RangeColorProcessor(settings, ctx);
       case ColorType.function:
         return new FunctionColorProcessor(settings);
       case ColorType.gradient:
-        return new GradientColorProcessor(settings, ctx, cd, maxValue);
+        return new GradientColorProcessor(settings, ctx);
       default:
         return new ConstantColorProcessor(settings);
     }
@@ -437,8 +451,7 @@ class RangeColorProcessor extends ColorProcessor {
   private progress;
 
   constructor(protected settings: ColorSettings,
-              protected ctx: WidgetContext,
-              protected cd: ChangeDetectorRef) {
+              protected ctx: WidgetContext) {
     super(settings);
   }
 
@@ -563,10 +576,10 @@ class RangeColorProcessor extends ColorProcessor {
     return this.settings.color;
   }
 
-  public static constantRange(range): boolean {
+  public static constantRange(range: ColorRange): boolean {
     return isNumber(range.from) && isNumber(range.to) && range.from === range.to;
   }
-  public static constantAdvancedRange(range): boolean {
+  public static constantAdvancedRange(range: AdvancedColorRange): boolean {
     return isNumber(range.from.value) && isNumber(range.to.value) && range.from.value === range.to.value;
   }
 }
@@ -593,17 +606,20 @@ class GradientColorProcessor extends ColorProcessor {
 
   private progress: number;
 
+  private minValue: number;
+  private maxValue: number;
+
   private advancedGradientSourcesSubscription: IWidgetSubscription;
 
   constructor(protected settings: ColorSettings,
-              protected ctx: WidgetContext,
-              protected cd: ChangeDetectorRef,
-              protected maxValue: number) {
+              protected ctx: WidgetContext) {
     super(settings);
+    this.minValue = isDefinedAndNotNull(settings.gradient.minValue) ? settings.gradient.minValue : 0;
+    this.maxValue = isDefinedAndNotNull(settings.gradient.maxValue) ? settings.gradient.maxValue : 100;
   }
 
   update(value: any): void {
-    this.progress = value / this.maxValue;
+    this.progress = this.calculateProgress(+value, this.minValue, this.maxValue);
     if(isDefinedAndNotNull(this.settings.gradient.advancedMode) && this.settings.gradient.advancedMode) {
       this.advancedRangeSubscribe(this.settings.gradient.gradientAdvanced);
     } else {
@@ -617,23 +633,32 @@ class GradientColorProcessor extends ColorProcessor {
     }
   }
 
-  getProgressColor(progress: number, levelColors): string {
+  calculateProgress(current: number, min: number, max: number) {
+    if (current < min) {
+      return 0;
+    } else if (current > max) {
+      return 1;
+    }
+    return (current - min) / (max - min);
+  }
+
+  getProgressColor(progress: number, levelColors: Array<AdvancedGradient | string>): string {
     const colorsCount = levelColors.length;
     const inc = colorsCount > 1 ? (1 / (colorsCount - 1)) : 1;
     const colorsRange = [];
-    for (let i = 0; i < levelColors.length; i++) {
-      const levelColor: any = this.settings.gradient.advancedMode ? levelColors[i].color : levelColors[i];
-      if (levelColor !== null) {
-        const tColor = tinycolor(levelColor);
+    levelColors.forEach((levelColor, i) => {
+      const color = typeof levelColor === 'string' ? levelColor : levelColor.color;
+      if (color !== null) {
+        const tColor = tinycolor(color);
         colorsRange.push({
-          pct: this.settings.gradient.advancedMode ? levelColors[i].source.value / this.maxValue : inc * i,
+          pct:  typeof levelColor !== 'string' ?
+            this.calculateProgress(+levelColor.source.value, this.minValue, this.maxValue) : inc * i,
           color: tColor.toRgb(),
           alpha: tColor.getAlpha(),
           rgbString: tColor.toRgbString()
         });
       }
-    }
-
+    });
     if (progress === 0 || colorsRange.length === 1) {
       return colorsRange[0].rgbString;
     }

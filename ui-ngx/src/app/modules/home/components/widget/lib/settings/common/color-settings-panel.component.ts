@@ -99,7 +99,7 @@ export class ColorSettingsPanelComponent extends PageComponent implements OnInit
       {
         type: [this.colorSettings?.type || ColorType.constant, []],
         color: [this.colorSettings?.color, []],
-        gradient: [this.colorSettings?.gradient || defaultGradient(), []],
+        gradient: [this.colorSettings?.gradient || defaultGradient(+this.minValue, +this.maxValue), []],
         rangeList: [this.colorSettings?.rangeList, []],
         colorFunction: [this.colorSettings?.colorFunction, []]
       }

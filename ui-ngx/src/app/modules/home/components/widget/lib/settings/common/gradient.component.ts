@@ -92,7 +92,6 @@ export class GradientComponent implements OnInit, ControlValueAccessor, OnDestro
               private sanitizer: DomSanitizer) {}
 
   ngOnInit(): void {
-    console.log(this.minValue, this.maxValue);
     this.gradientFormGroup = this.fb.group({
       advancedMode: [false],
       gradient: this.fb.group({

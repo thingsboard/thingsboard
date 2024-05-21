@@ -28,7 +28,7 @@ import {
   ViewEncapsulation
 } from '@angular/core';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { formattedDataFormDatasourceData, formatValue, isDefinedAndNotNull, isNumeric } from '@core/utils';
+import { formatValue, isDefinedAndNotNull, isNumeric } from '@core/utils';
 import { DatePipe } from '@angular/common';
 import {
   backgroundStyle,
@@ -37,7 +37,8 @@ import {
   getDataKey,
   getSingleTsValue,
   overlayStyle,
-  textStyle
+  textStyle,
+  updateGradientMinMaxValues
 } from '@shared/models/widget-settings.models';
 import { WidgetComponent } from '@home/components/widget/widget.component';
 import {
@@ -46,15 +47,9 @@ import {
   BatteryLevelWidgetSettings
 } from '@home/components/widget/lib/indicator/battery-level-widget.models';
 import { ResizeObserver } from '@juggle/resize-observer';
-import { forkJoin, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
-import { FormattedData } from '@shared/models/widget.models';
-import {
-  parseThresholdData,
-  TimeSeriesChartThresholdType
-} from '@home/components/widget/lib/chart/time-series-chart.models';
-import { map } from 'rxjs/operators';
 
 const verticalBatteryDimensions = {
   shapeAspectRatio: 64 / 113,
@@ -197,11 +192,11 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
     this.showValue = this.settings.showValue;
     this.autoScaleValueSize = this.showValue && this.settings.autoScaleValueSize;
     this.valueStyle = textStyle(this.settings.valueFont);
-    this.valueColor = ColorProcessor.fromSettings(this.settings.valueColor,this.ctx, this.cd);
+    this.valueColor = ColorProcessor.fromSettings(updateGradientMinMaxValues(this.settings.valueColor, 0, 100), this.ctx);
 
-    this.batteryLevelColor = ColorProcessor.fromSettings(this.settings.batteryLevelColor, this.ctx, this.cd);
+    this.batteryLevelColor = ColorProcessor.fromSettings(updateGradientMinMaxValues(this.settings.batteryLevelColor, 0, 100), this.ctx);
 
-    this.batteryShapeColor = ColorProcessor.fromSettings(this.settings.batteryShapeColor, this.ctx, this.cd);
+    this.batteryShapeColor = ColorProcessor.fromSettings(updateGradientMinMaxValues(this.settings.batteryShapeColor, 0, 100), this.ctx);
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
