@@ -93,8 +93,7 @@ export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDia
           this.dialogRef.close(value);
         }
       });
-    }
-    if (this.connectorForm.valid) {
+    } else if (this.connectorForm.valid) {
       this.dialogRef.close(value);
     }
   }

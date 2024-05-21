@@ -18,13 +18,15 @@ package org.thingsboard.server.service.queue.ruleengine;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
@@ -95,7 +97,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @Slf4j
-@RunWith(MockitoJUnitRunner.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class TbRuleEngineQueueConsumerManagerTest {
 
     @Mock
@@ -128,7 +130,7 @@ public class TbRuleEngineQueueConsumerManagerTest {
     private AtomicInteger totalConsumedMsgs;
     private AtomicInteger totalProcessedMsgs;
 
-    @Before
+    @BeforeEach
     public void beforeEach() {
         ruleEngineConsumerContext = new TbRuleEngineConsumerContext(
                 actorContext, statsFactory, spy(new TbRuleEngineSubmitStrategyFactory()),
@@ -190,7 +192,7 @@ public class TbRuleEngineQueueConsumerManagerTest {
                 .build();
     }
 
-    @After
+    @AfterEach
     public void afterEach() {
         consumerManager.stop();
         consumerManager.awaitStop();

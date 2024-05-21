@@ -99,6 +99,7 @@ import { PieChartWidgetComponent } from '@home/components/widget/lib/chart/pie-c
 import { BarChartWidgetComponent } from '@home/components/widget/lib/chart/bar-chart-widget.component';
 import { PolarAreaWidgetComponent } from '@home/components/widget/lib/chart/polar-area-widget.component';
 import { RadarChartWidgetComponent } from '@home/components/widget/lib/chart/radar-chart-widget.component';
+import { MobileAppQrcodeWidgetComponent } from '@home/components/widget/lib/mobile-app-qrcode-widget.component';
 import { ServerConfigComponent } from '@home/components/widget/lib/gateway/connectors-configuration/server-config.component';
 import { TypeValuePanelComponent } from '@home/components/widget/lib/gateway/connectors-configuration/type-value-panel.component';
 
@@ -121,6 +122,7 @@ import { TypeValuePanelComponent } from '@home/components/widget/lib/gateway/con
       NavigationCardsWidgetComponent,
       NavigationCardWidgetComponent,
       QrCodeWidgetComponent,
+      MobileAppQrcodeWidgetComponent,
       MarkdownWidgetComponent,
       SelectEntityDialogComponent,
       LegendComponent,
@@ -194,6 +196,7 @@ import { TypeValuePanelComponent } from '@home/components/widget/lib/gateway/con
         NavigationCardsWidgetComponent,
         NavigationCardWidgetComponent,
         QrCodeWidgetComponent,
+        MobileAppQrcodeWidgetComponent,
         MarkdownWidgetComponent,
         LegendComponent,
         FlotWidgetComponent,

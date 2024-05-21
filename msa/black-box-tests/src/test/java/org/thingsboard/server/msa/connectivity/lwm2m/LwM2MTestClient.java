@@ -50,7 +50,6 @@ import org.eclipse.leshan.core.request.BootstrapRequest;
 import org.eclipse.leshan.core.request.DeregisterRequest;
 import org.eclipse.leshan.core.request.RegisterRequest;
 import org.eclipse.leshan.core.request.UpdateRequest;
-import org.junit.Assert;
 import org.thingsboard.server.msa.connectivity.lwm2m.Lwm2mTestHelper.LwM2MClientState;
 
 import java.io.IOException;
@@ -63,6 +62,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CONNECTION_ID_LENGTH;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY;
 import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
@@ -107,7 +107,7 @@ public class LwM2MTestClient {
     private Map<LwM2MClientState, Integer> clientDtlsCid;
 
     public void init(Security security, int clientPort) throws InvalidDDFFileException, IOException {
-        Assert.assertNull("client already initialized", leshanClient);
+        assertThat(leshanClient).as("client already initialized").isNull();
 
         List<ObjectModel> models = new ArrayList<>();
         for (String resourceName : resources) {
