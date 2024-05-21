@@ -229,7 +229,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       const mode = this.connectorForm.get('mode').value;
       if (
         !isEqual(config, basicConfig?.value) &&
-        type === ConnectorType.MQTT &&
+        (type === ConnectorType.MQTT || type === ConnectorType.OPCUA) &&
         mode === ConnectorConfigurationModes.ADVANCED
       ) {
         this.connectorForm.get('basicConfig').patchValue(config, {emitEvent: false});
@@ -587,11 +587,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
               value.configurationJson = {};
             }
             value.basicConfig = value.configurationJson;
-            if (value.type === ConnectorType.MQTT) {
-              this.addMQTTConfigControls();
-            } else {
-              this.connectorForm.setControl('basicConfig', this.fb.group({}), {emitEvent: false});
-            }
+            this.addConnectorControls(value.type);
             this.connectorForm.patchValue(value, {emitEvent: false});
             this.generate('basicConfig.broker.clientId');
             this.saveConnector();
@@ -663,6 +659,18 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     this.createBasicConfigWatcher();
   }
 
+  private addOPCUAConfigControls(): void {
+    const configControl = this.fb.group({});
+    configControl.addControl('server', this.fb.control({}, []));
+    configControl.addControl('mapping', this.fb.control([], []));
+    if (this.connectorForm.get('basicConfig')) {
+      this.connectorForm.setControl('basicConfig', configControl, {emitEvent: false});
+    } else {
+      this.connectorForm.addControl('basicConfig', configControl, {emitEvent: false});
+    }
+    this.createBasicConfigWatcher();
+  }
+
   private createBasicConfigWatcher(): void {
     if (this.basicConfigSub) {
       this.basicConfigSub.unsubscribe();
@@ -675,7 +683,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       const mode = this.connectorForm.get('mode').value;
       if (
         !isEqual(config, configJson?.value) &&
-        type === ConnectorType.MQTT &&
+        (type === ConnectorType.MQTT || type === ConnectorType.OPCUA) &&
         mode === ConnectorConfigurationModes.BASIC
       ) {
         const newConfig = { ...configJson.value, ...config };
@@ -714,11 +722,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
     this.initialConnector = connector;
 
-    if (connector.type === ConnectorType.MQTT) {
-      this.addMQTTConfigControls();
-    } else {
-      this.connectorForm.setControl('basicConfig', this.fb.group({}), {emitEvent: false});
-    }
+    this.addConnectorControls(connector.type);
 
     this.connectorForm.patchValue(connector, {emitEvent: false});
     this.connectorForm.markAsPristine();
@@ -735,6 +739,19 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
           this.setFormValue(clientConnectorData.value);
         }
       }
+    }
+  }
+
+  private addConnectorControls(type: ConnectorType): void {
+    switch (type) {
+      case ConnectorType.MQTT:
+        this.addMQTTConfigControls();
+        break;
+      case ConnectorType.OPCUA:
+        this.addOPCUAConfigControls();
+        break;
+      default:
+        this.connectorForm.setControl('basicConfig', this.fb.group({}), {emitEvent: false});
     }
   }
 }

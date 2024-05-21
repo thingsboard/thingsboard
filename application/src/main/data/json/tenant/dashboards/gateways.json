@@ -186,7 +186,7 @@
                 "useShowWidgetActionFunction": null,
                 "showWidgetActionFunction": "return true;",
                 "type": "customPretty",
-                "customHtml": "<div class=\"container\">\n    <mat-toolbar fxLayout=\"row\" color=\"primary\">\n        <h2>Docker commands</h2>\n        <span fxFlex></span>\n        <div [tb-help]=\"'gatewayInstall'\"></div>\n        <button mat-icon-button (click)=\"cancel()\" type=\"button\">\n            <mat-icon class=\"material-icons\">close</mat-icon>\n        </button>\n    </mat-toolbar>\n    <tb-gateway-command [deviceId]=\"entityId\"></tb-gateway-command>\n    <div mat-dialog-actions fxLayout=\"row\" fxLayoutAlign=\"end center\">\n        <button mat-button color=\"primary\"\n            type=\"button\"\n            (click)=\"cancel()\" cdkFocusInitial>\n            {{ 'action.close' | translate }}\n        </button>\n    </div>\n</div>\n",
+                "customHtml": "<div class=\"container\">\n    <mat-toolbar fxLayout=\"row\" color=\"primary\">\n        <h2>Launch command</h2>\n        <span fxFlex></span>\n        <div [tb-help]=\"'gatewayInstall'\"></div>\n        <button mat-icon-button (click)=\"cancel()\" type=\"button\">\n            <mat-icon class=\"material-icons\">close</mat-icon>\n        </button>\n    </mat-toolbar>\n    <tb-gateway-command [deviceId]=\"entityId\"></tb-gateway-command>\n    <div mat-dialog-actions fxLayout=\"row\" fxLayoutAlign=\"end center\">\n        <button mat-button color=\"primary\"\n            type=\"button\"\n            (click)=\"cancel()\" cdkFocusInitial>\n            {{ 'action.close' | translate }}\n        </button>\n    </div>\n</div>\n",
                 "customCss": ".container {\n    display: grid;\n    grid-template-rows: min-content minmax(auto, 1fr) min-content;\n    height: 100%;\n    max-height: 100vh;\n    width: 600px;\n    max-width: 100%;\n}",
                 "customFunction": "let $injector = widgetContext.$scope.$injector;\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\n\nopenCommands();\n\nfunction openCommands() {\n    customDialog.customDialog(htmlTemplate, CommandsDialogController, {panelClass: \"test\"}).subscribe();\n}\n\nfunction CommandsDialogController(instance) {\n    let vm = instance;\n    \n    vm.entityId = entityId.id;\n\n    vm.cancel = function() {\n        vm.dialogRef.close(null);\n    };\n}\n",
                 "customResources": [],
@@ -6740,6 +6740,5 @@
       "dashboardCss": ""
     }
   },
-  "externalId": null,
-  "name": "Gateway"
+  "name": "ThingsBoard IoT Gateways"
 }

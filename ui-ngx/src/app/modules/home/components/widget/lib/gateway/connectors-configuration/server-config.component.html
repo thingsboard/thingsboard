@@ -1,0 +1,90 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-form-panel no-border no-padding padding-top" [formGroup]="serverConfigFormGroup">
+  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <div class="fixed-title-width" translate>gateway.server-url</div>
+    <div class="tb-flex no-gap">
+      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+        <input matInput name="value" formControlName="url" placeholder="{{ 'gateway.set' | translate }}"/>
+        <mat-icon matSuffix
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  [matTooltip]="('gateway.server-url-required') | translate"
+                  *ngIf="serverConfigFormGroup.get('url').hasError('required')
+                                           && serverConfigFormGroup.get('url').touched"
+                  class="tb-error">
+          warning
+        </mat-icon>
+      </mat-form-field>
+    </div>
+  </div>
+  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <div class="fixed-title-width" translate>gateway.timeout</div>
+    <div class="tb-flex no-gap">
+      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+        <input matInput type="number" min="0" name="value" formControlName="timeoutInMillis" placeholder="{{ 'gateway.set' | translate }}"/>
+      </mat-form-field>
+    </div>
+  </div>
+  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <div class="fixed-title-width" translate>gateway.security</div>
+    <div class="tb-flex no-gap">
+      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="security">
+          <mat-option *ngFor="let version of serverSecurityTypes" [value]="version.value">{{ version.name }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </div>
+  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <div class="fixed-title-width" translate>gateway.scan-period</div>
+    <div class="tb-flex no-gap">
+      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+        <input matInput type="number" min="0" name="value"
+               formControlName="scanPeriodInMillis" placeholder="{{ 'gateway.set' | translate }}"/>
+      </mat-form-field>
+    </div>
+  </div>
+  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <div class="fixed-title-width" translate>gateway.sub-check-period</div>
+    <div class="tb-flex no-gap">
+      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+        <input matInput type="number" min="0" name="value"
+               formControlName="subCheckPeriodInMillis" placeholder="{{ 'gateway.set' | translate }}"/>
+      </mat-form-field>
+    </div>
+  </div>
+  <div class="tb-form-row" fxLayoutAlign="space-between center">
+    <mat-slide-toggle class="mat-slide" formControlName="enableSubscriptions">
+      <mat-label tb-hint-tooltip-icon="{{ 'gateway.enable-subscription-hint' | translate }}">
+        {{ 'gateway.enable-subscription' | translate }}
+      </mat-label>
+    </mat-slide-toggle>
+  </div>
+  <div class="tb-form-row" fxLayoutAlign="space-between center">
+    <mat-slide-toggle class="mat-slide" formControlName="showMap">
+      <mat-label tb-hint-tooltip-icon="{{ 'gateway.show-map-hint' | translate }}">
+        {{ 'gateway.show-map' | translate }}
+      </mat-label>
+    </mat-slide-toggle>
+  </div>
+  <tb-security-config [formControl]="serverConfigFormGroup.get('identity')"
+                      title="gateway.identity"
+                      [extendCertificatesModel]="true">
+  </tb-security-config>
+</div>

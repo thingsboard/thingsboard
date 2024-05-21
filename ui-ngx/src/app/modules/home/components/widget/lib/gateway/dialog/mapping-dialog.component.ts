@@ -37,6 +37,7 @@ import {
   MappingType,
   MappingTypeTranslationsMap,
   noLeadTrailSpacesRegex,
+  OPCUaSourceTypes,
   QualityTypes,
   QualityTypeTranslationsMap,
   RequestType,
@@ -72,6 +73,7 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
   ConvertorTypeTranslationsMap = ConvertorTypeTranslationsMap;
 
   sourceTypes = Object.values(SourceTypes);
+  OPCUaSourceTypes = Object.values(OPCUaSourceTypes) as Array<OPCUaSourceTypes>;
   sourceTypesEnum = SourceTypes;
   SourceTypeTranslationsMap = SourceTypeTranslationsMap;
 
@@ -125,6 +127,22 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
     }
   }
 
+  get opcAttributes(): Array<string> {
+    return this.mappingForm.get('attributes').value?.map(value => value.key) || [];
+  }
+
+  get opcTelemetry(): Array<string> {
+    return this.mappingForm.get('timeseries').value?.map(value => value.key) || [];
+  }
+
+  get opcRpcMethods(): Array<string> {
+    return this.mappingForm.get('rpc_methods').value?.map(value => value.method) || [];
+  }
+
+  get opcAttributesUpdates(): Array<string> {
+    return this.mappingForm.get('attributes_updates')?.value.map(value => value.key) || [];
+  }
+
   get converterType(): ConvertorType {
     return this.mappingForm.get('converter').get('type').value;
   }
@@ -155,109 +173,17 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
   }
 
   private createMappingForm(): void {
-    this.mappingForm = this.fb.group({});
-    if (this.data.mappingType === MappingType.DATA) {
-      this.mappingForm.addControl('topicFilter',
-        this.fb.control('', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]));
-      this.mappingForm.addControl('subscriptionQos', this.fb.control(0));
-      this.mappingForm.addControl('converter', this.fb.group({
-        type: [ConvertorType.JSON, []],
-        json: this.fb.group({
-          deviceInfo: [{}, []],
-          attributes: [[], []],
-          timeseries: [[], []]
-        }),
-        bytes: this.fb.group({
-          deviceInfo: [{}, []],
-          attributes: [[], []],
-          timeseries: [[], []]
-        }),
-        custom: this.fb.group({
-          extension: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          extensionConfig: [{}, []]
-        }),
-      }));
-      this.mappingForm.patchValue(this.prepareFormValueData());
-      this.mappingForm.get('converter.type').valueChanges.pipe(
-        startWith(this.mappingForm.get('converter.type').value),
-        takeUntil(this.destroy$)
-      ).subscribe((value) => {
-        const converterGroup = this.mappingForm.get('converter');
-        converterGroup.get('json').disable({emitEvent: false});
-        converterGroup.get('bytes').disable({emitEvent: false});
-        converterGroup.get('custom').disable({emitEvent: false});
-        converterGroup.get(value).enable({emitEvent: false});
-      })
-    }
-
-    if (this.data.mappingType === MappingType.REQUESTS) {
-      this.mappingForm.addControl('requestType', this.fb.control(RequestType.CONNECT_REQUEST, []));
-      this.mappingForm.addControl('requestValue', this.fb.group({
-        connectRequests: this.fb.group({
-          topicFilter: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          deviceInfo: [{}, []]
-        }),
-        disconnectRequests: this.fb.group({
-          topicFilter: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          deviceInfo: [{}, []]
-        }),
-        attributeRequests: this.fb.group({
-          topicFilter: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          deviceInfo:  this.fb.group({
-            deviceNameExpressionSource: [SourceTypes.MSG, []],
-            deviceNameExpression: ['', [Validators.required]],
-          }),
-          attributeNameExpressionSource: [SourceTypes.MSG, []],
-          attributeNameExpression: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          topicExpression: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          valueExpression: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          retain: [false, []]
-        }),
-        attributeUpdates: this.fb.group({
-          deviceNameFilter: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          attributeFilter: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          topicExpression: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          valueExpression: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          retain: [true, []]
-        }),
-        serverSideRpc: this.fb.group({
-          type: [ServerSideRPCType.TWO_WAY, []],
-          deviceNameFilter: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          methodFilter: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          requestTopicExpression: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          responseTopicExpression: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          valueExpression: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          responseTopicQoS: [0, []],
-          responseTimeout: [10000, [Validators.required, Validators.min(1)]],
-        })
-      }));
-      this.mappingForm.get('requestType').valueChanges.pipe(
-        startWith(this.mappingForm.get('requestType').value),
-        takeUntil(this.destroy$)
-      ).subscribe((value) => {
-        const requestValueGroup = this.mappingForm.get('requestValue');
-        requestValueGroup.get('connectRequests').disable({emitEvent: false});
-        requestValueGroup.get('disconnectRequests').disable({emitEvent: false});
-        requestValueGroup.get('attributeRequests').disable({emitEvent: false});
-        requestValueGroup.get('attributeUpdates').disable({emitEvent: false});
-        requestValueGroup.get('serverSideRpc').disable({emitEvent: false});
-        requestValueGroup.get(value).enable();
-      });
-      this.mappingForm.get('requestValue.serverSideRpc.type').valueChanges.pipe(
-        takeUntil(this.destroy$)
-      ).subscribe((value) => {
-        const requestValueGroup = this.mappingForm.get('requestValue.serverSideRpc');
-        if (value === ServerSideRPCType.ONE_WAY) {
-          requestValueGroup.get('responseTopicExpression').disable({emitEvent: false});
-          requestValueGroup.get('responseTopicQoS').disable({emitEvent: false});
-          requestValueGroup.get('responseTimeout').disable({emitEvent: false});
-        } else {
-          requestValueGroup.get('responseTopicExpression').enable({emitEvent: false});
-          requestValueGroup.get('responseTopicQoS').enable({emitEvent: false});
-          requestValueGroup.get('responseTimeout').enable({emitEvent: false});
-        }
-      });
-      this.mappingForm.patchValue(this.prepareFormValueData());
+    switch (this.data.mappingType) {
+      case MappingType.DATA:
+        this.mappingForm = this.fb.group({});
+        this.createDataMappingForm();
+        break;
+      case MappingType.REQUESTS:
+        this.mappingForm = this.fb.group({});
+        this.createRequestMappingForm();
+        break;
+      case MappingType.OPCUA:
+        this.createOPCUAMappingForm();
     }
   }
 
@@ -286,16 +212,24 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const keysControl = this.mappingForm.get('converter').get(this.converterType).get(keysType);
-      const ctx: any = {
+      const group = this.data.mappingType !== MappingType.OPCUA ? this.mappingForm.get('converter').get(this.converterType)
+        : this.mappingForm;
+
+      const keysControl = group.get(keysType);
+      const ctx: {[key: string]: any} = {
         keys: keysControl.value,
         keysType: keysType,
-        rawData: this.mappingForm.get('converter.type').value === ConvertorType.BYTES,
+        rawData: this.mappingForm.get('converter.type')?.value === ConvertorType.BYTES,
         panelTitle: MappingKeysPanelTitleTranslationsMap.get(keysType),
         addKeyTitle: MappingKeysAddKeyTranslationsMap.get(keysType),
         deleteKeyTitle: MappingKeysDeleteKeyTranslationsMap.get(keysType),
         noKeysText: MappingKeysNoKeysTextTranslationsMap.get(keysType)
       };
+      if (this.data.mappingType === MappingType.OPCUA) {
+        ctx.valueTypeKeys = Object.values(OPCUaSourceTypes);
+        ctx.valueTypeEnum = OPCUaSourceTypes;
+        ctx.valueTypes = SourceTypeTranslationsMap;
+      }
       this.keysPopupClosed = false;
       const dataKeysPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
         this.viewContainerRef, MappingDataKeysPanelComponent, 'leftBottom', false, null,
@@ -316,45 +250,167 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
 
   private prepareMappingData(): {[key: string]: any} {
     const formValue = this.mappingForm.value;
-    if (this.data.mappingType === MappingType.DATA) {
-      const { converter, topicFilter, subscriptionQos } = formValue;
-      return {
-        topicFilter,
-        subscriptionQos,
-        converter: {
-          type: converter.type,
-          ...converter[converter.type]
-        }
-      };
-    } else {
-      return {
-        requestType: formValue.requestType,
-        requestValue: formValue.requestValue[formValue.requestType]
-      };
-    }
-  }
-
-  private prepareFormValueData(): {[key: string]: any} {
-    if (this.data.value && Object.keys(this.data.value).length) {
-      if (this.data.mappingType === MappingType.DATA) {
-        const { converter, topicFilter, subscriptionQos } = this.data.value;
+    switch (this.data.mappingType) {
+      case MappingType.DATA:
+        const { converter, topicFilter, subscriptionQos } = formValue;
         return {
           topicFilter,
           subscriptionQos,
           converter: {
             type: converter.type,
-            [converter.type]: { ...converter }
+            ...converter[converter.type]
           }
         };
-      } else {
+      case MappingType.REQUESTS:
         return {
-          requestType: this.data.value.requestType,
-          requestValue: {
-            [this.data.value.requestType]: this.data.value.requestValue
-          }
+          requestType: formValue.requestType,
+          requestValue: formValue.requestValue[formValue.requestType]
         };
+      default:
+        return formValue;
+    }
+  }
+
+  private prepareFormValueData(): {[key: string]: any} {
+    if (this.data.value && Object.keys(this.data.value).length) {
+      switch (this.data.mappingType) {
+        case MappingType.DATA:
+          const { converter, topicFilter, subscriptionQos } = this.data.value;
+          return {
+            topicFilter,
+            subscriptionQos,
+            converter: {
+              type: converter.type,
+              [converter.type]: { ...converter }
+            }
+          };
+        case MappingType.REQUESTS:
+          return {
+            requestType: this.data.value.requestType,
+            requestValue: {
+              [this.data.value.requestType]: this.data.value.requestValue
+            }
+          };
+        default:
+          return this.data.value;
       }
     }
-    return this.data.value;
+  }
+
+  private createDataMappingForm(): void {
+    this.mappingForm.addControl('topicFilter',
+      this.fb.control('', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]));
+    this.mappingForm.addControl('subscriptionQos', this.fb.control(0));
+    this.mappingForm.addControl('converter', this.fb.group({
+      type: [ConvertorType.JSON, []],
+      json: this.fb.group({
+        deviceInfo: [{}, []],
+        attributes: [[], []],
+        timeseries: [[], []]
+      }),
+      bytes: this.fb.group({
+        deviceInfo: [{}, []],
+        attributes: [[], []],
+        timeseries: [[], []]
+      }),
+      custom: this.fb.group({
+        extension: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+        extensionConfig: [{}, []]
+      }),
+    }));
+    this.mappingForm.patchValue(this.prepareFormValueData());
+    this.mappingForm.get('converter.type').valueChanges.pipe(
+      startWith(this.mappingForm.get('converter.type').value),
+      takeUntil(this.destroy$)
+    ).subscribe((value) => {
+      const converterGroup = this.mappingForm.get('converter');
+      converterGroup.get('json').disable({emitEvent: false});
+      converterGroup.get('bytes').disable({emitEvent: false});
+      converterGroup.get('custom').disable({emitEvent: false});
+      converterGroup.get(value).enable({emitEvent: false});
+    })
+  }
+
+  private createRequestMappingForm(): void {
+    this.mappingForm.addControl('requestType', this.fb.control(RequestType.CONNECT_REQUEST, []));
+    this.mappingForm.addControl('requestValue', this.fb.group({
+      connectRequests: this.fb.group({
+        topicFilter: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+        deviceInfo: [{}, []]
+      }),
+      disconnectRequests: this.fb.group({
+        topicFilter: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+        deviceInfo: [{}, []]
+      }),
+      attributeRequests: this.fb.group({
+        topicFilter: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+        deviceInfo:  this.fb.group({
+          deviceNameExpressionSource: [SourceTypes.MSG, []],
+          deviceNameExpression: ['', [Validators.required]],
+        }),
+        attributeNameExpressionSource: [SourceTypes.MSG, []],
+        attributeNameExpression: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+        topicExpression: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+        valueExpression: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+        retain: [false, []]
+      }),
+      attributeUpdates: this.fb.group({
+        deviceNameFilter: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+        attributeFilter: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+        topicExpression: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+        valueExpression: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+        retain: [true, []]
+      }),
+      serverSideRpc: this.fb.group({
+        type: [ServerSideRPCType.TWO_WAY, []],
+        deviceNameFilter: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+        methodFilter: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+        requestTopicExpression: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+        responseTopicExpression: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+        valueExpression: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+        responseTopicQoS: [0, []],
+        responseTimeout: [10000, [Validators.required, Validators.min(1)]],
+      })
+    }));
+    this.mappingForm.get('requestType').valueChanges.pipe(
+      startWith(this.mappingForm.get('requestType').value),
+      takeUntil(this.destroy$)
+    ).subscribe((value) => {
+      const requestValueGroup = this.mappingForm.get('requestValue');
+      requestValueGroup.get('connectRequests').disable({emitEvent: false});
+      requestValueGroup.get('disconnectRequests').disable({emitEvent: false});
+      requestValueGroup.get('attributeRequests').disable({emitEvent: false});
+      requestValueGroup.get('attributeUpdates').disable({emitEvent: false});
+      requestValueGroup.get('serverSideRpc').disable({emitEvent: false});
+      requestValueGroup.get(value).enable();
+    });
+    this.mappingForm.get('requestValue.serverSideRpc.type').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((value) => {
+      const requestValueGroup = this.mappingForm.get('requestValue.serverSideRpc');
+      if (value === ServerSideRPCType.ONE_WAY) {
+        requestValueGroup.get('responseTopicExpression').disable({emitEvent: false});
+        requestValueGroup.get('responseTopicQoS').disable({emitEvent: false});
+        requestValueGroup.get('responseTimeout').disable({emitEvent: false});
+      } else {
+        requestValueGroup.get('responseTopicExpression').enable({emitEvent: false});
+        requestValueGroup.get('responseTopicQoS').enable({emitEvent: false});
+        requestValueGroup.get('responseTimeout').enable({emitEvent: false});
+      }
+    });
+    this.mappingForm.patchValue(this.prepareFormValueData());
+  }
+
+  private createOPCUAMappingForm(): void {
+    this.mappingForm = this.fb.group({
+      deviceNodeSource: [OPCUaSourceTypes.CONST, []],
+      deviceNodePattern: ['', []],
+      deviceInfo: [{}, []],
+      attributes: [[], []],
+      timeseries: [[], []],
+      rpc_methods: [[], []],
+      attributes_updates: [[], []]
+    });
+    this.mappingForm.patchValue(this.prepareFormValueData());
   }
 }

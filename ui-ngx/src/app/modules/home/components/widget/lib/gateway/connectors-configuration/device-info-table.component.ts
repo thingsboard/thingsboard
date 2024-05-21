@@ -50,6 +50,7 @@ import {
 import {
   DeviceInfoType,
   noLeadTrailSpacesRegex,
+  OPCUaSourceTypes,
   SourceTypes,
   SourceTypeTranslationsMap
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
@@ -88,7 +89,7 @@ export class DeviceInfoTableComponent extends PageComponent implements ControlVa
   required = false;
 
   @Input()
-  sourceTypes: Array<SourceTypes> = Object.values(SourceTypes);
+  sourceTypes: Array<SourceTypes | OPCUaSourceTypes> = Object.values(SourceTypes);
 
   deviceInfoTypeValue: any;
 
@@ -131,13 +132,13 @@ export class DeviceInfoTableComponent extends PageComponent implements ControlVa
 
     if (this.useSource) {
       this.mappingFormGroup.addControl('deviceNameExpressionSource',
-        this.fb.control(SourceTypes.MSG, []));
+        this.fb.control(this.sourceTypes[0], []));
     }
 
     if (this.deviceInfoType === DeviceInfoType.FULL) {
       if (this.useSource) {
         this.mappingFormGroup.addControl('deviceProfileExpressionSource',
-          this.fb.control(SourceTypes.MSG, []));
+          this.fb.control(this.sourceTypes[0], []));
       }
       this.mappingFormGroup.addControl('deviceProfileExpression',
         this.fb.control('', this.required ?
@@ -154,6 +155,7 @@ export class DeviceInfoTableComponent extends PageComponent implements ControlVa
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+    super.ngOnDestroy();
   }
 
   registerOnChange(fn: any): void {

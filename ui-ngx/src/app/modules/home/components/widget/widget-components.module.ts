@@ -91,7 +91,7 @@ import { MappingTableComponent } from '@home/components/widget/lib/gateway/conne
 import { MappingDialogComponent } from '@home/components/widget/lib/gateway/dialog/mapping-dialog.component';
 import { DeviceInfoTableComponent } from '@home/components/widget/lib/gateway/connectors-configuration/device-info-table.component';
 import { MappingDataKeysPanelComponent } from '@home/components/widget/lib/gateway/connectors-configuration/mapping-data-keys-panel.component';
-import { BrokerSecurityComponent } from '@home/components/widget/lib/gateway/connectors-configuration/broker-security.component';
+import { SecurityConfigComponent } from '@home/components/widget/lib/gateway/connectors-configuration/security-config.component';
 import { EllipsisChipListDirective } from '@home/components/widget/lib/gateway/connectors-configuration/ellipsis-chip-list.directive';
 import { StatusWidgetComponent } from '@home/components/widget/lib/indicator/status-widget.component';
 import { LatestChartComponent } from '@home/components/widget/lib/chart/latest-chart.component';
@@ -99,6 +99,8 @@ import { PieChartWidgetComponent } from '@home/components/widget/lib/chart/pie-c
 import { BarChartWidgetComponent } from '@home/components/widget/lib/chart/bar-chart-widget.component';
 import { PolarAreaWidgetComponent } from '@home/components/widget/lib/chart/polar-area-widget.component';
 import { RadarChartWidgetComponent } from '@home/components/widget/lib/chart/radar-chart-widget.component';
+import { ServerConfigComponent } from '@home/components/widget/lib/gateway/connectors-configuration/server-config.component';
+import { TypeValuePanelComponent } from '@home/components/widget/lib/gateway/connectors-configuration/type-value-panel.component';
 
 @NgModule({
   declarations:
@@ -129,7 +131,9 @@ import { RadarChartWidgetComponent } from '@home/components/widget/lib/chart/rad
       MappingDialogComponent,
       DeviceInfoTableComponent,
       MappingDataKeysPanelComponent,
-      BrokerSecurityComponent,
+      SecurityConfigComponent,
+      ServerConfigComponent,
+      TypeValuePanelComponent,
       GatewayLogsComponent,
       GatewayStatisticsComponent,
       GatewayServiceRPCComponent,
@@ -199,7 +203,9 @@ import { RadarChartWidgetComponent } from '@home/components/widget/lib/chart/rad
         MappingDialogComponent,
         DeviceInfoTableComponent,
         MappingDataKeysPanelComponent,
-        BrokerSecurityComponent,
+        SecurityConfigComponent,
+        ServerConfigComponent,
+        TypeValuePanelComponent,
         GatewayLogsComponent,
         GatewayServiceRPCConnectorComponent,
         GatewayServiceRPCConnectorTemplatesComponent,

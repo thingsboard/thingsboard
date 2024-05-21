@@ -615,6 +615,124 @@
               </ng-container>
             </ng-container>
         </ng-template>
+        <ng-template [ngSwitchCase]="MappingType.OPCUA">
+          <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+            <div class="fixed-title-width tb-flex no-flex align-center" translate>
+              <div class="tb-required" tb-hint-tooltip-icon="{{ 'gateway.device-node-hint' | translate }}" translate>
+                gateway.device-node
+              </div>
+            </div>
+            <div class="tb-flex">
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <mat-select formControlName="deviceNodeSource">
+                  <mat-option *ngFor="let type of OPCUaSourceTypes" [value]="type">
+                    {{ SourceTypeTranslationsMap.get(type) | translate }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <input matInput name="value" formControlName="deviceNodePattern" placeholder="{{ 'gateway.set' | translate }}"/>
+                <mat-icon matSuffix
+                          matTooltipPosition="above"
+                          matTooltipClass="tb-error-tooltip"
+                          [matTooltip]="('gateway.device-node-required') | translate"
+                          *ngIf="(mappingForm.get('deviceNodePattern').hasError('required') &&
+                                  mappingForm.get('deviceNodePattern').touched)"
+                          class="tb-error">
+                  warning
+                </mat-icon>
+                <div matSuffix
+                     class="see-example"
+                     [tb-help-popup]="'widget/lib/gateway/expressions_fn'"
+                     tb-help-popup-placement="left"
+                     [tb-help-popup-style]="{maxWidth: '970px'}">
+                </div>
+              </mat-form-field>
+            </div>
+          </div>
+          <tb-device-info-table formControlName="deviceInfo" [sourceTypes]="OPCUaSourceTypes" [deviceInfoType]="DeviceInfoType.FULL" required="true">
+          </tb-device-info-table>
+          <div class="tb-form-row space-between tb-flex">
+            <div class="fixed-title-width" translate>gateway.attributes</div>
+            <div class="tb-flex ellipsis-chips-container">
+              <mat-chip-listbox [tb-ellipsis-chip-list]="opcAttributes" class="tb-flex">
+                <mat-chip *ngFor="let attribute of opcAttributes">
+                  {{ attribute }}
+                </mat-chip>
+                <mat-chip class="mat-mdc-chip ellipsis-chip">
+                  <label class="ellipsis-text"></label>
+                </mat-chip>
+              </mat-chip-listbox>
+              <button type="button"
+                      mat-icon-button
+                      color="primary"
+                      #opcAttributesButton
+                      (click)="manageKeys($event, opcAttributesButton, MappingKeysType.ATTRIBUTES)">
+                <tb-icon matButtonIcon>edit</tb-icon>
+              </button>
+            </div>
+          </div>
+          <div class="tb-form-row space-between tb-flex">
+            <div class="fixed-title-width" translate>gateway.timeseries</div>
+            <div class="tb-flex ellipsis-chips-container">
+              <mat-chip-listbox class="tb-flex" [tb-ellipsis-chip-list]="opcTelemetry">
+                <mat-chip *ngFor="let telemetry of opcTelemetry">
+                  {{ telemetry }}
+                </mat-chip>
+                <mat-chip class="mat-mdc-chip ellipsis-chip">
+                  <label class="ellipsis-text"></label>
+                </mat-chip>
+              </mat-chip-listbox>
+              <button type="button"
+                      mat-icon-button
+                      color="primary"
+                      #opcTelemetryButton
+                      (click)="manageKeys($event, opcTelemetryButton, MappingKeysType.TIMESERIES)">
+                <tb-icon matButtonIcon>edit</tb-icon>
+              </button>
+            </div>
+          </div>
+          <div class="tb-form-row space-between tb-flex">
+            <div class="fixed-title-width" translate>gateway.attribute-updates</div>
+            <div class="tb-flex ellipsis-chips-container">
+              <mat-chip-listbox [tb-ellipsis-chip-list]="opcAttributesUpdates" class="tb-flex">
+                <mat-chip *ngFor="let attribute of opcAttributesUpdates">
+                  {{ attribute }}
+                </mat-chip>
+                <mat-chip class="mat-mdc-chip ellipsis-chip">
+                  <label class="ellipsis-text"></label>
+                </mat-chip>
+              </mat-chip-listbox>
+              <button type="button"
+                      mat-icon-button
+                      color="primary"
+                      #attributesUpdatesButton
+                      (click)="manageKeys($event, attributesUpdatesButton, MappingKeysType.ATTRIBUTES_UPDATES)">
+                <tb-icon matButtonIcon>edit</tb-icon>
+              </button>
+            </div>
+          </div>
+          <div class="tb-form-row space-between tb-flex">
+            <div class="fixed-title-width" translate>gateway.rpc-methods</div>
+            <div class="tb-flex ellipsis-chips-container">
+              <mat-chip-listbox [tb-ellipsis-chip-list]="opcRpcMethods" class="tb-flex">
+                <mat-chip *ngFor="let attribute of opcRpcMethods">
+                  {{ attribute }}
+                </mat-chip>
+                <mat-chip class="mat-mdc-chip ellipsis-chip">
+                  <label class="ellipsis-text"></label>
+                </mat-chip>
+              </mat-chip-listbox>
+              <button type="button"
+                      mat-icon-button
+                      color="primary"
+                      #rpcMethodsButton
+                      (click)="manageKeys($event, rpcMethodsButton, MappingKeysType.RPC_METHODS)">
+                <tb-icon matButtonIcon>edit</tb-icon>
+              </button>
+            </div>
+          </div>
+        </ng-template>
       </ng-container>
     </div>
   </div>

@@ -20,8 +20,10 @@ import {
   Component,
   ElementRef,
   forwardRef,
+  Input,
   NgZone,
   OnDestroy,
+  OnInit,
   ViewContainerRef
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
@@ -47,37 +49,48 @@ import {
 import {
   BrokerSecurityType,
   BrokerSecurityTypeTranslationsMap,
+  ModeType,
   noLeadTrailSpacesRegex
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { takeUntil } from 'rxjs/operators';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-broker-security',
-  templateUrl: './broker-security.component.html',
-  styleUrls: ['./broker-security.component.scss'],
+  selector: 'tb-security-config',
+  templateUrl: './security-config.component.html',
+  styleUrls: ['./security-config.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => BrokerSecurityComponent),
+      useExisting: forwardRef(() => SecurityConfigComponent),
       multi: true
     },
     {
       provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => BrokerSecurityComponent),
+      useExisting: forwardRef(() => SecurityConfigComponent),
       multi: true
     }
   ]
 })
-export class BrokerSecurityComponent extends PageComponent implements ControlValueAccessor, Validator, OnDestroy {
+export class SecurityConfigComponent extends PageComponent implements ControlValueAccessor, Validator, OnInit, OnDestroy {
 
   BrokerSecurityType = BrokerSecurityType;
 
   securityTypes = Object.values(BrokerSecurityType);
 
+  modeTypes = Object.values(ModeType);
+
   SecurityTypeTranslationsMap = BrokerSecurityTypeTranslationsMap;
 
   securityFormGroup: UntypedFormGroup;
+
+  @Input()
+  title: string = 'gateway.security';
+
+  @Input()
+  @coerceBoolean()
+  extendCertificatesModel = false;
 
   private destroy$ = new Subject<void>();
   private propagateChange = (v: any) => {};
@@ -95,6 +108,9 @@ export class BrokerSecurityComponent extends PageComponent implements ControlVal
               private elementRef: ElementRef,
               private fb: FormBuilder) {
     super(store);
+  }
+
+  ngOnInit() {
     this.securityFormGroup = this.fb.group({
       type: [BrokerSecurityType.ANONYMOUS, []],
       username: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
@@ -103,6 +119,9 @@ export class BrokerSecurityComponent extends PageComponent implements ControlVal
       pathToPrivateKey: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
       pathToClientCert: ['', [Validators.pattern(noLeadTrailSpacesRegex)]]
     });
+    if (this.extendCertificatesModel) {
+      this.securityFormGroup.addControl('mode', this.fb.control(ModeType.NONE, []));
+    }
     this.securityFormGroup.valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe((value) => {
@@ -152,6 +171,7 @@ export class BrokerSecurityComponent extends PageComponent implements ControlVal
       this.securityFormGroup.get('pathToCACert').disable({emitEvent: false});
       this.securityFormGroup.get('pathToPrivateKey').disable({emitEvent: false});
       this.securityFormGroup.get('pathToClientCert').disable({emitEvent: false});
+      this.securityFormGroup.get('mode')?.disable({emitEvent: false});
       if (type === BrokerSecurityType.BASIC) {
         this.securityFormGroup.get('username').enable({emitEvent: false});
         this.securityFormGroup.get('password').enable({emitEvent: false});
@@ -159,6 +179,16 @@ export class BrokerSecurityComponent extends PageComponent implements ControlVal
         this.securityFormGroup.get('pathToCACert').enable({emitEvent: false});
         this.securityFormGroup.get('pathToPrivateKey').enable({emitEvent: false});
         this.securityFormGroup.get('pathToClientCert').enable({emitEvent: false});
+        if (this.extendCertificatesModel) {
+          const modeControl = this.securityFormGroup.get('mode');
+          if (modeControl && !modeControl.value) {
+            modeControl.setValue(ModeType.NONE, {emitEvent: false});
+          }
+
+          modeControl?.enable({emitEvent: false});
+          this.securityFormGroup.get('username').enable({emitEvent: false});
+          this.securityFormGroup.get('password').enable({emitEvent: false});
+        }
       }
     }
   }

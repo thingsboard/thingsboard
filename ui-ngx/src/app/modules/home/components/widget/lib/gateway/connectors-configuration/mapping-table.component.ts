@@ -40,7 +40,14 @@ import { debounceTime, distinctUntilChanged, map, takeUntil } from 'rxjs/operato
 import { Overlay } from '@angular/cdk/overlay';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityService } from '@core/http/entity.service';
-import { ControlValueAccessor, FormBuilder, NG_VALUE_ACCESSOR, UntypedFormArray } from '@angular/forms';
+import {
+  ControlValueAccessor,
+  FormArray,
+  FormBuilder,
+  FormGroup,
+  NG_VALUE_ACCESSOR,
+  UntypedFormArray
+} from '@angular/forms';
 import {
   ConvertorTypeTranslationsMap,
   MappingInfo,
@@ -121,18 +128,7 @@ export class MappingTableComponent extends PageComponent implements ControlValue
   }
 
   ngOnInit() {
-    if (this.mappingType === MappingType.DATA) {
-      this.mappingColumns.push(
-        {def: 'topicFilter', title: 'gateway.topic-filter'},
-        {def: 'QoS', title: 'gateway.mqtt-qos'},
-        {def: 'converter', title: 'gateway.payload-type'}
-      )
-    } else {
-      this.mappingColumns.push(
-        {def: 'type', title: 'gateway.type'},
-        {def: 'details', title: 'gateway.details'}
-      );
-    }
+    this.setMappingColumns();
     this.displayedColumns.push(...this.mappingColumns.map(column => column.def), 'actions');
     this.mappingFormGroup.valueChanges.pipe(
       takeUntil(this.destroy$)
@@ -183,7 +179,11 @@ export class MappingTableComponent extends PageComponent implements ControlValue
     }
     this.mappingFormGroup.clear({emitEvent: false});
     for (let mapping of mappingConfigs) {
-      this.mappingFormGroup.push(this.fb.group(mapping), {emitEvent: false});
+      let groupConfig = { ...mapping };
+      if (this.mappingType === MappingType.OPCUA) {
+        groupConfig = this.createFormArrays(groupConfig);
+      }
+      this.mappingFormGroup.push(this.fb.group(groupConfig), {emitEvent: false});
     }
     this.updateTableData(mappingConfigs);
   }
@@ -225,7 +225,7 @@ export class MappingTableComponent extends PageComponent implements ControlValue
       $event.stopPropagation();
     }
     const value = isDefinedAndNotNull(index) ? this.mappingFormGroup.at(index).value : {};
-    this.dialog.open<MappingDialogComponent, MappingInfo, boolean>(MappingDialogComponent, {
+    this.dialog.open<MappingDialogComponent, MappingInfo, {[key: string]: any}>(MappingDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
@@ -237,8 +237,18 @@ export class MappingTableComponent extends PageComponent implements ControlValue
       (res) => {
         if (res) {
           if (isDefinedAndNotNull(index)) {
-            this.mappingFormGroup.at(index).patchValue(res);
+            const formGroup = this.mappingFormGroup.at(index);
+            formGroup.patchValue(res);
+            if (this.mappingType === MappingType.OPCUA) {
+              this.updateFormArray(formGroup as FormGroup, 'attributes', res.attributes || []);
+              this.updateFormArray(formGroup as FormGroup, 'timeseries', res.timeseries || []);
+              this.updateFormArray(formGroup as FormGroup, 'rpc_methods', res.rpc_methods || []);
+              this.updateFormArray(formGroup as FormGroup, 'attributes_updates', res.attributes_updates || []);
+            }
           } else {
+            if (this.mappingType === MappingType.OPCUA) {
+              res = this.createFormArrays(res);
+            }
             this.mappingFormGroup.push(this.fb.group(res));
           }
         }
@@ -247,31 +257,9 @@ export class MappingTableComponent extends PageComponent implements ControlValue
   }
 
   updateTableData(value: Array<{[key: string]: any}>, textSearch?: string): void {
-    let tableValue = value;
-    if (this.mappingType === MappingType.DATA) {
-      tableValue = tableValue.map((value) => {
-        return {
-          topicFilter: value.topicFilter,
-          QoS: value.subscriptionQos,
-          converter: this.translate.instant(ConvertorTypeTranslationsMap.get(value.converter.type))
-        };
-      });
-    } else {
-      tableValue = tableValue.map((value) => {
-        let details;
-        if (value.requestType === RequestType.ATTRIBUTE_UPDATE) {
-          details = value.requestValue.attributeFilter;
-        } else if (value.requestType === RequestType.SERVER_SIDE_RPC) {
-          details = value.requestValue.methodFilter;
-        } else {
-          details = value.requestValue.topicFilter;
-        }
-        return {
-          type: this.translate.instant(RequestTypesTranslationsMap.get(value.requestType)),
-          details
-        };
-      });
-    }
+    let tableValue = value.map((value) => {
+      return this.getMappingValue(value);
+    });
     if (textSearch) {
       tableValue = tableValue.filter(value =>
         Object.values(value).some(val =>
@@ -299,6 +287,85 @@ export class MappingTableComponent extends PageComponent implements ControlValue
     });
   }
 
+  private getMappingValue(value: {[key: string]: any}): {[key: string]: any} {
+    switch (this.mappingType) {
+      case MappingType.DATA:
+        return {
+          topicFilter: value.topicFilter,
+          QoS: value.subscriptionQos,
+          converter: this.translate.instant(ConvertorTypeTranslationsMap.get(value.converter.type))
+        };
+      case MappingType.REQUESTS:
+        let details;
+        if (value.requestType === RequestType.ATTRIBUTE_UPDATE) {
+          details = value.requestValue.attributeFilter;
+        } else if (value.requestType === RequestType.SERVER_SIDE_RPC) {
+          details = value.requestValue.methodFilter;
+        } else {
+          details = value.requestValue.topicFilter;
+        }
+        return {
+          type: this.translate.instant(RequestTypesTranslationsMap.get(value.requestType)),
+          details
+        };
+      case MappingType.OPCUA:
+        const deviceNamePattern = value.deviceInfo?.deviceNameExpression;
+        const deviceProfileExpression = value.deviceInfo?.deviceProfileExpression;
+        const { deviceNodePattern } = value;
+        return {
+          deviceNodePattern,
+          deviceNamePattern,
+          deviceProfileExpression
+        };
+      default:
+        return {};
+    }
+  }
+
+  private setMappingColumns(): void {
+    switch (this.mappingType) {
+      case MappingType.DATA:
+        this.mappingColumns.push(
+          { def: 'topicFilter', title: 'gateway.topic-filter' },
+          { def: 'QoS', title: 'gateway.mqtt-qos' },
+          { def: 'converter', title: 'gateway.payload-type' }
+        );
+        break;
+      case MappingType.REQUESTS:
+        this.mappingColumns.push(
+          { def: 'type', title: 'gateway.type' },
+          { def: 'details', title: 'gateway.details' }
+        );
+        break;
+      case MappingType.OPCUA:
+        this.mappingColumns.push(
+          { def: 'deviceNodePattern', title: 'gateway.device-node' },
+          { def: 'deviceNamePattern', title: 'gateway.device-name' },
+          { def: 'deviceProfileExpression', title: 'gateway.device-profile' }
+        );
+    }
+  }
+
+  private updateFormArray(formGroup: FormGroup, key: string, data: Array<{[key: string]: any}>): void {
+    if (!formGroup.get(key)) {
+      formGroup.addControl(key, this.fb.array([]));
+    }
+    const arrayControl = formGroup.get(key) as FormArray;
+
+    arrayControl.clear();
+
+    (data || []).forEach(item => {
+      arrayControl.push(this.fb.control(item));
+    });
+  }
+
+  private createFormArrays(value: {[key: string]: any}): {[key: string]: any} {
+    value.attributes = this.fb.array(value.attributes || []);
+    value.timeseries = this.fb.array(value.timeseries || []);
+    value.rpc_methods = this.fb.array(value.rpc_methods || []);
+    value.attributes_updates = this.fb.array(value.attributes_updates || []);
+    return value;
+  }
 }
 
 export class MappingDatasource implements DataSource<{[key: string]: any}> {

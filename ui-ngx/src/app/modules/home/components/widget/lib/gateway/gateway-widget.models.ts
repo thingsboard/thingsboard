@@ -331,10 +331,16 @@ export interface CreatedConnectorConfigData {
 }
 
 export interface MappingDataKey {
-  key: string,
+  key?: string,
   value: any,
-  type: MappingValueType
+  type?: MappingValueType
 }
+
+export interface RpcMethodsMapping {
+  method: string,
+  arguments: Array<MappingDataKey>
+}
+
 export interface MappingInfo {
   mappingType: MappingType,
   value: {[key: string]: any},
@@ -350,6 +356,12 @@ export enum BrokerSecurityType {
   ANONYMOUS = 'anonymous',
   BASIC = 'basic',
   CERTIFICATES = 'certificates'
+}
+
+export enum ModeType {
+  NONE = 'None',
+  SIGN = 'Sign',
+  SIGNANDENCRYPT = 'SignAndEncrypt'
 }
 
 export const BrokerSecurityTypeTranslationsMap = new Map<BrokerSecurityType, string>(
@@ -368,19 +380,22 @@ export const MqttVersions = [
 
 export enum MappingType {
   DATA = 'data',
-  REQUESTS = 'requests'
+  REQUESTS = 'requests',
+  OPCUA = 'OPCua'
 }
 
 export const MappingTypeTranslationsMap = new Map<MappingType, string>(
   [
     [MappingType.DATA, 'gateway.data-mapping'],
-    [MappingType.REQUESTS, 'gateway.requests-mapping']
+    [MappingType.REQUESTS, 'gateway.requests-mapping'],
+    [MappingType.OPCUA, 'gateway.data-mapping']
   ]
 );
 
 export const MappingHintTranslationsMap = new Map<MappingType, string>(
   [
     [MappingType.DATA, 'gateway.data-mapping-hint'],
+    [MappingType.OPCUA, 'gateway.data-mapping-hint'],
     [MappingType.REQUESTS, 'gateway.requests-mapping-hint']
   ]
 );
@@ -415,16 +430,25 @@ export enum SourceTypes {
   CONST = 'constant'
 }
 
+export enum OPCUaSourceTypes {
+  PATH = 'path',
+  IDENTIFIER = 'identifier',
+  CONST = 'constant'
+}
+
 export enum DeviceInfoType {
   FULL = 'full',
   PARTIAL = 'partial'
 }
 
-export const SourceTypeTranslationsMap = new Map<SourceTypes, string>(
+export const SourceTypeTranslationsMap = new Map<SourceTypes | OPCUaSourceTypes, string>(
   [
     [SourceTypes.MSG, 'gateway.source-type.msg'],
     [SourceTypes.TOPIC, 'gateway.source-type.topic'],
     [SourceTypes.CONST, 'gateway.source-type.const'],
+    [OPCUaSourceTypes.PATH, 'gateway.source-type.path'],
+    [OPCUaSourceTypes.IDENTIFIER, 'gateway.source-type.identifier'],
+    [OPCUaSourceTypes.CONST, 'gateway.source-type.const']
   ]
 );
 
@@ -449,14 +473,18 @@ export const RequestTypesTranslationsMap = new Map<RequestType, string>(
 export enum MappingKeysType {
   ATTRIBUTES = 'attributes',
   TIMESERIES = 'timeseries',
-  CUSTOM = 'extensionConfig'
+  CUSTOM = 'extensionConfig',
+  RPC_METHODS = 'rpc_methods',
+  ATTRIBUTES_UPDATES = 'attributes_updates'
 }
 
 export const MappingKeysPanelTitleTranslationsMap = new Map<MappingKeysType, string>(
   [
     [MappingKeysType.ATTRIBUTES, 'gateway.attributes'],
     [MappingKeysType.TIMESERIES, 'gateway.timeseries'],
-    [MappingKeysType.CUSTOM, 'gateway.keys']
+    [MappingKeysType.CUSTOM, 'gateway.keys'],
+    [MappingKeysType.ATTRIBUTES_UPDATES, 'gateway.attribute-updates'],
+    [MappingKeysType.RPC_METHODS, 'gateway.rpc-methods']
   ]
 );
 
@@ -464,7 +492,9 @@ export const MappingKeysAddKeyTranslationsMap = new Map<MappingKeysType, string>
   [
     [MappingKeysType.ATTRIBUTES, 'gateway.add-attribute'],
     [MappingKeysType.TIMESERIES, 'gateway.add-timeseries'],
-    [MappingKeysType.CUSTOM, 'gateway.add-key']
+    [MappingKeysType.CUSTOM, 'gateway.add-key'],
+    [MappingKeysType.ATTRIBUTES_UPDATES, 'gateway.add-attribute-update'],
+    [MappingKeysType.RPC_METHODS, 'gateway.add-rpc-method']
   ]
 );
 
@@ -472,7 +502,9 @@ export const MappingKeysDeleteKeyTranslationsMap = new Map<MappingKeysType, stri
   [
     [MappingKeysType.ATTRIBUTES, 'gateway.delete-attribute'],
     [MappingKeysType.TIMESERIES, 'gateway.delete-timeseries'],
-    [MappingKeysType.CUSTOM, 'gateway.delete-key']
+    [MappingKeysType.CUSTOM, 'gateway.delete-key'],
+    [MappingKeysType.ATTRIBUTES_UPDATES, 'gateway.delete-attribute-update'],
+    [MappingKeysType.RPC_METHODS, 'gateway.delete-rpc-method']
   ]
 );
 
@@ -480,7 +512,9 @@ export const MappingKeysNoKeysTextTranslationsMap = new Map<MappingKeysType, str
   [
     [MappingKeysType.ATTRIBUTES, 'gateway.no-attributes'],
     [MappingKeysType.TIMESERIES, 'gateway.no-timeseries'],
-    [MappingKeysType.CUSTOM, 'gateway.no-keys']
+    [MappingKeysType.CUSTOM, 'gateway.no-keys'],
+    [MappingKeysType.ATTRIBUTES_UPDATES, 'gateway.no-attribute-updates'],
+    [MappingKeysType.RPC_METHODS, 'gateway.no-rpc-methods']
   ]
 );
 
@@ -540,3 +574,9 @@ export const DataConversionTranslationsMap = new Map<ConvertorType, string>(
     [ConvertorType.CUSTOM, 'gateway.custom-hint']
   ]
 );
+
+export const ServerSecurityTypes = [
+  { value: 'Basic128Rsa15', name: 'Basic128RSA' },
+  { value: 'Basic256', name: 'Basic256' },
+  { value: 'Basic256Sha256', name: 'Basic256SHA' }
+];
