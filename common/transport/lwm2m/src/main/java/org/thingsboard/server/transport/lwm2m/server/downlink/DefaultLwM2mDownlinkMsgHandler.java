@@ -98,7 +98,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -115,8 +114,6 @@ import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.OBJE
 import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.SERVER_URI;
 import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.SHORT_SERVER_ID;
 import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.STEP;
-import static org.eclipse.leshan.core.model.ResourceModel.Type.OBJLNK;
-import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertMultiResourceValuesFromRpcBody;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.createModelsDefault;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.fromVersionedIdToObjectId;
@@ -742,19 +739,8 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
 
     private static ContentFormat getRequestContentFormat(LwM2mClient client, String versionedId, LwM2mModelProvider modelProvider) {
         LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(versionedId));
-        if (pathIds.isResource() || pathIds.isResourceInstance()) {
-            ResourceModel resourceModel = client.getResourceModel(versionedId, modelProvider);
-            if (resourceModel != null && (pathIds.isResourceInstance() || (pathIds.isResource() && !resourceModel.multiple))) {
-                if (OBJLNK.equals(resourceModel.type)) {
-                    return ContentFormat.LINK;
-                } else if (OPAQUE.equals(resourceModel.type)) {
-                    return ContentFormat.OPAQUE;
-                } else {
-                    return findFirstContentFormatForComp(client.getClientSupportContentFormats(), client.getDefaultContentFormat(), ContentFormat.CBOR, ContentFormat.SENML_CBOR, ContentFormat.SENML_JSON);
-                }
-            } else {
-                return getContentFormatForComplex(client);
-            }
+        if (pathIds.isResourceInstance()) {
+            return findFirstContentFormatForComp(client.getClientSupportContentFormats(), client.getDefaultContentFormat(), ContentFormat.CBOR, ContentFormat.SENML_CBOR, ContentFormat.SENML_JSON);
         } else {
             return getContentFormatForComplex(client);
         }
@@ -783,37 +769,21 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         }
     }
 
-    private ContentFormat findFirstContentFormatForComposite (Set<?> clientSupportContentFormats) {
-        ContentFormat contentFormat = findFirstContentFormatForComp(clientSupportContentFormats, null, ContentFormat.SENML_JSON, ContentFormat.SENML_CBOR);
+    private ContentFormat findFirstContentFormatForComposite (Set<ContentFormat> clientSupportContentFormats) {
+        ContentFormat contentFormat = findFirstContentFormatForComp(clientSupportContentFormats, null, ContentFormat.SENML_CBOR, ContentFormat.SENML_JSON);
         if (contentFormat != null) {
             return contentFormat;
         } else {
             throw new RuntimeException("This device does not support Composite Operation");
         }
     }
-    private static ContentFormat findFirstContentFormatForComp(Set<?> clientSupportContentFormats, ContentFormat defaultValue, ContentFormat... desiredFormats) {
-        AtomicReference<ContentFormat> compositeContentFormat = new AtomicReference<>();
-        clientSupportContentFormats.forEach(c -> {
-            if (c instanceof Collection) {
-                for (ContentFormat contentFormat : desiredFormats) {
-                    if (((Collection<?>) c).contains(contentFormat)) {
-                        compositeContentFormat.set(contentFormat);
-                        break;
-                    }
-                }
-            } else if (compositeContentFormat.get() == null && c instanceof ContentFormat) {
-                compositeContentFormat.set(Arrays.stream(desiredFormats).filter(f -> f.equals(c)).findFirst().get());
-            }
-        });
-        return compositeContentFormat.get() != null ? compositeContentFormat.get() : defaultValue;
-    }
-
-    private static <T> boolean containsObserveComposite(List<T> l1, List<T> l2) {
-        for (T elem : l1) {
-            if (l2.contains(elem)) {
-                return true;
+    private static ContentFormat findFirstContentFormatForComp(Set<ContentFormat> clientSupportContentFormats, ContentFormat defaultValue, ContentFormat... desiredFormats) {
+        List desiredFormatsList =  Arrays.asList(desiredFormats);
+        for (ContentFormat c : clientSupportContentFormats) {
+            if (desiredFormatsList.contains(c)) {
+                return c;
             }
         }
-        return false;
+        return defaultValue;
     }
 }
