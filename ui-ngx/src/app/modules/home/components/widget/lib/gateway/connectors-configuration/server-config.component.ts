@@ -35,7 +35,9 @@ import {
   Validators
 } from '@angular/forms';
 import {
+  BrokerSecurityType,
   noLeadTrailSpacesRegex,
+  SecurityType,
   ServerSecurityTypes
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { takeUntil } from 'rxjs/operators';
@@ -78,15 +80,15 @@ export class ServerConfigComponent extends PageComponent implements ControlValue
       enableSubscriptions: [true, []],
       subCheckPeriodInMillis: [0, []],
       showMap: [false, []],
-      security: ['', []],
+      security: [SecurityType.BASIC128, []],
       identity: [{}, [Validators.required]]
     });
 
     this.serverConfigFormGroup.valueChanges.pipe(
-        takeUntil(this.destroy$)
-      ).subscribe((value) => {
-        this.updateView(value);
-      });
+      takeUntil(this.destroy$)
+    ).subscribe((value) => {
+      this.updateView(value);
+    });
   }
 
   ngOnDestroy() {
@@ -102,6 +104,15 @@ export class ServerConfigComponent extends PageComponent implements ControlValue
   registerOnTouched(fn: any): void {}
 
   writeValue(deviceInfo: any) {
+    if (!deviceInfo) {
+      deviceInfo = {};
+    }
+    if (!deviceInfo.security) {
+      deviceInfo.security = SecurityType.BASIC128;
+    }
+    if (!deviceInfo.identity) {
+      deviceInfo.identity = { type: BrokerSecurityType.ANONYMOUS };
+    }
     this.serverConfigFormGroup.reset(deviceInfo);
     this.updateView(deviceInfo);
   }

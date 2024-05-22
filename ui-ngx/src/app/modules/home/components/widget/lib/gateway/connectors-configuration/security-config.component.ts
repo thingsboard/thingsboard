@@ -147,6 +147,9 @@ export class SecurityConfigComponent extends PageComponent implements ControlVal
   registerOnTouched(fn: any): void {}
 
   writeValue(deviceInfo: any) {
+    if (!deviceInfo) {
+      deviceInfo = {};
+    }
     if (!deviceInfo.type) {
       deviceInfo.type = BrokerSecurityType.ANONYMOUS;
     }

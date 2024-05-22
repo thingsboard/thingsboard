@@ -222,7 +222,9 @@
             </div>
           </div>
         </mat-tab>
-        <ng-container *ngIf="connectorForm.get('mode').value === connectorConfigurationModes.BASIC; else defaultConfig">
+        <ng-container *ngIf="connectorForm.get('mode').value === connectorConfigurationModes.BASIC &&
+                             (initialConnector.type === connectorType.MQTT ||
+                             initialConnector.type === connectorType.OPCUA); else defaultConfig">
           <ng-container formGroupName="basicConfig" [ngSwitch]="connectorForm.get('type').value">
             <ng-template [ngSwitchCase]="connectorType.MQTT">
               <mat-tab label="{{ 'gateway.broker.connection' | translate }}*">
@@ -363,9 +365,9 @@
             </ng-template>
             <ng-template [ngSwitchCase]="connectorType.OPCUA">
               <mat-tab label="{{ 'gateway.server' | translate }}*">
-                  <tb-server-config formControlName="server"></tb-server-config>
+                  <tb-server-config [formControl]="connectorForm.get('basicConfig.server')"></tb-server-config>
               </mat-tab>
-              <mat-tab label="{{ 'gateway.data-mapping' | translate }}*">
+              <mat-tab label="{{ 'gateway.data-mapping' | translate }}">
                   <div class="tb-form-panel no-border no-padding padding-top tb-flex fill-height">
                     <tb-mapping-table formControlName="mapping" [mappingType]="mappingTypes.OPCUA"></tb-mapping-table>
                   </div>

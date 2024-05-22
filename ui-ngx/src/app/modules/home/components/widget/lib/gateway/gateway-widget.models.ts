@@ -17,7 +17,6 @@
 import { ResourcesService } from '@core/services/resources.service';
 import { Observable } from 'rxjs';
 import { ValueTypeData } from '@shared/models/constants';
-import { Validators } from '@angular/forms';
 
 export const noLeadTrailSpacesRegex: RegExp = /^(?! )[\S\s]*(?<! )$/;
 
@@ -395,7 +394,7 @@ export const MappingTypeTranslationsMap = new Map<MappingType, string>(
 export const MappingHintTranslationsMap = new Map<MappingType, string>(
   [
     [MappingType.DATA, 'gateway.data-mapping-hint'],
-    [MappingType.OPCUA, 'gateway.data-mapping-hint'],
+    [MappingType.OPCUA, 'gateway.opcua-data-mapping-hint'],
     [MappingType.REQUESTS, 'gateway.requests-mapping-hint']
   ]
 );
@@ -523,7 +522,6 @@ export enum ServerSideRPCType {
   TWO_WAY = 'twoWay'
 }
 
-
 export const getDefaultConfig = (resourcesService: ResourcesService, type: string): Observable<any> =>
   resourcesService.loadJsonResource(`/assets/metadata/connector-default-configs/${type}.json`);
 
@@ -574,6 +572,12 @@ export const DataConversionTranslationsMap = new Map<ConvertorType, string>(
     [ConvertorType.CUSTOM, 'gateway.custom-hint']
   ]
 );
+
+export enum SecurityType {
+  BASIC128 = 'Basic128Rsa15',
+  BASIC256 = 'Basic256',
+  BASIC256SHA = 'Basic256Sha256'
+}
 
 export const ServerSecurityTypes = [
   { value: 'Basic128Rsa15', name: 'Basic128RSA' },
