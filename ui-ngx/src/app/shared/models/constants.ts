@@ -142,6 +142,7 @@ export const HelpLinks = {
     ruleNodeSendSms: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/external-nodes/#send-sms-node',
     ruleNodeMath: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#math-function-node',
     ruleNodeCalculateDelta: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/enrichment-nodes/#calculate-delta',
+    ruleNodeRestCallReply: helpBaseUrl + '/docs/user-guide/rule-engine-2-0/action-nodes/#rest-call-reply-node',
     tenants: helpBaseUrl + '/docs/user-guide/ui/tenants',
     tenantProfiles: helpBaseUrl + '/docs/user-guide/ui/tenant-profiles',
     customers: helpBaseUrl + '/docs/user-guide/ui/customers',
