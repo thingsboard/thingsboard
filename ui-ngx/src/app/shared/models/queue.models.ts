@@ -108,20 +108,21 @@ export interface QueueInfo extends BaseData<QueueId>, HasTenantId {
   consumerPerPartition: boolean;
   pollInterval: number;
   processingStrategy: {
-    type: QueueProcessingStrategyTypes,
-    retries: number,
-    failurePercentage: number,
-    pauseBetweenRetries: number,
-    maxPauseBetweenRetries: number
+    type: QueueProcessingStrategyTypes;
+    retries: number;
+    failurePercentage: number;
+    pauseBetweenRetries: number;
+    maxPauseBetweenRetries: number;
   };
   submitStrategy: {
-    type: QueueSubmitStrategyTypes,
-    batchSize: number,
+    type: QueueSubmitStrategyTypes;
+    batchSize: number;
   };
   tenantId?: TenantId;
   topic: string;
   additionalInfo: {
     description?: string;
     customProperties?: string;
+    duplicateMsgToAllPartitions?: boolean;
   };
 }
