@@ -116,7 +116,6 @@ public class TbKafkaAdmin implements TbQueueAdmin {
     }
 
     public CreateTopicsResult createTopic(NewTopic topic) {
-        client.listConsumerGroupOffsets("id1");
         return client.createTopics(Collections.singletonList(topic));
     }
 
