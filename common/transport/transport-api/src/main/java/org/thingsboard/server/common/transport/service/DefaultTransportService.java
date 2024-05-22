@@ -452,8 +452,13 @@ public class DefaultTransportService extends TransportActivityManager implements
 
     @Override
     public void process(TenantId tenantId, TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg requestMsg, TransportServiceCallback<GetOrCreateDeviceFromGatewayResponse> callback) {
-        TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setGetOrCreateDeviceRequestMsg(requestMsg).build());
         log.trace("Processing msg: {}", requestMsg);
+        DeviceId gatewayid = new DeviceId(new UUID(requestMsg.getGatewayIdMSB(), requestMsg.getGatewayIdLSB()));
+        if (!checkLimits(tenantId, gatewayid, null, requestMsg.getDeviceName(), requestMsg, callback, 0)) {
+            return;
+        }
+
+        TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setGetOrCreateDeviceRequestMsg(requestMsg).build());
         var key = new EntityLimitKey(tenantId, StringUtils.truncate(requestMsg.getDeviceName(), 256));
         if (entityLimitsCache.get(key)) {
             transportCallbackExecutor.submit(() -> callback.onError(new RuntimeException(DataConstants.MAXIMUM_NUMBER_OF_DEVICES_REACHED)));
@@ -857,6 +862,14 @@ public class DefaultTransportService extends TransportActivityManager implements
             gatewayId = new DeviceId(new UUID(sessionInfo.getGatewayIdMSB(), sessionInfo.getGatewayIdLSB()));
         }
 
+        return checkLimits(tenantId, gatewayId, deviceId, sessionInfo.getDeviceName(), msg, callback, dataPoints);
+    }
+
+    private boolean checkLimits(TenantId tenantId, DeviceId gatewayId, DeviceId deviceId, String deviceName, Object msg, TransportServiceCallback<?> callback, int dataPoints) {
+        if (log.isTraceEnabled()) {
+            log.trace("[{}][{}] Processing msg: {}", tenantId, deviceName, msg);
+        }
+
         var rateLimitedPair = rateLimitService.checkLimits(tenantId, gatewayId, deviceId, dataPoints);
         if (rateLimitedPair == null) {
             return true;
@@ -868,13 +881,16 @@ public class DefaultTransportService extends TransportActivityManager implements
 
             if (rateLimitedEntityType == EntityType.DEVICE || rateLimitedEntityType == EntityType.TENANT) {
                 LimitedApi limitedApi =
-                        rateLimitedEntityType == EntityType.TENANT ?  LimitedApi.TRANSPORT_MESSAGES_PER_TENANT :
+                        rateLimitedEntityType == EntityType.TENANT ? LimitedApi.TRANSPORT_MESSAGES_PER_TENANT :
                                 rateLimitedPair.getSecond() ? LimitedApi.TRANSPORT_MESSAGES_PER_GATEWAY : LimitedApi.TRANSPORT_MESSAGES_PER_DEVICE;
+
+                EntityId limitLevel = rateLimitedEntityType == EntityType.DEVICE ? deviceId == null ? gatewayId : deviceId : tenantId;
+
                 notificationRuleProcessor.process(RateLimitsTrigger.builder()
                         .tenantId(tenantId)
                         .api(limitedApi)
-                        .limitLevel(rateLimitedEntityType == EntityType.DEVICE ? deviceId : tenantId)
-                        .limitLevelEntityName(rateLimitedEntityType == EntityType.DEVICE ? sessionInfo.getDeviceName() : null)
+                        .limitLevel(limitLevel)
+                        .limitLevelEntityName(rateLimitedEntityType == EntityType.DEVICE ? deviceName : null)
                         .build());
             }
             return false;
