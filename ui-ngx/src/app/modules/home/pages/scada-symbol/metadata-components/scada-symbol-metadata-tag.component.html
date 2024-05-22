@@ -1,0 +1,74 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div [formGroup]="tagFormGroup" class="tb-form-panel stroked">
+  <mat-expansion-panel #expansionPanel class="tb-settings">
+    <mat-expansion-panel-header fxLayout="row wrap">
+      <div class="tb-scada-symbol-metadata-tag-header">
+        <div class="tb-form-row tb-flex">
+          <div class="fixed-title-width" translate>scada.tag</div>
+          <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic" (click)="$event.stopPropagation()">
+            <mat-select required formControlName="tag" placeholder="{{ 'scada.select-tag' | translate }}">
+              <mat-option *ngFor="let tag of availableTags" [value]="tag">
+                {{ tag }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <button type="button"
+                mat-icon-button
+                (click)="tagRemoved.emit()"
+                matTooltip="{{ 'scada.remove-tag' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+    </mat-expansion-panel-header>
+    <ng-template matExpansionPanelContent>
+      <div class="tb-form-panel stroked">
+        <mat-expansion-panel class="tb-settings">
+          <mat-expansion-panel-header fxLayout="row wrap">
+            <mat-panel-title>
+              {{ 'scada.state-render-function' | translate }}
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <ng-template matExpansionPanelContent>
+            <tb-js-func formControlName="stateRenderFunction"
+                        [functionArgs]="['element', 'ctx']"
+                        helpId="widget/lib/timeseries/cell_style_fn">
+            </tb-js-func>
+          </ng-template>
+        </mat-expansion-panel>
+      </div>
+      <div class="tb-form-panel stroked">
+        <mat-expansion-panel class="tb-settings">
+          <mat-expansion-panel-header fxLayout="row wrap">
+            <mat-panel-title>
+              {{ 'scada.on-click-action' | translate }}
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <ng-template matExpansionPanelContent>
+            <tb-js-func formControlName="clickAction"
+                        [functionArgs]="['event', 'ctx']"
+                        helpId="widget/lib/timeseries/cell_style_fn">
+            </tb-js-func>
+          </ng-template>
+        </mat-expansion-panel>
+      </div>
+    </ng-template>
+  </mat-expansion-panel>
+</div>

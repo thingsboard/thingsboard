@@ -29,14 +29,43 @@
                             [showCloseDetails]="false"
                             headerHeightPx="64"
                             headerTitle="{{symbolData?.imageResource?.title}}">
-            <button mat-button
-                    *ngIf="previewMode"
-                    (click)="exitPreviewMode()">
-              <mat-icon>chevron_left</mat-icon>
-              {{ 'action.back' | translate }}
-            </button>
+            <div *ngIf="previewMode" class="tb-scada-symbol-preview-content tb-absolute-fill">
+              <div class="tb-scada-symbol-preview-header">
+                <button mat-button
+                        (click)="exitPreviewMode()">
+                  <mat-icon>chevron_left</mat-icon>
+                  {{ 'action.back' | translate }}
+                </button>
+                <span style="flex: 1;"></span>
+                <button [disabled]="!scadaPreviewFormGroup.dirty"
+                        mat-stroked-button color="primary"
+                        (click)="onRevertPreviewSettings()">
+                  <mat-icon>close</mat-icon>
+                  {{ 'action.decline' | translate }}
+                </button>
+                <button [disabled]="!scadaPreviewFormGroup.valid || !scadaPreviewFormGroup.dirty"
+                        mat-flat-button color="primary"
+                        (click)="onApplyPreviewSettings()">
+                  <mat-icon>done</mat-icon>
+                  {{ 'action.apply' | translate }}
+                </button>
+              </div>
+              <div [formGroup]="scadaPreviewFormGroup" class="tb-scada-symbol-preview-settings">
+                <div class="mat-content">
+                  <tb-iot-svg-object-settings
+                    formControlName="iotSvgObject"
+                    [svgContent]="symbolData.svgContent"
+                    [aliasController]="aliasController"
+                    [widgetType]="widgetType.rpc"
+                    [callbacks]="widgetActionCallbacks">
+                  </tb-iot-svg-object-settings>
+                </div>
+              </div>
+            </div>
             <div [fxShow]="!previewMode" [formGroup]="scadaSymbolFormGroup">
-              <tb-scada-symbol-metadata formControlName="metadata">
+              <tb-scada-symbol-metadata
+                [tags]="tags"
+                formControlName="metadata">
                 <div class="tb-scada-symbol-metadata-header-prefix">
                   <button fxHide.gt-sm
                           [disabled]="!scadaSymbolFormGroup.valid"
@@ -74,7 +103,9 @@
           </tb-details-panel>
         </mat-drawer>
         <mat-drawer-content class="tb-scada-symbol-content">
-          <tb-scada-symbol-editor *ngIf="!previewMode" #symbolEditor [data]="symbolEditorData"></tb-scada-symbol-editor>
+          <tb-scada-symbol-editor *ngIf="!previewMode" #symbolEditor
+                                  [data]="symbolEditorData"
+                                  (tags)="tags = $event"></tb-scada-symbol-editor>
           <tb-dashboard *ngIf="previewMode"
                         class="tb-absolute-fill"
                         [aliasController]="aliasController"

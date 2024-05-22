@@ -18,7 +18,7 @@ import { ImageResourceInfo } from '@shared/models/resource.models';
 import * as svgjs from '@svgdotjs/svg.js';
 import { Box, Element, Rect, Style, SVG, Svg, Timeline } from '@svgdotjs/svg.js';
 import { ResizeObserver } from '@juggle/resize-observer';
-import { ViewContainerRef } from '@angular/core';
+import { EventEmitter, ViewContainerRef } from '@angular/core';
 import { forkJoin, from } from 'rxjs';
 import {
   setupAddTagPanelTooltip,
@@ -47,6 +47,11 @@ export class ScadaSymbolEditObject {
   public scale = 1;
 
   public dirty = false;
+
+  public tags: string[] = [];
+
+  public tagsUpdated = new EventEmitter<string[]>();
+
   constructor(private rootElement: HTMLElement,
               public viewContainerRef: ViewContainerRef) {
     this.shapeResize$ = new ResizeObserver(() => {
@@ -202,6 +207,7 @@ export class ScadaSymbolEditObject {
     for (const el of this.elements) {
       el.init();
     }
+    this.updateTags();
   }
 
   private addElement(e: Element) {
@@ -221,6 +227,7 @@ export class ScadaSymbolEditObject {
       this.shapeResize$.disconnect();
     }
     this.destroyElements();
+    this.tagsUpdated.complete();
   }
 
   private destroyElements() {
@@ -284,6 +291,15 @@ export class ScadaSymbolEditObject {
     for (const e of this.elements) {
       e.updateTooltipPosition(container);
     }
+  }
+
+  public updateTags() {
+    this.tags = this.elements
+    .filter(e => e.hasTag())
+    .map(e => e.tag)
+    .filter((v, i, a) => a.indexOf(v) === i)
+    .sort();
+    this.tagsUpdated.emit(this.tags);
   }
 
 }
@@ -429,6 +445,7 @@ export class ScadaSymbolElement {
     this.unhighlight();
     this.createAddTagTooltip();
     this.editObject.dirty = true;
+    this.editObject.updateTags();
   }
 
   public setTag(tag: string) {
@@ -437,6 +454,7 @@ export class ScadaSymbolElement {
     this.element.attr('tb:tag', tag);
     this.createTagTooltip();
     this.editObject.dirty = true;
+    this.editObject.updateTags();
   }
 
   public startEdit(onCancelEdit: () => void) {
@@ -661,7 +679,7 @@ export class ScadaSymbolElement {
     return side;
   }
 
-  private hasTag() {
+  public hasTag() {
     return !!this.tag;
   }
 

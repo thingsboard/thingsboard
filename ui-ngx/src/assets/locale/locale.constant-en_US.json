@@ -3417,7 +3417,13 @@
         "properties": "Properties",
         "title": "Title",
         "state-render-function": "State render function",
-        "preview": "Preview"
+        "preview": "Preview",
+        "tag": "Tag",
+        "on-click-action": "On click action",
+        "remove-tag": "Remove tag",
+        "add-tag": "Add tag",
+        "no-tags": "No tags configured",
+        "select-tag": "Select tag"
     },
     "item": {
         "selected": "Selected"

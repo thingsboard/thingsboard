@@ -17,7 +17,9 @@
 -->
 <div class="tb-iot-svg-panel" [style]="backgroundStyle$ | async">
   <div class="tb-iot-svg-overlay" [style]="overlayStyle"></div>
-  <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
+  <ng-container *ngIf="widgetComponent.dashboardWidget.showWidgetTitlePanel">
+    <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
+  </ng-container>
   <div class="tb-iot-svg-content">
     <div #iotSvgShape class="tb-iot-svg-shape">
     </div>

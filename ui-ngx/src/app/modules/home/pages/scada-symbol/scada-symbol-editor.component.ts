@@ -17,11 +17,11 @@
 import {
   AfterViewInit,
   Component,
-  ElementRef,
+  ElementRef, EventEmitter,
   Input,
   OnChanges,
   OnDestroy,
-  OnInit,
+  OnInit, Output,
   SimpleChanges,
   ViewChild,
   ViewContainerRef,
@@ -47,6 +47,9 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
   @Input()
   data: ScadaSymbolEditorData;
 
+  @Output()
+  tags = new EventEmitter<string[]>();
+
   scadaSymbolEditObject: ScadaSymbolEditObject;
 
   constructor(private viewContainerRef: ViewContainerRef) {
@@ -58,6 +61,7 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
   ngAfterViewInit() {
     this.scadaSymbolEditObject = new ScadaSymbolEditObject(this.iotSvgShape.nativeElement,
       this.viewContainerRef);
+    this.scadaSymbolEditObject.tagsUpdated.subscribe(tags => this.tags.emit(tags));
     if (this.data) {
       this.scadaSymbolEditObject.setContent(this.data.svgContent);
     }

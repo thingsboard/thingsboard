@@ -38,6 +38,7 @@ import {
 import { Observable, of } from 'rxjs';
 import { backgroundStyle, ComponentStyle, overlayStyle } from '@shared/models/widget-settings.models';
 import { ImageService } from '@core/http/image.service';
+import { WidgetComponent } from '@home/components/widget/widget.component';
 
 @Component({
   selector: 'tb-iot-svg-widget',
@@ -61,7 +62,8 @@ export class IotSvgWidgetComponent extends
 
   private shapeResize$: ResizeObserver;
 
-  constructor(protected imagePipe: ImagePipe,
+  constructor(public widgetComponent: WidgetComponent,
+              protected imagePipe: ImagePipe,
               protected sanitizer: DomSanitizer,
               private renderer: Renderer2,
               private imageService: ImageService,

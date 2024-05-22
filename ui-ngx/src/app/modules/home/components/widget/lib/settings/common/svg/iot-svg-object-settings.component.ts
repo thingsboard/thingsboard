@@ -44,8 +44,9 @@ import {
   IotSvgPropertyRow,
   toPropertyRows
 } from '@home/components/widget/lib/settings/common/svg/iot-svg-object-settings.models';
-import { merge, Observable, Subscription } from 'rxjs';
+import { merge, Observable, of, Subscription } from 'rxjs';
 import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
+import { ImageService } from '@core/http/image.service';
 
 @Component({
   selector: 'tb-iot-svg-object-settings',
@@ -75,6 +76,12 @@ export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, Control
   svgPath = 'drawing.svg';
 
   @Input()
+  svgUrl: string;
+
+  @Input()
+  svgContent: string;
+
+  @Input()
   aliasController: IAliasController;
 
   @Input()
@@ -101,6 +108,7 @@ export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, Control
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder,
               private http: HttpClient,
+              private imageService: ImageService,
               private cd: ChangeDetectorRef) {
   }
 
@@ -116,7 +124,7 @@ export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, Control
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
       if (!change.firstChange && change.currentValue !== change.previousValue) {
-        if (['svgPath'].includes(propName)) {
+        if (['svgPath', 'svgUrl', 'svgContent'].includes(propName)) {
           this.loadMetadata();
         }
       }
@@ -160,7 +168,16 @@ export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, Control
       this.validatorSubscription = null;
     }
     this.validatorTriggers = [];
-    this.http.get(this.svgPath, {responseType: 'text'}).subscribe(
+
+    let svgContent$: Observable<string>;
+    if (this.svgContent) {
+      svgContent$ = of(this.svgContent);
+    } else if (this.svgUrl) {
+      svgContent$ = this.imageService.getImageString(this.svgUrl);
+    } else {
+      svgContent$ = this.http.get(this.svgPath, {responseType: 'text'});
+    }
+    svgContent$.subscribe(
       (svgContent) => {
         this.metadata = parseIotSvgMetadataFromContent(svgContent);
         this.propertyRows = toPropertyRows(this.metadata.properties);

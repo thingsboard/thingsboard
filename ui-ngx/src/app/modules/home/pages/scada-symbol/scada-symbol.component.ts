@@ -58,6 +58,7 @@ import {
   iotSvgWidgetDefaultSettings,
   IotSvgWidgetSettings
 } from '@home/components/widget/lib/svg/iot-svg-widget.models';
+import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
 
 @Component({
   selector: 'tb-scada-symbol',
@@ -66,6 +67,8 @@ import {
   encapsulation: ViewEncapsulation.None
 })
 export class ScadaSymbolComponent extends PageComponent implements OnInit, OnDestroy, AfterViewInit, HasDirtyFlag {
+
+  widgetType = widgetType;
 
   @HostBinding('style.width') width = '100%';
   @HostBinding('style.height') height = '100%';
@@ -80,6 +83,8 @@ export class ScadaSymbolComponent extends PageComponent implements OnInit, OnDes
 
   scadaSymbolFormGroup: UntypedFormGroup;
 
+  scadaPreviewFormGroup: UntypedFormGroup;
+
   private destroy$ = new Subject<void>();
 
   private origSymbolData: ScadaSymbolData;
@@ -88,7 +93,16 @@ export class ScadaSymbolComponent extends PageComponent implements OnInit, OnDes
 
   aliasController: IAliasController;
 
+  widgetActionCallbacks: WidgetActionCallbacks = {
+    fetchDashboardStates: () => [],
+    fetchCellClickColumns: () => []
+  };
+
   previewWidgets: Array<Widget> = [];
+
+  tags: string[];
+
+  private previewIotSvgObjectSettings: IotSvgObjectSettings;
 
   private previewWidget: Widget;
 
@@ -117,6 +131,9 @@ export class ScadaSymbolComponent extends PageComponent implements OnInit, OnDes
   ngOnInit(): void {
     this.scadaSymbolFormGroup = this.fb.group({
       metadata: [null]
+    });
+    this.scadaPreviewFormGroup = this.fb.group({
+      iotSvgObject: [null]
     });
 
     const entitiAliases: EntityAliases = {};
@@ -190,9 +207,13 @@ export class ScadaSymbolComponent extends PageComponent implements OnInit, OnDes
 
   enterPreviewMode() {
     this.symbolData.svgContent = this.prepareSvgContent();
-    const iotSvgObject: IotSvgObjectSettings = {};
+    this.previewIotSvgObjectSettings = {};
+    this.scadaPreviewFormGroup.patchValue({
+      iotSvgObject: this.previewIotSvgObjectSettings
+    }, {emitEvent: false});
+    this.scadaPreviewFormGroup.markAsPristine();
     const settings: IotSvgWidgetSettings = {...iotSvgWidgetDefaultSettings,
-      ...{iotSvg: null, iotSvgContent: this.symbolData.svgContent, iotSvgObject}};
+      ...{iotSvg: null, iotSvgContent: this.symbolData.svgContent, iotSvgObject: this.previewIotSvgObjectSettings}};
     this.previewWidget = {
       typeFullFqn: 'system.iot_svg',
       type: widgetType.rpc,
@@ -202,6 +223,7 @@ export class ScadaSymbolComponent extends PageComponent implements OnInit, OnDes
       col: 0,
       config: {
         settings,
+        showTitle: false,
         dropShadow: false,
         padding: '0',
         margin: '0'
@@ -221,11 +243,22 @@ export class ScadaSymbolComponent extends PageComponent implements OnInit, OnDes
     this.previewMode = false;
   }
 
+  onRevertPreviewSettings() {
+    this.scadaPreviewFormGroup.patchValue({
+      iotSvgObject: this.previewIotSvgObjectSettings
+    }, {emitEvent: false});
+    this.scadaPreviewFormGroup.markAsPristine();
+  }
+
+  onApplyPreviewSettings() {
+    this.scadaPreviewFormGroup.markAsPristine();
+    this.previewIotSvgObjectSettings = this.scadaPreviewFormGroup.get('iotSvgObject').value;
+    this.updatePreviewWidgetSettings();
+  }
+
   private updatePreviewWidgetSettings() {
     this.previewWidget = deepClone(this.previewWidget);
-    this.previewWidget.config.title = this.symbolData.imageResource.title;
-    this.previewWidget.config.showTitle = true;
-    this.previewWidget.config.padding = '48px';
+    this.previewWidget.config.settings.iotSvgObject = this.previewIotSvgObjectSettings;
     this.previewWidgets = [this.previewWidget];
   }
 

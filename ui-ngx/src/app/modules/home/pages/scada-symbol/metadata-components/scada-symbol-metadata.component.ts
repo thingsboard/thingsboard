@@ -14,12 +14,15 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, forwardRef, Input, OnInit, ViewEncapsulation } from '@angular/core';
 import {
   ControlValueAccessor,
+  NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   UntypedFormBuilder,
+  UntypedFormControl,
   UntypedFormGroup,
+  Validator,
   Validators
 } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
@@ -39,13 +42,22 @@ import { TranslateService } from '@ngx-translate/core';
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => ScadaSymbolMetadataComponent),
       multi: true
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => ScadaSymbolMetadataComponent),
+      multi: true
     }
-  ]
+  ],
+  encapsulation: ViewEncapsulation.None
 })
-export class ScadaSymbolMetadataComponent extends PageComponent implements OnInit, ControlValueAccessor {
+export class ScadaSymbolMetadataComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  tags: string[];
 
   private modelValue: IotSvgMetadata;
 
@@ -116,6 +128,15 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
     this.metadataFormGroup.patchValue(
       value, {emitEvent: false}
     );
+  }
+
+  public validate(c: UntypedFormControl) {
+    const valid = this.metadataFormGroup.valid;
+    return valid ? null : {
+      metadata: {
+        valid: false,
+      },
+    };
   }
 
   private updateModel() {
