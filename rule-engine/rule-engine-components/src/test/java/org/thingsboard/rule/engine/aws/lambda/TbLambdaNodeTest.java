@@ -20,7 +20,6 @@ import com.amazonaws.handlers.AsyncHandler;
 import com.amazonaws.services.lambda.AWSLambdaAsync;
 import com.amazonaws.services.lambda.model.InvokeRequest;
 import com.amazonaws.services.lambda.model.InvokeResult;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,9 +29,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -46,7 +43,6 @@ import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -71,36 +67,26 @@ public class TbLambdaNodeTest {
         config = new TbLambdaNodeConfiguration().defaultConfiguration();
     }
 
-    @Test
-    public void givenConfigWithNoInputKeys_whenInit_thenThrowsException() {
-        var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-
-        assertThatThrownBy(() -> node.init(ctx, configuration))
-                .isInstanceOf(TbNodeException.class)
-                .hasMessage("At least one input key should be specified!");
-    }
-
     @ParameterizedTest
-    @ValueSource(strings = {"${msgKeyTemplate}", "msgKey", "10"})
-    public void givenNothingThrownInsideFunction_whenOnMsg_thenTellSuccess(String msgKey) throws TbNodeException, ExecutionException, InterruptedException {
+    @ValueSource(strings = {"new-function", "${funcNameMdPattern}", "$[funcNameMsgPattern]"})
+    public void givenFunctionNamePattern_whenOnMsg_thenTellSuccess(String functionName) throws TbNodeException, ExecutionException, InterruptedException {
         init();
-        config.setInputKeys(Map.of("${funcKeyTemplate}", msgKey));
+        config.setFunctionName(functionName);
         String data = """
                 {
-                "msgKey": 10
+                "x": 10,
+                "y": 20,
+                "funcNameMsgPattern": "new-function"
                 }
                 """;
         Map<String, String> metadata = new HashMap<>();
-        metadata.put("funcKeyTemplate", "funcKey");
-        metadata.put("msgKeyTemplate", "msgKey");
+        metadata.put("funcNameMdPattern", "new-function");
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, new TbMsgMetaData(metadata), data);
-        ObjectNode requestBody = JacksonUtil.newObjectNode();
-        requestBody.put("funcKey", "10");
         String requestIdStr = "a124af57-e7c3-4ebb-83bf-b09ff86eaa23";
-        InvokeRequest request = createInvokeRequest(requestBody);
+        InvokeRequest request = createInvokeRequest(msg.getData(), "new-function");
         InvokeResult result = new InvokeResult();
         result.setSdkResponseMetadata(new ResponseMetadata(Map.of("AWS_REQUEST_ID", requestIdStr)));
-        String payload = "100";
+        String payload = "{\"statusCode\":200,\"body\":30}";
         result.setPayload(ByteBuffer.wrap(payload.getBytes()));
         metadata.put("requestId", requestIdStr);
         TbMsg resultedMsg = TbMsg.transformMsg(msg, new TbMsgMetaData(metadata), payload);
@@ -114,28 +100,26 @@ public class TbLambdaNodeTest {
         node.onMsg(ctx, msg);
 
         verify(clientMock).invokeAsync(eq(request), any());
-        ArgumentCaptor<TbMsg> captor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctx).tellSuccess(captor.capture());
-        TbMsg captorValue = captor.getValue();
-        assertThat(captorValue.getData()).isEqualTo(resultedMsg.getData());
-        assertThat(captorValue.getMetaData()).isEqualTo(resultedMsg.getMetaData());
+        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        verify(ctx).tellSuccess(msgCaptor.capture());
+        TbMsg msgCaptorValue = msgCaptor.getValue();
+        assertThat(msgCaptorValue.getData()).isEqualTo(resultedMsg.getData());
+        assertThat(msgCaptorValue.getMetaData()).isEqualTo(resultedMsg.getMetaData());
     }
 
     @Test
-    public void givenExceptionWasThrownInsideFunction_whenOnMsg_thenTellFailure() throws TbNodeException, ExecutionException, InterruptedException {
+    public void givenExceptionWasThrownInsideFunctionAndTellFailureIfFuncThrowsExcIsTrue_whenOnMsg_thenTellFailure() throws TbNodeException, ExecutionException, InterruptedException {
         init();
+        config.setTellFailureIfFuncThrowsExc(true);
         String data = """
                 {
-                "msgKey": 10
+                "x": 10
                 }
                 """;
         Map<String, String> metadata = new HashMap<>();
-        metadata.put("funcKeyTemplate", "funcKey");
-        metadata.put("msgKeyTemplate", "msgKey");
+        metadata.put("data", "40");
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, new TbMsgMetaData(metadata), data);
-        ObjectNode requestBody = JacksonUtil.newObjectNode();
-        requestBody.put("funcKey", "10");
-        InvokeRequest request = createInvokeRequest(requestBody);
+        InvokeRequest request = createInvokeRequest(msg.getData(), "new-function");
         InvokeResult result = new InvokeResult();
         result.setFunctionError("Unhandled exception from function");
         metadata.put("error", RuntimeException.class + ": Unhandled exception from function");
@@ -162,20 +146,54 @@ public class TbLambdaNodeTest {
     }
 
     @Test
+    public void givenExceptionWasThrownInsideFunctionAndTellFailureIfFuncThrowsExcIsFalse_whenOnMsg_thenTellSuccess() throws TbNodeException, ExecutionException, InterruptedException {
+        init();
+        config.setTellFailureIfFuncThrowsExc(false);
+        String data = """
+                {
+                "x": 10
+                }
+                """;
+        Map<String, String> metadata = new HashMap<>();
+        metadata.put("data", "40");
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, new TbMsgMetaData(metadata), data);
+        InvokeRequest request = createInvokeRequest(msg.getData(), "new-function");
+        String requestIdStr = "e83dfbc4-68d5-441c-8ee9-289959a30d3b";
+        InvokeResult result = new InvokeResult();
+        result.setSdkResponseMetadata(new ResponseMetadata(Map.of("AWS_REQUEST_ID", requestIdStr)));
+        String payload = "{\"errorMessage\":\"Something went wrong\",\"errorType\":\"Exception\",\"requestId\":\"e83dfbc4-68d5-441c-8ee9-289959a30d3b\"}";
+        result.setPayload(ByteBuffer.wrap(payload.getBytes()));
+        metadata.put("requestId", requestIdStr);
+        TbMsg resultedMsg = TbMsg.transformMsg(msg, new TbMsgMetaData(metadata), payload);
+
+        when(clientMock.invokeAsync(any(), any())).then(invocation -> {
+            AsyncHandler<InvokeRequest, InvokeResult> asyncHandler = invocation.getArgument(1);
+            asyncHandler.onSuccess(request, result);
+            return null;
+        });
+
+        node.onMsg(ctx, msg);
+
+        verify(clientMock).invokeAsync(eq(request), any());
+        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        verify(ctx).tellSuccess(msgCaptor.capture());
+        TbMsg msgCaptorValue = msgCaptor.getValue();
+        assertThat(msgCaptorValue.getData()).isEqualTo(resultedMsg.getData());
+        assertThat(msgCaptorValue.getMetaData()).isEqualTo(resultedMsg.getMetaData());
+    }
+
+    @Test
     public void givenExceptionWasThrownOnAWS_whenOnMsg_thenTellFailure() throws TbNodeException, ExecutionException, InterruptedException {
         init();
         String data = """
                 {
-                "msgKey": 10
+                "x": 10
                 }
                 """;
-        Map<String, String> metadata = Map.of(
-                "funcKeyTemplate", "funcKey",
-                "msgKeyTemplate", "msgKey");
+        Map<String, String> metadata = new HashMap<>();
+        metadata.put("data", "40");
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, new TbMsgMetaData(metadata), data);
-        ObjectNode requestBody = JacksonUtil.newObjectNode();
-        requestBody.put("funcKey", "10");
-        InvokeRequest request = createInvokeRequest(requestBody);
+        InvokeRequest request = createInvokeRequest(msg.getData(), "new-function");
 
         when(clientMock.invokeAsync(any(), any())).then(invocation -> {
             AsyncHandler<InvokeRequest, InvokeResult> asyncHandler = invocation.getArgument(1);
@@ -193,17 +211,17 @@ public class TbLambdaNodeTest {
     private void init() {
         config.setAccessKey("accessKey");
         config.setSecretKey("secretKey");
-        config.setInputKeys(Map.of("${funcKeyTemplate}", "${msgKeyTemplate}"));
-        config.setFunctionName("test");
+        config.setFunctionName("new-function");
         config.setQualifier("$LATEST");
+        config.setTellFailureIfFuncThrowsExc(false);
         ReflectionTestUtils.setField(node, "client", clientMock);
         ReflectionTestUtils.setField(node, "config", config);
     }
 
-    private InvokeRequest createInvokeRequest(ObjectNode requestBody) {
+    private InvokeRequest createInvokeRequest(String requestBody, String functionName) {
         InvokeRequest request = new InvokeRequest()
-                .withFunctionName(config.getFunctionName())
-                .withPayload(JacksonUtil.toString(requestBody));
+                .withFunctionName(functionName)
+                .withPayload(requestBody);
         request.setInvocationType(config.getInvocationType());
         request.withQualifier(config.getQualifier());
         return request;

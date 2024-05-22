@@ -19,9 +19,6 @@ import com.amazonaws.services.lambda.model.InvocationType;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
-import java.util.Collections;
-import java.util.Map;
-
 @Data
 public class TbLambdaNodeConfiguration implements NodeConfiguration<TbLambdaNodeConfiguration> {
 
@@ -31,14 +28,18 @@ public class TbLambdaNodeConfiguration implements NodeConfiguration<TbLambdaNode
     private String functionName;
     private String invocationType;
     private String qualifier;
-    private Map<String, String> inputKeys;
+    private int connectionTimeout;
+    private int requestTimeout;
+    private boolean tellFailureIfFuncThrowsExc;
 
     @Override
     public TbLambdaNodeConfiguration defaultConfiguration() {
         TbLambdaNodeConfiguration configuration = new TbLambdaNodeConfiguration();
         configuration.setRegion("us-east-1");
         configuration.setInvocationType(InvocationType.RequestResponse.name());
-        configuration.setInputKeys(Collections.emptyMap());
+        configuration.setConnectionTimeout(10000);
+        configuration.setRequestTimeout(5000);
+        configuration.setTellFailureIfFuncThrowsExc(false);
         return configuration;
     }
 }

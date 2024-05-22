@@ -25,7 +25,6 @@ import com.amazonaws.services.lambda.AWSLambdaAsyncClientBuilder;
 import com.amazonaws.services.lambda.model.InvokeRequest;
 import com.amazonaws.services.lambda.model.InvokeResult;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.ObjectUtils;
 import org.thingsboard.common.util.JacksonUtil;
@@ -40,8 +39,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.nio.ByteBuffer;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 @Slf4j
@@ -50,7 +47,10 @@ import java.util.concurrent.ExecutionException;
         name = "aws lambda",
         configClazz = TbLambdaNodeConfiguration.class,
         nodeDescription = "Publish message to the AWS Lambda",
-        nodeDetails = "Will publish message payload to the AWS Lambda function. ",
+        nodeDetails = "Will publish message payload to the AWS Lambda function. Outbound message will contain response field " +
+                "(<code>requestId</code>) in the Message Metadata from the AWS Lambda. " +
+                "For example <b>requestId</b> field can be accessed with <code>metadata.requestId</code>.<br><br>" +
+                "Output connections: <code>Success</code>, <code>Failure</code>.",
         iconUrl = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4Ij48cGF0aCBkPSJNMTMuMjMgMTAuNTZWMTBjLTEuOTQgMC0zLjk5LjM5LTMuOTkgMi42NyAwIDEuMTYuNjEgMS45NSAxLjYzIDEuOTUuNzYgMCAxLjQzLS40NyAxLjg2LTEuMjIuNTItLjkzLjUtMS44LjUtMi44NG0yLjcgNi41M2MtLjE4LjE2LS40My4xNy0uNjMuMDYtLjg5LS43NC0xLjA1LTEuMDgtMS41NC0xLjc5LTEuNDcgMS41LTIuNTEgMS45NS00LjQyIDEuOTUtMi4yNSAwLTQuMDEtMS4zOS00LjAxLTQuMTcgMC0yLjE4IDEuMTctMy42NCAyLjg2LTQuMzggMS40Ni0uNjQgMy40OS0uNzYgNS4wNC0uOTNWNy41YzAtLjY2LjA1LTEuNDEtLjMzLTEuOTYtLjMyLS40OS0uOTUtLjctMS41LS43LTEuMDIgMC0xLjkzLjUzLTIuMTUgMS42MS0uMDUuMjQtLjI1LjQ4LS40Ny40OWwtMi42LS4yOGMtLjIyLS4wNS0uNDYtLjIyLS40LS41Ni42LTMuMTUgMy40NS00LjEgNi00LjEgMS4zIDAgMyAuMzUgNC4wMyAxLjMzQzE3LjExIDQuNTUgMTcgNi4xOCAxNyA3Ljk1djQuMTdjMCAxLjI1LjUgMS44MSAxIDIuNDguMTcuMjUuMjEuNTQgMCAuNzFsLTIuMDYgMS43OGgtLjAxIj48L3BhdGg+PHBhdGggZD0iTTIwLjE2IDE5LjU0QzE4IDIxLjE0IDE0LjgyIDIyIDEyLjEgMjJjLTMuODEgMC03LjI1LTEuNDEtOS44NS0zLjc2LS4yLS4xOC0uMDItLjQzLjI1LS4yOSAyLjc4IDEuNjMgNi4yNSAyLjYxIDkuODMgMi42MSAyLjQxIDAgNS4wNy0uNSA3LjUxLTEuNTMuMzctLjE2LjY2LjI0LjMyLjUxIj48L3BhdGg+PHBhdGggZD0iTTIxLjA3IDE4LjVjLS4yOC0uMzYtMS44NS0uMTctMi41Ny0uMDgtLjE5LjAyLS4yMi0uMTYtLjAzLS4zIDEuMjQtLjg4IDMuMjktLjYyIDMuNTMtLjMzLjI0LjMtLjA3IDIuMzUtMS4yNCAzLjMyLS4xOC4xNi0uMzUuMDctLjI2LS4xMS4yNi0uNjcuODUtMi4xNC41Ny0yLjV6Ij48L3BhdGg+PC9zdmc+"
 )
 public class TbLambdaNode extends TbAbstractExternalNode {
@@ -60,16 +60,15 @@ public class TbLambdaNode extends TbAbstractExternalNode {
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbLambdaNodeConfiguration.class);
-        checkIfInputKeysAreNotEmptyOrElseThrow(this.config.getInputKeys());
-        AWSCredentials awsCredentials = new BasicAWSCredentials(this.config.getAccessKey(), this.config.getSecretKey());
+        config = TbNodeUtils.convert(configuration, TbLambdaNodeConfiguration.class);
         try {
-            this.client = AWSLambdaAsyncClientBuilder.standard()
+            AWSCredentials awsCredentials = new BasicAWSCredentials(config.getAccessKey(), config.getSecretKey());
+            client = AWSLambdaAsyncClientBuilder.standard()
                     .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
-                    .withRegion(this.config.getRegion())
+                    .withRegion(config.getRegion())
                     .withClientConfiguration(new ClientConfiguration()
-                            .withConnectionTimeout(10000)
-                            .withRequestTimeout(5000))
+                            .withConnectionTimeout(config.getConnectionTimeout())
+                            .withRequestTimeout(config.getRequestTimeout()))
                     .build();
         } catch (Exception e) {
             throw new TbNodeException(e, true);
@@ -79,9 +78,9 @@ public class TbLambdaNode extends TbAbstractExternalNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
         var tbMsg = ackIfNeeded(ctx, msg);
-        ObjectNode requestBody = getRequestBody(tbMsg);
-        InvokeRequest request = toRequest(requestBody, this.config.getFunctionName());
-        this.client.invokeAsync(request, new AsyncHandler<>() {
+        String functionName = TbNodeUtils.processPattern(config.getFunctionName(), msg);
+        InvokeRequest request = toRequest(msg.getData(), functionName);
+        client.invokeAsync(request, new AsyncHandler<>() {
             @Override
             public void onError(Exception e) {
                 tellFailure(ctx, tbMsg, e);
@@ -89,7 +88,7 @@ public class TbLambdaNode extends TbAbstractExternalNode {
             @Override
             public void onSuccess(InvokeRequest request, InvokeResult invokeResult) {
                 try {
-                    if (invokeResult.getFunctionError() != null) {
+                    if (config.isTellFailureIfFuncThrowsExc() && invokeResult.getFunctionError() != null) {
                         String errorMessage = invokeResult.getPayload() != null ?
                                 JacksonUtil.toString(getPayload(invokeResult)) : invokeResult.getFunctionError();
                         throw new RuntimeException(errorMessage);
@@ -102,47 +101,15 @@ public class TbLambdaNode extends TbAbstractExternalNode {
         });
     }
 
-    private void checkIfInputKeysAreNotEmptyOrElseThrow(Map<String, String> inputKeys) throws TbNodeException {
-        if (inputKeys == null || inputKeys.isEmpty()) {
-            throw new TbNodeException("At least one input key should be specified!", true);
-        }
-    }
-
-    private ObjectNode getRequestBody(TbMsg msg) {
-        ObjectNode requestBodyJson = JacksonUtil.newObjectNode();
-        Map<String, String> mappings = processInputKeys(msg);
-        for (Map.Entry<String, String> entry : mappings.entrySet()) {
-            requestBodyJson.put(entry.getKey(), entry.getValue());
-        }
-        return requestBodyJson;
-    }
-
-    private Map<String, String> processInputKeys(TbMsg msg) {
-        JsonNode msgData = JacksonUtil.toJsonNode(msg.getData());
-        var mappings = new HashMap<String, String>();
-        this.config.getInputKeys().forEach((funcKey, msgKey) -> {
-            String patternProcessedFuncKey = TbNodeUtils.processPattern(funcKey, msg);
-            String patternProcessedMsgValue;
-            try {
-                String patternProcessedMsgKey = TbNodeUtils.processPattern(msgKey, msg);
-                patternProcessedMsgValue = msgData.get(patternProcessedMsgKey).asText();
-            } catch (Exception e) {
-                patternProcessedMsgValue = msgKey;
-            }
-            mappings.put(patternProcessedFuncKey, patternProcessedMsgValue);
-        });
-        return mappings;
-    }
-
-    private <T> InvokeRequest toRequest(T requestBody, String functionName) {
+    private InvokeRequest toRequest(String requestBody, String functionName) {
         InvokeRequest request = new InvokeRequest()
                 .withFunctionName(functionName)
-                .withPayload(JacksonUtil.toString(requestBody));
-        if (!ObjectUtils.isEmpty(this.config.getInvocationType())) {
-            request.setInvocationType(this.config.getInvocationType());
+                .withPayload(requestBody);
+        if (!ObjectUtils.isEmpty(config.getInvocationType())) {
+            request.setInvocationType(config.getInvocationType());
         }
-        if (!ObjectUtils.isEmpty(this.config.getQualifier())) {
-            request.withQualifier(this.config.getQualifier());
+        if (!ObjectUtils.isEmpty(config.getQualifier())) {
+            request.withQualifier(config.getQualifier());
         }
         return request;
     }
@@ -172,9 +139,9 @@ public class TbLambdaNode extends TbAbstractExternalNode {
 
     @Override
     public void destroy() {
-        if (this.client != null) {
+        if (client != null) {
             try {
-                this.client.shutdown();
+                client.shutdown();
             } catch (Exception e) {
                 log.error("Failed to shutdown Lambda client during destroy()", e);
             }
