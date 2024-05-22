@@ -15,11 +15,12 @@
  */
 package org.thingsboard.server.service.limits;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.server.cache.limits.DefaultRateLimitService;
 import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -35,21 +36,19 @@ import org.thingsboard.server.dao.tenant.DefaultTbTenantProfileCache;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class RateLimitServiceTest {
 
     private RateLimitService rateLimitService;
     private DefaultTbTenantProfileCache tenantProfileCache;
     private TenantId tenantId;
 
-    @Before
+    @BeforeEach
     public void beforeEach() {
         tenantProfileCache = Mockito.mock(DefaultTbTenantProfileCache.class);
         rateLimitService = new DefaultRateLimitService(tenantProfileCache, mock(NotificationRuleProcessor.class), 60, 100);
@@ -102,10 +101,10 @@ public class RateLimitServiceTest {
     private void testRateLimits(LimitedApi limitedApi, int max, Object level) {
         for (int i = 1; i <= max; i++) {
             boolean success = rateLimitService.checkRateLimit(limitedApi, tenantId, level);
-            assertTrue(success);
+            Assertions.assertTrue(success);
         }
         boolean success = rateLimitService.checkRateLimit(limitedApi, tenantId, level);
-        assertFalse(success);
+        Assertions.assertFalse(success);
     }
 
     private void updateTenantProfileConfiguration(DefaultTenantProfileConfiguration profileConfiguration) {

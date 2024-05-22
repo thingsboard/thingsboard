@@ -17,7 +17,6 @@ package org.thingsboard.server.queue.kafka;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
 import org.apache.kafka.clients.admin.ListConsumerGroupOffsetsResult;
 import org.apache.kafka.clients.admin.NewTopic;
@@ -41,23 +40,16 @@ import java.util.concurrent.TimeoutException;
 @Slf4j
 public class TbKafkaAdmin implements TbQueueAdmin {
 
-    @Getter
-    private final AdminClient client;
+    private final TbKafkaSettings settings;
     private final Map<String, String> topicConfigs;
-    private final Set<String> topics = ConcurrentHashMap.newKeySet();
     private final int numPartitions;
+    private volatile Set<String> topics;
 
     private final short replicationFactor;
 
     public TbKafkaAdmin(TbKafkaSettings settings, Map<String, String> topicConfigs) {
-        client = AdminClient.create(settings.toAdminProps());
+        this.settings = settings;
         this.topicConfigs = topicConfigs;
-
-        try {
-            topics.addAll(client.listTopics().names().get());
-        } catch (InterruptedException | ExecutionException e) {
-            log.error("Failed to get all topics.", e);
-        }
 
         String numPartitionsStr = topicConfigs.get(TbKafkaTopicConfigs.NUM_PARTITIONS_SETTING);
         if (numPartitionsStr != null) {
@@ -71,6 +63,7 @@ public class TbKafkaAdmin implements TbQueueAdmin {
 
     @Override
     public void createTopicIfNotExists(String topic, String properties) {
+        Set<String> topics = getTopics();
         if (topics.contains(topic)) {
             return;
         }
@@ -93,12 +86,13 @@ public class TbKafkaAdmin implements TbQueueAdmin {
 
     @Override
     public void deleteTopic(String topic) {
+        Set<String> topics = getTopics();
         if (topics.contains(topic)) {
-            client.deleteTopics(Collections.singletonList(topic));
+            settings.getAdminClient().deleteTopics(Collections.singletonList(topic));
         } else {
             try {
-                if (client.listTopics().names().get().contains(topic)) {
-                    client.deleteTopics(Collections.singletonList(topic));
+                if (settings.getAdminClient().listTopics().names().get().contains(topic)) {
+                    settings.getAdminClient().deleteTopics(Collections.singletonList(topic));
                 } else {
                     log.warn("Kafka topic [{}] does not exist.", topic);
                 }
@@ -108,15 +102,28 @@ public class TbKafkaAdmin implements TbQueueAdmin {
         }
     }
 
-    @Override
-    public void destroy() {
-        if (client != null) {
-            client.close();
+    private Set<String> getTopics() {
+        if (topics == null) {
+            synchronized (this) {
+                if (topics == null) {
+                    topics = ConcurrentHashMap.newKeySet();
+                    try {
+                        topics.addAll(settings.getAdminClient().listTopics().names().get());
+                    } catch (InterruptedException | ExecutionException e) {
+                        log.error("Failed to get all topics.", e);
+                    }
+                }
+            }
         }
+        return topics;
     }
 
     public CreateTopicsResult createTopic(NewTopic topic) {
-        return client.createTopics(Collections.singletonList(topic));
+        return settings.getAdminClient().createTopics(Collections.singletonList(topic));
+    }
+
+    @Override
+    public void destroy() {
     }
 
     /**
@@ -138,7 +145,7 @@ public class TbKafkaAdmin implements TbQueueAdmin {
             return;
         }
         Map<TopicPartition, OffsetAndMetadata> oldOffsets =
-                client.listConsumerGroupOffsets(fatGroupId).partitionsToOffsetAndMetadata().get(10, TimeUnit.SECONDS);
+                settings.getAdminClient().listConsumerGroupOffsets(fatGroupId).partitionsToOffsetAndMetadata().get(10, TimeUnit.SECONDS);
         if (oldOffsets.isEmpty()) {
             return;
         }
@@ -150,7 +157,7 @@ public class TbKafkaAdmin implements TbQueueAdmin {
             }
             var om = consumerOffset.getValue();
             Map<TopicPartition, OffsetAndMetadata> newOffsets =
-                    client.listConsumerGroupOffsets(newGroupId).partitionsToOffsetAndMetadata().get(10, TimeUnit.SECONDS);
+                    settings.getAdminClient().listConsumerGroupOffsets(newGroupId).partitionsToOffsetAndMetadata().get(10, TimeUnit.SECONDS);
 
             var existingOffset = newOffsets.get(tp);
             if (existingOffset == null) {
@@ -161,7 +168,7 @@ public class TbKafkaAdmin implements TbQueueAdmin {
             } else {
                 log.info("[{}] SHOULD alter topic offset [{}] less than old node group offset [{}]", tp, existingOffset.offset(), om.offset());
             }
-            client.alterConsumerGroupOffsets(newGroupId, Map.of(tp, om)).all().get(10, TimeUnit.SECONDS);
+            settings.getAdminClient().alterConsumerGroupOffsets(newGroupId, Map.of(tp, om)).all().get(10, TimeUnit.SECONDS);
             log.info("[{}] altered new consumer groupId {}", tp, newGroupId);
             break;
         }

@@ -20,9 +20,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueConsumer;
-import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.TbQueueMsg;
 
 import java.util.Objects;
 import java.util.Set;
@@ -31,23 +30,23 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 @Slf4j
-public class TbQueueConsumerTask {
+public class TbQueueConsumerTask<M extends TbQueueMsg> {
 
     @Getter
     private final Object key;
-    private volatile TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> consumer;
-    private volatile Supplier<TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>>> consumerSupplier;
+    private volatile TbQueueConsumer<M> consumer;
+    private volatile Supplier<TbQueueConsumer<M>> consumerSupplier;
 
     @Setter
     private Future<?> task;
 
-    public TbQueueConsumerTask(Object key, Supplier<TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>>> consumerSupplier) {
+    public TbQueueConsumerTask(Object key, Supplier<TbQueueConsumer<M>> consumerSupplier) {
         this.key = key;
         this.consumer = null;
         this.consumerSupplier = consumerSupplier;
     }
 
-    public TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> getConsumer() {
+    public TbQueueConsumer<M> getConsumer() {
         if (consumer == null) {
             synchronized (this) {
                 if (consumer == null) {

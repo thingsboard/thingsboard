@@ -164,6 +164,8 @@ mail:
   oauth2:
     # Interval for checking refresh token expiration in seconds(by default, 1 day).
     refreshTokenCheckingInterval: "${REFRESH_TOKEN_EXPIRATION_CHECKING_INTERVAL:86400}"
+  # Rate limits for sending mails per tenant. As example for 1000 per minute and 10000 per hour is "1000:60,10000:3600"
+  per_tenant_rate_limits: "${MAIL_PER_TENANT_RATE_LIMITS:}"
 
 # Usage statistics parameters
 usage:
@@ -585,6 +587,12 @@ cache:
     alarmTypes:
       timeToLiveInMinutes: "${CACHE_SPECS_ALARM_TYPES_TTL:60}" # Alarm types cache TTL
       maxSize: "${CACHE_SPECS_ALARM_TYPES_MAX_SIZE:10000}" # 0 means the cache is disabled
+    mobileAppSettings:
+      timeToLiveInMinutes: "${CACHE_SPECS_MOBILE_APP_SETTINGS_TTL:1440}" # Mobile application cache TTL
+      maxSize: "${CACHE_SPECS_MOBILE_APP_SETTINGS_MAX_SIZE:10000}" # 0 means the cache is disabled
+    mobileSecretKey:
+      timeToLiveInMinutes: "${CACHE_MOBILE_SECRET_KEY_TTL:2}" # QR secret key cache TTL
+      maxSize: "${CACHE_MOBILE_SECRET_KEY_MAX_SIZE:10000}" # 0 means the cache is disabled
 
   # Deliberately placed outside the 'specs' group above
   notificationRules:
@@ -1627,6 +1635,8 @@ queue:
     partitions: "${TB_QUEUE_CORE_PARTITIONS:10}"
     # Timeout for processing a message pack by Core microservices
     pack-processing-timeout: "${TB_QUEUE_CORE_PACK_PROCESSING_TIMEOUT_MS:2000}"
+    # Enable/disable a separate consumer per partition for Core queue
+    consumer-per-partition: "${TB_QUEUE_CORE_CONSUMER_PER_PARTITION:true}"
     ota:
       # Default topic name for OTA updates
       topic: "${TB_QUEUE_CORE_OTA_TOPIC:tb_ota_package}"
