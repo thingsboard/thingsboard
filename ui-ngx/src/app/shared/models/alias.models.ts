@@ -130,6 +130,7 @@ export interface RelationsQueryFilter {
   filters?: Array<RelationEntityTypeFilter>;
   maxLevel?: number;
   fetchLastLevelOnly?: boolean;
+  negate?: boolean;
 }
 
 export interface EntitySearchQueryFilter {
