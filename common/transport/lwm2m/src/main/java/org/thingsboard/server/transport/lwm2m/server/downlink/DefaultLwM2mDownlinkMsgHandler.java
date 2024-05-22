@@ -114,6 +114,8 @@ import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.OBJE
 import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.SERVER_URI;
 import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.SHORT_SERVER_ID;
 import static org.eclipse.leshan.core.link.lwm2m.attributes.LwM2mAttributes.STEP;
+import static org.eclipse.leshan.core.model.ResourceModel.Type.OBJLNK;
+import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertMultiResourceValuesFromRpcBody;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.createModelsDefault;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.fromVersionedIdToObjectId;
@@ -739,8 +741,21 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
 
     private static ContentFormat getRequestContentFormat(LwM2mClient client, String versionedId, LwM2mModelProvider modelProvider) {
         LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(versionedId));
-        if (pathIds.isResourceInstance()) {
-            return findFirstContentFormatForComp(client.getClientSupportContentFormats(), client.getDefaultContentFormat(), ContentFormat.CBOR, ContentFormat.SENML_CBOR, ContentFormat.SENML_JSON);
+        if (pathIds.isResourceInstance() || pathIds.isResource()) {
+            ResourceModel resourceModel = client.getResourceModel(versionedId, modelProvider);
+            if (resourceModel != null && (pathIds.isResourceInstance() || (pathIds.isResource() && !resourceModel.multiple))) {
+                ContentFormat[] desiredFormats;
+                if (OBJLNK.equals(resourceModel.type)) {
+                    desiredFormats =  new ContentFormat[]{ContentFormat.LINK, ContentFormat.CBOR, ContentFormat.SENML_CBOR, ContentFormat.SENML_JSON};
+                } else if (OPAQUE.equals(resourceModel.type)) {
+                    desiredFormats =  new ContentFormat[]{ContentFormat.OPAQUE, ContentFormat.CBOR, ContentFormat.SENML_CBOR, ContentFormat.SENML_JSON};
+                 } else {
+                    desiredFormats =  new ContentFormat[]{ContentFormat.CBOR, ContentFormat.SENML_CBOR, ContentFormat.SENML_JSON};
+               }
+                return findFirstContentFormatForComp(client.getClientSupportContentFormats(), client.getDefaultContentFormat(), desiredFormats);
+            } else {
+                return getContentFormatForComplex(client);
+            }
         } else {
             return getContentFormatForComplex(client);
         }
@@ -748,9 +763,9 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
 
     private static ContentFormat getContentFormatForComplex(LwM2mClient client) {
         if (LwM2m.LwM2mVersion.V1_0.equals(client.getRegistration().getLwM2mVersion())) {
-            return ContentFormat.TLV;
+            return client.getDefaultContentFormat();
         } else if (LwM2m.LwM2mVersion.V1_1.equals(client.getRegistration().getLwM2mVersion())) {
-            ContentFormat result = findFirstContentFormatForComp(client.getClientSupportContentFormats(), null, ContentFormat.SENML_CBOR, ContentFormat.SENML_JSON, ContentFormat.TLV, ContentFormat.JSON);
+            ContentFormat result = findFirstContentFormatForComp(client.getClientSupportContentFormats(), client.getDefaultContentFormat(), ContentFormat.SENML_CBOR, ContentFormat.SENML_JSON, ContentFormat.TLV, ContentFormat.JSON);
             if (result != null) {
                 return result;
             } else {
