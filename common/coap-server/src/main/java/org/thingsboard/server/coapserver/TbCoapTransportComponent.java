@@ -15,15 +15,13 @@
  */
 package org.thingsboard.server.coapserver;
 
-import org.eclipse.californium.core.CoapServer;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
-import java.util.concurrent.ConcurrentMap;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
-public interface CoapServerService {
-
-    CoapServer getCoapServer() throws UnknownHostException;
-
-    ConcurrentMap<InetSocketAddress, TbCoapDtlsSessionInfo> getDtlsSessionsMap();
+@Retention(RetentionPolicy.RUNTIME)
+@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || " +
+        "('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${coap.enabled}'=='true' && '${transport.coap.enabled}'=='true')")
+public @interface TbCoapTransportComponent {
 }
