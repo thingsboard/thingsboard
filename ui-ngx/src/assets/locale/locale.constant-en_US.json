@@ -638,6 +638,7 @@
         "filter-type-edge-search-query-description": "Edges with types {{edgeTypes}} that have {{relationType}} relation {{direction}} {{rootEntity}}",
         "entity-filter": "Entity filter",
         "resolve-multiple": "Resolve as multiple entities",
+        "resolve-multiple-hint": "Enable to render data from all filtered entities simultaneously. \nIf disabled, the widget shows data from the selected entity only.",
         "filter-type": "Filter type",
         "filter-type-required": "Filter type is required.",
         "entity-filter-no-entity-matched": "No entities matching specified filter were found.",
@@ -3830,8 +3831,7 @@
         "additional-info": "Additional info (JSON)",
         "invalid-additional-info": "Unable to parse additional info json.",
         "no-relations-text": "No relations found",
-        "negate-all-relations": "Negate all relations (NOT condition)",
-        "negate-relation": "Negate this relation (NOT condition)"
+        "not": "Not"
     },
     "resource": {
         "add": "Add resource",
