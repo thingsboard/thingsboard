@@ -178,6 +178,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     private String[] resources;
     protected String deviceId;
     protected boolean isWriteAttribute = false;
+    protected boolean supportFormatOnly_SenMLJSON_SenMLCBOR = false;
 
     @Before
     public void startInit() throws Exception {
@@ -318,8 +319,8 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         try (ServerSocket socket = new ServerSocket(0)) {
             int clientPort = socket.getLocalPort();
             lwM2MTestClient.init(security, securityBs, clientPort, isRpc,
-                    this.defaultLwM2mUplinkMsgHandlerTest, this.clientContextTest, isWriteAttribute
-                    , clientDtlsCidLength, queueMode);
+                    this.defaultLwM2mUplinkMsgHandlerTest, this.clientContextTest, isWriteAttribute,
+                    clientDtlsCidLength, queueMode, supportFormatOnly_SenMLJSON_SenMLCBOR);
         }
     }
 
