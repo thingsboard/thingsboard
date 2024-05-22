@@ -15,9 +15,13 @@
  */
 package org.thingsboard.server.queue.kafka;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.CreateTopicsResult;
+import org.apache.kafka.clients.admin.ListConsumerGroupOffsetsResult;
 import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.TopicExistsException;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.util.PropertyUtils;
@@ -27,6 +31,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Created by ashvayka on 24.09.18.
@@ -118,6 +124,55 @@ public class TbKafkaAdmin implements TbQueueAdmin {
 
     @Override
     public void destroy() {
+    }
+
+    /**
+     * Sync offsets from a fat group to a single-partition group
+     * Migration back from single-partition consumer to a fat group is not supported
+     * TODO: The best possible approach to synchronize the offsets is to do the synchronization as a part of the save Queue parameters with stop all consumers
+     * */
+    public void syncOffsets(String fatGroupId, String newGroupId, Integer partitionId) {
+        try {
+            syncOffsetsUnsafe(fatGroupId, newGroupId, partitionId);
+        } catch (Exception e) {
+            log.warn("Failed to syncOffsets from {} to {} partitionId {}", fatGroupId, newGroupId, partitionId, e);
+        }
+    }
+
+    void syncOffsetsUnsafe(String fatGroupId, String newGroupId, Integer partitionId) throws ExecutionException, InterruptedException, TimeoutException {
+        log.info("syncOffsets [{}][{}][{}]", fatGroupId, newGroupId, partitionId);
+        if (partitionId == null) {
+            return;
+        }
+        Map<TopicPartition, OffsetAndMetadata> oldOffsets =
+                settings.getAdminClient().listConsumerGroupOffsets(fatGroupId).partitionsToOffsetAndMetadata().get(10, TimeUnit.SECONDS);
+        if (oldOffsets.isEmpty()) {
+            return;
+        }
+
+        for (var consumerOffset : oldOffsets.entrySet()) {
+            var tp = consumerOffset.getKey();
+            if (!tp.topic().endsWith("." + partitionId)) {
+                continue;
+            }
+            var om = consumerOffset.getValue();
+            Map<TopicPartition, OffsetAndMetadata> newOffsets =
+                    settings.getAdminClient().listConsumerGroupOffsets(newGroupId).partitionsToOffsetAndMetadata().get(10, TimeUnit.SECONDS);
+
+            var existingOffset = newOffsets.get(tp);
+            if (existingOffset == null) {
+                log.info("[{}] topic offset does not exists in the new node group {}, all found offsets {}", tp, newGroupId, newOffsets);
+            } else if (existingOffset.offset() >= om.offset()) {
+                log.info("[{}] topic offset {} >= than old node group offset {}", tp, existingOffset.offset(), om.offset());
+                break;
+            } else {
+                log.info("[{}] SHOULD alter topic offset [{}] less than old node group offset [{}]", tp, existingOffset.offset(), om.offset());
+            }
+            settings.getAdminClient().alterConsumerGroupOffsets(newGroupId, Map.of(tp, om)).all().get(10, TimeUnit.SECONDS);
+            log.info("[{}] altered new consumer groupId {}", tp, newGroupId);
+            break;
+        }
+
     }
 
 }

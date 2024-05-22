@@ -21,10 +21,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomUtils;
@@ -55,6 +55,8 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
+import org.thingsboard.server.queue.provider.KafkaMonolithQueueFactory;
+import org.thingsboard.server.queue.provider.KafkaTbRuleEngineQueueFactory;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.provider.TbRuleEngineQueueFactory;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineProcessingStrategyFactory;
@@ -79,10 +81,12 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.willCallRealMethod;
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
@@ -114,6 +118,7 @@ public class TbRuleEngineQueueConsumerManagerTest {
     private PartitionService partitionService;
     @Mock
     private TbQueueProducerProvider producerProvider;
+    @Mock
     private TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> ruleEngineMsgProducer;
     @Mock
     private TbQueueAdmin queueAdmin;
@@ -148,7 +153,7 @@ public class TbRuleEngineQueueConsumerManagerTest {
             log.trace("totalProcessedMsgs = {}", totalProcessedMsgs);
             return null;
         }).when(actorContext).tell(any());
-        ruleEngineMsgProducer = mock(TbQueueProducer.class);
+
         when(producerProvider.getRuleEngineMsgProducer()).thenReturn(ruleEngineMsgProducer);
         consumersExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("tb-rule-engine-consumer"));
         mgmtExecutor = ThingsBoardExecutors.newWorkStealingPool(3, "tb-rule-engine-mgmt");
@@ -180,7 +185,7 @@ public class TbRuleEngineQueueConsumerManagerTest {
             }
             consumers.add(consumer);
             return consumer;
-        }).when(queueFactory).createToRuleEngineMsgConsumer(any());
+        }).when(queueFactory).createToRuleEngineMsgConsumer(any(), any());
 
         QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, queue);
         consumerManager = TbRuleEngineQueueConsumerManager.create()
@@ -208,6 +213,20 @@ public class TbRuleEngineQueueConsumerManagerTest {
                         assertThat(totalProcessedMsgs.get()).isEqualTo(totalConsumedMsgs.get());
                     });
         }
+    }
+
+    @ParameterizedTest
+    @ValueSource(classes = {KafkaMonolithQueueFactory.class, KafkaTbRuleEngineQueueFactory.class})
+    public void testUnsupported_createToRuleEngineMsgConsumer_KafkaTbRuleEngineQueueFactory(Class<TbRuleEngineQueueFactory> factoryClass) {
+        // obsolete, but need to pass the afterEach
+        queue.setConsumerPerPartition(false);
+        consumerManager.init(queue);
+
+        var factory = mock(factoryClass);
+        willCallRealMethod().given(factory).createToRuleEngineMsgConsumer(any());
+        assertThatThrownBy(() -> factory.createToRuleEngineMsgConsumer(mock(Queue.class)))
+                .isInstanceOf(UnsupportedOperationException.class);
+
     }
 
     @Test
@@ -247,7 +266,8 @@ public class TbRuleEngineQueueConsumerManagerTest {
 
         Set<TopicPartitionInfo> partitions = Collections.emptySet();
         consumerManager.update(partitions);
-        verify(queueFactory, after(1000).never()).createToRuleEngineMsgConsumer(any());
+        verify(queueFactory, after(1000).never()).createToRuleEngineMsgConsumer(any(), any());
+        verify(queueFactory, never()).createToRuleEngineMsgConsumer(any());
 
         partitions = createTpis(1);
         consumerManager.update(partitions);
@@ -278,7 +298,8 @@ public class TbRuleEngineQueueConsumerManagerTest {
         consumerManager.init(queue);
 
         consumerManager.update(Collections.emptySet());
-        verify(queueFactory, after(1000).never()).createToRuleEngineMsgConsumer(any());
+        verify(queueFactory, after(1000).never()).createToRuleEngineMsgConsumer(any(), any());
+        verify(queueFactory, never()).createToRuleEngineMsgConsumer(any());
 
         consumerManager.update(createTpis(1));
         TestConsumer consumer1 = getConsumer(1);
@@ -420,7 +441,8 @@ public class TbRuleEngineQueueConsumerManagerTest {
         consumerManager.update(createTpis(1));
         TestConsumer consumer = getConsumer(1);
         verifySubscribedAndLaunched(consumer, 1);
-        verify(queueFactory, times(1)).createToRuleEngineMsgConsumer(any());
+        verify(queueFactory, times(1)).createToRuleEngineMsgConsumer(any(), any());
+        verify(queueFactory, never()).createToRuleEngineMsgConsumer(any());
 
         consumerManager.stop();
         consumerManager.update(createTpis(1, 2, 3, 4)); // to check that no new tasks after stop are processed
