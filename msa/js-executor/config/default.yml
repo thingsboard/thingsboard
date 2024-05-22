@@ -35,9 +35,11 @@ kafka:
   requestTimeout: "30000" # The default value in kafkajs is: 30000
   connectionTimeout: "1000" # The default value in kafkajs is: 1000
   compression: "gzip" # gzip or uncompressed
-  topic_properties: "retention.ms:604800000;segment.bytes:26214400;retention.bytes:104857600;partitions:100;min.insync.replicas:1"
+  topic_properties: "retention.ms:604800000;segment.bytes:52428800;retention.bytes:104857600;partitions:100;min.insync.replicas:1"
   use_confluent_cloud: false
   client_id: "kafkajs" #inject pod name to easy identify the client using /opt/kafka/bin/kafka-consumer-groups.sh
+  ssl:
+    enabled: false
   confluent:
     sasl:
       mechanism: "PLAIN"

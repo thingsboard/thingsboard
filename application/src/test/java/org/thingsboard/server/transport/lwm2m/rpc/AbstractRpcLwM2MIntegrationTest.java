@@ -86,6 +86,9 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
         if (this.getClass().getSimpleName().equals("RpcLwm2mIntegrationDiscoverWriteAttributesTest")){
             isWriteAttribute = true;
         }
+        if (this.getClass().getSimpleName().equals("RpcLwm2mIntegrationWriteCborTest")){
+            supportFormatOnly_SenMLJSON_SenMLCBOR = true;
+        }
         initRpc();
     }
 

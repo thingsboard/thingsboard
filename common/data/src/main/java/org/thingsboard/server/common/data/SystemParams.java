@@ -31,4 +31,5 @@ public class SystemParams {
     JsonNode userSettings;
     long maxDatapointsLimit;
     long maxResourceSize;
+    boolean mobileQrEnabled;
 }
