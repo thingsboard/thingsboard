@@ -7062,6 +7062,7 @@
             "bar-width-absolute": "Absolute (ms)",
             "comparison": {
               "comparison": "Comparison",
+              "comparison-hint": "Comparison works only with historical data!",
               "show": "Show",
               "settings": "Comparison settings",
               "show-values-for-comparison": "Show historical data for comparison",
