@@ -24,7 +24,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -41,6 +42,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -68,22 +70,25 @@ public class TbLambdaNodeTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"new-function", "${funcNameMdPattern}", "$[funcNameMsgPattern]"})
-    public void givenFunctionNamePattern_whenOnMsg_thenTellSuccess(String functionName) throws TbNodeException, ExecutionException, InterruptedException {
+    @MethodSource
+    public void givenFunctionNameAndQualifierPatterns_whenOnMsg_thenTellSuccess(String functionName, String qualifier) throws TbNodeException, ExecutionException, InterruptedException {
         init();
         config.setFunctionName(functionName);
+        config.setQualifier(qualifier);
         String data = """
                 {
                 "x": 10,
                 "y": 20,
-                "funcNameMsgPattern": "new-function"
+                "funcNameMsgPattern": "new-function",
+                "qualifierMsgPattern": "$LATEST"
                 }
                 """;
         Map<String, String> metadata = new HashMap<>();
         metadata.put("funcNameMdPattern", "new-function");
+        metadata.put("qualifierMdPattern", "$LATEST");
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, new TbMsgMetaData(metadata), data);
         String requestIdStr = "a124af57-e7c3-4ebb-83bf-b09ff86eaa23";
-        InvokeRequest request = createInvokeRequest(msg.getData(), "new-function");
+        InvokeRequest request = createInvokeRequest(msg.getData(), "new-function", "$LATEST");
         InvokeResult result = new InvokeResult();
         result.setSdkResponseMetadata(new ResponseMetadata(Map.of("AWS_REQUEST_ID", requestIdStr)));
         String payload = "{\"statusCode\":200,\"body\":30}";
@@ -107,6 +112,14 @@ public class TbLambdaNodeTest {
         assertThat(msgCaptorValue.getMetaData()).isEqualTo(resultedMsg.getMetaData());
     }
 
+    private static Stream<Arguments> givenFunctionNameAndQualifierPatterns_whenOnMsg_thenTellSuccess() {
+        return Stream.of(
+                Arguments.of("new-function", "$LATEST"),
+                Arguments.of("${funcNameMdPattern}", "${qualifierMdPattern}"),
+                Arguments.of("$[funcNameMsgPattern]", "$[qualifierMsgPattern]")
+        );
+    }
+
     @Test
     public void givenExceptionWasThrownInsideFunctionAndTellFailureIfFuncThrowsExcIsTrue_whenOnMsg_thenTellFailure() throws TbNodeException, ExecutionException, InterruptedException {
         init();
@@ -119,7 +132,7 @@ public class TbLambdaNodeTest {
         Map<String, String> metadata = new HashMap<>();
         metadata.put("data", "40");
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, new TbMsgMetaData(metadata), data);
-        InvokeRequest request = createInvokeRequest(msg.getData(), "new-function");
+        InvokeRequest request = createInvokeRequest(msg.getData(), "new-function", "$LATEST");
         InvokeResult result = new InvokeResult();
         result.setFunctionError("Unhandled exception from function");
         metadata.put("error", RuntimeException.class + ": Unhandled exception from function");
@@ -157,7 +170,7 @@ public class TbLambdaNodeTest {
         Map<String, String> metadata = new HashMap<>();
         metadata.put("data", "40");
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, new TbMsgMetaData(metadata), data);
-        InvokeRequest request = createInvokeRequest(msg.getData(), "new-function");
+        InvokeRequest request = createInvokeRequest(msg.getData(), "new-function", "$LATEST");
         String requestIdStr = "e83dfbc4-68d5-441c-8ee9-289959a30d3b";
         InvokeResult result = new InvokeResult();
         result.setSdkResponseMetadata(new ResponseMetadata(Map.of("AWS_REQUEST_ID", requestIdStr)));
@@ -193,7 +206,7 @@ public class TbLambdaNodeTest {
         Map<String, String> metadata = new HashMap<>();
         metadata.put("data", "40");
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, new TbMsgMetaData(metadata), data);
-        InvokeRequest request = createInvokeRequest(msg.getData(), "new-function");
+        InvokeRequest request = createInvokeRequest(msg.getData(), "new-function", "$LATEST");
 
         when(clientMock.invokeAsync(any(), any())).then(invocation -> {
             AsyncHandler<InvokeRequest, InvokeResult> asyncHandler = invocation.getArgument(1);
@@ -212,18 +225,17 @@ public class TbLambdaNodeTest {
         config.setAccessKey("accessKey");
         config.setSecretKey("secretKey");
         config.setFunctionName("new-function");
-        config.setQualifier("$LATEST");
         config.setTellFailureIfFuncThrowsExc(false);
         ReflectionTestUtils.setField(node, "client", clientMock);
         ReflectionTestUtils.setField(node, "config", config);
     }
 
-    private InvokeRequest createInvokeRequest(String requestBody, String functionName) {
+    private InvokeRequest createInvokeRequest(String requestBody, String functionName, String qualifier) {
         InvokeRequest request = new InvokeRequest()
                 .withFunctionName(functionName)
                 .withPayload(requestBody);
         request.setInvocationType(config.getInvocationType());
-        request.withQualifier(config.getQualifier());
+        request.withQualifier(qualifier);
         return request;
     }
 }

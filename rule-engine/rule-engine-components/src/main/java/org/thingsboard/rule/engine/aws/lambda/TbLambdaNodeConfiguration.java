@@ -37,6 +37,7 @@ public class TbLambdaNodeConfiguration implements NodeConfiguration<TbLambdaNode
         TbLambdaNodeConfiguration configuration = new TbLambdaNodeConfiguration();
         configuration.setRegion("us-east-1");
         configuration.setInvocationType(InvocationType.RequestResponse.name());
+        configuration.setQualifier("$LATEST");
         configuration.setConnectionTimeout(10000);
         configuration.setRequestTimeout(5000);
         configuration.setTellFailureIfFuncThrowsExc(false);

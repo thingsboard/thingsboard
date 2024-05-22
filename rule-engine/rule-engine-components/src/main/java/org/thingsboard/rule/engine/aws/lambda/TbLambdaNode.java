@@ -39,6 +39,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.nio.ByteBuffer;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 @Slf4j
@@ -79,7 +80,10 @@ public class TbLambdaNode extends TbAbstractExternalNode {
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
         var tbMsg = ackIfNeeded(ctx, msg);
         String functionName = TbNodeUtils.processPattern(config.getFunctionName(), msg);
-        InvokeRequest request = toRequest(msg.getData(), functionName);
+        String qualifier = Optional.ofNullable(config.getQualifier())
+                .map(q -> TbNodeUtils.processPattern(q, msg))
+                .orElse("$LATEST");
+        InvokeRequest request = toRequest(msg.getData(), functionName, qualifier);
         client.invokeAsync(request, new AsyncHandler<>() {
             @Override
             public void onError(Exception e) {
@@ -101,15 +105,13 @@ public class TbLambdaNode extends TbAbstractExternalNode {
         });
     }
 
-    private InvokeRequest toRequest(String requestBody, String functionName) {
+    private InvokeRequest toRequest(String requestBody, String functionName, String qualifier) {
         InvokeRequest request = new InvokeRequest()
                 .withFunctionName(functionName)
-                .withPayload(requestBody);
+                .withPayload(requestBody)
+                .withQualifier(qualifier);
         if (!ObjectUtils.isEmpty(config.getInvocationType())) {
             request.setInvocationType(config.getInvocationType());
-        }
-        if (!ObjectUtils.isEmpty(config.getQualifier())) {
-            request.withQualifier(config.getQualifier());
         }
         return request;
     }
