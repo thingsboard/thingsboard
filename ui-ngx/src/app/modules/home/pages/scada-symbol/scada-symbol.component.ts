@@ -218,13 +218,22 @@ export class ScadaSymbolComponent extends PageComponent
 
   enterPreviewMode() {
     this.symbolData.svgContent = this.prepareSvgContent();
-    this.previewIotSvgObjectSettings = {};
+    this.previewIotSvgObjectSettings = {
+      behavior: {},
+      properties: {}
+    };
     this.scadaPreviewFormGroup.patchValue({
       iotSvgObject: this.previewIotSvgObjectSettings
     }, {emitEvent: false});
     this.scadaPreviewFormGroup.markAsPristine();
     const settings: IotSvgWidgetSettings = {...iotSvgWidgetDefaultSettings,
-      ...{iotSvg: null, iotSvgContent: this.symbolData.svgContent, iotSvgObject: this.previewIotSvgObjectSettings}};
+      ...{
+          simulated: true,
+          iotSvg: null,
+          iotSvgContent: this.symbolData.svgContent,
+          iotSvgObject: this.previewIotSvgObjectSettings
+         }
+    };
     this.previewWidget = {
       typeFullFqn: 'system.iot_svg',
       type: widgetType.rpc,

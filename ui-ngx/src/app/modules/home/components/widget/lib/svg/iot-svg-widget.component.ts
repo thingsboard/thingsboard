@@ -39,6 +39,7 @@ import { Observable, of } from 'rxjs';
 import { backgroundStyle, ComponentStyle, overlayStyle } from '@shared/models/widget-settings.models';
 import { ImageService } from '@core/http/image.service';
 import { WidgetComponent } from '@home/components/widget/widget.component';
+import { isDefinedAndNotNull, mergeDeep } from '@core/utils';
 
 @Component({
   selector: 'tb-iot-svg-widget',
@@ -74,7 +75,7 @@ export class IotSvgWidgetComponent extends
 
   ngOnInit(): void {
     super.ngOnInit();
-    this.settings = {...iotSvgWidgetDefaultSettings, ...this.ctx.settings};
+    this.settings = mergeDeep({} as IotSvgWidgetSettings, iotSvgWidgetDefaultSettings, this.ctx.settings || {});
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
@@ -96,9 +97,14 @@ export class IotSvgWidgetComponent extends
   }
 
   private initObject(svgContent: string) {
-    this.iotSvgObject = new IotSvgObject(this.ctx, svgContent, this.settings.iotSvgObject);
+    const simulated = this.ctx.utilsService.widgetEditMode ||
+                               this.ctx.isPreview || (isDefinedAndNotNull(this.settings.simulated) ? this.settings.simulated : false);
+    this.iotSvgObject = new IotSvgObject(this.ctx, svgContent, this.settings.iotSvgObject, simulated);
     this.iotSvgObject.onError((error) => {
       this.ctx.showErrorToast(error, 'bottom', 'center', this.ctx.toastTargetId, true);
+    });
+    this.iotSvgObject.onMessage((message) => {
+      this.ctx.showSuccessToast(message, 3000, 'bottom', 'center', this.ctx.toastTargetId, true);
     });
     this.iotSvgObject.init();
     if (this.iotSvgShape) {

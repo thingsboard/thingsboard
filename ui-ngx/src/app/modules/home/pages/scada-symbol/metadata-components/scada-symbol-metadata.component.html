@@ -58,5 +58,10 @@
         formControlName="tags">
       </tb-scada-symbol-metadata-tags>
     </div>
+    <div [fxShow]="selectedOption === 'behavior'" class="mat-content overflow-hidden">
+      <tb-scada-symbol-metadata-behaviors
+        formControlName="behavior">
+      </tb-scada-symbol-metadata-behaviors>
+    </div>
   </div>
 </div>

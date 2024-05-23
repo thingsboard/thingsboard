@@ -564,6 +564,7 @@
 
   .tb-form-table-header {
     height: 48px;
+    min-height: 48px;
     border-bottom: 1px solid rgba(0, 0, 0, 0.12);
     &-cell {
       color: rgba(0, 0, 0, 0.54);

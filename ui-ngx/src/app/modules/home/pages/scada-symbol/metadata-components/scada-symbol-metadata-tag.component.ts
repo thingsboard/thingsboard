@@ -37,6 +37,7 @@ import {
 import { IotSvgTag } from '@home/components/widget/lib/svg/iot-svg.models';
 import { MatExpansionPanel } from '@angular/material/expansion';
 import { JsFuncComponent } from '@shared/components/js-func.component';
+import { MatSelect } from '@angular/material/select';
 
 @Component({
   selector: 'tb-scada-symbol-metadata-tag',
@@ -52,6 +53,9 @@ import { JsFuncComponent } from '@shared/components/js-func.component';
   encapsulation: ViewEncapsulation.None
 })
 export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, OnInit, OnChanges {
+
+  @ViewChild('tagSelect')
+  tagSelect: MatSelect;
 
   @ViewChild('expansionPanel')
   expansionPanel: MatExpansionPanel;
@@ -161,6 +165,11 @@ export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, On
         this.clickAction.focus();
       });
     });
+  }
+
+  focus() {
+    this.tagSelect._elementRef.nativeElement.scrollIntoView();
+    this.tagSelect.focus();
   }
 
   private openPanelWithCallback(panel: MatExpansionPanel, callback: () => void) {

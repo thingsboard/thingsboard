@@ -3389,9 +3389,6 @@
             "error-entities": "There was an error creating {{count}} entities."
         }
     },
-    "iot-svg": {
-        "behavior": "Behavior"
-    },
     "scada": {
         "symbol": "SCADA symbol",
         "symbols": "SCADA symbols",
@@ -3413,7 +3410,6 @@
         "symbol-preview": "Symbol preview",
         "general": "General",
         "tags": "Tags",
-        "behavior": "Behavior",
         "properties": "Properties",
         "title": "Title",
         "state-render-function": "State render function",
@@ -3423,7 +3419,21 @@
         "remove-tag": "Remove tag",
         "add-tag": "Add tag",
         "no-tags": "No tags configured",
-        "select-tag": "Select tag"
+        "select-tag": "Select tag",
+        "preview-widget-action-text": "Widget action '{{type}}' successfully invoked!",
+        "behavior": {
+            "behavior": "Behavior",
+            "id": "Id",
+            "name": "Name",
+            "type": "Type",
+            "no-behaviors": "No behaviors configured",
+            "add-behavior": "Add behavior",
+            "type-action": "Action",
+            "type-value": "Value",
+            "type-widget-action": "Widget action",
+            "behavior-settings": "Behavior settings",
+            "remove-behavior": "Remove behavior"
+        }
     },
     "item": {
         "selected": "Selected"

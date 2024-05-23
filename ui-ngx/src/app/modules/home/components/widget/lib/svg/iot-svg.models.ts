@@ -33,14 +33,14 @@ import {
   mergeDeep,
   parseFunction
 } from '@core/utils';
-import { BehaviorSubject, forkJoin, Observable, Observer } from 'rxjs';
+import { BehaviorSubject, forkJoin, Observable, Observer, of } from 'rxjs';
 import { share } from 'rxjs/operators';
 import { ValueAction, ValueGetter, ValueSetter } from '@home/components/widget/lib/action/action-widget.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { ColorProcessor, constantColor, Font } from '@shared/models/widget-settings.models';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
-import { WidgetAction, WidgetActionType } from '@shared/models/widget.models';
+import { WidgetAction, WidgetActionType, widgetActionTypeTranslationMap } from '@shared/models/widget.models';
 
 export interface IotSvgApi {
   formatValue: (value: any, dec?: number, units?: string, showZeroDecimals?: boolean) => string | undefined;
@@ -85,6 +85,17 @@ export enum IotSvgBehaviorType {
   widgetAction = 'widgetAction'
 }
 
+export const iotSvgBehaviorTypes = Object.keys(IotSvgBehaviorType) as IotSvgBehaviorType[];
+
+export const iotSvgBehaviorTypeTranslations = new Map<IotSvgBehaviorType, string>(
+  [
+    [IotSvgBehaviorType.value, 'scada.behavior.type-value'],
+    [IotSvgBehaviorType.action, 'scada.behavior.type-action'],
+    [IotSvgBehaviorType.widgetAction, 'scada.behavior.type-widget-action']
+  ]
+);
+
+
 export interface IotSvgBehaviorBase {
   id: string;
   name: string;
@@ -95,7 +106,6 @@ export interface IotSvgBehaviorBase {
 export interface IotSvgBehaviorValue extends IotSvgBehaviorBase {
   valueType: ValueType;
   defaultValue: any;
-  valueId: string;
   trueLabel?: string;
   falseLabel?: string;
   stateLabel?: string;
@@ -283,23 +293,29 @@ const defaultWidgetActionSettings = (widgetAction: IotSvgBehavior): WidgetAction
 });
 
 export const defaultIotSvgObjectSettings = (metadata: IotSvgMetadata): IotSvgObjectSettings => {
-  const settings: IotSvgObjectSettings = {};
+  const settings: IotSvgObjectSettings = {
+    behavior: {},
+    properties: {}
+  };
   for (const behavior of metadata.behavior) {
     if (behavior.type === IotSvgBehaviorType.value) {
-      settings[behavior.id] = defaultGetValueSettings(behavior as IotSvgBehaviorValue);
+      settings.behavior[behavior.id] = defaultGetValueSettings(behavior as IotSvgBehaviorValue);
     } else if (behavior.type === IotSvgBehaviorType.action) {
-      settings[behavior.id] = defaultSetValueSettings(behavior as IotSvgBehaviorAction);
+      settings.behavior[behavior.id] = defaultSetValueSettings(behavior as IotSvgBehaviorAction);
     } else if (behavior.type === IotSvgBehaviorType.widgetAction) {
-      settings[behavior.id] = defaultWidgetActionSettings(behavior);
+      settings.behavior[behavior.id] = defaultWidgetActionSettings(behavior);
     }
   }
   for (const property of metadata.properties) {
-    settings[property.id] = property.default;
+    settings.properties[property.id] = property.default;
   }
   return settings;
 };
 
-export type IotSvgObjectSettings = {[id: string]: any};
+export type IotSvgObjectSettings = {
+  behavior: {[id: string]: any};
+  properties: {[id: string]: any};
+};
 
 const parseError = (ctx: WidgetContext, err: any): string =>
   ctx.$injector.get(UtilsService).parseException(err).message || 'Unknown Error';
@@ -327,16 +343,20 @@ export class IotSvgObject {
 
   private _onError: (error: string) => void = () => {};
 
+  private _onMessage: (message: string) => void = () => {};
+
   constructor(private ctx: WidgetContext,
               private svgContent: string,
-              private inputSettings: IotSvgObjectSettings) {
+              private inputSettings: IotSvgObjectSettings,
+              private simulated: boolean) {
   }
 
   public init() {
     const doc: XMLDocument = new DOMParser().parseFromString(this.svgContent, 'image/svg+xml');
     this.metadata = parseIotSvgMetadataFromDom(doc);
     const defaults = defaultIotSvgObjectSettings(this.metadata);
-    this.settings = mergeDeep<IotSvgObjectSettings>({}, defaults, this.inputSettings || {});
+    this.settings = mergeDeep<IotSvgObjectSettings>({} as IotSvgObjectSettings,
+      defaults, this.inputSettings || {} as IotSvgObjectSettings);
     this.prepareMetadata();
     this.prepareSvgShape(doc);
     this.initialize();
@@ -344,6 +364,10 @@ export class IotSvgObject {
 
   public onError(onError: (error: string) => void) {
     this._onError = onError;
+  }
+
+  public onMessage(onMessage: (message: string) => void) {
+    this._onMessage = onMessage;
   }
 
   public addTo(element: HTMLElement) {
@@ -451,13 +475,14 @@ export class IotSvgObject {
     for (const behavior of this.metadata.behavior) {
       if (behavior.type === IotSvgBehaviorType.value) {
         const getBehavior = behavior as IotSvgBehaviorValue;
-        let getValueSettings: GetValueSettings<any> = this.settings[getBehavior.id];
-        getValueSettings = {...getValueSettings, actionLabel: getBehavior.name};
+        let getValueSettings: GetValueSettings<any> = this.settings.behavior[getBehavior.id];
+        getValueSettings = {...getValueSettings, actionLabel:
+            this.ctx.utilsService.customTranslation(getBehavior.name, getBehavior.name)};
         const stateValueSubject = new BehaviorSubject<any>(getValueSettings.defaultValue);
-        this.stateValueSubjects[getBehavior.valueId] = stateValueSubject;
-        this.context.values[getBehavior.valueId] = getValueSettings.defaultValue;
+        this.stateValueSubjects[getBehavior.id] = stateValueSubject;
+        this.context.values[getBehavior.id] = getValueSettings.defaultValue;
         stateValueSubject.subscribe((value) => {
-          this.onStateValueChanged(getBehavior.valueId, value);
+          this.onStateValueChanged(getBehavior.id, value);
         });
         const valueGetter =
           ValueGetter.fromSettings(this.ctx, getValueSettings, getBehavior.valueType, {
@@ -466,14 +491,15 @@ export class IotSvgObject {
               const message = parseError(this.ctx, err);
               this._onError(message);
             }
-          });
+          }, this.simulated);
         this.valueGetters.push(valueGetter);
         this.valueActions.push(valueGetter);
       } else if (behavior.type === IotSvgBehaviorType.action) {
         const setBehavior = behavior as IotSvgBehaviorAction;
-        let setValueSettings: SetValueSettings = this.settings[setBehavior.id];
-        setValueSettings = {...setValueSettings, actionLabel: setBehavior.name};
-        const valueSetter = ValueSetter.fromSettings<any>(this.ctx, setValueSettings);
+        let setValueSettings: SetValueSettings = this.settings.behavior[setBehavior.id];
+        setValueSettings = {...setValueSettings, actionLabel:
+            this.ctx.utilsService.customTranslation(setBehavior.name, setBehavior.name)};
+        const valueSetter = ValueSetter.fromSettings<any>(this.ctx, setValueSettings, this.simulated);
         this.valueSetters[setBehavior.id] = valueSetter;
         this.valueActions.push(valueSetter);
       } else if (behavior.type === IotSvgBehaviorType.widgetAction) {
@@ -527,8 +553,14 @@ export class IotSvgObject {
           );
         }
       } else if (behavior.type === IotSvgBehaviorType.widgetAction) {
-        const widgetAction: WidgetAction = this.settings[behavior.id];
-        this.ctx.actionsApi.onWidgetAction(event, widgetAction);
+        const widgetAction: WidgetAction = this.settings.behavior[behavior.id];
+        if (this.simulated) {
+          const translatedType = this.ctx.translate.instant(widgetActionTypeTranslationMap.get(widgetAction.type));
+          const message = this.ctx.translate.instant('scada.preview-widget-action-text', {type: translatedType});
+          this._onMessage(message);
+        } else {
+          this.ctx.actionsApi.onWidgetAction(event, widgetAction);
+        }
       }
     }
   }
@@ -546,8 +578,7 @@ export class IotSvgObject {
   private onValue(id: string, value: any) {
     const valueBehavior = this.metadata.behavior.find(b => b.id === id) as IotSvgBehaviorValue;
     value = this.normalizeValue(value, valueBehavior.valueType);
-    const valueId = valueBehavior.valueId;
-    this.setValue(valueId, value);
+    this.setValue(valueBehavior.id, value);
   }
 
   private setValue(valueId: string, value: any) {
@@ -659,7 +690,7 @@ export class IotSvgObject {
   private getPropertyValue(id: string): any {
     const property = this.getProperty(id);
     if (property) {
-      const value = this.settings[id];
+      const value = this.settings.properties[id];
       if (isDefinedAndNotNull(value)) {
         if (property.type === 'color-settings') {
           return ColorProcessor.fromSettings(value);

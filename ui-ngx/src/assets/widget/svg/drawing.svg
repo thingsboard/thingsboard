@@ -28,7 +28,7 @@
            "tag": "onButton",
            "actions": {
                "click": {
-                   "actionFunction": "ctx.api.callAction(event, 'onUpdateState');"
+                   "actionFunction": "ctx.api.callAction(event, 'onUpdateState', undefined, {\n  next: () => {\n     ctx.api.setValue('on', true);\n  }\n});"
                }
            }
         },
@@ -36,7 +36,7 @@
            "tag": "offButton",
            "actions": {
                "click": {
-                   "actionFunction": "ctx.api.callAction(event, 'offUpdateState');"
+                   "actionFunction": "ctx.api.callAction(event, 'offUpdateState', undefined, {\n  next: () => {\n     ctx.api.setValue('on', false);\n  }\n});\n"
                }
            }
         },
@@ -59,33 +59,30 @@
      ],
      "behavior": [
         {
-          "id": "levelState",
+          "id": "level",
           "name": "Level",
           "type": "value",
           "valueType": "DOUBLE",
-          "defaultValue": 0,
-          "valueId": "level"
+          "defaultValue": 0
         },
         {
-           "id": "disabledState",
+           "id": "disabled",
            "name": "{i18n:widgets.rpc-state.disabled-state}",
            "hint": "{i18n:widgets.rpc-state.disabled-state-hint}",
            "stateLabel": "{i18n:widgets.rpc-state.disabled}",
            "type": "value",
            "valueType": "BOOLEAN",
-           "defaultValue": false,
-           "valueId": "disabled"
+           "defaultValue": false
         },
         {
-           "id": "onState",
+           "id": "on",
            "name": "On/Off state",
            "trueLabel": "{i18n:widgets.rpc-state.on}",
            "falseLabel": "{i18n:widgets.rpc-state.off}",
            "stateLabel": "{i18n:widgets.rpc-state.on}",
            "type": "value",
            "valueType": "BOOLEAN",
-           "defaultValue": false,
-           "valueId": "on"
+           "defaultValue": false
         },
         {
            "id": "onUpdateState",

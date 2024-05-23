@@ -21,13 +21,17 @@ export interface IotSvgWidgetSettings {
   iotSvg?: string;
   iotSvgUrl?: string;
   iotSvgContent?: string;
+  simulated?: boolean;
   iotSvgObject: IotSvgObjectSettings;
   background: BackgroundSettings;
 }
 
 export const iotSvgWidgetDefaultSettings: IotSvgWidgetSettings = {
   iotSvg: '/assets/widget/svg/drawing.svg',
-  iotSvgObject: {},
+  iotSvgObject: {
+    behavior: {},
+    properties: {}
+  },
   background: {
     type: BackgroundType.color,
     color: '#fff',

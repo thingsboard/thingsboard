@@ -80,7 +80,7 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
       value: 'tags'
     },
     {
-      name: this.translate.instant('scada.behavior'),
+      name: this.translate.instant('scada.behavior.behavior'),
       value: 'behavior'
     },
     {

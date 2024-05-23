@@ -164,6 +164,10 @@ export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, O
 
   addTag() {
     this.addNewTag(null);
+    setTimeout(() => {
+      const tagComponent = this.metadataTags.get(this.metadataTags.length-1);
+      tagComponent.focus();
+    });
   }
 
   editTagStateRenderFunction(tag: string): void {

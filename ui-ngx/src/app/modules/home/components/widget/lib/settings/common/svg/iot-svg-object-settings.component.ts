@@ -39,7 +39,7 @@ import { HttpClient } from '@angular/common/http';
 import { ValueType } from '@shared/models/constants';
 import { IAliasController } from '@core/api/widget-api.models';
 import { TargetDevice, widgetType } from '@shared/models/widget.models';
-import { isDefinedAndNotNull } from '@core/utils';
+import { isDefinedAndNotNull, mergeDeep } from '@core/utils';
 import {
   IotSvgPropertyRow,
   toPropertyRows
@@ -113,7 +113,10 @@ export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, Control
   }
 
   ngOnInit(): void {
-    this.iotSvgObjectSettingsFormGroup = this.fb.group({});
+    this.iotSvgObjectSettingsFormGroup = this.fb.group({
+      behavior: this.fb.group({}),
+      properties: this.fb.group({})
+    });
     this.iotSvgObjectSettingsFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
     });
@@ -149,7 +152,7 @@ export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, Control
   }
 
   writeValue(value: IotSvgObjectSettings): void {
-    this.modelValue = value || {};
+    this.modelValue = value || { behavior: {}, properties: {} };
     this.setupValue();
   }
 
@@ -181,11 +184,16 @@ export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, Control
       (svgContent) => {
         this.metadata = parseIotSvgMetadataFromContent(svgContent);
         this.propertyRows = toPropertyRows(this.metadata.properties);
-        for (const control of Object.keys(this.iotSvgObjectSettingsFormGroup.controls)) {
-          this.iotSvgObjectSettingsFormGroup.removeControl(control, {emitEvent: false});
+        const behaviorFormGroup =  this.iotSvgObjectSettingsFormGroup.get('behavior') as UntypedFormGroup;
+        for (const control of Object.keys(behaviorFormGroup.controls)) {
+          behaviorFormGroup.removeControl(control, {emitEvent: false});
+        }
+        const propertiesFormGroup =  this.iotSvgObjectSettingsFormGroup.get('properties') as UntypedFormGroup;
+        for (const control of Object.keys(propertiesFormGroup.controls)) {
+          propertiesFormGroup.removeControl(control, {emitEvent: false});
         }
         for (const behaviour of this.metadata.behavior) {
-          this.iotSvgObjectSettingsFormGroup.addControl(behaviour.id, this.fb.control(null, []), {emitEvent: false});
+          behaviorFormGroup.addControl(behaviour.id, this.fb.control(null, []), {emitEvent: false});
         }
         for (const property of this.metadata.properties) {
           if (property.disableOnProperty) {
@@ -205,12 +213,12 @@ export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, Control
               validators.push(Validators.max(property.max));
             }
           }
-          this.iotSvgObjectSettingsFormGroup.addControl(property.id, this.fb.control(null, validators), {emitEvent: false});
+          propertiesFormGroup.addControl(property.id, this.fb.control(null, validators), {emitEvent: false});
         }
         if (this.validatorTriggers.length) {
           const observables: Observable<any>[] = [];
           for (const trigger of this.validatorTriggers) {
-            observables.push(this.iotSvgObjectSettingsFormGroup.get(trigger).valueChanges);
+            observables.push(propertiesFormGroup.get(trigger).valueChanges);
           }
           this.validatorSubscription = merge(...observables).subscribe(() => {
             this.updateValidators();
@@ -223,11 +231,12 @@ export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, Control
   }
 
   private updateValidators() {
+    const propertiesFormGroup =  this.iotSvgObjectSettingsFormGroup.get('properties') as UntypedFormGroup;
     for (const trigger of this.validatorTriggers) {
-      const value: boolean = this.iotSvgObjectSettingsFormGroup.get(trigger).value;
+      const value: boolean = propertiesFormGroup.get(trigger).value;
       this.metadata.properties.filter(p => p.disableOnProperty === trigger).forEach(
         (p) => {
-          const control = this.iotSvgObjectSettingsFormGroup.get(p.id);
+          const control = propertiesFormGroup.get(p.id);
           if (value) {
             control.enable({emitEvent: false});
           } else {
@@ -241,7 +250,7 @@ export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, Control
   private setupValue() {
     if (this.metadata) {
       const defaults = defaultIotSvgObjectSettings(this.metadata);
-      this.modelValue = {...defaults, ...this.modelValue};
+      this.modelValue = mergeDeep<IotSvgObjectSettings>(defaults, this.modelValue);
       this.iotSvgObjectSettingsFormGroup.patchValue(
         this.modelValue, {emitEvent: false}
       );
@@ -253,6 +262,4 @@ export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, Control
     this.modelValue = this.iotSvgObjectSettingsFormGroup.getRawValue();
     this.propagateChange(this.modelValue);
   }
-
-  protected readonly ValueType = ValueType;
 }

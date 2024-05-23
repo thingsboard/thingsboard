@@ -24,13 +24,21 @@ import { ScadaSymbolMetadataComponent } from '@home/pages/scada-symbol/metadata-
 import {
   ScadaSymbolMetadataTagsComponent
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-metadata-tags.component';
+import {
+  ScadaSymbolBehaviorsComponent
+} from '@home/pages/scada-symbol/metadata-components/scada-symbol-behaviors.component';
+import {
+  ScadaSymbolBehaviorRowComponent
+} from '@home/pages/scada-symbol/metadata-components/scada-symbol-behavior-row.component';
 
 @NgModule({
   declarations:
     [
       ScadaSymbolMetadataComponent,
       ScadaSymbolMetadataTagComponent,
-      ScadaSymbolMetadataTagsComponent
+      ScadaSymbolMetadataTagsComponent,
+      ScadaSymbolBehaviorsComponent,
+      ScadaSymbolBehaviorRowComponent
     ],
   imports: [
     CommonModule,

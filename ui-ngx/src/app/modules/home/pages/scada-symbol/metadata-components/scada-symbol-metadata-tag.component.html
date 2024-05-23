@@ -22,7 +22,7 @@
         <div class="tb-form-row tb-flex">
           <div class="fixed-title-width" translate>scada.tag</div>
           <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic" (click)="$event.stopPropagation()">
-            <mat-select required formControlName="tag" placeholder="{{ 'scada.select-tag' | translate }}">
+            <mat-select #tagSelect required formControlName="tag" placeholder="{{ 'scada.select-tag' | translate }}">
               <mat-option *ngFor="let tag of availableTags" [value]="tag">
                 {{ tag }}
               </mat-option>
