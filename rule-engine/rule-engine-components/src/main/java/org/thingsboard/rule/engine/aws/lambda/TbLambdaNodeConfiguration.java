@@ -19,14 +19,18 @@ import com.amazonaws.services.lambda.model.InvocationType;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
+import java.util.concurrent.TimeUnit;
+
 @Data
 public class TbLambdaNodeConfiguration implements NodeConfiguration<TbLambdaNodeConfiguration> {
+
+    public static final String DEFAULT_QUALIFIER = "$LATEST";
 
     private String accessKey;
     private String secretKey;
     private String region;
     private String functionName;
-    private String invocationType;
+    private InvocationType invocationType;
     private String qualifier;
     private int connectionTimeout;
     private int requestTimeout;
@@ -36,11 +40,20 @@ public class TbLambdaNodeConfiguration implements NodeConfiguration<TbLambdaNode
     public TbLambdaNodeConfiguration defaultConfiguration() {
         TbLambdaNodeConfiguration configuration = new TbLambdaNodeConfiguration();
         configuration.setRegion("us-east-1");
-        configuration.setInvocationType(InvocationType.RequestResponse.name());
-        configuration.setQualifier("$LATEST");
+        configuration.setInvocationType(InvocationType.RequestResponse);
+        configuration.setQualifier(DEFAULT_QUALIFIER);
         configuration.setConnectionTimeout(10000);
         configuration.setRequestTimeout(5000);
         configuration.setTellFailureIfFuncThrowsExc(false);
         return configuration;
     }
+
+    public int getConnectionTimeout() {
+        return (int) TimeUnit.SECONDS.toMillis(connectionTimeout);
+    }
+
+    public int getRequestTimeout() {
+        return (int) TimeUnit.SECONDS.toMillis(requestTimeout);
+    }
+
 }

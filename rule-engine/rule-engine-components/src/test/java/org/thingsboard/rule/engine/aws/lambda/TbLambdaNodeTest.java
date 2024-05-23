@@ -26,11 +26,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -38,6 +42,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -45,6 +50,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -53,7 +59,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class TbLambdaNodeTest {
 
-    private static final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("ddb88645-7379-4a08-a51c-e84a0b4b3d88"));
+    private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("ddb88645-7379-4a08-a51c-e84a0b4b3d88"));
     
     private TbLambdaNode node;
     private TbLambdaNodeConfiguration config;
@@ -70,8 +76,30 @@ public class TbLambdaNodeTest {
     }
 
     @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = "  ")
+    public void givenInvalidFunctionName_whenInit_thenThrowsException(String funcName) {
+        config.setQualifier(funcName);
+        var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        assertThatThrownBy(() -> node.init(ctx, configuration))
+                .isInstanceOf(TbNodeException.class)
+                .hasMessage("Invalid function name");
+    }
+
+    @Test
+    void givenInvocationTypeIsNull_whenInit_thenThrowsException() {
+        config.setFunctionName("new-function");
+        config.setInvocationType(null);
+        var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        assertThatThrownBy(() -> node.init(ctx, configuration))
+                .isInstanceOf(TbNodeException.class)
+                .hasMessage("Invocation type must be set!");
+    }
+
+    @ParameterizedTest
     @MethodSource
-    public void givenFunctionNameAndQualifierPatterns_whenOnMsg_thenTellSuccess(String functionName, String qualifier) throws TbNodeException, ExecutionException, InterruptedException {
+    public void givenFunctionNameAndQualifierPatterns_whenOnMsg_thenTellSuccess(String functionName, String qualifier)
+            throws TbNodeException, ExecutionException, InterruptedException {
         init();
         config.setFunctionName(functionName);
         config.setQualifier(qualifier);
@@ -85,10 +113,10 @@ public class TbLambdaNodeTest {
                 """;
         Map<String, String> metadata = new HashMap<>();
         metadata.put("funcNameMdPattern", "new-function");
-        metadata.put("qualifierMdPattern", "$LATEST");
+        metadata.put("qualifierMdPattern", TbLambdaNodeConfiguration.DEFAULT_QUALIFIER);
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, new TbMsgMetaData(metadata), data);
         String requestIdStr = "a124af57-e7c3-4ebb-83bf-b09ff86eaa23";
-        InvokeRequest request = createInvokeRequest(msg.getData(), "new-function", "$LATEST");
+        InvokeRequest request = createInvokeRequest(msg.getData(), "new-function", TbLambdaNodeConfiguration.DEFAULT_QUALIFIER);
         InvokeResult result = new InvokeResult();
         result.setSdkResponseMetadata(new ResponseMetadata(Map.of("AWS_REQUEST_ID", requestIdStr)));
         String payload = "{\"statusCode\":200,\"body\":30}";
@@ -114,14 +142,15 @@ public class TbLambdaNodeTest {
 
     private static Stream<Arguments> givenFunctionNameAndQualifierPatterns_whenOnMsg_thenTellSuccess() {
         return Stream.of(
-                Arguments.of("new-function", "$LATEST"),
+                Arguments.of("new-function", TbLambdaNodeConfiguration.DEFAULT_QUALIFIER),
                 Arguments.of("${funcNameMdPattern}", "${qualifierMdPattern}"),
                 Arguments.of("$[funcNameMsgPattern]", "$[qualifierMsgPattern]")
         );
     }
 
     @Test
-    public void givenExceptionWasThrownInsideFunctionAndTellFailureIfFuncThrowsExcIsTrue_whenOnMsg_thenTellFailure() throws TbNodeException, ExecutionException, InterruptedException {
+    public void givenExceptionWasThrownInsideFunctionAndTellFailureIfFuncThrowsExcIsTrue_whenOnMsg_thenTellFailure()
+            throws TbNodeException, ExecutionException, InterruptedException {
         init();
         config.setTellFailureIfFuncThrowsExc(true);
         String data = """
@@ -129,13 +158,13 @@ public class TbLambdaNodeTest {
                 "x": 10
                 }
                 """;
-        Map<String, String> metadata = new HashMap<>();
-        metadata.put("data", "40");
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, new TbMsgMetaData(metadata), data);
-        InvokeRequest request = createInvokeRequest(msg.getData(), "new-function", "$LATEST");
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, data);
+        InvokeRequest request = createInvokeRequest(msg.getData(), "new-function", TbLambdaNodeConfiguration.DEFAULT_QUALIFIER);
+        String errorMsg = "Unhandled exception from function";
         InvokeResult result = new InvokeResult();
-        result.setFunctionError("Unhandled exception from function");
-        metadata.put("error", RuntimeException.class + ": Unhandled exception from function");
+        result.setPayload(ByteBuffer.wrap(errorMsg.getBytes(StandardCharsets.UTF_8)));
+        result.setFunctionError(errorMsg);
+        Map<String, String> metadata = Map.of("error", RuntimeException.class + ": " + errorMsg);
         TbMsg resultedMsg = TbMsg.transformMsgMetadata(msg, new TbMsgMetaData(metadata));
 
         when(clientMock.invokeAsync(any(), any())).then(invocation -> {
@@ -153,13 +182,48 @@ public class TbLambdaNodeTest {
         TbMsg msgCaptorValue = msgCaptor.getValue();
         assertThat(msgCaptorValue.getData()).isEqualTo(resultedMsg.getData());
         assertThat(msgCaptorValue.getMetaData()).isEqualTo(resultedMsg.getMetaData());
-        Throwable throwableCaptorValue = throwableCaptor.getValue();
-        assertThat(throwableCaptorValue).isInstanceOf(RuntimeException.class);
-        assertThat(throwableCaptorValue.getMessage()).isEqualTo("Unhandled exception from function");
+        assertThat(throwableCaptor.getValue()).isInstanceOf(RuntimeException.class).hasMessage(errorMsg);
     }
 
     @Test
-    public void givenExceptionWasThrownInsideFunctionAndTellFailureIfFuncThrowsExcIsFalse_whenOnMsg_thenTellSuccess() throws TbNodeException, ExecutionException, InterruptedException {
+    public void givenPayloadFromResultIsNull_whenOnMsg_thenTellFailure()
+            throws TbNodeException, ExecutionException, InterruptedException {
+        init();
+        String data = """
+                {
+                "x": 10
+                }
+                """;
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, data);
+        InvokeRequest request = createInvokeRequest(msg.getData(), "new-function", TbLambdaNodeConfiguration.DEFAULT_QUALIFIER);
+        String errorMsg = "Payload from result of AWS Lambda function execution is null.";
+        InvokeResult result = new InvokeResult();
+        String requestIdStr = "12bbb074-e2fc-4381-8f28-d4bd235103d5";
+        result.setSdkResponseMetadata(new ResponseMetadata(Map.of("AWS_REQUEST_ID", requestIdStr)));
+        Map<String, String> metadata = Map.of("error", RuntimeException.class + ": " + errorMsg);
+        TbMsg resultedMsg = TbMsg.transformMsgMetadata(msg, new TbMsgMetaData(metadata));
+
+        when(clientMock.invokeAsync(any(), any())).then(invocation -> {
+            AsyncHandler<InvokeRequest, InvokeResult> asyncHandler = invocation.getArgument(1);
+            asyncHandler.onSuccess(request, result);
+            return null;
+        });
+
+        node.onMsg(ctx, msg);
+
+        verify(clientMock).invokeAsync(eq(request), any());
+        ArgumentCaptor<Throwable> throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
+        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        verify(ctx).tellFailure(msgCaptor.capture(), throwableCaptor.capture());
+        TbMsg msgCaptorValue = msgCaptor.getValue();
+        assertThat(msgCaptorValue.getData()).isEqualTo(resultedMsg.getData());
+        assertThat(msgCaptorValue.getMetaData()).isEqualTo(resultedMsg.getMetaData());
+        assertThat(throwableCaptor.getValue()).isInstanceOf(RuntimeException.class).hasMessage(errorMsg);
+    }
+
+    @Test
+    public void givenExceptionWasThrownInsideFunctionAndTellFailureIfFuncThrowsExcIsFalse_whenOnMsg_thenTellSuccess()
+            throws TbNodeException, ExecutionException, InterruptedException {
         init();
         config.setTellFailureIfFuncThrowsExc(false);
         String data = """
@@ -167,16 +231,14 @@ public class TbLambdaNodeTest {
                 "x": 10
                 }
                 """;
-        Map<String, String> metadata = new HashMap<>();
-        metadata.put("data", "40");
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, new TbMsgMetaData(metadata), data);
-        InvokeRequest request = createInvokeRequest(msg.getData(), "new-function", "$LATEST");
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, data);
+        InvokeRequest request = createInvokeRequest(msg.getData(), "new-function", TbLambdaNodeConfiguration.DEFAULT_QUALIFIER);
         String requestIdStr = "e83dfbc4-68d5-441c-8ee9-289959a30d3b";
         InvokeResult result = new InvokeResult();
         result.setSdkResponseMetadata(new ResponseMetadata(Map.of("AWS_REQUEST_ID", requestIdStr)));
         String payload = "{\"errorMessage\":\"Something went wrong\",\"errorType\":\"Exception\",\"requestId\":\"e83dfbc4-68d5-441c-8ee9-289959a30d3b\"}";
         result.setPayload(ByteBuffer.wrap(payload.getBytes()));
-        metadata.put("requestId", requestIdStr);
+        Map<String, String> metadata = Map.of("requestId", requestIdStr);
         TbMsg resultedMsg = TbMsg.transformMsg(msg, new TbMsgMetaData(metadata), payload);
 
         when(clientMock.invokeAsync(any(), any())).then(invocation -> {
@@ -203,10 +265,8 @@ public class TbLambdaNodeTest {
                 "x": 10
                 }
                 """;
-        Map<String, String> metadata = new HashMap<>();
-        metadata.put("data", "40");
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, new TbMsgMetaData(metadata), data);
-        InvokeRequest request = createInvokeRequest(msg.getData(), "new-function", "$LATEST");
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, data);
+        InvokeRequest request = createInvokeRequest(msg.getData(), "new-function", TbLambdaNodeConfiguration.DEFAULT_QUALIFIER);
 
         when(clientMock.invokeAsync(any(), any())).then(invocation -> {
             AsyncHandler<InvokeRequest, InvokeResult> asyncHandler = invocation.getArgument(1);
@@ -219,6 +279,7 @@ public class TbLambdaNodeTest {
         verify(clientMock).invokeAsync(eq(request), any());
         ArgumentCaptor<Throwable> captor = ArgumentCaptor.forClass(Throwable.class);
         verify(ctx).tellFailure(eq(msg), captor.capture());
+        assertThat(captor.getValue().getMessage()).isEqualTo("Simulated error");
     }
 
     private void init() {

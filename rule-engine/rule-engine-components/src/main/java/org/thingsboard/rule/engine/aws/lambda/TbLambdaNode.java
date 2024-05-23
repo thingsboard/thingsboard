@@ -24,16 +24,14 @@ import com.amazonaws.services.lambda.AWSLambdaAsync;
 import com.amazonaws.services.lambda.AWSLambdaAsyncClientBuilder;
 import com.amazonaws.services.lambda.model.InvokeRequest;
 import com.amazonaws.services.lambda.model.InvokeResult;
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.ObjectUtils;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.external.TbAbstractExternalNode;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -48,9 +46,8 @@ import java.util.concurrent.ExecutionException;
         name = "aws lambda",
         configClazz = TbLambdaNodeConfiguration.class,
         nodeDescription = "Publish message to the AWS Lambda",
-        nodeDetails = "Will publish message payload to the AWS Lambda function. Outbound message will contain response field " +
-                "(<code>requestId</code>) in the Message Metadata from the AWS Lambda. " +
-                "For example <b>requestId</b> field can be accessed with <code>metadata.requestId</code>.<br><br>" +
+        nodeDetails = "Connects with AWS Lambda, enabling you to execute serverless functions based on incoming message data. " +
+                "Useful for advanced data processing, triggering external workflows, and using AWS Lambda service.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
         iconUrl = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4Ij48cGF0aCBkPSJNMTMuMjMgMTAuNTZWMTBjLTEuOTQgMC0zLjk5LjM5LTMuOTkgMi42NyAwIDEuMTYuNjEgMS45NSAxLjYzIDEuOTUuNzYgMCAxLjQzLS40NyAxLjg2LTEuMjIuNTItLjkzLjUtMS44LjUtMi44NG0yLjcgNi41M2MtLjE4LjE2LS40My4xNy0uNjMuMDYtLjg5LS43NC0xLjA1LTEuMDgtMS41NC0xLjc5LTEuNDcgMS41LTIuNTEgMS45NS00LjQyIDEuOTUtMi4yNSAwLTQuMDEtMS4zOS00LjAxLTQuMTcgMC0yLjE4IDEuMTctMy42NCAyLjg2LTQuMzggMS40Ni0uNjQgMy40OS0uNzYgNS4wNC0uOTNWNy41YzAtLjY2LjA1LTEuNDEtLjMzLTEuOTYtLjMyLS40OS0uOTUtLjctMS41LS43LTEuMDIgMC0xLjkzLjUzLTIuMTUgMS42MS0uMDUuMjQtLjI1LjQ4LS40Ny40OWwtMi42LS4yOGMtLjIyLS4wNS0uNDYtLjIyLS40LS41Ni42LTMuMTUgMy40NS00LjEgNi00LjEgMS4zIDAgMyAuMzUgNC4wMyAxLjMzQzE3LjExIDQuNTUgMTcgNi4xOCAxNyA3Ljk1djQuMTdjMCAxLjI1LjUgMS44MSAxIDIuNDguMTcuMjUuMjEuNTQgMCAuNzFsLTIuMDYgMS43OGgtLjAxIj48L3BhdGg+PHBhdGggZD0iTTIwLjE2IDE5LjU0QzE4IDIxLjE0IDE0LjgyIDIyIDEyLjEgMjJjLTMuODEgMC03LjI1LTEuNDEtOS44NS0zLjc2LS4yLS4xOC0uMDItLjQzLjI1LS4yOSAyLjc4IDEuNjMgNi4yNSAyLjYxIDkuODMgMi42MSAyLjQxIDAgNS4wNy0uNSA3LjUxLTEuNTMuMzctLjE2LjY2LjI0LjMyLjUxIj48L3BhdGg+PHBhdGggZD0iTTIxLjA3IDE4LjVjLS4yOC0uMzYtMS44NS0uMTctMi41Ny0uMDgtLjE5LjAyLS4yMi0uMTYtLjAzLS4zIDEuMjQtLjg4IDMuMjktLjYyIDMuNTMtLjMzLjI0LjMtLjA3IDIuMzUtMS4yNCAzLjMyLS4xOC4xNi0uMzUuMDctLjI2LS4xMS4yNi0uNjcuODUtMi4xNC41Ny0yLjV6Ij48L3BhdGg+PC9zdmc+"
 )
@@ -62,6 +59,12 @@ public class TbLambdaNode extends TbAbstractExternalNode {
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         config = TbNodeUtils.convert(configuration, TbLambdaNodeConfiguration.class);
+        if (StringUtils.isBlank(config.getFunctionName())) {
+            throw new TbNodeException("Invalid function name", true);
+        }
+        if (config.getInvocationType() == null) {
+            throw new TbNodeException("Invocation type must be set!", true);
+        }
         try {
             AWSCredentials awsCredentials = new BasicAWSCredentials(config.getAccessKey(), config.getSecretKey());
             client = AWSLambdaAsyncClientBuilder.standard()
@@ -82,7 +85,7 @@ public class TbLambdaNode extends TbAbstractExternalNode {
         String functionName = TbNodeUtils.processPattern(config.getFunctionName(), msg);
         String qualifier = Optional.ofNullable(config.getQualifier())
                 .map(q -> TbNodeUtils.processPattern(q, msg))
-                .orElse("$LATEST");
+                .orElse(TbLambdaNodeConfiguration.DEFAULT_QUALIFIER);
         InvokeRequest request = toRequest(msg.getData(), functionName, qualifier);
         client.invokeAsync(request, new AsyncHandler<>() {
             @Override
@@ -93,9 +96,7 @@ public class TbLambdaNode extends TbAbstractExternalNode {
             public void onSuccess(InvokeRequest request, InvokeResult invokeResult) {
                 try {
                     if (config.isTellFailureIfFuncThrowsExc() && invokeResult.getFunctionError() != null) {
-                        String errorMessage = invokeResult.getPayload() != null ?
-                                JacksonUtil.toString(getPayload(invokeResult)) : invokeResult.getFunctionError();
-                        throw new RuntimeException(errorMessage);
+                        throw new RuntimeException(getPayload(invokeResult));
                     }
                     tellSuccess(ctx, getResponseMsg(tbMsg, invokeResult));
                 } catch (Exception e) {
@@ -106,30 +107,27 @@ public class TbLambdaNode extends TbAbstractExternalNode {
     }
 
     private InvokeRequest toRequest(String requestBody, String functionName, String qualifier) {
-        InvokeRequest request = new InvokeRequest()
+        return new InvokeRequest()
                 .withFunctionName(functionName)
                 .withPayload(requestBody)
-                .withQualifier(qualifier);
-        if (!ObjectUtils.isEmpty(config.getInvocationType())) {
-            request.setInvocationType(config.getInvocationType());
-        }
-        return request;
+                .withQualifier(qualifier)
+                .withInvocationType(config.getInvocationType());
     }
 
-    private JsonNode getPayload(InvokeResult invokeResult) {
-        if (invokeResult.getPayload() == null || !invokeResult.getPayload().hasRemaining()) {
-            return null;
-        }
+    private String getPayload(InvokeResult invokeResult) {
         ByteBuffer buf = invokeResult.getPayload();
-        byte[] responseData = new byte[buf.remaining()];
-        buf.get(responseData);
-        return JacksonUtil.fromBytes(responseData);
+        if (buf == null) {
+            throw new RuntimeException("Payload from result of AWS Lambda function execution is null.");
+        }
+        byte[] responseBytes = new byte[buf.remaining()];
+        buf.get(responseBytes);
+        return new String(responseBytes);
     }
 
     private TbMsg getResponseMsg(TbMsg originalMsg, InvokeResult invokeResult) {
         TbMsgMetaData metaData = originalMsg.getMetaData().copy();
         metaData.putValue("requestId", invokeResult.getSdkResponseMetadata().getRequestId());
-        String data = JacksonUtil.toString(getPayload(invokeResult));
+        String data = getPayload(invokeResult);
         return TbMsg.transformMsg(originalMsg, metaData, data);
     }
 
@@ -145,7 +143,7 @@ public class TbLambdaNode extends TbAbstractExternalNode {
             try {
                 client.shutdown();
             } catch (Exception e) {
-                log.error("Failed to shutdown Lambda client during destroy()", e);
+                log.error("Failed to shutdown Lambda client during destroy", e);
             }
         }
     }
