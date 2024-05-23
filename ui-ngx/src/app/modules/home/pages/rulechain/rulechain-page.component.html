@@ -47,7 +47,7 @@
                   <mat-icon>search</mat-icon>
                 </button>
                 <input matInput
-                       [formControl]="ruleNodeTypeSearch"
+                       [formControl]="ruleNodeTypeSearch" (focusin)="focus(true)" (focusout)="focus(false)"
                        placeholder="{{'rulenode.search' | translate}}"/>
                 <button mat-icon-button matSuffix class="tb-small"
                         [fxShow]="ruleNodeTypeSearch.value !== ''"
