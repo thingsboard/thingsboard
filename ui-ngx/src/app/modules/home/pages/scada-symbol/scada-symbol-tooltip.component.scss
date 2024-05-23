@@ -21,6 +21,9 @@
   &.column {
     flex-direction: column;
   }
+  &.flex-start {
+    align-items: start;
+  }
 
   .tb-confirm-text {
     font-size: 14px;

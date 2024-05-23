@@ -16,12 +16,15 @@
 
 import {
   ChangeDetectorRef,
-  Component, EventEmitter,
+  Component,
+  EventEmitter,
   forwardRef,
   Input,
   OnChanges,
-  OnInit, Output,
-  SimpleChanges, ViewChild,
+  OnInit,
+  Output,
+  SimpleChanges,
+  ViewChild,
   ViewEncapsulation
 } from '@angular/core';
 import {
@@ -33,6 +36,7 @@ import {
 } from '@angular/forms';
 import { IotSvgTag } from '@home/components/widget/lib/svg/iot-svg.models';
 import { MatExpansionPanel } from '@angular/material/expansion';
+import { JsFuncComponent } from '@shared/components/js-func.component';
 
 @Component({
   selector: 'tb-scada-symbol-metadata-tag',
@@ -51,6 +55,18 @@ export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, On
 
   @ViewChild('expansionPanel')
   expansionPanel: MatExpansionPanel;
+
+  @ViewChild('renderFunctionExpansionPanel')
+  renderFunctionExpansionPanel: MatExpansionPanel;
+
+  @ViewChild('clickActionExpansionPanel')
+  clickActionExpansionPanel: MatExpansionPanel;
+
+  @ViewChild('stateRenderFunction')
+  stateRenderFunction: JsFuncComponent;
+
+  @ViewChild('clickAction')
+  clickAction: JsFuncComponent;
 
   @Input()
   disabled: boolean;
@@ -129,6 +145,36 @@ export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, On
         clickAction
       }, {emitEvent: false}
     );
+  }
+
+  editTagStateRenderFunction(): void {
+    this.openPanelWithCallback(this.expansionPanel, () => {
+      this.openPanelWithCallback(this.renderFunctionExpansionPanel, () => {
+        this.stateRenderFunction.focus();
+      });
+    });
+  }
+
+  editClickAction(): void {
+    this.openPanelWithCallback(this.expansionPanel, () => {
+      this.openPanelWithCallback(this.clickActionExpansionPanel, () => {
+        this.clickAction.focus();
+      });
+    });
+  }
+
+  private openPanelWithCallback(panel: MatExpansionPanel, callback: () => void) {
+    if (!panel.expanded) {
+      const s = panel.afterExpand.subscribe(() => {
+        s.unsubscribe();
+        setTimeout(() => {
+          callback();
+        });
+      });
+      panel.open();
+    } else {
+      callback();
+    }
   }
 
   private updateModel() {

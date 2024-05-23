@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 .tb-scada-symbol-metadata-tags {
+  flex: 1;
+  margin: 12px;
   .tb-scada-symbol-metadata-tags-list {
+    overflow: auto;
     display: flex;
     flex-direction: column;
     gap: 8px;

@@ -51,8 +51,9 @@
         </div>
       </div>
     </div>
-    <div [fxShow]="selectedOption === 'tags'" class="mat-content">
+    <div [fxShow]="selectedOption === 'tags'" class="mat-content overflow-hidden">
       <tb-scada-symbol-metadata-tags
+        #symbolMetadataTags
         [tags]="tags"
         formControlName="tags">
       </tb-scada-symbol-metadata-tags>

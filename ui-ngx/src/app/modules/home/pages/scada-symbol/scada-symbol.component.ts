@@ -31,7 +31,7 @@ import { AppState } from '@core/core.state';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map, switchMap, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { ScadaSymbolData } from '@home/pages/scada-symbol/scada-symbol.models';
+import { ScadaSymbolData, ScadaSymbolEditObjectCallbacks } from '@home/pages/scada-symbol/scada-symbol.models';
 import {
   IotSvgMetadata, IotSvgObjectSettings,
   parseIotSvgMetadataFromContent,
@@ -59,6 +59,9 @@ import {
   IotSvgWidgetSettings
 } from '@home/components/widget/lib/svg/iot-svg-widget.models';
 import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
+import {
+  ScadaSymbolMetadataComponent
+} from '@home/pages/scada-symbol/metadata-components/scada-symbol-metadata.component';
 
 @Component({
   selector: 'tb-scada-symbol',
@@ -66,7 +69,8 @@ import { WidgetActionCallbacks } from '@home/components/widget/action/manage-wid
   styleUrls: ['./scada-symbol.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
-export class ScadaSymbolComponent extends PageComponent implements OnInit, OnDestroy, AfterViewInit, HasDirtyFlag {
+export class ScadaSymbolComponent extends PageComponent
+  implements OnInit, OnDestroy, AfterViewInit, HasDirtyFlag, ScadaSymbolEditObjectCallbacks {
 
   widgetType = widgetType;
 
@@ -75,6 +79,9 @@ export class ScadaSymbolComponent extends PageComponent implements OnInit, OnDes
 
   @ViewChild('symbolEditor', {static: false})
   symbolEditor: ScadaSymbolEditorComponent;
+
+  @ViewChild('symbolMetadata')
+  symbolMetadata: ScadaSymbolMetadataComponent;
 
   symbolData: ScadaSymbolData;
   symbolEditorData: ScadaSymbolEditorData;
@@ -102,6 +109,10 @@ export class ScadaSymbolComponent extends PageComponent implements OnInit, OnDes
 
   tags: string[];
 
+  editObjectCallbacks: ScadaSymbolEditObjectCallbacks = this;
+
+  symbolEditorDirty = false;
+
   private previewIotSvgObjectSettings: IotSvgObjectSettings;
 
   private previewWidget: Widget;
@@ -109,7 +120,7 @@ export class ScadaSymbolComponent extends PageComponent implements OnInit, OnDes
   private forcePristine = false;
 
   get isDirty(): boolean {
-    return (this.scadaSymbolFormGroup.dirty || this.symbolEditor?.dirty) && !this.forcePristine;
+    return (this.scadaSymbolFormGroup.dirty || this.symbolEditorDirty) && !this.forcePristine;
   }
 
   set isDirty(value: boolean) {
@@ -231,9 +242,6 @@ export class ScadaSymbolComponent extends PageComponent implements OnInit, OnDes
     };
     this.previewWidgets = [this.previewWidget];
     this.previewMode = true;
-    /*setTimeout(() => {
-      this.updatePreviewWidgetSettings();
-    }, 2000);*/
   }
 
   exitPreviewMode() {
@@ -254,6 +262,40 @@ export class ScadaSymbolComponent extends PageComponent implements OnInit, OnDes
     this.scadaPreviewFormGroup.markAsPristine();
     this.previewIotSvgObjectSettings = this.scadaPreviewFormGroup.get('iotSvgObject').value;
     this.updatePreviewWidgetSettings();
+  }
+
+  tagsUpdated(tags: string[]) {
+    this.tags = tags;
+  }
+
+  tagHasStateRenderFunction(tag: string): boolean {
+    const metadata: IotSvgMetadata = this.scadaSymbolFormGroup.get('metadata').value;
+    if (metadata.tags) {
+      const found = metadata.tags.find(t => t.tag === tag);
+      return !!found?.stateRenderFunction;
+    }
+    return false;
+  }
+
+  tagHasClickAction(tag: string): boolean {
+    const metadata: IotSvgMetadata = this.scadaSymbolFormGroup.get('metadata').value;
+    if (metadata.tags) {
+      const found = metadata.tags.find(t => t.tag === tag);
+      return !!found?.actions?.click?.actionFunction;
+    }
+    return false;
+  }
+
+  editTagStateRenderFunction(tag: string) {
+    this.symbolMetadata.editTagStateRenderFunction(tag);
+  }
+
+  editTagClickAction(tag: string) {
+    this.symbolMetadata.editTagClickAction(tag);
+  }
+
+  onSymbolEditObjectDirty(dirty: boolean) {
+    this.symbolEditorDirty = dirty;
   }
 
   private updatePreviewWidgetSettings() {
@@ -283,6 +325,7 @@ export class ScadaSymbolComponent extends PageComponent implements OnInit, OnDes
       metadata
     }, {emitEvent: false});
     this.scadaSymbolFormGroup.markAsPristine();
+    this.symbolEditorDirty = false;
     this.cd.markForCheck();
   }
 }

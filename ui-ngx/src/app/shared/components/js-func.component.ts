@@ -317,6 +317,11 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
     }
   }
 
+  public focus() {
+    this.javascriptEditorElmRef.nativeElement.scrollIntoView();
+    this.jsEditor?.focus();
+  }
+
   private validateJsFunc(): boolean {
     try {
       const toValidate = new Function(this.functionArgsString, this.modelValue);

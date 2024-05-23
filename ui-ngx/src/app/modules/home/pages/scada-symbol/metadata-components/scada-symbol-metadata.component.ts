@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, forwardRef, Input, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALIDATORS,
@@ -29,9 +29,11 @@ import { PageComponent } from '@shared/components/page.component';
 import { IotSvgMetadata } from '@home/components/widget/lib/svg/iot-svg.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { WidgetConfigMode, widgetType } from '@shared/models/widget.models';
 import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
 import { TranslateService } from '@ngx-translate/core';
+import {
+  ScadaSymbolMetadataTagsComponent
+} from '@home/pages/scada-symbol/metadata-components/scada-symbol-metadata-tags.component';
 
 @Component({
   selector: 'tb-scada-symbol-metadata',
@@ -52,6 +54,9 @@ import { TranslateService } from '@ngx-translate/core';
   encapsulation: ViewEncapsulation.None
 })
 export class ScadaSymbolMetadataComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
+
+  @ViewChild('symbolMetadataTags')
+  symbolMetadataTags: ScadaSymbolMetadataTagsComponent;
 
   @Input()
   disabled: boolean;
@@ -130,6 +135,16 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
     );
   }
 
+  editTagStateRenderFunction(tag: string): void {
+    this.selectedOption = 'tags';
+    this.symbolMetadataTags.editTagStateRenderFunction(tag);
+  }
+
+  editTagClickAction(tag: string): void {
+    this.selectedOption = 'tags';
+    this.symbolMetadataTags.editTagClickAction(tag);
+  }
+
   public validate(c: UntypedFormControl) {
     const valid = this.metadataFormGroup.valid;
     return valid ? null : {
@@ -144,7 +159,4 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
     this.modelValue = metadata;
     this.propagateChange(this.modelValue);
   }
-
-  protected readonly WidgetConfigMode = WidgetConfigMode;
-  protected readonly widgetType = widgetType;
 }

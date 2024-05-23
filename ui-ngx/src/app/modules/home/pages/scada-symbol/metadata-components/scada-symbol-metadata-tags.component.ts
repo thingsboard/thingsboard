@@ -14,7 +14,16 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnChanges, OnInit, SimpleChanges, ViewEncapsulation } from '@angular/core';
+import {
+  Component,
+  forwardRef, HostBinding,
+  Input,
+  OnChanges,
+  OnInit, QueryList,
+  SimpleChanges,
+  ViewChildren,
+  ViewEncapsulation
+} from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -28,6 +37,9 @@ import {
   Validator
 } from '@angular/forms';
 import { IotSvgTag } from '@home/components/widget/lib/svg/iot-svg.models';
+import {
+  ScadaSymbolMetadataTagComponent
+} from '@home/pages/scada-symbol/metadata-components/scada-symbol-metadata-tag.component';
 
 const tagValidator = (control: AbstractControl): ValidationErrors | null => {
   const tag: IotSvgTag = control.value;
@@ -58,6 +70,12 @@ const tagValidator = (control: AbstractControl): ValidationErrors | null => {
   encapsulation: ViewEncapsulation.None
 })
 export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, OnInit, Validator, OnChanges {
+
+  @HostBinding('style.display') styleDisplay = 'flex';
+  @HostBinding('style.overflow') styleOverflow = 'hidden';
+
+  @ViewChildren(ScadaSymbolMetadataTagComponent)
+  metadataTags: QueryList<ScadaSymbolMetadataTagComponent>;
 
   @Input()
   disabled: boolean;
@@ -140,13 +158,44 @@ export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, O
     return tagControl;
   }
 
-  removeTag(index: number) {
-    (this.tagsFormGroup.get('tags') as UntypedFormArray).removeAt(index);
+  removeTag(index: number, emitEvent = true) {
+    (this.tagsFormGroup.get('tags') as UntypedFormArray).removeAt(index, {emitEvent});
   }
 
   addTag() {
+    this.addNewTag(null);
+  }
+
+  editTagStateRenderFunction(tag: string): void {
+    this.addTagIfNotPresent(tag);
+    setTimeout(() => {
+      const tags: IotSvgTag[] = this.tagsFormGroup.get('tags').value;
+      const index = tags.findIndex(t => t.tag === tag);
+      const tagComponent = this.metadataTags.get(index);
+      tagComponent?.editTagStateRenderFunction();
+    });
+  }
+
+  editTagClickAction(tag: string): void {
+    this.addTagIfNotPresent(tag);
+    setTimeout(() => {
+      const tags: IotSvgTag[] = this.tagsFormGroup.get('tags').value;
+      const index = tags.findIndex(t => t.tag === tag);
+      const tagComponent = this.metadataTags.get(index);
+      tagComponent?.editClickAction();
+    });
+  }
+
+  private addTagIfNotPresent(tag: string) {
+    const tags: IotSvgTag[] = this.tagsFormGroup.get('tags').value;
+    if (!tags || !tags.find(t => t.tag === tag)) {
+      this.addNewTag(tag);
+    }
+  }
+
+  private addNewTag(tagLabel: string) {
     const tag: IotSvgTag = {
-      tag: null
+      tag: tagLabel
     };
     const tagsArray = this.tagsFormGroup.get('tags') as UntypedFormArray;
     const tagControl = this.fb.control(tag, [tagValidator]);
@@ -164,6 +213,15 @@ export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, O
   }
 
   private updateAvailableTags() {
+    if (this.tags) {
+      for (const c of this.tagsFormArray().controls) {
+        const svgTag: IotSvgTag = c.value;
+        if (svgTag.tag && !this.tags.includes(svgTag.tag)) {
+          const index = this.tagsFormArray().controls.indexOf(c);
+          this.removeTag(index, false);
+        }
+      }
+    }
     const svgTags: IotSvgTag[] = this.tagsFormGroup.get('tags').value;
     const usedTags = (svgTags || []).filter(t => !!t.tag).map(t => t.tag);
     this.availableTags = (this.tags || []).filter(t => !usedTags.includes(t));

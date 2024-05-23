@@ -18,7 +18,7 @@ import { ImageResourceInfo } from '@shared/models/resource.models';
 import * as svgjs from '@svgdotjs/svg.js';
 import { Box, Element, Rect, Style, SVG, Svg, Timeline } from '@svgdotjs/svg.js';
 import { ResizeObserver } from '@juggle/resize-observer';
-import { EventEmitter, ViewContainerRef } from '@angular/core';
+import { ViewContainerRef } from '@angular/core';
 import { forkJoin, from } from 'rxjs';
 import {
   setupAddTagPanelTooltip,
@@ -35,6 +35,15 @@ export interface ScadaSymbolData {
   svgContent: string;
 }
 
+export interface ScadaSymbolEditObjectCallbacks {
+  tagHasStateRenderFunction: (tag: string) => boolean;
+  tagHasClickAction: (tag: string) => boolean;
+  editTagStateRenderFunction: (tag: string) => void;
+  editTagClickAction: (tag: string) => void;
+  tagsUpdated: (tags: string[]) => void;
+  onSymbolEditObjectDirty: (dirty: boolean) => void;
+}
+
 export class ScadaSymbolEditObject {
 
   public svgShape: Svg;
@@ -46,14 +55,11 @@ export class ScadaSymbolEditObject {
   private hoverFilterStyle: Style;
   public scale = 1;
 
-  public dirty = false;
-
   public tags: string[] = [];
 
-  public tagsUpdated = new EventEmitter<string[]>();
-
   constructor(private rootElement: HTMLElement,
-              public viewContainerRef: ViewContainerRef) {
+              public viewContainerRef: ViewContainerRef,
+              private callbacks: ScadaSymbolEditObjectCallbacks) {
     this.shapeResize$ = new ResizeObserver(() => {
       this.resize();
     });
@@ -66,7 +72,6 @@ export class ScadaSymbolEditObject {
       this.svgShape.remove();
     }
     this.scale = 1;
-    this.dirty = false;
     const contentData = iotSvgContentData(svgContent);
     this.svgRootNodePart = contentData.svgRootNode;
     this.svgShape = SVG().addTo(this.rootElement).svg(contentData.innerSvg);
@@ -227,7 +232,6 @@ export class ScadaSymbolEditObject {
       this.shapeResize$.disconnect();
     }
     this.destroyElements();
-    this.tagsUpdated.complete();
   }
 
   private destroyElements() {
@@ -299,7 +303,27 @@ export class ScadaSymbolEditObject {
     .map(e => e.tag)
     .filter((v, i, a) => a.indexOf(v) === i)
     .sort();
-    this.tagsUpdated.emit(this.tags);
+    this.callbacks.tagsUpdated(this.tags);
+  }
+
+  public tagHasStateRenderFunction(tag: string): boolean {
+    return this.callbacks.tagHasStateRenderFunction(tag);
+  }
+
+  public tagHasClickAction(tag: string): boolean {
+    return this.callbacks.tagHasClickAction(tag);
+  }
+
+  public editTagStateRenderFunction(tag: string) {
+    this.callbacks.editTagStateRenderFunction(tag);
+  }
+
+  public editTagClickAction(tag: string) {
+    this.callbacks.editTagClickAction(tag);
+  }
+
+  public setDirty(dirty: boolean) {
+    this.callbacks.onSymbolEditObjectDirty(dirty);
   }
 
 }
@@ -444,7 +468,7 @@ export class ScadaSymbolElement {
     this.element.attr('tb:tag', null);
     this.unhighlight();
     this.createAddTagTooltip();
-    this.editObject.dirty = true;
+    this.editObject.setDirty(true);
     this.editObject.updateTags();
   }
 
@@ -453,8 +477,36 @@ export class ScadaSymbolElement {
     this.tag = tag;
     this.element.attr('tb:tag', tag);
     this.createTagTooltip();
-    this.editObject.dirty = true;
+    this.editObject.setDirty(true);
     this.editObject.updateTags();
+  }
+
+  public hasStateRenderFunction(): boolean {
+    if (this.hasTag()) {
+      return this.editObject.tagHasStateRenderFunction(this.tag);
+    } else {
+      return false;
+    }
+  }
+
+  public hasClickAction(): boolean {
+    if (this.hasTag()) {
+      return this.editObject.tagHasClickAction(this.tag);
+    } else {
+      return false;
+    }
+  }
+
+  public editStateRenderFunction() {
+    if (this.hasTag()) {
+      this.editObject.editTagStateRenderFunction(this.tag);
+    }
+  }
+
+  public editClickAction() {
+    if (this.hasTag()) {
+      this.editObject.editTagClickAction(this.tag);
+    }
   }
 
   public startEdit(onCancelEdit: () => void) {

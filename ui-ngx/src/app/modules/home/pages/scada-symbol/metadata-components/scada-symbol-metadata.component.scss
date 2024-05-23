@@ -41,6 +41,7 @@
     }
   }
   .tb-scada-symbol-metadata-content {
+    display: flex;
     & > .mat-content {
       padding-top: 8px;
       @media #{$mat-xs} {
@@ -59,6 +60,9 @@
       gap: 16px;
       @media #{$mat-xs} {
         gap: 8px;
+      }
+      &.overflow-hidden {
+        overflow: hidden;
       }
     }
     .tb-form-panel {

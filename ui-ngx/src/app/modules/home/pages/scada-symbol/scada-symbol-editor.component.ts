@@ -17,17 +17,17 @@
 import {
   AfterViewInit,
   Component,
-  ElementRef, EventEmitter,
+  ElementRef,
   Input,
   OnChanges,
   OnDestroy,
-  OnInit, Output,
+  OnInit,
   SimpleChanges,
   ViewChild,
   ViewContainerRef,
   ViewEncapsulation
 } from '@angular/core';
-import { ScadaSymbolEditObject } from '@home/pages/scada-symbol/scada-symbol.models';
+import { ScadaSymbolEditObject, ScadaSymbolEditObjectCallbacks } from '@home/pages/scada-symbol/scada-symbol.models';
 
 export interface ScadaSymbolEditorData {
   svgContent: string;
@@ -47,8 +47,8 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
   @Input()
   data: ScadaSymbolEditorData;
 
-  @Output()
-  tags = new EventEmitter<string[]>();
+  @Input()
+  editObjectCallbacks: ScadaSymbolEditObjectCallbacks;
 
   scadaSymbolEditObject: ScadaSymbolEditObject;
 
@@ -60,8 +60,7 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
 
   ngAfterViewInit() {
     this.scadaSymbolEditObject = new ScadaSymbolEditObject(this.iotSvgShape.nativeElement,
-      this.viewContainerRef);
-    this.scadaSymbolEditObject.tagsUpdated.subscribe(tags => this.tags.emit(tags));
+      this.viewContainerRef, this.editObjectCallbacks);
     if (this.data) {
       this.scadaSymbolEditObject.setContent(this.data.svgContent);
     }
@@ -86,13 +85,8 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
     this.scadaSymbolEditObject.destroy();
   }
 
-  get dirty(): boolean {
-    return this.scadaSymbolEditObject?.dirty;
-  }
-
   getContent(): string {
     return this.scadaSymbolEditObject?.getContent();
   }
-
 }
 
