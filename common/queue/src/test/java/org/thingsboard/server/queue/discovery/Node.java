@@ -18,9 +18,15 @@ package org.thingsboard.server.queue.discovery;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 @Data
 public class Node {
-    final String name;
+    final int id;
     @EqualsAndHashCode.Exclude
-    transient int capacity = 0;
+    final AtomicBoolean up = new AtomicBoolean(true);
+    @EqualsAndHashCode.Exclude
+    final Set<Integer> partitions = new HashSet<>();
 }
