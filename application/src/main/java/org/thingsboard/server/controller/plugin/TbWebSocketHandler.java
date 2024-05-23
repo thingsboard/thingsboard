@@ -18,6 +18,7 @@ package org.thingsboard.server.controller.plugin;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.RemovalCause;
+import jakarta.annotation.PreDestroy;
 import jakarta.websocket.RemoteEndpoint;
 import jakarta.websocket.SendHandler;
 import jakarta.websocket.SendResult;
@@ -132,6 +133,11 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                     }
                 })
                 .build();
+    }
+
+    @PreDestroy
+    private void stop() {
+        internalSessionMap.clear();
     }
 
     @Override
