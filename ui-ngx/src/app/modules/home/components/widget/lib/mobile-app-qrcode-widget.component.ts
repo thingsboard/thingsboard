@@ -58,6 +58,7 @@ export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnI
   showBadgeContainer = true;
 
   private mobileAppSettingsValue: MobileAppSettings | MobileAppQrCodeWidgetSettings;
+  private deepLink: string;
   private deepLinkTTL: number;
   private deepLinkTTLTimeoutID: NodeJS.Timeout;
 
@@ -101,12 +102,22 @@ export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnI
     clearTimeout(this.deepLinkTTLTimeoutID);
   }
 
+  navigateByDeepLink($event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    if (this.ctx.isMobile) {
+      window.open(this.deepLink, '_blank');
+    }
+  }
+
   private initMobileAppQRCode() {
     if (this.deepLinkTTLTimeoutID) {
       clearTimeout(this.deepLinkTTLTimeoutID);
       this.deepLinkTTLTimeoutID = null;
     }
     this.mobileAppService.getMobileAppDeepLink().subscribe(link => {
+      this.deepLink = link;
       this.deepLinkTTL = Number(this.utilsService.getQueryParam('ttl', link)) * MINUTE;
       this.updateQRCode(link);
       this.deepLinkTTLTimeoutID = setTimeout(() => this.initMobileAppQRCode(), this.deepLinkTTL);

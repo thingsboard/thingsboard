@@ -27,7 +27,7 @@
   <mat-card-content style="padding-top: 16px">
     <div class="tb-form-panel no-border no-padding" [formGroup]="mobileAppSettingsForm">
       <div class="tb-form-panel">
-        <div fxLayout="row" fxLayoutAlign="space-between center">
+        <div class="tb-form-row column-xs no-border no-padding space-between">
           <div class="tb-form-panel-title" translate>admin.mobile-app.applications</div>
           <tb-toggle-select formControlName="useDefaultApp">
             <tb-toggle-option [value]="true">{{ 'admin.mobile-app.default' | translate }}</tb-toggle-option>
@@ -104,7 +104,7 @@
         </div>
       </div>
       <div class="tb-form-panel" formGroupName="qrCodeConfig">
-        <div class="tb-flex row space-between align-center">
+        <div class="tb-form-row column-xs no-border no-padding space-between">
           <div class="tb-form-panel-title" translate>admin.mobile-app.appearance-on-home-page</div>
           <tb-toggle-select formControlName="showOnHomePage">
             <tb-toggle-option [value]="true">{{ 'admin.mobile-app.enabled' | translate }}</tb-toggle-option>

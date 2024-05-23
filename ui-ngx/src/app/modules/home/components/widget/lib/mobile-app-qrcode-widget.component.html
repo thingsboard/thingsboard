@@ -19,7 +19,7 @@
   <div class="tb-flex row align-center shrink"
        [class.row]="mobileAppSettings?.qrCodeConfig.badgePosition === badgePosition.RIGHT"
        [class.row-reverse]="mobileAppSettings?.qrCodeConfig.badgePosition === badgePosition.LEFT">
-    <canvas #canvas class="tb-qrcode"></canvas>
+    <canvas #canvas class="tb-qrcode" (click)="navigateByDeepLink($event)"></canvas>
     <div class="tb-flex column" *ngIf="mobileAppSettings?.qrCodeConfig.badgeEnabled && showBadgeContainer">
       <img *ngIf="mobileAppSettings.iosConfig.enabled" src="assets/android-ios-stores-badges/ios_store_en_black_badge.svg">
       <img *ngIf="mobileAppSettings.androidConfig.enabled" src="assets/android-ios-stores-badges/android_store_en_black_badge.svg">
