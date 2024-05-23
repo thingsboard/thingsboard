@@ -72,13 +72,13 @@ public class DeviceConnectivityUtil {
                 BasicMqttCredentials credentials = JacksonUtil.fromString(deviceCredentials.getCredentialsValue(),
                         BasicMqttCredentials.class);
                 if (credentials != null) {
-                    if (credentials.getClientId() != null) {
+                    if (StringUtils.isNotEmpty(credentials.getClientId())) {
                         command.append(" -i \"").append(credentials.getClientId()).append("\"");
                     }
-                    if (credentials.getUserName() != null) {
+                    if (StringUtils.isNotEmpty(credentials.getUserName())) {
                         command.append(" -u \"").append(credentials.getUserName()).append("\"");
                     }
-                    if (credentials.getPassword() != null) {
+                    if (StringUtils.isNotEmpty(credentials.getPassword())) {
                         command.append(" -P \"").append(credentials.getPassword()).append("\"");
                     }
                 } else {
@@ -129,13 +129,13 @@ public class DeviceConnectivityUtil {
                 BasicMqttCredentials credentials = JacksonUtil.fromString(deviceCredentials.getCredentialsValue(),
                         BasicMqttCredentials.class);
                 if (credentials != null) {
-                    if (credentials.getClientId() != null) {
+                    if (StringUtils.isNotEmpty(credentials.getClientId())) {
                         dockerComposeBuilder.append("      - clientId=").append(credentials.getClientId()).append("\n");
                     }
-                    if (credentials.getUserName() != null) {
+                    if (StringUtils.isNotEmpty(credentials.getUserName())) {
                         dockerComposeBuilder.append("      - username=").append(credentials.getUserName()).append("\n");
                     }
-                    if (credentials.getPassword() != null) {
+                    if (StringUtils.isNotEmpty(credentials.getPassword())) {
                         dockerComposeBuilder.append("      - password=").append(credentials.getPassword()).append("\n");
                     }
                 }
