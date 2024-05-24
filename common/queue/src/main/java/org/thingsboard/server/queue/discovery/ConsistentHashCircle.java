@@ -29,8 +29,6 @@ import java.util.concurrent.atomic.AtomicLong;
 @Getter
 public class ConsistentHashCircle<K extends Comparable<K>, V> {
     private final ConcurrentNavigableMap<K, V> circle = new ConcurrentSkipListMap<>();
-    private final AtomicLong floor = new AtomicLong();
-    private final AtomicLong ceil = new AtomicLong();
     private final AtomicLong total = new AtomicLong();
 
     public void put(K hash, V instance) {
