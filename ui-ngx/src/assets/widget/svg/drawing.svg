@@ -1,306 +1,309 @@
-<svg width="100" height="100" version="1.1" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg">
- <tb:metadata><![CDATA[{
-     "title": "My first IoT SVG Object",
-     "stateRenderFunction": "var showMinMaxLevel = ctx.properties.showMinMaxLevel;\nvar minLevelElement = ctx.tags.minLevel[0];\nvar maxLevelElement = ctx.tags.maxLevel[0];\nvar minLevel = ctx.properties.minLevel; \nvar maxLevel = ctx.properties.maxLevel;\n\nif (showMinMaxLevel) {\n   \n   var minMaxLevelFont = ctx.properties.minMaxLevelFont;\n   var minMaxLevelColor = ctx.properties.minMaxLevelColor;\n   \n   ctx.api.text(minLevelElement, minLevel);\n   ctx.api.text(maxLevelElement, maxLevel);\n   \n   ctx.api.font(minLevelElement, minMaxLevelFont, minMaxLevelColor);\n   ctx.api.font(maxLevelElement, minMaxLevelFont, minMaxLevelColor);\n      \n} else {\n   minLevelElement.hide();\n   maxLevelElement.hide();\n}\n\nvar disabled = ctx.values.disabled;\nvar on = ctx.values.on;\nvar level = ctx.values.level;\n\nvar onButton = ctx.tags.onButton;\nvar offButton = ctx.tags.offButton;\nvar levelUpButton = ctx.tags.levelUpButton;\nvar levelDownButton = ctx.tags.levelDownButton;\n\nvar onButtonEnabled = !disabled && !on;\nvar offButtonEnabled = !disabled && on;\nvar levelUpEnabled = !disabled && level < maxLevel;\nvar levelDownEnabled = !disabled && level > minLevel;\n\nif (onButtonEnabled) {\n    ctx.api.enable(onButton);\n    onButton[0].findOne('rect').attr({fill: '#12ed19'});\n} else {\n    ctx.api.disable(onButton);\n    onButton[0].findOne('rect').attr({fill: '#777'});\n}\n   \nif (offButtonEnabled) {\n    ctx.api.enable(offButton);\n    offButton[0].findOne('rect').attr({fill: '#ed121f'});\n} else {\n    ctx.api.disable(offButton);\n    offButton[0].findOne('rect').attr({fill: '#777'});\n}    \n\n\nif (levelUpEnabled) {\n    ctx.api.enable(levelUpButton);\n    levelUpButton[0].findOne('rect').attr({fill: '#fff'});\n} else {\n    ctx.api.disable(levelUpButton);\n    levelUpButton[0].findOne('rect').attr({fill: '#777'});\n}\n   \nif (levelDownEnabled) {\n    ctx.api.enable(levelDownButton);\n    levelDownButton[0].findOne('rect').attr({fill: '#fff'});\n} else {\n    ctx.api.disable(levelDownButton);\n    levelDownButton[0].findOne('rect').attr({fill: '#777'});\n}",
-     "tags": [
-        {
-           "tag": "level",
-           "stateRenderFunction": "var level = ctx.values.level; \nvar disabled = ctx.values.disabled;\nvar minLevel = ctx.properties.minLevel; \nvar maxLevel = ctx.properties.maxLevel;\n\nvar height = (level - minLevel) / (maxLevel - minLevel);\nheight = Math.max(0, Math.min(1, height))*80; \n\nctx.api.animate(element, 200).attr({height: height});\n\nvar fill;\nif (disabled) {\n  fill = ctx.properties.disabledLevelBackground;\n} else {\n  var colorProcessor = ctx.properties.levelBackground;\n  colorProcessor.update(level);\n  fill = colorProcessor.color;\n}\n\nelement.attr({fill: fill});"
-        },
-        {
-           "tag": "levelTitle",
-           "stateRenderFunction": "var showLevelTitle = ctx.properties.showLevelTitle;\n\nif (showLevelTitle) {\n   var levelTitle = ctx.properties.levelTitle;\n   var levelTitleFont = ctx.properties.levelTitleFont;\n   var levelTitleColor = ctx.properties.levelTitleColor;\n   \n   ctx.api.text(element, levelTitle);\n   ctx.api.font(element, levelTitleFont, levelTitleColor);\n   \n} else {\n   element.hide();\n}"
-        },
-        {
-           "tag": "levelValue",
-           "stateRenderFunction": "var showValue = ctx.properties.showValue;\n\nif (showValue) {\n  var valueFont = ctx.properties.valueFont;\n  var valueColor = ctx.properties.valueColor;\n  var level = ctx.values.level; \n  \n  var levelText = ctx.api.formatValue(level, ctx.properties.valueDecimals, ctx.properties.valueUnits, false);\n\n  ctx.api.font(element, valueFont, valueColor);\n  ctx.api.text(element, levelText);\n\n} else {\n  element.hide();\n  ctx.tags.levelValueBackground[0].hide();\n}",
-           "actions": {
-               "click": {
-                   "actionFunction": "ctx.api.callAction(event, 'levelValueClick');"
-               }
-           }
-        },
-        {
-           "tag": "fan",
-           "stateRenderFunction": "var on = ctx.values.on;\nif (on) {\n   element.addClass('fan-rotate');\n} else {\n   element.removeClass('fan-rotate');\n}\n"
-        },
-        {
-           "tag": "onButton",
-           "actions": {
-               "click": {
-                   "actionFunction": "ctx.api.callAction(event, 'onUpdateState', undefined, {\n  next: () => {\n     ctx.api.setValue('on', true);\n  }\n});"
-               }
-           }
-        },
-        {
-           "tag": "offButton",
-           "actions": {
-               "click": {
-                   "actionFunction": "ctx.api.callAction(event, 'offUpdateState', undefined, {\n  next: () => {\n     ctx.api.setValue('on', false);\n  }\n});\n"
-               }
-           }
-        },
-        {
-           "tag": "levelUpButton",
-           "actions": {
-               "click": {
-                   "actionFunction": "var level = ctx.values.level; \nvar maxLevel = ctx.properties.maxLevel;\n\nvar newLevel = Math.min(maxLevel, level + 5);\nctx.api.setValue('level', newLevel);\nctx.api.callAction(event, 'levelUpdateState', newLevel, {\n  error: () => {\n     ctx.api.setValue('level', level);\n  }\n});"
-               }
-           }
-        },
-        {
-           "tag": "levelDownButton",
-           "actions": {
-               "click": {
-                   "actionFunction": "var level = ctx.values.level; \nvar minLevel = ctx.properties.minLevel;\n\nvar newLevel = Math.max(minLevel, level - 5);\nctx.api.setValue('level', newLevel);\nctx.api.callAction(event, 'levelUpdateState', newLevel, {\n  error: () => {\n     ctx.api.setValue('level', level);\n  }\n});"
-               }
-           }
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="100" height="100" version="1.1" viewBox="0 0 100 100">
+<tb:metadata xmlns=""><![CDATA[{
+  "title": "Level and Fan12",
+  "stateRenderFunction": "var showMinMaxLevel = ctx.properties.showMinMaxLevel;\nvar minLevelElement = ctx.tags.minLevel[0];\nvar maxLevelElement = ctx.tags.maxLevel[0];\nvar minLevel = ctx.properties.minLevel; \nvar maxLevel = ctx.properties.maxLevel;\n\nif (showMinMaxLevel) {\n   \n   var minMaxLevelFont = ctx.properties.minMaxLevelFont;\n   var minMaxLevelColor = ctx.properties.minMaxLevelColor;\n   \n   ctx.api.text(minLevelElement, minLevel);\n   ctx.api.text(maxLevelElement, maxLevel);\n   \n   ctx.api.font(minLevelElement, minMaxLevelFont, minMaxLevelColor);\n   ctx.api.font(maxLevelElement, minMaxLevelFont, minMaxLevelColor);\n      \n} else {\n   minLevelElement.hide();\n   maxLevelElement.hide();\n}\n\nvar disabled = ctx.values.disabled;\nvar on = ctx.values.on;\nvar level = ctx.values.level;\n\nvar onButton = ctx.tags.onButton;\nvar offButton = ctx.tags.offButton;\nvar levelUpButton = ctx.tags.levelUpButton;\nvar levelDownButton = ctx.tags.levelDownButton;\n\nvar onButtonEnabled = !disabled && !on;\nvar offButtonEnabled = !disabled && on;\nvar levelUpEnabled = !disabled && level < maxLevel;\nvar levelDownEnabled = !disabled && level > minLevel;\n\nif (onButtonEnabled) {\n    ctx.api.enable(onButton);\n    onButton[0].findOne('rect').attr({fill: '#12ed19'});\n} else {\n    ctx.api.disable(onButton);\n    onButton[0].findOne('rect').attr({fill: '#777'});\n}\n   \nif (offButtonEnabled) {\n    ctx.api.enable(offButton);\n    offButton[0].findOne('rect').attr({fill: '#ed121f'});\n} else {\n    ctx.api.disable(offButton);\n    offButton[0].findOne('rect').attr({fill: '#777'});\n}    \n\n\nif (levelUpEnabled) {\n    ctx.api.enable(levelUpButton);\n    levelUpButton[0].findOne('rect').attr({fill: '#fff'});\n} else {\n    ctx.api.disable(levelUpButton);\n    levelUpButton[0].findOne('rect').attr({fill: '#777'});\n}\n   \nif (levelDownEnabled) {\n    ctx.api.enable(levelDownButton);\n    levelDownButton[0].findOne('rect').attr({fill: '#fff'});\n} else {\n    ctx.api.disable(levelDownButton);\n    levelDownButton[0].findOne('rect').attr({fill: '#777'});\n}",
+  "tags": [
+    {
+      "tag": "level",
+      "stateRenderFunction": "var level = ctx.values.level; \nvar disabled = ctx.values.disabled;\nvar minLevel = ctx.properties.minLevel; \nvar maxLevel = ctx.properties.maxLevel;\n\nvar height = (level - minLevel) / (maxLevel - minLevel);\nheight = Math.max(0, Math.min(1, height))*80; \n\nctx.api.animate(element, 200).attr({height: height});\n\nvar fill;\nif (disabled) {\n  fill = ctx.properties.disabledLevelBackground;\n} else {\n  var colorProcessor = ctx.properties.levelBackground;\n  colorProcessor.update(level);\n  fill = colorProcessor.color;\n}\n\nelement.attr({fill: fill});"
+    },
+    {
+      "tag": "levelTitle",
+      "stateRenderFunction": "var showLevelTitle = ctx.properties.showLevelTitle;\n\nif (showLevelTitle) {\n   var levelTitle = ctx.properties.levelTitle;\n   var levelTitleFont = ctx.properties.levelTitleFont;\n   var levelTitleColor = ctx.properties.levelTitleColor;\n   \n   ctx.api.text(element, levelTitle);\n   ctx.api.font(element, levelTitleFont, levelTitleColor);\n   \n} else {\n   element.hide();\n}"
+    },
+    {
+      "tag": "levelValue",
+      "stateRenderFunction": "var showValue = ctx.properties.showValue;\n\nif (showValue) {\n  var valueFont = ctx.properties.valueFont;\n  var valueColor = ctx.properties.valueColor;\n  var level = ctx.values.level; \n  \n  var levelText = ctx.api.formatValue(level, ctx.properties.valueDecimals, ctx.properties.valueUnits, false);\n\n  ctx.api.font(element, valueFont, valueColor);\n  ctx.api.text(element, levelText);\n\n} else {\n  element.hide();\n  ctx.tags.levelValueBackground[0].hide();\n}",
+      "actions": {
+        "click": {
+          "actionFunction": "ctx.api.callAction(event, 'levelValueClick');"
         }
-     ],
-     "behavior": [
-        {
-          "id": "level",
-          "name": "Level",
-          "type": "value",
-          "valueType": "DOUBLE",
-          "defaultValue": 0
-        },
-        {
-           "id": "disabled",
-           "name": "{i18n:widgets.rpc-state.disabled-state}",
-           "hint": "{i18n:widgets.rpc-state.disabled-state-hint}",
-           "stateLabel": "{i18n:widgets.rpc-state.disabled}",
-           "type": "value",
-           "valueType": "BOOLEAN",
-           "defaultValue": false
-        },
-        {
-           "id": "on",
-           "name": "On/Off state",
-           "trueLabel": "{i18n:widgets.rpc-state.on}",
-           "falseLabel": "{i18n:widgets.rpc-state.off}",
-           "stateLabel": "{i18n:widgets.rpc-state.on}",
-           "type": "value",
-           "valueType": "BOOLEAN",
-           "defaultValue": false
-        },
-        {
-           "id": "onUpdateState",
-           "name": "{i18n:widgets.rpc-state.turn-on}",
-           "hint": "{i18n:widgets.rpc-state.turn-on-hint}",
-           "type": "action",
-           "valueType": "BOOLEAN",
-           "valueToDataType": "CONSTANT",
-           "constantValue": true
-        },
-        {
-           "id": "offUpdateState",
-           "name": "{i18n:widgets.rpc-state.turn-off}",
-           "hint": "{i18n:widgets.rpc-state.turn-off-hint}",
-           "type": "action",
-           "valueType": "BOOLEAN",
-           "valueToDataType": "CONSTANT",
-           "constantValue": false
-        },
-        {
-           "id": "levelUpdateState",
-           "name": "Update level",
-           "type": "action",
-           "valueType": "DOUBLE",
-           "valueToDataType": "VALUE",
-           "constantValue": 0
-        },
-        {
-           "id": "levelValueClick",
-           "name": "On level value click",
-           "type": "widgetAction"
+      }
+    },
+    {
+      "tag": "fan",
+      "stateRenderFunction": "var on = ctx.values.on;\nif (on) {\n    var level = ctx.values.level; \n    var minLevel = ctx.properties.minLevel; \n    var maxLevel = ctx.properties.maxLevel;\n\n    var speed = (level - minLevel) / (maxLevel - minLevel);\n    speed = Math.max(0, Math.min(1, speed))*2; \n\n    var t = element.timeline();\n    if (!t.active()) {\n      ctx.api.animate(element, 1000).ease('-').rotate(360).loop();\n      t = element.timeline();\n    }\n    t.speed(speed);\n} else {\n    element.timeline().stop();\n}\n",
+      "actions": null
+    },
+    {
+      "tag": "onButton",
+      "actions": {
+        "click": {
+          "actionFunction": "ctx.api.callAction(event, 'onUpdateState', undefined, {\n  next: () => {\n     ctx.api.setValue('on', true);\n  }\n});\n\n"
         }
-     ],
-     "properties": [
-         {
-            "id": "showLevelTitle",
-            "name": "Level title",
-            "type": "switch",
-            "default": true,
-            "rowClass": "column-xs"
-         },
-         {
-            "id": "levelTitle",
-            "name": "Level title",
-            "type": "string",
-            "default": "{i18n:widgets.battery-level.value}",
-            "disableOnProperty": "showLevelTitle",
-            "fieldClass": "flex"
-         },
-         {
-            "id": "levelTitleFont",
-            "name": "Level title",
-            "type": "font",
-            "default": {
-               "size": 6,
-               "sizeUnit": "px",
-               "family": "Roboto",
-               "weight": "normal",
-               "style": "normal"
-            },
-            "disableOnProperty": "showLevelTitle"
-         },
-         {
-            "id": "levelTitleColor",
-            "name": "Level title",
-            "type": "color",
-            "default": "#000000",
-            "disableOnProperty": "showLevelTitle"
-         },
-         {
-            "id": "showValue",
-            "name": "Value",
-            "type": "switch",
-            "default": true,
-            "rowClass": "column-xs"
-         },
-         {
-            "id": "valueUnits",
-            "name": "Value",
-            "type": "units",
-            "default": "",
-            "disableOnProperty": "showValue",
-            "fieldClass": "flex"
-         },
-         {
-            "id": "valueDecimals",
-            "name": "Value",
-            "type": "number",
-            "default": 2,
-            "min": 0,
-            "max": 15,
-            "step": 1,
-            "fieldSuffix": "decimals",
-            "disableOnProperty": "showValue",
-            "fieldClass": "flex"
-         },
-         {
-            "id": "valueFont",
-            "name": "Value",
-            "type": "font",
-            "default": {
-               "size": 6,
-               "sizeUnit": "px",
-               "family": "Roboto",
-               "weight": "normal",
-               "style": "normal"
-            },
-            "disableOnProperty": "showValue"
-         },
-         {
-            "id": "valueColor",
-            "name": "Value",
-            "type": "color",
-            "default": "#000000",
-            "disableOnProperty": "showValue"
-         },
-         {
-            "id": "minLevel",
-            "name": "Level range",
-            "subLabel": "min",
-            "type": "number",
-            "required": true,
-            "default": 0,
-            "min": 0,
-            "rowClass": "column-xs",
-            "fieldClass": "flex-xs"
-         },
-         {
-            "id": "maxLevel",
-            "name": "Level range",
-            "subLabel": "max",
-            "type": "number",
-            "required": true,
-            "default": 100,
-            "min": 0,
-            "fieldClass": "flex-xs"
-         },
-         {
-            "id": "showMinMaxLevel",
-            "name": "Min/Max label",
-            "type": "switch",
-            "default": true
-         },
-         {
-            "id": "minMaxLevelFont",
-            "name": "Min/Max label",
-            "type": "font",
-            "default": {
-               "size": 6,
-               "sizeUnit": "px",
-               "family": "Roboto",
-               "weight": "normal",
-               "style": "normal"
-            },
-            "disableOnProperty": "showMinMaxLevel"
-         },
-         {
-            "id": "minMaxLevelColor",
-            "name": "Min/Max label",
-            "type": "color",
-            "default": "#666",
-            "disableOnProperty": "showMinMaxLevel"
-         },
-         {
-           "id": "levelBackground",
-           "name": "Level background",
-           "subLabel": "Enabled",
-           "type": "color-settings",
-           "default": {
-              "type": "constant",
-              "color": "#1abb48",
-              "colorFunction": "return value &gt; 70 ? '#d5280d' : '#1abb48';"
-           },
-           "divider": true,
-           "rowClass": "column-xs"
-         },
-         {
-           "id": "disabledLevelBackground",
-           "name": "Level background",
-           "subLabel": "Disabled",
-           "type": "color",
-           "default": "#ccc"
-         }
-     ]
-   }]]></tb:metadata>
- <style>.fan-rotate {
-         animation: rotate 2s linear infinite;
-         transform-origin: 71.894px 39.787px;
-     }
-     @keyframes rotate {
-         0% { transform: rotate(0deg); }
-         100% { transform: rotate(360deg); }
-     }</style>
- <rect width="100" height="100" rx="0" fill="none" stroke="#ccc" stroke-width="2"/>
- <rect x="8" y="15" width="20" height="81" rx="2" fill="#ececec" stroke="#000" stroke-width="1.0359"/>
- <rect transform="scale(1 -1)" x="8.5" y="-95.5" width="19" height="40" rx="1.5" fill="#1abb48" tb:tag="level"/>
- <text x="32" y="95" fill="#666" font-family="Roboto" font-size="6px" tb:tag="minLevel" xml:space="preserve"><tspan x="31.354307" y="96.626251">min</tspan></text>
- <rect x="10.941" y="49.544" width="14.155" height="12" rx="2.8668" fill="#fff" fill-opacity=".45148" tb:tag="levelValueBackground"/>
- <g font-family="Roboto" font-size="6px">
+      }
+    },
+    {
+      "tag": "offButton",
+      "actions": {
+        "click": {
+          "actionFunction": "ctx.api.callAction(event, 'offUpdateState', undefined, {\n  next: () => {\n     ctx.api.setValue('on', false);\n  }\n});\n"
+        }
+      }
+    },
+    {
+      "tag": "levelUpButton",
+      "actions": {
+        "click": {
+          "actionFunction": "var level = ctx.values.level; \nvar maxLevel = ctx.properties.maxLevel;\n\nvar newLevel = Math.min(maxLevel, level + 5);\nctx.api.setValue('level', newLevel);\nctx.api.callAction(event, 'levelUpdateState', newLevel, {\n  error: () => {\n     ctx.api.setValue('level', level);\n  }\n});"
+        }
+      }
+    },
+    {
+      "tag": "levelDownButton",
+      "actions": {
+        "click": {
+          "actionFunction": "var level = ctx.values.level; \nvar minLevel = ctx.properties.minLevel;\n\nvar newLevel = Math.max(minLevel, level - 5);\nctx.api.setValue('level', newLevel);\nctx.api.callAction(event, 'levelUpdateState', newLevel, {\n  error: () => {\n     ctx.api.setValue('level', level);\n  }\n});"
+        }
+      }
+    },
+    {
+      "tag": "ramka",
+      "stateRenderFunction": "var on = ctx.values.on;\nif (on) {\n    if (!element.timeline().active()) {\n        ctx.api.animate(element, 1000).scale(1.1).loop(0, true);\n    }\n} else {\n    element.timeline().stop();\n}",
+      "actions": null
+    }
+  ],
+  "behavior": [
+    {
+      "id": "level",
+      "name": "Level",
+      "hint": null,
+      "type": "value",
+      "valueType": "DOUBLE",
+      "defaultValue": 10,
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "valueToDataType": null,
+      "constantValue": null,
+      "valueToDataFunction": null
+    },
+    {
+      "id": "disabled",
+      "name": "{i18n:widgets.rpc-state.disabled-state}",
+      "hint": "{i18n:widgets.rpc-state.disabled-state-hint}",
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "defaultValue": false,
+      "trueLabel": "",
+      "falseLabel": "",
+      "stateLabel": "{i18n:widgets.rpc-state.disabled}",
+      "valueToDataType": null,
+      "constantValue": null,
+      "valueToDataFunction": null
+    },
+    {
+      "id": "on",
+      "name": "On/Off state",
+      "hint": null,
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "defaultValue": true,
+      "trueLabel": "{i18n:widgets.rpc-state.on}",
+      "falseLabel": "{i18n:widgets.rpc-state.off}",
+      "stateLabel": "{i18n:widgets.rpc-state.on}",
+      "valueToDataType": null,
+      "constantValue": null,
+      "valueToDataFunction": null
+    },
+    {
+      "id": "onUpdateState",
+      "name": "{i18n:widgets.rpc-state.turn-on}",
+      "hint": "{i18n:widgets.rpc-state.turn-on-hint}",
+      "type": "action",
+      "valueType": "BOOLEAN",
+      "valueToDataType": "CONSTANT",
+      "constantValue": true
+    },
+    {
+      "id": "offUpdateState",
+      "name": "{i18n:widgets.rpc-state.turn-off}",
+      "hint": "{i18n:widgets.rpc-state.turn-off-hint}",
+      "type": "action",
+      "valueType": "BOOLEAN",
+      "valueToDataType": "CONSTANT",
+      "constantValue": false
+    },
+    {
+      "id": "levelUpdateState",
+      "name": "Update level",
+      "type": "action",
+      "valueType": "DOUBLE",
+      "valueToDataType": "VALUE",
+      "constantValue": 0
+    },
+    {
+      "id": "levelValueClick",
+      "name": "On level value click",
+      "type": "widgetAction"
+    }
+  ],
+  "properties": [
+    {
+      "id": "showLevelTitle",
+      "name": "Level title",
+      "type": "switch",
+      "default": true,
+      "rowClass": "column-xs"
+    },
+    {
+      "id": "levelTitle",
+      "name": "Level title",
+      "type": "text",
+      "default": "{i18n:widgets.battery-level.value}",
+      "disableOnProperty": "showLevelTitle",
+      "fieldClass": "flex"
+    },
+    {
+      "id": "levelTitleFont",
+      "name": "Level title",
+      "type": "font",
+      "default": {
+        "size": 6,
+        "sizeUnit": "px",
+        "family": "Roboto",
+        "weight": "normal",
+        "style": "normal"
+      },
+      "disableOnProperty": "showLevelTitle"
+    },
+    {
+      "id": "levelTitleColor",
+      "name": "Level title",
+      "type": "color",
+      "default": "#000000",
+      "disableOnProperty": "showLevelTitle"
+    },
+    {
+      "id": "showValue",
+      "name": "Value",
+      "type": "switch",
+      "default": true,
+      "rowClass": "column-xs"
+    },
+    {
+      "id": "valueUnits",
+      "name": "Value",
+      "type": "units",
+      "default": "",
+      "disableOnProperty": "showValue",
+      "fieldClass": "flex"
+    },
+    {
+      "id": "valueDecimals",
+      "name": "Value",
+      "type": "number",
+      "default": 2,
+      "min": 0,
+      "max": 15,
+      "step": 1,
+      "fieldSuffix": "decimals",
+      "disableOnProperty": "showValue",
+      "fieldClass": "flex"
+    },
+    {
+      "id": "valueFont",
+      "name": "Value",
+      "type": "font",
+      "default": {
+        "size": 6,
+        "sizeUnit": "px",
+        "family": "Roboto",
+        "weight": "normal",
+        "style": "normal"
+      },
+      "disableOnProperty": "showValue"
+    },
+    {
+      "id": "valueColor",
+      "name": "Value",
+      "type": "color",
+      "default": "#000000",
+      "disableOnProperty": "showValue"
+    },
+    {
+      "id": "minLevel",
+      "name": "Level range",
+      "subLabel": "min",
+      "type": "number",
+      "required": true,
+      "default": 0,
+      "min": 0,
+      "rowClass": "column-xs",
+      "fieldClass": "flex-xs"
+    },
+    {
+      "id": "maxLevel",
+      "name": "Level range",
+      "subLabel": "max",
+      "type": "number",
+      "required": true,
+      "default": 100,
+      "min": 0,
+      "fieldClass": "flex-xs"
+    },
+    {
+      "id": "showMinMaxLevel",
+      "name": "Min/Max label",
+      "type": "switch",
+      "default": true
+    },
+    {
+      "id": "minMaxLevelFont",
+      "name": "Min/Max label",
+      "type": "font",
+      "default": {
+        "size": 6,
+        "sizeUnit": "px",
+        "family": "Roboto",
+        "weight": "normal",
+        "style": "normal"
+      },
+      "disableOnProperty": "showMinMaxLevel"
+    },
+    {
+      "id": "minMaxLevelColor",
+      "name": "Min/Max label",
+      "type": "color",
+      "default": "#666",
+      "disableOnProperty": "showMinMaxLevel"
+    },
+    {
+      "id": "levelBackground",
+      "name": "Level background",
+      "subLabel": "Enabled",
+      "type": "color_settings",
+      "default": {
+        "type": "constant",
+        "color": "#1abb48",
+        "colorFunction": "return value > 70 ? '#d5280d' : '#1abb48';"
+      },
+      "divider": true,
+      "rowClass": "column-xs"
+    },
+    {
+      "id": "disabledLevelBackground",
+      "name": "Level background",
+      "subLabel": "Disabled",
+      "type": "color",
+      "default": "#ccc"
+    }
+  ]
+}]]></tb:metadata>
+  <rect width="100" height="100" rx="0" fill="none" stroke="#ccc" stroke-width="2"/><rect x="8" y="15" width="20" height="81" rx="2" fill="#ececec" stroke="#000" stroke-width="1.0359"/><rect transform="scale(1 -1)" x="8.5" y="-95.5" width="19" height="40" rx="1.5" fill="#1abb48" tb:tag="level"/><text x="32" y="95" fill="#666" font-family="Roboto" font-size="6px" tb:tag="minLevel" xml:space="preserve"><tspan x="31.354307" y="96.626251">min</tspan></text><rect x="10.941" y="49.544" width="14.155" height="12" rx="2.8668" fill="#fff" fill-opacity=".45148" tb:tag="levelValueBackground"/><g font-family="Roboto" font-size="6px">
   <text x="18" y="56" dominant-baseline="middle" fill="#000000" text-anchor="middle" tb:tag="levelValue" xml:space="preserve"><tspan>N/A</tspan></text>
   <text x="17.636805" y="10.347933" dominant-baseline="middle" fill="#000000" text-anchor="middle" tb:tag="levelTitle" xml:space="preserve"><tspan>Level</tspan></text>
   <text x="32" y="20" fill="#666666" tb:tag="maxLevel" xml:space="preserve"><tspan x="29.865496" y="18.716127">max</tspan></text>
- </g>
- <path d="m82.143 27.538h-20.499c-1.1045 0-1.9999 0.8954-1.9999 1.9999v20.499c0 1.1045 0.8954 1.9999 1.9999 1.9999h20.499c1.1045 0 1.9999-0.8954 1.9999-1.9999v-20.499c0-1.1045-0.8954-1.9999-1.9999-1.9999zm-20.499 1.4999c0.27613 0 0.49998 0.22385 0.49998 0.49998s-0.22385 0.49998-0.49998 0.49998-0.49998-0.22385-0.49998-0.49998 0.22385-0.49998 0.49998-0.49998zm0 21.499c-0.27613 0-0.49998-0.22385-0.49998-0.49998s0.22385-0.49998 0.49998-0.49998 0.49998 0.22385 0.49998 0.49998-0.22385 0.49998-0.49998 0.49998zm10.249-0.79997c-5.495 0-9.9495-4.4545-9.9495-9.9495s4.4545-9.9495 9.9495-9.9495 9.9495 4.4545 9.9495 9.9495-4.4545 9.9495-9.9495 9.9495zm10.249 0.79997c-0.27613 0-0.49998-0.22385-0.49998-0.49998s0.22385-0.49998 0.49998-0.49998 0.49998 0.22385 0.49998 0.49998-0.22385 0.49998-0.49998 0.49998zm0-20.499c-0.27613 0-0.49998-0.22385-0.49998-0.49998s0.22385-0.49998 0.49998-0.49998 0.49998 0.22385 0.49998 0.49998-0.22385 0.49998-0.49998 0.49998z" fill="#080d7d" stroke-width=".040031"/>
- <path class="fan-rotate" d="m80.66 37.983c-0.04956-0.24078-0.15288-0.4126-0.34242-0.56916-1.5148-1.2518-3.6154-1.1677-6.3021 0.25239-0.17533-0.17533-0.36512-0.32353-0.5778-0.45114 1.8517-1.6612 3.5396-2.3586 5.0637-2.0924 0.44934 0.0785 0.7605-0.43637 0.48209-0.79765-0.61795-0.80201-1.3212-1.455-2.1668-2.0119-0.20536-0.13522-0.39987-0.18358-0.64461-0.16032-1.9563 0.18594-3.3822 1.7308-4.2778 4.6347-0.24799 0-0.48697 0.02938-0.72756 0.08955 0.1347-2.484 0.83504-4.1707 2.101-5.0601 0.37324-0.2622 0.22918-0.84629-0.22313-0.90497-1.0041-0.13014-1.9631-0.09459-2.9548 0.10956-0.24078 0.04956-0.4126 0.15288-0.56916 0.34242-1.2518 1.5148-1.1677 3.6154 0.25239 6.3021-0.17533 0.17533-0.32353 0.36512-0.45114 0.5778-1.6612-1.8517-2.3586-3.5396-2.0924-5.0637 0.0785-0.44934-0.43637-0.7605-0.79765-0.48213-0.80201 0.61795-1.455 1.3212-2.0119 2.1668-0.13522 0.20536-0.18358 0.39986-0.16032 0.64461 0.18594 1.9563 1.7308 3.3822 4.6347 4.2778 0 0.24799 0.02938 0.48697 0.08955 0.72756-2.484-0.1347-4.1707-0.83504-5.0601-2.101-0.2622-0.37324-0.84629-0.22918-0.90497 0.22313-0.13014 1.0041-0.09459 1.9631 0.10956 2.9548 0.04956 0.24078 0.15288 0.4126 0.34242 0.56916 1.5148 1.2518 3.6154 1.1677 6.3021-0.25239 0.17533 0.17533 0.36512 0.32353 0.5778 0.45114-1.8517 1.6612-3.5396 2.3586-5.0637 2.0924-0.44934-0.0785-0.7605 0.43637-0.48209 0.79765 0.61795 0.80201 1.3212 1.455 2.1668 2.0119 0.20536 0.13522 0.39986 0.18358 0.64461 0.16032 1.9563-0.18594 3.3822-1.7308 4.2778-4.6347 0.24799 0 0.48697-0.02938 0.72756-0.08959-0.1347 2.484-0.83504 4.1707-2.101 5.0601-0.37324 0.2622-0.22918 0.84629 0.22313 0.90497 1.0041 0.13014 1.9631 0.09459 2.9548-0.10956 0.24078-0.04956 0.4126-0.15288 0.56916-0.34242 1.2518-1.5148 1.1677-3.6154-0.25239-6.3021 0.17533-0.17533 0.32353-0.36512 0.45114-0.5778 1.6612 1.8517 2.3586 3.5396 2.0924 5.0637-0.0785 0.44934 0.43637 0.7605 0.79765 0.48209 0.80201-0.61795 1.455-1.3212 2.0119-2.1668 0.13522-0.20536 0.18358-0.39987 0.16032-0.64461-0.18594-1.9563-1.7308-3.3822-4.6347-4.2778 0-0.24799-0.02938-0.48697-0.08955-0.72756 2.484 0.1347 4.1707 0.83504 5.0601 2.101 0.2622 0.37324 0.84629 0.22918 0.90497-0.22313 0.13014-1.004 0.09459-1.963-0.10956-2.9547zm-8.7657 4.3043c-1.3806 0-2.4999-1.1193-2.4999-2.4999s1.1193-2.4999 2.4999-2.4999 2.4999 1.1193 2.4999 2.4999-1.1193 2.4999-2.4999 2.4999z" fill="#7d081e" stroke-width=".040031" tb:tag="fan"/>
- <g tb:tag="onButton">
+ </g><path d="m82.143 27.538h-20.499c-1.1045 0-1.9999 0.8954-1.9999 1.9999v20.499c0 1.1045 0.8954 1.9999 1.9999 1.9999h20.499c1.1045 0 1.9999-0.8954 1.9999-1.9999v-20.499c0-1.1045-0.8954-1.9999-1.9999-1.9999zm-20.499 1.4999c0.27613 0 0.49998 0.22385 0.49998 0.49998s-0.22385 0.49998-0.49998 0.49998-0.49998-0.22385-0.49998-0.49998 0.22385-0.49998 0.49998-0.49998zm0 21.499c-0.27613 0-0.49998-0.22385-0.49998-0.49998s0.22385-0.49998 0.49998-0.49998 0.49998 0.22385 0.49998 0.49998-0.22385 0.49998-0.49998 0.49998zm10.249-0.79997c-5.495 0-9.9495-4.4545-9.9495-9.9495s4.4545-9.9495 9.9495-9.9495 9.9495 4.4545 9.9495 9.9495-4.4545 9.9495-9.9495 9.9495zm10.249 0.79997c-0.27613 0-0.49998-0.22385-0.49998-0.49998s0.22385-0.49998 0.49998-0.49998 0.49998 0.22385 0.49998 0.49998-0.22385 0.49998-0.49998 0.49998zm0-20.499c-0.27613 0-0.49998-0.22385-0.49998-0.49998s0.22385-0.49998 0.49998-0.49998 0.49998 0.22385 0.49998 0.49998-0.22385 0.49998-0.49998 0.49998z" fill="#080d7d" stroke-width=".040031" tb:tag="ramka"/><path d="m80.66 37.983c-0.04956-0.24078-0.15288-0.4126-0.34242-0.56916-1.5148-1.2518-3.6154-1.1677-6.3021 0.25239-0.17533-0.17533-0.36512-0.32353-0.5778-0.45114 1.8517-1.6612 3.5396-2.3586 5.0637-2.0924 0.44934 0.0785 0.7605-0.43637 0.48209-0.79765-0.61795-0.80201-1.3212-1.455-2.1668-2.0119-0.20536-0.13522-0.39987-0.18358-0.64461-0.16032-1.9563 0.18594-3.3822 1.7308-4.2778 4.6347-0.24799 0-0.48697 0.02938-0.72756 0.08955 0.1347-2.484 0.83504-4.1707 2.101-5.0601 0.37324-0.2622 0.22918-0.84629-0.22313-0.90497-1.0041-0.13014-1.9631-0.09459-2.9548 0.10956-0.24078 0.04956-0.4126 0.15288-0.56916 0.34242-1.2518 1.5148-1.1677 3.6154 0.25239 6.3021-0.17533 0.17533-0.32353 0.36512-0.45114 0.5778-1.6612-1.8517-2.3586-3.5396-2.0924-5.0637 0.0785-0.44934-0.43637-0.7605-0.79765-0.48213-0.80201 0.61795-1.455 1.3212-2.0119 2.1668-0.13522 0.20536-0.18358 0.39986-0.16032 0.64461 0.18594 1.9563 1.7308 3.3822 4.6347 4.2778 0 0.24799 0.02938 0.48697 0.08955 0.72756-2.484-0.1347-4.1707-0.83504-5.0601-2.101-0.2622-0.37324-0.84629-0.22918-0.90497 0.22313-0.13014 1.0041-0.09459 1.9631 0.10956 2.9548 0.04956 0.24078 0.15288 0.4126 0.34242 0.56916 1.5148 1.2518 3.6154 1.1677 6.3021-0.25239 0.17533 0.17533 0.36512 0.32353 0.5778 0.45114-1.8517 1.6612-3.5396 2.3586-5.0637 2.0924-0.44934-0.0785-0.7605 0.43637-0.48209 0.79765 0.61795 0.80201 1.3212 1.455 2.1668 2.0119 0.20536 0.13522 0.39986 0.18358 0.64461 0.16032 1.9563-0.18594 3.3822-1.7308 4.2778-4.6347 0.24799 0 0.48697-0.02938 0.72756-0.08959-0.1347 2.484-0.83504 4.1707-2.101 5.0601-0.37324 0.2622-0.22918 0.84629 0.22313 0.90497 1.0041 0.13014 1.9631 0.09459 2.9548-0.10956 0.24078-0.04956 0.4126-0.15288 0.56916-0.34242 1.2518-1.5148 1.1677-3.6154-0.25239-6.3021 0.17533-0.17533 0.32353-0.36512 0.45114-0.5778 1.6612 1.8517 2.3586 3.5396 2.0924 5.0637-0.0785 0.44934 0.43637 0.7605 0.79765 0.48209 0.80201-0.61795 1.455-1.3212 2.0119-2.1668 0.13522-0.20536 0.18358-0.39987 0.16032-0.64461-0.18594-1.9563-1.7308-3.3822-4.6347-4.2778 0-0.24799-0.02938-0.48697-0.08955-0.72756 2.484 0.1347 4.1707 0.83504 5.0601 2.101 0.2622 0.37324 0.84629 0.22918 0.90497-0.22313 0.13014-1.004 0.09459-1.963-0.10956-2.9547zm-8.7657 4.3043c-1.3806 0-2.4999-1.1193-2.4999-2.4999s1.1193-2.4999 2.4999-2.4999 2.4999 1.1193 2.4999 2.4999-1.1193 2.4999-2.4999 2.4999z" fill="#7d081e" stroke-width=".040031" tb:tag="fan"/><g tb:tag="onButton">
   <rect x="54.702" y="60.372" width="14.263" height="7.4261" rx="1.5" fill="#12ed19" stroke="#000" tb:tag="onButtonBackground"/>
   <text x="61.855518" y="64.49128" dominant-baseline="middle" fill="#000000" font-family="Roboto" font-size="4.4461px" stroke-width=".74101" text-anchor="middle" xml:space="preserve"><tspan stroke-width=".74101">On</tspan></text>
- </g>
- <g tb:tag="offButton">
+ </g><g tb:tag="offButton">
   <rect x="74.367" y="60.311" width="14.263" height="7.4261" rx="1.5" fill="#ed121f" stroke="#000" tb:tag="offButtonBackground"/>
   <text x="81.365944" y="64.518349" dominant-baseline="middle" fill="#000000" font-family="Roboto" font-size="4.4461px" stroke-width=".74101" text-anchor="middle" xml:space="preserve"><tspan stroke-width=".74101">Off</tspan></text>
- </g>
- <g stroke="#000" stroke-miterlimit="1" tb:tag="levelUpButton">
+ </g><g stroke="#000" stroke-miterlimit="1" tb:tag="levelUpButton">
   <rect x="34.97" y="39.377" width="9.5005" height="12.584" rx=".75" fill="none"/>
   <path transform="matrix(.4753 -.2938 .2938 .4753 4.8821 31.04)" d="m41.544 60.24-7.893-4.9762 8.256-4.3474-0.18153 4.6618z" fill="#12ed19"/>
- </g>
- <g stroke="#000" stroke-miterlimit="1" tb:tag="levelDownButton">
+ </g><g stroke="#000" stroke-miterlimit="1" tb:tag="levelDownButton">
   <rect x="34.97" y="59.039" width="9.5005" height="12.584" rx=".75" fill="none"/>
   <path transform="matrix(-.47514 .29405 -.29405 -.47514 74.568 79.771)" d="m41.544 60.24-7.893-4.9762 8.256-4.3474-0.18153 4.6618z" fill="#12ed19"/>
  </g>

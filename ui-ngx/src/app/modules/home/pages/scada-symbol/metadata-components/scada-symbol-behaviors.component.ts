@@ -43,6 +43,7 @@ import {
   behaviorValidator,
   ScadaSymbolBehaviorRowComponent
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-behavior-row.component';
+import { ValueToDataType } from '@shared/models/action-widget-settings.models';
 
 @Component({
   selector: 'tb-scada-symbol-metadata-behaviors',
@@ -154,14 +155,19 @@ export class ScadaSymbolBehaviorsComponent implements ControlValueAccessor, OnIn
       name: '',
       type: IotSvgBehaviorType.value,
       valueType: ValueType.BOOLEAN,
-      defaultValue: false
+      defaultValue: false,
+      valueToDataType: ValueToDataType.CONSTANT,
+      constantValue: false,
+      valueToDataFunction: ''
     };
     const behaviorsArray = this.behaviorsFormGroup.get('behaviors') as UntypedFormArray;
     const behaviorControl = this.fb.control(behavior, [behaviorValidator]);
     behaviorsArray.push(behaviorControl);
     setTimeout(() => {
       const behaviorRow = this.behaviorRows.get(this.behaviorRows.length-1);
-      behaviorRow.focus();
+      behaviorRow.onAdd(() => {
+        this.removeBehavior(behaviorsArray.length-1);
+      });
     });
   }
 

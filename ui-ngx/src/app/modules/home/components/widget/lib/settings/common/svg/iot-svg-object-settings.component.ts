@@ -30,13 +30,13 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
   defaultIotSvgObjectSettings,
-  parseIotSvgMetadataFromContent,
   IotSvgBehaviorType,
   IotSvgMetadata,
-  IotSvgObjectSettings
+  IotSvgObjectSettings,
+  IotSvgPropertyType,
+  parseIotSvgMetadataFromContent
 } from '@home/components/widget/lib/svg/iot-svg.models';
 import { HttpClient } from '@angular/common/http';
-import { ValueType } from '@shared/models/constants';
 import { IAliasController } from '@core/api/widget-api.models';
 import { TargetDevice, widgetType } from '@shared/models/widget.models';
 import { isDefinedAndNotNull, mergeDeep } from '@core/utils';
@@ -68,6 +68,8 @@ import { ImageService } from '@core/http/image.service';
 export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, ControlValueAccessor, Validator {
 
   IotSvgBehaviorType = IotSvgBehaviorType;
+
+  IotSvgPropertyType = IotSvgPropertyType;
 
   @Input()
   disabled: boolean;
@@ -205,7 +207,7 @@ export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, Control
           if (property.required) {
             validators.push(Validators.required);
           }
-          if (property.type === 'number') {
+          if (property.type === IotSvgPropertyType.number) {
             if (isDefinedAndNotNull(property.min)) {
               validators.push(Validators.min(property.min));
             }

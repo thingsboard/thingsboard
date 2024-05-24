@@ -15,7 +15,7 @@
 ///
 
 import { ValueType } from '@shared/models/constants';
-import { Box, Element, Runner, SVG, Svg, Text } from '@svgdotjs/svg.js';
+import { Box, Element, Runner, SVG, Svg, Text, Timeline } from '@svgdotjs/svg.js';
 import '@svgdotjs/svg.panzoom.js';
 import {
   DataToValueType,
@@ -33,7 +33,7 @@ import {
   mergeDeep,
   parseFunction
 } from '@core/utils';
-import { BehaviorSubject, forkJoin, Observable, Observer, of } from 'rxjs';
+import { BehaviorSubject, forkJoin, Observable, Observer } from 'rxjs';
 import { share } from 'rxjs/operators';
 import { ValueAction, ValueGetter, ValueSetter } from '@home/components/widget/lib/action/action-widget.models';
 import { WidgetContext } from '@home/models/widget-component.models';
@@ -41,6 +41,7 @@ import { ColorProcessor, constantColor, Font } from '@shared/models/widget-setti
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetAction, WidgetActionType, widgetActionTypeTranslationMap } from '@shared/models/widget.models';
+import { ResizeObserver } from '@juggle/resize-observer';
 
 export interface IotSvgApi {
   formatValue: (value: any, dec?: number, units?: string, showZeroDecimals?: boolean) => string | undefined;
@@ -112,14 +113,37 @@ export interface IotSvgBehaviorValue extends IotSvgBehaviorBase {
 }
 
 export interface IotSvgBehaviorAction extends IotSvgBehaviorBase {
+  valueType: ValueType;
   valueToDataType: ValueToDataType;
   constantValue: any;
   valueToDataFunction: string;
 }
 
-export type IotSvgBehavior = IotSvgBehaviorValue | IotSvgBehaviorAction;
+export type IotSvgBehavior = IotSvgBehaviorValue & IotSvgBehaviorAction;
 
-export type IotSvgPropertyType = 'string' | 'number' | 'color' | 'color-settings' | 'font' | 'units' | 'switch';
+export enum IotSvgPropertyType {
+  text = 'text',
+  number = 'number',
+  switch = 'switch',
+  color = 'color',
+  color_settings = 'color_settings',
+  font = 'font',
+  units = 'units'
+}
+
+export const iotSvgPropertyTypes = Object.keys(IotSvgPropertyType) as IotSvgPropertyType[];
+
+export const iotSvgPropertyTypeTranslations = new Map<IotSvgPropertyType, string>(
+  [
+    [IotSvgPropertyType.text, 'scada.property.type-text'],
+    [IotSvgPropertyType.number, 'scada.property.type-number'],
+    [IotSvgPropertyType.switch, 'scada.property.type-switch'],
+    [IotSvgPropertyType.color, 'scada.property.type-color'],
+    [IotSvgPropertyType.color_settings, 'scada.property.type-color-settings'],
+    [IotSvgPropertyType.font, 'scada.property.type-font'],
+    [IotSvgPropertyType.units, 'scada.property.type-units']
+  ]
+);
 
 export interface IotSvgPropertyBase {
   id: string;
@@ -320,17 +344,19 @@ export type IotSvgObjectSettings = {
 const parseError = (ctx: WidgetContext, err: any): string =>
   ctx.$injector.get(UtilsService).parseException(err).message || 'Unknown Error';
 
+export interface IotSvgObjectCallbacks {
+  onSvgObjectError: (error: string) => void;
+  onSvgObjectMessage: (message: string) => void;
+}
+
 export class IotSvgObject {
 
   private metadata: IotSvgMetadata;
   private settings: IotSvgObjectSettings;
   private context: IotSvgContext;
 
-  private rootElement: HTMLElement;
   private svgShape: Svg;
   private box: Box;
-  private targetWidth: number;
-  private targetHeight: number;
 
   private loadingSubject = new BehaviorSubject(false);
   private valueGetters: ValueGetter<any>[] = [];
@@ -339,19 +365,22 @@ export class IotSvgObject {
 
   private stateValueSubjects: {[id: string]: BehaviorSubject<any>} = {};
 
+  private readonly shapeResize$: ResizeObserver;
+  private scale = 1;
+
+  private performInit = true;
+
   loading$ = this.loadingSubject.asObservable().pipe(share());
 
-  private _onError: (error: string) => void = () => {};
-
-  private _onMessage: (message: string) => void = () => {};
-
-  constructor(private ctx: WidgetContext,
+  constructor(private rootElement: HTMLElement,
+              private ctx: WidgetContext,
               private svgContent: string,
               private inputSettings: IotSvgObjectSettings,
+              private callbacks: IotSvgObjectCallbacks,
               private simulated: boolean) {
-  }
-
-  public init() {
+    this.shapeResize$ = new ResizeObserver(() => {
+      this.resize();
+    });
     const doc: XMLDocument = new DOMParser().parseFromString(this.svgContent, 'image/svg+xml');
     this.metadata = parseIotSvgMetadataFromDom(doc);
     const defaults = defaultIotSvgObjectSettings(this.metadata);
@@ -359,25 +388,13 @@ export class IotSvgObject {
       defaults, this.inputSettings || {} as IotSvgObjectSettings);
     this.prepareMetadata();
     this.prepareSvgShape(doc);
-    this.initialize();
-  }
-
-  public onError(onError: (error: string) => void) {
-    this._onError = onError;
-  }
-
-  public onMessage(onMessage: (message: string) => void) {
-    this._onMessage = onMessage;
-  }
-
-  public addTo(element: HTMLElement) {
-    this.rootElement = element;
-    if (this.svgShape) {
-      this.svgShape.addTo(element);
-    }
+    this.shapeResize$.observe(this.rootElement);
   }
 
   public destroy() {
+    if (this.shapeResize$) {
+      this.shapeResize$.disconnect();
+    }
     for (const stateValueId of Object.keys(this.stateValueSubjects)) {
       this.stateValueSubjects[stateValueId].complete();
       this.stateValueSubjects[stateValueId].unsubscribe();
@@ -385,16 +402,15 @@ export class IotSvgObject {
     this.valueActions.forEach(v => v.destroy());
     this.loadingSubject.complete();
     this.loadingSubject.unsubscribe();
+    for (const tag of this.metadata.tags) {
+      const elements = this.context.tags[tag.tag];
+      elements.forEach(element => {
+        element.timeline().finish();
+        element.timeline(null);
+      });
+    }
     if (this.svgShape) {
       this.svgShape.remove();
-    }
-  }
-
-  public setSize(targetWidth: number, targetHeight: number) {
-    this.targetWidth = targetWidth;
-    this.targetHeight = targetHeight;
-    if (this.svgShape) {
-      this.resize();
     }
   }
 
@@ -421,15 +437,10 @@ export class IotSvgObject {
     this.svgShape.node.style['user-select'] = 'none';
     this.box = this.svgShape.bbox();
     this.svgShape.size(this.box.width, this.box.height);
-    if (this.rootElement) {
-      this.svgShape.addTo(this.rootElement);
-    }
-    if (this.targetWidth && this.targetHeight) {
-      this.resize();
-    }
+    this.svgShape.addTo(this.rootElement);
   }
 
-  private initialize() {
+  private init() {
     this.context = {
       api: {
         formatValue,
@@ -447,7 +458,7 @@ export class IotSvgObject {
     };
     const taggedElements = this.svgShape.find(`[tb\\:tag]`);
     for (const element of taggedElements) {
-      const tag = element.attr('tb:tag');
+      const tag: string = element.attr('tb:tag');
       let elements = this.context.tags[tag];
       if (!elements) {
         elements = [];
@@ -489,7 +500,7 @@ export class IotSvgObject {
             next: (val) => {this.onValue(getBehavior.id, val);},
             error: (err) => {
               const message = parseError(this.ctx, err);
-              this._onError(message);
+              this.onError(message);
             }
           }, this.simulated);
         this.valueGetters.push(valueGetter);
@@ -526,6 +537,14 @@ export class IotSvgObject {
     }
   }
 
+  private onError(error: string) {
+    this.callbacks.onSvgObjectError(error);
+  }
+
+  private onMessage(message: string) {
+    this.callbacks.onSvgObjectMessage(message);
+  }
+
   private callAction(event: Event, behaviorId: string, value?: any, observer?: Partial<Observer<void>>) {
     const behavior = this.metadata.behavior.find(b => b.id === behaviorId);
     if (behavior) {
@@ -547,7 +566,7 @@ export class IotSvgObject {
                   observer.error(err);
                 }
                 const message = parseError(this.ctx, err);
-                this._onError(message);
+                this.onError(message);
               }
             }
           );
@@ -557,22 +576,38 @@ export class IotSvgObject {
         if (this.simulated) {
           const translatedType = this.ctx.translate.instant(widgetActionTypeTranslationMap.get(widgetAction.type));
           const message = this.ctx.translate.instant('scada.preview-widget-action-text', {type: translatedType});
-          this._onMessage(message);
+          this.onMessage(message);
         } else {
           this.ctx.actionsApi.onWidgetAction(event, widgetAction);
+        }
+        if (observer?.next) {
+          observer.next();
         }
       }
     }
   }
 
   private resize() {
-    let scale: number;
-    if (this.targetWidth < this.targetHeight) {
-      scale = this.targetWidth / this.box.width;
-    } else {
-      scale = this.targetHeight / this.box.height;
+    if (this.svgShape) {
+      const targetWidth = this.rootElement.getBoundingClientRect().width;
+      const targetHeight = this.rootElement.getBoundingClientRect().height;
+      if (targetWidth && targetHeight) {
+        let scale: number;
+        if (targetWidth < targetHeight) {
+          scale = targetWidth / this.box.width;
+        } else {
+          scale = targetHeight / this.box.height;
+        }
+        if (this.scale !== scale) {
+          this.scale = scale;
+          this.svgShape.node.style.transform = `scale(${this.scale})`;
+        }
+        if (this.performInit) {
+          this.performInit = false;
+          this.init();
+        }
+      }
     }
-    this.svgShape.node.style.transform = `scale(${scale})`;
   }
 
   private onValue(id: string, value: any) {
@@ -598,7 +633,7 @@ export class IotSvgObject {
   private renderState(): void {
     this.metadata.stateRender(this.svgShape, this.context);
     for (const tag of this.metadata.tags) {
-      const elements = this.svgShape.find(`[tb\\:tag="${tag.tag}"]`);
+      const elements = this.context.tags[tag.tag];// this.svgShape.find(`[tb\\:tag="${tag.tag}"]`);
       elements.forEach(element => {
         tag.stateRender(element, this.context);
       });
@@ -664,6 +699,7 @@ export class IotSvgObject {
 
   private animate(element: Element, duration: number): Runner {
     element.timeline().finish();
+    element.timeline(new Timeline());
     return element.animate(duration, 0, 'now');
   }
 
@@ -692,9 +728,9 @@ export class IotSvgObject {
     if (property) {
       const value = this.settings.properties[id];
       if (isDefinedAndNotNull(value)) {
-        if (property.type === 'color-settings') {
+        if (property.type === IotSvgPropertyType.color_settings) {
           return ColorProcessor.fromSettings(value);
-        } else if (property.type === 'string') {
+        } else if (property.type === IotSvgPropertyType.text) {
           const result =  this.ctx.utilsService.customTranslation(value, value);
           const entityInfo = this.ctx.defaultSubscription.getFirstEntityInfo();
           return createLabelFromSubscriptionEntityInfo(entityInfo, result);
@@ -702,13 +738,13 @@ export class IotSvgObject {
         return value;
       } else {
         switch (property.type) {
-          case 'string':
+          case IotSvgPropertyType.text:
             return '';
-          case 'number':
+          case IotSvgPropertyType.number:
             return 0;
-          case 'color':
+          case IotSvgPropertyType.color:
             return '#000';
-          case 'color-settings':
+          case IotSvgPropertyType.color_settings:
             return ColorProcessor.fromSettings(constantColor('#000'));
         }
       }

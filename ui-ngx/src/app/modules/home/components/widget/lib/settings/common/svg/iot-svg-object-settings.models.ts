@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { IotSvgProperty } from '@home/components/widget/lib/svg/iot-svg.models';
+import { IotSvgProperty, IotSvgPropertyType } from '@home/components/widget/lib/svg/iot-svg.models';
 
 export interface IotSvgPropertyRow {
   label: string;
@@ -35,7 +35,7 @@ export const toPropertyRows = (properties: IotSvgProperty[]): IotSvgPropertyRow[
       };
       result.push(propertyRow);
     }
-    if (property.type === 'switch') {
+    if (property.type === IotSvgPropertyType.switch) {
       propertyRow.switch = property;
     } else {
       propertyRow.properties.push(property);

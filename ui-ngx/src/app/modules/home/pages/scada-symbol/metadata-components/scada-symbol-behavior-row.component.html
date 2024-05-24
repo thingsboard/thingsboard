@@ -32,7 +32,8 @@
   <div class="tb-form-table-row-cell-buttons">
     <button type="button"
             mat-icon-button
-            (click)="editBehavior()"
+            #editButton
+            (click)="editBehavior($event, editButton)"
             matTooltip="{{ 'scada.behavior.behavior-settings' | translate }}"
             matTooltipPosition="above">
       <mat-icon>settings</mat-icon>

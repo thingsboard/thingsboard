@@ -26,7 +26,7 @@
     </div>
   </div>
   <div>
-    <button type="button" mat-stroked-button color="primary" (click)="addTag()">
+    <button *ngIf="availableTags?.length" type="button" mat-stroked-button color="primary" (click)="addTag()">
       {{ 'scada.add-tag' | translate }}
     </button>
   </div>

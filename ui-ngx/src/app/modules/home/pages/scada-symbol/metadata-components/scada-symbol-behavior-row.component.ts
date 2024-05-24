@@ -23,7 +23,9 @@ import {
   Input,
   OnInit,
   Output,
+  Renderer2,
   ViewChild,
+  ViewContainerRef,
   ViewEncapsulation
 } from '@angular/core';
 import {
@@ -32,17 +34,22 @@ import {
   NG_VALUE_ACCESSOR,
   UntypedFormBuilder,
   UntypedFormGroup,
-  ValidationErrors
+  ValidationErrors,
+  Validators
 } from '@angular/forms';
-import { MatDialog } from '@angular/material/dialog';
 import {
   IotSvgBehavior,
-  IotSvgBehaviorAction,
   IotSvgBehaviorType,
   iotSvgBehaviorTypes,
-  iotSvgBehaviorTypeTranslations,
-  IotSvgBehaviorValue
+  iotSvgBehaviorTypeTranslations
 } from '@home/components/widget/lib/svg/iot-svg.models';
+import { deepClone, isDefinedAndNotNull, isUndefinedOrNull } from '@core/utils';
+import { MatButton } from '@angular/material/button';
+import { TbPopoverService } from '@shared/components/popover.service';
+import {
+  ScadaSymbolBehaviorPanelComponent
+} from '@home/pages/scada-symbol/metadata-components/scada-symbol-behavior-panel.component';
+import { ValueToDataType } from '@shared/models/action-widget-settings.models';
 
 export const behaviorValid = (behavior: IotSvgBehavior): boolean => {
   if (!behavior.id || !behavior.name || !behavior.type) {
@@ -50,14 +57,20 @@ export const behaviorValid = (behavior: IotSvgBehavior): boolean => {
   }
   switch (behavior.type) {
     case IotSvgBehaviorType.value:
-      const valueBehavior = behavior as IotSvgBehaviorValue;
-      if (!valueBehavior.valueType) {
+      if (!behavior.valueType || isUndefinedOrNull(behavior.defaultValue)) {
         return false;
       }
       break;
     case IotSvgBehaviorType.action:
-      const actionBehavior = behavior as IotSvgBehaviorAction;
-      if (!actionBehavior.valueToDataType) {
+      if (!behavior.valueToDataType) {
+        return false;
+      }
+      if (behavior.valueToDataType === ValueToDataType.CONSTANT
+        && isUndefinedOrNull(behavior.constantValue)) {
+        return false;
+      }
+      if (behavior.valueToDataType === ValueToDataType.FUNCTION
+        && isUndefinedOrNull(behavior.valueToDataFunction)) {
         return false;
       }
       break;
@@ -95,6 +108,9 @@ export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, On
   @ViewChild('idInput')
   idInput: ElementRef<HTMLInputElement>;
 
+  @ViewChild('editButton')
+  editButton: MatButton;
+
   iotSvgBehaviorTypes = iotSvgBehaviorTypes;
   iotSvgBehaviorTypeTranslations = iotSvgBehaviorTypeTranslations;
 
@@ -111,19 +127,24 @@ export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, On
   private propagateChange = (_val: any) => {};
 
   constructor(private fb: UntypedFormBuilder,
-              private dialog: MatDialog,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private popoverService: TbPopoverService,
+              private renderer: Renderer2,
+              private viewContainerRef: ViewContainerRef) {
   }
 
   ngOnInit() {
     this.behaviorRowFormGroup = this.fb.group({
-      id: [null, []],
-      name: [null, []],
-      type: [null, []]
+      id: [null, [Validators.required]],
+      name: [null, [Validators.required]],
+      type: [null, [Validators.required]]
     });
     this.behaviorRowFormGroup.valueChanges.subscribe(
       () => this.updateModel()
     );
+    this.behaviorRowFormGroup.get('type').valueChanges.subscribe((newType: IotSvgBehaviorType) => {
+      this.onTypeChanged(newType);
+    });
   }
 
   registerOnChange(fn: any): void {
@@ -154,13 +175,66 @@ export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, On
     this.cd.markForCheck();
   }
 
-  editBehavior() {
-
+  editBehavior($event: Event, matButton: MatButton, add = false, editCanceled = () => {}) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const trigger = matButton._elementRef.nativeElement;
+    if (this.popoverService.hasPopover(trigger)) {
+      this.popoverService.hidePopover(trigger);
+    } else {
+      const ctx: any = {
+        isAdd: add,
+        behavior: deepClone(this.modelValue)
+      };
+      const scadaSymbolBehaviorPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
+        this.viewContainerRef, ScadaSymbolBehaviorPanelComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], true, null,
+        ctx,
+        {},
+        {}, {}, true);
+      scadaSymbolBehaviorPanelPopover.tbComponentRef.instance.popover = scadaSymbolBehaviorPanelPopover;
+      scadaSymbolBehaviorPanelPopover.tbComponentRef.instance.behaviorSettingsApplied.subscribe((behavior) => {
+        scadaSymbolBehaviorPanelPopover.hide();
+        this.behaviorRowFormGroup.patchValue(
+          {
+            id: behavior.id,
+            name: behavior.name,
+            type: behavior.type
+          }, {emitEvent: false}
+        );
+        this.modelValue = behavior;
+        this.propagateChange(this.modelValue);
+      });
+      scadaSymbolBehaviorPanelPopover.tbDestroy.subscribe(() => {
+        if (!behaviorValid(this.modelValue)) {
+          editCanceled();
+        }
+      });
+    }
   }
 
   focus() {
     this.idInput.nativeElement.scrollIntoView();
     this.idInput.nativeElement.focus();
+  }
+
+  onAdd(onCanceled: () => void) {
+    this.idInput.nativeElement.scrollIntoView();
+    this.editBehavior(null, this.editButton, true, onCanceled);
+  }
+
+  private onTypeChanged(newType: IotSvgBehaviorType) {
+    const prevType = this.modelValue.type;
+    this.modelValue = {...this.modelValue, ...{type: newType}};
+    if (!behaviorValid(this.modelValue)) {
+      this.editBehavior(null, this.editButton, false, () => {
+        this.behaviorRowFormGroup.patchValue(
+          {
+            type: prevType
+          }, {emitEvent: true}
+        );
+      });
+    }
   }
 
   private updateModel() {

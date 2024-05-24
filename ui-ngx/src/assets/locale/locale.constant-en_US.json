@@ -3432,7 +3432,31 @@
             "type-value": "Value",
             "type-widget-action": "Widget action",
             "behavior-settings": "Behavior settings",
-            "remove-behavior": "Remove behavior"
+            "remove-behavior": "Remove behavior",
+            "hint": "Hint",
+            "value-type": "Value type",
+            "default-value": "Default value",
+            "true-label": "True label",
+            "false-label": "False label",
+            "state-label": "State label",
+            "default-payload": "Default payload"
+        },
+        "property": {
+            "property": "Property",
+            "id": "Id",
+            "name": "Name",
+            "type": "Type",
+            "type-text": "Text",
+            "type-number": "Number",
+            "type-switch": "Switch",
+            "type-color": "Color",
+            "type-color-settings": "Color settings",
+            "type-font": "Font",
+            "type-units": "Units",
+            "no-properties": "No properties configured",
+            "add-property": "Add property",
+            "property-settings": "Property settings",
+            "remove-property": "Remove property"
         }
     },
     "item": {

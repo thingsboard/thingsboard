@@ -74,13 +74,14 @@ export class ScadaSymbolEditObject {
     this.scale = 1;
     const contentData = iotSvgContentData(svgContent);
     this.svgRootNodePart = contentData.svgRootNode;
-    this.svgShape = SVG().addTo(this.rootElement).svg(contentData.innerSvg);
+    this.svgShape = SVG().svg(contentData.innerSvg);
     this.svgShape.node.style.overflow = 'visible';
     this.svgShape.node.style['user-select'] = 'none';
     this.box = this.svgShape.bbox();
     this.svgShape.size(this.box.width, this.box.height);
     this.svgShape.viewbox(`0 0 ${this.box.width} ${this.box.height}`);
     this.svgShape.style().attr('tb:inner', true).rule('.tb-element', {cursor: 'pointer', transition: '0.2s filter ease-in-out'});
+    this.svgShape.addTo(this.rootElement);
     this.updateHoverFilterStyle();
     this.performSetup = true;
     this.shapeResize$.observe(this.rootElement);
@@ -245,22 +246,24 @@ export class ScadaSymbolEditObject {
     if (this.svgShape) {
       const targetWidth = this.rootElement.getBoundingClientRect().width;
       const targetHeight = this.rootElement.getBoundingClientRect().height;
-      let scale: number;
-      if (targetWidth < targetHeight) {
-        scale = targetWidth / this.box.width;
-      } else {
-        scale = targetHeight / this.box.height;
-      }
-      if (this.scale !== scale) {
-        this.scale = scale;
-        this.svgShape.node.style.transform = `scale(${this.scale})`;
-        this.updateHoverFilterStyle();
-        this.updateZoomOptions();
-        this.updateTooltipPositions();
-      }
-      if (this.performSetup) {
-        this.performSetup = false;
-        this.doSetup();
+      if (targetWidth && targetHeight) {
+        let scale: number;
+        if (targetWidth < targetHeight) {
+          scale = targetWidth / this.box.width;
+        } else {
+          scale = targetHeight / this.box.height;
+        }
+        if (this.scale !== scale) {
+          this.scale = scale;
+          this.svgShape.node.style.transform = `scale(${this.scale})`;
+          this.updateHoverFilterStyle();
+          this.updateZoomOptions();
+          this.updateTooltipPositions();
+        }
+        if (this.performSetup) {
+          this.performSetup = false;
+          this.doSetup();
+        }
       }
     }
   }

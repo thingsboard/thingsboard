@@ -30,6 +30,9 @@ import {
 import {
   ScadaSymbolBehaviorRowComponent
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-behavior-row.component';
+import {
+  ScadaSymbolBehaviorPanelComponent
+} from '@home/pages/scada-symbol/metadata-components/scada-symbol-behavior-panel.component';
 
 @NgModule({
   declarations:
@@ -38,7 +41,8 @@ import {
       ScadaSymbolMetadataTagComponent,
       ScadaSymbolMetadataTagsComponent,
       ScadaSymbolBehaviorsComponent,
-      ScadaSymbolBehaviorRowComponent
+      ScadaSymbolBehaviorRowComponent,
+      ScadaSymbolBehaviorPanelComponent
     ],
   imports: [
     CommonModule,
