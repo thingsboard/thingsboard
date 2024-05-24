@@ -972,6 +972,8 @@ transport:
     proxy_enabled: "${MQTT_PROXY_PROTOCOL_ENABLED:false}"
     # MQTT processing timeout in milliseconds
     timeout: "${MQTT_TIMEOUT:10000}"
+    # MQTT disconnect timeout in milliseconds. The time to wait for the client to disconnect after the server sends a disconnect message.
+    disconnect_timeout: "${MQTT_DISCONNECT_TIMEOUT:1000}"
     msg_queue_size_per_device_limit: "${MQTT_MSG_QUEUE_SIZE_PER_DEVICE_LIMIT:100}" # messages await in the queue before the device connected state. This limit works on the low level before TenantProfileLimits mechanism
     netty:
       # Netty leak detector level

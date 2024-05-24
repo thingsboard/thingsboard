@@ -31,6 +31,7 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
+import io.netty.handler.codec.mqtt.MqttReasonCodes;
 import io.netty.handler.codec.mqtt.MqttVersion;
 import lombok.Getter;
 import lombok.Setter;
@@ -47,6 +48,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
@@ -60,7 +62,6 @@ import org.thingsboard.server.transport.mqtt.MqttTransportHandler;
 import org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
-import org.thingsboard.server.transport.mqtt.util.ReturnCode;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState;
 
 import java.util.ArrayList;
@@ -84,7 +85,6 @@ import static org.thingsboard.server.common.transport.service.DefaultTransportSe
 import static org.thingsboard.server.common.transport.service.DefaultTransportService.SESSION_EVENT_MSG_OPEN;
 import static org.thingsboard.server.common.transport.service.DefaultTransportService.SUBSCRIBE_TO_ATTRIBUTE_UPDATES_ASYNC_MSG;
 import static org.thingsboard.server.common.transport.service.DefaultTransportService.SUBSCRIBE_TO_RPC_ASYNC_MSG;
-import static org.thingsboard.server.transport.mqtt.util.ReturnCode.PAYLOAD_FORMAT_INVALID;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState.OFFLINE;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.STATE;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.messageName;
@@ -230,7 +230,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         log.trace("[{}][{}][{}] onDeviceConnect: [{}]", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName);
         process(onDeviceConnect(deviceName, deviceType),
                 result -> {
-                    ack(msg, ReturnCode.SUCCESS);
+                    ack(msg, MqttReasonCodes.PubAck.SUCCESS);
                     log.trace("[{}][{}][{}] onDeviceConnectOk: [{}]", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName);
                 },
                 t -> logDeviceCreationError(t, deviceName));
@@ -361,7 +361,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
 
     void processOnDisconnect(MqttPublishMessage msg, String deviceName) {
         deregisterSession(deviceName);
-        ack(msg, ReturnCode.SUCCESS);
+        ack(msg, MqttReasonCodes.PubAck.SUCCESS);
     }
 
     protected void onDeviceTelemetryJson(int msgId, ByteBuf payload) throws AdaptorException {
@@ -618,7 +618,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         process(deviceName, deviceCtx -> processGetAttributeRequestMessage(deviceCtx, requestMsg, deviceName, msgId),
                 t -> {
                     failedToProcessLog(deviceName, ATTRIBUTES_REQUEST, t);
-                    ack(msgId, ReturnCode.IMPLEMENTATION_SPECIFIC);
+                    ack(mqttMsg, MqttReasonCodes.PubAck.IMPLEMENTATION_SPECIFIC_ERROR);
                 });
     }
 
@@ -663,20 +663,20 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         return ProtoMqttAdaptor.toBytes(payload);
     }
 
-    protected void ack(MqttPublishMessage msg, ReturnCode returnCode) {
+    protected void ack(MqttPublishMessage msg, MqttReasonCodes.PubAck returnCode) {
         int msgId = getMsgId(msg);
         ack(msgId, returnCode);
     }
 
-    protected void ack(int msgId, ReturnCode returnCode) {
+    protected void ack(int msgId, MqttReasonCodes.PubAck returnCode) {
         if (msgId > 0) {
-            writeAndFlush(MqttTransportHandler.createMqttPubAckMsg(deviceSessionCtx, msgId, returnCode));
+            writeAndFlush(MqttTransportHandler.createMqttPubAckMsg(deviceSessionCtx, msgId, returnCode.byteValue()));
         }
     }
 
     protected void ackOrClose(int msgId) {
         if (MqttVersion.MQTT_5.equals(deviceSessionCtx.getMqttVersion())) {
-            ack(msgId, PAYLOAD_FORMAT_INVALID);
+            ack(msgId, MqttReasonCodes.PubAck.PAYLOAD_FORMAT_INVALID);
         } else {
             channel.close();
         }
@@ -707,13 +707,22 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
             public void onSuccess(Void dummy) {
                 log.trace("[{}][{}][{}][{}] Published msg: [{}]", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName, msg);
                 if (msgId > 0) {
-                    ctx.writeAndFlush(MqttTransportHandler.createMqttPubAckMsg(deviceSessionCtx, msgId, ReturnCode.SUCCESS));
+                    ctx.writeAndFlush(MqttTransportHandler.createMqttPubAckMsg(deviceSessionCtx, msgId, MqttReasonCodes.PubAck.SUCCESS.byteValue()));
+                } else {
+                    log.trace("[{}][{}][{}] Wrong msg id: [{}]", gateway.getTenantId(), gateway.getDeviceId(), sessionId, msg);
+                    ctx.writeAndFlush(MqttTransportHandler.createMqttPubAckMsg(deviceSessionCtx, msgId, MqttReasonCodes.PubAck.UNSPECIFIED_ERROR.byteValue()));
+                    closeDeviceSession(deviceName, MqttReasonCodes.Disconnect.MALFORMED_PACKET);
                 }
             }
 
             @Override
             public void onError(Throwable e) {
                 log.trace("[{}][{}][{}] Failed to publish msg: [{}] for device: [{}]", gateway.getTenantId(), gateway.getDeviceId(), sessionId, msg, deviceName, e);
+                if (e instanceof TbRateLimitsException) {
+                    closeDeviceSession(deviceName, MqttReasonCodes.Disconnect.MESSAGE_RATE_TOO_HIGH);
+                } else {
+                    closeDeviceSession(deviceName, MqttReasonCodes.Disconnect.UNSPECIFIED_ERROR);
+                }
                 ctx.close();
             }
         };
@@ -737,4 +746,17 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         log.debug("[{}][{}][{}] Failed to process device {} command: [{}]", gateway.getTenantId(), gateway.getDeviceId(), sessionId, msgType, deviceName, t);
     }
 
+
+    private void closeDeviceSession(String deviceName, MqttReasonCodes.Disconnect returnCode) {
+        try {
+            if (MqttVersion.MQTT_5.equals(deviceSessionCtx.getMqttVersion())) {
+                MqttTransportAdaptor adaptor = deviceSessionCtx.getPayloadAdaptor();
+                int returnCodeValue = returnCode.byteValue() & 0xFF;
+                Optional<MqttMessage> deviceDisconnectPublishMsg = adaptor.convertToGatewayDeviceDisconnectPublish(deviceSessionCtx, deviceName, returnCodeValue);
+                deviceDisconnectPublishMsg.ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
+            }
+        } catch (Exception e) {
+            log.trace("Failed to send device disconnect to gateway session", e);
+        }
+    }
 }
