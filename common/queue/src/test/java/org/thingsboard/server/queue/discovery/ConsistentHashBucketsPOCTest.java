@@ -15,10 +15,8 @@
  */
 package org.thingsboard.server.queue.discovery;
 
-import com.google.common.hash.Funnel;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
-import com.google.common.hash.PrimitiveSink;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -26,7 +24,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +37,7 @@ import java.util.concurrent.ConcurrentNavigableMap;
 class ConsistentHashBucketsPOCTest {
 
     int partitions = 6;
+    int vNodesPerNode = 10;
 
     private long getHash(HashFunction hashFunction, VNode vnode) {
         return hashFunction.hashObject(vnode, VNodeFunnel.INSTANCE).padToLong();
@@ -55,19 +53,12 @@ class ConsistentHashBucketsPOCTest {
         for (int i = 0; i < nodeCount; i++) {
             Node node = new Node("tb-rule-engine-" + i);
             nodes.add(node);
-            for (int j = 0; j < nodeCount * 10; j++) {
+            for (int j = 0; j < nodeCount * vNodesPerNode; j++) {
                 VNode vnode = new VNode(j, node);
                 circle.put(getHash(hashFunction, vnode), vnode);
             }
         }
 
-//        for (int i = 0; i < nodeCount; i++) {
-//            Node node = new Node(i, "TOPIC-" + i);
-//            VNode vnode = new VNode(i, node);
-//            long hash = getHash(hashFunction, vnode);
-//            //circle.put(hash - 1, vnode);
-//
-//        }
         SortedMap<String, Set<Integer>> snapshotOK;
         log.warn("======== ROLLOUT RESTART ============================================================");
         nodes.forEach(node -> node.getUp().set(true));
@@ -86,8 +77,6 @@ class ConsistentHashBucketsPOCTest {
             node.getUp().set(true);
         }
         log.warn("ℹ️ totalDiff with the OK state {}", totalDiff);
-//        repartition(circle, nodes, partitions, hashFunction);
-//        logDistribution(nodes, partitions);
 
         if (nodeCount < 3) {
             return;
@@ -113,8 +102,6 @@ class ConsistentHashBucketsPOCTest {
         }
         log.warn("ℹ️ totalDiff with previous state {}", totalDiff);
 
-//        repartition(circle, nodes, partitions, hashFunction);
-//        logDistribution(nodes, partitions);
 
         log.warn("======== ROLLOUT RESTART BY 2 =======================================================");
         nodes.forEach(node -> node.getUp().set(true));
@@ -136,8 +123,6 @@ class ConsistentHashBucketsPOCTest {
             node.getUp().set(true);
         }
         log.warn("ℹ️ totalDiff with the OK state {}", totalDiff);
-//        repartition(circle, nodes, partitions, hashFunction);
-//        logDistribution(nodes, partitions);
 
     }
 
@@ -224,41 +209,39 @@ class ConsistentHashBucketsPOCTest {
     }
 
     private void repartition(ConsistentHashCircle<Long, VNode> circle, List<Node> nodes, int partitions, HashFunction hashFunction) {
+        nodes.forEach(node -> node.getPartitions().clear());
+        circle.getTotal().set(0);
         long liveNodesCount = nodes.stream().filter(x -> x.getUp().get()).count();
         //log.warn("liveNodesCount {}", liveNodesCount);
-        long floor = partitions / liveNodesCount;                         // 10 / 3 = 3
-        long ceil = floor + (partitions % liveNodesCount > 0 ? 1 : 0);    // 4
-        long capacity = floor;
 
-        circle.getTotal().set(0);
-        circle.getFloor().set(floor);
-        circle.getCeil().set(ceil);
-        nodes.forEach(node -> node.getPartitions().clear());
-
-        HashMap<Integer, VNode> stickyMap = new HashMap<>();
-
+        SortedMap<Integer, VNode> stickyMap = new TreeMap<>();
         for (int i = 0; i < partitions; i++) {
             Node partition = new Node("tb_rule_engine.main." + i);
-            VNode vnode = matchVNodePartition(stickyMap, nodes, partition, i);
-            //VNode vnode = new VNode(0, partition);
-            long hash = getHash(hashFunction, vnode);
-            if (circle.getTotal().get() >= liveNodesCount * capacity) {
-                capacity++;
-                if (capacity > ceil) {
-                    throw new RuntimeException("capacity exceed ceil");
-                }
-            }
+            matchVNodePartition(stickyMap, nodes, partition, i);
+        }
 
-            if (assignPartition(circle, circle.tailMap(hash), capacity, i)
-                    || assignPartition(circle, circle.getCircle(), capacity, i)) {
+        SortedMap<Integer, VNode> liveMap = new TreeMap<>(stickyMap);
+        SortedMap<Integer, VNode> failedMap = new TreeMap<>();
+        // extract failed nodes to the failedMap
+        for (var entry : stickyMap.entrySet()) {
+            int partitionId = entry.getKey();
+            VNode vNode = entry.getValue();
+            if (vNode.getNode().getUp().get()) {
                 continue;
             }
-
-            throw new RuntimeException("failed to assign partition " + i);
+            liveMap.remove(partitionId);
+            failedMap.put(partitionId, vNode);
         }
+
+        fillByCircle(circle, hashFunction, liveNodesCount, liveMap);
+
+        if (!failedMap.isEmpty()) {
+            fillByCircle(circle, hashFunction, liveNodesCount, failedMap);
+        }
+
     }
 
-    private VNode matchVNodePartition(HashMap<Integer, VNode> stickyMap, List<Node> nodes, Node partition, int partitionNum) {
+    private VNode matchVNodePartition(Map<Integer, VNode> stickyMap, List<Node> nodes, Node partition, int partitionNum) {
         VNode stikyNode = stickyMap.get(partitionNum);
         if (stikyNode != null) {
             return stikyNode;
@@ -294,18 +277,30 @@ class ConsistentHashBucketsPOCTest {
         return false;
     }
 
-    public enum VNodeFunnel implements Funnel<VNode> {
-        INSTANCE;
+    private void fillByCircle(ConsistentHashCircle<Long, VNode> circle, HashFunction hashFunction, long liveNodesCount, SortedMap<Integer, VNode> partitionsMap) {
+        int partitionsToDistribute = partitionsMap.size();
+        long floor = (partitionsToDistribute + circle.getTotal().get()) / liveNodesCount;                         // 10 / 3 = 3
+        long ceil = floor + ((partitionsToDistribute + circle.getTotal().get() ) % liveNodesCount > 0 ? 1 : 0);    // 4
+        long capacity = floor;
 
-        @Override
-        public void funnel(VNode vnode, PrimitiveSink into) {
-            into
-                    //.putUnencodedChars("Node-")
-                    .putInt(vnode.getId())
-                    .putUnencodedChars("~")
-                    .putUnencodedChars(vnode.getNode().getId())
-            ;
-            //.putUnencodedChars(vnode.getNode().getName())
+        for (var entry : partitionsMap.entrySet()) {
+            int partitionId = entry.getKey();
+            VNode vnode = entry.getValue();
+
+            long hash = getHash(hashFunction, vnode);
+            if (circle.getTotal().get() >= liveNodesCount * capacity) {
+                capacity++;
+                if (capacity > ceil) {
+                    throw new RuntimeException("capacity exceed ceil " + partitionId);
+                }
+            }
+
+            if (assignPartition(circle, circle.tailMap(hash), capacity, partitionId)
+                    || assignPartition(circle, circle.getCircle(), capacity, partitionId)) {
+                continue;
+            }
+
+            throw new RuntimeException("failed to assign partition " + partitionId);
         }
     }
 
