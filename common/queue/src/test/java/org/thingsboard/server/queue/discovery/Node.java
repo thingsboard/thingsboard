@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 @Data
 public class Node {
-    final int id;
+    final String id;
     @EqualsAndHashCode.Exclude
     final AtomicBoolean up = new AtomicBoolean(true);
     @EqualsAndHashCode.Exclude
