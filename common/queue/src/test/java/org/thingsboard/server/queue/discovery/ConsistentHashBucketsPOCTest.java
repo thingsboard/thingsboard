@@ -37,11 +37,7 @@ import java.util.concurrent.ConcurrentNavigableMap;
 class ConsistentHashBucketsPOCTest {
 
     int partitions = 6;
-    int vNodesPerNode = 10;
-
-    private long getHash(HashFunction hashFunction, VNode vnode) {
-        return hashFunction.hashObject(vnode, VNodeFunnel.INSTANCE).padToLong();
-    }
+    int vNodesPerNode = Math.min(10, PrimeNumbers.FIRST_1000_PRIMES.length);
 
     @ParameterizedTest
     @ValueSource(ints = {2, 3, 4, 5, 6, 7, 8, 9})
@@ -124,6 +120,10 @@ class ConsistentHashBucketsPOCTest {
         }
         log.warn("ℹ️ totalDiff with the OK state {}", totalDiff);
 
+    }
+
+    private long getHash(HashFunction hashFunction, VNode vnode) {
+        return hashFunction.hashObject(vnode, VNodeFunnel.INSTANCE).padToLong();
     }
 
     private int calculateDiff(SortedMap<String, Set<Integer>> snapshotOK, SortedMap<String, Set<Integer>> snapshot) {
