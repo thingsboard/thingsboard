@@ -60,9 +60,6 @@ public class TbLambdaNode extends TbAbstractExternalNode {
         if (StringUtils.isBlank(config.getFunctionName())) {
             throw new TbNodeException("Function name must be set!", true);
         }
-        if (config.getInvocationType() == null) {
-            throw new TbNodeException("Invocation type must be set!", true);
-        }
         try {
             AWSCredentials awsCredentials = new BasicAWSCredentials(config.getAccessKey(), config.getSecretKey());
             client = AWSLambdaAsyncClientBuilder.standard()
@@ -109,8 +106,7 @@ public class TbLambdaNode extends TbAbstractExternalNode {
         return new InvokeRequest()
                 .withFunctionName(functionName)
                 .withPayload(requestBody)
-                .withQualifier(qualifier)
-                .withInvocationType(config.getInvocationType());
+                .withQualifier(qualifier);
     }
 
     private String getPayload(InvokeResult invokeResult) {

@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.aws.lambda;
 
-import com.amazonaws.services.lambda.model.InvocationType;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
@@ -30,7 +29,6 @@ public class TbLambdaNodeConfiguration implements NodeConfiguration<TbLambdaNode
     private String secretKey;
     private String region;
     private String functionName;
-    private InvocationType invocationType;
     private String qualifier;
     private int connectionTimeout;
     private int requestTimeout;
@@ -40,7 +38,6 @@ public class TbLambdaNodeConfiguration implements NodeConfiguration<TbLambdaNode
     public TbLambdaNodeConfiguration defaultConfiguration() {
         TbLambdaNodeConfiguration configuration = new TbLambdaNodeConfiguration();
         configuration.setRegion("us-east-1");
-        configuration.setInvocationType(InvocationType.RequestResponse);
         configuration.setQualifier(DEFAULT_QUALIFIER);
         configuration.setConnectionTimeout(10);
         configuration.setRequestTimeout(5);

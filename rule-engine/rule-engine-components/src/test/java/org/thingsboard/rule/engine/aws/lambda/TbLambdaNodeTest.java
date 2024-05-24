@@ -19,7 +19,6 @@ import com.amazonaws.ResponseMetadata;
 import com.amazonaws.handlers.AsyncHandler;
 import com.amazonaws.services.lambda.AWSLambdaAsync;
 import com.amazonaws.services.lambda.model.AWSLambdaException;
-import com.amazonaws.services.lambda.model.InvocationType;
 import com.amazonaws.services.lambda.model.InvokeRequest;
 import com.amazonaws.services.lambda.model.InvokeResult;
 import org.junit.jupiter.api.BeforeEach;
@@ -84,7 +83,6 @@ public class TbLambdaNodeTest {
         assertThat(config.getSecretKey()).isNull();
         assertThat(config.getRegion()).isEqualTo(("us-east-1"));
         assertThat(config.getFunctionName()).isNull();
-        assertThat(config.getInvocationType()).isEqualTo(InvocationType.RequestResponse);
         assertThat(config.getQualifier()).isEqualTo(DEFAULT_QUALIFIER);
         assertThat(config.getConnectionTimeout()).isEqualTo(10000);
         assertThat(config.getRequestTimeout()).isEqualTo(5000);
@@ -100,16 +98,6 @@ public class TbLambdaNodeTest {
         assertThatThrownBy(() -> node.init(ctx, configuration))
                 .isInstanceOf(TbNodeException.class)
                 .hasMessage("Function name must be set!");
-    }
-
-    @Test
-    public void givenInvocationTypeIsNull_whenInit_thenThrowsException() {
-        config.setFunctionName("new-function");
-        config.setInvocationType(null);
-        var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-        assertThatThrownBy(() -> node.init(ctx, configuration))
-                .isInstanceOf(TbNodeException.class)
-                .hasMessage("Invocation type must be set!");
     }
 
     @ParameterizedTest
@@ -301,12 +289,10 @@ public class TbLambdaNodeTest {
     }
 
     private InvokeRequest createInvokeRequest(TbMsg msg) {
-        InvokeRequest request = new InvokeRequest()
+        return new InvokeRequest()
                 .withFunctionName(getFunctionName(msg))
-                .withPayload(msg.getData());
-        request.setInvocationType(config.getInvocationType());
-        request.withQualifier(getQualifier(msg));
-        return request;
+                .withPayload(msg.getData())
+                .withQualifier(getQualifier(msg));
     }
 
     private String getQualifier(TbMsg msg) {
