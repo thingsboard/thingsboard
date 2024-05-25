@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,8 +66,8 @@ import org.thingsboard.server.service.ws.telemetry.cmd.v2.LatestValueCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.TimeSeriesCmd;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.UnsubscribeCmd;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -95,7 +95,8 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     private static final int DEFAULT_LIMIT = 100;
     private final Map<String, Map<Integer, TbAbstractSubCtx>> subscriptionsBySessionId = new ConcurrentHashMap<>();
 
-    @Autowired @Lazy
+    @Autowired
+    @Lazy
     private WebSocketService wsService;
 
     @Autowired
@@ -560,17 +561,14 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
         List<String> keys = cmd.getKeys();
         List<ReadTsKvQuery> finalTsKvQueryList;
         List<ReadTsKvQuery> tsKvQueryList = keys.stream().map(key -> {
-            var query = new BaseReadTsKvQuery(
-                    key, cmd.getStartTs(), cmd.getEndTs(), cmd.getInterval(), getLimit(cmd.getLimit()), cmd.getAgg()
-            );
+            var query = new BaseReadTsKvQuery(key, cmd.getStartTs(), cmd.getEndTs(), cmd.toAggregationParams(), getLimit(cmd.getLimit()));
             queriesKeys.put(query.getId(), query.getKey());
             return query;
         }).collect(Collectors.toList());
         if (cmd.isFetchLatestPreviousPoint()) {
             finalTsKvQueryList = new ArrayList<>(tsKvQueryList);
             finalTsKvQueryList.addAll(keys.stream().map(key -> {
-                        var query = new BaseReadTsKvQuery(
-                                key, cmd.getStartTs() - TimeUnit.DAYS.toMillis(365), cmd.getStartTs(), cmd.getInterval(), 1, cmd.getAgg());
+                        var query = new BaseReadTsKvQuery(key, cmd.getStartTs() - TimeUnit.DAYS.toMillis(365), cmd.getStartTs(), cmd.toAggregationParams(), 1);
                         queriesKeys.put(query.getId(), query.getKey());
                         return query;
                     }
@@ -731,7 +729,14 @@ public class DefaultTbEntityDataSubscriptionService implements TbEntityDataSubsc
     public void cancelAllSessionSubscriptions(String sessionId) {
         Map<Integer, TbAbstractSubCtx> sessionSubs = subscriptionsBySessionId.remove(sessionId);
         if (sessionSubs != null) {
-            sessionSubs.values().forEach(this::cleanupAndCancel);
+            sessionSubs.values().forEach(sub -> {
+                        try {
+                            cleanupAndCancel(sub);
+                        } catch (Exception e) {
+                            log.warn("[{}] Failed to remove subscription {} due to ", sub.getTenantId(), sub, e);
+                        }
+                    }
+            );
         }
     }
 

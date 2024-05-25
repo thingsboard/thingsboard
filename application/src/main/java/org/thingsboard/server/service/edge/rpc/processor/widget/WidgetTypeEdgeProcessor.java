@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,8 +38,7 @@ public class WidgetTypeEdgeProcessor extends BaseEdgeProcessor {
         WidgetTypeId widgetTypeId = new WidgetTypeId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
-            case ADDED:
-            case UPDATED:
+            case ADDED, UPDATED -> {
                 WidgetTypeDetails widgetTypeDetails = widgetTypeService.findWidgetTypeDetailsById(edgeEvent.getTenantId(), widgetTypeId);
                 if (widgetTypeDetails != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
@@ -50,16 +49,17 @@ public class WidgetTypeEdgeProcessor extends BaseEdgeProcessor {
                             .addWidgetTypeUpdateMsg(widgetTypeUpdateMsg)
                             .build();
                 }
-                break;
-            case DELETED:
+            }
+            case DELETED -> {
                 WidgetTypeUpdateMsg widgetTypeUpdateMsg =
                         ((WidgetMsgConstructor) widgetMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructWidgetTypeDeleteMsg(widgetTypeId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addWidgetTypeUpdateMsg(widgetTypeUpdateMsg)
                         .build();
-                break;
+            }
         }
         return downlinkMsg;
     }
+
 }

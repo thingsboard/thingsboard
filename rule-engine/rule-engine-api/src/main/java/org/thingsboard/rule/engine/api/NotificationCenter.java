@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public interface NotificationCenter {
 
     void markNotificationAsRead(TenantId tenantId, UserId recipientId, NotificationId notificationId);
 
-    void markAllNotificationsAsRead(TenantId tenantId, UserId recipientId);
+    void markAllNotificationsAsRead(TenantId tenantId, NotificationDeliveryMethod deliveryMethod, UserId recipientId);
 
     void deleteNotification(TenantId tenantId, UserId recipientId, NotificationId notificationId);
 

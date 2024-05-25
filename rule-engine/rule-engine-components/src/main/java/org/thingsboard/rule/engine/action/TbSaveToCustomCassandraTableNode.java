@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ import org.thingsboard.server.dao.cassandra.guava.GuavaSession;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 import org.thingsboard.server.dao.nosql.TbResultSetFuture;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -72,7 +72,6 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
 public class TbSaveToCustomCassandraTableNode implements TbNode {
 
     private static final String TABLE_PREFIX = "cs_tb_";
-    private static final JsonParser parser = new JsonParser();
     private static final String ENTITY_ID = "$entityId";
 
     private TbSaveToCustomCassandraTableNodeConfiguration config;
@@ -168,7 +167,7 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
     }
 
     private ListenableFuture<Void> save(TbMsg msg, TbContext ctx) {
-        JsonElement data = parser.parse(msg.getData());
+        JsonElement data = JsonParser.parseString(msg.getData());
         if (!data.isJsonObject()) {
             throw new IllegalStateException("Invalid message structure, it is not a JSON Object:" + data);
         } else {

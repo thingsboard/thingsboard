@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 package org.thingsboard.mqtt;
+
+import io.netty.handler.codec.mqtt.MqttConnAckMessage;
+import io.netty.handler.codec.mqtt.MqttMessage;
+import io.netty.handler.codec.mqtt.MqttPubAckMessage;
+import io.netty.handler.codec.mqtt.MqttSubAckMessage;
+import io.netty.handler.codec.mqtt.MqttUnsubAckMessage;
 
 /**
  * Created by Valerii Sosliuk on 12/30/2017.
@@ -32,4 +38,19 @@ public interface MqttClientCallback {
      *
      */
     void onSuccessfulReconnect();
+
+    default void onConnAck(MqttConnAckMessage connAckMessage) {
+    }
+
+    default void onPubAck(MqttPubAckMessage pubAckMessage) {
+    }
+
+    default void onSubAck(MqttSubAckMessage pubAckMessage) {
+    }
+
+    default void onUnsubAck(MqttUnsubAckMessage unsubAckMessage) {
+    }
+
+    default void onDisconnect(MqttMessage mqttDisconnectMessage) {
+    }
 }

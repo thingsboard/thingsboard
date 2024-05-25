@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@
           </div>
         </div>
         <mat-expansion-panel class="tb-settings">
-          <mat-expansion-panel-header expandedHeight="48px">
+          <mat-expansion-panel-header>
             <mat-panel-description fxLayoutAlign="start" translate>
               widget-config.advanced-title-style
             </mat-panel-description>
@@ -241,21 +241,13 @@
         formControlName="datasources">
       </tb-datasources>
     </div>
-    <div class="tb-form-panel" *ngIf="widgetType === widgetTypes.rpc &&
-                                                  modelValue?.isDataEnabled">
-      <div class="tb-form-panel-title" translate>widget-config.target-device</div>
-      <div [formGroup]="targetDeviceSettings">
-        <tb-entity-alias-select fxFlex
-                                [tbRequired]="!widgetEditMode"
-                                [aliasController]="aliasController"
-                                [allowedEntityTypes]="[entityTypes.DEVICE]"
-                                [callbacks]="widgetConfigCallbacks"
-                                formControlName="targetDeviceAliasId">
-        </tb-entity-alias-select>
-      </div>
-    </div>
+    <ng-container *ngIf="widgetType === widgetTypes.rpc &&
+                         modelValue?.isDataEnabled" [formGroup]="targetDeviceSettings">
+      <tb-target-device formControlName="targetDevice">
+      </tb-target-device>
+    </ng-container>
     <div *ngIf="widgetType === widgetTypes.alarm && modelValue?.isDataEnabled"
-         [formGroup]="dataSettings" class="tb-form-panel" >
+         [formGroup]="dataSettings" class="tb-form-panel">
       <div class="tb-form-panel-title" translate>widget-config.alarm-source</div>
       <tb-datasource
         formControlName="alarmSource">
@@ -296,6 +288,7 @@
     <div *ngIf="displayAdvancedAppearance" style="height: 100%;" [formGroup]="advancedSettings">
       <tb-widget-settings
         [aliasController]="aliasController"
+        [dataKeyCallbacks]="widgetConfigCallbacks"
         [dashboard]="dashboard"
         [widget]="widget"
         [widgetConfig]="modelValue"

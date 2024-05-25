@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,10 @@ import org.thingsboard.server.service.edge.rpc.fetch.DeviceProfilesEdgeEventFetc
 import org.thingsboard.server.service.edge.rpc.fetch.DevicesEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.EdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.EntityViewsEdgeEventFetcher;
+import org.thingsboard.server.service.edge.rpc.fetch.NotificationRuleEdgeEventFetcher;
+import org.thingsboard.server.service.edge.rpc.fetch.NotificationTargetEdgeEventFetcher;
+import org.thingsboard.server.service.edge.rpc.fetch.NotificationTemplateEdgeEventFetcher;
+import org.thingsboard.server.service.edge.rpc.fetch.OAuth2EdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.OtaPackagesEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.QueuesEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.RuleChainsEdgeEventFetcher;
@@ -73,12 +77,16 @@ public class EdgeSyncCursor {
         fetchers.add(new AssetsEdgeEventFetcher(ctx.getAssetService()));
         fetchers.add(new EntityViewsEdgeEventFetcher(ctx.getEntityViewService()));
         if (fullSync) {
+            fetchers.add(new NotificationTemplateEdgeEventFetcher(ctx.getNotificationTemplateService()));
+            fetchers.add(new NotificationTargetEdgeEventFetcher(ctx.getNotificationTargetService()));
+            fetchers.add(new NotificationRuleEdgeEventFetcher(ctx.getNotificationRuleService()));
             fetchers.add(new SystemWidgetTypesEdgeEventFetcher(ctx.getWidgetTypeService()));
             fetchers.add(new TenantWidgetTypesEdgeEventFetcher(ctx.getWidgetTypeService()));
             fetchers.add(new SystemWidgetsBundlesEdgeEventFetcher(ctx.getWidgetsBundleService()));
             fetchers.add(new TenantWidgetsBundlesEdgeEventFetcher(ctx.getWidgetsBundleService()));
             fetchers.add(new OtaPackagesEdgeEventFetcher(ctx.getOtaPackageService()));
             fetchers.add(new TenantResourcesEdgeEventFetcher(ctx.getResourceService()));
+            fetchers.add(new OAuth2EdgeEventFetcher(ctx.getOAuth2Service()));
         }
     }
 
@@ -98,4 +106,5 @@ public class EdgeSyncCursor {
     public int getCurrentIdx() {
         return currentIdx;
     }
+
 }

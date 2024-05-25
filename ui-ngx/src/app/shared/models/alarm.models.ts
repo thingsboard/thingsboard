@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -335,7 +335,7 @@ export class AlarmQueryV2 {
     let query = this.affectedEntityId ? `/${this.affectedEntityId.entityType}/${this.affectedEntityId.id}` : '';
     query += this.pageLink.toQuery();
     if (this.typeList && this.typeList.length) {
-      query += `&typeList=${this.typeList.join(',')}`;
+      query += `&typeList=${this.typeList.map(type => encodeURIComponent(type)).join(',')}`;
     }
     if (this.statusList && this.statusList.length) {
       query += `&statusList=${this.statusList.join(',')}`;

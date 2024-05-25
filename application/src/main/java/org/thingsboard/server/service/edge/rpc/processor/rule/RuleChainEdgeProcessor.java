@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.thingsboard.server.service.edge.rpc.processor.rule;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -42,16 +43,19 @@ public class RuleChainEdgeProcessor extends BaseEdgeProcessor {
         RuleChainId ruleChainId = new RuleChainId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
-            case ADDED:
-            case UPDATED:
-            case ASSIGNED_TO_EDGE:
+            case ADDED, UPDATED, ASSIGNED_TO_EDGE -> {
                 RuleChain ruleChain = ruleChainService.findRuleChainById(edgeEvent.getTenantId(), ruleChainId);
                 if (ruleChain != null) {
                     boolean isRoot = false;
                     if (edgeEvent.getBody() != null && edgeEvent.getBody().get(EDGE_IS_ROOT_BODY_KEY) != null) {
                         try {
                             isRoot = Boolean.parseBoolean(edgeEvent.getBody().get(EDGE_IS_ROOT_BODY_KEY).asText());
-                        } catch (Exception ignored) {}
+                        } catch (Exception ignored) {
+                        }
+                    }
+                    if (!isRoot) {
+                        Edge edge = edgeService.findEdgeById(edgeEvent.getTenantId(), edgeEvent.getEdgeId());
+                        isRoot = edge.getRootRuleChainId().equals(ruleChainId);
                     }
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     RuleChainUpdateMsg ruleChainUpdateMsg = ((RuleChainMsgConstructor)
@@ -62,15 +66,12 @@ public class RuleChainEdgeProcessor extends BaseEdgeProcessor {
                             .addRuleChainUpdateMsg(ruleChainUpdateMsg)
                             .build();
                 }
-                break;
-            case DELETED:
-            case UNASSIGNED_FROM_EDGE:
-                downlinkMsg = DownlinkMsg.newBuilder()
-                        .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                        .addRuleChainUpdateMsg(((RuleChainMsgConstructor) ruleChainMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion))
-                                .constructRuleChainDeleteMsg(ruleChainId))
-                        .build();
-                break;
+            }
+            case DELETED, UNASSIGNED_FROM_EDGE -> downlinkMsg = DownlinkMsg.newBuilder()
+                    .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
+                    .addRuleChainUpdateMsg(((RuleChainMsgConstructor) ruleChainMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion))
+                            .constructRuleChainDeleteMsg(ruleChainId))
+                    .build();
         }
         return downlinkMsg;
     }
@@ -94,4 +95,5 @@ public class RuleChainEdgeProcessor extends BaseEdgeProcessor {
         }
         return downlinkMsg;
     }
+
 }

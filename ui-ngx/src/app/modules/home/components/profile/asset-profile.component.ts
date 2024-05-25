@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { ServiceType } from '@shared/models/queue.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { DashboardId } from '@shared/models/id/dashboard-id';
-import { AssetProfile, TB_SERVICE_QUEUE } from '@shared/models/asset.models';
+import { AssetProfile } from '@shared/models/asset.models';
 import { RuleChainType } from '@shared/models/rule-chain.models';
 
 @Component({
@@ -45,8 +45,6 @@ export class AssetProfileComponent extends EntityComponent<AssetProfile> {
   serviceType = ServiceType.TB_RULE_ENGINE;
 
   edgeRuleChainType = RuleChainType.EDGE;
-
-  TB_SERVICE_QUEUE = TB_SERVICE_QUEUE;
 
   assetProfileId: EntityId;
 

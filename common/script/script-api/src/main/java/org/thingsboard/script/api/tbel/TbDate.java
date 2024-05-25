@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,6 @@ import java.time.format.DateTimeParseException;
 import java.time.format.FormatStyle;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAccessor;
-import java.util.Arrays;
 import java.util.Locale;
 import java.util.function.BiFunction;
 
@@ -66,28 +65,48 @@ public class TbDate implements Serializable, Cloneable {
     }
 
     public TbDate(String s, String pattern, String locale, String zoneId) {
-       this.instant = parseInstant(s, pattern, locale, zoneId);
+        this.instant = parseInstant(s, pattern, locale, zoneId);
+    }
+
+    public TbDate(String s, String pattern, Locale locale, ZoneId zoneId) {
+        instant =  parseInstant(s, pattern, locale, zoneId);
     }
 
     public TbDate(long dateMilliSecond) {
         instant = Instant.ofEpochMilli(dateMilliSecond);
     }
 
-    public TbDate(int year, int month, int date, String... tz) {
+    public TbDate(int year, int month, int date) {
+        this(year, month, date, 0, 0, 0, 0, null);
+    }
+
+    public TbDate(int year, int month, int date, String tz) {
         this(year, month, date, 0, 0, 0, 0, tz);
     }
 
-    public TbDate(int year, int month, int date, int hrs, int min, String... tz) {
+    public TbDate(int year, int month, int date, int hrs, int min) {
+        this(year, month, date, hrs, min, 0, 0, null);
+    }
+
+    public TbDate(int year, int month, int date, int hrs, int min, String tz) {
         this(year, month, date, hrs, min, 0, 0, tz);
     }
 
-    public TbDate(int year, int month, int date, int hrs, int min, int second, String... tz) {
+    public TbDate(int year, int month, int date, int hrs, int min, int second) {
+        this(year, month, date, hrs, min, second, 0, null);
+    }
+
+    public TbDate(int year, int month, int date, int hrs, int min, int second, String tz) {
         this(year, month, date, hrs, min, second, 0, tz);
     }
 
-    public TbDate(int year, int month, int date, int hrs, int min, int second, int secondMilli, String... tz) {
-        ZoneId zoneId = tz.length > 0 ? ZoneId.of(Arrays.stream(tz).findFirst().get()) : ZoneId.systemDefault();
-        instant = parseInstant(year, month, date, hrs, min, second,  secondMilli, zoneId);
+    public TbDate(int year, int month, int date, int hrs, int min, int second, int milliSecond) {
+        this(year, month, date, hrs, min, second, milliSecond, null);
+    }
+
+    public TbDate(int year, int month, int date, int hrs, int min, int second, int milliSecond, String tz) {
+        ZoneId zoneId = tz != null && tz.length() > 0 ? ZoneId.of(tz) : ZoneId.systemDefault();
+        instant = parseInstant(year, month, date, hrs, min, second,  milliSecond, zoneId);
     }
 
     public Instant getInstant() {
@@ -231,11 +250,11 @@ public class TbDate implements Serializable, Cloneable {
         return instant.toEpochMilli();
     }
 
-   public static long UTC(int year) {
+    public static long UTC(int year) {
         return UTC(year, 0, 0, 0, 0, 0, 0);
     }
     public static long UTC(int year, int month) {
-       return UTC(year, month, 0, 0, 0, 0, 0);
+        return UTC(year, month, 0, 0, 0, 0, 0);
     }
     public static long UTC(int year, int month, int date) {
         return UTC(year, month, date, 0, 0, 0, 0);
@@ -244,7 +263,7 @@ public class TbDate implements Serializable, Cloneable {
         return UTC(year, month, date, hrs, 0, 0, 0);
     }
     public static long UTC(int year, int month, int date, int hrs, int min) {
-       return UTC(year, month, date, hrs, min, 0, 0);
+        return UTC(year, month, date, hrs, min, 0, 0);
     }
     public static long UTC(int year, int month, int date, int hrs, int min, int sec) {
         return UTC(year, month, date, hrs, min, sec, 0);
@@ -268,22 +287,22 @@ public class TbDate implements Serializable, Cloneable {
     }
     // day in week
     public int getUTCDay() {
-       return getUTCDateTime().getDayOfWeek().getValue();
+        return getUTCDateTime().getDayOfWeek().getValue();
     }
 
     public int getUTCHours() {
-       return getUTCDateTime().getHour();
+        return getUTCDateTime().getHour();
     }
 
     public int getUTCMinutes() {
-       return getZonedDateTime().getMinute();
+        return getZonedDateTime().getMinute();
     }
 
     public int getUTCSeconds() {
-       return getUTCDateTime().getSecond();
+        return getUTCDateTime().getSecond();
     }
     public int getUTCMilliseconds() {
-       return getUTCDateTime().getNano()/1000000;
+        return getUTCDateTime().getNano()/1000000;
     }
 
     public void setUTCFullYear(int year) {
@@ -361,25 +380,25 @@ public class TbDate implements Serializable, Cloneable {
     }
     // day in week
     public int getDay() {
-       return getLocalDateTime().getDayOfWeek().getValue();
+        return getLocalDateTime().getDayOfWeek().getValue();
     }
 
     public int getHours() {
-       return getLocalDateTime().getHour();
+        return getLocalDateTime().getHour();
     }
 
     public int getMinutes() {
-       return getLocalDateTime().getMinute();
+        return getLocalDateTime().getMinute();
     }
 
     public int getSeconds() {
-       return getLocalDateTime().getSecond();
+        return getLocalDateTime().getSecond();
     }
     public int getMilliseconds() {
         return getLocalDateTime().getNano()/1000000;
     }
     // Milliseconds since Jan 1, 1970, 00:00:00.000 GMT
-     public long getTime() {
+    public long getTime() {
         return instant.toEpochMilli();
     }
     public long valueOf(){
@@ -458,8 +477,8 @@ public class TbDate implements Serializable, Cloneable {
     }
 
     // Milliseconds since Jan 1, 1970, 00:00:00.000 GMT
-     public void setTime(long dateMilliSecond) {
-         instant = Instant.ofEpochMilli(dateMilliSecond);
+    public void setTime(long dateMilliSecond) {
+        instant = Instant.ofEpochMilli(dateMilliSecond);
     }
 
     public ZoneOffset getLocaleZoneOffset(Instant... instants){
@@ -544,9 +563,9 @@ public class TbDate implements Serializable, Cloneable {
         }
     }
     private static Instant getInstant_RFC_1123(String s) {
-            // assuming RFC-1123 value "Tue, 3 Jun 2008 11:05:30 GMT"
-            // assuming RFC-1123 value "Tue, 3 Jun 2008 11:05:30 GMT-02:00"
-            // assuming RFC-1123 value "Tue, 3 Jun 2008 11:05:30 -0200"
+        // assuming RFC-1123 value "Tue, 3 Jun 2008 11:05:30 GMT"
+        // assuming RFC-1123 value "Tue, 3 Jun 2008 11:05:30 GMT-02:00"
+        // assuming RFC-1123 value "Tue, 3 Jun 2008 11:05:30 -0200"
         DateTimeFormatter formatter = DateTimeFormatter.RFC_1123_DATE_TIME;
         try {
             return Instant.from(formatter.parse(s));
@@ -565,5 +584,12 @@ public class TbDate implements Serializable, Cloneable {
         String id =  systemZone.getRules().getOffset(instant).getId();
         value =  value.trim() + " " + id.replaceAll(":", "");
         return Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(value));
+    }
+
+    private static Instant parseInstant(String s, String pattern, Locale locale, ZoneId zoneId) {
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(pattern, locale);
+        LocalDateTime localDateTime = LocalDateTime.parse(s, dateTimeFormatter);
+        ZonedDateTime zonedDateTime = localDateTime.atZone(zoneId);
+        return zonedDateTime.toInstant();
     }
 }

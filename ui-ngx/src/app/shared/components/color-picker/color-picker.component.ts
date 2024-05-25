@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -31,8 +31,8 @@ export enum ColorType {
 }
 
 const colorPresetsHex =
-  ['#435B63', '#F44336', '#E89623', '#F5DD00', '#8BC34A', '#4CAF50', '#009688', '#048AD3', '#673AB7', '#9C27B0', '#E91E63',
-   '#A1ADB1', '#F9A19B', '#FFD190', '#FFF59D', '#C5E1A4', '#A5D7A7', '#80CBC3', '#81C4E9', '#B39CDB', '#CD93D7', '#F48FB1'];
+  ['#435B63', '#F44336', '#E89623', '#F5DD00', '#8BC34A', '#4CAF50', '#009688', '#048AD3', '#673AB7', '#9C27B0', '#E91E63', '#6F113A',
+   '#A1ADB1', '#F9A19B', '#FFD190', '#FFF59D', '#C5E1A4', '#A5D7A7', '#80CBC3', '#81C4E9', '#B39CDB', '#CD93D7', '#F48FB1', '#BC91A4'];
 
 @Component({
   selector: `tb-color-picker`,

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -45,6 +46,10 @@ import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.edge.EdgeSynchronizationManager;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.notification.NotificationRuleService;
+import org.thingsboard.server.dao.notification.NotificationTargetService;
+import org.thingsboard.server.dao.notification.NotificationTemplateService;
+import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -54,13 +59,13 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.service.edge.rpc.constructor.alarm.AlarmMsgConstructorFactory;
 import org.thingsboard.server.service.edge.rpc.constructor.alarm.AlarmMsgConstructorV1;
 import org.thingsboard.server.service.edge.rpc.constructor.alarm.AlarmMsgConstructorV2;
@@ -80,6 +85,8 @@ import org.thingsboard.server.service.edge.rpc.constructor.edge.EdgeMsgConstruct
 import org.thingsboard.server.service.edge.rpc.constructor.entityview.EntityViewMsgConstructorFactory;
 import org.thingsboard.server.service.edge.rpc.constructor.entityview.EntityViewMsgConstructorV1;
 import org.thingsboard.server.service.edge.rpc.constructor.entityview.EntityViewMsgConstructorV2;
+import org.thingsboard.server.service.edge.rpc.constructor.notification.NotificationMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.oauth2.OAuth2MsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.ota.OtaPackageMsgConstructorFactory;
 import org.thingsboard.server.service.edge.rpc.constructor.ota.OtaPackageMsgConstructorV1;
 import org.thingsboard.server.service.edge.rpc.constructor.ota.OtaPackageMsgConstructorV2;
@@ -127,13 +134,15 @@ import org.thingsboard.server.service.edge.rpc.processor.device.profile.DevicePr
 import org.thingsboard.server.service.edge.rpc.processor.entityview.EntityViewProcessorFactory;
 import org.thingsboard.server.service.edge.rpc.processor.entityview.EntityViewProcessorV1;
 import org.thingsboard.server.service.edge.rpc.processor.entityview.EntityViewProcessorV2;
+import org.thingsboard.server.service.edge.rpc.processor.notification.NotificationEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.oauth2.OAuth2EdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.relation.RelationEdgeProcessorFactory;
 import org.thingsboard.server.service.edge.rpc.processor.relation.RelationEdgeProcessorV1;
 import org.thingsboard.server.service.edge.rpc.processor.relation.RelationEdgeProcessorV2;
 import org.thingsboard.server.service.edge.rpc.processor.resource.ResourceEdgeProcessorFactory;
 import org.thingsboard.server.service.edge.rpc.processor.resource.ResourceEdgeProcessorV1;
 import org.thingsboard.server.service.edge.rpc.processor.resource.ResourceEdgeProcessorV2;
-import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
+import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
@@ -149,13 +158,16 @@ public abstract class BaseEdgeProcessorTest {
     protected TelemetrySubscriptionService tsSubService;
 
     @MockBean
-    protected TbNotificationEntityService notificationEntityService;
+    protected TbLogEntityActionService logEntityActionService;
 
     @MockBean
     protected RuleChainService ruleChainService;
 
     @MockBean
     protected AlarmService alarmService;
+
+    @MockBean
+    protected AlarmCommentService alarmCommentService;
 
     @MockBean
     protected DeviceService deviceService;
@@ -191,6 +203,15 @@ public abstract class BaseEdgeProcessorTest {
     protected UserService userService;
 
     @MockBean
+    protected NotificationRuleService notificationRuleService;
+
+    @MockBean
+    protected NotificationTargetService notificationTargetService;
+
+    @MockBean
+    protected NotificationTemplateService notificationTemplateService;
+
+    @MockBean
     protected DeviceProfileService deviceProfileService;
 
     @MockBean
@@ -204,6 +225,9 @@ public abstract class BaseEdgeProcessorTest {
 
     @MockBean
     protected AttributesService attributesService;
+
+    @MockBean
+    protected TimeseriesService timeseriesService;
 
     @MockBean
     protected TbClusterService tbClusterService;
@@ -231,6 +255,9 @@ public abstract class BaseEdgeProcessorTest {
 
     @MockBean
     protected ResourceService resourceService;
+
+    @MockBean
+    protected OAuth2Service oAuth2Service;
 
     @MockBean
     @Lazy
@@ -354,6 +381,12 @@ public abstract class BaseEdgeProcessorTest {
     protected WidgetMsgConstructorV2 widgetMsgConstructorV2;
 
     @MockBean
+    protected NotificationMsgConstructor notificationMsgConstructor;
+
+    @MockBean
+    protected OAuth2MsgConstructor oAuth2MsgConstructor;
+
+    @MockBean
     protected AlarmEdgeProcessorV1 alarmProcessorV1;
 
     @MockBean
@@ -409,6 +442,12 @@ public abstract class BaseEdgeProcessorTest {
 
     @MockBean
     protected RelationEdgeProcessorV2 relationEdgeProcessorV2;
+
+    @MockBean
+    protected OAuth2EdgeProcessor oAuth2EdgeProcessor;
+
+    @MockBean
+    protected NotificationEdgeProcessor notificationEdgeProcessor;
 
     @SpyBean
     protected RuleChainMsgConstructorFactory ruleChainMsgConstructorFactory;
@@ -481,9 +520,6 @@ public abstract class BaseEdgeProcessorTest {
 
     @MockBean
     protected DbCallbackExecutorService dbCallbackExecutorService;
-    
-    @MockBean
-    protected DataDecodingEncodingService dataDecodingEncodingService;
 
     protected EdgeId edgeId;
     protected TenantId tenantId;
@@ -510,17 +546,18 @@ public abstract class BaseEdgeProcessorTest {
     }
 
     protected static Stream<Arguments> provideParameters() {
-        UUID dashoboardUUID = UUID.randomUUID();
-        UUID ruleChaindUUID = UUID.randomUUID();
+        UUID dashboardUUID = UUID.randomUUID();
+        UUID ruleChainUUID = UUID.randomUUID();
         return Stream.of(
                 Arguments.of(EdgeVersion.V_3_3_0, 0, 0, 0, 0),
                 Arguments.of(EdgeVersion.V_3_3_3, 0, 0, 0, 0),
                 Arguments.of(EdgeVersion.V_3_4_0, 0, 0, 0, 0),
                 Arguments.of(EdgeVersion.V_3_6_0,
-                        dashoboardUUID.getMostSignificantBits(),
-                        dashoboardUUID.getLeastSignificantBits(),
-                        ruleChaindUUID.getMostSignificantBits(),
-                        ruleChaindUUID.getLeastSignificantBits())
+                        dashboardUUID.getMostSignificantBits(),
+                        dashboardUUID.getLeastSignificantBits(),
+                        ruleChainUUID.getMostSignificantBits(),
+                        ruleChainUUID.getLeastSignificantBits())
         );
     }
+
 }

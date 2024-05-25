@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ public class DashboardMsgConstructorV1 extends BaseDashboardMsgConstructor {
 
     @Override
     public DashboardUpdateMsg constructDashboardUpdatedMsg(UpdateMsgType msgType, Dashboard dashboard) {
+        dashboard = JacksonUtil.clone(dashboard);
         imageService.inlineImagesForEdge(dashboard);
         DashboardUpdateMsg.Builder builder = DashboardUpdateMsg.newBuilder()
                 .setMsgType(msgType)
@@ -52,4 +53,5 @@ public class DashboardMsgConstructorV1 extends BaseDashboardMsgConstructor {
         }
         return builder.build();
     }
+
 }

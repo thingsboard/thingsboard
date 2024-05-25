@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package org.thingsboard.server.common.data.widget;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -32,14 +32,14 @@ import org.thingsboard.server.common.data.validation.NoXss;
 @JsonPropertyOrder({ "fqn", "name", "deprecated", "image", "description", "descriptor", "externalId" })
 public class WidgetTypeDetails extends WidgetType implements HasName, HasTenantId, HasImage, ExportableEntity<WidgetTypeId> {
 
-    @ApiModelProperty(position = 9, value = "Relative or external image URL. Replaced with image data URL (Base64) in case of relative URL and 'inlineImages' option enabled.")
+    @Schema(description = "Relative or external image URL. Replaced with image data URL (Base64) in case of relative URL and 'inlineImages' option enabled.")
     private String image;
     @NoXss
     @Length(fieldName = "description", max = 1024)
-    @ApiModelProperty(position = 10, value = "Description of the widget")
+    @Schema(description = "Description of the widget")
     private String description;
     @NoXss
-    @ApiModelProperty(position = 11, value = "Tags of the widget type")
+    @Schema(description = "Tags of the widget type")
     private String[] tags;
 
     @Getter

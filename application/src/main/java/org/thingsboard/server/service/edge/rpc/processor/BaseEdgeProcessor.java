@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Dashboard;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EdgeUtils;
@@ -50,8 +50,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.PageDataIterable;
+import org.thingsboard.server.common.data.page.PageDataIterableByTenantIdEntityId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -59,6 +59,7 @@ import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -72,6 +73,10 @@ import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.edge.EdgeSynchronizationManager;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.notification.NotificationRuleService;
+import org.thingsboard.server.dao.notification.NotificationTargetService;
+import org.thingsboard.server.dao.notification.NotificationTemplateService;
+import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -97,6 +102,8 @@ import org.thingsboard.server.service.edge.rpc.constructor.dashboard.DashboardMs
 import org.thingsboard.server.service.edge.rpc.constructor.device.DeviceMsgConstructorFactory;
 import org.thingsboard.server.service.edge.rpc.constructor.edge.EdgeMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.entityview.EntityViewMsgConstructorFactory;
+import org.thingsboard.server.service.edge.rpc.constructor.notification.NotificationMsgConstructor;
+import org.thingsboard.server.service.edge.rpc.constructor.oauth2.OAuth2MsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.ota.OtaPackageMsgConstructorFactory;
 import org.thingsboard.server.service.edge.rpc.constructor.queue.QueueMsgConstructorFactory;
 import org.thingsboard.server.service.edge.rpc.constructor.relation.RelationMsgConstructorFactory;
@@ -110,7 +117,7 @@ import org.thingsboard.server.service.edge.rpc.constructor.widget.WidgetMsgConst
 import org.thingsboard.server.service.edge.rpc.processor.alarm.AlarmEdgeProcessorFactory;
 import org.thingsboard.server.service.edge.rpc.processor.asset.AssetEdgeProcessorFactory;
 import org.thingsboard.server.service.edge.rpc.processor.entityview.EntityViewProcessorFactory;
-import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
+import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
@@ -137,13 +144,16 @@ public abstract class BaseEdgeProcessor {
     protected TelemetrySubscriptionService tsSubService;
 
     @Autowired
-    protected TbNotificationEntityService notificationEntityService;
+    protected TbLogEntityActionService logEntityActionService;
 
     @Autowired
     protected RuleChainService ruleChainService;
 
     @Autowired
     protected AlarmService alarmService;
+
+    @Autowired
+    protected AlarmCommentService alarmCommentService;
 
     @Autowired
     protected DeviceService deviceService;
@@ -221,6 +231,18 @@ public abstract class BaseEdgeProcessor {
     protected ResourceService resourceService;
 
     @Autowired
+    protected NotificationRuleService notificationRuleService;
+
+    @Autowired
+    protected NotificationTargetService notificationTargetService;
+
+    @Autowired
+    protected NotificationTemplateService notificationTemplateService;
+
+    @Autowired
+    protected OAuth2Service oAuth2Service;
+
+    @Autowired
     @Lazy
     protected TbQueueProducerProvider producerProvider;
 
@@ -250,6 +272,13 @@ public abstract class BaseEdgeProcessor {
 
     @Autowired
     protected EntityDataMsgConstructor entityDataMsgConstructor;
+
+    @Autowired
+    protected NotificationMsgConstructor notificationMsgConstructor;
+
+    @Autowired
+    protected OAuth2MsgConstructor oAuth2MsgConstructor;
+
 
     @Autowired
     protected RuleChainMsgConstructorFactory ruleChainMsgConstructorFactory;
@@ -318,7 +347,7 @@ public abstract class BaseEdgeProcessor {
                                                    EntityId entityId,
                                                    JsonNode body) {
         ListenableFuture<Optional<AttributeKvEntry>> future =
-                attributesService.find(tenantId, edgeId, DataConstants.SERVER_SCOPE, DefaultDeviceStateService.ACTIVITY_STATE);
+                attributesService.find(tenantId, edgeId, AttributeScope.SERVER_SCOPE, DefaultDeviceStateService.ACTIVITY_STATE);
         return Futures.transformAsync(future, activeOpt -> {
             if (activeOpt.isEmpty()) {
                 log.trace("Edge is not activated. Skipping event. tenantId [{}], edgeId [{}], type[{}], " +
@@ -343,32 +372,16 @@ public abstract class BaseEdgeProcessor {
 
     private boolean doSaveIfEdgeIsOffline(EdgeEventType type,
                                           EdgeEventActionType action) {
-        switch (action) {
-            case TIMESERIES_UPDATED:
-            case ALARM_ACK:
-            case ALARM_CLEAR:
-            case ALARM_ASSIGNED:
-            case ALARM_UNASSIGNED:
-            case CREDENTIALS_REQUEST:
-                return true;
-        }
-        switch (type) {
-            case ALARM:
-            case RULE_CHAIN:
-            case RULE_CHAIN_METADATA:
-            case USER:
-            case CUSTOMER:
-            case TENANT:
-            case TENANT_PROFILE:
-            case WIDGETS_BUNDLE:
-            case WIDGET_TYPE:
-            case ADMIN_SETTINGS:
-            case OTA_PACKAGE:
-            case QUEUE:
-            case RELATION:
-                return true;
-        }
-        return false;
+        return switch (action) {
+            case TIMESERIES_UPDATED, ALARM_ACK, ALARM_CLEAR, ALARM_ASSIGNED, ALARM_UNASSIGNED, CREDENTIALS_REQUEST, ADDED_COMMENT, UPDATED_COMMENT ->
+                    true;
+            default -> switch (type) {
+                case ALARM, ALARM_COMMENT, RULE_CHAIN, RULE_CHAIN_METADATA, USER, CUSTOMER, TENANT, TENANT_PROFILE, WIDGETS_BUNDLE, WIDGET_TYPE,
+                        ADMIN_SETTINGS, OTA_PACKAGE, QUEUE, RELATION, NOTIFICATION_TEMPLATE, NOTIFICATION_TARGET, NOTIFICATION_RULE ->
+                        true;
+                default -> false;
+            };
+        };
     }
 
     private ListenableFuture<Void> doSaveEdgeEvent(TenantId tenantId, EdgeId edgeId, EdgeEventType type, EdgeEventActionType action, EntityId entityId, JsonNode body) {
@@ -378,26 +391,18 @@ public abstract class BaseEdgeProcessor {
 
         EdgeEvent edgeEvent = EdgeUtils.constructEdgeEvent(tenantId, edgeId, type, action, entityId, body);
 
-        return Futures.transform(edgeEventService.saveAsync(edgeEvent), unused -> {
-            tbClusterService.onEdgeEventUpdate(tenantId, edgeId);
-            return null;
-        }, dbCallbackExecutorService);
+        return edgeEventService.saveAsync(edgeEvent);
     }
 
     protected ListenableFuture<Void> processActionForAllEdges(TenantId tenantId, EdgeEventType type,
                                                               EdgeEventActionType actionType, EntityId entityId,
-                                                              EdgeId sourceEdgeId) {
+                                                              JsonNode body, EdgeId sourceEdgeId) {
         List<ListenableFuture<Void>> futures = new ArrayList<>();
         if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
-            PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
-            PageData<TenantId> tenantsIds;
-            do {
-                tenantsIds = tenantService.findTenantsIds(pageLink);
-                for (TenantId tenantId1 : tenantsIds.getData()) {
-                    futures.addAll(processActionForAllEdgesByTenantId(tenantId1, type, actionType, entityId, null, sourceEdgeId));
-                }
-                pageLink = pageLink.nextPageLink();
-            } while (tenantsIds.hasNext());
+            PageDataIterable<TenantId> tenantIds = new PageDataIterable<>(link -> tenantService.findTenantsIds(link), 1024);
+            for (TenantId tenantId1 : tenantIds) {
+                futures.addAll(processActionForAllEdgesByTenantId(tenantId1, type, actionType, entityId, body, sourceEdgeId));
+            }
         } else {
             futures = processActionForAllEdgesByTenantId(tenantId, type, actionType, entityId, null, sourceEdgeId);
         }
@@ -410,22 +415,13 @@ public abstract class BaseEdgeProcessor {
                                                                             EntityId entityId,
                                                                             JsonNode body,
                                                                             EdgeId sourceEdgeId) {
-        PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
-        PageData<Edge> pageData;
         List<ListenableFuture<Void>> futures = new ArrayList<>();
-        do {
-            pageData = edgeService.findEdgesByTenantId(tenantId, pageLink);
-            if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
-                for (Edge edge : pageData.getData()) {
-                    if (!edge.getId().equals(sourceEdgeId)) {
-                        futures.add(saveEdgeEvent(tenantId, edge.getId(), type, actionType, entityId, body));
-                    }
-                }
-                if (pageData.hasNext()) {
-                    pageLink = pageLink.nextPageLink();
-                }
+        PageDataIterable<Edge> edges = new PageDataIterable<>(link -> edgeService.findEdgesByTenantId(tenantId, link), 1024);
+        for (Edge edge : edges) {
+            if (!edge.getId().equals(sourceEdgeId)) {
+                futures.add(saveEdgeEvent(tenantId, edge.getId(), type, actionType, entityId, body));
             }
-        } while (pageData != null && pageData.hasNext());
+        }
         return futures;
     }
 
@@ -436,27 +432,15 @@ public abstract class BaseEdgeProcessor {
     }
 
     protected UpdateMsgType getUpdateMsgType(EdgeEventActionType actionType) {
-        switch (actionType) {
-            case UPDATED:
-            case CREDENTIALS_UPDATED:
-            case ASSIGNED_TO_CUSTOMER:
-            case UNASSIGNED_FROM_CUSTOMER:
-                return UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE;
-            case ADDED:
-            case ASSIGNED_TO_EDGE:
-            case RELATION_ADD_OR_UPDATE:
-                return UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE;
-            case DELETED:
-            case UNASSIGNED_FROM_EDGE:
-            case RELATION_DELETED:
-                return UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE;
-            case ALARM_ACK:
-                return UpdateMsgType.ALARM_ACK_RPC_MESSAGE;
-            case ALARM_CLEAR:
-                return UpdateMsgType.ALARM_CLEAR_RPC_MESSAGE;
-            default:
-                throw new RuntimeException("Unsupported actionType [" + actionType + "]");
-        }
+        return switch (actionType) {
+            case UPDATED, CREDENTIALS_UPDATED, ASSIGNED_TO_CUSTOMER, UNASSIGNED_FROM_CUSTOMER, UPDATED_COMMENT ->
+                    UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE;
+            case ADDED, ASSIGNED_TO_EDGE, RELATION_ADD_OR_UPDATE, ADDED_COMMENT -> UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE;
+            case DELETED, UNASSIGNED_FROM_EDGE, RELATION_DELETED, DELETED_COMMENT, ALARM_DELETE -> UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE;
+            case ALARM_ACK -> UpdateMsgType.ALARM_ACK_RPC_MESSAGE;
+            case ALARM_CLEAR -> UpdateMsgType.ALARM_CLEAR_RPC_MESSAGE;
+            default -> throw new RuntimeException("Unsupported actionType [" + actionType + "]");
+        };
     }
 
     public ListenableFuture<Void> processEntityNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
@@ -517,94 +501,64 @@ public abstract class BaseEdgeProcessor {
 
     private ListenableFuture<Void> processNotificationToRelatedEdges(TenantId tenantId, EntityId entityId, EdgeEventType type,
                                                                      EdgeEventActionType actionType, EdgeId sourceEdgeId) {
-        PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
-        PageData<EdgeId> pageData;
         List<ListenableFuture<Void>> futures = new ArrayList<>();
-        do {
-            pageData = edgeService.findRelatedEdgeIdsByEntityId(tenantId, entityId, pageLink);
-            if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
-                for (EdgeId relatedEdgeId : pageData.getData()) {
-                    if (!relatedEdgeId.equals(sourceEdgeId)) {
-                        futures.add(saveEdgeEvent(tenantId, relatedEdgeId, type, actionType, entityId, null));
-                    }
-                }
-                if (pageData.hasNext()) {
-                    pageLink = pageLink.nextPageLink();
-                }
+        PageDataIterableByTenantIdEntityId<EdgeId> edgeIds =
+                new PageDataIterableByTenantIdEntityId<>(edgeService::findRelatedEdgeIdsByEntityId, tenantId, entityId, DEFAULT_PAGE_SIZE);
+        for (EdgeId relatedEdgeId : edgeIds) {
+            if (!relatedEdgeId.equals(sourceEdgeId)) {
+                futures.add(saveEdgeEvent(tenantId, relatedEdgeId, type, actionType, entityId, null));
             }
-        } while (pageData != null && pageData.hasNext());
+        }
         return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
     }
 
     private ListenableFuture<Void> updateDependentRuleChains(TenantId tenantId, RuleChainId processingRuleChainId, EdgeId edgeId) {
-        PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
-        PageData<RuleChain> pageData;
         List<ListenableFuture<Void>> futures = new ArrayList<>();
-        do {
-            pageData = ruleChainService.findRuleChainsByTenantIdAndEdgeId(tenantId, edgeId, pageLink);
-            if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
-                for (RuleChain ruleChain : pageData.getData()) {
-                    if (!ruleChain.getId().equals(processingRuleChainId)) {
-                        List<RuleChainConnectionInfo> connectionInfos =
-                                ruleChainService.loadRuleChainMetaData(ruleChain.getTenantId(), ruleChain.getId()).getRuleChainConnections();
-                        if (connectionInfos != null && !connectionInfos.isEmpty()) {
-                            for (RuleChainConnectionInfo connectionInfo : connectionInfos) {
-                                if (connectionInfo.getTargetRuleChainId().equals(processingRuleChainId)) {
-                                    futures.add(saveEdgeEvent(tenantId,
-                                            edgeId,
-                                            EdgeEventType.RULE_CHAIN_METADATA,
-                                            EdgeEventActionType.UPDATED,
-                                            ruleChain.getId(),
-                                            null));
-                                }
-                            }
-                        }
+        PageDataIterable<RuleChain> ruleChains = new PageDataIterable<>(link -> ruleChainService.findRuleChainsByTenantIdAndEdgeId(tenantId, edgeId, link), 1024);
+        for (RuleChain ruleChain : ruleChains) {
+            List<RuleChainConnectionInfo> connectionInfos =
+                    ruleChainService.loadRuleChainMetaData(ruleChain.getTenantId(), ruleChain.getId()).getRuleChainConnections();
+            if (connectionInfos != null && !connectionInfos.isEmpty()) {
+                for (RuleChainConnectionInfo connectionInfo : connectionInfos) {
+                    if (connectionInfo.getTargetRuleChainId().equals(processingRuleChainId)) {
+                        futures.add(saveEdgeEvent(tenantId,
+                                edgeId,
+                                EdgeEventType.RULE_CHAIN_METADATA,
+                                EdgeEventActionType.UPDATED,
+                                ruleChain.getId(),
+                                null));
                     }
                 }
-                if (pageData.hasNext()) {
-                    pageLink = pageLink.nextPageLink();
-                }
             }
-        } while (pageData != null && pageData.hasNext());
+        }
         return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
     }
 
     private ListenableFuture<Void> processEntityNotificationForAllEdges(TenantId tenantId, EdgeEventType type, EdgeEventActionType actionType, EntityId entityId, EdgeId sourceEdgeId) {
-        switch (actionType) {
-            case ADDED:
-            case UPDATED:
-            case DELETED:
-            case CREDENTIALS_UPDATED: // used by USER entity
-                return processActionForAllEdges(tenantId, type, actionType, entityId, sourceEdgeId);
-            default:
-                return Futures.immediateFuture(null);
-        }
+        return switch (actionType) {
+            case ADDED, UPDATED, DELETED, CREDENTIALS_UPDATED -> // used by USER entity
+                    processActionForAllEdges(tenantId, type, actionType, entityId, null, sourceEdgeId);
+            default -> Futures.immediateFuture(null);
+        };
     }
 
     protected EntityId constructEntityId(String entityTypeStr, long entityIdMSB, long entityIdLSB) {
         EntityType entityType = EntityType.valueOf(entityTypeStr);
-        switch (entityType) {
-            case DEVICE:
-                return new DeviceId(new UUID(entityIdMSB, entityIdLSB));
-            case ASSET:
-                return new AssetId(new UUID(entityIdMSB, entityIdLSB));
-            case ENTITY_VIEW:
-                return new EntityViewId(new UUID(entityIdMSB, entityIdLSB));
-            case DASHBOARD:
-                return new DashboardId(new UUID(entityIdMSB, entityIdLSB));
-            case TENANT:
-                return TenantId.fromUUID(new UUID(entityIdMSB, entityIdLSB));
-            case CUSTOMER:
-                return new CustomerId(new UUID(entityIdMSB, entityIdLSB));
-            case USER:
-                return new UserId(new UUID(entityIdMSB, entityIdLSB));
-            case EDGE:
-                return new EdgeId(new UUID(entityIdMSB, entityIdLSB));
-            default:
+        return switch (entityType) {
+            case DEVICE -> new DeviceId(new UUID(entityIdMSB, entityIdLSB));
+            case ASSET -> new AssetId(new UUID(entityIdMSB, entityIdLSB));
+            case ENTITY_VIEW -> new EntityViewId(new UUID(entityIdMSB, entityIdLSB));
+            case DASHBOARD -> new DashboardId(new UUID(entityIdMSB, entityIdLSB));
+            case TENANT -> TenantId.fromUUID(new UUID(entityIdMSB, entityIdLSB));
+            case CUSTOMER -> new CustomerId(new UUID(entityIdMSB, entityIdLSB));
+            case USER -> new UserId(new UUID(entityIdMSB, entityIdLSB));
+            case EDGE -> new EdgeId(new UUID(entityIdMSB, entityIdLSB));
+            default -> {
                 log.warn("Unsupported entity type [{}] during construct of entity id. entityIdMSB [{}], entityIdLSB [{}]",
                         entityTypeStr, entityIdMSB, entityIdLSB);
-                return null;
-        }
+                yield null;
+            }
+        };
     }
 
     protected UUID safeGetUUID(long mSB, long lSB) {
@@ -621,26 +575,17 @@ public abstract class BaseEdgeProcessor {
     }
 
     protected boolean isEntityExists(TenantId tenantId, EntityId entityId) {
-        switch (entityId.getEntityType()) {
-            case TENANT:
-                return tenantService.findTenantById(tenantId) != null;
-            case DEVICE:
-                return deviceService.findDeviceById(tenantId, new DeviceId(entityId.getId())) != null;
-            case ASSET:
-                return assetService.findAssetById(tenantId, new AssetId(entityId.getId())) != null;
-            case ENTITY_VIEW:
-                return entityViewService.findEntityViewById(tenantId, new EntityViewId(entityId.getId())) != null;
-            case CUSTOMER:
-                return customerService.findCustomerById(tenantId, new CustomerId(entityId.getId())) != null;
-            case USER:
-                return userService.findUserById(tenantId, new UserId(entityId.getId())) != null;
-            case DASHBOARD:
-                return dashboardService.findDashboardById(tenantId, new DashboardId(entityId.getId())) != null;
-            case EDGE:
-                return edgeService.findEdgeById(tenantId, new EdgeId(entityId.getId())) != null;
-            default:
-                return false;
-        }
+        return switch (entityId.getEntityType()) {
+            case TENANT -> tenantService.findTenantById(tenantId) != null;
+            case DEVICE -> deviceService.findDeviceById(tenantId, new DeviceId(entityId.getId())) != null;
+            case ASSET -> assetService.findAssetById(tenantId, new AssetId(entityId.getId())) != null;
+            case ENTITY_VIEW -> entityViewService.findEntityViewById(tenantId, new EntityViewId(entityId.getId())) != null;
+            case CUSTOMER -> customerService.findCustomerById(tenantId, new CustomerId(entityId.getId())) != null;
+            case USER -> userService.findUserById(tenantId, new UserId(entityId.getId())) != null;
+            case DASHBOARD -> dashboardService.findDashboardById(tenantId, new DashboardId(entityId.getId())) != null;
+            case EDGE -> edgeService.findEdgeById(tenantId, new EdgeId(entityId.getId())) != null;
+            default -> false;
+        };
     }
 
     protected void createRelationFromEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId) {
@@ -679,55 +624,38 @@ public abstract class BaseEdgeProcessor {
     }
 
     protected AssetProfile checkIfAssetProfileDefaultFieldsAssignedToEdge(TenantId tenantId, EdgeId edgeId, AssetProfile assetProfile, EdgeVersion edgeVersion) {
-        switch (edgeVersion) {
-            case V_3_3_3:
-            case V_3_3_0:
-            case V_3_4_0:
-                if (assetProfile.getDefaultDashboardId() != null
-                        && isEntityNotAssignedToEdge(tenantId, assetProfile.getDefaultDashboardId(), edgeId)) {
-                    assetProfile.setDefaultDashboardId(null);
-                }
-                if (assetProfile.getDefaultEdgeRuleChainId() != null
-                        && isEntityNotAssignedToEdge(tenantId, assetProfile.getDefaultEdgeRuleChainId(), edgeId)) {
-                    assetProfile.setDefaultEdgeRuleChainId(null);
-                }
-                break;
+        if (EdgeVersion.V_3_3_0.equals(edgeVersion) || EdgeVersion.V_3_3_3.equals(edgeVersion) || EdgeVersion.V_3_4_0.equals(edgeVersion)) {
+            if (assetProfile.getDefaultDashboardId() != null && isEntityNotAssignedToEdge(tenantId, assetProfile.getDefaultDashboardId(), edgeId)) {
+                assetProfile.setDefaultDashboardId(null);
+            }
+            if (assetProfile.getDefaultEdgeRuleChainId() != null && isEntityNotAssignedToEdge(tenantId, assetProfile.getDefaultEdgeRuleChainId(), edgeId)) {
+                assetProfile.setDefaultEdgeRuleChainId(null);
+            }
         }
         return assetProfile;
     }
 
     protected DeviceProfile checkIfDeviceProfileDefaultFieldsAssignedToEdge(TenantId tenantId, EdgeId edgeId, DeviceProfile deviceProfile, EdgeVersion edgeVersion) {
-        switch (edgeVersion) {
-            case V_3_3_3:
-            case V_3_3_0:
-            case V_3_4_0:
-                if (deviceProfile.getDefaultDashboardId() != null
-                        && isEntityNotAssignedToEdge(tenantId, deviceProfile.getDefaultDashboardId(), edgeId)) {
-                    deviceProfile.setDefaultDashboardId(null);
-                }
-                if (deviceProfile.getDefaultEdgeRuleChainId() != null
-                        && isEntityNotAssignedToEdge(tenantId, deviceProfile.getDefaultEdgeRuleChainId(), edgeId)) {
-                    deviceProfile.setDefaultEdgeRuleChainId(null);
-                }
-                break;
+        if (EdgeVersion.V_3_3_0.equals(edgeVersion) || EdgeVersion.V_3_3_3.equals(edgeVersion) || EdgeVersion.V_3_4_0.equals(edgeVersion)) {
+            if (deviceProfile.getDefaultDashboardId() != null && isEntityNotAssignedToEdge(tenantId, deviceProfile.getDefaultDashboardId(), edgeId)) {
+                deviceProfile.setDefaultDashboardId(null);
+            }
+            if (deviceProfile.getDefaultEdgeRuleChainId() != null && isEntityNotAssignedToEdge(tenantId, deviceProfile.getDefaultEdgeRuleChainId(), edgeId)) {
+                deviceProfile.setDefaultEdgeRuleChainId(null);
+            }
         }
         return deviceProfile;
     }
 
     private boolean isEntityNotAssignedToEdge(TenantId tenantId, EntityId entityId, EdgeId edgeId) {
-        PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
-        PageData<EdgeId> pageData;
-        do {
-            pageData = edgeService.findRelatedEdgeIdsByEntityId(tenantId, entityId, pageLink);
-            if (pageData != null && pageData.getData() != null && !pageData.getData().isEmpty()) {
-                if (pageData.getData().contains(edgeId)) {
-                    return false;
-                }
-                if (pageData.hasNext()) {
-                    pageLink = pageLink.nextPageLink();
-                }
+        PageDataIterableByTenantIdEntityId<EdgeId> edgeIds =
+                new PageDataIterableByTenantIdEntityId<>(edgeService::findRelatedEdgeIdsByEntityId, tenantId, entityId, DEFAULT_PAGE_SIZE);
+        for (EdgeId edgeId1 : edgeIds) {
+            if (edgeId1.equals(edgeId)) {
+                return false;
             }
-        } while (pageData != null && pageData.hasNext());
+        }
         return true;
     }
+
 }

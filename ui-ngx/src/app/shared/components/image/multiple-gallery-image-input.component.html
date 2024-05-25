@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -85,12 +85,11 @@
       </div>
     </div>
     <div *ngIf="linkType === ImageLinkType.none" class="tb-image-select-buttons-container">
-      <button #browseGalleryButton
-              mat-stroked-button
+      <button mat-stroked-button
               type="button"
               color="primary"
               class="tb-image-select-button"
-              (click)="toggleGallery($event, browseGalleryButton)">
+              (click)="toggleGallery($event)">
         <tb-icon matButtonIcon>filter</tb-icon>
         <span translate>image.browse-from-gallery</span>
       </button>

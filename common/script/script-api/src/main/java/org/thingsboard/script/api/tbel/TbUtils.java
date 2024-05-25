@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.thingsboard.script.api.tbel;
 
 import com.google.common.primitives.Bytes;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.mvel2.ExecutionContext;
 import org.mvel2.ParserConfiguration;
@@ -29,6 +30,8 @@ import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
@@ -37,13 +40,38 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
 
+@Slf4j
 public class TbUtils {
 
     private static final byte[] HEX_ARRAY = "0123456789ABCDEF".getBytes(StandardCharsets.US_ASCII);
+
+    private static final LinkedHashMap<String, String> mdnEncodingReplacements = new LinkedHashMap<>();
+
+    static {
+        mdnEncodingReplacements.put("\\+", "%20");
+        mdnEncodingReplacements.put("%21", "!");
+        mdnEncodingReplacements.put("%27", "'");
+        mdnEncodingReplacements.put("%28", "\\(");
+        mdnEncodingReplacements.put("%29", "\\)");
+        mdnEncodingReplacements.put("%7E", "~");
+        mdnEncodingReplacements.put("%3B", ";");
+        mdnEncodingReplacements.put("%2C", ",");
+        mdnEncodingReplacements.put("%2F", "/");
+        mdnEncodingReplacements.put("%3F", "\\?");
+        mdnEncodingReplacements.put("%3A", ":");
+        mdnEncodingReplacements.put("%40", "@");
+        mdnEncodingReplacements.put("%26", "&");
+        mdnEncodingReplacements.put("%3D", "=");
+        mdnEncodingReplacements.put("%2B", "\\+");
+        mdnEncodingReplacements.put("%24", Matcher.quoteReplacement("$"));
+        mdnEncodingReplacements.put("%23", "#");
+    }
 
     public static void register(ParserConfiguration parserConfig) throws Exception {
         parserConfig.addImport("btoa", new MethodStub(TbUtils.class.getMethod("btoa",
@@ -165,6 +193,10 @@ public class TbUtils {
                 ExecutionContext.class, Map.class, List.class)));
         parserConfig.addImport("toFlatMap", new MethodStub(TbUtils.class.getMethod("toFlatMap",
                 ExecutionContext.class, Map.class, List.class, boolean.class)));
+        parserConfig.addImport("encodeURI", new MethodStub(TbUtils.class.getMethod("encodeURI",
+                String.class)));
+        parserConfig.addImport("decodeURI", new MethodStub(TbUtils.class.getMethod("decodeURI",
+                String.class)));
     }
 
     public static String btoa(String input) {
@@ -579,22 +611,6 @@ public class TbUtils {
         return BigDecimal.valueOf(value).setScale(precision, RoundingMode.HALF_UP).floatValue();
     }
 
-    private static boolean isHexadecimal(String value) {
-        return value != null && (value.contains("0x") || value.contains("0X"));
-    }
-
-    private static String prepareNumberString(String value) {
-        if (value != null) {
-            value = value.trim();
-            if (isHexadecimal(value)) {
-                value = value.replace("0x", "");
-                value = value.replace("0X", "");
-            }
-            value = value.replace(",", ".");
-        }
-        return value;
-    }
-
     public static ExecutionHashMap<String, Object> toFlatMap(ExecutionContext ctx, Map<String, Object> json) {
         return toFlatMap(ctx, json, new ArrayList<>(), true);
     }
@@ -611,6 +627,24 @@ public class TbUtils {
         ExecutionHashMap<String, Object> map = new ExecutionHashMap<>(16, ctx);
         parseRecursive(json, map, excludeList, "", pathInKey);
         return map;
+    }
+
+
+    public static String encodeURI(String uri) {
+        String encoded = URLEncoder.encode(uri, StandardCharsets.UTF_8);
+        for (var entry : mdnEncodingReplacements.entrySet()) {
+            encoded = encoded.replaceAll(entry.getKey(), entry.getValue());
+        }
+        return encoded;
+    }
+
+    public static String decodeURI(String uri) {
+        ArrayList<String> allKeys = new ArrayList<>(mdnEncodingReplacements.keySet());
+        Collections.reverse(allKeys);
+        for (String strKey : allKeys) {
+            uri = uri.replaceAll(mdnEncodingReplacements.get(strKey), strKey);
+        }
+        return URLDecoder.decode(uri, StandardCharsets.UTF_8);
     }
 
     private static void parseRecursive(Object json, Map<String, Object> map, List<String> excludeList, String path, boolean pathInKey) {
@@ -651,6 +685,22 @@ public class TbUtils {
                 map.put(key, json);
             }
         }
+    }
+
+    private static boolean isHexadecimal(String value) {
+        return value != null && (value.contains("0x") || value.contains("0X"));
+    }
+
+    private static String prepareNumberString(String value) {
+        if (value != null) {
+            value = value.trim();
+            if (isHexadecimal(value)) {
+                value = value.replace("0x", "");
+                value = value.replace("0X", "");
+            }
+            value = value.replace(",", ".");
+        }
+        return value;
     }
 
     private static boolean isValidRadix(String value, int radix) {

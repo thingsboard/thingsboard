@@ -1510,8 +1510,7 @@
                 "step": "步",
                 "min-evaluation-period": "最小評估期間",
                 "max-evaluation-period": "最大評估期間"
-            },
-            "composite-operations-support": "支持複合讀/寫/觀察 操作"
+            }
         },
         "snmp": {
             "add-communication-config": "新增通訊配置",
@@ -3439,8 +3438,8 @@
         "popover-placement-leftBottom": "左側底部",
         "popover-hide-on-click-outside": "在外部單擊時隱藏彈出視窗",
         "popover-hide-dashboard-toolbar": "在彈出提示框中隱藏對話工具欄",
-        "popover-width": "瀏覽器單元中的彈出框寬度(例如100px、25vw)",
-        "popover-height": "瀏覽器單元中的彈出框高度 (例如100px、25vh)",
+        "popover-width": "彈出寬度",
+        "popover-height": "彈出高度",
         "popover-style": "彈出提示框形式",
         "open-new-browser-tab": "在新的瀏覽器選項中打開",
         "mobile": {
@@ -3535,7 +3534,7 @@
         "action-source-required": "動作源必填",
         "action-name": "動作名稱",
         "action-name-required": "動作名稱必填。",
-        "action-name-not-unique": "動作名稱已經存在。<br/>統一動作源的動作名稱必須唯一。",
+        "action-name-not-unique": "動作名稱已經存在。\n統一動作源的動作名稱必須唯一。",
         "action-icon": "圖示",
         "show-hide-action-using-function": "使用函數顯示/隱藏動作",
         "action-type": "類型",

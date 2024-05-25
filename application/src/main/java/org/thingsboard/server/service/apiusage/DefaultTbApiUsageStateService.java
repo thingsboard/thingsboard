@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package org.thingsboard.server.service.apiusage;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -25,7 +27,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.MailService;
-import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.ApiFeature;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.ApiUsageRecordState;
@@ -45,10 +46,11 @@ import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.notification.rule.trigger.ApiUsageLimitTrigger;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
-import org.thingsboard.server.common.data.notification.rule.trigger.ApiUsageLimitTrigger;
+import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -61,15 +63,12 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceM
 import org.thingsboard.server.gen.transport.TransportProtos.UsageStatsKVProto;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.service.apiusage.BaseApiUsageState.StatsCalculationResult;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.mail.MailExecutorService;
 import org.thingsboard.server.service.partition.AbstractPartitionBasedService;
 import org.thingsboard.server.service.telemetry.InternalTelemetryService;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -101,7 +100,6 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
         public void onFailure(Throwable t) {
         }
     };
-    private final TbClusterService clusterService;
     private final PartitionService partitionService;
     private final TenantService tenantService;
     private final TimeseriesService tsService;
@@ -186,6 +184,9 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
             if (newHourTs != hourTs) {
                 usageState.setHour(newHourTs);
             }
+            if (log.isTraceEnabled()) {
+                log.trace("[{}][{}] Processing usage stats from {} (currentCycleTs={}, currentHourTs={}): {}", tenantId, ownerId, serviceId, ts, newHourTs, values);
+            }
             updatedEntries = new ArrayList<>(ApiUsageRecordKey.values().length);
             Set<ApiFeature> apiFeatures = new HashSet<>();
             for (UsageStatsKVProto statsItem : values) {
@@ -212,6 +213,7 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
         } finally {
             updateLock.unlock();
         }
+        log.trace("[{}][{}] Saving new stats: {}", tenantId, ownerId, updatedEntries);
         tsWsService.saveAndNotifyInternal(tenantId, usageState.getApiUsageState().getId(), updatedEntries, VOID_CALLBACK);
         if (!result.isEmpty()) {
             persistAndNotify(usageState, result);
@@ -343,7 +345,6 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
     private void persistAndNotify(BaseApiUsageState state, Map<ApiFeature, ApiUsageStateValue> result) {
         log.info("[{}] Detected update of the API state for {}: {}", state.getEntityId(), state.getEntityType(), result);
         apiUsageStateService.update(state.getApiUsageState());
-        clusterService.onApiStateChange(state.getApiUsageState(), null);
         long ts = System.currentTimeMillis();
         List<TsKvEntry> stateTelemetry = new ArrayList<>();
         result.forEach((apiFeature, aState) -> stateTelemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(apiFeature.getApiStateKey(), aState.name()))));
@@ -413,6 +414,9 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
             myUsageStates.values().forEach(state -> {
                 if ((state.getNextCycleTs() < now) && (now - state.getNextCycleTs() < TimeUnit.HOURS.toMillis(1))) {
                     state.setCycles(state.getNextCycleTs(), SchedulerUtils.getStartOfNextNextMonth());
+                    if (log.isTraceEnabled()) {
+                        log.trace("[{}][{}] Updating state cycles (currentCycleTs={},nextCycleTs={})", state.getTenantId(), state.getEntityId(), state.getCurrentCycleTs(), state.getNextCycleTs());
+                    }
                     saveNewCounts(state, Arrays.asList(ApiUsageRecordKey.values()));
                     if (state.getEntityType() == EntityType.TENANT && !state.getEntityId().equals(TenantId.SYS_TENANT_ID)) {
                         TenantId tenantId = state.getTenantId();
@@ -420,6 +424,8 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
                     }
                 }
             });
+        } catch (Throwable e) {
+            log.error("Failed to check start of next cycle", e);
         } finally {
             updateLock.unlock();
         }
@@ -486,7 +492,7 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
                 }
             }
             state.setGaugeReportInterval(gaugeReportInterval);
-            log.debug("[{}] Initialized state: {}", ownerId, storedState);
+            log.debug("[{}][{}] Initialized state: {}", tenantId, ownerId, state);
             TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, ownerId);
             if (tpi.isMyPartition()) {
                 addEntityState(tpi, state);

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,12 @@ public interface EntityDaoService {
         throw new IllegalArgumentException("Not implemented for " + getEntityType());
     }
 
-    default void deleteEntity(TenantId tenantId, EntityId id) {
+    default void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
         throw new IllegalArgumentException(getEntityType().getNormalName() + " deletion not supported");
+    }
+
+    default void deleteByTenantId(TenantId tenantId) {
+        throw new IllegalArgumentException("Deletion by tenant id not supported for " + getEntityType().getNormalName());
     }
 
     EntityType getEntityType();

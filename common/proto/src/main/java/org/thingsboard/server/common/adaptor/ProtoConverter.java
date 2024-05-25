@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import java.util.List;
 public class ProtoConverter {
 
     public static final Gson GSON = new Gson();
-    public static final JsonParser JSON_PARSER = new JsonParser();
 
     public static TransportProtos.PostTelemetryMsg convertToTelemetryProto(byte[] payload) throws InvalidProtocolBufferException, IllegalArgumentException {
         TransportProtos.TsKvListProto protoPayload = TransportProtos.TsKvListProto.parseFrom(payload);
@@ -165,7 +164,7 @@ public class ProtoConverter {
                     break;
                 case JSON_V:
                     try {
-                        JSON_PARSER.parse(keyValueProto.getJsonV());
+                        JsonParser.parseString(keyValueProto.getJsonV());
                     } catch (Exception e) {
                         throw new IllegalArgumentException("Can't parse value: " + keyValueProto.getJsonV() + " for key: " + key + "!");
                     }
@@ -184,7 +183,7 @@ public class ProtoConverter {
         rpcRequestJson.addProperty("requestId", toDeviceRpcRequestMsg.getRequestId());
         String params = toDeviceRpcRequestMsg.getParams();
         try {
-            JsonElement paramsElement = JSON_PARSER.parse(params);
+            JsonElement paramsElement = JsonParser.parseString(params);
             rpcRequestJson.add("params", paramsElement);
             DynamicMessage dynamicRpcRequest = DynamicProtoUtils.jsonToDynamicMessage(rpcRequestDynamicMessageBuilder, GSON.toJson(rpcRequestJson));
             return dynamicRpcRequest.toByteArray();

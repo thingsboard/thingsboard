@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,8 +38,7 @@ public class OtaPackageEdgeProcessor extends BaseEdgeProcessor {
         OtaPackageId otaPackageId = new OtaPackageId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
-            case ADDED:
-            case UPDATED:
+            case ADDED, UPDATED -> {
                 OtaPackage otaPackage = otaPackageService.findOtaPackageById(edgeEvent.getTenantId(), otaPackageId);
                 if (otaPackage != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
@@ -50,16 +49,17 @@ public class OtaPackageEdgeProcessor extends BaseEdgeProcessor {
                             .addOtaPackageUpdateMsg(otaPackageUpdateMsg)
                             .build();
                 }
-                break;
-            case DELETED:
+            }
+            case DELETED -> {
                 OtaPackageUpdateMsg otaPackageUpdateMsg = ((OtaPackageMsgConstructor)
                         otaPackageMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructOtaPackageDeleteMsg(otaPackageId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addOtaPackageUpdateMsg(otaPackageUpdateMsg)
                         .build();
-                break;
+            }
         }
         return downlinkMsg;
     }
+
 }

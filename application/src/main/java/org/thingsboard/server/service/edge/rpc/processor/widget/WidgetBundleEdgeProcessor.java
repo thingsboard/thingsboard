@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,8 +40,7 @@ public class WidgetBundleEdgeProcessor extends BaseEdgeProcessor {
         WidgetsBundleId widgetsBundleId = new WidgetsBundleId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
-            case ADDED:
-            case UPDATED:
+            case ADDED, UPDATED -> {
                 WidgetsBundle widgetsBundle = widgetsBundleService.findWidgetsBundleById(edgeEvent.getTenantId(), widgetsBundleId);
                 if (widgetsBundle != null) {
                     List<String> widgets = widgetTypeService.findWidgetFqnsByWidgetsBundleId(edgeEvent.getTenantId(), widgetsBundleId);
@@ -53,16 +52,17 @@ public class WidgetBundleEdgeProcessor extends BaseEdgeProcessor {
                             .addWidgetsBundleUpdateMsg(widgetsBundleUpdateMsg)
                             .build();
                 }
-                break;
-            case DELETED:
+            }
+            case DELETED -> {
                 WidgetsBundleUpdateMsg widgetsBundleUpdateMsg =
                         ((WidgetMsgConstructor) widgetMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructWidgetsBundleDeleteMsg(widgetsBundleId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addWidgetsBundleUpdateMsg(widgetsBundleUpdateMsg)
                         .build();
-                break;
+            }
         }
         return downlinkMsg;
     }
+
 }

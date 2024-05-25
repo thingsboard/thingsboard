@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -307,7 +307,7 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
         const newWidth = height * horizontalBatteryDimensions.shapeAspectRatio;
         this.renderer.setStyle(this.batteryLevelRectangle.nativeElement, 'width', newWidth + 'px');
       } else {
-        this.renderer.setStyle(this.batteryLevelRectangle.nativeElement, 'width', null);
+        this.renderer.setStyle(this.batteryLevelRectangle.nativeElement, 'width', width + 'px');
       }
       if (this.batteryLevelValue) {
         const ratios = horizontalBatteryDimensions.heightRatio;

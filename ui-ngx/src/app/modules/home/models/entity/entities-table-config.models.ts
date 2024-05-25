@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -120,8 +120,9 @@ export class EntityLinkTableColumn<T extends BaseData<HasId>> extends BaseEntity
               public title: string,
               public width: string = '0px',
               public cellContentFunction: CellContentFunction<T> = (entity, property) => entity[property] ? entity[property] : '',
-              public entityURL: (entity) => string) {
-    super('link', key, title, width, false);
+              public entityURL: (entity) => string,
+              public sortable: boolean = true) {
+    super('link', key, title, width, sortable);
   }
 }
 

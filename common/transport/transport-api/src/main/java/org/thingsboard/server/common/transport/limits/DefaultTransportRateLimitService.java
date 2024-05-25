@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.transport.TransportTenantProfileCache;
 import org.thingsboard.server.common.transport.profile.TenantProfileUpdateResult;
 import org.thingsboard.server.queue.util.TbTransportComponent;
@@ -39,6 +40,10 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
+import static org.thingsboard.server.common.transport.limits.TransportLimitsType.DEVICE_LIMITS;
+import static org.thingsboard.server.common.transport.limits.TransportLimitsType.GATEWAY_LIMITS;
+import static org.thingsboard.server.common.transport.limits.TransportLimitsType.TENANT_LIMITS;
+
 @Service
 @TbTransportComponent
 @Slf4j
@@ -47,8 +52,10 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
     private final static DummyTransportRateLimit ALLOW = new DummyTransportRateLimit();
     private final ConcurrentMap<TenantId, Boolean> tenantAllowed = new ConcurrentHashMap<>();
     private final ConcurrentMap<TenantId, Set<DeviceId>> tenantDevices = new ConcurrentHashMap<>();
+    private final ConcurrentMap<TenantId, Set<DeviceId>> tenantGateways = new ConcurrentHashMap<>();
     private final ConcurrentMap<TenantId, EntityTransportRateLimits> perTenantLimits = new ConcurrentHashMap<>();
     private final ConcurrentMap<DeviceId, EntityTransportRateLimits> perDeviceLimits = new ConcurrentHashMap<>();
+    private final ConcurrentMap<DeviceId, EntityTransportRateLimits> perGatewayLimits = new ConcurrentHashMap<>();
     private final Map<InetAddress, InetAddressRateLimitStats> ipMap = new ConcurrentHashMap<>();
 
     private final TransportTenantProfileCache tenantProfileCache;
@@ -65,15 +72,20 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
     }
 
     @Override
-    public EntityType checkLimits(TenantId tenantId, DeviceId deviceId, int dataPoints) {
+    public TbPair<EntityType, Boolean> checkLimits(TenantId tenantId, DeviceId gatewayId, DeviceId deviceId, int dataPoints) {
         if (!tenantAllowed.getOrDefault(tenantId, Boolean.TRUE)) {
-            return EntityType.API_USAGE_STATE;
+            return TbPair.of(EntityType.API_USAGE_STATE, false);
         }
         if (!checkEntityRateLimit(dataPoints, getTenantRateLimits(tenantId))) {
-            return EntityType.TENANT;
+            return TbPair.of(EntityType.TENANT, false);
         }
-        if (!checkEntityRateLimit(dataPoints, getDeviceRateLimits(tenantId, deviceId))) {
-            return EntityType.DEVICE;
+
+        if (gatewayId != null && !checkEntityRateLimit(dataPoints, getGatewayRateLimits(tenantId, gatewayId))) {
+            return TbPair.of(EntityType.DEVICE, true);
+        }
+
+        if (deviceId != null && !checkEntityRateLimit(dataPoints, getDeviceRateLimits(tenantId, deviceId))) {
+            return TbPair.of(EntityType.DEVICE, false);
         }
         return null;
     }
@@ -89,24 +101,27 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
     @Override
     public void update(TenantProfileUpdateResult update) {
         log.info("Received tenant profile update: {}", update.getProfile());
-        EntityTransportRateLimits tenantRateLimitPrototype = createRateLimits(update.getProfile(), true);
-        EntityTransportRateLimits deviceRateLimitPrototype = createRateLimits(update.getProfile(), false);
+        EntityTransportRateLimits tenantRateLimitPrototype = createRateLimits(update.getProfile(), TENANT_LIMITS);
+        EntityTransportRateLimits deviceRateLimitPrototype = createRateLimits(update.getProfile(), DEVICE_LIMITS);
+        EntityTransportRateLimits gatewayRateLimitPrototype = createRateLimits(update.getProfile(), GATEWAY_LIMITS);
         for (TenantId tenantId : update.getAffectedTenants()) {
-            mergeLimits(tenantId, tenantRateLimitPrototype, perTenantLimits::get, perTenantLimits::put);
-            tenantDevices.get(tenantId).forEach(deviceId -> {
-                mergeLimits(deviceId, deviceRateLimitPrototype, perDeviceLimits::get, perDeviceLimits::put);
-            });
+            update(tenantId, tenantRateLimitPrototype, deviceRateLimitPrototype, gatewayRateLimitPrototype);
         }
     }
 
     @Override
     public void update(TenantId tenantId) {
-        EntityTransportRateLimits tenantRateLimitPrototype = createRateLimits(tenantProfileCache.get(tenantId), true);
-        EntityTransportRateLimits deviceRateLimitPrototype = createRateLimits(tenantProfileCache.get(tenantId), false);
+        EntityTransportRateLimits tenantRateLimitPrototype = createRateLimits(tenantProfileCache.get(tenantId), TENANT_LIMITS);
+        EntityTransportRateLimits deviceRateLimitPrototype = createRateLimits(tenantProfileCache.get(tenantId), DEVICE_LIMITS);
+        EntityTransportRateLimits gatewayRateLimitPrototype = createRateLimits(tenantProfileCache.get(tenantId), GATEWAY_LIMITS);
+        update(tenantId, tenantRateLimitPrototype, deviceRateLimitPrototype, gatewayRateLimitPrototype);
+    }
+
+    private void update(TenantId tenantId, EntityTransportRateLimits tenantRateLimitPrototype,
+                        EntityTransportRateLimits deviceRateLimitPrototype, EntityTransportRateLimits gatewayRateLimitPrototype) {
         mergeLimits(tenantId, tenantRateLimitPrototype, perTenantLimits::get, perTenantLimits::put);
-        tenantDevices.get(tenantId).forEach(deviceId -> {
-            mergeLimits(deviceId, deviceRateLimitPrototype, perDeviceLimits::get, perDeviceLimits::put);
-        });
+        getTenantDevices(tenantId).forEach(deviceId -> mergeLimits(deviceId, deviceRateLimitPrototype, perDeviceLimits::get, perDeviceLimits::put));
+        getTenantGateways(tenantId).forEach(deviceId -> mergeLimits(deviceId, gatewayRateLimitPrototype, perGatewayLimits::get, perGatewayLimits::put));
     }
 
     @Override
@@ -233,15 +248,34 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
         }
     }
 
-    private EntityTransportRateLimits createRateLimits(TenantProfile tenantProfile, boolean tenant) {
+    private EntityTransportRateLimits createRateLimits(TenantProfile tenantProfile, TransportLimitsType limitsType) {
         TenantProfileData profileData = tenantProfile.getProfileData();
         DefaultTenantProfileConfiguration profile = (DefaultTenantProfileConfiguration) profileData.getConfiguration();
         if (profile == null) {
             return new EntityTransportRateLimits(ALLOW, ALLOW, ALLOW);
         } else {
-            TransportRateLimit regularMsgRateLimit = newLimit(tenant ? profile.getTransportTenantMsgRateLimit() : profile.getTransportDeviceMsgRateLimit());
-            TransportRateLimit telemetryMsgRateLimit = newLimit(tenant ? profile.getTransportTenantTelemetryMsgRateLimit() : profile.getTransportDeviceTelemetryMsgRateLimit());
-            TransportRateLimit telemetryDpRateLimit = newLimit(tenant ? profile.getTransportTenantTelemetryDataPointsRateLimit() : profile.getTransportDeviceTelemetryDataPointsRateLimit());
+            TransportRateLimit regularMsgRateLimit;
+            TransportRateLimit telemetryMsgRateLimit;
+            TransportRateLimit telemetryDpRateLimit;
+            switch (limitsType) {
+                case TENANT_LIMITS -> {
+                    regularMsgRateLimit = newLimit(profile.getTransportTenantMsgRateLimit());
+                    telemetryMsgRateLimit = newLimit(profile.getTransportTenantTelemetryMsgRateLimit());
+                    telemetryDpRateLimit = newLimit(profile.getTransportTenantTelemetryDataPointsRateLimit());
+                }
+                case DEVICE_LIMITS -> {
+                    regularMsgRateLimit = newLimit(profile.getTransportDeviceMsgRateLimit());
+                    telemetryMsgRateLimit = newLimit(profile.getTransportDeviceTelemetryMsgRateLimit());
+                    telemetryDpRateLimit = newLimit(profile.getTransportDeviceTelemetryDataPointsRateLimit());
+                }
+                case GATEWAY_LIMITS -> {
+                    regularMsgRateLimit = newLimit(profile.getTransportGatewayMsgRateLimit());
+                    telemetryMsgRateLimit = newLimit(profile.getTransportGatewayTelemetryMsgRateLimit());
+                    telemetryDpRateLimit = newLimit(profile.getTransportGatewayTelemetryDataPointsRateLimit());
+                }
+                default -> throw new IllegalStateException("Unknown limits type: " + limitsType);
+            }
+
             return new EntityTransportRateLimits(regularMsgRateLimit, telemetryMsgRateLimit, telemetryDpRateLimit);
         }
     }
@@ -251,16 +285,31 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
     }
 
     private EntityTransportRateLimits getTenantRateLimits(TenantId tenantId) {
-        return perTenantLimits.computeIfAbsent(tenantId, k -> {
-            return createRateLimits(tenantProfileCache.get(tenantId), true);
-        });
+        return perTenantLimits.computeIfAbsent(tenantId, k -> createRateLimits(tenantProfileCache.get(tenantId), TENANT_LIMITS));
     }
 
     private EntityTransportRateLimits getDeviceRateLimits(TenantId tenantId, DeviceId deviceId) {
         return perDeviceLimits.computeIfAbsent(deviceId, k -> {
-            EntityTransportRateLimits limits = createRateLimits(tenantProfileCache.get(tenantId), false);
-            tenantDevices.computeIfAbsent(tenantId, id -> ConcurrentHashMap.newKeySet()).add(deviceId);
+            EntityTransportRateLimits limits = createRateLimits(tenantProfileCache.get(tenantId), DEVICE_LIMITS);
+            getTenantDevices(tenantId).add(deviceId);
             return limits;
         });
     }
+
+    private EntityTransportRateLimits getGatewayRateLimits(TenantId tenantId, DeviceId deviceId) {
+        return perGatewayLimits.computeIfAbsent(deviceId, k -> {
+            EntityTransportRateLimits limits = createRateLimits(tenantProfileCache.get(tenantId), GATEWAY_LIMITS);
+            getTenantGateways(tenantId).add(deviceId);
+            return limits;
+        });
+    }
+
+    private Set<DeviceId> getTenantDevices(TenantId tenantId) {
+        return tenantDevices.computeIfAbsent(tenantId, id -> ConcurrentHashMap.newKeySet());
+    }
+
+    private Set<DeviceId> getTenantGateways(TenantId tenantId) {
+        return tenantGateways.computeIfAbsent(tenantId, id -> ConcurrentHashMap.newKeySet());
+    }
+
 }

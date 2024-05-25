@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.thingsboard.server.actors.ruleChain;
 
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.TbActorRef;
@@ -29,6 +28,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleState;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -42,7 +42,6 @@ import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.common.msg.queue.RuleNodeException;
-import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -103,7 +102,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
             RuleChain ruleChain = service.findRuleChainById(tenantId, entityId);
             if (ruleChain != null && RuleChainType.CORE.equals(ruleChain.getType())) {
                 List<RuleNode> ruleNodeList = service.getRuleChainNodes(tenantId, entityId);
-                log.trace("[{}][{}] Starting rule chain with {} nodes", tenantId, entityId, ruleNodeList.size());
+                log.debug("[{}][{}] Starting rule chain with {} nodes", tenantId, entityId, ruleNodeList.size());
                 // Creating and starting the actors;
                 for (RuleNode ruleNode : ruleNodeList) {
                     log.trace("[{}][{}] Creating rule node [{}]: {}", entityId, ruleNode.getId(), ruleNode.getName(), ruleNode);
@@ -124,7 +123,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         if (ruleChain != null && RuleChainType.CORE.equals(ruleChain.getType())) {
             ruleChainName = ruleChain.getName();
             List<RuleNode> ruleNodeList = service.getRuleChainNodes(tenantId, entityId);
-            log.trace("[{}][{}] Updating rule chain with {} nodes", tenantId, entityId, ruleNodeList.size());
+            log.debug("[{}][{}] Updating rule chain with {} nodes", tenantId, entityId, ruleNodeList.size());
             for (RuleNode ruleNode : ruleNodeList) {
                 RuleNodeCtx existing = nodeActors.get(ruleNode.getId());
                 if (existing == null) {
@@ -161,6 +160,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
 
     @Override
     public void onPartitionChangeMsg(PartitionChangeMsg msg) {
+        log.debug("[{}][{}] onPartitionChangeMsg: [{}]", tenantId, entityId, msg);
         nodeActors.values().stream().map(RuleNodeCtx::getSelfActor).forEach(actorRef -> actorRef.tellWithHighPriority(msg));
     }
 
@@ -294,7 +294,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         try {
             checkComponentStateActive(msg);
             EntityId entityId = msg.getOriginator();
-            TopicPartitionInfo tpi = systemContext.resolve(ServiceType.TB_RULE_ENGINE, msg.getQueueName(), tenantId, entityId);
+            TopicPartitionInfo tpi = systemContext.resolve(tenantId, entityId, msg);
 
             List<RuleNodeRelation> ruleNodeRelations = nodeRoutes.get(originatorNodeId);
             if (ruleNodeRelations == null) { // When unchecked, this will cause NullPointerException when rule node doesn't exist anymore

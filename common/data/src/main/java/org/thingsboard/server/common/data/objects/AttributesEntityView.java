@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
  */
 package org.thingsboard.server.common.data.objects;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -28,15 +27,15 @@ import java.util.List;
  * Created by Victor Basanets on 9/05/2017.
  */
 @Data
-@ApiModel
+@Schema
 @NoArgsConstructor
 public class AttributesEntityView implements Serializable {
 
-    @ApiModelProperty(position = 1, required = true, value = "List of client-side attribute keys to expose", example = "currentConfiguration")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of client-side attribute keys to expose", example = "currentConfiguration")
     private List<String> cs = new ArrayList<>();
-    @ApiModelProperty(position = 3, required = true, value = "List of server-side attribute keys to expose", example = "model")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of server-side attribute keys to expose", example = "model")
     private List<String> ss = new ArrayList<>();
-    @ApiModelProperty(position = 2, required = true, value = "List of shared attribute keys to expose", example = "targetConfiguration")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of shared attribute keys to expose", example = "targetConfiguration")
     private List<String> sh = new ArrayList<>();
 
     public AttributesEntityView(List<String> cs,

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,8 +14,16 @@
 /// limitations under the License.
 ///
 
-import { isDefinedAndNotNull, isNumber, isNumeric, isUndefinedOrNull, parseFunction } from '@core/utils';
-import { DataKey, Datasource, DatasourceData } from '@shared/models/widget.models';
+import { isDefinedAndNotNull, isNumber, isNumeric, isUndefinedOrNull, mergeDeep, parseFunction } from '@core/utils';
+import {
+  DataEntry,
+  DataKey,
+  Datasource,
+  DatasourceData,
+  DatasourceType,
+  TargetDevice,
+  TargetDeviceType
+} from '@shared/models/widget.models';
 import { Injector } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
@@ -26,6 +34,8 @@ import { Observable, of } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { map } from 'rxjs/operators';
 import { DomSanitizer } from '@angular/platform-browser';
+import { AVG_MONTH, DAY, HOUR, Interval, IntervalMath, MINUTE, SECOND, YEAR } from '@shared/models/time/time.models';
+import moment from 'moment';
 
 export type ComponentStyle = {[klass: string]: any};
 
@@ -204,7 +214,7 @@ export const cssSizeToStrSize = (size?: number, unit?: cssUnit): string => (isDe
 
 export const resolveCssSize = (strSize?: string): [number, cssUnit] => {
   if (!strSize || !strSize.trim().length) {
-    return [0, 'px'];
+    return [null, 'px'];
   }
   let resolvedUnit: cssUnit;
   let resolvedSize = strSize;
@@ -218,11 +228,20 @@ export const resolveCssSize = (strSize?: string): [number, cssUnit] => {
     resolvedSize = strSize.substring(0, strSize.length - resolvedUnit.length);
   }
   resolvedUnit = resolvedUnit || 'px';
-  let numericSize = 0;
+  let numericSize: number = null;
   if (isNumeric(resolvedSize)) {
     numericSize = Number(resolvedSize);
   }
   return [numericSize, resolvedUnit];
+};
+
+export const validateCssSize = (strSize?: string): string | undefined => {
+  const resolved = resolveCssSize(strSize);
+  if (!!resolved[0] && !!resolved[1]) {
+    return cssSizeToStrSize(resolved[0], resolved[1]);
+  } else {
+    return undefined;
+  }
 };
 
 type ValueColorFunction = (value: any) => string;
@@ -306,34 +325,84 @@ class FunctionColorProcessor extends ColorProcessor {
   }
 }
 
+export type FormatTimeUnit = 'millisecond' | 'second' | 'minute' | 'hour'
+  | 'day' | 'month' | 'year';
+
+
+export const formatTimeUnits: FormatTimeUnit[] = [
+  'year', 'month', 'day', 'hour', 'minute', 'second', 'millisecond'
+];
+
+export const formatTimeUnitTranslations = new Map<FormatTimeUnit, string>(
+  [
+    ['year', 'date.unit-year'],
+    ['month', 'date.unit-month'],
+    ['day', 'date.unit-day'],
+    ['hour', 'date.unit-hour'],
+    ['minute', 'date.unit-minute'],
+    ['second', 'date.unit-second'],
+    ['millisecond', 'date.unit-millisecond']
+  ]
+);
+
+export type AutoDateFormatSettings = {
+  [unit in FormatTimeUnit]?: string;
+};
+
 export interface DateFormatSettings {
   format?: string;
   lastUpdateAgo?: boolean;
   custom?: boolean;
+  auto?: boolean;
   hideLastUpdatePrefix?: boolean;
+  autoDateFormatSettings?: AutoDateFormatSettings;
 }
 
 export const simpleDateFormat = (format: string): DateFormatSettings => ({
   format,
   lastUpdateAgo: false,
-  custom: false
+  custom: false,
+  auto: false
 });
 
 export const lastUpdateAgoDateFormat = (): DateFormatSettings => ({
   format: null,
   lastUpdateAgo: true,
-  custom: false
+  custom: false,
+  auto: false
 });
 
 export const customDateFormat = (format: string): DateFormatSettings => ({
   format,
   lastUpdateAgo: false,
-  custom: true
+  custom: true,
+  auto: false
 });
 
-export const dateFormats = ['MMM dd yyyy HH:mm', 'dd MMM yyyy HH:mm', 'yyyy MMM dd HH:mm',
-  'MM/dd/yyyy HH:mm', 'dd/MM/yyyy HH:mm', 'yyyy/MM/dd HH:mm:ss', 'yyyy-MM-dd HH:mm:ss', 'yyyy-MM-dd HH:mm:ss.SSS']
+export const defaultAutoDateFormatSettings: AutoDateFormatSettings = {
+  millisecond: 'MMM dd yyyy HH:mm:ss.SSS',
+  second: 'MMM dd yyyy HH:mm:ss',
+  minute: 'MMM dd yyyy HH:mm',
+  hour: 'MMM dd yyyy HH:mm',
+  day: 'MMM dd yyyy',
+  month: 'MMM yyyy',
+  year: 'yyyy'
+};
+
+export const autoDateFormat = (): DateFormatSettings => ({
+  format: null,
+  lastUpdateAgo: false,
+  custom: false,
+  auto: true,
+  autoDateFormatSettings: {}
+});
+
+export const dateFormats = ['MMM yyyy', 'MMM dd yyyy', 'MMM dd yyyy HH:mm', 'dd MMM yyyy HH:mm', 'dd MMM yyyy HH:mm:ss',
+  'yyyy MMM dd HH:mm', 'MM/dd/yyyy HH:mm', 'dd/MM/yyyy HH:mm', 'MMM dd yyyy HH:mm:ss', 'yyyy/MM/dd HH:mm:ss', 'yyyy-MM-dd HH:mm:ss',
+  'MMM dd yyyy HH:mm:ss.SSS', 'yyyy-MM-dd HH:mm:ss.SSS']
   .map(f => simpleDateFormat(f)).concat([lastUpdateAgoDateFormat(), customDateFormat('EEE, MMMM dd, yyyy')]);
+
+export const dateFormatsWithAuto = [autoDateFormat()].concat(dateFormats);
 
 export const compareDateFormats = (df1: DateFormatSettings, df2: DateFormatSettings): boolean => {
   if (df1 === df2) {
@@ -343,7 +412,9 @@ export const compareDateFormats = (df1: DateFormatSettings, df2: DateFormatSetti
       return true;
     } else if (df1.custom && df2.custom) {
       return true;
-    } else if (!df1.lastUpdateAgo && !df2.lastUpdateAgo && !df1.custom && !df2.custom) {
+    } else if (df1.auto && df2.auto && !df1.custom && !df2.custom) {
+      return true;
+    } else if (!df1.lastUpdateAgo && !df2.lastUpdateAgo && !df1.custom && !df2.custom && !df1.auto && !df2.auto) {
       return df1.format === df2.format;
     }
   }
@@ -355,6 +426,8 @@ export abstract class DateFormatProcessor {
   static fromSettings($injector: Injector, settings: DateFormatSettings): DateFormatProcessor {
     if (settings.lastUpdateAgo) {
       return new LastUpdateAgoDateFormatProcessor($injector, settings);
+    } else if (settings.auto && !settings.custom) {
+      return new AutoDateFormatProcessor($injector, settings);
     } else {
       return new SimpleDateFormatProcessor($injector, settings);
     }
@@ -366,7 +439,7 @@ export abstract class DateFormatProcessor {
                         protected settings: DateFormatSettings) {
   }
 
-  abstract update(ts: string | number | Date): void;
+  abstract update(ts: string | number | Date, interval?: Interval): string;
 
 }
 
@@ -380,12 +453,13 @@ export class SimpleDateFormatProcessor extends DateFormatProcessor {
     this.datePipe = $injector.get(DatePipe);
   }
 
-  update(ts: string| number | Date): void {
+  update(ts: string| number | Date): string {
     if (ts) {
       this.formatted = this.datePipe.transform(ts, this.settings.format);
     } else {
       this.formatted = '&nbsp;';
     }
+    return this.formatted;
   }
 
 }
@@ -402,7 +476,7 @@ export class LastUpdateAgoDateFormatProcessor extends DateFormatProcessor {
     this.translate = $injector.get(TranslateService);
   }
 
-  update(ts: string| number | Date): void {
+  update(ts: string| number | Date): string {
     if (ts) {
       const agoText = this.dateAgoPipe.transform(ts, {applyAgo: true, short: true, textPart: true});
       if (this.settings.hideLastUpdatePrefix) {
@@ -414,9 +488,95 @@ export class LastUpdateAgoDateFormatProcessor extends DateFormatProcessor {
     } else {
       this.formatted = '&nbsp;';
     }
+    return this.formatted;
   }
 
 }
+
+export class AutoDateFormatProcessor extends DateFormatProcessor {
+
+  private datePipe: DatePipe;
+  private readonly autoDateFormatSettings: AutoDateFormatSettings;
+
+  constructor(protected $injector: Injector,
+              protected settings: DateFormatSettings) {
+    super($injector, settings);
+    this.datePipe = $injector.get(DatePipe);
+    this.autoDateFormatSettings = mergeDeep({} as AutoDateFormatSettings,
+      defaultAutoDateFormatSettings, this.settings.autoDateFormatSettings);
+  }
+
+  update(ts: string| number | Date, interval?: Interval): string {
+    if (ts) {
+      const unit = interval ? intervalToFormatTimeUnit(interval) : tsToFormatTimeUnit(ts);
+      const format = this.autoDateFormatSettings[unit];
+      if (format) {
+        this.formatted = this.datePipe.transform(ts, format);
+      } else {
+        this.formatted = '&nbsp;';
+      }
+    } else {
+      this.formatted = '&nbsp;';
+    }
+    return this.formatted;
+  }
+}
+
+const intervalToFormatTimeUnit = (interval: Interval): FormatTimeUnit => {
+  const intervalValue = IntervalMath.numberValue(interval);
+  if (intervalValue < SECOND) {
+    return 'millisecond';
+  } else if (intervalValue < MINUTE) {
+    return 'second';
+  } else if (intervalValue < HOUR) {
+    return 'minute';
+  } else if (intervalValue < DAY) {
+    return 'hour';
+  } else if (intervalValue < AVG_MONTH) {
+    return 'day';
+  } else if (intervalValue < YEAR) {
+    return 'month';
+  } else {
+    return 'year';
+  }
+};
+
+export const tsToFormatTimeUnit = (ts: string | number | Date): FormatTimeUnit => {
+  const date = moment(ts);
+  const M = date.month() + 1;
+  const d = date.date();
+  const h = date.hours();
+  const m = date.minutes();
+  const s = date.seconds();
+  const S = date.milliseconds();
+  const isSecond = S === 0;
+  const isMinute = isSecond && s === 0;
+  const isHour = isMinute && m === 0;
+  const isDay = isHour && h === 0;
+  const isMonth = isDay && d === 1;
+  const isYear = isMonth && M === 1;
+  if (isYear) {
+    return 'year';
+  }
+  else if (isMonth) {
+    return 'month';
+  }
+  else if (isDay) {
+    return 'day';
+  }
+  else if (isHour) {
+    return 'hour';
+  }
+  else if (isMinute) {
+    return 'minute';
+  }
+  else if (isSecond) {
+    return 'second';
+  }
+  else {
+    return 'millisecond';
+  }
+};
 
 export enum BackgroundType {
   image = 'image',
@@ -598,6 +758,24 @@ export const updateDataKeyByLabel = (datasources: Datasource[], dataKey: DataKey
   }
 };
 
+export const getTargetDeviceFromDatasources = (datasources?: Datasource[]): TargetDevice => {
+  if (datasources && datasources.length) {
+    const datasource = datasources[0];
+    if (datasource?.type === DatasourceType.device) {
+      return {
+        type: TargetDeviceType.device,
+        deviceId: datasource?.deviceId
+      };
+    } else if (datasource?.type === DatasourceType.entity) {
+      return {
+        type: TargetDeviceType.entity,
+        entityAliasId: datasource?.entityAliasId
+      };
+    }
+  }
+  return null;
+};
+
 export const getAlarmFilterConfig = (datasources?: Datasource[]): AlarmFilterConfig => {
   if (datasources && datasources.length) {
     const config = datasources[0].alarmFilterConfig;
@@ -629,7 +807,7 @@ export const setLabel = (label: string, datasources?: Datasource[]): void => {
   }
 };
 
-export const getSingleTsValue = (data: Array<DatasourceData>): [number, any] => {
+export const getSingleTsValue = (data: Array<DatasourceData>): DataEntry => {
   if (data.length) {
     const dsData = data[0];
     if (dsData.data.length) {
@@ -639,7 +817,7 @@ export const getSingleTsValue = (data: Array<DatasourceData>): [number, any] => 
   return null;
 };
 
-export const getSingleTsValueByDataKey = (data: Array<DatasourceData>, dataKey: DataKey): [number, any] => {
+export const getSingleTsValueByDataKey = (data: Array<DatasourceData>, dataKey: DataKey): DataEntry => {
   if (data.length) {
     const dsData = data.find(d => d.dataKey === dataKey);
     if (dsData?.data?.length) {
@@ -649,7 +827,7 @@ export const getSingleTsValueByDataKey = (data: Array<DatasourceData>, dataKey: 
   return null;
 };
 
-export const getLatestSingleTsValue = (data: Array<DatasourceData>): [number, any] => {
+export const getLatestSingleTsValue = (data: Array<DatasourceData>): DataEntry => {
   if (data.length) {
     const dsData = data[0];
     if (dsData.data.length) {

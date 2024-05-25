@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ export interface WidgetContextMenuItem extends ContextMenuItem {
 
 export interface DashboardCallbacks {
   onEditWidget?: ($event: Event, widget: Widget) => void;
-  onExportWidget?: ($event: Event, widget: Widget) => void;
+  onExportWidget?: ($event: Event, widget: Widget, widgeTitle: string) => void;
   onRemoveWidget?: ($event: Event, widget: Widget) => void;
   onWidgetMouseDown?: ($event: Event, widget: Widget) => void;
   onWidgetClicked?: ($event: Event, widget: Widget) => void;

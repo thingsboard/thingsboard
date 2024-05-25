@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2023 The Thingsboard Authors
+# Copyright © 2016-2024 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,9 +14,12 @@
 # limitations under the License.
 #
 
-FROM thingsboard/openjdk11:bullseye-slim
+FROM thingsboard/openjdk17:bookworm-slim
 
 COPY start-tb-node.sh ${pkg.name}.deb /tmp/
+
+# Required for SWAGGER UI when reverse proxy is used
+ENV HTTP_FORWARD_HEADERS_STRATEGY=framework
 
 RUN chmod a+x /tmp/*.sh \
     && mv /tmp/start-tb-node.sh /usr/bin && \

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.springframework.data.redis.core.types.Expiration;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.thingsboard.server.common.data.FstStatsService;
+import redis.clients.jedis.Connection;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.util.JedisClusterCRC16;
@@ -159,7 +160,7 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
         RedisConnection connection = connectionFactory.getClusterConnection();
 
         int slotNum = JedisClusterCRC16.getSlot(rawKey);
-        Jedis jedis = ((JedisClusterConnection) connection).getNativeConnection().getConnectionFromSlot(slotNum);
+        Jedis jedis = new Jedis((((JedisClusterConnection) connection).getNativeConnection().getConnectionFromSlot(slotNum)));
 
         JedisConnection jedisConnection = new JedisConnection(jedis, MOCK_POOL, jedis.getDB());
         jedisConnection.setConvertPipelineAndTxResults(connectionFactory.getConvertPipelineAndTxResults());

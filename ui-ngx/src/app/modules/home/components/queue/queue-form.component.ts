@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -118,7 +118,8 @@ export class QueueFormComponent implements ControlValueAccessor, OnInit, OnDestr
         topic: [''],
         additionalInfo: this.fb.group({
           description: [''],
-          customProperties: ['']
+          customProperties: [''],
+          duplicateMsgToAllPartitions: [false]
         })
       });
     this.valueChange$ = this.queueFormGroup.valueChanges.subscribe(() => {
@@ -160,6 +161,10 @@ export class QueueFormComponent implements ControlValueAccessor, OnInit, OnDestr
       this.queueFormGroup.patchValue(this.modelValue, {emitEvent: false});
       this.queueFormGroup.get('additionalInfo').get('description')
         .patchValue(this.modelValue.additionalInfo?.description, {emitEvent: false});
+      this.queueFormGroup.get('additionalInfo').get('customProperties')
+        .patchValue(this.modelValue.additionalInfo?.customProperties, {emitEvent: false});
+      this.queueFormGroup.get('additionalInfo').get('duplicateMsgToAllPartitions')
+        .patchValue(this.modelValue.additionalInfo?.duplicateMsgToAllPartitions, {emitEvent: false});
       this.submitStrategyTypeChanged();
       if (!this.disabled && !this.queueFormGroup.valid) {
         this.updateModel();

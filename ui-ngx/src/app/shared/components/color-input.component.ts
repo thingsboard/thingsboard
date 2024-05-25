@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -189,13 +189,13 @@ export class ColorInputComponent extends PageComponent implements OnInit, Contro
         this.popoverService.hidePopover(trigger);
       } else {
         const colorPickerPopover = this.popoverService.displayPopover(trigger, this.renderer,
-            this.viewContainerRef, ColorPickerPanelComponent, 'left', true, null,
+            this.viewContainerRef, ColorPickerPanelComponent, ['left'], true, null,
             {
               color: this.colorFormGroup.get('color').value,
-              colorClearButton: this.colorClearButton
+              colorClearButton: this.colorClearButton,
+              colorCancelButton: true
             },
-            {},
-            {}, {}, true);
+            {}, {}, {}, false, () => {}, {padding: '12px 4px 12px 12px'});
         colorPickerPopover.tbComponentRef.instance.popover = colorPickerPopover;
         colorPickerPopover.tbComponentRef.instance.colorSelected.subscribe((color) => {
           colorPickerPopover.hide();

@@ -425,9 +425,9 @@
             "issuer-name": "Naam van de uitgever",
             "issuer-name-required": "De naam van de uitgever is vereist.",
             "signings-key": "Sleutel ondertekenen",
-            "signings-key-hint": "Base64-gecodeerde tekenreeks die ten minste 256 bits aan gegevens vertegenwoordigt.",
+            "signings-key-hint": "Base64-gecodeerde tekenreeks die ten minste 512 bits aan gegevens vertegenwoordigt.",
             "signings-key-required": "Ondertekeningssleutel is vereist.",
-            "signings-key-min-length": "De ondertekeningssleutel moet ten minste 256 bits aan gegevens bevatten.",
+            "signings-key-min-length": "De ondertekeningssleutel moet ten minste 512 bits aan gegevens bevatten.",
             "signings-key-base64": "De ondertekeningssleutel moet de base64-indeling hebben.",
             "expiration-time": "Vervaltijd token (sec)",
             "expiration-time-required": "De vervaltijd van het token is vereist.",
@@ -1935,8 +1935,7 @@
                 "step": "Stap",
                 "min-evaluation-period": "Minimale evaluatieperiode",
                 "max-evaluation-period": "Maximale evaluatieperiode"
-            },
-            "composite-operations-support": "Ondersteunt samengestelde lees-/schrijf-/observatiebewerkingen"
+            }
         },
         "snmp": {
             "add-communication-config": "Communicatieconfiguratie toevoegen",
@@ -5382,8 +5381,8 @@
         "popover-placement-leftBottom": "Links onder",
         "popover-hide-on-click-outside": "Popover verbergen bij klikken aan de buitenkant",
         "popover-hide-dashboard-toolbar": "Dashboardwerkbalk verbergen in pop-over",
-        "popover-width": "Popover-breedte in browsereenheden (bijv. 100px, 25vw)",
-        "popover-height": "Popover-hoogte in browsereenheden (bijv. 100px, 25vh)",
+        "popover-width": "Popover-breedte",
+        "popover-height": "Popover-hoogte",
         "popover-style": "Popover-stijl",
         "open-new-browser-tab": "Openen in een nieuw browsertabblad",
         "mobile": {
@@ -5481,7 +5480,7 @@
         "action-source-required": "Actiebron is vereist.",
         "action-name": "Naam",
         "action-name-required": "De naam van de actie is vereist.",
-        "action-name-not-unique": "Er bestaat al een andere actie met dezelfde naam.<br/>De naam van de actie moet uniek zijn binnen dezelfde actiebron.",
+        "action-name-not-unique": "Er bestaat al een andere actie met dezelfde naam.\nDe naam van de actie moet uniek zijn binnen dezelfde actiebron.",
         "action-icon": "Pictogram",
         "show-hide-action-using-function": "Actie tonen/verbergen met behulp van functie",
         "action-type": "Type",

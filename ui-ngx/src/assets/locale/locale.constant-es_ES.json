@@ -431,9 +431,9 @@
             "issuer-name": "Nombre del emisor",
             "issuer-name-required": "Se requiere nombre del emisor.",
             "signings-key": "Clave de firma",
-            "signings-key-hint": "Una string codificada en Base64 representando por lo menos 256 bits de datos.",
+            "signings-key-hint": "Una string codificada en Base64 representando por lo menos 512 bits de datos.",
             "signings-key-required": "Se requiere clave de firma.",
-            "signings-key-min-length": "La clave de firma debe tener al menos 256 bits de datos.",
+            "signings-key-min-length": "La clave de firma debe tener al menos 512 bits de datos.",
             "signings-key-base64": "La clave de firma debe estar en formato base64.",
             "expiration-time": "Caducidad del token (en segundos)",
             "expiration-time-required": "Se requiere caducidad del token.",
@@ -1835,8 +1835,7 @@
                 "step": "Paso",
                 "min-evaluation-period": "Período mínimo de evaluación",
                 "max-evaluation-period": "Período máximo de evaluación"
-            },
-            "composite-operations-support": "Soporta operaciones Lectura/Escritura/Observación Compuestas"
+            }
         },
         "snmp": {
             "add-communication-config": "Añadir configuración de comunicaciones",
@@ -4883,8 +4882,8 @@
         "popover-placement-leftBottom": "Izquierda inferior",
         "popover-hide-on-click-outside": "Ocultar en click fuera del popover",
         "popover-hide-dashboard-toolbar": "Ocultar caja de herramientas en popover",
-        "popover-width": "Ancho de popover en unidades de navegador (ej. 100px, 25vw)",
-        "popover-height": "Altura de popover en unidades de navegador (ej. 100px, 25vh)",
+        "popover-width": "Ancho de popover",
+        "popover-height": "Altura de popover",
         "popover-style": "Estilo de popover",
         "open-new-browser-tab": "Abrir en una nueva pestaña",
         "mobile": {
@@ -4996,7 +4995,7 @@
         "action-source-required": "Origen de acción requerido.",
         "action-name": "Nombre",
         "action-name-required": "Nombre de accion requerido.",
-        "action-name-not-unique": "Existe una acción con el mismo nombre.<br/>El nombre de acción debe ser único dentro de la misma fuente de acción (origen).",
+        "action-name-not-unique": "Existe una acción con el mismo nombre.\nEl nombre de acción debe ser único dentro de la misma fuente de acción (origen).",
         "action-icon": "Icono",
         "show-hide-action-using-function": "Mostrar/Ocultar acción usando función",
         "action-type": "Tipo",

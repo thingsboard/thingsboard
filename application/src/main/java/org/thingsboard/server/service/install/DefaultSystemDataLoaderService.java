@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,19 +19,24 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -80,11 +85,13 @@ import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.UserCredentials;
+import org.thingsboard.server.common.data.security.model.JwtSettings;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.device.DeviceConnectivityConfiguration;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -98,14 +105,11 @@ import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
-import org.thingsboard.server.dao.widget.WidgetTypeService;
-import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 
-import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.TreeMap;
@@ -115,76 +119,51 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.thingsboard.server.common.data.DataConstants.DEFAULT_DEVICE_TYPE;
+import static org.thingsboard.server.service.security.auth.jwt.settings.DefaultJwtSettingsService.isSigningKeyDefault;
+import static org.thingsboard.server.service.security.auth.jwt.settings.DefaultJwtSettingsService.validateTokenSigningKeyLength;
 
 @Service
 @Profile("install")
 @Slf4j
+@RequiredArgsConstructor
 public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     public static final String CUSTOMER_CRED = "customer";
     public static final String ACTIVITY_STATE = "active";
 
-    @Autowired
-    private InstallScripts installScripts;
+    private final InstallScripts installScripts;
+    private final UserService userService;
+    private final AdminSettingsService adminSettingsService;
+    private final TenantService tenantService;
+    private final TenantProfileService tenantProfileService;
+    private final CustomerService customerService;
+    private final DeviceService deviceService;
+    private final DeviceProfileService deviceProfileService;
+    private final AttributesService attributesService;
+    private final DeviceCredentialsService deviceCredentialsService;
+    private final RuleChainService ruleChainService;
+    private final TimeseriesService tsService;
+    private final DeviceConnectivityConfiguration connectivityConfiguration;
+    private final QueueService queueService;
+    private final JwtSettingsService jwtSettingsService;
+    private final NotificationSettingsService notificationSettingsService;
+    private final NotificationTargetService notificationTargetService;
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private AdminSettingsService adminSettingsService;
-
-    @Autowired
-    private WidgetTypeService widgetTypeService;
-
-    @Autowired
-    private WidgetsBundleService widgetsBundleService;
-
-    @Autowired
-    private TenantService tenantService;
-
-    @Autowired
-    private TenantProfileService tenantProfileService;
-
-    @Autowired
-    private CustomerService customerService;
-
-    @Autowired
-    private DeviceService deviceService;
-
-    @Autowired
-    private DeviceProfileService deviceProfileService;
-
-    @Autowired
-    private AttributesService attributesService;
-
-    @Autowired
-    private DeviceCredentialsService deviceCredentialsService;
-
-    @Autowired
-    private RuleChainService ruleChainService;
-
-    @Autowired
-    private TimeseriesService tsService;
 
     @Value("${state.persistToTelemetry:false}")
     @Getter
     private boolean persistActivityToTelemetry;
 
-    @Lazy
-    @Autowired
-    private QueueService queueService;
-
-    @Autowired
-    private JwtSettingsService jwtSettingsService;
-
-    @Autowired
-    private NotificationSettingsService notificationSettingsService;
-
-    @Autowired
-    private NotificationTargetService notificationTargetService;
+    @Value("${security.jwt.tokenExpirationTime:9000}")
+    private Integer tokenExpirationTime;
+    @Value("${security.jwt.refreshTokenExpTime:604800}")
+    private Integer refreshTokenExpTime;
+    @Value("${security.jwt.tokenIssuer:thingsboard.io}")
+    private String tokenIssuer;
+    @Value("${security.jwt.tokenSigningKey:thingsboardDefaultSigningKey}")
+    private String tokenSigningKey;
 
     @Bean
     protected BCryptPasswordEncoder passwordEncoder() {
@@ -260,7 +239,6 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         ObjectNode node = JacksonUtil.newObjectNode();
         node.put("baseUrl", "http://localhost:8080");
         node.put("prohibitDifferentUrl", false);
-        node.set("connectivity", createDeviceConnectivityConfiguration());
         generalSettings.setJsonValue(node);
         adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, generalSettings);
 
@@ -285,59 +263,48 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         AdminSettings connectivitySettings = new AdminSettings();
         connectivitySettings.setTenantId(TenantId.SYS_TENANT_ID);
         connectivitySettings.setKey("connectivity");
-        connectivitySettings.setJsonValue(createDeviceConnectivityConfiguration());
+        connectivitySettings.setJsonValue(JacksonUtil.valueToTree(connectivityConfiguration.getConnectivity()));
         adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, connectivitySettings);
-    }
-
-    private ObjectNode createDeviceConnectivityConfiguration() {
-        ObjectNode config = JacksonUtil.newObjectNode();
-
-        ObjectNode http = JacksonUtil.newObjectNode();
-        http.put("enabled", true);
-        http.put("host", "");
-        http.put("port", 8080);
-        config.set("http", http);
-
-        ObjectNode https = JacksonUtil.newObjectNode();
-        https.put("enabled", false);
-        https.put("host", "");
-        https.put("port", 443);
-        config.set("https", https);
-
-        ObjectNode mqtt = JacksonUtil.newObjectNode();
-        mqtt.put("enabled", true);
-        mqtt.put("host", "");
-        mqtt.put("port", 1883);
-        config.set("mqtt", mqtt);
-
-        ObjectNode mqtts = JacksonUtil.newObjectNode();
-        mqtts.put("enabled", false);
-        mqtts.put("host", "");
-        mqtts.put("port", 8883);
-        config.set("mqtts", mqtts);
-
-        ObjectNode coap = JacksonUtil.newObjectNode();
-        coap.put("enabled", true);
-        coap.put("host", "");
-        coap.put("port", 5683);
-        config.set("coap", coap);
-
-        ObjectNode coaps = JacksonUtil.newObjectNode();
-        coaps.put("enabled", false);
-        coaps.put("host", "");
-        coaps.put("port", 5684);
-        config.set("coaps", coaps);
-        return config;
     }
 
     @Override
     public void createRandomJwtSettings() throws Exception {
-        jwtSettingsService.createRandomJwtSettings();
+            if (jwtSettingsService.getJwtSettings() == null) {
+                log.info("Creating JWT admin settings...");
+                var jwtSettings = new JwtSettings(this.tokenExpirationTime, this.refreshTokenExpTime, this.tokenIssuer, this.tokenSigningKey);
+                if (isSigningKeyDefault(jwtSettings) || !validateTokenSigningKeyLength(jwtSettings)) {
+                    jwtSettings.setTokenSigningKey(Base64.getEncoder().encodeToString(
+                            RandomStringUtils.randomAlphanumeric(64).getBytes(StandardCharsets.UTF_8)));
+                }
+                jwtSettingsService.saveJwtSettings(jwtSettings);
+            } else {
+                log.info("Skip creating JWT admin settings because they already exist.");
+            }
     }
 
     @Override
-    public void saveLegacyYmlSettings() throws Exception {
-        jwtSettingsService.saveLegacyYmlSettings();
+    public void updateJwtSettings() {
+        JwtSettings jwtSettings = jwtSettingsService.getJwtSettings();
+        boolean invalidSignKey = false;
+        String warningMessage = null;
+
+        if (isSigningKeyDefault(jwtSettings)) {
+            warningMessage = "The platform is using the default JWT Signing Key, which is a security risk.";
+            invalidSignKey = true;
+        } else if (!validateTokenSigningKeyLength(jwtSettings)) {
+            warningMessage = "The JWT Signing Key is shorter than 512 bits, which is a security risk.";
+            invalidSignKey = true;
+        }
+
+        if (invalidSignKey) {
+            log.warn("WARNING: {}. A new JWT Signing Key has been added automatically. " +
+                    "You can change the JWT Signing Key using the Web UI: " +
+                    "Navigate to \"System settings -> Security settings\" while logged in as a System Administrator.", warningMessage);
+
+            jwtSettings.setTokenSigningKey(Base64.getEncoder().encodeToString(
+                    RandomStringUtils.randomAlphanumeric(64).getBytes(StandardCharsets.UTF_8)));
+            jwtSettingsService.saveJwtSettings(jwtSettings);
+        }
     }
 
     @Override
@@ -513,7 +480,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         DeviceId t1Id = createDevice(demoTenant.getId(), null, savedThermostatDeviceProfile.getId(), "Thermostat T1", "T1_TEST_TOKEN", "Demo device for Thermostats dashboard").getId();
         DeviceId t2Id = createDevice(demoTenant.getId(), null, savedThermostatDeviceProfile.getId(), "Thermostat T2", "T2_TEST_TOKEN", "Demo device for Thermostats dashboard").getId();
 
-        attributesService.save(demoTenant.getId(), t1Id, DataConstants.SERVER_SCOPE,
+        attributesService.save(demoTenant.getId(), t1Id, AttributeScope.SERVER_SCOPE,
                 Arrays.asList(new BaseAttributeKvEntry(System.currentTimeMillis(), new DoubleDataEntry("latitude", 37.3948)),
                         new BaseAttributeKvEntry(System.currentTimeMillis(), new DoubleDataEntry("longitude", -122.1503)),
                         new BaseAttributeKvEntry(System.currentTimeMillis(), new BooleanDataEntry("temperatureAlarmFlag", true)),
@@ -521,7 +488,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
                         new BaseAttributeKvEntry(System.currentTimeMillis(), new LongDataEntry("temperatureAlarmThreshold", (long) 20)),
                         new BaseAttributeKvEntry(System.currentTimeMillis(), new LongDataEntry("humidityAlarmThreshold", (long) 50))));
 
-        attributesService.save(demoTenant.getId(), t2Id, DataConstants.SERVER_SCOPE,
+        attributesService.save(demoTenant.getId(), t2Id, AttributeScope.SERVER_SCOPE,
                 Arrays.asList(new BaseAttributeKvEntry(System.currentTimeMillis(), new DoubleDataEntry("latitude", 37.493801)),
                         new BaseAttributeKvEntry(System.currentTimeMillis(), new DoubleDataEntry("longitude", -121.948769)),
                         new BaseAttributeKvEntry(System.currentTimeMillis(), new BooleanDataEntry("temperatureAlarmFlag", true)),
@@ -589,9 +556,9 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
                     Collections.singletonList(new BasicTsKvEntry(System.currentTimeMillis(), new BooleanDataEntry(key, value))), 0L);
             addTsCallback(saveFuture, new TelemetrySaveCallback<>(deviceId, key, value));
         } else {
-            ListenableFuture<List<String>> saveFuture = attributesService.save(TenantId.SYS_TENANT_ID, deviceId, DataConstants.SERVER_SCOPE,
+            ListenableFuture<List<String>> saveFuture = attributesService.save(TenantId.SYS_TENANT_ID, deviceId, AttributeScope.SERVER_SCOPE,
                     Collections.singletonList(new BaseAttributeKvEntry(new BooleanDataEntry(key, value)
-                    , System.currentTimeMillis())));
+                            , System.currentTimeMillis())));
             addTsCallback(saveFuture, new TelemetrySaveCallback<>(deviceId, key, value));
         }
     }
@@ -734,8 +701,27 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     }
 
     @Override
-    public void updateDefaultNotificationConfigs() {
+    @SneakyThrows
+    public void updateDefaultNotificationConfigs(boolean updateTenants) {
+        log.info("Updating notification configs...");
         notificationSettingsService.updateDefaultNotificationConfigs(TenantId.SYS_TENANT_ID);
+
+        if (updateTenants) {
+            PageDataIterable<TenantId> tenants = new PageDataIterable<>(tenantService::findTenantsIds, 500);
+            ExecutorService executor = Executors.newFixedThreadPool(Math.max(Runtime.getRuntime().availableProcessors(), 4));
+            AtomicInteger count = new AtomicInteger();
+            for (TenantId tenantId : tenants) {
+                executor.submit(() -> {
+                    notificationSettingsService.updateDefaultNotificationConfigs(tenantId);
+                    int n = count.incrementAndGet();
+                    if (n % 500 == 0) {
+                        log.info("{} tenants processed", n);
+                    }
+                });
+            }
+            executor.shutdown();
+            executor.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
+        }
     }
 
 }

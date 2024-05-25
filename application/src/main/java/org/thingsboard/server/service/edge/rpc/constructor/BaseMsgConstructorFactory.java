@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,16 +31,10 @@ public abstract class BaseMsgConstructorFactory<T extends MsgConstructor, U exte
     protected U v2Constructor;
 
     public MsgConstructor getMsgConstructorByEdgeVersion(EdgeVersion edgeVersion) {
-        switch (edgeVersion) {
-            case V_3_3_0:
-            case V_3_3_3:
-            case V_3_4_0:
-            case V_3_6_0:
-            case V_3_6_1:
-                return v1Constructor;
-            case V_3_6_2:
-            default:
-                return v2Constructor;
-        }
+        return switch (edgeVersion) {
+            case V_3_3_0, V_3_3_3, V_3_4_0, V_3_6_0, V_3_6_1 -> v1Constructor;
+            default -> v2Constructor;
+        };
     }
+
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,8 +38,10 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
@@ -148,7 +150,9 @@ public class NotificationTargetApiTest extends AbstractNotificationApiTest {
         assertThat(notificationTargetDao.findByTenantIdAndSupportedNotificationTypeAndPageLink(differentTenantId, NotificationType.GENERAL, new PageLink(10)).getData()).isNotEmpty();
 
         deleteDifferentTenant();
-        assertThat(notificationTargetDao.findByTenantIdAndPageLink(differentTenantId, new PageLink(10)).getData()).isEmpty();
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(notificationTargetDao.findByTenantIdAndPageLink(differentTenantId, new PageLink(10)).getData()).isEmpty();
+        });
     }
 
     @Test

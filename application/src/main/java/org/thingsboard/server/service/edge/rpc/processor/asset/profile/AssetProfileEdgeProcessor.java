@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,8 +97,7 @@ public abstract class AssetProfileEdgeProcessor extends BaseAssetProfileProcesso
         AssetProfileId assetProfileId = new AssetProfileId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
-            case ADDED:
-            case UPDATED:
+            case ADDED, UPDATED -> {
                 AssetProfile assetProfile = assetProfileService.findAssetProfileById(edgeEvent.getTenantId(), assetProfileId);
                 if (assetProfile != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
@@ -110,16 +109,17 @@ public abstract class AssetProfileEdgeProcessor extends BaseAssetProfileProcesso
                             .addAssetProfileUpdateMsg(assetProfileUpdateMsg)
                             .build();
                 }
-                break;
-            case DELETED:
+            }
+            case DELETED -> {
                 AssetProfileUpdateMsg assetProfileUpdateMsg = ((AssetMsgConstructor)
                         assetMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructAssetProfileDeleteMsg(assetProfileId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addAssetProfileUpdateMsg(assetProfileUpdateMsg)
                         .build();
-                break;
+            }
         }
         return downlinkMsg;
     }
+
 }

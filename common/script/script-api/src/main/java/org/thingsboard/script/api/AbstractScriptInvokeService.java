@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,14 +145,14 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
                 log.trace("[{}] InvokeScript uuid {} with timeout {}ms", tenantId, scriptId, getMaxInvokeRequestsTimeout());
                 var task = doInvokeFunction(scriptId, args);
 
-                var resultFuture = Futures.transformAsync(task.getResultFuture(), output -> {
+                var resultFuture = Futures.transform(task.getResultFuture(), output -> {
                     String result = JacksonUtil.toString(output);
                     if (resultSizeExceeded(result)) {
                         throw new TbScriptException(scriptId, TbScriptException.ErrorCode.OTHER, null, new RuntimeException(
                                 format("Script invocation result exceeds maximum allowed size of %s symbols", getMaxResultSize())
                         ));
                     }
-                    return Futures.immediateFuture(output);
+                    return output;
                 }, MoreExecutors.directExecutor());
 
                 return withTimeoutAndStatsCallback(scriptId, task, resultFuture, invokeCallback, getMaxInvokeRequestsTimeout());

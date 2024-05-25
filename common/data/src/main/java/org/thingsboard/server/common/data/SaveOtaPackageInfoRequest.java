@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,17 @@
  */
 package org.thingsboard.server.common.data;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-@ApiModel
+@Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 public class SaveOtaPackageInfoRequest extends OtaPackageInfo {
-    @ApiModelProperty(position = 16, value = "Indicates OTA Package uses url. Should be 'true' if uses url or 'false' if will be used data.", example = "true", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Indicates OTA Package uses url. Should be 'true' if uses url or 'false' if will be used data.", example = "true", accessMode = Schema.AccessMode.READ_ONLY)
     boolean usesUrl;
 
     public SaveOtaPackageInfoRequest(OtaPackageInfo otaPackageInfo, boolean usesUrl) {

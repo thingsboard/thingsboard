@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,22 @@
  */
 package org.thingsboard.server.common.data.tenant.profile;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.io.Serializable;
 import java.util.List;
 
-@ApiModel
+@Schema
 @Data
 public class TenantProfileData implements Serializable {
 
     private static final long serialVersionUID = -3642550257035920976L;
 
-    @ApiModelProperty(position = 1, value = "Complex JSON object that contains profile settings: max devices, max assets, rate limits, etc.")
+    @Schema(description = "Complex JSON object that contains profile settings: max devices, max assets, rate limits, etc.")
     private TenantProfileConfiguration configuration;
 
-    @ApiModelProperty(position = 2, value = "JSON array of queue configuration per tenant profile")
+    @Schema(description = "JSON array of queue configuration per tenant profile")
     private List<TenantProfileQueueConfiguration> queueConfiguration;
 
 }

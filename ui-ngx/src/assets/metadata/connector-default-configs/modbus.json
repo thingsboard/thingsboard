@@ -1,0 +1,248 @@
+{
+  "master": {
+    "slaves": [
+      {
+        "host": "127.0.0.1",
+        "port": 5021,
+        "type": "tcp",
+        "method": "socket",
+        "timeout": 35,
+        "byteOrder": "LITTLE",
+        "wordOrder": "LITTLE",
+        "retries": true,
+        "retryOnEmpty": true,
+        "retryOnInvalid": true,
+        "pollPeriod": 5000,
+        "unitId": 1,
+        "deviceName": "Temp Sensor",
+        "sendDataOnlyOnChange": true,
+        "connectAttemptTimeMs": 5000,
+        "connectAttemptCount": 5,
+        "waitAfterFailedAttemptsMs": 300000,
+        "attributes": [
+          {
+            "tag": "string_read",
+            "type": "string",
+            "functionCode": 4,
+            "objectsCount": 4,
+            "address": 1
+          },
+          {
+            "tag": "bits_read",
+            "type": "bits",
+            "functionCode": 4,
+            "objectsCount": 1,
+            "address": 5
+          },
+          {
+            "tag": "8int_read",
+            "type": "8int",
+            "functionCode": 4,
+            "objectsCount": 1,
+            "address": 6
+          },
+          {
+            "tag": "16int_read",
+            "type": "16int",
+            "functionCode": 4,
+            "objectsCount": 1,
+            "address": 7
+          },
+          {
+            "tag": "32int_read_divider",
+            "type": "32int",
+            "functionCode": 4,
+            "objectsCount": 2,
+            "address": 8,
+            "divider": 10
+          },
+          {
+            "tag": "8int_read_multiplier",
+            "type": "8int",
+            "functionCode": 4,
+            "objectsCount": 1,
+            "address": 10,
+            "multiplier": 10
+          },
+          {
+            "tag": "32int_read",
+            "type": "32int",
+            "functionCode": 4,
+            "objectsCount": 2,
+            "address": 11
+          },
+          {
+            "tag": "64int_read",
+            "type": "64int",
+            "functionCode": 4,
+            "objectsCount": 4,
+            "address": 13
+          }
+        ],
+        "timeseries": [
+          {
+            "tag": "8uint_read",
+            "type": "8uint",
+            "functionCode": 4,
+            "objectsCount": 1,
+            "address": 17
+          },
+          {
+            "tag": "16uint_read",
+            "type": "16uint",
+            "functionCode": 4,
+            "objectsCount": 2,
+            "address": 18
+          },
+          {
+            "tag": "32uint_read",
+            "type": "32uint",
+            "functionCode": 4,
+            "objectsCount": 4,
+            "address": 20
+          },
+          {
+            "tag": "64uint_read",
+            "type": "64uint",
+            "functionCode": 4,
+            "objectsCount": 1,
+            "address": 24
+          },
+          {
+            "tag": "16float_read",
+            "type": "16float",
+            "functionCode": 4,
+            "objectsCount": 1,
+            "address": 25
+          },
+          {
+            "tag": "32float_read",
+            "type": "32float",
+            "functionCode": 4,
+            "objectsCount": 2,
+            "address": 26
+          },
+          {
+            "tag": "64float_read",
+            "type": "64float",
+            "functionCode": 4,
+            "objectsCount": 4,
+            "address": 28
+          }
+        ],
+        "attributeUpdates": [
+          {
+            "tag": "shared_attribute_write",
+            "type": "32int",
+            "functionCode": 6,
+            "objectsCount": 2,
+            "address": 29
+          }
+        ],
+        "rpc": [
+          {
+            "tag": "setValue",
+            "type": "bits",
+            "functionCode": 5,
+            "objectsCount": 1,
+            "address": 31
+          },
+          {
+            "tag": "getValue",
+            "type": "bits",
+            "functionCode": 1,
+            "objectsCount": 1,
+            "address": 31
+          },
+          {
+            "tag": "setCPUFanSpeed",
+            "type": "32int",
+            "functionCode": 16,
+            "objectsCount": 2,
+            "address": 33
+          },
+          {
+            "tag": "getCPULoad",
+            "type": "32int",
+            "functionCode": 4,
+            "objectsCount": 2,
+            "address": 35
+          }
+        ]
+      }
+    ]
+  },
+  "slave": {
+    "type": "tcp",
+    "host": "127.0.0.1",
+    "port": 5026,
+    "method": "socket",
+    "deviceName": "Modbus Slave Example",
+    "deviceType": "default",
+    "pollPeriod": 5000,
+    "sendDataToThingsBoard": false,
+    "byteOrder": "LITTLE",
+    "wordOrder": "LITTLE",
+    "unitId": 0,
+    "values": {
+      "holding_registers": [
+        {
+          "attributes": [
+            {
+              "address": 1,
+              "type": "string",
+              "tag": "sm",
+              "objectsCount": 1,
+              "value": "ON"
+            }
+          ],
+          "timeseries": [
+            {
+              "address": 2,
+              "type": "int",
+              "tag": "smm",
+              "objectsCount": 1,
+              "value": "12334"
+            }
+          ],
+          "attributeUpdates": [
+            {
+              "tag": "shared_attribute_write",
+              "type": "32int",
+              "functionCode": 6,
+              "objectsCount": 2,
+              "address": 29,
+              "value": 1243
+            }
+          ],
+          "rpc": [
+            {
+              "tag": "setValue",
+              "type": "bits",
+              "functionCode": 5,
+              "objectsCount": 1,
+              "address": 31,
+              "value": 22
+            }
+          ]
+        }
+      ],
+      "coils_initializer": [
+        {
+          "attributes": [
+            {
+              "address": 5,
+              "type": "string",
+              "tag": "sm",
+              "objectsCount": 1,
+              "value": "12"
+            }
+          ],
+          "timeseries": [],
+          "attributeUpdates": [],
+          "rpc": []
+        }
+      ]
+    }
+  }
+}

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,8 +50,7 @@ public class EdgeProcessor extends BaseEdgeProcessor {
         EdgeId edgeId = new EdgeId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
-            case ASSIGNED_TO_CUSTOMER:
-            case UNASSIGNED_FROM_CUSTOMER:
+            case ASSIGNED_TO_CUSTOMER, UNASSIGNED_FROM_CUSTOMER -> {
                 Edge edge = edgeService.findEdgeById(edgeEvent.getTenantId(), edgeId);
                 if (edge != null) {
                     EdgeConfiguration edgeConfigMsg =
@@ -61,7 +60,7 @@ public class EdgeProcessor extends BaseEdgeProcessor {
                             .setEdgeConfiguration(edgeConfigMsg)
                             .build();
                 }
-                break;
+            }
         }
         return downlinkMsg;
     }
@@ -112,4 +111,5 @@ public class EdgeProcessor extends BaseEdgeProcessor {
             return Futures.immediateFailedFuture(e);
         }
     }
+
 }

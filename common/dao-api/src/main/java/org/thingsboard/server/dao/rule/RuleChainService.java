@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,9 +44,13 @@ public interface RuleChainService extends EntityDaoService {
 
     RuleChain saveRuleChain(RuleChain ruleChain);
 
+    RuleChain saveRuleChain(RuleChain ruleChain, boolean publishSaveEvent);
+
     boolean setRootRuleChain(TenantId tenantId, RuleChainId ruleChainId);
 
     RuleChainUpdateResult saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData, Function<RuleNode, RuleNode> ruleNodeUpdater);
+
+    RuleChainUpdateResult saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData, Function<RuleNode, RuleNode> ruleNodeUpdater, boolean publishSaveEvent);
 
     RuleChainMetaData loadRuleChainMetaData(TenantId tenantId, RuleChainId ruleChainId);
 

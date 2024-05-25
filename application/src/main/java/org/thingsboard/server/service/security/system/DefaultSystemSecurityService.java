@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,13 +57,12 @@ import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.user.UserServiceImpl;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
 import org.thingsboard.server.service.security.exception.UserPasswordExpiredException;
-import org.thingsboard.server.service.security.exception.UserPasswordNotValidException;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.utils.MiscUtils;
 import ua_parser.Client;
 
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -74,6 +73,8 @@ import static org.thingsboard.server.common.data.CacheConstants.SECURITY_SETTING
 @Service
 @Slf4j
 public class DefaultSystemSecurityService implements SystemSecurityService {
+
+    public static final int DEFAULT_MOBILE_SECRET_KEY_LENGTH = 64;
 
     @Autowired
     private AdminSettingsService adminSettingsService;
@@ -109,6 +110,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
             securitySettings.setPasswordPolicy(new UserPasswordPolicy());
             securitySettings.getPasswordPolicy().setMinimumLength(6);
             securitySettings.getPasswordPolicy().setMaximumLength(72);
+            securitySettings.setMobileSecretKeyLength(DEFAULT_MOBILE_SECRET_KEY_LENGTH);
         }
         return securitySettings;
     }

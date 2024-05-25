@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -29,11 +31,11 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.service.executors.PubSubRuleNodeExecutorProvider;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.NotificationCenter;
+import org.thingsboard.rule.engine.api.RuleEngineDeviceStateManager;
 import org.thingsboard.rule.engine.api.SmsService;
-import org.thingsboard.rule.engine.api.slack.SlackService;
+import org.thingsboard.rule.engine.api.notification.SlackService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.script.api.js.JsInvokeService;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
@@ -79,6 +81,7 @@ import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
+import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -93,7 +96,6 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.queue.discovery.DiscoveryService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
@@ -101,6 +103,7 @@ import org.thingsboard.server.service.entitiy.entityview.TbEntityViewService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.executors.ExternalCallExecutorService;
 import org.thingsboard.server.service.executors.NotificationExecutorService;
+import org.thingsboard.server.service.executors.PubSubRuleNodeExecutorProvider;
 import org.thingsboard.server.service.executors.SharedEventLoopGroupService;
 import org.thingsboard.server.service.mail.MailExecutorService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
@@ -115,8 +118,6 @@ import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.service.transport.TbCoreToTransportService;
 
-import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.concurrent.ConcurrentHashMap;
@@ -185,10 +186,6 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private DataDecodingEncodingService encodingService;
-
-    @Autowired
-    @Getter
     private DeviceService deviceService;
 
     @Autowired
@@ -202,6 +199,10 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private DeviceCredentialsService deviceCredentialsService;
+
+    @Autowired(required = false)
+    @Getter
+    private RuleEngineDeviceStateManager deviceStateManager;
 
     @Autowired
     @Getter
@@ -449,6 +450,11 @@ public class ActorSystemContext {
     @Lazy
     @Autowired(required = false)
     @Getter
+    private QueueStatsService queueStatsService;
+
+    @Lazy
+    @Autowired(required = false)
+    @Getter
     private WidgetsBundleService widgetsBundleService;
 
     @Lazy
@@ -556,6 +562,10 @@ public class ActorSystemContext {
     @Getter
     private boolean externalNodeForceAck;
 
+    @Value("${state.rule.node.deviceState.rateLimit:1:1,30:60,60:3600}")
+    @Getter
+    private String deviceStateNodeRateLimitConfig;
+
     @Getter
     @Setter
     private TbActorSystem actorSystem;
@@ -624,6 +634,10 @@ public class ActorSystemContext {
 
     public TopicPartitionInfo resolve(ServiceType serviceType, String queueName, TenantId tenantId, EntityId entityId) {
         return partitionService.resolve(serviceType, queueName, tenantId, entityId);
+    }
+
+    public TopicPartitionInfo resolve(TenantId tenantId, EntityId entityId, TbMsg msg) {
+        return partitionService.resolve(ServiceType.TB_RULE_ENGINE, msg.getQueueName(), tenantId, entityId, msg.getPartition());
     }
 
     public String getServiceId() {

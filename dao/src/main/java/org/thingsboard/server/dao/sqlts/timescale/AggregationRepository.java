@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ import org.springframework.stereotype.Repository;
 import org.thingsboard.server.dao.model.sqlts.timescale.ts.TimescaleTsKvEntity;
 import org.thingsboard.server.dao.util.TimescaleDBTsOrTsLatestDao;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import java.util.List;
 import java.util.UUID;
 

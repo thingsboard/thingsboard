@@ -1,0 +1,365 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ng-container [formGroup]="timeSeriesChartWidgetConfigForm">
+  <tb-timewindow-config-panel formControlName="timewindowConfig">
+  </tb-timewindow-config-panel>
+  <tb-datasources
+      [configMode]="basicMode"
+      hideDatasourceLabel
+      hideDataKeys
+      forceSingleDatasource
+      formControlName="datasources">
+  </tb-datasources>
+  <div class="tb-form-panel">
+    <div fxLayout="row" fxLayoutAlign="space-between center">
+      <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ seriesMode === 'comparison' ? ('widgets.time-series-chart.comparison.comparison-hint' | translate) : null }}">
+        {{ 'widgets.chart.series' | translate }}
+      </div>
+      <tb-toggle-select [ngModel]="seriesMode" (ngModelChange)="seriesModeChange($event)"
+                        [ngModelOptions]="{ standalone: true }">
+        <tb-toggle-option value="series">{{ 'widgets.chart.series' | translate }}</tb-toggle-option>
+        <tb-toggle-option value="comparison">{{ 'widgets.time-series-chart.comparison.comparison' | translate }}</tb-toggle-option>
+      </tb-toggle-select>
+    </div>
+    <tb-data-keys-panel
+        *ngIf="seriesMode === 'series'"
+        hidePanel
+        panelTitle="{{ 'widgets.chart.series' | translate }}"
+        addKeyTitle="{{ 'widgets.chart.add-series' | translate }}"
+        keySettingsTitle="{{ 'widgets.chart.series-settings' | translate }}"
+        removeKeyTitle="{{ 'widgets.chart.remove-series' | translate }}"
+        noKeysText="{{ 'widgets.chart.no-series' | translate }}"
+        requiredKeysText="{{ 'widgets.chart.no-series-error' | translate }}"
+        timeSeriesChart
+        [yAxisIds]="yAxisIds"
+        [showTimeSeriesType]="chartType === TimeSeriesChartType.default"
+        hideSourceSelection
+        [datasourceType]="datasource?.type"
+        [deviceId]="datasource?.deviceId"
+        [entityAliasId]="datasource?.entityAliasId"
+        formControlName="series">
+    </tb-data-keys-panel>
+    <div *ngIf="seriesMode === 'comparison'" class="tb-form-row no-border no-padding column-xs">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="comparisonEnabled">
+        {{ 'widgets.time-series-chart.comparison.comparison' | translate }}
+      </mat-slide-toggle>
+      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="timeForComparison">
+            <mat-option [value]="'previousInterval'">
+              {{ 'widgets.chart.time-for-comparison-previous-interval' | translate }}
+            </mat-option>
+            <mat-option [value]="'days'">
+              {{ 'widgets.chart.time-for-comparison-days' | translate }}
+            </mat-option>
+            <mat-option [value]="'weeks'">
+              {{ 'widgets.chart.time-for-comparison-weeks' | translate }}
+            </mat-option>
+            <mat-option [value]="'months'">
+              {{ 'widgets.chart.time-for-comparison-months' | translate }}
+            </mat-option>
+            <mat-option [value]="'years'">
+              {{ 'widgets.chart.time-for-comparison-years' | translate }}
+            </mat-option>
+            <mat-option [value]="'customInterval'">
+              {{ 'widgets.chart.time-for-comparison-custom-interval' | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field [fxShow]="timeSeriesChartWidgetConfigForm.get('timeForComparison').value === 'customInterval'"
+                        appearance="outline" class="number flex-lt-md" subscriptSizing="dynamic">
+          <input matInput formControlName="comparisonCustomIntervalValue" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <tb-time-series-chart-axis-settings-button
+            axisType="xAxis"
+            panelTitle="{{ 'widgets.time-series-chart.axis.comparison-x-axis-settings' | translate }}"
+            formControlName="comparisonXAxis">
+        </tb-time-series-chart-axis-settings-button>
+      </div>
+    </div>
+    <tb-comparison-keys-table
+        *ngIf="seriesMode === 'comparison'"
+        [datasourceType]="datasource?.type"
+        formControlName="series">
+    </tb-comparison-keys-table>
+  </div>
+  <tb-time-series-chart-states-panel
+      *ngIf="chartType === TimeSeriesChartType.state"
+      formControlName="states">
+  </tb-time-series-chart-states-panel>
+  <tb-time-series-chart-y-axes-panel
+    formControlName="yAxes"
+    (axisRemoved)="yAxisRemoved($event)">
+  </tb-time-series-chart-y-axes-panel>
+  <tb-time-series-chart-thresholds-panel
+    formControlName="thresholds"
+    [aliasController]="aliasController"
+    [dataKeyCallbacks]="callbacks"
+    [datasource]="datasource"
+    [widgetConfig]="widgetConfig?.config"
+    [yAxisIds]="yAxisIds">
+  </tb-time-series-chart-thresholds-panel>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widget-config.appearance</div>
+    <div class="tb-form-row column-xs">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTitle">
+        {{ 'widget-config.title' | translate }}
+      </mat-slide-toggle>
+      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+          <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <tb-font-settings formControlName="titleFont"
+                          clearButton
+                          [previewText]="timeSeriesChartWidgetConfigForm.get('title').value"
+                          [initialPreviewStyle]="widgetConfig.config.titleStyle">
+        </tb-font-settings>
+        <tb-color-input asBoxInput
+                        colorClearButton
+                        formControlName="titleColor">
+        </tb-color-input>
+      </div>
+    </div>
+    <div class="tb-form-row column-xs">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showIcon">
+        {{ 'widget-config.card-icon' | translate }}
+      </mat-slide-toggle>
+      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <mat-form-field appearance="outline" class="flex number" subscriptSizing="dynamic">
+          <input matInput type="number" min="0" formControlName="iconSize" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <tb-css-unit-select fxFlex formControlName="iconSizeUnit"></tb-css-unit-select>
+        <tb-material-icon-select asBoxInput
+                                 iconClearButton
+                                 [color]="timeSeriesChartWidgetConfigForm.get('iconColor').value"
+                                 formControlName="icon">
+        </tb-material-icon-select>
+        <tb-color-input asBoxInput
+                        colorClearButton
+                        formControlName="iconColor">
+        </tb-color-input>
+      </div>
+    </div>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.time-series-chart.chart</div>
+    <div class="tb-form-row">
+      <mat-slide-toggle class="mat-slide" formControlName="dataZoom">
+        {{ 'widgets.time-series-chart.data-zoom' | translate }}
+      </mat-slide-toggle>
+    </div>
+    <tb-time-series-chart-grid-settings
+        formControlName="grid">
+    </tb-time-series-chart-grid-settings>
+    <div class="tb-form-row">
+      <mat-slide-toggle class="mat-slide" formControlName="stack">
+        <div tb-hint-tooltip-icon="{{'widgets.time-series-chart.stack-mode-hint' | translate}}">
+          {{ 'widgets.time-series-chart.stack-mode' | translate }}
+        </div>
+      </mat-slide-toggle>
+    </div>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.time-series-chart.axis.x-axis</div>
+    <tb-time-series-chart-axis-settings
+      formControlName="xAxis"
+      axisType="xAxis">
+    </tb-time-series-chart-axis-settings>
+  </div>
+  <tb-time-series-no-aggregation-bar-width-settings
+    *ngIf="chartType === TimeSeriesChartType.default || chartType === TimeSeriesChartType.bar"
+    formControlName="noAggregationBarWidthSettings">
+  </tb-time-series-no-aggregation-bar-width-settings>
+  <div class="tb-form-panel tb-slide-toggle">
+    <mat-expansion-panel class="tb-settings" [expanded]="timeSeriesChartWidgetConfigForm.get('showLegend').value"
+                         [disabled]="!timeSeriesChartWidgetConfigForm.get('showLegend').value">
+      <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-panel-title>
+          <mat-slide-toggle class="mat-slide" formControlName="showLegend" (click)="$event.stopPropagation()"
+                            fxLayoutAlign="center">
+            {{ 'widget-config.legend' | translate }}
+          </mat-slide-toggle>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <div class="tb-form-row space-between">
+          <div>{{ 'legend.label' | translate }}</div>
+          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <tb-font-settings formControlName="legendLabelFont"
+                              [initialPreviewStyle]="{color: timeSeriesChartWidgetConfigForm.get('legendLabelColor').value}"
+                              previewText="Temperature">
+            </tb-font-settings>
+            <tb-color-input asBoxInput
+                            colorClearButton
+                            formControlName="legendLabelColor">
+            </tb-color-input>
+          </div>
+        </div>
+        <div class="tb-form-row space-between">
+          <div>{{ 'legend.value' | translate }}</div>
+          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <tb-font-settings formControlName="legendValueFont"
+                              [initialPreviewStyle]="{color: timeSeriesChartWidgetConfigForm.get('legendValueColor').value}"
+                              previewText="22 °C">
+            </tb-font-settings>
+            <tb-color-input asBoxInput
+                            colorClearButton
+                            formControlName="legendValueColor">
+            </tb-color-input>
+          </div>
+        </div>
+        <div class="tb-form-row space-between">
+          <div>{{ 'legend.column-title' | translate }}</div>
+          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <tb-font-settings formControlName="legendColumnTitleFont"
+                              [initialPreviewStyle]="{color: timeSeriesChartWidgetConfigForm.get('legendColumnTitleColor').value}"
+                              previewText="{{ 'legend.Avg' | translate }}">
+            </tb-font-settings>
+            <tb-color-input asBoxInput
+                            colorClearButton
+                            formControlName="legendColumnTitleColor">
+            </tb-color-input>
+          </div>
+        </div>
+        <tb-legend-config hideDirection
+                          formControlName="legendConfig">
+        </tb-legend-config>
+      </ng-template>
+    </mat-expansion-panel>
+  </div>
+  <div class="tb-form-panel tb-slide-toggle">
+    <mat-expansion-panel class="tb-settings" [expanded]="timeSeriesChartWidgetConfigForm.get('showTooltip').value"
+                         [disabled]="!timeSeriesChartWidgetConfigForm.get('showTooltip').value">
+      <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-panel-title>
+          <mat-slide-toggle class="mat-slide" formControlName="showTooltip" (click)="$event.stopPropagation()"
+                            fxLayoutAlign="center">
+            {{ 'widget-config.tooltip' | translate }}
+          </mat-slide-toggle>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <div class="tb-form-row space-between">
+          <div>{{ 'tooltip.trigger' | translate }}</div>
+          <mat-chip-listbox class="center-stretch" formControlName="tooltipTrigger">
+            <mat-chip-option [selectable]="timeSeriesChartWidgetConfigForm.get('tooltipTrigger').value !== EChartsTooltipTrigger.point"
+                             [value]="EChartsTooltipTrigger.point">{{ 'tooltip.trigger-point' | translate }}</mat-chip-option>
+            <mat-chip-option [selectable]="timeSeriesChartWidgetConfigForm.get('tooltipTrigger').value !== EChartsTooltipTrigger.axis"
+                             [value]="EChartsTooltipTrigger.axis">{{ 'tooltip.trigger-axis' | translate }}</mat-chip-option>
+          </mat-chip-listbox>
+        </div>
+        <div class="tb-form-row space-between">
+          <div>{{ 'tooltip.label' | translate }}</div>
+          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <tb-font-settings formControlName="tooltipLabelFont"
+                              [initialPreviewStyle]="{ color: timeSeriesChartWidgetConfigForm.get('tooltipLabelColor').value }"
+                              previewText="Temperature">
+            </tb-font-settings>
+            <tb-color-input asBoxInput
+                            colorClearButton
+                            formControlName="tooltipLabelColor">
+            </tb-color-input>
+          </div>
+        </div>
+        <div class="tb-form-row space-between">
+          <div>{{ 'tooltip.value' | translate }}</div>
+          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <tb-font-settings formControlName="tooltipValueFont"
+                              [initialPreviewStyle]="{ color: timeSeriesChartWidgetConfigForm.get('tooltipValueColor').value }"
+                              [previewText]="tooltipValuePreviewFn">
+            </tb-font-settings>
+            <tb-color-input asBoxInput
+                            colorClearButton
+                            formControlName="tooltipValueColor">
+            </tb-color-input>
+          </div>
+        </div>
+        <div class="tb-form-row column-xs">
+          <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="tooltipShowDate">
+            {{ 'tooltip.date' | translate }}
+          </mat-slide-toggle>
+          <div fxFlex.gt-xs fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <tb-date-format-select fxFlex excludeLastUpdateAgo includeAuto
+                                   formControlName="tooltipDateFormat"></tb-date-format-select>
+            <tb-font-settings formControlName="tooltipDateFont"
+                              [initialPreviewStyle]="{ color: timeSeriesChartWidgetConfigForm.get('tooltipDateColor').value }"
+                              [previewText]="tooltipDatePreviewFn">
+            </tb-font-settings>
+            <tb-color-input asBoxInput
+                            colorClearButton
+                            formControlName="tooltipDateColor">
+            </tb-color-input>
+          </div>
+        </div>
+        <div class="tb-form-row">
+          <mat-slide-toggle class="mat-slide" formControlName="tooltipDateInterval">
+            <div tb-hint-tooltip-icon="{{'tooltip.show-date-time-interval-hint' | translate}}">
+              {{ 'tooltip.show-date-time-interval' | translate }}
+            </div>
+          </mat-slide-toggle>
+        </div>
+        <div class="tb-form-row space-between">
+          <div>{{ 'tooltip.background-color' | translate }}</div>
+          <tb-color-input asBoxInput
+                          colorClearButton
+                          formControlName="tooltipBackgroundColor">
+          </tb-color-input>
+        </div>
+        <div class="tb-form-row space-between">
+          <div>{{ 'tooltip.background-blur' | translate }}</div>
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="tooltipBackgroundBlur" type="number" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+            <div matSuffix>px</div>
+          </mat-form-field>
+        </div>
+      </ng-template>
+    </mat-expansion-panel>
+  </div>
+  <tb-chart-animation-settings
+    formControlName="animation">
+  </tb-chart-animation-settings>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widget-config.card-appearance</div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widgets.background.background' | translate }}</div>
+      <tb-background-settings formControlName="background">
+      </tb-background-settings>
+    </div>
+    <div class="tb-form-row space-between column-lt-md">
+      <div translate>widget-config.show-card-buttons</div>
+      <mat-chip-listbox multiple formControlName="cardButtons">
+        <mat-chip-option value="fullscreen">{{ 'fullscreen.fullscreen' | translate }}</mat-chip-option>
+      </mat-chip-listbox>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widget-config.card-border-radius' | translate }}</div>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="borderRadius" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widget-config.card-padding' | translate }}</div>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="padding" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+  </div>
+  <tb-widget-actions-panel
+      formControlName="actions">
+  </tb-widget-actions-panel>
+</ng-container>

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import { FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
+import { isDefinedAndNotNull } from '@core/utils';
 
 export interface ExportWidgetsBundleDialogData {
   widgetsBundle: WidgetsBundle;
@@ -43,7 +44,7 @@ export class ExportWidgetsBundleDialogComponent extends DialogComponent<ExportWi
 
   widgetsBundle: WidgetsBundle;
 
-  exportWidgetsFormControl = new FormControl(false);
+  exportWidgetsFormControl = new FormControl(true);
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -51,7 +52,7 @@ export class ExportWidgetsBundleDialogComponent extends DialogComponent<ExportWi
               public dialogRef: MatDialogRef<ExportWidgetsBundleDialogComponent, ExportWidgetsBundleDialogResult>) {
     super(store, router, dialogRef);
     this.widgetsBundle = data.widgetsBundle;
-    if (data.includeBundleWidgetsInExport) {
+    if (isDefinedAndNotNull(data.includeBundleWidgetsInExport)) {
       this.exportWidgetsFormControl.patchValue(data.includeBundleWidgetsInExport, {emitEvent: false});
     }
   }

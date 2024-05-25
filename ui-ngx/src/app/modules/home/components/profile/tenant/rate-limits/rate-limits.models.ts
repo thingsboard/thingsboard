@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -26,6 +26,9 @@ export enum RateLimitsType {
   DEVICE_TELEMETRY_MESSAGES = 'DEVICE_TELEMETRY_MESSAGES',
   DEVICE_TELEMETRY_DATA_POINTS = 'DEVICE_TELEMETRY_DATA_POINTS',
   TENANT_MESSAGES = 'TENANT_MESSAGES',
+  GATEWAY_MESSAGES = 'GATEWAY_MESSAGES',
+  GATEWAY_TELEMETRY_MESSAGES = 'GATEWAY_TELEMETRY_MESSAGES',
+  GATEWAY_TELEMETRY_DATA_POINTS = 'GATEWAY_TELEMETRY_DATA_POINTS',
   TENANT_TELEMETRY_MESSAGES = 'TENANT_TELEMETRY_MESSAGES',
   TENANT_TELEMETRY_DATA_POINTS = 'TENANT_TELEMETRY_DATA_POINTS',
   TENANT_SERVER_REST_LIMITS_CONFIGURATION = 'TENANT_SERVER_REST_LIMITS_CONFIGURATION',
@@ -35,7 +38,11 @@ export enum RateLimitsType {
   TENANT_ENTITY_EXPORT_RATE_LIMIT = 'TENANT_ENTITY_EXPORT_RATE_LIMIT',
   TENANT_ENTITY_IMPORT_RATE_LIMIT = 'TENANT_ENTITY_IMPORT_RATE_LIMIT',
   TENANT_NOTIFICATION_REQUEST_RATE_LIMIT = 'TENANT_NOTIFICATION_REQUEST_RATE_LIMIT',
-  TENANT_NOTIFICATION_REQUESTS_PER_RULE_RATE_LIMIT = 'TENANT_NOTIFICATION_REQUESTS_PER_RULE_RATE_LIMIT'
+  TENANT_NOTIFICATION_REQUESTS_PER_RULE_RATE_LIMIT = 'TENANT_NOTIFICATION_REQUESTS_PER_RULE_RATE_LIMIT',
+  EDGE_EVENTS_RATE_LIMIT = 'EDGE_EVENTS_RATE_LIMIT',
+  EDGE_EVENTS_PER_EDGE_RATE_LIMIT = 'EDGE_EVENTS_PER_EDGE_RATE_LIMIT',
+  EDGE_UPLINK_MESSAGES_RATE_LIMIT = 'EDGE_UPLINK_MESSAGES_RATE_LIMIT',
+  EDGE_UPLINK_MESSAGES_PER_EDGE_RATE_LIMIT = 'EDGE_UPLINK_MESSAGES_PER_EDGE_RATE_LIMIT'
 }
 
 export const rateLimitsLabelTranslationMap = new Map<RateLimitsType, string>(
@@ -46,6 +53,9 @@ export const rateLimitsLabelTranslationMap = new Map<RateLimitsType, string>(
     [RateLimitsType.DEVICE_MESSAGES, 'tenant-profile.rate-limits.transport-device-msg'],
     [RateLimitsType.DEVICE_TELEMETRY_MESSAGES, 'tenant-profile.rate-limits.transport-device-telemetry-msg'],
     [RateLimitsType.DEVICE_TELEMETRY_DATA_POINTS, 'tenant-profile.rate-limits.transport-device-telemetry-data-points'],
+    [RateLimitsType.GATEWAY_MESSAGES, 'tenant-profile.rate-limits.transport-gateway-msg'],
+    [RateLimitsType.GATEWAY_TELEMETRY_MESSAGES, 'tenant-profile.rate-limits.transport-gateway-telemetry-msg'],
+    [RateLimitsType.GATEWAY_TELEMETRY_DATA_POINTS, 'tenant-profile.rate-limits.transport-gateway-telemetry-data-points'],
     [RateLimitsType.TENANT_SERVER_REST_LIMITS_CONFIGURATION, 'tenant-profile.rest-requests-for-tenant'],
     [RateLimitsType.CUSTOMER_SERVER_REST_LIMITS_CONFIGURATION, 'tenant-profile.customer-rest-limits'],
     [RateLimitsType.WS_UPDATE_PER_SESSION_RATE_LIMIT, 'tenant-profile.ws-limit-updates-per-session'],
@@ -54,6 +64,10 @@ export const rateLimitsLabelTranslationMap = new Map<RateLimitsType, string>(
     [RateLimitsType.TENANT_ENTITY_IMPORT_RATE_LIMIT, 'tenant-profile.tenant-entity-import-rate-limit'],
     [RateLimitsType.TENANT_NOTIFICATION_REQUEST_RATE_LIMIT, 'tenant-profile.tenant-notification-request-rate-limit'],
     [RateLimitsType.TENANT_NOTIFICATION_REQUESTS_PER_RULE_RATE_LIMIT, 'tenant-profile.tenant-notification-requests-per-rule-rate-limit'],
+    [RateLimitsType.EDGE_EVENTS_RATE_LIMIT, 'tenant-profile.rate-limits.edge-events-rate-limit'],
+    [RateLimitsType.EDGE_EVENTS_PER_EDGE_RATE_LIMIT, 'tenant-profile.rate-limits.edge-events-per-edge-rate-limit'],
+    [RateLimitsType.EDGE_UPLINK_MESSAGES_RATE_LIMIT, 'tenant-profile.rate-limits.edge-uplink-messages-rate-limit'],
+    [RateLimitsType.EDGE_UPLINK_MESSAGES_PER_EDGE_RATE_LIMIT, 'tenant-profile.rate-limits.edge-uplink-messages-per-edge-rate-limit'],
   ]
 );
 
@@ -66,6 +80,9 @@ export const rateLimitsDialogTitleTranslationMap = new Map<RateLimitsType, strin
     [RateLimitsType.DEVICE_TELEMETRY_MESSAGES, 'tenant-profile.rate-limits.edit-transport-device-telemetry-msg-title'],
     [RateLimitsType.DEVICE_TELEMETRY_DATA_POINTS, 'tenant-profile.rate-limits.edit-transport-device-telemetry-data-points-title'],
     [RateLimitsType.TENANT_SERVER_REST_LIMITS_CONFIGURATION, 'tenant-profile.rate-limits.edit-tenant-rest-limits-title'],
+    [RateLimitsType.GATEWAY_MESSAGES, 'tenant-profile.rate-limits.edit-transport-gateway-msg-title'],
+    [RateLimitsType.GATEWAY_TELEMETRY_MESSAGES, 'tenant-profile.rate-limits.edit-transport-gateway-telemetry-msg-title'],
+    [RateLimitsType.GATEWAY_TELEMETRY_DATA_POINTS, 'tenant-profile.rate-limits.edit-transport-gateway-telemetry-data-points-title'],
     [RateLimitsType.CUSTOMER_SERVER_REST_LIMITS_CONFIGURATION, 'tenant-profile.rate-limits.edit-customer-rest-limits-title'],
     [RateLimitsType.WS_UPDATE_PER_SESSION_RATE_LIMIT, 'tenant-profile.rate-limits.edit-ws-limit-updates-per-session-title'],
     [RateLimitsType.CASSANDRA_QUERY_TENANT_RATE_LIMITS_CONFIGURATION, 'tenant-profile.rate-limits.edit-cassandra-tenant-limits-configuration-title'],
@@ -73,6 +90,10 @@ export const rateLimitsDialogTitleTranslationMap = new Map<RateLimitsType, strin
     [RateLimitsType.TENANT_ENTITY_IMPORT_RATE_LIMIT, 'tenant-profile.rate-limits.edit-tenant-entity-import-rate-limit-title'],
     [RateLimitsType.TENANT_NOTIFICATION_REQUEST_RATE_LIMIT, 'tenant-profile.rate-limits.edit-tenant-notification-request-rate-limit-title'],
     [RateLimitsType.TENANT_NOTIFICATION_REQUESTS_PER_RULE_RATE_LIMIT, 'tenant-profile.rate-limits.edit-tenant-notification-requests-per-rule-rate-limit-title'],
+    [RateLimitsType.EDGE_EVENTS_RATE_LIMIT, 'tenant-profile.rate-limits.edit-edge-events-rate-limit'],
+    [RateLimitsType.EDGE_EVENTS_PER_EDGE_RATE_LIMIT, 'tenant-profile.rate-limits.edit-edge-events-per-edge-rate-limit'],
+    [RateLimitsType.EDGE_UPLINK_MESSAGES_RATE_LIMIT, 'tenant-profile.rate-limits.edit-edge-uplink-messages-rate-limit'],
+    [RateLimitsType.EDGE_UPLINK_MESSAGES_PER_EDGE_RATE_LIMIT, 'tenant-profile.rate-limits.edit-edge-uplink-messages-per-edge-rate-limit'],
   ]
 );
 

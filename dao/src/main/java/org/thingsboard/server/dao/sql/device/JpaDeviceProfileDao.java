@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,6 +148,11 @@ public class JpaDeviceProfileDao extends JpaAbstractDao<DeviceProfileEntity, Dev
     public DeviceProfileId getExternalIdByInternal(DeviceProfileId internalId) {
         return Optional.ofNullable(deviceProfileRepository.getExternalIdById(internalId.getId()))
                 .map(DeviceProfileId::new).orElse(null);
+    }
+
+    @Override
+    public DeviceProfile findDefaultEntityByTenantId(UUID tenantId) {
+        return findDefaultDeviceProfile(TenantId.fromUUID(tenantId));
     }
 
     @Override

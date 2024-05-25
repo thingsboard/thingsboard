@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public class AssetProfilesEdgeEventFetcher extends BasePageableEdgeEventFetcher<
     private final AssetProfileService assetProfileService;
 
     @Override
-    PageData<AssetProfile> fetchPageData(TenantId tenantId, Edge edge, PageLink pageLink) {
+    PageData<AssetProfile> fetchEntities(TenantId tenantId, Edge edge, PageLink pageLink) {
         return assetProfileService.findAssetProfiles(tenantId, pageLink);
     }
 
@@ -44,4 +44,5 @@ public class AssetProfilesEdgeEventFetcher extends BasePageableEdgeEventFetcher<
         return EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.ASSET_PROFILE,
                 EdgeEventActionType.ADDED, assetProfile.getId(), null);
     }
+
 }

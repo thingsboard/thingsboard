@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,7 @@
  */
 package org.thingsboard.server.common.data.rule;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.RuleChainId;
 
@@ -26,23 +25,23 @@ import java.util.List;
 /**
  * Created by igor on 3/13/18.
  */
-@ApiModel
+@Schema
 @Data
 public class RuleChainMetaData {
 
-    @ApiModelProperty(position = 1, required = true, value = "JSON object with Rule Chain Id.", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "JSON object with Rule Chain Id.", accessMode = Schema.AccessMode.READ_ONLY)
     private RuleChainId ruleChainId;
 
-    @ApiModelProperty(position = 2, required = true, value = "Index of the first rule node in the 'nodes' list")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Index of the first rule node in the 'nodes' list")
     private Integer firstNodeIndex;
 
-    @ApiModelProperty(position = 3, required = true, value = "List of rule node JSON objects")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of rule node JSON objects")
     private List<RuleNode> nodes;
 
-    @ApiModelProperty(position = 4, required = true, value = "List of JSON objects that represent connections between rule nodes")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of JSON objects that represent connections between rule nodes")
     private List<NodeConnectionInfo> connections;
 
-    @ApiModelProperty(position = 5, required = true, value = "List of JSON objects that represent connections between rule nodes and other rule chains.")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of JSON objects that represent connections between rule nodes and other rule chains.")
     private List<RuleChainConnectionInfo> ruleChainConnections;
 
     public void addConnectionInfo(int fromIndex, int toIndex, String type) {

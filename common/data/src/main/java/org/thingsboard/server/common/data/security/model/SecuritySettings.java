@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,22 +15,23 @@
  */
 package org.thingsboard.server.common.data.security.model;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.io.Serializable;
 
-@ApiModel
+@Schema
 @Data
 public class SecuritySettings implements Serializable {
 
     private static final long serialVersionUID = -1307613974597312465L;
 
-    @ApiModelProperty(position = 1, value = "The user password policy object." )
+    @Schema(description = "The user password policy object." )
     private UserPasswordPolicy passwordPolicy;
-    @ApiModelProperty(position = 2, value = "Maximum number of failed login attempts allowed before user account is locked." )
+    @Schema(description = "Maximum number of failed login attempts allowed before user account is locked." )
     private Integer maxFailedLoginAttempts;
-    @ApiModelProperty(position = 3, value = "Email to use for notifications about locked users." )
+    @Schema(description = "Email to use for notifications about locked users." )
     private String userLockoutNotificationEmail;
+    @Schema(description = "Mobile secret key length" )
+    private Integer mobileSecretKeyLength;
 }

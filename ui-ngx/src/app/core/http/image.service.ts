@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
 import { defaultHttpOptionsFromConfig, defaultHttpUploadOptions, RequestConfig } from '@core/http/http-utils';
-import { Observable, of } from 'rxjs';
+import { Observable, of, ReplaySubject } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import {
   NO_IMAGE_DATA_URI,
@@ -36,6 +36,9 @@ import { ResourcesService } from '@core/services/resources.service';
   providedIn: 'root'
 })
 export class ImageService {
+
+  private imagesLoading: { [url: string]: ReplaySubject<Blob> } = {};
+
   constructor(
     private http: HttpClient,
     private sanitizer: DomSanitizer,
@@ -95,12 +98,34 @@ export class ImageService {
     parts[parts.length - 1] = encodeURIComponent(key);
     const encodedUrl = parts.join('/');
     const imageLink = preview ? (encodedUrl + '/preview') : encodedUrl;
-    const options = defaultHttpOptionsFromConfig({ignoreLoading: true, ignoreErrors: true});
-    return this.http
-    .get(imageLink, {...options, ...{ responseType: 'blob' } }).pipe(
+    return this.loadImageDataUrl(imageLink, asString, emptyUrl);
+  }
+
+  private loadImageDataUrl(imageLink: string, asString = false, emptyUrl = NO_IMAGE_DATA_URI): Observable<SafeUrl | string> {
+    let request: ReplaySubject<Blob>;
+    if (this.imagesLoading[imageLink]) {
+      request = this.imagesLoading[imageLink];
+    } else {
+      request = new ReplaySubject<Blob>(1);
+      this.imagesLoading[imageLink] = request;
+      const options = defaultHttpOptionsFromConfig({ignoreLoading: true, ignoreErrors: true});
+      this.http.get(imageLink, {...options, ...{ responseType: 'blob' } }).subscribe({
+        next: (value) => {
+          request.next(value);
+          request.complete();
+        },
+        error: err => {
+          request.error(err);
+        },
+        complete: () => {
+          delete this.imagesLoading[imageLink];
+        }
+      });
+    }
+    return request.pipe(
       switchMap(val => blobToBase64(val).pipe(
-          map((dataUrl) => asString ? dataUrl : this.sanitizer.bypassSecurityTrustUrl(dataUrl))
-        )),
+        map((dataUrl) => asString ? dataUrl : this.sanitizer.bypassSecurityTrustUrl(dataUrl))
+      )),
       catchError(() => of(asString ? emptyUrl : this.sanitizer.bypassSecurityTrustUrl(emptyUrl)))
     );
   }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,8 +97,7 @@ public abstract class DeviceProfileEdgeProcessor extends BaseDeviceProfileProces
         DeviceProfileId deviceProfileId = new DeviceProfileId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
-            case ADDED:
-            case UPDATED:
+            case ADDED, UPDATED -> {
                 DeviceProfile deviceProfile = deviceProfileService.findDeviceProfileById(edgeEvent.getTenantId(), deviceProfileId);
                 if (deviceProfile != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
@@ -110,16 +109,17 @@ public abstract class DeviceProfileEdgeProcessor extends BaseDeviceProfileProces
                             .addDeviceProfileUpdateMsg(deviceProfileUpdateMsg)
                             .build();
                 }
-                break;
-            case DELETED:
+            }
+            case DELETED -> {
                 DeviceProfileUpdateMsg deviceProfileUpdateMsg = ((DeviceMsgConstructor)
                         deviceMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructDeviceProfileDeleteMsg(deviceProfileId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addDeviceProfileUpdateMsg(deviceProfileUpdateMsg)
                         .build();
-                break;
+            }
         }
         return downlinkMsg;
     }
+
 }

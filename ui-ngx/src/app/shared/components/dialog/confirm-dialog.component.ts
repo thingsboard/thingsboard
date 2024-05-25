@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,6 +16,10 @@
 
 import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { DialogComponent } from '@shared/components/dialog.component';
+import { AppState } from '@core/core.state';
+import { Router } from '@angular/router';
+import { Store } from '@ngrx/store';
 
 export interface ConfirmDialogData {
   title: string;
@@ -30,7 +34,11 @@ export interface ConfirmDialogData {
   templateUrl: './confirm-dialog.component.html',
   styleUrls: ['./confirm-dialog.component.scss']
 })
-export class ConfirmDialogComponent {
-  constructor(public dialogRef: MatDialogRef<ConfirmDialogComponent>,
-              @Inject(MAT_DIALOG_DATA) public data: ConfirmDialogData) {}
+export class ConfirmDialogComponent extends DialogComponent<ConfirmDialogComponent, boolean>{
+  constructor(protected store: Store<AppState>,
+              protected router: Router,
+              public dialogRef: MatDialogRef<ConfirmDialogComponent>,
+              @Inject(MAT_DIALOG_DATA) public data: ConfirmDialogData) {
+    super(store, router, dialogRef);
+  }
 }

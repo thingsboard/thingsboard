@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -108,20 +108,21 @@ export interface QueueInfo extends BaseData<QueueId>, HasTenantId {
   consumerPerPartition: boolean;
   pollInterval: number;
   processingStrategy: {
-    type: QueueProcessingStrategyTypes,
-    retries: number,
-    failurePercentage: number,
-    pauseBetweenRetries: number,
-    maxPauseBetweenRetries: number
+    type: QueueProcessingStrategyTypes;
+    retries: number;
+    failurePercentage: number;
+    pauseBetweenRetries: number;
+    maxPauseBetweenRetries: number;
   };
   submitStrategy: {
-    type: QueueSubmitStrategyTypes,
-    batchSize: number,
+    type: QueueSubmitStrategyTypes;
+    batchSize: number;
   };
   tenantId?: TenantId;
   topic: string;
   additionalInfo: {
     description?: string;
     customProperties?: string;
+    duplicateMsgToAllPartitions?: boolean;
   };
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -20,13 +20,14 @@ import { AliasesInfo, EntityAlias, EntityAliases, EntityAliasInfo } from '@share
 import {
   Datasource,
   DatasourceType,
+  TargetDeviceType,
   Widget,
   WidgetPosition,
   WidgetSize,
   widgetType
 } from '@shared/models/widget.models';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
-import { deepClone, isEqual } from '@core/utils';
+import { deepClone, isDefinedAndNotNull, isEqual } from '@core/utils';
 import { UtilsService } from '@core/services/utils.service';
 import { Observable, of, throwError } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -87,7 +88,7 @@ export class ItemBufferService {
   public prepareWidgetItem(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget): WidgetItem {
     const aliasesInfo: AliasesInfo = {
       datasourceAliases: {},
-      targetDeviceAliases: {}
+      targetDeviceAlias: null
     };
     const filtersInfo: FiltersInfo = {
       datasourceFilters: {}
@@ -111,15 +112,11 @@ export class ItemBufferService {
           }
         }
       }
-      if (widget.config.targetDeviceAliasIds) {
-        for (let i = 0; i < widget.config.targetDeviceAliasIds.length; i++) {
-          const targetDeviceAliasId = widget.config.targetDeviceAliasIds[i];
-          if (targetDeviceAliasId) {
-            entityAlias = dashboard.configuration.entityAliases[targetDeviceAliasId];
-            if (entityAlias) {
-              aliasesInfo.targetDeviceAliases[i] = this.prepareAliasInfo(entityAlias);
-            }
-          }
+      if (widget.config.targetDevice?.type === TargetDeviceType.entity && widget.config.targetDevice.entityAliasId) {
+        const targetDeviceAliasId = widget.config.targetDevice.entityAliasId;
+        entityAlias = dashboard.configuration.entityAliases[targetDeviceAliasId];
+        if (entityAlias) {
+          aliasesInfo.targetDeviceAlias = this.prepareAliasInfo(entityAlias);
         }
       }
     }
@@ -312,6 +309,12 @@ export class ItemBufferService {
       if (origNode.error) {
         node.error = origNode.error;
       }
+      if (isDefinedAndNotNull(origNode.singletonMode)) {
+        node.singletonMode = origNode.singletonMode;
+      }
+      if (isDefinedAndNotNull(origNode.queueName)) {
+        node.queueName = origNode.queueName;
+      }
       ruleNodes.nodes.push(node);
       if (i === 0) {
         top = node.y;
@@ -456,11 +459,15 @@ export class ItemBufferService {
         widget.config.datasources[datasourceIndex].entityAliasId = newAliasId;
       }
     }
-    for (const targetDeviceAliasIndexStr of Object.keys(aliasesInfo.targetDeviceAliases)) {
-      const targetDeviceAliasIndex = Number(targetDeviceAliasIndexStr);
-      aliasInfo = aliasesInfo.targetDeviceAliases[targetDeviceAliasIndex];
+    if (aliasesInfo.targetDeviceAlias) {
+      aliasInfo = aliasesInfo.targetDeviceAlias;
       newAliasId = this.getEntityAliasId(entityAliases, aliasInfo);
-      widget.config.targetDeviceAliasIds[targetDeviceAliasIndex] = newAliasId;
+      if (widget.config.targetDevice?.type !== TargetDeviceType.entity) {
+        widget.config.targetDevice = {
+          type: TargetDeviceType.entity
+        };
+      }
+      widget.config.targetDevice.entityAliasId = newAliasId;
     }
     return entityAliases;
   }

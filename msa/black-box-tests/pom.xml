@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>3.6.3-SNAPSHOT</version>
+        <version>3.7.0-SNAPSHOT</version>
         <artifactId>msa</artifactId>
     </parent>
     <groupId>org.thingsboard.msa</groupId>
@@ -41,6 +41,11 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>software.xdev</groupId>
+            <artifactId>testcontainers-junit4-mock</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -64,11 +69,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.junit.vintage</groupId>
-            <artifactId>junit-vintage-engine</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
             <scope>test</scope>
@@ -85,7 +85,7 @@
         </dependency>
         <dependency>
             <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-all</artifactId>
+            <artifactId>hamcrest</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -185,6 +185,10 @@
             <groupId>io.qameta.allure</groupId>
             <artifactId>allure-testng</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.leshan</groupId>
+            <artifactId>leshan-client-cf</artifactId>
         </dependency>
     </dependencies>
     <build>

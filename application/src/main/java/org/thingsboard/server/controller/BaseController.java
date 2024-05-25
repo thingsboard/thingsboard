@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,16 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
+import jakarta.mail.MessagingException;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.ConstraintViolation;
 import lombok.Getter;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -142,7 +144,7 @@ import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.action.EntityActionService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
-import org.thingsboard.server.service.entitiy.TbNotificationEntityService;
+import org.thingsboard.server.service.entitiy.TbLogEntityActionService;
 import org.thingsboard.server.service.entitiy.user.TbUserSettingsService;
 import org.thingsboard.server.service.ota.OtaPackageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
@@ -157,9 +159,6 @@ import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
-import javax.mail.MessagingException;
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.ConstraintViolation;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -300,7 +299,7 @@ public abstract class BaseController {
     protected EdgeService edgeService;
 
     @Autowired
-    protected TbNotificationEntityService notificationEntityService;
+    protected TbLogEntityActionService logEntityActionService;
 
     @Autowired
     protected EntityActionService entityActionService;
@@ -376,13 +375,18 @@ public abstract class BaseController {
             return new ThingsboardException("Unable to send mail: " + exception.getMessage(), ThingsboardErrorCode.GENERAL);
         } else if (exception instanceof AsyncRequestTimeoutException) {
             return new ThingsboardException("Request timeout", ThingsboardErrorCode.GENERAL);
-        } else {
-            return new ThingsboardException(exception.getMessage(), exception, ThingsboardErrorCode.GENERAL);
+        } else if (exception instanceof DataAccessException) {
+            String errorType = exception.getClass().getSimpleName();
+            if (!logControllerErrorStackTrace) { // not to log the error twice
+                log.warn("Database error: {} - {}", errorType, ExceptionUtils.getRootCauseMessage(exception));
+            }
+            return new ThingsboardException("Database error", ThingsboardErrorCode.GENERAL);
         }
+        return new ThingsboardException(exception.getMessage(), exception, ThingsboardErrorCode.GENERAL);
     }
 
     /**
-     * Handles validation error for controller method arguments annotated with @{@link javax.validation.Valid}
+     * Handles validation error for controller method arguments annotated with @{@link jakarta.validation.Valid}
      * */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public void handleValidationError(MethodArgumentNotValidException validationError, HttpServletResponse response) {
@@ -502,7 +506,7 @@ public abstract class BaseController {
 
     TenantProfile checkTenantProfileId(TenantProfileId tenantProfileId, Operation operation) throws ThingsboardException {
         try {
-            validateId(tenantProfileId, "Incorrect tenantProfileId " + tenantProfileId);
+            validateId(tenantProfileId, id -> "Incorrect tenantProfileId " + id);
             TenantProfile tenantProfile = tenantProfileService.findTenantProfileById(getTenantId(), tenantProfileId);
             checkNotNull(tenantProfile, "Tenant profile with id [" + tenantProfileId + "] is not found");
             accessControlService.checkPermission(getCurrentUser(), Resource.TENANT_PROFILE, operation);
@@ -537,7 +541,7 @@ public abstract class BaseController {
             if (entityId == null) {
                 throw new ThingsboardException("Parameter entityId can't be empty!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
             }
-            validateId(entityId.getId(), "Incorrect entityId " + entityId);
+            validateId(entityId.getId(), id -> "Incorrect entityId " + id);
             switch (entityId.getEntityType()) {
                 case ALARM:
                     checkAlarmId(new AlarmId(entityId.getId()), operation);
@@ -664,7 +668,7 @@ public abstract class BaseController {
 
     AlarmComment checkAlarmCommentId(AlarmCommentId alarmCommentId, AlarmId alarmId) throws ThingsboardException {
         try {
-            validateId(alarmCommentId, "Incorrect alarmCommentId " + alarmCommentId);
+            validateId(alarmCommentId, id -> "Incorrect alarmCommentId " + id);
             AlarmComment alarmComment = alarmCommentService.findAlarmCommentByIdAsync(getCurrentUser().getTenantId(), alarmCommentId).get();
             checkNotNull(alarmComment, "Alarm comment with id [" + alarmCommentId + "] is not found");
             if (!alarmId.equals(alarmComment.getAlarmId())) {
@@ -732,7 +736,7 @@ public abstract class BaseController {
     }
 
     protected RuleNode checkRuleNode(RuleNodeId ruleNodeId, Operation operation) throws ThingsboardException {
-        validateId(ruleNodeId, "Incorrect ruleNodeId " + ruleNodeId);
+        validateId(ruleNodeId, id -> "Incorrect ruleNodeId " + id);
         RuleNode ruleNode = ruleChainService.findRuleNodeById(getTenantId(), ruleNodeId);
         checkNotNull(ruleNode, "Rule node with id [" + ruleNodeId + "] is not found");
         checkRuleChain(ruleNode.getRuleChainId(), operation);
