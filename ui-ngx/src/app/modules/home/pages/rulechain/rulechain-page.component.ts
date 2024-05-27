@@ -77,10 +77,10 @@ import {
 } from '@shared/models/rule-node.models';
 import { FcRuleNodeModel, FcRuleNodeTypeModel, RuleChainMenuContextInfo } from './rulechain-page.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
-import { NEVER, Observable, of, ReplaySubject, startWith, skip, Subject } from 'rxjs';
+import { NEVER, Observable, of, ReplaySubject, skip, startWith, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, mergeMap, takeUntil, tap } from 'rxjs/operators';
 import { ISearchableComponent } from '../../models/searchable-component.models';
-import { deepClone, isDefinedAndNotNull } from '@core/utils';
+import { deepClone, isDefinedAndNotNull, isEqual } from '@core/utils';
 import { RuleNodeDetailsComponent } from '@home/pages/rulechain/rule-node-details.component';
 import { RuleNodeLinkComponent } from './rule-node-link.component';
 import { DialogComponent } from '@shared/components/dialog.component';
@@ -166,8 +166,6 @@ export class RuleChainPageComponent extends PageComponent
 
   ruleNodeSearch = '';
   ruleNodeTypeSearch = this.fb.control('', {nonNullable: true});
-
-  ruleNodeTypeSearchFocus = false;
 
   ruleChain: RuleChain;
   ruleChainMetaData: RuleChainMetaData;
@@ -296,10 +294,6 @@ export class RuleChainPageComponent extends PageComponent
     ).subscribe(() => this.updateRuleChainLibrary());
   }
 
-  focus(focus: boolean) {
-    this.ruleNodeTypeSearchFocus = focus;
-  }
-
   ngAfterViewChecked(){
     this.changeDetector.detectChanges();
   }
@@ -373,7 +367,7 @@ export class RuleChainPageComponent extends PageComponent
     if (!this.hotKeys.length) {
       this.hotKeys.push(
         new Hotkey('ctrl+a', (event: KeyboardEvent) => {
-            if (this.enableHotKeys && !this.ruleNodeTypeSearchFocus) {
+            if (this.enableHotKeys && isEqual(event.currentTarget, event.target)) {
               event.preventDefault();
               this.ruleChainCanvas.modelService.selectAll();
               return false;
@@ -384,7 +378,7 @@ export class RuleChainPageComponent extends PageComponent
       );
       this.hotKeys.push(
         new Hotkey('ctrl+c', (event: KeyboardEvent) => {
-            if (this.enableHotKeys && !this.ruleNodeTypeSearchFocus) {
+            if (this.enableHotKeys && isEqual(event.currentTarget, event.target)) {
               event.preventDefault();
               this.copyRuleNodes();
               return false;
@@ -395,7 +389,7 @@ export class RuleChainPageComponent extends PageComponent
       );
       this.hotKeys.push(
         new Hotkey('ctrl+v', (event: KeyboardEvent) => {
-            if (this.enableHotKeys && !this.ruleNodeTypeSearchFocus) {
+            if (this.enableHotKeys && isEqual(event.currentTarget, event.target)) {
               event.preventDefault();
               if (this.itembuffer.hasRuleNodes()) {
                 this.pasteRuleNodes();
@@ -442,7 +436,7 @@ export class RuleChainPageComponent extends PageComponent
       );
       this.hotKeys.push(
         new Hotkey('del', (event: KeyboardEvent) => {
-            if (this.enableHotKeys && !this.ruleNodeTypeSearchFocus) {
+            if (this.enableHotKeys && isEqual(event.currentTarget, event.target)) {
               event.preventDefault();
               this.ruleChainCanvas.modelService.deleteSelected();
               return false;
