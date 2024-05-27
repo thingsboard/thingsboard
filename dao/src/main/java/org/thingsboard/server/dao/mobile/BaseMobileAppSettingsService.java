@@ -98,7 +98,6 @@ public class BaseMobileAppSettingsService extends AbstractCachedEntityService<Te
                     .qrCodeLabel(DEFAULT_QR_CODE_LABEL)
                     .badgeEnabled(true)
                     .badgePosition(BadgePosition.RIGHT)
-                    .badgeStyle(BadgeStyle.ORIGINAL)
                     .badgeEnabled(true)
                     .build();
 
