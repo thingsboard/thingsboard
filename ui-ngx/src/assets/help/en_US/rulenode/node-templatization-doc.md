@@ -1,4 +1,4 @@
-# Rule node templatization
+# Rule nodes fields templatization
 
 Templatization is the process of using predefined templates to dynamically insert or substitute values into text.
 These templates serve as placeholders for variables that can be filled in later with actual data.
