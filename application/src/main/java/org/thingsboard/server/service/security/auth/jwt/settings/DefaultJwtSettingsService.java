@@ -17,8 +17,6 @@ package org.thingsboard.server.service.security.auth.jwt.settings;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
@@ -111,8 +109,8 @@ public class DefaultJwtSettingsService implements JwtSettingsService {
         return TOKEN_SIGNING_KEY_DEFAULT.equals(settings.getTokenSigningKey());
     }
 
-    public static boolean validateTokenSigningKeyLength(JwtSettings settings) {
-        return Base64.getDecoder().decode(settings.getTokenSigningKey()).length * Byte.SIZE >= KEY_LENGTH;
+    public static boolean validateKeyLength(String key) {
+        return Base64.getDecoder().decode(key).length * Byte.SIZE >= KEY_LENGTH;
     }
 
 }
