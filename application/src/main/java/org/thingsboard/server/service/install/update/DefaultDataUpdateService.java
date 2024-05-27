@@ -203,14 +203,14 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
     @Override
     public void upgradeRuleNodes() {
-        try {
-            int totalRuleNodesUpgraded = 0;
-            log.info("Starting rule nodes upgrade ...");
-            var nodeClassToVersionMap = componentDiscoveryService.getVersionedNodes();
-            log.debug("Found {} versioned nodes to check for upgrade!", nodeClassToVersionMap.size());
-            for (var ruleNodeClassInfo : nodeClassToVersionMap) {
-                var ruleNodeTypeForLogs = ruleNodeClassInfo.getSimpleName();
-                var toVersion = ruleNodeClassInfo.getCurrentVersion();
+        int totalRuleNodesUpgraded = 0;
+        log.info("Starting rule nodes upgrade ...");
+        var nodeClassToVersionMap = componentDiscoveryService.getVersionedNodes();
+        log.debug("Found {} versioned nodes to check for upgrade!", nodeClassToVersionMap.size());
+        for (var ruleNodeClassInfo : nodeClassToVersionMap) {
+            var ruleNodeTypeForLogs = ruleNodeClassInfo.getSimpleName();
+            var toVersion = ruleNodeClassInfo.getCurrentVersion();
+            try {
                 log.debug("Going to check for nodes with type: {} to upgrade to version: {}.", ruleNodeTypeForLogs, toVersion);
                 var ruleNodesIdsToUpgrade = getRuleNodesIdsWithTypeAndVersionLessThan(ruleNodeClassInfo.getClassName(), toVersion);
                 if (ruleNodesIdsToUpgrade.isEmpty()) {
@@ -222,11 +222,11 @@ public class DefaultDataUpdateService implements DataUpdateService {
                     totalRuleNodesUpgraded += processRuleNodePack(ruleNodePack, ruleNodeClassInfo);
                     log.info("{} upgraded rule nodes so far ...", totalRuleNodesUpgraded);
                 }
+            } catch (Exception e) {
+                log.error("Unexpected error during {} rule nodes upgrade: ", ruleNodeTypeForLogs, e);
             }
-            log.info("Finished rule nodes upgrade. Upgraded rule nodes count: {}", totalRuleNodesUpgraded);
-        } catch (Exception e) {
-            log.error("Unexpected error during rule nodes upgrade: ", e);
         }
+        log.info("Finished rule nodes upgrade. Upgraded rule nodes count: {}", totalRuleNodesUpgraded);
     }
 
     private int processRuleNodePack(List<RuleNodeId> ruleNodeIdsBatch, RuleNodeClassInfo ruleNodeClassInfo) {
