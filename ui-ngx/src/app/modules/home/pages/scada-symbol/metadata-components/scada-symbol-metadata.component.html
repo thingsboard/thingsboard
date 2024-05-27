@@ -63,5 +63,10 @@
         formControlName="behavior">
       </tb-scada-symbol-metadata-behaviors>
     </div>
+    <div [fxShow]="selectedOption === 'properties'" class="mat-content overflow-hidden">
+      <tb-scada-symbol-metadata-properties
+        formControlName="properties">
+      </tb-scada-symbol-metadata-properties>
+    </div>
   </div>
 </div>

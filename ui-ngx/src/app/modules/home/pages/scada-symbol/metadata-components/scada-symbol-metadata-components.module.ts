@@ -20,7 +20,9 @@ import { SharedModule } from '@shared/shared.module';
 import {
   ScadaSymbolMetadataTagComponent
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-metadata-tag.component';
-import { ScadaSymbolMetadataComponent } from '@home/pages/scada-symbol/metadata-components/scada-symbol-metadata.component';
+import {
+  ScadaSymbolMetadataComponent
+} from '@home/pages/scada-symbol/metadata-components/scada-symbol-metadata.component';
 import {
   ScadaSymbolMetadataTagsComponent
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-metadata-tags.component';
@@ -33,6 +35,16 @@ import {
 import {
   ScadaSymbolBehaviorPanelComponent
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-behavior-panel.component';
+import {
+  ScadaSymbolPropertiesComponent
+} from '@home/pages/scada-symbol/metadata-components/scada-symbol-properties.component';
+import {
+  ScadaSymbolPropertyRowComponent
+} from '@home/pages/scada-symbol/metadata-components/scada-symbol-property-row.component';
+import {
+  ScadaSymbolPropertyPanelComponent
+} from '@home/pages/scada-symbol/metadata-components/scada-symbol-property-panel.component';
+import { WidgetSettingsCommonModule } from '@home/components/widget/lib/settings/common/widget-settings-common.module';
 
 @NgModule({
   declarations:
@@ -42,11 +54,15 @@ import {
       ScadaSymbolMetadataTagsComponent,
       ScadaSymbolBehaviorsComponent,
       ScadaSymbolBehaviorRowComponent,
-      ScadaSymbolBehaviorPanelComponent
+      ScadaSymbolBehaviorPanelComponent,
+      ScadaSymbolPropertiesComponent,
+      ScadaSymbolPropertyRowComponent,
+      ScadaSymbolPropertyPanelComponent
     ],
   imports: [
     CommonModule,
-    SharedModule
+    SharedModule,
+    WidgetSettingsCommonModule
   ],
   exports: [
     ScadaSymbolMetadataComponent

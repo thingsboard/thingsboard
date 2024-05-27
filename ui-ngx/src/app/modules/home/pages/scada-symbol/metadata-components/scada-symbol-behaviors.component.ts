@@ -40,10 +40,10 @@ import { ValueType } from '@shared/models/constants';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import {
   behaviorValid,
-  behaviorValidator,
   ScadaSymbolBehaviorRowComponent
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-behavior-row.component';
 import { ValueToDataType } from '@shared/models/action-widget-settings.models';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'tb-scada-symbol-metadata-behaviors',
@@ -76,13 +76,16 @@ export class ScadaSymbolBehaviorsComponent implements ControlValueAccessor, OnIn
 
   behaviorsFormGroup: UntypedFormGroup;
 
+  errorText = '';
+
   get dragEnabled(): boolean {
     return this.behaviorsFormArray().controls.length > 1;
   }
 
   private propagateChange = (_val: any) => {};
 
-  constructor(private fb: UntypedFormBuilder) {
+  constructor(private fb: UntypedFormBuilder,
+              private translate: TranslateService) {
   }
 
   ngOnInit() {
@@ -122,12 +125,35 @@ export class ScadaSymbolBehaviorsComponent implements ControlValueAccessor, OnIn
   }
 
   public validate(c: UntypedFormControl) {
-    const valid = this.behaviorsFormGroup.valid;
+    this.errorText = '';
+    const behaviorsArray = this.behaviorsFormGroup.get('behaviors') as UntypedFormArray;
+    const notUniqueControls =
+      behaviorsArray.controls.filter(control => control.hasError('behaviorIdNotUnique'));
+    for (const control of notUniqueControls) {
+      control.updateValueAndValidity({onlySelf: false, emitEvent: false});
+      if (control.hasError('behaviorIdNotUnique')) {
+        this.errorText = this.translate.instant('scada.behavior.not-unique-behavior-ids-error');
+      }
+    }
+    const valid =  this.behaviorsFormGroup.valid;
     return valid ? null : {
       behaviors: {
         valid: false,
       },
     };
+  }
+
+  public behaviorIdUnique(id: string, index: number): boolean {
+    const behaviorsArray = this.behaviorsFormGroup.get('behaviors') as UntypedFormArray;
+    for (let i = 0; i < behaviorsArray.controls.length; i++) {
+      if (i !== index) {
+        const otherControl = behaviorsArray.controls[i];
+        if (id === otherControl.value.id) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   behaviorDrop(event: CdkDragDrop<string[]>) {
@@ -161,7 +187,7 @@ export class ScadaSymbolBehaviorsComponent implements ControlValueAccessor, OnIn
       valueToDataFunction: ''
     };
     const behaviorsArray = this.behaviorsFormGroup.get('behaviors') as UntypedFormArray;
-    const behaviorControl = this.fb.control(behavior, [behaviorValidator]);
+    const behaviorControl = this.fb.control(behavior, []);
     behaviorsArray.push(behaviorControl);
     setTimeout(() => {
       const behaviorRow = this.behaviorRows.get(this.behaviorRows.length-1);
@@ -175,7 +201,7 @@ export class ScadaSymbolBehaviorsComponent implements ControlValueAccessor, OnIn
     const behaviorsControls: Array<AbstractControl> = [];
     if (behaviors) {
       behaviors.forEach((behavior) => {
-        behaviorsControls.push(this.fb.control(behavior, [behaviorValidator]));
+        behaviorsControls.push(this.fb.control(behavior, []));
       });
     }
     return this.fb.array(behaviorsControls);

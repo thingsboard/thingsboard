@@ -128,7 +128,6 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
   }
 
   writeValue(value: IotSvgMetadata): void {
-    this.selectedOption = 'general';
     this.modelValue = value;
     this.metadataFormGroup.patchValue(
       value, {emitEvent: false}

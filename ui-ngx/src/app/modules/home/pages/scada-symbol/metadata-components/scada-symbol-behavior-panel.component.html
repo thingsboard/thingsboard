@@ -50,7 +50,7 @@
       <div class="fixed-title-width" translate>scada.behavior.value-type</div>
       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="flex tb-value-type">
         <mat-select formControlName="valueType">
-          <mat-select-trigger>
+          <mat-select-trigger *ngIf="behaviorFormGroup.get('valueType').value">
             <div class="tb-value-type-row">
               <mat-icon class="tb-mat-18" svgIcon="{{ valueTypesMap.get(behaviorFormGroup.get('valueType').value).icon }}"></mat-icon>
               <span>{{ valueTypesMap.get(behaviorFormGroup.get('valueType').value).name | translate }}</span>

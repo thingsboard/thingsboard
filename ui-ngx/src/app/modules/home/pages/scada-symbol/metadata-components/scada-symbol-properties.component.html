@@ -15,26 +15,27 @@
     limitations under the License.
 
 -->
-<div class="tb-form-panel tb-scada-symbol-behaviors">
+<div class="tb-form-panel tb-scada-symbol-properties">
   <div class="tb-form-table">
     <div class="tb-form-table-header no-padding-right">
-      <div class="tb-form-table-header-cell tb-id-header" translate>scada.behavior.id</div>
-      <div class="tb-form-table-header-cell tb-name-header" translate>scada.behavior.name</div>
-      <div class="tb-form-table-header-cell tb-type-header" translate>scada.behavior.type</div>
+      <div class="tb-form-table-header-cell tb-id-header" translate>scada.property.id</div>
+      <div class="tb-form-table-header-cell tb-name-header" translate>scada.property.name</div>
+      <div class="tb-form-table-header-cell tb-type-header" translate>scada.property.type</div>
       <div class="tb-form-table-header-cell tb-actions-header"></div>
     </div>
-    <div *ngIf="behaviorsFormArray().controls.length; else noBehaviors" class="tb-form-table-body tb-drop-list"
+    <div *ngIf="propertiesFormArray().controls.length; else noProperties" class="tb-form-table-body tb-drop-list"
          cdkDropList cdkDropListOrientation="vertical"
          [cdkDropListDisabled]="!dragEnabled"
-         (cdkDropListDropped)="behaviorDrop($event)">
+         (cdkDropListDropped)="propertyDrop($event)">
       <div cdkDrag [cdkDragDisabled]="!dragEnabled"
            class="tb-draggable-form-table-row"
-           *ngFor="let behaviorControl of behaviorsFormArray().controls; trackBy: trackByBehavior; let $index = index;">
-        <tb-scada-symbol-metadata-behavior-row fxFlex
-          [index]="$index"
-          [formControl]="behaviorControl"
-          (behaviorRemoved)="removeBehavior($index)">
-        </tb-scada-symbol-metadata-behavior-row>
+           *ngFor="let propertyControl of propertiesFormArray().controls; trackBy: trackByProperty; let $index = index;">
+        <tb-scada-symbol-metadata-property-row fxFlex
+                                               [index]="$index"
+                                               [booleanPropertyIds]="booleanPropertyIds"
+                                               [formControl]="propertyControl"
+                                               (propertyRemoved)="removeProperty($index)">
+        </tb-scada-symbol-metadata-property-row>
         <div class="tb-form-table-row-cell-buttons">
           <button mat-icon-button
                   type="button"
@@ -50,13 +51,13 @@
     <tb-error *ngIf="errorText" noMargin [error]="errorText" style="padding-left: 12px;"></tb-error>
   </div>
   <div>
-    <button type="button" mat-stroked-button color="primary" (click)="addBehavior()">
-      {{ 'scada.behavior.add-behavior' | translate }}
+    <button type="button" mat-stroked-button color="primary" (click)="addProperty()">
+      {{ 'scada.property.add-property' | translate }}
     </button>
   </div>
 </div>
 
-<ng-template #noBehaviors>
+<ng-template #noProperties>
   <span fxLayoutAlign="center center"
-        class="tb-prompt">{{ 'scada.behavior.no-behaviors' | translate }}</span>
+        class="tb-prompt">{{ 'scada.property.no-properties' | translate }}</span>
 </ng-template>

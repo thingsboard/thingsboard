@@ -3439,7 +3439,8 @@
             "true-label": "True label",
             "false-label": "False label",
             "state-label": "State label",
-            "default-payload": "Default payload"
+            "default-payload": "Default payload",
+            "not-unique-behavior-ids-error": "Behavior Ids must be unique!"
         },
         "property": {
             "property": "Property",
@@ -3456,7 +3457,21 @@
             "no-properties": "No properties configured",
             "add-property": "Add property",
             "property-settings": "Property settings",
-            "remove-property": "Remove property"
+            "remove-property": "Remove property",
+            "default-value": "Default value",
+            "value-required": "Value required",
+            "number-settings": "Number settings",
+            "min": "Min",
+            "max": "Max",
+            "step": "Step",
+            "advanced-ui-settings": "Advanced UI settings",
+            "disable-on-property": "Disable on property",
+            "sub-label": "Sub label",
+            "vertical-divider-after": "Vertical divider after",
+            "input-field-suffix": "Input field suffix",
+            "property-row-classes": "Property row classes",
+            "property-field-classes": "Property field classes",
+            "not-unique-property-ids-error": "Property Ids must be unique!"
         }
     },
     "item": {

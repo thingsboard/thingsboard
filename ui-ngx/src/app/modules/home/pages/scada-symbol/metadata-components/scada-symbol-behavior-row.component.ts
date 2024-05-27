@@ -30,11 +30,11 @@ import {
 } from '@angular/core';
 import {
   AbstractControl,
-  ControlValueAccessor,
+  ControlValueAccessor, NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  UntypedFormBuilder,
+  UntypedFormBuilder, UntypedFormControl,
   UntypedFormGroup,
-  ValidationErrors,
+  ValidationErrors, Validator, ValidatorFn,
   Validators
 } from '@angular/forms';
 import {
@@ -50,6 +50,9 @@ import {
   ScadaSymbolBehaviorPanelComponent
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-behavior-panel.component';
 import { ValueToDataType } from '@shared/models/action-widget-settings.models';
+import {
+  ScadaSymbolBehaviorsComponent
+} from '@home/pages/scada-symbol/metadata-components/scada-symbol-behaviors.component';
 
 export const behaviorValid = (behavior: IotSvgBehavior): boolean => {
   if (!behavior.id || !behavior.name || !behavior.type) {
@@ -80,16 +83,6 @@ export const behaviorValid = (behavior: IotSvgBehavior): boolean => {
   return true;
 };
 
-export const behaviorValidator = (control: AbstractControl): ValidationErrors | null => {
-  const behavior: IotSvgBehavior = control.value;
-  if (!behaviorValid(behavior)) {
-    return {
-      behavior: true
-    };
-  }
-  return null;
-};
-
 @Component({
   selector: 'tb-scada-symbol-metadata-behavior-row',
   templateUrl: './scada-symbol-behavior-row.component.html',
@@ -99,11 +92,16 @@ export const behaviorValidator = (control: AbstractControl): ValidationErrors | 
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => ScadaSymbolBehaviorRowComponent),
       multi: true
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => ScadaSymbolBehaviorRowComponent),
+      multi: true
     }
   ],
   encapsulation: ViewEncapsulation.None
 })
-export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, OnInit {
+export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, OnInit, Validator {
 
   @ViewChild('idInput')
   idInput: ElementRef<HTMLInputElement>;
@@ -116,6 +114,9 @@ export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, On
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  index: number;
 
   @Output()
   behaviorRemoved = new EventEmitter();
@@ -130,12 +131,13 @@ export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, On
               private cd: ChangeDetectorRef,
               private popoverService: TbPopoverService,
               private renderer: Renderer2,
-              private viewContainerRef: ViewContainerRef) {
+              private viewContainerRef: ViewContainerRef,
+              private behaviorsComponent: ScadaSymbolBehaviorsComponent) {
   }
 
   ngOnInit() {
     this.behaviorRowFormGroup = this.fb.group({
-      id: [null, [Validators.required]],
+      id: [null, [this.behaviorIdValidator()]],
       name: [null, [Validators.required]],
       type: [null, [Validators.required]]
     });
@@ -221,6 +223,42 @@ export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, On
   onAdd(onCanceled: () => void) {
     this.idInput.nativeElement.scrollIntoView();
     this.editBehavior(null, this.editButton, true, onCanceled);
+  }
+
+  public validate(c: UntypedFormControl) {
+    const idControl = this.behaviorRowFormGroup.get('id');
+    if (idControl.hasError('behaviorIdNotUnique')) {
+      idControl.updateValueAndValidity({onlySelf: false, emitEvent: false});
+    }
+    if (idControl.hasError('behaviorIdNotUnique')) {
+      this.behaviorRowFormGroup.get('id').markAsTouched();
+      return {
+        behaviorIdNotUnique: true
+      };
+    }
+    const behavior: IotSvgBehavior = {...this.modelValue, ...this.behaviorRowFormGroup.value};
+    if (!behaviorValid(behavior)) {
+      return {
+        behavior: true
+      };
+    }
+    return null;
+  }
+
+  private behaviorIdValidator(): ValidatorFn {
+    return control => {
+      if (!control.value) {
+        return {
+          required: true
+        };
+      }
+      if (!this.behaviorsComponent.behaviorIdUnique(control.value, this.index)) {
+        return {
+          behaviorIdNotUnique: true
+        };
+      }
+      return null;
+    };
   }
 
   private onTypeChanged(newType: IotSvgBehaviorType) {

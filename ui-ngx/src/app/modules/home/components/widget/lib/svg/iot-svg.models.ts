@@ -145,6 +145,12 @@ export const iotSvgPropertyTypeTranslations = new Map<IotSvgPropertyType, string
   ]
 );
 
+export const iotSvgPropertyRowClasses =
+  ['column', 'column-xs', 'column-lt-md', 'align-start', 'no-border', 'no-gap', 'no-padding', 'same-padding'];
+
+export const iotSvgPropertyFieldClasses =
+  ['medium-width', 'flex', 'flex-xs', 'flex-lt-md'];
+
 export interface IotSvgPropertyBase {
   id: string;
   name: string;

@@ -320,6 +320,9 @@ export class ScadaSymbolComponent extends PageComponent
   }
 
   private reset(): void {
+    if (this.symbolMetadata) {
+      this.symbolMetadata.selectedOption = 'general';
+    }
     this.previewMode = false;
   }
 
