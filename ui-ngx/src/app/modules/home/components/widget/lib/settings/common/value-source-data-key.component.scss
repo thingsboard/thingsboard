@@ -13,28 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 :host {
-  display: block;
-  .mat-expansion-panel {
-    box-shadow: none;
-    &.fixed-color-level {
-      border: 1px groove rgba(0, 0, 0, .25);
-      .mat-expansion-panel-header {
-        padding: 0 24px 0 8px;
-        &.mat-expanded {
-          height: 48px;
-        }
-      }
+  .tb-value-source {
+    display: flex;
+    gap: 12px;
+  }
+  .tb-source-field {
+    display: flex;
+    flex: 1;
+    gap: 12px;
+    .tb-type-field, .tb-entity-alias-field {
+      flex: 1;
+    }
+  }
+  .tb-key-value-field, .tb-constant-field {
+    display: flex;
+    flex: 1;
+  }
+  ::ng-deep {
+    .tb-data-key-input {
+      flex: 1;
     }
   }
 }
 
-:host ::ng-deep {
-  .mat-expansion-panel {
-    &.fixed-color-level {
-      .mat-expansion-panel-body {
-        padding: 0 8px 8px;
-      }
-    }
-  }
-}

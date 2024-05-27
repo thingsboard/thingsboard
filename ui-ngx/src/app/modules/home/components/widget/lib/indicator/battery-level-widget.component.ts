@@ -37,7 +37,8 @@ import {
   getDataKey,
   getSingleTsValue,
   overlayStyle,
-  textStyle
+  textStyle,
+  updateGradientMinMaxValues
 } from '@shared/models/widget-settings.models';
 import { WidgetComponent } from '@home/components/widget/widget.component';
 import {
@@ -191,16 +192,20 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
     this.showValue = this.settings.showValue;
     this.autoScaleValueSize = this.showValue && this.settings.autoScaleValueSize;
     this.valueStyle = textStyle(this.settings.valueFont);
-    this.valueColor = ColorProcessor.fromSettings(this.settings.valueColor);
+    this.valueColor = ColorProcessor.fromSettings(updateGradientMinMaxValues(this.settings.valueColor, 0, 100), this.ctx);
 
-    this.batteryLevelColor = ColorProcessor.fromSettings(this.settings.batteryLevelColor);
+    this.batteryLevelColor = ColorProcessor.fromSettings(updateGradientMinMaxValues(this.settings.batteryLevelColor, 0, 100), this.ctx);
 
-    this.batteryShapeColor = ColorProcessor.fromSettings(this.settings.batteryShapeColor);
+    this.batteryShapeColor = ColorProcessor.fromSettings(updateGradientMinMaxValues(this.settings.batteryShapeColor, 0, 100), this.ctx);
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
 
     this.hasCardClickAction = this.ctx.actionsApi.getActionDescriptors('cardClick').length > 0;
+
+    this.valueColor.colorUpdated.subscribe(() => this.cd.markForCheck());
+    this.batteryLevelColor.colorUpdated.subscribe(() => this.cd.markForCheck());
+    this.batteryShapeColor.colorUpdated.subscribe(() => this.cd.markForCheck());
   }
 
   ngAfterViewInit() {
@@ -218,6 +223,14 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
     if (this.batteryBoxResize$) {
       this.batteryBoxResize$.disconnect();
     }
+
+    this.valueColor.colorUpdated.unsubscribe();
+    this.batteryLevelColor.colorUpdated.unsubscribe();
+    this.batteryShapeColor.colorUpdated.unsubscribe();
+
+    this.batteryLevelColor.destroy();
+    this.valueColor.destroy();
+    this.batteryShapeColor.destroy();
   }
 
   public onInit() {

@@ -18,27 +18,25 @@ import * as CanvasGauges from 'canvas-gauges';
 import { WidgetContext } from '@home/models/widget-component.models';
 import {
   attributesGaugeType,
-  AttributeSourceProperty,
   ColorLevelSetting,
   DigitalGaugeSettings,
   FixedLevelColors
 } from '@home/components/widget/lib/digital-gauge.models';
 import tinycolor from 'tinycolor2';
-import { isDefined, isDefinedAndNotNull } from '@core/utils';
+import { isDefined, isDefinedAndNotNull, parseFunction, safeExecute } from '@core/utils';
 import { prepareFontSettings } from '@home/components/widget/lib/settings.models';
 import { CanvasDigitalGauge, CanvasDigitalGaugeOptions } from '@home/components/widget/lib/canvas-digital-gauge';
 import { DatePipe } from '@angular/common';
-import {
-  DataKey,
-  Datasource,
-  DatasourceData,
-  DatasourceType,
-  JsonSettingsSchema,
-  widgetType
-} from '@shared/models/widget.models';
+import { DataKey, Datasource, DatasourceData, DatasourceType, widgetType } from '@shared/models/widget.models';
 import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { EMPTY, Observable } from 'rxjs';
+import {
+  ColorProcessor,
+  ColorType,
+  ValueSourceDataKeyType,
+  ValueSourceWithDataKey
+} from '@shared/models/widget-settings.models';
 import GenericOptions = CanvasGauges.GenericOptions;
 
 // @dynamic
@@ -70,6 +68,7 @@ export class TbCanvasDigitalGauge {
 
     this.localSettings.gaugeWidthScale = settings.gaugeWidthScale || 0.75;
     this.localSettings.gaugeColor = settings.gaugeColor || tinycolor(keyColor).setAlpha(0.2).toRgbString();
+    this.localSettings.barColor = settings.barColor;
 
     this.localSettings.useFixedLevelColor = settings.useFixedLevelColor || false;
     if (!settings.useFixedLevelColor) {
@@ -217,9 +216,9 @@ export class TbCanvasDigitalGauge {
       throw new Error('Not valid entity aliase name ' + entityAlias);
     }
 
-    const datasource = datasources.find((datasourceIteration) => {
-      return datasourceIteration.entityAliasId === entityAliasId;
-    });
+    const datasource = datasources.find((datasourceIteration) =>
+      datasourceIteration.entityAliasId === entityAliasId
+    );
 
     const dataKey: DataKey = {
       type: DataKeyType.attribute,
@@ -230,9 +229,9 @@ export class TbCanvasDigitalGauge {
     };
 
     if (datasource) {
-      const findDataKey = datasource.dataKeys.find((dataKeyIteration) => {
-        return dataKeyIteration.name === attribute;
-      });
+      const findDataKey = datasource.dataKeys.find((dataKeyIteration) =>
+        dataKeyIteration.name === attribute
+      );
 
       if (findDataKey) {
         findDataKey.settings.push(settings);
@@ -282,20 +281,26 @@ export class TbCanvasDigitalGauge {
       color: this.localSettings.gaugeColor
     });
 
-    function setLevelColor(levelSetting: AttributeSourceProperty, color: string) {
-      if (levelSetting.valueSource === 'predefinedValue' && isFinite(levelSetting.value)) {
+    function setLevelColor(levelSetting, color: string) {
+      if (levelSetting.type === ValueSourceDataKeyType.constant && isFinite(levelSetting.value)) {
         predefineLevelColors.push({
           value: levelSetting.value,
           color
         });
-      } else if (levelSetting.entityAlias && levelSetting.attribute) {
+      } else if (levelSetting.type === ValueSourceDataKeyType.latestKey || levelSetting.type === ValueSourceDataKeyType.entity) {
         try {
-          levelColorsDatasource = TbCanvasDigitalGauge.generateDatasource(this.ctx, levelColorsDatasource,
-            levelSetting.entityAlias, levelSetting.attribute, {color, index: predefineLevelColors.length});
+          levelColorsDatasource = ColorProcessor.generateDatasource(
+            this.ctx, levelColorsDatasource, levelSetting, {color, index: predefineLevelColors.length}
+          );
         } catch (e) {
           return;
         }
         predefineLevelColors.push(null);
+      } else if (isFinite(levelSetting)) {
+        predefineLevelColors.push({
+          value: levelSetting,
+          color
+        });
       }
     }
 
@@ -315,17 +320,18 @@ export class TbCanvasDigitalGauge {
     return predefineLevelColors;
   }
 
-  settingTicksSubscribe(options: AttributeSourceProperty[]): number[] {
+  settingTicksSubscribe(options: ValueSourceWithDataKey[]): number[] {
     let ticksDatasource: Datasource[] = [];
     const predefineTicks: number[] = [];
 
     for (const tick of options) {
-      if (tick.valueSource === 'predefinedValue' && isFinite(tick.value)) {
+      if (tick.type === ValueSourceDataKeyType.constant && isFinite(tick.value)) {
         predefineTicks.push(tick.value);
-      } else if (tick.entityAlias && tick.attribute) {
+      } else {
         try {
-          ticksDatasource = TbCanvasDigitalGauge
-            .generateDatasource(this.ctx, ticksDatasource, tick.entityAlias, tick.attribute, predefineTicks.length);
+          ticksDatasource = ColorProcessor.generateDatasource(
+            this.ctx, ticksDatasource, tick, {index: predefineTicks.length}
+          );
         } catch (e) {
           continue;
         }
@@ -364,7 +370,7 @@ export class TbCanvasDigitalGauge {
       if (keyData && keyData.data && keyData.data[0]) {
         const attrValue = keyData.data[0][1];
         if (isFinite(attrValue)) {
-          for (const setting of keyData.dataKey.settings) {
+          for (const setting of keyData.dataKey.settings.dataKeySettings) {
             switch (typeAttributes) {
               case 'levelColors':
                 this.localSettings.levelColors[setting.index] = {
@@ -373,7 +379,7 @@ export class TbCanvasDigitalGauge {
                 };
                 break;
               case 'ticks':
-                this.localSettings.ticks[setting] = attrValue;
+                this.localSettings.ticks[setting.index] = attrValue;
                 break;
             }
           }
@@ -409,6 +415,13 @@ export class TbCanvasDigitalGauge {
             this.gauge._value = value;
           }
           this.gauge.value = value;
+          if (this.localSettings.barColor?.type === ColorType.function && isDefined(this.localSettings.barColor?.colorFunction)) {
+            this.localSettings.levelColors = [safeExecute(parseFunction(this.localSettings.barColor.colorFunction, ['value']), [value])];
+            this.updateSetting();
+          } else if (this.localSettings.barColor?.type === ColorType.constant && isDefinedAndNotNull(this.localSettings.barColor?.color)) {
+            this.localSettings.levelColors = [this.localSettings.barColor.color];
+            this.updateSetting();
+          }
         } else if (this.localSettings.showTimestamp && this.gauge.timestamp !== timestamp) {
           this.gauge.timestamp = timestamp;
         }
