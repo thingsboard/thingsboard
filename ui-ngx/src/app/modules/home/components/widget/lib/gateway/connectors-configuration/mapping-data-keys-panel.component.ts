@@ -104,7 +104,7 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
   }
 
   ngOnInit() {
-    this.keysListFormArray = this.prepareKeysFormArray(this.keys)
+    this.keysListFormArray = this.prepareKeysFormArray(this.keys);
   }
 
   trackByKey(index: number, keyControl: AbstractControl): any {

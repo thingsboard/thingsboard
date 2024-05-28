@@ -367,7 +367,7 @@
               <mat-tab label="{{ 'gateway.server' | translate }}*">
                   <tb-server-config [formControl]="connectorForm.get('basicConfig.server')"></tb-server-config>
               </mat-tab>
-              <mat-tab label="{{ 'gateway.data-mapping' | translate }}">
+              <mat-tab label="{{ 'gateway.data-mapping' | translate }}*">
                   <div class="tb-form-panel no-border no-padding padding-top tb-flex fill-height">
                     <tb-mapping-table formControlName="mapping" [mappingType]="mappingTypes.OPCUA"></tb-mapping-table>
                   </div>

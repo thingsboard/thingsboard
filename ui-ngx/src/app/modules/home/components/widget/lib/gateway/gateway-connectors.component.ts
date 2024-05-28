@@ -662,7 +662,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   private addOPCUAConfigControls(): void {
     const configControl = this.fb.group({});
     configControl.addControl('server', this.fb.control({}, []));
-    configControl.addControl('mapping', this.fb.control([], []));
+    configControl.addControl('mapping', this.fb.control([], Validators.required));
     if (this.connectorForm.get('basicConfig')) {
       this.connectorForm.setControl('basicConfig', configControl, {emitEvent: false});
     } else {

@@ -124,7 +124,7 @@ export enum ConnectorType {
   MODBUS = 'modbus',
   GRPC = 'grpc',
   OPCUA = 'opcua',
-  OPCUA_ASYNCIO = 'opcua_asyncio',
+  OPCUA_ASYNCIO = 'opcua_asyncio', // DEPRECATED
   BLE = 'ble',
   REQUEST = 'request',
   CAN = 'can',
@@ -144,7 +144,7 @@ export const GatewayConnectorDefaultTypesTranslatesMap = new Map<ConnectorType, 
   [ConnectorType.MODBUS, 'MODBUS'],
   [ConnectorType.GRPC, 'GRPC'],
   [ConnectorType.OPCUA, 'OPCUA'],
-  [ConnectorType.OPCUA_ASYNCIO, 'OPCUA ASYNCIO'],
+  [ConnectorType.OPCUA_ASYNCIO, 'OPCUA ASYNCIO'], // DEPRECATED
   [ConnectorType.BLE, 'BLE'],
   [ConnectorType.REQUEST, 'REQUEST'],
   [ConnectorType.CAN, 'CAN'],

@@ -34,7 +34,9 @@
     </div>
   </div>
   <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-    <div class="fixed-title-width" translate>gateway.timeout</div>
+    <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.opcua-timeout' | translate }}" translate>
+      gateway.timeout
+    </div>
     <div class="tb-flex no-gap">
       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
         <input matInput type="number" min="0" name="value" formControlName="timeoutInMillis" placeholder="{{ 'gateway.set' | translate }}"/>
@@ -52,7 +54,9 @@
     </div>
   </div>
   <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-    <div class="fixed-title-width" translate>gateway.scan-period</div>
+    <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.scan-period' | translate }}" translate>
+      gateway.scan-period
+    </div>
     <div class="tb-flex no-gap">
       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
         <input matInput type="number" min="0" name="value"
@@ -61,7 +65,9 @@
     </div>
   </div>
   <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-    <div class="fixed-title-width" translate>gateway.sub-check-period</div>
+    <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.sub-check-period' | translate }}" translate>
+      gateway.sub-check-period
+    </div>
     <div class="tb-flex no-gap">
       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
         <input matInput type="number" min="0" name="value"
@@ -71,14 +77,14 @@
   </div>
   <div class="tb-form-row" fxLayoutAlign="space-between center">
     <mat-slide-toggle class="mat-slide" formControlName="enableSubscriptions">
-      <mat-label tb-hint-tooltip-icon="{{ 'gateway.enable-subscription-hint' | translate }}">
+      <mat-label tb-hint-tooltip-icon="{{ 'gateway.hints.enable-subscription' | translate }}">
         {{ 'gateway.enable-subscription' | translate }}
       </mat-label>
     </mat-slide-toggle>
   </div>
   <div class="tb-form-row" fxLayoutAlign="space-between center">
     <mat-slide-toggle class="mat-slide" formControlName="showMap">
-      <mat-label tb-hint-tooltip-icon="{{ 'gateway.show-map-hint' | translate }}">
+      <mat-label tb-hint-tooltip-icon="{{ 'gateway.hints.show-map' | translate }}">
         {{ 'gateway.show-map' | translate }}
       </mat-label>
     </mat-slide-toggle>

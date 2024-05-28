@@ -41,6 +41,7 @@ import {
   ServerSecurityTypes
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { takeUntil } from 'rxjs/operators';
+import { isDefined } from '@core/utils';
 
 @Component({
   selector: 'tb-server-config',
@@ -112,6 +113,12 @@ export class ServerConfigComponent extends PageComponent implements ControlValue
     }
     if (!deviceInfo.identity) {
       deviceInfo.identity = { type: BrokerSecurityType.ANONYMOUS };
+    }
+    if (!isDefined(deviceInfo.enableSubscriptions)) {
+      deviceInfo.enableSubscriptions = true;
+    }
+    if (!isDefined(deviceInfo.showMap)) {
+      deviceInfo.showMap = false;
     }
     this.serverConfigFormGroup.reset(deviceInfo);
     this.updateView(deviceInfo);
