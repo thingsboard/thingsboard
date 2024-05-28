@@ -90,6 +90,7 @@ import org.thingsboard.server.service.update.UpdateService;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
@@ -216,7 +217,7 @@ public class AdminController extends BaseController {
     @RequestMapping(value = "/settings/testMail", method = RequestMethod.POST)
     public void sendTestMail(
             @Parameter(description = "A JSON value representing the Mail Settings.")
-            @RequestBody AdminSettings adminSettings) throws ThingsboardException {
+            @RequestBody AdminSettings adminSettings) throws Exception {
         accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
         adminSettings = checkNotNull(adminSettings);
         if (adminSettings.getKey().equals("mail")) {
@@ -235,7 +236,7 @@ public class AdminController extends BaseController {
                 }
             }
             String email = getCurrentUser().getEmail();
-            mailService.sendTestMail(adminSettings.getJsonValue(), email);
+            mailService.sendTestMail(adminSettings.getJsonValue(), email).get(10, TimeUnit.SECONDS);
         }
     }
 

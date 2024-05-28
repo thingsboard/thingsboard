@@ -25,6 +25,8 @@ import org.thingsboard.server.common.data.notification.NotificationDeliveryMetho
 import org.thingsboard.server.common.data.notification.template.EmailDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.service.notification.NotificationProcessingContext;
 
+import java.util.concurrent.TimeUnit;
+
 @Component
 @RequiredArgsConstructor
 public class EmailNotificationChannel implements NotificationChannel<User, EmailDeliveryMethodNotificationTemplate> {
@@ -38,7 +40,8 @@ public class EmailNotificationChannel implements NotificationChannel<User, Email
                 .subject(processedTemplate.getSubject())
                 .body(processedTemplate.getBody())
                 .html(true)
-                .build());
+                .build())
+                .get(10, TimeUnit.SECONDS);
     }
 
     @Override

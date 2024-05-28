@@ -17,6 +17,7 @@ package org.thingsboard.server.service.mail;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import jakarta.annotation.PostConstruct;
@@ -84,7 +85,7 @@ public class DefaultMailService implements MailService {
     private TbApiUsageStateService apiUsageStateService;
 
     @Autowired
-    private MailSenderInternalExecutorService mailExecutorService;
+    private MailExecutorService mailExecutorService;
 
     @Autowired
     private PasswordResetExecutorService passwordResetExecutorService;
@@ -145,18 +146,22 @@ public class DefaultMailService implements MailService {
     }
 
     @Override
-    public void sendTestMail(JsonNode jsonConfig, String email) throws ThingsboardException {
-        TbMailSender testMailSender = new TbMailSender(ctx, jsonConfig);
-        String mailFrom = jsonConfig.get("mailFrom").asText();
-        String subject = messages.getMessage("test.message.subject", null, Locale.US);
-        long timeout = jsonConfig.get("timeout").asLong(DEFAULT_TIMEOUT);
+    public ListenableFuture<Void> sendTestMail(JsonNode jsonConfig, String email){
+        ListenableFuture<Void> future = mailExecutorService.executeAsync(() -> {
+            TbMailSender testMailSender = new TbMailSender(ctx, jsonConfig);
+            String mailFrom = jsonConfig.get("mailFrom").asText();
+            String subject = messages.getMessage("test.message.subject", null, Locale.US);
+            long timeout = jsonConfig.get("timeout").asLong(DEFAULT_TIMEOUT);
 
-        Map<String, Object> model = new HashMap<>();
-        model.put(TARGET_EMAIL, email);
+            Map<String, Object> model = new HashMap<>();
+            model.put(TARGET_EMAIL, email);
 
-        String message = mergeTemplateIntoString("test.ftl", model);
+            String message = mergeTemplateIntoString("test.ftl", model);
 
-        sendMail(testMailSender, mailFrom, email, subject, message, timeout);
+            sendMail(testMailSender, mailFrom, email, subject, message, timeout);
+            return null;
+        });
+        return Futures.withTimeout(future, timeout, TimeUnit.SECONDS,timeoutScheduler);
     }
 
     @Override
@@ -228,13 +233,21 @@ public class DefaultMailService implements MailService {
     }
 
     @Override
-    public void send(TenantId tenantId, CustomerId customerId, TbEmail tbEmail) throws ThingsboardException {
-        sendMail(tenantId, customerId, tbEmail, this.mailSender, timeout);
+    public ListenableFuture<Void> send(TenantId tenantId, CustomerId customerId, TbEmail tbEmail) {
+        ListenableFuture<Void> future = mailExecutorService.executeAsync(() -> {
+            sendMail(tenantId, customerId, tbEmail, this.mailSender, timeout);
+            return null;
+        });
+        return Futures.withTimeout(future, timeout, TimeUnit.SECONDS, timeoutScheduler);
     }
 
     @Override
-    public void send(TenantId tenantId, CustomerId customerId, TbEmail tbEmail, JavaMailSender javaMailSender, long timeout) throws ThingsboardException {
-        sendMail(tenantId, customerId, tbEmail, javaMailSender, timeout);
+    public ListenableFuture<Void> send(TenantId tenantId, CustomerId customerId, TbEmail tbEmail, JavaMailSender javaMailSender, long timeout) {
+        ListenableFuture<Void> future = mailExecutorService.executeAsync(() -> {
+            sendMail(tenantId, customerId, tbEmail, javaMailSender, timeout);
+            return null;
+        });
+        return Futures.withTimeout(future, timeout, TimeUnit.SECONDS, timeoutScheduler);
     }
 
     private void sendMail(TenantId tenantId, CustomerId customerId, TbEmail tbEmail, JavaMailSender javaMailSender, long timeout) throws ThingsboardException {
@@ -305,30 +318,38 @@ public class DefaultMailService implements MailService {
     }
 
     @Override
-    public void sendApiFeatureStateEmail(ApiFeature apiFeature, ApiUsageStateValue stateValue, String email, ApiUsageRecordState recordState) throws ThingsboardException {
-        String subject = messages.getMessage("api.usage.state", null, Locale.US);
+    public ListenableFuture<Void> sendApiFeatureStateEmail(ApiFeature apiFeature, ApiUsageStateValue stateValue, String email, ApiUsageRecordState recordState) {
+        ListenableFuture<Void> future = mailExecutorService.executeAsync(() -> {
+            String subject = messages.getMessage("api.usage.state", null, Locale.US);
 
-        Map<String, Object> model = new HashMap<>();
-        model.put("apiFeature", apiFeature.getLabel());
-        model.put(TARGET_EMAIL, email);
+            Map<String, Object> model = new HashMap<>();
+            model.put("apiFeature", apiFeature.getLabel());
+            model.put(TARGET_EMAIL, email);
 
-        String message = null;
+            String message = null;
 
-        switch (stateValue) {
-            case ENABLED:
-                model.put("apiLabel", toEnabledValueLabel(apiFeature));
-                message = mergeTemplateIntoString("state.enabled.ftl", model);
-                break;
-            case WARNING:
-                model.put("apiValueLabel", toDisabledValueLabel(apiFeature) + " " + toWarningValueLabel(recordState));
-                message = mergeTemplateIntoString("state.warning.ftl", model);
-                break;
-            case DISABLED:
-                model.put("apiLimitValueLabel", toDisabledValueLabel(apiFeature) + " " + toDisabledValueLabel(recordState));
-                message = mergeTemplateIntoString("state.disabled.ftl", model);
-                break;
-        }
-        sendMail(mailSender, mailFrom, email, subject, message, timeout);
+            switch (stateValue) {
+                case ENABLED:
+                    model.put("apiLabel", toEnabledValueLabel(apiFeature));
+                    message = mergeTemplateIntoString("state.enabled.ftl", model);
+                    break;
+                case WARNING:
+                    model.put("apiValueLabel", toDisabledValueLabel(apiFeature) + " " + toWarningValueLabel(recordState));
+                    message = mergeTemplateIntoString("state.warning.ftl", model);
+                    break;
+                case DISABLED:
+                    model.put("apiLimitValueLabel", toDisabledValueLabel(apiFeature) + " " + toDisabledValueLabel(recordState));
+                    message = mergeTemplateIntoString("state.disabled.ftl", model);
+                    break;
+            }
+            try {
+                sendMail(mailSender, mailFrom, email, subject, message, timeout);
+            } catch (ThingsboardException e) {
+                throw new RuntimeException(e);
+            }
+            return null;
+        });
+        return Futures.withTimeout(future, timeout, TimeUnit.SECONDS, timeoutScheduler);
     }
 
     @Override
