@@ -28,6 +28,8 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
+import java.util.List;
+
 @Slf4j
 @RuleNode(
         type = ComponentType.EXTERNAL,
@@ -88,7 +90,7 @@ public class TbRestApiCallNode extends TbAbstractExternalNode {
             case 1:
                 if (oldConfiguration.has("useRedisQueueForMsgPersistence")) {
                     hasChanges = true;
-                    ((ObjectNode) oldConfiguration).remove("useRedisQueueForMsgPersistence");
+                    ((ObjectNode) oldConfiguration).remove(List.of("useRedisQueueForMsgPersistence", "trimQueue", "maxQueueSize"));
                 }
                 break;
             default:

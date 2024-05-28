@@ -233,7 +233,7 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
                                 "\"enableProxy\": false,\"useSystemProxyProperties\": false,\"proxyScheme\": null,\"proxyHost\": null," +
                                 "\"proxyPort\": 0,\"proxyUser\": null,\"proxyPassword\": null,\"readTimeoutMs\": 0," +
                                 "\"maxParallelRequestsCount\": 0,\"headers\": {\"Content-Type\": \"application/json\"}," +
-                                "\"trimQueue\": null,\"maxQueueSize\": null,\"credentials\": {\"type\": \"anonymous\"}}"),
+                                "\"credentials\": {\"type\": \"anonymous\"}}"),
                 // config for version 2 with upgrade from version 1
                 Arguments.of(1,
                         "{\"restEndpointUrlPattern\":\"http://localhost/api\",\"requestMethod\": \"POST\"," +
@@ -249,7 +249,7 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
                                 "\"enableProxy\": false,\"useSystemProxyProperties\": false,\"proxyScheme\": null,\"proxyHost\": null," +
                                 "\"proxyPort\": 0,\"proxyUser\": null,\"proxyPassword\": null,\"readTimeoutMs\": 0," +
                                 "\"maxParallelRequestsCount\": 0,\"headers\": {\"Content-Type\": \"application/json\"}," +
-                                "\"trimQueue\": null,\"maxQueueSize\": null,\"credentials\": {\"type\": \"anonymous\"}}")
+                                "\"credentials\": {\"type\": \"anonymous\"}}")
         );
     }
 
