@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.telemetry;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,12 +33,14 @@ import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -46,15 +49,17 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class TbMsgTimeseriesNodeTest {
 
+    private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("c8f34868-603a-4433-876a-7d356e5cf377"));
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("e5095e9a-04f4-44c9-b443-1cf1b97d3384"));
-    private final TenantId TENANT_ID = new TenantId(UUID.fromString("c8f34868-603a-4433-876a-7d356e5cf377"));
 
     private TbMsgTimeseriesNode node;
     private TbMsgTimeseriesNodeConfiguration config;
@@ -70,9 +75,9 @@ public class TbMsgTimeseriesNodeTest {
         node = new TbMsgTimeseriesNode();
         config = new TbMsgTimeseriesNodeConfiguration().defaultConfiguration();
         var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-        TenantProfile tenantProfile = new TenantProfile(new TenantProfileId(UUID.fromString("8c45d0fe-d437-40e9-8c31-b695b315bf40")));
-        TenantProfileData tenantProfileData = new TenantProfileData();
-        DefaultTenantProfileConfiguration tenantProfileConfiguration = new DefaultTenantProfileConfiguration();
+        var tenantProfile = new TenantProfile(new TenantProfileId(UUID.fromString("8c45d0fe-d437-40e9-8c31-b695b315bf40")));
+        var tenantProfileData = new TenantProfileData();
+        var tenantProfileConfiguration = new DefaultTenantProfileConfiguration();
         tenantProfileData.setConfiguration(tenantProfileConfiguration);
         tenantProfile.setProfileData(tenantProfileData);
         when(ctxMock.getTenantProfile()).thenReturn(tenantProfile);
@@ -86,33 +91,18 @@ public class TbMsgTimeseriesNodeTest {
 
     @ParameterizedTest
     @EnumSource(TbMsgType.class)
-    void givenUnsupportedMsgType_whenOnMsg_thenTellFailure(TbMsgType msgType) {
+    void givenMsgTypeAndEmptyMsgData_whenOnMsg_thenVerifyFailureMsg(TbMsgType msgType) {
         TbMsg msg = TbMsg.newMsg(msgType, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_ARRAY);
+        node.onMsg(ctxMock, msg);
+        ArgumentCaptor<Throwable> throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
+        verify(ctxMock).tellFailure(eq(msg), throwableCaptor.capture());
 
         if (TbMsgType.POST_TELEMETRY_REQUEST.equals(msgType)) {
+            assertThat(throwableCaptor.getValue()).isInstanceOf(IllegalArgumentException.class).hasMessage("Msg body is empty: " + msg.getData());
             return;
         }
-
-        node.onMsg(ctxMock, msg);
-
-        ArgumentCaptor<Throwable> captor = ArgumentCaptor.forClass(Throwable.class);
-        verify(ctxMock).tellFailure(eq(msg), captor.capture());
-        Throwable throwable = captor.getValue();
-        assertThat(throwable).isInstanceOf(IllegalArgumentException.class);
-        assertThat(throwable.getMessage()).isEqualTo("Unsupported msg type: " + msgType);
-    }
-
-    @Test
-    void givenEmptyMsgData_whenOnMsg_thenTellFailure() {
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_ARRAY);
-
-        node.onMsg(ctxMock, msg);
-
-        ArgumentCaptor<Throwable> captor = ArgumentCaptor.forClass(Throwable.class);
-        verify(ctxMock).tellFailure(eq(msg), captor.capture());
-        Throwable throwable = captor.getValue();
-        assertThat(throwable).isInstanceOf(IllegalArgumentException.class);
-        assertThat(throwable.getMessage()).isEqualTo("Msg body is empty: " + msg.getData());
+        assertThat(throwableCaptor.getValue()).isInstanceOf(IllegalArgumentException.class).hasMessage("Unsupported msg type: " + msgType);
+        verifyNoMoreInteractions(ctxMock);
     }
 
     @Test
@@ -135,8 +125,14 @@ public class TbMsgTimeseriesNodeTest {
 
         node.onMsg(ctxMock, msg);
 
-        verify(telemetryServiceMock).saveAndNotify(eq(TENANT_ID), eq(null), eq(DEVICE_ID), anyList(), eq(tenantProfileDefaultStorageTtl), any(TelemetryNodeCallback.class));
+        ArgumentCaptor<List<TsKvEntry>> entryListCaptor = ArgumentCaptor.forClass(List.class);
+        verify(telemetryServiceMock).saveAndNotify(
+                eq(TENANT_ID), isNull(), eq(DEVICE_ID), entryListCaptor.capture(), eq(tenantProfileDefaultStorageTtl), any(TelemetryNodeCallback.class));
+        List<TsKvEntry> entryListCaptorValue = entryListCaptor.getValue();
+        assertThat(entryListCaptorValue.size()).isEqualTo(2);
+        verifyTimeseriesToSave(entryListCaptorValue, msg);
         verify(ctxMock).tellSuccess(eq(msg));
+        verifyNoMoreInteractions(ctxMock, telemetryServiceMock);
     }
 
     @Test
@@ -163,7 +159,24 @@ public class TbMsgTimeseriesNodeTest {
 
         node.onMsg(ctxMock, msg);
 
-        verify(telemetryServiceMock).saveWithoutLatestAndNotify(eq(TENANT_ID), eq(null), eq(DEVICE_ID), anyList(), eq(tenantProfileDefaultStorageTtl), any(TelemetryNodeCallback.class));
+        ArgumentCaptor<List<TsKvEntry>> entryListCaptor = ArgumentCaptor.forClass(List.class);
+        verify(telemetryServiceMock).saveWithoutLatestAndNotify(
+                eq(TENANT_ID), isNull(), eq(DEVICE_ID), entryListCaptor.capture(), eq(tenantProfileDefaultStorageTtl), any(TelemetryNodeCallback.class));
+        List<TsKvEntry> entryListCaptorValue = entryListCaptor.getValue();
+        assertThat(entryListCaptorValue.size()).isEqualTo(2);
+        verifyTimeseriesToSave(entryListCaptorValue, msg);
         verify(ctxMock).tellSuccess(eq(msg));
+        verifyNoMoreInteractions(ctxMock, telemetryServiceMock);
     }
+
+    private void verifyTimeseriesToSave(List<TsKvEntry> tsKvEntryList, TbMsg incomingMsg) {
+        JsonNode msgData = JacksonUtil.toJsonNode(incomingMsg.getData());
+        tsKvEntryList.forEach(tsKvEntry -> {
+            String key = tsKvEntry.getKey();
+            assertThat(msgData.has(key)).isTrue();
+            String value = tsKvEntry.getValueAsString();
+            assertThat(value).isEqualTo(msgData.findValue(key).asText());
+        });
+    }
+
 }
