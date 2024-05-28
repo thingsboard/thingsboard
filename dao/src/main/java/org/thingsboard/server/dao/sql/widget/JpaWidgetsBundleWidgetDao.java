@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.widget.WidgetsBundleWidget;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.TenantEntityDao;
+import org.thingsboard.server.dao.model.sql.WidgetsBundleWidgetEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
 @Component
@@ -31,6 +32,11 @@ public class JpaWidgetsBundleWidgetDao implements TenantEntityDao<WidgetsBundleW
 
     @Autowired
     private WidgetsBundleWidgetRepository widgetsBundleWidgetRepository;
+
+    @Override
+    public WidgetsBundleWidget save(TenantId tenantId, WidgetsBundleWidget entity) {
+        return widgetsBundleWidgetRepository.save(new WidgetsBundleWidgetEntity(entity)).toData();
+    }
 
     @Override
     public PageData<WidgetsBundleWidget> findAllByTenantId(TenantId tenantId, PageLink pageLink) {

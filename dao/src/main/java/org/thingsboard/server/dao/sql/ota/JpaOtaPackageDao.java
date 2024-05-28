@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -56,6 +57,7 @@ public class JpaOtaPackageDao extends JpaAbstractDao<OtaPackageEntity, OtaPackag
         return otaPackageRepository.sumDataSizeByTenantId(tenantId.getId());
     }
 
+    @Transactional
     @Override
     public PageData<OtaPackage> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(otaPackageRepository.findByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));

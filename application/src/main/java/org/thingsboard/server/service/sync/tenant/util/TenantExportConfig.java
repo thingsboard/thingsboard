@@ -13,36 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.kv;
+package org.thingsboard.server.service.sync.tenant.util;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Data;
 
-import java.io.Serializable;
-import java.util.Optional;
+import java.util.UUID;
 
-/**
- * Represents attribute or any other KV data entry
- *
- * @author ashvayka
- */
-public interface KvEntry extends Serializable {
+@Data
+public class TenantExportConfig {
 
-    String getKey();
+    private UUID tenantId;
 
-    DataType getDataType();
-
-    Optional<String> getStrValue();
-
-    Optional<Long> getLongValue();
-
-    Optional<Boolean> getBooleanValue();
-
-    Optional<Double> getDoubleValue();
-
-    Optional<String> getJsonValue();
-
-    @JsonIgnore
-    String getValueAsString();
-
-    Object getValue();
 }

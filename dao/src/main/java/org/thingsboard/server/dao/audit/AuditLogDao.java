@@ -23,11 +23,12 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.dao.TenantEntityDao;
 
 import java.util.List;
 import java.util.UUID;
 
-public interface AuditLogDao extends Dao<AuditLog> {
+public interface AuditLogDao extends Dao<AuditLog>, TenantEntityDao<AuditLog> {
 
     PageData<AuditLog> findAuditLogsByTenantIdAndEntityId(UUID tenantId, EntityId entityId, List<ActionType> actionTypes, TimePageLink pageLink);
 

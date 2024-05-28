@@ -13,36 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.kv;
+package org.thingsboard.server.service.sync.tenant.util;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Data;
 
-import java.io.Serializable;
-import java.util.Optional;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * Represents attribute or any other KV data entry
- *
- * @author ashvayka
- */
-public interface KvEntry extends Serializable {
+@Data
+public class TenantImportResult {
+    private boolean done;
+    private boolean success;
+    private String error;
 
-    String getKey();
+    private final Map<String, AtomicInteger> stats = new LinkedHashMap<>();
 
-    DataType getDataType();
-
-    Optional<String> getStrValue();
-
-    Optional<Long> getLongValue();
-
-    Optional<Boolean> getBooleanValue();
-
-    Optional<Double> getDoubleValue();
-
-    Optional<String> getJsonValue();
-
-    @JsonIgnore
-    String getValueAsString();
-
-    Object getValue();
+    public void report(String type) {
+        stats.computeIfAbsent(type, k -> new AtomicInteger()).incrementAndGet();
+    }
 }

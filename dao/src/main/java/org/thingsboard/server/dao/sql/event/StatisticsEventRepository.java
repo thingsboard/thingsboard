@@ -31,7 +31,7 @@ import java.util.UUID;
 public interface StatisticsEventRepository extends EventRepository<StatisticsEventEntity, StatisticsEvent>, JpaRepository<StatisticsEventEntity, UUID> {
 
     @Override
-    @Query(nativeQuery = true,  value = "SELECT * FROM stats_event e WHERE e.tenant_id = :tenantId AND e.entity_id = :entityId ORDER BY e.ts DESC LIMIT :limit")
+    @Query(nativeQuery = true, value = "SELECT * FROM stats_event e WHERE e.tenant_id = :tenantId AND e.entity_id = :entityId ORDER BY e.ts DESC LIMIT :limit")
     List<StatisticsEventEntity> findLatestEvents(@Param("tenantId") UUID tenantId, @Param("entityId") UUID entityId, @Param("limit") int limit);
 
     @Query("SELECT e FROM StatisticsEventEntity e WHERE " +
@@ -42,6 +42,17 @@ public interface StatisticsEventRepository extends EventRepository<StatisticsEve
     )
     Page<StatisticsEventEntity> findEvents(@Param("tenantId") UUID tenantId,
                                            @Param("entityId") UUID entityId,
+                                           @Param("startTime") Long startTime,
+                                           @Param("endTime") Long endTime,
+                                           Pageable pageable);
+
+    @Override
+    @Query("SELECT e FROM StatisticsEventEntity e WHERE " +
+            "e.tenantId = :tenantId " +
+            "AND (:startTime IS NULL OR e.ts >= :startTime) " +
+            "AND (:endTime IS NULL OR e.ts <= :endTime)"
+    )
+    Page<StatisticsEventEntity> findEvents(@Param("tenantId") UUID tenantId,
                                            @Param("startTime") Long startTime,
                                            @Param("endTime") Long endTime,
                                            Pageable pageable);

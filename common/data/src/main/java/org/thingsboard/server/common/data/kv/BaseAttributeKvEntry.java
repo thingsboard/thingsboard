@@ -15,7 +15,13 @@
  */
 package org.thingsboard.server.common.data.kv;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import jakarta.validation.Valid;
+
 import java.util.Optional;
 
 /**
@@ -26,10 +32,13 @@ public class BaseAttributeKvEntry implements AttributeKvEntry {
     private static final long serialVersionUID = -6460767583563159407L;
 
     private final long lastUpdateTs;
+    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
+    @JsonIgnoreProperties(ignoreUnknown = true)
     @Valid
     private final KvEntry kv;
 
-    public BaseAttributeKvEntry(KvEntry kv, long lastUpdateTs) {
+    @JsonCreator
+    public BaseAttributeKvEntry(@JsonProperty("kv") KvEntry kv, @JsonProperty("lastUpdateTs") long lastUpdateTs) {
         this.kv = kv;
         this.lastUpdateTs = lastUpdateTs;
     }
@@ -43,46 +52,55 @@ public class BaseAttributeKvEntry implements AttributeKvEntry {
         return lastUpdateTs;
     }
 
+    @JsonIgnore
     @Override
     public String getKey() {
         return kv.getKey();
     }
 
+    @JsonIgnore
     @Override
     public DataType getDataType() {
         return kv.getDataType();
     }
 
+    @JsonIgnore
     @Override
     public Optional<String> getStrValue() {
         return kv.getStrValue();
     }
 
+    @JsonIgnore
     @Override
     public Optional<Long> getLongValue() {
         return kv.getLongValue();
     }
 
+    @JsonIgnore
     @Override
     public Optional<Boolean> getBooleanValue() {
         return kv.getBooleanValue();
     }
 
+    @JsonIgnore
     @Override
     public Optional<Double> getDoubleValue() {
         return kv.getDoubleValue();
     }
 
+    @JsonIgnore
     @Override
     public Optional<String> getJsonValue() {
         return kv.getJsonValue();
     }
 
+    @JsonIgnore
     @Override
     public String getValueAsString() {
         return kv.getValueAsString();
     }
 
+    @JsonIgnore
     @Override
     public Object getValue() {
         return kv.getValue();

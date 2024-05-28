@@ -13,36 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.kv;
+package org.thingsboard.server.service.sync.tenant.util;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
-import java.util.Optional;
+@Data
+@AllArgsConstructor(staticName = "of")
+@NoArgsConstructor
+public class DataWrapper {
 
-/**
- * Represents attribute or any other KV data entry
- *
- * @author ashvayka
- */
-public interface KvEntry extends Serializable {
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
+    private Object entity;
 
-    String getKey();
-
-    DataType getDataType();
-
-    Optional<String> getStrValue();
-
-    Optional<Long> getLongValue();
-
-    Optional<Boolean> getBooleanValue();
-
-    Optional<Double> getDoubleValue();
-
-    Optional<String> getJsonValue();
-
-    @JsonIgnore
-    String getValueAsString();
-
-    Object getValue();
 }

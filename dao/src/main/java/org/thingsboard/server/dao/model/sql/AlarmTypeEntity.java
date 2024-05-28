@@ -21,10 +21,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
 import jakarta.persistence.Table;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.alarm.AlarmType;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.model.ToData;
 
@@ -32,7 +30,7 @@ import java.util.UUID;
 
 @Data
 @Entity
-@Table(name = ModelConstants.NOTIFICATION_TARGET_TABLE_NAME)
+@Table(name = ModelConstants.ALARM_TYPES_TABLE_NAME)
 @IdClass(AlarmTypeCompositeKey.class)
 public class AlarmTypeEntity implements ToData<AlarmType> {
 

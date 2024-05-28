@@ -27,6 +27,7 @@
     <logger name="org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService" level="TRACE"/>
     <logger name="org.thingsboard.server.transport.lwm2m.server" level="INFO"/>
     <logger name="org.eclipse.californium.core" level="INFO"/>
+    <logger name="org.thingsboard.server.service.sync.tenant" level="TRACE"/>
 
     <!--    To reduce logs -->
     <logger name="org.apache.catalina.loader.WebappClassLoaderBase" level="ERROR" />

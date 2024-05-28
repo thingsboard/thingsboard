@@ -21,30 +21,32 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.TenantEntityDao;
 
-import java.util.Collection;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class EntityDaoRegistry {
 
     private final Map<EntityType, Dao<?>> daos = new EnumMap<>(EntityType.class);
-    private final List<Dao<?>> all;
+    private final Map<String, TenantEntityDao<?>> tenantEntityDaos;
 
-    private EntityDaoRegistry(List<Dao<?>> daos) {
+    private final Map<Class<? extends TenantEntityDao>, String> tenantEntityDaosTypes = new ConcurrentHashMap<>();
+
+    private EntityDaoRegistry(List<Dao<?>> daos, List<TenantEntityDao<?>> tenantEntityDaos) {
         daos.forEach(dao -> {
             EntityType entityType = dao.getEntityType();
             if (entityType != null) {
                 this.daos.put(entityType, dao);
             }
         });
-        this.all = daos;
+        this.tenantEntityDaos = tenantEntityDaos.stream().collect(Collectors.toMap(TenantEntityDao::getType, dao -> dao));
     }
 
-    @SuppressWarnings("unchecked")
     public <T> Dao<T> getDao(EntityType entityType) {
         Dao<T> dao = (Dao<T>) daos.get(entityType);
         if (dao == null) {
@@ -53,8 +55,20 @@ public class EntityDaoRegistry {
         return dao;
     }
 
-    public Collection<TenantEntityDao<?>> getTenantEntityDaos() {
-        return all.stream().filter(dao -> dao instanceof TenantEntityDao).map(dao -> (TenantEntityDao<?>) dao).collect(Collectors.toList());
+    public <T> TenantEntityDao<T> getTenantEntityDao(String type) {
+        TenantEntityDao<T> dao = (TenantEntityDao<T>) tenantEntityDaos.get(type);
+        if (dao == null) {
+            throw new IllegalArgumentException("Missing dao for type " + type);
+        }
+        return dao;
+    }
+
+    public Map<String, TenantEntityDao<?>> getTenantEntityDaos() {
+        return tenantEntityDaos;
+    }
+
+    public String getType(TenantEntityDao<?> dao) {
+        return tenantEntityDaosTypes.computeIfAbsent(dao.getClass(), cls -> dao.getType());
     }
 
 }

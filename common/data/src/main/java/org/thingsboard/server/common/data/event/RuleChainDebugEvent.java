@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.data.event;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -23,6 +25,7 @@ import lombok.Setter;
 import lombok.ToString;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EventInfo;
+import org.thingsboard.server.common.data.id.EventId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.UUID;
@@ -35,6 +38,15 @@ public class RuleChainDebugEvent extends Event {
 
     @Builder
     private RuleChainDebugEvent(TenantId tenantId, UUID entityId, String serviceId, UUID id, long ts, String message, String error) {
+        super(tenantId, entityId, serviceId, id, ts);
+        this.message = message;
+        this.error = error;
+    }
+
+    @JsonCreator
+    private RuleChainDebugEvent(@JsonProperty("tenantId") TenantId tenantId, @JsonProperty("entityId") UUID entityId,
+                                @JsonProperty("serviceId") String serviceId, @JsonProperty("id") EventId id, @JsonProperty("ts") long ts,
+                                @JsonProperty("message") String message, @JsonProperty("error") String error) {
         super(tenantId, entityId, serviceId, id, ts);
         this.message = message;
         this.error = error;

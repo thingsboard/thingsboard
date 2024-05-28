@@ -15,13 +15,17 @@
  */
 package org.thingsboard.server.common.data.kv;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Objects;
 import java.util.Optional;
 
 public class BooleanDataEntry extends BasicKvEntry {
     private final Boolean value;
 
-    public BooleanDataEntry(String key, Boolean value) {
+    @JsonCreator
+    public BooleanDataEntry(@JsonProperty("key") String key, @JsonProperty("value") Boolean value) {
         super(key);
         this.value = value;
     }

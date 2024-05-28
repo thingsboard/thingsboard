@@ -18,13 +18,12 @@ package org.thingsboard.server.dao.sql.alarm;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.alarm.AlarmType;
-import org.thingsboard.server.common.data.alarm.EntityAlarm;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.TenantEntityDao;
-import org.thingsboard.server.dao.alarm.AlarmTypesCaffeineCache;
+import org.thingsboard.server.dao.model.sql.AlarmTypeEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
 @Component
@@ -36,7 +35,12 @@ public class JpaAlarmTypeDao implements TenantEntityDao<AlarmType> {
 
     @Override
     public PageData<AlarmType> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
-        return DaoUtil.toPageData(alarmTypeRepository.findByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
+        return DaoUtil.toPageData(alarmTypeRepository.findByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink, "tenantId", "type")));
+    }
+
+    @Override
+    public AlarmType save(TenantId tenantId, AlarmType alarmType) {
+        return alarmTypeRepository.save(new AlarmTypeEntity(alarmType)).toData();
     }
 
 }

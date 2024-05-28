@@ -15,34 +15,19 @@
  */
 package org.thingsboard.server.common.data.kv;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.id.EntityId;
 
-import java.io.Serializable;
-import java.util.Optional;
-
-/**
- * Represents attribute or any other KV data entry
- *
- * @author ashvayka
- */
-public interface KvEntry extends Serializable {
-
-    String getKey();
-
-    DataType getDataType();
-
-    Optional<String> getStrValue();
-
-    Optional<Long> getLongValue();
-
-    Optional<Boolean> getBooleanValue();
-
-    Optional<Double> getDoubleValue();
-
-    Optional<String> getJsonValue();
-
-    @JsonIgnore
-    String getValueAsString();
-
-    Object getValue();
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class LatestTsKv {
+    private EntityId entityId;
+    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private TsKvEntry entry;
 }

@@ -33,10 +33,10 @@ import java.util.UUID;
 public interface RuleNodeDebugEventRepository extends EventRepository<RuleNodeDebugEventEntity, RuleNodeDebugEvent>, JpaRepository<RuleNodeDebugEventEntity, UUID> {
 
     @Override
-    @Query(nativeQuery = true,  value = "SELECT * FROM rule_node_debug_event e WHERE e.tenant_id = :tenantId AND e.entity_id = :entityId ORDER BY e.ts DESC LIMIT :limit")
+    @Query(nativeQuery = true, value = "SELECT * FROM rule_node_debug_event e WHERE e.tenant_id = :tenantId AND e.entity_id = :entityId ORDER BY e.ts DESC LIMIT :limit")
     List<RuleNodeDebugEventEntity> findLatestEvents(@Param("tenantId") UUID tenantId, @Param("entityId") UUID entityId, @Param("limit") int limit);
 
-    @Query(nativeQuery = true,  value = "SELECT * FROM rule_node_debug_event e WHERE e.tenant_id = :tenantId AND e.entity_id = :entityId AND e.e_type = 'IN' ORDER BY e.ts DESC LIMIT 1")
+    @Query(nativeQuery = true, value = "SELECT * FROM rule_node_debug_event e WHERE e.tenant_id = :tenantId AND e.entity_id = :entityId AND e.e_type = 'IN' ORDER BY e.ts DESC LIMIT 1")
     Optional<RuleNodeDebugEventEntity> findLatestDebugRuleNodeInEvent(@Param("tenantId") UUID tenantId, @Param("entityId") UUID entityId);
 
     @Override
@@ -48,6 +48,17 @@ public interface RuleNodeDebugEventRepository extends EventRepository<RuleNodeDe
     )
     Page<RuleNodeDebugEventEntity> findEvents(@Param("tenantId") UUID tenantId,
                                               @Param("entityId") UUID entityId,
+                                              @Param("startTime") Long startTime,
+                                              @Param("endTime") Long endTime,
+                                              Pageable pageable);
+
+    @Override
+    @Query("SELECT e FROM RuleNodeDebugEventEntity e WHERE " +
+            "e.tenantId = :tenantId " +
+            "AND (:startTime IS NULL OR e.ts >= :startTime) " +
+            "AND (:endTime IS NULL OR e.ts <= :endTime)"
+    )
+    Page<RuleNodeDebugEventEntity> findEvents(@Param("tenantId") UUID tenantId,
                                               @Param("startTime") Long startTime,
                                               @Param("endTime") Long endTime,
                                               Pageable pageable);

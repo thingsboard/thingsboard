@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.data.event;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -23,6 +25,7 @@ import lombok.Setter;
 import lombok.ToString;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EventInfo;
+import org.thingsboard.server.common.data.id.EventId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.UUID;
@@ -35,6 +38,15 @@ public class ErrorEvent extends Event {
 
     @Builder
     private ErrorEvent(TenantId tenantId, UUID entityId, String serviceId, UUID id, long ts, String method, String error) {
+        super(tenantId, entityId, serviceId, id, ts);
+        this.method = method;
+        this.error = error;
+    }
+
+    @JsonCreator
+    private ErrorEvent(@JsonProperty("tenantId") TenantId tenantId, @JsonProperty("entityId") UUID entityId,
+                       @JsonProperty("serviceId") String serviceId, @JsonProperty("id") EventId id, @JsonProperty("ts") long ts,
+                       @JsonProperty("method") String method, @JsonProperty("error") String error) {
         super(tenantId, entityId, serviceId, id, ts);
         this.method = method;
         this.error = error;

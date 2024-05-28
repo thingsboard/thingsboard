@@ -49,6 +49,14 @@ public abstract class Event extends BaseData<EventId> {
         this.createdTime = ts;
     }
 
+    public Event(TenantId tenantId, UUID entityId, String serviceId, EventId id, long ts) {
+        super(id);
+        this.tenantId = tenantId != null ? tenantId : TenantId.SYS_TENANT_ID;
+        this.entityId = entityId;
+        this.serviceId = serviceId;
+        this.createdTime = ts;
+    }
+
     public abstract EventType getType();
 
     public EventInfo toInfo(EntityType entityType) {

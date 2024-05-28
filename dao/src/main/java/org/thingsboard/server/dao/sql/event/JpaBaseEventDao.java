@@ -19,6 +19,7 @@ import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.util.concurrent.ListenableFuture;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,6 +34,7 @@ import org.thingsboard.server.common.data.event.RuleChainDebugEventFilter;
 import org.thingsboard.server.common.data.event.RuleNodeDebugEventFilter;
 import org.thingsboard.server.common.data.event.StatisticsEventFilter;
 import org.thingsboard.server.common.data.id.EventId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -226,6 +228,11 @@ public class JpaBaseEventDao implements EventDao {
     @Override
     public void migrateEvents(long regularEventTs, long debugEventTs) {
         eventCleanupRepository.migrateEvents(regularEventTs, debugEventTs);
+    }
+
+    @Override
+    public PageData<? extends Event> findEvents(UUID tenantId, EventType eventType, TimePageLink pageLink) {
+        return DaoUtil.toPageData(getEventRepository(eventType).findEvents(tenantId, pageLink.getStartTime(), pageLink.getEndTime(), DaoUtil.toPageable(pageLink, EventEntity.eventColumnMap)));
     }
 
     private PageData<? extends Event> findEventByFilter(UUID tenantId, UUID entityId, RuleChainDebugEventFilter eventFilter, TimePageLink pageLink) {
@@ -443,5 +450,11 @@ public class JpaBaseEventDao implements EventDao {
         return repository;
     }
 
+    @SneakyThrows
+    @Override
+    public Event save(TenantId tenantId, Event event) {
+        saveAsync(event).get();
+        return event;
+    }
 
 }

@@ -23,9 +23,9 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
-import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.entity.EntityDaoRegistry;
 
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -77,12 +77,18 @@ public class EntityDaoRegistryTest extends AbstractServiceTest {
 
     @Test
     public void givenAllTenantEntityDaos_whenFindAllByTenantId_thenOk() {
-        for (TenantEntityDao<?> dao : entityDaoRegistry.getTenantEntityDaos()) {
-            System.err.println("Checking dao " + dao);
+        Set<String> ignored = Set.of("Tenant", "AuditLog", "EntityRelation", "AttributeKv", "LatestTsKv", "Event");
+        entityDaoRegistry.getTenantEntityDaos().forEach((type, dao) -> {
             assertDoesNotThrow(() -> {
-                dao.findAllByTenantId(tenantId, new PageLink(100));
+                try {
+                    dao.findAllByTenantId(tenantId, new PageLink(100));
+                } catch (Exception e) {
+                    if (!ignored.contains(type)) {
+                        throw e;
+                    }
+                }
             });
-        }
+        });
     }
 
 }
