@@ -7,15 +7,17 @@
   "descriptor": {
     "type": "static",
     "sizeX": 7.5,
-    "sizeY": 3,
+    "sizeY": 4,
     "resources": [],
-    "templateHtml": "<tb-mobile-app-qrcode-widget\n    [ctx]=\"ctx\">\n</tb-mobile-app-qrcode-widget>",
+    "templateHtml": "<tb-mobile-app-qrcode-widget\n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-mobile-app-qrcode-widget>",
     "templateCss": "",
-    "controllerScript": "self.onInit = function() {\n}\n",
+    "controllerScript": "self.onInit = function() {\n}\n\nself.typeParameters = function() {\n    return {\n        previewWidth: '250px',\n        previewHeight: '250px',\n        embedTitlePanel: true\n    };\n};",
     "settingsSchema": "",
     "dataKeySettingsSchema": "",
     "settingsDirective": "tb-mobile-app-qr-code-widget-settings",
-    "defaultConfig": "{\n  \"showTitle\": true,\n  \"backgroundColor\": \"rgb(255, 255, 255)\",\n  \"color\": \"rgba(0, 0, 0, 0.87)\",\n  \"padding\": \"8px\",\n  \"settings\": {\n    \"useSystemSettings\": true,\n    \"androidConfig\": {\n      \"enabled\": true\n    },\n    \"iosConfig\": {\n      \"enabled\": true\n    },\n    \"qrCodeConfig\": {\n      \"badgeEnabled\": true,\n      \"badgeStyle\": \"ORIGINAL\",\n      \"badgePosition\": \"RIGHT\",\n      \"qrCodeLabelEnabled\": true,\n      \"qrCodeLabel\": \"Scan to connect or download mobile app\"\n    }\n  },\n  \"title\": \"Mobile app QR code\",\n  \"dropShadow\": true,\n  \"enableFullscreen\": false,\n  \"widgetStyle\": {},\n  \"widgetCss\": \"\",\n  \"pageSize\": 1024,\n  \"noDataDisplayMessage\": \"\",\n  \"showTitleIcon\": false,\n  \"titleTooltip\": \"\",\n  \"titleStyle\": {\n    \"fontSize\": \"16px\",\n    \"fontWeight\": 400\n  }\n}\n"
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-mobile-app-qr-code-basic-config",
+    "defaultConfig": "{\"showTitle\":true,\"backgroundColor\":\"rgb(255, 255, 255)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"useSystemSettings\":true,\"qrCodeConfig\":{\"badgeEnabled\":true,\"badgePosition\":\"RIGHT\",\"qrCodeLabelEnabled\":true,\"qrCodeLabel\":\"Scan to connect or download mobile app\"},\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}}},\"title\":\"Mobile app QR code\",\"dropShadow\":true,\"showTitleIcon\":false,\"titleTooltip\":\"\",\"enableFullscreen\":false,\"margin\":\"0px\",\"borderRadius\":\"0px\",\"widgetStyle\":{},\"widgetCss\":\"\",\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"configMode\":\"basic\"}"
   },
   "tags": [
     "ios",

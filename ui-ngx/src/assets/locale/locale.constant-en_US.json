@@ -5557,6 +5557,9 @@
         "invalid-widget-file-error": "Unable to import widget: Invalid widget data structure."
     },
     "widgets": {
+        "mobile-app-qr-code": {
+            "configuration-hint": "The configuration depends on the Mobile app QR code widget in platform main settings"
+        },
         "action-button": {
             "behavior": "Behavior",
             "on-click": "On click",

@@ -23,57 +23,50 @@
       </mat-slide-toggle>
     </div>
   </div>
-  <div class="tb-form-panel" *ngIf="!mobileAppQRCodeWidgetSettingsForm.get('useSystemSettings').value">
-    <div class="tb-form-panel-title" translate>admin.mobile-app.applications</div>
-    <div class="tb-form-panel stroked no-padding no-gap">
-      <div class="tb-form-row no-border no-padding-bottom">
-        <mat-slide-toggle class="mat-slide" [formControl]="mobileAppQRCodeWidgetSettingsForm.get('androidConfig.enabled')" (click)="$event.stopPropagation()">
-          {{ 'admin.mobile-app.android' | translate }}
-        </mat-slide-toggle>
+  <div class="tb-form-panel no-border no-padding" *ngIf="!mobileAppQRCodeWidgetSettingsForm.get('useSystemSettings').value">
+    <div class="tb-form-panel" formGroupName="qrCodeConfig">
+      <div class="tb-form-panel-title" translate>widget-config.card-style</div>
+      <div class="tb-form-hint tb-primary-fill">{{ 'widgets.mobile-app-qr-code.configuration-hint' | translate }}</div>
+      <div class="tb-form-panel stroked no-padding no-gap">
+        <div class="tb-form-row space-between no-border no-padding-bottom column-xs">
+          <mat-slide-toggle class="mat-slide fixed-title-width-230" formControlName="badgeEnabled"
+                            (click)="$event.stopPropagation()">
+            {{ 'admin.mobile-app.badges' | translate }}
+          </mat-slide-toggle>
+          <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="badgePosition" appearance="outline" subscriptSizing="dynamic">
+              <mat-option *ngFor="let badgePosition of badgePositionTranslationsMap | keyvalue" [value]="badgePosition.key">
+                {{ badgePosition.value | translate }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
       </div>
-    </div>
-    <div class="tb-form-panel stroked no-padding no-gap" formGroupName="iosConfig">
-      <div class="tb-form-row no-border no-padding-bottom">
-        <mat-slide-toggle class="mat-slide" [formControl]="mobileAppQRCodeWidgetSettingsForm.get('iosConfig.enabled')" (click)="$event.stopPropagation()">
-          {{ 'admin.mobile-app.ios' | translate }}
-        </mat-slide-toggle>
-      </div>
-    </div>
-  </div>
-  <div class="tb-form-panel" formGroupName="qrCodeConfig" *ngIf="!mobileAppQRCodeWidgetSettingsForm.get('useSystemSettings').value">
-    <div class="tb-form-panel-title" translate>admin.mobile-app.appearance</div>
-    <div class="tb-form-panel stroked no-padding no-gap">
-      <div class="tb-form-row space-between no-border no-padding-bottom column-xs">
-        <mat-slide-toggle class="mat-slide fixed-title-width-230" formControlName="badgeEnabled"
-                          (click)="$event.stopPropagation()">
-          {{ 'admin.mobile-app.badges' | translate }}
-        </mat-slide-toggle>
-        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
-          <mat-select formControlName="badgePosition" appearance="outline" subscriptSizing="dynamic">
-            <mat-option *ngFor="let badgePosition of badgePositionTranslationsMap | keyvalue" [value]="badgePosition.key">
-              {{ badgePosition.value | translate }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-      </div>
-    </div>
-    <div class="tb-form-panel stroked no-padding no-gap">
-      <div class="tb-form-row space-between no-border no-padding-bottom column-xs">
-        <mat-slide-toggle class="mat-slide fixed-title-width-230" formControlName="qrCodeLabelEnabled" (click)="$event.stopPropagation()">
-          {{ 'admin.mobile-app.label' | translate }}
-        </mat-slide-toggle>
-        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
-          <input matInput formControlName="qrCodeLabel" maxlength="50" placeholder="{{'admin.mobile-app.set' | translate}}">
-          <mat-icon matSuffix
-                    matTooltipPosition="above"
-                    matTooltipClass="tb-error-tooltip"
-                    [matTooltip]="'admin.mobile-app.label-required' | translate"
-                    *ngIf="mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.qrCodeLabel').hasError('required')
+      <div class="tb-form-panel stroked no-padding no-gap">
+        <div class="tb-form-row space-between no-border no-padding-bottom column-xs">
+          <mat-slide-toggle class="mat-slide fixed-title-width-230" formControlName="qrCodeLabelEnabled" (click)="$event.stopPropagation()">
+            {{ 'admin.mobile-app.label' | translate }}
+          </mat-slide-toggle>
+          <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="qrCodeLabel" maxlength="50" placeholder="{{'admin.mobile-app.set' | translate}}">
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="'admin.mobile-app.label-required' | translate"
+                      *ngIf="mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.qrCodeLabel').hasError('required')
                             && mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.qrCodeLabel').touched"
-                    class="tb-error">
-            warning
-          </mat-icon>
-        </mat-form-field>
+                      class="tb-error">
+              warning
+            </mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
+    <div class="tb-form-panel no-border no-padding">
+      <div class="tb-form-row space-between">
+        <div>{{ 'widgets.background.background' | translate }}</div>
+        <tb-background-settings formControlName="background">
+        </tb-background-settings>
       </div>
     </div>
   </div>

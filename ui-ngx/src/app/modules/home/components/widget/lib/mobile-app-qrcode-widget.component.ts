@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, Input, OnDestroy, OnInit, TemplateRef } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { AppState } from '@core/core.state';
 import { Store } from '@ngrx/store';
@@ -22,11 +22,13 @@ import { BadgePosition, MobileAppSettings } from '@shared/models/mobile-app.mode
 import { MobileAppService } from '@core/http/mobile-app.service';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { UtilsService } from '@core/services/utils.service';
-import { Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { MINUTE } from '@shared/models/time/time.models';
-import { MobileAppQrCodeWidgetSettings } from '@home/components/widget/lib/cards/mobile-app-qr-code-widget.models';
-import { isDefinedAndNotNull } from '@core/utils';
+import { isDefinedAndNotNull, mergeDeep } from '@core/utils';
 import { ResizeObserver } from '@juggle/resize-observer';
+import { backgroundStyle, ComponentStyle, overlayStyle } from '@shared/models/widget-settings.models';
+import { ImagePipe } from '@shared/pipe/image.pipe';
+import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
   selector: 'tb-mobile-app-qrcode-widget',
@@ -35,61 +37,76 @@ import { ResizeObserver } from '@juggle/resize-observer';
 })
 export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnInit, OnDestroy {
 
+  private readonly destroy$ = new Subject<void>();
+  private widgetResize$: ResizeObserver;
+
+  private mobileAppSettingsValue: MobileAppSettings;
+  private deepLink: string;
+  private deepLinkTTL: number;
+  private deepLinkTTLTimeoutID: NodeJS.Timeout;
+
+  previewMode = false;
+
+  badgePosition = BadgePosition;
+  showBadgeContainer = true;
+
+  backgroundStyle$: Observable<ComponentStyle>;
+  overlayStyle: ComponentStyle = {};
+
+  qrCodeSVG = '';
+
   @Input()
   ctx: WidgetContext;
 
   @Input()
-  set mobileAppSettings(settings: MobileAppSettings | MobileAppQrCodeWidgetSettings) {
+  widgetTitlePanel: TemplateRef<any>;
+
+  @Input()
+  set mobileAppSettings(settings: MobileAppSettings) {
     if (settings) {
       this.mobileAppSettingsValue = settings;
     }
   };
 
-  get mobileAppSettings(): MobileAppSettings | MobileAppQrCodeWidgetSettings {
+  get mobileAppSettings(): MobileAppSettings {
     return this.mobileAppSettingsValue;
   }
-
-  @ViewChild('canvas', {static: true}) canvasRef: ElementRef<HTMLCanvasElement>;
-
-  private readonly destroy$ = new Subject<void>();
-  private widgetResize$: ResizeObserver;
-
-  badgePosition = BadgePosition;
-  showBadgeContainer = true;
-
-  private mobileAppSettingsValue: MobileAppSettings | MobileAppQrCodeWidgetSettings;
-  private deepLink: string;
-  private deepLinkTTL: number;
-  private deepLinkTTLTimeoutID: NodeJS.Timeout;
 
   constructor(protected store: Store<AppState>,
               protected cd: ChangeDetectorRef,
               private mobileAppService: MobileAppService,
               private utilsService: UtilsService,
-              private elementRef: ElementRef) {
+              private elementRef: ElementRef,
+              private imagePipe: ImagePipe,
+              private sanitizer: DomSanitizer,) {
     super(store);
   }
 
   ngOnInit(): void {
     if (!this.mobileAppSettings) {
-      if (isDefinedAndNotNull(this.ctx.settings.useSystemSettings) && !this.ctx.settings.useSystemSettings) {
-        this.mobileAppSettings = this.ctx.settings;
-      } else {
-        this.mobileAppService.getMobileAppSettings().subscribe((settings => {
-          this.mobileAppSettings = settings;
-          this.cd.markForCheck();
-        }));
-      }
+      this.mobileAppService.getMobileAppSettings().subscribe((settings => {
+        this.mobileAppSettings = settings;
+        if (isDefinedAndNotNull(this.ctx.settings.useSystemSettings) && !this.ctx.settings.useSystemSettings) {
+          this.mobileAppSettings = mergeDeep(this.mobileAppSettings, this.ctx.settings);
+        }
+
+        this.widgetResize$ = new ResizeObserver(() => {
+          const showHideBadgeContainer = this.elementRef.nativeElement.offsetWidth > 250;
+          if (showHideBadgeContainer !== this.showBadgeContainer) {
+            this.showBadgeContainer = showHideBadgeContainer;
+            this.cd.markForCheck();
+          }
+        });
+
+        this.widgetResize$.observe(this.elementRef.nativeElement);
+        this.backgroundStyle$ = backgroundStyle(this.ctx.settings.background, this.imagePipe, this.sanitizer);
+        this.overlayStyle = overlayStyle(this.ctx.settings.background.overlay);
+        this.cd.markForCheck();
+      }));
+    } else {
+      this.previewMode = true;
     }
     this.initMobileAppQRCode();
-    this.widgetResize$ = new ResizeObserver(() => {
-      const showHideBadgeContainer = this.elementRef.nativeElement.offsetWidth > 250;
-      if (showHideBadgeContainer !== this.showBadgeContainer) {
-        this.showBadgeContainer = showHideBadgeContainer;
-        this.cd.markForCheck();
-      }
-    });
-    this.widgetResize$.observe(this.elementRef.nativeElement);
   }
 
   ngOnDestroy() {
@@ -126,7 +143,10 @@ export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnI
 
   private updateQRCode(link: string) {
     import('qrcode').then((QRCode) => {
-      QRCode.toCanvas(this.canvasRef.nativeElement, link, { width: 100 });
+      QRCode.toString(link, (err, string) => {
+        this.qrCodeSVG = string;
+        this.cd.markForCheck();
+      })
     });
   }
 

@@ -15,14 +15,19 @@
     limitations under the License.
 
 -->
-<div class="tb-flex column center align-center">
-  <div class="tb-flex row align-center shrink"
+<div class="tb-mobile-app-qrcode-panel"
+     [class.preview]="previewMode"
+     [style]="backgroundStyle$ | async">
+  <div class="tb-mobile-app-qrcode-overlay" [style]="overlayStyle"></div>
+  <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
+  <div class="tb-flex row center align-center"
        [class.row]="mobileAppSettings?.qrCodeConfig.badgePosition === badgePosition.RIGHT"
        [class.row-reverse]="mobileAppSettings?.qrCodeConfig.badgePosition === badgePosition.LEFT">
-    <canvas #canvas class="tb-qrcode" (click)="navigateByDeepLink($event)"></canvas>
-    <div class="tb-flex column" *ngIf="mobileAppSettings?.qrCodeConfig.badgeEnabled && showBadgeContainer">
-      <img *ngIf="mobileAppSettings.iosConfig.enabled" src="assets/android-ios-stores-badges/ios_store_en_black_badge.svg">
-      <img *ngIf="mobileAppSettings.androidConfig.enabled" src="assets/android-ios-stores-badges/android_store_en_black_badge.svg">
+    <div class="tb-qrcode" (click)="navigateByDeepLink($event)" [innerHTML]="qrCodeSVG | safe: 'html'" ></div>
+    <div class="tb-badges" *ngIf="(mobileAppSettings?.iosConfig.enabled || mobileAppSettings?.androidConfig.enabled) &&
+                                  mobileAppSettings?.qrCodeConfig.badgeEnabled && showBadgeContainer">
+      <img *ngIf="mobileAppSettings?.iosConfig.enabled" src="assets/android-ios-stores-badges/ios_store_en_black_badge.svg">
+      <img *ngIf="mobileAppSettings?.androidConfig.enabled" src="assets/android-ios-stores-badges/android_store_en_black_badge.svg">
     </div>
   </div>
   <div *ngIf="mobileAppSettings?.qrCodeConfig.qrCodeLabelEnabled" class="tb-qrcode-label">
