@@ -32,10 +32,12 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.objects.AttributesEntityView;
@@ -56,8 +58,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.thingsboard.server.common.data.msg.TbMsgType.ACTIVITY_EVENT;
 import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_DELETED;
@@ -70,6 +72,18 @@ public class TbCopyAttributesToEntityViewNodeTest {
 
     private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("9fdb1f05-dc66-4960-9263-ae195f1b4533"));
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("1d453dc9-9333-476a-a51f-093cf2176e59"));
+    private final EntityViewId ENTITY_VIEW_ID = new EntityViewId(UUID.fromString("65636806-453d-4bb4-b513-92b833970753"));
+
+    private final AttributesEntityView CLIENT_ATTRIBUTES = new AttributesEntityView(List.of("clientAttribute1"), Collections.emptyList(), Collections.emptyList());
+    private final AttributesEntityView SERVER_ATTRIBUTES = new AttributesEntityView(Collections.emptyList(), List.of("serverAttribute1"), Collections.emptyList());
+    private final AttributesEntityView SHARED_ATTRIBUTES = new AttributesEntityView(Collections.emptyList(), Collections.emptyList(), List.of("sharedAttribute1"));
+
+    private final TelemetryEntityView CLIENT_TELEMETRY_ENTITY_VIEW = new TelemetryEntityView(Collections.emptyList(), CLIENT_ATTRIBUTES);
+    private final TelemetryEntityView SERVER_TELEMETRY_ENTITY_VIEW = new TelemetryEntityView(Collections.emptyList(), SERVER_ATTRIBUTES);
+    private final TelemetryEntityView SHARED_TELEMETRY_ENTITY_VIEW = new TelemetryEntityView(Collections.emptyList(), SHARED_ATTRIBUTES);
+
+    private final long ENTITY_VIEW_START_TS = Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli();
+    private final long ENTITY_VIEW_END_TS = Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli();
 
     private TbCopyAttributesToEntityViewNode node;
 
@@ -89,14 +103,14 @@ public class TbCopyAttributesToEntityViewNodeTest {
     }
 
     @Test
-    public void givenExistingAttributes_whenOnMsg_thenCopyAttributesToView() {
-        EntityView entityView = getEntityView();
+    public void givenExistingClientAttributes_whenOnMsg_thenCopyAttributesToView() {
+        EntityView entityView = getEntityView(CLIENT_TELEMETRY_ENTITY_VIEW);
 
-        TbMsg msg = TbMsg.newMsg(
-                TbMsgType.POST_ATTRIBUTES_REQUEST, DEVICE_ID, new TbMsgMetaData(Map.of("scope", AttributeScope.CLIENT_SCOPE.name())),
-                "{\"attribute1\": 100, \"attribute2\": \"value2\"}");
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, DEVICE_ID,
+                new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.SERVER_SCOPE.name())),
+                "{\"clientAttribute1\": 100, \"clientAttribute2\": \"value2\"}");
 
-        mockEntityViewService(entityView);
+        mockEntityViewLookup(entityView);
         when(ctxMock.getTelemetryService()).thenReturn(telemetryServiceMock);
         doAnswer(invocation -> {
             FutureCallback<Void> callback = invocation.getArgument(4);
@@ -104,25 +118,33 @@ public class TbCopyAttributesToEntityViewNodeTest {
             return null;
         }).when(telemetryServiceMock).saveAndNotify(any(), any(), any(AttributeScope.class), anyList(), any(FutureCallback.class));
         TbMsg newMsg = TbMsg.newMsg(msg, msg.getQueueName(), msg.getRuleChainId(), msg.getRuleNodeId());
+        // TODO: use newMsg() with any(TbMsgType.class), replace in other tests as well.
         doAnswer(invocation -> newMsg).when(ctxMock).newMsg(any(), any(String.class), any(), any(), any(), any());
 
         node.onMsg(ctxMock, msg);
 
         verify(entityViewServiceMock).findEntityViewsByTenantIdAndEntityIdAsync(eq(TENANT_ID), eq(DEVICE_ID));
-        verify(telemetryServiceMock).saveAndNotify(eq(TENANT_ID), eq(entityView.getId()), eq(AttributeScope.CLIENT_SCOPE), anyList(), any(FutureCallback.class));
+        ArgumentCaptor<List<AttributeKvEntry>> filteredAttributesCaptor = ArgumentCaptor.forClass(List.class);
+        verify(telemetryServiceMock).saveAndNotify(eq(TENANT_ID), eq(ENTITY_VIEW_ID), eq(AttributeScope.CLIENT_SCOPE),
+                filteredAttributesCaptor.capture(), any(FutureCallback.class));
+        List<AttributeKvEntry> filteredAttributesCaptorValue = filteredAttributesCaptor.getValue();
+        assertThat(filteredAttributesCaptorValue.size()).isEqualTo(1);
+        assertThat(filteredAttributesCaptorValue.get(0).getKey()).isEqualTo("clientAttribute1");
+        assertThat(filteredAttributesCaptorValue.get(0).getValue()).isEqualTo(100L);
         verify(ctxMock).ack(eq(msg));
         verify(ctxMock).enqueueForTellNext(eq(newMsg), eq(TbNodeConnectionType.SUCCESS));
+        verifyNoMoreInteractions(ctxMock, entityViewServiceMock, telemetryServiceMock);
     }
 
     @Test
-    public void givenExistingAttributesAndMsgTypeAttributesDeleted_whenOnMsg_thenDeleteAttributesFromView() {
-        EntityView entityView = getEntityView();
+    public void givenExistingServerAttributesAndMsgTypeAttributesDeleted_whenOnMsg_thenDeleteAttributesFromView() {
+        EntityView entityView = getEntityView(SERVER_TELEMETRY_ENTITY_VIEW);
 
         TbMsg msg = TbMsg.newMsg(
-                ATTRIBUTES_DELETED, DEVICE_ID, new TbMsgMetaData(Map.of("scope", AttributeScope.CLIENT_SCOPE.name())),
-                "{\"attributes\": [\"attribute1\"]}");
+                ATTRIBUTES_DELETED, DEVICE_ID, new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.SERVER_SCOPE.name())),
+                "{\"attributes\": [\"serverAttribute1\"]}");
 
-        mockEntityViewService(entityView);
+        mockEntityViewLookup(entityView);
         when(ctxMock.getTelemetryService()).thenReturn(telemetryServiceMock);
         doAnswer(invocation -> {
             FutureCallback<Void> callback = invocation.getArgument(4);
@@ -135,37 +157,42 @@ public class TbCopyAttributesToEntityViewNodeTest {
         node.onMsg(ctxMock, msg);
 
         verify(entityViewServiceMock).findEntityViewsByTenantIdAndEntityIdAsync(eq(TENANT_ID), eq(DEVICE_ID));
-        verify(telemetryServiceMock).deleteAndNotify(eq(TENANT_ID), eq(entityView.getId()), eq(AttributeScope.CLIENT_SCOPE), anyList(), any(FutureCallback.class));
+        ArgumentCaptor<List<String>> filteredAttributesCaptor = ArgumentCaptor.forClass(List.class);
+        verify(telemetryServiceMock).deleteAndNotify(eq(TENANT_ID), eq(ENTITY_VIEW_ID), eq(AttributeScope.SERVER_SCOPE), filteredAttributesCaptor.capture(), any(FutureCallback.class));
+        List<String> filteredAttributesCaptorValue = filteredAttributesCaptor.getValue();
+        assertThat(filteredAttributesCaptorValue.size()).isEqualTo(1);
+        assertThat(filteredAttributesCaptorValue.get(0)).isEqualTo("serverAttribute1");
         verify(ctxMock).ack(eq(msg));
         verify(ctxMock).enqueueForTellNext(eq(newMsg), eq(TbNodeConnectionType.SUCCESS));
+        verifyNoMoreInteractions(ctxMock, entityViewServiceMock, telemetryServiceMock);
     }
 
     @Test
-    public void givenNonMatchedAttributesAndMsgTypeIsAttributesDeleted_whenOnMsg_thenNoAttributesDeleteFromView() {
-        EntityView entityView = getEntityView();
+    public void givenNonMatchedSharedAttributesAndMsgTypeIsAttributesDeleted_whenOnMsg_thenNoAttributesDeleteFromView() {
+        EntityView entityView = getEntityView(SHARED_TELEMETRY_ENTITY_VIEW);
 
         TbMsg msg = TbMsg.newMsg(
-                TbMsgType.ATTRIBUTES_DELETED, DEVICE_ID, new TbMsgMetaData(Map.of("scope", AttributeScope.CLIENT_SCOPE.name())),
+                TbMsgType.ATTRIBUTES_DELETED, DEVICE_ID, new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.SHARED_SCOPE.name())),
                 "{\"attributes\": [\"anotherAttribute\"]}");
 
-        mockEntityViewService(entityView);
+        mockEntityViewLookup(entityView);
 
         node.onMsg(ctxMock, msg);
 
         verify(entityViewServiceMock).findEntityViewsByTenantIdAndEntityIdAsync(eq(TENANT_ID), eq(DEVICE_ID));
         verify(ctxMock).ack(eq(msg));
-        verify(ctxMock, never()).getTelemetryService();
+        verifyNoMoreInteractions(ctxMock, entityViewServiceMock);
     }
 
     @Test
     public void givenNonMatchedAttributesAndMsgTypeIsPostAttributesRequest_whenOnMsg_thenCopyNoAttributesToView() {
-        EntityView entityView = getEntityView();
+        EntityView entityView = getEntityView(CLIENT_TELEMETRY_ENTITY_VIEW);
 
         TbMsg msg = TbMsg.newMsg(
-                TbMsgType.POST_ATTRIBUTES_REQUEST, DEVICE_ID, new TbMsgMetaData(Map.of("scope", AttributeScope.CLIENT_SCOPE.name())),
-                "{\"attribute2\": \"value2\"}");
+                TbMsgType.POST_ATTRIBUTES_REQUEST, DEVICE_ID, new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.SERVER_SCOPE.name())),
+                "{\"clientAttribute2\": \"value2\"}");
 
-        mockEntityViewService(entityView);
+        mockEntityViewLookup(entityView);
         when(ctxMock.getTelemetryService()).thenReturn(telemetryServiceMock);
         doAnswer(invocation -> {
             FutureCallback<Void> callback = invocation.getArgument(4);
@@ -178,71 +205,66 @@ public class TbCopyAttributesToEntityViewNodeTest {
         node.onMsg(ctxMock, msg);
 
         verify(entityViewServiceMock).findEntityViewsByTenantIdAndEntityIdAsync(eq(TENANT_ID), eq(DEVICE_ID));
-        verify(telemetryServiceMock).saveAndNotify(eq(TENANT_ID), eq(entityView.getId()), eq(AttributeScope.CLIENT_SCOPE), eq(Collections.emptyList()), any(FutureCallback.class));
+        verify(telemetryServiceMock).saveAndNotify(eq(TENANT_ID), eq(ENTITY_VIEW_ID), eq(AttributeScope.CLIENT_SCOPE), eq(Collections.emptyList()), any(FutureCallback.class));
         verify(ctxMock).ack(eq(msg));
         verify(ctxMock).enqueueForTellNext(eq(newMsg), eq(TbNodeConnectionType.SUCCESS));
+        verifyNoMoreInteractions(ctxMock, entityViewServiceMock, telemetryServiceMock);
     }
 
     @Test
     public void givenAttributesValidityPeriodOutOfStartDateAndEndDate_whenOnMsg_thenDoNothing() {
-        EntityViewId entityViewId = new EntityViewId(UUID.fromString("d117f1a4-24ea-4fdd-b94e-5a472e99d925"));
-        EntityView entityView = new EntityView(entityViewId);
-        entityView.setStartTimeMs(Instant.now().minus(2, ChronoUnit.DAYS).toEpochMilli());
-        entityView.setEndTimeMs(Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli());
-
-        mockEntityViewService(entityView);
+        EntityView entityView = getEntityView(
+                SERVER_TELEMETRY_ENTITY_VIEW,
+                Instant.now().minus(2, ChronoUnit.DAYS).toEpochMilli(),
+                Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli()
+        );
+        mockEntityViewLookup(entityView);
 
         TbMsg msg = TbMsg.newMsg(
-                ATTRIBUTES_DELETED, DEVICE_ID, new TbMsgMetaData(Map.of("scope", AttributeScope.CLIENT_SCOPE.name())),
-                "{\"attributes\": [\"attribute1\"]}");
-
+                ATTRIBUTES_DELETED, DEVICE_ID, new TbMsgMetaData(Map.of(DataConstants.SCOPE, AttributeScope.SERVER_SCOPE.name())),
+                "{\"attributes\": [\"serverAttribute1\"]}");
         node.onMsg(ctxMock, msg);
 
         verify(entityViewServiceMock).findEntityViewsByTenantIdAndEntityIdAsync(eq(TENANT_ID), eq(DEVICE_ID));
         verify(ctxMock).ack(eq(msg));
-    }
-
-    @Test
-    public void givenEmptyMetadata_whenOnMsg_thenThrowsException() {
-        TbMsg msg = TbMsg.newMsg(
-                ATTRIBUTES_UPDATED, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
-
-        node.onMsg(ctxMock, msg);
-
-        ArgumentCaptor<Throwable> throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
-        verify(ctxMock).tellFailure(eq(msg), throwableCaptor.capture());
-        assertThat(throwableCaptor.getValue()).isInstanceOf(IllegalArgumentException.class).hasMessage("Message metadata is empty");
+        verifyNoMoreInteractions(ctxMock, entityViewServiceMock);
     }
 
     @ParameterizedTest
     @EnumSource(TbMsgType.class)
-    public void givenUnsupportedMsgType_whenOnMsg_thenTellFailure(TbMsgType msgType) {
-        TbMsg msg = TbMsg.newMsg(
-                msgType, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
-
-        if (msg.isTypeOneOf(ATTRIBUTES_UPDATED, ATTRIBUTES_DELETED,
-                ACTIVITY_EVENT, INACTIVITY_EVENT, POST_ATTRIBUTES_REQUEST)) {
-            return;
-        }
+    public void givenMsgTypeAndEmptyMetadata_whenOnMsg_thenVerifyFailureMsg(TbMsgType msgType) {
+        TbMsg msg = TbMsg.newMsg(msgType, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
 
         node.onMsg(ctxMock, msg);
 
         ArgumentCaptor<Throwable> throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
         verify(ctxMock).tellFailure(eq(msg), throwableCaptor.capture());
-        assertThat(throwableCaptor.getValue()).isInstanceOf(IllegalArgumentException.class).hasMessage("Unsupported msg type [" + msgType + "]");
+
+        if (msg.isTypeOneOf(ATTRIBUTES_UPDATED, ATTRIBUTES_DELETED,
+                ACTIVITY_EVENT, INACTIVITY_EVENT, POST_ATTRIBUTES_REQUEST)) {
+            assertThat(throwableCaptor.getValue()).isInstanceOf(IllegalArgumentException.class)
+                    .hasMessage("Message metadata is empty");
+            return;
+        }
+        assertThat(throwableCaptor.getValue()).isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Unsupported msg type [" + msgType + "]");
+
+        verifyNoMoreInteractions(ctxMock);
     }
 
-    private EntityView getEntityView() {
-        EntityViewId entityViewId = new EntityViewId(UUID.fromString("a2109747-d1f4-475a-baaa-55f5d4897ad8"));
-        EntityView entityView = new EntityView(entityViewId);
-        entityView.setStartTimeMs(Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli());
-        entityView.setEndTimeMs(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli());
-        AttributesEntityView attributes = new AttributesEntityView(List.of("attribute1"), Collections.emptyList(), Collections.emptyList());
-        entityView.setKeys(new TelemetryEntityView(Collections.emptyList(), attributes));
+    private EntityView getEntityView(TelemetryEntityView attributesEntityView, long startTimeMs, long endTimeMs) {
+        EntityView entityView = new EntityView(ENTITY_VIEW_ID);
+        entityView.setStartTimeMs(startTimeMs);
+        entityView.setEndTimeMs(endTimeMs);
+        entityView.setKeys(attributesEntityView);
         return entityView;
     }
 
-    private void mockEntityViewService(EntityView entityView) {
+    private EntityView getEntityView(TelemetryEntityView attributesEntityView) {
+        return getEntityView(attributesEntityView, ENTITY_VIEW_START_TS, ENTITY_VIEW_END_TS);
+    }
+
+    private void mockEntityViewLookup(EntityView entityView) {
         when(ctxMock.getEntityViewService()).thenReturn(entityViewServiceMock);
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
         when(entityViewServiceMock.findEntityViewsByTenantIdAndEntityIdAsync(any(), any()))
