@@ -762,26 +762,26 @@ export class ScadaSymbolElement {
 const scadaSymbolCtxObjectHighlightRules: TbHighlightRule[] = [
   {
     class: 'scada-symbol-ctx',
-    regex: /(?<=\W|^)(ctx)(?=\.)\b/
+    regex: /(?<=\W|^)(ctx)(?=\W|$)\b/
   }
 ];
 
 export const scadaSymbolGeneralStateRenderHighlightRules: TbHighlightRule[] =
   scadaSymbolCtxObjectHighlightRules.concat({
     class: 'scada-symbol-svg',
-    regex: /(?<=\W|^)(svg)(?=\.)\b/
+    regex: /(?<=\W|^)(svg)(?=\W|$)\b/
   });
 
 export const scadaSymbolElementStateRenderHighlightRules: TbHighlightRule[] =
   scadaSymbolCtxObjectHighlightRules.concat({
     class: 'scada-symbol-element',
-    regex: /(?<=\W|^)(element)(?=\.)\b/
+    regex: /(?<=\W|^)(element)(?=\W|$)\b/
   });
 
 export const scadaSymbolClickActionHighlightRules: TbHighlightRule[] =
-  scadaSymbolCtxObjectHighlightRules.concat({
+  scadaSymbolElementStateRenderHighlightRules.concat({
     class: 'scada-symbol-event',
-    regex: /(?<=\W|^)(event)(?=\.)\b/
+    regex: /(?<=\W|^)(event)(?=\W|$)\b/
   });
 
 const scadaSymbolCtxPropertyHighlightRules: TbHighlightRule[] = [
@@ -832,7 +832,7 @@ export const scadaSymbolElementStateRenderPropertiesHighlightRules: TbHighlightR
   });
 
 export const scadaSymbolClickActionPropertiesHighlightRules: TbHighlightRule[] =
-  scadaSymbolCtxPropertyHighlightRules.concat({
+  scadaSymbolElementStateRenderPropertiesHighlightRules.concat({
     class: 'scada-symbol-event-properties',
     regex: /(?<=event\.)([a-zA-Z\$_\u00a1-\uffff][a-zA-Z\d\$_\u00a1-\uffff]*)\b/
   });
@@ -860,14 +860,13 @@ export const elementStateRenderFunctionCompletions = (ctxCompletion: TbEditorCom
 };
 
 export const clickActionFunctionCompletions = (ctxCompletion: TbEditorCompletion): TbEditorCompletions => {
-  return {
-    ctx: ctxCompletion,
-    event: {
-      meta: 'argument',
-      type: 'Event',
-      description: 'DOM event.'
-    },
+  const completions = elementStateRenderFunctionCompletions(ctxCompletion);
+  completions.event = {
+    meta: 'argument',
+    type: 'Event',
+    description: 'DOM event.'
   };
+  return completions;
 };
 
 export const iotSvgContextCompletion = (metadata: IotSvgMetadata, tags: string[],

@@ -131,7 +131,7 @@ export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, O
     this.propagateChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(_fn: any): void {
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -148,7 +148,7 @@ export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, O
     this.tagsFormGroup.setControl('tags', this.prepareTagsFormArray(tags), {emitEvent: false});
   }
 
-  public validate(c: UntypedFormControl) {
+  public validate(_c: UntypedFormControl) {
     const valid = this.tagsFormGroup.valid;
     return valid ? null : {
       tags: {
@@ -161,7 +161,7 @@ export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, O
     return this.tagsFormGroup.get('tags') as UntypedFormArray;
   }
 
-  trackByTag(index: number, tagControl: AbstractControl): any {
+  trackByTag(_index: number, tagControl: AbstractControl): any {
     return tagControl;
   }
 

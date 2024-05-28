@@ -67,7 +67,7 @@ export type IotSvgTagStateRenderFunction = (ctx: IotSvgContext, element: Element
 
 export type IotSvgActionTrigger = 'click';
 
-export type IotSvgActionFunction = (ctx: IotSvgContext, event: Event) => void;
+export type IotSvgActionFunction = (ctx: IotSvgContext, element: Element, event: Event) => void;
 export interface IotSvgAction {
   actionFunction?: string;
   action?: IotSvgActionFunction;
@@ -427,7 +427,7 @@ export class IotSvgObject {
       if (tag.actions) {
         for (const trigger of Object.keys(tag.actions)) {
           const action = tag.actions[trigger];
-          action.action = parseFunction(action.actionFunction, ['ctx', 'event']) || (() => {});
+          action.action = parseFunction(action.actionFunction, ['ctx', 'element', 'event']) || (() => {});
         }
       }
     }
@@ -483,7 +483,7 @@ export class IotSvgObject {
           elements.forEach(element => {
             element.attr('cursor', 'pointer');
             element.on(trigger, (event) => {
-              action.action(this.context, event);
+              action.action(this.context, element, event);
             });
           });
         }

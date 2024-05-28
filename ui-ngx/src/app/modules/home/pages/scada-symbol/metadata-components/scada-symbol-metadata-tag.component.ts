@@ -15,7 +15,6 @@
 ///
 
 import {
-  ChangeDetectorRef,
   Component,
   EventEmitter,
   forwardRef,
@@ -29,9 +28,12 @@ import {
 } from '@angular/core';
 import {
   ControlValueAccessor,
+  NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   UntypedFormBuilder,
+  UntypedFormControl,
   UntypedFormGroup,
+  Validator,
   Validators
 } from '@angular/forms';
 import { IotSvgTag } from '@home/components/widget/lib/svg/iot-svg.models';
@@ -55,11 +57,16 @@ import {
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => ScadaSymbolMetadataTagComponent),
       multi: true
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => ScadaSymbolMetadataTagComponent),
+      multi: true
     }
   ],
   encapsulation: ViewEncapsulation.None
 })
-export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, OnInit, OnChanges {
+export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, OnInit, OnChanges, Validator {
 
   @ViewChild('tagSelect')
   tagSelect: MatSelect;
@@ -108,8 +115,7 @@ export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, On
 
   private propagateChange = (_val: any) => {};
 
-  constructor(private fb: UntypedFormBuilder,
-              private cd: ChangeDetectorRef) {
+  constructor(private fb: UntypedFormBuilder) {
   }
 
   ngOnInit() {
@@ -143,7 +149,7 @@ export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, On
     this.propagateChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(_fn: any): void {
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -168,6 +174,15 @@ export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, On
         clickAction
       }, {emitEvent: false}
     );
+  }
+
+  public validate(_c: UntypedFormControl) {
+    const valid = this.tagFormGroup.valid;
+    return valid ? null : {
+      tag: {
+        valid: false,
+      },
+    };
   }
 
   editTagStateRenderFunction(): void {
