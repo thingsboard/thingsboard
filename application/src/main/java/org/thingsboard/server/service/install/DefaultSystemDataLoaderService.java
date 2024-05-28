@@ -277,8 +277,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
             log.info("Creating JWT admin settings...");
             var jwtSettings = new JwtSettings(this.tokenExpirationTime, this.refreshTokenExpTime, this.tokenIssuer, this.tokenSigningKey);
             if (isSigningKeyDefault(jwtSettings) || !validateKeyLength(jwtSettings.getTokenSigningKey())) {
-                jwtSettings.setTokenSigningKey(Base64.getEncoder().encodeToString(
-                        RandomStringUtils.randomAlphanumeric(64).getBytes(StandardCharsets.UTF_8)));
+                jwtSettings.setTokenSigningKey(generateRandomKey());
             }
             jwtSettingsService.saveJwtSettings(jwtSettings);
         } else {
