@@ -1,0 +1,66 @@
+{
+  "centralSystem": {
+    "name": "Central System",
+    "host": "127.0.0.1",
+    "port": 9000,
+    "connection": {
+      "type": "insecure"
+    },
+    "security": [
+      {
+        "type": "token",
+        "tokens": [
+          "Bearer ACCESS_TOKEN"
+        ]
+      },
+      {
+        "type": "basic",
+        "credentials": [
+          {
+            "username": "admin",
+            "password": "admin"
+          }
+        ]
+      }
+    ]
+  },
+  "chargePoints": [
+    {
+      "idRegexpPattern": "bidon/hello/CP_1",
+      "deviceNameExpression": "${Vendor} ${Model}",
+      "deviceTypeExpression": "default",
+      "attributes": [
+        {
+          "messageTypeFilter": "MeterValues,",
+          "key": "temp1",
+          "value": "${meter_value[:].sampled_value[:].value}"
+        },
+        {
+          "messageTypeFilter": "MeterValues,",
+          "key": "vendorId",
+          "value": "${connector_id}"
+        }
+      ],
+      "timeseries": [
+        {
+          "messageTypeFilter": "DataTransfer,",
+          "key": "temp",
+          "value": "${data.temp}"
+        }
+      ],
+      "attributeUpdates": [
+        {
+          "attributeOnThingsBoard": "shared",
+          "valueExpression": "{\"${attributeKey}\":\"${attributeValue}\"}"
+        }
+      ],
+      "serverSideRpc": [
+        {
+          "methodRPC": "rpc1",
+          "withResponse": true,
+          "valueExpression": "${params}"
+        }
+      ]
+    }
+  ]
+}

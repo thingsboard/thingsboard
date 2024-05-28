@@ -72,6 +72,10 @@ public class MqttTransportContext extends TransportContext {
     private long timeout;
 
     @Getter
+    @Value("${transport.mqtt.disconnect_timeout:1000}")
+    private long disconnectTimeout;
+
+    @Getter
     @Value("${transport.mqtt.proxy_enabled:false}")
     private boolean proxyEnabled;
 

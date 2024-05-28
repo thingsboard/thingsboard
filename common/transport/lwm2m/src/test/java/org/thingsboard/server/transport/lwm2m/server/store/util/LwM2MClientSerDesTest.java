@@ -25,8 +25,7 @@ import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.peer.IpPeer;
 import org.eclipse.leshan.core.request.WriteRequest;
 import org.eclipse.leshan.server.registration.Registration;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.device.data.PowerMode;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -54,8 +53,8 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -119,7 +118,7 @@ public class LwM2MClientSerDesTest {
         client.saveResourceValue("/17_1.0/0/0", multipleResource, provider, WriteRequest.Mode.UPDATE);
 
         byte[] bytes = LwM2MClientSerDes.serialize(client);
-        Assert.assertNotNull(bytes);
+        assertNotNull(bytes);
 
         LwM2mClient desClient = LwM2MClientSerDes.deserialize(bytes);
 

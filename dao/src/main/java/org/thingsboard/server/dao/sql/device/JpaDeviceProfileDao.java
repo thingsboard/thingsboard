@@ -151,6 +151,11 @@ public class JpaDeviceProfileDao extends JpaAbstractDao<DeviceProfileEntity, Dev
     }
 
     @Override
+    public DeviceProfile findDefaultEntityByTenantId(UUID tenantId) {
+        return findDefaultDeviceProfile(TenantId.fromUUID(tenantId));
+    }
+
+    @Override
     public List<DeviceProfileInfo> findByTenantAndImageLink(TenantId tenantId, String imageLink, int limit) {
         return deviceProfileRepository.findByTenantAndImageLink(tenantId.getId(), imageLink, PageRequest.of(0, limit));
     }

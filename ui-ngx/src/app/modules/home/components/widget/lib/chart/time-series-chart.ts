@@ -16,15 +16,16 @@
 
 import { WidgetContext } from '@home/models/widget-component.models';
 import {
+  adjustTimeAxisExtentToData,
   calculateThresholdsOffset,
   createTimeSeriesVisualMapOption,
   createTimeSeriesXAxis,
   createTimeSeriesYAxis,
+  createTooltipValueFormatFunction,
   defaultTimeSeriesChartYAxisSettings,
   generateChartData,
   LineSeriesStepType,
   parseThresholdData,
-  SeriesLabelPosition,
   TimeSeriesChartAxis,
   TimeSeriesChartDataItem,
   timeSeriesChartDefaultSettings,
@@ -37,30 +38,27 @@ import {
   timeSeriesChartThresholdDefaultSettings,
   TimeSeriesChartThresholdItem,
   TimeSeriesChartThresholdType,
+  timeSeriesChartTooltipFormatter,
+  TimeSeriesChartTooltipTrigger,
+  TimeSeriesChartTooltipValueFormatFunction,
   TimeSeriesChartType,
   TimeSeriesChartXAxis,
   TimeSeriesChartYAxis,
   TimeSeriesChartYAxisId,
   TimeSeriesChartYAxisSettings,
+  toTimeSeriesChartDataSet,
   updateDarkMode,
   updateXAxisTimeWindow
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { ResizeObserver } from '@juggle/resize-observer';
 import {
-  adjustTimeAxisExtentToData,
   calculateAxisSize,
-  createTooltipValueFormatFunction,
   ECharts,
   echartsModule,
   EChartsOption,
-  EChartsShape,
-  echartsTooltipFormatter,
-  EChartsTooltipTrigger,
-  EChartsTooltipValueFormatFunction,
   getAxisExtent,
   getFocusedSeriesIndex,
-  measureAxisNameSize,
-  toNamedData
+  measureAxisNameSize
 } from '@home/components/widget/lib/chart/echarts-widget.models';
 import { DateFormatProcessor } from '@shared/models/widget-settings.models';
 import { formattedDataFormDatasourceData, formatValue, isDefinedAndNotNull, isEqual, mergeDeep } from '@core/utils';
@@ -76,6 +74,7 @@ import { DataKeySettingsFunction } from '@home/components/widget/config/data-key
 import { DeepPartial } from '@shared/models/common';
 import { BarRenderSharedContext } from '@home/components/widget/lib/chart/time-series-chart-bar.models';
 import { TimeSeriesChartStateValueConverter } from '@home/components/widget/lib/chart/time-series-chart-state.models';
+import { ChartLabelPosition, ChartShape, toAnimationOption } from '@home/components/widget/lib/chart/chart.models';
 
 export class TbTimeSeriesChart {
 
@@ -92,14 +91,14 @@ export class TbTimeSeriesChart {
           settings.type = TimeSeriesChartSeriesType.line;
           settings.lineSettings.showLine = false;
           settings.lineSettings.showPoints = true;
-          settings.lineSettings.pointShape = EChartsShape.circle;
+          settings.lineSettings.pointShape = ChartShape.circle;
           settings.lineSettings.pointSize = 8;
         } else if (type === TimeSeriesChartType.state) {
           settings.type = TimeSeriesChartSeriesType.line;
           settings.lineSettings.showLine = true;
           settings.lineSettings.step = true;
           settings.lineSettings.stepType = LineSeriesStepType.end;
-          settings.lineSettings.pointShape = EChartsShape.circle;
+          settings.lineSettings.pointShape = ChartShape.circle;
           settings.lineSettings.pointSize = 12;
         }
         return settings;
@@ -135,7 +134,7 @@ export class TbTimeSeriesChart {
   private timeSeriesChartOptions: EChartsOption;
 
   private readonly tooltipDateFormat: DateFormatProcessor;
-  private readonly tooltipValueFormatFunction: EChartsTooltipValueFormatFunction;
+  private readonly tooltipValueFormatFunction: TimeSeriesChartTooltipValueFormatFunction;
   private readonly stateValueConverter: TimeSeriesChartStateValueConverter;
 
   private yMinSubject = new BehaviorSubject(-1);
@@ -189,7 +188,7 @@ export class TbTimeSeriesChart {
         this.tooltipValueFormatFunction =
           createTooltipValueFormatFunction(this.settings.tooltipValueFormatter);
         if (!this.tooltipValueFormatFunction) {
-          this.tooltipValueFormatFunction = (value, latestData, units, decimals) => formatValue(value, decimals, units, false);
+          this.tooltipValueFormatFunction = (value, _latestData, units, decimals) => formatValue(value, decimals, units, false);
         }
       }
     }
@@ -218,7 +217,7 @@ export class TbTimeSeriesChart {
       const datasourceData = this.ctx.data ? this.ctx.data.find(d => d.dataKey === item.dataKey) : null;
       if (!isEqual(item.dataSet, datasourceData?.data)) {
         item.dataSet = datasourceData?.data;
-        item.data = datasourceData?.data ? toNamedData(datasourceData.data, this.stateValueConverter?.valueConverter) : [];
+        item.data = datasourceData?.data ? toTimeSeriesChartDataSet(datasourceData.data, this.stateValueConverter?.valueConverter) : [];
       }
     }
     this.onResize();
@@ -352,7 +351,7 @@ export class TbTimeSeriesChart {
       this.darkMode = darkMode;
       if (this.timeSeriesChart) {
         this.timeSeriesChartOptions = updateDarkMode(this.timeSeriesChartOptions,
-          this.settings, this.xAxisList, this.yAxisList, this.dataItems, darkMode);
+          this.xAxisList, this.yAxisList, this.dataItems, darkMode);
         this.timeSeriesChart.setOption(this.timeSeriesChartOptions);
       }
     }
@@ -381,11 +380,11 @@ export class TbTimeSeriesChart {
           const keySettings = mergeDeep<TimeSeriesChartKeySettings>({} as TimeSeriesChartKeySettings,
             timeSeriesChartKeyDefaultSettings, dataKey.settings);
           if ((keySettings.type === TimeSeriesChartSeriesType.line && keySettings.lineSettings.showPointLabel &&
-              keySettings.lineSettings.pointLabelPosition === SeriesLabelPosition.top) ||
+              keySettings.lineSettings.pointLabelPosition === ChartLabelPosition.top) ||
             (keySettings.type === TimeSeriesChartSeriesType.bar &&
               keySettings.barSettings.showLabel &&
-              [SeriesLabelPosition.top, SeriesLabelPosition.bottom]
-              .includes(keySettings.barSettings.labelPosition as SeriesLabelPosition))) {
+              [ChartLabelPosition.top, ChartLabelPosition.bottom]
+              .includes(keySettings.barSettings.labelPosition as ChartLabelPosition))) {
             this.topPointLabels = true;
           }
           if (this.stateValueConverter && keySettings.type === TimeSeriesChartSeriesType.line) {
@@ -393,7 +392,8 @@ export class TbTimeSeriesChart {
           }
           dataKey.settings = keySettings;
           const datasourceData = this.ctx.data ? this.ctx.data.find(d => d.dataKey === dataKey) : null;
-          const namedData = datasourceData?.data ? toNamedData(datasourceData.data, this.stateValueConverter?.valueConverter) : [];
+          const data = datasourceData?.data ?
+            toTimeSeriesChartDataSet(datasourceData.data, this.stateValueConverter?.valueConverter) : [];
           const units = dataKey.units && dataKey.units.length ? dataKey.units : this.ctx.units;
           const decimals = isDefinedAndNotNull(dataKey.decimals) ? dataKey.decimals :
             (isDefinedAndNotNull(this.ctx.decimals) ? this.ctx.decimals : 2);
@@ -413,7 +413,7 @@ export class TbTimeSeriesChart {
             comparisonItem,
             datasource,
             dataKey,
-            data: namedData,
+            data,
             enabled: !keySettings.dataHiddenByDefault,
             tooltipValueFormatFunction: createTooltipValueFormatFunction(keySettings.tooltipValueFormatter)
           });
@@ -588,6 +588,7 @@ export class TbTimeSeriesChart {
 
   private drawChart() {
     echartsModule.init();
+    this.renderer.setStyle(this.chartElement, 'letterSpacing', 'normal');
     this.timeSeriesChart = echarts.init(this.chartElement,  null, {
       renderer: 'canvas'
     });
@@ -595,14 +596,14 @@ export class TbTimeSeriesChart {
       darkMode: this.darkMode,
       backgroundColor: 'transparent',
       tooltip: [{
-        trigger: this.settings.tooltipTrigger === EChartsTooltipTrigger.axis ? 'axis' : 'item',
+        trigger: this.settings.tooltipTrigger === TimeSeriesChartTooltipTrigger.axis ? 'axis' : 'item',
         confine: true,
         appendTo: 'body',
         axisPointer: {
           type: this.noAggregation ? 'line' : 'shadow'
         },
         formatter: (params: CallbackDataParams[]) =>
-          this.settings.showTooltip ? echartsTooltipFormatter(this.renderer, this.tooltipDateFormat,
+          this.settings.showTooltip ? timeSeriesChartTooltipFormatter(this.renderer, this.tooltipDateFormat,
             this.settings, params, this.tooltipValueFormatFunction,
             this.settings.tooltipShowFocusedSeries ? getFocusedSeriesIndex(this.timeSeriesChart) : -1,
             this.dataItems,  this.noAggregation ? null : this.ctx.timeWindow.interval) : undefined,
@@ -612,6 +613,10 @@ export class TbTimeSeriesChart {
         extraCssText: `line-height: 1; backdrop-filter: blur(${this.settings.tooltipBackgroundBlur}px);`
       }],
       grid: [{
+        show: this.settings.grid.show,
+        backgroundColor: this.settings.grid.backgroundColor,
+        borderWidth: this.settings.grid.borderWidth,
+        borderColor: this.settings.grid.borderColor,
         top: this.minTopOffset(),
         left: this.settings.dataZoom ? 5 : 0,
         right: this.settings.dataZoom ? 5 : 0,
@@ -635,14 +640,7 @@ export class TbTimeSeriesChart {
           bottom: 10
         }
       ],
-      animation: this.settings.animation.animation,
-      animationThreshold: this.settings.animation.animationThreshold,
-      animationDuration: this.settings.animation.animationDuration,
-      animationEasing: this.settings.animation.animationEasing,
-      animationDelay: this.settings.animation.animationDelay,
-      animationDurationUpdate: this.settings.animation.animationDurationUpdate,
-      animationEasingUpdate: this.settings.animation.animationEasingUpdate,
-      animationDelayUpdate: this.settings.animation.animationDelayUpdate
+      ...toAnimationOption(this.ctx, this.settings.animation)
     };
     if (this.hasVisualMap) {
       this.timeSeriesChartOptions.visualMap =
@@ -798,9 +796,13 @@ export class TbTimeSeriesChart {
   }
 
   private scaleYAxis(yAxis: TimeSeriesChartYAxis): boolean {
-    const axisBarDataItems = this.dataItems.filter(d => d.yAxisId === yAxis.id && d.enabled &&
-      d.data.length && d.dataKey.settings.type === TimeSeriesChartSeriesType.bar);
-    return !axisBarDataItems.length;
+    if (!this.stateData) {
+      const axisBarDataItems = this.dataItems.filter(d => d.yAxisId === yAxis.id && d.enabled &&
+        d.data.length && d.dataKey.settings.type === TimeSeriesChartSeriesType.bar);
+      return !axisBarDataItems.length;
+    } else {
+      return false;
+    }
   }
 
   private minTopOffset(): number {

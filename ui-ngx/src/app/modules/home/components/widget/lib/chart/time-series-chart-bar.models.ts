@@ -16,7 +16,7 @@
 
 import { LinearGradientObject } from 'zrender/lib/graphic/LinearGradient';
 import { Interval, IntervalMath } from '@shared/models/time/time.models';
-import { LabelFormatterCallback, SeriesLabelOption } from 'echarts/types/src/util/types';
+import { LabelFormatterCallback } from 'echarts/types/src/util/types';
 import {
   TimeSeriesChartDataItem,
   TimeSeriesChartNoAggregationBarWidthStrategy
@@ -25,6 +25,7 @@ import { CustomSeriesRenderItemParams } from 'echarts';
 import { CallbackDataParams, CustomSeriesRenderItemAPI, CustomSeriesRenderItemReturn } from 'echarts/types/dist/shared';
 import { isNumeric } from '@core/utils';
 import * as echarts from 'echarts/core';
+import { BarSeriesLabelOption } from 'echarts/types/src/chart/bar/BarSeries';
 
 export interface BarVisualSettings {
   color: string | LinearGradientObject;
@@ -48,7 +49,7 @@ export interface BarRenderContext {
   barIndex?: number;
   noAggregation?: boolean;
   visualSettings?: BarVisualSettings;
-  labelOption?: SeriesLabelOption;
+  labelOption?: BarSeriesLabelOption;
   additionalLabelOption?: {[key: string]: any};
   barStackIndex?: number;
   currentStackItems?: TimeSeriesChartDataItem[];
@@ -128,7 +129,8 @@ export const renderTimeSeriesBar = (params: CustomSeriesRenderItemParams, api: C
     height: coordSys.height
   });
 
-  const zeroPos = api.coord([0, offset]);
+  const zeroCoord = api.coord([0, offset]);
+  const zeroPos = Math.min(zeroCoord[1], coordSys.y + coordSys.height);
 
   let style: any = {
     fill: renderCtx.visualSettings.color,
@@ -176,7 +178,7 @@ export const renderTimeSeriesBar = (params: CustomSeriesRenderItemParams, api: C
     transition: 'all',
     enterFrom: {
       style: { opacity: 0 },
-      shape: { height: 0, y: zeroPos[1] }
+      shape: { height: 0, y: zeroPos }
     }
   };
 };

@@ -79,6 +79,11 @@ public class RabbitMqTbVersionControlQueueFactory implements TbVersionControlQue
         );
     }
 
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToHousekeeperServiceMsg>> createHousekeeperMsgProducer() {
+        return new TbRabbitMqProducerTemplate<>(coreAdmin, rabbitMqSettings, topicService.buildTopicName(coreSettings.getHousekeeperTopic()));
+    }
+
     @PreDestroy
     private void destroy() {
         if (coreAdmin != null) {

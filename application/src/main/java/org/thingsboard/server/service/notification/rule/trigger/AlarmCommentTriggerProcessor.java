@@ -29,7 +29,7 @@ import org.thingsboard.server.common.data.notification.rule.trigger.config.Notif
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmCommentTrigger;
 import org.thingsboard.server.dao.entity.EntityService;
 
-import static org.apache.commons.collections.CollectionUtils.isEmpty;
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 import static org.thingsboard.server.common.data.util.CollectionsUtil.emptyOrContains;
 
 @Service

@@ -1,0 +1,470 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ng-container [formGroup]="latestChartWidgetSettingsForm">
+  <ng-container *ngTemplateOutlet="latestChartConfigTemplate()"></ng-container>
+  <div class="tb-form-panel tb-slide-toggle">
+    <mat-expansion-panel class="tb-settings" [expanded]="latestChartWidgetSettingsForm.get('showLegend').value" [disabled]="!latestChartWidgetSettingsForm.get('showLegend').value">
+      <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-panel-title>
+          <mat-slide-toggle class="mat-slide" formControlName="showLegend" (click)="$event.stopPropagation()"
+                            fxLayoutAlign="center">
+            {{ 'widget-config.legend' | translate }}
+          </mat-slide-toggle>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <div class="tb-form-row space-between">
+          <div>{{ 'legend.position' | translate }}</div>
+          <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="legendPosition">
+              <mat-option *ngFor="let pos of legendPositions" [value]="pos">
+                {{ legendPositionTranslationMap.get(pos) | translate }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row space-between">
+          <div>{{ 'legend.label' | translate }}</div>
+          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <tb-font-settings formControlName="legendLabelFont"
+                              previewText="Wind power">
+            </tb-font-settings>
+            <tb-color-input asBoxInput
+                            colorClearButton
+                            formControlName="legendLabelColor">
+            </tb-color-input>
+          </div>
+        </div>
+        <div class="tb-form-row space-between">
+          <div>{{ 'legend.value' | translate }}</div>
+          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <tb-font-settings formControlName="legendValueFont"
+                              [previewText]="valuePreviewFn">
+            </tb-font-settings>
+            <tb-color-input asBoxInput
+                            colorClearButton
+                            formControlName="legendValueColor">
+            </tb-color-input>
+          </div>
+        </div>
+      </ng-template>
+    </mat-expansion-panel>
+  </div>
+  <div class="tb-form-panel tb-slide-toggle">
+    <mat-expansion-panel class="tb-settings" [expanded]="latestChartWidgetSettingsForm.get('showTooltip').value" [disabled]="!latestChartWidgetSettingsForm.get('showTooltip').value">
+      <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-panel-title>
+          <mat-slide-toggle class="mat-slide" formControlName="showTooltip" (click)="$event.stopPropagation()"
+                            fxLayoutAlign="center">
+            {{ 'widget-config.tooltip' | translate }}
+          </mat-slide-toggle>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <div class="tb-form-row space-between column-xs">
+          <div>{{ 'tooltip.value' | translate }}</div>
+          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+              <mat-select formControlName="tooltipValueType">
+                <mat-option *ngFor="let type of latestChartTooltipValueTypes" [value]="type">
+                  {{ latestChartTooltipValueTypeTranslationMap.get(type) | translate }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+              <input matInput formControlName="tooltipValueDecimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+              <div matSuffix fxHide.lt-md translate>widget-config.decimals-suffix</div>
+            </mat-form-field>
+            <tb-font-settings formControlName="tooltipValueFont"
+                              [previewText]="tooltipValuePreviewFn">
+            </tb-font-settings>
+            <tb-color-input asBoxInput
+                            colorClearButton
+                            formControlName="tooltipValueColor">
+            </tb-color-input>
+          </div>
+        </div>
+        <div class="tb-form-row space-between">
+          <div>{{ 'tooltip.background-color' | translate }}</div>
+          <tb-color-input asBoxInput
+                          colorClearButton
+                          formControlName="tooltipBackgroundColor">
+          </tb-color-input>
+        </div>
+        <div class="tb-form-row space-between">
+          <div>{{ 'tooltip.background-blur' | translate }}</div>
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="tooltipBackgroundBlur" type="number" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+            <div matSuffix>px</div>
+          </mat-form-field>
+        </div>
+      </ng-template>
+    </mat-expansion-panel>
+  </div>
+  <tb-chart-animation-settings
+      formControlName="animation">
+  </tb-chart-animation-settings>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widget-config.card-appearance</div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widgets.background.background' | translate }}</div>
+      <tb-background-settings formControlName="background">
+      </tb-background-settings>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widget-config.card-padding' | translate }}</div>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="padding" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+  </div>
+</ng-container>
+
+<ng-template #pieChart>
+  <ng-container [formGroup]="latestChartWidgetSettingsForm">
+    <div class="tb-form-panel">
+      <div class="tb-form-panel-title" translate>widgets.pie-chart.pie-chart-card-style</div>
+      <div class="tb-form-row space-between column-xs">
+        <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showLabel">
+          {{ 'widgets.pie-chart.label' | translate }}
+        </mat-slide-toggle>
+        <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="labelPosition">
+              <mat-option *ngFor="let position of pieChartLabelPositions" [value]="position">
+                {{ pieChartLabelPositionTranslationMap.get(position) | translate }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <tb-font-settings formControlName="labelFont"
+                            disabledLineHeight
+                            forceSizeUnit="px"
+                            [previewText]="'Wind<br/>55%'">
+          </tb-font-settings>
+          <tb-color-input asBoxInput
+                          colorClearButton
+                          formControlName="labelColor">
+          </tb-color-input>
+        </div>
+      </div>
+      <div class="tb-form-row space-between">
+        <div>{{ 'widgets.pie-chart.border' | translate }}</div>
+        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="borderWidth" type="number" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+            <div matSuffix>px</div>
+          </mat-form-field>
+          <tb-color-input asBoxInput
+                          colorClearButton
+                          formControlName="borderColor">
+          </tb-color-input>
+        </div>
+      </div>
+      <div class="tb-form-row space-between">
+        <div>{{ 'widgets.pie-chart.radius' | translate }}</div>
+        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="radius" type="number" min="0" max="100" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+            <div matSuffix>%</div>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide" formControlName="clockwise">
+          {{ 'widgets.latest-chart.clockwise-layout' | translate }}
+        </mat-slide-toggle>
+      </div>
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide" formControlName="sortSeries">
+          {{ 'widgets.latest-chart.sort-series' | translate }}
+        </mat-slide-toggle>
+      </div>
+    </div>
+  </ng-container>
+</ng-template>
+<ng-template #doughnutChart>
+  <ng-container [formGroup]="latestChartWidgetSettingsForm">
+    <div class="tb-form-panel">
+      <div class="tb-form-panel-title" translate>widgets.doughnut.doughnut-card-style</div>
+      <tb-image-cards-select rowHeight="{{ doughnutHorizontal ? '8:5' : '5:4' }}"
+                             [cols]="{columns: 2,
+                                    breakpoints: {
+                                      'lt-sm': 1
+                                    }}"
+                             label="{{ 'widgets.doughnut.layout' | translate }}" formControlName="layout">
+        <tb-image-cards-select-option *ngFor="let layout of doughnutLayouts"
+                                      [value]="layout"
+                                      [image]="doughnutLayoutImageMap.get(layout)">
+          {{ doughnutLayoutTranslationMap.get(layout) | translate }}
+        </tb-image-cards-select-option>
+      </tb-image-cards-select>
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide" formControlName="autoScale">
+          {{ 'widgets.latest-chart.auto-scale' | translate }}
+        </mat-slide-toggle>
+      </div>
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide" formControlName="clockwise">
+          {{ 'widgets.latest-chart.clockwise-layout' | translate }}
+        </mat-slide-toggle>
+      </div>
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide" formControlName="sortSeries">
+          {{ 'widgets.latest-chart.sort-series' | translate }}
+        </mat-slide-toggle>
+      </div>
+      <div [fxShow]="doughnutTotalEnabled" class="tb-form-row space-between">
+        <div>{{ 'widgets.doughnut.central-total-value' | translate }}</div>
+        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <tb-font-settings formControlName="totalValueFont"
+                            [previewText]="valuePreviewFn">
+          </tb-font-settings>
+          <tb-color-settings formControlName="totalValueColor" settingsKey="{{'widgets.doughnut.central-total-value' | translate }}">
+          </tb-color-settings>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</ng-template>
+<ng-template #barChart>
+  <ng-container [formGroup]="latestChartWidgetSettingsForm">
+    <div class="tb-form-panel">
+      <div class="tb-form-panel-title" translate>widgets.bar-chart.bar-chart-style</div>
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide" formControlName="sortSeries">
+          {{ 'widgets.latest-chart.sort-series' | translate }}
+        </mat-slide-toggle>
+      </div>
+      <div class="tb-form-panel">
+        <div class="tb-form-panel-title" translate>widgets.bar-chart.bar-appearance</div>
+        <tb-chart-bar-settings
+            formControlName="barSettings"
+            [series]="false">
+        </tb-chart-bar-settings>
+      </div>
+      <div class="tb-form-panel">
+        <div class="tb-form-panel-title" translate>widgets.bar-chart.bar-axis</div>
+        <div class="tb-form-row space-between column-xs">
+          <div translate>widgets.chart.chart-axis.scale</div>
+          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <div class="tb-small-label" translate>widgets.chart.chart-axis.scale-min</div>
+            <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+              <input matInput formControlName="axisMin"
+                     type="number" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
+            </mat-form-field>
+            <div class="tb-small-label" translate>widgets.chart.chart-axis.scale-max</div>
+            <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+              <input matInput formControlName="axisMax"
+                     type="number" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
+            </mat-form-field>
+            <tb-font-settings formControlName="axisTickLabelFont"
+                              clearButton
+                              disabledLineHeight
+                              forceSizeUnit="px"
+                              previewText="100">
+            </tb-font-settings>
+            <tb-color-input asBoxInput
+                            colorClearButton
+                            formControlName="axisTickLabelColor">
+            </tb-color-input>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</ng-template>
+<ng-template #polarAreaChart>
+  <ng-container [formGroup]="latestChartWidgetSettingsForm">
+    <div class="tb-form-panel">
+      <div class="tb-form-panel-title" translate>widgets.polar-area-chart.polar-area-chart-style</div>
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide" formControlName="sortSeries">
+          {{ 'widgets.latest-chart.sort-series' | translate }}
+        </mat-slide-toggle>
+      </div>
+      <div class="tb-form-panel">
+        <div class="tb-form-panel-title" translate>widgets.bar-chart.bar-appearance</div>
+        <tb-chart-bar-settings
+            formControlName="barSettings"
+            pieLabelPosition
+            [series]="false">
+        </tb-chart-bar-settings>
+      </div>
+      <div class="tb-form-panel">
+        <div class="tb-form-panel-title" translate>widgets.polar-area-chart.polar-axis</div>
+        <div class="tb-form-row space-between column-xs">
+          <div translate>widgets.chart.chart-axis.scale</div>
+          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <div class="tb-small-label" translate>widgets.chart.chart-axis.scale-min</div>
+            <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+              <input matInput formControlName="axisMin"
+                     type="number" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
+            </mat-form-field>
+            <div class="tb-small-label" translate>widgets.chart.chart-axis.scale-max</div>
+            <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+              <input matInput formControlName="axisMax"
+                     type="number" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
+            </mat-form-field>
+            <tb-font-settings formControlName="axisTickLabelFont"
+                              clearButton
+                              disabledLineHeight
+                              forceSizeUnit="px"
+                              previewText="100">
+            </tb-font-settings>
+            <tb-color-input asBoxInput
+                            colorClearButton
+                            formControlName="axisTickLabelColor">
+            </tb-color-input>
+          </div>
+        </div>
+        <div class="tb-form-row space-between">
+          <div translate>widgets.polar-area-chart.start-angle</div>
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="angleAxisStartAngle" type="number" min="0" max="360" placeholder="{{ 'widget-config.set' | translate }}">
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</ng-template>
+<ng-template #radarChart>
+  <ng-container [formGroup]="latestChartWidgetSettingsForm">
+    <div class="tb-form-panel">
+      <div class="tb-form-panel-title" translate>widgets.radar-chart.radar-chart-style</div>
+      <div class="tb-form-row">
+        <mat-slide-toggle class="mat-slide" formControlName="sortSeries">
+          {{ 'widgets.latest-chart.sort-series' | translate }}
+        </mat-slide-toggle>
+      </div>
+      <div class="tb-form-panel">
+        <div class="tb-form-panel-title" translate>widgets.radar-chart.radar-appearance</div>
+        <div class="tb-form-row space-between">
+          <div>{{ 'widgets.radar-chart.shape' | translate }}</div>
+          <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="shape">
+              <mat-option *ngFor="let shape of radarChartShapes" [value]="shape">
+                {{ radarChartShapeTranslations.get(shape) | translate }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row space-between">
+          <div translate>widgets.radar-chart.color</div>
+          <tb-color-input asBoxInput
+                          colorClearButton
+                          formControlName="color">
+          </tb-color-input>
+        </div>
+        <div class="tb-form-row space-between column-xs">
+          <mat-slide-toggle class="mat-slide" formControlName="showLine">
+            {{ 'widgets.radar-chart.line' | translate }}
+          </mat-slide-toggle>
+          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <mat-form-field class="medium-width" fxFlex.xs appearance="outline" subscriptSizing="dynamic">
+              <mat-select formControlName="lineType">
+                <mat-option *ngFor="let type of chartLineTypes" [value]="type">
+                  {{ chartLineTypeTranslations.get(type) | translate }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="number fixed-width" subscriptSizing="dynamic">
+              <input matInput formControlName="lineWidth"
+                     type="number" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+            </mat-form-field>
+          </div>
+        </div>
+        <div class="tb-form-row space-between column-xs">
+          <mat-slide-toggle class="mat-slide" formControlName="showPoints">
+            {{ 'widgets.radar-chart.points' | translate }}
+          </mat-slide-toggle>
+          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <mat-form-field class="medium-width" fxFlex.xs appearance="outline" subscriptSizing="dynamic">
+              <mat-select formControlName="pointShape">
+                <mat-option *ngFor="let shape of chartShapes" [value]="shape">
+                  {{ chartShapeTranslations.get(shape) | translate }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="number fixed-width" subscriptSizing="dynamic">
+              <input matInput formControlName="pointSize"
+                     type="number" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+            </mat-form-field>
+          </div>
+        </div>
+        <div class="tb-form-row space-between column-lt-md">
+          <mat-slide-toggle class="mat-slide" formControlName="showLabel">
+            {{ 'widgets.radar-chart.points-label' | translate }}
+          </mat-slide-toggle>
+          <div fxLayout="row" fxFlex.lt-md fxLayoutAlign="start center" fxLayoutGap="8px">
+            <mat-form-field class="medium-width" fxFlex.lt-md appearance="outline" subscriptSizing="dynamic">
+              <mat-select formControlName="labelPosition">
+                <mat-option *ngFor="let position of chartLabelPositions" [value]="position">
+                  {{ chartLabelPositionTranslations.get(position) | translate }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <tb-font-settings formControlName="labelFont"
+                              clearButton
+                              disabledLineHeight
+                              forceSizeUnit="px"
+                              [previewText]="valuePreviewFn">
+            </tb-font-settings>
+            <tb-color-input asBoxInput
+                            colorClearButton
+                            formControlName="labelColor">
+            </tb-color-input>
+          </div>
+        </div>
+        <tb-chart-fill-settings
+            formControlName="fillAreaSettings">
+        </tb-chart-fill-settings>
+      </div>
+      <div class="tb-form-panel">
+        <div class="tb-form-panel-title" translate>widgets.radar-chart.radar-axis</div>
+        <div class="tb-form-row space-between">
+          <mat-slide-toggle class="mat-slide" formControlName="axisShowLabel">
+            {{ 'widgets.radar-chart.axis-label' | translate }}
+          </mat-slide-toggle>
+          <tb-font-settings formControlName="axisLabelFont"
+                            clearButton
+                            disabledLineHeight
+                            forceSizeUnit="px"
+                            previewText="Wind">
+          </tb-font-settings>
+        </div>
+        <div class="tb-form-row space-between">
+          <mat-slide-toggle class="mat-slide" formControlName="axisShowTickLabels">
+            {{ 'widgets.radar-chart.ticks-label' | translate }}
+          </mat-slide-toggle>
+          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <tb-font-settings formControlName="axisTickLabelFont"
+                              clearButton
+                              disabledLineHeight
+                              forceSizeUnit="px"
+                              previewText="100">
+            </tb-font-settings>
+            <tb-color-input asBoxInput
+                            colorClearButton
+                            formControlName="axisTickLabelColor">
+            </tb-color-input>
+          </div>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</ng-template>

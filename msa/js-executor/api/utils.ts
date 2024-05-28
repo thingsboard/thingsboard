@@ -62,3 +62,7 @@ export function parseJsErrorDetails(err: any): string | undefined {
 export function isNotUUID(candidate: string) {
     return candidate.length != 36 || !candidate.includes('-');
 }
+
+export function isNotEmptyStr(value: any): boolean {
+    return typeof value === 'string' && value.trim().length > 0;
+}

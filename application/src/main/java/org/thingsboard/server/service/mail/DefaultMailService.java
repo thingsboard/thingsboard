@@ -16,12 +16,13 @@
 package org.thingsboard.server.service.mail;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.Futures;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
-import jakarta.xml.bind.DatatypeConverter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.NestedRuntimeException;
@@ -31,29 +32,36 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.TbEmail;
+import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.ApiFeature;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.ApiUsageRecordState;
 import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.exception.RateLimitExceededException;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import jakarta.mail.internet.MimeMessage;
 import java.io.ByteArrayInputStream;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -76,13 +84,21 @@ public class DefaultMailService implements MailService {
     private TbApiUsageStateService apiUsageStateService;
 
     @Autowired
-    private MailExecutorService mailExecutorService;
+    private MailSenderInternalExecutorService mailExecutorService;
 
     @Autowired
     private PasswordResetExecutorService passwordResetExecutorService;
 
     @Autowired
-    private TbMailContextComponent tbMailContextComponent;
+    private TbMailContextComponent ctx;
+
+    @Autowired
+    private RateLimitService rateLimitService;
+
+    @Value("${mail.per_tenant_rate_limits:}")
+    private String perTenantRateLimitConfig;
+
+    private final ScheduledExecutorService timeoutScheduler;
 
     private TbMailSender mailSender;
 
@@ -95,6 +111,7 @@ public class DefaultMailService implements MailService {
         this.freemarkerConfig = freemarkerConfig;
         this.adminSettingsService = adminSettingsService;
         this.apiUsageClient = apiUsageClient;
+        this.timeoutScheduler = Executors.newScheduledThreadPool(1, ThingsBoardThreadFactory.forName("mail-service-watchdog"));
     }
 
     @PostConstruct
@@ -102,12 +119,19 @@ public class DefaultMailService implements MailService {
         updateMailConfiguration();
     }
 
+    @PreDestroy
+    public void destroy() {
+        if (timeoutScheduler != null) {
+            timeoutScheduler.shutdownNow();
+        }
+    }
+
     @Override
     public void updateMailConfiguration() {
         AdminSettings settings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, "mail");
         if (settings != null) {
             JsonNode jsonConfig = settings.getJsonValue();
-            mailSender = new TbMailSender(tbMailContextComponent, jsonConfig);
+            mailSender = new TbMailSender(ctx, jsonConfig);
             mailFrom = jsonConfig.get("mailFrom").asText();
             timeout = jsonConfig.get("timeout").asLong(DEFAULT_TIMEOUT);
         } else {
@@ -122,7 +146,7 @@ public class DefaultMailService implements MailService {
 
     @Override
     public void sendTestMail(JsonNode jsonConfig, String email) throws ThingsboardException {
-        TbMailSender testMailSender = new TbMailSender(tbMailContextComponent, jsonConfig);
+        TbMailSender testMailSender = new TbMailSender(ctx, jsonConfig);
         String mailFrom = jsonConfig.get("mailFrom").asText();
         String subject = messages.getMessage("test.message.subject", null, Locale.US);
         long timeout = jsonConfig.get("timeout").asLong(DEFAULT_TIMEOUT);
@@ -214,6 +238,10 @@ public class DefaultMailService implements MailService {
 
     private void sendMail(TenantId tenantId, CustomerId customerId, TbEmail tbEmail, JavaMailSender javaMailSender, long timeout) throws ThingsboardException {
         if (apiUsageStateService.getApiUsageState(tenantId).isEmailSendEnabled()) {
+            if (tenantId != null && !tenantId.isSysTenantId() && StringUtils.isNotEmpty(perTenantRateLimitConfig) &&
+                    !rateLimitService.checkRateLimit(LimitedApi.EMAILS, (Object) tenantId, perTenantRateLimitConfig)) {
+                throw new RateLimitExceededException(LimitedApi.EMAILS);
+            }
             try {
                 MimeMessage mailMsg = javaMailSender.createMimeMessage();
                 boolean multipart = (tbEmail.getImages() != null && !tbEmail.getImages().isEmpty());
@@ -415,8 +443,11 @@ public class DefaultMailService implements MailService {
     }
 
     private void sendMailWithTimeout(JavaMailSender mailSender, MimeMessage msg, long timeout) {
+        var submittedMail = Futures.withTimeout(
+                mailExecutorService.submit(() -> mailSender.send(msg)),
+                timeout, TimeUnit.MILLISECONDS, timeoutScheduler);
         try {
-            mailExecutorService.submit(() -> mailSender.send(msg)).get(timeout, TimeUnit.MILLISECONDS);
+            submittedMail.get(timeout, TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
             log.debug("Error during mail submission", e);
             throw new RuntimeException("Timeout!");

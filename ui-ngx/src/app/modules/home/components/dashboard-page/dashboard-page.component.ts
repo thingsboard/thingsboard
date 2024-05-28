@@ -320,6 +320,13 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   set rightLayoutOpened(rightLayoutOpened: boolean) {
   }
 
+  get mobileDisplayRightLayoutFirst(): boolean {
+    return this.isMobile && this.layouts.right.layoutCtx.gridSettings?.mobileDisplayLayoutFirst;
+  }
+
+  set mobileDisplayRightLayoutFirst(mobileDisplayRightLayoutFirst: boolean) {
+  }
+
   @ViewChild('tbEditWidget') editWidgetComponent: EditWidgetComponent;
 
   @ViewChild('dashboardWidgetSelect') dashboardWidgetSelectComponent: DashboardWidgetSelectComponent;
@@ -1343,9 +1350,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     });
   }
 
-  exportWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget) {
+  exportWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget, widgetTitle: string) {
     $event.stopPropagation();
-    this.importExport.exportWidget(this.dashboard, this.dashboardCtx.state, layoutCtx.id, widget);
+    this.importExport.exportWidget(this.dashboard, this.dashboardCtx.state, layoutCtx.id, widget, widgetTitle);
   }
 
   widgetClicked($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget) {

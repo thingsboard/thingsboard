@@ -54,6 +54,11 @@ public class JpaNotificationTemplateDao extends JpaAbstractDao<NotificationTempl
     }
 
     @Override
+    public int countByTenantIdAndNotificationTypes(TenantId tenantId, List<NotificationType> notificationTypes) {
+        return notificationTemplateRepository.countByTenantIdAndNotificationTypes(tenantId.getId(), notificationTypes);
+    }
+
+    @Override
     public void removeByTenantId(TenantId tenantId) {
         notificationTemplateRepository.deleteByTenantId(tenantId.getId());
     }

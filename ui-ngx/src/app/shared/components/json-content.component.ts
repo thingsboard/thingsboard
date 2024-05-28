@@ -24,11 +24,11 @@ import {
   OnDestroy,
   OnInit,
   SimpleChanges,
-  ViewChild, ViewEncapsulation
+  ViewChild,
+  ViewEncapsulation
 } from '@angular/core';
-import { ControlValueAccessor, UntypedFormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validator } from '@angular/forms';
+import { ControlValueAccessor, NG_VALIDATORS, NG_VALUE_ACCESSOR, UntypedFormControl, Validator } from '@angular/forms';
 import { Ace } from 'ace-builds';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { ActionNotificationHide, ActionNotificationShow } from '@core/notification/notification.actions';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -38,6 +38,7 @@ import { guid } from '@core/utils';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { getAce } from '@shared/models/ace/ace.models';
 import { beautifyJs } from '@shared/models/beautify.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-json-content',
@@ -79,41 +80,27 @@ export class JsonContentComponent implements OnInit, ControlValueAccessor, Valid
 
   @Input() editorStyle: {[klass: string]: any};
 
-  private readonlyValue: boolean;
-  get readonly(): boolean {
-    return this.readonlyValue;
-  }
-  @Input()
-  set readonly(value: boolean) {
-    this.readonlyValue = coerceBooleanProperty(value);
-  }
+  @Input() tbPlaceholder: string;
 
-  private validateContentValue: boolean;
-  get validateContent(): boolean {
-    return this.validateContentValue;
-  }
   @Input()
-  set validateContent(value: boolean) {
-    this.validateContentValue = coerceBooleanProperty(value);
-  }
+  @coerceBoolean()
+  hideToolbar = false;
 
-  private validateOnChangeValue: boolean;
-  get validateOnChange(): boolean {
-    return this.validateOnChangeValue;
-  }
   @Input()
-  set validateOnChange(value: boolean) {
-    this.validateOnChangeValue = coerceBooleanProperty(value);
-  }
+  @coerceBoolean()
+  readonly: boolean;
 
-  private requiredValue: boolean;
-  get required(): boolean {
-    return this.requiredValue;
-  }
   @Input()
-  set required(value: boolean) {
-    this.requiredValue = coerceBooleanProperty(value);
-  }
+  @coerceBoolean()
+  validateContent: boolean;
+
+  @Input()
+  @coerceBoolean()
+  validateOnChange: boolean;
+
+  @Input()
+  @coerceBoolean()
+  required: boolean;
 
   fullscreen = false;
 
@@ -169,12 +156,49 @@ export class JsonContentComponent implements OnInit, ControlValueAccessor, Valid
             this.cd.markForCheck();
           });
         }
+
+        if (this.tbPlaceholder && this.tbPlaceholder.length) {
+          this.createPlaceholder();
+        }
         this.editorResize$ = new ResizeObserver(() => {
           this.onAceEditorResize();
         });
         this.editorResize$.observe(editorElement);
       }
     );
+  }
+
+  private createPlaceholder() {
+    this.jsonEditor.on('input', this.updateEditorPlaceholder.bind(this));
+    setTimeout(this.updateEditorPlaceholder.bind(this), 100);
+  }
+
+  private updateEditorPlaceholder() {
+    const shouldShow = !this.jsonEditor.session.getValue().length;
+    let node: HTMLElement = (this.jsonEditor.renderer as any).emptyMessageNode;
+    if (!shouldShow && node) {
+      this.jsonEditor.renderer.getMouseEventTarget().removeChild(node);
+      (this.jsonEditor.renderer as any).emptyMessageNode = null;
+    } else if (shouldShow && !node) {
+      const placeholderElement = $('<textarea></textarea>');
+      placeholderElement.text(this.tbPlaceholder);
+      placeholderElement.addClass('ace_invisible ace_emptyMessage');
+      placeholderElement.css({
+        padding: '0 9px',
+        width: '100%',
+        border: 'none',
+        textWrap: 'nowrap',
+        whiteSpace: 'pre',
+        overflow: 'hidden',
+        resize: 'none',
+        fontSize: '15px'
+      });
+      const rows = this.tbPlaceholder.split('\n').length;
+      placeholderElement.attr('rows', rows);
+      node = placeholderElement[0];
+      (this.jsonEditor.renderer as any).emptyMessageNode = node;
+      this.jsonEditor.renderer.getMouseEventTarget().appendChild(node);
+    }
   }
 
   ngOnDestroy(): void {

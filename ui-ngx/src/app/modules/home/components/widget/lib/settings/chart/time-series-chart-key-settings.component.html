@@ -52,9 +52,9 @@
                                         [chartType]="chartType"
                                         formControlName="lineSettings">
     </tb-time-series-chart-line-settings>
-    <tb-time-series-chart-bar-settings [fxShow]="timeSeriesChartKeySettingsForm.get('type').value === TimeSeriesChartSeriesType.bar"
-                                        formControlName="barSettings">
-    </tb-time-series-chart-bar-settings>
+    <tb-chart-bar-settings [fxShow]="timeSeriesChartKeySettingsForm.get('type').value === TimeSeriesChartSeriesType.bar"
+                                     formControlName="barSettings">
+    </tb-chart-bar-settings>
   </div>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widgets.chart.tooltip-settings</div>
