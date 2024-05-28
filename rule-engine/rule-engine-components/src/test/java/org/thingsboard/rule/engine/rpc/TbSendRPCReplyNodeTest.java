@@ -20,7 +20,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -41,7 +43,9 @@ import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -116,7 +120,7 @@ public class TbSendRPCReplyNodeTest {
 
     @ParameterizedTest
     @EnumSource(EntityType.class)
-    public void testOriginatorEntityTypes(EntityType entityType) throws TbNodeException {
+    public void testOriginatorEntityTypes(EntityType entityType) {
         if (entityType == EntityType.DEVICE) return;
         EntityId entityId = new EntityId() {
             @Override
@@ -133,44 +137,37 @@ public class TbSendRPCReplyNodeTest {
 
         node.onMsg(ctx, msg);
 
-        ArgumentCaptor<Throwable> captor = ArgumentCaptor.forClass(Throwable.class);
-        verify(ctx).tellFailure(eq(msg), captor.capture());
-        Throwable value = captor.getValue();
-        assertThat(value.getClass()).isEqualTo(RuntimeException.class);
-        assertThat(value.getMessage()).isEqualTo("Message originator is not a device entity!");
+        ArgumentCaptor<Throwable> throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
+        verify(ctx).tellFailure(eq(msg), throwableCaptor.capture());
+        assertThat(throwableCaptor.getValue()).isInstanceOf(RuntimeException.class)
+                .hasMessage("Message originator is not a device entity!");
     }
 
-    @Test
-    public void testForAvailabilityOfMetadataAndDataValues2() {
-        //without requestId
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
-        verifyFailure(msg, "Request id is not present in the metadata!");
+    @ParameterizedTest
+    @MethodSource
+    public void testForAvailabilityOfMetadataAndDataValues(TbMsgMetaData metaData, String errorMsg) {
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, metaData, TbMsg.EMPTY_STRING);
 
-        //without serviceId
-        TbMsgMetaData metadata = new TbMsgMetaData();
-        metadata.putValue("requestId", Integer.toString(DUMMY_REQUEST_ID));
-        msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, metadata, TbMsg.EMPTY_JSON_OBJECT);
-        verifyFailure(msg, "Service id is not present in the metadata!");
-
-        //without sessionId
-        metadata.putValue("serviceId", DUMMY_SERVICE_ID);
-        msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, metadata, TbMsg.EMPTY_JSON_OBJECT);
-        verifyFailure(msg, "Session id is not present in the metadata!");
-
-        //with empty data
-        metadata.putValue("sessionId", DUMMY_SESSION_ID.toString());
-        msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, metadata, TbMsg.EMPTY_STRING);
-        verifyFailure(msg, "Request body is empty!");
-    }
-
-    private void verifyFailure(TbMsg msg, String expectedErrorMessage) {
         node.onMsg(ctx, msg);
 
-        ArgumentCaptor<Throwable> captor = ArgumentCaptor.forClass(Throwable.class);
-        verify(ctx).tellFailure(eq(msg), captor.capture());
-        Throwable value = captor.getValue();
-        assertThat(value.getClass()).isEqualTo(RuntimeException.class);
-        assertThat(value.getMessage()).isEqualTo(expectedErrorMessage);
+        ArgumentCaptor<Throwable> throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
+        verify(ctx).tellFailure(eq(msg), throwableCaptor.capture());
+        assertThat(throwableCaptor.getValue()).isInstanceOf(RuntimeException.class).hasMessage(errorMsg);
+    }
+
+    private static Stream<Arguments> testForAvailabilityOfMetadataAndDataValues() {
+        return Stream.of(
+                Arguments.of(TbMsgMetaData.EMPTY, "Request id is not present in the metadata!"),
+                Arguments.of(new TbMsgMetaData(Map.of(
+                        "requestId", Integer.toString(DUMMY_REQUEST_ID))), "Service id is not present in the metadata!"),
+                Arguments.of(new TbMsgMetaData(Map.of(
+                        "requestId", Integer.toString(DUMMY_REQUEST_ID),
+                        "serviceId", DUMMY_SERVICE_ID)), "Session id is not present in the metadata!"),
+                Arguments.of(new TbMsgMetaData(Map.of(
+                        "requestId", Integer.toString(DUMMY_REQUEST_ID),
+                        "serviceId", DUMMY_SERVICE_ID, "sessionId",
+                        DUMMY_SESSION_ID.toString())), "Request body is empty!")
+        );
     }
 
     private TbMsgMetaData getDefaultMetadata() {
