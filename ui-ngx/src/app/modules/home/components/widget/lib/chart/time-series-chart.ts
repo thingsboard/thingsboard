@@ -37,7 +37,6 @@ import {
   TimeSeriesChartThreshold,
   timeSeriesChartThresholdDefaultSettings,
   TimeSeriesChartThresholdItem,
-  TimeSeriesChartThresholdType,
   timeSeriesChartTooltipFormatter,
   TimeSeriesChartTooltipTrigger,
   TimeSeriesChartTooltipValueFormatFunction,
@@ -60,7 +59,7 @@ import {
   getFocusedSeriesIndex,
   measureAxisNameSize
 } from '@home/components/widget/lib/chart/echarts-widget.models';
-import { DateFormatProcessor } from '@shared/models/widget-settings.models';
+import { DateFormatProcessor, ValueSourceType } from '@shared/models/widget-settings.models';
 import { formattedDataFormDatasourceData, formatValue, isDefinedAndNotNull, isEqual, mergeDeep } from '@core/utils';
 import { DataKey, Datasource, DatasourceType, FormattedData, widgetType } from '@shared/models/widget.models';
 import * as echarts from 'echarts/core';
@@ -255,7 +254,7 @@ export class TbTimeSeriesChart {
         item.latestData = latestData;
       }
       for (const item of this.thresholdItems) {
-        if (item.settings.type === TimeSeriesChartThresholdType.latestKey && item.latestDataKey) {
+        if (item.settings.type === ValueSourceType.latestKey && item.latestDataKey) {
           const data = this.ctx.latestData.find(d => d.dataKey === item.latestDataKey);
           if (data.data[0]) {
             item.value = parseThresholdData(data.data[0][1]);
@@ -435,7 +434,7 @@ export class TbTimeSeriesChart {
       let latestDataKey: DataKey = null;
       let entityDataKey: DataKey = null;
       let value = null;
-      if (threshold.type === TimeSeriesChartThresholdType.latestKey) {
+      if (threshold.type === ValueSourceType.latestKey) {
         if (this.ctx.datasources.length) {
           for (const datasource of this.ctx.datasources) {
             latestDataKey = datasource.latestDataKeys?.find(d =>
@@ -450,7 +449,7 @@ export class TbTimeSeriesChart {
         if (!latestDataKey) {
           continue;
         }
-      } else if (threshold.type === TimeSeriesChartThresholdType.entity) {
+      } else if (threshold.type === ValueSourceType.entity) {
         const entityAliasId = this.ctx.aliasController.getEntityAliasId(threshold.entityAlias);
         if (!entityAliasId) {
           continue;
@@ -464,14 +463,15 @@ export class TbTimeSeriesChart {
         };
         if (datasource) {
           datasource.dataKeys.push(entityDataKey);
+        } else {
+          datasource = {
+            type: DatasourceType.entity,
+            name: threshold.entityAlias,
+            aliasName: threshold.entityAlias,
+            entityAliasId,
+            dataKeys: [entityDataKey]
+          };
         }
-        datasource = {
-          type: DatasourceType.entity,
-          name: threshold.entityAlias,
-          aliasName: threshold.entityAlias,
-          entityAliasId,
-          dataKeys: [ entityDataKey ]
-        };
         thresholdDatasources.push(datasource);
       } else { // constant
         value = threshold.value;
@@ -567,7 +567,7 @@ export class TbTimeSeriesChart {
             let update = false;
             if (subscription.data) {
               for (const item of this.thresholdItems) {
-                if (item.settings.type === TimeSeriesChartThresholdType.entity) {
+                if (item.settings.type === ValueSourceType.entity) {
                   const data = subscription.data.find(d => d.dataKey.settings?.thresholdItemId === item.id);
                   if (data.data[0]) {
                     item.value = parseThresholdData(data.data[0][1]);

@@ -20,8 +20,8 @@ import { FontSettings } from '@home/components/widget/lib/settings.models';
 import {
   AdvancedColorRange,
   ColorSettings,
-  ValueSourceDataKeyType,
-  ValueSourceWithDataKey
+  ValueSourceType,
+  ValueSourceTypeConfig
 } from '@shared/models/widget-settings.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { isDefinedAndNotNull } from '@core/utils';
@@ -34,8 +34,8 @@ export interface AttributeSourceProperty {
 }
 
 export interface FixedLevelColors {
-  from?: ValueSourceWithDataKey | number;
-  to?: ValueSourceWithDataKey | number;
+  from?: ValueSourceTypeConfig | number;
+  to?: ValueSourceTypeConfig | number;
   color: string;
 }
 
@@ -112,7 +112,7 @@ export interface DigitalGaugeSettings {
   hideValue?: boolean;
   hideMinMax?: boolean;
   showTicks?: boolean;
-  ticksValue?: ValueSourceWithDataKey[];
+  ticksValue?: ValueSourceTypeConfig[];
   ticks?: number[];
   colorTicks?: string;
   tickWidth?: number;
@@ -127,14 +127,14 @@ export const backwardCompatibilityFixedLevelColors = (fixedLevelColors) => {
   const valueSourceWithDataKey: AdvancedColorRange[] = [];
   fixedLevelColors.forEach(fixedLevelColor => valueSourceWithDataKey.push({
     from: {
-      type: fixedLevelColor?.from?.valueSource === 'predefinedValue' ? ValueSourceDataKeyType.constant : ValueSourceDataKeyType.entity,
+      type: fixedLevelColor?.from?.valueSource === 'predefinedValue' ? ValueSourceType.constant : ValueSourceType.entity,
       value: fixedLevelColor?.from?.value || null,
       entityAlias: fixedLevelColor?.from?.entityAlias || '',
       entityKey: fixedLevelColor?.from?.attribute || '',
       entityKeyType: DataKeyType.attribute
     },
     to: {
-      type: fixedLevelColor?.to?.valueSource === 'predefinedValue' ? ValueSourceDataKeyType.constant : ValueSourceDataKeyType.entity,
+      type: fixedLevelColor?.to?.valueSource === 'predefinedValue' ? ValueSourceType.constant : ValueSourceType.entity,
       value: fixedLevelColor?.to?.value || null,
       entityAlias: fixedLevelColor?.to?.entityAlias || '',
       entityKey: fixedLevelColor?.to?.attribute || '',
@@ -146,10 +146,10 @@ export const backwardCompatibilityFixedLevelColors = (fixedLevelColors) => {
 };
 
 export const backwardCompatibilityTicks = (ticksValue) => {
-  const ticks: ValueSourceWithDataKey[] = [];
+  const ticks: ValueSourceTypeConfig[] = [];
   if (ticksValue?.length && isDefinedAndNotNull(ticksValue[0]?.valueSource)) {
     ticksValue.forEach(tick => ticks.push({
-      type: tick?.valueSource === 'predefinedValue' ? ValueSourceDataKeyType.constant : ValueSourceDataKeyType.entity,
+      type: tick?.valueSource === 'predefinedValue' ? ValueSourceType.constant : ValueSourceType.entity,
       value: tick?.value || null,
       entityAlias: tick?.entityAlias || '',
       entityKey: tick?.attribute || '',

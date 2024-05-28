@@ -31,9 +31,9 @@ import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { DataKey, Datasource, DatasourceType } from '@app/shared/models/widget.models';
 import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
 import {
-  ValueSourceDataKeyType,
-  ValueSourceDataKeyTypes,
-  ValueSourceDataKeyTypeTranslation
+  ValueSourceType,
+  ValueSourceTypes,
+  ValueSourceTypeTranslation
 } from '@shared/models/widget-settings.models';
 
 @Component({
@@ -53,9 +53,9 @@ export class ValueSourceDataKeyComponent extends PageComponent implements OnInit
   dataKeyType = DataKeyType;
   datasourceType = DatasourceType;
 
-  valueSourceDataKeyType = ValueSourceDataKeyType;
-  valueSourceDataKeyTypes = ValueSourceDataKeyTypes;
-  valueSourceDataKeyTypeTranslation = ValueSourceDataKeyTypeTranslation;
+  valueSourceDataKeyType = ValueSourceType;
+  valueSourceDataKeyTypes = ValueSourceTypes;
+  valueSourceDataKeyTypeTranslation = ValueSourceTypeTranslation;
 
   @Input()
   disabled: boolean;
@@ -86,7 +86,7 @@ export class ValueSourceDataKeyComponent extends PageComponent implements OnInit
 
   ngOnInit(): void {
     this.valueSourceFormGroup = this.fb.group({
-      type: [ValueSourceDataKeyType.constant, []],
+      type: [ValueSourceType.constant, []],
       value: [null, [Validators.required]],
       entityAlias: [null, [Validators.required]]
     });
@@ -134,12 +134,12 @@ export class ValueSourceDataKeyComponent extends PageComponent implements OnInit
         entityAlias: value.entityAlias
       }, {emitEvent: false}
     );
-    if (value.type === ValueSourceDataKeyType.latestKey) {
+    if (value.type === ValueSourceType.latestKey) {
       this.latestKeyFormControl.patchValue({
         type: value.latestKeyType,
         name: value.latestKey
       }, {emitEvent: false});
-    } else if (value.type === ValueSourceDataKeyType.entity) {
+    } else if (value.type === ValueSourceType.entity) {
       this.entityKeyFormControl.patchValue({
         type: value.entityKeyType,
         name: value.entityKey
@@ -156,11 +156,11 @@ export class ValueSourceDataKeyComponent extends PageComponent implements OnInit
     this.modelValue.value = value.value;
     this.modelValue.entityAlias = value.entityAlias;
 
-    if (value.type === ValueSourceDataKeyType.latestKey) {
+    if (value.type === ValueSourceType.latestKey) {
       const latestKey: DataKey = this.latestKeyFormControl.value;
       this.modelValue.latestKey = latestKey?.name;
       this.modelValue.latestKeyType = (latestKey?.type as any);
-    } else if (value.type === ValueSourceDataKeyType.entity) {
+    } else if (value.type === ValueSourceType.entity) {
       const entityKey: DataKey = this.entityKeyFormControl.value;
       this.modelValue.entityKey = entityKey?.name;
       this.modelValue.entityKeyType = (entityKey?.type as any);
@@ -169,18 +169,18 @@ export class ValueSourceDataKeyComponent extends PageComponent implements OnInit
   }
 
   private updateValidators(): void {
-    const type: ValueSourceDataKeyType = this.valueSourceFormGroup.get('type').value;
-    if (type === ValueSourceDataKeyType.constant) {
+    const type: ValueSourceType = this.valueSourceFormGroup.get('type').value;
+    if (type === ValueSourceType.constant) {
       this.valueSourceFormGroup.get('value').enable({emitEvent: false});
       this.valueSourceFormGroup.get('entityAlias').disable({emitEvent: false});
       this.latestKeyFormControl.disable({emitEvent: false});
       this.entityKeyFormControl.disable({emitEvent: false});
-    } else if (type === ValueSourceDataKeyType.latestKey) {
+    } else if (type === ValueSourceType.latestKey) {
       this.valueSourceFormGroup.get('value').disable({emitEvent: false});
       this.valueSourceFormGroup.get('entityAlias').disable({emitEvent: false});
       this.latestKeyFormControl.enable({emitEvent: false});
       this.entityKeyFormControl.disable({emitEvent: false});
-    } else if (type === ValueSourceDataKeyType.entity) {
+    } else if (type === ValueSourceType.entity) {
       this.valueSourceFormGroup.get('value').disable({emitEvent: false});
       this.valueSourceFormGroup.get('entityAlias').enable({emitEvent: false});
       this.latestKeyFormControl.disable({emitEvent: false});

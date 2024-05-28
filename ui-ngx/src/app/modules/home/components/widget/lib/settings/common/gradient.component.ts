@@ -24,7 +24,7 @@ import {
   UntypedFormBuilder,
   UntypedFormGroup
 } from '@angular/forms';
-import { AdvancedGradient, ColorGradientSettings, ValueSourceDataKeyType } from '@shared/models/widget-settings.models';
+import { AdvancedGradient, ColorGradientSettings, ValueSourceType } from '@shared/models/widget-settings.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -101,12 +101,12 @@ export class GradientComponent implements OnInit, ControlValueAccessor, OnDestro
       }),
       gradientAdvanced: this.fb.group({
         start: this.fb.group({
-          source: [{type: ValueSourceDataKeyType.constant}],
+          source: [{type: ValueSourceType.constant}],
           color: ['rgba(0, 255, 0, 1)']
         }),
         gradientList: this.fb.array([]),
         end: this.fb.group({
-          source: [{type: ValueSourceDataKeyType.constant}],
+          source: [{type: ValueSourceType.constant}],
           color: ['rgba(255, 0, 0, 1)']
         })
       })
@@ -241,7 +241,7 @@ export class GradientComponent implements OnInit, ControlValueAccessor, OnDestro
   addGradient(advanced = false) {
     if (advanced) {
       this.advancedGradientListFormArray.push(
-        this.advancedGradientControl({source: {type: ValueSourceDataKeyType.constant}, color: 'rgba(0,0,0,0.87)'})
+        this.advancedGradientControl({source: {type: ValueSourceType.constant}, color: 'rgba(0,0,0,0.87)'})
       );
     } else {
       this.gradientListFormArray.push(this.colorGradientControl('rgba(0,0,0,0.87)'));

@@ -30,7 +30,7 @@ import {
   AdvancedColorRange,
   ColorRange,
   ColorRangeSettings,
-  ValueSourceDataKeyType
+  ValueSourceType
 } from '@shared/models/widget-settings.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { Subject } from 'rxjs';
@@ -197,10 +197,10 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
   public addAdvancedRange() {
     const advancedRange: AdvancedColorRange = {
       from: {
-        type: ValueSourceDataKeyType.constant
+        type: ValueSourceType.constant
       },
       to: {
-        type: ValueSourceDataKeyType.constant
+        type: ValueSourceType.constant
       },
       color: null
     };
