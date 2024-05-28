@@ -49,7 +49,10 @@
           <ng-template matExpansionPanelContent>
             <tb-js-func #stateRenderFunction
                         formControlName="stateRenderFunction"
-                        [functionArgs]="['element', 'ctx']"
+                        [objectHighlightRules]="scadaSymbolElementStateRenderHighlightRules"
+                        [propertyHighlightRules]="scadaSymbolElementStateRenderPropertiesHighlightRules"
+                        [editorCompleter]="elementStateRenderFunctionCompleter"
+                        [functionArgs]="['ctx', 'element']"
                         helpId="widget/lib/timeseries/cell_style_fn">
             </tb-js-func>
           </ng-template>
@@ -65,7 +68,10 @@
           <ng-template matExpansionPanelContent>
             <tb-js-func #clickAction
                         formControlName="clickAction"
-                        [functionArgs]="['event', 'ctx']"
+                        [objectHighlightRules]="scadaSymbolClickActionHighlightRules"
+                        [propertyHighlightRules]="scadaSymbolClickActionPropertiesHighlightRules"
+                        [editorCompleter]="clickActionFunctionCompleter"
+                        [functionArgs]="['ctx', 'event']"
                         helpId="widget/lib/timeseries/cell_style_fn">
             </tb-js-func>
           </ng-template>

@@ -59,6 +59,10 @@ export class TbEditorCompleter implements Ace.Completer {
   constructor(private editorCompletions: TbEditorCompletions) {
   }
 
+  updateCompletions(completions: TbEditorCompletions): void {
+    this.editorCompletions = completions;
+  }
+
   getCompletions(editor: Ace.Editor, session: Ace.EditSession,
                  position: Ace.Point, prefix: string, callback: Ace.CompleterCallback): void {
     const result = this.prepareCompletions(prefix);

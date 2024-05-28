@@ -24,11 +24,22 @@ import {
   setupAddTagPanelTooltip,
   setupTagPanelTooltip
 } from '@home/pages/scada-symbol/scada-symbol-tooltip.components';
-import { iotSvgContentData } from '@home/components/widget/lib/svg/iot-svg.models';
+import {
+  IotSvgBehavior,
+  IotSvgBehaviorType,
+  iotSvgContentData,
+  IotSvgMetadata,
+  IotSvgProperty,
+  IotSvgPropertyType
+} from '@home/components/widget/lib/svg/iot-svg.models';
+import { TbEditorCompletion, TbEditorCompletions } from '@shared/models/ace/completion.models';
+import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
+import { TbHighlightRule } from '@shared/models/ace/ace.models';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 import TooltipPositioningSide = JQueryTooltipster.TooltipPositioningSide;
 import ITooltipsterHelper = JQueryTooltipster.ITooltipsterHelper;
 import ITooltipPosition = JQueryTooltipster.ITooltipPosition;
+import { ValueType } from '@shared/models/constants';
 
 export interface ScadaSymbolData {
   imageResource: ImageResourceInfo;
@@ -747,3 +758,243 @@ export class ScadaSymbolElement {
   }
 
 }
+
+const scadaSymbolCtxObjectHighlightRules: TbHighlightRule[] = [
+  {
+    class: 'scada-symbol-ctx',
+    regex: /(?<=\W|^)(ctx)(?=\.)\b/
+  }
+];
+
+export const scadaSymbolGeneralStateRenderHighlightRules: TbHighlightRule[] =
+  scadaSymbolCtxObjectHighlightRules.concat({
+    class: 'scada-symbol-svg',
+    regex: /(?<=\W|^)(svg)(?=\.)\b/
+  });
+
+export const scadaSymbolElementStateRenderHighlightRules: TbHighlightRule[] =
+  scadaSymbolCtxObjectHighlightRules.concat({
+    class: 'scada-symbol-element',
+    regex: /(?<=\W|^)(element)(?=\.)\b/
+  });
+
+export const scadaSymbolClickActionHighlightRules: TbHighlightRule[] =
+  scadaSymbolCtxObjectHighlightRules.concat({
+    class: 'scada-symbol-event',
+    regex: /(?<=\W|^)(event)(?=\.)\b/
+  });
+
+const scadaSymbolCtxPropertyHighlightRules: TbHighlightRule[] = [
+  {
+    class: 'scada-symbol-ctx-properties',
+    regex: /(?<=ctx\.)(properties)\b/
+  },
+  {
+    class: 'scada-symbol-ctx-tags',
+    regex: /(?<=ctx\.)(tags)\b/
+  },
+  {
+    class: 'scada-symbol-ctx-values',
+    regex: /(?<=ctx\.)(values)\b/
+  },
+  {
+    class: 'scada-symbol-ctx-api',
+    regex: /(?<=ctx\.)(api)\b/
+  },
+  {
+    class: 'scada-symbol-ctx-property',
+    regex: /(?<=ctx\.properties\.)([a-zA-Z\$_\u00a1-\uffff][a-zA-Z\d\$_\u00a1-\uffff]*)\b/
+  },
+  {
+    class: 'scada-symbol-ctx-tag',
+    regex: /(?<=ctx\.tags\.)([a-zA-Z\$_\u00a1-\uffff][a-zA-Z\d\$_\u00a1-\uffff]*)\b/
+  },
+  {
+    class: 'scada-symbol-ctx-value',
+    regex: /(?<=ctx\.values\.)([a-zA-Z\$_\u00a1-\uffff][a-zA-Z\d\$_\u00a1-\uffff]*)\b/
+  },
+  {
+    class: 'scada-symbol-ctx-api-method',
+    regex: /(?<=ctx\.api\.)([a-zA-Z\$_\u00a1-\uffff][a-zA-Z\d\$_\u00a1-\uffff]*)\b/
+  }
+];
+
+export const scadaSymbolGeneralStateRenderPropertiesHighlightRules: TbHighlightRule[] =
+  scadaSymbolCtxPropertyHighlightRules.concat({
+    class: 'scada-symbol-svg-properties',
+    regex: /(?<=svg\.)([a-zA-Z\$_\u00a1-\uffff][a-zA-Z\d\$_\u00a1-\uffff]*)\b/
+  });
+
+export const scadaSymbolElementStateRenderPropertiesHighlightRules: TbHighlightRule[] =
+  scadaSymbolCtxPropertyHighlightRules.concat({
+    class: 'scada-symbol-element-properties',
+    regex: /(?<=element\.)([a-zA-Z\$_\u00a1-\uffff][a-zA-Z\d\$_\u00a1-\uffff]*)\b/
+  });
+
+export const scadaSymbolClickActionPropertiesHighlightRules: TbHighlightRule[] =
+  scadaSymbolCtxPropertyHighlightRules.concat({
+    class: 'scada-symbol-event-properties',
+    regex: /(?<=event\.)([a-zA-Z\$_\u00a1-\uffff][a-zA-Z\d\$_\u00a1-\uffff]*)\b/
+  });
+
+export const generalStateRenderFunctionCompletions = (ctxCompletion: TbEditorCompletion): TbEditorCompletions => {
+  return {
+    ctx: ctxCompletion,
+    svg: {
+      meta: 'argument',
+      type: 'Svg',
+      description: 'A root svg node. Instance of SVG.Svg.'
+    }
+  };
+};
+
+export const elementStateRenderFunctionCompletions = (ctxCompletion: TbEditorCompletion): TbEditorCompletions => {
+  return {
+    ctx: ctxCompletion,
+    element: {
+      meta: 'argument',
+      type: 'Element',
+      description: 'An SVG element.'
+    },
+  };
+};
+
+export const clickActionFunctionCompletions = (ctxCompletion: TbEditorCompletion): TbEditorCompletions => {
+  return {
+    ctx: ctxCompletion,
+    event: {
+      meta: 'argument',
+      type: 'Event',
+      description: 'DOM event.'
+    },
+  };
+};
+
+export const iotSvgContextCompletion = (metadata: IotSvgMetadata, tags: string[],
+                                        customTranslate: CustomTranslatePipe): TbEditorCompletion => {
+  const properties: TbEditorCompletion = {
+    meta: 'object',
+    type: 'object',
+    description: 'An object holding all defined SVG object properties.',
+    children: {}
+  };
+  for (const property of metadata.properties) {
+    properties.children[property.id] = iotSvgPropertyCompletion(property, customTranslate);
+  }
+  const values: TbEditorCompletion = {
+    meta: 'object',
+    type: 'object',
+    description: 'An object holding all values obtained using behaviors of type \'Value\'',
+    children: {}
+  };
+  const getValues = metadata.behavior.filter(b => b.type === IotSvgBehaviorType.value);
+  for (const value of getValues) {
+    values.children[value.id] = iotSvgValueCompletion(value, customTranslate);
+  }
+  const tagsCompletions: TbEditorCompletion = {
+    meta: 'object',
+    type: 'object',
+    description: 'An object holding all tagged SVG elements grouped by tags (object keys).',
+    children: {}
+  };
+  if (tags?.length) {
+    for (const tag of tags) {
+      tagsCompletions.children[tag] = {
+        meta: 'property',
+        description: 'An array of SVG elements.',
+        type: 'Array<Element>'
+      };
+    }
+  }
+  return {
+    meta: 'argument',
+    type: 'IotSvgContext',
+    description: 'Context of svg object.',
+    children: {
+      api: {
+        meta: 'object',
+        type: 'IotSvgApi',
+        description: 'Svg object API',
+        children: {
+          animate: {
+            meta: 'function',
+            description: 'Animate SVG element',
+            args: [
+              {
+                name: 'element',
+                description: 'SVG element',
+                type: 'Element'
+              },
+              {
+                name: 'duration',
+                description: 'Animation duretion is milliseconds',
+                type: 'number'
+              }
+            ],
+            return: {
+              description: 'Instance of SVG.Runner which has the same methods as any element and additional methods to control the runner.',
+              type: 'SVG.Runner'
+            }
+          }
+        }
+      },
+      properties,
+      values,
+      tags: tagsCompletions
+    }
+  };
+};
+
+const iotSvgPropertyCompletion = (property: IotSvgProperty, customTranslate: CustomTranslatePipe): TbEditorCompletion => {
+  let description = customTranslate.transform(property.name, property.name);
+  if (property.subLabel) {
+    description += ` <small>${customTranslate.transform(property.subLabel, property.subLabel)}</small>`;
+  }
+  return {
+    meta: 'property',
+    description,
+    type: iotSvgPropertyCompletionType(property.type)
+  };
+};
+
+const iotSvgValueCompletion = (value: IotSvgBehavior, customTranslate: CustomTranslatePipe): TbEditorCompletion => {
+  const description = customTranslate.transform(value.name, value.name);
+  return {
+    meta: 'property',
+    description,
+    type: iotSvgValueCompletionType(value.valueType)
+  };
+};
+
+const iotSvgPropertyCompletionType = (type: IotSvgPropertyType): string => {
+  switch (type) {
+    case IotSvgPropertyType.text:
+      return 'string';
+    case IotSvgPropertyType.number:
+      return 'number';
+    case IotSvgPropertyType.switch:
+      return 'boolean';
+    case IotSvgPropertyType.color:
+      return 'color string';
+    case IotSvgPropertyType.color_settings:
+      return 'ColorProcessor';
+    case IotSvgPropertyType.font:
+      return 'Font';
+    case IotSvgPropertyType.units:
+      return 'units string';
+  }
+};
+
+const iotSvgValueCompletionType = (type: ValueType): string => {
+  switch (type) {
+    case ValueType.STRING:
+      return 'string';
+    case ValueType.INTEGER:
+    case ValueType.DOUBLE:
+      return 'number';
+    case ValueType.BOOLEAN:
+      return 'boolean';
+    case ValueType.JSON:
+      return 'object';
+  }
+};

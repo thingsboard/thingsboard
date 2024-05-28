@@ -27,13 +27,13 @@ import {
 } from '@angular/core';
 import { ControlValueAccessor, UntypedFormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validator } from '@angular/forms';
 import { Ace } from 'ace-builds';
-import { getAce, Range } from '@shared/models/ace/ace.models';
+import { getAce, Range, TbHighlightRule } from '@shared/models/ace/ace.models';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { ActionNotificationHide, ActionNotificationShow } from '@core/notification/notification.actions';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UtilsService } from '@core/services/utils.service';
-import { guid, isUndefined } from '@app/core/utils';
+import { deepClone, guid, isUndefined } from '@app/core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { ResizeObserver } from '@juggle/resize-observer';
@@ -89,6 +89,10 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
   @Input() minHeight = '200px';
 
   @Input() editorCompleter: TbEditorCompleter;
+
+  @Input() propertyHighlightRules: TbHighlightRule[];
+
+  @Input() objectHighlightRules: TbHighlightRule[];
 
   @Input() globalVariables: Array<string>;
 
@@ -214,6 +218,32 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
               this.cd.markForCheck();
             }
           });
+        }
+        // @ts-ignore
+        if ((this.propertyHighlightRules?.length || this.objectHighlightRules?.length) && !!this.jsEditor.session.$mode) {
+          // @ts-ignore
+          const newMode = new this.jsEditor.session.$mode.constructor();
+          newMode.$highlightRules = new newMode.HighlightRules();
+          if (this.propertyHighlightRules?.length) {
+            const propertiesRules: { token: string; regex: RegExp }[] = newMode.$highlightRules.$rules.property;
+            const index = propertiesRules.findIndex(p => p.token === 'support.constant');
+            const additionalPropertyRules: { token: string; regex: RegExp }[] = this.propertyHighlightRules.map(r => ({
+              token: `tb.${r.class}`,
+              regex: r.regex
+            }));
+            propertiesRules.splice(index, 0, ...additionalPropertyRules);
+          }
+          if (this.objectHighlightRules?.length) {
+            const noRegexRules: { token: string; regex: RegExp }[] = newMode.$highlightRules.$rules.no_regex;
+            const index = noRegexRules.findIndex(p => Array.isArray(p.token) && p.token[0] === 'support.constant');
+            const additionalNoRegexRules: { token: string; regex: RegExp }[] = this.objectHighlightRules.map(r => ({
+              token: `tb.${r.class}`,
+              regex: r.regex
+            }));
+            noRegexRules.splice(index, 0, ...additionalNoRegexRules);
+          }
+          // @ts-ignore
+          this.jsEditor.session.$onChangeMode(newMode);
         }
         // @ts-ignore
         if (!!this.jsEditor.session.$worker) {

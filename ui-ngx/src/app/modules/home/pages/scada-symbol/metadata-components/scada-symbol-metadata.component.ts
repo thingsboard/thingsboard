@@ -14,7 +14,16 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import {
+  Component,
+  forwardRef,
+  Input,
+  OnChanges,
+  OnInit,
+  SimpleChanges,
+  ViewChild,
+  ViewEncapsulation
+} from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALIDATORS,
@@ -26,7 +35,7 @@ import {
   Validators
 } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
-import { IotSvgMetadata } from '@home/components/widget/lib/svg/iot-svg.models';
+import { emptyMetadata, IotSvgMetadata } from '@home/components/widget/lib/svg/iot-svg.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
@@ -34,6 +43,16 @@ import { TranslateService } from '@ngx-translate/core';
 import {
   ScadaSymbolMetadataTagsComponent
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-metadata-tags.component';
+import { TbEditorCompleter } from '@shared/models/ace/completion.models';
+import {
+  clickActionFunctionCompletions,
+  elementStateRenderFunctionCompletions,
+  generalStateRenderFunctionCompletions,
+  iotSvgContextCompletion,
+  scadaSymbolGeneralStateRenderHighlightRules,
+  scadaSymbolGeneralStateRenderPropertiesHighlightRules
+} from '@home/pages/scada-symbol/scada-symbol.models';
+import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 
 @Component({
   selector: 'tb-scada-symbol-metadata',
@@ -53,7 +72,7 @@ import {
   ],
   encapsulation: ViewEncapsulation.None
 })
-export class ScadaSymbolMetadataComponent extends PageComponent implements OnInit, ControlValueAccessor, Validator {
+export class ScadaSymbolMetadataComponent extends PageComponent implements OnInit, OnChanges, ControlValueAccessor, Validator {
 
   @ViewChild('symbolMetadataTags')
   symbolMetadataTags: ScadaSymbolMetadataTagsComponent;
@@ -91,9 +110,18 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
 
   selectedOption = 'general';
 
+  generalStateRenderFunctionCompleter: TbEditorCompleter;
+  elementStateRenderFunctionCompleter: TbEditorCompleter;
+  clickActionFunctionCompleter: TbEditorCompleter;
+
+  scadaSymbolGeneralStateRenderHighlightRules = scadaSymbolGeneralStateRenderHighlightRules;
+
+  scadaSymbolGeneralStateRenderPropertiesHighlightRules = scadaSymbolGeneralStateRenderPropertiesHighlightRules;
+
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder,
-              private translate: TranslateService) {
+              private translate: TranslateService,
+              private customTranslate: CustomTranslatePipe) {
     super(store);
   }
 
@@ -105,10 +133,22 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
       behavior: [null],
       properties: [null]
     });
+    this.updateFunctionCompleters(emptyMetadata());
 
     this.metadataFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
     });
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    for (const propName of Object.keys(changes)) {
+      const change = changes[propName];
+      if (!change.firstChange && change.currentValue !== change.previousValue) {
+        if (['tags'].includes(propName)) {
+          this.updateFunctionCompleters(this.modelValue);
+        }
+      }
+    }
   }
 
   registerOnChange(fn: any): void {
@@ -132,6 +172,7 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
     this.metadataFormGroup.patchValue(
       value, {emitEvent: false}
     );
+    this.updateFunctionCompleters(value);
   }
 
   editTagStateRenderFunction(tag: string): void {
@@ -157,5 +198,28 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
     const metadata: IotSvgMetadata = this.metadataFormGroup.getRawValue();
     this.modelValue = metadata;
     this.propagateChange(this.modelValue);
+    this.updateFunctionCompleters(metadata);
+  }
+
+  private updateFunctionCompleters(metadata: IotSvgMetadata) {
+    const contextCompleter = iotSvgContextCompletion(metadata, this.tags, this.customTranslate);
+    const generalStateRender = generalStateRenderFunctionCompletions(contextCompleter);
+    if (!this.generalStateRenderFunctionCompleter) {
+      this.generalStateRenderFunctionCompleter = new TbEditorCompleter(generalStateRender);
+    } else {
+      this.generalStateRenderFunctionCompleter.updateCompletions(generalStateRender);
+    }
+    const elementStateRender = elementStateRenderFunctionCompletions(contextCompleter);
+    if (!this.elementStateRenderFunctionCompleter) {
+      this.elementStateRenderFunctionCompleter = new TbEditorCompleter(elementStateRender);
+    } else {
+      this.elementStateRenderFunctionCompleter.updateCompletions(elementStateRender);
+    }
+    const clickAction = clickActionFunctionCompletions(contextCompleter);
+    if (!this.clickActionFunctionCompleter) {
+      this.clickActionFunctionCompleter = new TbEditorCompleter(clickAction);
+    } else {
+      this.clickActionFunctionCompleter.updateCompletions(clickAction);
+    }
   }
 }

@@ -61,13 +61,13 @@ export interface IotSvgContext {
   properties: {[id: string]: any};
 }
 
-export type IotSvgStateRenderFunction = (svg: Svg, ctx: IotSvgContext) => void;
+export type IotSvgStateRenderFunction = (ctx: IotSvgContext, svg: Svg) => void;
 
-export type IotSvgTagStateRenderFunction = (element: Element, ctx: IotSvgContext) => void;
+export type IotSvgTagStateRenderFunction = (ctx: IotSvgContext, element: Element) => void;
 
 export type IotSvgActionTrigger = 'click';
 
-export type IotSvgActionFunction = (event: Event, ctx: IotSvgContext) => void;
+export type IotSvgActionFunction = (ctx: IotSvgContext, event: Event) => void;
 export interface IotSvgAction {
   actionFunction?: string;
   action?: IotSvgActionFunction;
@@ -421,13 +421,13 @@ export class IotSvgObject {
   }
 
   private prepareMetadata() {
-    this.metadata.stateRender = parseFunction(this.metadata.stateRenderFunction, ['svg', 'ctx']) || (() => {});
+    this.metadata.stateRender = parseFunction(this.metadata.stateRenderFunction, ['ctx', 'svg']) || (() => {});
     for (const tag of this.metadata.tags) {
-      tag.stateRender = parseFunction(tag.stateRenderFunction, ['element', 'ctx']) || (() => {});
+      tag.stateRender = parseFunction(tag.stateRenderFunction, ['ctx', 'element']) || (() => {});
       if (tag.actions) {
         for (const trigger of Object.keys(tag.actions)) {
           const action = tag.actions[trigger];
-          action.action = parseFunction(action.actionFunction, ['event', 'ctx']) || (() => {});
+          action.action = parseFunction(action.actionFunction, ['ctx', 'event']) || (() => {});
         }
       }
     }
@@ -483,7 +483,7 @@ export class IotSvgObject {
           elements.forEach(element => {
             element.attr('cursor', 'pointer');
             element.on(trigger, (event) => {
-              action.action(event, this.context);
+              action.action(this.context, event);
             });
           });
         }
@@ -637,11 +637,11 @@ export class IotSvgObject {
   }
 
   private renderState(): void {
-    this.metadata.stateRender(this.svgShape, this.context);
+    this.metadata.stateRender(this.context, this.svgShape);
     for (const tag of this.metadata.tags) {
       const elements = this.context.tags[tag.tag];// this.svgShape.find(`[tb\\:tag="${tag.tag}"]`);
       elements.forEach(element => {
-        tag.stateRender(element, this.context);
+        tag.stateRender(this.context, element);
       });
     }
   }

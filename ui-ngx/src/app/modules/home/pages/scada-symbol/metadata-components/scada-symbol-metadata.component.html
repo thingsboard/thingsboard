@@ -43,7 +43,10 @@
             <ng-template matExpansionPanelContent>
               <tb-js-func formControlName="stateRenderFunction"
                           minHeight="300px"
-                          [functionArgs]="['svg', 'ctx']"
+                          [editorCompleter]="generalStateRenderFunctionCompleter"
+                          [objectHighlightRules]="scadaSymbolGeneralStateRenderHighlightRules"
+                          [propertyHighlightRules]="scadaSymbolGeneralStateRenderPropertiesHighlightRules"
+                          [functionArgs]="['ctx', 'svg']"
                           helpId="widget/lib/timeseries/cell_style_fn">
               </tb-js-func>
             </ng-template>
@@ -55,6 +58,8 @@
       <tb-scada-symbol-metadata-tags
         #symbolMetadataTags
         [tags]="tags"
+        [clickActionFunctionCompleter]="clickActionFunctionCompleter"
+        [elementStateRenderFunctionCompleter]="elementStateRenderFunctionCompleter"
         formControlName="tags">
       </tb-scada-symbol-metadata-tags>
     </div>

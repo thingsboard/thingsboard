@@ -38,6 +38,13 @@ import { IotSvgTag } from '@home/components/widget/lib/svg/iot-svg.models';
 import { MatExpansionPanel } from '@angular/material/expansion';
 import { JsFuncComponent } from '@shared/components/js-func.component';
 import { MatSelect } from '@angular/material/select';
+import { TbEditorCompleter } from '@shared/models/ace/completion.models';
+import {
+  scadaSymbolClickActionHighlightRules,
+  scadaSymbolClickActionPropertiesHighlightRules,
+  scadaSymbolElementStateRenderHighlightRules,
+  scadaSymbolElementStateRenderPropertiesHighlightRules
+} from '@home/pages/scada-symbol/scada-symbol.models';
 
 @Component({
   selector: 'tb-scada-symbol-metadata-tag',
@@ -78,6 +85,12 @@ export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, On
   @Input()
   tags: string[];
 
+  @Input()
+  elementStateRenderFunctionCompleter: TbEditorCompleter;
+
+  @Input()
+  clickActionFunctionCompleter: TbEditorCompleter;
+
   @Output()
   tagRemoved = new EventEmitter();
 
@@ -86,6 +99,12 @@ export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, On
   tagFormGroup: UntypedFormGroup;
 
   modelValue: IotSvgTag;
+
+  scadaSymbolElementStateRenderHighlightRules = scadaSymbolElementStateRenderHighlightRules;
+  scadaSymbolElementStateRenderPropertiesHighlightRules = scadaSymbolElementStateRenderPropertiesHighlightRules;
+
+  scadaSymbolClickActionHighlightRules = scadaSymbolClickActionHighlightRules;
+  scadaSymbolClickActionPropertiesHighlightRules = scadaSymbolClickActionPropertiesHighlightRules;
 
   private propagateChange = (_val: any) => {};
 

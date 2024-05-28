@@ -40,6 +40,7 @@ import { IotSvgTag } from '@home/components/widget/lib/svg/iot-svg.models';
 import {
   ScadaSymbolMetadataTagComponent
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-metadata-tag.component';
+import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 
 const tagValidator = (control: AbstractControl): ValidationErrors | null => {
   const tag: IotSvgTag = control.value;
@@ -82,6 +83,12 @@ export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, O
 
   @Input()
   tags: string[];
+
+  @Input()
+  elementStateRenderFunctionCompleter: TbEditorCompleter;
+
+  @Input()
+  clickActionFunctionCompleter: TbEditorCompleter;
 
   availableTags: string[];
 
