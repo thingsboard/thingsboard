@@ -318,8 +318,6 @@ public interface TbContext {
 
     QueueStatsService getQueueStatsService();
 
-    ListeningExecutor getMailExecutor();
-
     ListeningExecutor getSmsExecutor();
 
     ListeningExecutor getDbCallbackExecutor();
