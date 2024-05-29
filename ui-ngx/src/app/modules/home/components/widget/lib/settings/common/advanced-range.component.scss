@@ -13,26 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import './../../../scss/mixins';
-
 :host {
-  .mat-mdc-form-field {
-    width: 100%;
-    mat-label {
-      .mat-icon {
-        margin-right: 4px;
+  .range {
+    &-container {
+      display: flex;
+      flex: 1;
+      flex-direction: row;
+      align-items: center;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 6px;
+    }
+    &-input {
+      padding: 7px;
+      &-fields {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        gap: 12px;
+        border-right: 1px solid rgba(0, 0, 0, 0.12);;
       }
     }
-  }
-  .tb-color-preview {
-    margin-left: 8px;
-    margin-right: 5px;
-    &.no-margin {
-      margin: 0;
+    &-text {
+      min-width: 50px;
+      font-size: 14px;
+      color: rgba(0, 0, 0, 0.38);
     }
-  }
-
-  .button-no-border {
-    border: none;
   }
 }
