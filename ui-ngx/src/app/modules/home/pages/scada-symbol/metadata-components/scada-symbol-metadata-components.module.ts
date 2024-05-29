@@ -45,6 +45,9 @@ import {
   ScadaSymbolPropertyPanelComponent
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-property-panel.component';
 import { WidgetSettingsCommonModule } from '@home/components/widget/lib/settings/common/widget-settings-common.module';
+import {
+  ScadaSymbolMetadataTagFunctionPanelComponent
+} from '@home/pages/scada-symbol/metadata-components/scada-symbol-metadata-tag-function-panel.component';
 
 @NgModule({
   declarations:
@@ -52,6 +55,7 @@ import { WidgetSettingsCommonModule } from '@home/components/widget/lib/settings
       ScadaSymbolMetadataComponent,
       ScadaSymbolMetadataTagComponent,
       ScadaSymbolMetadataTagsComponent,
+      ScadaSymbolMetadataTagFunctionPanelComponent,
       ScadaSymbolBehaviorsComponent,
       ScadaSymbolBehaviorRowComponent,
       ScadaSymbolBehaviorPanelComponent,

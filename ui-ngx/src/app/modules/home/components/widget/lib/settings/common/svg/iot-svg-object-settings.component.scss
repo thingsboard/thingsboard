@@ -13,23 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.tb-scada-symbol-metadata-tag-row {
-  .tb-tag-field {
-    flex: 1 1 70%;
-  }
-  .tb-state-render-function-field {
-    flex: 1 1 15%;
-  }
-  .tb-on-click-action-field {
-    flex: 1 1 15%;
-  }
-  .tb-state-render-function-field, .tb-on-click-action-field {
-    display: flex;
-    justify-content: flex-end;
-    .mdc-button {
-      .mat-mdc-button-touch-target {
-        height: 36px;
-      }
-    }
+:host {
+  .iot-svg-object-title {
+    font-size: 18px;
+    font-style: normal;
+    font-weight: 500;
+    line-height: 24px;
   }
 }

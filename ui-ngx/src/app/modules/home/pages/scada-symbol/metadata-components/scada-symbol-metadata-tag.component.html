@@ -15,8 +15,35 @@
     limitations under the License.
 
 -->
-<div [formGroup]="tagFormGroup" class="tb-form-panel stroked">
-  <mat-expansion-panel #expansionPanel class="tb-settings">
+<div [formGroup]="tagFormGroup" class="tb-form-table-row tb-scada-symbol-metadata-tag-row">
+  <div class="tb-tag-field">
+    <mat-chip-set>
+      <mat-chip>
+        <span class="tb-scada-symbol-metadata-tag-label">
+          {{ tagFormGroup.get('tag').value }}
+        </span>
+      </mat-chip>
+    </mat-chip-set>
+  </div>
+  <div class="tb-state-render-function-field">
+    <button #editStateRenderFunctionButton
+            mat-button
+            color="primary"
+            (click)="editTagStateRenderFunction()">
+      <mat-icon>{{ tagFormGroup.get('stateRenderFunction').value ? 'edit' : 'add' }}</mat-icon>
+      <span>{{ (tagFormGroup.get('stateRenderFunction').value ? 'action.edit' : 'action.add') | translate }}</span>
+    </button>
+  </div>
+  <div class="tb-on-click-action-field">
+    <button #editClickActionButton
+            mat-button
+            color="primary"
+            (click)="editClickAction()">
+      <mat-icon>{{ tagFormGroup.get('clickAction').value ? 'edit' : 'add' }}</mat-icon>
+      <span>{{ (tagFormGroup.get('clickAction').value ? 'action.edit' : 'action.add') | translate }}</span>
+    </button>
+  </div>
+  <!--mat-expansion-panel #expansionPanel class="tb-settings">
     <mat-expansion-panel-header fxLayout="row wrap">
       <div class="tb-scada-symbol-metadata-tag-header">
         <div class="tb-form-row tb-flex">
@@ -78,5 +105,5 @@
         </mat-expansion-panel>
       </div>
     </ng-template>
-  </mat-expansion-panel>
+  </mat-expansion-panel-->
 </div>

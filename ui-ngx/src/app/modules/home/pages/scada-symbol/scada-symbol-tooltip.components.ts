@@ -37,6 +37,7 @@ import { ENTER } from '@angular/cdk/keycodes';
 import Timeout = NodeJS.Timeout;
 import { MatButton } from '@angular/material/button';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
+import { TranslateService } from '@ngx-translate/core';
 
 @Directive()
 abstract class ScadaSymbolPanelComponent implements AfterViewInit {
@@ -60,7 +61,7 @@ abstract class ScadaSymbolPanelComponent implements AfterViewInit {
     <span>{{ symbolElement?.element?.type }}:</span>
     <button mat-stroked-button color="primary" (click)="onAddTag()">
       <mat-icon>add</mat-icon>
-      <span>Add tag</span>
+      <span translate>scada.tag.add-tag</span>
     </button>
   </div>`,
   styleUrls: ['./scada-symbol-tooltip.component.scss'],
@@ -83,20 +84,20 @@ class ScadaSymbolAddTagPanelComponent extends ScadaSymbolPanelComponent {
 
 @Component({
   template: `<div class="tb-scada-symbol-tooltip-panel">
-    <span>{{ isAdd ? 'Enter tag:' : 'Update tag:' }}</span>
+    <span>{{ (isAdd ? 'scada.tag.enter-tag' : 'scada.tag.update-tag' ) | translate }}:</span>
     <mat-form-field class="tb-inline-field" appearance="outline" subscriptSizing="dynamic">
       <input #tagField matInput [(ngModel)]="tag" (keydown)="tagEnter($event)" (blur)="onBlur()"
              placeholder="{{ 'widget-config.set' | translate }}">
     </mat-form-field>
     <button type="button" mat-icon-button class="tb-mat-20"
-            matTooltip="Apply"
+            matTooltip="{{ 'action.apply' | translate }}"
             matTooltipPosition="above"
             [disabled]="!tag"
             (click)="onApply()">
       <mat-icon>done</mat-icon>
     </button>
     <button type="button" mat-icon-button class="tb-mat-20"
-            matTooltip="Cancel"
+            matTooltip="{{ 'action.cancel' | translate }}"
             matTooltipPosition="above"
             (click)="onCancel()">
       <mat-icon>close</mat-icon>
@@ -184,20 +185,20 @@ class ScadaSymbolTagInputPanelComponent extends ScadaSymbolPanelComponent implem
     <span>{{ symbolElement?.element?.type }}:</span>
     <span><b>{{ symbolElement?.tag }}</b></span>
     <button type="button" mat-icon-button class="tb-mat-20"
-            matTooltip="Update tag"
+            matTooltip="{{ 'scada.tag.update-tag' | translate }}"
             matTooltipPosition="above"
             (click)="onUpdateTag()">
       <mat-icon>edit</mat-icon>
     </button>
     <button #tagSettingsButton type="button"
             mat-icon-button class="tb-mat-20"
-            matTooltip="Settings"
+            matTooltip="{{ 'scada.tag.tag-settings' | translate }}"
             matTooltipPosition="above">
       <mat-icon>settings</mat-icon>
     </button>
     <button #removeTagButton type="button"
             mat-icon-button class="tb-mat-20"
-            matTooltip="Remove tag"
+            matTooltip="{{ 'scada.tag.remove-tag' | translate }}"
             matTooltipPosition="above">
       <mat-icon>delete</mat-icon>
     </button>
@@ -288,12 +289,12 @@ class ScadaSymbolTagPanelComponent extends ScadaSymbolPanelComponent implements 
     <div class="tb-scada-symbol-tooltip-panel">
       <button mat-stroked-button color="primary" (click)="onCancel()">
         <mat-icon>close</mat-icon>
-        <span>No</span>
+        <span translate>action.no</span>
       </button>
       <button #yesButton
               mat-stroked-button color="primary" (click)="onRemoveTag()">
         <mat-icon>done</mat-icon>
-        <span>Yes</span>
+        <span translate>action.yes</span>
       </button>
     </div>
   </div>`,
@@ -313,13 +314,14 @@ class ScadaSymbolRemoveTagConfirmComponent extends ScadaSymbolPanelComponent imp
   @Output()
   removeTag = new EventEmitter();
 
-  constructor(public element: ElementRef<HTMLElement>) {
+  constructor(public element: ElementRef<HTMLElement>,
+              private translate: TranslateService) {
     super(element);
   }
 
   ngOnInit() {
-    this.deleteText = `Are you sure you want to delete tag<br/><b>${this.symbolElement?.tag}</b>
-                          from <b>${this.symbolElement?.element?.type}</b> element?`;
+    this.deleteText = this.translate.instant('scada.tag.delete-tag-text',
+      {tag: this.symbolElement?.tag, elementType: this.symbolElement?.element?.type});
   }
 
   public onCancel() {
@@ -339,29 +341,29 @@ class ScadaSymbolRemoveTagConfirmComponent extends ScadaSymbolPanelComponent imp
             color="primary"
             (click)="editStateRenderFunction()">
       <mat-icon>edit</mat-icon>
-      <span>Edit</span>
+      <span translate>action.edit</span>
     </button>
     <button *ngIf="!hasStateRenderFunction"
             mat-stroked-button
             color="primary"
             (click)="editStateRenderFunction()">
       <mat-icon>add</mat-icon>
-      <span>Add</span>
+      <span translate>action.add</span>
     </button>
-    <div translate>scada.on-click-action</div>
+    <div translate>scada.tag.on-click-action</div>
     <button *ngIf="hasClickAction"
             mat-stroked-button
             color="primary"
             (click)="editClickAction()">
       <mat-icon>edit</mat-icon>
-      <span>Edit</span>
+      <span translate>action.edit</span>
     </button>
     <button *ngIf="!hasClickAction"
             mat-stroked-button
             color="primary"
             (click)="editClickAction()">
       <mat-icon>add</mat-icon>
-      <span>Add</span>
+      <span translate>action.add</span>
     </button>
   </div>`,
   styleUrls: ['./scada-symbol-tooltip.component.scss'],

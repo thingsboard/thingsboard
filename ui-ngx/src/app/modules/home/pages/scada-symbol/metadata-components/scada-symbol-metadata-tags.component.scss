@@ -16,13 +16,31 @@
 .tb-scada-symbol-metadata-tags {
   flex: 1;
   margin: 12px;
-  .tb-scada-symbol-metadata-tags-list {
-    overflow: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+  .tb-form-table-header-cell {
+    &.tb-tag-header {
+      flex: 1 1 70%;
+    }
+    &.tb-state-render-function-header {
+      flex: 1 1 15%;
+    }
+    &.tb-on-click-action-header {
+      flex: 1 1 15%;
+    }
+    &.tb-state-render-function-header, &.tb-on-click-action-header {
+      display: flex;
+      justify-content: flex-end;
+    }
   }
-  .tb-no-tags {
-    height: 60px;
+  .tb-form-table {
+    overflow: hidden;
+  }
+  .tb-form-table-body {
+    overflow: auto;
+    tb-scada-symbol-metadata-tag  {
+      overflow: hidden;
+    }
+    .mat-divider {
+      margin-top: 8px;
+    }
   }
 }

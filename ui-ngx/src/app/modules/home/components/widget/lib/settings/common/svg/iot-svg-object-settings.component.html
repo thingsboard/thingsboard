@@ -16,7 +16,7 @@
 
 -->
 <ng-container [formGroup]="iotSvgObjectSettingsFormGroup">
-  <div>{{ metadata?.title | customTranslate }}</div>
+  <div class="iot-svg-object-title">{{ metadata?.title | customTranslate }}</div>
   <div *ngIf="metadata?.behavior?.length" class="tb-form-panel" formGroupName="behavior">
     <div class="tb-form-panel-title" translate>scada.behavior.behavior</div>
     <div *ngFor="let behaviour of metadata.behavior" class="tb-form-row">
@@ -52,6 +52,7 @@
     </div>
   </div>
   <div *ngIf="propertyRows?.length" class="tb-form-panel" formGroupName="properties">
+    <div class="tb-form-panel-title" translate>widget-config.appearance</div>
     <div *ngFor="let propertyRow of propertyRows" class="tb-form-row space-between" [class]="propertyRow.rowClass">
       <mat-slide-toggle *ngIf="propertyRow.switch" class="mat-slide fixed-title-width" formControlName="{{ propertyRow.switch.id }}">
         {{ propertyRow.label | customTranslate }}

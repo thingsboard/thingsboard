@@ -51,7 +51,7 @@ import { ImageService } from '@core/http/image.service';
 @Component({
   selector: 'tb-iot-svg-object-settings',
   templateUrl: './iot-svg-object-settings.component.html',
-  styleUrls: ['./../../widget-settings.scss'],
+  styleUrls: ['./iot-svg-object-settings.component.scss', './../../widget-settings.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

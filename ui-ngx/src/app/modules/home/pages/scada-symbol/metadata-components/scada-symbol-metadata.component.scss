@@ -79,35 +79,33 @@
   .ace_tb {
     &.ace_scada-symbol {
       &-ctx {
-        color: orangered;
-        font-weight: bold;
+        color: #C52F00;
         &-properties, &-property {
-          color: #0c959c;
+          color: #185F2A;
         }
         &-values, &-value {
-          color: #669900;
+          color: #2CAA00;
         }
         &-tags, &-tag {
-          color: #cc8500;
+          color: #DF8600;
         }
         &-api, &-api-method {
-          color: #ff00fe;
+          color: #7214D0;
         }
         &-properties, &-values, &-tags, &-api {
-          font-style: italic;
+          // font-style: italic;
           // font-weight: bold;
         }
         &-property, &-value, &-tag, &-api-method {
-          font-weight: bold;
-          // font-weight: bold;
+          font-weight: 700;
         }
       }
       &-svg, &-element, &-event {
-        color: orangered;
-        font-weight: bold;
+        color: #C52F00;
+        // font-weight: bold;
         &-properties {
-          color: #0c959c;
-          font-weight: bold;
+          color: #7214D0;
+          font-weight: 700;
         }
       }
     }
