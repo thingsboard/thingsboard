@@ -31,6 +31,7 @@ import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { DataKey, Datasource, DatasourceType } from '@app/shared/models/widget.models';
 import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
 import {
+  ValueSourceConfig,
   ValueSourceType,
   ValueSourceTypes,
   ValueSourceTypeTranslation
@@ -71,10 +72,10 @@ export class ValueSourceDataKeyComponent extends PageComponent implements OnInit
 
   valueSourceFormGroup: UntypedFormGroup;
 
-  modelValue;
-
   latestKeyFormControl: UntypedFormControl;
   entityKeyFormControl: UntypedFormControl;
+
+  private modelValue: ValueSourceConfig;
 
   private propagateChange = (_val: any) => {};
 
@@ -125,7 +126,7 @@ export class ValueSourceDataKeyComponent extends PageComponent implements OnInit
     }
   }
 
-  writeValue(value): void {
+  writeValue(value: ValueSourceConfig): void {
     this.modelValue = value;
     this.valueSourceFormGroup.patchValue(
       {
@@ -151,7 +152,7 @@ export class ValueSourceDataKeyComponent extends PageComponent implements OnInit
   }
 
   private updateModel() {
-    const value = this.valueSourceFormGroup.value;
+    const value: ValueSourceConfig = this.valueSourceFormGroup.value;
     this.modelValue.type = value.type;
     this.modelValue.value = value.value;
     this.modelValue.entityAlias = value.entityAlias;
