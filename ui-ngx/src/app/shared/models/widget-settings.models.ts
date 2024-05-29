@@ -361,19 +361,10 @@ export interface ColorProcessorSettings {
 export abstract class ColorProcessor {
 
   static fromSettings(color: ColorSettings, ctx?: WidgetContext): ColorProcessor {
-    const settings = color || constantColor(null);
-    switch (settings.type) {
-      case ColorType.constant:
-        return new ConstantColorProcessor(settings);
-      case ColorType.range:
-        return new RangeColorProcessor(settings, ctx);
-      case ColorType.function:
-        return new FunctionColorProcessor(settings);
-      case ColorType.gradient:
-        return new GradientColorProcessor(settings, ctx);
-      default:
-        return new ConstantColorProcessor(settings);
-    }
+    return ColorProcessor.fromColorProcessingSettings({
+      settings: color,
+      ctx
+    });
   }
 
   static fromColorProcessingSettings(setting: ColorProcessorSettings): ColorProcessor {
