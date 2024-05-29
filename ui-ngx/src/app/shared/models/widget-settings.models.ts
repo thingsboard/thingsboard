@@ -297,14 +297,15 @@ export const defaultGradient = (minValue?: number, maxValue?: number): ColorGrad
   maxValue: isDefinedAndNotNull(maxValue) ? maxValue : 100
 });
 
-export const updateGradientMinMaxValues = (colorSettings: ColorSettings, minValue: number, maxValue: number): ColorSettings => {
+const updateGradientMinMaxValues = (colorSettings: ColorSettings, minValue?: number, maxValue?: number): void => {
   if (isDefinedAndNotNull(colorSettings.gradient)) {
-    colorSettings.gradient.minValue = minValue;
-    colorSettings.gradient.maxValue = maxValue;
-  } else {
-    colorSettings.gradient = defaultGradient(minValue, maxValue);
+    if (isDefinedAndNotNull(minValue)) {
+      colorSettings.gradient.minValue = minValue;
+    }
+    if (isDefinedAndNotNull(maxValue)) {
+      colorSettings.gradient.maxValue = maxValue;
+    }
   }
-  return colorSettings;
 };
 
 export const defaultColorFunction = 'var temperature = value;\n' +
@@ -350,6 +351,13 @@ export const validateCssSize = (strSize?: string): string | undefined => {
 
 type ValueColorFunction = (value: any) => string;
 
+export interface ColorProcessorSettings {
+  settings: ColorSettings;
+  ctx?: WidgetContext;
+  minGradientValue?: number;
+  maxGradientValue?: number;
+}
+
 export abstract class ColorProcessor {
 
   static fromSettings(color: ColorSettings, ctx?: WidgetContext): ColorProcessor {
@@ -363,6 +371,23 @@ export abstract class ColorProcessor {
         return new FunctionColorProcessor(settings);
       case ColorType.gradient:
         return new GradientColorProcessor(settings, ctx);
+      default:
+        return new ConstantColorProcessor(settings);
+    }
+  }
+
+  static fromColorProcessingSettings(setting: ColorProcessorSettings): ColorProcessor {
+    const settings = setting.settings || constantColor(null);
+    switch (settings.type) {
+      case ColorType.constant:
+        return new ConstantColorProcessor(settings);
+      case ColorType.range:
+        return new RangeColorProcessor(settings, setting.ctx);
+      case ColorType.function:
+        return new FunctionColorProcessor(settings);
+      case ColorType.gradient:
+        updateGradientMinMaxValues(settings, setting.minGradientValue, setting.maxGradientValue);
+        return new GradientColorProcessor(settings, setting.ctx);
       default:
         return new ConstantColorProcessor(settings);
     }

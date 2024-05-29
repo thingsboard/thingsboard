@@ -37,8 +37,7 @@ import {
   getDataKey,
   getSingleTsValue,
   overlayStyle,
-  textStyle,
-  updateGradientMinMaxValues
+  textStyle
 } from '@shared/models/widget-settings.models';
 import { WidgetComponent } from '@home/components/widget/widget.component';
 import {
@@ -192,11 +191,26 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
     this.showValue = this.settings.showValue;
     this.autoScaleValueSize = this.showValue && this.settings.autoScaleValueSize;
     this.valueStyle = textStyle(this.settings.valueFont);
-    this.valueColor = ColorProcessor.fromSettings(updateGradientMinMaxValues(this.settings.valueColor, 0, 100), this.ctx);
+    this.valueColor = ColorProcessor.fromColorProcessingSettings({
+      settings: this.settings.valueColor,
+      ctx: this.ctx,
+      minGradientValue: 0,
+      maxGradientValue: 0
+    });
 
-    this.batteryLevelColor = ColorProcessor.fromSettings(updateGradientMinMaxValues(this.settings.batteryLevelColor, 0, 100), this.ctx);
+    this.batteryLevelColor = ColorProcessor.fromColorProcessingSettings({
+      settings: this.settings.batteryLevelColor,
+      ctx: this.ctx,
+      minGradientValue: 0,
+      maxGradientValue: 0
+    });
 
-    this.batteryShapeColor = ColorProcessor.fromSettings(updateGradientMinMaxValues(this.settings.batteryShapeColor, 0, 100), this.ctx);
+    this.batteryShapeColor = ColorProcessor.fromColorProcessingSettings({
+      settings: this.settings.batteryShapeColor,
+      ctx: this.ctx,
+      minGradientValue: 0,
+      maxGradientValue: 0
+    });
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
