@@ -25,6 +25,7 @@ import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 
 import com.google.common.util.concurrent.SettableFuture;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -95,10 +96,14 @@ public class TbSaveToCustomCassandraTableNodeTest {
     @Mock
     private Node nodeMock;
 
+    @BeforeEach
+    void setUp() {
+        node = spy(new TbSaveToCustomCassandraTableNode());
+        config = new TbSaveToCustomCassandraTableNodeConfiguration().defaultConfiguration();
+    }
+
     @Test
     void givenCassandraClusterIsMissing_whenInit_thenThrowsException() {
-        node = new TbSaveToCustomCassandraTableNode();
-        config = new TbSaveToCustomCassandraTableNodeConfiguration().defaultConfiguration();
         var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         assertThatThrownBy(() -> node.init(ctxMock, configuration))
                 .isInstanceOf(RuntimeException.class)
@@ -107,8 +112,6 @@ public class TbSaveToCustomCassandraTableNodeTest {
 
     @Test
     void givenFieldsMapIsEmpty_whenInit_thenThrowsException() {
-        node = new TbSaveToCustomCassandraTableNode();
-        config = new TbSaveToCustomCassandraTableNodeConfiguration().defaultConfiguration();
         config.setFieldsMapping(emptyMap());
         var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
@@ -121,8 +124,6 @@ public class TbSaveToCustomCassandraTableNodeTest {
 
     @Test
     void givenInvalidMessageStructure_whenOnMsg_thenThrowsException() throws TbNodeException {
-        node = new TbSaveToCustomCassandraTableNode();
-        config = new TbSaveToCustomCassandraTableNodeConfiguration().defaultConfiguration();
         config.setTableName("temperature_sensor");
         config.setFieldsMapping(Map.of("temp", "temperature"));
         var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
@@ -131,8 +132,7 @@ public class TbSaveToCustomCassandraTableNodeTest {
 
         node.init(ctxMock, configuration);
 
-        String data = "";
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, data);
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
 
         assertThatThrownBy(() -> node.onMsg(ctxMock, msg))
                 .isInstanceOf(IllegalStateException.class)
@@ -141,8 +141,6 @@ public class TbSaveToCustomCassandraTableNodeTest {
 
     @Test
     void givenDataKeyIsMissingInMsg_whenOnMsg_thenThrowsException() throws TbNodeException {
-        node = new TbSaveToCustomCassandraTableNode();
-        config = new TbSaveToCustomCassandraTableNodeConfiguration().defaultConfiguration();
         config.setTableName("temperature_sensor");
         config.setFieldsMapping(Map.of("temp", "temperature"));
         var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
@@ -171,8 +169,6 @@ public class TbSaveToCustomCassandraTableNodeTest {
 
     @Test
     void givenUnsupportedData_whenOnMsg_thenThrowsException() throws TbNodeException {
-        node = new TbSaveToCustomCassandraTableNode();
-        config = new TbSaveToCustomCassandraTableNodeConfiguration().defaultConfiguration();
         config.setTableName("temperature_sensor");
         config.setFieldsMapping(Map.of("temp", "temperature"));
         var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
@@ -203,8 +199,6 @@ public class TbSaveToCustomCassandraTableNodeTest {
 
     @Test
     void givenValidMsgStructure_whenOnMsg_thenOk() throws Exception {
-        node = spy(new TbSaveToCustomCassandraTableNode());
-        config = new TbSaveToCustomCassandraTableNodeConfiguration().defaultConfiguration();
         config.setTableName("temperature_sensor");
         config.setFieldsMapping(Map.of("temp", "temperature"));
         var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
