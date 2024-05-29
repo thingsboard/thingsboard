@@ -415,7 +415,7 @@ export abstract class AdvancedModeColorProcessor extends ColorProcessor {
     super(settings);
     this.advancedMode = this.getCurrentConfig().advancedMode;
     if (this.advancedMode) {
-      createdValueSubscription(
+      createValueSubscription(
         this.ctx,
         this.datasourceConfigs(),
         this.onDataUpdated.bind(this)
@@ -1141,9 +1141,9 @@ export const getLatestSingleTsValue = (data: Array<DatasourceData>): DataEntry =
   return null;
 };
 
-export const createdValueSubscription = (ctx: WidgetContext,
-                                         datasourceConfigs: ValueSourceConfig[],
-                                         onDataUpdated: WidgetSubscriptionCallbacks['onDataUpdated']): Observable<IWidgetSubscription> => {
+export const createValueSubscription = (ctx: WidgetContext,
+                                        datasourceConfigs: ValueSourceConfig[],
+                                        onDataUpdated: WidgetSubscriptionCallbacks['onDataUpdated']): Observable<IWidgetSubscription> => {
   let datasources: Datasource[] = [];
   let index = 0;
 
@@ -1165,9 +1165,9 @@ export const createdValueSubscription = (ctx: WidgetContext,
 };
 
 const generateDatasource = (ctx: WidgetContext,
-                                   datasources: Datasource[],
-                                   valueSource: ValueSourceConfig,
-                                   index: number): Datasource[] => {
+                            datasources: Datasource[],
+                            valueSource: ValueSourceConfig,
+                            index: number): Datasource[] => {
   if (valueSource.type === ValueSourceType.latestKey) {
     if (ctx.datasources.length && isDefinedAndNotNull(ctx.datasources[0].aliasName)) {
       datasources = configureDatasource(ctx, valueSource, ctx.datasources[0].aliasName, datasources, index, true);
@@ -1181,11 +1181,11 @@ const generateDatasource = (ctx: WidgetContext,
 };
 
 const configureDatasource = (ctx: WidgetContext,
-                                    valueSource: ValueSourceConfig,
-                                    entityAlias: string,
-                                    datasources: Datasource[],
-                                    index: number,
-                                    isLatest: boolean): Datasource[] => {
+                             valueSource: ValueSourceConfig,
+                             entityAlias: string,
+                             datasources: Datasource[],
+                             index: number,
+                             isLatest: boolean): Datasource[] => {
   const indexes = [index];
   const entityAliasId = ctx.aliasController.getEntityAliasId(entityAlias);
   let datasource = datasources.find(d =>
@@ -1230,8 +1230,8 @@ const configureDatasource = (ctx: WidgetContext,
 
 
 const subscribeForDatasource = (ctx: WidgetContext,
-                                       datasource: Datasource[],
-                                       onDataUpdated: WidgetSubscriptionCallbacks['onDataUpdated']): Observable<IWidgetSubscription> => {
+                                datasource: Datasource[],
+                                onDataUpdated: WidgetSubscriptionCallbacks['onDataUpdated']): Observable<IWidgetSubscription> => {
   if (!datasource.length) {
     return EMPTY;
   }

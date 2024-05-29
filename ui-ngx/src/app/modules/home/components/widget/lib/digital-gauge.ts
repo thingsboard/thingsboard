@@ -27,7 +27,7 @@ import { CanvasDigitalGauge, CanvasDigitalGaugeOptions } from '@home/components/
 import { DatePipe } from '@angular/common';
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { Subscription } from 'rxjs';
-import { ColorProcessor, createdValueSubscription, ValueSourceType } from '@shared/models/widget-settings.models';
+import { ColorProcessor, createValueSubscription, ValueSourceType } from '@shared/models/widget-settings.models';
 import GenericOptions = CanvasGauges.GenericOptions;
 
 // @dynamic
@@ -205,7 +205,7 @@ export class TbCanvasDigitalGauge {
       this.localSettings.ticks = this.localSettings.ticksValue
         .map(tick => tick.type === ValueSourceType.constant && isFinite(tick.value) ? tick.value : null);
 
-      createdValueSubscription(
+      createValueSubscription(
         this.ctx,
         this.localSettings.ticksValue,
         this.updateAttribute.bind(this)
