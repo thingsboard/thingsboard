@@ -580,7 +580,7 @@ export enum SecurityType {
 }
 
 export const ServerSecurityTypes = [
-  { value: 'Basic128Rsa15', name: 'Basic128RSA' },
+  { value: 'Basic128Rsa15', name: 'Basic128RSA15' },
   { value: 'Basic256', name: 'Basic256' },
-  { value: 'Basic256Sha256', name: 'Basic256SHA' }
+  { value: 'Basic256Sha256', name: 'Basic256SHA256' }
 ];

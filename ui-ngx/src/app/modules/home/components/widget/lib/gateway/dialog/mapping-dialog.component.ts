@@ -74,6 +74,7 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
 
   sourceTypes = Object.values(SourceTypes);
   OPCUaSourceTypes = Object.values(OPCUaSourceTypes) as Array<OPCUaSourceTypes>;
+  OPCUaSourceTypesEnum = OPCUaSourceTypes;
   sourceTypesEnum = SourceTypes;
   SourceTypeTranslationsMap = SourceTypeTranslationsMap;
 
@@ -404,7 +405,7 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
   private createOPCUAMappingForm(): void {
     this.mappingForm = this.fb.group({
       deviceNodeSource: [OPCUaSourceTypes.CONST, []],
-      deviceNodePattern: ['', []],
+      deviceNodePattern: ['', [Validators.required]],
       deviceInfo: [{}, []],
       attributes: [[], []],
       timeseries: [[], []],
