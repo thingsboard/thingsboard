@@ -230,38 +230,6 @@ export class CanvasDigitalGauge extends BaseGauge {
       }
     }
 
-    // const colorsCount = options.levelColors.length;
-    // const isColorProperty = isString(options.levelColors[0]);
-    // const inc = colorsCount > 1 ? (1 / (colorsCount - 1)) : 1;
-    // options.colorsRange = [];
-    // if (options.neonGlowBrightness) {
-    //   options.neonColorsRange = [];
-    // }
-    // for (let i = 0; i < options.levelColors.length; i++) {
-    //   const levelColor: any = options.levelColors[i];
-    //   if (levelColor !== null) {
-    //     let percentage: number;
-    //     if (isColorProperty) {
-    //       percentage = inc * i;
-    //     } else {
-    //       percentage = CanvasDigitalGauge.normalizeValue(levelColor.value, options.minValue, options.maxValue);
-    //     }
-    //     let tColor = tinycolor(isColorProperty ? levelColor : levelColor.color);
-    //     options.colorsRange.push({
-    //       pct: percentage,
-    //       color: tColor.toRgb(),
-    //       rgbString: tColor.toRgbString()
-    //     });
-    //     if (options.neonGlowBrightness) {
-    //       tColor = tinycolor(isColorProperty ? levelColor : levelColor.color).brighten(options.neonGlowBrightness);
-    //       options.neonColorsRange.push({
-    //         pct: percentage,
-    //         color: tColor.toRgb(),
-    //         rgbString: tColor.toRgbString()
-    //       });
-    //     }
-    //   }
-    // }
     options.ticksValue = [];
     for (const tick of options.ticks) {
       if (tick !== null) {
