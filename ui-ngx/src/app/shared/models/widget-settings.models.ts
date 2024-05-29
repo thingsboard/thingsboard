@@ -361,13 +361,13 @@ export interface ColorProcessorSettings {
 export abstract class ColorProcessor {
 
   static fromSettings(color: ColorSettings, ctx?: WidgetContext): ColorProcessor {
-    return ColorProcessor.fromColorProcessingSettings({
+    return ColorProcessor.fromColorProcessorSettings({
       settings: color,
       ctx
     });
   }
 
-  static fromColorProcessingSettings(setting: ColorProcessorSettings): ColorProcessor {
+  static fromColorProcessorSettings(setting: ColorProcessorSettings): ColorProcessor {
     const settings = setting.settings || constantColor(null);
     switch (settings.type) {
       case ColorType.constant:
