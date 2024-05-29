@@ -33,7 +33,7 @@ import {
 import { formatValue, isUndefined } from '@core/utils';
 import { Component } from '@angular/core';
 import {
-  backwardCompatibilityFixedLevelColors,
+  convertLevelColorsSettingsToColorProcessor,
   defaultDigitalSimpleGaugeOptions,
   digitalGaugeLayoutImages,
   digitalGaugeLayouts,
@@ -41,7 +41,7 @@ import {
   DigitalGaugeSettings,
   DigitalGaugeType
 } from '@home/components/widget/lib/digital-gauge.models';
-import { ColorSettings, ColorType, constantColor } from '@shared/models/widget-settings.models';
+import { ColorSettings, ColorType } from '@shared/models/widget-settings.models';
 
 @Component({
   selector: 'tb-digital-simple-gauge-basic-config',
@@ -98,28 +98,7 @@ export class DigitalSimpleGaugeBasicConfigComponent extends BasicWidgetConfigCom
   protected onConfigSet(configData: WidgetConfigComponentData) {
     const settings: DigitalGaugeSettings = {...defaultDigitalSimpleGaugeOptions, ...(configData.config.settings || {})};
 
-    if (!settings.barColor) {
-      settings.barColor = constantColor(settings.gaugeColor);
-      if (settings.fixedLevelColors?.length) {
-        settings.barColor.rangeList = {
-          advancedMode: settings.useFixedLevelColor,
-          range: null,
-          rangeAdvanced: backwardCompatibilityFixedLevelColors(settings.fixedLevelColors)
-        };
-      }
-      if (settings.levelColors?.length) {
-        settings.barColor.gradient = {
-          advancedMode: false,
-          gradient: settings.levelColors as string[],
-          gradientAdvanced: null
-        };
-      }
-      if (settings.useFixedLevelColor) {
-        settings.barColor.type = ColorType.range;
-      } else if (settings.levelColors.length) {
-        settings.barColor.type = ColorType.gradient;
-      }
-    }
+    convertLevelColorsSettingsToColorProcessor(settings);
 
     this.simpleGaugeWidgetConfigForm = this.fb.group({
       timewindowConfig: [getTimewindowConfig(configData.config), []],

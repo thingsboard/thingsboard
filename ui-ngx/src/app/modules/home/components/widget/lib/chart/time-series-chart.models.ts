@@ -27,8 +27,8 @@ import {
   DateFormatSettings,
   Font,
   tsToFormatTimeUnit,
-  ValueSourceType,
-  ValueSourceTypeConfig
+  ValueSourceConfig,
+  ValueSourceType
 } from '@shared/models/widget-settings.models';
 import {
   CallbackDataParams,
@@ -722,7 +722,7 @@ export const defaultTimeSeriesChartXAxisSettings: TimeSeriesChartXAxisSettings =
 
 export type TimeSeriesChartYAxes = {[id: TimeSeriesChartYAxisId]: TimeSeriesChartYAxisSettings};
 
-export interface TimeSeriesChartThreshold extends ValueSourceTypeConfig {
+export interface TimeSeriesChartThreshold extends ValueSourceConfig {
   yAxisId: TimeSeriesChartYAxisId;
   units?: string;
   decimals?: number;
