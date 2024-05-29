@@ -25,16 +25,9 @@ import { isDefined, isDefinedAndNotNull } from '@core/utils';
 import { prepareFontSettings } from '@home/components/widget/lib/settings.models';
 import { CanvasDigitalGauge, CanvasDigitalGaugeOptions } from '@home/components/widget/lib/canvas-digital-gauge';
 import { DatePipe } from '@angular/common';
-import { Datasource } from '@shared/models/widget.models';
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { Subscription } from 'rxjs';
-import {
-  ColorProcessor,
-  generateDatasource,
-  subscribeForDatasource,
-  ValueSourceConfig,
-  ValueSourceType
-} from '@shared/models/widget-settings.models';
+import { ColorProcessor, createdValueSubscription, ValueSourceType } from '@shared/models/widget-settings.models';
 import GenericOptions = CanvasGauges.GenericOptions;
 
 // @dynamic
@@ -209,7 +202,16 @@ export class TbCanvasDigitalGauge {
   init() {
     let updateSetting = false;
     if (this.localSettings.showTicks && this.localSettings.ticksValue?.length) {
-      this.localSettings.ticks = this.settingTicksSubscribe(this.localSettings.ticksValue);
+      this.localSettings.ticks = this.localSettings.ticksValue
+        .map(tick => tick.type === ValueSourceType.constant && isFinite(tick.value) ? tick.value : null);
+
+      createdValueSubscription(
+        this.ctx,
+        this.localSettings.ticksValue,
+        this.updateAttribute.bind(this)
+      ).subscribe((subscription) => {
+        this.ticksSourcesSubscription = subscription;
+      });
       updateSetting = true;
     }
 
@@ -222,42 +224,12 @@ export class TbCanvasDigitalGauge {
     });
   }
 
-  settingTicksSubscribe(options: ValueSourceConfig[]): number[] {
-    let ticksDatasource: Datasource[] = [];
-    const predefineTicks: number[] = [];
-
-    for (const tick of options) {
-      if (tick.type === ValueSourceType.constant && isFinite(tick.value)) {
-        if (isFinite(tick.value)) {
-          predefineTicks.push(tick.value);
-        } else {
-          predefineTicks.push(null);
-        }
-      } else {
-        try {
-          ticksDatasource = generateDatasource(this.ctx, ticksDatasource, tick, predefineTicks.length);
-        } catch (e) {
-          continue;
-        }
-        predefineTicks.push(null);
-      }
-    }
-
-    if (ticksDatasource.length) {
-      subscribeForDatasource(this.ctx, ticksDatasource, this.updateAttribute.bind(this)).subscribe((subscription) => {
-        this.ticksSourcesSubscription = subscription;
-      });
-    }
-
-    return predefineTicks;
-  }
-
   updateAttribute(subscription: IWidgetSubscription) {
     for (const keyData of subscription.data) {
       if (keyData && keyData.data && keyData.data[0]) {
         const attrValue = keyData.data[0][1];
         if (isFinite(attrValue)) {
-          for (const index of keyData.dataKey.settings.keyIds) {
+          for (const index of keyData.dataKey.settings.indexes) {
             this.localSettings.ticks[index] = attrValue;
           }
         }

@@ -151,6 +151,26 @@ export interface ColorRangeSettings extends AdvancedColorMode {
   rangeAdvanced?: AdvancedColorRange[];
 }
 
+export interface ColorGradientSettings extends AdvancedColorMode {
+  gradient?: string[];
+  gradientAdvanced?: AdvancedGradient[];
+  minValue?: number;
+  maxValue?: number;
+}
+
+export interface AdvancedGradient {
+  source: ValueSourceConfig;
+  color: string;
+}
+
+export interface ColorSettings {
+  type: ColorType;
+  color: string;
+  rangeList?: ColorRangeSettings;
+  gradient?: ColorGradientSettings;
+  colorFunction?: string;
+}
+
 export const colorRangeIncludes = (range: ColorRange, toCheck: ColorRange): boolean => {
   if (isNumber(range.from) && isNumber(range.to)) {
     if (isNumber(toCheck.from) && isNumber(toCheck.to)) {
@@ -223,26 +243,6 @@ export const sortedColorRange = (ranges: Array<ColorRange>): Array<ColorRange> =
       }
     }
   ) : [];
-
-export interface ColorGradientSettings extends AdvancedColorMode {
-  gradient?: string[];
-  gradientAdvanced?: AdvancedGradient[];
-  minValue?: number;
-  maxValue?: number;
-}
-
-export interface AdvancedGradient {
-  source: ValueSourceConfig;
-  color: string;
-}
-
-export interface ColorSettings {
-  type: ColorType;
-  color: string;
-  rangeList?: ColorRangeSettings;
-  gradient?: ColorGradientSettings;
-  colorFunction?: string;
-}
 
 export interface TimewindowStyle {
   showIcon: boolean;
@@ -377,7 +377,7 @@ export abstract class ColorProcessor {
   }
 
   abstract update(value: any): void;
-  abstract destroy(): void;
+  destroy(): void {};
 }
 
 class ConstantColorProcessor extends ColorProcessor {
@@ -386,7 +386,22 @@ class ConstantColorProcessor extends ColorProcessor {
   }
 
   update(value: any): void {}
-  destroy(): void {}
+}
+
+class FunctionColorProcessor extends ColorProcessor {
+
+  private readonly colorFunction: ValueColorFunction;
+
+  constructor(protected settings: ColorSettings) {
+    super(settings);
+    this.colorFunction = parseFunction(settings.colorFunction, ['value']);
+  }
+
+  update(value: any): void {
+    if (this.colorFunction) {
+      this.color = this.colorFunction(value) || this.settings.color;
+    }
+  }
 }
 
 export abstract class AdvancedModeColorProcessor extends ColorProcessor {
@@ -400,11 +415,17 @@ export abstract class AdvancedModeColorProcessor extends ColorProcessor {
     super(settings);
     this.advancedMode = this.getCurrentConfig().advancedMode;
     if (this.advancedMode) {
-      this.subscribe();
+      createdValueSubscription(
+        this.ctx,
+        this.datasourceConfigs(),
+        this.onDataUpdated.bind(this)
+      ).subscribe((subscription) => {
+        this.sourcesSubscription = subscription;
+      });
     }
   }
 
-  abstract updatedAdvancedData(data: Array<DatasourceData>);
+  abstract updatedAdvancedData(data: Array<DatasourceData>): void;
   abstract datasourceConfigs(): Array<ValueSourceConfig>;
   abstract getCurrentConfig(): AdvancedColorMode;
 
@@ -417,28 +438,6 @@ export abstract class AdvancedModeColorProcessor extends ColorProcessor {
   destroy(): void {
     if (this.sourcesSubscription) {
       this.ctx.subscriptionApi.removeSubscription(this.sourcesSubscription.id);
-    }
-  }
-
-  private subscribe(){
-    let sourcesDatasource: Datasource[] = [];
-    let index = 0;
-
-    this.datasourceConfigs().forEach(config => {
-      if (config.type !== ValueSourceType.constant) {
-        try {
-          sourcesDatasource = generateDatasource(this.ctx, sourcesDatasource, config, index);
-        } catch (e) {
-          return;
-        }
-      }
-      index++;
-    });
-
-    if (sourcesDatasource.length) {
-      subscribeForDatasource(this.ctx, sourcesDatasource, this.onDataUpdated.bind(this)).subscribe((subscription) => {
-        this.sourcesSubscription = subscription;
-      });
     }
   }
 
@@ -468,9 +467,9 @@ class RangeColorProcessor extends AdvancedModeColorProcessor {
       if (keyData && keyData.data && keyData.data[0]) {
         const attrValue = keyData.data[0][1];
         if (isFinite(attrValue)) {
-          for (const id of keyData.dataKey.settings.keyIds) {
-            const index = Math.floor(id / 2);
-            if (index === id / 2) {
+          for (const currentIndex of keyData.dataKey.settings.indexes) {
+            const index = Math.floor(currentIndex / 2);
+            if (index === currentIndex / 2) {
               this.settings.rangeList.rangeAdvanced[index].from.value = attrValue;
             } else {
               this.settings.rangeList.rangeAdvanced[index].to.value = attrValue;
@@ -536,24 +535,6 @@ class RangeColorProcessor extends AdvancedModeColorProcessor {
   }
 }
 
-class FunctionColorProcessor extends ColorProcessor {
-
-  private readonly colorFunction: ValueColorFunction;
-
-  constructor(protected settings: ColorSettings) {
-    super(settings);
-    this.colorFunction = parseFunction(settings.colorFunction, ['value']);
-  }
-
-  update(value: any): void {
-    if (this.colorFunction) {
-      this.color = this.colorFunction(value) || this.settings.color;
-    }
-  }
-
-  destroy(): void {}
-}
-
 class GradientColorProcessor extends AdvancedModeColorProcessor {
 
   private readonly minValue: number;
@@ -577,8 +558,8 @@ class GradientColorProcessor extends AdvancedModeColorProcessor {
       if (keyData && keyData.data && keyData.data[0]) {
         const attrValue = keyData.data[0][1];
         if (isFinite(attrValue)) {
-          for (const id of keyData.dataKey.settings.keyIds) {
-            this.settings.gradient.gradientAdvanced[id].source.value = attrValue;
+          for (const index of keyData.dataKey.settings.indexes) {
+            this.settings.gradient.gradientAdvanced[index].source.value = attrValue;
           }
         }
       }
@@ -1160,7 +1141,30 @@ export const getLatestSingleTsValue = (data: Array<DatasourceData>): DataEntry =
   return null;
 };
 
-export const generateDatasource = (ctx: WidgetContext,
+export const createdValueSubscription = (ctx: WidgetContext,
+                                         datasourceConfigs: ValueSourceConfig[],
+                                         onDataUpdated: WidgetSubscriptionCallbacks['onDataUpdated']): Observable<IWidgetSubscription> => {
+  let datasources: Datasource[] = [];
+  let index = 0;
+
+  datasourceConfigs.forEach(config => {
+    if (config.type !== ValueSourceType.constant) {
+      try {
+        datasources = generateDatasource(ctx, datasources, config, index);
+      } catch (e) {
+        return;
+      }
+    }
+    index++;
+  });
+
+  if (datasources.length) {
+    return subscribeForDatasource(ctx, datasources, onDataUpdated);
+  }
+  return EMPTY;
+};
+
+const generateDatasource = (ctx: WidgetContext,
                                    datasources: Datasource[],
                                    valueSource: ValueSourceConfig,
                                    index: number): Datasource[] => {
@@ -1176,13 +1180,13 @@ export const generateDatasource = (ctx: WidgetContext,
   return datasources;
 };
 
-export const configureDatasource = (ctx: WidgetContext,
+const configureDatasource = (ctx: WidgetContext,
                                     valueSource: ValueSourceConfig,
                                     entityAlias: string,
                                     datasources: Datasource[],
                                     index: number,
                                     isLatest: boolean): Datasource[] => {
-  const keyIds = [index];
+  const indexes = [index];
   const entityAliasId = ctx.aliasController.getEntityAliasId(entityAlias);
   let datasource = datasources.find(d =>
     entityAlias ? (d.entityAliasId === entityAliasId) : (d.deviceId === ctx.datasources[0].deviceId)
@@ -1191,13 +1195,13 @@ export const configureDatasource = (ctx: WidgetContext,
     type: isLatest ? valueSource.latestKeyType : valueSource.entityKeyType,
     name: isLatest ? valueSource.latestKey : valueSource.entityKey,
     label: isLatest ? valueSource.latestKey : valueSource.entityKey,
-    settings: {keyIds}
+    settings: {indexes}
   };
   if (datasource) {
     const findDataKey = datasource.dataKeys.find(dataKeyIteration =>
       dataKeyIteration.name === (isLatest ? valueSource.latestKey : valueSource.entityKey));
     if (findDataKey) {
-      findDataKey.settings.keyIds.push(index);
+      findDataKey.settings.indexes.push(index);
     } else {
       datasource.dataKeys.push(dataKey);
     }
@@ -1225,7 +1229,7 @@ export const configureDatasource = (ctx: WidgetContext,
 };
 
 
-export const subscribeForDatasource = (ctx: WidgetContext,
+const subscribeForDatasource = (ctx: WidgetContext,
                                        datasource: Datasource[],
                                        onDataUpdated: WidgetSubscriptionCallbacks['onDataUpdated']): Observable<IWidgetSubscription> => {
   if (!datasource.length) {
